@@ -3,6 +3,456 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-567",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The rest below the elites is not taken out of another promise",
+    "detail": "#562 guaranteed a Shrine on some floor below every elite. Meeting that guarantee must not consume a rest the map had already promised somewhere else, and now it does not.",
+    "build": "0.5.0-rc.4.1958",
+    "pullRequest": 567,
+    "url": "https://github.com/cehinds/AshenSpire/pull/567"
+  },
+  {
+    "id": "pr-563",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The fourth 0.5.0 candidate",
+    "detail": "The in-game stamp reads 0.5.0-rc.4.<build> from this build on: the candidate QA receives after rc.3, which was promoted to test at build 0.5.3.1. Nothing else a player sees changes with the stamp itself. What the candidate carries over rc.3 is in the entries below, and the one a player will feel is the rest before the elites — a map that holds an elite now holds a Shrine on some floor beneath it, where most maps did not. The one rider is docs: the migration checklist's account of the owner's asks and the open issues, corrected where it had overstated what was shipped.",
+    "build": "0.5.0-rc.4.1956",
+    "pullRequest": 563,
+    "url": "https://github.com/cehinds/AshenSpire/pull/563"
+  },
+  {
+    "id": "pr-562",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "A rest before the elites",
+    "detail": "You asked for a rest site before the elites, maybe a shop, and definitely before a boss. Before a boss was always kept — the floor below every boss is a Shrine. Before the elites was not: on most maps an elite stood with no Shrine anywhere below it, because one rule opened rests and elites on the same floor and so a rest could never sit under the first elite. Rests now open earlier than elites do, and a map that holds an elite holds a Shrine on some floor beneath it — measured across the generated maps, from 124 of 180 breaking that to none. The floor elites begin from has not moved, but the maps have: rolling a rest earlier changes what every node above it rolls, so a seed you have played before now draws a different map, elites included. What a run gains is about one more Shrine on the map, and the levels you buy at them are unchanged, because cinders were always the limit rather than the number of Shrines. The route is still yours: a path can climb past a rest and meet the elite anyway. Debug riders on the Custom Climb screen: the shortest act the slider offers is now 7 floors rather than 4, because a shorter act has no floor free to hold the promised rest.",
+    "build": "0.5.3.2",
+    "pullRequest": 562,
+    "url": "https://github.com/cehinds/AshenSpire/pull/562"
+  },
+  {
+    "id": "pr-558",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Co-op: the party's defeat takes the queue with it",
+    "detail": "A seat waiting out its catch-up queue when the last fighter fell was felled with the party, but its client kept drawing the reward or event it was holding — over the end of the run — until a choice was tried and refused. The queue is now forfeited with the seat, so the defeat is what you see. The rc.3 receipt below also names the right rollback build: test carries build 0.5.2.2, not 1935.",
+    "build": "0.5.3.1",
+    "pullRequest": 558,
+    "url": "https://github.com/cehinds/AshenSpire/pull/558"
+  },
+  {
+    "id": "pr-556",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The third 0.5.0 candidate",
+    "detail": "The in-game stamp reads 0.5.0-rc.3.<build> from this build on: the candidate QA receives after rc.2, which was promoted to test at build 0.5.2.2 (0.5.2.0 is where the rc.2 stamp began; #541 promoted a later dev). Nothing else a player sees changes with the stamp itself. What the candidate carries over rc.2 is in the entries below — the Dodge Roll that rides on one empty hand (#554), the co-op catch-up queue a returning seat drains (#547, #548, #549, #552), and the README pass with the receipts owed since the second candidate (#555). Tooling rider: the layout gate judges a control covered by what its own text paints, and its known-bad corpus is 24 plants, 24 caught.",
+    "build": "0.5.3.0",
+    "pullRequest": 556,
+    "url": "https://github.com/cehinds/AshenSpire/pull/556"
+  },
+  {
+    "id": "pr-555",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The README names what the game now does",
+    "detail": "Nothing a player sees changes: the feature list had stopped at the M4 polish pass, and now names the four things that shipped after it — equip load and the Weight Class it lands you in, Stamina recovery with the class-priced Dodge Roll and the empty hand that brings it, the first quest chain on event-level history, and Forsaken Together, the LAN co-op the launcher serves. The one-line description no longer calls the game single-player only. The in-game changelog is this file's projection, so the build moves with the receipt.",
+    "build": "0.5.2.4",
+    "pullRequest": 555,
+    "url": "https://github.com/cehinds/AshenSpire/pull/555"
+  },
+  {
+    "id": "pr-554",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The Dodge Roll rides as long as one hand is empty",
+    "detail": "A hand with nothing in it fights. With one hand armed and the other empty, the empty hand brings the Dodge Roll to your deck while the armed hand keeps the technique its armament installs; fill that hand and the dodge goes, empty it and it comes back. A shield counts as a full hand, and a two-handed armament fills both. Both hands empty is unchanged: Evasive Guard in every guard slot and Dodge Roll in every technique slot, as #523 shipped it. Tooling rider: the layout gate now judges a control covered by what its own TEXT paints, so a label that is part of the control is no longer read as something hiding it, and its known-bad corpus is 24 plants, 24 caught.",
+    "build": "0.5.2.3",
+    "pullRequest": 554,
+    "url": "https://github.com/cehinds/AshenSpire/pull/554"
+  },
+  {
+    "id": "pr-548",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Co-op: drop out of a run and you come back to the events you missed",
+    "detail": "An event the party met while your seat was away is now queued for you and answered on your return: the choices are the ones your history had earned at the time, a choice you could not have afforded then is refused now, the random reward is the one the room would have given you, and you read each result before the next entry opens. A seat that returns mid-fight waits out its queue and then joins the fight already in progress; a replay that fells you fells you, and the live reward offer you were holding is withdrawn. A resumed party reconnects together before the room settles, and a fight the party loses with nobody left standing ends the run for every seat, including one held outside it. Landed over #547, #549 and #552.",
+    "build": "0.5.2.2",
+    "pullRequest": 548,
+    "url": "https://github.com/cehinds/AshenSpire/pull/548"
+  },
+  {
+    "id": "pr-543",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Review riders on the second candidate",
+    "detail": "Nothing new a player asks for: a fight an event starts pays from that encounter's own reward pool and survives the disconnect of the seat that chose it, the result of an event is read before the fight it opens, the Pages deploy runs only on an explicit dispatch, and the layout gate reads a control's text where it used to read its box. Landed over #544, #545, #546 and #550; the migration checklist's account of what the 0.5.0 candidates asked and what was done landed in #551.",
+    "build": "0.5.2.1",
+    "pullRequest": 543,
+    "url": "https://github.com/cehinds/AshenSpire/pull/543"
+  },
+  {
+    "id": "pr-539",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The second 0.5.0 candidate",
+    "detail": "The in-game stamp reads 0.5.0-rc.2.<build> from this build on: the candidate QA receives after rc.1 (promoted to test at build 0.5.1.10), carrying the review fixes below. Nothing else a player sees changes. Tooling and docs riders since rc.1: the layout gate re-aimed at the combat action row (#532, #538), the owner asks ledger (#530), every branch's build published on Pages with the README naming them (#525).",
+    "build": "0.5.2.0",
+    "pullRequest": 539,
+    "url": "https://github.com/cehinds/AshenSpire/pull/539"
+  },
+  {
+    "id": "pr-536",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Co-op: an event choice is a quest step, and the party's map follows its history",
+    "detail": "Choosing at an event in co-op now does what the choice says: its effects run on your seat, it is written into your history so the quest chain reaches you, a choice your history has not earned is not offered, a priced choice you cannot afford is shown disabled, an event that starts a fight opens it for the party, and a choice that leaves you at 0 HP fells your seat. A seat's upgraded Poise threshold now reaches the shared fight too.",
+    "build": "0.5.1.11",
+    "pullRequest": 536,
+    "url": "https://github.com/cehinds/AshenSpire/pull/536"
+  },
+  {
+    "id": "pr-525",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Every branch's builds are playable at their own address",
+    "detail": "The site gains a build index across dev, test, release and main: each build sits under its own branch and ordinal, each branch keeps a latest alias, and every listed build is checked byte-for-byte against the file committed at that merge before it is served. The README shows each branch's current build number. As this shipped, a push to any of those four branches assembled and deployed the site; deploying was narrowed afterwards, by #543, to the repository owner's explicit dispatch alone.",
+    "build": "0.5.1.11",
+    "pullRequest": 525,
+    "url": "https://github.com/cehinds/AshenSpire/pull/525"
+  },
+  {
+    "id": "pr-537",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Every armed option control marks its beat; small title and modal fixes",
+    "detail": "The title screen's slot Delete no longer shows a hold hint it does not honour, a drag that ends on a confirmation's backdrop no longer cancels it (only a press that began there does), and every hold-or-tap option control now declares the action it is wired to, so the hold-harness census reads 139 checks with no findings.",
+    "build": "0.5.1.10",
+    "pullRequest": 537,
+    "url": "https://github.com/cehinds/AshenSpire/pull/537"
+  },
+  {
+    "id": "pr-535",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The Shrine smiths the armaments you carry, not only the ones in hand",
+    "detail": "An upgradeable armament left in storage is now offered at the Shrine with its authored cards previewed, and a random upgrade never lands on an armament with no live cards.",
+    "build": "0.5.1.9",
+    "pullRequest": 535,
+    "url": "https://github.com/cehinds/AshenSpire/pull/535"
+  },
+  {
+    "id": "pr-534",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Co-op clients price an upgraded relic the way the host does",
+    "detail": "Each seat's upgrade tiers travel with the live combat snapshot, so an upgraded Ancestral Horn reduces a Power's cost on the client's screen exactly as it does on the host's.",
+    "build": "0.5.1.8",
+    "pullRequest": 534,
+    "url": "https://github.com/cehinds/AshenSpire/pull/534"
+  },
+  {
+    "id": "pr-533",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "A blocked confirmation keeps the keyboard on Back",
+    "detail": "When Confirm is hidden because the option cannot be taken (an unaffordable upgrade, say), Tab and Shift+Tab stay on the visible Back button instead of landing on the hidden Confirm.",
+    "build": "0.5.1.8",
+    "pullRequest": 533,
+    "url": "https://github.com/cehinds/AshenSpire/pull/533"
+  },
+  {
+    "id": "pr-531",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "A press you walk away from does nothing",
+    "detail": "Moving your finger or pointer off a hold-or-tap control before releasing now cancels the whole press: the hold timer stops, no review opens on release, and nothing commits. Before, a press that slid off could commit at full hold or open the review on release.",
+    "build": "0.5.1.7",
+    "pullRequest": 531,
+    "url": "https://github.com/cehinds/AshenSpire/pull/531"
+  },
+  {
+    "id": "pr-526",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The first quest chain: Grave of the Nameless → the Keeper → the Nameless at Rest",
+    "detail": "What you did at the grave follows you: dig for cinders and the keeper comes to collect (repay, or fight); pay your respects and the keeper thanks you with the Gravetender's Bell, a relic no shop or drop will ever hand over. A second cairn opens only after the keeper, answers the branch you took, and neither step comes twice. Under the hood, an Unknown node can now roll an event only once your run's history has earned it, so more chains are content on the same door.",
+    "build": "0.5.1.6",
+    "pullRequest": 526,
+    "url": "https://github.com/cehinds/AshenSpire/pull/526"
+  },
+  {
+    "id": "pr-523",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Empty hands fight with the Dodge Roll, Stamina recovers, and your Weight Class prices the dodge",
+    "detail": "A run with both hands empty now composes Evasive Guard in every guard slot and Dodge Roll in every technique slot instead of the placeholder Defend and Footwork. The Dodge Roll checks Dexterity against a d20 and, on success, lands a temporary guard as Block; the pure dodge costs what your Weight Class says — Light 1 Stamina, Medium 2 Stamina and 1 action, Heavy 3 Stamina and 2 actions — and the card face, the tooltip and the engine quote the same price. A turn in which you spend no Stamina recovers some at its end. Armed play is unchanged. Co-op seats are priced from their own Dexterity and equipment.",
+    "build": "0.5.1.5",
+    "pullRequest": 523,
+    "url": "https://github.com/cehinds/AshenSpire/pull/523"
+  },
+  {
+    "id": "pr-520",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Your equipment now has a weight, and the Armoury says what it costs you",
+    "detail": "Beside the Poise threshold, the Armoury's equipment receipts show your Equip load: what your hands and armour weigh against a capacity set by Constitution and Strength, the percent, and the Weight Class it lands you in — Light, Medium or Heavy. Armour weighs its Poise threshold, every item card shows the same Weight number the total counts, smithed or not, and comparing a piece shows the load and Weight Class the swap would leave you at. This is a readout for now; the dodge roll that spends it lands separately. The capacity base is tuned so that every class can reach every class of load; no starting kit the creator allows begins Heavy.",
+    "build": "0.5.1.4",
+    "pullRequest": 520,
+    "url": "https://github.com/cehinds/AshenSpire/pull/520"
+  },
+  {
+    "id": "pr-519",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Framework cutover checklist and importer validation",
+    "detail": "Nothing a player sees changes: the migration checklist and cutover report now read the live counts (393 entities, 196 cards) and name each dormant row's missing piece; the importer refuses an armament or outfit whose weight, ratings or poise threshold are malformed, with a malformed-row test.",
+    "build": "0.5.1.3",
+    "pullRequest": 519,
+    "url": "https://github.com/cehinds/AshenSpire/pull/519"
+  },
+  {
+    "id": "pr-522",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Shrines level you at a measured pace, and can be multi-use",
+    "detail": "Balance change: a level at the Shrine now costs 20 cinders, rising 4 per level (was 800 + 200), calibrated so a full climb buys 10–20 level-ups. Settings → Advanced → Gameplay → Multi-use Shrines (off by default) lets you Rest, Smith and Level at one Shrine and leave when you choose; every Shrine sentence tells the truth about staying or leaving.",
+    "build": "0.5.1.2",
+    "pullRequest": 522,
+    "url": "https://github.com/cehinds/AshenSpire/pull/522"
+  },
+  {
+    "id": "pr-517",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Release-candidate versioning",
+    "detail": "The in-game stamp reads 0.5.0-rc.1.<build> from this build on — the first candidate of the 0.5.0 line QA tests — and the version gate clears the one named contract column that legitimately ends in \"version\". Receipts for #510–#516 landed here.",
+    "build": "0.5.1.1",
+    "pullRequest": 517,
+    "url": "https://github.com/cehinds/AshenSpire/pull/517"
+  },
+  {
+    "id": "pr-521",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Dragging a card lights the one legal target, self or ally",
+    "detail": "When a card's legal targets on the board come to exactly one and it is you, the drag lights you — for self cards as before, and now for self-or-ally cards when no ally is present. The set is taken once at drag start, so nothing pops in mid-drag, and the highlight never lights a drop the release would refuse. Co-op keeps its own aiming.",
+    "build": "0.5.1.0",
+    "pullRequest": 521,
+    "url": "https://github.com/cehinds/AshenSpire/pull/521"
+  },
+  {
+    "id": "pr-516",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Status-effect rules and the cost badges on card faces now come from the framework",
+    "detail": "Behavior-preserving: the ninth port tranche moves status semantics (stacks, meters, decay, procs, resists) behind a framework door and reads the card-face cost, mana and stamina badges from the framework cost profile. Every card's badges are proven identical. Release remains RED.",
+    "build": "0.4.0.1903",
+    "pullRequest": 516,
+    "url": "https://github.com/cehinds/AshenSpire/pull/516"
+  },
+  {
+    "id": "pr-514",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Every status and stance word, and the whole hold-to-confirm surface, route through the framework",
+    "detail": "Behavior-preserving: the eighth port tranche resolves the remaining status/stance names and tooltips (combat rows, proc bars, stance chips, stagger tooltips, co-op board, arcane exposure) through the framework term registry, verbatim, and moves the tap/hold/inspect interaction surface behind the framework door for all ten screens that use it.",
+    "build": "0.4.0.1902",
+    "pullRequest": 514,
+    "url": "https://github.com/cehinds/AshenSpire/pull/514"
+  },
+  {
+    "id": "pr-513",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Armaments can grant cards and install default weapon arts, dormant until authored",
+    "detail": "Nothing a player sees changes: no shipped armament authors a grant or a weapon art yet. The mechanism composes them with save-stable ids at creation and on equip, reconciles them across the combat piles on a mid-fight swap and on loading a fight, dedupes a shared weapon art across two hands, and keeps them out of per-copy upgrade and removal offers — all proven by fixture. Status and stance words on card faces now resolve through the framework term registry.",
+    "build": "0.4.0.1901",
+    "pullRequest": 513,
+    "url": "https://github.com/cehinds/AshenSpire/pull/513"
+  },
+  {
+    "id": "pr-512",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Deck composition and confirmation rules adopted as the framework's own",
+    "detail": "Behavior-preserving: the shipped weapon-deck composer and the fail-closed confirmation derivation become the framework's implementations behind framework doors; the smith upgrade modal routes through the option-decision door. Rides along: the about-changelog instrument's selftest census and verdict lines (#498).",
+    "build": "0.4.0.1896",
+    "pullRequest": 512,
+    "url": "https://github.com/cehinds/AshenSpire/pull/512"
+  },
+  {
+    "id": "pr-511",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Two owner rulings recorded and executed for the framework port",
+    "detail": "Behavior-preserving: the owner adopted the legacy deck composition and the fail-closed confirmation derivation as the framework's rules; status and stance tooltips on card faces resolve through framework terms.",
+    "build": "0.4.0.1893",
+    "pullRequest": 511,
+    "url": "https://github.com/cehinds/AshenSpire/pull/511"
+  },
+  {
+    "id": "pr-510",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "Card costs and load/quit confirmation severity decided by the framework",
+    "detail": "Behavior-preserving: the second port tranche compiles every card's cost profile (action, mana, stamina, X, Power reduction) through the framework and reads the load/quit dialog tone from the confirmation registry; every card's costs are proven identical, base and upgraded.",
+    "build": "0.4.0.1893",
+    "pullRequest": 510,
+    "url": "https://github.com/cehinds/AshenSpire/pull/510"
+  },
+  {
+    "id": "pr-508",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "The data-driven property framework lands as a complete, validated replacement candidate",
+    "detail": "Nothing a player sees changes: the framework — canonical registries, a deterministic property compiler, gameplay services, shared presentation rules, an importer carrying all 392 existing entities with their exact identities, and a cutover gate that refuses to switch until every check passes — ships alongside the running game without touching it. Evidence and groundwork only; it rebuilds nothing, so it shares the current ordinal. Release remains RED.",
+    "build": "0.4.0.1888",
+    "pullRequest": 508,
+    "url": "https://github.com/cehinds/AshenSpire/pull/508"
+  },
+  {
+    "id": "pr-507",
+    "date": "2026-09-01",
+    "group": "2026-09-01",
+    "summary": "The Smith reaches your armour and your relics, not just your armaments",
+    "detail": "What the Smith will work on is now the equipment you own — the armour you are wearing and the relics you carry — where before it was armaments alone. Their upgrades are authored as data rather than written into code: armour raises its poise threshold, and a relic improves the passive it already grants.",
+    "build": "0.4.0.1888",
+    "pullRequest": 507,
+    "url": "https://github.com/cehinds/AshenSpire/pull/507"
+  },
+  {
+    "id": "pr-491",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Earlier event choices influence later events",
+    "detail": "What you chose at an event is remembered, and can change what a later event offers you.",
+    "build": "0.4.0.1855",
+    "pullRequest": 491,
+    "url": "https://github.com/cehinds/AshenSpire/pull/491"
+  },
+  {
+    "id": "pr-495",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Equipment cards show their receipts",
+    "detail": "What an equipment card does to your numbers is surfaced on the card instead of being left to infer.",
+    "build": "0.4.0.1855",
+    "pullRequest": 495,
+    "url": "https://github.com/cehinds/AshenSpire/pull/495"
+  },
+  {
+    "id": "pr-502",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Smithing upgrades an armament and every basic card it owns",
+    "detail": "Elite and boss victories award Smithing Stones; the Shrine spends one Stone to improve an owned armament for the run, with exact before-and-after card values shown before confirmation. The upgrade follows the armament through swaps, saves, active combats, legacy runs, rewards, and co-op host restoration. The picker uses the owned weapon or shield art, inventory quantity, WEAPON label, and equipment tags instead of borrowing one combat card's identity.",
+    "build": "0.4.0.1854",
+    "pullRequest": 502,
+    "url": "https://github.com/cehinds/AshenSpire/pull/502"
+  },
+  {
+    "id": "pr-477",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Enemies are authored in level bands, and scale within them",
+    "detail": "Enemy levels come from authored bands with scaling rather than a fixed level per encounter.",
+    "build": "0.4.0.1760",
+    "pullRequest": 477,
+    "url": "https://github.com/cehinds/AshenSpire/pull/477"
+  },
+  {
+    "id": "pr-462",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "The parry dagger is held in the shield hand",
+    "detail": "The dagger routes through the shield socket, so it is worn and drawn where a parrying off-hand belongs.",
+    "build": "0.4.0.1760",
+    "pullRequest": 462,
+    "url": "https://github.com/cehinds/AshenSpire/pull/462"
+  },
+  {
+    "id": "pr-463",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Combat controls stay inside the iPhone safe areas",
+    "detail": "The controls no longer sit under the notch or the home indicator.",
+    "build": "0.4.0.1719",
+    "pullRequest": 463,
+    "url": "https://github.com/cehinds/AshenSpire/pull/463"
+  },
+  {
+    "id": "pr-458",
+    "date": "2026-08-31",
+    "group": "2026-08-31",
+    "summary": "Confirming a self-target on a controller keeps its focus",
+    "detail": "Choosing yourself as the target of a card no longer loses the controller's place in the confirmation.",
+    "build": "0.4.0.1708",
+    "pullRequest": 458,
+    "url": "https://github.com/cehinds/AshenSpire/pull/458"
+  },
+  {
+    "id": "pr-456",
+    "date": "2026-08-30",
+    "group": "2026-08-30",
+    "summary": "Escape closes what is actually on top of Settings",
+    "detail": "Escape now dismisses the frontmost dialog rather than the screen behind it, and focus returns to the control that opened it.",
+    "build": "0.4.0.1708",
+    "pullRequest": 456,
+    "url": "https://github.com/cehinds/AshenSpire/pull/456"
+  },
+  {
+    "id": "pr-459",
+    "date": "2026-08-30",
+    "group": "2026-08-30",
+    "summary": "The combat command bar's layout is refined",
+    "detail": "The bar is positioned by the stylesheet instead of by the combat screen's own code, which loses about 175 lines of it.",
+    "build": "0.4.0.1704",
+    "pullRequest": 459,
+    "url": "https://github.com/cehinds/AshenSpire/pull/459"
+  },
+  {
+    "id": "pr-447",
+    "date": "2026-08-30",
+    "group": "2026-08-30",
+    "summary": "Armaments get a command rail and radial shortcuts in combat",
+    "detail": "The armaments you carry are reachable from a rail on the combat screen, with radial shortcuts to them.",
+    "build": "0.4.0.1701",
+    "pullRequest": 447,
+    "url": "https://github.com/cehinds/AshenSpire/pull/447"
+  },
+  {
+    "id": "pr-449",
+    "date": "2026-08-30",
+    "group": "2026-08-30",
+    "summary": "Levels gain canonical hidden semantics",
+    "detail": "Nothing a player sees changes at this build: the rules for a hidden player level and for enemy level profiles are authored and validated, and deliberately wired to nothing — no UI, save, encounter, combat or co-op reads them yet. The enemy bands that stand on them arrive in #477.",
+    "build": "0.4.0.1688",
+    "pullRequest": 449,
+    "url": "https://github.com/cehinds/AshenSpire/pull/449"
+  },
+  {
+    "id": "pr-437",
+    "date": "2026-08-30",
+    "group": "2026-08-30",
+    "summary": "Save and Quit writes the camera state with the save",
+    "detail": "Resuming puts the view back where you left it instead of at a default framing.",
+    "build": "0.4.0.1688",
+    "pullRequest": 437,
+    "url": "https://github.com/cehinds/AshenSpire/pull/437"
+  },
+  {
+    "id": "pr-371",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "The title collapses when a run exits and when you cancel",
+    "detail": "Leaving a run, or cancelling out of the opening menus, returns the title to its folded state instead of leaving it open.",
+    "build": "0.4.0.1454",
+    "pullRequest": 371,
+    "url": "https://github.com/cehinds/AshenSpire/pull/371"
+  },
+  {
     "id": "pr-361",
     "date": "2026-08-28",
     "group": "2026-08-28",
@@ -11,6 +461,86 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.4.0.1454",
     "pullRequest": 361,
     "url": "https://github.com/cehinds/AshenSpire/pull/361"
+  },
+  {
+    "id": "pr-367",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "Startup components anchor to the viewport centre",
+    "detail": "The startup screen's parts are positioned against the centre of the viewport rather than drifting with the layout around them.",
+    "build": "0.4.0.1453",
+    "pullRequest": 367,
+    "url": "https://github.com/cehinds/AshenSpire/pull/367"
+  },
+  {
+    "id": "pr-366",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "The startup gate is centred, and its background card is gone",
+    "detail": "Merged as pull request #366 in development build 0.4.0.1448.",
+    "build": "0.4.0.1448",
+    "pullRequest": 366,
+    "url": "https://github.com/cehinds/AshenSpire/pull/366"
+  },
+  {
+    "id": "pr-365",
+    "date": "2026-08-28",
+    "group": "2026-08-28",
+    "summary": "Enemy tooltips read in context, the HUD compacts, and the title is centred",
+    "detail": "An enemy's tooltip is written for the situation it appears in, the HUD takes less room, and the title's alignment is corrected.",
+    "build": "0.4.0.1432",
+    "pullRequest": 365,
+    "url": "https://github.com/cehinds/AshenSpire/pull/365"
+  },
+  {
+    "id": "pr-356",
+    "date": "2026-08-26",
+    "group": "2026-08-26",
+    "summary": "Escape cancels an armed rebind without leaving Controls",
+    "detail": "Pressing Escape while a key rebind is waiting for a press cancels the capture and keeps the Controls menu open, instead of closing it out from under you.",
+    "build": "0.4.0.1378",
+    "pullRequest": 356,
+    "url": "https://github.com/cehinds/AshenSpire/pull/356"
+  },
+  {
+    "id": "pr-355",
+    "date": "2026-08-26",
+    "group": "2026-08-26",
+    "summary": "Load and Quit ask in the game's own words",
+    "detail": "The browser prompts standing in for Load and Quit are replaced with the game's own confirmations, so a misread click no longer drops the run you are in.",
+    "build": "0.4.0.1376",
+    "pullRequest": 355,
+    "url": "https://github.com/cehinds/AshenSpire/pull/355"
+  },
+  {
+    "id": "pr-354",
+    "date": "2026-08-26",
+    "group": "2026-08-26",
+    "summary": "A fight saved mid-combat resumes exactly",
+    "detail": "Loading a save made during a fight restores that fight as it stood.",
+    "build": "0.4.0.1371",
+    "pullRequest": 354,
+    "url": "https://github.com/cehinds/AshenSpire/pull/354"
+  },
+  {
+    "id": "pr-353",
+    "date": "2026-08-26",
+    "group": "2026-08-26",
+    "summary": "New Game save-slot selection has one owner",
+    "detail": "The slot you choose is the slot the new run is written to.",
+    "build": "0.4.0.1368",
+    "pullRequest": 353,
+    "url": "https://github.com/cehinds/AshenSpire/pull/353"
+  },
+  {
+    "id": "pr-352",
+    "date": "2026-08-26",
+    "group": "2026-08-26",
+    "summary": "Load slots activate where you press them",
+    "detail": "Slot activation is deterministic and the tap targets match what is drawn.",
+    "build": "0.4.0.1366",
+    "pullRequest": 352,
+    "url": "https://github.com/cehinds/AshenSpire/pull/352"
   },
   {
     "id": "pr-350",

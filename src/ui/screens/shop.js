@@ -46,7 +46,7 @@ import { attachTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
@@ -147,6 +147,8 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         // ZERO commits outside that table. An action wired with a bare
         // `addEventListener` can only ever be changed by editing this line.
         arm(el, 'shopBuy', {
+          question: `Buy ${registries.cards.get(item.id).name} for ${item.cost} cinders? You have ${run.cinders}.`,
+          confirmLabel: 'BUY IT',
           onConfirm: () => {
             run.cinders -= item.cost;
             run.deck.push({ instanceId: `s${run.deck.length}_${item.id}`, cardId: item.id, upgraded: false });
@@ -200,6 +202,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         grid.style.gap = '14px';
         grid.style.justifyContent = 'center';
         run.deck.forEach((inst, idx) => {
+          // An equipment-granted instance (grantedBy) is a package output the
+          // next authoritative reconcile would recreate under the same id —
+          // selling its removal would charge cinders for nothing.
+          if (inst.grantedBy) return;
           const el = renderCard(registries, inst, { small: true });
           const def = registries.cards.get(inst.cardId);
           arm(el, 'shopRemove', {
@@ -281,7 +287,14 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     const el = document.createElement('div');
     el.className = `class-pick${affordable ? '' : ' locked'}`;
     el.innerHTML = `<h3 style="font-size:13px">${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} ${esc(costWord)}</span>`;
-    if (affordable && onBuy) el.addEventListener('click', onBuy);
+    if (affordable && onBuy) {
+      const itemName = el.querySelector('h3')?.textContent?.trim() || 'this item';
+      arm(el, 'shopBuy', {
+        question: `Buy ${itemName} for ${cost} ${costWord}? You have ${run.cinders} cinders.`,
+        confirmLabel: 'BUY IT',
+        onConfirm: onBuy,
+      });
+    }
     return el;
   }
 

@@ -13,10 +13,10 @@
 //     NEVER A LIST OF CALL SITES.
 //
 // So no screen decides. A screen names the action it is wiring and hands over
-// the commit; the machinery reads the characteristics below and picks the form.
-// Adding a second beat to something is A ROW HERE. Taking one away is a row
-// here. Neither is a line in a screen. (Law 0 clause 1: the entry DESCRIBES,
-// the machinery DERIVES.)
+// the commit. The characteristics below remain the enumerable stakes/hazard
+// record; the UI applies one universal option contract: tap reviews, deliberate
+// hold commits directly. Adding a reviewed action is A ROW HERE, never a new
+// call-site interaction rule. (Law 0 clause 1: the entry DESCRIBES.)
 //
 // ---------------------------------------------------------------------------
 // WHY ONE TABLE RATHER THAN A DECLARATION BESIDE EACH ACTION. The precedent is
@@ -182,11 +182,23 @@ export const ACTIONS = Object.freeze({
     // enough apart that the finger is not the risk — the STAT is. A point spent
     // on Wisdom by a player who meant Constitution is gone for the run, and
     // what they need first is to read what the point actually does, which is
-    // why the confirm panel carries the derived-stat sentence rather than a
+    // why the result line carries the derived-stat sentence rather than a
     // second copy of it (content/derivedStats.js `presentation.sense`).
+    //
+    // IN THE STAT CARD'S OWN HAND since the shared allocation card (Vira's
+    // level panel, components/statAllocationCard.js): `+` only PENDS the point
+    // — the row reads +1, the result line says what it does, Clear takes it
+    // back — and "Level up" is the second beat that spends it. That is the
+    // choosing form already, said in the panel instead of over it; a modal on
+    // "Level up" would be a third beat on a verb the card already asks twice.
+    // Named here for the same reason the two profile rows are: the census
+    // (tools/holdconfirm.mjs) reads `surface` and `handledBy` together, and it
+    // read this row as "not wired" for as long as the field was missing.
+    // Driven in its own idiom at ?shot=rest by that instrument.
     stakes: 'run',
     undo: 'none',
     hazard: 'choosing',
+    handledBy: 'rest.js drawLevelCard — the stat card pends the point on + and spends it on "Level up" (statAllocationCard.js)',
     note: 'five stat buttons on one panel; the point is permanent and the cinders are gone',
   },
   smithUpgrade: {

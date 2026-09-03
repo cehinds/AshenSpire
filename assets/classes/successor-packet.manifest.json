@@ -1,0 +1,280 @@
+{
+  "schema": "ashenspire/class-silhouette-successor/v1",
+  "ticket": "AS-HD-040",
+  "decision": "AS-HD-040-0003",
+  "scope": "proof-only",
+  "adopted": false,
+  "recorded_at_base_oid": "284fd6e2dcf0",
+  "authority_note": "D1 (owner, 2026-08-29, issue #389) authorized one bounded proof-only upper-body successor from the frozen four-crop desktop/mobile packet. This manifest records identity and measured acceptance facts only. It adopts, integrates, maps, or releases nothing, and no runtime code reads assets/classes/**.",
+  "successor_packet": {
+    "name": "component-catalog asset look switcher \u2014 COMPLETE FIRST PROOF PACKET",
+    "hub_status": "Proof Accepted \u00b7 Not Adopted; future looks 4 remain proof-only and disabled; 20/20 gates; findings 0",
+    "hub_source": "review-approval-hub/index.html",
+    "root": "review-approval-hub/evidence/look-switcher/",
+    "crops": [
+      {
+        "class": "reaver",
+        "path": "review-approval-hub/evidence/look-switcher/assets/reaver-future.png",
+        "git_blob": "48041c50dbadb968fa92b56389111e3766524bc2",
+        "sha256": "6ce034eb419cc51a9948a4a7e71bbedf2e43405114f9a81f2cde81fc94797ff8",
+        "bytes": 80807,
+        "width": 512,
+        "height": 512,
+        "png_color_type": 6,
+        "alpha": {
+          "transparent": 223715,
+          "semi": 4428,
+          "opaque": 34001
+        },
+        "bbox": {
+          "x0": 156,
+          "x1": 356,
+          "y0": 79,
+          "y1": 359
+        },
+        "edge_contact_px": 0,
+        "transparent_pixels_with_nonzero_rgb": 0,
+        "anchor": {
+          "alpha_weighted_centroid_x": 255.6,
+          "alpha_weighted_centroid_y": 245.4,
+          "baseline_y": 359
+        },
+        "decoded_rgba_bytes": 1048576
+      },
+      {
+        "class": "starseer",
+        "path": "review-approval-hub/evidence/look-switcher/assets/starseer-future.png",
+        "git_blob": "eb929a467fe854c2e058e45a3d0dce4bb4589122",
+        "sha256": "b8477a38b35fe1768b84c565ca383b88d0bab9c6c27e4de5c8ce887ecfb29526",
+        "bytes": 67879,
+        "width": 512,
+        "height": 512,
+        "png_color_type": 6,
+        "alpha": {
+          "transparent": 227186,
+          "semi": 3408,
+          "opaque": 31550
+        },
+        "bbox": {
+          "x0": 170,
+          "x1": 342,
+          "y0": 57,
+          "y1": 359
+        },
+        "edge_contact_px": 0,
+        "transparent_pixels_with_nonzero_rgb": 0,
+        "anchor": {
+          "alpha_weighted_centroid_x": 256.0,
+          "alpha_weighted_centroid_y": 241.1,
+          "baseline_y": 359
+        },
+        "decoded_rgba_bytes": 1048576
+      },
+      {
+        "class": "rogue",
+        "path": "review-approval-hub/evidence/look-switcher/assets/rogue-future.png",
+        "git_blob": "8359517b5ae1c816b2e717c2f3089a71ff71d6ba",
+        "sha256": "370e8dd353e4c27866b7c8e615da5c8a90b48e4784b181d93030a95edbe6ca3a",
+        "bytes": 87974,
+        "width": 512,
+        "height": 512,
+        "png_color_type": 6,
+        "alpha": {
+          "transparent": 218070,
+          "semi": 2787,
+          "opaque": 41287
+        },
+        "bbox": {
+          "x0": 130,
+          "x1": 381,
+          "y0": 85,
+          "y1": 359
+        },
+        "edge_contact_px": 0,
+        "transparent_pixels_with_nonzero_rgb": 0,
+        "anchor": {
+          "alpha_weighted_centroid_x": 256.1,
+          "alpha_weighted_centroid_y": 254.5,
+          "baseline_y": 359
+        },
+        "decoded_rgba_bytes": 1048576
+      },
+      {
+        "class": "herald",
+        "path": "review-approval-hub/evidence/look-switcher/assets/herald-future.png",
+        "git_blob": "1a7cb6c86884bb07e188765ef39539627b457aae",
+        "sha256": "4eed36360a425935baa66c0af39d6827542826d5872befb1bd525cb82c185414",
+        "bytes": 73383,
+        "width": 512,
+        "height": 512,
+        "png_color_type": 6,
+        "alpha": {
+          "transparent": 228551,
+          "semi": 4812,
+          "opaque": 28781
+        },
+        "bbox": {
+          "x0": 172,
+          "x1": 340,
+          "y0": 70,
+          "y1": 359
+        },
+        "edge_contact_px": 0,
+        "transparent_pixels_with_nonzero_rgb": 0,
+        "anchor": {
+          "alpha_weighted_centroid_x": 255.4,
+          "alpha_weighted_centroid_y": 242.8,
+          "baseline_y": 359
+        },
+        "decoded_rgba_bytes": 1048576
+      }
+    ],
+    "context_proofs": [
+      {
+        "surface": "desktop",
+        "path": "review-approval-hub/evidence/look-switcher/proofs/desktop-1440x900.jpg",
+        "git_blob": "a029d904e9c3d23aaf863a70e2e750540205dd75",
+        "sha256": "05609301e38d746a08ef7b1b59c747bed7f16c51b8191b04e5722d9ecf092cf7",
+        "bytes": 118635,
+        "width": 1440,
+        "height": 900
+      },
+      {
+        "surface": "mobile",
+        "path": "review-approval-hub/evidence/look-switcher/proofs/mobile-future-390x844.jpg",
+        "git_blob": "7c9b571b8278e3a4e81bb07609637a814fb6bfec",
+        "sha256": "4081336361bab845c2011c13c08862ba632c5dd4a44fbee59e5c41934dce7a2b",
+        "bytes": 45165,
+        "width": 390,
+        "height": 844
+      },
+      {
+        "surface": "mobile",
+        "path": "review-approval-hub/evidence/look-switcher/proofs/mobile-header-390x844.jpg",
+        "git_blob": "62b0ba6fa4a7a3fec777d3b370f1853c18e1910d",
+        "sha256": "1fdd475bfd402e3948356b83a6b42646f9c39561aa011e9261be2ea1e06f00af",
+        "bytes": 58376,
+        "width": 390,
+        "height": 844
+      },
+      {
+        "surface": "mobile",
+        "path": "review-approval-hub/evidence/look-switcher/proofs/mobile-status-unavailable-390x844.jpg",
+        "git_blob": "ccc257abcca7632ac6c6e23952d7a97315a3cde2",
+        "sha256": "d32e8c007447a355c2ab19f74dc735cdba0f526866ea7f5de2efbe17015e1e8e",
+        "bytes": 56804,
+        "width": 390,
+        "height": 844
+      }
+    ]
+  },
+  "acceptance": {
+    "clause_closed": "component-card class silhouette \u2014 full-class-silhouette clause",
+    "closure_mode": "superseded-by-approved-successor",
+    "criteria": [
+      {
+        "id": "AC1-canvas",
+        "requirement": "Every class crop is 512x512.",
+        "measured": "4/4 at 512x512",
+        "verdict": "PASS"
+      },
+      {
+        "id": "AC2-rgba",
+        "requirement": "Genuine RGBA (PNG color type 6) with a real partial-alpha edge, not RGB with a baked matte.",
+        "measured": "4/4 color type 6; semi-alpha 2787-4812 px per file",
+        "verdict": "PASS"
+      },
+      {
+        "id": "AC3-residue",
+        "requirement": "Zero background/checker/matte residue: no fully transparent pixel carries non-zero RGB.",
+        "measured": "0 residue pixels in 4/4",
+        "verdict": "PASS"
+      },
+      {
+        "id": "AC4-crop-safety",
+        "requirement": "The figure never contacts the canvas border on any of the four edges.",
+        "measured": "edge_contact_px = 0 in 4/4",
+        "verdict": "PASS"
+      },
+      {
+        "id": "AC5-upper-body",
+        "requirement": "Upper-body/torso framing: a shared deterministic bottom cut, not a grounded full-body figure.",
+        "measured": "all four terminate at y=359 with a soft final row (max alpha 136-140) and zero alpha at y>=360; bottom margin 152 px in 4/4",
+        "verdict": "PASS"
+      },
+      {
+        "id": "AC6-distinct-silhouette",
+        "requirement": "Each class silhouette is distinct from every other; specifically Rogue must not reuse the Reaver silhouette, the exact failure recorded in the 2026-08-28 preflight.",
+        "measured": "no two alpha>=128 masks identical; pairwise IoU 0.6533-0.7990; reaver vs rogue IoU 0.7052",
+        "verdict": "PASS"
+      },
+      {
+        "id": "AC7-context",
+        "requirement": "Deterministic desktop and mobile context proofs exist at fixed viewports.",
+        "measured": "1x 1440x900 desktop; 3x 390x844 mobile",
+        "verdict": "PASS"
+      },
+      {
+        "id": "AC8-proof-only",
+        "requirement": "The packet stays proof-only and disabled: no adoption, mapping, integration or release.",
+        "measured": "hub records 'Proof Accepted \u00b7 Not Adopted', future looks 4 proof-only/disabled; no repository code path reads assets/classes/**",
+        "verdict": "PASS"
+      }
+    ],
+    "fails_if": [
+      "Any crop is replaced by RGB bytes, a baked checkerboard, or a masked/segmented derivative of the rejected 1254x1254 concept package or of reaver-alpha-retry-rejected.png.",
+      "Any crop contacts a canvas edge, or the shared y=359 bottom cut moves for one class only.",
+      "Any two class alpha masks become identical, or Rogue is regenerated from the Reaver rig.",
+      "Any file byte, SHA-256 or git blob in successor_packet changes: the packet is frozen, so a hash change is a break, not an update.",
+      "The packet is adopted, mapped into a reader/manifest, integrated, pushed, merged, deployed, published or released under D1, which authorizes none of these."
+    ]
+  },
+  "superseded": {
+    "path": "Option B \u2014 four new first-party full-body inputs",
+    "reason": "D1 narrowed the contract to the supplied upper-body/torso canvases rather than commissioning new full-body inputs.",
+    "prior_verdict": "PASS 0 / WITHHOLD 4",
+    "evidence": [
+      "docs/art-evidence/2026-08-28/class-facelift-fullbody-source-provenance-preflight-2026-08-28.md",
+      "docs/art-evidence/2026-08-28/class-facelift-fullbody-source-readiness-census-r2-2026-08-28.md"
+    ]
+  },
+  "not_the_successor_packet": {
+    "path_root": "review-approval-hub/evidence/classes/",
+    "files": [
+      "reaver-concept-v1.png",
+      "starseer-concept-v1.png",
+      "rogue-concept-v1.png",
+      "herald-concept-v1.png"
+    ],
+    "measured": "4/4 at 1254x1254, PNG color type 2 (RGB, no alpha channel); SHA-256 values match the four concept hashes recorded in the 2026-08-28 preflight",
+    "reason_excluded": "Also a four-crop set with a desktop/mobile proof pair, but recorded INELIGIBLE 4 / direction-evidence-only, RGB with baked checkerboards, and explicitly not to be repaired, masked or reused. It cannot satisfy the successor criteria above."
+  },
+  "open_items_not_closed_by_d1": [
+    "Per-file immutable first-party provenance package for each of the four successor crops. CREDITS.md carries a folder-level CC0 declaration for assets/equipment/**; it does not cover review-approval-hub/evidence/look-switcher/assets/**, and no per-file provenance record for these four files was found in this repository.",
+    "The exact UI crop/size/state receipt and the manifest/reader steward named as WAKE items by the 2026-08-28 preflight. Adoption remains blocked on both."
+  ],
+  "binary_manifest_columns": {
+    "source": "docs/governance/RUNBOOKS/art.md section 3 \u2014 twelve required columns.",
+    "note": "Filled here rather than escalated. Four columns are answered by measurement or by the proof-only scope; two are genuinely unknown and are adoption gates, not gaps in this work.",
+    "columns": {
+      "asset_id": "FILLED \u2014 crops[].class.",
+      "path": "FILLED \u2014 crops[].path.",
+      "format": "FILLED \u2014 PNG, color type 6 (RGBA), bit depth 8.",
+      "dimensions": "FILLED \u2014 512x512, 4/4.",
+      "bytes": "FILLED \u2014 crops[].bytes.",
+      "sha256": "FILLED \u2014 crops[].sha256.",
+      "source_export_recipe_and_tool_version": "UNKNOWN. No generation or export receipt for these four files exists in this repository. This is an adoption gate (see open_items_not_closed_by_d1), not an unfilled field this seat could measure.",
+      "pivot_anchor": "FILLED BY MEASUREMENT \u2014 crops[].anchor. All four alpha-weighted centroids fall within 0.7 px of x=256 on a 512-wide canvas, so the packet is horizontally centred, and all four share baseline_y=359. Binding one of these as the runtime pivot is an adoption-time choice D1 does not authorize; the measurement itself is a fact and is recorded.",
+      "runtime_budget_optimization": "FILLED BY MEASUREMENT \u2014 crops[].bytes on disk (67,879-87,974) and crops[].decoded_rgba_bytes (1,048,576 each, 512x512x4). Setting a budget against these numbers is a UI-owner decision, not a maker one.",
+      "fallback_id": "NOT APPLICABLE \u2014 reason: a fallback identity presupposes a reader mapping, and D1 authorizes no mapping, adoption or integration. Becomes required if adoption is ever approved.",
+      "provenance_licence": "UNKNOWN. CREDITS.md line 28 declares folder-level CC0 for assets/equipment/*.webp only; no row covers these four files. art.md section 11 makes unknown provenance an integration blocker, so this is an adoption gate.",
+      "consumers": "NOT APPLICABLE \u2014 reason: there are none. No repository code path reads assets/classes/**, and the packet stays at review-approval-hub/evidence/look-switcher/. Becomes required if adoption is ever approved."
+    },
+    "acceptance_note": "art.md permits Not applicable with a short reason and it-manager-iii recorded acceptance. The two NOT APPLICABLE entries carry their reasons above and are offered for acceptance at QA review rather than held as a separate blocker."
+  },
+  "evidence_pin": {
+    "commit": "62f6867a",
+    "why": "The Hub rebuild 3e98769e removed review-approval-hub/evidence/** from the tree; origin/dev holds 0 files there. The packet bytes survive as git objects reachable from this commit. Every read below binds to a git object, never to a working-tree path, so this contract verifies the same bytes in any clone that has the objects \u2014 including one where the paths no longer exist.",
+    "read_order": "git_blob OID first (content-addressed, path-independent); 62f6867a:<path> as fallback when no OID is recorded."
+  }
+}

@@ -1,4 +1,5 @@
-// src/content/events.js — Unknown-node events (SPEC §5.6; grown to 10 in M3)
+// src/content/events.js — Unknown-node events (SPEC §5.6; grown to 10 in M3,
+// 22 with the first quest chain)
 //
 // Every choice is a real trade-off, StS-style. `requires` is checked by the
 // event screen (e.g. { cinders: 50 }); `effects` are run-level opcodes executed
@@ -482,4 +483,151 @@ export const events = [
       { label: 'Leave', effects: [], resultText: 'The fingers tap on. You leave the riddle unanswered, which is its own kind of answer.' },
     ],
   },
+  // THE FIRST QUEST CHAIN (E12, #257: "questing and previous choices to
+  // influence other events"). Three steps over the run: the Grave of the
+  // Nameless above is step one; the two events below are gated by what was
+  // chosen there (eventHistoryRequirements) and branch on it (choice-level
+  // requiresHistory), so a later act answers an earlier act's choice. A gated
+  // event never enters an Unknown node's pool until its step is earned.
+  {
+    id: 'namelessKeeper',
+    name: 'The Keeper of the Nameless',
+    art: '🕯',
+    text:
+      'A figure in grave-clothes waits at a fork in the road, a lantern of cinder-light held low. ' +
+      'It knows the cairn of broken swords. It knows what you did there. It has been walking since.',
+    choices: [
+      {
+        label: 'Return what you took (lose 90 cinders; the keeper stands down)',
+        requires: { cinders: 90 },
+        effects: [{ op: 'addCinders', amount: -90 }],
+        resultText: 'The cinders go back into the lantern one by one. The keeper turns without a word and walks the way you came.',
+      },
+      {
+        label: 'Face the keeper (fight; keep what you took)',
+        effects: [{ op: 'startCombat', encounterId: 'patrol' }],
+        resultText: 'The lantern goes out. Things that were following the keeper are not so patient.',
+      },
+      {
+        label: "Accept the keeper's thanks (gain the Gravetender's Bell)",
+        effects: [{ op: 'addRelic', id: 'gravetendersBell' }],
+        resultText: 'A small bell, iron and cold, pressed into your palm. "One toll for each name," the keeper says. "You will know when."',
+      },
+      { label: 'Leave', effects: [], resultText: 'The keeper does not follow. It only needed to be seen.' },
+    ],
+  },
+  {
+    id: 'namelessRest',
+    name: 'The Nameless at Rest',
+    art: '🪦',
+    text:
+      'The road ends at a second cairn, newer than the first — every sword standing, every name struck ' +
+      'into the stone. The keeper is not here. Whatever it was walking toward, it arrived.',
+    choices: [
+      {
+        label: 'Keep the vigil (upgrade 2 random cards)',
+        effects: [{ op: 'upgradeCard', random: true }, { op: 'upgradeCard', random: true }],
+        resultText: 'You stand until the cinder-light gutters. The bell in your pack rings once, though nothing moved it.',
+      },
+      {
+        label: 'Rest among the stones (heal 30% max HP)',
+        effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 30 } }],
+        resultText: 'What you returned bought you this much: a night among the nameless, and no one waking you.',
+      },
+      {
+        label: 'Loot the barrow (gain 120 cinders, gain a Guilt curse)',
+        effects: [{ op: 'addCinders', amount: 120 }, { op: 'addCardToDeck', card: 'guilt' }],
+        resultText: 'Second time is easier. The names on the stone do not object. That is the part that follows you.',
+      },
+      { label: 'Leave', effects: [], resultText: 'You leave the cairn as you found it, which is more than the first one got.' },
+    ],
+  },
 ];
+
+// Stable history ids live beside event content without widening the validated
+// event opcode schema. Labels may change; these ids are durable save facts.
+export const eventChoiceIds = Object.freeze({
+  goldboughAvatar: ['offerCard', 'pray', 'leave'],
+  abandonedCart: ['lootStrongbox', 'leave'],
+  weepingPilgrim: ['giveCinders', 'refuse'],
+  bloodstainedAltar: ['offerBlood', 'leave'],
+  wanderingPhysician: ['procedure', 'patch', 'leave'],
+  goldenMoth: ['gatherCinders', 'keepVigil', 'leave'],
+  feralShrine: ['takeOffering', 'leave'],
+  ancientRuneStone: ['studyStone', 'smashStone', 'leave'],
+  graveOfTheNameless: ['digForCinders', 'payRespects', 'leave'],
+  sleepingSmith: ['takeBlade', 'wakeSmith', 'leave'],
+  wyrmTrial: ['enterRing', 'circleRing', 'leave'],
+  discardedReliquary: ['takeCurse', 'burnPack', 'leave'],
+  omensAltar: ['acceptGaze', 'shatterAltar', 'leave'],
+  rotPriestOffer: ['acceptBlessing', 'robPriest', 'leave'],
+  handspiderNest: ['snatchStrongbox', 'backAway'],
+  fadedGrace: ['warmYourself', 'temperBlade', 'leave'],
+  merchantsGhost: ['payInKind', 'stealRelic', 'leave'],
+  cinderbearDen: ['takeHoard', 'skimEdges', 'leave'],
+  stakeOfTheMartyr: ['makeOffering', 'leave'],
+  twoFingersRiddle: ['sharpen', 'mend', 'leave'],
+  namelessKeeper: ['returnCinders', 'faceKeeper', 'acceptThanks', 'leave'],
+  namelessRest: ['keepVigil', 'restAmongStones', 'lootBarrow', 'leave'],
+});
+
+// The merchant will not trade with a traveler who previously looted the
+// abandoned cart. Stealing remains available, and Leave is deliberately
+// requirement-free so this history branch can never trap the player.
+export const eventChoiceHistoryRequirements = Object.freeze({
+  merchantsGhost: [
+    { none: [{ eventId: 'abandonedCart', choiceId: 'lootStrongbox' }] },
+    undefined,
+    undefined,
+  ],
+  // The keeper answers what was done at the grave: the digger may pay or
+  // fight, the mourner is thanked; Leave stays free so no branch can trap.
+  namelessKeeper: [
+    { all: [{ eventId: 'graveOfTheNameless', choiceId: 'digForCinders' }] },
+    { all: [{ eventId: 'graveOfTheNameless', choiceId: 'digForCinders' }] },
+    { all: [{ eventId: 'graveOfTheNameless', choiceId: 'payRespects' }] },
+    undefined,
+  ],
+  // The second cairn answers the keeper: the thanked keep the vigil, the
+  // penitent rest, the one who fought loots again.
+  namelessRest: [
+    { all: [{ eventId: 'namelessKeeper', choiceId: 'acceptThanks' }] },
+    { all: [{ eventId: 'namelessKeeper', choiceId: 'returnCinders' }] },
+    { all: [{ eventId: 'namelessKeeper', choiceId: 'faceKeeper' }] },
+    undefined,
+  ],
+});
+
+// EVENT-LEVEL history gates (quest steps). An event listed here enters an
+// Unknown node's pool only once the run's history satisfies its requirement
+// (engine/encounters.js resolveUnknownNode via model/quests.js) — so a chain
+// step cannot be met before the step it answers. Events not listed are
+// ungated, exactly as before.
+export const eventHistoryRequirements = Object.freeze({
+  namelessKeeper: {
+    any: [
+      { eventId: 'graveOfTheNameless', choiceId: 'digForCinders' },
+      { eventId: 'graveOfTheNameless', choiceId: 'payRespects' },
+    ],
+  },
+  namelessRest: {
+    any: [
+      { eventId: 'namelessKeeper', choiceId: 'returnCinders' },
+      { eventId: 'namelessKeeper', choiceId: 'faceKeeper' },
+      { eventId: 'namelessKeeper', choiceId: 'acceptThanks' },
+    ],
+  },
+});
+
+/** Enrich validated event choices with their durable history contract. */
+export function eventChoicesWithHistory(event) {
+  const ids = eventChoiceIds[event?.id];
+  if (!event || !Array.isArray(event.choices) || !Array.isArray(ids)
+    || ids.length !== event.choices.length) return [];
+  const requirements = eventChoiceHistoryRequirements[event.id] || [];
+  return event.choices.map((choice, index) => ({
+    ...choice,
+    id: ids[index],
+    requiresHistory: requirements[index],
+  }));
+}

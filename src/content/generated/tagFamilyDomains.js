@@ -43,12 +43,20 @@ export const tagFamilyDomains = [
     "domain": "item"
   },
   {
+    "family": "armament",
+    "domain": "itemType"
+  },
+  {
     "family": "armour",
     "domain": "card"
   },
   {
     "family": "armour",
     "domain": "item"
+  },
+  {
+    "family": "armour",
+    "domain": "itemType"
   },
   {
     "family": "basicCardProfile",

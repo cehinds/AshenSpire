@@ -218,8 +218,8 @@ primary-stat-card
 |---|---|---|---|
 | `shrine-option-card` | `balance.ui.shrinePresentation` + option plan | `rest.mountRest` | Rest / Smith / Flask Allocation / Level Up |
 | `smith-upgrade-modal` | `SmithSelectionModel` | `smithUpgradeModal.mountSmithUpgradeModal` | Dedicated Smith choose/review transaction |
-| `smith-candidate-card` | `SmithSelectionModel.properties.candidates[]` | shared `card.renderCard` inside Smith modal | Upgrade-eligible deck card |
-| `smith-upgrade-preview` | `SmithSelectionModel.properties.selected` | shared `card.upgradePreviewHtml` inside Smith modal | Current-versus-upgraded review |
+| `smith-candidate-card` | `SmithSelectionModel.properties.candidates[]` | shared `card.renderCard` plus armament-tier banner inside Smith modal | One distinct owned armament below the run tier cap |
+| `smith-upgrade-preview` | `SmithSelectionModel.properties.selected` | grouped delta renderer inside Smith modal | Tier, cost, purse, shortfall, and every sourced basic-card delta |
 
 The default Shrine presentation is one vertical list. Every folded option uses
 the same data-owned viewport footprint: width and height percentages come from
@@ -231,14 +231,16 @@ Smith is a modal composition rather than an inline card dump:
 
 ```text
 smith-upgrade-modal
-├─ smith-candidate-card × eligible deck cards
-├─ smith-upgrade-preview
+├─ smith-candidate-card × distinct eligible owned armaments
+├─ smith-upgrade-preview × selected armament's grouped card deltas
 ├─ Back to Shrine (also Escape)
-└─ Confirm selected card (disabled until selection)
+└─ Confirm selected armament (disabled until selected and affordable)
 ```
 
 Selection is reversible presentation state. Back and Escape restore the Shrine
-without mutation; Confirm upgrades exactly one card and leaves the Shrine.
+without mutation. Confirm spends the displayed Smithing Stone cost, promotes exactly one
+armament for the run, refreshes every sourced basic card from that armament, and leaves the
+Shrine. Ordinary non-equipment cards retain their independent per-copy upgrade behavior.
 
 ## Folding Tray session geometry
 
@@ -346,7 +348,7 @@ low-contrast danger text.
 | `inventory-item-card` | `inventoryItemCardModel` | `armouryComponents.renderInventoryItemCard` | Folded carried-item face. The current `inventoryItem` class explicitly enables `holdAction`; its folded and expanded states are one action/progress surface, and an early release aborts without changing equipment. |
 | `inventory-detail-card` | `inventoryDetailCardModel` | `armouryComponents.renderInventoryDetailCard` | Expanded art, tags, mods, and action label inside the same whole-card hold surface; the label is not a second action button while hold confirmation owns the action. |
 | `equipment-comparison` | semantic child model + `armouryUi.layout.comparison` | `equipmentReceipts.js` in shared tooltip or item card | Full before/after receipt, including exact weapon-package card counts and slot-bound upgrade changes, separate from the action hold. Authored presentation chooses delayed hover/focus tooltip or inline content, with data-owned delay, width, and viewport cap. |
-| `armoury-stats-panel` | `armouryStatsPanelModel` | `equipment.js` inside `renderTray` | Stats tray content: attributes, combat values, resources, and relic summary. |
+| `armoury-stats-panel` | `armouryStatsPanelModel` | `equipment.js` inside `renderTray` | Stats tray content: attributes, combat values, resources, relic summary, and the equipment receipts (card packages, requirements, Poise threshold, Equip load with its Weight Class — `armoury.playerLoadReceipt`). |
 | `armoury-card-strip` | `armouryCardStripModel` | `equipment.js` + `card.js` inside `renderTray` | Cards tray content: exact equipment-associated card counts grouped by card/profile in list or grid presentation. |
 | `armoury-region-header` | compatibility semantic ID | replaced by `tray-header` | Historical Armoury-only fold header name. |
 

@@ -16,6 +16,7 @@ import { esc } from '../components/tooltip.js';
 import { createRunState } from '../../model/state.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
+import { FOLD_GLYPH } from '../components/foldGlyph.js';
 
 /** How many seeds the live estimate averages. Named, because it is printed. */
 const ESTIMATE_SEEDS = 24;
@@ -116,7 +117,7 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
           <button class="runshape-toggle" id="cr-shape-toggle" aria-expanded="false" aria-controls="cr-shape-body">
             <span class="rs-title">ADVANCED · DEBUG — RUN SHAPE</span>
             <span class="rs-state" id="cr-shape-state">off</span>
-            <span class="rs-caret" aria-hidden="true">▾</span>
+            <span class="rs-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </button>
           <div class="runshape-body" id="cr-shape-body" hidden>
             <p class="set-note rs-intro">Shorten the climb. Caps the act, and biases what the map rolls — for testing a full run in one sitting.</p>

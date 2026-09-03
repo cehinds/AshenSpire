@@ -21,6 +21,24 @@ export const basicCardProfiles = [
     "compatibility": "attack-v1"
   },
   {
+    "id": "shieldAttack",
+    "role": "attack",
+    "baseCardId": "strike",
+    "displayName": "Shield Strike",
+    "icon": "🛡",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0,
+    "baseValue": 2,
+    "scalingStat": "strength",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "flavor": "A short iron answer when no main-hand weapon is ready.",
+    "mods": "",
+    "compatibility": "attack-v1"
+  },
+  {
     "id": "bladeAttack",
     "role": "attack",
     "baseCardId": "strike",
@@ -113,9 +131,9 @@ export const basicCardProfiles = [
   {
     "id": "unarmedGuard",
     "role": "guard",
-    "baseCardId": "defend",
-    "displayName": "Defend",
-    "icon": "🛡",
+    "baseCardId": "evasiveGuard",
+    "displayName": "Evasive Guard",
+    "icon": "🌀",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0,
     "baseValue": 1,
@@ -124,7 +142,7 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "flavor": "Brace with what you have.",
+    "flavor": "Nothing in your hands but the ground under your feet.",
     "mods": "",
     "compatibility": "guard-v1"
   },
@@ -203,9 +221,9 @@ export const basicCardProfiles = [
   {
     "id": "unarmedTechnique",
     "role": "technique",
-    "baseCardId": "technique",
-    "displayName": "Footwork",
-    "icon": "✧",
+    "baseCardId": "dodgeRoll",
+    "displayName": "Dodge Roll",
+    "icon": "💨",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0,
     "baseValue": 0,
@@ -214,7 +232,7 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 0,
     "cap": "",
-    "flavor": "Position is an armament too.",
+    "flavor": "The empty hand's art is not being there.",
     "mods": "",
     "compatibility": "technique-v1"
   },

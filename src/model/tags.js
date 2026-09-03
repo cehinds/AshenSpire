@@ -24,6 +24,8 @@
 //              duplicate (family, scope, objectId, tagId)
 //   leftovers  an object still carrying its own `tags` — the old second home,
 //              refused so it cannot come back one CSV column at a time
+//   equipment  a weapon or outfit wearing no item-type tag — the guarantee
+//              content/equipment.js used to throw for, moved with the tags
 //
 // The `legal:` list on a domain error is the point: the message tells the
 // author which words this family accepts instead of making them find out.
@@ -229,6 +231,29 @@ export function tagContentProblems(bundle, keywordIds = []) {
       err(path, scope
         ? `no ${family} with id '${objectId}' and ${spec.scopeField} '${scope}' — the row tags nothing`
         : `no ${family} with id '${objectId}' — the row tags nothing`);
+    }
+  }
+
+  // ---- every equipment piece still declares an item type ---------------------
+  // content/equipment.js used to THROW at CSV-normalisation time when a piece
+  // carried no `item:*` tag. The tags moved, so the guarantee moved with them:
+  // same rule, one table later, and now named rather than thrown.
+  const itemTypeIds = new Set([...byId.values()].filter((t) => t.domain === 'itemType').map((t) => t.id));
+  if (itemTypeIds.size) {
+    for (const family of ['armament', 'armour']) {
+      const spec = familyByName.get(family);
+      if (!spec || !spec.source) continue;
+      const collection = atPath(b, spec.source);
+      if (!Array.isArray(collection)) continue;
+      for (const entry of collection) {
+        if (!entry) continue;
+        const scope = spec.scopeField ? (entry[spec.scopeField] || '') : '';
+        const worn = tagging.filter((row) => row && row.family === family
+          && (row.scope || '') === scope && row.objectId === entry.id);
+        if (!worn.some((row) => itemTypeIds.has(row.tagId))) {
+          err(`${spec.source}.${entry.id || '?'}`, `carries no item-type tag — every piece must declare at least one (legal: ${[...itemTypeIds].join(', ')}); add a tagging.csv row`);
+        }
+      }
     }
   }
 

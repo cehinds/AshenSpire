@@ -19,6 +19,7 @@ import {
 } from '../../model/mapknowledge.js';
 import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
+import { modalCloseButtonHtml, modalFooter, bindModalDismiss } from '../components/modalShell.js';
 
 const UI_DEFAULTS = balance.ui;
 const EQ_DEFAULTS = balance.equipment;
@@ -147,6 +148,13 @@ const ROWS = [
   // `def` is the resolver's own const (model/mapknowledge.js) rather than a
   // second `true` typed here — the row three above learned that lesson with the
   // zoom ladder.
+  // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the
+  // shipped Shrine — Rest or Smith, and taking either leaves. ON keeps the
+  // Shrine open: Rest once, Smith while you have Stones, Level while you have
+  // cinders, and leave when you choose. Conservative default, as his own
+  // data-driven instruction for an unsettled 'maybe' asks.
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
+    note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
   // How strongly the nodes already walked fade behind you — his clause, with
@@ -1550,36 +1558,37 @@ export function openSettings({ meta, onChange, saves = null }) {
   const opener = document.activeElement;
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
+  // The chrome is the shell's (modalShell.js): a title, ONE close control in
+  // the corner every other modal keeps it in, and a footer whose forward button
+  // is the emphasised one. This door had no close control at all — `Done` was
+  // the only way out, and the in-run twin of this same panel has no `Done`.
   veil.innerHTML = `
     <div class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
-      <h2 id="settings-modal-title">Settings</h2>
+      <header class="modal-head">
+        <h2 id="settings-modal-title">Settings</h2>
+        <div class="modal-head-actions">${modalCloseButtonHtml({ label: 'Close Settings' })}</div>
+      </header>
       <div class="set-body"></div>
-      <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
   renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
 
   const modal = veil.querySelector('.settings-modal');
-  const onKeydown = (event) => {
-    if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
-    const topModal = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
-    if (topModal !== modal) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    close();
-  };
+  const done = document.createElement('button');
+  done.type = 'button';
+  done.id = 'set-close';
+  done.textContent = 'Done';
+  modal.appendChild(modalFooter({ primary: done }));
+
+  let release = null;
   const close = () => {
     if (!veil.isConnected) return;
-    document.removeEventListener('keydown', onKeydown, true);
+    release?.();
+    release = null;
     veil.remove();
-    if (opener?.isConnected && typeof opener.focus === 'function') {
-      opener.focus({ preventScroll: true });
-    }
   };
-  veil.addEventListener('click', (e) => {
-    if (e.target === veil) close();
-  });
-  veil.querySelector('#set-close').addEventListener('click', close);
-  document.addEventListener('keydown', onKeydown, true);
+  release = bindModalDismiss({ veil, panel: modal, close, opener });
+  done.addEventListener('click', close);
+  modal.querySelector('.modal-close').addEventListener('click', close);
   veil.querySelector('.set-tab.on, #set-close')?.focus({ preventScroll: true });
 }

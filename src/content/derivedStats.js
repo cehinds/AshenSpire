@@ -71,13 +71,14 @@ export const derivedStatRules = {
   //   sense       ONE player sentence, no numbers in it (Law 1 clause 2).
   //
   // STAMINA IS 'reveal' ON PURPOSE and it is the honest half of this table:
-  // nothing in the engine spends it yet. The old panel said so in engine words
-  // ("No current consumer") on the first screen of the game. It now says so in
-  // player words, one tap down, where a stat that does nothing belongs.
+  // the dodge roll (and any Stamina-cost card) spends it and an idle turn
+  // recovers some (framework Mana & Stamina rule). The old panel once said
+  // "No current consumer" in engine words on the first screen of the game; the
+  // sense line below is the player's words, one tap down.
   presentation: {
     hp: { label: 'HP', order: 1, disclosure: 'face', sense: 'What you have left before the climb ends.' },
     mana: { label: 'Mana', order: 2, disclosure: 'face', sense: 'Spent by the cards that ask for more than effort.' },
-    stamina: { label: 'Stamina', order: 3, disclosure: 'reveal', sense: 'Carried, and nothing spends it yet.' },
+    stamina: { label: 'Stamina', order: 3, disclosure: 'reveal', sense: 'Spent by cards that ask for it — the dodge roll among them. An idle turn recovers some.' },
     // ACTIONS, NOT ENERGY — his rename, D17 message 3: "energy (which we
     // should call actions going forward)", confirmed by D21 as needing no
     // re-ask. The ENGINE ids are untouched here (`energyMax`, `balance.energy`,

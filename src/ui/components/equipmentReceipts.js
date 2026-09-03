@@ -17,6 +17,33 @@ export function renderPlayerPoise(receipt) {
     + `<small>${esc(receipt.note)}</small></section>`;
 }
 
+export function renderPlayerLoad(receipt) {
+  const sources = receipt.sources.length
+    ? `<ul>${receipt.sources.map((source) => `<li data-source-kind="${esc(source.kind)}">${esc(source.id)} <strong>${source.value}</strong></li>`).join('')}</ul>`
+    : '<p>Nothing equipped weighs anything.</p>';
+  return `<section class="player-load-receipt" data-weight-class="${esc(receipt.classId)}"><b>${esc(receipt.label)}</b>`
+    + sources
+    + `<span>Hands ${receipt.hands} + armour ${receipt.armour} = <strong>${receipt.load}</strong> of ${receipt.capacity} · <strong>${esc(receipt.word)}</strong></span>`
+    + `<small>${esc(receipt.note)}</small></section>`;
+}
+
+// The swap's load row: before → after out of the (unmoving) capacity, each
+// with its percent (the number the class thresholds are stated in — SPEC's
+// `.player-load-receipt` carries percent), and the Weight Class word on both
+// sides so a swap that crosses a boundary reads as the class change it is,
+// not as a number the player has to divide themselves.
+// `data-weight-class` carries the AFTER class, matching renderPlayerLoad's
+// attribute on the standing readout; `data-class-change` marks a crossing.
+function renderCandidateLoad(load) {
+  if (!load) return '';
+  const word = load.changesClass
+    ? `${esc(load.beforeWord)} → <strong>${esc(load.afterWord)}</strong>`
+    : `<strong>${esc(load.afterWord)}</strong>`;
+  return `<section class="player-load-receipt" data-weight-class="${esc(load.afterClassId)}" data-class-change="${load.changesClass ? 'yes' : 'no'}"><b>Equip load</b>`
+    + `<span>${load.before} (${load.beforePercent}%) → <strong>${load.after} (${load.afterPercent}%)</strong> of ${load.capacity} · ${word}</span>`
+    + `<small>${esc(load.note)}</small></section>`;
+}
+
 export function renderRoleCopies(surface) {
   return surface.roles.map((row) => `<div data-role="${esc(row.role)}"><b>${esc(row.profile.displayName)} <em class="role-copy-count">x${row.copies}</em></b>`
     + `<span>${row.receipt.base} base + ${row.receipt.tier} tier x ${row.receipt.gainPerTier}`
@@ -43,5 +70,6 @@ export function renderCandidateComparison(candidate, { expanded = false } = {}) 
     + `<section><b>Explicit added effects</b><ul>${effects}</ul></section>`
     + `<section><b>Resource changes</b><ul>${resources}</ul></section>`
     + `<section class="player-poise-receipt"><b>Poise threshold</b><span>${candidate.poise.before} → <strong>${candidate.poise.after}</strong></span><small>${esc(candidate.poise.note)}</small></section>`
+    + renderCandidateLoad(candidate.load)
     + '</details>';
 }

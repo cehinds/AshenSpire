@@ -1,6 +1,24 @@
 {
   "schema": "agentops/roles/v1",
   "policy_version": "1.0.0",
+  "non_seat_writers": [
+    {
+      "id": "generator",
+      "appears_in": [
+        "owner_role",
+        "producer_role"
+      ],
+      "means": "The generated-artifact lane’s single writer. `opsctl render` is the only thing that writes those paths, so the owner is a tool rather than a seat, and no one holds it."
+    },
+    {
+      "id": "per-seat",
+      "appears_in": [
+        "owner_role"
+      ],
+      "means": "Ownership follows the ticket’s writer lease rather than a fixed seat, so the owner is whichever role currently holds that ticket. Used where a path or ref is one lane per seat and can therefore be owned by any role in turn."
+    }
+  ],
+  "non_seat_writers_are_not_roles": "These identifiers appear where a role identifier does, and nothing holds them. They are declared so a reference naming one is checked rather than waved through, and so a typo in a role field cannot pass as one of them. Each names the fields it may appear in — the ownership and writer fields whose semantics support an unheld owner — and outside those fields it is refused: a field that names someone who must ACT (a gate actor, a reviewer, a verifier, an authority) cannot be satisfied by an identifier nobody holds.",
   "roles": [
     {
       "role": "owner",
@@ -26,6 +44,7 @@
     {
       "role": "it-manager-iii",
       "mission": "Mandatory technical relay and deputy: own exceptions, technical scope and architecture reconciliation, sequencing, path/maker ownership, integration and delivery gates, and incident/P0 command.",
+      "display_name": "P | IT Manager III | IT Manager and Coordination Specialist - AshenSpire",
       "may": [
         "resolve-technical-ambiguity",
         "assign-and-rebind-work",

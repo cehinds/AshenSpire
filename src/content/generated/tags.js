@@ -185,5 +185,37 @@ export const tags = [
     "color": "7FA8C9",
     "glyph": "👻",
     "blurb": "Untethered from the body it used to wear."
+  },
+  {
+    "id": "item:blade",
+    "domain": "itemType",
+    "label": "Blade",
+    "color": "C9502E",
+    "glyph": "⚔",
+    "blurb": "What this piece IS: the Armoury and the smith name it Blade."
+  },
+  {
+    "id": "item:shield",
+    "domain": "itemType",
+    "label": "Shield",
+    "color": "7FA8C9",
+    "glyph": "🛡",
+    "blurb": "What this piece IS: the Armoury and the smith name it Shield."
+  },
+  {
+    "id": "item:magic-focus",
+    "domain": "itemType",
+    "label": "Magic Focus",
+    "color": "9FC3E8",
+    "glyph": "✦",
+    "blurb": "What this piece IS: the Armoury and the smith name it Magic Focus."
+  },
+  {
+    "id": "item:armor",
+    "domain": "itemType",
+    "label": "Armor",
+    "color": "B8B0A0",
+    "glyph": "▣",
+    "blurb": "What this piece IS: the Armoury and the smith name it Armor."
   }
 ];

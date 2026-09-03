@@ -50,9 +50,9 @@ import { flaskIdentityHtml } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, resolveContinue, unseenIds } from '../../model/rewardplan.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 
-const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
+const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
 // caller (main.js collectArmament): run storage + meta.found + the discovery
@@ -62,7 +62,7 @@ const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔
 // no such caller exists today; the boundary is named, not covered.
 export function mountRewards(app, {
   registries, run, rewards, onDone, saves = null, rng = null,
-  onCollectArmament = null, onPersist = null,
+  onCollectArmament = null, onPersist = null, checkpoint = null,
 }) {
   const plan = rewardPlan(rewards, {
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
@@ -75,8 +75,19 @@ export function mountRewards(app, {
       (registries.balance.equipment.storageSlots || 8) - (((run.loadout || {}).storage) || []).length,
     ),
   });
-  const states = {}; // kind → 'taken' (absent = pending / implicitly left in manual mode)
-  let chosenCardId = null;
+  const states = {
+    ...(checkpoint?.states || {}),
+    ...(rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {}),
+  }; // kind → 'taken'|'skipped' (absent = pending / implicitly left in manual mode)
+  let chosenCardId = checkpoint?.chosenCardId || null;
+
+  function persistProgress() {
+    if (checkpoint) {
+      checkpoint.states = { ...states };
+      checkpoint.chosenCardId = chosenCardId;
+    }
+    if (onPersist) onPersist();
+  }
 
   // ---- the 'new' derivation: run inventory ∪ the profile's record ----------
   const meta = (saves && saves.loadMeta && saves.loadMeta()) || {};
@@ -105,30 +116,27 @@ export function mountRewards(app, {
   const apply = {
     cinders(row) {
       run.cinders += row.amount;
-      if (onPersist) onPersist();
       return true;
     },
+    // Smithing Stones are granted and durably claimed at combat resolution,
+    // before this presentation can be interrupted. This row is informational
+    // and begins in Taken state; reaching this function would be a contract bug.
+    smithingStone() { return false; },
     card(row) {
       run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
       recordSeen('card', [row.cardId]);
-      // A selected card is durable before Continue can close the offer. The
-      // caller hands in the run's one persistence door; a failed write throws
-      // before the row can claim Taken (the armament ordering, same rule).
-      if (onPersist) onPersist();
       return true;
     },
     flask(row) {
       run.flasks.push({ flaskId: row.flaskId });
       recordSeen('flask', [row.flaskId]);
-      if (onPersist) onPersist();
       return true;
     },
     relic(row) {
       run.relics.push(row.relicId);
       syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
       recordSeen('relic', [row.relicId]);
-      if (onPersist) onPersist();
       return true;
     },
     armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
@@ -140,6 +148,10 @@ export function mountRewards(app, {
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
     if (!apply[row.kind](row)) return false;
     states[row.kind] = 'taken';
+    // Reward state and the run mutation cross one save door. A reload can now
+    // distinguish an already-applied row from an untouched one and cannot
+    // duplicate a card, currency, flask, relic, or armament.
+    persistProgress();
     sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
     renderMenu(viaKind || row.kind);
     return true;
@@ -151,6 +163,11 @@ export function mountRewards(app, {
     switch (row.kind) {
       case 'cinders':
         return { title: `${row.amount} cinders`, body: state === 'taken' ? `${run.cinders} total` : 'The climb’s coin.' };
+      case 'smithingStone':
+        return {
+          title: `${row.amount} Smithing Stone${row.amount === 1 ? '' : 's'}`,
+          body: `<b>${row.stoneBalanceAfter} total</b> · secured for the next Shrine.`,
+        };
       case 'card': {
         if (state === 'taken') {
           const def = registries.cards.get(chosenCardId);
@@ -267,6 +284,7 @@ export function mountRewards(app, {
       btn.addEventListener('click', (ev) => {
         ev.stopPropagation();
         states[btn.dataset.skip] = 'skipped';
+        persistProgress();
         renderMenu(btn.dataset.skip);
       });
     }
@@ -282,7 +300,10 @@ export function mountRewards(app, {
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
       const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
       for (const row of toTake) {
-        if (apply[row.kind](row)) states[row.kind] = 'taken';
+        if (apply[row.kind](row)) {
+          states[row.kind] = 'taken';
+          persistProgress();
+        }
       }
       if (toTake.length) sfx.play('rewardTake');
       onDone(chosenCardId);
@@ -290,7 +311,11 @@ export function mountRewards(app, {
     // The action is registered in secondbeat's enumerable table, so native
     // keyboard/gamepad presses enter the same shared armPress door as pointer
     // and touch; the configured dial remains the one duration authority.
-    beatArmer(meta, registries)(cont, 'rewardContinue', { onConfirm: finish });
+    beatArmer(meta, registries)(cont, 'rewardContinue', {
+      question: 'Leave these rewards and continue?',
+      confirmLabel: 'CONTINUE',
+      onConfirm: finish,
+    });
 
     if (isEngaged()) {
       setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-kind="${focusKind}"]`))

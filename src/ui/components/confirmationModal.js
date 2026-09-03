@@ -2,6 +2,7 @@
 // choices. The action is not committed until the primary button is pressed.
 
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { modalFooter } from './modalShell.js';
 
 let activeClose = null;
 export const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
@@ -52,12 +53,14 @@ export function openConfirmationModal({
   confirmLabel = 'Continue',
   cancelLabel = 'Back',
   consequence = '',
+  detailsHtml = '',
   tone = 'normal',
   onConfirm,
   onCancel = () => {},
   returnFocusElement = document.activeElement,
   component = UI.confirmationModal,
   inputShieldMs = CONFIRMATION_INPUT_SHIELD_MS,
+  confirmEnabled = true,
 } = {}) {
   // One service, one active decision. Repeated activation replaces the stale
   // surface without committing or reporting a cancellation that was not made.
@@ -90,7 +93,14 @@ export function openConfirmationModal({
   copy.className = 'confirmation-copy';
   copy.textContent = message || '';
 
-  const footer = document.createElement('footer');
+  const details = document.createElement('div');
+  details.className = 'confirmation-details';
+  details.hidden = !detailsHtml;
+  // Callers build this only from escaped, model-owned presentation values.
+  // Keeping the detail region in the shared modal is what makes costs and
+  // consequences uniform rather than a collection of screen-owned dialogs.
+  if (detailsHtml) details.innerHTML = detailsHtml;
+
   const cancelButton = document.createElement('button');
   cancelButton.type = 'button';
   cancelButton.className = 'subtle confirmation-cancel';
@@ -98,11 +108,16 @@ export function openConfirmationModal({
   markUiComponent(cancelButton, UI.confirmationCancel, 'neutral');
   const confirmButton = document.createElement('button');
   confirmButton.type = 'button';
-  confirmButton.className = `subtle confirmation-confirm${tone === 'danger' ? ' danger' : ''}`;
+  // `.danger` still reads as danger and keeps the red; every other confirmation
+  // is a way FORWARD and now says so with the emphasis rather than by sitting
+  // second in a row of two identical buttons.
+  confirmButton.className = `confirmation-confirm${tone === 'danger' ? ' subtle danger' : ''}`;
   confirmButton.textContent = confirmLabel;
+  confirmButton.hidden = !confirmEnabled;
   markUiComponent(confirmButton, UI.confirmationAction, tone);
-  footer.append(cancelButton, confirmButton);
-  dialog.append(header, copy, footer);
+  // The house order, from the one home: way out left, way forward right.
+  const footer = modalFooter({ secondary: [cancelButton], primary: confirmButton, className: 'confirmation-footer' });
+  dialog.append(header, copy, details, footer);
   veil.appendChild(dialog);
   document.body.appendChild(veil);
 
@@ -134,19 +149,25 @@ export function openConfirmationModal({
       return;
     }
     if (event.key !== 'Tab') return;
-    const controls = [cancelButton, confirmButton];
+    // The trap wraps over the VISIBLE controls only. When the option is
+    // blocked (an unaffordable Smithing upgrade), `confirmEnabled` is false,
+    // the confirm button is hidden, and `controls` is Back alone — so Shift+Tab
+    // from Back must land on the last entry of `controls`, never on a hidden
+    // button that would leave the dialog with no visible focus.
+    const controls = [cancelButton, ...(confirmEnabled ? [confirmButton] : [])];
     const at = controls.indexOf(document.activeElement);
     if (event.shiftKey && at <= 0) {
       event.preventDefault();
-      confirmButton.focus({ preventScroll: true });
+      controls[controls.length - 1].focus({ preventScroll: true });
     } else if (!event.shiftKey && at === controls.length - 1) {
       event.preventDefault();
-      cancelButton.focus({ preventScroll: true });
+      controls[0].focus({ preventScroll: true });
     }
   }
 
   cancelButton.addEventListener('click', cancel);
   confirmButton.addEventListener('click', () => {
+    if (!confirmEnabled) return;
     if (closed) return;
     close({ restoreFocus: false, retainInputShield: true });
     const shield = holdNavigationInputShield({ veil, durationMs: inputShieldMs });
@@ -162,8 +183,22 @@ export function openConfirmationModal({
       shield.afterDestinationPaint();
     }
   });
+  // A SCRIM CLICK CANCELS ONLY WHEN THE PRESS BEGAN ON THE SCRIM. With the
+  // hold dial off, a control opens this review on pointerup, and the browser
+  // then dispatches that same touch's trailing click at the point of release
+  // — which is now the scrim (the finger never moved; the veil did). Cancelling
+  // on it closed the review in the same gesture that opened it, so an
+  // off-dial tap on the title's ✕ opened nothing a player could see. Measured
+  // with real touch events (tools/holdconfirm.mjs, the title's dial-off leg):
+  // pointerdown on the ✕, MODAL-ADDED, pointerup, click on the veil, REMOVED.
+  // A press that begins on the scrim is the player's; a click that arrives
+  // without one is the opening gesture's echo.
+  let scrimPressed = false;
+  veil.addEventListener('pointerdown', (event) => { scrimPressed = event.target === veil; });
   veil.addEventListener('click', (event) => {
-    if (event.target === veil) cancel();
+    const pressedHere = scrimPressed;
+    scrimPressed = false;
+    if (event.target === veil && pressedHere) cancel();
   });
   window.addEventListener('keydown', onKeydown, true);
   // Quick-menu actions close their list after awaiting the controller result,

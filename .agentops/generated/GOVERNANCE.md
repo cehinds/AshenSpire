@@ -102,6 +102,7 @@ Elapsed time changes routing only, never truth, evidence, or authority. FYIs rem
 ### `it-manager-iii`
 
 - **Mission:** Mandatory technical relay and deputy: own exceptions, technical scope and architecture reconciliation, sequencing, path/maker ownership, integration and delivery gates, and incident/P0 command.
+- **Seat:** P \| IT Manager III \| IT Manager and Coordination Specialist - AshenSpire
 - **May:** resolve-technical-ambiguity, assign-and-rebind-work, issue-and-revoke-lease, create-isolated-ref, integrate-to-dev-via-pr, accept-bounded-technical-risk, fast-forward-test-under-gate-c
 - **Must:** record a decision packet answer; obtain data-architecture clearance or exact exception authority before overriding a WITHHOLD
 - **Must not:** amend its own grant to reach any authority listed in owner-intent owner.reserved_authority, mutate main or release, change Pages source, self-approve protected independent review, perform owner-exclusive playtest sign-off
@@ -244,9 +245,18 @@ Elapsed time changes routing only, never truth, evidence, or authority. FYIs rem
 - **Must not:** approve-its-own-implementation, waive-independent-qa, push-pr-merge-deploy-or-release, amend-its-own-grant
 - **Approval ceiling:** Forms and staffs its own team. Holds no waiver over independent QA: decision 0010 withdrew that mechanism pending an authenticated approval path.
 
+### Identifiers that are not seats
+
+These identifiers appear where a role identifier does, and nothing holds them. They are declared so a reference naming one is checked rather than waved through, and so a typo in a role field cannot pass as one of them. Each names the fields it may appear in — the ownership and writer fields whose semantics support an unheld owner — and outside those fields it is refused: a field that names someone who must ACT (a gate actor, a reviewer, a verifier, an authority) cannot be satisfied by an identifier nobody holds.
+
+- `generator` (permitted in `owner_role`, `producer_role`) — The generated-artifact lane’s single writer. `opsctl render` is the only thing that writes those paths, so the owner is a tool rather than a seat, and no one holds it.
+- `per-seat` (permitted in `owner_role`) — Ownership follows the ticket’s writer lease rather than a fixed seat, so the owner is whichever role currently holds that ticket. Used where a path or ref is one lane per seat and can therefore be owned by any role in turn.
+
 ## Authority matrix
 
-| Action | Routine owner role | Scope | Protected | Required evidence |
+What a grant expects before it is exercised, written for a person to read. It is deliberately NOT called required_evidence: that name means a list of evidence.json ids everywhere else in this corpus (promotion-gates, qa), and one name carrying two types is how a check that reads it generically ends up skipping the contract it cannot parse. A grant that should demand a specific receipt names it in the gate that guards the move, not here.
+
+| Action | Routine owner role | Scope | Protected | Evidence expected |
 |---|---|---|---|---|
 | record-triage-route-report-status | help-desk | ticket-intake-and-status | no | Complete ticket and truthful Project readback. |
 | implement-locally | maker | assigned-exclusive-paths | no | CONTRACT READY, explicit implementation scope, fresh base, exclusive paths, and a held writer lease. |
@@ -268,13 +278,14 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 
 ### Refs
 
-| Ref | Owner role | Mutation |
-|---|---|---|
-| `main` | owner | protected |
-| `dev` | it-manager-iii | pr-only |
-| `test` | it-manager-iii | gate-c-fast-forward-only |
-| `claude/*` | maker | isolated-continuation |
-| `recovery/*` | per-seat | isolated-continuation |
+| Ref | Owner role | Mutation | Moved by |
+|---|---|---|---|
+| `main` | owner | protected | — |
+| `dev` | it-manager-iii | pr-only | — |
+| `test` | it-manager-iii | gate-c-fast-forward-only | `fast-forward-test` |
+| `codex/docs-current-build-links` | maker | isolated-continuation | — |
+| `claude/*` | maker | isolated-continuation | — |
+| `recovery/*` | per-seat | isolated-continuation | — |
 
 ### Paths
 
@@ -284,8 +295,8 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `.agentops/schemas/**` | it-manager-iii | governance |
 | `.agentops/tools/**` | maker | agentops-tooling |
 | `.agentops/generated/**` | generator | governance |
-| `.agentops/work/**` | maker | per-ticket |
-| `.agentops/events/**` | maker | per-ticket |
+| `.agentops/work/**` | `per-seat` — the ticket’s lease | per-ticket |
+| `.agentops/events/**` | `per-seat` — the ticket’s lease | per-ticket |
 | `.agentops/leases/**` | it-manager-iii | governance |
 | `docs/reconstruction/**` | it-manager-iii | reconstruction |
 | `src/**` | maker | product-source |
@@ -312,6 +323,10 @@ Default: `rebase`. Rewriting needs `it-manager-iii` when the branch is not the a
 
 Generated lane `governance`: A generated view is regenerated from validated JSON and never edited by hand. opsctl render is the sole writer; opsctl render --check proves the committed view matches its sources with no drift.
 
+Ledger lane `per-ticket`, written solely by `opsctl`: A work capsule and its event chain are written only by an opsctl command, never by hand: the command seals the capsule, appends the event and checks the chain, so a hand-edited ledger fails its own seal. The path is therefore owned per seat rather than by one role — any seat drives the command for its own ticket, and a role that cannot be granted the ledger cannot record what it did.
+
+The ledger records the seat as the actor of what the seat did, and opsctl as the actor of what the tool did on its own account. A process appending on a seat’s behalf never carries that seat’s actor.
+
 Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
 
 
@@ -322,8 +337,8 @@ Promotion is a sequence of separately evidenced gates against one frozen head, n
 | Gate | Name | Who acts | Guards | Required evidence | Grants |
 |---|---|---|---|---|---|
 | **A** | Exact candidate QA | `qa-independent` | `accepted` → `pushed` | test-run-receipt, generated-view-drift-check | nothing |
-| **B** | Dev integration and hosted verification | `it-manager-iii` | `pushed` → `pr-open`<br>`pr-open` → `dev-integrated` | hosted-evidence-url | nothing |
-| **C** | Exact fast-forward to test | `it-manager-iii` | `dev-integrated` → `hosted-verified` | hosted-evidence-url, rollback-procedure | nothing |
+| **B** | Dev integration and hosted verification | `it-manager-iii` | `pushed` → `pr-open`<br>`pr-open` → `dev-integrated` | hosted-verification-receipt | nothing |
+| **C** | Exact fast-forward to test | `it-manager-iii` | `dev-integrated` → `hosted-verified` | hosted-verification-receipt, rollback-procedure | nothing |
 | **D** | Five-role exact-test acceptance | `project-management-lead` | `hosted-verified` → `resolved` | acceptance-ledger | nothing |
 | **E** | Owner playtest | `owner` | — | playtest-receipt | nothing |
 | **F** | Separate main and release actions | `owner` | `resolved` → `released` | promotion-packet, rollback-procedure | nothing |
@@ -433,6 +448,12 @@ A seat's name states what it is, which team it serves and the project, so a rost
 
 - Persistent team lead: `P | <role> III | <team> | Ashenspire`
 - Agent seat it spins out: `A | <role> | <team> | Ashenspire`
+- Persistent display name: `P | <role and level> | <title> - AshenSpire`
+- Agent display name: `A | <role and level> | <title> - AshenSpire`
+
+A seat_name is the roster identity — kind, role level, team, project — and a display_name is the human-facing title the owner stated in #430: kind, role level, then a descriptive title and the project. They are different shapes on purpose and neither derives from the other, so a seat may carry both. Populating a display_name is naming a person's job, so it is recorded where the owner or the IT Manager III has stated the title and left absent otherwise, never guessed from the role id.
+
+The leading letter of a display_name is the seat's own kind, not a free pick between the two templates. Every seat declared in roles.json or hierarchy.json is standing — it exists before any ticket and outlives every pod — so its display_name takes display_name_persistent. Agent seats are spun out per ticket by a lead under agent_seat and are never declared in those contracts, so an agent-kind display_name on a declared seat presents a standing seat as one a lead could spin out and discard.
 
 The leading letter is the seat kind, never an authority code: a bare P is a persistent team lead, a bare A is an agent that lead spins out. P followed by a number is never a seat kind. P<n> is the authority tier in hierarchy.json, or an issue priority, and the subject decides which — exactly as the tier contract already says. A bare P and a P2 belong to different namespaces and must not be read as one.
 
@@ -457,6 +478,7 @@ Idle capacity: Read-only audits, modernization-register refreshes, documentation
 | `qa-functional` | `qa-guild` | Independent functional and regression evidence. |
 | `review-approval-hub` | `platform-release` | The Hub is now generated output under the generated-artifact lane; approval gates themselves live in transitions.json and authority.json, not a team. |
 | `writing` | `experience-design` | Narrative, copy and documentation clarity. |
+| `delivery-systems-review` | `platform-release` | Named as a Gate D conditional reviewer in promotion-gates while no role, pool or alias declared it, so that condition could never be routed to anyone. Routed here because platform-release is the declared pool for CI, packaging, deployment and release staging — the surfaces the gate condition names. This is a routing decision recorded where routing decisions live; the IT Manager III or the owner may rebind it. |
 
 
 ## RACI (exactly one Accountable per item)
@@ -560,6 +582,18 @@ Minimal sufficient context. A cold-start agent loads only what the current actio
 - **On demand:** an exact governance contract under .agentops/governance/; the current work capsule for the active ticket; an exact evidence pointer by id/path/hash; one extra hop from an exact reference
 - **Restricted:** credential, token, or secret material; owner private decision context; another writer's in-flight uncommitted workspace
 - **Forbidden (never loaded):** full-git-history; full-backlog-or-portfolio; all-chat-transcripts; raw-tool-logs; whole-diffs-or-screenshot-sets; unrelated-source-trees; the-reconstruction-installer-bundle-at-startup
+
+**Owner decision surfaces are the exception.** A seat may exceed concise output only where the emission is an owner decision surface: an owner-reserved authority, a protected transition, or a recorded blocker whose wake is the owner. Such an emission MUST take the form of the decision packet AUTHORITY.md already specifies, in the order decision_packet names it, with OPTIONS as its default form rather than an open question. Every other emission stays concise; the exception is never claimed to justify narration, and needing an owner decision does not itself widen any grant.
+
+The packet shape is docs/governance/AUTHORITY.md § Decision and exception packets:
+
+- EVIDENCE — exact current state, links, base/head, and conflict
+- OPTIONS — two or three materially different choices when applicable, each stating what it authorizes, what it forecloses, and its reversibility
+- REC — recommendation and trade-off
+- NEXT — smallest action after the decision
+- AUTH — exact new authority required, or 'No new authority'
+
+A request for direction without enumerated options is a contract failure, not a shorter packet.
 
 
 ### Canonical documents
@@ -668,19 +702,52 @@ Every assignment record carries: model, effort, why, escalate_when.
 
 The owner-command path accepts only enumerated actions from an authenticated actor. Every command is schema-validated against an allowlist, checks its expected_current_hash (compare-and-swap) against live state, records a dry-run summary, and would append a decision event and CAS-update only the affected state. No arbitrary shell or free-form field is ever accepted. A stale or unauthorized command fails safely and mutates nothing.
 
-| Action | Authenticator roles | CAS | Protected | Required fields | Affects |
+| Action | Authenticator roles | CAS | Protected | Gate | Advances to | Required fields | Affects |
+|---|---|---|---|---|---|---|---|
+| prioritize | owner | no | no | — | — | `target`, `params` | portfolio sequencing (recommendation input only) |
+| delegate | owner, it-manager-iii | no | no | — | — | `target`, `params` | delegation envelope assignment/rebind |
+| approve | owner, it-manager-iii | yes | no | — | — | `target`, `expected_current_hash`, `candidate_oid` | acceptance of an exact object |
+| reject | owner, it-manager-iii | yes | no | — | — | `target`, `expected_current_hash`, `reason` | rejection of an exact object |
+| defer | owner, it-manager-iii | no | no | — | — | `target`, `reason` | deferral (routing only) |
+| issue-lease | owner, it-manager-iii | no | no | — | — | `target`, `params` | writer lease issuance |
+| revoke-lease | owner, it-manager-iii | yes | no | — | — | `target`, `expected_current_hash` | writer lease revocation |
+| reseat | owner, it-manager-iii | yes | no | — | — | `target`, `expected_current_hash`, `params` | an unstarted seat's base — pinned to an exact commit, or pointed at a branch the wake compiler resolves at read time |
+| request-revision | owner, it-manager-iii | yes | no | — | — | `target`, `expected_current_hash`, `reason` | revision request on an exact object |
+| authorize-integration | owner, it-manager-iii | yes | yes | Gate B | `dev-integrated` | `target`, `expected_current_hash`, `candidate_oid` | integration to dev of an exact reviewed head |
+| fast-forward-test | owner, it-manager-iii | yes | yes | Gate C | `hosted-verified` | `target`, `expected_current_hash`, `params` | the `test` ref — a true fast-forward to the exact hosted-verified `dev` SHA, and nothing else |
+| grant-dev-delivery-authority | owner | yes | yes | — | — | `target`, `expected_current_hash`, `reason` | grant an it-manager-iii-owned capsule normal-PR delivery authority to dev only; direct dev push, deploy, main/release, tags, publication, and Pages remain forbidden |
+| authorize-release | owner | yes | yes | Gate F | `released` | `target`, `expected_current_hash`, `candidate_oid` | release / main / publication of an exact object (owner-exclusive) |
+| record-owner-override | owner | yes | yes | — | — | `target`, `expected_current_hash`, `reason` | OWNER_OVERRIDE recorded separately from the evidence it overrides (owner-exclusive) |
+
+## Retention and consolidation
+
+The event chain only grows, and that is the point: it is the evidence. Retention here means making a long chain READABLE, never shorter. A consolidation appends one summary node describing a contiguous range and leaves every event in that range exactly where it is, so nothing that was recorded stops being recorded.
+
+Authority: `it-manager-iii`, from docs/governance/AUTHORITY.md — archive or delete a task, worktree, branch, artifact, or evidence. This is not a new grant — the authority already exists and this is its machine-readable form. Preconditions:
+
+- durable capture — the range summarised is still present and reachable
+- exact targets — the first and last event of the range are named by id
+- recovery consequence — the summary states what reading it instead of the range would lose
+- explicit authority — the consolidation names the actor who authorised it
+
+A consolidation is one appended event of kind `consolidation` naming a contiguous, closed range of earlier events on the same ticket. It never rewrites an event, never deletes one, never edits the chain's parent links, and never spans two tickets. Reading the summary is a convenience; the range remains the record.
+
+A `consolidation` names from_event, to_event, count, authorised_by, recovery_consequence, and covers at least 10 events.
+
+**Never:** delete an event; edit an existing event; rewrite the parent chain; consolidate across tickets; consolidate a range that is not fully present; consolidate a correction of record.
+
+An event that is a correction of record stays individually readable. AS-HD-029-0052 is the correction of record for 423 misattributed reseat events; those events and that ruling are evidence of a governance failure, and summarising them away would remove exactly the history the ruling exists to preserve.
+
+## Standing directives
+
+A standing directive is an owner instruction that outlives the conversation it was given in. Chat is a projection; this file is the record. A directive that has been codified names the contract that enforces it, so the enforcement is checkable rather than remembered — and a directive nothing enforces is visible as exactly that.
+
+A directive can never exceed the issuing role's own grant. It changes what a seat must do, never what a seat may do: an instruction that would confer an action its issuer does not hold is void, and delegation.non_amplification_rule governs. Needing an owner decision does not itself widen any grant.
+
+| Directive | Issued by | Issued | Status | Codified in | Instruction |
 |---|---|---|---|---|---|
-| prioritize | owner | no | no | `target`, `params` | portfolio sequencing (recommendation input only) |
-| delegate | owner, it-manager-iii | no | no | `target`, `params` | delegation envelope assignment/rebind |
-| approve | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `candidate_oid` | acceptance of an exact object |
-| reject | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | rejection of an exact object |
-| defer | owner, it-manager-iii | no | no | `target`, `reason` | deferral (routing only) |
-| issue-lease | owner, it-manager-iii | no | no | `target`, `params` | writer lease issuance |
-| revoke-lease | owner, it-manager-iii | yes | no | `target`, `expected_current_hash` | writer lease revocation |
-| request-revision | owner, it-manager-iii | yes | no | `target`, `expected_current_hash`, `reason` | revision request on an exact object |
-| authorize-integration | owner, it-manager-iii | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | integration to dev of an exact reviewed head |
-| authorize-release | owner | yes | yes | `target`, `expected_current_hash`, `candidate_oid` | release / main / publication of an exact object (owner-exclusive) |
-| record-owner-override | owner | yes | yes | `target`, `expected_current_hash`, `reason` | OWNER_OVERRIDE recorded separately from the evidence it overrides (owner-exclusive) |
+| concise-by-default | `constantine` | 2026-08-29T19:31:22Z | standing | `information-access.reporting.style` | All teams default to concise, minimal output unless it is something the owner needs to decide on. |
+| options-when-the-owner-decides | `constantine` | 2026-08-29T19:33:07Z | standing | `information-access.reporting.owner_decision_exception` | Options are the default form whenever something needs owner attention, not an open question. An emission on an owner decision surface presents enumerated options, a recommendation, and the consequence of deciding nothing. |
 
 ## Legacy migration
 
@@ -697,6 +764,10 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 | security-scan-receipt | qa-independent | commit OID | it-manager-iii | head_oid | valid only for the scanned commit |
 | data-lineage-receipt | data-architecture-lead | schema/id/lineage manifest hash | it-manager-iii | schema_version, manifest_hash | valid only for the manifested schema version |
 | hosted-verification-receipt | qa-independent | deployed commit SHA + hosted URL | it-manager-iii | hosted_sha | valid only for the exact hosted SHA |
+| rollback-procedure | it-manager-iii | rollback target and procedure for the exact promoted head | owner | promoted_sha | valid only for the exact head it was recorded against |
+| acceptance-ledger | project-management-lead | five-role acceptance recommendations at the unchanged exact test SHA | it-manager-iii | test_sha | valid only for the exact test SHA it was recorded against |
+| playtest-receipt | owner | build and artifact identity, flows, result and known accepted defects at the exact test SHA | it-manager-iii | test_sha | valid only for the exact test SHA played |
+| promotion-packet | it-manager-iii | the fresh exact-SHA promotion packet delivery.promotion_packet enumerates | owner | candidate_sha | valid only for the exact SHA it was assembled against |
 
 ## Enforced invariants
 
@@ -714,6 +785,14 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 - `readiness_is_not_release` — Declaring a packet ready for owner review grants no promotion authority and is not a release-readiness claim.
 - `rollback_is_recorded_before_the_switch` — A Pages source switch records its rollback target, procedure, trigger, responsible actor and authority before it happens, so a failed deployment has somewhere to go back to.
 
+**`directives`**
+
+- `chat_is_not_the_record` — A directive given in conversation is a projection until it is recorded here. Nothing enforces an uncodified directive, and this file makes that visible rather than leaving it to memory.
+- `issuer_must_be_declared` — A directive's issuer is an actor the hierarchy declares. An instruction from nobody in particular binds nobody.
+- `codification_is_named` — A directive marked codified names the contract and the exact field that carries it, and validation checks the field is really there. A directive that claims enforcement it does not have is worse than one that claims none.
+- `supersession_is_explicit` — A superseded directive names the directive that replaced it and stays in the file. The record of what was once instructed is not deleted to tidy the current state.
+- `never_amplifies` — A directive may constrain a seat and may not empower one. Any action it purports to grant must already be held by its issuer, and a directive is never a route to an owner-reserved authority.
+
 **`escalation`**
 
 - `acyclic_route` — Each route is an ordered list of actor_ids with no repeats; it must terminate at the Owner or a role that itself routes to the Owner.
@@ -723,6 +802,8 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 
 - `producer_exists` — every evidence type names a producer_role that is a declared role or the generator writer.
 - `bound_to_exact_object` — every evidence type binds to an exact object and lists invalidation keys.
+- `pointers_are_types_not_receipts` — A capsule's evidence_pointers name evidence TYPES, not receipts. Listing a type says the capsule is expected to carry that kind of evidence; it does not say a receipt exists, nor that one binds to the current head. No artifact in this corpus records a receipt against an exact object, so freshness_rule and invalidation_keys are stated and unenforceable per candidate. A gate that must prove fresh evidence therefore cannot be satisfied from the corpus as it stands, and must refuse rather than accept a type name as proof.
+- `invalidation_keys_are_not_the_capsule_vocabulary` — An evidence declaration's invalidation_keys name properties of the exact object a receipt binds to — head_oid, tree_oid, candidate_sha and the like. A work capsule carries a field of the same name holding a different vocabulary: the capsule's own fields whose change makes its wake stale. They are one keystroke apart in places (tree against tree_oid, base_oid against head_oid) and neither is valid in the other's place. The capsule side is checked against the capsule schema; this side has no declared vocabulary to check against, so a key here is only as good as the reader.
 
 **`information-access`**
 
@@ -749,13 +830,16 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 
 - `enumerated_only` — A command whose action is not in this allowlist is rejected.
 - `authenticated_actor` — The command actor must map to a role in the action's authenticator_roles.
-- `owner_exclusive` — authorize-release and record-owner-override authenticate the owner role only.
+- `owner_exclusive` — grant-dev-delivery-authority, authorize-release, and record-owner-override authenticate the owner role only.
 - `compare_and_swap` — When requires_cas is true, expected_current_hash must equal the live sealed hash of the target; a mismatch is a stale command and fails safely.
 - `no_arbitrary_input` — The request schema forbids additional fields; there is no shell or free-form command field.
 - `dry_run_first` — The processor records a dry-run summary before any mutation; --apply performs the mutation only after the same validation passes.
 - `declared_lifecycle_target` — An action may declare lifecycle_target. Applying it moves the target capsule to that state only if transitions.json declares that exact transition from the capsule's current state and permits the authenticating role (the owner role is permitted on protected transitions). An undeclared or unpermitted transition is rejected and nothing is written.
 - `blocker_resolution` — An action may declare resolves_blocker. Applying it clears the target capsule's blocker, because the decision the blocker was waiting on has been recorded. A deferral or a routing-only action never clears one.
-- `append_only_apply` — Applying writes one append-only decision event and re-seals only the target capsule under compare-and-swap. It never rewrites history, never edits an existing event, and never touches another ticket.
+- `append_only_apply` — Applying writes one append-only decision event and re-seals only the target capsule under compare-and-swap. It never rewrites history, never edits an existing event, and never touches another ticket. One action also mutates a git ref — fast-forward-test — and it is bounded rather than excepted: only the ref git-ownership declares for it, only forward, only to an ancestor-checked target, only with the prior head recorded first, and only through an update that fails if the ref moved since validation. No apply path force-updates, deletes, or rewrites a ref.
+- `reseat_is_not_a_sweep` — The reseat action moves ONE named target under compare-and-swap, and only a seat that has not started. It exists for a base a seat did not set for itself — a lane reassigned by the deputy — not for keeping capsules level with HEAD: a seat starting its own work reseats its own capsule, and an unstarted seat that should follow a branch carries base_ref instead, which appends nothing. Ruling AS-HD-029-0052 rules 1 and 2.
+- `reseat_records_its_commander` — The event this action appends names the authenticating actor, never the seat whose capsule moved. A process or a deputy acting on a seat's behalf never carries that seat's actor. Ruling AS-HD-029-0052 rule 3.
+- `gate_c_conditions_are_the_contract` — fast-forward-test enforces all five conditions decision 0009 states for Gate C: gates A and B fresh; the target is exactly the hosted-verified dev SHA; current test is an ancestor of it, so the mutation is a true fast-forward; the exact head, rollback target and mutation evidence are recorded; and there is no P0/P1 WITHHOLD or unresolved blocker. A condition that cannot be shown is a refusal, never an assumption.
 
 **`promotion-gates`**
 
@@ -774,6 +858,12 @@ Evidence is a manifest or exact pointer, not another ledger. Each evidence type 
 
 - `single_accountable` — Each item lists exactly one Accountable role.
 - `no_maker_self_acceptance` — The Accountable for an independent-QA acceptance decision must not also be the Responsible maker of the object under review.
+
+**`retention`**
+
+- `growth_is_not_a_defect` — A chain that grows because work happened needs no retention action. Retention answers unreadability, and a chain that grew because a process appended no-ops is fixed at the process, not by summarising the evidence of it.
+- `append_only_or_nothing` — Consolidation shares the append-only guarantee owner-command.rules.append_only_apply states: it adds a node and touches nothing else. Any operation that would remove or alter an event is destructive cleanup, which is a protected class and is not reachable from here.
+- `the_range_outlives_the_summary` — A summary is valid only while every event it names is still present. If the range cannot be read, the summary is not a substitute for it — it is a dangling claim, and validation says so.
 
 **`transitions`**
 

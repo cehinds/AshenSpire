@@ -10,7 +10,7 @@ import {
   appendEvents, applyAssignments, assertPortable, assertSchedulerDispatchCutover, beginWakeDispatch, canonicalClaimPath, claimsConflict, commitAssignmentsAfterWakeDispatch, compareAndSwap, compileWake, ensureCustody,
   emptySnapshot, historyAdvanceAllowed, main, makeEvent, mergeCommandArgs, mergeGateResult, mergedPrRecovery, pathsOverlap, planAssignments,
   localMachine, persistPortableState, protectedTransitionAllowed, readConfig, readPortableState, reduceEvents, repositorySlug, resolveCanonicalIssue,
-  runBoundedCommand, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validateSchedulerDocument, validateWorkers, watcherPlan
+  runBoundedCommand, sameIdentityReviewAccepted, sameIdentityReviewEvidence, schedulerStateRefs, simulate, snapshotsMatch, stableStringify, transitionInput, trustedTransitionArgs, validateEvent, validateMachineIdentity, validateMachineLease, validateSchedulerDocument, validateWorkers, watcherPlan
 } from './scheduler.mjs';
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
@@ -330,6 +330,109 @@ test('dev merge one-writer gate uses preserved maker lease after QA releases sea
   const gate = mergeGateResult(config, item, pr, { currentBaseIsAncestor: true, unresolvedThreads: 0, competingPrs: 0, rollbackKnown: true });
   assert.equal(gate.gates.one_writer, true);
   assert.equal(gate.allowed, true);
+  assert.equal(gate.review_independence, 'distinct-account');
+});
+
+// #434: every seat authors as one GitHub account, and GitHub will not let a PR
+// author approve their own PR — so there is no obtainable GitHub approval to
+// relax TO. The exception instead spends the scheduler's own seat identities:
+// a QA lease is only issued to a non-maker seat and a PASS only counts against
+// the exact candidate. These fix what the exception does NOT buy, so a later
+// edit cannot quietly widen it into "merge without any verdict".
+function mergeGateFixture() {
+  let state = intake(fresh(), '434'); state = claim(state, '434'); state = entered(state, '434'); state = candidate(state, '434'); state = qa(state, '434');
+  const item = state.snapshot.work_items['434'];
+  const approval = (login, oid) => ({ state: 'APPROVED', author: { login }, commit: { oid } });
+  return { item, approval, pr: (reviews) => ({ author: { login: 'cehinds' }, headRefOid: item.candidate_commit, statusCheckRollup: [{ conclusion: 'SUCCESS' }], reviews }) };
+}
+const withAuthority = (over) => ({ ...config, authority: { ...config.authority, ...over } });
+const gateOf = (cfg, item, pr) => mergeGateResult(cfg, item, pr, { currentBaseIsAncestor: true, unresolvedThreads: 0, competingPrs: 0, rollbackKnown: true });
+
+test('an independent QA seat does not admit a merge while the exception is off', () => {
+  const { item, pr } = mergeGateFixture();
+  const gate = gateOf(withAuthority({ same_identity_review_accepted: false }), item, pr([]));
+  assert.equal(gate.gates.independent_review, false);
+  assert.equal(gate.review_independence, 'none');
+  assert.match(gate.reason, /independent_review/);
+});
+
+test('the exception is inert without complete recorded authorization', () => {
+  const { item, pr } = mergeGateFixture();
+  const flagOnly = withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: { authorized_by: 'constantine (owner)' } });
+  assert.equal(sameIdentityReviewAccepted(flagOnly), false);
+  assert.equal(gateOf(flagOnly, item, pr([])).allowed, false);
+  const complete = withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: { authorized_by: 'constantine (owner)', at: '2026-08-31T21:30:00Z', reason: 'single shared identity' } });
+  assert.equal(sameIdentityReviewAccepted(complete), true);
+});
+
+test('evidence that records nothing does not authorize the exception', () => {
+  const { item, pr } = mergeGateFixture();
+  const good = { authorized_by: 'constantine (owner)', at: '2026-08-31T21:30:00Z', reason: 'single shared identity' };
+  // Every one of these is truthy, so a presence check would have accepted it.
+  for (const [label, bad] of [
+    ['blank approver', { ...good, authorized_by: '   ' }],
+    ['unparseable instant', { ...good, at: 'not-a-date' }],
+    ['non-string reason', { ...good, reason: ['single shared identity'] }],
+    ['non-string instant', { ...good, at: 20260831 }],
+    ['future-dated authorization', { ...good, at: '2099-01-01T00:00:00Z' }],
+    // Relaxing a protected transition is owner authority. A role that does not
+    // hold it cannot grant it, however well-formed the rest of the block is.
+    ['a maker granting itself the exception', { ...good, authorized_by: 'maker' }],
+    ['the deputy granting owner-exclusive authority', { ...good, authorized_by: 'it-manager-iii' }],
+    ['a seat identity rather than a role', { ...good, authorized_by: 'seat:worker-a:6f24cb92-3738-42fa-862d-0c45b3936a27' }]
+  ]) {
+    const cfg = withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: bad });
+    assert.equal(sameIdentityReviewAccepted(cfg), false, `${label} must not authorize the exception`);
+    assert.equal(gateOf(cfg, item, pr([])).gates.independent_review, false, `${label} must leave the strict gate in force`);
+  }
+  assert.deepEqual(sameIdentityReviewEvidence(withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: good })), good);
+  assert.equal(sameIdentityReviewEvidence(withAuthority({ same_identity_review_accepted: false, same_identity_review_evidence: good })), null);
+  // The role annotation is not part of the identity, and case is not identity.
+  for (const spelling of ['constantine', 'Constantine (owner)', '  constantine (Owner)  ']) {
+    const cfg = withAuthority({ same_identity_review_accepted: true, same_identity_review_evidence: { ...good, authorized_by: spelling } });
+    assert.ok(sameIdentityReviewEvidence(cfg), `${spelling} names the owner and must authorize`);
+  }
+});
+
+test('the exception spends the independent QA seat, with no GitHub approval available', () => {
+  const { item, pr } = mergeGateFixture();
+  const qaLease = item.lease_history.find((lease) => lease.assignment_kind === 'qa');
+  assert.ok(qaLease && qaLease.actor !== item.maker_actor, 'the QA verdict must come from a seat other than the maker');
+  const gate = gateOf(config, item, pr([]));
+  assert.equal(sameIdentityReviewAccepted(config), true);
+  assert.equal(gate.gates.independent_review, true);
+  assert.equal(gate.allowed, true);
+  assert.equal(gate.review_independence, 'independent-qa-seat');
+});
+
+test('the exception never admits a candidate that no independent seat verified', () => {
+  const { item, pr } = mergeGateFixture();
+  const unverified = { ...item, lease_history: item.lease_history.filter((lease) => lease.assignment_kind !== 'qa') };
+  assert.equal(gateOf(config, unverified, pr([])).gates.independent_review, false, 'no QA seat means no verdict to spend');
+  const selfVerified = { ...item, lease_history: [{ assignment_kind: 'qa', actor: item.maker_actor }] };
+  assert.equal(gateOf(config, selfVerified, pr([])).gates.independent_review, false, 'the maker verifying itself is not independence');
+});
+
+test('merge recovery keeps the verdict and the evidence apart', () => {
+  const { item, pr } = mergeGateFixture();
+  const merged = { ...pr([]), number: 434, url: 'https://github.com/cehinds/AshenSpire/pull/434', state: 'MERGED', baseRefName: config.development_branch, headRefName: item.branch, mergedAt: '2026-08-30T00:10:00Z', mergeCommit: { oid: 'a'.repeat(40) } };
+  const recovery = mergedPrRecovery(config, item, merged);
+  // The merge already existed, so this process permitted nothing — but the
+  // candidate's verification is still derivable and must not be thrown away.
+  assert.equal(recovery.gate.review_independence, 'recovered');
+  assert.equal(recovery.gate.review_independence_evidence, 'independent-qa-seat');
+  const unverified = { ...item, lease_history: item.lease_history.filter((lease) => lease.assignment_kind !== 'qa') };
+  assert.equal(mergedPrRecovery(config, unverified, merged).gate.review_independence_evidence, 'none',
+    'a hand merge of an unverified candidate must not inherit a verdict it never passed');
+});
+
+test('a distinct-account approval still outranks the exception and is labelled as such', () => {
+  const { item, approval, pr } = mergeGateFixture();
+  const gate = gateOf(config, item, pr([approval('someone-else', item.candidate_commit)]));
+  assert.equal(gate.gates.independent_review, true);
+  assert.equal(gate.review_independence, 'distinct-account');
+  const staleDistinct = gateOf(withAuthority({ same_identity_review_accepted: false }), item, pr([approval('someone-else', 'f'.repeat(40))]));
+  assert.equal(staleDistinct.gates.independent_review, false, 'an approval of another head must not authorize this one');
 });
 
 test('terminal DONE rejects lease expiry and drift regressions', () => {
@@ -581,7 +684,13 @@ test('Git and GitHub subprocesses fail closed on startup errors and timeouts', (
 });
 
 test('scheduler dispatch remains mechanically disabled while legacy watcher is authoritative', () => {
-  assert.throws(() => assertSchedulerDispatchCutover(config), /legacy watcher remains authoritative/);
+  // Both cutover postures are BUILT here rather than read from the shipped
+  // config. This line asserted the refusal against the live config until the
+  // cutover landed, at which point the fixture became a copy of production and
+  // the test went red for describing yesterday's repository — a check that
+  // reports the corpus instead of the rule.
+  const preCutover = { ...config, cutover: { scheduler_dispatch_enabled: false, legacy_watcher_authoritative: true, authorization_evidence: null } };
+  assert.throws(() => assertSchedulerDispatchCutover(preCutover), /legacy watcher remains authoritative/);
   const authorized = { ...config, cutover: { scheduler_dispatch_enabled: true, legacy_watcher_authoritative: false, authorization_evidence: 'owner:cutover-1' } };
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-cutover-guard-'));
   try {

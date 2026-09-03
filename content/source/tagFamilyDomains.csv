@@ -27,8 +27,10 @@ encounter,run
 enemy,creature
 armament,card
 armament,item
+armament,itemType
 armour,card
 armour,item
+armour,itemType
 basicCardProfile,card
 slot,item
 startingKit,item

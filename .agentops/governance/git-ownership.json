@@ -19,7 +19,14 @@
       "ref": "test",
       "owner_role": "it-manager-iii",
       "mutation": "gate-c-fast-forward-only",
+      "mutated_by_action": "fast-forward-test",
       "note": "Exact fast-forward to hosted-verified dev SHA; non-release."
+    },
+    {
+      "ref": "codex/docs-current-build-links",
+      "owner_role": "maker",
+      "mutation": "isolated-continuation",
+      "note": "Exact issue #183 documentation lane; no wildcard grant or protected-ref authority."
     },
     {
       "ref": "claude/*",
@@ -62,15 +69,17 @@
     },
     {
       "glob": ".agentops/work/**",
-      "owner_role": "maker",
+      "owner_role": "per-seat",
       "serialized_lane": "per-ticket",
-      "note": "One current work capsule per ticket; the ticket's writer lease owns it."
+      "note": "One current work capsule per ticket. Ownership follows the ticket's writer lease, so any role may hold its own capsule; opsctl is the sole writer and the per-ticket lane keeps two seats off one ticket.",
+      "per_seat": true
     },
     {
       "glob": ".agentops/events/**",
-      "owner_role": "maker",
+      "owner_role": "per-seat",
       "serialized_lane": "per-ticket",
-      "note": "Append-only event chain per ticket; written behind the same per-ticket lane as the capsule it records."
+      "note": "Append-only event chain per ticket. Ownership follows the ticket's writer lease, so any role may record what it did; opsctl is the sole writer and the per-ticket lane keeps two seats off one ticket.",
+      "per_seat": true
     },
     {
       "glob": ".agentops/leases/**",
@@ -174,6 +183,12 @@
   "generated_serialization": {
     "lane": "governance",
     "rule": "A generated view is regenerated from validated JSON and never edited by hand. opsctl render is the sole writer; opsctl render --check proves the committed view matches its sources with no drift."
+  },
+  "ledger_serialization": {
+    "lane": "per-ticket",
+    "writer": "opsctl",
+    "rule": "A work capsule and its event chain are written only by an opsctl command, never by hand: the command seals the capsule, appends the event and checks the chain, so a hand-edited ledger fails its own seal. The path is therefore owned per seat rather than by one role \u2014 any seat drives the command for its own ticket, and a role that cannot be granted the ledger cannot record what it did.",
+    "actor_rule": "The ledger records the seat as the actor of what the seat did, and opsctl as the actor of what the tool did on its own account. A process appending on a seat\u2019s behalf never carries that seat\u2019s actor."
   },
   "collision_rule": "Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.",
   "branch_hygiene": {

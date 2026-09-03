@@ -15,13 +15,15 @@
 
 import * as A from './actions.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
-import * as S from './statuses.js';
+import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } from '../model/state.js';
-import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
-import { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
+import { playerPoiseThresholdReceipt, playerLoadReceipt } from '../model/statProjection.js';
+import { canSwap, cycleSet, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
+// Deck restamping goes through the framework's adopted composition door.
+import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
 
 const QUEUE_GUARD = 10000;
@@ -73,11 +75,14 @@ export function createCombat({
   const poiseMax = Number.isInteger(player.poiseMax)
     ? player.poiseMax
     : (player.loadout
-      ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId }).value
+      ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId, itemUpgradeLevels: player.itemUpgradeLevels || {} }).value
       : 0);
   const combat = {
     registries,
     equipmentProfileRuleSnapshot,
+    // Namespaced item tiers are the sole current authority. The legacy armament
+    // map is accepted only at the load/migration door, never written here.
+    itemUpgradeLevels: structuredClone(player.itemUpgradeLevels || {}),
     equipmentPoolDeficits: player.equipmentPoolDeficits
       ? { ...player.equipmentPoolDeficits }
       : { hp: Math.max(0, player.maxHp - player.hp), mana: Math.max(0, maxMana - (player.mana ?? maxMana)), stamina: Math.max(0, (player.maxStamina || 0) - (player.stamina ?? player.maxStamina ?? 0)) },
@@ -103,6 +108,7 @@ export function createCombat({
       drawPerTurn: player.drawPerTurn,
       poiseMax,
       damageBySchoolAdd: player.damageBySchoolAdd || {},
+      itemUpgradeLevels: player.itemUpgradeLevels || {},
     }),
     enemies: [],
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
@@ -156,6 +162,8 @@ export function createCombat({
     ...(c.equipmentPlanFingerprint ? { equipmentPlanFingerprint: c.equipmentPlanFingerprint } : {}),
     ...(c.sourceHand ? { sourceHand: c.sourceHand } : {}),
     ...(c.weaponId ? { weaponId: c.weaponId } : {}),
+    ...(c.sourceArmamentId ? { sourceArmamentId: c.sourceArmamentId } : {}),
+    ...(Number.isInteger(c.smithingLevel) ? { smithingLevel: c.smithingLevel } : {}),
     ...(c.sourceEquipmentInstanceId ? { sourceEquipmentInstanceId: c.sourceEquipmentInstanceId } : {}),
   }));
   const shuffled = rng.shuffle('shuffle', deck);
@@ -163,7 +171,7 @@ export function createCombat({
   const rest = [];
   for (const card of shuffled) {
     const def = resolveCard(registries, card);
-    ((def.keywords || []).includes('innate') ? innate : rest).push(card);
+    (registries.framework.isInnate(def) ? innate : rest).push(card);
   }
   combat.piles.draw = [...innate, ...rest];
 
@@ -268,15 +276,31 @@ function endPlayerTurn(combat) {
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 
-  // …then discard hand except Retain; Ethereal cards exhaust instead.
+  // …then stamina (framework contract: Mana and Stamina): an idle turn recovers,
+  // a spending turn does not — the framework decides, this engine moves the pool.
+  if (Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
+    const next = combat.registries.framework.staminaTurnEnd({
+      currentStamina: p.stamina, maxStamina: p.maxStamina, staminaSpentThisTurn: p.counters.staminaSpentThisTurn || 0,
+    });
+    if (next.currentStamina !== p.stamina) {
+      const amount = next.currentStamina - p.stamina;
+      p.stamina = next.currentStamina;
+      combat.emit('staminaRecovered', { amount, reason: 'idle' });
+    }
+  }
+  p.counters.staminaSpentThisTurn = 0;
+
+  // …then discard hand except Retain; Ethereal cards exhaust instead. The
+  // fate of each card is the framework's call (src/framework/lifecycle.js);
+  // this engine only moves the card and emits the receipt.
   const keep = [];
   const toDiscard = [];
   const toExhaust = [];
   for (const card of combat.piles.hand) {
     const def = resolveCard(combat.registries, card);
-    const kws = def.keywords || [];
-    if (kws.includes('retain')) keep.push(card);
-    else if (kws.includes('ethereal')) toExhaust.push(card);
+    const fate = combat.registries.framework.endTurnFate(def);
+    if (fate === 'keep') keep.push(card);
+    else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);
   }
   combat.piles.hand = keep;
@@ -605,7 +629,20 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // The intent resolves before this mutation, so no in-flight card changes
   // underneath its own effects.
   const piles = [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust];
-  const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes, equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot };
+  const run = {
+    deck: [],
+    loadout: combat.loadout,
+    class: p.classId,
+    attributes: combat.attributes,
+    itemUpgradeLevels: combat.itemUpgradeLevels,
+    equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
+  };
+  // Pile stamps are subset calls, so granted/weaponArt instances reconcile
+  // here explicitly, BEFORE the stamps: the swapped-out armament's leave every
+  // pile, the swapped-in armament's land in the discard pile — and then get
+  // carrier/mod-stamped by the pile pass like every other card (dormant while
+  // no shipped armament authors either).
+  reconcileGrantedCardsInCombat(combat.registries, run, combat.piles);
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 
   // The vessel keeps telling the truth across the ONE mid-fight door equipment
@@ -614,7 +651,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // value (0 today; nothing writes it), so the future writer's build-up will
   // survive a swap unchanged. This deliberately re-derives over any explicit
   // poiseMax override: after a real swap, the receipt is the truth again.
-  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId }).value);
+  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId, itemUpgradeLevels: combat.itemUpgradeLevels || {} }).value);
 
   // The event carries what it COST and under which rule — a price nobody can
   // read back is a price nobody can check, and "try each" is a comparison.
@@ -626,15 +663,42 @@ function needsEnemyTarget(def) {
   return (def.effects || []).some((eff) => eff.target === 'enemy');
 }
 
+/**
+ * The Weight Class the player fights in — derived, never stored: the loadout
+ * this fight holds (the SAME object the run holds, so a mid-fight swap moves
+ * it) and the run attributes, decided by the framework (bridge.weightClass
+ * over playerLoadReceipt). A fixture with no loadout or attributes carries no
+ * load and stands Light, the contract's zero-load class.
+ */
+export function playerWeightClass(combat) {
+  const registries = combat.registries;
+  if (combat.loadout && combat.attributes) {
+    const receipt = playerLoadReceipt(registries, {
+      loadout: combat.loadout, attributes: combat.attributes, class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels || {},
+    });
+    return registries.framework.weightClass({
+      attributes: combat.attributes,
+      weights: { mainHandWeight: receipt.hands, offHandWeight: 0, armorWeight: receipt.armour, otherCountedWeight: 0 },
+    });
+  }
+  return registries.framework.weightClass({
+    attributes: { constitution: 10, strength: 10, ...(combat.attributes || {}) },
+    weights: { mainHandWeight: 0, offHandWeight: 0, armorWeight: 0, otherCountedWeight: 0 },
+  });
+}
+
 // Effective numeric cost after relic passives (powerCostReduction, min 0).
 // X-cost is unaffected (it always consumes all energy).
 function effectiveCost(combat, def) {
   if (def.cost === 'X') return 'X';
-  let cost = def.cost;
-  if (def.type === 'power') {
-    cost = Math.max(0, cost - passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction'));
-  }
-  return cost;
+  // The cost profile is the framework's call; this engine supplies the live
+  // relic reduction and the framework applies it only where the card's
+  // classification permits (Powers).
+  return combat.registries.framework.costProfile(def, {
+    powerCostReduction: passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction', combat.itemUpgradeLevels || {}),
+    weightClass: playerWeightClass(combat).weightClass,
+  }).action;
 }
 
 function doPlayCard(combat, { cardInstanceId, targetId }) {
@@ -646,13 +710,16 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   const def = resolveCard(combat.registries, inst);
   const kws = def.keywords || [];
 
-  if (kws.includes('unplayable')) throw new Error(`'${def.name}' is unplayable`);
+  if (combat.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(combat, def);
-  const manaCost = def.manaCost || 0;
+  const pools = combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass });
+  const manaCost = pools.mana;
+  const staminaCost = pools.stamina;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
+  if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);
 
   let target = null;
   if (targetId != null) {
@@ -668,6 +735,11 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   if (cost > 0 || isX) combat.emit('energySpent', { amount: cost });
   p.mana -= manaCost;
   if (manaCost > 0) combat.emit('manaSpent', { amount: manaCost });
+  p.stamina -= staminaCost;
+  if (staminaCost > 0) {
+    p.counters.staminaSpentThisTurn = (p.counters.staminaSpentThisTurn || 0) + staminaCost;
+    combat.emit('staminaSpent', { amount: staminaCost });
+  }
 
   // Remove from hand; bump counters (used by predicates + formulas).
   combat.piles.hand.splice(idx, 1);
@@ -676,6 +748,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   const meta = {
     energySpent: cost,
     manaSpent: manaCost,
+    staminaSpent: staminaCost,
     ordinalThisTurn: p.counters.cardsPlayedThisTurn,
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
@@ -705,16 +778,21 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     ordinalThisCombat: meta.ordinalThisCombat,
     energySpent: cost,
     manaSpent: manaCost,
+    staminaSpent: staminaCost,
   });
   drainQueue(combat);
 
   // Placement after resolution (SPEC §4.3): Exhaust → exhaust pile;
   // Powers are removed from play (NOT exhausted); everything else → discard.
+  // The destination is the framework's call; this engine moves the card.
   if (!combat.result) {
-    if (kws.includes('exhaust')) {
+    const destination = combat.registries.framework.afterPlayDestination(def);
+    if (destination === 'EXHAUST_PILE') {
       combat.piles.exhaust.push(inst);
       combat.emit('cardExhausted', { cardInstanceId: inst.instanceId, cardId: inst.cardId, reason: 'played' });
-    } else if (def.type !== 'power') {
+    } else if (destination === 'HAND') {
+      combat.piles.hand.push(inst); // Recall After Use (no shipped card carries it yet)
+    } else if (destination !== 'REMOVED_FROM_PLAY') {
       combat.piles.discard.push(inst);
     }
     drainQueue(combat);
@@ -893,6 +971,8 @@ export function previewCard(combat, cardInstanceId, targetId) {
     cost: shownCost,
     costIsX: isX,
     manaCost: def.manaCost || 0,
+    // The stamina badge in a fight is the class-priced one for the pure dodge.
+    staminaCost: combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass }).stamina,
     needsTarget: needsEnemyTarget(def),
     values,
     tokens,

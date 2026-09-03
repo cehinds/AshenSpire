@@ -18,7 +18,7 @@ import { mountTutorial } from '../components/tutorial.js';
 import { veilIsOpen } from '../components/veil.js';
 import { focusElement, focusFirst, matchAction, actionDestinationForEvent, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } from '../input.js';
 import { clearTargetSilhouettes, renderTargetSilhouette } from '../components/friendlyTargets.js';
-import { friendlyTargetMode } from '../../model/friendlyTargets.js';
+import { friendlyTargetMode, friendlyTargetPlan } from '../../model/friendlyTargets.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
@@ -27,7 +27,7 @@ import { trackGesture } from '../gesture.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
@@ -139,8 +139,9 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
     orb: () => app.querySelector('.energy-orb'),
     // #61: fx beats read a proc row's display data (name/tint/icon) through
-    // this accessor — one home, the status def itself.
-    statusInfo: (sid) => registries.statuses.get(sid),
+    // this accessor — one home, the status def itself, with the WORDS
+    // resolved through the framework term overlay.
+    statusInfo: (sid) => registries.frameworkTerms.withStatusWords(registries.statuses.get(sid)),
   };
 
   let selected = null; // card instanceId in click-targeting mode
@@ -205,7 +206,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       // the shared second-beat rule rather than inventing a screen-local rule.
       wireAction: (row, button, invoke) => {
         if (row.id !== 'use' || !row.enabled) return false;
-        arm(button, 'useFlask', { ctx: { targeted: !!def.targeted }, onConfirm: invoke });
+        arm(button, 'useFlask', {
+          ctx: { targeted: !!def.targeted },
+          question: `Use ${def.name}? ${remaining} charge${remaining === 1 ? '' : 's'} remaining.`,
+          confirmLabel: 'USE',
+          onConfirm: invoke,
+        });
         return true;
       },
     });
@@ -300,7 +306,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       if (!instance) return [];
       const amount = instance.meter ? instance.meter.value : instance.stacks;
       if (!(amount > 0)) return [];
-      const def = registries.statuses.get(statusId);
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(statusId));
       if (!def) return [];
       const presentation = statusInstancePresentation(def, instance);
       return [{ name: def.name, detail: presentation.tooltip }];
@@ -325,7 +331,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const v = dv(entity);
     if (role === 'player') {
       const classDef = registries.classes.get(run.class);
-      const stance = entity.stanceId ? registries.stances.get(entity.stanceId) : null;
+      const stance = entity.stanceId ? registries.frameworkTerms.withStanceWords(registries.stances.get(entity.stanceId)) : null;
       const skills = [];
       if (stance) skills.push({ name: stance.name, detail: stance.tooltip || 'Current stance.', active: true });
       skills.push({ name: classDef.name, detail: classDef.description || 'Current combat role.', active: true });
@@ -733,7 +739,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
-      const def = registries.statuses.get(sid);
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
       // M1's "absent at zero", applied to pips too: a spent proc row (💧0
@@ -786,7 +792,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       if (kind === 'player') {
         return 'Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet.';
       }
-      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      const staggered = registries.frameworkTerms.statusDisplay('staggered');
+      const stagDesc = (staggered && staggered.tooltip) || '';
       return `Fill it to Stagger. ${esc(stagDesc)}`;
     };
   }
@@ -831,7 +838,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         // v, not entity: the bar is the thing the drain animates, so it must
         // read the paced snapshot like every other meter on this card.
         const inst = v.statuses[sid];
-        const def = registries.statuses.get(sid);
+        const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
         const bar = document.createElement('div');
         bar.className = 'bar procbar';
         markUiComponent(bar, UI.procStatusBar, sid);
@@ -867,7 +874,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const p = combat.player;
     const trailing = [];
     if (p.stanceId) {
-      const st = registries.stances.get(p.stanceId);
+      const st = registries.frameworkTerms.withStanceWords(registries.stances.get(p.stanceId));
       const chip = document.createElement('div');
       chip.className = `stance-chip ${p.stanceId}`;
       chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
@@ -994,7 +1001,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }
-        const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && !isUnplayable(inst);
+        const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
         return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm };
       }),
     });
@@ -1052,18 +1059,26 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
 
   function isUnplayable(inst) {
-    return (resolveCard(registries, inst).keywords || []).includes('unplayable');
+    return registries.framework.isUnplayable(resolveCard(registries, inst));
   }
 
   /** The pulse reports that the player still has an affordable play. */
   function endTurnHasPlayable() {
     const anyPlayable = combat.piles.hand.some((inst) => {
-      const def = resolveCard(registries, inst);
-      if ((def.keywords || []).includes('unplayable')) return false;
-      return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost)
-        && combat.player.mana >= (def.manaCost || 0);
+      if (registries.framework.isUnplayable(resolveCard(registries, inst))) return false;
+      // The live preview — class-priced dodge costs, Power reductions — the
+      // same numbers the badge shows and the engine charges, in all three
+      // pools. A card the preview cannot resolve is not a playable card.
+      let pv = null;
+      try { pv = previewCard(combat, inst.instanceId); } catch (e) { return false; }
+      return combat.player.energy >= (pv.costIsX ? 0 : pv.cost)
+        && combat.player.mana >= pv.manaCost
+        && combat.player.stamina >= (pv.staminaCost || 0);
     });
-    return combat.player.energy > 0 && anyPlayable;
+    // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
+    // player at 0 Energy with Stamina left still holds a playable card, and
+    // the per-card check above already prices every pool.
+    return anyPlayable;
   }
 
   function renderControls() {
@@ -1100,13 +1115,23 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // A card whose only legal target is the player has ONE destination, so the
     // drag names it instead of making him aim at it (his words: "dragging a
     // block should default highlight player character since it can only target
-    // that character"). `friendlyTargetMode` is the ONE home of "can only
-    // target X" — model/friendlyTargets.js, #209 — and `'self'` is the only
-    // mode a solo board can resolve to a single target. `'ally'` and `'mixed'`
-    // depend on who is alive and connected and are deliberately NOT wired
-    // here; solo has no allies to state that rule against.
+    // that character"). #313 asked which "can only target X" means — the
+    // card's DECLARED mode or the BOARD'S current legal set. This is the
+    // B-side of that A/B: the legal set, taken at drag start from the one
+    // home of the rule (model/friendlyTargets.js, friendlyTargetPlan). On a
+    // solo board the set is the player for `self` AND for `mixed` (a
+    // self+ally card with no ally has exactly one legal target), and the
+    // highlight lights only when the set has exactly one member and it is the
+    // player — so it can never light a target the release would refuse. The
+    // A-side (declared mode only: `self` lights, `mixed` never does) is the
+    // shipped behaviour this replaces. Co-op keeps its own aiming.
+    const dragDef = resolveCard(registries, inst);
+    const friendlyLegal = friendlyTargetPlan(dragDef, combat.player.id, [
+      { id: combat.player.id, alive: combat.player.alive, connected: true },
+    ]).legalIds;
     const selfOnlyTarget = dragTargetMode === 'none'
-      && friendlyTargetMode(resolveCard(registries, inst)) === 'self';
+      && friendlyTargetMode(dragDef) !== 'none'
+      && friendlyLegal.length === 1 && friendlyLegal[0] === combat.player.id;
 
     const livingEnemyEls = () => [...app.querySelectorAll('.enemy:not(.dead)')];
 
@@ -1399,7 +1424,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const inst = combat.piles.hand[cardIdx];
       if (!inst) return;
       const pv = previewCard(combat, inst.instanceId);
-      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && !isUnplayable(inst);
+      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
       if (!affordable) return;
       if (pv.needsTarget) {
         const living = combat.enemies.filter((e) => e.alive);
@@ -1586,6 +1611,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // Nothing on this line says "hold", and adding a third action to this screen
   // would say even less.
   endTurnBeat = arm($('.end-turn'), 'endTurn', {
+    question: 'End your turn and let the enemies act?',
+    confirmLabel: 'END TURN',
     onConfirm: () => {
     if (busy || combat.result || combat.phase !== 'player') {
       const why = { busy, result: combat.result, phase: combat.phase };

@@ -15,6 +15,13 @@
 # unplayable) — those are a frozen engine set. Tags are content, and the
 # validator refuses a tag id that collides with one.
 #
+#
+# ITEM-TYPE TAGS (domain itemType) carry the `item:` prefix in their id because
+# content/equipment.js `itemTypeLabel` derives the Armoury's displayed name from
+# it. Their `label` here MUST equal what that function produces — the test suite
+# holds the two together, so the prefix stays a display convention and the domain
+# does the categorising.
+#
 # columns: id, domain (FK -> tagDomains.csv), label, color (hex, no '#'), glyph, blurb
 id,domain,label,color,glyph,blurb
 blade,card,Blade,C9502E,⚔,"Steel and edge — direct weapon work."
@@ -40,3 +47,7 @@ humanoid,creature,Humanoid,B8B0A0,👤,"Two arms, two legs, and a reason for bei
 undead,creature,Undead,647B73,💀,"Died once and did not stay down."
 construct,creature,Construct,9FC3E8,⚙,"Built, not born — no blood to let."
 spirit,creature,Spirit,7FA8C9,👻,"Untethered from the body it used to wear."
+item:blade,itemType,Blade,C9502E,⚔,"What this piece IS: the Armoury and the smith name it Blade."
+item:shield,itemType,Shield,7FA8C9,🛡,"What this piece IS: the Armoury and the smith name it Shield."
+item:magic-focus,itemType,Magic Focus,9FC3E8,✦,"What this piece IS: the Armoury and the smith name it Magic Focus."
+item:armor,itemType,Armor,B8B0A0,▣,"What this piece IS: the Armoury and the smith name it Armor."

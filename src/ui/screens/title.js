@@ -5,7 +5,7 @@
 // art and spacing can evolve without duplicating the screen structure.
 
 import { esc } from '../components/tooltip.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 import { buildStampHtml } from '../components/buildstamp.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { closeSaveSlotSelector, openSaveSlotSelector } from '../components/saveSlotSelector.js';

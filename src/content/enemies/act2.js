@@ -19,6 +19,7 @@ export const act2Enemies = [
     name: 'Gilded Knight',
     hp: [42, 46],
     poiseMax: 18,
+    levelProfile: { min: 6, max: 9 },
     art: '♞',
     moves: {
       thrust: { intent: 'attack', damage: 11, weight: 50, maxConsecutive: 2 },
@@ -36,6 +37,7 @@ export const act2Enemies = [
     name: 'Court Surgeon',
     hp: [30, 34],
     poiseMax: 10,
+    levelProfile: { min: 6, max: 9 },
     art: '⚕',
     moves: {
       scalpel: { intent: 'attack', damage: 7, weight: 40 },
@@ -59,6 +61,7 @@ export const act2Enemies = [
     name: 'Stitched Hound',
     hp: [24, 28],
     poiseMax: 8,
+    levelProfile: { min: 6, max: 8 },
     art: '🐩',
     moves: {
       maul: { intent: 'attack', damage: 4, hits: 2, weight: 60 },
@@ -76,6 +79,7 @@ export const act2Enemies = [
     name: 'Court Marionette',
     hp: [16, 18],
     poiseMax: 6,
+    levelProfile: { min: 6, max: 9 },
     art: '🪆',
     moves: {
       dart: { intent: 'attack', damage: 4, hits: 2, weight: 50 },
@@ -92,6 +96,7 @@ export const act2Enemies = [
     name: 'Living Armor',
     hp: [36, 40],
     poiseMax: 22,
+    levelProfile: { min: 7, max: 10 },
     art: '🛡',
     moves: {
       slam: { intent: 'attack', damage: 10, weight: 30 },
@@ -119,6 +124,7 @@ export const act2Enemies = [
     name: 'Duelist of the Court',
     hp: [90, 96],
     poiseMax: 26,
+    levelProfile: { min: 10, max: 11 },
     art: '🤺',
     firstMove: 'enGarde',
     moves: {
@@ -140,6 +146,7 @@ export const act2Enemies = [
     name: 'The Stitched King',
     hp: [195, 195],
     poiseMax: 34,
+    levelProfile: { min: 11, max: 12 },
     art: '👑',
     firstMove: 'courtlyDecree',
     moves: {

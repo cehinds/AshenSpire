@@ -194,7 +194,18 @@ const SCREENS = [
   // so excluding it here would put back the condition the gap lived in). The
   // landmarks are the controls the states were added FOR: the occupied slot's
   // ✕, the drawer's Restore, the crisis screen's fresh-profile button.
-  { name: 'title-slots', query: '?shot=title', landmark: '.slot.occupied .slot-delete', state: 'title' },
+  {
+    // THE ✕ MOVED BEHIND LOAD (title.js → saveSlotSelector.js): the title menu
+    // is five verbs and the slot rows with their delete control are the LOAD
+    // selector's, so the landmark this state was added FOR is not on the first
+    // paint any more. `.slot.occupied .slot-delete` matched nothing for as long
+    // as the menu has existed — a MISS on the release stamp, filed against the
+    // screen. The drive walks the player's door (LOAD) and the landmark is the
+    // ✕ inside the selector's own list.
+    name: 'title-slots', query: '?shot=title', state: 'title',
+    drive: `(()=>{const l=document.querySelector('[data-title-action="load"]');if(!l)return 'LOAD missing on the title menu';l.click();return true})()`,
+    landmark: '.title-slot-list .title-slot-delete',
+  },
   {
     name: 'profile-drawer',
     // THIS ENTRY MISSED FOR AS LONG AS IT HAS EXISTED, AND THE DOOR IS WHY
@@ -244,10 +255,10 @@ const SCREENS = [
   },
   { name: 'profile-crisis', query: '?shot=crisis', landmark: '.profile-notice .fresh', state: 'crisis' },
   {
-    // AND THE GRID OPEN, driven, because the closed Shrine FITS. A baseline of
-    // the screen in the state that never overflowed could not have caught the
-    // defect it was created for — it would have gone green through the whole
-    // bug. The overflow only exists once the Smith grid is on screen.
+    // AND THE ARMAMENT REVIEW OPEN, driven, because the closed Shrine FITS. A
+    // baseline of the screen in the state that never overflowed could not have
+    // caught the defect it was created for — it would have gone green through
+    // the whole bug. The overflow only exists once the Smith modal is open.
     //
     // `#smith-grid .card`, and the first version of this line said
     // `.deck-strip .mini` — WHICH NOTHING ON THIS SCREEN EMITS. renderCard()
@@ -265,8 +276,8 @@ const SCREENS = [
     // whose landmark never resolved is Bjorn's animated-title finding pointed
     // the other way, and the instrument that catches it has to assert the
     // landmark RESOLVED before it is allowed to hash anything.
-    name: 'shrine-smith', query: '?shot=rest', landmark: '#smith-grid .card',
-    drive: `document.querySelector('#smith-opt').click()`,
+    name: 'shrine-smith', query: '?shot=rest&shotSmithingStones=1', landmark: '.smith-preview-card',
+    drive: `(()=>{const smith=document.querySelector('#smith-opt');if(!smith)return 'Smith option missing';smith.click();const card=document.querySelector('.smith-candidate-card');if(!card)return 'Smith armament candidate missing';card.click();return true})()`,
   },
   // THE COMPENDIUM — photographed in the act that creates it (Marina's condition
   // carried from #78's first commit), and at BOTH EDGES, because this screen's

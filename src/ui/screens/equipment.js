@@ -18,18 +18,21 @@ import {
   canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, figureSpec,
   ownership, openedSets, visibleSets, rungFor, setCellState, slotHand, equippedPieces,
 } from '../../model/loadout.js';
-import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
+import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresentation.js';
 import { equippedTagColor } from '../../model/equipmentUi.js';
 import { renderCard, relicText } from '../components/card.js';
-import { renderCandidateComparison } from '../components/equipmentReceipts.js';
+import {
+  renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies,
+} from '../components/equipmentReceipts.js';
 import { esc, attachTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
-import { armHold, holdMs, HOLD_POINTER_SLOP } from '../components/holdconfirm.js';
+import { armHold, holdMs, HOLD_POINTER_SLOP } from '../../framework/optionDecision.js';
 import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
-import { statProjection } from '../../model/statProjection.js';
+import { statProjection, pieceWeight } from '../../model/statProjection.js';
+import { resolveUpgradedEquipment } from '../../model/itemUpgrades.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
@@ -50,6 +53,7 @@ import { trayModel } from '../models/TrayModels.js';
 import { renderTray } from '../components/trayComponents.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { traySizeService } from '../services/TraySizeService.js';
+import { FOLD_GLYPH } from '../components/foldGlyph.js';
 
 const CFG = () => balance.equipment;
 const armouryTraySession = { folded: new Map(), heights: new Map() };
@@ -855,7 +859,7 @@ export function mountEquipment(host, {
     const hadSelection = !!picking;
     const changed = equipPiece(
       registries, run.loadout, slotId, setIndex, pieceId, owned(),
-      { inCombat, attributes: run.attributes, classId: run.class, onEquipmentChanged: captureEquipmentChanged }
+      { inCombat, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels, classId: run.class, onEquipmentChanged: captureEquipmentChanged }
     );
     if (!changed) {
       notice = `${actionLabel} was refused. The loadout was not changed.`;
@@ -1365,13 +1369,13 @@ export function mountEquipment(host, {
       row.dataset.component = 'armoury.cardRow';
       const summary = document.createElement('summary');
       summary.className = 'armoury-card-row-summary';
-      summary.innerHTML = '<span class="armoury-card-row-caret" aria-hidden="true">▸</span>'
+      summary.innerHTML = `<span class="armoury-card-row-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>`
         + `<span class="armoury-card-row-icon" aria-hidden="true">${esc(art)}</span>`
         + `<strong class="armoury-card-row-name">${esc(def.name)}</strong>`
         + `<span class="armoury-card-row-type">${esc(type)}</span>`
         + `<span class="armoury-card-row-cost">◆ ${esc(cost)}${mana ? ` ${esc(mana.textContent.trim())}` : ''}</span>`
         + `<span class="armoury-card-row-tags">${tags ? tags.textContent.trim() : ''}</span>`
-        + `<em class="armoury-card-row-count">x${esc(String(copyCount))}</em>`;
+        + `<em class="armoury-card-row-count role-copy-count">x${esc(String(copyCount))}</em>`;
       attachTooltip(summary, () => `<div class="tt-title">${esc(def.name)}</div><p>Tap to expand the card details.</p>`);
 
       const detail = document.createElement('div');
@@ -1403,6 +1407,18 @@ export function mountEquipment(host, {
     return box;
   }
 
+  function equipmentReceiptPanel(surface) {
+    const panel = document.createElement('section');
+    panel.className = 'armoury-equipment-receipts';
+    panel.innerHTML = '<section class="equip-role-receipts"><b>Equipment card packages</b>'
+      + renderRoleCopies(surface)
+      + '</section>'
+      + renderEquipmentRequirements(surface.requirements)
+      + renderPlayerPoise(surface.poise)
+      + renderPlayerLoad(surface.load);
+    return panel;
+  }
+
   /** A compact, separate Stats tray; Cards owns no stat receipts. */
   function statsComparison() {
     const projection = statProjection(registries, run);
@@ -1428,6 +1444,7 @@ export function mountEquipment(host, {
       + `<span>Damage dealt ${esc(String(runStats.damageDealt || 0))}</span>`
       + `<span>Damage taken ${esc(String(runStats.damageTaken || 0))}</span></section>`
       + `<section class="armoury-stats-group"><b>Relics</b><span>${esc(relicNames.length ? `${relicNames.length}: ${relicNames.join(' · ')}` : '0 equipped')}</span></section>`;
+    box.appendChild(equipmentReceiptPanel(surface));
     return box;
   }
 
@@ -1472,6 +1489,7 @@ export function mountEquipment(host, {
     const box = document.createElement('section');
     box.className = 'armoury-character-stats';
     const projection = statProjection(registries, run);
+    const surface = equipmentSurfaceReceipt(registries, run);
     const expanded = viewMode().character === 'expanded';
 
     function informationCard({ id, label, summary, body }) {
@@ -1480,7 +1498,8 @@ export function mountEquipment(host, {
       card.dataset.component = `armoury.${id}`;
       card.open = expanded;
       const head = document.createElement('summary');
-      head.innerHTML = `<span class="character-info-label">${esc(label)}</span>`
+      head.innerHTML = `<span class="character-info-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>`
+        + `<span class="character-info-label">${esc(label)}</span>`
         + `<span class="character-info-summary">${esc(summary)}</span>`;
       attachTooltip(head, () => `<div class="tt-title">${esc(label)}</div><p>${esc(card.open ? `Fold ${label}.` : `Expand ${label} for its full calculation and details.`)}</p>`);
       card.append(head, body);
@@ -1528,6 +1547,12 @@ export function mountEquipment(host, {
       summary: entries.length ? `${entries.length} equipped · ${entries.map((entry) => entry.face.label).join(' · ')}` : '0 equipped',
       body: relics,
     }));
+    box.appendChild(informationCard({
+      id: 'equipmentReceiptsCard',
+      label: 'Equipment cards',
+      summary: surface.roles.map((row) => `${row.profile.displayName} x${row.copies}`).join(' · '),
+      body: equipmentReceiptPanel(surface),
+    }));
     return box;
   }
 
@@ -1542,9 +1567,15 @@ export function mountEquipment(host, {
 
   function slotSummary(slot, setIndex = run.loadout.active?.[slot.id] || 0) {
     const itemId = (run.loadout.sets[slot.id] || [])[setIndex];
-    const item = slot.kinds.includes('armor')
+    const authored = slot.kinds.includes('armor')
       ? (eq.armour || []).find((piece) => piece.classId === run.class && piece.id === itemId)
       : (eq.armaments || []).find((piece) => piece.id === itemId);
+    // The item AT ITS SMITHED TIER, the same resolution the load receipt
+    // uses (equippedPieces → resolveUpgradedEquipment): a tier that raises
+    // the poise threshold raises the armour's weight with it, and the card's
+    // Poise and Weight labels must say what the total counts.
+    const itemRef = authored ? (slot.kinds.includes('armor') ? `armor/${run.class}/${authored.id}` : `armament/${authored.id}`) : null;
+    const item = authored ? resolveUpgradedEquipment(registries, itemRef, (run.itemUpgradeLevels || {})[itemRef] || 0) : null;
     const surface = equipmentSurfaceReceipt(registries, run);
     const roleLabels = new Map(layout.combatPower.cards.map((card) => [card.role, card.label]));
     const isActive = setIndex === (run.loadout.active?.[slot.id] || 0);
@@ -1558,9 +1589,13 @@ export function mountEquipment(host, {
     const bonus = item
       ? [...roleBonuses, ...authoredBonuses, poise].filter(Boolean).slice(0, 2).join(' · ') || 'No combat bonus authored'
       : 'Empty socket';
-    const weight = item && item.weight != null ? `Weight ${item.weight}` : 'Weight —';
+    // One rule for the item and the total (model/statProjection.pieceWeight):
+    // an armour piece weighs its poise threshold, so its card can never say
+    // "Weight —" while the Equip load counts it.
+    const weight = item ? `Weight ${pieceWeight(item)}` : 'Weight —';
     return {
       item,
+      intrinsic: item && !slot.kinds.includes('armor') ? armamentIntrinsicReceipt(item) : null,
       name: item ? item.name : 'Empty socket',
       category: item ? (slot.kinds.includes('armor') ? 'Armour' : `${item.kind || 'Armament'}`.replace(/^./, (c) => c.toUpperCase())) : 'Empty',
       bonus,
@@ -1638,8 +1673,21 @@ export function mountEquipment(host, {
       return { id: tagId, label: tag?.label || tagId, description: tag?.blurb || 'Equipment classification.' };
     });
     const mods = modSummary(registries, item);
-    const value = item.value != null ? String(item.value) : '—';
-    const weight = item.weight != null ? String(item.weight) : '—';
+    const intrinsic = summaryItem.intrinsic;
+    const intrinsicRows = intrinsic
+      ? `<div><dt>Attack rating (AR)</dt><dd>${intrinsic.attackRating}</dd></div>`
+        + `<div><dt>Defense rating (DEF)</dt><dd>${intrinsic.defenseRating}</dd></div>`
+        + `<div><dt>Weight</dt><dd>${intrinsic.weight}</dd></div>`
+        + `<div><dt>Weapon Art Mana</dt><dd>${intrinsic.weaponArtManaCost}</dd></div>`
+        + `<div><dt>Unique Skill Stamina</dt><dd>${intrinsic.uniqueSkillStaminaCost}</dd></div>`
+      : '';
+    const itemRef = `armament/${item.id}`;
+    const smithingLevel = Number.isInteger(run.itemUpgradeLevels?.[itemRef])
+      ? run.itemUpgradeLevels[itemRef]
+      : (Number.isInteger(run.armamentLevels?.[item.id]) ? run.armamentLevels[item.id] : 0);
+    const smithingReceipt = (run.lastSmithingReceipt?.itemRef === itemRef || run.lastSmithingReceipt?.armamentId === item.id)
+      ? run.lastSmithingReceipt
+      : null;
 
     const detail = document.createElement('section');
     detail.className = 'armoury-armament-details';
@@ -1649,8 +1697,11 @@ export function mountEquipment(host, {
       + `<dl><div><dt>Type</dt><dd>${esc(summaryItem.category)} · ${esc(item.rarity || 'standard')}</dd></div>`
       + `<div><dt>Effects</dt><dd>${esc(mods.length ? mods.join(' · ') : 'No additional equipment effects authored.')}</dd></div>`
       + `<div><dt>Combat bonuses</dt><dd>${esc(summaryItem.bonus)}</dd></div>`
-      + `<div><dt>Value</dt><dd>${esc(value)}</dd></div>`
-      + `<div><dt>Weight</dt><dd>${esc(weight)}</dd></div></dl>`
+      + `<div><dt>Smithing tier</dt><dd>${smithingLevel}</dd></div>`
+      + `${intrinsicRows}</dl>`
+      + (smithingReceipt
+        ? `<p class="armoury-smithing-receipt"><b>Last Smithing</b><span>Tier ${smithingReceipt.beforeLevel} → ${smithingReceipt.afterLevel} · ${smithingReceipt.cost} Stone · ${smithingReceipt.affectedCards.length} basic cards improved</span></p>`
+        : '')
       + `<div class="armoury-armament-tag-details">${tagRows.map((tag) => `<p><strong>${esc(tag.label)}</strong><span>${esc(tag.description)}</span></p>`).join('') || '<p><strong>Tags</strong><span>No tags authored.</span></p>'}</div>`;
     card.append(detail);
     attachTooltip(card, () => `<div class="tt-title">${esc(`${slot.label}: ${item.name}`)}</div><p>${esc(summaryItem.bonus)} · ${esc(summaryItem.weight)}</p>`);

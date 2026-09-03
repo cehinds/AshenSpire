@@ -5,7 +5,7 @@
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
-import { armHold, beatArmer } from './holdconfirm.js';
+import { armHold, beatArmer } from '../../framework/optionDecision.js';
 import { esc, hideTooltip } from './tooltip.js';
 import { mountTitleSaveSlotTooltip } from './titleSaveSlotTooltip.js';
 
@@ -110,7 +110,7 @@ export function openSaveSlotSelector({
       const record = slots.find(({ slot }) => slot === loadReviewSlot);
       if (record?.summary) {
         veil.innerHTML = `<section class="modal title-menu-modal title-load-review" data-component="title-menu-modal" data-variant="load-review" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
-          <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game">×</button>
+          <button class="subtle modal-close title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game" title="Close Load Game (Esc)">✕</button>
           <h2 id="title-modal-heading" data-component="title-modal-heading">LOAD SLOT ${record.slot}?</h2>
           <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
           <article class="title-load-review-slot" data-component="title-save-slot" aria-label="Selected save summary">
@@ -119,7 +119,7 @@ export function openSaveSlotSelector({
           <p class="title-load-review-copy">Load this saved climb now?</p>
           <div class="title-modal-actions" data-component="title-modal-actions">
             <button class="title-modal-back title-load-review-back" data-component="title-modal-back-control" type="button" data-title-action="review-back">BACK TO SAVES</button>
-            <button class="title-load-review-confirm" data-component="title-modal-continue-control" type="button" data-title-action="review-load">LOAD SAVE</button>
+            <button class="primary title-load-review-confirm" data-component="title-modal-continue-control" type="button" data-title-action="review-load">LOAD SAVE</button>
           </div>
         </section>`;
         return;
@@ -129,13 +129,13 @@ export function openSaveSlotSelector({
 
     const selection = model();
     veil.innerHTML = `<section class="modal title-menu-modal" data-component="title-menu-modal" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
-      <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game">×</button>
+      <button class="subtle modal-close title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game" title="Close Load Game (Esc)">✕</button>
       <h2 id="title-modal-heading" data-component="title-modal-heading">LOAD GAME</h2>
       <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
       <div class="title-slot-list" data-component="title-save-slot-list" aria-label="Save slots">${slotRows(selection)}</div>
       <div class="title-modal-actions" data-component="title-modal-actions">
         <button class="title-modal-back" data-component="title-modal-back-control" type="button" data-title-action="back">BACK</button>
-        <button class="title-modal-continue" data-component="title-modal-continue-control" type="button" data-title-action="modal-continue" data-action-slot="${selection.properties.actionSlot ?? ''}"${selection.properties.canContinue ? '' : ' disabled'}>CONTINUE</button>
+        <button class="primary title-modal-continue" data-component="title-modal-continue-control" type="button" data-title-action="modal-continue" data-action-slot="${selection.properties.actionSlot ?? ''}"${selection.properties.canContinue ? '' : ' disabled'}>CONTINUE</button>
       </div>
     </section>`;
 

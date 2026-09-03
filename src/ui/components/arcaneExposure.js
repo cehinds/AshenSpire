@@ -29,7 +29,7 @@ export function arcaneExposureReceipt(registries, enemySnapshot, recentEvents = 
     && Boolean(vulnerable && vulnerable.stacks > 0);
   const status = vulnerable && vulnerable.stacks > 0 ? {
     id: 'magicVulnerable',
-    label: registries.statuses.get('magicVulnerable').name,
+    label: registries.frameworkTerms.withStatusWords(registries.statuses.get('magicVulnerable')).name,
     value: vulnerable.stacks,
     duration: vulnerable.duration,
   } : null;
@@ -44,7 +44,7 @@ export function arcaneExposureReceipt(registries, enemySnapshot, recentEvents = 
 function eventHtml(event, registries) {
   if (!event) return '';
   if (event.type === 'arcaneBreak') {
-    const status = registries.statuses.get(event.status);
+    const status = registries.frameworkTerms.withStatusWords(registries.statuses.get(event.status));
     return `<div class="arcane-exposure-event arcane-break-receipt"><b>Break</b> · ${esc(status.name)} ${event.value}% · ${event.duration} turns</div>`;
   }
   if (event.type === 'arcaneExposureRefused') {

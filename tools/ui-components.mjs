@@ -67,6 +67,7 @@ export function receipt() {
     menuComponents: read('src/ui/components/menuComponents.js'),
     armouryComponents: read('src/ui/components/armouryComponents.js'),
     trayComponents: read('src/ui/components/trayComponents.js'),
+    foldGlyph: read('src/ui/components/foldGlyph.js'),
     traySizeService: read('src/ui/services/TraySizeService.js'),
     armouryUiSource: read('content/source/armouryUi.json'),
     creationCards: read('src/ui/components/creationCards.js'),
@@ -140,7 +141,7 @@ export function findings(r) {
   }
   if (!/hud-act[\s\S]*hud-floor[\s\S]*buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
-      || /hud-context|grid-row:\s*2/.test(r.hud + r.css.replace(/\/\* Variant D — Strict Compact HUD[\s\S]*?\/\* End Variant D \*\//g, ''))
+      || /(?:\.hud-run-meta|\.hud-context)[^{]*\{[^}]*grid-row:\s*2/.test(r.hud + r.css.replace(/\/\* Variant D — Strict Compact HUD[\s\S]*?\/\* End Variant D \*\//g, ''))
       || !/flex-wrap:\s*nowrap/.test(r.css)) {
     bad.push('C6 Run Header is not the corrected one-row Act/Floor/Build/Seed/Source trail');
   }
@@ -281,10 +282,21 @@ export function findings(r) {
       || !/renderArmouryPanel\([\s\S]*markUiComponent\(wrap\.querySelector\('\.armoury-inventory'\)/.test(r.armouryComponents)
       || !/renderTray\(trayModel\(/.test(r.equipment)
       || !/renderTray\([\s\S]*renderContent:/.test(r.equipment)
-      || !/right: Object\.freeze\(\{ closed: '<', open: '>' \}\)/.test(r.trayComponents)
-      || !/top: Object\.freeze\(\{ closed: 'v', open: '\^' \}\)/.test(r.trayComponents)
-      || !/bottom: Object\.freeze\(\{ closed: '\^', open: 'v' \}\)/.test(r.trayComponents)
-      || !/left: Object\.freeze\(\{ closed: '>', open: '<' \}\)/.test(r.trayComponents)
+      // THE EDGE TABLE MOVED, AND THE ASSERTION FOLLOWED IT RATHER THAN BEING
+      // DROPPED. What C15 has always guarded is that a tray's mark is EDGE-AWARE
+      // and frozen — four edges, each with a closed and an open answer — not
+      // which file holds it or which characters it spends. Both changed on
+      // 2026-09-02: the table is foldGlyph.js (one home for every disclosure
+      // mark in the tree, after a census found four families for one idea) and
+      // the ASCII letters `v ^ < >` became the triangle family `▾ ▴ ◂ ▸`. The
+      // shape of the guard is identical; a hand that deletes an edge, unfreezes
+      // the table, or lets trayComponents.js grow a second one still reds.
+      || !/right: Object\.freeze\(\{ closed: '◂', open: '▸' \}\)/.test(r.foldGlyph)
+      || !/top: Object\.freeze\(\{ closed: '▾', open: '▴' \}\)/.test(r.foldGlyph)
+      || !/bottom: Object\.freeze\(\{ closed: '▴', open: '▾' \}\)/.test(r.foldGlyph)
+      || !/left: Object\.freeze\(\{ closed: '▸', open: '◂' \}\)/.test(r.foldGlyph)
+      || !/export const TRAY_FOLD_GLYPH = Object\.freeze\(/.test(r.foldGlyph)
+      || !/TRAY_FOLD_GLYPH as GLYPHS/.test(r.trayComponents)
       || !/aria-expanded/.test(r.trayComponents)
       || !/aria-controls/.test(r.trayComponents)
       || !/content\.hidden = !tray\.expanded/.test(r.trayComponents)
@@ -351,16 +363,32 @@ export function findings(r) {
   const smithIds = ['smith-upgrade-modal', 'smith-candidate-card', 'smith-upgrade-preview'];
   if (!/export function smithSelectionModel/.test(r.smithSelectionModel)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.smithSelectionModel)
+      || !/function groupedAffected\(cards\)/.test(r.smithSelectionModel)
+      || !/itemRef,/.test(r.smithSelectionModel)
+      || !/currentLevel:\s*candidate\.currentLevel[\s\S]*nextLevel:\s*candidate\.nextLevel[\s\S]*cost:\s*candidate\.cost[\s\S]*stones:\s*candidate\.stones[\s\S]*shortfall:\s*candidate\.shortfall[\s\S]*affordable:\s*candidate\.affordable/.test(r.smithSelectionModel)
+      || !/affectedRows:\s*itemKind === 'armament'[\s\S]*groupedAffected\(candidate\.previewCards \|\| candidate\.affectedCards\)[\s\S]*genericAffected\(candidate\)/.test(r.smithSelectionModel)
+      || !/canConfirm:\s*Boolean\(selected\?\.affordable\)/.test(r.smithSelectionModel)
       || !/export function mountSmithUpgradeModal/.test(r.smithUpgradeModal)
       || !/role', 'dialog'/.test(r.smithUpgradeModal)
       || !/aria-modal/.test(r.smithUpgradeModal)
       || !/<button[^>]+smith-back/.test(r.smithUpgradeModal)
       || !/<button[^>]+smith-confirm/.test(r.smithUpgradeModal)
-      || !/tooltip: false/.test(r.smithUpgradeModal)
-      || !/reference = freeze\(\{[\s\S]*\.\.\.instance,[\s\S]*upgraded: false/.test(r.smithSelectionModel)
+      || !/attachTooltip\(card/.test(r.smithUpgradeModal)
+      || !/card\.dataset\.itemRef = item\.itemRef/.test(r.smithUpgradeModal)
+      || !/Tier \$\{item\.currentLevel\} → \$\{item\.nextLevel\}/.test(r.smithUpgradeModal)
+      || !/selected\.affectedRows\.map/.test(r.smithUpgradeModal)
+      || !/confirm\.disabled = !selected/.test(r.smithUpgradeModal)
+      || !/confirm\.setAttribute\('aria-disabled', String\(!model\.properties\.canConfirm\)\)/.test(r.smithUpgradeModal)
+      || !/canCommit: \(\) => Boolean\(currentModel\.properties\.canConfirm\)/.test(r.smithUpgradeModal)
+      || !/blockedTitle: `Cannot upgrade \$\{selected\.name\}`/.test(r.smithUpgradeModal)
+      || !/onConfirm\(selectedId\)/.test(r.smithUpgradeModal)
       || !/returnFocusElement: smithOption/.test(r.rest)
-      || !/smithSelectionModel\(registries, upgradable, selectedInstanceId\)/.test(r.rest)
+      || !/const smith = smithingPlan\(registries, run\)/.test(r.rest)
+      // #522: the Shrine hands the model its multi-use mode, and the model —
+      // never the modal — derives every stay/leave sentence from it.
+      || !/smithSelectionModel\(registries, smithingPlan\(registries, run\), selectedItemRef, \{ multiUse \}\)/.test(r.rest)
       || !/mountSmithUpgradeModal\(app, model\(\)/.test(r.rest)
+      || !/commitSmithing\(registries, run, itemRef\)/.test(r.rest)
       || !smithIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C19 Smith selection no longer uses its model-driven Back/preview/Confirm modal contract');

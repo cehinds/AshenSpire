@@ -1,12 +1,47 @@
 # AshenSpire — Ashen Spire
 
-A single-player roguelike deckbuilder for the browser. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**. Built with vanilla ES-module JavaScript, HTML, and CSS — no framework, no build step.
+A roguelike deckbuilder for the browser — single-player, with optional LAN co-op. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**. Built with vanilla ES-module JavaScript, HTML, and CSS — no framework, no build step.
 
 > **Status: feature-complete core loop.** Four classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
-## Play the current development build
+> **README content updated:** 2026-09-02T00:45:00-08:00 (Alaska)
+> **Updated by:** Claude Code, on the owner's instruction — the feature list now names equip load and Weight Class, Stamina with the class-priced Dodge Roll and the empty hand that brings it, the first quest chain, and Forsaken Together (the LAN co-op); the opening line no longer calls the game single-player only
+> **Source change:** Pull request #555, the README pass and its CHANGELOG receipt at `0.5.0-rc.2.1944`
+> **Scope:** README content-currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
 
-**[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)**
+## Play a build
+
+**[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)** — the stable
+build from `main`. **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** — the builds
+index: the current `dev`, `test`, `release` and `main` builds, each playable at its own address.
+
+### Playable builds and where each comes from
+
+| Branch | Role | Build number (live, derived) | Play | Changelog |
+|---|---|---|---|---|
+| `main` | stable — the classic Play link serves this | [![main build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fmain%2Fbuildordinal.json&query=%24.ordinal&label=main%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/main/) | [play latest](https://cehinds.github.io/AshenSpire/main/latest/) · [all `main` builds](https://cehinds.github.io/AshenSpire/main/) | [CHANGELOG](https://github.com/cehinds/AshenSpire/blob/main/CHANGELOG.md) |
+| `release` | release candidate — awaiting the owner's release cut | [![release build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Frelease%2Fbuildordinal.json&query=%24.ordinal&label=release%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/release/) | [play latest](https://cehinds.github.io/AshenSpire/release/latest/) · [all `release` builds](https://cehinds.github.io/AshenSpire/release/) | [CHANGELOG](https://github.com/cehinds/AshenSpire/blob/release/CHANGELOG.md) |
+| `test` | QA — the dev→test promotion under independent test | [![test build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Ftest%2Fbuildordinal.json&query=%24.ordinal&label=test%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/test/) | [play latest](https://cehinds.github.io/AshenSpire/test/latest/) · [all `test` builds](https://cehinds.github.io/AshenSpire/test/) | [CHANGELOG](https://github.com/cehinds/AshenSpire/blob/test/CHANGELOG.md) |
+| `dev` | integration — merged work lands here first; unreviewed | [![dev build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fdev%2Fbuildordinal.json&query=%24.ordinal&label=dev%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/dev/) | [play latest](https://cehinds.github.io/AshenSpire/dev/latest/) · [all `dev` builds](https://cehinds.github.io/AshenSpire/dev/) | [CHANGELOG](https://github.com/cehinds/AshenSpire/blob/dev/CHANGELOG.md) |
+
+The badge reads each branch's committed `buildordinal.json` — the number is never typed
+here. It is the last segment of the stamp the game paints on its title screen,
+`BUILD <version>.<ordinal> · src <digest>` (for example `BUILD 0.4.0.1688 · src b258350c3d`
+on `main`), so the number on the badge, the number on the builds index and the number on
+the title screen are the same fact read from the same file.
+
+**Address scheme.** `https://cehinds.github.io/AshenSpire/<branch>/<ordinal>/` is that exact
+build — `…/dev/1908/` is dev build 1908, byte-identical to the `AshenSpire.html` of the
+commit that produced it — and `…/<branch>/latest/` is the branch's newest. Each entry on the
+index links the `CHANGELOG.md` **at that build's commit**, not at a moving branch head. The
+site is assembled from git history by `node tools/pages-site.mjs` in the `pages-builds`
+workflow on every push to one of the four branches; nothing on it is hand-edited. Publication
+itself is owner-exclusive and separate from pushing: a push only assembles and proves the site,
+and it is deployed only by the repository owner's own manual dispatch of that workflow, with
+its `publish` input spelling PUBLISH (a push-triggered run holds no Pages credential), once the
+repository's Pages source is set to **GitHub Actions** (Settings → Pages).
+Until then the legacy `main:/` source keeps serving the stable link above and the per-branch
+addresses are not yet live.
 
 **[AshenSpire Project #4](https://github.com/users/cehinds/projects/4)** owns
 workflow status. **[Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)**
@@ -42,9 +77,10 @@ composition/component redesign contract. The [current-`dev` architecture
 snapshot](docs/ARCHITECTURE-CURRENT-DEV.md) is refreshed automatically after
 every push to `dev` without rewriting the core contract.
 
-That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
-from `main` and follows the newest reviewed development build after GitHub Pages
-finishes deploying it. This is a **development preview**, not a release, tag, or
+The stable Play link publishes the repository-root `AshenSpire.html` from `main`
+and follows the newest reviewed development build after GitHub Pages finishes
+deploying it; the builds index above serves the other branches' current builds
+beside it. This is a **development preview**, not a release, tag, or
 production approval. Release status remains governed separately and is currently
 **RED**.
 
@@ -169,6 +205,10 @@ No install, no framework, no build step for the source.
 - **One data-driven Armoury:** Character, Inventory, and Hybrid are presentations of the same equipment owner. Character places the contained figure beside expandable Combat Power, Attributes, and Relics; Inventory pairs procedural Armaments with the one shared carried-item list; Hybrid keeps the compact Character stack beside Armaments. Armaments, Inventory, Cards, and Stats use the shared Folding Tray grammar. Equipment cards drag as one surface and, when hold-confirm is enabled, fill across the whole folded or expanded card while equipping, moving, or unequipping. The fixed authored attack slots rebind in place to the active weapon package: a lone left- or right-hand weapon owns all of them, dual wield splits them right-first without deck growth, and the comparison receipt shows the exact before/after counts.
 - **Faithful StS mechanics:** 3 energy / draw 5 turns, block that expires, telegraphed enemy intents, exhaust/ethereal/retain keywords, exact StS damage-order math.
 - **Elden Ring flavor with real mechanics:** Bleed as a build-up meter that bursts for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and a Poise/Stagger system that skips enemy turns and opens damage windows.
+- **Equip load and Weight Class:** what your hands and armour weigh counts against a capacity set by Constitution and Strength, and the percentage lands you in Light, Medium or Heavy. The Armoury shows the load, the capacity and the class, and comparing a piece shows the load and class the swap would leave you at.
+- **Stamina, and hands that fight empty:** a turn in which you spend no Stamina recovers some at its end, and the Dodge Roll checks Dexterity against a d20 to land a temporary guard. Its price is your Weight Class — Light 1 Stamina, Medium 2 Stamina and 1 action, Heavy 3 Stamina and 2 actions — quoted the same way on the card face, in the tooltip and by the engine. An empty hand brings the Dodge Roll to your deck: with one hand armed the armed hand keeps its own technique, with both hands empty every guard slot is Evasive Guard and every technique slot the Dodge Roll. A shield counts as a full hand.
+- **Quests that remember what you did:** an event choice is written into your run's history, and a quest step your history has not earned is kept out of the event pool entirely. Earn it and it becomes eligible at the Unknown nodes of maps built after that — a chance the map rolls, not a node that opens on cue — and a step you have already answered never comes back. The Grave of the Nameless is the first chain: dig for cinders and the keeper may come to collect, or pay your respects and be thanked with the Gravetender's Bell, a relic no shop or drop will ever hand over.
+- **Forsaken Together — LAN co-op:** a party shares one map, votes on the fork and fights one shared combat, each seat playing its own deck, relics and flasks. Events are answered seat by seat, and a seat that drops out comes back to a catch-up queue that replays what it missed against the choices its history had earned at the time. Served by the launcher's own Node server, so a `file://`-opened build stays single-player.
 - **Character creation, one panel at a time:** six folded picks — class, starting kit, keepsake, sigil, tint, sprite — each pick opens the next, and the column reads your choices back in words. Below them, **starting armour** and **stat points** sit open as rows of their own: both change the run, so neither folds, and editing them never marches you on to the next section. Mouse, keyboard, and pad all walk the same flow; pressing Confirm repeatedly accepts the defaults.
 - **Rewards you open before you collect:** post-fight spoils are a menu — cinders, cards, flasks, armaments, relics — and nothing joins your run until you take it, so you can look first and back out unchanged. A reward you have no room for says so on its own row, and is the only row that offers Skip. Continue is always pressable; Settings → Advanced → Reward collection decides whether it sweeps up the rest for you or simply means *done*.
 - **A merchant who buys back:** the shop is five collapsing bars — cards, relics, flasks, remove-a-card, and Sell — one open at a time. He buys back relics and flasks at half his own cheapest price, and the Sell bar can be switched off entirely in Settings.

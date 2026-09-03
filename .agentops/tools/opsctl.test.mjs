@@ -9,7 +9,7 @@
 // valid, (b) every plant is caught, and (c) the committed generated view has no
 // drift from its JSON sources.
 
-import { runValidate, runSelftest, renderGovernance, viewCoverageErrors, probeStrengthErrors, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers, renderResultConsumerErrors } from './opsctl.mjs';
+import { CONTRACT_COUNT, runValidate, runSelftest, renderGovernance, viewCoverageErrors, probeStrengthErrors, loadContracts, strictParse, validateSchema, ROOT, runWake, loadRuntime, computeCapsuleHash, runDrill, runCommand, runMigrate, parseIssueCommand, buildCapsule, computeDispatch, runReseal, runReseat, renderHud, renderHubSite, OWNER_PAGE_LAYOUT_ID, subcommandDocErrors, opsctlHeader, renderHelpDeskTemplate, globCovers, renderResultConsumerErrors } from './opsctl.mjs';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -22,11 +22,23 @@ function check(name, cond, detail = '') {
   if (!ok) failures++;
 }
 
+// The GitHub trigger is an authority boundary, so keep its replay/provenance
+// contract executable even though the workflow itself is not run by this suite.
+{
+  const workflow = readFileSync(resolve(ROOT, '..', '.github/workflows/owner-command.yml'), 'utf8');
+  check('AT-01 owner-created event is the only executable trigger', workflow.includes('types: [opened]'));
+  check('AT-02 non-owner association is rejected', workflow.includes("github.event.issue.author_association == 'OWNER'"));
+  check('AT-03 edited event cannot replay a command', workflow.includes('types: [opened]') && !workflow.includes('types: [opened, edited]'));
+  check('AT-04 editor/sender mismatch cannot impersonate Constantine', workflow.includes("github.event.issue.user.login == 'cehinds'") && workflow.includes("github.event.sender.login == 'cehinds'"));
+  check('AT-05 issue body cannot supply the actor identity', workflow.includes('--actor owner') && workflow.includes('env:\n          ISSUE_BODY:'));
+  check('AT-06 workflow performs dry-run before apply', workflow.includes('command --dry-run') && workflow.includes('command --apply'));
+}
+
 // 1. The real, on-disk corpus parses, schema-validates, and is cross-consistent.
 {
   const { contracts, errors } = runValidate();
   check('real corpus validates with zero errors', errors.length === 0, errors.join(' | '));
-  check('all nineteen contracts loaded', Object.keys(contracts).length === 19, Object.keys(contracts).join(','));
+  check(`every registered contract loads (${CONTRACT_COUNT})`, Object.keys(contracts).length === CONTRACT_COUNT, Object.keys(contracts).join(','));
 }
 
 // 2. Every negative plant is caught through the live entry points.
@@ -248,6 +260,49 @@ function check(name, cond, detail = '') {
     runCommand(box, { schema: 'agentops/owner-command-request/v1', action: 'defer', actor: 'owner', target: 'AS-1001', reason: 'not yet' }, { dryRun: false });
     check('a deferral does not clear the blocker', readCap().blocker !== null);
 
+    // Restore the valid seed before exercising a second ticket; command entry
+    // refuses the entire runtime when any capsule is schema-invalid.
+    const restored = readCap();
+    restored.blocker = null;
+    restored.current_hash = computeCapsuleHash(restored);
+    writeFileSync(capPath, JSON.stringify(restored, null, 2) + '\n');
+
+    // A capsule authority grant is a first-class owner-only action. It may add
+    // only the dev-via-PR capability already held by the target role, and it
+    // replaces the legacy bundled denial with explicit protected boundaries.
+    const deliveryPath = resolve(box, 'work/AS-HD-029/CURRENT.json');
+    const readDeliveryCap = () => strictParse(readFileSync(deliveryPath, 'utf8'));
+    const deliverySeed = readDeliveryCap();
+    deliverySeed.authority.may = deliverySeed.authority.may.filter((item) => item !== 'integrate-to-dev-via-pr');
+    deliverySeed.authority.must_not = deliverySeed.authority.must_not
+      .filter((item) => !['direct-push-to-dev', 'mutate-main-or-release', 'tag-publish-deploy-or-change-pages-source'].includes(item));
+    if (!deliverySeed.authority.must_not.includes('push-pr-merge-deploy-or-release')) deliverySeed.authority.must_not.unshift('push-pr-merge-deploy-or-release');
+    deliverySeed.current_hash = computeCapsuleHash(deliverySeed);
+    writeFileSync(deliveryPath, JSON.stringify(deliverySeed, null, 2) + '\n');
+    const beforeDelivery = readDeliveryCap();
+    const deliveryHash = computeCapsuleHash(beforeDelivery);
+    const grant = {
+      schema: 'agentops/owner-command-request/v1',
+      action: 'grant-dev-delivery-authority',
+      actor: 'owner',
+      target: 'AS-HD-029',
+      expected_current_hash: deliveryHash,
+      reason: 'Owner grant from #470; dev via normal PR only.'
+    };
+    check('dev-delivery grant remains owner-exclusive', runCommand(box, { ...grant, actor: 'it-manager-iii' }, { dryRun: true }).ok === false);
+    check('dev-delivery grant refuses a non-ITM3 capsule', runCommand(box, { ...grant, target: 'AS-1001', expected_current_hash: computeCapsuleHash(readCap()) }, { dryRun: true }).ok === false);
+    const granted = runCommand(box, grant, { dryRun: false });
+    check('owner may grant the ITM3 capsule dev-via-PR authority', granted.ok, (granted.errors || []).join(' | '));
+    const afterDelivery = readDeliveryCap();
+    check('grant adds only integrate-to-dev-via-pr and removes the bundled denial',
+      afterDelivery.authority.may.filter((item) => !beforeDelivery.authority.may.includes(item)).join(',') === 'integrate-to-dev-via-pr'
+        && !afterDelivery.authority.must_not.includes('push-pr-merge-deploy-or-release'));
+    check('grant preserves direct-dev, deploy, main/release, tag, publication, and Pages prohibitions',
+      ['direct-push-to-dev', 'mutate-main-or-release', 'tag-publish-deploy-or-change-pages-source']
+        .every((item) => afterDelivery.authority.must_not.includes(item)));
+    check('granted capsule remains sealed and the complete corpus validates',
+      afterDelivery.current_hash === computeCapsuleHash(afterDelivery) && runValidate(box).errors.length === 0);
+
     // Replaying the identical command is now stale: the CAS has moved.
     check('apply rejects a replayed (stale) command', runCommand(box, req, { dryRun: false }).ok === false);
     // Owner-exclusive actions stay owner-exclusive under apply.
@@ -385,7 +440,10 @@ function check(name, cond, detail = '') {
   // The bug that froze six of seven seat-holding roles: dispatch woke `maker`
   // for every seat because no other role was permitted to leave 'assigned'.
   const byTicket = Object.fromEntries(d.map((e) => [e.ticket, e]));
-  check('an it-support seat wakes it-support, not maker', byTicket['AS-HD-057'] && byTicket['AS-HD-057'].wake === 'it-support', byTicket['AS-HD-057'] && byTicket['AS-HD-057'].wake);
+  const rtSupport = loadRuntime();
+  rtSupport.capsules['AS-HD-057'].blocker = null;
+  const support = computeDispatch(contracts, rtSupport).find((e) => e.ticket === 'AS-HD-057');
+  check('an unblocked it-support seat wakes it-support, not maker', support && support.wake === 'it-support', support && support.wake);
   check('a qa seat wakes qa-independent', byTicket['AS-HD-055'] && byTicket['AS-HD-055'].wake === 'qa-independent', byTicket['AS-HD-055'] && byTicket['AS-HD-055'].wake);
   check('every unblocked seat wakes its own capsule owner',
     d.filter((e) => !e.escalation_class).every((e) => e.wake === rt.capsules[e.ticket].owner_actor),
@@ -394,6 +452,7 @@ function check(name, cond, detail = '') {
   // seat that would stop the moment it read its own capsule.
   const rtDead = loadRuntime();
   const victim = rtDead.capsules['AS-HD-057'];
+  victim.blocker = null;
   rtDead.leases.find((l) => l.id === victim.writer_lease).revoked = true;
   const dead = computeDispatch(contracts, rtDead).find((e) => e.ticket === 'AS-HD-057');
   check('a revoked lease escalates instead of waking the seat', !!dead && dead.escalation_class === 'technical-blocker' && /revoked/.test(dead.reason), JSON.stringify(dead));
@@ -448,8 +507,10 @@ function check(name, cond, detail = '') {
     check('reseating twice is a no-op', (() => { const again = runReseat(agentops, 'AS-HD-057'); return again.ok && again.unchanged === true; })());
 
     // The CI shape: a pull request is checked out as a detached merge commit.
+    // AS-HD-054 is a still-unstarted capsule on a stale base, so the refusal
+    // exercised here is the detached HEAD, not an already-started state.
     git('checkout', '-q', '--detach');
-    const det = runReseat(agentops, 'AS-HD-050');
+    const det = runReseat(agentops, 'AS-HD-054');
     check('reseat refuses a detached HEAD', !det.ok && /detached/.test(det.errors.join(' ')), JSON.stringify(det));
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
@@ -477,6 +538,18 @@ function check(name, cond, detail = '') {
   check('hub overview lists every ticket', Object.keys(rt.capsules).every((t) => home.includes(t)));
   check('hub overview names the seat that each ticket wakes',
     computeDispatch(contracts, rt).every((e) => home.includes(e.wake)));
+  check('hub restores the owner-facing editorial shell',
+    home.includes('class="hero"') && home.includes('class="truth-panel"') && home.includes('Review &amp; Approval Hub'));
+  check('hub ticket queue uses keyboard-native expandable cards',
+    home.includes('<details class="section-fold"') && home.includes('<details class="ticket-card">') && home.includes('<summary class="ticket-summary">'));
+  check('hub overview metrics are derived from current runtime state',
+    home.includes(`<strong>${Object.keys(rt.capsules).length}</strong><span>Tracked tickets</span>`)
+      && home.includes(`<span>Writer seats</span><small>active leases</small>`));
+  check('every current and future Hub route uses the versioned owner-page default',
+    pages.every((page) => page.text.includes(`data-owner-layout="${OWNER_PAGE_LAYOUT_ID}"`)
+      && page.text.includes(`<meta name="ashenspire-owner-layout" content="${OWNER_PAGE_LAYOUT_ID}">`)
+      && page.text.includes('<header class="hero">')),
+    pages.filter((page) => !page.text.includes(`data-owner-layout="${OWNER_PAGE_LAYOUT_ID}"`)).map((page) => page.rel).join(','));
   const ticketPage = byRel['generated/hub/tickets/AS-HD-057.html'];
   check('a ticket page carries its live seal', ticketPage.includes(rt.capsules['AS-HD-057'].current_hash.slice(0, 23)));
   check('a ticket page replays its event chain',

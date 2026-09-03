@@ -32,7 +32,8 @@ import { chargeFlaskId } from '../model/gracerefill.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 
 import * as A from './actions.js';
-import * as S from './statuses.js';
+import { playerWeightClass } from './combat.js';
+import * as S from '../framework/statusSemantics.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
@@ -136,6 +137,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     energyMax: p.energyMax,
     drawPerTurn: p.drawPerTurn,
     damageBySchoolAdd: p.damageBySchoolAdd || {},
+    itemUpgradeLevels: p.itemUpgradeLevels || {},
     // Co-op players carry no loadout into this engine, so the vessel arrives
     // only if the caller stamped a threshold; absent stays absent (the HUD
     // refusal), never a lying 0/0. Same graceful shape as maxMana above.
@@ -149,12 +151,14 @@ function addPlayerState(C, p, { initial = false } = {}) {
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
+    ...(c.sourceArmamentId ? { sourceArmamentId: c.sourceArmamentId } : {}),
+    ...(Number.isInteger(c.smithingLevel) ? { smithingLevel: c.smithingLevel } : {}),
   }));
   const shuffled = C.rng.shuffle('shuffle', deck);
   const innate = [];
   const rest = [];
   for (const card of shuffled) {
-    ((resolveCard(C.registries, card).keywords || []).includes('innate') ? innate : rest).push(card);
+    (C.registries.framework.isInnate(resolveCard(C.registries, card)) ? innate : rest).push(card);
   }
   const P = {
     id: p.id,
@@ -162,6 +166,10 @@ function addPlayerState(C, p, { initial = false } = {}) {
     classId: p.classId,
     attributeMode: p.attributeMode,
     attributes: p.attributes ? { ...p.attributes } : undefined,
+    // The seat's loadout, so the framework Weight Class (dodge pricing and the
+    // dodge check) is decided from THIS player's equipment, not a Light default.
+    loadout: p.loadout ? structuredClone(p.loadout) : null,
+    itemUpgradeLevels: p.itemUpgradeLevels || {},
     entity,
     piles: { draw: [...innate, ...rest], hand: [], discard: [], exhaust: [] },
     connected: true,
@@ -184,6 +192,12 @@ function addPlayerState(C, p, { initial = false } = {}) {
 function setActive(C, P) {
   C.player = P ? P.entity : null;
   C.piles = P ? P.piles : null;
+  // The shared action context is combat-shaped: the dodge opcode and the
+  // class-priced cost read `attributes` / `loadout` off it, so the active
+  // seat's own are exposed here — the same fields the solo engine carries.
+  C.attributes = P ? P.attributes : null;
+  C.loadout = P ? P.loadout : null;
+  C.itemUpgradeLevels = P ? P.itemUpgradeLevels : {};
   // Every player entity carries id 'player', so triggers.js scopes player-owned
   // once / limitPerTurn gates by this seat id instead (see ownerKeyFor). Without
   // it, one seat's once-per-combat relic/stance/status consumes the party's.
@@ -279,6 +293,11 @@ function startPlayerPhase(C) {
     const e = P.entity;
     P.ended = false;
     e.counters.cardsPlayedThisTurn = 0;
+    // A turn's Stamina spend belongs to that turn alone. A seat that spent
+    // and then disconnected is retired by leaveCombat without reaching
+    // endOnePlayerTurn, so the counter is zeroed here, at every seat's turn
+    // start, and never survives into a later turn to suppress its recovery.
+    e.counters.staminaSpentThisTurn = 0;
     if (!S.getFlag(C, e, 'retainBlock')) e.block = 0;
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
     e.energy = e.energyMax;
@@ -311,9 +330,11 @@ function needsEnemyTarget(def) {
 }
 function effectiveCost(C, def) {
   if (def.cost === 'X') return 'X';
-  let cost = def.cost;
-  if (def.type === 'power') cost = Math.max(0, cost - passiveSum(C.registries, C.player.relicIds, 'powerCostReduction'));
-  return cost;
+  // Same framework cost authority as the solo engine (hand parity).
+  return C.registries.framework.costProfile(def, {
+    powerCostReduction: passiveSum(C.registries, C.player.relicIds, 'powerCostReduction', C.player.itemUpgradeLevels || {}),
+    weightClass: playerWeightClass(C).weightClass,
+  }).action;
 }
 
 function doPlayCard(C, { cardInstanceId, targetId }) {
@@ -323,13 +344,16 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   const inst = C.piles.hand[idx];
   const def = resolveCard(C.registries, inst);
   const kws = def.keywords || [];
-  if (kws.includes('unplayable')) throw new Error(`'${def.name}' is unplayable`);
+  if (C.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(C, def);
-  const manaCost = def.manaCost || 0;
+  const pools = C.registries.framework.costProfile(def, { weightClass: playerWeightClass(C).weightClass });
+  const manaCost = pools.mana;
+  const staminaCost = pools.stamina;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
+  if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);
 
   const friendlyPlan = friendlyTargetPlan(def, C.playerKey, [...C.players.values()].map((entry) => ({
     id: entry.id,
@@ -359,6 +383,9 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   if (cost > 0 || isX) C.emit('energySpent', { amount: cost });
   p.mana -= manaCost;
   if (manaCost > 0) C.emit('manaSpent', { amount: manaCost });
+  p.stamina -= staminaCost;
+  if (staminaCost > 0) C.emit('staminaSpent', { amount: staminaCost });
+  p.counters.staminaSpentThisTurn = (p.counters.staminaSpentThisTurn || 0) + staminaCost;
 
   C.piles.hand.splice(idx, 1);
   p.counters.cardsPlayedThisTurn += 1;
@@ -366,6 +393,7 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   const meta = {
     energySpent: cost,
     manaSpent: manaCost,
+    staminaSpent: staminaCost,
     ordinalThisTurn: p.counters.cardsPlayedThisTurn,
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
@@ -382,15 +410,19 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   C.emit('cardPlayed', {
     cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: def.type,
     targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
-    ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost,
+    ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,
   });
   drainQueue(C);
 
   if (!C.result) {
-    if (kws.includes('exhaust')) {
+    // Same framework placement authority as the solo engine (hand parity).
+    const destination = C.registries.framework.afterPlayDestination(def);
+    if (destination === 'EXHAUST_PILE') {
       C.piles.exhaust.push(inst);
       C.emit('cardExhausted', { cardInstanceId: inst.instanceId, cardId: inst.cardId, reason: 'played' });
-    } else if (def.type !== 'power') {
+    } else if (destination === 'HAND') {
+      C.piles.hand.push(inst);
+    } else if (destination !== 'REMOVED_FROM_PLAY') {
       C.piles.discard.push(inst);
     }
     drainQueue(C);
@@ -462,11 +494,25 @@ function endOnePlayerTurn(C, P) {
   drainQueue(C);
   if (C.result) return;
   S.decayAtTurnEnd(C, p);
+  // Stamina (framework contract: Mana and Stamina), per seat: an idle turn
+  // recovers, a spending turn does not — the same rule and door as the solo
+  // engine's end of turn, on this player's own pool and counter.
+  if (Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
+    const next = C.registries.framework.staminaTurnEnd({
+      currentStamina: p.stamina, maxStamina: p.maxStamina, staminaSpentThisTurn: p.counters.staminaSpentThisTurn || 0,
+    });
+    if (next.currentStamina !== p.stamina) {
+      const amount = next.currentStamina - p.stamina;
+      p.stamina = next.currentStamina;
+      C.emit('staminaRecovered', { amount, reason: 'idle', playerId: P.id });
+    }
+  }
+  p.counters.staminaSpentThisTurn = 0;
   const keep = [], toDiscard = [], toExhaust = [];
   for (const card of C.piles.hand) {
-    const kws = resolveCard(C.registries, card).keywords || [];
-    if (kws.includes('retain')) keep.push(card);
-    else if (kws.includes('ethereal')) toExhaust.push(card);
+    const fate = C.registries.framework.endTurnFate(resolveCard(C.registries, card));
+    if (fate === 'keep') keep.push(card);
+    else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);
   }
   C.piles.hand = keep;

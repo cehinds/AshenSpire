@@ -69,10 +69,15 @@ Run these in order so later steps exercise real state produced by earlier steps.
    - Use a combat flask and verify health/charge deltas.
    - At a shrine, test Rest, Smith, flask reallocation, and Level up.
    - Before committing, verify the confirmation shows exact costs, stat/resource deltas, whether the choice leaves the shrine, Back, and Continue.
-   - For Smith, verify Confirm starts disabled; choosing a card shows the
-     current-versus-upgraded preview without mutating the deck; Back and Escape
-     preserve the deck and return focus; Confirm upgrades exactly one card and
-     leaves the Shrine.
+   - For Smith, verify Confirm starts disabled; each candidate is one distinct owned armament,
+     not a deck copy. Selecting one must show its tier, 1-Stone cost, purse or shortfall, and
+     every grouped sourced-basic-card delta without mutating the deck. Back and Escape preserve
+     the run and return focus. Confirm remains disabled at zero Stones; when affordable it spends
+     exactly 1 Stone, promotes exactly one armament to tier 1, refreshes all current and future
+     sourced basic cards, records a durable receipt, and leaves the Shrine.
+   - Verify a Smithing tier survives save/load, active-combat save/load, and swapping away from
+     and back to the armament. Verify elite and boss victories grant exactly 1 Stone once while
+     normal and treasure pools grant 0, including save/load between grant and replay.
 9. **Persistence**
    - Save in a stable map state and in combat.
    - Return to title, Continue, and explicitly Load the slot.

@@ -262,8 +262,15 @@ const CONTRACTS = [
   { name: 'qa', file: 'governance/qa.json', schema: 'schemas/qa.schema.json' },
   { name: 'evidence', file: 'governance/evidence.json', schema: 'schemas/evidence.schema.json' },
   { name: 'owner-command', file: 'governance/owner-command.json', schema: 'schemas/owner-command.schema.json' },
-  { name: 'migration', file: 'governance/migration.json', schema: 'schemas/migration.schema.json' }
+  { name: 'migration', file: 'governance/migration.json', schema: 'schemas/migration.schema.json' },
+  { name: 'directives', file: 'governance/directives.json', schema: 'schemas/directives.schema.json' },
+  { name: 'retention', file: 'governance/retention.json', schema: 'schemas/retention.schema.json' }
 ];
+
+// Derived, never restated. The test asserted a hardcoded 19 with the number
+// spelled out in its own label, so registering a contract failed a check whose
+// real subject is "every registered contract loads".
+export const CONTRACT_COUNT = CONTRACTS.length;
 
 export function loadContracts(root = ROOT) {
   const out = {};
@@ -540,6 +547,171 @@ export function semanticChecks(c) {
   // and — the part that matters most — what each explicitly does NOT grant.
   // It lived only as a decision record, so nothing stopped a transition guard
   // paraphrasing a gate wrongly, or a gate quietly claiming release authority.
+  // An action whose lifecycle_target is reached by a protected transition is a
+  // protected action. Restating the flag by hand let fast-forward-test declare
+  // itself unprotected while moving through transitions.json's protected
+  // `dev-integrated -> hosted-verified`, so generated governance and every
+  // decision event reported a protected promotion as ordinary.
+  if (c['owner-command'] && c.transitions) {
+    for (const a of c['owner-command'].actions) {
+      if (!a.lifecycle_target) continue;
+      const moves = c.transitions.transitions.filter((t) => t.to === a.lifecycle_target);
+      if (moves.length && moves.every((t) => t.protected) && !a.protected) {
+        errors.push(`owner-command: action '${a.id}' moves to '${a.lifecycle_target}', which transitions.json reaches only by protected moves, but declares protected:false; a consumer filtering on that flag would omit it`);
+      }
+    }
+  }
+
+  // An action that performs a gate must move the lifecycle that gate guards.
+  // fast-forward-test advanced `test` and left the capsule at dev-integrated,
+  // so Gate D's declared hosted-verified -> resolved transition was unreachable:
+  // the ref said promoted and the authoritative lifecycle did not.
+  // `required_evidence` was validated against evidence.json in promotion-gates
+  // and in qa, each by its own loop, and nowhere else. authority.json carried a
+  // field of the same name holding prose — one name, two types — so a generic
+  // check would either have failed on it or been written to skip it, and
+  // skipping is how a check stops firing. The prose field is `evidence_expected`
+  // now, and this sweeps every `required_evidence` in the corpus instead of the
+  // two contracts someone thought of.
+  if (c.evidence) {
+    const evIds = new Set(c.evidence.evidence.map((e) => e.id));
+    const sweepEvidence = (node, where) => {
+      if (Array.isArray(node)) { node.forEach((v, i) => sweepEvidence(v, `${where}[${i}]`)); return; }
+      if (!node || typeof node !== 'object') return;
+      for (const [k, v] of Object.entries(node)) {
+        if (k === 'required_evidence') {
+          if (!Array.isArray(v)) {
+            errors.push(`${where}.${k} is not a list of evidence ids; that name means a list of evidence.json ids everywhere in this corpus, and prose under it would be read as one`);
+          } else {
+            for (const need of v) {
+              if (!evIds.has(need)) errors.push(`${where}.${k} requires '${need}', which evidence.json does not declare; nothing can produce it and nothing can pass by holding it`);
+            }
+          }
+        }
+        sweepEvidence(v, `${where}.${k}`);
+      }
+    };
+    for (const [name, contract] of Object.entries(c)) sweepEvidence(contract, name);
+  }
+
+  // Role-valued fields were checked one at a time, where someone remembered.
+  // A sweep found four references nothing declared: three were deliberate
+  // non-seat writers with no declaration to point at, and one — Gate D's
+  // 'delivery-systems-review' conditional reviewer — was dangling outright, so
+  // that condition could never be routed to anyone. A role field naming
+  // something nobody holds is the same defect as a status string nothing
+  // matches: the check that reads it compares against a value that never
+  // appears, and passes by never running. Every such field is swept now, and
+  // the vocabulary it may draw from is declared rather than remembered.
+  if (c.roles && c.teams) {
+    const roleIds = new Set(c.roles.roles.map((r) => r.role));
+    // A non-seat writer is valid only in the fields its declaration names —
+    // the ownership/writer fields whose semantics support an unheld owner.
+    // One flat vocabulary let Gate D's conditional reviewer be 'generator':
+    // a protected gate requiring a recommendation nobody can author, with
+    // verify green. The declaration carries its own scope now.
+    const nonSeat = new Map((c.roles.non_seat_writers || []).map((w) => [w.id, new Set(w.appears_in || [])]));
+    const pools = new Set((c.teams.capability_pools || []).map((pp) => pp.id));
+    const aliases = new Set((c.teams.legacy_aliases || []).map((a) => a.legacy));
+    const overlap = [...nonSeat.keys()].filter((id) => roleIds.has(id));
+    for (const id of overlap) {
+      errors.push(`roles: '${id}' is declared both as a role and as a non-seat writer; a reference naming it would mean two different things`);
+    }
+    const sweep = (node, where) => {
+      if (Array.isArray(node)) { node.forEach((v, i) => sweep(v, `${where}[${i}]`)); return; }
+      if (!node || typeof node !== 'object') return;
+      for (const [k, v] of Object.entries(node)) {
+        if (typeof v === 'string' && (k === 'role' || k.endsWith('_role'))) {
+          if (roleIds.has(v) || pools.has(v) || aliases.has(v)) {
+            // a declared seat, review lane, or routed alias — someone acts
+          } else if (nonSeat.has(v)) {
+            if (!nonSeat.get(v).has(k)) {
+              errors.push(`${where}.${k} names '${v}', a non-seat writer that nothing holds; its declaration permits it in ${[...nonSeat.get(v)].map((f) => `'${f}'`).join(', ')} only, and a field naming someone who must act cannot be satisfied by an identifier nobody holds`);
+            }
+          } else {
+            errors.push(`${where}.${k} names '${v}', which is not a declared role, capability pool, legacy alias or non-seat writer; a reference nobody holds routes to no one and every check reading it passes by never matching`);
+          }
+        }
+        sweep(v, `${where}.${k}`);
+      }
+    };
+    for (const [name, contract] of Object.entries(c)) sweep(contract, name);
+  }
+
+  // A ref naming the command that may move it is a grant, so it is checked like
+  // one: the action must exist, must be a protected one (moving a shared ref is
+  // never ordinary), and no two refs may claim the same command — two refs
+  // answering one lookup means the ref a command moves depends on array order.
+  if (c['git-ownership'] && c['owner-command']) {
+    const byActionId = new Map(c['owner-command'].actions.map((a) => [a.id, a]));
+    const claimed = new Map();
+    for (const r of c['git-ownership'].refs) {
+      if (!r.mutated_by_action) continue;
+      const act = byActionId.get(r.mutated_by_action);
+      if (!act) {
+        errors.push(`git-ownership: ref '${r.ref}' names '${r.mutated_by_action}' as the command that may move it, which owner-command.json does not declare; the ref would answer a lookup no command makes`);
+      } else if (!act.protected) {
+        errors.push(`git-ownership: ref '${r.ref}' may be moved by '${act.id}', which is declared unprotected; moving a shared ref is never an ordinary command`);
+      }
+      const prior = claimed.get(r.mutated_by_action);
+      if (prior) {
+        errors.push(`git-ownership: refs '${prior}' and '${r.ref}' both claim '${r.mutated_by_action}'; which ref that command moves would depend on declaration order`);
+      } else {
+        claimed.set(r.mutated_by_action, r.ref);
+      }
+    }
+  }
+
+  // The earlier form found Gate C by matching /fast-forward/ against its prose
+  // `entry`. Rewording the gate would have made the lookup miss and the check
+  // pass by never running — the defect class this file exists to catch, sitting
+  // inside the check that catches it. The binding is declared now
+  // (`performs_gate`), so it is looked up rather than inferred, and an action
+  // that advances the lifecycle without naming its gate is an error.
+  if (c['owner-command'] && c['promotion-gates']) {
+    const byGateId = new Map(c['promotion-gates'].gates.map((g) => [g.id, g]));
+    for (const a of c['owner-command'].actions) {
+      if (!a.lifecycle_target && !a.performs_gate) continue;
+      if (a.lifecycle_target && !a.performs_gate) {
+        errors.push(`owner-command: action '${a.id}' advances the lifecycle to '${a.lifecycle_target}' but names no gate it performs; a lifecycle advance no gate guards is an ungated promotion`);
+        continue;
+      }
+      const gate = byGateId.get(a.performs_gate);
+      if (!gate) {
+        errors.push(`owner-command: action '${a.id}' performs gate '${a.performs_gate}', which promotion-gates does not declare; nothing would check what it claims to have opened`);
+        continue;
+      }
+      const tos = (gate.guards_transitions || []).map((t) => t.to);
+      if (!a.lifecycle_target) {
+        errors.push(`owner-command: action '${a.id}' performs Gate ${gate.id} but declares no lifecycle_target; the gate would open and the capsule stand still`);
+      } else if (!tos.includes(a.lifecycle_target)) {
+        errors.push(`owner-command: action '${a.id}' performs Gate ${gate.id}, which guards the move to ${tos.map((t) => `'${t}'`).join(' or ') || 'nothing'}, but declares lifecycle_target '${a.lifecycle_target}'; the ref would advance while the capsule stood still`);
+      }
+      // A gate is opened by the seat that command authenticates. A gate whose
+      // actor cannot authenticate the action is a gate no one can pass.
+      if (!(a.authenticator_roles || []).includes(gate.actor_role)) {
+        errors.push(`owner-command: action '${a.id}' performs Gate ${gate.id}, whose actor is '${gate.actor_role}', but authenticates ${(a.authenticator_roles || []).map((r) => `'${r}'`).join(', ') || 'no one'}; the seat the gate names could not run the command that opens it`);
+      }
+    }
+  }
+
+  // A gate requiring evidence nobody declares is a gate nothing can pass.
+  // Gate B required 'hosted-evidence-url' while evidence.json declares
+  // 'hosted-verification-receipt' — the same concept under a name the manifest
+  // never had — so a capsule could neither hold it (runtimeChecks rejects an
+  // undeclared pointer) nor omit it. Nothing caught that until a check depended
+  // on it, which is the point of checking it here.
+  if (c['promotion-gates'] && c.evidence) {
+    const declared = new Set(c.evidence.evidence.map((e) => e.id));
+    for (const g of c['promotion-gates'].gates) {
+      for (const need of g.required_evidence || []) {
+        if (!declared.has(need)) {
+          errors.push(`promotion-gates: gate ${g.id} requires evidence '${need}', which evidence.json does not declare; a capsule can neither hold it nor pass without it`);
+        }
+      }
+    }
+  }
+
   if (c['promotion-gates'] && c.roles && c.transitions) {
     const pg = c['promotion-gates'];
     const roleSet = new Set(c.roles.roles.map((r) => r.role));
@@ -777,9 +949,23 @@ export function semanticChecks(c) {
 
   // 2. Git-ownership references only known roles (declared or synthetic writer).
   if (c['git-ownership']) {
+    const ledger = c['git-ownership'].ledger_serialization;
     for (const p of c['git-ownership'].paths) {
-      if (!knownRoles.has(p.owner_role)) errors.push(`git-ownership: path '${p.glob}' names unknown role '${p.owner_role}'`);
+      // A per_seat path is owned by whichever lease holds the ticket, so its
+      // owner_role is a marker rather than a declared role — the same shape
+      // refs already use for `recovery/*`.
+      if (!p.per_seat && !knownRoles.has(p.owner_role)) errors.push(`git-ownership: path '${p.glob}' names unknown role '${p.owner_role}'`);
       if (p.glob.split('/').includes('..')) errors.push(`git-ownership: path glob '${p.glob}' contains a '..' traversal segment`);
+      // per_seat is not a way out of ownership. It is only sound where a single
+      // tool is the sole writer and the lane is serialized per ticket: that is
+      // what keeps two seats holding the same glob from being a collision. A
+      // product path marked per_seat would just be unowned.
+      if (p.per_seat) {
+        if (p.owner_role !== 'per-seat') errors.push(`git-ownership: path '${p.glob}' is per_seat but names owner_role '${p.owner_role}'; a per-seat path declares the marker, not a role that does not own it`);
+        if (!ledger || p.serialized_lane !== ledger.lane) errors.push(`git-ownership: path '${p.glob}' is per_seat but its lane '${p.serialized_lane}' declares no sole writer; per-seat ownership is only safe where one tool writes and the lane serializes per ticket`);
+      } else if (p.owner_role === 'per-seat') {
+        errors.push(`git-ownership: path '${p.glob}' names owner_role 'per-seat' without the per_seat marker, so nothing checks the conditions that make per-seat ownership safe`);
+      }
     }
     for (const r of c['git-ownership'].refs) {
       // A per_seat namespace is owned by whichever lease holds the ticket, so
@@ -896,6 +1082,165 @@ export function semanticChecks(c) {
     }
   }
 
+  // B3 (#430): standing directives. The cap the routing package demands is
+  // non-amplification — a directive changes what a seat MUST do, never what it
+  // MAY do. Everything else here exists because a directive that claims
+  // enforcement it does not have is worse than one that claims none.
+  // #430 (seat display names): both schemas were additionalProperties:false with
+  // no such field, so any display_name failed validation and the owner's naming
+  // convention could not be applied at all. The field exists now, and a
+  // populated one is checked against the template teams.json declares rather
+  // than being free text — an unchecked display field drifts into a second,
+  // contradictory naming scheme, which is how there came to be two shapes here
+  // already.
+  if (c.teams && c.teams.naming_convention) {
+    const nc = c.teams.naming_convention;
+    const shape = (tpl) => {
+      const segs = String(tpl).split('|').map((x) => x.trim());
+      return { kind: segs[0], segments: segs.length, suffix: (segs[segs.length - 1].split('-').pop() || '').trim() };
+    };
+    const persistent = shape(nc.display_name_persistent);
+    const agent = shape(nc.display_name_agent);
+    // Accepting either template for every seat was the whole check: a standing
+    // seat could be presented as `A | ...` and nothing objected, so the ledger's
+    // one persistent coordination seat could read as an agent a lead spins out
+    // and discards. The permitted kind is the seat's own, and a seat declared in
+    // roles.json or hierarchy.json is standing by construction — agent seats are
+    // spun out per ticket under agent_seat and are never declared there. Stated
+    // in teams.naming_convention.display_name_kind_is_not_a_choice.
+    const checkDisplay = (where, id, value, requiredKind) => {
+      const segs = String(value).split('|').map((x) => x.trim());
+      const kind = segs[0];
+      if (kind !== persistent.kind && kind !== agent.kind) {
+        errors.push(`${where} '${id}' display_name starts with '${kind}', which is neither seat kind the convention declares ('${persistent.kind}' or '${agent.kind}')`);
+        return;
+      }
+      if (kind !== requiredKind) {
+        errors.push(`${where} '${id}' is a declared standing seat but its display_name opens '${kind}', the kind a lead spins out; a declared seat carries '${requiredKind}'`);
+        return;
+      }
+      const tpl = kind === agent.kind ? agent : persistent;
+      const tplText = kind === agent.kind ? nc.display_name_agent : nc.display_name_persistent;
+      if (segs.length !== tpl.segments) {
+        errors.push(`${where} '${id}' display_name has ${segs.length} segments; the declared template '${tplText}' has ${tpl.segments}`);
+        return;
+      }
+      // Every segment the template declares must carry content. Checking only
+      // the last one let `P |  | Coordination Specialist - AshenSpire` pass with
+      // the role and level missing — right shape, no name.
+      const tplSegs = String(tplText).split('|').map((x) => x.trim());
+      for (let k = 1; k < segs.length; k++) {
+        if (segs[k] === '') {
+          errors.push(`${where} '${id}' display_name leaves segment ${k + 1} empty, where the template declares '${tplSegs[k]}'; a name with the right shape and nothing in it is not a name`);
+        }
+      }
+      const last = segs[segs.length - 1];
+      if (!last.endsWith(`- ${tpl.suffix}`)) {
+        errors.push(`${where} '${id}' display_name ends '${last}'; the declared template closes with '- ${tpl.suffix}'`);
+      } else if (last.slice(0, -(`- ${tpl.suffix}`).length).trim() === '') {
+        errors.push(`${where} '${id}' display_name carries no title before the project; a display name without a title says less than the role id it decorates`);
+      }
+    };
+    for (const r of (c.roles ? c.roles.roles : [])) if (r.display_name) checkDisplay('roles', r.role, r.display_name, persistent.kind);
+    for (const n of (c.hierarchy ? c.hierarchy.nodes : [])) if (n.display_name) checkDisplay('hierarchy node', n.actor_id, n.display_name, persistent.kind);
+    // A role and its actor must not disagree about the same seat's name.
+    if (c.roles && c.hierarchy) {
+      const byRole = new Map(c.roles.roles.filter((r) => r.display_name).map((r) => [r.role, r.display_name]));
+      for (const n of c.hierarchy.nodes) {
+        if (!n.display_name) continue;
+        const rd = byRole.get(n.role);
+        if (rd && rd !== n.display_name) {
+          errors.push(`hierarchy node '${n.actor_id}' display_name differs from role '${n.role}' display_name; one seat, two names, and nothing says which is shown`);
+        }
+      }
+    }
+  }
+
+  // The same shape as the directive status the review flagged, found by sweeping
+  // the two contracts this PR added for unconstrained strings that other code
+  // then compares against. Both of these are read by checks, so a typo does not
+  // fail loudly — it makes the check quietly match nothing.
+  if (c.retention) {
+    const ret = c.retention;
+    if (c.roles && !c.roles.roles.some((r) => r.role === ret.authority.actor_role)) {
+      errors.push(`retention: authority.actor_role '${ret.authority.actor_role}' is not a declared role; the consolidation authority check would compare against a role nobody holds and refuse every consolidation`);
+    }
+    // The event kind consolidations use must be one events can actually carry,
+    // or runtimeChecks matches no event and every range, authority and
+    // protected-ticket check silently never runs.
+    let kinds = [];
+    try { kinds = JSON.parse(readFileSync(resolve(ROOT, RUNTIME_SCHEMAS.event), 'utf8')).properties.kind.enum || []; } catch { kinds = []; }
+    if (kinds.length && !kinds.includes(ret.consolidation.kind)) {
+      errors.push(`retention: consolidation.kind '${ret.consolidation.kind}' is not a declared event kind (${kinds.join(', ')}); no event could ever match it, so every consolidation check would pass by never running`);
+    }
+  }
+
+  if (c.directives) {
+    const ids = new Set();
+    const known = new Set(Object.keys(c));
+    const actorIds = c.hierarchy ? new Set(c.hierarchy.nodes.map((n) => n.actor_id)) : new Set();
+    const ownerActor = c['owner-intent'] && c['owner-intent'].owner.actor_id;
+    const ownerReserved = new Set((c['owner-intent'] && c['owner-intent'].owner.reserved_authority) || []);
+    for (const d of c.directives.directives) {
+      if (ids.has(d.id)) errors.push(`directives: '${d.id}' is declared twice`);
+      ids.add(d.id);
+      if (actorIds.size && !actorIds.has(d.issued_by)) {
+        errors.push(`directives: '${d.id}' is issued by '${d.issued_by}', which is not a hierarchy actor; an instruction from nobody in particular binds nobody`);
+      }
+      if (utcInstant(d.issued_at) === null) errors.push(`directives: '${d.id}' issued_at '${d.issued_at}' is not a real instant`);
+      // Non-amplification. An action a directive purports to grant must already
+      // be held by its issuer, and owner-reserved authority is never reachable
+      // by instruction — that is how a directive would become a back door.
+      for (const a of d.grants_actions || []) {
+        if (ownerReserved.has(a) && d.issued_by !== ownerActor) {
+          errors.push(`directives: '${d.id}' purports to grant owner-reserved authority '${a}'; a directive constrains a seat, it does not empower one`);
+        }
+        errors.push(`directives: '${d.id}' grants action '${a}'; a directive changes what a seat must do, never what it may do — grants belong in authority.json or a delegation envelope`);
+      }
+      // A claimed codification is checked against the corpus, not trusted.
+      // Half a codification claim is still a claim. `codified_in` alone skipped
+      // the field check entirely, so a directive could name a contract without
+      // naming what in it enforces the directive — which is the invariant this
+      // contract was written to hold.
+      if (!!d.codified_in !== !!d.codified_as) {
+        errors.push(`directives: '${d.id}' names ${d.codified_in ? 'codified_in without codified_as' : 'codified_as without codified_in'}; a codification claim names the contract AND the exact field, or it names neither`);
+      }
+      if (d.codified_in) {
+        if (!known.has(d.codified_in)) {
+          errors.push(`directives: '${d.id}' claims codification in '${d.codified_in}', which is not a declared contract`);
+        } else if (d.codified_as && contractFieldAt(c[d.codified_in], d.codified_as) === undefined) {
+          errors.push(`directives: '${d.id}' claims codification at '${d.codified_in}.${d.codified_as}', which does not exist; a directive claiming enforcement it does not have is worse than one claiming none`);
+        }
+      }
+      if (d.status === 'superseded' && !d.superseded_by) {
+        errors.push(`directives: '${d.id}' is superseded but names no successor; the record of what replaced it is the point of keeping it`);
+      }
+      if (d.superseded_by && !c.directives.directives.some((x) => x.id === d.superseded_by)) {
+        errors.push(`directives: '${d.id}' names successor '${d.superseded_by}', which is not a declared directive`);
+      }
+      // Existence is not succession. A directive naming itself, or two naming
+      // each other, leaves every one of them claiming to be replaced by
+      // something that was also replaced — a supersession chain with no live
+      // end, which is not a record of what is in force.
+      if (d.superseded_by) {
+        const seen = new Set([d.id]);
+        let cur = d.superseded_by;
+        while (cur) {
+          if (seen.has(cur)) {
+            errors.push(`directives: supersession from '${d.id}' closes a loop at '${cur}'; a chain of replacements with no live end says nothing about what is in force`);
+            break;
+          }
+          seen.add(cur);
+          const nxt = c.directives.directives.find((x) => x.id === cur);
+          cur = nxt ? nxt.superseded_by : null;
+        }
+      }
+      if (d.status !== 'superseded' && d.superseded_by) {
+        errors.push(`directives: '${d.id}' names a successor but is still '${d.status}'; two live directives on one instruction is a contradiction nothing resolves`);
+      }
+    }
+  }
+
   // 7. Delegation: subset-of-parent, decreasing depth, deputy cannot delegate an
   //    Owner-excluded action, time-bound, path-safe, declared roles.
   if (c.delegation) {
@@ -994,7 +1339,7 @@ export function semanticChecks(c) {
       if (ids.has(a.id)) errors.push(`owner-command: duplicate action id '${a.id}'`);
       ids.add(a.id);
       for (const r of a.authenticator_roles) if (!roles.has(r)) errors.push(`owner-command: action '${a.id}' names unknown authenticator role '${r}'`);
-      if ((a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
+      if ((a.id === 'grant-dev-delivery-authority' || a.id === 'authorize-release' || a.id === 'record-owner-override') && !(a.authenticator_roles.length === 1 && a.authenticator_roles[0] === 'owner')) {
         errors.push(`owner-command: action '${a.id}' must be owner-exclusive`);
       }
     }
@@ -1011,6 +1356,16 @@ export function semanticChecks(c) {
 // Deterministic Markdown view. No timestamps or volatile state — the output is
 // a pure function of the JSON so `render --check` is a reliable drift gate.
 // ---------------------------------------------------------------------------
+// One row shape for the owner-command table, shared by the renderer and the
+// coverage projection. Two copies of a row template drift, and a drifted
+// projection reports a field as rendered that the reader never sees. The Gate
+// and Advances-to columns exist because performs_gate and lifecycle_target
+// decide whether a command advances a capsule at all — a seat reading the
+// table to see what a command does could not see either of them before.
+export function ownerCommandRow(a) {
+  return `| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} | ${a.performs_gate ? `Gate ${a.performs_gate}` : '\u2014'} | ${a.lifecycle_target ? '`' + a.lifecycle_target + '`' : '\u2014'} | ${a.required_fields.map((f) => '`' + f + '`').join(', ')} | ${mdCell(a.affects)} |`;
+}
+
 export function renderGovernance(c) {
   const L = [];
   L.push('<!-- GENERATED by .agentops/tools/opsctl.mjs render — do not edit by hand. -->');
@@ -1081,6 +1436,7 @@ export function renderGovernance(c) {
     L.push(`### \`${r.role}\``);
     L.push('');
     L.push(`- **Mission:** ${r.mission}`);
+    if (r.display_name) L.push(`- **Seat:** ${mdCell(r.display_name)}`);
     if (r.archetype) L.push(`- **Derives from:** \`${r.archetype}\` — a seniority level, carrying exactly that archetype's authority and no more.`);
     L.push(`- **May:** ${r.may.join(', ') || '—'}`);
     L.push(`- **Must:** ${r.must.join('; ') || '—'}`);
@@ -1089,12 +1445,24 @@ export function renderGovernance(c) {
     L.push('');
   }
 
+  // Identifiers that stand where a role does and are held by no one. They are
+  // rendered because a reader hitting `generator` or `per-seat` in the ref and
+  // path tables has no other place to find out what they mean.
+  L.push('### Identifiers that are not seats');
+  L.push('');
+  L.push(c.roles.non_seat_writers_are_not_roles);
+  L.push('');
+  for (const w of c.roles.non_seat_writers) L.push(`- \`${w.id}\` (permitted in ${w.appears_in.map((f) => '\`' + f + '\`').join(', ')}) — ${w.means}`);
+  L.push('');
+
   L.push('## Authority matrix');
   L.push('');
-  L.push('| Action | Routine owner role | Scope | Protected | Required evidence |');
+  L.push(c.authority.evidence_expected_is_prose);
+  L.push('');
+  L.push('| Action | Routine owner role | Scope | Protected | Evidence expected |');
   L.push('|---|---|---|---|---|');
   for (const g of c.authority.grants) {
-    L.push(`| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`);
+    L.push(`| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${mdCell(g.evidence_expected)} |`);
   }
   L.push('');
 
@@ -1104,15 +1472,15 @@ export function renderGovernance(c) {
   L.push('');
   L.push('### Refs');
   L.push('');
-  L.push('| Ref | Owner role | Mutation |');
-  L.push('|---|---|---|');
-  for (const r of c['git-ownership'].refs) L.push(`| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`);
+  L.push('| Ref | Owner role | Mutation | Moved by |');
+  L.push('|---|---|---|---|');
+  for (const r of c['git-ownership'].refs) L.push(gitRefRow(r));
   L.push('');
   L.push('### Paths');
   L.push('');
   L.push('| Path glob | Owner role | Serialized lane |');
   L.push('|---|---|---|');
-  for (const p of c['git-ownership'].paths) L.push(`| \`${mdCell(p.glob)}\` | ${p.owner_role} | ${p.serialized_lane} |`);
+  for (const p of c['git-ownership'].paths) L.push(`| \`${mdCell(p.glob)}\` | ${p.per_seat ? '`per-seat` — the ticket\u2019s lease' : p.owner_role} | ${p.serialized_lane} |`);
   if (c['git-ownership'].branch_hygiene) {
     const bh = c['git-ownership'].branch_hygiene;
     L.push('');
@@ -1124,6 +1492,11 @@ export function renderGovernance(c) {
   }
   L.push('');
     L.push(`Generated lane \`${c['git-ownership'].generated_serialization.lane}\`: ${c['git-ownership'].generated_serialization.rule}`);
+    const led = c['git-ownership'].ledger_serialization;
+    L.push('');
+    L.push(`Ledger lane \`${led.lane}\`, written solely by \`${led.writer}\`: ${led.rule}`);
+    L.push('');
+    L.push(led.actor_rule);
     L.push('');
   L.push(`Collision rule: ${c['git-ownership'].collision_rule}`);
   L.push('');
@@ -1200,6 +1573,12 @@ export function renderGovernance(c) {
       L.push('');
       L.push(`- Persistent team lead: \`${nc.persistent_lead}\``);
       L.push(`- Agent seat it spins out: \`${nc.agent_seat}\``);
+      L.push(`- Persistent display name: \`${nc.display_name_persistent}\``);
+      L.push(`- Agent display name: \`${nc.display_name_agent}\``);
+      L.push('');
+      L.push(nc.display_name_is_not_the_seat_name);
+      L.push('');
+      L.push(nc.display_name_kind_is_not_a_choice);
       L.push('');
       L.push(`${nc.leading_letter_is_seat_kind} ${nc.not_the_tier_namespace}`);
     }
@@ -1319,6 +1698,18 @@ export function renderGovernance(c) {
     L.push(`- **Restricted:** ${ia.restricted.join('; ')}`);
     L.push(`- **Forbidden (never loaded):** ${ia.forbidden.join('; ')}`);
     L.push('');
+    // The one carve-out from concise output, and the shape it must take. Both
+    // arrived as owner directives and are codified here; directives.json names
+    // this field as their enforcement, and a claim of codification is checked
+    // against the corpus rather than believed.
+    L.push(`**Owner decision surfaces are the exception.** ${ia.reporting.owner_decision_exception}`);
+    L.push('');
+    L.push(`The packet shape is ${ia.reporting.decision_packet.source}:`);
+    L.push('');
+    for (const part of ia.reporting.decision_packet.parts) L.push(`- ${part}`);
+    L.push('');
+    L.push(ia.reporting.decision_packet.open_question_is_a_failure);
+    L.push('');
     if (ia.canonical_documents) {
       L.push('');
       L.push('### Canonical documents');
@@ -1426,10 +1817,45 @@ export function renderGovernance(c) {
     L.push('');
     L.push(c['owner-command'].principle);
     L.push('');
-    L.push('| Action | Authenticator roles | CAS | Protected | Required fields | Affects |');
+    L.push('| Action | Authenticator roles | CAS | Protected | Gate | Advances to | Required fields | Affects |');
+    L.push('|---|---|---|---|---|---|---|---|');
+    for (const a of c['owner-command'].actions) L.push(ownerCommandRow(a));
+    L.push('');
+  }
+
+  if (c.retention) {
+    const rt2 = c.retention;
+    L.push('## Retention and consolidation');
+    L.push('');
+    L.push(rt2.principle);
+    L.push('');
+    L.push(`Authority: \`${rt2.authority.actor_role}\`, from ${rt2.authority.source}. This is ${rt2.authority.is_a_new_grant ? 'a new grant' : 'not a new grant — the authority already exists and this is its machine-readable form'}. Preconditions:`);
+    L.push('');
+    for (const pc of rt2.authority.preconditions) L.push(`- ${pc}`);
+    L.push('');
+    L.push(rt2.consolidation.rule);
+    L.push('');
+    L.push(`A \`${rt2.consolidation.kind}\` names ${rt2.consolidation.summary_must_name.join(', ')}, and covers at least ${rt2.consolidation.min_range} events.`);
+    L.push('');
+    L.push(`**Never:** ${rt2.never.join('; ')}.`);
+    L.push('');
+    L.push(rt2.corrections_are_never_consolidated.rule);
+    L.push('');
+  }
+
+  if (c.directives) {
+    const dv = c.directives;
+    L.push('## Standing directives');
+    L.push('');
+    L.push(dv.principle);
+    L.push('');
+    L.push(dv.non_amplification);
+    L.push('');
+    L.push('| Directive | Issued by | Issued | Status | Codified in | Instruction |');
     L.push('|---|---|---|---|---|---|');
-    for (const a of c['owner-command'].actions) {
-      L.push(`| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} | ${a.required_fields.map((f) => '\`' + f + '\`').join(', ')} | ${mdCell(a.affects)} |`);
+    for (const d of dv.directives) {
+      const cod = d.codified_in ? `\`${d.codified_in}.${d.codified_as}\`` : '— (nothing enforces it)';
+      L.push(`| ${d.id} | \`${d.issued_by}\` | ${d.issued_at} | ${d.status}${d.superseded_by ? ` → \`${d.superseded_by}\`` : ''} | ${cod} | ${mdCell(d.text)} |`);
     }
     L.push('');
   }
@@ -1568,6 +1994,42 @@ export function globCovers(declGlob, glob) {
   return dirG.startsWith(dirD);
 }
 
+// Read a dotted field path out of a contract, for checking that a claimed
+// codification really exists rather than taking the claim's word for it.
+export function contractFieldAt(contract, path) {
+  let node = contract;
+  for (const key of String(path).split('.')) {
+    // Own properties only. Parsed JSON inherits from Object.prototype, so plain
+    // access made `constructor`, `__proto__` and `toString` resolve to defined
+    // values — a codification claim naming no field in the contract passed as
+    // though it named one.
+    if (node === null || node === undefined || typeof node !== 'object') return undefined;
+    if (!Object.hasOwn(node, key)) return undefined;
+    node = node[key];
+  }
+  return node;
+}
+
+// How a ledger glob is scoped, as three cases rather than a nullable ticket.
+// The nullable form conflated "grants the whole root" with "cannot be proven to
+// name one ticket", so `.agentops/events/AS-HD-040*/**` on an AS-HD-055 lease
+// read as a broad root grant and passed: the per-ticket check was bypassable by
+// putting a wildcard where the ticket goes.
+//
+//   root        exactly the declared root. Broad, and authorized only for the
+//               lease's own subtree, which the affected-path check enforces.
+//   ticket      a literal ticket name in the first component.
+//   unprovable  anything else, a wildcard in the ticket position included.
+export function ledgerScopeOf(rootGlob, granted) {
+  const root = rootGlob.replace(/\*+$/, '');
+  if (!granted.startsWith(root)) return { kind: 'outside' };
+  const rest = granted.slice(root.length).replace(/^\/+/, '');
+  if (rest === '' || rest === '**') return { kind: 'root' };
+  const first = rest.split('/')[0];
+  if (!first || /[*?\[]/.test(first)) return { kind: 'unprovable' };
+  return { kind: 'ticket', ticket: first };
+}
+
 export function pathGrantErrors(contracts, lease) {
   const errors = [];
   // An exception covers only the globs it names. A lease carrying one is still
@@ -1575,13 +2037,49 @@ export function pathGrantErrors(contracts, lease) {
   // widened later under cover of its own exception.
   const exempt = new Set(((lease.path_grant_exception || {}).globs) || []);
   const decls = (contracts['git-ownership'] && contracts['git-ownership'].paths) || [];
+  const ticketCustody = new Set([
+    `.agentops/work/${lease.ticket}/**`,
+    `.agentops/events/${lease.ticket}/**`,
+  ]);
   for (const g of lease.path_globs) {
+    // Work capsules and their event chains are owned by the ticket's current
+    // writer even when that actor's standing role does not own every
+    // .agentops/work/** path. Keep this exception exact and ticket-scoped.
+    if (ticketCustody.has(g)) continue;
     if (exempt.has(g)) continue;
     const owner = decls.find((d) => globCovers(d.glob, g));
     if (!owner) {
       errors.push(`lease '${lease.id}' grants '${g}', which no git-ownership path declares (declare it, or record a path_grant_exception with a reason)`);
+    } else if (owner.per_seat) {
+      // Ownership follows the ticket's writer lease, so any role may hold its
+      // own ledger. This is the A2 fix: with these globs owned by `maker`, a
+      // qa-independent or help-desk seat could not be granted its own capsule
+      // or event chain, and therefore could not record what it did.
+      //
+      // "Follows the ticket's lease" is the whole safety argument, and the first
+      // version of this branch did not check it: an unconditional `continue`
+      // accepted `.agentops/work/**` and authorized the holder for EVERY
+      // ticket's ledger. `ledger_serialization` claimed the per-ticket lane kept
+      // two seats off one ticket while nothing enforced it — the same
+      // self-consistency defect this work keeps finding.
+      //
+      // A glob scoped to a ticket must name the lease's own; a broad root grant
+      // stays legal (AS-1001 holds one) but authorizes only that subtree, which
+      // ledgerScopeErrors enforces where the writes actually are.
+      const scope = ledgerScopeOf(owner.glob, g);
+      if (scope.kind === 'ticket' && lease.ticket && scope.ticket !== lease.ticket) {
+        errors.push(`lease '${lease.id}' is issued for '${lease.ticket}' but grants '${g}', which is ${scope.ticket}'s ledger; a seat records what it did, not what another seat did`);
+      } else if (scope.kind === 'unprovable') {
+        errors.push(`lease '${lease.id}' grants '${g}', whose ticket segment is a pattern; a ledger scope is either the whole root or one literal ticket, because a wildcard there cannot be proven to name this lease's own`);
+      }
+      continue;
     } else if (owner.owner_role !== actorRole(contracts, lease.actor)) {
       errors.push(`lease '${lease.id}' grants '${g}' to '${lease.actor}', but git-ownership assigns that path to '${owner.owner_role}'`);
+    }
+  }
+  for (const x of lease.excluded_globs || []) {
+    if (!lease.path_globs.some((g) => leaseGlobCovers(g, x))) {
+      errors.push(`lease '${lease.id}' excludes '${x}', but no granted path covers that exclusion`);
     }
   }
   return errors;
@@ -1592,12 +2090,67 @@ export function computeCapsuleHash(capsule) {
   return 'sha256:' + createHash('sha256').update(stableStringify(clone)).digest('hex');
 }
 
+// Lease v2 is an append-only successor: the prior lease remains as history,
+// receives only the explicit revoked transition, and the child binds those
+// exact parent bytes. Multiple children may split one parent only when their
+// effective scopes do not overlap.
+export function computeLeaseHash(lease) {
+  const clone = { ...lease, current_hash: '' };
+  return 'sha256:' + createHash('sha256').update(stableStringify(clone)).digest('hex');
+}
+
 // Literal directory prefix of a glob, for conservative overlap/coverage tests.
 function globPrefix(glob) {
   const s = glob.search(/[*?[]/);
   const cut = s === -1 ? glob : glob.slice(0, s);
   const i = cut.lastIndexOf('/');
   return i === -1 ? '' : cut.slice(0, i + 1);
+}
+
+function globOverlap(a, b) {
+  const pa = globPrefix(a), pb = globPrefix(b);
+  return pa.startsWith(pb) || pb.startsWith(pa);
+}
+
+// Unlike the older ownership helper, this comparison must distinguish an
+// exact file from the directory-wide glob beside it. Otherwise excluding
+// tools/ui-preview-gallery.mjs would incorrectly appear to exclude tools/**.
+function leaseGlobCovers(a, b) {
+  const wildcard = /[*?[]/.test(a);
+  if (!wildcard) return a === b;
+  if (a.endsWith('/**')) return b.startsWith(a.slice(0, -2));
+  return a === b;
+}
+
+function leaseExcludes(lease, glob) {
+  return (lease.excluded_globs || []).some((x) => leaseGlobCovers(x, glob));
+}
+
+function leaseCovers(lease, glob) {
+  return lease.path_globs.some((g) => leaseGlobCovers(g, glob)) && !leaseExcludes(lease, glob);
+}
+
+function ticketCustodyScope(lease, glob) {
+  return glob === `.agentops/work/${lease.ticket}/**`
+    || glob === `.agentops/events/${lease.ticket}/**`;
+}
+
+function effectiveLeaseOverlap(a, b) {
+  for (const ga of a.path_globs) for (const gb of b.path_globs) {
+    if (!globOverlap(ga, gb)) continue;
+    const narrower = leaseGlobCovers(ga, gb) ? gb : leaseGlobCovers(gb, ga) ? ga : null;
+    if (narrower && (leaseExcludes(a, narrower) || leaseExcludes(b, narrower))) continue;
+    return true;
+  }
+  return false;
+}
+
+function activeRuntimeLeases(rt) {
+  // A successor never shadows a parent merely by existing. The issuer first
+  // revokes the parent, then appends the sealed child. This prevents a
+  // malformed or revoked child from disabling otherwise-live custody in code
+  // paths that compute dispatch before a separate validation call.
+  return rt.leases.filter((l) => !l.revoked);
 }
 
 export function loadRuntime(root = ROOT) {
@@ -1645,14 +2198,16 @@ export function loadRuntime(root = ROOT) {
       events[ticket] = list;
     }
   }
-  return { capsules, leases, events, errors };
+  return { capsules, leases, events, errors, schemas };
 }
 
 // Cross-checks tying runtime artifacts to the governance contracts and to each
 // other: one-writer lease collisions, lease expiry, append-only event chains,
 // capsule seal (CAS) integrity, evidence ownership, and non-amplifying authority.
-export function runtimeChecks(g, rt) {
+export function runtimeChecks(g, rt, root = null) {
   const errors = [];
+  const leaseById = new Map(rt.leases.map((l) => [l.id, l]));
+  const activeLeases = activeRuntimeLeases(rt);
   const roles = g.roles ? new Set(g.roles.roles.map((r) => r.role)) : new Set();
   // A role that holds work but has no hierarchy node has no escalation parent:
   // when it blocks, escalation routing has nowhere to send it and the only
@@ -1722,25 +2277,76 @@ export function runtimeChecks(g, rt) {
         errors.push(`capsule ${t}: owner_actor '${rt.capsules[t].owner_actor}' is a capability pool, not a standing team; a pool cannot hold a seat or own a backlog`);
       }
     }
-    for (const l of rt.leases) {
-      if (!l.revoked && pools.has(l.actor)) {
+    for (const l of activeLeases) {
+      if (pools.has(l.actor)) {
         errors.push(`lease ${l.id}: actor '${l.actor}' is a capability pool, not a standing team; a pool cannot hold a writer lease`);
       }
     }
   }
 
-  for (const l of rt.leases) if (!l.revoked) errors.push(...pathGrantErrors(g, l));
+  // Lease-v2 successors preserve the old file as immutable history while
+  // binding the exact parent content. Sibling successors are a permitted
+  // split only when their effective scopes are disjoint.
+  const childrenByParent = new Map();
+  for (const l of rt.leases) {
+    if (l.schema !== 'agentops/lease/v2') continue;
+    for (const key of ['revision', 'parent_lease', 'parent_hash', 'current_hash']) {
+      if (l[key] === undefined) errors.push(`lease '${l.id}' v2 is missing '${key}'`);
+    }
+    if (l.current_hash !== undefined && l.current_hash !== computeLeaseHash(l)) {
+      errors.push(`lease '${l.id}' seal mismatch: current_hash does not match content (stale expected-old-value or tampered)`);
+    }
+    const parent = leaseById.get(l.parent_lease);
+    if (!parent) {
+      errors.push(`lease '${l.id}' names unknown parent_lease '${l.parent_lease}'`);
+      continue;
+    }
+    if (!parent.revoked) errors.push(`lease '${l.id}' cannot succeed live parent '${parent.id}'; revoke the parent first`);
+    const parentRevision = parent.schema === 'agentops/lease/v2' ? parent.revision : 1;
+    if (l.revision !== parentRevision + 1) errors.push(`lease '${l.id}' revision ${l.revision} is not parent revision ${parentRevision} + 1`);
+    if (l.parent_hash !== computeLeaseHash(parent)) errors.push(`lease '${l.id}' parent_hash does not match '${parent.id}'`);
+    if (l.actor !== parent.actor) errors.push(`lease '${l.id}' changes actor '${parent.actor}' to '${l.actor}'; succession cannot transfer identity`);
+    if (l.issuer !== parent.issuer) errors.push(`lease '${l.id}' changes issuer '${parent.issuer}' to '${l.issuer}'`);
+    if (l.ticket !== parent.ticket) errors.push(`lease '${l.id}' changes ticket '${parent.ticket}' to '${l.ticket}'`);
+    for (const g0 of l.path_globs) {
+      if (!leaseCovers(parent, g0) && !ticketCustodyScope(l, g0)) {
+        errors.push(`lease '${l.id}' grants '${g0}' outside parent '${parent.id}' effective scope or exact ticket custody`);
+      }
+    }
+    for (const a of l.actions) if (!parent.actions.includes(a)) errors.push(`lease '${l.id}' action '${a}' is not granted by parent '${parent.id}'`);
+    for (const x of parent.excluded_globs || []) {
+      if (l.path_globs.some((g0) => leaseGlobCovers(g0, x)) && !(l.excluded_globs || []).some((y) => leaseGlobCovers(y, x))) {
+        errors.push(`lease '${l.id}' re-grants parent exclusion '${x}'`);
+      }
+    }
+    if (utcInstant(l.issued) !== null && utcInstant(parent.issued) !== null && utcInstant(l.issued) < utcInstant(parent.issued)) {
+      errors.push(`lease '${l.id}' issued before parent '${parent.id}'`);
+    }
+    if (utcInstant(l.expiry) !== null && utcInstant(parent.expiry) !== null && utcInstant(l.expiry) > utcInstant(parent.expiry)) {
+      errors.push(`lease '${l.id}' expiry exceeds parent '${parent.id}'`);
+    }
+    const siblings = childrenByParent.get(parent.id) || [];
+    siblings.push(l); childrenByParent.set(parent.id, siblings);
+  }
+  for (const [parent, children] of childrenByParent) {
+    for (let a = 0; a < children.length; a++) for (let b = a + 1; b < children.length; b++) {
+      if (effectiveLeaseOverlap(children[a], children[b])) {
+        errors.push(`lease successor collision: '${children[a].id}' and '${children[b].id}' split parent '${parent}' with overlapping effective paths`);
+      }
+    }
+  }
+
+  for (const l of activeLeases) errors.push(...pathGrantErrors(g, l));
   // Entitlement must hold for every active lease, not only the one a capsule
   // happens to select: a second unrevoked lease on a protected ref is
   // authoritative too, and would otherwise never be looked at.
-  for (const l of rt.leases) if (!l.revoked) errors.push(...refEntitlementErrors(g, `lease '${l.id}'`, l.ref, l.actor));
+  for (const l of activeLeases) errors.push(...refEntitlementErrors(g, `lease '${l.id}'`, l.ref, l.actor));
   // A per-seat ref is isolated by definition, so exactly one active lease may
   // hold it. Path-overlap alone does not catch two seats pointed at the same
   // branch with disjoint paths — they would still collide on the ref.
   {
     const byRef = new Map();
-    for (const l of rt.leases) {
-      if (l.revoked) continue;
+    for (const l of activeLeases) {
       const d = refDeclaration(g, l.ref);
       // Every isolated ref is one seat's branch, per_seat or not: two makers
       // on one claude/* ref collide even with disjoint paths.
@@ -1752,7 +2358,6 @@ export function runtimeChecks(g, rt) {
   }
   const roleMay = new Map(g.roles ? g.roles.roles.map((r) => [r.role, new Set(r.may)]) : []);
   const evIds = g.evidence ? new Set(g.evidence.evidence.map((e) => e.id)) : new Set();
-  const leaseById = new Map(rt.leases.map((l) => [l.id, l]));
 
   // Leases: role validity, time-bound, path safety.
   for (const l of rt.leases) {
@@ -1766,9 +2371,8 @@ export function runtimeChecks(g, rt) {
   }
   // One writer per overlapping path/ref: two active leases on the same ref with
   // overlapping globs held by different actors are a collision.
-  const active = rt.leases.filter((l) => !l.revoked);
-  for (let a = 0; a < active.length; a++) for (let b = a + 1; b < active.length; b++) {
-    const la = active[a], lb = active[b];
+  for (let a = 0; a < activeLeases.length; a++) for (let b = a + 1; b < activeLeases.length; b++) {
+    const la = activeLeases[a], lb = activeLeases[b];
     if (la.ref !== lb.ref || la.actor === lb.actor) continue;
     const overlap = la.path_globs.some((ga) => lb.path_globs.some((gb) => {
       const pa = globPrefix(ga), pb = globPrefix(gb);
@@ -1778,6 +2382,201 @@ export function runtimeChecks(g, rt) {
   }
 
   // Append-only event chains per ticket: one genesis, contiguous seq, unbroken parent chain.
+  // B4 (#430): consolidation. The whole safety argument is that a summary ADDS
+  // a node and removes nothing, so every check here exists to keep it that way.
+  // A summary whose range has gone is not a shorter record — it is a claim about
+  // events nobody can read.
+  // A payload belongs to the kind that owns it. The schema lists `consolidates`
+  // and `promotion` as free properties, and runtimeChecks skips a payload whose
+  // kind does not match — so a `genesis` event carrying a schema-valid
+  // `consolidates` passed verify with an unchecked consolidation claim sitting
+  // in the authoritative ledger. `promotion` arrived in this same PR with the
+  // identical flaw; both are paired here.
+  // Binding `promotion` to kind 'owner-decision' was not enough: every owner
+  // command produces that kind, so a delegate or defer event could carry a
+  // fabricated promotion and nothing would look at it. The event records the
+  // ACTION that produced it now, and the payload is bound to the action.
+  const KIND_PAYLOAD = [
+    { field: 'consolidates', kind: 'consolidation', action: null },
+    { field: 'promotion', kind: 'owner-decision', action: 'fast-forward-test' },
+  ];
+  for (const [ticket, list] of Object.entries(rt.events)) {
+    for (const ev of list) {
+      for (const { field, kind, action } of KIND_PAYLOAD) {
+        // The pairing was one-directional: a payload had to name its action, but
+        // an action was free to arrive with no payload, and both the pairing
+        // check and the payload validator skipped it. An `owner-decision`
+        // recording 'fast-forward-test' with no `promotion` claimed a protected
+        // move while recording no ref, no source, no target and no evidence —
+        // exactly the fields the record exists to hold. A protected action and
+        // its record are one thing or neither.
+        if (action && ev.action === action && ev.kind === kind && ev[field] === undefined) {
+          errors.push(`event '${ev.id}' records action '${action}' but carries no '${field}' payload; the ledger would claim a protected move without recording the ref, commits or evidence it was made on`);
+        }
+        if (ev[field] === undefined) continue;
+        if (ev.kind !== kind) {
+          errors.push(`event '${ev.id}' is kind '${ev.kind}' but carries a '${field}' payload, which only a '${kind}' event may carry; nothing would check it there`);
+        } else if (action && ev.action !== action) {
+          errors.push(`event '${ev.id}' carries a '${field}' payload but records action '${ev.action || 'none'}', not '${action}'; the ledger would claim a promotion no command performed`);
+        }
+      }
+    }
+  }
+
+  // A capsule's `invalidation_keys` name the capsule's OWN fields — the ones
+  // whose change makes the wake stale. Nothing checked them, so a key naming no
+  // field watched nothing and the capsule reported freshness rules it did not
+  // have. The near-miss risk is real and already visible in the corpus: evidence
+  // declarations carry a field of the same name holding a DIFFERENT vocabulary
+  // (`tree_oid`, `head_oid`, `candidate_sha` — properties of the object a
+  // receipt binds to), and `tree` against `tree_oid`, `base_oid` against
+  // `head_oid` are one keystroke apart. Only the capsule side is derivable
+  // without inventing a vocabulary, so only that side is checked here.
+  const capsuleFields = new Set(Object.keys((((rt.schemas || {}).capsule || {}).properties) || {}));
+  if (capsuleFields.size) {
+    for (const [ticket, cap] of Object.entries(rt.capsules)) {
+      for (const key of cap.invalidation_keys || []) {
+        if (!capsuleFields.has(key)) {
+          errors.push(`capsule '${ticket}' invalidates on '${key}', which is not a field of a work capsule; a key naming nothing is watched by nothing, and the capsule reports a freshness rule it does not have`);
+        }
+      }
+    }
+  }
+
+  // Binding the payload to its action still validated only the LABEL. An
+  // `owner-decision` with action 'fast-forward-test' and `ref: 'main'`,
+  // `from: 'x'`, `to: 'y'`, `hosted_verified_dev_oid: 'z'` satisfied both the
+  // schema (minLength 1 strings) and every check above, so the authoritative
+  // ledger could claim a protected promotion that could not have occurred.
+  // The recorded facts are checked against the same contracts the command path
+  // derives them from — the ref from git-ownership, the evidence from the gate
+  // that guards the move — so a hand-written event cannot name its own ref or
+  // invent its own evidence.
+  const ffDecl = refForAction(g, 'fast-forward-test');
+  // Every check above reads the payload and none read who wrote it. An
+  // `owner-decision` naming 'maker' as its actor validated a full, correct
+  // promotion, attributing a protected move to a seat with no authority to
+  // perform it. The command path authenticates the actor; the ledger did not,
+  // so a hand-authored or recovered event bypassed the one gate that decides
+  // who may act. Checked for every recorded action rather than for promotions
+  // alone — the same hole stands behind every protected command.
+  const declaredActions = new Map(((g['owner-command'] || {}).actions || []).map((a) => [a.id, a]));
+  for (const [, list] of Object.entries(rt.events)) {
+    for (const ev of list) {
+      if (ev.kind !== 'owner-decision' || !ev.action) continue;
+      const act = declaredActions.get(ev.action);
+      if (!act) {
+        errors.push(`event '${ev.id}' records action '${ev.action}', which owner-command.json does not declare; nothing says who may perform it or what it may touch`);
+        continue;
+      }
+      const role = actorRole(g, ev.actor);
+      if (!(act.authenticator_roles || []).includes(role)) {
+        errors.push(`event '${ev.id}' attributes action '${ev.action}' to '${ev.actor}' (role '${role}'), which owner-command authenticates for ${(act.authenticator_roles || []).map((r) => `'${r}'`).join(', ') || 'no one'}; the ledger would record a protected move performed by a seat that may not perform it`);
+      }
+    }
+  }
+
+  const ffAction = ((g['owner-command'] || {}).actions || []).find((a) => a.id === 'fast-forward-test');
+  const ffGate = ffAction ? ((g['promotion-gates'] || {}).gates || []).find((x) => x.id === ffAction.performs_gate) : undefined;
+  const declaredEvidence = new Set(((g.evidence || {}).evidence || []).map((x) => x.id));
+  const fullOid = (v) => typeof v === 'string' && /^[0-9a-f]{40}$/.test(v);
+  for (const [, list] of Object.entries(rt.events)) {
+    for (const ev of list) {
+      const pr = ev.promotion;
+      if (!pr || ev.kind !== 'owner-decision' || ev.action !== 'fast-forward-test') continue;
+      if (!ffDecl) {
+        errors.push(`event '${ev.id}' records a promotion, but git-ownership declares no gate-c-fast-forward ref; there is no ref this promotion could have moved`);
+      } else if (pr.ref !== ffDecl.ref) {
+        errors.push(`event '${ev.id}' records a promotion of '${pr.ref}', but the only ref this action may move is '${ffDecl.ref}' (git-ownership); the ledger names the ref, so it must be the one the command was permitted to touch`);
+      }
+      for (const k of ['from', 'to', 'hosted_verified_dev_oid']) {
+        if (!fullOid(pr[k])) {
+          errors.push(`event '${ev.id}' promotion.${k} is '${String(pr[k]).slice(0, 24)}', not a full 40-character commit id; a promotion recorded against something that is not a commit cannot be verified or undone`);
+        }
+      }
+      if (fullOid(pr.to) && fullOid(pr.hosted_verified_dev_oid) && pr.to !== pr.hosted_verified_dev_oid) {
+        errors.push(`event '${ev.id}' promotion moved to ${pr.to.slice(0, 12)}, which is not the recorded hosted-verified dev SHA ${pr.hosted_verified_dev_oid.slice(0, 12)}; decision 0009 permits exactly that commit and no other`);
+      }
+      if (fullOid(pr.from) && fullOid(pr.to) && pr.from === pr.to) {
+        errors.push(`event '${ev.id}' promotion records the same commit as predecessor and target; a ref that did not move is not a promotion, and the rollback target it names restores nothing`);
+      }
+      // Shape and equality were still only the ledger agreeing with itself:
+      // forty zeroes to forty ones is a well-formed promotion between commits
+      // that do not exist. The repository is the authority for what a commit is
+      // and what descends from what, so it is asked — where it can answer.
+      // A shallow clone genuinely cannot, and treating "cannot see" as "is
+      // fabricated" would fail every honest promotion verified in CI, so the
+      // repository-backed half runs only against complete history. That is a
+      // real limit, reported by `verify` rather than left to look like a pass.
+      if (root && fullHistory(root)) {
+        for (const k of ['from', 'to']) {
+          if (fullOid(pr[k]) && !commitExists(root, pr[k])) {
+            errors.push(`event '${ev.id}' promotion.${k} names ${pr[k].slice(0, 12)}, which is not a commit in this repository; the ledger certifies a promotion between objects that do not exist`);
+          }
+        }
+        if (fullOid(pr.from) && fullOid(pr.to) && pr.from !== pr.to
+            && commitExists(root, pr.from) && commitExists(root, pr.to) && !isAncestor(root, pr.from, pr.to)) {
+          errors.push(`event '${ev.id}' promotion records ${pr.from.slice(0, 12)} -> ${pr.to.slice(0, 12)}, but the predecessor is not an ancestor of the target; that move is not a fast-forward, whatever the event calls it`);
+        }
+      }
+      const ev_ = Array.isArray(pr.evidence) ? pr.evidence : [];
+      for (const item of ev_) {
+        if (!declaredEvidence.has(item)) {
+          errors.push(`event '${ev.id}' promotion cites evidence '${item}', which evidence.json does not declare; the ledger would justify a protected move with a name nothing defines`);
+        }
+      }
+      if (!ffGate) {
+        // Skipping here would let a recorded promotion cite whatever it likes
+        // whenever the gate cannot be resolved — the check passing by never
+        // running, against the one payload that asserts a protected move.
+        errors.push(`event '${ev.id}' records a promotion, but the gate 'fast-forward-test' declares it performs cannot be resolved in promotion-gates; nothing can say what evidence this move required`);
+      } else {
+        for (const need of ffGate.required_evidence || []) {
+          if (!ev_.includes(need)) {
+            errors.push(`event '${ev.id}' promotion cites no '${need}', which Gate ${ffGate.id} requires to open this move; the recorded justification is short of the gate it claims to have passed`);
+          }
+        }
+      }
+    }
+  }
+
+  if (g.retention) {
+    const ret = g.retention;
+    const protectedTickets = new Set(ret.corrections_are_never_consolidated.protected_tickets || []);
+    for (const [ticket, list] of Object.entries(rt.events)) {
+      const byId = new Map(list.map((e) => [e.id, e]));
+      for (const ev of list) {
+        if (ev.kind !== ret.consolidation.kind) continue;
+        const c = ev.consolidates;
+        if (!c) { errors.push(`event '${ev.id}' is a ${ret.consolidation.kind} but names no range; a summary of nothing is not a record`); continue; }
+        if (protectedTickets.has(ticket)) {
+          errors.push(`event '${ev.id}' consolidates '${ticket}', whose chain carries a correction of record; summarising it away would remove the history the correction exists to preserve`);
+        }
+        const from = byId.get(c.from_event), to = byId.get(c.to_event);
+        if (!from) errors.push(`event '${ev.id}' consolidates from '${c.from_event}', which is not an event on '${ticket}'; the range must be present to be summarised`);
+        if (!to) errors.push(`event '${ev.id}' consolidates to '${c.to_event}', which is not an event on '${ticket}'; the range must be present to be summarised`);
+        if (from && to) {
+          if (from.seq > to.seq) errors.push(`event '${ev.id}' consolidates ${c.from_event}..${c.to_event}, which runs backwards`);
+          if (to.seq >= ev.seq) errors.push(`event '${ev.id}' consolidates a range reaching itself or later; a summary describes what is already recorded`);
+          const span = list.filter((e) => e.seq >= from.seq && e.seq <= to.seq);
+          if (span.length !== c.count) errors.push(`event '${ev.id}' claims ${c.count} events but ${span.length} are present in ${c.from_event}..${c.to_event}; a count that does not match the range is a dangling claim`);
+          if (span.length < ret.consolidation.min_range) errors.push(`event '${ev.id}' consolidates ${span.length} events, below the declared minimum ${ret.consolidation.min_range}; a summary shorter than what it replaces reads worse, not better`);
+          if (span.some((e) => e.kind === ret.consolidation.kind)) errors.push(`event '${ev.id}' consolidates a range containing another consolidation; summaries of summaries lose the range they both point at`);
+        }
+        // Existing is not authorised. retention.authority.actor_role names who
+        // may consolidate, and checking only that the identity is known let any
+        // actor — `maker` included — claim one while the corpus still validated.
+        const authRole = actorRole(g, c.authorised_by);
+        const ownerActor = g['owner-intent'] && g['owner-intent'].owner.actor_id;
+        if (!roles.has(authRole) && !hierarchyActors(g).has(c.authorised_by)) {
+          errors.push(`event '${ev.id}' names '${c.authorised_by}' as authorising the consolidation, which is not a declared actor`);
+        } else if (authRole !== ret.authority.actor_role && c.authorised_by !== ownerActor) {
+          errors.push(`event '${ev.id}' is authorised by '${c.authorised_by}' (role '${authRole}'), but retention declares '${ret.authority.actor_role}' as the consolidation authority; existing is not the same as being allowed`);
+        }
+      }
+    }
+  }
+
   // Ruling AS-HD-029-0052 point 3, enforced: a tool-initiated reseat must carry
   // the process as its actor. An event signed `maker` that no maker performed
   // binds a producer who did not produce, which is exactly what evidence.json
@@ -1821,6 +2620,27 @@ export function runtimeChecks(g, rt) {
   // Capsules: seal/CAS integrity, evidence ownership, authority, lease binding.
   for (const [ticket, cap] of Object.entries(rt.capsules)) {
     if (cap.ticket !== ticket) errors.push(`capsule for '${ticket}' has mismatched ticket field '${cap.ticket}'`);
+    // Ruling AS-HD-029-0052 point 2. A tracking pointer belongs only to a seat
+    // that has not started: once work stands on a tree, the base is that tree
+    // and following the branch would silently rebase the seat's assumptions.
+    // The freeze is what makes the pointer safe, so it is checked rather than
+    // trusted to the writer.
+    if (cap.base_ref) {
+      if (!RESEATABLE.has(cap.lifecycle_state)) {
+        errors.push(`capsule '${ticket}' is '${cap.lifecycle_state}' and still tracks '${cap.base_ref}'; work stands on a tree, so the base freezes into base_oid when the seat starts`);
+      }
+      if (/^[0-9a-f]{7,40}$/.test(cap.base_ref)) {
+        errors.push(`capsule '${ticket}' base_ref '${cap.base_ref}' is a commit id, not a branch; a pinned value recorded as a pointer is neither`);
+      }
+      // git decides what a branch name is. The hand-rolled character filter that
+      // stood here passed `dev..bad`, `foo//bar`, `trailing/`, `-lead`,
+      // `.hidden` and `a.lock` — six names git rejects — while this file already
+      // used refNameValid() for a capsule's own ref 400 lines up. Restating a
+      // rule instead of reusing it is the defect this branch keeps finding.
+      if (!refNameValid(cap.base_ref)) {
+        errors.push(`capsule '${ticket}' base_ref '${cap.base_ref}' is not a valid git branch name; git could not create it`);
+      }
+    }
     if (cap.current_hash !== computeCapsuleHash(cap)) errors.push(`capsule '${ticket}' seal mismatch: current_hash does not match content (stale expected-old-value or tampered)`);
     if (cap.evidence_pointers.length > 8) errors.push(`capsule '${ticket}' has ${cap.evidence_pointers.length} evidence pointers, exceeding the max of 8`);
     for (const ep of cap.evidence_pointers) if (!evIds.has(ep)) errors.push(`capsule '${ticket}' evidence pointer '${ep}' is not a declared evidence type in evidence.json`);
@@ -1832,6 +2652,7 @@ export function runtimeChecks(g, rt) {
     if (!lease) errors.push(`capsule '${ticket}' references unknown writer_lease '${cap.writer_lease}'`);
     else {
       if (lease.revoked) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' is revoked`);
+      if (!activeLeases.includes(lease)) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' is superseded by an append-only successor`);
       if (lease.ticket !== ticket) errors.push(`capsule '${ticket}' writer_lease '${lease.id}' belongs to ticket '${lease.ticket}'`);
       if (lease.actor !== cap.owner_actor) errors.push(`capsule '${ticket}' owner_actor '${cap.owner_actor}' does not match lease actor '${lease.actor}'`);
       if (hierActors.size && !hierActors.has(cap.owner_actor)) {
@@ -1843,9 +2664,25 @@ export function runtimeChecks(g, rt) {
       // git-ownership ref pattern, so `wake` cannot hand a seat a checkout
       // instruction the control plane never sanctioned.
       errors.push(...refEntitlementErrors(g, `capsule '${ticket}'`, cap.ref, cap.owner_actor));
+      const capExcluded = new Set(cap.excluded_paths || []);
+      for (const x of lease.excluded_globs || []) if (!capExcluded.has(x)) errors.push(`capsule '${ticket}' omits writer lease exclusion '${x}'`);
+      for (const x of cap.excluded_paths || []) if (!(lease.excluded_globs || []).includes(x)) errors.push(`capsule '${ticket}' excludes '${x}' without its writer lease excluding it`);
       for (const p of cap.affected_paths) {
-        const covered = lease.path_globs.some((g) => globPrefix(p).startsWith(globPrefix(g)));
+        const covered = leaseCovers(lease, p);
         if (!covered) errors.push(`capsule '${ticket}' affected path '${p}' is not covered by its writer lease '${lease.id}'`);
+        // A broad ledger grant is legal but authorizes only this seat's own
+        // subtree. Without this, holding `.agentops/work/**` let a capsule
+        // declare another ticket's ledger among its affected paths, which is
+        // what the per-ticket lane was supposed to prevent.
+        for (const decl of (g['git-ownership'] || {}).paths || []) {
+          if (!decl.per_seat || !globCovers(decl.glob, p)) continue;
+          const scope = ledgerScopeOf(decl.glob, p);
+          if (scope.kind === 'ticket' && scope.ticket !== ticket) {
+            errors.push(`capsule '${ticket}' claims affected path '${p}', which is ${scope.ticket}'s ledger; a per-seat grant authorizes the lease's own ticket, not the whole root`);
+          } else if (scope.kind === 'unprovable') {
+            errors.push(`capsule '${ticket}' claims affected path '${p}', whose ticket segment is a pattern; it cannot be proven to stay inside this seat's own ledger`);
+          }
+        }
       }
     }
   }
@@ -1893,6 +2730,44 @@ function onBranch(root) {
 // Advisory: does this working ref exist yet? A seat's ref is where it SHOULD
 // work, so an absent ref is normal for an unstarted seat — but wake must say so
 // rather than printing a checkout instruction that silently cannot be followed.
+// Any local branch, for fixtures that need a ref that genuinely resolves. A CI
+// pull-request checkout is detached with no local branches at all, so callers
+// must handle null rather than assume a well-known name exists: hardcoding
+// `dev` is what turned the reseat control plant red on a checkout that had none.
+function anyLocalBranch(root) {
+  try {
+    const out = execFileSync('git', ['for-each-ref', '--format=%(refname:short)', '--count=1', 'refs/heads/'], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return out || null;
+  } catch { return null; }
+}
+
+// Does this repository carry the object, and is it a commit? Same execFileSync
+// discipline as resolveRef: the value comes from a command request.
+// Whether this checkout can answer questions about ancestry at all. CI checks
+// out PRs shallow, where an absent object proves nothing about the ledger.
+export function fullHistory(root) {
+  try {
+    const out = execFileSync('git', ['rev-parse', '--is-shallow-repository'], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return out === 'false';
+  } catch { return false; }
+}
+
+function commitExists(root, oid) {
+  try {
+    const t = execFileSync('git', ['cat-file', '-t', oid], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return t === 'commit';
+  } catch { return false; }
+}
+
+// Resolve a branch name to its current OID. Same execFileSync discipline as
+// refExists: the ref comes from capsule JSON and a shell would expand `$(...)`
+// in it. Returns null when the ref does not exist in this checkout.
+function resolveRef(root, ref) {
+  try {
+    return execFileSync('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${ref}`], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || null;
+  } catch { return null; }
+}
+
 function refExists(root, ref) {
   try {
     // execFileSync, never execSync: the ref comes from capsule JSON, and a
@@ -1923,13 +2798,23 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
   if (!cap) return { errors: [`no work capsule for '${work}' under .agentops/work/`] };
   const oi = contracts['owner-intent'];
   const lease = rt.leases.find((l) => l.id === cap.writer_lease);
+  const leaseIsActive = !!lease && activeRuntimeLeases(rt).includes(lease);
   const shrt = (o) => (o && o.length > 12) ? o.slice(0, 12) : (o || '?');
+  // Ruling AS-HD-029-0052 point 2: an unstarted seat's base may TRACK a branch
+  // rather than pin a commit it never worked from. The pointer is resolved here,
+  // at read time, and nothing is appended to say so — chasing HEAD with an event
+  // per commit is what wrote 423 no-op entries. A tracking capsule is never
+  // stale, because there is no pinned value to fall behind.
   let freshness;
-  if (frozen) freshness = `as-recorded (base ${shrt(cap.base_oid)}); verify live HEAD out-of-band`;
+  const tracked = cap.base_ref ? resolveRef(root, cap.base_ref) : null;
+  if (cap.base_ref && frozen) freshness = `tracking \`${cap.base_ref}\` (as recorded); resolve the ref in this checkout`;
+  else if (cap.base_ref && tracked) freshness = `tracking \`${cap.base_ref}\` @ ${shrt(tracked)}; an unstarted seat follows the branch, so it does not go stale`;
+  else if (cap.base_ref) freshness = `UNRESOLVABLE — capsule tracks \`${cap.base_ref}\`, which this checkout does not carry; a pointer that cannot be resolved is not a base`;
+  else if (frozen) freshness = `as-recorded (base ${shrt(cap.base_oid)}); verify live HEAD out-of-band`;
   else if (!head) freshness = 'unknown (no live HEAD)';
   else if (head.startsWith(cap.base_oid) || cap.base_oid.startsWith(head)) freshness = `current (base matches HEAD ${shrt(head)})`;
   else freshness = `STALE — capsule base ${shrt(cap.base_oid)} != live HEAD ${shrt(head)}; re-seat before mutating`;
-  const leaseState = !lease ? 'MISSING' : lease.revoked ? 'REVOKED' : `active until ${lease.expiry}`;
+  const leaseState = !lease ? 'MISSING' : lease.revoked ? 'REVOKED' : !leaseIsActive ? 'SUPERSEDED' : `active until ${lease.expiry}`;
 
   const L = [];
   L.push('=== AGENTOPS WAKE CAPSULE ===');
@@ -1941,7 +2826,19 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
   L.push(`FORBIDDEN  : ${oi.protected_decision_classes.join('; ')}`);
   const refNote = frozen ? '' : (refExists(root, cap.ref) ? ' (exists)' : ' (NOT CREATED YET — create it before working; it is an isolated continuation branch)');
   L.push(`REPO/REF   : ${cap.repo} @ ${cap.ref}${refNote}`);
-  L.push(`BASE       : ${cap.base_oid} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
+  // While tracking, the RESOLVED commit is the base the seat works from — naming
+  // the last-recorded one here told the seat to follow a branch and then handed
+  // it a different commit. Frozen mode resolves nothing and says so, keeping the
+  // reconstruction goldens deterministic.
+  const effectiveBase = tracked || cap.base_oid;
+  const baseLine = cap.base_ref
+    ? (frozen
+      ? `${cap.base_ref} (tracked; resolve in this checkout, recorded ${cap.base_oid})`
+      : tracked
+        ? `${tracked} (tracking \`${cap.base_ref}\`)`
+        : `${cap.base_ref} (tracked; UNRESOLVED in this checkout)`)
+    : cap.base_oid;
+  L.push(`BASE       : ${baseLine} tree ${cap.tree} dirty=${cap.expected_dirty_state}`);
   L.push(`NEXT ACTION: ${cap.next_action}`);
   // A seat at a gated state must know which gate stands in front of it, who
   // may open it, and what evidence it needs — otherwise it discovers the wall
@@ -1954,11 +2851,17 @@ export function buildCapsule(contracts, rt, work, { frozen = false, head = null,
       L.push(`GATE       : ${g.id} (${g.name}) stands before ${to} — ${g.actor_role} acts; evidence ${g.required_evidence.join(', ') || 'none declared'}`);
     }
   }
-  L.push(`STOP       : lease expired or revoked; base_oid moved from HEAD; independent QA WITHHOLD; any protected transition (see FORBIDDEN)`);
+  // A tracking seat is not stopped by its base moving — that is the whole point
+  // of the pointer. Leaving the pinned-base clause in place emitted a capsule
+  // that said follow the branch and must not work, in the same breath.
+  const stopBase = cap.base_ref
+    ? 'the tracked branch cannot be resolved, or the base freezes when work starts'
+    : 'base_oid moved from HEAD';
+  L.push(`STOP       : lease expired or revoked; ${stopBase}; independent QA WITHHOLD; any protected transition (see FORBIDDEN)`);
   const rep = contracts['information-access'].reporting;
   L.push(`REPORTING  : ${rep.style} Must: ${rep.must.join('; ')}. Never: ${rep.must_not.join('; ')}.`);
   L.push(`EVIDENCE   : ${cap.evidence_pointers.slice(0, 8).join(', ') || '—'}`);
-  L.push(`SOURCE     : ${cap.base_oid}`);
+  L.push(`SOURCE     : ${frozen ? cap.base_oid : effectiveBase}`);
   L.push(`FRESHNESS  : ${freshness}`);
   L.push(`INVALIDATION: ${cap.invalidation_keys.join(', ')}`);
   if (cap.blocker) L.push(`BLOCKER    : ${JSON.stringify(cap.blocker)}`);
@@ -1989,11 +2892,284 @@ export function runWake(root, actor, work, { frozen = false } = {}) {
 // ===========================================================================
 
 const REQUEST_SCHEMA_FILE = 'schemas/owner-command-request.schema.json';
+const DEV_DELIVERY_ACTION = 'integrate-to-dev-via-pr';
+const LEGACY_DELIVERY_DENIAL = 'push-pr-merge-deploy-or-release';
+const DEV_DELIVERY_PROTECTED_DENIALS = Object.freeze([
+  'direct-push-to-dev',
+  'mutate-main-or-release',
+  'tag-publish-deploy-or-change-pages-source'
+]);
 
 // Validate an owner-command request against the policy: enumerated action,
 // authenticated actor, required fields, and the compare-and-swap precondition.
 // Pure over already-loaded contracts + runtime so the harness can plant defects.
-export function validateCommand(contracts, rt, request) {
+// A3 (#430): reseat as an enumerated, authenticated, compare-and-swap-checked
+// action, so the precondition a stale wake demands is satisfiable by a declared
+// path rather than only by a seat running the CLI.
+//
+// Scope is narrow by ruling, not by omission. AS-HD-029-0052 rule 1 makes reseat
+// seat-initiated at the start of work, and rule 2 gives an unstarted seat a
+// base_ref that follows a branch without appending anything. What is left for a
+// COMMAND is the case those two do not cover: a base a seat did not set for
+// itself, moved by the deputy — one named target, under CAS, never a sweep.
+// B2 (#430): Gate C, as five refusals rather than five hopes.
+//
+// Decision 0009 gives the IT Manager III standing conditional authority to
+// fast-forward `test`. Every one of its conditions is checked here, and a
+// condition that cannot be SHOWN is a refusal — an unprovable precondition on a
+// shared-ref mutation is the one place "probably fine" must not be reachable.
+//
+// Repository-dependent checks run only where a checkout is available, so the
+// function stays pure for the plant harness; the apply path always passes root.
+export function fastForwardTestErrors(contracts, rt, request, root = null) {
+  const errors = [];
+  const p = (request.params && typeof request.params === 'object') ? request.params : null;
+  if (!p) return [`command 'fast-forward-test' requires params naming the target and its evidence`];
+  for (const k of Object.keys(p)) {
+    if (!['target_oid', 'hosted_verified_dev_oid', 'rollback_oid', 'evidence'].includes(k)) {
+      errors.push(`command 'fast-forward-test' params carries unknown field '${k}'`);
+    }
+  }
+  // The ref it may touch comes from git-ownership, not from the request: a
+  // command must not be able to name the ref it mutates.
+  const decl = refForAction(contracts, 'fast-forward-test');
+  if (!decl) return [`git-ownership declares no ref whose mutation is gate-c-fast-forward-only; there is nothing this action may move`];
+  const ref = decl.ref;
+
+  // 2. The target is exactly the hosted-verified dev SHA.
+  const full = (v) => typeof v === 'string' && /^[0-9a-f]{40}$/.test(v);
+  if (!full(p.target_oid)) errors.push(`command 'fast-forward-test' params.target_oid must be a full 40-character commit id`);
+  if (!full(p.hosted_verified_dev_oid)) errors.push(`command 'fast-forward-test' params.hosted_verified_dev_oid must be a full 40-character commit id`);
+  if (full(p.target_oid) && full(p.hosted_verified_dev_oid) && p.target_oid !== p.hosted_verified_dev_oid) {
+    errors.push(`command 'fast-forward-test' target ${p.target_oid.slice(0, 12)} is not the hosted-verified dev SHA ${p.hosted_verified_dev_oid.slice(0, 12)}; decision 0009 permits exactly that commit and no other`);
+  }
+  // ...but comparing two fields of the same request is not a constraint: put the
+  // same OID in both and the check agrees with itself. The integration ref is
+  // the authority for what dev is, and git-ownership names it, so the claim is
+  // checked against the repository below rather than against its own restatement.
+  const devDecl = ((contracts['git-ownership'] || {}).refs || []).find((r) => (r.mutation || '') === 'pr-only');
+  if (!devDecl) errors.push(`git-ownership declares no pr-only integration ref, so there is nothing to check the hosted-verified SHA against`);
+  // 4. The rollback target is recorded BEFORE the mutation, and is the ref's
+  //    current head — a rollback to anything else does not restore what was
+  //    replaced.
+  if (!full(p.rollback_oid)) errors.push(`command 'fast-forward-test' params.rollback_oid must be a full 40-character commit id; a ref mutation with no recorded predecessor cannot be undone`);
+  if (!Array.isArray(p.evidence) || p.evidence.length === 0) {
+    errors.push(`command 'fast-forward-test' params.evidence must record the mutation evidence decision 0009 requires`);
+  } else if (!p.evidence.every((x) => typeof x === 'string' && x.trim() !== '')) {
+    // `[null]` is a non-empty array. Length was never the question.
+    errors.push(`command 'fast-forward-test' params.evidence must be non-empty strings; an array with nothing readable in it records nothing`);
+  } else {
+    // ...and readable was never the question either. applyCommand copies these
+    // strings verbatim into the event's promotion payload, where runtimeChecks
+    // requires declared evidence ids covering the gate's requirement. Accepting
+    // free text here meant the ref moved and the event persisted before the
+    // ledger check rejected what was written — and in owner-command.yml that
+    // verification runs only AFTER the apply step, so the mutation stood.
+    // The two layers ask the same question now, and the earlier one asks first.
+    const declared = new Set(((contracts.evidence || {}).evidence || []).map((x) => x.id));
+    for (const item of p.evidence) {
+      if (!declared.has(item)) {
+        errors.push(`command 'fast-forward-test' params.evidence names '${item}', which evidence.json does not declare; the ref would move and the event persist before anything rejected it`);
+      }
+    }
+  }
+
+  // 1 and 5. Gate freshness and the absence of a withhold are read from the
+  //    capsule, never from the request: a command does not get to assert that
+  //    the gates in front of it have passed.
+  const cap = rt.capsules[request.target];
+  if (cap && cap.blocker) {
+    errors.push(`command 'fast-forward-test' target '${request.target}' carries an unresolved blocker (${cap.blocker.escalation_class}); decision 0009 condition 5 forbids promoting past one`);
+  }
+  // Condition 1: gates A and B pass and remain fresh. Absence of a blocker is
+  // not evidence that they passed — it is only the absence of a record that
+  // they did not. The evidence each gate requires is derived from
+  // promotion-gates rather than restated here, and must be present on the
+  // capsule being promoted.
+  // Naming gates A and B by id was the same prose-coupling as the entry regex:
+  // rename or renumber a gate and this loop selects nothing, so condition 1 —
+  // and the standing freshness refusal that lives inside it — would pass by
+  // never running, on the one command that moves a shared ref. The prerequisite
+  // set is walked instead: from the state this gate's move departs, take every
+  // gate guarding a move INTO that state, and repeat. For Gate C that yields
+  // exactly {A, B}, and it keeps yielding the right set if the chain changes.
+  const allGates = ((contracts['promotion-gates'] || {}).gates || []);
+  const performed = allGates.find((x) => x.id === (((contracts['owner-command'] || {}).actions || []).find((a) => a.id === 'fast-forward-test') || {}).performs_gate);
+  const prerequisites = [];
+  if (performed) {
+    const seenState = new Set();
+    const queue = (performed.guards_transitions || []).map((t) => t.from);
+    while (queue.length) {
+      const state = queue.shift();
+      if (!state || seenState.has(state)) continue;
+      seenState.add(state);
+      for (const gate of allGates) {
+        if (gate.id === performed.id) continue;
+        if (!(gate.guards_transitions || []).some((t) => t.to === state)) continue;
+        if (!prerequisites.includes(gate)) prerequisites.push(gate);
+        for (const t of gate.guards_transitions || []) queue.push(t.from);
+      }
+    }
+  }
+  // The gate this command performs requires evidence of its own, and nothing
+  // checked the request against it before the mutation.
+  if (performed && Array.isArray(p.evidence)) {
+    for (const need of performed.required_evidence || []) {
+      if (!p.evidence.includes(need)) {
+        errors.push(`command 'fast-forward-test' params.evidence carries no '${need}', which Gate ${performed.id} requires to open this move; the recorded justification would be short of the gate it claims`);
+      }
+    }
+  }
+  if (!performed || prerequisites.length === 0) {
+    errors.push(`command 'fast-forward-test' cannot determine which gates stand before it: ${performed ? `no declared gate guards a move into '${(performed.guards_transitions || []).map((t) => t.from).join('/')}'` : 'the gate it declares it performs is not declared'}. Condition 1 asks that the preceding gates have passed, and a precondition that cannot be identified is a refusal`);
+  }
+  if (cap) {
+    const held = new Set(cap.evidence_pointers || []);
+    for (const gate of prerequisites) {
+      for (const need of gate.required_evidence || []) {
+        if (!held.has(need)) {
+          errors.push(`command 'fast-forward-test' target '${request.target}' does not carry '${need}', which Gate ${gate.id} requires; decision 0009 condition 1 needs the gates standing before this one shown to have passed, not merely not recorded as failing`);
+        }
+      }
+      // ...and carrying the type name is still not proof. evidence_pointers
+      // name TYPES; nothing in this corpus records a receipt bound to an exact
+      // object, so freshness cannot be evaluated for this candidate. Condition 1
+      // asks for fresh gate results, and a condition that cannot be shown is a
+      // refusal. Declared in evidence.rules.pointers_are_types_not_receipts and
+      // raised on #430 rather than papered over with a membership test.
+      if ((gate.required_evidence || []).length && contracts.evidence && contracts.evidence.rules.pointers_are_types_not_receipts) {
+        errors.push(`command 'fast-forward-test' cannot show Gate ${gate.id} evidence is FRESH for this candidate: evidence_pointers name types, and no receipt is recorded against an exact object anywhere in the corpus. Decision 0009 condition 1 asks for fresh gate results, so this refuses until a per-candidate receipt exists`);
+      }
+    }
+  }
+
+  if (root) {
+    const current = resolveRef(root, ref);
+    if (current === null) {
+      errors.push(`command 'fast-forward-test' cannot resolve '${ref}' in this checkout; the ref it would move must be present to be moved safely`);
+    } else {
+      if (full(p.rollback_oid) && p.rollback_oid !== current) {
+        errors.push(`command 'fast-forward-test' records rollback ${p.rollback_oid.slice(0, 12)} but '${ref}' is at ${current.slice(0, 12)}; the recorded predecessor must be what is actually being replaced`);
+      }
+      // A local ref move in an ephemeral checkout is not a promotion. The
+      // owner-command workflow checks out `dev` and pushes only HEAD:dev, so
+      // moving refs/heads/test there would report success while the hosted ref
+      // stood still. Refuse unless the local ref is at the published state, so
+      // the move is at least from something real — and see the publication
+      // blocker raised on this PR, which this check does not close.
+      const published = resolveRemoteRef(root, ref);
+      if (published === null) {
+        errors.push(`command 'fast-forward-test' cannot see 'origin/${ref}' in this checkout; a ref move that no one can publish is not a promotion, and this tool does not push`);
+      } else if (current !== null && published !== current) {
+        errors.push(`command 'fast-forward-test' refused: local '${ref}' at ${current.slice(0, 12)} differs from 'origin/${ref}' at ${published.slice(0, 12)}; promoting from an unpublished state would move a ref no one else has`);
+      }
+
+      // The hosted-verified claim, checked against the ref rather than the
+      // request that makes it.
+      if (devDecl && full(p.hosted_verified_dev_oid)) {
+        const devHead = resolveRef(root, devDecl.ref);
+        if (devHead === null) {
+          errors.push(`command 'fast-forward-test' cannot resolve '${devDecl.ref}' in this checkout, so the hosted-verified claim cannot be checked against it`);
+        } else if (devHead !== p.hosted_verified_dev_oid) {
+          errors.push(`command 'fast-forward-test' claims ${p.hosted_verified_dev_oid.slice(0, 12)} as the hosted-verified '${devDecl.ref}' SHA, but '${devDecl.ref}' is at ${devHead.slice(0, 12)}; the ref is the authority for that, not the request`);
+        }
+      }
+      if (full(p.target_oid)) {
+        if (!commitExists(root, p.target_oid)) {
+          errors.push(`command 'fast-forward-test' target ${p.target_oid.slice(0, 12)} is not a commit in this repository`);
+        } else if (p.target_oid === current) {
+          errors.push(`command 'fast-forward-test' target is already '${ref}'; a command that moves nothing still appends an event`);
+        } else if (!isAncestor(root, current, p.target_oid)) {
+          // 3. A true fast-forward, or nothing.
+          errors.push(`command 'fast-forward-test' refused: '${ref}' at ${current.slice(0, 12)} is not an ancestor of ${p.target_oid.slice(0, 12)}, so this is not a fast-forward. Decision 0009 permits no other shape of move`);
+        }
+      }
+    }
+  }
+  return errors;
+}
+
+// writeFileSync truncates before it writes, so a failure part-way leaves an
+// empty or half-written event on disk. That file is not a record of anything —
+// it is a malformed entry the next loadRuntime chokes on, and the next attempt
+// at the same sequence number would collide with it. Removing a file this call
+// created moments ago is not a history rewrite; it is not letting a failed write
+// become history in the first place.
+function discardPartialEvent(evPath) {
+  try { if (existsSync(evPath)) rmSync(evPath, { force: true }); return true; } catch { return false; }
+}
+
+// Move a ref forward, atomically, refusing if it is not where we last saw it.
+// `git update-ref <ref> <new> <old>` fails when the ref has moved since
+// validation — the same compare-and-swap discipline the capsule seal uses, at
+// the level where a concurrent writer would otherwise be clobbered. No force,
+// no delete, no rewrite: this is the only ref write in the tool.
+function fastForwardRef(root, ref, newOid, oldOid) {
+  try {
+    execFileSync('git', ['update-ref', `refs/heads/${ref}`, newOid, oldOid], { cwd: root, stdio: ['ignore', 'ignore', 'pipe'] });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: `update-ref refused to move '${ref}' from ${oldOid.slice(0, 12)} to ${newOid.slice(0, 12)}: ${String((e && e.stderr) || e.message || e).trim()}` };
+  }
+}
+
+// The published counterpart of a local branch, or null when this checkout has
+// none. A promotion is a statement about the hosted ref, not about a working
+// copy that will be discarded when the job ends.
+export function resolveRemoteRefForTest(root, ref) { return resolveRemoteRef(root, ref); }
+function resolveRemoteRef(root, ref) {
+  try {
+    return execFileSync('git', ['rev-parse', '--verify', '--quiet', `refs/remotes/origin/${ref}`], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || null;
+  } catch { return null; }
+}
+
+// Is `maybe` an ancestor of `of`? The exact question a fast-forward asks.
+export function isAncestorForTest(root, maybe, of) { return isAncestor(root, maybe, of); }
+function isAncestor(root, maybe, of) {
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', maybe, of], { cwd: root, stdio: ['ignore', 'ignore', 'ignore'] });
+    return true;
+  } catch { return false; }
+}
+
+export function reseatParamErrors(rt, request, root = null) {
+  const errors = [];
+  const cap = rt.capsules[request.target];
+  const p = (request.params && typeof request.params === 'object') ? request.params : null;
+  if (!p) return [`command 'reseat' requires params naming the new base`];
+  const hasOid = typeof p.base_oid === 'string' && p.base_oid !== '';
+  const hasRef = typeof p.base_ref === 'string' && p.base_ref !== '';
+  if (hasOid === hasRef) {
+    errors.push(`command 'reseat' takes exactly one of params.base_oid (pin an exact commit) or params.base_ref (track a branch); it was given ${hasOid ? 'both' : 'neither'}`);
+  }
+  for (const k of Object.keys(p)) {
+    if (k !== 'base_oid' && k !== 'base_ref') errors.push(`command 'reseat' params carries unknown field '${k}'; the action reads base_oid and base_ref only`);
+  }
+  if (cap && !RESEATABLE.has(cap.lifecycle_state)) {
+    errors.push(`command 'reseat' target '${request.target}' is '${cap.lifecycle_state}', not unstarted; work already stands on its base, and moving it would silently rebase what the seat assumed`);
+  }
+  if (hasOid && !/^[0-9a-f]{40}$/.test(p.base_oid)) {
+    errors.push(`command 'reseat' params.base_oid '${p.base_oid}' is not a full 40-character commit id; an abbreviated base is ambiguous in a growing repository`);
+  }
+  if (hasRef && /^[0-9a-f]{7,40}$/.test(p.base_ref)) {
+    errors.push(`command 'reseat' params.base_ref '${p.base_ref}' is a commit id, not a branch; a pinned value recorded as a pointer is neither`);
+  }
+  if (cap && hasOid && cap.base_oid === p.base_oid && !cap.base_ref) {
+    errors.push(`command 'reseat' would set '${request.target}' to the base it already records; a command that changes nothing still appends an event`);
+  }
+  if (cap && hasRef && cap.base_ref === p.base_ref) {
+    errors.push(`command 'reseat' would set '${request.target}' to the pointer it already records; a command that changes nothing still appends an event`);
+  }
+  // Repository-dependent checks run only where a checkout is available, so the
+  // function stays pure for the plant harness.
+  if (root) {
+    if (hasOid && !commitExists(root, p.base_oid)) errors.push(`command 'reseat' params.base_oid '${p.base_oid.slice(0, 12)}' is not a commit in this repository`);
+    if (hasRef && resolveRef(root, p.base_ref) === null) errors.push(`command 'reseat' params.base_ref '${p.base_ref}' is not a branch in this repository`);
+  }
+  return errors;
+}
+
+export function validateCommand(contracts, rt, request, { root = null } = {}) {
   const errors = [];
   const policy = contracts['owner-command'];
   if (!policy) return { ok: false, errors: ['owner-command policy not loaded'], decision: null };
@@ -2006,6 +3182,18 @@ export function validateCommand(contracts, rt, request) {
     const v = request[f];
     if (v === undefined || v === null || (typeof v === 'string' && v === '')) errors.push(`command '${request.action}' is missing required field '${f}'`);
   }
+  if (action.id === 'grant-dev-delivery-authority') {
+    const cap = rt.capsules[request.target];
+    if (!cap) errors.push(`command target '${request.target}' has no work capsule`);
+    else {
+      const ownerRole = actorRole(contracts, cap.owner_actor);
+      const role = contracts.roles.roles.find((r) => r.role === ownerRole);
+      if (ownerRole !== 'it-manager-iii') errors.push(`command '${action.id}' may target only an it-manager-iii-owned capsule (target resolves to '${ownerRole}')`);
+      if (!role || !role.may.includes(DEV_DELIVERY_ACTION)) errors.push(`command '${action.id}' cannot grant '${DEV_DELIVERY_ACTION}' because the target role does not hold it`);
+      if (cap.authority.may.includes(DEV_DELIVERY_ACTION)) errors.push(`command '${action.id}' target '${request.target}' already has '${DEV_DELIVERY_ACTION}'`);
+      if (!cap.authority.must_not.includes(LEGACY_DELIVERY_DENIAL)) errors.push(`command '${action.id}' target '${request.target}' has no exact legacy delivery denial to narrow`);
+    }
+  }
   let cas = 'n/a';
   if (action.requires_cas) {
     const cap = rt.capsules[request.target];
@@ -2014,6 +3202,13 @@ export function validateCommand(contracts, rt, request) {
       errors.push(`stale command: expected_current_hash does not match the live state of '${request.target}' (compare-and-swap failed)`);
     } else if (request.expected_current_hash) cas = 'OK';
   }
+  // Action-specific shape. `params` is an open object in the request schema, so
+  // an action that reads it validates what it reads — otherwise no_arbitrary_input
+  // holds for every field except the one that carries the payload. Checked here
+  // rather than at apply so dry_run_first actually reports it.
+  if (action.id === 'reseat') errors.push(...reseatParamErrors(rt, request, root));
+  if (action.id === 'fast-forward-test') errors.push(...fastForwardTestErrors(contracts, rt, request, root));
+
   const ok = errors.length === 0;
   const decision = ok ? {
     schema: 'agentops/decision-event/v1',
@@ -2057,7 +3252,8 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   const capsule = rt.capsules[ticket];
   const written = [];
 
-  const move = resolveTransition(contracts, capsule, action, request.actor);
+  let pendingCapsule = null;
+    const move = resolveTransition(contracts, capsule, action, request.actor);
   if (move && move.error) return { ok: false, errors: [move.error], written };
 
   const chain = (rt.events[ticket] || []).slice().sort((a, b) => a.seq - b.seq);
@@ -2069,14 +3265,31 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
   const summary = [
     move
       ? `Owner-command '${request.action}' by ${request.actor}: lifecycle ${move.from} -> ${move.target}.${request.candidate_oid ? ` Exact object ${request.candidate_oid}.` : ''}`
-      : `Owner-command '${request.action}' by ${request.actor} recorded${reason ? `: ${reason}` : ''}.`,
+      : request.action === 'reseat' && capsule
+        ? `Owner-command 'reseat' by ${request.actor}: ${capsule.base_ref ? `base_ref ${capsule.base_ref}` : `base ${String(capsule.base_oid).slice(0, 12)}`} -> ${request.params.base_ref ? `base_ref ${request.params.base_ref} (resolved at read time)` : `base ${String(request.params.base_oid).slice(0, 12)}`}. The seat did not perform this; the authenticating actor did.`
+        : request.action === 'fast-forward-test'
+        ? `Owner-command 'fast-forward-test' by ${request.actor}: fast-forwarded '${(refForAction(contracts, 'fast-forward-test') || {}).ref}' from ${String(request.params.rollback_oid).slice(0, 12)} to ${String(request.params.target_oid).slice(0, 12)}, the hosted-verified dev SHA. Rollback target is the recorded predecessor.`
+        : `Owner-command '${request.action}' by ${request.actor} recorded${reason ? `: ${reason}` : ''}.`,
     clearsBlocker ? 'Blocker cleared: the decision it was waiting on is now recorded.' : ''
   ].filter(Boolean).join(' ');
   const event = {
     schema: 'agentops/event/v1', id, ticket, seq,
     parent_event: last ? last.id : null,
-    kind: 'owner-decision', actor: request.actor, at: now, summary
+    kind: 'owner-decision', actor: request.actor, action: request.action, at: now, summary
   };
+  // The ledger is the authoritative record of the promotion, so it carries the
+  // exact facts rather than the 12-character prefixes the summary reads with.
+  // The evidence was validated and then discarded, which left the chain unable
+  // to reconstruct what the promotion was justified by.
+  if (request.action === 'fast-forward-test' && request.params) {
+    event.promotion = {
+      ref: (refForAction(contracts, 'fast-forward-test') || {}).ref,
+      from: request.params.rollback_oid,
+      to: request.params.target_oid,
+      hosted_verified_dev_oid: request.params.hosted_verified_dev_oid,
+      evidence: request.params.evidence,
+    };
+  }
 
   if (capsule) {
     // Re-check the seal immediately before writing: a capsule that changed since
@@ -2093,23 +3306,92 @@ export function applyCommand(root, contracts, rt, request, { now = new Date().to
     // this the capsule would keep reporting itself blocked after the answer
     // arrived, and the HUD would list a resolved decision forever.
     if (action.resolves_blocker && next.blocker) next.blocker = null;
+    // A3: move the base. Re-validated here against the same function the dry run
+    // used, because apply must never trust a decision taken against older state.
+    if (action.id === 'reseat') {
+      const bad = reseatParamErrors(rt, request, root);
+      if (bad.length) return { ok: false, errors: bad, written };
+      if (request.params.base_ref) { next.base_ref = request.params.base_ref; }
+      else { next.base_oid = request.params.base_oid; delete next.base_ref; }
+    }
+    if (action.id === 'grant-dev-delivery-authority') {
+      next.authority.may.push(DEV_DELIVERY_ACTION);
+      next.authority.must_not = next.authority.must_not.filter((item) => item !== LEGACY_DELIVERY_DENIAL);
+      for (const denial of DEV_DELIVERY_PROTECTED_DENIALS) {
+        if (!next.authority.must_not.includes(denial)) next.authority.must_not.push(denial);
+      }
+    }
     // The appended event is the decision's record; evidence_pointers carries
     // declared evidence types only (evidence.json), never event ids.
     delete next.current_hash;
     next.current_hash = computeCapsuleHash(next);
-    const capPath = resolve(root, `work/${ticket}/CURRENT.json`);
-    writeFileSync(capPath, JSON.stringify(reorderCapsule(next), null, 2) + '\n');
-    written.push(`work/${ticket}/CURRENT.json`);
+    // Computed, NOT written. I called the earlier ordering deliberate and it was
+    // still wrong: a refusal after this point left CURRENT.json rewritten and
+    // its revision advanced with no event appended. Nothing persists until every
+    // preflight has passed.
+    pendingCapsule = { path: resolve(root, `work/${ticket}/CURRENT.json`), body: JSON.stringify(reorderCapsule(next), null, 2) + '\n' };
   }
 
+  // Three rounds of review landed on this block, each time on a narrower window,
+  // because each fix moved the fallible step rather than removing the window.
+  // The rule now, stated once: NOTHING that another reader can see is written
+  // until every step that can still refuse has passed, and every write after
+  // that point has an undo. The order is preflight, ref, capsule, event; a
+  // failure at any point restores what came before it, in reverse.
   const evDir = resolve(root, `events/${ticket}`);
   mkdirSync(evDir, { recursive: true });
   const evPath = resolve(evDir, `${id}.json`);
   if (existsSync(evPath)) return { ok: false, errors: [`event '${id}' already exists; refusing to overwrite an append-only record`], written };
-  writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
-  written.push(`events/${ticket}/${id}.json`);
 
-  return { ok: true, errors: [], written, event, transition: move || null };
+  // The capsule's prior bytes, so a later failure can put them back. A capsule
+  // whose revision advanced with no ledger entry is a seal mismatch the next
+  // verify reports and nobody asked for.
+  const capPath = pendingCapsule ? pendingCapsule.path : null;
+  let priorCapsule = null;
+  if (capPath) { try { priorCapsule = readFileSync(capPath, 'utf8'); } catch { priorCapsule = null; } }
+  const restoreCapsule = () => {
+    if (capPath && priorCapsule !== null) { try { writeFileSync(capPath, priorCapsule); return true; } catch { return false; } }
+    return true;
+  };
+
+  let refMove = null;
+  if (action.id === 'fast-forward-test') {
+    const bad = fastForwardTestErrors(contracts, rt, request, root);
+    if (bad.length) return { ok: false, errors: bad, written };
+    const decl = refForAction(contracts, 'fast-forward-test');
+    // The ref moves FIRST among the writes, because it is the only one whose
+    // failure mode is a lost race rather than an I/O error, and losing it must
+    // cost nothing. The previous version wrote the capsule immediately before
+    // this call, so a lost CAS left a resealed capsule with no event.
+    const moved = fastForwardRef(root, decl.ref, request.params.target_oid, request.params.rollback_oid);
+    if (!moved.ok) return { ok: false, errors: [moved.error], written };
+    refMove = { ref: decl.ref, from: request.params.rollback_oid, to: request.params.target_oid };
+    written.push(`ref:refs/heads/${decl.ref}`);
+    const undoRef = () => fastForwardRef(root, decl.ref, request.params.rollback_oid, request.params.target_oid);
+    try {
+      if (pendingCapsule) { writeFileSync(pendingCapsule.path, pendingCapsule.body); written.push(`work/${ticket}/CURRENT.json`); }
+      writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
+    } catch (e) {
+      const evGone = discardPartialEvent(evPath);
+      const capBack = restoreCapsule();
+      const undo = undoRef();
+      return { ok: false, errors: [`promotion failed after '${decl.ref}' moved: ${String(e.message || e)}. ${undo.ok ? `'${decl.ref}' was restored to ${request.params.rollback_oid.slice(0, 12)}` : `RESTORE FAILED — '${decl.ref}' stands at ${request.params.target_oid.slice(0, 12)}: ${undo.error}`}; ${capBack ? 'the capsule was restored to its prior revision' : 'THE CAPSULE COULD NOT BE RESTORED and its revision has advanced with no event'}${evGone ? '' : `; A PARTIAL EVENT REMAINS AT ${evPath} and must be removed before the next run`}.`], written };
+    }
+    written.push(`events/${ticket}/${id}.json`);
+  } else {
+    try {
+      if (pendingCapsule) { writeFileSync(pendingCapsule.path, pendingCapsule.body); written.push(`work/${ticket}/CURRENT.json`); }
+      writeFileSync(evPath, JSON.stringify(event, null, 2) + '\n');
+    } catch (e) {
+      const evGone = discardPartialEvent(evPath);
+      const capBack = restoreCapsule();
+      return { ok: false, errors: [`decision write failed: ${String(e.message || e)}. ${capBack ? 'The capsule was restored to its prior revision.' : 'THE CAPSULE COULD NOT BE RESTORED and its revision has advanced with no event.'}${evGone ? '' : ` A PARTIAL EVENT REMAINS AT ${evPath} and must be removed before the next run.`}`], written };
+    }
+    written.push(`events/${ticket}/${id}.json`);
+  }
+  pendingCapsule = null;
+
+  return { ok: true, errors: [], written, event, transition: move || null, refMove };
 }
 
 // Keep the capsule's key order stable so an applied decision produces a minimal,
@@ -2170,7 +3452,7 @@ export function runCommand(root, request, { dryRun = true } = {}) {
   if (schemaErrs.length) return { ok: false, errors: schemaErrs.map((e) => `request schema: ${e}`), decision: null };
   const rt = loadRuntime(root);
   if (rt.errors.length) return { ok: false, errors: rt.errors.map((e) => `runtime: ${e}`), decision: null };
-  const res = validateCommand(contracts, rt, request);
+  const res = validateCommand(contracts, rt, request, { root });
   if (!res.ok || dryRun) return res;
 
   const applied = applyCommand(root, contracts, rt, request);
@@ -2196,7 +3478,7 @@ export function renderHud(contracts, rt) {
   const oi = contracts['owner-intent'];
   const project = contracts.project;
   const tickets = Object.keys(rt.capsules).sort();
-  const activeLeases = rt.leases.filter((l) => !l.revoked);
+  const activeLeases = activeRuntimeLeases(rt);
   const protectedStates = new Set(contracts.transitions.protected_states);
   const ownerActor = oi.owner.actor_id;
 
@@ -2390,43 +3672,59 @@ export function runMigrate(root, { plan = false } = {}) {
 // away from the truth again without CI saying so.
 // ---------------------------------------------------------------------------
 const HUB_DIR = 'generated/hub';
+// Versioned owner-page shell. Every current and future Review & Approval Hub
+// route must render through `renderOwnerPage` so a new page cannot quietly
+// fall back to an unstyled document or fork its own copy of the motif.
+export const OWNER_PAGE_LAYOUT_ID = 'ashenspire-owner-hub-v1';
 
 const hubEsc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 
-const HUB_CSS = [
-  ':root{--bg:#f7f7f8;--fg:#1b1d21;--card:#fff;--line:#e2e3e7;--muted:#5c6169;--accent:#6b4bd6;--warn:#b23b2e;--ok:#1c7d4d}',
-  '@media(prefers-color-scheme:dark){:root{--bg:#15161a;--fg:#e9eaee;--card:#1e2026;--line:#2c2f37;--muted:#9aa0aa;--accent:#a48bff;--warn:#ff7a6b;--ok:#4bd694}}',
-  '*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}',
-  'header{padding:20px;border-bottom:1px solid var(--line)}h1{margin:0 0 4px;font-size:20px}.sub{color:var(--muted);font-size:13px}',
-  'nav{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:13px}nav a{color:var(--accent);text-decoration:none}nav a:hover{text-decoration:underline}',
-  'main{max-width:1000px;margin:0 auto;padding:20px;display:grid;gap:16px}',
-  'section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}',
-  'h2{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}',
-  'table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:600}',
-  'code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}',
-  '.pill{display:inline-block;padding:1px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px}',
-  '.none{color:var(--muted);font-style:italic}.ok{color:var(--ok)}.warn{color:var(--warn)}.wrap{overflow-x:auto}',
-  'a{color:var(--accent)}dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px}dt{color:var(--muted)}dd{margin:0}',
-  'ol.chain{margin:0;padding-left:18px;font-size:13px}ol.chain li{margin-bottom:8px}',
-  'footer{max-width:1000px;margin:0 auto;padding:12px 20px 32px;color:var(--muted);font-size:12px}',
+export const OWNER_PAGE_CSS = [
+  ':root{--ink:#171a18;--muted:#666a64;--paper:#f4f0e8;--paper-bright:#fbf8f2;--line:#d8d1c4;--charcoal:#202622;--charcoal-soft:#2a312c;--mint:#a7e2c2;--mint-deep:#1f6b4b;--amber:#d49245;--amber-deep:#8c581e;--rose:#984e59;--shadow:0 18px 48px rgba(37,35,29,.09)}',
+  '*{box-sizing:border-box}html{scroll-behavior:smooth;background:var(--paper)}body{margin:0;color:var(--ink);background:radial-gradient(circle at 85% 4%,rgba(167,226,194,.18),transparent 28rem),linear-gradient(90deg,rgba(23,26,24,.025) 1px,transparent 1px),var(--paper);background-size:auto,42px 42px,auto;font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}',
+  'a{color:inherit}code{font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace}button,a,summary{touch-action:manipulation}.sub{color:var(--muted);font-size:12px;line-height:1.55}',
+  '.hero{color:#eef3ef;background:linear-gradient(135deg,rgba(167,226,194,.08),transparent 44%),var(--charcoal);border-bottom:1px solid #3b443e;padding:24px clamp(24px,3vw,56px) 34px}',
+  '.hero-topline{color:#d2dad4;letter-spacing:.03em;display:flex;align-items:center;gap:12px;font-size:13px}.priority{width:34px;height:34px;color:var(--mint);border:1px solid rgba(167,226,194,.46);border-radius:50%;display:grid;place-items:center;font-weight:800;flex:none}.divider{width:1px;height:16px;background:#566159}.hero-brand{text-decoration:none}.hero-brand:hover,.hero-brand:focus-visible{color:var(--mint);text-decoration:underline;text-underline-offset:4px}.hero-grid{width:min(90vw,1440px);margin:0 auto;padding:clamp(42px,6vw,74px) 0 18px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:end}.eyebrow,.kicker,.card-index{text-transform:uppercase;letter-spacing:.15em;font-size:11px;font-weight:850}.eyebrow{color:var(--mint);margin:0 0 12px}.hero h1,.display-title{font-family:Georgia,Cambria,serif}.hero h1{max-width:900px;margin:0 0 18px;font-size:clamp(48px,7vw,92px);font-weight:600;letter-spacing:-.055em;line-height:.9}.lede{max-width:780px;margin:0;color:#bdc7bf;font-size:clamp(15px,1.6vw,19px);line-height:1.65}',
+  'nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}nav a{color:#c7d0c9;border:1px solid #465149;border-radius:999px;padding:9px 14px;font-size:12px;text-decoration:none;white-space:nowrap}nav a:hover,nav a:focus-visible,nav a[aria-current=page]{border-color:var(--mint);color:var(--mint);outline:none;background:rgba(167,226,194,.06)}',
+  '.truth-panel{width:min(90vw,1440px);margin:0 auto;background:#465149;border:1px solid #465149;border-radius:18px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;overflow:hidden}.truth-button{min-height:92px;color:inherit;background:var(--charcoal-soft);text-align:center;padding:17px 12px;text-decoration:none;display:grid;align-content:center}.truth-button:hover,.truth-button:focus-visible{color:#fff;box-shadow:inset 0 -3px 0 var(--mint);background:#354139;outline:none}.truth-button strong{color:var(--mint);font:600 34px/1 Georgia,Cambria,serif}.truth-button span{color:#d2ddd5;margin-top:7px;font-size:11px}.truth-button small{color:#89958c;margin-top:4px;font-size:9px}.truth-button.blocker-metric strong{color:#efc07c}',
+  'main{width:min(90vw,1440px);margin:0 auto;padding:clamp(36px,5vw,72px) 0;display:grid;gap:22px}.section-heading{max-width:820px;margin:0 0 22px}.section-heading .kicker{color:var(--mint-deep);margin:0 0 8px}.section-heading h2{font:600 clamp(30px,4vw,50px)/1 Georgia,Cambria,serif;letter-spacing:-.035em;margin:0 0 12px}.section-heading p{color:var(--muted);margin:0}',
+  'section,.panel{background:var(--paper-bright);border:1px solid var(--line);border-radius:20px;padding:clamp(22px,3vw,38px);box-shadow:var(--shadow)}section>h2{margin:0 0 18px;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.14em}',
+  '.section-fold{background:var(--paper-bright);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}.fold-summary{cursor:pointer;list-style:none;min-height:92px;padding:20px clamp(20px,2.4vw,34px);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center}.fold-summary::-webkit-details-marker,.ticket-summary::-webkit-details-marker{display:none}.fold-summary:hover,.fold-summary:focus-visible{background:#fff;outline:none}.fold-summary-copy{display:grid;gap:5px}.fold-summary-copy strong{font:600 clamp(25px,3vw,38px)/1 Georgia,Cambria,serif;letter-spacing:-.025em}.fold-summary-copy span{color:var(--muted);font-size:13px}.fold-toggle{min-height:42px;padding:9px 14px;border:1px solid #b9b09f;border-radius:999px;color:#4d514d;font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:9px}.fold-toggle:after{content:"+";font-size:18px;font-weight:400;line-height:1}.section-fold[open]>.fold-summary{border-bottom:1px solid var(--line)}.section-fold[open] .fold-toggle:after{content:"−"}.section-content{padding:clamp(20px,3vw,36px)}',
+  '.notice{border-left:4px solid var(--mint-deep);background:#edf4ef;padding:18px 20px;border-radius:0 14px 14px 0}.notice.warn{border-color:var(--amber);background:#fbf1e3}.notice p:last-child{margin-bottom:0}.none{color:var(--muted);font-style:italic}.ok{color:var(--mint-deep)}.warn{color:var(--amber-deep)}',
+  '.ticket-list{display:grid;gap:10px}.ticket-card{background:#fffdf8;border:1px solid var(--line);border-radius:15px;overflow:hidden}.ticket-summary{cursor:pointer;list-style:none;min-height:74px;padding:14px 18px;display:grid;grid-template-columns:minmax(105px,.38fr) minmax(0,1.45fr) minmax(120px,.58fr) auto;gap:14px;align-items:center}.ticket-summary:hover,.ticket-summary:focus-visible{background:#fff;outline:2px solid rgba(31,107,75,.32);outline-offset:-2px}.ticket-id{font-weight:850;color:var(--mint-deep)}.ticket-title{min-width:0}.ticket-title strong{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ticket-title small,.ticket-seat small{display:block;color:var(--muted);font-size:11px}.ticket-seat{font-size:12px;min-width:0}.state-pill,.pill{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:#f3efe7;font-size:10px;font-weight:850;letter-spacing:.05em;text-transform:uppercase}.state-pill.active{color:#fff;background:var(--mint-deep);border-color:var(--mint-deep)}.state-pill.blocked{color:#fff;background:var(--rose);border-color:var(--rose)}.state-pill.complete{color:#58605a;background:#e1e3df;border-color:#c8ccc7}.ticket-body{border-top:1px solid var(--line);padding:22px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(240px,.75fr);gap:28px}.ticket-body p{margin:0;color:#505650}.ticket-actions{display:grid;align-content:start;gap:9px}.button-link{min-height:44px;border:1px solid var(--mint-deep);border-radius:999px;padding:10px 15px;color:#fff;background:var(--mint-deep);display:inline-flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:850;text-decoration:none}.button-link.secondary{color:var(--mint-deep);background:transparent}.button-link:hover,.button-link:focus-visible{filter:brightness(.92);outline:3px solid rgba(31,107,75,.22);outline-offset:2px}',
+  '.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px}.mini-card{background:#fffdf8;border:1px solid var(--line);border-radius:15px;padding:20px}.mini-card .kicker{color:var(--mint-deep);margin:0 0 7px}.mini-card h3{font:600 25px/1.05 Georgia,Cambria,serif;margin:0 0 12px}.mini-card p{color:var(--muted);margin:0 0 15px}.mini-card dl{margin-top:14px}',
+  '.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;font-size:13px;background:#fffdf8}th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.1em}tr:last-child td{border-bottom:0}tbody tr:hover{background:#fff}',
+  'dl{margin:0;display:grid;grid-template-columns:minmax(110px,.35fr) minmax(0,1fr);gap:8px 16px;font-size:13px}dt{color:var(--muted);font-weight:700}dd{margin:0;min-width:0;overflow-wrap:anywhere}ol.chain{margin:0;padding-left:20px;font-size:13px}ol.chain li{margin-bottom:12px;padding-left:4px}',
+  'footer{width:min(90vw,1440px);margin:0 auto;padding:0 0 38px;color:var(--muted);font-size:12px}',
+  '@media(max-width:900px){.hero-grid{grid-template-columns:1fr}.hero-grid nav{justify-content:flex-start}.truth-panel{grid-template-columns:repeat(2,minmax(0,1fr))}.ticket-summary{grid-template-columns:minmax(100px,.5fr) minmax(0,1.5fr) auto}.ticket-seat{display:none}.ticket-body{grid-template-columns:1fr}}',
+  '@media(max-width:620px){.hero{padding-left:20px;padding-right:20px}.hero-topline .divider,.hero-topline .muted{display:none}.hero-grid,main,.truth-panel,footer{width:min(100% - 28px,1440px)}.hero h1{font-size:49px}.truth-panel{grid-template-columns:1fr 1fr}.truth-button{min-height:78px;padding:13px 8px}.truth-button strong{font-size:27px}.fold-summary{grid-template-columns:1fr;gap:12px}.fold-toggle{width:max-content}.ticket-summary{grid-template-columns:1fr auto;gap:7px 10px}.ticket-id{grid-column:1}.ticket-title{grid-column:1/-1}.state-pill{grid-column:2;grid-row:1}.ticket-body{padding:18px}.section-content,section,.panel{padding:20px 16px}dl{grid-template-columns:1fr;gap:3px}dd{margin-bottom:9px}.wrap{margin-left:-8px;margin-right:-8px}}',
+  '@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}',
 ].join('');
 
 // One shell so every page shares chrome and a reader never lands somewhere with
 // no way back. `up` is '' at the site root and '../' one level down.
-function hubPage(project, title, up, bodyHtml) {
+export function renderOwnerPage(project, title, up, bodyHtml, { eyebrow = 'Owner command center', lede = 'Current decisions, accountable work, evidence and routing — projected from validated repository state.', metrics = '' } = {}) {
+  const current = title === 'Overview' ? 'index.html' : title === 'Decisions' ? 'decisions.html' : title === 'Help desk' ? 'help-desk.html' : title === 'Seats and teams' ? 'seats.html' : '';
+  const navLink = (href, label) => `<a href="${up}${href}"${current === href ? ' aria-current="page"' : ''}>${label}</a>`;
+  const displayTitle = title === 'Overview' ? 'Review &amp; Approval Hub' : title;
   return [
     '<!DOCTYPE html>',
     '<!-- GENERATED by .agentops/tools/opsctl.mjs render — do not edit by hand. Deterministic projection of validated repository state. -->',
-    '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
+    `<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="ashenspire-owner-layout" content="${OWNER_PAGE_LAYOUT_ID}">`,
     `<title>${hubEsc(project.project_name)} — ${hubEsc(title)}</title>`,
-    `<style>${HUB_CSS}</style></head><body>`,
-    '<header>',
-    `<h1>${hubEsc(title)}</h1>`,
-    `<div class="sub">${hubEsc(project.project_name)} · Review &amp; Approval Hub · generated from committed state by <code>opsctl render</code></div>`,
-    `<nav><a href="${up}index.html">Overview</a><a href="${up}decisions.html">Decisions</a><a href="${up}help-desk.html">Help desk</a><a href="${up}seats.html">Seats &amp; teams</a></nav>`,
+    `<style>${OWNER_PAGE_CSS}</style></head><body class="owner-page" data-owner-layout="${OWNER_PAGE_LAYOUT_ID}">`,
+    '<header class="hero">',
+    '<div class="hero-topline"><span class="priority">P2</span><span class="divider"></span>',
+    `<a class="hero-brand" href="${up}index.html">${hubEsc(project.project_name)} · Review &amp; Approval Hub</a><span class="muted">generated by <code>opsctl render</code></span></div>`,
+    '<div class="hero-grid"><div>',
+    `<p class="eyebrow">${hubEsc(eyebrow)}</p><h1>${hubEsc(displayTitle)}</h1><p class="lede">${hubEsc(lede)}</p>`,
+    '</div><nav aria-label="Hub sections">',
+    navLink('index.html', 'Overview'), navLink('decisions.html', 'Decisions'), navLink('help-desk.html', 'Help desk'), navLink('seats.html', 'Seats &amp; teams'),
+    '</nav></div>',
+    metrics,
     '</header><main>',
     bodyHtml,
-    '</main><footer>Read-only. Every figure here is derived from validated repository state; nothing on this page is hand-maintained.</footer>',
+    '</main><footer>Read-only projection. Repository contracts and ticket capsules remain authoritative; this interface is regenerated, not hand-maintained.</footer>',
     '</body></html>',
   ].join('\n');
 }
@@ -2441,28 +3739,33 @@ export function renderHubSite(contracts, rt) {
   const issueBase = `${String(project.repository).replace(/\.git$/, '')}/issues/new`;
   const q = (o) => Object.entries(o).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
   const ownerDue = dispatch.filter((e) => e.kind === 'owner-decision');
+  const blockedTickets = tickets.filter((t) => rt.capsules[t].blocker);
+  const leases = activeRuntimeLeases(rt);
   const out = [];
 
   // --- Overview -------------------------------------------------------------
   {
     const L = [];
-    L.push('<section><h2>Needs you now</h2>');
-    if (!ownerDue.length) L.push(`<p class="none">Nothing is waiting on ${hubEsc(owner)}. ${dispatch.length} item(s) are moving as seat work.</p>`);
+    L.push(`<details class="section-fold" id="needs-you"${ownerDue.length ? ' open' : ''}><summary class="fold-summary"><span class="fold-summary-copy"><span class="kicker">Owner decisions</span><strong>Needs you now</strong><span>${ownerDue.length ? `${ownerDue.length} decision${ownerDue.length === 1 ? '' : 's'} need your authority.` : `Nothing is waiting on ${hubEsc(owner)}.`}</span></span><span class="fold-toggle">${ownerDue.length ? 'Review' : 'Clear'}</span></summary><div class="section-content">`);
+    if (!ownerDue.length) L.push(`<div class="notice"><p><strong>You are clear.</strong></p><p>${dispatch.length} item(s) are moving as seat work; no owner command is currently required.</p></div>`);
     else {
-      L.push('<div class="wrap"><table><tr><th>Ticket</th><th>Why it reached you</th></tr>');
-      for (const e of ownerDue) L.push(`<tr><td><a href="tickets/${hubEsc(e.ticket)}.html"><code>${hubEsc(e.ticket)}</code></a></td><td>${hubEsc(e.reason)}</td></tr>`);
-      L.push('</table></div>');
+      L.push('<div class="card-grid">');
+      for (const e of ownerDue) L.push(`<article class="mini-card"><p class="kicker">Decision required</p><h3>${hubEsc(e.ticket)}</h3><p>${hubEsc(e.reason)}</p><a class="button-link" href="tickets/${hubEsc(e.ticket)}.html">Review decision</a></article>`);
+      L.push('</div>');
     }
-    L.push('</section>');
+    L.push('</div></details>');
 
-    L.push('<section><h2>Every ticket</h2><div class="wrap"><table><tr><th>Ticket</th><th>Seat</th><th>State</th><th>Due</th><th>Waking</th></tr>');
+    L.push(`<details class="section-fold" id="ticket-queue" open><summary class="fold-summary"><span class="fold-summary-copy"><span class="kicker">Current work</span><strong>Every ticket</strong><span>${tickets.length} validated work capsule${tickets.length === 1 ? '' : 's'}, each with one accountable seat.</span></span><span class="fold-toggle">Browse</span></summary><div class="section-content"><div class="ticket-list">`);
     for (const t of tickets) {
       const cap = rt.capsules[t];
       const d = byTicket.get(t);
-      L.push(`<tr><td><a href="tickets/${hubEsc(t)}.html"><code>${hubEsc(t)}</code></a></td><td>${hubEsc(cap.owner_actor)}</td><td>${hubEsc(cap.lifecycle_state)}</td><td>${d ? (d.kind === 'owner-decision' ? '<span class="warn">owner</span>' : '<span class="ok">seat</span>') : '<span class="none">—</span>'}</td><td>${d ? hubEsc(d.wake) : '<span class="none">nobody</span>'}</td></tr>`);
+      const stateClass = cap.blocker ? 'blocked' : ['resolved', 'released'].includes(cap.lifecycle_state) ? 'complete' : 'active';
+      const wake = d ? d.wake : 'nobody';
+      L.push(`<details class="ticket-card"><summary class="ticket-summary"><span class="ticket-id">${hubEsc(t)}</span><span class="ticket-title"><strong>${hubEsc(cap.objective)}</strong><small>${d ? hubEsc(d.reason) : 'No transition is currently due.'}</small></span><span class="ticket-seat">${hubEsc(cap.owner_actor)}<small>Wakes ${hubEsc(wake)}</small></span><span class="state-pill ${stateClass}">${hubEsc(cap.lifecycle_state)}</span></summary><div class="ticket-body"><div><p class="kicker">Next action</p><p>${hubEsc(cap.next_action)}</p></div><div class="ticket-actions"><a class="button-link" href="tickets/${hubEsc(t)}.html">Open ticket details</a><a class="button-link secondary" href="${d && d.kind === 'owner-decision' ? 'decisions.html' : 'seats.html'}">${d && d.kind === 'owner-decision' ? 'Review decision route' : 'View routing'}</a></div></div></details>`);
     }
-    L.push('</table></div><p class="sub">"Due" is derived by <code>opsctl dispatch</code> from the contracts: a blocked ticket routes by its declared escalation class, an unblocked one by whoever may move it out of its state.</p></section>');
-    out.push({ rel: `${HUB_DIR}/index.html`, text: hubPage(project, 'Overview', '', L.join('\n')) + '\n' });
+    L.push('</div><p class="sub">Routing is derived by <code>opsctl dispatch</code>: blockers follow their declared escalation class; unblocked tickets wake whoever may advance the current state.</p></div></details>');
+    const metrics = `<div class="truth-panel" aria-label="Current Hub totals"><a class="truth-button" href="#ticket-queue"><strong>${tickets.length}</strong><span>Tracked tickets</span><small>validated capsules</small></a><a class="truth-button" href="decisions.html"><strong>${ownerDue.length}</strong><span>Owner decisions</span><small>${ownerDue.length ? 'review now' : 'nothing waiting'}</small></a><a class="truth-button" href="seats.html"><strong>${leases.length}</strong><span>Writer seats</span><small>active leases</small></a><a class="truth-button blocker-metric" href="help-desk.html"><strong>${blockedTickets.length}</strong><span>Blockers</span><small>routed, not hidden</small></a></div>`;
+    out.push({ rel: `${HUB_DIR}/index.html`, text: renderOwnerPage(project, 'Overview', '', L.join('\n'), { eyebrow: 'P2 · owner overview', lede: 'The familiar Hub presentation, now driven by validated AgentOps state so the design and the truth stay together.', metrics }) + '\n' });
   }
 
   // --- Decisions ------------------------------------------------------------
@@ -2490,14 +3793,14 @@ export function renderHubSite(contracts, rt) {
     const reserved = contracts['owner-command'].actions.filter((a) => a.protected).map((a) => a.id);
     L.push(`<section><h2>Protected — owner only</h2><p class="sub">${reserved.map((a) => `<span class="pill">${hubEsc(a)}</span>`).join(' ')}</p>`);
     L.push(`<p class="sub">${oi.protected_decision_classes.map(hubEsc).join(' · ')}</p></section>`);
-    out.push({ rel: `${HUB_DIR}/decisions.html`, text: hubPage(project, 'Decisions', '', L.join('\n')) + '\n' });
+    out.push({ rel: `${HUB_DIR}/decisions.html`, text: renderOwnerPage(project, 'Decisions', '', L.join('\n')) + '\n' });
   }
 
   // --- Seats ----------------------------------------------------------------
   {
     const L = [];
     L.push('<section><h2>Seats and their writer leases</h2><div class="wrap"><table><tr><th>Lease</th><th>Seat</th><th>Ticket</th><th>Ref</th><th>Paths</th><th>Expiry</th></tr>');
-    for (const l of rt.leases.filter((x) => !x.revoked)) {
+    for (const l of activeRuntimeLeases(rt)) {
       L.push(`<tr><td><code>${hubEsc(l.id)}</code></td><td>${hubEsc(l.actor)}</td><td><a href="tickets/${hubEsc(l.ticket)}.html"><code>${hubEsc(l.ticket)}</code></a></td><td><code>${hubEsc(l.ref)}</code></td><td>${l.path_globs.map((g) => `<code>${hubEsc(g)}</code>`).join(' ')}</td><td>${hubEsc(l.expiry)}</td></tr>`);
     }
     L.push('</table></div><p class="sub">One writer per overlapping path or ref. Collisions, undeclared refs and path grants a role was never given are rejected by <code>opsctl verify</code>.</p></section>');
@@ -2565,7 +3868,7 @@ export function renderHubSite(contracts, rt) {
       L.push(`<p class="sub">Concurrence required: ${ce.requires_concurrence.map((r) => `<span class="pill">${hubEsc(r)}</span>`).join(' ')} · escalates as <code>${hubEsc(ce.escalation_class)}</code> · records ${ce.records.map(hubEsc).join('; ')}.</p>`);
       L.push(`<p class="sub">Pods dissolve after ${hubEsc(tm.pods.dissolves_after)}; one lead and at most ${tm.pods.max_helpers} helpers. A pod's chat is never an authority source.</p></section>`);
     }
-    out.push({ rel: `${HUB_DIR}/seats.html`, text: hubPage(project, 'Seats and teams', '', L.join('\n')) + '\n' });
+    out.push({ rel: `${HUB_DIR}/seats.html`, text: renderOwnerPage(project, 'Seats and teams', '', L.join('\n')) + '\n' });
   }
 
   // --- Help desk ------------------------------------------------------------
@@ -2585,7 +3888,7 @@ export function renderHubSite(contracts, rt) {
       L.push('</table></div>');
     }
     L.push('</section>');
-    out.push({ rel: `${HUB_DIR}/help-desk.html`, text: hubPage(project, 'Help desk', '', L.join('\n')) + '\n' });
+    out.push({ rel: `${HUB_DIR}/help-desk.html`, text: renderOwnerPage(project, 'Help desk', '', L.join('\n')) + '\n' });
   }
 
   // --- One page per ticket --------------------------------------------------
@@ -2640,7 +3943,7 @@ export function renderHubSite(contracts, rt) {
     }
     L.push('<p class="sub">Append-only. The chain is what a clean clone replays to reconstruct this ticket with no other context.</p></section>');
 
-    out.push({ rel: `${HUB_DIR}/tickets/${t}.html`, text: hubPage(project, t, '../', L.join('\n')) + '\n' });
+    out.push({ rel: `${HUB_DIR}/tickets/${t}.html`, text: renderOwnerPage(project, t, '../', L.join('\n')) + '\n' });
   }
 
   return out;
@@ -2784,7 +4087,7 @@ const HELPDESK_VIEW = 'generated/intake/help-desk-ticket.yml';
 // escalation classes), and probeStrengthErrors below proves each one still fails
 // when its block is removed.
 const VIEW_PROBES = {
-  authority: (x) => x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${g.required_evidence} |`),
+  authority: (x) => [x.evidence_expected_is_prose, ...x.grants.map((g) => `| ${g.action} | ${g.routine_owner_role} | ${g.scope} | ${g.protected ? 'yes' : 'no'} | ${mdCell(g.evidence_expected)} |`)],
   delegation: (x) => [x.non_amplification_rule, ...x.envelopes.map((e) => `| ${e.id} | ${e.parent_id || '\u2014'} | ${e.delegator_role} \u2192 ${e.delegatee_role} | ${e.delegated_actions.join(', ')} | ${e.scope_paths.map((g) => '\`' + mdCell(g) + '\`').join(', ') || '\u2014 (no path scope)'} | ${e.max_subdelegation_depth} | ${e.effective} \u2192 ${e.expiry} |`)],
   delivery: (x) => [x.principle, ...x.dev_delivery.all_must_pass_at_one_exact_head.map((cond) => `- ${cond}`), `Delivery to \`dev\` is held by \`${x.dev_delivery.actor_role}\``,
     `Desired Pages source: \`${x.pages.desired_source}\``,
@@ -2797,17 +4100,27 @@ const VIEW_PROBES = {
     ...x.pages.switch_packet_records.map((r) => `- ${r}`)],
   escalation: (x) => [x.principle, ...x.classes.map((cl) => `| ${cl.id} | ${cl.attempts_before_escalate} | ${cl.sla_minutes} | ${cl.route.join(' \u2192 ')} | ${cl.wake} | ${cl.authority_effect} | ${cl.continuing_work_allowed ? 'yes' : 'no'} |`), ...x.classes.map((cl) => `- \`${cl.id}\` \u2014 ${cl.hazard}`), x.ticket_flow.principle, x.ticket_flow.owner_is_last_resort, ...x.ticket_flow.handoff_events, x.ticket_flow.handoff_rule, ...x.ticket_flow.steps.map((st) => `| ${st.n} | \`${st.actor}\` | ${mdCell(st.does)} |`)],
   evidence: (x) => [x.principle, ...x.evidence.map((e) => `| ${e.id} | ${e.producer_role} | ${e.exact_object} | ${e.verifier_role} | ${e.invalidation_keys.join(', ')} | ${mdCell(e.freshness_rule)} |`)],
-  'git-ownership': (x) => [x.principle, ...x.refs.map((r) => `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} |`), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, `Rewriting needs \`${x.branch_hygiene.permission_role}\` when ${x.branch_hygiene.rewrite_requires_permission_when}; absent that, ${x.branch_hygiene.alternative_when_permission_is_absent}.`, `Generated lane \`${x.generated_serialization.lane}\`: ${x.generated_serialization.rule}`, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
+  'git-ownership': (x) => [x.principle, ...x.refs.map(gitRefRow), ...x.paths.map((pp) => `| \`${mdCell(pp.glob)}\` | ${pp.per_seat ? '\`per-seat\` \u2014 the ticket\u2019s lease' : pp.owner_role} | ${pp.serialized_lane} |`), x.branch_hygiene.principle, x.collision_rule, `Rewriting needs \`${x.branch_hygiene.permission_role}\` when ${x.branch_hygiene.rewrite_requires_permission_when}; absent that, ${x.branch_hygiene.alternative_when_permission_is_absent}.`, `Generated lane \`${x.generated_serialization.lane}\`: ${x.generated_serialization.rule}`, `Ledger lane \`${x.ledger_serialization.lane}\`, written solely by \`${x.ledger_serialization.writer}\`: ${x.ledger_serialization.rule}`, x.ledger_serialization.actor_rule, x.branch_hygiene.records.join(', '), x.branch_hygiene.never.join('; ')],
   hierarchy: (x) => [...x.nodes.map((n) => `| \`${n.actor_id}\` | ${n.role} | ${n.escalation_parent ? '\`' + n.escalation_parent + '\`' : '\u2014 (root)'} | ${n.owns_escalations.join(', ')} |`), x.authority_tiers.principle, x.authority_tiers.disambiguation.rule, ...Object.values(x.authority_tiers.rules), `Routing SLA: deputy custody at ${x.escalation_routing.deputy_custody_at_minutes} min`, x.escalation_routing.note, x.authority_tiers.namespace_note, x.authority_tiers.disambiguation.known_ambiguous_artifact, x.escalation_routing.immediate_owner_classes.join(', '), ...x.authority_tiers.levels.map((lv) => `| **P${lv.p}** ${lv.label} | ${lv.actors.map((a) => '\`' + a + '\`').join(', ')} | ${lv.holds.join('; ')} | ${lv.cannot.join('; ')} |`)],
   'information-access': (x) => [x.principle, ...x.canonical_documents.map((d) => `| ${d.topic} | \`${d.path}\` | ${d.superseded_paths.map((y) => '\`' + y + '\`').join(', ') || '\u2014'} | \`${d.decision}\` |`),
     `- **On demand:** ${x.on_demand.join('; ')}`, `- **Restricted:** ${x.restricted.join('; ')}`,
     `- **Forbidden (never loaded):** ${x.forbidden.join('; ')}`,
+    `**Owner decision surfaces are the exception.** ${x.reporting.owner_decision_exception}`,
+    `The packet shape is ${x.reporting.decision_packet.source}:`,
+    ...x.reporting.decision_packet.parts.map((y) => `- ${y}`),
+    x.reporting.decision_packet.open_question_is_a_failure,
     `- **Startup** (\u2264 ${x.max_startup_items}, target ${x.startup_token_target} / hard ${x.startup_token_hard_limit} tokens)`],
+  retention: (x) => [x.principle, x.consolidation.rule, x.corrections_are_never_consolidated.rule,
+    `Authority: \`${x.authority.actor_role}\`, from ${x.authority.source}.`,
+    ...x.authority.preconditions.map((y) => `- ${y}`),
+    `A \`${x.consolidation.kind}\` names ${x.consolidation.summary_must_name.join(', ')}, and covers at least ${x.consolidation.min_range} events.`,
+    `**Never:** ${x.never.join('; ')}.`],
+  directives: (x) => [x.principle, x.non_amplification, ...x.directives.map((d) => `| ${d.id} | \`${d.issued_by}\` | ${d.issued_at} | ${d.status}${d.superseded_by ? ' \u2192 \`' + d.superseded_by + '\`' : ''} | ${d.codified_in ? '\`' + d.codified_in + '.' + d.codified_as + '\`' : '\u2014 (nothing enforces it)'} | ${mdCell(d.text)} |`)],
   migration: (x) => [x.principle],
   'model-effort': (x) => [x.principle, x.assignment_record.format,
     `Selection stability: ${x.stability} Substitution: ${x.substitution}`,
     `Every assignment record carries: ${x.assignment_record.required_fields.join(', ')}.`, ...x.tiers.map((t) => `| ${t.risk_and_station} | \`${t.default_model}\` | ${t.allowed_efforts.join(', ')}${t.requires_exceptional_reason ? ' (needs a recorded exceptional reason)' : ''} | ${t.typical_work} |`)],
-  'owner-command': (x) => [x.principle, ...x.actions.map((a) => `| ${a.id} | ${a.authenticator_roles.join(', ')} | ${a.requires_cas ? 'yes' : 'no'} | ${a.protected ? 'yes' : 'no'} | ${a.required_fields.map((f) => '\`' + f + '\`').join(', ')} | ${mdCell(a.affects)} |`)],
+  'owner-command': (x) => [x.principle, ...x.actions.map(ownerCommandRow)],
   'owner-intent': (x) => [x.mission, x.measurable_end_state, `- **Risk tolerance:** ${x.risk_tolerance}`, ...x.non_negotiable_invariants.map((i) => `  - ${i}`), ...x.priority_order.map((pr, i) => `  ${i + 1}. ${pr}`), x.owner.reserved_authority.join('; '), x.deputy.grant_summary,
     `  - Non-amplifying rule: \`${x.deputy.non_amplifying_rule}\``,
     ...x.deputy.included_actions.map((a) => `    - ${a}`), ...x.deputy.excluded_actions.map((a) => `    - ${a}`),
@@ -2819,17 +4132,18 @@ const VIEW_PROBES = {
   'promotion-gates': (x) => [x.principle, x.immutable_candidate, ...x.gates.map((g) => gateDetailLines(g).length ? [`#### Gate ${g.id} \u2014 ${g.name}`, '', ...gateDetailLines(g)].join('\n') : null).filter((y) => y !== null), ...x.gates.map((g) => `| **${g.id}** | ${g.name} | \`${g.actor_role}\` | ${(g.guards_transitions || []).map((t) => '\`' + t.from + '\` \u2192 \`' + t.to + '\`').join('<br>') || '\u2014'} | ${g.required_evidence.join(', ') || '\u2014'} | ${g.grants.length ? g.grants.join(', ') : 'nothing'} |`)],
   qa: (x) => [x.principle, ...x.risk_classes.map((r) => `| ${r.id} | ${r.required_suites.join(', ')} | ${r.independent_qa ? 'yes' : 'no'} |`), ...x.gates.map((g) => `| ${g.id} | ${g.risk_class} | ${g.verifier_role} | ${g.independent_of_maker ? 'yes' : 'no'} | ${g.required_checks.join(', ')} | ${g.waiver_authority_role} | ${g.required_evidence.join(', ')} |`)],
   raci: (x) => [x.principle, ...x.items.map((i) => `| ${i.id} | ${i.kind} | ${i.responsible.join(', ')} | ${i.accountable.join(', ')} | ${i.consulted.join(', ') || '\u2014'} | ${i.informed.join(', ') || '\u2014'} |`)],
-  roles: (x) => x.roles.map((r) => [
+  roles: (x) => [x.non_seat_writers_are_not_roles, ...x.non_seat_writers.map((w) => `- \`${w.id}\` (permitted in ${w.appears_in.map((f) => '\`' + f + '\`').join(', ')}) \u2014 ${w.means}`), ...x.roles.map((r) => [
     '### `' + r.role + '`',
     '',
     `- **Mission:** ${r.mission}`,
+    r.display_name ? `- **Seat:** ${mdCell(r.display_name)}` : null,
     r.archetype ? `- **Derives from:** \`${r.archetype}\` \u2014 a seniority level, carrying exactly that archetype's authority and no more.` : null,
     `- **May:** ${r.may.join(', ') || '\u2014'}`,
     `- **Must:** ${r.must.join('; ') || '\u2014'}`,
     `- **Must not:** ${r.must_not.join(', ') || '\u2014'}`,
     `- **Approval ceiling:** ${r.approval_ceiling}`,
-  ].filter((l) => l !== null).join('\n')),
-  teams: (x) => [x.principle, x.pool_rules.note, `Idle capacity: ${x.wip_limits.idle_capacity}`, ...x.legacy_aliases.map((a) => `| \`${mdCell(a.legacy)}\` | \`${mdCell(a.routes_to)}\` | ${mdCell(a.note)} |`), x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``],
+  ].filter((l) => l !== null).join('\n'))],
+  teams: (x) => [x.principle, x.pool_rules.note, `Idle capacity: ${x.wip_limits.idle_capacity}`, ...x.legacy_aliases.map((a) => `| \`${mdCell(a.legacy)}\` | \`${mdCell(a.routes_to)}\` | ${mdCell(a.note)} |`), x.team_leads.spins_out, ...x.standing_roles.map((r) => `| \`${r.id}\` | ${r.responsibility} | ${r.boundary} |`), ...x.capability_pools.map((pp) => `| \`${pp.id}\` | ${pp.delivery_capability} | ${pp.stewardship} |`), x.charter_exception.principle, x.team_leads.principle, x.team_leads.identity_rule, ...x.team_leads.leads.map((l) => `| \`${l.team}\` | \`${l.actor_id}\` | ${mdCell(l.seat_name)} |`), x.naming_convention.principle, x.naming_convention.not_the_tier_namespace, `- Persistent team lead: \`${x.naming_convention.persistent_lead}\``, `- Agent seat it spins out: \`${x.naming_convention.agent_seat}\``, `- Persistent display name: \`${x.naming_convention.display_name_persistent}\``, `- Agent display name: \`${x.naming_convention.display_name_agent}\``, x.naming_convention.display_name_is_not_the_seat_name, x.naming_convention.display_name_kind_is_not_a_choice],
   transitions: (x) => [x.principle, `States: ${x.states.map((st) => '\`' + st + '\`').join(' \u2192 ')}`, `Protected states: ${x.protected_states.map((st) => '\`' + st + '\`').join(', ')}`, ...x.transitions.map((t) => `| ${t.from} | ${t.to} | ${t.guard} | ${t.permitted_actor_roles.join(', ')} | ${t.protected ? 'yes' : 'no'} |`), x.legacy_rule, ...(x.legacy_values || []).map((lv) => `| \`${mdCell(lv.legacy)}\` | ${mdCell(lv.canonical_treatment)} |`)],
 };
 
@@ -2968,6 +4282,22 @@ export function governanceGateErrors(contracts, arts) {
 // check, the capsule authority check, dispatch's wake selection, and the wake
 // capsule's own IDENTITY line, which printed `role=<actor id>`. One helper
 // instead of four fixes, so the fifth site cannot drift.
+// The ref a command may move, looked up by the command's id. Seven call sites
+// each carried their own /gate-c-fast-forward/ substring match against the
+// ref's `mutation` prose, so the binding lived in seven places and none of
+// them named the command. A ref declares which action may move it now, and
+// every call site asks the same question here.
+// One row shape for the ref table, shared by the renderer and the coverage
+// projection. The Moved-by column exists because mutated_by_action decides
+// which command may move a shared ref, and a reader could not see it.
+export function gitRefRow(r) {
+  return `| \`${r.ref}\` | ${r.owner_role} | ${r.mutation} | ${r.mutated_by_action ? '\`' + r.mutated_by_action + '\`' : '\u2014'} |`;
+}
+
+export function refForAction(contracts, actionId) {
+  return (((contracts || {})['git-ownership'] || {}).refs || []).find((r) => r.mutated_by_action === actionId) || null;
+}
+
 export function actorRole(g, actorId) {
   const node = g && g.hierarchy && g.hierarchy.nodes.find((n) => n.actor_id === actorId);
   return node ? node.role : actorId;
@@ -3168,7 +4498,7 @@ export function runValidate(root = ROOT) {
     // governance contracts. Zero runtime artifacts is valid (no active tickets).
     const rt = loadRuntime(root);
     all.push(...rt.errors);
-    if (rt.errors.length === 0) all.push(...runtimeChecks(contracts, rt));
+    if (rt.errors.length === 0) all.push(...runtimeChecks(contracts, rt, root));
   }
   return { contracts, errors: all };
 }
@@ -3360,6 +4690,10 @@ export function runDrill(root = ROOT) {
     total = Object.keys(rtNow.capsules).length;
     for (const t of Object.keys(rtNow.capsules).sort()) {
       const cap = rtNow.capsules[t];
+      // A capsule tracking a branch has no pinned value to fall behind, so it is
+      // not stale — that is the point of ruling AS-HD-029-0052's pointer. An
+      // UNRESOLVABLE pointer is a different matter and wake reports it.
+      if (cap.base_ref) continue;
       if (cap.base_oid !== head) stale.push({ ticket: t, base: cap.base_oid, state: cap.lifecycle_state });
     }
   }
@@ -3492,18 +4826,337 @@ export function runSelftest(root = ROOT) {
     results.push({ label: 'the reseat sweep is gone, not merely undocumented', pass: !new RegExp('function ' + sweepName).test(self), errs: [] });
   }
 
+  // Ruling AS-HD-029-0052 point 2. The pointer is only safe because it freezes
+  // when work starts; every way of loosening that is planted.
+  expectRuntime('a started capsule still tracking a branch', (rt) => {
+    const cap = Object.values(rt.capsules).find((c) => !RESEATABLE.has(c.lifecycle_state));
+    cap.base_ref = 'dev';
+  }, 'work stands on a tree, so the base freezes');
+  expectRuntime('a commit id recorded as a tracking pointer', (rt) => {
+    const cap = Object.values(rt.capsules).find((c) => RESEATABLE.has(c.lifecycle_state));
+    cap.base_ref = 'a72cac9611df';
+  }, 'a pinned value recorded as a pointer is neither');
+  expectRuntime('a tracking pointer that is not a branch name', (rt) => {
+    const cap = Object.values(rt.capsules).find((c) => RESEATABLE.has(c.lifecycle_state));
+    cap.base_ref = 'dev^{tree}';
+  }, 'is not a valid git branch name');
+  {
+    // ...and the pointer actually removes the staleness it was ruled against:
+    // an unstarted capsule tracking a branch reads as tracking, not STALE.
+    const rt = baseRt();
+    const t = Object.keys(rt.capsules).find((k) => RESEATABLE.has(rt.capsules[k].lifecycle_state));
+    rt.capsules[t].base_ref = 'dev';
+    const built = buildCapsule(contracts, rt, t, { head: 'ffffffffffffffffffffffffffffffffffffffff', root });
+    const line = (built.text || '').split('\n').find((l) => l.startsWith('FRESHNESS'));
+    results.push({ label: 'an unstarted capsule tracking a branch never reads STALE', pass: !!line && !line.includes('STALE'), errs: [String(line)] });
+    const frozenBuilt = buildCapsule(contracts, rt, t, { frozen: true, root });
+    const fline = (frozenBuilt.text || '').split('\n').find((l) => l.startsWith('FRESHNESS'));
+    results.push({ label: 'a tracking capsule reconstructs deterministically when frozen', pass: !!fline && fline.includes('as recorded'), errs: [String(fline)] });
+    // ...and a pointer this checkout cannot resolve is reported, not silently
+    // treated as a base.
+    rt.capsules[t].base_ref = 'no-such-branch-anywhere';
+    const missing = buildCapsule(contracts, rt, t, { head: 'ffffffffffffffffffffffffffffffffffffffff', root });
+    const mline = (missing.text || '').split('\n').find((l) => l.startsWith('FRESHNESS'));
+    results.push({ label: 'an unresolvable tracking pointer is reported, not assumed', pass: !!mline && mline.includes('UNRESOLVABLE'), errs: [String(mline)] });
+  }
+
+  // Codex finding: a hand-rolled character filter is not git's branch-name rule.
+  for (const badName of ['dev..bad', 'foo//bar', 'trailing/', '-lead', '.hidden', 'a.lock']) {
+    expectRuntime(`a base_ref git would reject: ${badName}`, (rt) => {
+      const cap = Object.values(rt.capsules).find((c) => RESEATABLE.has(c.lifecycle_state));
+      cap.base_ref = badName;
+    }, 'not a valid git branch name');
+  }
+  {
+    // Codex finding: while tracking, the resolved commit is the effective base.
+    // A capsule that says follow the branch and then names a different commit —
+    // or tells the seat to stop because its base moved — defeats the pointer.
+    const rt = baseRt();
+    const t = Object.keys(rt.capsules).find((k) => RESEATABLE.has(rt.capsules[k].lifecycle_state));
+    const branch = anyLocalBranch(root);
+    // Visible, not silent: these four assertions need a branch that resolves,
+    // and a CI pull-request checkout carries none. A block that quietly stops
+    // running is the failure mode this file has already been bitten by twice, so
+    // the skip is itself a reported result.
+    results.push({ label: 'tracking-capsule assertions ' + (branch ? 'ran against ' + branch : 'skipped — this checkout carries no local branch to resolve'), pass: true, errs: [] });
+    if (branch) {
+      const resolved = resolveRef(root, branch);
+      rt.capsules[t].base_ref = branch;
+      const lines = (buildCapsule(contracts, rt, t, { head: 'f'.repeat(40), root }).text || '').split('\n');
+      const get = (k) => lines.find((l) => l.startsWith(k)) || '';
+      results.push({ label: 'a tracking capsule names the resolved commit as its base', pass: get('BASE').includes(resolved), errs: [get('BASE')] });
+      results.push({ label: 'a tracking capsule sources the resolved commit', pass: get('SOURCE').includes(resolved), errs: [get('SOURCE')] });
+      results.push({ label: 'a tracking capsule does not report the old recorded base as its base', pass: !get('BASE').includes(rt.capsules[t].base_oid) || rt.capsules[t].base_oid === resolved, errs: [get('BASE')] });
+      results.push({ label: 'a tracking capsule is not told to stop because its base moved', pass: !get('STOP').includes('base_oid moved from HEAD'), errs: [get('STOP')] });
+    }
+    // ...and a pinned capsule keeps the pinned-base stop condition.
+    const pinned = baseRt();
+    const pt = Object.keys(pinned.capsules).find((k) => RESEATABLE.has(pinned.capsules[k].lifecycle_state));
+    const pLines = (buildCapsule(contracts, pinned, pt, { head: 'f'.repeat(40), root }).text || '').split('\n');
+    const pStop = pLines.find((l) => l.startsWith('STOP')) || '';
+    results.push({ label: 'a pinned capsule still stops when its base moves', pass: pStop.includes('base_oid moved from HEAD'), errs: [pStop] });
+  }
+
+  // Codex P1: a per-seat grant authorizes the lease's OWN ticket. The first
+  // version accepted `.agentops/work/**` unconditionally, so every holder was
+  // authorized for every seat's ledger while the contract claimed otherwise.
+  expectRuntime('a lease granting another ticket\'s ledger', (rt) => {
+    rt.leases.find((l) => l.id === 'lease-AS-HD-055-qa-independent').path_globs.push('.agentops/events/AS-HD-040/**');
+  }, "is AS-HD-040's ledger");
+  expectRuntime('a capsule claiming another ticket\'s ledger as an affected path', (rt) => {
+    const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker');
+    l.path_globs.push('.agentops/events/**');
+    rt.capsules['AS-1001'].affected_paths.push('.agentops/events/AS-HD-055/**');
+  }, "is AS-HD-055's ledger");
+  {
+    // ...and a seat's own ticket-scoped ledger grant stays legal.
+    const rt = baseRt();
+    const lease = rt.leases.find((l) => l.id === 'lease-AS-HD-055-qa-independent');
+    lease.path_globs.push('.agentops/events/AS-HD-055/**', '.agentops/work/AS-HD-055/**');
+    const errs = pathGrantErrors(contracts, lease);
+    results.push({ label: 'a seat may hold its own ticket-scoped ledger', pass: errs.length === 0, errs });
+  }
+
+  // B4 consolidation plants. Every one guards the same property: a summary adds
+  // a node and removes nothing, so a summary whose range is gone, wrong, or
+  // protected must fail rather than quietly stand in for evidence.
+  const consolidate = (rt, ticket, over) => {
+    const list = rt.events[ticket];
+    const last = list[list.length - 1];
+    const span = list.slice(0, over);
+    list.push({
+      schema: 'agentops/event/v1', id: `${ticket}-9100`, ticket, seq: last.seq + 1, parent_event: last.id,
+      kind: 'consolidation', actor: 'it-manager-iii', at: '2026-09-01T00:00:00Z',
+      summary: 'Consolidated an early range for readability.',
+      consolidates: { from_event: span[0].id, to_event: span[span.length - 1].id, count: span.length, authorised_by: 'it-manager-iii', recovery_consequence: 'the individual summaries in the range are no longer read line by line' },
+    });
+    return list[list.length - 1];
+  };
+  const bigTicket = Object.keys(rt0.events).find((t) => rt0.events[t].length > 20 && t !== 'AS-HD-029');
+  if (bigTicket) {
+    {
+      const rt = baseRt();
+      consolidate(rt, bigTicket, 12);
+      const errs = runtimeChecks(contracts, rt).filter((e) => e.includes('-9100'));
+      results.push({ label: 'consolidation control: a well-formed summary of a present range validates', pass: errs.length === 0, errs });
+    }
+    // A payload on the wrong kind is never checked, so it must never be accepted.
+  // Invalidation keys name capsule fields. The near-miss is the point: `tree_oid`
+  // and `head_oid` are real keys in the evidence contract's field of the same
+  // name, and both are wrong here.
+  expectRuntime('capsule: an invalidation key that names no capsule field', (rt) => { const t = Object.keys(rt.capsules)[0]; rt.capsules[t].invalidation_keys = ['tree_oid']; }, 'watched by nothing');
+  expectRuntime('capsule: an invalidation key borrowed from the evidence vocabulary', (rt) => { const t = Object.keys(rt.capsules)[0]; rt.capsules[t].invalidation_keys = ['base_oid', 'head_oid']; }, "invalidates on 'head_oid'");
+  {
+    // Control: the keys the live capsules actually use must all resolve, or the
+    // pair above could be passing because every key fails.
+    const rt = baseRt();
+    const errs = runtimeChecks(contracts, rt).filter((e) => e.includes('watched by nothing'));
+    results.push({ label: 'capsule control: the invalidation keys in the live corpus all name real fields', pass: errs.length === 0, errs });
+  }
+  expectRuntime('a consolidation payload on a genesis event', (rt) => {
+    const t = Object.keys(rt.events)[0];
+    const g = rt.events[t].find((e) => e.kind === 'genesis') || rt.events[t][0];
+    g.consolidates = { from_event: 'x', to_event: 'y', count: 2, authorised_by: 'maker', recovery_consequence: 'none' };
+  }, "only a 'consolidation' event may carry");
+  expectRuntime('a promotion payload on a decision that is not a fast-forward', (rt) => {
+    const t = Object.keys(rt.events).find((k) => rt.events[k].some((e) => e.kind === 'owner-decision'));
+    const e = rt.events[t].find((x) => x.kind === 'owner-decision');
+    e.action = 'delegate';
+    e.promotion = { ref: 'test', from: 'a'.repeat(40), to: 'b'.repeat(40), hosted_verified_dev_oid: 'b'.repeat(40), evidence: ['fabricated'] };
+  }, 'the ledger would claim a promotion no command performed');
+  expectRuntime('a promotion payload on a state-change event', (rt) => {
+    const t = Object.keys(rt.events)[0];
+    const e = rt.events[t].find((x) => x.kind === 'state-change') || rt.events[t][0];
+    e.promotion = { ref: 'test', from: 'a'.repeat(40), to: 'b'.repeat(40), hosted_verified_dev_oid: 'b'.repeat(40), evidence: ['x'] };
+  }, "only a 'owner-decision' event may carry");
+
+  // Binding the payload to the action validated the LABEL only. These plant the
+  // payload itself: a promotion the ledger records must name the ref
+  // git-ownership permits, full commits, the hosted-verified SHA it claims, and
+  // the evidence its gate requires — or the authoritative record asserts a
+  // protected move that could not have occurred.
+  const ffRef = refForAction(contracts, 'fast-forward-test').ref;
+  const ffGateId = ((contracts['promotion-gates'] || {}).gates || []).find((x) => x.id === contracts['owner-command'].actions.find((a) => a.id === 'fast-forward-test').performs_gate);
+  const plantPromotion = (rt, mutate) => {
+    const t = Object.keys(rt.events).find((k) => rt.events[k].some((e) => e.kind === 'owner-decision'));
+    const e = rt.events[t].find((x) => x.kind === 'owner-decision');
+    e.action = 'fast-forward-test';
+    e.promotion = {
+      ref: ffRef, from: 'a'.repeat(40), to: 'b'.repeat(40), hosted_verified_dev_oid: 'b'.repeat(40),
+      evidence: [...(ffGateId.required_evidence || [])],
+    };
+    if (mutate) mutate(e.promotion);
+    return e;
+  };
+  {
+    const rt = baseRt();
+    const e = plantPromotion(rt, null);
+    const errs = runtimeChecks(contracts, rt).filter((x) => x.includes(e.id) && x.includes('promotion'));
+    results.push({ label: 'promotion control: a well-formed recorded promotion validates', pass: errs.length === 0, errs });
+  }
+  expectRuntime('promotion: a ref the command was never permitted to move', (rt) => { plantPromotion(rt, (pr) => { pr.ref = 'main'; }); }, 'the only ref this action may move is');
+  expectRuntime('promotion: a target that is not a commit id', (rt) => { plantPromotion(rt, (pr) => { pr.to = 'y'; pr.hosted_verified_dev_oid = 'y'; }); }, 'not a full 40-character commit id');
+  expectRuntime('promotion: a predecessor that is not a commit id', (rt) => { plantPromotion(rt, (pr) => { pr.from = 'x'; }); }, 'not a full 40-character commit id');
+  expectRuntime('promotion: a target that is not the hosted-verified dev SHA', (rt) => { plantPromotion(rt, (pr) => { pr.to = 'c'.repeat(40); }); }, 'decision 0009 permits exactly that commit and no other');
+  expectRuntime('promotion: a ref that did not move', (rt) => { plantPromotion(rt, (pr) => { pr.from = pr.to; }); }, 'a ref that did not move is not a promotion');
+  expectRuntime('promotion: evidence nothing declares', (rt) => { plantPromotion(rt, (pr) => { pr.evidence = ['looks-fine']; }); }, 'which evidence.json does not declare');
+  expectRuntime('promotion: short of the evidence its own gate requires', (rt) => { plantPromotion(rt, (pr) => { pr.evidence = [pr.evidence[0]]; }); }, 'short of the gate it claims to have passed');
+  // Reported round 13: shape and equality are the ledger agreeing with itself.
+  // The repository is the authority, and it can only answer where history is
+  // complete — this checkout and CI's are both shallow — so the plants build a
+  // throwaway repository with two real commits and run the check against that.
+  // Without it the repository-backed branch would be unproven everywhere it runs.
+  {
+    const repo = resolve(tmpdir(), `agentops-promotion-${process.pid}-${Date.now()}`);
+    let built = null;
+    try {
+      mkdirSync(repo, { recursive: true });
+      const git = (...args) => execFileSync('git', args, { cwd: repo, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+      git('init', '-q', '-b', 'main');
+      git('config', 'user.email', 'selftest@example.invalid');
+      git('config', 'user.name', 'selftest');
+      writeFileSync(resolve(repo, 'a.txt'), 'one\n');
+      git('add', '-A'); git('commit', '-qm', 'one');
+      const first = git('rev-parse', 'HEAD');
+      writeFileSync(resolve(repo, 'a.txt'), 'two\n');
+      git('add', '-A'); git('commit', '-qm', 'two');
+      const second = git('rev-parse', 'HEAD');
+      built = { first, second };
+    } catch (e) { built = null; }
+    if (!built) {
+      results.push({ label: 'promotion repository checks skipped — no throwaway repository could be built here', pass: true, errs: [] });
+    } else {
+      results.push({ label: 'promotion repository checks: the throwaway repository carries complete history', pass: fullHistory(repo), errs: fullHistory(repo) ? [] : ['built repository reports shallow'] });
+      const run = (mutate) => {
+        const rt = baseRt();
+        const e = plantPromotion(rt, mutate);
+        return { id: e.id, errs: runtimeChecks(contracts, rt, repo).filter((x) => x.includes(e.id)) };
+      };
+      const ctl = run((pr) => { pr.from = built.first; pr.to = built.second; pr.hosted_verified_dev_oid = built.second; });
+      results.push({ label: 'promotion control: a real ancestor-to-descendant move validates against the repository', pass: ctl.errs.length === 0, errs: ctl.errs });
+      const ghost = run((pr) => { pr.from = '0'.repeat(40); pr.to = '1'.repeat(40); pr.hosted_verified_dev_oid = '1'.repeat(40); });
+      results.push({ label: 'promotion: commits that do not exist in the repository', pass: ghost.errs.some((x) => x.includes('objects that do not exist')), errs: ghost.errs });
+      const back = run((pr) => { pr.from = built.second; pr.to = built.first; pr.hosted_verified_dev_oid = built.first; });
+      results.push({ label: 'promotion: a move that is not a fast-forward', pass: back.errs.some((x) => x.includes('not a fast-forward')), errs: back.errs });
+    }
+    try { rmSync(repo, { recursive: true, force: true }); } catch { /* best effort */ }
+  }
+  // Reported round 12, both verified against the live corpus first.
+  expectRuntime('promotion: a protected action attributed to a seat that may not perform it', (rt) => { plantPromotion(rt, null).actor = 'maker'; }, 'a seat that may not perform it');
+  expectRuntime('promotion: the action recorded with no payload at all', (rt) => { const e = plantPromotion(rt, null); delete e.promotion; }, 'without recording the ref, commits or evidence it was made on');
+  expectRuntime('owner-decision: an action owner-command does not declare', (rt) => { plantPromotion(rt, null).action = 'fast-forward-main'; }, 'owner-command.json does not declare');
+  // ...and the authority check must cover every action, not only promotions.
+  expectRuntime('owner-decision: an owner-reserved action attributed to the deputy', (rt) => {
+    const t = Object.keys(rt.events).find((k) => rt.events[k].some((e) => e.kind === 'owner-decision'));
+    const e = rt.events[t].find((x) => x.kind === 'owner-decision');
+    e.action = 'authorize-release';
+    e.actor = 'it-manager-iii';
+  }, "which owner-command authenticates for 'owner'");
+  {
+    // Control: the same action recorded by a seat that IS an authenticator must
+    // pass, or the group above could be passing by rejecting every actor.
+    const rt = baseRt();
+    const t = Object.keys(rt.events).find((k) => rt.events[k].some((e) => e.kind === 'owner-decision'));
+    const e = rt.events[t].find((x) => x.kind === 'owner-decision');
+    e.action = 'delegate'; e.actor = 'it-manager-iii';
+    const errs = runtimeChecks(contracts, rt).filter((x) => x.includes(e.id));
+    results.push({ label: 'owner-decision control: an action recorded by a declared authenticator validates', pass: errs.length === 0, errs });
+  }
+  expectRuntime('consolidation: a range that is not present', (rt) => { consolidate(rt, bigTicket, 12).consolidates.from_event = `${bigTicket}-8888`; }, 'must be present to be summarised');
+    expectRuntime('consolidation: a count that does not match the range', (rt) => { consolidate(rt, bigTicket, 12).consolidates.count = 3; }, 'a dangling claim');
+    expectRuntime('consolidation: a range that runs backwards', (rt) => { const e = consolidate(rt, bigTicket, 12); const f = e.consolidates.from_event; e.consolidates.from_event = e.consolidates.to_event; e.consolidates.to_event = f; }, 'runs backwards');
+    expectRuntime('consolidation: fewer events than the declared minimum', (rt) => { consolidate(rt, bigTicket, 3); }, 'below the declared minimum');
+    expectRuntime('consolidation: a summary naming no range at all', (rt) => { delete consolidate(rt, bigTicket, 12).consolidates; }, 'a summary of nothing is not a record');
+    expectRuntime('consolidation: an authoriser who is not a declared actor', (rt) => { consolidate(rt, bigTicket, 12).consolidates.authorised_by = 'someone'; }, 'not a declared actor');
+    expectRuntime('consolidation: a summary of a summary', (rt) => { consolidate(rt, bigTicket, 12); const e = consolidate(rt, bigTicket, rt.events[bigTicket].length); e.id = `${bigTicket}-9101`; }, 'summaries of summaries');
+  }
+  expectRuntime('consolidation: authorised by a seat that is not the declared authority', (rt) => { consolidate(rt, bigTicket, 12).consolidates.authorised_by = 'maker'; }, 'existing is not the same as being allowed');
+
+  // ...and the correction of record is unreachable, which is the point.
+  expectRuntime('consolidation: a ticket carrying a correction of record', (rt) => { consolidate(rt, 'AS-HD-029', 12); }, 'the history the correction exists to preserve');
+
   expectRuntime('capsule seal / CAS mismatch', (rt) => { rt.capsules['AS-1001'].objective = 'tampered objective'; }, 'seal mismatch');
   expectRuntime('capsule missing evidence pointer', (rt) => { rt.capsules['AS-1001'].evidence_pointers.push('ghost-evidence'); }, 'not a declared evidence type');
   expectRuntime('capsule authority amplification', (rt) => { rt.capsules['AS-1001'].authority.may.push('mutate-main-or-release'); }, 'authority amplification');
   expectRuntime('broken event chain', (rt) => { rt.events['AS-1001'][2].parent_event = 'AS-1001-0001'; }, 'breaks the chain');
   expectRuntime('affected path outside lease', (rt) => { rt.capsules['AS-1001'].affected_paths.push('src/**'); }, 'not covered by its writer lease');
-  expectRuntime('exempted lease cannot be widened with an unnamed glob', (rt) => { rt.leases.find((x) => x.id === 'lease-AS-1001-maker').path_globs.push('content/**'); }, 'git-ownership assigns that path to');
-  expectRuntime('lease grants an undeclared path glob', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['wildcat/**']; }, 'no git-ownership path declares');
-  expectRuntime('lease grants a path owned by a different role', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker'); delete l.path_grant_exception; l.path_globs = ['.agentops/governance/**']; }, 'git-ownership assigns that path to');
-  expectRuntime('a second active lease on a protected ref', (rt) => { const base = rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support'); rt.leases.push({ ...base, id: 'lease-AS-HD-057-shadow', ref: 'main' }); }, 'not an isolated-continuation branch');
+  expectRuntime('exempted lease cannot be widened with an unnamed glob', (rt) => { rt.leases.find((x) => x.id === 'lease-GH-183-current-build-links').path_globs.push('content/**'); }, 'git-ownership assigns that path to');
+  expectRuntime('lease grants an undeclared path glob', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-GH-183-current-build-links'); delete l.path_grant_exception; l.path_globs = ['wildcat/**']; }, 'no git-ownership path declares');
+  expectRuntime('lease grants a path owned by a different role', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-GH-183-current-build-links'); delete l.path_grant_exception; l.path_globs = ['.agentops/governance/**']; }, 'git-ownership assigns that path to');
+  const appendLeaseSuccessor = (rt, overrides = {}) => {
+    const parent = rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support');
+    const child = {
+      ...parent,
+      schema: 'agentops/lease/v2',
+      id: 'lease-AS-HD-057-it-support-r2-plant',
+      revision: 2,
+      parent_lease: parent.id,
+      parent_hash: computeLeaseHash(parent),
+      current_hash: '',
+      excluded_globs: ['tools/ui-preview-gallery.mjs'],
+      issued: '2026-08-31T15:11:18Z',
+      revoked: false,
+      ...overrides,
+    };
+    child.current_hash = computeLeaseHash(child);
+    rt.leases.push(child);
+    return child;
+  };
+  expectRuntime('lease v2 stale parent hash', (rt) => { const l = appendLeaseSuccessor(rt); l.parent_hash = 'sha256:stale'; l.current_hash = computeLeaseHash(l); }, 'parent_hash does not match');
+  expectRuntime('lease v2 seal mismatch', (rt) => { const l = appendLeaseSuccessor(rt); l.expiry = '2026-10-30T23:59:59Z'; }, 'lease-AS-HD-057-it-support-r2-plant\' seal mismatch');
+  expectRuntime('lease exclusion outside its granted scope', (rt) => { const l = appendLeaseSuccessor(rt); l.excluded_globs = ['src/main.js']; l.current_hash = computeLeaseHash(l); }, 'no granted path covers that exclusion');
+  expectRuntime('an exact-file lease cannot exclude a sibling file', (rt) => {
+    appendLeaseSuccessor(rt, { path_globs: ['tools/ui-preview-gallery.mjs'], excluded_globs: ['tools/other.mjs'] });
+  }, 'no granted path covers that exclusion');
+  expectRuntime('lease successor cannot re-grant a parent exclusion', (rt) => {
+    const first = appendLeaseSuccessor(rt);
+    const second = { ...first, id: 'lease-AS-HD-057-it-support-r3-plant', revision: 3, parent_lease: first.id, parent_hash: computeLeaseHash(first), excluded_globs: undefined, current_hash: '' };
+    delete second.excluded_globs; second.current_hash = computeLeaseHash(second); rt.leases.push(second);
+  }, 're-grants parent exclusion');
+  expectRuntime('sibling lease successors must have disjoint effective paths', (rt) => {
+    appendLeaseSuccessor(rt, { id: 'lease-AS-HD-057-retained-plant' });
+    appendLeaseSuccessor(rt, { id: 'lease-AS-HD-057-overlap-plant', ref: 'recovery/as-hd-057-overlap-plant', excluded_globs: ['tools/other.mjs'] });
+  }, 'lease successor collision');
+  {
+    const rt = baseRt();
+    rt.leases = rt.leases.filter((l) => l.id !== 'lease-AS-HD-057-it-support-r2');
+    const parent = rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support');
+    const retained = appendLeaseSuccessor(rt, { id: 'lease-AS-HD-057-retained-positive' });
+    const carveout = appendLeaseSuccessor(rt, { id: 'lease-GH-194-ui-preview-gallery-positive', ref: 'recovery/gh-194-ui-preview-gallery-plant', path_globs: ['tools/ui-preview-gallery.mjs'], excluded_globs: undefined });
+    delete carveout.excluded_globs; carveout.current_hash = computeLeaseHash(carveout);
+    const cap = rt.capsules['AS-HD-057'];
+    cap.writer_lease = retained.id; cap.affected_paths = ['tools/**']; cap.excluded_paths = ['tools/ui-preview-gallery.mjs']; cap.blocker = null;
+    cap.authority.may = [...retained.actions]; cap.parent_hash = cap.current_hash; cap.revision += 1; cap.current_hash = computeCapsuleHash(cap);
+    rt.leases = [...rt.leases.filter((l) => l !== retained && l !== carveout), carveout, retained];
+    const errs = runtimeChecks(contracts, rt).filter((e) => e.includes(retained.id) || e.includes(carveout.id) || e.includes(parent.id) || e.includes("capsule 'AS-HD-057'"));
+    results.push({ label: 'append-only lease split is disjoint regardless of successor order', pass: errs.length === 0, errs });
+  }
+  expectRuntime('capsule cannot claim a sibling of an exact-file lease', (rt) => {
+    const l = rt.leases.find((x) => x.id === 'lease-AS-HD-057-it-support-r2');
+    l.path_globs = ['.agentops/work/AS-HD-057/CURRENT.json']; l.current_hash = computeLeaseHash(l);
+    const cap = rt.capsules['AS-HD-057']; cap.affected_paths = ['.agentops/work/AS-HD-057/OTHER.json']; cap.current_hash = computeCapsuleHash(cap);
+  }, 'affected path');
+  expectRuntime('capsule cannot claim a file excluded by its lease', (rt) => {
+    rt.leases = rt.leases.filter((l) => l.id !== 'lease-AS-HD-057-it-support-r2');
+    const l = appendLeaseSuccessor(rt);
+    const cap = rt.capsules['AS-HD-057']; cap.writer_lease = l.id; cap.affected_paths = ['tools/ui-preview-gallery.mjs'];
+    cap.excluded_paths = ['tools/ui-preview-gallery.mjs']; cap.blocker = null; cap.authority.may = [...l.actions]; cap.current_hash = computeCapsuleHash(cap);
+  }, 'affected path');
+  {
+    const rt = baseRt();
+    const parent = rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support'); parent.revoked = false;
+    const child = rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support-r2'); child.revoked = true;
+    const cap = rt.capsules['AS-HD-057']; cap.writer_lease = parent.id; cap.affected_paths = ['tools/**']; cap.blocker = null; cap.authority.may = [...parent.actions];
+    const wake = computeDispatch(contracts, rt).find((e) => e.ticket === 'AS-HD-057');
+    results.push({ label: 'a revoked successor cannot shadow its live parent during dispatch', pass: wake && wake.wake === 'it-support', errs: wake ? [JSON.stringify(wake)] : ['missing wake'] });
+  }
+  expectRuntime('an active lease on a protected ref', (rt) => { const l = rt.leases.find((x) => x.id === 'lease-AS-HD-057-it-support-r2'); l.ref = 'main'; l.current_hash = computeLeaseHash(l); }, 'not an isolated-continuation branch');
   expectRuntime('two seats holding the same isolated ref', (rt) => { rt.leases.find((l) => l.id === 'lease-AS-HD-040-maker').ref = 'claude/ashenspire-agentops-stage3-capsules'; }, 'belongs to exactly one seat');
   expectRuntime('capsule ref that git cannot create', (rt) => { rt.capsules['AS-HD-040'].ref = 'recovery/foo..bar'; rt.leases.find((l) => l.id === 'lease-AS-HD-040-maker').ref = 'recovery/foo..bar'; }, 'not a valid git branch name');
-  expectRuntime('two seats holding the same per-seat ref', (rt) => { rt.leases.find((l) => l.id === 'lease-AS-HD-057-it-support').ref = 'recovery/as-hd-029'; }, 'belongs to exactly one seat');
+  expectRuntime('two seats holding the same per-seat ref', (rt) => {
+    const l = rt.leases.find((x) => x.id === 'lease-AS-HD-057-it-support-r2'); l.ref = 'recovery/as-hd-029'; l.current_hash = computeLeaseHash(l);
+    const cap = rt.capsules['AS-HD-057']; cap.ref = l.ref; cap.parent_hash = cap.current_hash; cap.revision += 1; cap.current_hash = computeCapsuleHash(cap);
+  }, 'belongs to exactly one seat');
   expectRuntime('capsule claiming a protected ref', (rt) => { rt.capsules['AS-1001'].ref = 'main'; rt.leases.find((l) => l.id === rt.capsules['AS-1001'].writer_lease).ref = 'main'; }, 'not an isolated-continuation branch');
   expectRuntime('capsule claiming the pr-only integration ref', (rt) => { rt.capsules['AS-HD-029'].ref = 'dev'; rt.leases.find((l) => l.id === rt.capsules['AS-HD-029'].writer_lease).ref = 'dev'; }, 'not an isolated-continuation branch');
 
@@ -3529,6 +5182,196 @@ export function runSelftest(root = ROOT) {
   expectCommand('owner-command: stale compare-and-swap rejected', (r) => { r.expected_current_hash = 'sha256:stale'; }, 'stale command');
   expectCommand('owner-command: missing required field rejected', (r) => { delete r.candidate_oid; }, 'missing required field');
   expectCommand('owner-command: owner-exclusive release by deputy rejected', (r) => { r.action = 'authorize-release'; }, 'not authorized');
+  expectCommand('owner-command: owner-exclusive dev-delivery grant by deputy rejected', (r) => { r.action = 'grant-dev-delivery-authority'; r.target = 'AS-HD-029'; r.expected_current_hash = computeCapsuleHash(rt0.capsules['AS-HD-029']); r.reason = 'bounded grant'; delete r.candidate_oid; }, 'not authorized');
+
+  // A3 reseat plants, through the same validateCommand() the live dry run uses.
+  // The control is a real unstarted seat: AS-1001 is in-progress, so it doubles
+  // as the started-target rejection below.
+  const rsTicket = Object.keys(rt0.capsules).find((t) => RESEATABLE.has(rt0.capsules[t].lifecycle_state));
+  const rsHash = computeCapsuleHash(rt0.capsules[rsTicket]);
+  const rsReq = (params) => ({ schema: 'agentops/owner-command-request/v1', action: 'reseat', actor: 'it-manager-iii', target: rsTicket, expected_current_hash: rsHash, params });
+  // Fixtures come from the repository, never from a well-known name. The first
+  // version of this control used `dev`, which exists in a working clone and does
+  // NOT exist in a CI pull-request checkout — detached, with no local branches —
+  // so it failed there and only there.
+  const rsBranch = anyLocalBranch(root);
+  const rsHead = currentHead(root);
+  const rsPin = (rsHead && rsHead !== rt0.capsules[rsTicket].base_oid) ? rsHead : null;
+  if (rsPin) {
+    const pinned = validateCommand(contracts, rt0, rsReq({ base_oid: rsPin }), { root });
+    results.push({ label: 'reseat control: an unstarted seat pinned to a real commit is accepted', pass: pinned.ok, errs: pinned.errors });
+  }
+  // The pointer control needs a branch that resolves. Where the checkout has
+  // none, the same request runs in pure mode — the shape logic is what this
+  // asserts, and the repository check is environment-dependent by design, which
+  // is exactly why reseatParamErrors takes root as an option rather than always
+  // reaching for git.
+  const ptrReq = rsReq({ base_ref: rsBranch || 'any-branch-name' });
+  const ptr = validateCommand(contracts, rt0, ptrReq, rsBranch ? { root } : {});
+  results.push({ label: `reseat control: an unstarted seat pointed at a branch is accepted (${rsBranch ? 'resolved' : 'shape only — this checkout carries no local branch'})`, pass: ptr.ok, errs: ptr.errors });
+  const expectReseat = (label, req, needle) => {
+    const res = validateCommand(contracts, rt0, req, { root });
+    const hit = !res.ok && res.errors.some((e) => e.includes(needle));
+    results.push({ label, pass: hit, errs: hit ? [] : res.errors });
+  };
+  expectReseat('reseat: both a pin and a pointer', rsReq({ base_oid: 'a'.repeat(40), base_ref: 'dev' }), 'exactly one of');
+  expectReseat('reseat: neither a pin nor a pointer', rsReq({}), 'exactly one of');
+  expectReseat('reseat: an unknown params field', rsReq({ base_ref: 'dev', sweep: true }), 'unknown field');
+  expectReseat('reseat: an abbreviated commit id', rsReq({ base_oid: 'a72cac96' }), 'not a full 40-character commit id');
+  expectReseat('reseat: a commit this repository does not carry', rsReq({ base_oid: 'a'.repeat(40) }), 'not a commit in this repository');
+  expectReseat('reseat: a branch this repository does not carry', rsReq({ base_ref: 'no-such-branch-anywhere' }), 'not a branch in this repository');
+  // ...and the pin control's own fixture must have been real, or the control above proves nothing.
+  results.push({ label: 'the reseat controls ran against a real commit', pass: rsPin !== null || rsHead === null, errs: [String(rsHead)] });
+  expectReseat('reseat: a commit id recorded as a pointer', rsReq({ base_ref: 'a72cac9611df' }), 'a pinned value recorded as a pointer is neither');
+  expectReseat('reseat: a no-op that would still append an event', rsReq({ base_oid: rt0.capsules[rsTicket].base_oid }), 'a command that changes nothing still appends');
+  expectReseat('reseat: a seat that has already started', { ...rsReq({ base_ref: 'dev' }), target: 'AS-1001', expected_current_hash: computeCapsuleHash(rt0.capsules['AS-1001']) }, 'work already stands on its base');
+  expectReseat('reseat: an unauthenticated actor', { ...rsReq({ base_ref: 'dev' }), actor: 'maker' }, 'not authorized');
+  expectReseat('reseat: a stale compare-and-swap', { ...rsReq({ base_ref: 'dev' }), expected_current_hash: 'sha256:' + '0'.repeat(64) }, 'stale command');
+
+  // B2 Gate-C plants. The accept control runs in PURE mode: a CI pull-request
+  // checkout carries no local `test` branch, and hardcoding one is the mistake
+  // that turned an earlier control red. The repository-dependent refusals run
+  // only where the ref is present, and that skip is a reported result.
+  // No capsule in the live corpus carries all of Gate A and B's evidence, which
+  // is the honest state: nothing is currently promotable to `test`. The control
+  // therefore constructs one rather than pretending a real capsule qualifies —
+  // the alternative is a control that passes because the check it exercises was
+  // never reached.
+  // Derived the same way the command does — by walking the transition chain
+  // backwards from the gate the action declares it performs — so the plant and
+  // the check cannot drift apart, and so neither is pinned to a gate id.
+  const prereqGates = (cs) => {
+    const gates = cs['promotion-gates'].gates;
+    const performed = gates.find((x) => x.id === cs['owner-command'].actions.find((a) => a.id === 'fast-forward-test').performs_gate);
+    const out = [], seen = new Set();
+    const queue = performed ? (performed.guards_transitions || []).map((t) => t.from) : [];
+    while (queue.length) {
+      const st = queue.shift();
+      if (!st || seen.has(st)) continue;
+      seen.add(st);
+      for (const gt of gates) {
+        if (!performed || gt.id === performed.id) continue;
+        if (!(gt.guards_transitions || []).some((t) => t.to === st)) continue;
+        if (!out.includes(gt)) out.push(gt);
+        for (const t of gt.guards_transitions || []) queue.push(t.from);
+      }
+    }
+    return out;
+  };
+  // Canary: the walk must still select the gates decision 0009 condition 1
+  // names. If the lifecycle chain is re-shaped, this says so out loud rather
+  // than letting the freshness refusal quietly select nothing.
+  {
+    const ids = prereqGates(contracts).map((gt) => gt.id).sort().join(',');
+    results.push({ label: 'gate C: the prerequisite walk selects the gates standing before it', pass: ids === 'A,B', errs: ids === 'A,B' ? [] : [`walk selected '${ids}', not 'A,B'`] });
+  }
+  const gateAB = [...new Set(prereqGates(contracts).flatMap((gt) => gt.required_evidence || []))];
+  const rtFF = baseRt();
+  const ffTicket = Object.keys(rtFF.capsules).find((t) => !rtFF.capsules[t].blocker);
+  if (ffTicket) {
+    const cp = rtFF.capsules[ffTicket];
+    cp.evidence_pointers = [...new Set([...(cp.evidence_pointers || []), ...gateAB])];
+    delete cp.current_hash;
+    cp.current_hash = computeCapsuleHash(cp);
+  }
+  const ffHash = ffTicket ? computeCapsuleHash(rtFF.capsules[ffTicket]) : null;
+  const OID = (ch) => ch.repeat(40);
+  const ffReq = (params, x = {}) => ({ schema: 'agentops/owner-command-request/v1', action: 'fast-forward-test', actor: 'it-manager-iii', target: ffTicket, expected_current_hash: ffHash, params, ...x });
+  // Derived from the gate rather than written as prose: the command now requires
+  // declared evidence ids covering what the performed gate asks for, so a plant
+  // using free text would be testing the wrong refusal.
+  const ffEv = [...((contracts['promotion-gates'].gates.find((gt) => gt.id === contracts['owner-command'].actions.find((a) => a.id === 'fast-forward-test').performs_gate) || {}).required_evidence || [])];
+  if (ffTicket) {
+    const good = ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv });
+    const ctl = validateCommand(contracts, rtFF, good);
+    // The control cannot be "accepted" any more, and saying so is the point.
+    // Gate C refuses every request until a per-candidate receipt exists, which
+    // no artifact in this corpus records. So the control asserts the honest
+    // property instead: a shape-valid request is refused ONLY for the declared
+    // structural gap, and for nothing else. If a shape defect ever slips in,
+    // this fails because a second, different reason appears.
+    const structural = (e) => e.includes('cannot show Gate') && e.includes('no receipt is recorded');
+    const other = ctl.errors.filter((e) => !structural(e));
+    results.push({ label: 'gate C control: a shape-valid request fails only on the declared receipt gap', pass: !ctl.ok && ctl.errors.some(structural) && other.length === 0, errs: other });
+    const expectFF = (label, req, needle) => {
+      const res = validateCommand(contracts, rtFF, req);
+      const hit = !res.ok && res.errors.some((e) => e.includes(needle));
+      results.push({ label, pass: hit, errs: hit ? [] : res.errors });
+    };
+    expectFF('gate C: target is not the hosted-verified dev SHA', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('c'), rollback_oid: OID('b'), evidence: ffEv }), 'permits exactly that commit and no other');
+    expectFF('gate C: no mutation evidence recorded', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: [] }), 'must record the mutation evidence');
+    expectFF('gate C: no rollback target recorded', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), evidence: ffEv }), 'cannot be undone');
+    expectFF('gate C: an abbreviated target', ffReq({ target_oid: 'a72cac96', hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }), 'full 40-character commit id');
+    expectFF('gate C: an unknown params field', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv, force: true }), 'unknown field');
+    expectFF('gate C: an unauthenticated actor', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }, { actor: 'maker' }), 'not authorized');
+    const blockedTicket = Object.keys(rtFF.capsules).find((t) => rtFF.capsules[t].blocker);
+    if (blockedTicket) {
+      expectFF('gate C: a target carrying an unresolved blocker', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }, { target: blockedTicket, expected_current_hash: computeCapsuleHash(rtFF.capsules[blockedTicket]) }), 'condition 5 forbids promoting past one');
+    }
+    expectFF('gate C: an evidence array with nothing readable in it', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: [null] }), 'nothing readable in it');
+    expectFF('gate C: an evidence array of blank strings', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ['   '] }), 'nothing readable in it');
+    // Reported round 13: readable is not the same as valid. These must refuse
+    // BEFORE the ref moves, not after the event is already on disk.
+    expectFF('gate C: evidence nothing declares, refused before the mutation', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ['made-up-note'] }), 'evidence.json does not declare');
+    expectFF('gate C: evidence short of what the performed gate requires', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: [ffEv[0]] }), 'short of the gate it claims');
+
+    // Codex P1: absence of a blocker is not evidence that gates A and B passed.
+    for (const ev of gateAB) {
+      const stripped = baseRt();
+      const cp = stripped.capsules[ffTicket];
+      cp.evidence_pointers = gateAB.filter((x) => x !== ev);
+      delete cp.current_hash; cp.current_hash = computeCapsuleHash(cp);
+      const res = validateCommand(contracts, stripped, { ...ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }), expected_current_hash: computeCapsuleHash(cp) });
+      const hit = !res.ok && res.errors.some((e) => e.includes(`does not carry '${ev}'`));
+      results.push({ label: `gate C: promoting without ${ev}`, pass: hit, errs: hit ? [] : res.errors });
+    }
+    // A chain in which nothing guards the state this gate departs leaves
+    // condition 1 with no prerequisite to check — and the standing freshness
+    // refusal lives in the same loop, so a silent skip would let Gate C pass.
+    const noPrereq = { ...contracts, 'promotion-gates': { ...contracts['promotion-gates'], gates: contracts['promotion-gates'].gates.map((gt) => (gt.id === 'A' || gt.id === 'B') ? { ...gt, guards_transitions: [] } : gt) } };
+    const orphanGate = validateCommand(noPrereq, rtFF, ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }));
+    results.push({ label: 'gate C: no gate stands before the one this action performs', pass: !orphanGate.ok && orphanGate.errors.some((e) => e.includes('a precondition that cannot be identified is a refusal')), errs: orphanGate.errors });
+
+    // ...and a corpus with no pr-only integration ref has nothing to check the
+    // hosted-verified claim against.
+    const noDev = { ...contracts, 'git-ownership': { ...contracts['git-ownership'], refs: contracts['git-ownership'].refs.filter((r) => r.mutation !== 'pr-only') } };
+    const noDevRes = validateCommand(noDev, rtFF, ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }));
+    results.push({ label: 'gate C: no pr-only integration ref to check the hosted claim against', pass: !noDevRes.ok && noDevRes.errors.some((e) => e.includes('no pr-only integration ref')), errs: noDevRes.errors });
+
+    // ...and the action must not be able to name the ref it moves.
+    const noRef = { ...contracts, 'git-ownership': { ...contracts['git-ownership'], refs: contracts['git-ownership'].refs.map((r) => { const { mutated_by_action, ...rest } = r; return rest; }) } };
+    const orphan = validateCommand(noRef, rtFF, ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: OID('b'), evidence: ffEv }));
+    results.push({ label: 'gate C: no declared gate-c ref means nothing to move', pass: !orphan.ok && orphan.errors.some((e) => e.includes('nothing this action may move')), errs: orphan.errors });
+
+    // Repository-dependent refusals: the ancestor check and the live-ref checks.
+    const ffRefDecl = refForAction(contracts, 'fast-forward-test');
+    const liveRef = ffRefDecl ? resolveRef(root, ffRefDecl.ref) : null;
+    results.push({ label: 'gate C repository checks ' + (liveRef ? 'ran against ' + ffRefDecl.ref : 'skipped — this checkout carries no ' + (ffRefDecl ? ffRefDecl.ref : 'gate-c') + ' branch'), pass: true, errs: [] });
+    if (liveRef) {
+      const head = currentHead(root);
+      // These four are the repository checks, so they must be validated WITH a
+      // checkout — expectFF runs pure, which silently passed them.
+      const expectFFRepo = (label, req, needle) => {
+        const res = validateCommand(contracts, rtFF, req, { root });
+        const hit = !res.ok && res.errors.some((e) => e.includes(needle));
+        results.push({ label, pass: hit, errs: hit ? [] : res.errors });
+      };
+      // Codex P1: the request asserting its own hosted-verified SHA proved
+      // nothing; the ref is the authority.
+      // Codex P1: a local ref move nobody publishes is not a promotion.
+      const pub = resolveRemoteRefForTest(root, ffRefDecl.ref);
+      if (pub === null) {
+        results.push({ label: 'gate C: refuses when the ref has no published counterpart', pass: validateCommand(contracts, rtFF, ffReq({ target_oid: liveRef, hosted_verified_dev_oid: liveRef, rollback_oid: liveRef, evidence: ffEv }), { root }).errors.some((e) => e.includes('this tool does not push')), errs: [] });
+      }
+      expectFFRepo('gate C: a hosted-verified claim the dev ref contradicts', ffReq({ target_oid: liveRef, hosted_verified_dev_oid: liveRef, rollback_oid: liveRef, evidence: ffEv }), 'the ref is the authority for that');
+      expectFFRepo('gate C: a rollback that is not the ref being replaced', ffReq({ target_oid: head, hosted_verified_dev_oid: head, rollback_oid: OID('b'), evidence: ffEv }), 'must be what is actually being replaced');
+      expectFFRepo('gate C: a target this repository does not carry', ffReq({ target_oid: OID('a'), hosted_verified_dev_oid: OID('a'), rollback_oid: liveRef, evidence: ffEv }), 'not a commit in this repository');
+      expectFFRepo('gate C: a move to where the ref already is', ffReq({ target_oid: liveRef, hosted_verified_dev_oid: liveRef, rollback_oid: liveRef, evidence: ffEv }), 'a command that moves nothing');
+      if (head && head !== liveRef && !isAncestorForTest(root, liveRef, head)) {
+        expectFFRepo('gate C: a move that is not a fast-forward', ffReq({ target_oid: head, hosted_verified_dev_oid: head, rollback_oid: liveRef, evidence: ffEv }), 'is not a fast-forward');
+      }
+    }
+  }
 
   // Stage 6 migration plants — run through the same runtimeChecks the live
   // validate uses (pure over migration.json + capsules).
@@ -3589,6 +5432,140 @@ export function runSelftest(root = ROOT) {
   expectSemantic('tiers: the ladder starting to pick models', (c) => { c.hierarchy.authority_tiers.rules.not_a_capability_ladder = 'higher tiers get better tools'; }, 'never selects model or effort');
   expectSemantic('ticket flow: a step routed straight to the owner', (c) => { c.escalation.ticket_flow.steps[0].actor = 'owner'; }, 'routes to the owner');
   expectSemantic('ticket flow: a dropped handoff event', (c) => { c.escalation.ticket_flow.handoff_events = ['SENT', 'RECEIVED']; }, "drops the 'ACKNOWLEDGED' handoff event");
+  // A2 (#430): with `.agentops/work/**` and `.agentops/events/**` owned by
+  // `maker`, no non-maker seat could be granted its own capsule or event chain,
+  // so qa-independent, help-desk and it-support seats existed but could not
+  // record what they did — the item on the AS-HD-029 P0 critical path. The fix
+  // is demonstrated positively, then fenced on every side, because a marker
+  // that exempts a path from ownership is exactly the kind of thing that grows.
+  {
+    const qaLease = { id: 'lease-probe-qa', actor: 'qa-independent', issuer: 'it-manager-iii', path_globs: ['.agentops/work/**', '.agentops/events/**'] };
+    const errs = pathGrantErrors(contracts, qaLease);
+    results.push({ label: 'a non-maker seat may hold its own capsule and event chain', pass: errs.length === 0, errs });
+    // ...and the exemption is narrow: an ordinary owned path still rejects a
+    // seat whose role does not own it.
+    const bad = pathGrantErrors(contracts, { ...qaLease, path_globs: ['src/**'] });
+    results.push({ label: 'a per-seat ledger does not exempt ordinary owned paths', pass: bad.some((e) => e.includes('git-ownership assigns that path to')), errs: bad });
+  }
+  expectSemantic('per-seat path whose owner_role is a real role', (c) => { c['git-ownership'].paths.find((pp) => pp.glob === '.agentops/events/**').owner_role = 'maker'; }, 'declares the marker, not a role that does not own it');
+  expectSemantic('per-seat path on a lane with no sole writer', (c) => { c['git-ownership'].paths.find((pp) => pp.glob === '.agentops/events/**').serialized_lane = 'product-source'; }, 'declares no sole writer');
+  expectSemantic('per-seat owner_role without the marker', (c) => { const pp = c['git-ownership'].paths.find((x) => x.glob === '.agentops/work/**'); delete pp.per_seat; }, 'without the per_seat marker');
+  expectSemantic('the ledger lane losing its sole writer', (c) => { delete c['git-ownership'].ledger_serialization; }, 'declares no sole writer');
+  // B3 (#430): standing directives. The cap the routing package demands is
+  // non-amplification; the rest exists because a directive claiming enforcement
+  // it does not have is worse than one claiming none.
+  // #430 seat display names. The field was unusable (additionalProperties:false
+  // in both schemas); now that it exists, an unchecked one would drift into a
+  // second naming scheme, so every way of drifting is planted.
+  expectSemantic('display name: a seat kind the convention does not declare', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'X | IT Manager III | Coordination - AshenSpire'; }, 'neither seat kind the convention declares');
+  expectSemantic('display name: the wrong number of segments', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P | IT Manager III | team | Coordination - AshenSpire'; }, 'segments; the declared template');
+  expectSemantic('display name: an empty role-and-level segment', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P |  | Coordination Specialist - AshenSpire'; }, 'a name with the right shape and nothing in it is not a name');
+  expectSemantic('display name: a different project suffix', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P | IT Manager III | Coordination - SomeOtherProject'; }, 'closes with');
+  expectSemantic('display name: no title before the project', (c) => { c.roles.roles.find((r) => r.display_name).display_name = 'P | IT Manager III | - AshenSpire'; }, 'carries no title before the project');
+  expectSemantic('display name: a standing seat presented as an agent seat', (c) => {
+    const r = c.roles.roles.find((x) => x.display_name);
+    const n = c.hierarchy.nodes.find((x) => x.display_name);
+    r.display_name = r.display_name.replace(/^P /, 'A ');
+    if (n) n.display_name = n.display_name.replace(/^P /, 'A ');
+  }, 'the kind a lead spins out');
+  expectSemantic('display name: a role and its actor disagreeing', (c) => { c.hierarchy.nodes.find((n) => n.display_name).display_name = 'P | IT Manager III | Something Else - AshenSpire'; }, 'one seat, two names');
+
+  expectSemantic('directives: an issuer who is nobody in particular', (c) => { c.directives.directives[0].issued_by = 'someone'; }, 'binds nobody');
+  expectSemantic('directives: a duplicate id', (c) => { c.directives.directives.push({ ...c.directives.directives[0] }); }, 'is declared twice');
+  expectSemantic('directives: an issued_at that is not a real instant', (c) => { c.directives.directives[0].issued_at = '2026-02-30T00:00:00Z'; }, 'not a real instant');
+  expectSemantic('directives: a directive that grants an action', (c) => { c.directives.directives[0].grants_actions = ['integrate-to-dev']; }, 'never what it may do');
+  expectSemantic('directives: a directive reaching for owner-reserved authority', (c) => { const d = c.directives.directives[0]; d.issued_by = 'it-manager-iii'; d.grants_actions = [c['owner-intent'].owner.reserved_authority[0]]; }, 'it does not empower one');
+  // Parsed JSON inherits from Object.prototype, so a plain lookup made these
+  // resolve to defined values and a codification claim naming no field passed.
+  for (const ghost of ['constructor', 'toString', 'reporting.__proto__', 'reporting.toString']) {
+    expectSemantic(`directives: an inherited codification path (${ghost})`, (c) => { const d = c.directives.directives[0]; d.codified_in = 'information-access'; d.codified_as = ghost; }, 'which does not exist');
+  }
+  expectSemantic('owner-command: a protected move declared unprotected', (c) => { c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').protected = false; }, 'a consumer filtering on that flag would omit it');
+  expectSemantic('retention: an authority role nobody holds', (c) => { c.retention.authority.actor_role = 'it-manger-iii'; }, 'refuse every consolidation');
+  expectSemantic('retention: a consolidation kind no event can carry', (c) => { c.retention.consolidation.kind = 'consolidaton'; }, 'pass by never running');
+  expectSemantic('directives: a directive superseded by itself', (c) => { const d = c.directives.directives[0]; d.status = 'superseded'; d.superseded_by = d.id; }, 'closes a loop at');
+  expectSemantic('directives: two directives superseding each other', (c) => { const [x, y] = c.directives.directives; x.status = 'superseded'; y.status = 'superseded'; x.superseded_by = y.id; y.superseded_by = x.id; }, 'closes a loop at');
+  expectSemantic('gate C: the action no longer moves the lifecycle its gate guards', (c) => { delete c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').lifecycle_target; }, 'the gate would open and the capsule stand still');
+  expectSemantic('gate C: the action moves a lifecycle its gate does not guard', (c) => { c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').lifecycle_target = 'resolved'; }, 'the ref would advance while the capsule stood still');
+  // The binding itself, and the two ways it can be broken without breaking any
+  // other check: a gate that is not declared, and a lifecycle advance that
+  // names no gate at all.
+  // `mutation` was an unconstrained string that three checks compare against
+  // ('pr-only', 'protected', and the gate-C value). A typo there matched no
+  // check and every one of them passed by never running — the same shape as the
+  // consolidation-kind and ledger-scope defects this file already carries.
+  {
+    const c = base();
+    c['git-ownership'].refs.find((r) => r.mutation === 'pr-only').mutation = 'pr-onIy';
+    const schema = JSON.parse(readFileSync(resolve(root, CONTRACTS.find((x) => x.name === 'git-ownership').schema), 'utf8'));
+    const errs = validateSchema(c['git-ownership'], schema);
+    const hit = errs.some((e) => e.includes('not in enum'));
+    results.push({ label: 'ref binding: a mutation value outside the declared vocabulary', pass: hit, errs: hit ? [] : errs });
+  }
+  // The role sweep. Three plants put a typo at a different depth, and three more
+  // remove one arm of the declared vocabulary each — if an arm is never the
+  // reason something resolves, it is dead permission widening the check for
+  // nothing, and these say which arm carries which reference.
+  // The evidence sweep, now that one name means one type corpus-wide.
+  expectSemantic('evidence sweep: a gate requiring evidence nothing declares', (c) => { c.qa.gates[0].required_evidence = ['smoke-receipt']; }, 'nothing can produce it and nothing can pass by holding it');
+  expectSemantic('evidence sweep: prose under the name that means a list of ids', (c) => { c['promotion-gates'].gates[0].required_evidence = 'the usual checks'; }, 'prose under it would be read as one');
+  expectSemantic('role sweep: a typo in a nested authority role', (c) => { c.retention.authority.actor_role = 'it-manager-ii'; }, 'is not a declared role, capability pool, legacy alias or non-seat writer');
+  expectSemantic('role sweep: a typo inside an array of arrays', (c) => { c['promotion-gates'].gates.find((g) => g.conditional_roles).conditional_roles[0].role = 'data-architecture-leed'; }, 'routes to no one');
+  expectSemantic('role sweep: a typo in a path owner', (c) => { c['git-ownership'].paths[0].owner_role = 'makerr'; }, 'is not a declared role');
+  expectSemantic('role sweep: the non-seat writers undeclared', (c) => { c.roles.non_seat_writers = [{ id: 'unused-writer', means: 'nothing references this' }]; }, "names 'generator'");
+  expectSemantic('role sweep: the capability pools undeclared', (c) => { c.teams.capability_pools = []; }, "names 'experience-accessibility-review'");
+  expectSemantic('role sweep: the legacy aliases undeclared', (c) => { c.teams.legacy_aliases = []; }, "names 'delivery-systems-review'");
+  expectSemantic('role sweep: an identifier declared as both a role and a non-seat writer', (c) => { c.roles.non_seat_writers.push({ id: 'maker', appears_in: ['owner_role'], means: 'ambiguous on purpose' }); }, 'two different things');
+  // A non-seat writer outside its declared fields. The reported case exactly:
+  // Gate D requiring a recommendation nobody can author, with verify green.
+  // The allowlist must not be able to widen itself: appears_in is data the
+  // sweep trusts, so the schema pins it to the writer-field vocabulary and a
+  // widened declaration fails validation before the sweep ever reads it.
+  {
+    const c = base();
+    c.roles.non_seat_writers.find((w) => w.id === 'generator').appears_in.push('role');
+    const schema = JSON.parse(readFileSync(resolve(root, CONTRACTS.find((x) => x.name === 'roles').schema), 'utf8'));
+    const errs = validateSchema(c.roles, schema);
+    const hit = errs.some((e) => e.includes('not in enum'));
+    results.push({ label: 'role sweep: a non-seat writer widening its own allowlist', pass: hit, errs: hit ? [] : errs });
+  }
+  expectSemantic('role sweep: a gate reviewer that nothing holds', (c) => { c['promotion-gates'].gates.find((g) => g.conditional_roles).conditional_roles[0].role = 'generator'; }, 'cannot be satisfied by an identifier nobody holds');
+  expectSemantic('role sweep: a lease-follower where a producer must act', (c) => { c.evidence.evidence[0].producer_role = 'per-seat'; }, "permits it in 'owner_role' only");
+  {
+    // Control: the corpus's real writer-field uses of both identifiers must
+    // still pass, or the scoping could be rejecting the fields it exists for.
+    const c = base();
+    const errs = semanticChecks(c).filter((e) => e.includes('non-seat writer'));
+    results.push({ label: 'role sweep control: generator and per-seat pass in their declared writer fields', pass: errs.length === 0, errs });
+  }
+  expectSemantic('ref binding: a ref moved by a command nothing declares', (c) => { c['git-ownership'].refs.find((r) => r.mutated_by_action).mutated_by_action = 'fast-forward-anything'; }, 'which owner-command.json does not declare');
+  expectSemantic('ref binding: a shared ref moved by an unprotected command', (c) => { c['git-ownership'].refs.find((r) => r.mutated_by_action).mutated_by_action = 'delegate'; }, 'moving a shared ref is never an ordinary command');
+  expectSemantic('ref binding: two refs claiming the same command', (c) => { const r = c['git-ownership'].refs.find((x) => x.mutated_by_action); c['git-ownership'].refs.push({ ...r, ref: 'test-2' }); }, 'would depend on declaration order');
+  expectSemantic('gate binding: an action performing a gate nothing declares', (c) => { c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').performs_gate = 'Z'; }, 'which promotion-gates does not declare');
+  expectSemantic('gate binding: a lifecycle advance naming no gate', (c) => { delete c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').performs_gate; }, 'a lifecycle advance no gate guards is an ungated promotion');
+  expectSemantic('gate binding: a gate whose actor cannot authenticate the command that opens it', (c) => { c['owner-command'].actions.find((x) => x.id === 'fast-forward-test').authenticator_roles = ['owner']; }, 'could not run the command that opens it');
+  expectSemantic('directives: a contract named with no field named', (c) => { delete c.directives.directives[0].codified_as; }, 'names the contract AND the exact field');
+  expectSemantic('directives: a field named with no contract named', (c) => { delete c.directives.directives[0].codified_in; }, 'names the contract AND the exact field');
+  expectSemantic('directives: codification in a contract that does not exist', (c) => { c.directives.directives[0].codified_in = 'ghost-contract'; }, 'not a declared contract');
+  expectSemantic('directives: codification at a field that does not exist', (c) => { c.directives.directives[0].codified_as = 'reporting.imaginary_clause'; }, 'claiming enforcement it does not have');
+  expectSemantic('directives: superseded with no successor named', (c) => { c.directives.directives[0].status = 'superseded'; }, 'names no successor');
+  expectSemantic('directives: a successor that does not exist', (c) => { const d = c.directives.directives[0]; d.status = 'superseded'; d.superseded_by = 'no-such-directive'; }, 'not a declared directive');
+  expectSemantic('directives: a live directive that also names a successor', (c) => { c.directives.directives[0].superseded_by = c.directives.directives[1].id; }, 'two live directives on one instruction');
+
+  // Codex P1: a wildcard where the ticket goes made the per-ticket ledger check
+  // bypassable, because "cannot be proven" read as "whole root, allowed".
+  expectRuntime('a wildcarded cross-ticket ledger grant', (rt) => {
+    rt.leases.find((l) => l.id === 'lease-AS-HD-055-qa-independent').path_globs.push('.agentops/events/AS-HD-040*/**');
+  }, 'ticket segment is a pattern');
+  expectRuntime('a bare wildcard in the ticket position', (rt) => {
+    rt.leases.find((l) => l.id === 'lease-AS-HD-055-qa-independent').path_globs.push('.agentops/work/*/**');
+  }, 'ticket segment is a pattern');
+  expectRuntime('a capsule claiming a wildcarded ledger path', (rt) => {
+    const l = rt.leases.find((x) => x.id === 'lease-AS-1001-maker');
+    l.path_globs.push('.agentops/events/**');
+    rt.capsules['AS-1001'].affected_paths.push('.agentops/events/AS*/**');
+  }, 'cannot be proven to stay inside');
+
   expectSemantic('branch hygiene: rewrite permission held by a pool', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'qa-guild'; }, 'is not a declared role');
   expectSemantic('branch hygiene: rewrite permission held by a non-standing role', (c) => { c['git-ownership'].branch_hygiene.permission_role = 'maker'; }, 'is not a standing role');
   expectSemantic('branch hygiene: no prior head recorded', (c) => { c['git-ownership'].branch_hygiene.records = ['the branch']; }, 'cannot be undone');
@@ -3607,6 +5584,12 @@ export function runSelftest(root = ROOT) {
   expectSemantic('gates: a gate claiming owner-reserved authority', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'C').grants = ['release']; }, 'owner-reserved and belongs to Gate F alone');
   expectSemantic('gates: a protected transition left ungated', (c) => { c['promotion-gates'].gates = c['promotion-gates'].gates.filter((g) => g.id !== 'C'); }, 'is not guarded by any declared gate');
   expectSemantic('gates: a gate guarding an undeclared move', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').guards_transitions = [{ from: 'accepted', to: 'released' }]; }, 'which transitions.json does not declare');
+  // A gate requiring evidence nobody declares is a gate nothing can pass. Gate B
+  // required 'hosted-evidence-url' against a manifest that declares
+  // 'hosted-verification-receipt', and four more gates named types that existed
+  // nowhere; nothing caught it until a runtime check depended on one.
+  expectSemantic('gates: a gate requiring evidence the manifest does not declare', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'B').required_evidence = ['hosted-evidence-url']; }, 'evidence.json does not declare');
+
   expectSemantic('gates: a gate whose actor is not a declared role', (c) => { c['promotion-gates'].gates.find((g) => g.id === 'A').actor_role = 'qa-team-1'; }, 'which roles.json does not declare');
   // Team-lead roster. These checks lost their plants when the self-certification
   // withdrawal removed the surrounding block; the checks survived, so the proof
@@ -3701,6 +5684,9 @@ export function runSelftest(root = ROOT) {
   {
     const rtLead = baseRt();
     rtLead.capsules['AS-HD-050'].owner_actor = 'lead-game-systems';
+    // The plant tests the actor-vs-role conflation only; clear the live blocker
+    // so a blocked capsule (which wakes the blocker's owner) cannot mask it.
+    rtLead.capsules['AS-HD-050'].blocker = null;
     const d = computeDispatch(contracts, rtLead, { now: new Date().toISOString() }).find((x) => x.ticket === 'AS-HD-050');
     results.push({ label: 'dispatch wakes the lead that owns the capsule, not a role that does not', pass: !!d && d.wake === 'lead-game-systems', errs: [d ? d.wake : '(no entry)'] });
     const w = runWake(root, 'maker', 'AS-1001');
@@ -4020,6 +6006,9 @@ export function computeDispatch(contracts, rt, { now = new Date().toISOString() 
   for (const ticket of Object.keys(rt.capsules).sort()) {
     const cap = rt.capsules[ticket];
     const lease = rt.leases.find((l) => l.id === cap.writer_lease);
+    const leaseIsActive = !!lease && activeRuntimeLeases(rt).includes(lease);
+    const outgoing = moves.filter((m) => m.from === cap.lifecycle_state);
+    if (!outgoing.length) continue;                       // terminal: wakes nobody
 
     if (cap.blocker) {
       entries.push(escalate(cap, cap.blocker.escalation_class, cap.blocker.summary));
@@ -4037,13 +6026,12 @@ export function computeDispatch(contracts, rt, { now = new Date().toISOString() 
     const nowMs = utcInstant(now) ?? Date.parse(now);
     const dead = !lease ? 'writer lease is missing'
       : lease.revoked ? `writer lease ${lease.id} is revoked`
+      : !leaseIsActive ? `writer lease ${lease.id} is superseded`
       : lx === null ? `writer lease ${lease.id} records expiry '${lease.expiry}', which is not a real instant`
       : (lx <= nowMs) ? `writer lease ${lease.id} expired ${lease.expiry}`
       : null;
     if (dead) { entries.push(escalate(cap, 'technical-blocker', dead)); continue; }
 
-    const outgoing = moves.filter((m) => m.from === cap.lifecycle_state);
-    if (!outgoing.length) continue;                       // terminal: wakes nobody
     const open = outgoing.filter((m) => !m.protected);
     if (!open.length) {
       entries.push({
@@ -4170,18 +6158,36 @@ export function runReseat(root, ticket, { actor = null, now = new Date().toISOSt
   if (!onBranch(root)) {
     return { ok: false, errors: [`HEAD is detached at ${head.slice(0, 12)}; reseating would pin the capsule to a commit no branch carries`] };
   }
-  if (cap.base_oid === head) return { ok: true, unchanged: true, ticket, base: head };
+  // A tracking capsule freezes here. runtimeChecks rejects a started capsule
+  // that still carries base_ref, and the first version of this branch shipped
+  // that check with no action that clears it — so a capsule that adopted the
+  // pointer could never start. The freeze and its check now exist together, and
+  // the early return below must not pre-empt it: a tracking capsule whose
+  // recorded base already equals HEAD still has a pointer to drop.
+  const freezing = !!cap.base_ref;
+  if (!freezing && cap.base_oid === head) return { ok: true, unchanged: true, ticket, base: head };
 
   const from = cap.base_oid;
-  cap.base_oid = head;
+  const tracked = freezing ? resolveRef(root, cap.base_ref) : null;
+  if (freezing && tracked === null) {
+    return { ok: false, errors: [`capsule ${ticket} tracks '${cap.base_ref}', which this checkout does not carry; a pointer that cannot be resolved cannot be frozen into a base`] };
+  }
+  const frozenRef = cap.base_ref;
+  cap.base_oid = freezing ? tracked : head;
+  if (freezing) delete cap.base_ref;
   writeFileSync(file, JSON.stringify(cap, null, 2) + '\n');
   const r = runReseal(root, ticket, {
     actor: actor || TOOL_ACTOR,
     now,
-    reason: `Reseated from ${from.slice(0, 12)} to live HEAD ${head.slice(0, 12)}; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from.`,
+    reason: freezing
+      ? `Froze tracked base '${frozenRef}' to ${tracked.slice(0, 12)}; the seat is starting work, so the branch it followed becomes the tree it works from and the pointer is dropped.`
+      : `Reseated from ${from.slice(0, 12)} to live HEAD ${head.slice(0, 12)}; the seat had not started, so its base follows the branch rather than pinning a commit it never worked from.`,
   });
   if (!r.ok) return r;
-  return { ok: true, ticket, from, base: head, revision: r.revision, event: r.event };
+  // The OID actually written, not HEAD: on the freezing path the base becomes
+  // the resolved ref, which need not be HEAD, so returning `head` made the CLI
+  // report a move that did not happen.
+  return { ok: true, ticket, from, base: cap.base_oid, froze: freezing ? frozenRef : null, revision: r.revision, event: r.event };
 }
 
 // `reseat --all` used to live here. It is gone, and the reason is on the record:
@@ -4283,6 +6289,14 @@ function main(argv) {
     if (r.errors && r.errors.length) { console.error('VERIFY FAIL (generated view):'); r.errors.forEach((e) => console.error('  - ' + e)); return 1; }
     if (r.drift) { console.error('VERIFY FAIL: stale generated artifacts; run `node .agentops/tools/opsctl.mjs render`:'); r.drifted.forEach((d) => console.error('  - ' + d)); return 1; }
     console.log('VERIFY OK: contracts + runtime valid, consistent, and all generated views in sync.');
+    // A promotion recorded in the ledger is checked against the repository —
+    // that the commits exist and that the move was a fast-forward — only where
+    // history is complete. A shallow checkout cannot tell a missing object from
+    // a fabricated one, so it does not try. Saying so is the point: an
+    // unreported skip reads exactly like a check that passed.
+    if (!fullHistory(ROOT)) {
+      console.log('NOTE: shallow checkout — recorded promotions were checked for shape and contract consistency, but not against repository history (commit existence, fast-forward ancestry). Re-run in a full clone to check those.');
+    }
     return 0;
   }
   if (cmd === 'drill') {

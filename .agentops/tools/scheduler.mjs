@@ -631,10 +631,85 @@ export function deliverCandidate(root, item, config) {
   return { created: true, ...created };
 }
 
+// A recorded owner exception to the distinct-account half of the review gate.
+// It is never inferred: the flag alone does nothing, because an exception whose
+// authorization is not written down is indistinguishable from a bug. Both the
+// flag and complete evidence must be present, so `scheduler verify` and the
+// merge event carry WHO relaxed the rule and WHY, and so restoring the rule is
+// a one-line revert rather than an archaeology exercise.
+// Returns the exception's authorization, or null if it does not hold. Presence
+// is not enough: a whitespace approver, an `at` of 'not-a-date' and a reason
+// that is an array are all truthy, so a check for truthiness would accept an
+// evidence block that records nothing — the very state this is meant to refuse.
+// A future-dated authorization is refused too; it has not happened yet.
+//
+// The approver must also hold the authority being spent. Relaxing the gate on a
+// protected transition is owner authority — the same class as
+// grant-dev-delivery-authority, which .agentops/governance/owner-command.json
+// marks owner_exclusive — so the deputy is deliberately absent from this set,
+// as are the maker and QA roles.
+//
+// This does not stop someone who controls the config; they would simply type the
+// owner's name, and no string can prevent that while one account holds every
+// seat (#434). It is not for that. It catches the reachable failure — an
+// exception enabled and attributed to a role with no authority to grant it —
+// and it keeps the permitted set in the tooling lane, where widening it is a
+// reviewable code diff, rather than inside the config the exception lives in.
+// Declared-role checking is how this system works everywhere else; owner-command
+// authenticates its actors by declared role too.
+const EXCEPTION_APPROVERS = new Set(['constantine']);
+
+export function sameIdentityReviewEvidence(config, now = Date.now()) {
+  if (config.authority?.same_identity_review_accepted !== true) return null;
+  const evidence = config.authority?.same_identity_review_evidence;
+  const filled = (value) => typeof value === 'string' && value.trim().length > 0;
+  if (!evidence || !filled(evidence.authorized_by) || !filled(evidence.reason) || !filled(evidence.at)) return null;
+  // 'constantine' and 'constantine (owner)' are the same person naming the same
+  // authority; the parenthetical is a role annotation, not part of the identity.
+  if (!EXCEPTION_APPROVERS.has(evidence.authorized_by.trim().replace(/\s*\([^)]*\)\s*$/, '').toLowerCase())) return null;
+  const at = Date.parse(evidence.at);
+  if (Number.isNaN(at) || at > now) return null;
+  return { authorized_by: evidence.authorized_by.trim(), at: evidence.at, reason: evidence.reason.trim() };
+}
+
+export function sameIdentityReviewAccepted(config, now = Date.now()) {
+  return sameIdentityReviewEvidence(config, now) !== null;
+}
+
+// Which rule, if any, makes this candidate independently verified. DERIVED from
+// the PR and the item rather than remembered, so the recovery path can re-answer
+// it from the same two inputs after a crash instead of losing it.
+//
+// An approval is only evidence about the bytes it was given: it must name the
+// exact candidate commit, so a review of an earlier head never authorizes a
+// later one. The exception relaxes WHO may verify, never WHAT.
+//
+// GitHub refuses to let a pull request's author approve it. So when every seat
+// shares one account there is no obtainable GitHub approval at all, and an
+// exception phrased in terms of one would be inert — it would read as a
+// relaxation while stalling every merge exactly as before.
+//
+// Independence is therefore taken from the layer that DOES hold separate
+// identities here: the scheduler's own seats. A QA lease is only ever issued to
+// a seat other than the maker, and a PASS is only accepted against the exact
+// candidate commit — so a recorded QA seat is an independent party's verdict on
+// precisely these bytes. An item cannot return from PR_READY or PR_OPEN to
+// candidacy, so that verdict can never be inherited by a later head. What is
+// given up against a distinct GitHub account is that both seats authenticate as
+// one login; what is kept is a separate actor, a separate lease, and a verdict
+// bound to the exact commit.
+export function reviewIndependenceOf(config, item, pr) {
+  const approvals = (pr.reviews ?? []).filter((review) => review.state === 'APPROVED' && review.author?.login && review.commit?.oid === item.candidate_commit);
+  if (approvals.some((review) => review.author.login !== pr.author?.login)) return 'distinct-account';
+  const independentQaSeat = (item.lease_history ?? []).some((lease) => lease.assignment_kind === 'qa' && lease.actor && lease.actor !== item.maker_actor);
+  return independentQaSeat && sameIdentityReviewAccepted(config) ? 'independent-qa-seat' : 'none';
+}
+
 export function mergeGateResult(config, item, pr, { currentBaseIsAncestor, unresolvedThreads, competingPrs, rollbackKnown }) {
   const checks = pr.statusCheckRollup ?? [];
   const checksPassed = checks.length > 0 && checks.every((check) => ['SUCCESS', 'SKIPPED', 'NEUTRAL'].includes(check.conclusion ?? check.state));
-  const independentReview = (pr.reviews ?? []).some((review) => review.state === 'APPROVED' && review.author?.login && review.author.login !== pr.author?.login && review.commit?.oid === item.candidate_commit);
+  const reviewIndependence = reviewIndependenceOf(config, item, pr);
+  const independentReview = reviewIndependence !== 'none';
   const makerLeaseRecorded = (item.lease_history ?? []).some((lease) => lease.assignment_kind === 'implementation' && lease.actor === item.maker_actor);
   const gates = {
     current_base: currentBaseIsAncestor,
@@ -646,7 +721,7 @@ export function mergeGateResult(config, item, pr, { currentBaseIsAncestor, unres
     no_competing_pr: competingPrs === 0,
     rollback_known: rollbackKnown === true
   };
-  return { ...protectedTransitionAllowed(config, 'merge-dev', gates), gates };
+  return { ...protectedTransitionAllowed(config, 'merge-dev', gates), gates, review_independence: reviewIndependence };
 }
 
 export function mergeCommandArgs(prNumber, candidateCommit, config = { repository: 'https://github.com/cehinds/AshenSpire.git' }) {
@@ -673,7 +748,18 @@ export function mergedPrRecovery(config, item, pr) {
   if (!pr.mergedAt || !/^[0-9a-f]{40}$/.test(pr.mergeCommit?.oid ?? '')) throw new Error('merged PR lacks an exact recovery identity');
   return {
     pr,
-    gate: { allowed: true, reason: 'RECOVER_GITHUB_MERGE', gates: { github_already_merged: true, head_unchanged: true } },
+    // Two different facts, kept apart on purpose. review_independence answers
+    // "under which rule did THIS process permit the merge", and for a recovery
+    // the honest answer is that it did not: the merge already existed, and the
+    // scheduler cannot tell its own interrupted merge from one a human made
+    // outside it. review_independence_evidence answers "what verification does
+    // the merged candidate actually carry", which is still derivable here from
+    // the PR's reviews and the item's lease history. Collapsing the two would
+    // let a hand merge inherit a gate verdict it never passed.
+    gate: {
+      allowed: true, reason: 'RECOVER_GITHUB_MERGE', gates: { github_already_merged: true, head_unchanged: true },
+      review_independence: 'recovered', review_independence_evidence: reviewIndependenceOf(config, item, pr)
+    },
     merged: { state: 'MERGED', mergedAt: pr.mergedAt, mergeCommit: pr.mergeCommit, url: pr.url },
     recovered: true
   };
@@ -1108,6 +1194,10 @@ export function verifyScheduler(root = REPOSITORY_ROOT) {
   const problems = [];
   for (const name of ['event.json', 'snapshot.json', 'wake.json']) if (!fs.existsSync(path.join(root, '.agentops', 'scheduler', 'schemas', name))) problems.push(`missing schema ${name}`);
   if (config.workers.length > config.worker_slots) problems.push('configured workers exceed worker_slots');
+  // Enabled-but-unauthorized fails verification rather than quietly reverting
+  // to the strict gate: a relaxation someone believes is active while it is not
+  // is its own defect, and so is malformed evidence nobody notices.
+  if (config.authority?.same_identity_review_accepted === true && !sameIdentityReviewAccepted(config)) problems.push('same-identity review exception is enabled but its authorization evidence is missing, malformed, or future-dated');
   if (config.wake_hard_limit_tokens > 1500) problems.push('wake hard limit exceeds 1500');
   const state = readPortableState(root, config);
   const rebuilt = reduceEvents(state.events);
@@ -1127,7 +1217,13 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
   const { command, args } = parseArgs(argv); const config = readConfig(path.join(root, '.agentops'));
   config.workers = configuredWorkers(root, config);
   if (command === 'simulate') { const result = simulate(config); emit(command, result, `SIMULATE ${result.concurrent && result.conflict_rejected && result.protected_stop ? 'PASS' : 'FAIL'}: ${result.tickets} tickets, ${result.assignments} concurrent assignments.`); return 0; }
-  if (command === 'verify') { const result = verifyScheduler(root); if (!result.ok) throw new Error(result.problems.join('; ')); emit(command, { state_ref_oid: result.state.oid, snapshot_hash: result.rebuilt.snapshot_hash, events: result.state.events.length }, `VERIFY PASS: ${result.state.events.length} material events replayed deterministically.`); return 0; }
+  if (command === 'verify') {
+    const result = verifyScheduler(root); if (!result.ok) throw new Error(result.problems.join('; '));
+    // Surfaced on every verify so an active relaxation of the merge gate cannot
+    // sit unnoticed in the config: visibility is the control this can offer.
+    const exception = sameIdentityReviewEvidence(result.config);
+    emit(command, { state_ref_oid: result.state.oid, snapshot_hash: result.rebuilt.snapshot_hash, events: result.state.events.length, same_identity_review_exception: exception }, `VERIFY PASS: ${result.state.events.length} material events replayed deterministically.${exception ? ` MERGE GATE RELAXED: same-identity review exception active, authorized by ${exception.authorized_by} at ${exception.at}.` : ''}`); return 0;
+  }
   let state = readPortableState(root, config); const machine = localMachine(root);
   if (command === 'bootstrap') {
     if (state.oid) { emit(command, { state_ref_oid: state.oid, snapshot_hash: state.snapshot.snapshot_hash }, 'BOOTSTRAP NOOP: scheduler state already exists.'); return 0; }
@@ -1222,7 +1318,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     const result = mergeDevPr(root, config, item, Number(args.pr), { rollbackKnown: args.rollback_known === true || args.rollback_known === 'true' });
     const createdAt = result.merged.mergedAt;
     state = appendEvents(state, [
-      { event_type: 'MERGED_DEV', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid, pr_number: result.pr.number }, payload: { merge_commit: result.merged.mergeCommit.oid }, created_at: createdAt, idempotency_key: `merged-dev:${result.pr.number}:${result.merged.mergeCommit.oid}` },
+      { event_type: 'MERGED_DEV', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid, pr_number: result.pr.number }, payload: { merge_commit: result.merged.mergeCommit.oid, review_independence: result.gate.review_independence, ...(result.gate.review_independence_evidence ? { review_independence_evidence: result.gate.review_independence_evidence } : {}) }, created_at: createdAt, idempotency_key: `merged-dev:${result.pr.number}:${result.merged.mergeCommit.oid}` },
       { event_type: 'COMPLETED', issue_id: item.issue_id, actor: 'scheduler', machine_id: machine.machine_id, lease_id: item.lease_id, lease_epoch: item.lease_epoch, exact_object: { oid: result.merged.mergeCommit.oid }, payload: {}, created_at: createdAt, idempotency_key: `completed:${item.issue_id}:${result.merged.mergeCommit.oid}` }
     ]);
     let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler MERGED_DEV ${item.issue_id}`, config });
@@ -1232,7 +1328,7 @@ export function main(argv = process.argv.slice(2), root = REPOSITORY_ROOT) {
     const refill = persistRefillAssignments(root, state, plan, machine.machine_id, createdAt, config, { push: args.push === true, message: `scheduler post-merge refill ${item.issue_id}` });
     state = refill.state; oid = refill.oid;
     const dispatched = refill.dispatched;
-    emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], merge: result.merged, gates: result.gate.gates, refill_assignments: plan.assignments, dispatched }, `MERGED_DEV accepted for ${item.issue_id}; refill candidates=${plan.assignments.length}.`); return 0;
+    emit(command, { state_ref_oid: oid, issue: state.snapshot.work_items[item.issue_id], merge: result.merged, gates: result.gate.gates, review_independence: result.gate.review_independence, refill_assignments: plan.assignments, dispatched }, `MERGED_DEV accepted for ${item.issue_id} (review: ${result.gate.review_independence}); refill candidates=${plan.assignments.length}.`); return 0;
   }
   const input = transitionInput(command, trustedTransitionArgs(args), state, machine); state = appendEvents(state, [input]);
   let oid = persistPortableState(root, state, { push: args.push === true, message: `scheduler ${input.event_type} ${input.issue_id}`, config });

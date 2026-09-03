@@ -1,0 +1,293 @@
+{
+  "note": "Known-drifted plant sites (the #498 backlog), sites the static scan cannot read, and a per-tool count+digest over EVERY readable site. plantsites.mjs --check fails on any difference from the live tree, in either direction — regenerate with --write-baseline only alongside the change that explains it.",
+  "drifted": [
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "0afb5288f599e996"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "22cff8988b0573de"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "22cff8988b0573de"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "43f173fc9ec16b5b"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "4b6ff8eba7de38d4"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "65d13765aa325728"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "styles/ui.css",
+      "id": "a18404a52c148e69"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "a4fc76ea6879630b"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "aa6ff22d47856d37"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "b3c17aefd8d27896"
+    },
+    {
+      "tool": "tools/armoury-picked-up.mjs",
+      "target": "src/ui/screens/equipment.js",
+      "id": "ebb60d6e25b61c32"
+    }
+  ],
+  "unreadable": {
+    "tools/armoury-picked-up.mjs": 11,
+    "tools/card-drag-targeting.mjs": 6,
+    "tools/displayfirst.mjs": 6,
+    "tools/doorplant.mjs": 1,
+    "tools/flask-menu-cancel.mjs": 1,
+    "tools/gatelist.mjs": 4,
+    "tools/hybrid-input-parity.mjs": 10,
+    "tools/onevocab.mjs": 2,
+    "tools/short-landscape-support.mjs": 2
+  },
+  "sites": {
+    "tools/about-changelog.mjs": {
+      "count": 52,
+      "digest": "ed0188fe2a36cb46"
+    },
+    "tools/armoury-picked-up.mjs": {
+      "count": 14,
+      "digest": "aa1b69cfbda16d47"
+    },
+    "tools/card-drag-targeting.mjs": {
+      "count": 10,
+      "digest": "bcb9e43cd35b163b"
+    },
+    "tools/class-loadouts.mjs": {
+      "count": 4,
+      "digest": "bb50920dc80f5ed8"
+    },
+    "tools/combat-action-row.mjs": {
+      "count": 9,
+      "digest": "d73a36e6733cecf1"
+    },
+    "tools/combat-save.mjs": {
+      "count": 3,
+      "digest": "454d327f2e222f7b"
+    },
+    "tools/confirmation-modal.mjs": {
+      "count": 10,
+      "digest": "1f5c08d068934c04"
+    },
+    "tools/coop-hand-parity.mjs": {
+      "count": 1,
+      "digest": "e753cef1956378c6"
+    },
+    "tools/coop-secondbeat.mjs": {
+      "count": 2,
+      "digest": "b1e74e649f8b897d"
+    },
+    "tools/derived-runtime-authority.mjs": {
+      "count": 3,
+      "digest": "89f8750385c28673"
+    },
+    "tools/displayfirst.mjs": {
+      "count": 4,
+      "digest": "772580a9e82225aa"
+    },
+    "tools/equipment-surface-receipts.mjs": {
+      "count": 3,
+      "digest": "706f6319c868604e"
+    },
+    "tools/flask-action-contract.mjs": {
+      "count": 4,
+      "digest": "745dcdbbed639a47"
+    },
+    "tools/flask-intent-smoke.mjs": {
+      "count": 3,
+      "digest": "e60db1b613402d0b"
+    },
+    "tools/flask-menu-cancel.mjs": {
+      "count": 6,
+      "digest": "fd574eb2f9dd3290"
+    },
+    "tools/flaskbox.mjs": {
+      "count": 7,
+      "digest": "40b7fd34a5fe7c4a"
+    },
+    "tools/fullscreen-control.mjs": {
+      "count": 5,
+      "digest": "b4ae936a8e412b7c"
+    },
+    "tools/gatelist.mjs": {
+      "count": 7,
+      "digest": "59cab679df8e66db"
+    },
+    "tools/gesture-cancel.mjs": {
+      "count": 2,
+      "digest": "fb32ee2d1b7b81fb"
+    },
+    "tools/hand-pager-threshold.mjs": {
+      "count": 7,
+      "digest": "24624c63c8967959"
+    },
+    "tools/hand-side-probe.mjs": {
+      "count": 5,
+      "digest": "6e4b0b0ed61d0e1b"
+    },
+    "tools/hintstrip.mjs": {
+      "count": 24,
+      "digest": "f5057d66824fab0e"
+    },
+    "tools/hudbars.mjs": {
+      "count": 2,
+      "digest": "6ee99c7a0270142e"
+    },
+    "tools/hudparity.mjs": {
+      "count": 18,
+      "digest": "9808853c19bbcbf3"
+    },
+    "tools/hybrid-input-parity.mjs": {
+      "count": 13,
+      "digest": "60e136235f05f921"
+    },
+    "tools/menufit.mjs": {
+      "count": 1,
+      "digest": "eeefabab3caca651"
+    },
+    "tools/music-toggle-parity.mjs": {
+      "count": 16,
+      "digest": "e9a3c3a74f96341f"
+    },
+    "tools/onefold.mjs": {
+      "count": 1,
+      "digest": "4ee164501959d166"
+    },
+    "tools/onevocab.mjs": {
+      "count": 10,
+      "digest": "af9727cc8c259637"
+    },
+    "tools/placement.mjs": {
+      "count": 8,
+      "digest": "e7cba52baafb1e40"
+    },
+    "tools/player-poise-threshold.mjs": {
+      "count": 4,
+      "digest": "ee565a3b0c8f6206"
+    },
+    "tools/profile-durability-probe.mjs": {
+      "count": 2,
+      "digest": "ebe437dc45687dfd"
+    },
+    "tools/profile-surface-drive.mjs": {
+      "count": 1,
+      "digest": "2b2279173a2849a8"
+    },
+    "tools/quicknav-reach.mjs": {
+      "count": 2,
+      "digest": "84cc8db9544d440d"
+    },
+    "tools/rebind-capture.mjs": {
+      "count": 8,
+      "digest": "5fa9e8b17502dd06"
+    },
+    "tools/restore-settings-drive.mjs": {
+      "count": 1,
+      "digest": "9c9183a3f5779e9d"
+    },
+    "tools/reward-collect-drive.mjs": {
+      "count": 9,
+      "digest": "a46bf617b94e88db"
+    },
+    "tools/runcreation.mjs": {
+      "count": 5,
+      "digest": "2685af698d0ee3b9"
+    },
+    "tools/saveroundtrip.mjs": {
+      "count": 6,
+      "digest": "258e4d2c96542f9e"
+    },
+    "tools/screenreach.mjs": {
+      "count": 6,
+      "digest": "ec20fc1646b8020c"
+    },
+    "tools/scroll-cue-bleed.mjs": {
+      "count": 2,
+      "digest": "e8cd56b68de1aec8"
+    },
+    "tools/shopbars.mjs": {
+      "count": 4,
+      "digest": "a33d30837221dd88"
+    },
+    "tools/short-landscape-support.mjs": {
+      "count": 2,
+      "digest": "0df767382db6375e"
+    },
+    "tools/startup-gate.mjs": {
+      "count": 26,
+      "digest": "b5cbde0bab5edc7c"
+    },
+    "tools/status-presentation-authority.mjs": {
+      "count": 4,
+      "digest": "8e06bb1549328347"
+    },
+    "tools/swap-cost-relic-surface.mjs": {
+      "count": 2,
+      "digest": "6aac8989f887c067"
+    },
+    "tools/swap-row-reads.mjs": {
+      "count": 9,
+      "digest": "dcaa9ef9c58aab6e"
+    },
+    "tools/tapsize.mjs": {
+      "count": 2,
+      "digest": "937b4f581c184b1d"
+    },
+    "tools/testnumbers.mjs": {
+      "count": 3,
+      "digest": "a99316891d40357e"
+    },
+    "tools/text-geometry.mjs": {
+      "count": 10,
+      "digest": "d39a91b04ac9376c"
+    },
+    "tools/title-new-slot.mjs": {
+      "count": 4,
+      "digest": "edaf8f33b2ee919a"
+    },
+    "tools/title-save-slot-tooltip.mjs": {
+      "count": 14,
+      "digest": "09d5ac5570def086"
+    },
+    "tools/tutorial-reach.mjs": {
+      "count": 1,
+      "digest": "8ecba2d09176de17"
+    },
+    "tools/uprightgate.mjs": {
+      "count": 14,
+      "digest": "2c7308ecd506ea35"
+    },
+    "tools/zoomplace.mjs": {
+      "count": 1,
+      "digest": "561212b4fb805f6f"
+    }
+  }
+}

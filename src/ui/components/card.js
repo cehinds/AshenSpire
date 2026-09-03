@@ -120,12 +120,19 @@ export function renderCard(registries, ref, opts = {}) {
     : tagsFor(def.id);
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
-  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
-  const manaCost = opts.preview ? opts.preview.manaCost : (def.manaCost || 0);
+  // The badge numbers come from the framework cost profile (a preview's
+  // numbers are the preview's own — it already resolved them); the badge
+  // words come from the TermRegistry, like the tooltip's cost line.
+  const pools = opts.preview ? null : registries.framework.costProfile(def);
+  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : (pools.variable ? 'X' : pools.action);
+  const manaCost = opts.preview ? opts.preview.manaCost : pools.mana;
+  const staminaCost = opts.preview ? opts.preview.staminaCost : pools.stamina;
+  const resourceWord = (resource) => esc(registries.framework.resourceWord(resource));
 
   el.innerHTML =
     `<div class="cost">${esc(cost)}</div>` +
-    (manaCost ? `<div class="mana-cost" title="Mana cost">◆ ${esc(manaCost)}</div>` : '') +
+    (manaCost ? `<div class="mana-cost" title="${resourceWord('mana')} cost">◆ ${esc(manaCost)}</div>` : '') +
+    (staminaCost ? `<div class="stamina-cost" title="${resourceWord('stamina')} cost">● ${esc(staminaCost)}</div>` : '') +
     `<div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
     `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
@@ -151,7 +158,13 @@ export function renderCard(registries, ref, opts = {}) {
   // opts.tooltipFn overrides the default tooltip. A parent that already owns a
   // persistent detail region may suppress the transient tooltip entirely.
   if (opts.tooltip !== false) {
-    attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
+    // A combat card's preview already resolved its live costs (Weight Class
+    // pricing, Power reductions); the tooltip must say the same numbers the
+    // badge and the engine do, so it takes them instead of re-deriving.
+    const liveCosts = opts.preview
+      ? { variable: !!opts.preview.costIsX, action: opts.preview.cost, mana: opts.preview.manaCost, stamina: opts.preview.staminaCost }
+      : null;
+    attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts)));
   }
   if (opts.small) {
     el.style.transform = 'scale(0.92)';
@@ -181,32 +194,44 @@ export function upgradePreviewHtml(registries, ref) {
   html += `<div class="ctext" style="margin-top:6px">${upgradedText}</div>`;
   if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
   if (baseText === upgradedText && upg.cost === base.cost) {
-    html += '<div class="tt-kw">Your current armament keeps the displayed values the same. The card still gains its permanent upgrade.</div>';
+    html += '<div class="tt-kw">The authored upgrade has no visible numeric change in this preview.</div>';
   }
   return html;
 }
 
-function cardTooltip(registries, def, tokens) {
-  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)} Energy${def.manaCost ? ` + ${esc(def.manaCost)} Mana` : ''}</div>`;
+function cardTooltip(registries, def, tokens, liveCosts = null) {
+  // Cost numbers come from the framework profile (or the preview's already
+  // resolved live costs, when the card is in play) and the resource words from
+  // TermRegistry — same rendered string, one authority for both.
+  const pools = liveCosts || registries.framework.costProfile(def);
+  // Terms are data; escape them like every other field before innerHTML.
+  const word = (resource) => esc(registries.framework.resourceWord(resource));
+  const costText = `${esc(pools.variable ? 'X' : pools.action)} ${word('action')}`
+    + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '')
+    + (pools.stamina ? ` + ${esc(pools.stamina)} ${word('stamina')}` : '');
+  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${costText}</div>`;
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {
-    if (registries.keywords.has(kw)) {
-      const k = registries.keywords.get(kw);
-      lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
-    }
+    // Words resolve through the framework TermRegistry (one vocabulary home);
+    // an id outside the keyword vocabulary is skipped, as before.
+    const k = registries.framework.keywordDisplay(kw);
+    if (k) lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
   }
   for (const eff of def.effects || []) {
-    if (eff.op === 'applyStatus' && registries.statuses.has(eff.status)) {
-      const s = registries.statuses.get(eff.status);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    // Status/stance WORDS resolve through the per-bundle framework term
+    // overlay — verbatim text, framework authority. Unknown ids and
+    // tooltip-less entities keep their existing skip behavior.
+    if (eff.op === 'applyStatus') {
+      const s = registries.frameworkTerms.statusDisplay(eff.status);
+      if (s && s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
     }
-    if (eff.op === 'enterStance' && registries.stances.has(eff.stance)) {
-      const s = registries.stances.get(eff.stance);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    if (eff.op === 'enterStance') {
+      const s = registries.frameworkTerms.stanceDisplay(eff.stance);
+      if (s && s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
     }
   }
   if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);

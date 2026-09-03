@@ -9,6 +9,7 @@ import { MAP_SHAPE_LIMITS } from '../src/content/mapconfig.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { tagService } from '../src/model/tagService.js';
+import { itemTypeLabel } from '../src/content/equipment.js';
 import {
   validateContent,
   extractTemplateTokens,
@@ -18,7 +19,7 @@ import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from
 import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../src/model/rewardplan.js';
 import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
-import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard, previewIntent, getEntity, playerWeightClass } from '../src/engine/combat.js';
 import { commitCombatSnapshot, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
@@ -63,7 +64,7 @@ import {
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
   previewCompatibleHands, startingHandsRequirementFailure,
 } from '../src/model/loadout.js';
-import { equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
+import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
 import {
   UNLOCK_CONDITIONS, REVEAL_MODES, PRESENT_STATES, emptyProgress, recordProgress, evaluateUnlocks,
@@ -143,9 +144,7 @@ const TEST_CARDS = [
 
 const TEST_ENEMIES = [
   { id: 'tDummy', name: 'T Dummy', hp: [30, 30], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
-  // #61: tagged twin of tDummy — the resistance gate's positive arm. Its tag is
-  // a TEST_TAGGING row, not a field: tags are authored in tagging.csv now, and a
-  // fixture that kept its own would be the second home the schema refuses.
+  // #61: tagged twin of tDummy — the resistance gate's positive arm.
   { id: 'tBeast', name: 'T Beast', hp: [30, 30], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tGiant', name: 'T Giant', hp: [400, 400], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tHitter', name: 'T Hitter', hp: [50, 50], poiseMax: 99, moves: { hit: { intent: 'attack', damage: 10, weight: 1 } } },
@@ -157,7 +156,8 @@ const TEST_ENEMIES = [
   },
 ];
 
-// Test fixtures are tagged the way shipped content is: a junction row.
+// Test fixtures are tagged the way shipped content is: junction rows, never a
+// field on the def. model/tags.js refuses a def that carries its own `tags`.
 const TEST_TAGGING = [
   { family: 'enemy', scope: '', objectId: 'tBeast', tagId: 'beast' },
 ];
@@ -165,10 +165,10 @@ const TEST_TAGGING = [
 function testBundle() {
   return {
     ...contentBundle,
+    tagging: [...contentBundle.tagging, ...TEST_TAGGING],
     cards: [...contentBundle.cards, ...TEST_CARDS],
     statuses: [...contentBundle.statuses, ...TEST_STATUSES],
     enemies: [...contentBundle.enemies, ...TEST_ENEMIES],
-    tagging: [...contentBundle.tagging, ...TEST_TAGGING],
   };
 }
 
@@ -189,6 +189,14 @@ const OWNS_EVERYTHING = { has: () => true };
 const REQUIREMENT_TEST_ATTRIBUTES = { strength: 15, dexterity: 15, constitution: 15, wisdom: 15, intelligence: 15 };
 const AT_CAMP = { inCombat: false, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 const MID_FIGHT = { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES };
+const TEST_ARMAMENT_INTRINSICS = Object.freeze({
+  attackRating: 0,
+  defenseRating: 0,
+  weight: 0,
+  poiseThreshold: 0,
+  weaponArtManaCost: 0,
+  uniqueSkillStaminaCost: 0,
+});
 
 // #104 — THE WIDE, SEALED SLOT, WOKEN ONCE. `talisman` is the only row in
 // equipSlots.csv that is BOTH multi-set (`sets=3`) and `swap=outOfCombat`, so it
@@ -201,7 +209,7 @@ const MID_FIGHT = { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 // test-only content that is never shipped.
 const TEST_CHARM = {
   id: 'testCharm', name: 'Charm', kind: 'talisman', hand: '',
-  rarity: 'common', mods: [], unlock: '',
+  rarity: 'common', mods: [], unlock: '', ...TEST_ARMAMENT_INTRINSICS,
 };
 const REG_CHARM = {
   ...REG,
@@ -764,9 +772,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       for (const n of nodes) {
         const fixedType = plan.fixed[n.floor];
         if (fixedType) eq(n.type, fixedType, `seed ${s}: fixed ${fixedType} node ${n.id} on floor ${n.floor}`);
-        // No early elites/shrines; none on the barred floor (SPEC §6).
-        if (n.floor < plan.eliteShrineFrom && !plan.fixed[n.floor]) {
-          assert(n.type !== 'elite' && n.type !== 'shrine', `seed ${s}: early ${n.type} on floor ${n.floor}`);
+        // No early elites/shrines; none on the barred floor (SPEC §6). TWO
+        // gates since E13's split — a rest may open below the floor an Elite
+        // may, which is what lets a rest be promised BELOW the first Elite.
+        if (n.floor < plan.eliteFrom && !plan.fixed[n.floor]) {
+          assert(n.type !== 'elite', `seed ${s}: early elite on floor ${n.floor}`);
+        }
+        if (n.floor < plan.shrineFrom && !plan.fixed[n.floor]) {
+          assert(n.type !== 'shrine', `seed ${s}: early shrine on floor ${n.floor}`);
         }
         if (n.floor === plan.noShrineOn) {
           assert(n.type !== 'shrine', `seed ${s}: shrine on the barred floor ${plan.noShrineOn}`);
@@ -781,6 +794,21 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       eq(map.columns, config.columns, `seed ${s}: graph carries its column count`);
       eq(map.nodes[map.shrineId].type, 'shrine', `seed ${s}: pre-boss shrine`);
       eq(map.nodes[map.bossId].type, 'boss', `seed ${s}: boss node`);
+
+      // E13: A REST BEFORE THE ELITES. His words were "so eletes, maybe shop,
+      // and definitely before a boss"; the boss half was always kept (the top
+      // floor is the lone Shrine) and this is the half that was not. Asserted
+      // on the GRAPH, which is exactly what the rule promises — the per-path
+      // number is measured and printed by tools/mapplan.mjs, never promised.
+      if (plan.restBeforeElite) {
+        const eliteFloors = nodes.filter((n) => n.type === 'elite').map((n) => n.floor);
+        if (eliteFloors.length) {
+          const firstElite = Math.min(...eliteFloors);
+          const rests = nodes.filter((n) => n.type === 'shrine' && n.floor < firstElite);
+          assert(rests.length > 0,
+            `seed ${s}: elite on floor ${firstElite} with no shrine on any earlier floor`);
+        }
+      }
 
       // Minimum counts (hard promise even via the relax path).
       // NOTE THE NAMES. These were `minReachableElites` / `minReachableMerchants`
@@ -1442,7 +1470,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(rn.flaskCharges.capacity, 5, "Traveler's Flask raises fixed charge capacity");
     eq(rn.flaskCharges.hp, 4, "Traveler's Flask allocates the added charge to Crimson");
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
-    assert(rn.deck.some((c) => c.cardId === 'strike' && c.upgraded), 'Whetstone Memory upgrades a Strike');
+    eq(rn.itemUpgradeLevels['armament/straightSword'], 1, 'Whetstone Memory promotes the sourced Straight Sword package');
+    assert(rn.deck.filter((c) => c.cardId === 'strike').every((c) => c.smithingLevel === 1 && !c.upgraded),
+      'Whetstone Memory upgrades every sourced Strike through equipment authority, not per-copy flags');
   });
 
   // ---- 20. M3 phase 1: Starseer + Herald class mechanics ---------------------------------
@@ -1556,7 +1586,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         const playable = c.piles.hand.find((inst) => {
           const def = resolveCard(REG, inst);
           if ((def.keywords || []).includes('unplayable')) return false;
-          return c.player.energy >= (def.cost === 'X' ? 0 : def.cost) && c.player.mana >= (def.manaCost || 0);
+          // AFFORDABLE MEANS EVERY POOL THE ENGINE CHARGES. Stamina joined the
+          // three when the dodge landed (#523), and the empty-hand rule (#554)
+          // put a stamina-priced card in a starting deck for the first time —
+          // so a bot filtering on energy and mana alone asked for a card
+          // playCard refuses, and this fixture died on the throw. The pools are
+          // read from the same cost authority the engine spends from.
+          const pools = REG.framework.costProfile(def, { weightClass: playerWeightClass(c).weightClass });
+          return c.player.energy >= (def.cost === 'X' ? 0 : def.cost)
+            && c.player.mana >= (pools.mana || 0)
+            && c.player.stamina >= (pools.stamina || 0);
         });
         if (playable && target) dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
         else dispatch(c, { type: 'endTurn' });
@@ -1921,7 +1960,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged', 'the table resolves by family and id');
     eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade', 'tagIdsOf resolves an unscoped family');
     eq(tagIdsOf('armament', REG.equipment.armaments.find((a) => a.id === 'straightSword')).join('|'),
-      'blade|basic', 'tagIdsOf resolves an armament');
+      'item:blade|blade|basic', 'tagIdsOf resolves an armament, item type included');
     eq(tagIdsOf('class', { id: 'nobody' }).length, 0, 'an untagged object resolves to no tags');
 
     // SCOPE: outfit ids repeat per class, so the parent key is (classId, id).
@@ -1929,8 +1968,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const defaults = REG.equipment.armour.filter((o) => o.id === 'default');
     eq(defaults.length, 4, 'four classes ship an outfit called default');
     eq(defaults.map((o) => o.tags.join('+')).join(' '), 'guard starstone ritual flourish',
-      'each default outfit keeps its own tags, keyed by class');
-    eq(objectTagIds('armour', 'default', 'reaver').join('|'), 'guard', 'the scope half of the key selects one');
+      'each default outfit keeps its own gameplay tags, keyed by class');
+    eq(defaults.map((o) => o.itemTypeTags.join('+')).join(' '), 'item:armor item:armor item:armor item:armor',
+      'and its item type, which registries splits out of the same rows');
+    eq(objectTagIds('armour', 'default', 'reaver').join('|'), 'item:armor|guard',
+      'the scope half of the key selects one');
     eq(objectTagIds('armour', 'default').length, 0, 'a scoped family does not resolve on the id alone');
 
     // Every carrier the families table names hands back an array.
@@ -1957,13 +1999,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // Scoped families need the whole parent key, and the service supplies it.
     const armour = REG.equipment.armour.find((o) => o.id === 'default' && o.classId === 'starseer');
-    eq(svc.idsOf('armour', armour).join('|'), 'starstone', 'a scoped object resolves by (classId, id)');
+    eq(svc.idsOf('armour', armour).join('|'), 'item:armor|starstone', 'a scoped object resolves by (classId, id)');
 
     // The junction is the authority: a doctored copy cannot answer for content.
     eq(svc.idsOf('card', { id: 'strike', tags: ['venom'] }).join('|'), 'blade',
       'a hand-edited tags field does not override the rows');
 
     // Reverse lookup hands back objects, not ids.
+    eq(svc.inDomain('itemType').map((t) => t.id).join('|'), 'item:blade|item:shield|item:magic-focus|item:armor',
+      'the itemType domain holds the four authored types');
+    // The registry label must equal what content/equipment.js derives from the
+    // id prefix, or the Armoury and the chip strip would disagree by one word.
+    for (const tag of svc.inDomain('itemType')) {
+      eq(tag.label, itemTypeLabel(tag.id), `item type '${tag.id}' label matches itemTypeLabel()`);
+    }
     const heavy = svc.withTag('armament', 'heavy');
     assert(heavy.length >= 4, 'withTag finds the heavy armaments');
     assert(heavy.every((row) => row && row.id), 'withTag returns objects');
@@ -1974,7 +2023,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Vocabulary questions.
     eq(svc.inDomain('creature').map((t) => t.id).join('|'), 'beast|humanoid|undead|construct|spirit',
       'inDomain lists one domain');
-    eq(svc.domainsFor('armament').join('|'), 'card|item', 'a family may carry two domains');
+    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType', 'a family may carry several domains');
     assert(svc.allowedFor('enemy').every((t) => t.domain === 'creature'), 'allowedFor is domain-filtered');
     assert(svc.allowedFor('enemy').length > 0, 'allowedFor is non-empty for a live family');
     eq(svc.tag('blade').label, 'Blade', 'tag() resolves one row');
@@ -2026,6 +2075,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         assert(tagIds.includes(t), `${where}: tag '${t}' is registered`);
       }
     };
+    const checkItemTypes = (tags, where) => {
+      const values = (tags === '' ? [] : Array.isArray(tags) ? tags : [tags]);
+      const itemTypes = values.filter((tag) => tag.startsWith('item:'));
+      assert(itemTypes.length > 0, `${where}: at least one authored item:* type tag`);
+      checkTags(values.filter((tag) => !tag.startsWith('item:')), where);
+    };
 
     for (const w of weapons) {
       assert(KINDS.includes(w.kind), `${w.id}: known kind`);
@@ -2034,7 +2089,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(/^[0-9A-Fa-f]{6}$/.test(w.metal), `${w.id}: metal is a 6-digit hex`);
       assert(/^[0-9A-Fa-f]{6}$/.test(w.accent), `${w.id}: accent is a 6-digit hex`);
       assert(String(w.geom).length > 0, `${w.id}: names a geometry archetype`);
-      checkTags(tagIdsOf('armament', w), w.id);
+      checkItemTypes(tagIdsOf('armament', w), w.id);
       checkMods(w.mods, w.id);
       eq(w.hand, 'either', `${w.id}: every armament is side-neutral; its slot records the equipped hand`);
     }
@@ -2046,7 +2101,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       eq(mine.filter((o) => o.unlock === '').length, 1, `class '${id}' has exactly one starting set`);
     }
     for (const o of outfits) {
-      checkTags(tagIdsOf('armour', o), `${o.classId}/${o.id}`);
+      checkItemTypes(tagIdsOf('armour', o), `${o.classId}/${o.id}`);
       checkMods(o.mods, o.id);
     }
   });
@@ -2057,6 +2112,44 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // no engine code. It changes numbers on the starters, through one closed
     // vocabulary (equipMods.csv) that a typo cannot slip past.
     eq(validateEquipment(REG).join('; '), '', 'every authored piece parses against the vocabulary');
+
+    const intrinsicReceipts = REG.equipment.armaments.map(armamentIntrinsicReceipt);
+    eq(intrinsicReceipts.length, 25, 'all 25 armaments expose an intrinsic stat receipt');
+    assert(intrinsicReceipts.every((row) => ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
+      .every((field) => Number.isInteger(row[field]) && row[field] >= 0)),
+    'each intrinsic receipt exposes five explicit non-negative integer facts');
+    assert(REG.equipment.armaments.every((piece) => piece.weight === piece.poiseThreshold),
+      'presentation weight is the already-authored Poise threshold and adds no balance behavior');
+    assert(REG.equipment.armaments.every((piece) => piece.weaponArtManaCost === (
+      piece.itemTypeTags.includes('item:magic-focus') && piece.techniqueProfile === 'staffTechnique' ? 1 : 0
+    )), 'only magic-focus staff-technique armaments author one Weapon Art Mana');
+    assert(REG.equipment.armaments.every((piece) => piece.uniqueSkillStaminaCost === 0),
+      'Unique Skill Stamina remains explicit zero until a priority or unique-skill consumer exists');
+    eq(JSON.stringify(armamentIntrinsicReceipt(REG.equipment.armaments.find((piece) => piece.id === 'greatsword'))),
+      JSON.stringify({ itemId: 'greatsword', attackRating: 9, defenseRating: 2, weight: 8, weaponArtManaCost: 0, uniqueSkillStaminaCost: 0 }),
+      'the Greatsword receipt is intrinsic and does not include generated-card or Smithing deltas');
+
+    const missingIntrinsicBundle = {
+      ...contentBundle,
+      equipment: {
+        ...contentBundle.equipment,
+        armaments: contentBundle.equipment.armaments.map((piece) => ({ ...piece })),
+      },
+    };
+    delete missingIntrinsicBundle.equipment.armaments[0].attackRating;
+    assert(validateContent(missingIntrinsicBundle).errors.some((error) => error.path.endsWith('.attackRating')),
+      'boot validation fails closed when an intrinsic armament field is absent');
+    const mismatchedIntrinsicRegistries = {
+      ...REG,
+      equipment: {
+        ...REG.equipment,
+        armaments: REG.equipment.armaments.map((piece) => (
+          piece.id === 'straightSword' ? { ...piece, weaponArtManaCost: 1 } : piece
+        )),
+      },
+    };
+    assert(validateEquipment(mismatchedIntrinsicRegistries).some((problem) => /straightSword: weaponArtManaCost/.test(problem)),
+      'registry validation rejects a Weapon Art cost that contradicts the authored type/profile contract');
 
     const bal = REG.balance.equipment;
     const strikeOf = (mods) => resolveCard(REG, { cardId: 'strike', mods });
@@ -2196,7 +2289,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     };
     const probe = {
       id: 'poolProbe', name: 'Pool Probe', kind: 'weapon', hand: 'right', rarity: 'rare',
-      tags: [], mods: ['self.maxHp=+10', 'self.maxMana=+1', 'self.maxStamina=+1'], unlock: '', dropWeight: 1,
+      mods: ['self.maxHp=+10', 'self.maxMana=+1', 'self.maxStamina=+1'], unlock: '', dropWeight: 1,
+      ...TEST_ARMAMENT_INTRINSICS,
     };
     const POOL_REG = {
       ...REG,
@@ -2378,7 +2472,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         ...REG.equipment,
         armaments: [...REG.equipment.armaments,
           { id: 'testCharm', name: 'Heavy Charm', kind: 'weapon', hand: 'right', rarity: 'common',
-            tags: [], mods: ['self.swapCost=+2'], unlock: '' }],
+            mods: ['self.swapCost=+2'], unlock: '', ...TEST_ARMAMENT_INTRINSICS }],
       },
     };
     const charmRun = createRunState({ seed: 5, classId: 'reaver', registries: REG });
@@ -2547,7 +2641,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
           ...REG.equipment,
           modFields: { ...REG.equipment.modFields, probe: { field: 'probe', scope: 'run', apply, status: 'strength' } },
           armaments: [...REG.equipment.armaments,
-            { id: 'probePiece', name: 'Probe', kind: 'weapon', hand: 'right', rarity: 'common', tags: [], mods: ['self.probe=+3'], unlock: '' }],
+            { id: 'probePiece', name: 'Probe', kind: 'weapon', hand: 'right', rarity: 'common', mods: ['self.probe=+3'], unlock: '', ...TEST_ARMAMENT_INTRINSICS }],
         },
       };
       const lo = createLoadout(reg, 'reaver');
@@ -4301,10 +4395,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(!seeds.has(sweepSeed(0) + 1) || sweepSeed(0) !== 0, 'index 0 is not seed 0');
 
     // ---- the caps SHORTEN, and the shortened act still resolves its own rules
-    const capped = applyRunShape(base, { floors: 6, columns: 4 }, MAP_SHAPE_LIMITS);
-    eq(capped.errors.length, 0, `floors=6 columns=4 resolves — ${JSON.stringify(capped.errors)}`);
-    eq(capped.config.floors, 6, 'the floors cap binds');
+    //
+    // THE LENGTH IS ASKED FOR, NOT TYPED, and this line used to type it: a
+    // literal `floors: 6` that was true only while the act's own rules happened
+    // to resolve at 6. E13's rest-before-Elite promise moved the shortest
+    // viable act from 4 to 7 — floors 3 and 4 are where a 12-floor act's
+    // promised rest lands, and a 6-floor act has no floor free to hold one — so
+    // the literal went red for a reason that was not a defect. Asking
+    // `minViableFloors` keeps this a test of THE CAP BINDING, which is its
+    // subject, and the boundary itself stays gated three lines below.
+    const shortest = minViableFloors(base).floors;
+    const capped = applyRunShape(base, { floors: shortest, columns: 4 }, MAP_SHAPE_LIMITS);
+    eq(capped.errors.length, 0, `floors=${shortest} columns=4 resolves — ${JSON.stringify(capped.errors)}`);
+    eq(capped.config.floors, shortest, 'the floors cap binds');
     eq(capped.config.columns, 4, 'the columns cap binds');
+    // AND THE NUMBER ITSELF IS PINNED, because it is a COST the debug short-run
+    // feature pays for the promise and it must not move again in silence.
+    eq(shortest, 7, 'the shortest act these rules describe (was 4 before restBeforeElite)');
     const wide = sampleActShape(base, 60);
     const short = sampleActShape(capped.config, 60);
     assert(short.nodes.max < wide.nodes.min,
@@ -4396,13 +4503,141 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }
     eq(MAP_SHAPE_KEYS.length, 3, 'three knobs, and the set is closed');
 
+    // ---- A HOSTILE SHAPE KEEPS BOTH PROMISES AT ONCE. Codex's repro on #562,
+    // and it went red before the fix: the shortest act with Event at 100 and
+    // every other weight 0 fills the one rest floor with Events, so a rest
+    // force-place that only ate Monsters could not run — and the code then
+    // returned without placing Elites, shipping a map with ZERO against an act
+    // promising 2, which applyRunShape PRINTS to the player as force-placed.
+    // Neither promise may break the other quietly, so both are asserted here.
+    const hostile = applyRunShape(
+      base,
+      { floors: shortest, typeWeights: { monster: 0, event: 100, shrine: 0, elite: 0, merchant: 0 } },
+      MAP_SHAPE_LIMITS,
+    );
+    eq(hostile.errors.length, 0, `the hostile shape is accepted — ${JSON.stringify(hostile.errors)}`);
+    const hostilePlan = resolveFloorPlan(hostile.config).plan;
+    for (let s2 = 0; s2 < 12; s2++) {
+      const g = generateActMap({ config: hostile.config, rng: createRng(sweepSeed(s2)) });
+      const all = Object.values(g.nodes);
+      const elites = all.filter((n) => n.type === 'elite');
+      assert(elites.length >= hostilePlan.minElites,
+        `hostile shape seed ${s2}: ${elites.length} elites against a promised ${hostilePlan.minElites}`);
+      const first = Math.min(...elites.map((n) => n.floor));
+      assert(all.some((n) => n.type === 'shrine' && n.floor < first),
+        `hostile shape seed ${s2}: elite on floor ${first} with no rest below it`);
+    }
+
+    // ---- AN ELITE THAT NEVER TOUCHES THE RELAX PATH STILL GETS ITS REST.
+    // The promise was enforced inside relaxPlace, which runs only when the
+    // rolls left the act short of minElites — so a FIXED Elite rank (typeOnce
+    // assigns it before any rule runs) that satisfies the count on its own
+    // meant the rest was never forced. Measured at 10 of 40 maps breaking the
+    // promise before the fix, 0 of 40 after, which is why the guarantee is now
+    // a final step on every exit rather than one branch of the generator.
+    const fixedElite = { ...base, floorRules: { ...base.floorRules, minElites: 1,
+      fixed: [{ at: 'first', type: 'monster' }, { at: 'floor', index: 6, type: 'elite' }] } };
+    const fePlan = resolveFloorPlan(fixedElite);
+    eq(fePlan.errors.length, 0, `a fixed Elite with rest floors beneath it resolves — ${JSON.stringify(fePlan.errors)}`);
+    for (let s2 = 0; s2 < 40; s2++) {
+      const all = Object.values(generateActMap({ config: fixedElite, rng: createRng(sweepSeed(s2)) }).nodes);
+      const firstElite = Math.min(...all.filter((n) => n.type === 'elite').map((n) => n.floor));
+      assert(all.some((n) => n.type === 'shrine' && n.floor < firstElite),
+        `fixed-elite act seed ${s2}: elite on floor ${firstElite} with no rest below it`);
+    }
+    // AND THE ONE ARRANGEMENT THE GENERATOR CANNOT FIX IS REFUSED BY NAME: a
+    // fixed Elite with no floor beneath it able to hold a rest.
+    const feBad = resolveFloorPlan({ ...base, floorRules: { ...base.floorRules,
+      fixed: [{ at: 'first', type: 'elite' }, { at: 'fraction', of: 0.64, type: 'treasure' }] } });
+    assert(feBad.errors.some((e) => e.key === 'floorRules.fixed' && /restBeforeElite/.test(e.msg)),
+      `a fixed Elite on floor 1 is refused and named — got ${JSON.stringify(feBad.errors)}`);
+
+    // ---- THE REST IS NOT PAID FOR OUT OF ANOTHER PROMISE. Codex's P2 on #566.
+    // ensureRestBeforeElite runs AFTER both relaxPlace calls, so a node it eats
+    // is never counted again — and the first cut ate any node on the rest
+    // floors, the act's last Merchant included. This act's rest floors can hold
+    // no Monster (two non-Monster types alternate under the no-repeat ban, so
+    // the Monster fallback never fires there), which forces that branch on
+    // every seed. Both minima must survive it.
+    // minMerchants 2, not 1: at 1 the victim is only ever the act's LAST
+    // Merchant on a narrow conjunction and the case hides — this test passed
+    // against the unfixed code until the config was corrected. At 2 the
+    // pre-fix branch breaks the count in 19 of these 40 maps.
+    const restVictim = { ...base, pathCount: 1, columns: 2, floors: 8,
+      typeWeights: { monster: 0, event: 40, shrine: 0, elite: 0, merchant: 60 },
+      floorRules: { minElites: 1, minMerchants: 2, restBeforeElite: true,
+        noShrineBefore: { at: 'floor', index: 3 }, noEliteBefore: { at: 'floor', index: 4 },
+        noShrineOn: { at: 'last' },
+        fixed: [{ at: 'first', type: 'monster' }, { at: 'floor', index: 5, type: 'elite' }] } };
+    const rvPlan = resolveFloorPlan(restVictim).plan;
+    assert(rvPlan != null, 'the rest-victim act resolves');
+    for (let s2 = 0; s2 < 30; s2++) {
+      const all = Object.values(generateActMap({ config: restVictim, rng: createRng(sweepSeed(s2)) }).nodes);
+      assert(all.filter((n) => n.type === 'merchant').length >= rvPlan.minMerchants,
+        `rest-victim seed ${s2}: the forced rest ate the act's last Merchant`);
+      assert(all.filter((n) => n.type === 'elite').length >= rvPlan.minElites,
+        `rest-victim seed ${s2}: elites below the promised minimum`);
+      const elites = all.filter((n) => n.type === 'elite').map((n) => n.floor);
+      assert(all.some((n) => n.type === 'shrine' && n.floor < Math.min(...elites)),
+        `rest-victim seed ${s2}: no rest below the first elite`);
+    }
+
+    // ---- AND IT DOES NOT BREAK A MINIMUM THAT WOULD OTHERWISE HOLD. Codex's
+    // second P2. The differential is the assertion: the SAME act with the rule
+    // off keeps its Merchants, so any shortfall with it on is caused by the
+    // rest. This act has no Monster anywhere — every node is Event or Merchant
+    // under the no-repeat ban — so `relaxPlace` has nothing to convert and the
+    // restore has to find a donor. Before the donor fallback: seeds 1, 2, 4, 7
+    // and 9 lost a Merchant here.
+    const noMonster = (restBeforeElite) => ({ ...base, pathCount: 1, columns: 2, floors: 7,
+      typeWeights: { monster: 0, event: 20, shrine: 0, elite: 0, merchant: 80 },
+      floorRules: { minElites: 1, minMerchants: 2, restBeforeElite,
+        noShrineBefore: { at: 'floor', index: 3 }, noEliteBefore: { at: 'floor', index: 4 },
+        noShrineOn: { at: 'last' },
+        fixed: [{ at: 'first', type: 'merchant' }, { at: 'floor', index: 5, type: 'elite' }] } });
+    const nmOn = noMonster(true), nmOff = noMonster(false);
+    assert(resolveFloorPlan(nmOn).errors.length === 0, 'the no-monster act resolves');
+    for (let s2 = 0; s2 < 12; s2++) {
+      const count = (cfg) => Object.values(generateActMap({ config: cfg, rng: createRng(sweepSeed(s2)) }).nodes)
+        .filter((n) => n.type === 'merchant').length;
+      const off = count(nmOff);
+      if (off < 2) continue; // the act could not hold two either way — not this rule's doing
+      assert(count(nmOn) >= 2,
+        `no-monster act seed ${s2}: the forced rest cost a Merchant the same act keeps without it (off ${off})`);
+    }
+
+    // ---- A SURPLUS SHRINE IS A LEGITIMATE DONOR. Codex's third P2. Excluding
+    // every Shrine from the donor pool took the deliberate short while a safe
+    // one sat on the map: seed 67 here came out 3 Merchants + 3 Shrines against
+    // 4 Merchants with the rule off, and the third Shrine was surplus to both
+    // the rest and the pre-boss promise. The differential is the assertion —
+    // the same act without the rule keeps its Merchants, so a shortfall here
+    // can only be this rule's doing.
+    const surplus = (restBeforeElite) => ({ ...base, pathCount: 1, columns: 2, floors: 8,
+      typeWeights: { monster: 0, event: 0, shrine: 40, elite: 0, merchant: 80 },
+      floorRules: { minElites: 1, minMerchants: 4, restBeforeElite,
+        noShrineBefore: { at: 'floor', index: 2 }, noEliteBefore: { at: 'floor', index: 3 },
+        noShrineOn: { at: 'last' },
+        fixed: [{ at: 'first', type: 'event' }, { at: 'floor', index: 3, type: 'elite' }] } });
+    assert(resolveFloorPlan(surplus(true)).errors.length === 0, 'the surplus-shrine act resolves');
+    for (const s2 of [67, 3, 11, 24]) {
+      const count = (cfg) => Object.values(generateActMap({ config: cfg, rng: createRng(sweepSeed(s2)) }).nodes)
+        .filter((n) => n.type === 'merchant').length;
+      const off = count(surplus(false));
+      if (off < 4) continue; // the act could not hold four either way
+      eq(count(surplus(true)), off,
+        `surplus-shrine act seed ${s2}: the rest cost a Merchant a spare Shrine could have paid for`);
+    }
+
     // ---- IT REACHES THE GAME. The one act-boot path applies it, an absent
     // shape leaves every existing seed byte-for-byte identical, and a shaped
     // run is flagged out of win-rate telemetry.
     const reg = createRegistries(contentBundle);
     const graphOf = (shape) => JSON.stringify(buildActMap(reg, createRng(0x715e), 1, shape));
     eq(graphOf(null), graphOf(undefined), 'no shape and an absent shape are the same run');
-    assert(graphOf(null) !== graphOf({ floors: 6 }), 'a shape reaches the generator through buildActMap');
+    // `shortest`, not a literal, for the same reason as above: this call really
+    // does build a map, so it must name a length this act's own rules resolve.
+    assert(graphOf(null) !== graphOf({ floors: shortest }), 'a shape reaches the generator through buildActMap');
     let threw = null;
     try { buildActMap(reg, createRng(1), 1, { columns: 1 }); } catch (e) { threw = e.message; }
     assert(threw && threw.includes('corridor'), `a bad shape throws at act boot and names the knob — got ${threw}`);
@@ -4511,13 +4746,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '46/3/5', 'tuned HP/actions/hand formulas reach the run');
-    eq(`${REG.balance.levelUp.firstCost}/${REG.balance.levelUp.costStep}`, '800/200', 'five level purchases cost 6000 through the authored ramp');
+    eq(`${REG.balance.levelUp.firstCost}/${REG.balance.levelUp.costStep}`, '20/4', 'the measured ramp (E13: 14.8 level-ups per full run for a greedy bot) — five purchases cost 140');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.scalingStat}/${tunedProfiles.unarmedAttack.pointsPerTier}`, '-6/strength/1', 'physical Strike is -6 + STR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.scalingStat}/${tunedProfiles.staffMagicAttack.pointsPerTier}`, '-6/wisdom/1', 'magic Strike is -6 + WIS');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.scalingStat}/${tunedProfiles.unarmedGuard.pointsPerTier}`, '-6/dexterity/1', 'Defend is -6 + DEX');
-    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 6000, 'five purchases cost 6000 and end at displayed level 6');
+    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 140, 'five purchases cost 140 on the measured 20 + 4 ramp and end at displayed level 6');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 11, dexterity: 13, constitution: 10, wisdom: 9, intelligence: 10 }), 'Rogue copies the exact approved tuned preset');
     eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'tuned/50/3/5', 'Rogue tuned stats reach the HP, action, and hand formulas');
@@ -4988,8 +5223,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // THE RAMP, and the only half of his acceptance test this suite can hold.
     eq(levelCost(REG, 1) - levelCost(REG, 0), REG.balance.levelUp.costStep, 'each level costs one step more');
-    eq(levelsAffordable(REG, 6000), 5, '6000 cinders buys five levels and reaches displayed level 6');
-    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 6000, 'the authored 800 + 200 ramp totals 6000 for five purchases');
+    eq(levelsAffordable(REG, 140), 5, '140 cinders buys five levels and reaches displayed level 6');
+    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 140, 'the measured 20 + 4 ramp totals 140 for five purchases');
     eq(levelsAffordable(REG, 0), 0, 'the empty edge: no cinders, no levels');
   });
 
@@ -5155,7 +5390,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // door, and it is the only thing in the tree that can fail on the copy.
     const edited = { ...REG.derivedStatRules, defaults: { ...REG.derivedStatRules.defaults, pointsPerTier: 1 } };
     const byHand = resolveDerivedStatRules(edited, {
-      attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+      attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana'],
     });
     eq(byHand.rules.hp.pointsPerTier, 1, 'HP keeps its authored per-CON formula when only the fallback default changes');
     eq(byHand.rules.energy.pointsPerTier, 10, 'Actions keep their authored DEX/10 formula');
@@ -6015,8 +6250,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       row: sharedInventoryRow, art: { kind: 'icon', value: '†' }, description: '', mods: [],
     }).properties.holdAction === false,
     'the shared unfolded Inventory card model remains hold-safe without an opted-in class');
-    eq(contentBundle.balance.ui.holdConfirm.def, 'off',
-      'the universal hold setting defaults off and arms opted-in card classes only after the player enables it');
+    eq(contentBundle.balance.ui.holdConfirm.def, 'normal',
+      'the universal hold setting defaults normal so state-changing options expose click-review and hold-direct from first run');
     eq(contentBundle.balance.ui.titleLoadHold.ms, 600,
       'the title quick-load hold duration is authored as 600 ms');
     const malformedTitleLoadHold = {

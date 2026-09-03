@@ -2,7 +2,6 @@
 //
 // Authored CSV/JSON content feeds this file and nothing else does:
 //
-//   content/source/tagging.csv       every tag any of these carries
 //   content/source/weapons.csv       every armament (weapon / shield / staff)
 //   content/source/outfits.csv       every armour set (an outfit IS a set)
 //   content/source/equipSlots.csv    what you can wear, and when you may swap
@@ -25,9 +24,10 @@ import { basicCardProfiles } from './generated/basicCardProfiles.js';
 import { cardExposure } from './generated/cardExposure.js';
 import { startingKits } from './generated/startingKits.js';
 import { equipmentRequirements } from './generated/equipmentRequirements.js';
+import { itemUpgradeChanges } from './generated/itemUpgradeChanges.js';
 import { cardEquipmentExceptions } from './generated/cardEquipmentExceptions.js';
-import { TAGGING } from './tags.js';
 import { equipmentGrants } from './generated/equipmentGrants.js';
+import { TAGGING } from './tags.js';
 import { armouryUi } from './generated/armouryUi.js';
 
 /** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
@@ -36,10 +36,28 @@ function list(v) {
   return Array.isArray(v) ? v : [v];
 }
 
+export const ITEM_TYPE_TAG_PREFIX = 'item:';
+
+/** `item:magic-focus` -> `Magic Focus`; adding a new type is a content tag. */
+export function itemTypeLabel(tag) {
+  if (typeof tag !== 'string' || !tag.startsWith(ITEM_TYPE_TAG_PREFIX)) return null;
+  return tag.slice(ITEM_TYPE_TAG_PREFIX.length)
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 function normPiece(row) {
   const attributes = Object.fromEntries(equipmentRequirements
     .filter((requirement) => requirement.itemId === row.id)
     .map((requirement) => [requirement.attributeId, requirement.minimum]));
+  // TAGS ARE NOT HERE. They are rows in content/source/tagging.csv, and
+  // model/registries.js stamps `entityTags`, `itemTypeTags`, `itemTypes` and
+  // the gameplay `tags` set onto the piece at boot — the same four fields this
+  // function used to build, from the same authored words, one table later. The
+  // split is unchanged: `tags` stays the familiar gameplay/presentation set and
+  // an item card still never infers its type from `kind` or a UI call site.
   return {
     ...row,
     artKey: row.artKey || row.id,
@@ -125,6 +143,9 @@ export const STARTING_KITS = startingKits.map((row) => ({ ...row }));
 /** Raw item/stat minima retained so validation can detect duplicate authored rows. */
 export const EQUIPMENT_REQUIREMENTS = equipmentRequirements.map((row) => ({ ...row }));
 
+/** Exact item/tier upgrade facts. Interpretation belongs to model/itemUpgrades.js. */
+export const ITEM_UPGRADE_CHANGES = itemUpgradeChanges.map((row) => ({ ...row }));
+
 /** Registered exceptional card→weapon bonds; ordinary fit is class/tag based. */
 export const CARD_EQUIPMENT_EXCEPTIONS = cardEquipmentExceptions.map((row) => ({ ...row }));
 
@@ -132,7 +153,6 @@ export const CARD_EQUIPMENT_EXCEPTIONS = cardEquipmentExceptions.map((row) => ({
  * Raw authored card tag ids, carried into registries for compatibility checks.
  * The card slice of the one association table (content/source/tagging.csv),
  * folded back to one row per card because that is the shape equipment fit reads.
- * `cardId` keeps the name that side has always used.
  */
 export const CARD_EQUIPMENT_TAGGING = (() => {
   const byCard = new Map();

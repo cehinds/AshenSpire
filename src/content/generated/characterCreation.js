@@ -146,7 +146,7 @@ export const characterCreation = {
       "id": "whetstoneMemory",
       "name": "Whetstone Memory",
       "icon": "🪨",
-      "desc": "Begin with one Strike already upgraded.",
+      "desc": "Begin with one armament already Smithed, improving all of its sourced basic cards.",
       "effects": [
         {
           "op": "upgradeCard",

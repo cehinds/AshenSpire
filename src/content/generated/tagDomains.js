@@ -21,5 +21,10 @@ export const tagDomains = [
     "id": "run",
     "label": "Run",
     "blurb": "Run structure — what an event, an encounter or an unlock is about."
+  },
+  {
+    "id": "itemType",
+    "label": "Item type",
+    "blurb": "What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword."
   }
 ];
