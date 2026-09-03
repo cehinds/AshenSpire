@@ -1284,13 +1284,27 @@ function startingDeckFindings(registries) {
   // one a player picks free to blow the budget and eat the promised minFiller.
   const order = (cfg.dropOrder || []).join(' → ');
   const kits = (registries.equipment || {}).startingKits || [];
+  const armours = (registries.equipment || {}).armour || [];
+  const seenDetail = new Set();
   for (const classId of registries.classes.ids()) {
+    // Character creation picks a kit AND a starting armour, independently, and
+    // either can carry grants — so the budget is checked against the PRODUCT,
+    // not one axis. Every armour row the class owns is enumerated, not just the
+    // free one: the others are behind unlocks, and an unlock is a thing that
+    // happens. `null` stands in for each axis a class does not author, so no
+    // class goes unchecked.
     const selectable = kits.filter((kit) => kit.classId === classId);
-    // Every class has at least its baseline; the bare loadout stands in for a
-    // class that authors no kit at all, so no class goes unchecked.
-    const candidates = selectable.length
-      ? selectable.map((kit) => ({ label: `kit '${kit.id}'`, loadout: createLoadout(registries, classId, kit) }))
-      : [{ label: 'default loadout', loadout: createLoadout(registries, classId) }];
+    const wearable = armours.filter((row) => row.classId === classId);
+    const candidates = [];
+    for (const kit of selectable.length ? selectable : [null]) {
+      for (const armour of wearable.length ? wearable : [null]) {
+        const where = [kit && `kit '${kit.id}'`, armour && `armour '${armour.id}'`].filter(Boolean).join(' + ');
+        candidates.push({
+          label: where || 'default loadout',
+          loadout: createLoadout(registries, classId, kit, armour),
+        });
+      }
+    }
     for (const { label, loadout } of candidates) {
       let plan;
       try {
@@ -1303,6 +1317,11 @@ function startingDeckFindings(registries) {
       const detail = `class '${classId}' ${label} grants ${plan.grants.length} card(s) and minFiller is `
         + `${plan.minFiller}, needing ${plan.grants.length + plan.minFiller} of `
         + `startingDeckSize ${registries.balance.startingDeckSize}`;
+      // One line per distinct overrun. Without this an overrun that does not
+      // depend on the armour repeats once per combination, burying the ones
+      // that do.
+      if (seenDetail.has(detail)) continue;
+      seenDetail.add(detail);
       if (plan.grewToFit) warnings.push(`startingDeck: ${detail}; growToFit raised the deck to ${plan.size}`);
       else problems.push(`startingDeck: ${detail}; raise startingDeckSize, lower minFiller, or drop a grant (${order})`);
     }

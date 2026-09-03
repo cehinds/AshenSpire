@@ -2142,6 +2142,38 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }
   });
 
+  // ---- 26f. the third review round's two findings -------------------------
+  test('26f. the budget spans kit x armour, and the fit index follows the bundle', () => {
+    // Character creation picks a kit AND an armour, independently. Checking one
+    // axis leaves the other free to blow the budget: an unlockable outfit that
+    // grants cards passed validation while eating the promised minFiller.
+    const greedy = JSON.parse(JSON.stringify(contentBundle));
+    greedy.tagging.push({ family: 'armour', scope: 'reaver', objectId: 'vigil', tagId: 'bound' });
+    greedy.equipment = {
+      ...greedy.equipment,
+      equipmentGrants: [{ family: 'armour', scope: 'reaver', sourceId: 'vigil', cards: ['strike', 'defend', 'strike', 'defend', 'strike'] }],
+    };
+    const said = validateEquipment(createRegistries(greedy)).join(' | ');
+    assert(/armour 'vigil'/.test(said), `the overrun names the armour that caused it — said ${JSON.stringify(said.slice(0, 160))}`);
+    assert(/kit 'reaverBaseline'/.test(said), 'and the kit it was paired with');
+    // The armour is behind an unlock, so it is only reachable later — which is
+    // exactly why enumerating just the free one was not enough.
+    const vigil = REG.equipment.armour.find((o) => o.classId === 'reaver' && o.id === 'vigil');
+    assert(vigil && vigil.unlock, 'vigil is an unlockable outfit, not the free one');
+
+    // equipment.cardTagging is what the fit check reads. Folded from the
+    // module-global rows it would answer a different question than card.tags
+    // does the moment a caller hands createRegistries an extended bundle.
+    const extended = JSON.parse(JSON.stringify(contentBundle));
+    extended.tagging.push({ family: 'card', scope: '', objectId: 'starstonePebble', tagId: 'blade' });
+    const reg = createRegistries(extended);
+    const stamped = reg.cards.get('starstonePebble').tags;
+    const indexed = (reg.equipment.cardTagging || []).find((row) => row.cardId === 'starstonePebble');
+    assert(indexed, 'the supplied row reaches the fit index at all');
+    eq(indexed.tags.join('|'), stamped.join('|'), 'the fit index and the stamped card agree, row for row');
+    assert(stamped.includes('blade'), 'and both carry the tag the bundle supplied');
+  });
+
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
   test('27. weapons and armour sets validate against the tag registry', () => {
     const tagIds = TAGS.map((t) => t.id);
