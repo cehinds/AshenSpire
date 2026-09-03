@@ -335,6 +335,17 @@ attempt to hold a total. What DOES hold mid-run is the attack count: a swap re-s
 attack slots the run was born with (`equipmentAttackSlotCount`, recorded at creation and
 read, never re-derived), so equipment never changes how many attacks you hold.
 
+**Every card has an owner: the run, or one item.** Run-owned cards are the run's for good —
+the base strikes and defends (gear only re-skins them), the class signature, global grants,
+rewards. Item-owned cards ride with the item: equip it and they arrive, unequip it and they
+leave, equip it again and they return identical. **If the item is not equipped, its cards are
+gone** (owner ruling, 2026-09-03). This is one rule with three authoring sources feeding it —
+a weapon package's `grantedCards`, its `weaponArtDefaults`, and the `bound` table
+(`equipmentGrants.csv`, gated by the `bound` tag on any piece, armour included) — and one
+reconcile that applies it on every equip transition, in or out of combat. Item-owned
+instances carry deterministic ids and the owner's namespaced ref, so the reconcile is
+idempotent and a save is stable across it.
+
 Everything above is data. The cap, the per-class bias and its default, the odd-split
 winner, and the grant-source vocabulary are all authored — the sources are rows in the
 `grantSource` tag domain, so adding one is a spreadsheet line rather than a code change.

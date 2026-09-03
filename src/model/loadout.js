@@ -1735,15 +1735,14 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
     });
   }
 
-  // Every equipped piece carrying the `bound` tag hands over the cards named
-  // for it in equipmentGrants.csv. The tag is the gate and the promise; the
-  // table is the payload. A piece with neither contributes nothing, which is
-  // every piece today — the seam is live and the data is empty by design.
-  for (const piece of equippedPieces(registries, loadout, classId)) {
-    for (const cardId of boundGrantCardIds(registries, piece, piece.kind === 'armor' ? 'armour' : 'armament')) {
-      grants.push({ source: grantSourceFor(cfg, piece.kind === 'armor' ? 'armor' : 'weapon'), cardId, sourceId: piece.id });
-    }
-  }
+  // NOT HERE: the cards a `bound` piece carries (equipmentGrants.csv). They
+  // used to be pushed as plain run-owned refs, which is why they stayed in the
+  // deck after the piece was unequipped and why a bound piece equipped mid-run
+  // brought nothing — round nineteen's finding, and the owner's ruling
+  // (2026-09-03): if the item is not equipped, its cards are gone. So they are
+  // ITEM-OWNED instances, minted by desiredGrantInstances alongside package
+  // grants and weapon arts, and swept by the same reconcile. startingDeckPlan
+  // counts them against the cap through that door, never through this list.
 
   // The validator names a non-array `global.grants`, so a bad bundle does not
   // boot — but this is the PLANNER, reached by tools and fixtures with
@@ -1936,6 +1935,47 @@ export function orderStartingDeck(registries, run) {
   return run.deck;
 }
 
+// ---------------------------------------------------------------------------
+// Card ownership
+// ---------------------------------------------------------------------------
+//
+// EVERY CARD IN THE DECK HAS AN OWNER: the run, or one item. Run-owned cards
+// are the run's for good — base strikes and defends (an item only re-skins
+// them), the class signature, global grants, rewards, and anything extracted
+// at a smith. Item-owned cards RIDE WITH THE ITEM: equip it and they arrive,
+// unequip it and they leave, equip it again and they are back, identical.
+//
+// One rule, three authoring sources feeding it — a package's `grantedCards`,
+// its `weaponArtDefaults`, and the `bound` table (equipmentGrants.csv). Until
+// the owner's ruling (2026-09-03) the third was the odd one out: its cards
+// were minted as plain run-owned refs at creation and never looked at again,
+// so they outlived the piece that promised them. Now all three are minted by
+// desiredGrantInstances and swept by the reconciles below, keyed on the one
+// predicate here rather than on a role list copied into each sweep.
+
+/** The roles an item-owned instance may carry. */
+export const ITEM_OWNED_ROLES = Object.freeze(['granted', 'weaponArt']);
+
+/** True when the instance rides with an item rather than belonging to the run. */
+export function isItemOwned(inst) {
+  return Boolean(inst) && ITEM_OWNED_ROLES.includes(inst.equipmentRole);
+}
+
+/**
+ * The namespaced ref of the piece — `armament/<id>` or `armor/<class>/<id>`,
+ * the same spelling itemUpgrades and smithing already key on, so an owner
+ * written on a card instance can be resolved by every model that speaks it.
+ */
+export function pieceItemRef(piece) {
+  if (!piece || !piece.id) return null;
+  return piece.kind === 'armor' ? `armor/${piece.classId}/${piece.id}` : `armament/${piece.id}`;
+}
+
+/** The tagFamilies.csv family a piece belongs to, from its kind. */
+function pieceFamily(piece) {
+  return piece && piece.kind === 'armor' ? 'armour' : 'armament';
+}
+
 export function reconcileGrantedCards(registries, run) {
   if (!run.deck) run.deck = [];
   const desired = desiredGrantInstances(registries, run);
@@ -1945,7 +1985,7 @@ export function reconcileGrantedCards(registries, run) {
   // reconciling, so an appended instance must land in the SAME array to flow
   // through the carrier/mod stamping that follows.
   const kept = run.deck.filter((inst) => {
-    if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
+    if (!isItemOwned(inst)) return true;
     if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
     return false;
   });
@@ -1956,21 +1996,47 @@ export function reconcileGrantedCards(registries, run) {
 }
 
 /**
- * The desired granted/weaponArt instances for the CURRENTLY equipped hands.
- * Grants concatenate right then left (the contract model authors no dedup for
- * them); weapon arts with both hands armed go through the framework's
+ * EVERY item-owned instance the CURRENTLY worn equipment lends — the one list
+ * both reconciles and the creation plan read, so "what does my gear give me"
+ * has one answer. Bound-table cards first, for every worn piece; then package
+ * grants, right hand then left (the contract model authors no dedup for them);
+ * then weapon arts, which with both hands armed go through the framework's
  * splitAuthoredWeaponArts — quota split, unique preference RIGHT_THEN_LEFT —
  * so an art both weapons author installs once, attributed to the winning hand.
  */
 function desiredGrantInstances(registries, run) {
   // Stamped from the authored binding, not typed here — see grantSourceFor.
-  const weaponSource = grantSourceFor(startingDeckSettings(registries), 'weapon');
+  const settings = startingDeckSettings(registries);
+  const weaponSource = grantSourceFor(settings, 'weapon');
+  const desired = [];
+
+  // THE BOUND TABLE. Every worn piece carrying the `bound` tag lends the cards
+  // equipmentGrants.csv names for it — armour as much as armaments, because
+  // the tag is the gate and it does not care what kind of thing wears it. The
+  // owner is written as the piece's namespaced ref, so an outfit id that
+  // repeats per class still names exactly one wearer. Copies of the same card
+  // are numbered, which is what keeps the id deterministic and the sweep
+  // idempotent when a row lists a card twice.
+  for (const piece of equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: run.itemUpgradeLevels || {} })) {
+    const family = pieceFamily(piece);
+    const owner = pieceItemRef(piece);
+    const copies = new Map();
+    for (const cardId of boundGrantCardIds(registries, piece, family)) {
+      const i = copies.get(cardId) || 0;
+      copies.set(cardId, i + 1);
+      desired.push({
+        instanceId: `bound:${owner}:${cardId}:${i}`,
+        cardId, upgraded: false, equipmentRole: 'granted', grantedBy: owner,
+        grantSource: grantSourceFor(settings, family === 'armour' ? 'armor' : 'weapon'),
+      });
+    }
+  }
+
   const sources = { right: null, left: null };
   for (const hand of ['right', 'left']) {
     const source = handSource(registries, run.loadout, run.class, hand);
     if (source.package) sources[hand] = source;
   }
-  const desired = [];
   for (const hand of ['right', 'left']) {
     const source = sources[hand];
     if (!source) continue;
@@ -2036,7 +2102,7 @@ export function reconcileGrantedCardsInCombat(registries, run, piles) {
   const present = new Set();
   for (const pile of [piles.hand, piles.draw, piles.discard, piles.exhaust]) {
     const kept = pile.filter((inst) => {
-      if (inst.equipmentRole !== 'granted' && inst.equipmentRole !== 'weaponArt') return true;
+      if (!isItemOwned(inst)) return true;
       if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
       return false;
     });

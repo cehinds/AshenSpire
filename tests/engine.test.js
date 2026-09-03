@@ -12,7 +12,7 @@ import { tagService } from '../src/model/tagService.js';
 import { importLegacyContent } from '../src/framework/importer.js';
 import { attackTagsFor } from '../src/engine/actions.js';
 import { tagContentProblems, itemTypeLabelFrom, tagIdsAllowedFor, tagIdsInDomain } from '../src/model/tags.js';
-import { boundGrantCardIds, boundGrantProblems } from '../src/model/loadout.js';
+import { boundGrantCardIds, boundGrantProblems, isItemOwned, pieceItemRef, reconcileGrantedCardsInCombat } from '../src/model/loadout.js';
 import { itemTypeLabel } from '../src/content/equipment.js';
 import {
   validateContent,
@@ -2209,7 +2209,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     run.loadout.sets.rightHand[0] = 'dagger';
     stampDeck(reg, run);
     eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, born, 'a swap re-skins the attacks, it does not re-count them');
-    eq(run.deck.length, 10, 'and the deck stays the size it was born');
+    // REPOINTED. This said "and the deck stays the size it was born" — ten —
+    // and it was true only because bound-table cards were minted as run-owned
+    // refs nothing ever swept. The owner ruled (2026-09-03): if the item is not
+    // equipped, its cards are gone. The sword took its two with it; 26v owns
+    // the full statement of that rule.
+    eq(run.deck.length, 8, 'and the unequipped sword took its two bound cards with it — the deck floats, by ruling');
 
     // roleCopies is the legacy distribution. Its hand-kept sum is exactly the
     // coupling the composed deck removes, so it is a rule only while it is the
@@ -3073,6 +3078,98 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     badOdd.balance.equipment.startingDeck.oddFillerGoesTo = 'either';
     assert(/oddFillerGoesTo must be 'attack' or 'guard'/.test(validateEquipment(createRegistries(badOdd)).join(' | ')),
       'and anything else is refused by name');
+  });
+
+  // ---- 26v. the owner's second ruling: bound cards ride with their item ----
+  test('26v. an item-owned card arrives with its item, leaves with it, and returns identical — armour included, in combat too', () => {
+    // ONE OWNER MODEL. A weapon package's grants and arts already rode with the
+    // weapon; the `bound` table's cards did not — they were minted as plain
+    // run-owned refs at creation and never looked at again, so they outlived
+    // the piece that promised them and a bound piece picked up mid-run brought
+    // nothing (round nineteen's finding). The owner ruled: if the item is not
+    // equipped, its cards are gone. So all three sources now mint item-owned
+    // instances through one door and one reconcile sweeps them.
+    const b = JSON.parse(JSON.stringify(contentBundle));
+    b.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
+    b.tagging.push({ family: 'armament', scope: '', objectId: 'dagger', tagId: 'bound' });
+    b.tagging.push({ family: 'armour', scope: 'reaver', objectId: 'vigil', tagId: 'bound' });
+    b.equipment = {
+      ...b.equipment,
+      equipmentGrants: [
+        { family: 'armament', scope: '', sourceId: 'straightSword', cards: ['strike', 'strike'] },
+        { family: 'armament', scope: '', sourceId: 'dagger', cards: ['defend'] },
+        { family: 'armour', scope: 'reaver', sourceId: 'vigil', cards: ['defend', 'strike'] },
+      ],
+    };
+    const reg = createRegistries(b);
+    const run = createRunState({ seed: 11, classId: 'reaver', registries: reg });
+    const owned = () => run.deck.filter(isItemOwned).map((c) => c.instanceId).sort();
+    const sword = pieceItemRef(reg.equipment.armaments.find((a) => a.id === 'straightSword'));
+    eq(sword, 'armament/straightSword', 'an owner is written as the namespaced item ref the rest of the model keys on');
+
+    // BORN WITH THEM, numbered, owned, and counted against the cap.
+    const bornOwned = owned();
+    eq(bornOwned.filter((id) => id.startsWith(`bound:${sword}:`)).join('|'),
+      `bound:${sword}:strike:0|bound:${sword}:strike:1`,
+      'two copies of one card are two numbered instances, so the ids are deterministic');
+    assert(run.deck.filter((c) => c.grantedBy === sword).every((c) => c.equipmentRole === 'granted' && c.grantSource === 'from:weapon'),
+      'a bound-table card is a granted instance with its provenance stamped');
+    eq(run.deck.length, contentBundle.balance.startingDeckSize, 'and it counts against the cap like any other bound card');
+
+    // UNEQUIP: gone. Not "still there with a stale sourceId" — gone.
+    run.loadout.sets.rightHand[0] = null;
+    stampDeck(reg, run);
+    eq(owned().filter((id) => id.startsWith(`bound:${sword}:`)).length, 0, "the sword's cards leave with the sword");
+    assert(!run.deck.some((c) => c.cardId === 'strike' && c.grantedBy === sword), 'nothing of it lingers under another role');
+
+    // A BOUND PIECE PICKED UP MID-RUN brings its cards — which never happened
+    // before, because only creation read the table.
+    run.loadout.sets.rightHand[0] = 'dagger';
+    stampDeck(reg, run);
+    eq(owned().filter((id) => id.startsWith('bound:armament/dagger:')).join('|'), 'bound:armament/dagger:defend:0',
+      'equipping a bound piece mid-run deals its cards');
+
+    // RE-EQUIP: back, identical ids, and the sweep is idempotent.
+    run.loadout.sets.rightHand[0] = 'straightSword';
+    stampDeck(reg, run);
+    eq(owned().join('|'), bornOwned.join('|'), 're-equipping restores exactly the instances the run was born with');
+    const again = owned().join('|');
+    stampDeck(reg, run);
+    eq(owned().join('|'), again, 'and a second restamp changes nothing');
+
+    // ARMOUR TOO. The tag is the gate and it does not care what wears it; the
+    // owner ref carries the class, because outfit ids repeat per class.
+    const vigil = reg.equipment.armour.find((o) => o.id === 'vigil' && o.classId === 'reaver');
+    run.loadout.sets.armor[0] = 'vigil';
+    stampDeck(reg, run);
+    eq(owned().filter((id) => id.startsWith(`bound:${pieceItemRef(vigil)}:`)).join('|'),
+      'bound:armor/reaver/vigil:defend:0|bound:armor/reaver/vigil:strike:0',
+      'an outfit lends its cards under a class-scoped owner');
+    assert(run.deck.filter((c) => c.grantedBy === pieceItemRef(vigil)).every((c) => c.grantSource === 'from:armor'),
+      'stamped from the armour seam');
+    run.loadout.sets.armor[0] = 'default';
+    stampDeck(reg, run);
+    eq(owned().filter((id) => id.startsWith('bound:armor/')).length, 0, 'and taking it off takes them back');
+
+    // IN COMBAT the deck is the piles, and the same sweep runs on them: a
+    // stale bound card in HAND leaves, a wanted one already in DRAW stays put,
+    // the missing one lands in the discard pile like any mid-fight addition.
+    const piles = {
+      hand: [{ instanceId: 'bound:armament/dagger:defend:0', cardId: 'defend', equipmentRole: 'granted', grantedBy: 'armament/dagger' }],
+      draw: [{ instanceId: 'x', cardId: 'strike' }, { instanceId: `bound:${sword}:strike:0`, cardId: 'strike', equipmentRole: 'granted', grantedBy: sword }],
+      discard: [], exhaust: [],
+    };
+    reconcileGrantedCardsInCombat(reg, run, piles);
+    eq(piles.hand.length, 0, 'the unequipped dagger takes its card out of the hand');
+    eq(piles.draw.map((c) => c.instanceId).join('|'), `x|bound:${sword}:strike:0`, 'a present wanted card stays where it is');
+    assert(piles.discard.some((c) => c.instanceId === `bound:${sword}:strike:1`), 'the missing copy lands in the discard pile');
+
+    // THE PLAN COUNTS THEM THROUGH THE SAME DOOR, so they are neither dealt
+    // twice nor counted twice: `grants` is the deal-out list, `packageCards`
+    // is what the reconcile mints.
+    const plan = startingDeckPlan(reg, createLoadout(reg, 'reaver'), 'reaver');
+    assert(!plan.grants.some((g) => g.grantSource === undefined && g.sourceId), 'no bound-table ref rides in the deal-out list');
+    assert(plan.packageCards >= 2, `the sword's two cards are counted where the package cards are (${plan.packageCards})`);
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
