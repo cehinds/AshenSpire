@@ -31,7 +31,11 @@ function check(name, ok, detail = '') {
   else { fail += 1; console.error(`FAIL ${name}${detail ? ` — ${detail}` : ''}`); }
 }
 
-const css = read('styles/ui.css');
+// THE CHROME LIVES IN THE KIT NOW (styles/kit.css). Every shell rule there is
+// written for both spellings — the kit's `.as-*` name and the repo's
+// `.modal-*` hook — so the kit twin is stripped from each selector list and
+// the checks below read the repo name exactly as they always did.
+const css = read('styles/kit.css') + '\n' + read('styles/ui.css');
 // COMMENTS OUT FIRST. The ladder's own block explains why `vh` is banned by
 // quoting the measurement that banned it ("74vh x zoom"), so a check that
 // greps the raw text fails on the sentence that documents the rule. Stripping
@@ -39,10 +43,21 @@ const css = read('styles/ui.css');
 // this stylesheet MENTION vh" — the first is the contract, the second was a
 // false positive this tool went red on before it stripped them.
 const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '');
-const chromeBlock = (selector) => {
+const rules = (() => {
   const flat = stripComments(css);
-  const at = flat.indexOf(`${selector} {`);
-  return at < 0 ? '' : flat.slice(at, flat.indexOf('}', at));
+  const out = [];
+  const re = /([^{}]+)\{([^{}]*)\}/g;
+  let m;
+  while ((m = re.exec(flat))) {
+    const list = m[1].split(',').map((s) => s.trim()).filter(Boolean);
+    if (list.length && !list[0].startsWith('@')) out.push({ list, body: m[2] });
+  }
+  return out;
+})();
+const chromeBlock = (selector) => {
+  const want = selector.split(',').map((s) => s.trim()).filter(Boolean);
+  const hit = rules.find((r) => want.every((w) => r.list.includes(w)));
+  return hit ? `${selector} {${hit.body}` : '';
 };
 
 // ---- 1. one opener, and the ladder is closed ------------------------------
@@ -100,7 +115,7 @@ for (const dir of uiDirs) {
     if (rel.endsWith('modalShell.js')) continue;
     const source = read(rel);
     const buildsVeil = /className\s*=\s*['"`][^'"`]*modal-veil/.test(source);
-    if (buildsVeil && !source.includes("from './modalShell.js'") && !source.includes("from '../components/modalShell.js'")) {
+    if (buildsVeil && !source.includes("from './modalShell.js'") && !source.includes("from '../components/modalShell.js'") && !/from '\.\.?\/(?:\.\.\/)?kit\/index\.js'/.test(source)) {
       holdouts.push(rel);
     }
   }
@@ -185,10 +200,10 @@ check('the foot note is whole or absent, never a stub',
 check('type shrinks before a label truncates', /\.modal-btnrow\s*>\s*button\s*\{[^}]*container-type:\s*inline-size/.test(css) && /font-size:\s*clamp\([^)]*cqi/.test(css),
   'the ladder is padding -> box -> type -> truncate; without a type rung a long label goes straight to …');
 check('the in-run menu\'s ☰ and foot wear the shared box and ladder',
-  /class="subtle modal-iconbtn" id="ov-quicknav"/.test(read('src/ui/components/menuComponents.js')) && /modal-foot-actions overlay-footer-actions modal-btnrow" data-size=/.test(read('src/ui/components/menuComponents.js')),
+  /menuButton\.id = 'ov-quicknav'/.test(read('src/ui/components/menuComponents.js')) && /modalFooter\(\{[^}]*className: 'overlay-footer'/.test(read('src/ui/components/menuComponents.js')),
   'the quick menu was the screenshot the directive came from');
 check('the title door\'s close wears the shared box',
-  /class="subtle modal-close title-modal-close"/.test(read('src/ui/screens/title.js')));
+  /close\.classList\.add\('title-modal-close'\)/.test(read('src/ui/components/saveSlotSelector.js')));
 
 // The close control's top inset must be the head's padding, not half of
 // whatever the identity's height happens to be. `.modal-head` centres its
@@ -203,7 +218,7 @@ check('the header actions sit at the top, not centred against the title',
 // The four declarations are ONE recipe; a control missing any of them can
 // bleed. Checked as a set on the shell's own text-bearing controls, because
 // the defect was found five times on five controls and fixed once.
-const contained = chromeBlock('.modal-btnrow > button, .modal-tab, .modal-head-status, .modal-foot-note, .modal-head-id h2');
+const contained = chromeBlock('.modal-btnrow > button, .modal-tab, .modal-head-status, .modal-foot-note > span, .modal-head-id h2');
 for (const decl of ['min-width: 0', 'overflow: hidden', 'text-overflow: ellipsis', 'white-space: nowrap']) {
   check(`shell labels declare ${decl}`, contained.includes(decl),
     'a single-line label needs all four to be unable to bleed');

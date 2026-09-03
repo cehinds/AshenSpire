@@ -218,26 +218,6 @@
 }
 :root[data-card-motif='band'] .card .art { border-bottom: 2px solid var(--gold); }
 
-/* ---------- modal / pile viewer ---------- */
-.modal-veil {
-  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); z-index: 500;
-  display: flex; align-items: center; justify-content: center;
-}
-.modal {
-  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: var(--r-4);
-  /* 80% NOT 80vh, and finding this is why the check measures the OUTCOME rather
-     than grepping for `vh`. The in-run overlay panel is `class="modal
-     overlay-modal"`, so this cap applies to it too. Fixing 74vh -> 74% on
-     .overlay-modal alone moved the measured share from 66.6% to 59.2% and no
-     further: this line had quietly become the binding constraint, because
-     80vh x zoom is what a percentage-based sibling now has to fit inside.
-     Sunna's original number (74% x --ui-zoom exactly) was the OTHER declaration
-     winning; one Law 2 breach was hiding a second one on the same element. */
-  max-width: 90rem; max-height: 80%; padding: 2.2rem; overflow: auto;
-}
-.modal h2 { color: var(--gold); font-size: 1.6rem; margin-bottom: 1.4rem; }
-.modal .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
-
 /* The pile viewer's body — a scrolling grid of small card faces. The panel,
    its head and its way out are the shell's (piles.js adopts openModal). */
 .pile-modal { padding: 0; display: flex; flex-direction: column; }
@@ -245,291 +225,6 @@
 .pile-body .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
 .pile-empty { margin: 0; padding: 2rem; color: var(--muted); }
 
-/* ---------- in-run tabbed overlay ---------- */
-/* PERCENT, not vw/vh — and the reason was already written in this file, on the
-   .armoury panel forty lines down, which learned it first:
-     "the whole app is zoomed by --ui-zoom on <body>, and viewport units ignore
-      that zoom — which is exactly what pushed this panel off the corner"
-   The overlay never learned it, so the in-run menu rendered at 74vh x --ui-zoom
-   of the screen instead of the 74% its author wrote — and because Auto sizing
-   LOWERS the zoom as the phone gets smaller, the smallest phone got the smallest
-   menu. Measured by Sunna across six shapes and four text sizes: the share was
-   74% x --ui-zoom exactly, every row — 74.0% at zoom 1.0, 66.6% at 0.9, 60.7% at
-   0.82, 54.8% at 320x640. That is Constantine's "scaling not auto adjusting for
-   mobile" with a mechanism under it, and it is one rule in one place.
-   A percentage resolves against the ZOOMED box, so 74% is 74% at every zoom.
-   Law 2, and the second copy of a lesson this stylesheet already held.
-
-   `92vw -> 96%` CHANGES THE NUMBER AS WELL AS THE UNIT, and that was unexplained
-   in the first pass (Bjorn). 92vw was never 92% of anything the player sees: at
-   zoom 0.74 it resolved to 68% of the app box, so the panel had ~32% of the width
-   as dead margin on a phone. 96% is the value the sibling .armoury panel already
-   uses for the same job — one gutter, one number, and the two panels stop
-   disagreeing about how much edge a phone owes. */
-.overlay-modal { width: 76rem; max-width: 96%; height: 74%; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
-/* ---- THE MODAL SHELL (src/ui/components/modalShell.js) --------------------
-   The chrome every modal wears: a head whose actions sit right, ONE close
-   control, and a foot whose way-out is left and way-forward is right. The four
-   doors each had their own; these are the rules they now share. Bodies are
-   still each modal's own — see the file header for why that line is drawn
-   there and not further in. */
-/* ONE PADDING, ALL FOUR SIDES. Head and foot were `1.2rem 1.6rem`, so the
-   gap above a title did not match the gap beside it and the chrome read as
-   two different insets on one panel. Constantine, 2026-09-03: "the padding
-   should be about the same for all directions". One number, both bars. */
-/* ONE INSET FOR EVERY MODAL, EVERY SIDE. Constantine, 2026-09-03: "all modals
-   should have uniform padding and margins in all all directions (top, bottom,
-   left, and right)." So it is a TOKEN and not a number typed per bar: the head
-   was `1.2rem 1.6rem`, the flask body `1.8rem 1.6rem`, the pile body `1.6rem`
-   and `.modal` itself `2.2rem` — four insets on surfaces meant to read as one
-   system. Declared on `.modal` so a body that wants a different rhythm can
-   scope it rather than re-type it, and every bar below reads it. */
-.modal { --modal-inset: 1.6rem; }
-/* THE WIDTH LADDER (modalShell.js MODAL_SIZES). A rung is a name a body picks,
-   not a length a caller types — see that file for why the detail door was on
-   the wrong rung and what it cost its prose. `max-width` so the phone rule
-   below still wins without restating any of these. */
-.modal[data-size='sm'] { width: 34rem; max-width: 94%; }
-.modal[data-size='md'] { width: 46rem; max-width: 94%; }
-.modal[data-size='lg'] { width: 76rem; max-width: 96%; }
-.modal[data-size='xl'] { width: 96rem; max-width: 96%; }
-.modal-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  padding: var(--modal-inset); border-bottom: 1px solid var(--line);
-}
-/* THE WAY OUT SITS AT THE TOP-RIGHT WITH THE HEAD'S OWN INSET, and that needs
-   `align-self` on the ROW rather than `align-items` inside it. `.modal-head` is
-   `align-items: center`, so the actions row was centred against whatever height
-   the identity beside it happened to be — with an eyebrow + title pair the
-   identity is two lines tall, so the close control drifted DOWN and its top gap
-   became visibly larger than its right gap. Photographed 2026-09-03 across
-   bodies B, C and D. Aligning the row to the start makes the top inset the
-   head's padding, which is the same number as the right inset (one value, all
-   four sides, above) — so the control is square, in the corner, evenly inset,
-   on every door regardless of how tall its title is. */
-.modal-head-actions { display: flex; gap: 0.8rem; align-items: flex-start; align-self: flex-start; }
-/* One hit box for the one way out. `min-*` and not `width` — a floor is not a
-   ceiling (base.css, --tap-floor), and this control must clear it on BOTH axes
-   at every UI size, which is the whole reason it is stated once. */
-/* ONE BOX, EVERY DOOR. The floor stays (tools/startup-gate.mjs plants its
-   removal); the LENGTH on both axes is base.css --iconbtn-size, so a taller
-   title, a stretched row or a phone inset cannot change the control's shape,
-   and `flex: 0 0 auto` so no row can shrink it. */
-.modal-close {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: var(--tap-floor); min-height: var(--tap-floor);
-  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
-  padding: 0; font-size: 1.6rem; line-height: 1; letter-spacing: 0;
-  border-radius: var(--r-2);
-}
-/* The head's two identity forms (modalShell.js modalHead): an eyebrow + title
-   pair, or a tab strip that replaces it. No third form, and never both. */
-.modal-head-id { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
-.modal-eyebrow {
-  font-size: 0.95rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
-}
-.modal-head-id h2 { margin: 0; }
-.modal-tabs { display: flex; gap: 0.2rem; }
-/* A COUNT IS STATUS, NOT PART OF A NAME. The pile viewer used to bake `(5)`
-   into its <h2>, so the thing a player reads as the name of the surface
-   changed every time a card moved. It rides in the head's actions row now,
-   quiet, left of the way out. */
-.modal-head-status { color: var(--muted); font-size: 0.95rem; white-space: nowrap; }
-/* A TAB IS NOT A BUTTON-SHAPED BUTTON. base.css's generic `button` is a gold
-   2 px pill with 2.6rem of side padding; a strip of those reads as a row of
-   call-to-actions rather than a place you are. Underline, no box. */
-.modal-tab {
-  padding: 0.6rem 1.2rem; min-height: var(--tap-floor);
-  background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: var(--r-2) var(--r-2) 0 0;
-  color: var(--parchment); font-family: var(--font-body); font-size: var(--t-2); letter-spacing: normal;
-}
-.modal-tab[aria-selected='true'] { color: var(--gold); border-bottom-color: var(--gold); }
-.modal-tab:hover, .modal-tab.gp-focus, .modal-tab:focus-visible { color: var(--gold); }
-
-/* THE BUTTON LADDER (modalShell.js buttonRow, and every .modal-foot-actions).
-   FOUR WIDTHS FOR THE WHOLE GAME, and the widest label in a row picks the step
-   for all of its buttons — measured 2026-09-03: a three-button footer produced
-   three widths and wrapped onto two lines at 390 px, which then made two
-   sibling doors different HEIGHTS, because a foot that grows by a line grows
-   the shell. `min-width` and not `width`, so the step is a floor the label can
-   exceed; `white-space: nowrap` so what yields under pressure is the PADDING
-   and never the line count. */
-/* A BUTTON ROW IS A GRID OF EQUAL TRACKS. Constantine, 2026-09-03: "make
-   primary and secondary buttons at the bottom uniform in size". Under flex
-   they were uniform only while nothing was squeezed: three medium buttons in
-   a foot beside a note shrank to 83px each and rendered as "B…", "S…", "S…",
-   because base padding is 2.6rem a side and equal shrink ignores the label.
-   `grid-auto-columns: minmax(0, 1fr)` makes every button in a row the SAME
-   width whatever its label — that is the uniformity — and the row's width is
-   the smaller of its box and n × step, so when there is room every button IS
-   the step, and when there is not they share the box equally. Truncation is
-   the last rung, reached only when an equal share is narrower than a label;
-   the padding yields first (below), and the foot's note yields before the row
-   does (.modal-foot-note). n is counted by :has, so no caller counts. */
-.modal-btnrow {
-  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
-  align-items: stretch; gap: 8px; min-width: 0;
-  --n: 1; --step: 15rem;
-  width: min(100%, calc(var(--n) * var(--step) + (var(--n) - 1) * 8px));
-}
-.modal-btnrow:has(> :nth-child(2):last-child) { --n: 2; }
-.modal-btnrow:has(> :nth-child(3):last-child) { --n: 3; }
-.modal-btnrow:has(> :nth-child(4):last-child) { --n: 4; }
-.modal-btnrow:has(> :nth-child(5):last-child) { --n: 5; }
-/* UNIVERSAL CONTAINMENT FOR A SINGLE-LINE LABEL, every part load-bearing.
-   Constantine, 2026-09-03, after photographing five clips (Back to Shrine,
-   More details, Save and Quit twice, the cost badge): "all objects and
-   components of components should be contained in their parent container and
-   not bleed out of it." Five screenshots, one defect, one rule:
-     min-width: 0         a flex item defaults to `min-width: auto`, which
-                          REFUSES to shrink below its content. That refusal is
-                          what pushed labels out of their rows — the single
-                          most common cause of a bleed in a flex layout.
-     white-space: nowrap  a control's label is one line; a wrap grows the box
-                          and, in a modal foot, the whole shell.
-     overflow: hidden     the box clips instead of letting ink escape.
-     text-overflow:       and the clip is legible — `…`, not a severed glyph.
-       ellipsis
-   Together: a label can never leave its control. Padding yields first (the
-   ladder's basis), then it truncates — and a truncated label is exactly a
-   control that "has more to say", so its full text belongs on its tooltip. */
-.modal-btnrow > button, .modal-tab, .modal-head-status, .modal-foot-note, .modal-head-id h2 {
-  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.modal-btnrow > button { text-align: center; }
-/* THE STEP IS A CAP ON THE TRACK, NOT A FLOOR — the row above widens to n ×
-   step when it can and no further, so a step can never overflow the panel
-   (the bug the flex basis was introduced to fix, measured 2026-09-03: a third
-   button clipped off the panel). Four steps for the whole game; nothing types
-   a fifth. */
-.modal-btnrow[data-size='short']  { --step: 10rem; }
-.modal-btnrow[data-size='medium'] { --step: 15rem; }
-.modal-btnrow[data-size='long']   { --step: 21rem; }
-/* `fill` spans its box whatever n is — a rail, a wizard step, a phone foot. */
-.modal-btnrow[data-size='fill'] { width: 100%; }
-/* THE CONCESSION LADDER, IN ORDER: padding yields, then the box steps up
-   (the door's rung, a caller's choice), then TYPE SHRINKS, then — only then —
-   the label truncates. Padding is a share of the track capped at the house
-   padding; type is a share of the button's own inline size (the button is its
-   own container) with a floor the eye can still read. Both are per-track and
-   tracks are equal, so every button in a row yields by the same amount. */
-.modal-btnrow > button {
-  container-type: inline-size;
-  padding-inline: clamp(0.5rem, 8%, 1.4rem);
-}
-.modal-btnrow > button { font-size: clamp(0.78rem, 9cqi, 1rem); }
-/* A SQUARE IN A ROW TAKES THE ROW'S HEIGHT and stays square by ratio, with
-   `justify-self: start` so the track's width does not stretch it out of
-   square. NO length is typed — the height is the row's, which survives
-   --ui-zoom; NOT vh (see .overlay-modal above). Close and ☰ are NOT this
-   rule: they wear one fixed box everywhere (--iconbtn-size, base.css). */
-.modal-btnrow > button[data-size='square'] {
-  aspect-ratio: 1; width: auto; height: auto; justify-self: start;
-  min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0;
-}
-/* ☰ shares the close control's box exactly, so a player who learns the shape
-   learns it once. Same rule, two glyphs. */
-.modal-iconbtn {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
-  min-width: var(--tap-floor); min-height: var(--tap-floor);
-  padding: 0; font-size: 1.6rem; line-height: 1; letter-spacing: 0;
-  border-radius: var(--r-2);
-}
-
-/* The body owns its own layout and its own scrolling; the shell never reaches
-   in. It DOES own the fact that the body is what flexes, so head and foot stay
-   put and a long body scrolls rather than pushing them off. */
-.modal-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
-
-.modal-foot {
-  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  flex: 0 0 auto; padding: var(--modal-inset); border-top: 1px solid var(--line);
-}
-/* THE NOTE YIELDS BEFORE THE ACTIONS DO. `min-width: 0` so a long sentence
-   wraps inside its own share instead of pushing the buttons out of the panel —
-   which is exactly what it did: measured 2026-09-03, "Progress saves to the
-   active slot." held the foot wide enough that `Save and Quit` sat flush to
-   the border with no right padding left. */
-.modal-foot-note { flex: 0 1 auto; min-width: 0; color: var(--muted); font-size: 0.95rem; }
-/* `margin-left: auto` so a foot with no note still puts its actions right.
-   `stretch`, not `center`: primary and secondary are ONE height in the foot
-   (the row's), and their widths come off the ladder because the row is also
-   a `.modal-btnrow` (modalShell.js modalFooter). */
-.modal-foot-actions { margin-left: auto; flex: 0 1 auto; justify-content: end; }
-/* THE NOTE YIELDS BEFORE THE ROW DOES: a high shrink weight, and it may go to
-   nothing (min-width: 0 in the containment set) before a button loses width.
-   WHOLE OR ABSENT: a note squeezed to "P…" is not a note. The span is its
-   own size container, so when the flex algorithm leaves it narrower than a
-   short sentence its text hides rather than stubs — the note may never carry
-   the only copy of a fact, so losing it costs nothing. */
-/* A size container has NO intrinsic width, so the basis is stated: 20rem is
-   room for one short sentence, and the note may never be longer than one. */
-.modal-foot-note { flex: 0 12 20rem; container-type: inline-size; }
-.modal-foot-note > span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-@container (max-width: 9rem) { .modal-foot-note > span { visibility: hidden; } }
-.modal-foot-actions button { min-height: var(--tap-floor); }
-@media (max-width: 640px) {
-  /* The inset shrinks on a phone, but it stays ONE number — the token moves,
-     not the individual declarations, so head, body and foot cannot drift
-     apart at one width and agree at another. */
-  .modal { --modal-inset: 0.8rem; }
-  .modal-foot { align-items: stretch; }
-  .modal-foot-note { display: none; }
-  .modal-foot-actions { width: 100%; }
-  /* A PHONE IS THE `fill` CASE, WHATEVER STEP THE ROW ASKED FOR. The ladder's
-     min-widths would overflow a 390 px foot, so here the step yields and the
-     row divides its box — the one place a declared size is overridden, and the
-     reason is that the box is now narrower than the smallest step. A square
-     still keeps its ratio. */
-  .modal-btnrow[data-size] { width: 100%; }
-  .modal-btnrow > button { padding-inline: clamp(0.4rem, 6%, 8px); }
-}
-
-/* THE SCROLL OWNERS INSIDE A MODAL, AND WHY THEY LOOKED FOREIGN.
-   `.screen` and `.map-scroll` already carry the house scrollbar; nothing
-   reached a modal's panes, so Settings, the Armoury and the in-run body drew
-   Chromium's default grey bar against the parchment. Same tokens, one rule. */
-.modal .set-panel, .modal .set-body, .overlay-body, .overlay-body .set-panel,
-.armoury-content, .armoury-left, .armoury-right, .armoury-inventory {
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-soft) transparent;
-}
-.modal .set-panel::-webkit-scrollbar, .overlay-body::-webkit-scrollbar,
-.armoury-content::-webkit-scrollbar, .armoury-left::-webkit-scrollbar,
-.armoury-right::-webkit-scrollbar, .armoury-inventory::-webkit-scrollbar {
-  width: 1.2rem; height: 1.2rem;
-}
-.modal .set-panel::-webkit-scrollbar-thumb, .overlay-body::-webkit-scrollbar-thumb,
-.armoury-content::-webkit-scrollbar-thumb, .armoury-left::-webkit-scrollbar-thumb,
-.armoury-right::-webkit-scrollbar-thumb, .armoury-inventory::-webkit-scrollbar-thumb {
-  background: var(--line-soft); border-radius: var(--r-2);
-  border: 3px solid transparent; background-clip: padding-box;
-}
-.modal .set-panel::-webkit-scrollbar-thumb:hover, .overlay-body::-webkit-scrollbar-thumb:hover,
-.armoury-content::-webkit-scrollbar-thumb:hover, .armoury-left::-webkit-scrollbar-thumb:hover,
-.armoury-right::-webkit-scrollbar-thumb:hover, .armoury-inventory::-webkit-scrollbar-thumb:hover {
-  background: var(--gold); background-clip: padding-box;
-}
-
-.overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line); background: var(--panel); }
-.overlay-tabs { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-.overlay-tabs .ov-tab {
-  padding: 0.7rem 1.4rem; border-radius: var(--r-3) var(--r-3) 0 0;
-  font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing);
-  background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer;
-  /* Law 4 (#37) applied where this work touches, ratchet-style, NOT swept.
-     These six tabs measured 20.3-35.8 DEVICE px against the 44 a finger wants,
-     and wrapped to 2, 3, and at 320x640 Text L/XL FOUR rows. --tap-floor is
-     Sunna's ruling expressed once: a floor of 44 device px measured AFTER zoom,
-     and a floor is not a ceiling — Text XL still makes the label bigger, it just
-     no longer decides how big a finger target is. See base.css for the unit. */
-  min-height: var(--tap-floor);
-  display: inline-flex; align-items: center;
-}
-.overlay-tabs .ov-tab:hover { color: var(--parchment); }
-.overlay-tabs .ov-tab.on { color: var(--gold); border-color: var(--line); border-bottom-color: transparent; background: var(--bg-raise); }
-.overlay-actions { display: flex; gap: 0.8rem; align-items: center; }
 .overlay-settings-actions { display: flex; align-items: center; gap: 6px; }
 .overlay-settings-actions[hidden] { display: none; }
 .ov-quick-action {
@@ -539,16 +234,7 @@
 }
 .ov-quick-action.on { color: var(--gold); border-color: var(--gold); }
 .ov-quick-action.armed { background: rgba(140, 30, 30, 0.3); border-color: var(--ember); }
-.overlay-body { flex: 1; overflow: auto; padding: 1.8rem; }
-.overlay-footer {
-  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 10px 16px; border-top: 1px solid var(--line); background: var(--panel);
-}
-.overlay-footer-note { color: var(--muted); font-size: 0.95rem; }
-/* The in-run foot is a button row (modalShell's ladder): the two classes on
-   the div in menuComponents.js are the whole rule. */
-.overlay-footer-actions button { min-height: var(--tap-floor); }
-.overlay-body .grid { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
+
 .ov-relic-grid { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 0.8rem; }
 .ov-relic { display: flex; gap: 1rem; align-items: flex-start; padding: 0.8rem 1rem; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-3); }
 .ov-relic-ic { font-size: 2rem; flex-shrink: 0; }
@@ -558,29 +244,12 @@
 .ov-stat { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line-soft); padding: 0.6rem 0; }
 .ov-stat span { color: var(--muted); font-size: 1.2rem; }
 .ov-stat b { color: var(--parchment); font-size: 1.2rem; }
-.set-cat { color: var(--gold); font-size: 1.2rem; letter-spacing: 0.15em; text-transform: uppercase; margin: 1.4rem 0 0.4rem; }
-.set-cat:first-child { margin-top: 0; }
+
 .set-row-unavailable { opacity: 0.86; }
 .set-action-status {
   max-width: 24rem; color: var(--muted); font-size: 1.05rem; line-height: 1.35; text-align: right;
 }
-.set-section-head {
-  display: grid; gap: 4px; padding: 0 0 14px; margin-bottom: 8px;
-  border-bottom: 1px solid var(--line);
-}
-.set-section-head p {
-  color: var(--gold); font-family: var(--font-display); font-size: 0.9rem;
-  letter-spacing: 0.14em; text-transform: uppercase;
-}
-.set-section-head h2 { margin: 0; color: var(--parchment); font-size: 1.65rem; }
-.set-section-head span { max-width: 42rem; color: var(--muted); line-height: 1.35; }
-.set-card-list { display: grid; gap: 8px; }
-.set-help { margin-top: 4px; color: var(--muted); }
-.set-help summary {
-  width: max-content; color: var(--gold); cursor: pointer; font-size: 0.95rem;
-  letter-spacing: 0.03em; list-style-position: inside;
-}
-.set-help[open] summary { margin-bottom: 4px; }
+
 .subtle.danger { border-color: var(--blood); color: var(--ember); }
 .subtle.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
 .ov-save-actions { display: flex; flex-direction: column; gap: 1rem; align-items: stretch; margin-top: 1.4rem; max-width: 32rem; }
@@ -758,44 +427,10 @@ body.hide-hints .hint-bar { display: none; }
 .confirmation-veil.confirmation-input-shield {
   padding: 0; background: transparent;
 }
-.confirmation-modal {
-  width: 36rem; max-width: 96%; max-height: 86%; padding: 1.6rem;
-  display: grid; gap: 1.2rem; overflow: auto;
-  box-shadow: 0 1.6rem 5rem rgba(0, 0, 0, 0.62);
-}
-.confirmation-modal header { display: grid; gap: 0.35rem; }
-.confirmation-modal h2 { margin: 0; color: var(--parchment); }
-.confirmation-details {
-  display: grid; gap: 0.65rem; max-height: min(46vh, 24rem); overflow: auto;
-  padding: 0.75rem; border: 1px solid var(--line-soft); border-radius: var(--r-3);
-  background: color-mix(in srgb, var(--panel) 82%, transparent);
-}
-.confirmation-cost { display: grid; gap: 0.45rem; color: var(--parchment); }
-.confirmation-change-list { display: grid; gap: 0.5rem; }
-.confirmation-change-list > div { display: grid; gap: 0.25rem; padding-top: 0.5rem; border-top: 1px solid var(--line-soft); }
-.confirmation-change-list span { display: inline-flex; align-items: baseline; gap: 0.3rem; margin-right: 0.55rem; }
-.confirmation-change-list em { color: var(--muted); font-style: normal; }
-.confirmation-change-list strong { color: var(--green); }
-.confirmation-eyebrow {
-  font-size: 0.85rem; letter-spacing: 0.16em;
-}
-.confirmation-eyebrow,
-.confirmation-modal .confirmation-confirm {
-  /* Blood/ember stays on the danger borders; prose uses the authored AA token. */
-  color: var(--parchment);
-}
-.confirmation-copy { color: var(--parchment); line-height: 1.5; }
-.confirmation-copy > :first-child { margin-top: 0; }
-.confirmation-copy > :last-child { margin-bottom: 0; }
-.confirmation-modal footer { display: flex; justify-content: flex-end; gap: 0.7rem; }
-.confirmation-modal footer button {
-  min-height: var(--tap-floor); height: auto; padding: 0.55rem 1rem;
-}
-.confirmation-modal.danger { border-color: var(--blood); }
+
 @media (max-width: 540px) {
   .confirmation-veil { padding: 3%; }
-  .confirmation-modal { max-width: 100%; padding: 1.2rem; }
-  .confirmation-modal footer { display: grid; grid-template-columns: 1fr 1fr; }
+
 }
 
 /* ---------- controls / rebinds ---------- */
@@ -1858,8 +1493,7 @@ button.rs-reset {
   height: calc(22px / var(--ui-zoom, 1));
   font-size: calc(22px / var(--ui-zoom, 1));
 }
-.title-stack { animation: screenIn 700ms ease-out; }
-.title-menu { display: flex; flex-direction: column; gap: 1.2rem; align-items: center; }
+
 .title-glow { animation: titleGlow 3.2s ease-in-out infinite alternate; }
 @keyframes titleGlow {
   from { text-shadow: 0 0 26px rgba(201, 162, 39, 0.25); }
@@ -2491,31 +2125,6 @@ button.rs-reset {
 .hx-seed { font-family: monospace; color: var(--muted); }
 .go-actions { display: flex; gap: 1.2rem; align-items: center; }
 
-/* ---------- settings modal ---------- */
-/* `height`, not just `min-width` — and it is a Sunna call with a measured
-   reason, not tidiness. With the sections drawn as TABS the modal is auto-height
-   and vertically centred, so a one-row section (Advanced) collapsed it and the
-   whole tab strip jumped: 174.54 device px at 390x844 and 141.22 at 1200x730,
-   measured across all six sections. A control that MOVES AFTER YOU PRESS IT is
-   what makes a tired hand mis-tap the next one, and it is the defect this whole
-   change exists to remove, reintroduced one layer up.
-   The cost is stated: a short section now sits above empty space. Stability wins
-   — empty space is calm, a jumping strip is not.
-   80% matches `.modal`'s own max-height, resolved against the same containing
-   block (`.modal-veil`, fixed inset:0) — one space, one number, and NOT `vh`
-   (Law 2, and the comment on .modal says why that distinction is load-bearing
-   here). */
-.settings-modal {
-  display: flex; flex-direction: column; width: 76rem; max-width: 96%; min-width: min(36rem, 96%);
-  height: 80%; overflow: hidden;
-}
-.settings-modal .set-body {
-  display: grid; grid-template-columns: 13rem minmax(0, 1fr);
-  flex: 1; min-height: 0; overflow: hidden;
-}
-.settings-modal .set-panel { min-width: 0; min-height: 0; overflow: auto; padding: 0 1rem; }
-.settings-modal .modal-head { flex: 0 0 auto; }
-.settings-modal .modal-head h2 { margin: 0; }
 .profile-archive-modal {
   width: min(64rem, 94vw); max-height: min(80vh, 52rem); padding: 0; overflow: hidden;
   display: flex; flex-direction: column;
@@ -2528,199 +2137,6 @@ button.rs-reset {
 .profile-archive-head h2 { margin: 0; }
 .profile-archive-body { min-height: 0; overflow: auto; padding: 1rem 1.25rem 1.4rem; }
 
-/* The settings SECTION TABS (Sunna, EldenSpire#90). Six sections used to be six
-   headings down one scrolling column: one name on screen at open, AUDIO 1848px
-   below DISPLAY at 390/Text M, five thumb-drags to the last section and eight
-   at Text XL — and six drags at 1200x730, so it was never only a phone.
-
-   STICKY, and that is the load-bearing line rather than a nicety. The scroller
-   here is `.modal` (title door) or `.overlay-body` (in-run door), and a strip
-   that scrolls away with the rows puts the taxonomy back out of sight the
-   moment the player reads past the first screenful — which is the defect, not
-   a smaller version of it. `top: 0` sticks it to whichever of those two is the
-   scrolling ancestor; one rule, both doors.
-
-   WRAPS, never scrolls sideways. A horizontally-scrolling strip hides tabs
-   again and hides them worse — off the edge, with no gold heading to even
-   promise they exist. Wrapping costs height and shows all six names.
-
-   Law 4, ratchet on a new write: box geometry in px (padding, gap, radius,
-   border) so Text size grows the LETTERS and the box follows intrinsically;
-   the label's own font-size is the one rem. --tap-floor is 44 device px
-   measured AFTER --ui-zoom (base.css) — the same unit .ov-tab and .choice use,
-   because a finger is the same size on every screen. */
-.set-tabs {
-  display: grid; grid-auto-rows: minmax(var(--tap-floor), auto); gap: 6px;
-  align-content: start; position: sticky; top: 0; z-index: 2;
-  background: var(--panel); padding: 14px 10px; border-right: 1px solid var(--line);
-}
-/* THE TAB IS NOT TALL, IT IS LOUD — and that is the whole of what reads as big.
-   Constantine: "make the tabs about 20% smaller or the size configurable or
-   scalable with ui or both." Measured across the entire UI-size space (5 sizes
-   x 2 text sizes x 2 shapes = 20 cells, freja-tabs-probe.mjs):
-
-     tab height        44.0 in ALL TWENTY at the DEFAULT floor. Zero variance
-                       across UI size — it is --tap-floor, and --tap-floor
-                       answers the Minimum tap size setting, not this block.
-                       THE FLOOR IS NOT FIXED, AND THIS BLOCK CLAIMED IT WAS.
-                       It attributed a permanent 44 minimum to Constantine; he
-                       had already reversed that the same day, in his words:
-                       "actually, I think it should b eable to go smaller than
-                       44px." The MEASUREMENT is untouched — 44.0 in every cell
-                       is what this tree renders today. What was refuted is the
-                       claim about what he RULED, and the refuted wording is
-                       deleted rather than quoted back: a stylesheet is not a
-                       dated record, the next reader takes whatever it says as
-                       current, and a sentence anyone can still grep out of the
-                       shipped file has not been withdrawn. It matters right
-                       here — a movable floor is what turns the next line from a
-                       curiosity into the number a smaller floor would land on.
-     what it wants     23.2-31.0. At the default floor of 44 that is 13-21px of
-                       height nothing in this block asked for — and the four
-                       numbers below are not what governs it. THE FLOOR
-                       GOVERNS IT, and the floor is now a control: Settings →
-                       Accessibility → Minimum tap size, 44 / 36 / 30 / 24,
-                       written as `--tap-target` (src/content/balance.js is the
-                       one home; base.css holds no constant).
-     padY / gap        5.1-6.0 across the whole space.
-     font              10.2-14.4.
-
-   So the height answers ONE thing, and it is not any of the four above — it is
-   the player's own floor. Measured on this tree at 390x844 Text M, headless
-   Chromium, `node tools/tapsize.mjs`: this rule renders 44.0 at the default and
-   24.0 at the bottom of that dial, where the tab's own glyphs finally take over.
-   THE WEIGHT IS STILL THE FINDING OF THIS BLOCK, and that is why the numbers
-   below stand unchanged: they are about how LOUD the tab is, which no floor
-   moves in either direction.
-
-   THE FINDING IS THE COMPARISON. On this same screen, measured in the same
-   moment, the 34 `.choice` chips a player sees directly under the strip:
-
-     height   tab 44.0  ·  chip 44.0   IDENTICAL, to the pixel, at both shapes
-     font     tab 12.0  ·  chip 10.0   the tab is EXACTLY 1.2x
-     padX     tab 12.0  ·  chip  9.0   1.33x
-     radius   tab  8.0  ·  chip  6.0   1.33x
-     width    tab 70.9  ·  chip 56.5   1.25x
-
-   The tab is the same height as everything beneath it and 20-33% heavier in
-   every other number. That is what "big" is: six names shouting over the panel
-   they label. So the three weight numbers come down to the chip's — not cut by
-   an arithmetic 20%, MATCHED, because two arbitrary sets of numbers for two
-   pills on one screen is the second copy this house keeps killing, and matching
-   lands inside "about 20%" for a reason instead of by rounding.
-
-   PROMINENCE MOVES TO THE SELECTED TAB, WHERE IT BELONGS — and when I wrote
-   that line it was ASPIRATION I HAD MISREAD AS DESCRIPTION. I justified it with
-   "`.set-tab.on` already carries three channels plus font-weight 600". One of
-   the three was null: its fill declared var(--bg-raise) on a parent declaring
-   var(--bg-raise), ratio 1.00, so the selected tab was the QUIETEST selected
-   thing on this screen — quieter than an unselected chip. Sunna found it in
-   painted pixels; the control says the defect predates this branch and that
-   making the strip lighter only unmasked it. THE SENTENCE IS TRUE NOW, and it
-   is true by the rule below rather than by having been asserted here: 35.19
-   against the selected chip's 34.60 (evidence at `.set-tab.on`). The strip is
-   distinguished by its sticky band and its border-bottom, not by making all six
-   loud. And nothing here is a height: the floor is untouched by construction,
-   which is the whole reason this is the axis that had room. */
-.set-tabs .set-tab {
-  width: 100%; padding: 0; border: 0; border-radius: var(--r-2);
-  font-size: 1rem; letter-spacing: 0.05em;
-  background: transparent; color: var(--muted);
-  cursor: pointer;
-  min-height: var(--tap-floor);
-  display: inline-flex; align-items: center; justify-content: flex-start; text-align: left;
-}
-.set-tab-face {
-  box-sizing: border-box; width: 100%; min-height: calc(35px / var(--ui-zoom, 1));
-  padding: calc(4px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
-  display: inline-flex; align-items: center; justify-content: inherit;
-  border: 1px solid var(--line-soft); border-radius: var(--r-2-glass);
-  background: var(--bg); color: inherit;
-}
-.set-tabs .set-tab:hover .set-tab-face { color: var(--parchment); }
-/* THREE CHANNELS on the selected tab — fill, border colour, label colour — for
-   the same reason the overlay strip carries three: an accent-only answer dies
-   for a colourblind player, and --gold is rewritten from balance.ui when a
-   player picks Crimson, so hue alone is not a constant either.
-
-   AND THE FILL CHANNEL WAS NOT ONE. This rule declared `background:
-   var(--bg-raise)` while its parent `.set-tabs` declares the SAME token, so the
-   selected tab was painted the exact colour of the strip behind it: a channel
-   the stylesheet lists and no player can see. Sunna measured it off painted
-   pixels at 390x844 — mean |Δ| RGB inside the pill against the ring outside it
-   — and the current tab was the QUIETEST selected thing on the settings screen,
-   quieter than an UNSELECTED chip beside it. It reproduces on a second
-   instrument (freja-pill-ink.mjs, ring convention stated in its header):
-
-                               dev     this branch BEFORE   after
-     selected tab `Display`    11.99         12.18            35.19
-     unselected chip `SLOW`    16.89         16.92            16.92
-     selected chip `NORMAL`    34.58         34.60            34.60
-
-   The selected tab lands at 35.19 against the selected chip's 34.60 — level
-   with it, which is what "matched" has meant at every one of the five moves.
-   Identical to the digit from styles/ui.css and from the single-file
-   dist/AshenSpire.html, so the artifact a player double-clicks carries it too.
-
-   It is NOT caused by the size change that ships with it — dev reads 11.99 and
-   the strip's own diff reads 12.18, the same number. The size change only
-   removed the difference that was HIDING it, which is this morning's finding
-   landing on me: every equalising constraint is also a mask.
-
-   So the fill takes the CHIP'S OWN value, and this is the fifth matching move,
-   not a sixth arbitrary number — font, padX and radius already came down to the
-   chip's, and this matches the selected-state fill (`.choice-group .choice.on`,
-   below). Two pills on one screen, one set of numbers.
-
-   THE LITERAL IS DELIBERATE AND IT IS ALSO A SEAM I AM NAMING, NOT FIXING.
-   `rgba(201, 162, 39, 0.25)` is frozen gold while `border-color` and `color`
-   here ride `--gold`, which main.js rewrites for the Crimson/Frost/Verdant/
-   Violet accents. The chip has carried that disagreement since it was written
-   (`.toggle.on` and `.mod-chip.on` too); matching means matching, and swapping
-   in `rgba(var(--accent-rgb), 0.25)` would make this tab the only pill on the
-   screen that themes — divergence dressed as a fix. Filed as its own act. */
-.set-tabs .set-tab.on {
-  color: var(--gold);
-  font-weight: 600;
-}
-.set-tabs .set-tab.on .set-tab-face { border-color: var(--gold); background: rgba(201, 162, 39, 0.25); }
-.set-subtabs {
-  display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px;
-  padding-bottom: 10px; border-bottom: 1px solid var(--line-soft);
-}
-.set-subtab {
-  min-height: var(--tap-floor); padding: 6px 10px; border-radius: var(--r-2);
-  border: 1px solid var(--line-soft); background: var(--bg); color: var(--muted);
-  cursor: pointer;
-}
-.set-subtab.on {
-  color: var(--gold); border-color: var(--gold); background: rgba(201, 162, 39, 0.25);
-  font-weight: 600;
-}
-.set-advanced-group[hidden] { display: none; }
-.set-advanced-tip { margin: 0 0 8px; }
-.set-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  padding: 0.9rem 1rem; border: 1px solid var(--line-soft); border-radius: var(--r-3);
-  background: color-mix(in srgb, var(--panel) 74%, transparent);
-}
-.set-row b { color: var(--parchment); font-size: 1.3rem; }
-/* THE TEXT COLUMN HAS A FLOOR NOW, and a row that cannot honour it wraps.
-   #107, Sunna: the Map zoom row offers seven chips, `.choice-group` was
-   `flex-shrink: 0`, and nothing else in the row was allowed to push back — so
-   the group took the width it wanted, `200`'s right edge went PAST THE DOCUMENT
-   at 390x844, and the note explaining the feature rendered in a 35 px column as
-   sixteen lines of one to three words, 301 px tall against 92 for the row above
-   it. The row that offered the most values made its last value unreachable and
-   its own explanation unreadable.
-   Three declarations, and each one is load-bearing: the text column may shrink
-   but not below 14rem, the chips may wrap onto a second line instead of
-   overflowing, and a row too narrow for both puts the chips underneath. This is
-   a fix to the SHARED row, not to one row — Accent color's five chips were one
-   longer word from the same failure. */
-.set-row > :first-child { flex: 1 1 14rem; min-width: min(14rem, 100%); }
-.set-row { flex-wrap: wrap; row-gap: 0.8rem; }
-.set-note { color: var(--muted); font-size: 1.05rem; margin-top: 0.3rem; max-width: 34rem; line-height: 1.4; }
 /* EldenSpire#26 — the value the UI-size control actually applied. Muted like a
    note when the request was granted; accented when the fit had to hold it back,
    because "you asked for XL and this window gets 1.00x" is the sentence that
@@ -2732,24 +2148,6 @@ button.rs-reset {
    advice, not part of that alarm. */
 .set-applied .set-applied-hint { color: var(--muted); display: block; }
 
-.set-actions { display: flex; justify-content: flex-end; margin-top: 1.6rem; }
-.toggle {
-  flex-shrink: 0; width: 4.6rem; height: 2.6rem; border-radius: var(--r-4); background: var(--panel);
-  border: 1px solid var(--line-soft); position: relative; cursor: pointer; padding: 0;
-  transition: background 160ms, border-color 160ms;
-}
-.toggle .knob {
-  position: absolute; top: 0.2rem; left: 0.2rem; width: 2rem; height: 2rem; border-radius: var(--r-round);
-  background: var(--muted); transition: left 160ms, background 160ms;
-}
-.toggle.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); }
-.toggle.on .knob { left: 2.2rem; background: var(--gold); }
-/* `flex-wrap: wrap` and `justify-content: flex-end` are the other half of the
-   #107 fix above: chips fold onto a second line at the right-hand edge rather
-   than running off the page. `flex-shrink: 0` stays on the CHIPS (below) — a
-   chip that shrinks is a tap target that shrinks, which is Law 4's business —
-   but the GROUP may now shrink, which is what gives the note its column back. */
-.choice-group { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
 /* THE ONE CONTROL EXEMPT FROM THE FLOOR IT SETS.
 
    Marina's ruling, and the reason is deliberately the narrowest one available so
@@ -3006,81 +2404,6 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 /* The armed control stays visible and stays IDENTIFIED — the player has to be
    able to see which card the question is about. */
 .beat-armed { outline: 2px solid var(--gold); outline-offset: 2px; }
-
-.choice-group[data-resizes-while-pressed] .choice {
-  min-height: var(--tap-floor-default); min-width: var(--tap-floor-default);
-}
-.choice-group .choice {
-  padding: 0.5rem 0.9rem; font-size: 1rem; letter-spacing: 0.08em; border-radius: var(--r-2);
-  background: var(--panel); border: 1px solid var(--line-soft); color: var(--muted);
-  cursor: pointer; transition: color 160ms, border-color 160ms, background 160ms;
-  /* Law 4 clause 4, ratchet-style — the SAME two lines .ov-tab above already
-     carries, and for the same measured reason. Read at 390x844 on the shipped
-     bundle at the default UI size (--ui-zoom 0.90): every one of these 38
-     option buttons rendered 21 DEVICE px tall against the 44 a finger wants —
-     under half the floor, and the smallest thing a player is asked to hit in
-     this game. The floor is `min-height`, never `height`: the box keeps a
-     fixed ergonomic bottom and still grows on its own glyphs at Text L/XL, so
-     it can neither clip nor balloon. `--ui-zoom` is already inside --tap-floor
-     (base.css), so the 44 is honoured after zoom at every UI size.
-     Scope: `.choice` is authored only by src/ui/screens/settings.js — checked,
-     no other producer — so this reaches the settings option rows and nothing
-     else. The toggles (13), the two volume sliders and the ✕ buttons are ALSO
-     under the floor and are deliberately NOT touched here: each needs its own
-     fix (an absolutely-positioned knob, a UA pseudo-element, a shared class),
-     and Law 4 says a blanket conversion is a large risky diff nobody should
-     attempt on the strength of the law alone. They are filed, not swept. */
-  min-height: var(--tap-floor); min-width: var(--tap-floor);
-  display: inline-flex; align-items: center; justify-content: center;
-  /* #107: the GROUP is allowed to shrink and wrap now, so say here that the
-     CHIP is not. A flex item can be squeezed below its content width, and a
-     chip squeezed is a tap target squeezed — the floor two lines up would
-     survive on paper while the box got narrower than it. */
-  flex-shrink: 0;
-}
-.choice-group .choice.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); color: var(--gold); }
-/* ---- 'number' rows: a typed field with a slider bound to it ----------------
-   Constantine, 2026-08-17: "I want to be able to enter the value myself and
-   maybe a slider with it that is synced with the value."
-
-   ITS OWN SELECTORS, not `.set-range`'s — that class is a volume slider with a
-   0-100 domain and it is the code path Aurora's #181 has a reviewed diff in.
-   Sharing the styling would have re-coupled what the markup deliberately split.
-
-   THE FIELD IS THE CONTROL AND THE SLIDER IS THE AFFORDANCE, which is why the
-   field comes first in the DOM and takes the tab stop: he asked to type, and the
-   slider is his "maybe". `min-width` on the field, never a fixed width, so a
-   two-digit value is not clipped at XL text — Law 4 clause 4, a floor with
-   intrinsic growth. */
-.num-wrap { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
-.num-wrap input.set-num {
-  min-width: 4.5rem;
-  padding: 0.4rem 0.5rem;
-  background: var(--panel);
-  color: var(--gold);
-  border: 1px solid var(--map-structure);
-  border-radius: var(--r-2);
-  font: inherit;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-.num-wrap input.set-num:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
-/* PART B'S SLIDER IS NOT STYLED HERE YET — it waits on Aurora's #181 (Marina's
-   order). Its rules land here, with its own selector and NOT `.set-range`'s: that
-   class is a 0-100 volume slider and is the code path #181 edits. On a narrow
-   shape it will be `display: none` — Law 5, a narrow shape spends width on
-   height, and the slider is the half he called "maybe" — with the field, which is
-   the half he asked for, fully enterable at every size. */
-
-.range-wrap { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
-.range-wrap .range-val { color: var(--gold); font-size: 1.1rem; width: 2.4rem; text-align: right; font-variant-numeric: tabular-nums; }
-input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor: pointer; }
-.set-row-wide { flex-wrap: wrap; }
-.set-text {
-  flex: 1; min-width: 20rem; background: var(--panel); border: 1px solid var(--line);
-  color: var(--parchment); border-radius: var(--r-2); padding: 0.6rem 1rem; font-size: 1.2rem; font-family: monospace;
-}
-.set-text:focus { border-color: var(--gold); outline: none; }
 
 /* ---------- first-run tutorial overlay ---------- */
 /* pointer-events:none is load-bearing, not tidiness. The veil covers the whole
@@ -3926,7 +3249,6 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ge-name { color: var(--parchment); }
 .ge-kind { color: var(--muted); text-transform: uppercase; font-size: 1.05rem; letter-spacing: 1px; }
 
-
 /* ==========================================================================
    EldenSpire#29 slice 1 — character creation on a narrow screen.
    ==========================================================================
@@ -4096,47 +3418,6 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-layout='narrow'] .cp-body { flex: 1; min-width: 0; }
 :root[data-layout='narrow'] .cz-opts { flex-wrap: wrap; justify-content: center; }
 :root[data-layout='narrow'] .cz-keepsakes { width: 100%; }
-/* ---------- ☰ quick menu -------------------------------------------------- */
-/* A `.modal-veil` on purpose and not for the dimming: input.js's scopeRoot()
-   scopes the focus cursor to the topmost veil, so a D-pad drives this list with
-   no new input code (Law 3 clause 6 — a vertical list takes the cursor, and the
-   bumpers stay with the tabs behind it). The veil is transparent and un-centred;
-   the panel places itself against its button, in local px, through fx.js. */
-.qn-veil { background: transparent; display: block; }
-.qn-panel {
-  /* One home for the hairline under the ☰ button — see #tooltip's --place-gap at
-     the top of this file for why it lives in CSS and why it is px. Was
-     `const gap = 6` in quicknav.js. */
-  --place-gap: 6px;
-  position: fixed; width: 26rem; max-width: 92%;
-  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-3);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  padding: 0.4rem 0; overflow-y: auto; color: var(--parchment);
-}
-.qn-cap {
-  padding: 0.7rem 1.6rem; margin-bottom: 0.2rem; border-bottom: 1px solid var(--line);
-  color: var(--muted); font-size: 1rem; line-height: 1.4; letter-spacing: 0.04em;
-}
-/* Navigation rows use the same text-independent ergonomic floor, then grow
-   intrinsically when their content needs more room. */
-.qn-panel .qn-row {
-  display: flex; align-items: center; gap: var(--ui-section-control-gap); width: 100%;
-  min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;
-  background: transparent; border: 0; border-radius: 0; color: inherit;
-  font-family: inherit; font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing); cursor: pointer;
-}
-.qn-panel .qn-row:hover { background: var(--bg-raise); }
-.qn-panel .qn-row.on { background: var(--bg-raise); color: var(--gold); }
-.qn-panel .qn-row.danger { color: var(--ember); }
-.qn-panel .qn-ic { width: 2rem; flex-shrink: 0; text-align: center; color: var(--muted); }
-.qn-panel .qn-row.on .qn-ic, .qn-panel .qn-row.danger .qn-ic { color: inherit; }
-.qn-panel .qn-label { flex: 1; }
-.qn-panel .qn-condition { color: var(--muted); font-size: 1rem; line-height: 1.2; text-align: right; }
-.qn-panel .qn-state { min-width: 2.6rem; color: var(--muted); font-size: 1rem; font-weight: 700; text-align: right; }
-.qn-panel .qn-row[role='switch'][aria-checked='true'] .qn-state { color: var(--gold); }
-.qn-panel .qn-row:disabled { cursor: not-allowed; opacity: 0.58; }
-.qn-panel .qn-badge { color: var(--muted); font-size: 1.1rem; }
-.qn-sep { border-top: 1px solid var(--line); margin: 0.4rem 0; }
 
 /* ---------- flask action menu (combat / map / co-op) ---------------------- */
 /* IT HANGS OFF THE SLOT THE PLAYER TAPPED, AND UNTIL 2026-08-17 IT DID NOT
@@ -4296,80 +3577,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .flask-action[aria-disabled='true'] { color: var(--muted); cursor: default; }
 .flask-action[aria-disabled='true']:hover { background: transparent; }
 
-/* Variant B: the whole tab strip, folded into one control that names where you
-   are. Same set, same order, same bumpers (Law 3 clause 1a). */
-.ov-switch {
-  min-height: var(--tap-floor); height: auto; padding: 0 1.6rem; border-radius: var(--r-3); cursor: pointer;
-  background: var(--bg-raise); border: 1px solid var(--line); color: var(--gold);
-  font-size: 1.3rem; letter-spacing: 0.05em;
-}
-.ov-switch:hover { border-color: var(--gold); }
-.overlay-tabs[hidden] { display: none; }
-
-/* Settings is a destination, not a document nested inside a pause modal. The
-   category rail and the independently scrolling page remain stable while a
-   player changes sections. */
-.overlay-body[data-settings-host] {
-  display: grid; grid-template-columns: 13rem minmax(0, 1fr);
-  min-height: 0; padding: 0; overflow: hidden;
-}
-.overlay-modal.settings-surface,
-.settings-modal {
-  border-color: transparent;
-  background: var(--bg-raise);
-  box-shadow: none;
-}
-.overlay-modal.settings-surface .overlay-head,
-.overlay-modal.settings-surface .set-tabs,
-.settings-modal .set-tabs {
-  background: transparent;
-}
-.overlay-body[data-settings-host] .set-panel {
-  min-width: 0; min-height: 0; overflow: auto; padding: 1.25rem;
-}
-
 @media (max-width: 720px) {
-  .overlay-modal { width: 96%; height: 92%; max-height: 92%; }
-  .overlay-head { padding: 8px 10px; gap: 4px; }
-  .overlay-actions { gap: 4px; }
-  .overlay-footer { align-items: stretch; padding: 8px 10px; }
-  .overlay-footer-note { display: none; }
-  .overlay-footer-actions { width: 100%; }
-  .overlay-footer-actions button { padding-inline: 8px; }
+
   .overlay-settings-actions { gap: 3px; }
   .ov-quick-action { min-width: var(--tap-floor); padding-inline: 6px; }
   .ov-qa-label { display: none; }
-  .overlay-modal.settings-surface .ov-switch { min-width: 0; flex: 1 1 auto; padding-inline: 10px; }
-  .overlay-body[data-settings-host] {
-    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
-  }
-  .overlay-body[data-settings-host] .set-tabs {
-    position: static; grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-auto-rows: minmax(var(--tap-floor), auto); padding: 8px;
-    border-right: 0; border-bottom: 1px solid var(--line);
-  }
-  .overlay-body[data-settings-host] .set-tab {
-    justify-content: center; padding-inline: 4px; text-align: center;
-    overflow-wrap: anywhere;
-  }
-  .overlay-body[data-settings-host] .set-panel { padding: 10px; }
-  .settings-modal { width: 96%; height: 92%; min-width: 0; padding: 12px; }
-  .settings-modal .set-body {
-    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
-  }
-  .settings-modal .set-tabs {
-    position: static; grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-auto-rows: minmax(var(--tap-floor), auto); padding: 8px;
-    border-right: 0; border-bottom: 1px solid var(--line);
-  }
-  .settings-modal .set-tab { justify-content: center; padding-inline: 4px; text-align: center; }
-  .settings-modal .set-panel { padding: 10px; }
-  .set-section-head { padding-bottom: 8px; }
-  .set-section-head h2 { font-size: 1.45rem; }
-  .set-section-head span { display: none; }
-  .set-row { gap: 8px; padding: 10px; }
-  .set-row > :first-child { flex-basis: min(12rem, 100%); min-width: min(12rem, 100%); }
-  .choice-group { width: 100%; justify-content: flex-start; }
+
   .set-action-status { max-width: 11rem; text-align: right; }
 }
 
@@ -4567,7 +3780,6 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   opacity: var(--cp-ghost);
 }
 .cp-cell.state-listed .cp-name { color: var(--muted); font-style: italic; }
-
 
 @media (prefers-reduced-motion: no-preference) {
   .cp-cell { transition: border-color 120ms ease, background 120ms ease; }
@@ -4850,196 +4062,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .title-screen > * { position: relative; z-index: 1; }
 .title-screen > .hud-quick-settings { position: absolute; z-index: 80; }
-.title-stack {
-  box-sizing: border-box;
-  display: grid;
-  justify-items: center;
-  width: 100%;
-  margin-inline: 0;
-  text-align: center;
-  align-self: center;
-}
-.title-screen .title-big {
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto;
-  color: var(--parchment);
-  font-size: 5.8rem;
-  line-height: 0.95;
-  letter-spacing: 0.04em;
-  text-indent: 0.04em;
-  white-space: nowrap;
-  text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28);
-}
-.title-screen .subtitle {
-  margin-top: 1.2rem;
-  color: var(--muted);
-  font-size: 1.4rem;
-  line-height: 1.2;
-  letter-spacing: 0.32em;
-  white-space: nowrap;
-}
-.title-rule,
-.title-modal-rule {
-  position: relative;
-  height: 1px;
-  margin: 1.8rem auto 0;
-  width: min(46rem, 88%);
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
-}
-.title-rule span,
-.title-modal-rule span {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0.9rem;
-  height: 0.9rem;
-  transform: translate(-50%, -50%) rotate(45deg);
-  background: var(--bg);
-  border: 1px solid var(--gold);
-}
-.title-menu {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  width: min(36rem, 92%);
-  margin: 2.5rem auto 0;
-  gap: 0;
-}
-.title-menu-item { --track: 0.12em;
-  position: relative;
-  display: grid;
-  place-items: center;
-  min-height: var(--tap-floor);
-  padding: 1.4rem 2.5rem 1.1rem;
-  border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--gold) 52%, transparent);
-  border-radius: 0;
-  background: transparent;
-  color: var(--parchment);
-  font-size: 2rem;
-  line-height: 1.15;
-  letter-spacing: var(--track);
-  text-align: center;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
- text-indent: var(--track);}
-.title-menu-item::before {
-  content: '';
-  position: absolute;
-  left: 14%;
-  right: 14%;
-  bottom: -1px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  opacity: 0;
-}
-.title-menu-item:hover,
-.title-menu-item:focus-visible,
-.title-menu-item.gp-focus {
-  color: var(--gold);
-  background: transparent;
-  outline: 0;
-  border: 1px solid var(--gold);
-  border-radius: var(--r-2);
-  box-shadow: 0 0 22px rgba(var(--accent-rgb), 0.18);
-  text-shadow: 0 0 16px rgba(var(--accent-rgb), 0.55);
-}
-.title-menu:not(:has(.title-menu-item:focus, .title-menu-item.gp-focus)) .title-menu-item.slot-continue:not(:disabled) {
-  border: 1px solid var(--gold);
-  border-radius: var(--r-2);
-  box-shadow: 0 0 22px rgba(var(--accent-rgb), 0.18);
-}
-.title-menu-item:hover::before,
-.title-menu-item:focus-visible::before,
-.title-menu-item.gp-focus::before { opacity: 1; }
-.title-menu-item:disabled { border-color: var(--line); background: transparent; color: var(--muted); opacity: 0.58; }
-.title-menu-gem { position: absolute; bottom: -0.65rem; padding: 0 0.65rem; color: var(--gold); background: var(--bg); font-size: 1.1rem; line-height: 1; }
-.title-tagline { --track: 0.18em; margin-top: 3rem; color: var(--muted); font-size: 0.92rem; letter-spacing: var(--track); text-align: center;  text-indent: var(--track);}
-
-.title-modal-veil { position: absolute; inset: 0; z-index: 900; padding: 2rem; background: rgba(4, 3, 2, 0.76); backdrop-filter: blur(2px); }
-.title-menu-modal {
-  position: relative;
-  width: min(63.3rem, 94%);
-  max-width: 63.3rem;
-  max-height: 88%;
-  padding: 3.7rem 4rem 3.8rem;
-  border: 1px solid var(--gold);
-  border-radius: var(--r-4);
-  background: linear-gradient(145deg, color-mix(in srgb, var(--panel) 96%, #000), color-mix(in srgb, var(--bg-raise) 98%, #000));
-  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.18), 0 2rem 6rem rgba(0, 0, 0, 0.7), inset 0 0 3rem rgba(var(--accent-rgb), 0.04);
-}
-.title-menu-modal h2 { --track: 0.08em; margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: var(--track); text-align: center;  text-indent: var(--track);}
-/* Position is this modal's (it has no head bar to sit in); the SHAPE is the
-   shell's — this was the only round close control in the game. */
-.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; background: transparent; color: var(--parchment); }
-.title-modal-close:hover, .title-modal-close:focus-visible { border-color: var(--gold); outline: 2px solid color-mix(in srgb, var(--gold) 42%, transparent); outline-offset: 2px; }
-.title-modal-rule { width: min(38.3rem, 74%); margin-top: 1.7rem; }
-.title-slot-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
-.title-slot-row { display: flex; align-items: stretch; gap: 0.8rem; }
-.title-slot-pick { position: relative; display: flex; align-items: center; justify-content: space-between; flex: 1 1 auto; min-width: 0; min-height: 8.6rem; padding: 1.5rem 2rem; border: 1px solid var(--line-soft); border-radius: var(--r-4); background: color-mix(in srgb, var(--bg) 84%, transparent); color: var(--parchment); text-align: left; }
-.title-slot-pick:hover, .title-slot-pick:focus-visible, .title-slot-row.is-selected .title-slot-pick { border-color: var(--gold); box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 32%, transparent); outline: none; }
-.title-slot-pick:disabled { cursor: default; opacity: 0.74; }
-.title-slot-copy { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
-.title-slot-tag, .title-slot-seed { color: var(--muted); font-size: 0.92rem; letter-spacing: 0.16em; }
-.title-slot-name { color: var(--gold); font-family: Georgia, 'Times New Roman', serif; font-size: 2rem; line-height: 1.1; }
-.title-slot-empty { color: var(--muted); font-family: Georgia, 'Times New Roman', serif; font-size: 2rem; line-height: 1.1; font-style: italic; }
-.title-slot-meta { color: var(--parchment); font-family: Georgia, 'Times New Roman', serif; font-size: 1.08rem; letter-spacing: 0; }
-.title-slot-seed { font-family: monospace; }
-.title-slot-state { flex: 0 0 auto; color: var(--muted); font-size: 0.9rem; letter-spacing: 0.14em; }
-.title-slot-row.is-selected .title-slot-state { color: var(--gold); }
-.title-slot-pick > .hold-hint { position: absolute; right: 1.8rem; bottom: 0.72rem; margin: 0; }
-.title-slot-delete { align-self: center; min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.8rem; }
-/* THE GUTTER IS HELD OPEN BY THE SAME BOX THAT WOULD FILL IT.
-   A delete exists only on a FILLED slot, so a list with one save and two empties
-   drew rows of two widths: measured 1440x900, slot 1's pick ended at x=990 and
-   the empty rows ran to 1051 — 61px of ragged right edge that nothing about the
-   slots explains. A `::after` spacer was the first attempt and it could not be
-   made exact: the real control is a `button.subtle` carrying that rule's border
-   and padding, and a pseudo-element copying those numbers is a second home for
-   them that drifts the day one changes. So an empty row renders the SAME button,
-   hidden — `visibility: hidden` also takes it out of the tab order, and it is
-   `disabled` and `aria-hidden` besides, so it is furniture to every reader. */
-.title-slot-delete[data-slot-spacer] { visibility: hidden; }
-/* THE WORD DOES NOT FIT ON AN ICON — the `.slot-delete .hold-hint` rule above
-   said it for the old title slot, and the ✕ moved into the LOAD selector
-   without it: HOLD was drawn beside the glyph again, measured by
-   tools/holdconfirm.mjs the first time its title section reached the
-   selector. The fill still runs; the native tooltip carries the sentence. */
-.title-slot-delete .hold-hint { display: none; }
-.title-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin: 2.3rem 1.3rem 0; }
-.title-modal-actions button { min-height: 4.8rem; border-radius: var(--r-4); font-size: var(--t-3); }
-.title-modal-back { border-color: var(--line-soft); color: var(--parchment); }
-.title-modal-continue { border-color: var(--gold); color: var(--gold); }
-.title-modal-actions button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
-.title-load-review { width: min(52rem, 94%); }
-.title-load-review-slot { display: block; margin-top: 2rem; padding: 1.6rem 2rem; border: 1px solid var(--gold); border-radius: var(--r-4); background: color-mix(in srgb, var(--bg) 84%, transparent); }
-.title-load-review-copy { margin: 1.2rem 0 0; color: var(--muted); font-size: 1.08rem; text-align: center; }
-.title-load-review-confirm { border-color: var(--green); color: var(--green); }
-.title-load-review-confirm:hover, .title-load-review-confirm:focus-visible { background: color-mix(in srgb, var(--green) 14%, transparent); border-color: var(--green); color: var(--green); }
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }
-  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; text-indent: 0.015em; }
-  .title-screen .subtitle { font-size: calc(0.9rem / var(--ui-zoom, 1)); letter-spacing: 0.2em; }
-  .title-rule { width: 90%; margin-top: 1.4rem; }
-  .title-menu { width: min(calc(36rem / var(--ui-zoom, 1)), 94%); margin-top: calc(2.2rem / var(--ui-zoom, 1)); }
-  .title-menu-item { min-height: var(--tap-floor); padding: calc(1.4rem / var(--ui-zoom, 1)) calc(1.8rem / var(--ui-zoom, 1)) calc(1.1rem / var(--ui-zoom, 1)); font-size: calc(1.5rem / var(--ui-zoom, 1)); }
-  .title-tagline { margin-top: calc(2.4rem / var(--ui-zoom, 1)); font-size: calc(0.8rem / var(--ui-zoom, 1)); letter-spacing: 0.12em; }
-  .title-modal-veil { padding: 1.2rem 0.8rem; }
-  .title-menu-modal { width: 98%; padding: calc(3.8rem / var(--ui-zoom, 1)) calc(1.3rem / var(--ui-zoom, 1)) calc(2.2rem / var(--ui-zoom, 1)); border-radius: var(--r-4-glass); }
-  .title-menu-modal h2 { font-size: calc(2.7rem / var(--ui-zoom, 1)); }
-  .title-modal-rule { width: 84%; }
-  .title-slot-list { gap: calc(1.2rem / var(--ui-zoom, 1)); margin-top: calc(1.8rem / var(--ui-zoom, 1)); }
-  .title-slot-pick { min-height: calc(8.6rem / var(--ui-zoom, 1)); padding: calc(1.4rem / var(--ui-zoom, 1)) calc(1.6rem / var(--ui-zoom, 1)); border-radius: var(--r-4-glass); }
-  .title-slot-name, .title-slot-empty { font-size: calc(1.8rem / var(--ui-zoom, 1)); }
-  .title-slot-tag, .title-slot-seed { font-size: calc(0.82rem / var(--ui-zoom, 1)); }
-  .title-slot-meta { font-size: calc(1.1rem / var(--ui-zoom, 1)); }
-  .title-slot-state { display: none; }
-  .title-slot-pick > .hold-hint { display: block; right: calc(1.2rem / var(--ui-zoom, 1)); bottom: calc(0.55rem / var(--ui-zoom, 1)); }
-  .title-modal-actions { gap: calc(1rem / var(--ui-zoom, 1)); margin: calc(2rem / var(--ui-zoom, 1)) 0 0; }
-  .title-modal-actions button { min-height: calc(5rem / var(--ui-zoom, 1)); padding-inline: calc(0.8rem / var(--ui-zoom, 1)); font-size: calc(var(--t-2) / var(--ui-zoom, 1)); }
-  .title-load-review-slot { margin-top: calc(1.8rem / var(--ui-zoom, 1)); padding: calc(1.4rem / var(--ui-zoom, 1)); }
-  .title-load-review-copy { font-size: calc(1rem / var(--ui-zoom, 1)); }
+
 }
 
 /* Folded companion to the title hall: the first interaction reveals the
@@ -5088,7 +4114,6 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   .startup-rule { width: 90%; }
   .startup-prompt { margin-top: 2.4rem; font-size: 0.84rem; letter-spacing: 0.13em; }
 }
-
 
 /* ---------------------------------------------------------------------------
    THE FIGURE FACES THE VIEWER, SO ITS RIGHT HAND IS ON YOUR LEFT (#48-adjacent).

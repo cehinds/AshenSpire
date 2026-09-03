@@ -9,6 +9,11 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8');
 
+// A composition names a stable id as the literal attribute, or through the
+// ONE home of ids (UI.<camelKey>) when it builds its markup from the kit.
+const camel = (id) => id.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+const mentionsId = (src, id) => src.includes(`data-component="${id}"`) || src.includes(`UI.${camel(id)}`);
+
 const REQUIRED_IDS = Object.freeze([
   'startup-gate', 'startup-ash-field', 'startup-ash-particle', 'startup-mark',
   'startup-wordmark', 'startup-subtitle', 'startup-divider', 'startup-prompt',
@@ -90,6 +95,7 @@ export function receipt() {
     startupGate: read('src/ui/components/startupGate.js'),
     startupGateModel: read('src/ui/models/StartupGateModels.js'),
     title: read('src/ui/screens/title.js'),
+    saveSlotSelector: read('src/ui/components/saveSlotSelector.js'),
     balance: read('src/content/balance.js'),
     main: read('src/main.js'),
     validate: read('src/model/validate.js'),
@@ -211,7 +217,7 @@ export function findings(r) {
       || !/export function mountStartupGate/.test(r.startupGate)
       || !/buildStampHtml\('startup'\)/.test(r.startupGate)
       || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`))
-      || !titleParts.every((id) => r.title.includes(`data-component="${id}"`))
+      || !titleParts.every((id) => mentionsId(r.title + r.saveSlotSelector, id))
       || ![...startupParts, ...titleParts].every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`['${id}'`))
       || /from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.startupGate + r.startupGateModel)) {

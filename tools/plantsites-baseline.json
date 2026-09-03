@@ -2,6 +2,16 @@
   "note": "Known-drifted plant sites (the #498 backlog), sites the static scan cannot read, and a per-tool count+digest over EVERY readable site. plantsites.mjs --check fails on any difference from the live tree, in either direction — regenerate with --write-baseline only alongside the change that explains it.",
   "drifted": [
     {
+      "tool": "tools/about-changelog.mjs",
+      "target": "src/ui/screens/title.js",
+      "id": "32ec77c8477b6c85"
+    },
+    {
+      "tool": "tools/about-changelog.mjs",
+      "target": "src/ui/screens/settings.js",
+      "id": "a4b9117dca401cd5"
+    },
+    {
       "tool": "tools/armoury-picked-up.mjs",
       "target": "src/ui/screens/equipment.js",
       "id": "0afb5288f599e996"
@@ -55,6 +65,46 @@
       "tool": "tools/armoury-picked-up.mjs",
       "target": "src/ui/screens/equipment.js",
       "id": "ebb60d6e25b61c32"
+    },
+    {
+      "tool": "tools/confirmation-modal.mjs",
+      "target": "styles/ui.css",
+      "id": "638e687db59857ee"
+    },
+    {
+      "tool": "tools/confirmation-modal.mjs",
+      "target": "styles/ui.css",
+      "id": "9fb86f9153777bc0"
+    },
+    {
+      "tool": "tools/displayfirst.mjs",
+      "target": "src/ui/screens/settings.js",
+      "id": "8ca41891dcb1ae85"
+    },
+    {
+      "tool": "tools/menufit.mjs",
+      "target": "styles/ui.css",
+      "id": "7b52b505469be5a0"
+    },
+    {
+      "tool": "tools/music-toggle-parity.mjs",
+      "target": "src/ui/components/menuComponents.js",
+      "id": "1bd723d53273b515"
+    },
+    {
+      "tool": "tools/quicknav-reach.mjs",
+      "target": "styles/ui.css",
+      "id": "0aa79cd7b469d989"
+    },
+    {
+      "tool": "tools/quicknav-reach.mjs",
+      "target": "styles/ui.css",
+      "id": "ffe6b4614dd92feb"
+    },
+    {
+      "tool": "tools/startup-gate.mjs",
+      "target": "src/ui/screens/settings.js",
+      "id": "425f6cab7daee778"
     }
   ],
   "unreadable": {
@@ -243,7 +293,7 @@
     },
     "tools/startup-gate.mjs": {
       "count": 26,
-      "digest": "ee75af095f51ca8f"
+      "digest": "2b96d0fd673f41fc"
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,

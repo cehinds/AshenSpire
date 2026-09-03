@@ -156,28 +156,23 @@ if (args.includes('--selftest')) {
         expectRed: /RED A8\.LOAD-SLOT-(?:KEY|PAD)-REVIEW/,
       },
       {
-        // THE FLOOR MOVED, SO THE PLANT DID. `.title-modal-close` used to state
-        // its own tap floor; the shared close control (src/ui/components/
-        // modalShell.js) states it once for all four modal doors and the
-        // save-slot rule keeps only its position. `.title-modal-close` still
-        // WEARS the floor — through `.modal-close` — so A8's assertion is
-        // unchanged and this mutation still reaches it. The find is anchored on
-        // the block opening because the two declarations alone appear ten times
-        // in this stylesheet.
+        // THE BOX LIVES IN THE KIT (styles/kit.css) and is one length on both
+        // axes, floor included: a plant that shrinks the length AND the floor
+        // is the only plant that reaches RED A8.LOAD-SLOT-TARGETS.
         name: 'title modal Close drops below the authored tap floor',
-        file: 'styles/ui.css',
-        // The box is a fixed LENGTH as well as a floor now (--iconbtn-size), so the
-        // plant must remove both: a floor planted away under a 44px length is
-        // still 44px, and this plant went UNCAUGHT the day the length landed.
-        find: '.modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  min-width: var(--tap-floor); min-height: var(--tap-floor);\n  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;',
-        replace: '.modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  min-width: 3rem; min-height: 3rem;\n  width: 3rem; height: 3rem; flex: 0 0 auto; /* startup-gate selftest plant */',
+        file: 'styles/kit.css',
+        find: '.as-iconbtn, .modal-iconbtn, .modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;\n  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);',
+        replace: '.as-iconbtn, .modal-iconbtn, .modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  width: 3rem; height: 3rem; flex: 0 0 auto;\n  min-width: 3rem; min-height: 3rem; /* startup-gate selftest plant */',
         expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
       },
       {
+        // Delete is an IconButton now — the same box as Close, sized by ONE
+        // token (base.css --iconbtn-size). Planting the token under the floor
+        // is what shrinks it; nothing else can.
         name: 'occupied-slot Delete loses its tap-floor height',
-        file: 'styles/ui.css',
-        find: '.title-slot-delete { align-self: center; min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.8rem; }',
-        replace: '.title-slot-delete { align-self: center; min-width: var(--tap-floor); padding-inline: 0.8rem; /* startup-gate selftest plant */ }',
+        file: 'styles/base.css',
+        find: '  --iconbtn-size: var(--tap-floor);',
+        replace: '  --iconbtn-size: 3rem; /* startup-gate selftest plant */',
         expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
       },
       {

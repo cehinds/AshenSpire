@@ -2,7 +2,7 @@
 // choices. The action is not committed until the primary button is pressed.
 
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { modalFooter } from './modalShell.js';
+import { modalHead, modalFooter, el, prose } from '../kit/index.js';
 
 let activeClose = null;
 export const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
@@ -69,8 +69,12 @@ export function openConfirmationModal({
   const veil = document.createElement('div');
   veil.className = 'modal-veil confirmation-veil';
 
+  // BODY C — one question, two answers, at the sm rung: the shell's head
+  // (the consequence as eyebrow, the act as title, the one close box), the
+  // message as prose, what is at stake in a DetailCard, the foot's two buttons.
   const dialog = document.createElement('section');
   dialog.className = `modal confirmation-modal${tone === 'danger' ? ' danger' : ''}`;
+  dialog.dataset.size = 'sm';
   dialog.setAttribute('role', tone === 'danger' ? 'alertdialog' : 'dialog');
   dialog.setAttribute('aria-modal', 'true');
   dialog.setAttribute('aria-labelledby', 'confirmation-modal-title');
@@ -78,23 +82,19 @@ export function openConfirmationModal({
   dialog.tabIndex = -1;
   markUiComponent(dialog, component, tone);
 
-  const header = document.createElement('header');
-  const eyebrow = document.createElement('span');
-  eyebrow.className = 'confirmation-eyebrow';
-  eyebrow.textContent = consequence;
-  eyebrow.hidden = !consequence;
-  const heading = document.createElement('h2');
-  heading.id = 'confirmation-modal-title';
-  heading.textContent = title || 'Confirm action';
-  header.append(eyebrow, heading);
+  const header = modalHead({
+    eyebrow: consequence || (tone === 'danger' ? 'Careful' : 'Confirm'),
+    title: title || 'Confirm action',
+    titleId: 'confirmation-modal-title',
+    closeLabel: cancelLabel,
+    onClose: () => cancel(),
+  });
+  header.querySelector?.('.modal-close')?.classList.add('confirmation-close');
 
-  const copy = document.createElement('p');
-  copy.id = 'confirmation-modal-copy';
-  copy.className = 'confirmation-copy';
-  copy.textContent = message || '';
+  const copy = prose(message || '', { id: 'confirmation-modal-copy', class: 'confirmation-copy' });
 
   const details = document.createElement('div');
-  details.className = 'confirmation-details';
+  details.className = 'confirmation-details as-detailcard muted';
   details.hidden = !detailsHtml;
   // Callers build this only from escaped, model-owned presentation values.
   // Keeping the detail region in the shared modal is what makes costs and
@@ -116,8 +116,9 @@ export function openConfirmationModal({
   confirmButton.hidden = !confirmEnabled;
   markUiComponent(confirmButton, UI.confirmationAction, tone);
   // The house order, from the one home: way out left, way forward right.
-  const footer = modalFooter({ secondary: [cancelButton], primary: confirmButton, className: 'confirmation-footer' });
-  dialog.append(header, copy, details, footer);
+  const footer = modalFooter({ secondary: [cancelButton], primary: confirmButton, className: 'confirmation-footer', size: 'long' });
+  const body = el('div', { class: 'modal-body' }, el('div', { class: 'as-decide confirmation-body' }, [copy, details]));
+  dialog.append(header, body, footer);
   veil.appendChild(dialog);
   document.body.appendChild(veil);
 

@@ -1,0 +1,532 @@
+/* styles/kit.css — THE COMPONENT KIT, in the game.
+   ───────────────────────────────────────────────────────────────────────────
+   Every player-facing surface is composed from the pieces in this file and
+   nothing else. The vocabulary is the kit artifact's (§03 sub-components,
+   §04 assemblies, §05 bodies, §07 menus, §08 tooltips, §10 cards), under the
+   same names, so a rule read on the kit page is the rule that runs here.
+
+   THE SHELL'S OWN CLASSES ARE KIT ASSEMBLIES UNDER THE REPO'S NAMES. The kit
+   page called them `.as-head`, `.as-foot`, `.as-iconbtn`, `.as-btnrow`; the
+   game had already named the same assemblies `.modal-head`, `.modal-foot`,
+   `.modal-iconbtn`/`.modal-close`, `.modal-btnrow`, and thirty tools read
+   those names off the rendered page. So this file styles BOTH spellings with
+   one rule each — the repo name is the hook, the kit name is the recipe — and
+   nothing in styles/ui.css may draw shell chrome any more.
+
+   SCALE. The kit page was authored at a 15px root; this game's root is 10px
+   (html { font-size: 62.5% }). Every kit rem is ×1.5 here, once, at the
+   declaration — never at a call site. Radii are px in both, unchanged.
+
+   LAWS KEPT: no vw/vh (the body is zoomed by --ui-zoom); the tap floor is
+   --tap-floor and the icon box is --iconbtn-size (base.css); rem for type
+   and the boxes that hold it, px for geometry that must not scale with type;
+   one home per fact.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* the kit's own two page tokens the game lacked */
+  --ink-dim: #b9ac91;
+  --rule: #2a2419;
+  --r-pill: 999px;
+}
+
+/* ═══ TEXT ATOMS ════════════════════════════════════════════════════════════ */
+.as-eyebrow { display: block; font-size: 1rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.as-title-l { --track: 0.05em; margin: 0; font: 700 2.55rem/1.1 var(--font-display); letter-spacing: var(--track); text-indent: var(--track); color: var(--parchment); }
+.as-title-m { margin: 0; font: 600 2.25rem/1.1 var(--font-display); letter-spacing: 0.03em; color: var(--parchment); }
+.as-title-s { margin: 0; font: 600 1.8rem/1.15 var(--font-display); letter-spacing: 0.045em; color: var(--gold); }
+.as-subtitle { margin: 0; color: var(--muted); font-size: 1.32rem; line-height: 1.4; }
+.as-hairline { border: 0; border-top: 1px solid var(--line); margin: 0; }
+.as-status { color: var(--muted); font-size: 1.2rem; text-align: right; }
+.as-flavor { color: var(--muted); font-style: italic; font-size: 1.28rem; }
+.as-prose { margin: 0; color: var(--parchment); font-size: 1.4rem; line-height: 1.5; }
+.as-prose + .as-prose { color: var(--muted); font-size: 1.3rem; }
+/* Ornament — the only decorative atom, spent on the title screen and on a
+   decision. It marks "you are being asked something". */
+.as-ornament { display: flex; align-items: center; gap: 1.05rem; color: var(--gold); }
+.as-ornament::before, .as-ornament::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--line-soft)); }
+.as-ornament::after { background: linear-gradient(270deg, transparent, var(--line-soft)); }
+.as-ornament span { font-size: 0.9rem; line-height: 1; }
+
+/* ═══ CONTAINMENT — a label can never leave its control ═════════════════════ */
+/* THE RECIPE, on the shell's own text-bearing controls, as one rule: the
+   defect was found five times on five controls and is fixed once. */
+.modal-btnrow > button, .modal-tab, .modal-head-status, .modal-foot-note > span, .modal-head-id h2 {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.as-btn, .as-tab, .modal-tab, .as-railitem, .as-seg button, .as-iconbtn,
+.as-pill, .as-tag, .as-chip .cv, .as-chip .ck,
+.as-row > .r-label, .as-option .on, .cb-name, .cd-name, .as-status,
+.as-statrow .sr-name, .as-detailcard .dc-name, .modal-head-status,
+.as-labelstack .ls-label, .as-labelstack .ls-hint {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis;
+}
+.as-btnrow, .as-head, .as-head-id, .as-head-actions, .as-row, .as-option,
+.as-statrow, .as-statstrip, .as-kitline, .as-tabs, .as-pane-head, .as-labelstack,
+.as-detailbody, .as-detailbody .lines { min-width: 0; }
+.as-btnrow > *, .as-row > *, .as-option > *, .as-statrow > *, .as-pane-head > * { min-width: 0; }
+
+/* ═══ CONTROL ATOMS ═════════════════════════════════════════════════════════ */
+/* Button — three weights, no fourth. The base `button` element IS the kit's
+   secondary button, so a screen that writes <button> gets the kit for free
+   and nothing can draw a fourth weight by omitting a class. */
+button, .as-btn {
+  min-height: var(--tap-floor);
+  padding: 0.75rem 1.65rem;
+  text-align: center; white-space: nowrap;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  color: var(--parchment);
+  font: 500 1.38rem/1 var(--font-body);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+button:hover, .as-btn:hover, button:focus-visible, .as-btn:focus-visible { background: var(--panel); border-color: var(--gold); outline: none; }
+button:focus-visible, .as-btn:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
+button:disabled, .as-btn:disabled, .as-btn[aria-disabled="true"] { border-color: var(--line); color: var(--muted); background: var(--panel); cursor: default; }
+button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 1.38rem; padding: 0.75rem 1.65rem; }
+button.primary, .as-btn.primary { background: color-mix(in srgb, var(--gold) 20%, var(--panel)); border-color: var(--gold); color: var(--parchment); font-weight: 600; }
+button.primary:hover, .as-btn.primary:hover { background: color-mix(in srgb, var(--gold) 30%, var(--panel)); }
+button.primary:disabled, .as-btn.primary:disabled { background: var(--panel); border-color: var(--line); color: var(--muted); }
+button.danger, .as-btn.danger, button.subtle.danger { border-color: var(--danger); color: var(--danger); background: var(--panel); }
+button.danger:hover, .as-btn.danger:hover { background: rgba(212, 98, 46, 0.08); }
+/* A loss is the way forward on a danger door: primary weight, danger colour. */
+button.primary.danger, .as-btn.primary.danger { background: rgba(212, 98, 46, 0.14); border-color: var(--danger); color: var(--parchment); }
+button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212, 98, 46, 0.24); }
+
+/* IconButton — ONE box for every header action, close included. A LENGTH, not
+   a floor: --iconbtn-size (base.css), the same on every component. */
+.as-iconbtn, .modal-iconbtn, .modal-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
+  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);
+  padding: 0;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-2);
+  color: var(--parchment);
+  font: 400 1.6rem/1 var(--font-body);
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.as-iconbtn:hover, .modal-iconbtn:hover, .modal-close:hover,
+.as-iconbtn:focus-visible, .modal-iconbtn:focus-visible, .modal-close:focus-visible { border-color: var(--gold); color: var(--gold); outline: none; background: var(--panel); }
+
+/* ButtonRow — a grid of EQUAL tracks; the row is min(box, n × step). */
+.as-btnrow, .modal-btnrow {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch; gap: 8px; min-width: 0;
+  --n: 1; --step: 15rem;
+  width: min(100%, calc(var(--n) * var(--step) + (var(--n) - 1) * 8px));
+}
+.as-btnrow:has(> :nth-child(2):last-child), .modal-btnrow:has(> :nth-child(2):last-child) { --n: 2; }
+.as-btnrow:has(> :nth-child(3):last-child), .modal-btnrow:has(> :nth-child(3):last-child) { --n: 3; }
+.as-btnrow:has(> :nth-child(4):last-child), .modal-btnrow:has(> :nth-child(4):last-child) { --n: 4; }
+.as-btnrow:has(> :nth-child(5):last-child), .modal-btnrow:has(> :nth-child(5):last-child) { --n: 5; }
+.as-btnrow[data-size="short"],  .modal-btnrow[data-size='short']  { --step: 10rem; }
+.as-btnrow[data-size="medium"], .modal-btnrow[data-size='medium'] { --step: 15rem; }
+.as-btnrow[data-size="long"],   .modal-btnrow[data-size='long']   { --step: 21rem; }
+.as-btnrow[data-size="fill"],   .modal-btnrow[data-size='fill']   { width: 100%; }
+.as-btnrow > button, .modal-btnrow > button {
+  container-type: inline-size;
+  padding-inline: clamp(0.5rem, 8%, 1.4rem);
+  font-size: clamp(1.1rem, 9cqi, 1.38rem);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.as-btnrow > button[data-size="square"], .modal-btnrow > button[data-size='square'] {
+  aspect-ratio: 1; width: auto; height: auto; justify-self: start;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0;
+}
+.as-btnrow.end, .modal-btnrow.end { justify-content: end; margin-left: auto; }
+
+/* Tab — switches SUBJECT. Underline, no box. */
+.as-tabs, .modal-tabs { display: flex; gap: 0.2rem; min-width: 0; }
+.as-tab, .modal-tab {
+  min-height: var(--tap-floor);
+  padding: 0.6rem 1rem;
+  background: transparent;
+  border: 0; border-bottom: 2px solid transparent;
+  border-radius: var(--r-2) var(--r-2) 0 0;
+  color: var(--ink-dim);
+  font: 500 1.38rem/1 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.as-tab[aria-selected="true"], .modal-tab[aria-selected="true"], .modal-tab.on, .as-tab.on { color: var(--gold); border-bottom-color: var(--gold); background: transparent; }
+.as-tab:hover, .modal-tab:hover, .as-tab:focus-visible, .modal-tab:focus-visible { color: var(--parchment); outline: none; background: transparent; border-color: transparent; border-bottom-color: var(--line-soft); box-shadow: none; }
+.as-tab[aria-selected="true"]:hover, .modal-tab[aria-selected="true"]:hover, .modal-tab.on:hover { border-bottom-color: var(--gold); }
+
+/* RailItem — switches SECTION. Bordered, full width of its rail, gold when
+   current. Always in a vertical column. */
+.as-railitem {
+  display: block; width: 100%;
+  min-height: var(--tap-floor);
+  padding: 0.75rem 0.9rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  color: var(--ink-dim);
+  font: 500 1.35rem/1.2 var(--font-body);
+  text-align: left; white-space: nowrap;
+  cursor: pointer;
+}
+.as-railitem:hover { border-color: var(--line-soft); color: var(--parchment); }
+.as-railitem[aria-current="true"], .as-railitem[aria-selected="true"], .as-railitem.on { border-color: var(--gold); color: var(--gold); background: rgba(var(--accent-rgb), 0.08); }
+
+/* Segmented — 2–3 mutually exclusive values, one visible at a glance. */
+.as-seg { display: inline-flex; border: 1px solid var(--line-soft); border-radius: var(--r-2); overflow: hidden; }
+.as-seg button { min-height: calc(var(--tap-floor) - 2px); padding: 0.6rem 1.2rem; background: transparent; border: 0; border-radius: 0; color: var(--ink-dim); font: 500 1.23rem/1 var(--font-body); cursor: pointer; }
+.as-seg button + button { border-left: 1px solid var(--line-soft); }
+.as-seg button:hover, .as-seg button:focus-visible { background: rgba(var(--accent-rgb), 0.06); color: var(--parchment); border-color: var(--line-soft); box-shadow: none; }
+.as-seg button[aria-pressed="true"], .as-seg button.on { background: rgba(var(--accent-rgb), 0.14); color: var(--gold); }
+.as-seg button:disabled { color: var(--muted); background: transparent; }
+
+/* Toggle — a binary setting. The knob is the state; the pill is the track. */
+.as-toggle {
+  position: relative; display: inline-block; flex: 0 0 auto;
+  width: 5.2rem; height: 2.8rem; min-height: 0; padding: 0;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.as-toggle .knob { position: absolute; top: 0.3rem; left: 0.3rem; width: 2rem; height: 2rem; border-radius: 50%; background: var(--muted); transition: left 140ms, background 140ms; }
+.as-toggle.on, .as-toggle[aria-checked="true"] { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.14); }
+.as-toggle.on .knob, .as-toggle[aria-checked="true"] .knob { left: calc(100% - 2.3rem); background: var(--gold); }
+.as-toggle:disabled { opacity: 0.55; cursor: default; }
+
+/* StatePill — binary state, scannable down a column. */
+.as-pill {
+  display: inline-block; padding: 0.15rem 0.6rem;
+  border: 1px solid var(--line-soft); border-radius: var(--r-1);
+  font: 500 1.02rem/1.5 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap;
+}
+.as-pill[data-on="true"] { border-color: var(--gold); color: var(--gold); }
+.as-pill.round { border-radius: var(--r-pill); font-size: 0.93rem; letter-spacing: 0.1em; }
+
+/* Tag — micro-label in its parent's tint. */
+.as-tag { display: inline-block; padding: 0.08rem 0.5rem; border: 1px solid currentColor; border-radius: var(--r-1); font: 500 0.96rem/1.5 var(--font-body); color: var(--muted); white-space: nowrap; }
+.as-tag.more { border-style: dashed; color: var(--muted); }
+
+/* Keycap */
+.as-keycap {
+  display: inline-grid; place-items: center;
+  min-width: 2rem; padding: 0.08rem 0.4rem;
+  background: var(--bg); border: 1px solid var(--line-soft); border-radius: var(--r-1);
+  font: 500 1.05rem/1.5 var(--font-body); color: var(--ink-dim);
+}
+
+/* Glyph — a fixed-width icon column so labels align with or without one. */
+.as-glyph { flex: 0 0 1.75rem; color: var(--muted); font-size: 1.42rem; line-height: 1; text-align: center; }
+
+/* LabelStack — what a control does, and one line on how. */
+.as-labelstack { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.as-labelstack .ls-label { font-size: 1.41rem; color: var(--parchment); white-space: nowrap; }
+.as-labelstack .ls-hint { color: var(--muted); font-size: 1.2rem; white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* ArtWell — a square that holds a thing's art at a size worth looking at. */
+.as-artwell {
+  flex: 0 0 auto; display: grid; place-items: center;
+  width: 8.4rem; height: 8.4rem;
+  background: radial-gradient(circle at 50% 40%, #3a1a18, #17110d);
+  border: 1px solid var(--line-soft); border-radius: var(--r-3);
+  font-size: 3.6rem; line-height: 1;
+}
+.as-artwell.sm { width: 5.1rem; height: 5.1rem; font-size: 2.25rem; }
+.as-artwell.cool { background: radial-gradient(circle at 50% 40%, #2b3a44, #12100c); }
+.as-artwell img { width: 100%; height: 100%; object-fit: contain; }
+
+/* DetailCard — an inset, gold-edged card that shows exactly what is at stake. */
+.as-detailcard { display: flex; flex-direction: column; gap: 0.2rem; padding: 1.28rem 1.5rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-3); text-align: left; }
+.as-detailcard .dc-eyebrow { font-size: 1.02rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.as-detailcard .dc-name { margin: 0.1rem 0 0.2rem; font: 600 1.72rem/1.1 var(--font-display); color: var(--gold); }
+.as-detailcard .dc-line { font-size: 1.32rem; font-weight: 600; color: var(--parchment); }
+.as-detailcard .dc-meta { font-size: 1.05rem; letter-spacing: 0.08em; color: var(--muted); }
+.as-detailcard.muted { border-color: var(--line); }
+.as-detailcard.muted .dc-name { color: var(--muted); }
+
+/* ═══ THE TWO LIST ATOMS ════════════════════════════════════════════════════ */
+/* Row — Glyph + label + StatusText + trail. Menus, popovers, action menus. */
+.as-row {
+  display: flex; align-items: center; gap: 1.05rem;
+  width: 100%; min-height: var(--tap-floor);
+  padding: 0.7rem 1.35rem;
+  background: transparent; border: 0; border-radius: 0;
+  color: var(--parchment);
+  font: 500 1.47rem/1.3 var(--font-body);
+  text-align: left; white-space: nowrap;
+  cursor: pointer;
+}
+.as-row:hover, .as-row:focus-visible { background: var(--panel); border-color: transparent; outline: none; box-shadow: none; }
+.as-row:focus-visible { box-shadow: inset 0 0 0 1px var(--gold); }
+.as-row > .r-label { flex: 0 1 auto; }
+.as-row > .as-status, .as-row > .r-trail { margin-left: auto; }
+.as-row > .as-status + .r-trail { margin-left: 0; }
+.as-row > .as-status { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.as-row .r-trail { flex: 0 0 auto; display: flex; align-items: center; gap: 0.75rem; }
+.as-row[data-tone="current"], .as-row[data-tone="current"] .as-glyph, .as-row.on, .as-row.on .as-glyph { color: var(--gold); }
+.as-row[data-tone="loss"], .as-row[data-tone="loss"] .as-glyph, .as-row.danger, .as-row.danger .as-glyph { color: var(--danger); }
+.as-row[aria-disabled="true"], .as-row:disabled { color: var(--muted); cursor: default; background: transparent; }
+.as-row[aria-disabled="true"]:hover, .as-row:disabled:hover { background: transparent; }
+/* The settings variant: same grammar, hairline between, no hover fill — a
+   settings row is read, not chosen. It may wrap its control under the label
+   when the pane is narrow, and it never clips a hint. */
+.as-row.setting { padding-inline: 0; border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
+.as-row.setting:hover { background: transparent; }
+.as-row.setting:last-child { border-bottom: 0; }
+.as-row.setting > .as-labelstack { flex: 1 1 18rem; }
+.as-row.setting > .r-trail { margin-left: auto; }
+.as-row.setting > .r-trail input[type="text"] { width: 100%; }
+
+/* OptionCard — choosing between things, not settings. */
+.as-options { display: flex; flex-direction: column; gap: 1.05rem; width: 100%; }
+.as-option {
+  position: relative;
+  display: flex; gap: 1.5rem; align-items: center;
+  width: 100%;
+  padding: 1.28rem 3.3rem 1.28rem 1.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  color: inherit; text-align: left; white-space: normal;
+  font: inherit;
+  cursor: pointer;
+}
+.as-option:hover { border-color: var(--line-soft); background: var(--panel); }
+.as-option::after { content: '›'; position: absolute; top: 50%; right: 1.28rem; transform: translateY(-50%); color: var(--muted); font-size: 1.72rem; line-height: 1; }
+.as-option:hover::after, .as-option[aria-checked="true"]::after, .as-option[aria-pressed="true"]::after { color: var(--gold); }
+/* Selection changes colour, never footprint: 1px border in both states, halo by shadow. */
+.as-option[aria-checked="true"], .as-option[aria-pressed="true"], .as-option.is-selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18);
+}
+.as-option .og { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+.as-option .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
+.as-option .on { display: flex; align-items: center; gap: 0.75rem; font: 600 1.65rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); white-space: nowrap; }
+.as-option .od { margin: 0; color: var(--ink-dim); font-size: 1.35rem; line-height: 1.4; }
+.as-option .om { margin: 0; color: var(--muted); font-size: 1.05rem; letter-spacing: 0.08em; }
+.as-option > .r-trail { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 0.75rem; }
+.as-option.noarrow > .r-trail { margin-right: 0; }
+.as-option[aria-disabled="true"], .as-option:disabled { opacity: 0.55; cursor: default; }
+.as-option[aria-disabled="true"] .on, .as-option:disabled .on { color: var(--muted); }
+.as-option.noarrow { padding-right: 1.5rem; }
+.as-option.noarrow::after { content: none; }
+/* A row of an option and a trailing IconButton (delete) share one height. */
+.as-optionrow { display: flex; align-items: stretch; gap: 0.75rem; }
+.as-optionrow > .as-option { flex: 1 1 auto; }
+.as-optionrow > .as-iconbtn { align-self: center; }
+
+/* ═══ NUMBER ATOMS ══════════════════════════════════════════════════════════ */
+.as-statrow { display: flex; align-items: flex-start; gap: 1.5rem; padding: 1.05rem 1.35rem; border: 1px solid var(--rule); border-radius: var(--r-2); background: var(--bg-raise); }
+.as-statrow + .as-statrow { margin-top: 0.6rem; }
+.as-statrow .sr-id { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.as-statrow .sr-name { font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); white-space: nowrap; }
+.as-statrow .sr-vals { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.2rem 1.2rem; text-align: right; }
+.as-statrow.drill { cursor: pointer; }
+.as-statrow.drill:hover { border-color: var(--line-soft); }
+.as-statrow.drill::after { content: '›'; align-self: center; color: var(--muted); font-size: 1.65rem; line-height: 1; }
+.as-statpair { display: inline-flex; align-items: baseline; gap: 0.45rem; white-space: nowrap; }
+.as-statpair .sp-k { font-size: 0.93rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.as-statpair .sp-v { font: 600 1.5rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
+.as-delta { display: inline-flex; align-items: baseline; gap: 0.45rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.as-delta .d-from { color: var(--muted); font-weight: 600; }
+.as-delta .d-arrow { color: var(--muted); }
+.as-delta .d-to { font-weight: 700; }
+.as-delta[data-dir="up"] .d-to { color: var(--green); }
+.as-delta[data-dir="down"] .d-to { color: var(--danger); }
+.as-delta[data-dir="flat"] .d-to { color: var(--parchment); }
+.as-blocker { padding: 1.05rem 1.35rem; border: 1px solid var(--danger); border-radius: var(--r-2); background: rgba(212, 98, 46, 0.08); color: var(--danger); font: 600 1.42rem/1.3 var(--font-body); }
+.as-blocker.pinned { margin-top: auto; }
+.as-blocker.in-foot { flex: 0 1 auto; min-width: 0; padding: 0.6rem 1.05rem; font-size: 1.32rem; }
+.as-blocker.in-foot::before { content: '⚠ '; }
+
+/* StatChip / KitLine — an option card's FACTS, on one baseline, one gap. */
+.as-statstrip, .as-kitline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem 1.35rem; margin: 0.6rem 0 0; }
+.as-kitline { font-size: 1.28rem; color: var(--ink-dim); }
+.as-chip { display: inline-flex; align-items: baseline; gap: 0.45rem; white-space: nowrap; cursor: help; }
+.as-chip .ck { border-bottom: 1px dotted var(--line-soft); font-size: 0.93rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.as-chip .cv { font: 600 1.42rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
+.as-chip:hover .ck { border-bottom-color: var(--gold); color: var(--ink-dim); }
+.as-kitline .ki { display: inline-flex; align-items: baseline; gap: 0.5rem; cursor: help; }
+.as-kitline .ki .kg { flex: 0 0 auto; color: var(--gold); }
+.as-kitline .ki .kn { border-bottom: 1px dotted var(--line-soft); }
+.as-kitline .ki:hover .kn { border-bottom-color: var(--gold); }
+
+/* ═══ ASSEMBLIES — the shell ════════════════════════════════════════════════ */
+.modal-veil, .as-veil {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2.4rem;
+  background: rgba(0, 0, 0, 0.62);
+}
+/* THE INSET IS THE DOOR'S: one number, all four sides, every bar. */
+.as-modal, .modal {
+  --modal-inset: 1.4rem;
+  container-type: inline-size;
+  display: flex; flex-direction: column;
+  width: 100%; max-height: 90%;
+  padding: 0;
+  background: var(--bg-raise);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-4);
+  overflow: hidden;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+}
+/* FOUR WIDTHS, a body picks the smallest that holds it. */
+.modal[data-size='sm'], .as-modal[data-size="sm"] { width: 43rem; max-width: 100%; }
+.modal[data-size='md'], .as-modal[data-size="md"] { width: 57rem; max-width: 100%; }
+.modal[data-size='lg'], .as-modal[data-size="lg"] { width: 76rem; max-width: 100%; }
+.modal[data-size='xl'], .as-modal[data-size="xl"] { width: 96rem; max-width: 100%; }
+
+/* ModalHead = (Eyebrow + Title·S | Tab×n) + IconButton×n. Identity left,
+   actions right, hairline under; the actions row sits at the TOP. */
+.modal-head, .as-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  flex: 0 0 auto;
+  padding: var(--modal-inset);
+  border-bottom: 1px solid var(--line);
+}
+.modal-head-id, .as-head-id { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { margin: 0; font: 600 1.8rem/1.15 var(--font-display); letter-spacing: 0.045em; color: var(--gold); white-space: nowrap; }
+.modal-eyebrow { font-size: 1rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.modal-head-actions, .as-head-actions { display: flex; align-items: flex-start; align-self: flex-start; gap: 0.75rem; flex: 0 0 auto; }
+.modal-head-status { color: var(--muted); font-size: 1.2rem; white-space: nowrap; align-self: center; }
+
+/* ModalFoot = FootNote + ButtonRow. */
+.modal-foot, .as-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  flex: 0 0 auto;
+  padding: var(--modal-inset);
+  border-top: 1px solid var(--line);
+}
+.as-foot-note, .modal-foot-note { flex: 0 12 27rem; min-width: 0; container-type: inline-size; color: var(--muted); font-size: 1.23rem; }
+.as-foot-note > span, .modal-foot-note > span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 9rem) { .modal-foot-note > span { visibility: hidden; } .as-foot-note > span { visibility: hidden; } }
+.modal-foot-actions, .as-foot-actions { margin-left: auto; flex: 0 1 auto; justify-content: end; }
+.modal-foot-actions button { min-height: var(--tap-floor); }
+
+/* Body — the surface's own, and what flexes. */
+.modal-body, .as-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+
+/* NavRail + Pane — body A. Vertical at every width the modal can be. */
+.as-railed { display: grid; grid-template-columns: 17.25rem minmax(0, 1fr); min-height: 22.5rem; height: 100%; }
+.as-rail { display: flex; flex-direction: column; gap: 0.6rem; padding: var(--modal-inset); border-right: 1px solid var(--line); overflow: auto; }
+.as-pane { display: flex; flex-direction: column; padding: var(--modal-inset); min-width: 0; overflow: auto; }
+.as-pane > .as-hairline { margin: 1.4rem 0; }
+.as-pane > .as-subtitle { margin-top: 0.5rem; }
+.as-pane > .as-title-m { margin-top: 0.3rem; }
+.as-pane-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem; }
+@container (max-width: 52rem) {
+  .as-railed { grid-template-columns: 11.25rem minmax(0, 1fr); }
+  .as-rail { padding: 0.9rem; gap: 0.45rem; }
+  .as-railitem { padding: 0.75rem 0.8rem; font-size: 1.2rem; }
+}
+
+/* Decision — body C. The one place the game centres text. */
+.as-decide { padding: 2.4rem 2.1rem 1.8rem; text-align: center; display: flex; flex-direction: column; gap: 0; }
+.as-decide > .as-ornament { margin: 1.28rem 0 1.65rem; }
+.as-decide > .as-title-l { text-align: center; }
+.as-decide > .prompt { margin: 1.5rem 0 0; color: var(--muted); font-size: 1.32rem; }
+.as-decide > .as-options { margin-top: 0.3rem; text-align: left; }
+.as-decide > .as-detailcard { text-align: left; }
+.as-decide > .as-prose { text-align: center; }
+
+/* Detail — body B. The height is the art's, not the prose's. */
+.as-detailbody { display: flex; gap: 1.95rem; padding: 2.1rem; align-items: flex-start; min-height: calc(8.4rem + 4.2rem); }
+.as-detailbody .lines { flex: 1 1 27rem; min-width: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+
+/* Workspace — body D. Two panes and a separator. */
+.as-splitbody { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 22.5rem; }
+.as-splitbody > * + * { border-left: 1px solid var(--line); }
+@container (max-width: 51rem) { .as-splitbody { grid-template-columns: 1fr; } .as-splitbody > * + * { border-left: 0; border-top: 1px solid var(--line); } }
+
+/* ═══ MENUS — three widths, one Row atom ════════════════════════════════════ */
+.as-pop { width: 31.5rem; max-width: 100%; background: var(--bg-raise); border: 1px solid var(--line-soft); border-radius: var(--r-3); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6); overflow: hidden auto; }
+.as-pop-cap { padding: 0.9rem 1.35rem; border-bottom: 1px solid var(--line); }
+.as-group { padding: 0.45rem 0; border-bottom: 1px solid var(--line); }
+.as-group:last-child { border-bottom: 0; }
+.as-actions { width: 23.25rem; }
+.as-actions .am-name { padding: 0.9rem 1.35rem 0.5rem; font: 600 1.65rem/1 var(--font-display); letter-spacing: 0.04em; color: var(--gold); }
+.as-actions .am-detail { padding: 0 1.35rem 0.9rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 1.28rem; line-height: 1.45; }
+
+/* TitleMenu — the one menu with no panel around it. */
+.as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; }
+.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1 var(--font-display); letter-spacing: var(--track); text-indent: var(--track); color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+.as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
+.as-titlemenu li + li { border-top: 1px solid var(--rule); }
+.as-titlemenu .tm-entry {
+  display: block; width: 100%; min-height: var(--tap-floor);
+  padding: 1.05rem 0;
+  background: transparent; border: 0; border-radius: 0;
+  color: var(--parchment);
+  font: 600 1.88rem/1 var(--font-display);
+  --track: 0.1em;
+  letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase;
+  cursor: pointer;
+}
+.as-titlemenu .tm-entry:hover, .as-titlemenu .tm-entry:focus-visible { color: var(--gold); outline: none; background: transparent; box-shadow: none; }
+.as-titlemenu .tm-entry:disabled { color: var(--muted); background: transparent; }
+.as-titlemenu > .as-ornament { margin-top: 1.35rem; }
+.as-titlemenu .tm-foot { margin-top: 1.5rem; color: var(--muted); font-size: 1.05rem; letter-spacing: 0.2em; text-transform: uppercase; }
+
+/* ═══ TOOLTIP — Title + meta + effect + hairline + glossary + flavour ══════ */
+.as-tip { width: 36rem; max-width: 100%; padding: 1.1rem 1.35rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-2); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55); font-size: 1.35rem; line-height: 1.45; color: var(--parchment); }
+.as-tip .ti-title { margin-bottom: 0.45rem; font: 600 1.58rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); }
+.as-tip .ti-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem 0.9rem; margin-bottom: 0.75rem; }
+.as-tip .ti-meta .as-tag { letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.9rem; }
+.as-tip .ti-cost { font-size: 1.2rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.as-tip .ti-cost b { color: var(--parchment); font-weight: 600; }
+.as-tip .ti-detail { margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 1.28rem; }
+.as-tip .ti-detail b { color: var(--parchment); }
+.as-tip .ti-list { margin: 0.75rem 0 0; padding-left: 1.65rem; color: var(--muted); font-size: 1.28rem; }
+.as-tip .as-flavor { display: block; margin-top: 0.75rem; }
+
+/* ═══ PAGE-LEVEL ═══════════════════════════════════════════════════════════ */
+/* A phone: the inset stays one number, the note goes, every row fills. */
+@media (max-width: 640px) {
+  .as-modal, .modal { --modal-inset: 1rem; }
+  .modal-veil, .as-veil { padding: 1rem; }
+  .modal-foot, .as-foot { align-items: stretch; }
+  .modal-foot-note, .as-foot-note { display: none; }
+  .modal-foot-actions, .as-foot-actions { width: 100%; }
+  .modal-btnrow[data-size], .as-btnrow[data-size] { width: 100%; }
+  .modal-btnrow > button, .as-btnrow > button { padding-inline: clamp(0.4rem, 6%, 8px); }
+  .as-railed { grid-template-columns: 10rem minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .as-toggle .knob { transition: none; } }
+
+/* ═══ INPUTS INSIDE A ROW — the kit's field, one look ══════════════════════ */
+.as-row.setting input[type="text"], .as-row.setting input[type="number"] {
+  min-height: var(--tap-floor); padding: 0.6rem 1rem;
+  background: var(--bg); border: 1px solid var(--line-soft); border-radius: var(--r-2);
+  color: var(--parchment); font: 500 1.38rem/1 var(--font-body); font-variant-numeric: tabular-nums;
+}
+.as-row.setting input[type="number"] { width: 9rem; text-align: right; }
+.as-row.setting input[type="text"] { width: min(100%, 30rem); }
+.as-row.setting input:focus-visible { border-color: var(--gold); outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
+.as-row.setting input[type="range"] { width: 18rem; accent-color: var(--gold); cursor: pointer; }
+.as-row.setting > .as-status.range-val { flex: 0 0 auto; margin-left: auto; min-width: 3.6rem; color: var(--gold); font-variant-numeric: tabular-nums; }
+.as-row.setting > .as-status.range-val + .r-trail { margin-left: 0; }
+.as-row.setting .set-applied-slot:empty { display: none; }
+.as-row.setting .set-applied-slot { color: var(--ink-dim); font-size: 1.2rem; margin-top: 0.2rem; }
+.as-row.setting .ls-hint code { color: var(--ink-dim); }
+.set-section-head { display: flex; flex-direction: column; gap: 0.3rem; }
+.set-section-head + .as-hairline { margin: 1.4rem 0; }
+.as-pane > .as-pane-head { margin-bottom: 1.2rem; }
+
+/* ═══ HOUSEKEEPING ═════════════════════════════════════════════════════════ */
+/* `hidden` wins over any display a kit class sets — a detail card the caller
+   hid must not draw its border. */
+.as-detailcard[hidden], .as-option[hidden], .as-row[hidden], .modal-foot-note[hidden], .as-pane [hidden] { display: none !important; }
+/* A hold-armed IconButton keeps its glyph; the hold hint is the tooltip's job. */
+.as-iconbtn .hold-hint, .modal-iconbtn .hold-hint, .modal-close .hold-hint { display: none; }
+/* THE SCROLL OWNERS INSIDE A DOOR wear the house scrollbar, not Chromium's. */
+.modal-body, .as-body, .as-pane, .as-rail, .as-pop, .modal .set-panel {
+  scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent;
+}
+.modal-body::-webkit-scrollbar, .as-pane::-webkit-scrollbar, .as-rail::-webkit-scrollbar, .as-pop::-webkit-scrollbar { width: 8px; height: 8px; }
+.modal-body::-webkit-scrollbar-thumb, .as-pane::-webkit-scrollbar-thumb, .as-rail::-webkit-scrollbar-thumb, .as-pop::-webkit-scrollbar-thumb { background: var(--line-soft); border-radius: 4px; }
+.modal-body::-webkit-scrollbar-track, .as-pane::-webkit-scrollbar-track, .as-rail::-webkit-scrollbar-track, .as-pop::-webkit-scrollbar-track { background: transparent; }

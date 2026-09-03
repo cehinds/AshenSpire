@@ -733,9 +733,9 @@
   {
    "id": "T4",
    "by": "Bjorn",
-   "read": "styles/ui.css (#100 — the tab takes the chip's weight) · settings.js .set-tabs",
+   "read": "styles/kit.css (the NavRail — the strip is a vertical rail of RailItems now) · src/ui/screens/settings.js .set-tabs",
    "anchors": [
-    ".set-tabs"
+    "as-rail set-tabs"
    ],
    "screen": "Settings › the tab strip, measured",
    "why-tolerance": "NO tolerance is asserted here and that is deliberate: WHICH of four numbers his '20% smaller' named is DEC-9 and undecided, so a threshold typed here would be me deciding it. What is asserted is the tap floor (44, card #37) and one row; the height is REPORTED.",
