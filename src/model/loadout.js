@@ -1630,7 +1630,14 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
     }
   }
 
-  for (const cardId of ((cfg.global || {}).grants) || []) grants.push({ source: 'global', cardId });
+  // The validator names a non-array `global.grants`, so a bad bundle does not
+  // boot — but this is the PLANNER, reached by tools and fixtures with
+  // hand-built configs that never went through that door. It reads the shape it
+  // needs rather than trusting that someone else checked.
+  const globalGrants = (cfg.global || {}).grants;
+  if (Array.isArray(globalGrants)) {
+    for (const cardId of globalGrants) grants.push({ source: 'global', cardId });
+  }
   if (cls.startingSignatureCard) grants.push({ source: 'class', cardId: cls.startingSignatureCard });
   return grants;
 }

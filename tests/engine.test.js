@@ -64,7 +64,7 @@ import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
   figureSpec, fitsSlot, slotHand, pieceHand,
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
-  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings, isEquipmentComposedInstance,
+  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings, isEquipmentComposedInstance, startingDeckPlan,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
   previewCompatibleHands, startingHandsRequirementFailure,
 } from '../src/model/loadout.js';
@@ -2759,8 +2759,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     const badGrants = clone();
     badGrants.balance.equipment.startingDeck.global = { grants: {} };
-    assert(validateEquipment(createRegistries(badGrants)).some((p) => /global\.grants must be an array/.test(p)),
+    const badGrantsReg = createRegistries(badGrants);
+    assert(validateEquipment(badGrantsReg).some((p) => /global\.grants must be an array/.test(p)),
       'a non-array global.grants is named');
+    // And the PLANNER reads the shape it needs rather than trusting the door:
+    // tools and fixtures build configs by hand and never pass through it.
+    startingDeckPlan(badGrantsReg, createLoadout(badGrantsReg, 'reaver'), 'reaver');
 
     // THE FLOOR ITSELF, and the point is that it does not depend on my having
     // thought of the field. `enemies` as a bare number reaches an unguarded
