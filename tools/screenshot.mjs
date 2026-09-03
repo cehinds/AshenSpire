@@ -99,6 +99,26 @@ const args = process.argv.slice(2);
 const oi = args.indexOf('--out');
 const outDir = resolve(ROOT, oi >= 0 && args[oi + 1] ? args[oi + 1] : 'docs/preview');
 
+// --prefix STR — put STR in front of every output filename.
+//
+// WITHOUT THIS, TWO VIEWPORTS INTO ONE FOLDER IS DATA LOSS. Every capture is
+// named `<shot>.png` and nothing else, so a phone pass into the directory a
+// desktop pass just filled overwrites all of it, silently and file for file.
+// The evidence folder's `desktop-1440x860-` / `phone-390x844-` names existed
+// only because I renamed the files by hand afterwards — which meant the
+// regeneration commands written next to them could not actually reproduce
+// them. An undocumented manual step is the same defect as a missing one.
+const pi = args.indexOf('--prefix');
+const PREFIX = pi >= 0 && args[pi + 1] && !args[pi + 1].startsWith('--') ? args[pi + 1] : '';
+
+// --only a,b — keep the shots whose name starts with one of these.
+// Lets a run write exactly one evidence set rather than every screen the tool
+// knows, so the documented command's output IS the committed folder.
+const yi = args.indexOf('--only');
+const ONLY = yi >= 0 && args[yi + 1] && !args[yi + 1].startsWith('--')
+  ? args[yi + 1].split(',').map((s) => s.trim()).filter(Boolean)
+  : null;
+
 // --class-matrix — one capture per SHIPPED class sprite, read from the sprite
 // manifest rather than listed here.
 //
@@ -172,8 +192,15 @@ const { server, port } = await serve({ root: ROOT, port: 8123, open: false });
 // stranded a `/tmp/.org.chromium.Chromium.*` — the single densest source of the
 // 2208 measured on this box. `awaitEndpoint` is off: one-shot `--screenshot=`
 // never prints a DevTools endpoint, it writes a file and exits.
+// ONE HOME for turning a shot name into a path, so --prefix cannot apply to
+// the capture and miss the probe (which would make every stable shot compare a
+// prefixed file against an unprefixed one and never agree).
+function shotPath(name) {
+  return resolve(outDir, `${PREFIX}${name}.png`);
+}
+
 async function capture(shot) {
-  const out = resolve(outDir, `${shot.name}.png`);
+  const out = shotPath(shot.name);
   const { child, close: dropBrowser } = await launchBrowser({
     prefix: 'shot-', browser, headless: '--headless=new', awaitEndpoint: false,
     // 8000 was not enough and failed at random: successive runs caught a
@@ -236,8 +263,8 @@ async function capture(shot) {
 // a change to the shot states themselves and belongs in its own commit.
 const MAX_TRIES = 4;
 async function captureStable(shot) {
-  const out = resolve(outDir, `${shot.name}.png`);
-  const probe = resolve(outDir, `.${shot.name}.probe.png`);
+  const out = shotPath(shot.name);
+  const probe = shotPath(`.${shot.name}.probe`);
   // EVERY exit that is not "reproduced" takes the files with it. A capture that
   // failed its probe — the probe browser did not launch, or wrote nothing — is
   // exactly as unverified as one that disagreed with it, and leaving the first
@@ -270,9 +297,14 @@ async function captureStable(shot) {
 const SAMPLE_CLASS_SHOTS = new Set([
   'class-reaver', 'class-starseer', 'class-rogue', 'class-herald', 'class-rogue-ember',
 ]);
-const RUN = CLASS_MATRIX
+const ALL = CLASS_MATRIX
   ? [...SHOTS.filter((s) => !SAMPLE_CLASS_SHOTS.has(s.name)), ...classMatrixShots()]
   : SHOTS;
+const RUN = ONLY ? ALL.filter((s) => ONLY.some((p) => s.name.startsWith(p))) : ALL;
+if (ONLY && !RUN.length) {
+  console.error(`screenshot: --only ${ONLY.join(',')} matched no shots.`);
+  process.exit(1);
+}
 
 let failed = 0;
 for (const shot of RUN) {

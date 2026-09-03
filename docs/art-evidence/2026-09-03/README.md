@@ -5,9 +5,24 @@ sizes `RUNBOOKS/art.md` §§145-150, 181-192 asks for, covering **all twenty
 replaced files** — four classes × five tints — at both sizes.
 
 ```
-node tools/screenshot.mjs --out <dir> --class-matrix                      # desktop 1440x860
-node tools/screenshot.mjs --out <dir> --class-matrix --viewport 390x844   # phone
+node tools/screenshot.mjs --out <dir> --class-matrix --only class- --viewport 1440x860 --prefix desktop-1440x860-
+node tools/screenshot.mjs --out <dir> --class-matrix --only class- --viewport 390x844  --prefix phone-390x844-
+node tools/screenshot.mjs --out <dir> --only combat  --viewport 1440x860 --prefix desktop-1440x860-
+node tools/screenshot.mjs --out <dir> --only combat  --viewport 390x844  --prefix phone-390x844-
 ```
+
+**Both class commands run into the SAME `<dir>` and the forty files come back
+byte-identical to the ones committed here** — checked, not asserted. `--prefix`
+is what makes that true: every capture is otherwise named `<shot>.png` and
+nothing else, so a second viewport into the same folder used to overwrite the
+first, file for file, silently. The `desktop-` / `phone-` names in this folder
+were originally produced by renaming the output by hand, which meant the
+commands printed beside them could not reproduce them. An undocumented manual
+step is the same defect as a missing one.
+
+The two combat captures do **not** reproduce byte-identically: that screen
+animates, it is not marked `stable`, and the harness makes no such promise
+about it. It is here for the finding below, not as a controlled comparison.
 
 | file | shows |
 |---|---|
