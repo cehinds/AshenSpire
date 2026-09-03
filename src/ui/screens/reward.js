@@ -233,8 +233,8 @@ export function mountRewards(app, {
     const pending = plan.rows.filter((r) => !states[r.kind] && !r.blockedBy);
     app.innerHTML = `
       <div class="screen" style="padding-bottom:calc(var(--tap-floor, 44px) + 16px)">
-        <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
-        ${plan.rows.length ? '<p class="subtitle">CLAIM YOUR SPOILS</p>' : ''}
+        <h2>${esc(rewards.title || 'Victory')}</h2>
+        ${plan.rows.length ? '<p class="subtitle">Claim your spoils</p>' : ''}
         <div class="class-row reward-menu">
           ${plan.rows.map((row) => {
             const state = states[row.kind] || (row.blockedBy ? 'blocked' : 'pending');
@@ -256,9 +256,9 @@ export function mountRewards(app, {
             </div>`;
           }).join('')}
         </div>
-        <button class="subtle" id="reward-continue" data-focusable="true" aria-describedby="reward-hold-copy">${
-          mode === 'auto' && pending.length ? 'CONTINUE — take the rest' : 'CONTINUE — leave the rest'}</button>
-        <p id="reward-hold-copy" class="subtitle" aria-live="polite">PRESS AND HOLD TO CONTINUE</p>
+        <button class="primary" id="reward-continue" data-focusable="true" aria-describedby="reward-hold-copy">${
+          mode === 'auto' && pending.length ? 'Continue — take the rest' : 'Continue — leave the rest'}</button>
+        <p id="reward-hold-copy" class="subtitle" aria-live="polite">Press and hold to continue</p>
       </div>`;
 
     for (const el of app.querySelectorAll('.reward-kind')) {
@@ -338,13 +338,13 @@ export function mountRewards(app, {
     app.innerHTML = `
       <div class="screen" data-reward-detail="${esc(row.kind)}">
         <h2 style="color:var(--gold);font-size:26px">${isFlask ? 'POTION' : 'ARMAMENT'}</h2>
-        <p class="subtitle">${isFlask ? 'INSPECT THE POTION' : 'INSPECT THE ARMAMENT'}</p>
+        <p class="subtitle">${isFlask ? 'Inspect the potion' : 'Inspect the armament'}</p>
         <div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
           <div class="glyph">${KIND_GLYPHS[row.kind]}</div>
           <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-          <button class="subtle" id="reward-detail-take" data-focusable="true">TAKE ${isFlask ? 'POTION' : 'ARMAMENT'}</button>
+          <button class="primary" id="reward-detail-take" data-focusable="true">Take ${isFlask ? 'potion' : 'armament'}</button>
           <button class="subtle" id="reward-back" data-focusable="true">Back</button>
         </div>
       </div>`;
@@ -361,7 +361,7 @@ export function mountRewards(app, {
     app.innerHTML = `
       <div class="screen">
         <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
-        <p class="subtitle">CHOOSE A CARD</p>
+        <p class="subtitle">Choose a card</p>
         <div class="reward-row"></div>
         <button class="subtle" id="reward-back" data-focusable="true">Back</button>
       </div>`;

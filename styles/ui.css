@@ -497,8 +497,7 @@ button.rs-reset {
   background: var(--line); border-radius: var(--r-2); border: 3px solid transparent;
   background-clip: padding-box;
 }
-.screen .title-big { font-size: 4.4rem; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
-.screen .subtitle { color: var(--muted); letter-spacing: 0.3em; font-size: 1.2rem; }
+
 /* The grace-refill sentence on the Shrine (Sten, 2026-08-08). NOT `.subtitle`:
    that rule's 0.3em tracking is right for a three-word banner and wrong for a
    sentence — at 390x844 it pushed the first draft of this line to six lines
@@ -539,7 +538,6 @@ button.rs-reset {
 }
 .seed-line input[aria-invalid='true'] { border-color: var(--ember); }
 
-.class-row { display: flex; gap: 1.8rem; }
 .shrine-option-list {
   width: min(100%, var(--shrine-folded-card-width, 88vw), var(--shrine-folded-card-max-width, 44rem)); margin-inline: auto;
   flex-direction: column; align-items: stretch; gap: 12px;
@@ -556,18 +554,7 @@ button.rs-reset {
 .shrine-option-list > #rest-opt .glyph,
 .shrine-option-list > #smith-opt .glyph { margin: 0; font-size: 3.2rem; }
 .shrine-option-grid { align-items: stretch; }
-.class-pick {
-  width: 19rem; padding: 1.6rem; border: 2px solid var(--line-soft); border-radius: var(--r-4);
-  background: var(--panel); cursor: pointer; text-align: center; transition: border-color 150ms, transform 150ms;
-}
-.class-pick:hover { border-color: var(--gold); transform: translateY(-3px); }
-.class-pick.locked { opacity: 0.45; cursor: default; }
-.class-pick.locked:hover { border-color: var(--line-soft); transform: none; }
-.class-pick .glyph { font-size: 4.4rem; margin-bottom: 0.8rem; }
-.class-pick .cp-body { min-width: 0; }
-.class-pick h3 { color: var(--gold); font-size: 1.5rem; margin-bottom: 0.6rem; }
-.class-pick p { font-size: 1.1rem; color: var(--muted); line-height: 1.5; }
-.class-pick .chip { display: inline-block; margin-top: 0.8rem; font-size: 1rem; color: var(--muted); border: 1px solid var(--line); border-radius: var(--r-3); padding: 0.2rem 0.8rem; }
+
 .flask-allocation-controls {
   display: flex; flex-wrap: wrap; gap: 6px;
 }
@@ -609,31 +596,10 @@ button.rs-reset {
 .stat-allocation-card .cc-stat-actions { justify-content: center; }
 .stat-allocation-card .se-step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
 
-/* ---------- Shrine Smith transaction -------------------------------------
-   Smith selection owns the complete Shrine action pane. It keeps dialog/input
-   semantics because the decision is permanent, but it is not a card floating
-   inside the Shrine: header, picker, preview, and actions fill the pane. */
-.smith-modal-veil { z-index: 620; padding: 0; box-sizing: border-box; }
-.smith-upgrade-modal {
-  /* Percent is intentional. The whole app is zoomed on <body>; viewport units
-     ignore that zoom and would visibly shrink this pane by --ui-zoom. */
-  width: 100%; height: 100%; max-width: none; max-height: none; padding: 0;
-  display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;
-  border-radius: 0;
-}
-.smith-modal-head {
-  flex: 0 0 auto; display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); background: var(--panel);
-}
-.smith-modal-head h2 { margin: 2px 0 4px; font-size: 1.8rem; }
-.smith-modal-head p { margin: 0; color: var(--muted); line-height: 1.35; }
 .smith-modal-eyebrow, .smith-preview-label {
   color: var(--gold); font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase;
 }
-.smith-modal-consequence {
-  flex: 0 0 auto; padding: 6px 9px; border: 1px solid var(--ember); border-radius: var(--r-pill);
-  color: var(--parchment); font-size: 0.78rem; letter-spacing: 0.1em;
-}
+
 .smith-modal-body {
   flex: 1 1 auto; min-height: 0; display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(22rem, 1fr);
@@ -852,13 +818,7 @@ button.rs-reset {
 .smith-preview-empty { text-align: center; color: var(--muted); }
 .smith-preview-empty b { color: var(--parchment); }
 .smith-preview-glyph { color: var(--gold); font-size: 2.8rem; }
-.smith-modal-footer {
-  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; padding: 12px 16px; border-top: 1px solid var(--line); background: var(--panel);
-}
-.smith-modal-footer p { max-width: 36rem; margin: 0; color: var(--muted); line-height: 1.3; }
-.smith-modal-actions { display: flex; gap: 8px; }
-.smith-modal-actions button { min-height: var(--tap-floor); height: auto; padding: 8px 16px; }
+
 .smith-confirm[data-smith-action-state='actionable'] {
   color: var(--green); border-color: var(--green);
   background: color-mix(in srgb, var(--green) 13%, var(--panel));
@@ -869,10 +829,7 @@ button.rs-reset {
 .smith-confirm[data-smith-action-state='unselected']:disabled { opacity: 0.42; cursor: default; }
 
 @media (max-width: 720px) {
-  .smith-modal-veil { padding: 0; }
-  .smith-upgrade-modal { width: 100%; height: 100%; max-height: none; }
-  .smith-modal-head { padding: 10px 12px; gap: 8px; }
-  .smith-modal-consequence { padding: 4px 6px; font-size: 0.68rem; }
+
   .smith-modal-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
   .smith-candidate-region { border-right: 0; border-bottom: 1px solid var(--line); }
   .smith-card-list {
@@ -900,10 +857,7 @@ button.rs-reset {
   .smith-fold-caret { grid-column: 2; grid-row: 1; }
   .smith-fold-detail { grid-template-columns: minmax(6.5rem, 8rem) minmax(0, 1fr); }
   .smith-card-sprite .card { width: 7.5rem; height: 10.5rem; }
-  .smith-modal-footer { align-items: stretch; flex-direction: column; gap: 8px; padding: 8px 10px; }
-  .smith-modal-footer p { font-size: 0.9rem; }
-  .smith-modal-actions { width: 100%; }
-  .smith-modal-actions button { flex: 1 1 0; padding-inline: 8px; }
+
 }
 
 /* ---------- E10: the flask assignment is an increment, not a menu ---------- */
@@ -1025,18 +979,6 @@ button.rs-reset {
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
-/* THE REWARD MENU (E11/#256) — rows are `.class-pick` cards (the B9 uniform
-   card-button pattern; input.js already focuses `.class-pick:not(.locked)`),
-   so this block styles only what is NEW here: the menu's wrap, the NEW chip,
-   and the Skip control's tap floor. Law 4 clause 4 on Skip: a fixed ergonomic
-   floor (--tap-floor) plus intrinsic growth — never a text-unit multiple. */
-.reward-menu { flex-wrap: wrap; justify-content: center; }
-/* Box geometry in px, NEW WRITES under Law 4 clause 3 (the ratchet): these are
-   boxes, not letters — .class-pick's own 19rem is pre-existing debt, not
-   license. The glyph stays in text units: it is a typographic mark. */
-.reward-menu .reward-kind { width: 256px; padding: 19px; }
-.reward-menu .reward-kind .glyph { font-size: 3rem; margin-bottom: 8px; }
-.chip.reward-new { color: var(--gold); border-color: var(--gold); }
 /* The card chooser's NEW badge (E11/#290 — Codex 4989824448 finding 3: the
    chooser set only `data-new`, which no stylesheet or renderer consumed, so
    the unseen card looked identical to its neighbours). The chip dress is
@@ -1052,10 +994,7 @@ button.rs-reset {
   padding: 1px 8px; background: rgba(20, 16, 10, 0.85);
   pointer-events: none; z-index: 2;
 }
-.reward-skip {
-  display: block; width: fit-content; margin-left: auto; align-self: center; flex: 0 0 auto;
-  min-height: calc(var(--tap-floor, 44px) + 1px); min-width: var(--tap-floor, 44px); height: auto;
-}
+
 :root:not([data-layout='narrow']) .reward-menu .reward-kind:has(.reward-skip) {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px;
 }
@@ -1064,9 +1003,7 @@ button.rs-reset {
 :root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .reward-skip {
   grid-column: 2; grid-row: 2; position: relative; left: 2px;
 }
-/* Receive feedback: a taken row settles — border flashes gold and the card
-   relaxes. Runs once on the state flip (data-state="taken" is re-rendered). */
-.reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
+
 @keyframes reward-took {
   0% { border-color: var(--gold); transform: scale(1.04); }
   100% { border-color: var(--line-soft); transform: scale(1); }

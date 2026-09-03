@@ -2,6 +2,7 @@
 // semantics, focus containment and rendering; the screen owns run mutation.
 import { assetUrl } from '../assetmap.js';
 import { esc, attachTooltip } from './tooltip.js';
+import { el, modalHead, modalFooter, pill, button, subtitle } from '../kit/index.js';
 import { renderCard } from './card.js';
 // The interaction router goes through the framework's adopted door.
 import { armOptionDecision } from '../../framework/optionDecision.js';
@@ -28,38 +29,40 @@ export function mountSmithUpgradeModal(host, initialModel, {
   veil.className = 'modal-veil smith-modal-veil';
   const modal = document.createElement('section');
   modal.className = 'modal smith-upgrade-modal';
+  modal.dataset.size = 'xl'; // body E: the chooser on the left, the inspector on the right
   modal.setAttribute('role', 'dialog');
   modal.setAttribute('aria-modal', 'true');
   modal.setAttribute('aria-labelledby', 'smith-modal-title');
   modal.setAttribute('aria-describedby', 'smith-modal-instruction');
   modal.tabIndex = -1;
   markUiComponent(modal, UI.smithUpgradeModal, initialModel.variant);
-  modal.innerHTML = `
-    <header class="smith-modal-head">
-      <div>
-        <span class="smith-modal-eyebrow">${esc(initialModel.properties.eyebrow)}</span>
-        <h2 id="smith-modal-title">${esc(initialModel.properties.title)}</h2>
-        <p id="smith-modal-instruction">${esc(initialModel.properties.instruction)}</p>
-      </div>
-      <span class="smith-modal-consequence">${esc(initialModel.properties.consequenceBadge)}</span>
-    </header>
-    <div class="smith-modal-body">
-      <section class="smith-candidate-region" aria-labelledby="smith-candidate-title">
-        <div class="smith-region-head">
-          <h3 id="smith-candidate-title">Choose an item</h3>
-          <span data-smith-count></span>
-        </div>
-        <div class="smith-card-list" role="listbox" aria-label="Items available to upgrade"></div>
-      </section>
-      <section class="smith-preview-region" aria-live="polite" aria-label="Selected upgrade preview"></section>
-    </div>
-    <footer class="smith-modal-footer">
-      <p>${esc(initialModel.properties.consequence)}</p>
-      <div class="smith-modal-actions">
-        <button type="button" class="subtle smith-back">${esc(initialModel.properties.backLabel)}</button>
-        <button type="button" class="smith-confirm"></button>
-      </div>
-    </footer>`;
+  // THE SHELL'S HEAD AND FOOT (kit §04): eyebrow + title, the consequence as
+  // a StatePill in the head's actions, the close box; the foot carries the
+  // consequence sentence as its note and the two ways out on the ladder.
+  const head = modalHead({
+    eyebrow: initialModel.properties.eyebrow,
+    title: initialModel.properties.title,
+    titleId: 'smith-modal-title',
+    extras: pill({ label: initialModel.properties.consequenceBadge, attrs: { class: 'smith-modal-consequence' } }),
+    closeLabel: initialModel.properties.backLabel,
+  });
+  const body = el('div', { class: 'modal-body smith-modal-body' }, [
+    el('section', { class: 'smith-candidate-region', 'aria-labelledby': 'smith-candidate-title' }, [
+      el('div', { class: 'smith-region-head' }, [
+        el('div', { class: 'as-labelstack' }, [
+          el('h3', { id: 'smith-candidate-title', class: 'as-title-s', text: 'Choose an item' }),
+          subtitle(initialModel.properties.instruction, { id: 'smith-modal-instruction' }),
+        ]),
+        el('span', { class: 'as-status', dataset: { smithCount: '' } }),
+      ]),
+      el('div', { class: 'smith-card-list', role: 'listbox', 'aria-label': 'Items available to upgrade' }),
+    ]),
+    el('section', { class: 'smith-preview-region', 'aria-live': 'polite', 'aria-label': 'Selected upgrade preview' }),
+  ]);
+  const backBtn = button({ label: initialModel.properties.backLabel, className: 'subtle smith-back' });
+  const confirmBtn = button({ label: '', weight: 'primary', className: 'smith-confirm' });
+  const foot = modalFooter({ note: initialModel.properties.consequence, secondary: [backBtn], primary: confirmBtn, className: 'smith-modal-footer', size: 'long' });
+  modal.append(head, body, foot);
   veil.appendChild(modal);
   host.appendChild(veil);
 
@@ -291,6 +294,10 @@ export function mountSmithUpgradeModal(host, initialModel, {
   }
 
   back.addEventListener('click', backOut);
+
+  // The shell's close box is the same way out as Back.
+
+  modal.querySelector('.modal-close')?.addEventListener('click', backOut);
   window.addEventListener('keydown', onKeydown, true);
   draw(initialModel);
   queueMicrotask(() => modal.focus({ preventScroll: true }));

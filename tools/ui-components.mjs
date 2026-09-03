@@ -388,8 +388,9 @@ export function findings(r) {
       || !/export function mountSmithUpgradeModal/.test(r.smithUpgradeModal)
       || !/role', 'dialog'/.test(r.smithUpgradeModal)
       || !/aria-modal/.test(r.smithUpgradeModal)
-      || !/<button[^>]+smith-back/.test(r.smithUpgradeModal)
-      || !/<button[^>]+smith-confirm/.test(r.smithUpgradeModal)
+      // The two ways out are kit buttons now (builder form), or literal markup.
+      || !/(<button[^>]+smith-back|className: '[^']*smith-back')/.test(r.smithUpgradeModal)
+      || !/(<button[^>]+smith-confirm|className: '[^']*smith-confirm')/.test(r.smithUpgradeModal)
       || !/attachTooltip\(card/.test(r.smithUpgradeModal)
       || !/card\.dataset\.itemRef = item\.itemRef/.test(r.smithUpgradeModal)
       || !/Tier \$\{item\.currentLevel\} → \$\{item\.nextLevel\}/.test(r.smithUpgradeModal)

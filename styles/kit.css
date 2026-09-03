@@ -405,7 +405,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
   padding: var(--modal-inset);
   border-top: 1px solid var(--line);
 }
-.as-foot-note, .modal-foot-note { flex: 0 12 27rem; min-width: 0; container-type: inline-size; color: var(--muted); font-size: 1.23rem; }
+.as-foot-note, .modal-foot-note { flex: 1 12 27rem; max-width: max-content; min-width: 0; container-type: inline-size; color: var(--muted); font-size: 1.23rem; }
 .as-foot-note > span, .modal-foot-note > span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @container (max-width: 9rem) { .modal-foot-note > span { visibility: hidden; } .as-foot-note > span { visibility: hidden; } }
 .modal-foot-actions, .as-foot-actions { margin-left: auto; flex: 0 1 auto; justify-content: end; }
@@ -524,7 +524,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* ═══ HOUSEKEEPING ═════════════════════════════════════════════════════════ */
 /* `hidden` wins over any display a kit class sets — a detail card the caller
    hid must not draw its border. */
-.as-detailcard[hidden], .as-option[hidden], .as-row[hidden], .modal-foot-note[hidden], .as-pane [hidden] { display: none !important; }
+.as-detailcard[hidden], .as-option[hidden], .as-row[hidden], .modal-foot-note[hidden], .as-pane [hidden], .modal-head [hidden], .as-iconbtn[hidden], .modal-close[hidden] { display: none !important; }
 /* A hold-armed IconButton keeps its glyph; the hold hint is the tooltip's job. */
 .as-iconbtn .hold-hint, .modal-iconbtn .hold-hint, .modal-close .hold-hint { display: none; }
 /* THE SCROLL OWNERS INSIDE A DOOR wear the house scrollbar, not Chromium's. */
@@ -739,3 +739,51 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .ctext .val { font-weight: 700; }
 .ctext .val.up { color: var(--green); }
 .ctext .val.down { color: var(--ember); }
+
+/* ═══ SCREENS — a page wears the same atoms a door does ═══════════════════ */
+/* A screen's banner is Title·L over an Eyebrow-weight subtitle; the same
+   two atoms the kit's TitleMenu and Pane use, centred because a screen's
+   banner is the one centred text a page has. */
+.screen > h2, .screen > .as-title-l { --track: 0.06em; margin: 0; font: 700 2.55rem/1.1 var(--font-display); letter-spacing: var(--track); text-indent: var(--track); color: var(--gold); text-align: center; }
+.screen > .subtitle, .screen > .as-eyebrow { margin: 0; color: var(--muted); font-size: 1.1rem; letter-spacing: 0.22em; text-transform: uppercase; text-align: center; }
+/* OptionCard under the names the screens already write: `.class-pick` is the
+   card, `.glyph` its Glyph, `.cp-body` its body, `h3` its Title·S, `p` its
+   prose, `.chip` a StatePill, `.locked` disabled. A row of them is `.class-row`. */
+.class-row { display: flex; flex-wrap: wrap; gap: 1.05rem; justify-content: center; width: 100%; max-width: 80rem; }
+.class-pick {
+  position: relative; display: flex; gap: 1.5rem; align-items: center;
+  flex: 1 1 26rem; max-width: 40rem; min-width: 0;
+  padding: 1.28rem 1.5rem;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-3);
+  color: inherit; text-align: left; cursor: pointer;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.class-pick:hover { border-color: var(--line-soft); }
+.class-pick.selected, .class-pick[aria-checked="true"], .class-pick[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18); }
+.class-pick.locked { opacity: 0.55; cursor: default; }
+.class-pick.locked:hover { border-color: var(--line); }
+.class-pick > .glyph { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+.class-pick > .cp-body, .class-pick > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
+.class-pick h3 { margin: 0; display: flex; align-items: center; gap: 0.75rem; font: 600 1.65rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.class-pick p { margin: 0; color: var(--ink-dim); font-size: 1.35rem; line-height: 1.4; }
+.class-pick .chip { display: inline-block; align-self: flex-start; margin-top: 0.3rem; padding: 0.15rem 0.6rem; border: 1px solid var(--line-soft); border-radius: var(--r-1); font: 500 1.02rem/1.5 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.class-pick .chip.reward-new { color: var(--gold); border-color: var(--gold); }
+.class-pick > button.reward-skip { flex: 0 0 auto; align-self: center; }
+/* The reward menu is a column of OptionCards, full pane width. */
+.reward-menu { flex-direction: column; align-items: stretch; max-width: 60rem; }
+.reward-menu > .class-pick, .shrine-option-list > .class-pick { max-width: none; flex: 0 0 auto; }
+.reward-row { display: flex; flex-wrap: wrap; gap: 2.2rem; justify-content: center; }
+.reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
+.reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
+
+/* ═══ EVENT — body C on the page ═══════════════════════════════════════════ */
+/* The event is a decision: the door's head names it, the body is ArtWell +
+   prose + OptionCards, the foot carries the way on. It stands on the page
+   rather than over one, so it wears the door's box without the veil. */
+.event-door { width: 57rem; max-width: 100%; }
+.event-door .as-decide > .as-artwell { margin: 0 auto 1.2rem; }
+.event-door .as-decide > .as-prose { margin-bottom: 1.5rem; }
+.event-door .as-options { text-align: left; }
+.event-door .as-option.ev-choice { min-height: var(--tap-floor); }
+.event-door .as-option.ev-choice[disabled] { opacity: 0.55; cursor: default; }
+.event-door .as-option .on { white-space: normal; }

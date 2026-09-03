@@ -914,8 +914,7 @@ button.rs-reset {
   background: var(--line); border-radius: var(--r-2); border: 3px solid transparent;
   background-clip: padding-box;
 }
-.screen .title-big { font-size: 4.4rem; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
-.screen .subtitle { color: var(--muted); letter-spacing: 0.3em; font-size: 1.2rem; }
+
 /* The grace-refill sentence on the Shrine (Sten, 2026-08-08). NOT `.subtitle`:
    that rule's 0.3em tracking is right for a three-word banner and wrong for a
    sentence — at 390x844 it pushed the first draft of this line to six lines
@@ -956,7 +955,6 @@ button.rs-reset {
 }
 .seed-line input[aria-invalid='true'] { border-color: var(--ember); }
 
-.class-row { display: flex; gap: 1.8rem; }
 .shrine-option-list {
   width: min(100%, var(--shrine-folded-card-width, 88vw), var(--shrine-folded-card-max-width, 44rem)); margin-inline: auto;
   flex-direction: column; align-items: stretch; gap: 12px;
@@ -973,18 +971,7 @@ button.rs-reset {
 .shrine-option-list > #rest-opt .glyph,
 .shrine-option-list > #smith-opt .glyph { margin: 0; font-size: 3.2rem; }
 .shrine-option-grid { align-items: stretch; }
-.class-pick {
-  width: 19rem; padding: 1.6rem; border: 2px solid var(--line-soft); border-radius: var(--r-4);
-  background: var(--panel); cursor: pointer; text-align: center; transition: border-color 150ms, transform 150ms;
-}
-.class-pick:hover { border-color: var(--gold); transform: translateY(-3px); }
-.class-pick.locked { opacity: 0.45; cursor: default; }
-.class-pick.locked:hover { border-color: var(--line-soft); transform: none; }
-.class-pick .glyph { font-size: 4.4rem; margin-bottom: 0.8rem; }
-.class-pick .cp-body { min-width: 0; }
-.class-pick h3 { color: var(--gold); font-size: 1.5rem; margin-bottom: 0.6rem; }
-.class-pick p { font-size: 1.1rem; color: var(--muted); line-height: 1.5; }
-.class-pick .chip { display: inline-block; margin-top: 0.8rem; font-size: 1rem; color: var(--muted); border: 1px solid var(--line); border-radius: var(--r-3); padding: 0.2rem 0.8rem; }
+
 .flask-allocation-controls {
   display: flex; flex-wrap: wrap; gap: 6px;
 }
@@ -1026,31 +1013,10 @@ button.rs-reset {
 .stat-allocation-card .cc-stat-actions { justify-content: center; }
 .stat-allocation-card .se-step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
 
-/* ---------- Shrine Smith transaction -------------------------------------
-   Smith selection owns the complete Shrine action pane. It keeps dialog/input
-   semantics because the decision is permanent, but it is not a card floating
-   inside the Shrine: header, picker, preview, and actions fill the pane. */
-.smith-modal-veil { z-index: 620; padding: 0; box-sizing: border-box; }
-.smith-upgrade-modal {
-  /* Percent is intentional. The whole app is zoomed on <body>; viewport units
-     ignore that zoom and would visibly shrink this pane by --ui-zoom. */
-  width: 100%; height: 100%; max-width: none; max-height: none; padding: 0;
-  display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;
-  border-radius: 0;
-}
-.smith-modal-head {
-  flex: 0 0 auto; display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); background: var(--panel);
-}
-.smith-modal-head h2 { margin: 2px 0 4px; font-size: 1.8rem; }
-.smith-modal-head p { margin: 0; color: var(--muted); line-height: 1.35; }
 .smith-modal-eyebrow, .smith-preview-label {
   color: var(--gold); font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase;
 }
-.smith-modal-consequence {
-  flex: 0 0 auto; padding: 6px 9px; border: 1px solid var(--ember); border-radius: var(--r-pill);
-  color: var(--parchment); font-size: 0.78rem; letter-spacing: 0.1em;
-}
+
 .smith-modal-body {
   flex: 1 1 auto; min-height: 0; display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(22rem, 1fr);
@@ -1269,13 +1235,7 @@ button.rs-reset {
 .smith-preview-empty { text-align: center; color: var(--muted); }
 .smith-preview-empty b { color: var(--parchment); }
 .smith-preview-glyph { color: var(--gold); font-size: 2.8rem; }
-.smith-modal-footer {
-  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; padding: 12px 16px; border-top: 1px solid var(--line); background: var(--panel);
-}
-.smith-modal-footer p { max-width: 36rem; margin: 0; color: var(--muted); line-height: 1.3; }
-.smith-modal-actions { display: flex; gap: 8px; }
-.smith-modal-actions button { min-height: var(--tap-floor); height: auto; padding: 8px 16px; }
+
 .smith-confirm[data-smith-action-state='actionable'] {
   color: var(--green); border-color: var(--green);
   background: color-mix(in srgb, var(--green) 13%, var(--panel));
@@ -1286,10 +1246,7 @@ button.rs-reset {
 .smith-confirm[data-smith-action-state='unselected']:disabled { opacity: 0.42; cursor: default; }
 
 @media (max-width: 720px) {
-  .smith-modal-veil { padding: 0; }
-  .smith-upgrade-modal { width: 100%; height: 100%; max-height: none; }
-  .smith-modal-head { padding: 10px 12px; gap: 8px; }
-  .smith-modal-consequence { padding: 4px 6px; font-size: 0.68rem; }
+
   .smith-modal-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
   .smith-candidate-region { border-right: 0; border-bottom: 1px solid var(--line); }
   .smith-card-list {
@@ -1317,10 +1274,7 @@ button.rs-reset {
   .smith-fold-caret { grid-column: 2; grid-row: 1; }
   .smith-fold-detail { grid-template-columns: minmax(6.5rem, 8rem) minmax(0, 1fr); }
   .smith-card-sprite .card { width: 7.5rem; height: 10.5rem; }
-  .smith-modal-footer { align-items: stretch; flex-direction: column; gap: 8px; padding: 8px 10px; }
-  .smith-modal-footer p { font-size: 0.9rem; }
-  .smith-modal-actions { width: 100%; }
-  .smith-modal-actions button { flex: 1 1 0; padding-inline: 8px; }
+
 }
 
 /* ---------- E10: the flask assignment is an increment, not a menu ---------- */
@@ -1442,18 +1396,6 @@ button.rs-reset {
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
-/* THE REWARD MENU (E11/#256) — rows are `.class-pick` cards (the B9 uniform
-   card-button pattern; input.js already focuses `.class-pick:not(.locked)`),
-   so this block styles only what is NEW here: the menu's wrap, the NEW chip,
-   and the Skip control's tap floor. Law 4 clause 4 on Skip: a fixed ergonomic
-   floor (--tap-floor) plus intrinsic growth — never a text-unit multiple. */
-.reward-menu { flex-wrap: wrap; justify-content: center; }
-/* Box geometry in px, NEW WRITES under Law 4 clause 3 (the ratchet): these are
-   boxes, not letters — .class-pick's own 19rem is pre-existing debt, not
-   license. The glyph stays in text units: it is a typographic mark. */
-.reward-menu .reward-kind { width: 256px; padding: 19px; }
-.reward-menu .reward-kind .glyph { font-size: 3rem; margin-bottom: 8px; }
-.chip.reward-new { color: var(--gold); border-color: var(--gold); }
 /* The card chooser's NEW badge (E11/#290 — Codex 4989824448 finding 3: the
    chooser set only `data-new`, which no stylesheet or renderer consumed, so
    the unseen card looked identical to its neighbours). The chip dress is
@@ -1469,10 +1411,7 @@ button.rs-reset {
   padding: 1px 8px; background: rgba(20, 16, 10, 0.85);
   pointer-events: none; z-index: 2;
 }
-.reward-skip {
-  display: block; width: fit-content; margin-left: auto; align-self: center; flex: 0 0 auto;
-  min-height: calc(var(--tap-floor, 44px) + 1px); min-width: var(--tap-floor, 44px); height: auto;
-}
+
 :root:not([data-layout='narrow']) .reward-menu .reward-kind:has(.reward-skip) {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px;
 }
@@ -1481,9 +1420,7 @@ button.rs-reset {
 :root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .reward-skip {
   grid-column: 2; grid-row: 2; position: relative; left: 2px;
 }
-/* Receive feedback: a taken row settles — border flashes gold and the card
-   relaxes. Runs once on the state flip (data-state="taken" is re-rendered). */
-.reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
+
 @keyframes reward-took {
   0% { border-color: var(--gold); transform: scale(1.04); }
   100% { border-color: var(--line-soft); transform: scale(1); }
@@ -7719,7 +7656,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
   padding: var(--modal-inset);
   border-top: 1px solid var(--line);
 }
-.as-foot-note, .modal-foot-note { flex: 0 12 27rem; min-width: 0; container-type: inline-size; color: var(--muted); font-size: 1.23rem; }
+.as-foot-note, .modal-foot-note { flex: 1 12 27rem; max-width: max-content; min-width: 0; container-type: inline-size; color: var(--muted); font-size: 1.23rem; }
 .as-foot-note > span, .modal-foot-note > span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @container (max-width: 9rem) { .modal-foot-note > span { visibility: hidden; } .as-foot-note > span { visibility: hidden; } }
 .modal-foot-actions, .as-foot-actions { margin-left: auto; flex: 0 1 auto; justify-content: end; }
@@ -7838,7 +7775,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* ═══ HOUSEKEEPING ═════════════════════════════════════════════════════════ */
 /* `hidden` wins over any display a kit class sets — a detail card the caller
    hid must not draw its border. */
-.as-detailcard[hidden], .as-option[hidden], .as-row[hidden], .modal-foot-note[hidden], .as-pane [hidden] { display: none !important; }
+.as-detailcard[hidden], .as-option[hidden], .as-row[hidden], .modal-foot-note[hidden], .as-pane [hidden], .modal-head [hidden], .as-iconbtn[hidden], .modal-close[hidden] { display: none !important; }
 /* A hold-armed IconButton keeps its glyph; the hold hint is the tooltip's job. */
 .as-iconbtn .hold-hint, .modal-iconbtn .hold-hint, .modal-close .hold-hint { display: none; }
 /* THE SCROLL OWNERS INSIDE A DOOR wear the house scrollbar, not Chromium's. */
@@ -8053,6 +7990,54 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .ctext .val { font-weight: 700; }
 .ctext .val.up { color: var(--green); }
 .ctext .val.down { color: var(--ember); }
+
+/* ═══ SCREENS — a page wears the same atoms a door does ═══════════════════ */
+/* A screen's banner is Title·L over an Eyebrow-weight subtitle; the same
+   two atoms the kit's TitleMenu and Pane use, centred because a screen's
+   banner is the one centred text a page has. */
+.screen > h2, .screen > .as-title-l { --track: 0.06em; margin: 0; font: 700 2.55rem/1.1 var(--font-display); letter-spacing: var(--track); text-indent: var(--track); color: var(--gold); text-align: center; }
+.screen > .subtitle, .screen > .as-eyebrow { margin: 0; color: var(--muted); font-size: 1.1rem; letter-spacing: 0.22em; text-transform: uppercase; text-align: center; }
+/* OptionCard under the names the screens already write: `.class-pick` is the
+   card, `.glyph` its Glyph, `.cp-body` its body, `h3` its Title·S, `p` its
+   prose, `.chip` a StatePill, `.locked` disabled. A row of them is `.class-row`. */
+.class-row { display: flex; flex-wrap: wrap; gap: 1.05rem; justify-content: center; width: 100%; max-width: 80rem; }
+.class-pick {
+  position: relative; display: flex; gap: 1.5rem; align-items: center;
+  flex: 1 1 26rem; max-width: 40rem; min-width: 0;
+  padding: 1.28rem 1.5rem;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-3);
+  color: inherit; text-align: left; cursor: pointer;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.class-pick:hover { border-color: var(--line-soft); }
+.class-pick.selected, .class-pick[aria-checked="true"], .class-pick[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18); }
+.class-pick.locked { opacity: 0.55; cursor: default; }
+.class-pick.locked:hover { border-color: var(--line); }
+.class-pick > .glyph { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+.class-pick > .cp-body, .class-pick > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
+.class-pick h3 { margin: 0; display: flex; align-items: center; gap: 0.75rem; font: 600 1.65rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.class-pick p { margin: 0; color: var(--ink-dim); font-size: 1.35rem; line-height: 1.4; }
+.class-pick .chip { display: inline-block; align-self: flex-start; margin-top: 0.3rem; padding: 0.15rem 0.6rem; border: 1px solid var(--line-soft); border-radius: var(--r-1); font: 500 1.02rem/1.5 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.class-pick .chip.reward-new { color: var(--gold); border-color: var(--gold); }
+.class-pick > button.reward-skip { flex: 0 0 auto; align-self: center; }
+/* The reward menu is a column of OptionCards, full pane width. */
+.reward-menu { flex-direction: column; align-items: stretch; max-width: 60rem; }
+.reward-menu > .class-pick, .shrine-option-list > .class-pick { max-width: none; flex: 0 0 auto; }
+.reward-row { display: flex; flex-wrap: wrap; gap: 2.2rem; justify-content: center; }
+.reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
+.reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
+
+/* ═══ EVENT — body C on the page ═══════════════════════════════════════════ */
+/* The event is a decision: the door's head names it, the body is ArtWell +
+   prose + OptionCards, the foot carries the way on. It stands on the page
+   rather than over one, so it wears the door's box without the veil. */
+.event-door { width: 57rem; max-width: 100%; }
+.event-door .as-decide > .as-artwell { margin: 0 auto 1.2rem; }
+.event-door .as-decide > .as-prose { margin-bottom: 1.5rem; }
+.event-door .as-options { text-align: left; }
+.event-door .as-option.ev-choice { min-height: var(--tap-floor); }
+.event-door .as-option.ev-choice[disabled] { opacity: 0.55; cursor: default; }
+.event-door .as-option .on { white-space: normal; }
 
   </style>
 </head>
@@ -54308,7 +54293,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '8624c96039';
+const SOURCE = 'd2a86faa8f';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -54342,7 +54327,7 @@ const SOURCE = '8624c96039';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '18';
+const ORDINAL = '19';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -73210,8 +73195,8 @@ function mountRewards(app, {
     const pending = plan.rows.filter((r) => !states[r.kind] && !r.blockedBy);
     app.innerHTML = `
       <div class="screen" style="padding-bottom:calc(var(--tap-floor, 44px) + 16px)">
-        <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
-        ${plan.rows.length ? '<p class="subtitle">CLAIM YOUR SPOILS</p>' : ''}
+        <h2>${esc(rewards.title || 'Victory')}</h2>
+        ${plan.rows.length ? '<p class="subtitle">Claim your spoils</p>' : ''}
         <div class="class-row reward-menu">
           ${plan.rows.map((row) => {
             const state = states[row.kind] || (row.blockedBy ? 'blocked' : 'pending');
@@ -73233,9 +73218,9 @@ function mountRewards(app, {
             </div>`;
           }).join('')}
         </div>
-        <button class="subtle" id="reward-continue" data-focusable="true" aria-describedby="reward-hold-copy">${
-          mode === 'auto' && pending.length ? 'CONTINUE — take the rest' : 'CONTINUE — leave the rest'}</button>
-        <p id="reward-hold-copy" class="subtitle" aria-live="polite">PRESS AND HOLD TO CONTINUE</p>
+        <button class="primary" id="reward-continue" data-focusable="true" aria-describedby="reward-hold-copy">${
+          mode === 'auto' && pending.length ? 'Continue — take the rest' : 'Continue — leave the rest'}</button>
+        <p id="reward-hold-copy" class="subtitle" aria-live="polite">Press and hold to continue</p>
       </div>`;
 
     for (const el of app.querySelectorAll('.reward-kind')) {
@@ -73315,13 +73300,13 @@ function mountRewards(app, {
     app.innerHTML = `
       <div class="screen" data-reward-detail="${esc(row.kind)}">
         <h2 style="color:var(--gold);font-size:26px">${isFlask ? 'POTION' : 'ARMAMENT'}</h2>
-        <p class="subtitle">${isFlask ? 'INSPECT THE POTION' : 'INSPECT THE ARMAMENT'}</p>
+        <p class="subtitle">${isFlask ? 'Inspect the potion' : 'Inspect the armament'}</p>
         <div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
           <div class="glyph">${KIND_GLYPHS[row.kind]}</div>
           <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-          <button class="subtle" id="reward-detail-take" data-focusable="true">TAKE ${isFlask ? 'POTION' : 'ARMAMENT'}</button>
+          <button class="primary" id="reward-detail-take" data-focusable="true">Take ${isFlask ? 'potion' : 'armament'}</button>
           <button class="subtle" id="reward-back" data-focusable="true">Back</button>
         </div>
       </div>`;
@@ -73338,7 +73323,7 @@ function mountRewards(app, {
     app.innerHTML = `
       <div class="screen">
         <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
-        <p class="subtitle">CHOOSE A CARD</p>
+        <p class="subtitle">Choose a card</p>
         <div class="reward-row"></div>
         <button class="subtle" id="reward-back" data-focusable="true">Back</button>
       </div>`;
@@ -74355,6 +74340,7 @@ Object.assign(module.exports, { smithSelectionModel });
 // semantics, focus containment and rendering; the screen owns run mutation.
 const { assetUrl } = require("src/ui/assetmap.js");
 const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
+const { el, modalHead, modalFooter, pill, button, subtitle } = require("src/ui/kit/index.js");
 const { renderCard } = require("src/ui/components/card.js");
 // The interaction router goes through the framework's adopted door.
 const { armOptionDecision } = require("src/framework/optionDecision.js");
@@ -74381,38 +74367,40 @@ function mountSmithUpgradeModal(host, initialModel, {
   veil.className = 'modal-veil smith-modal-veil';
   const modal = document.createElement('section');
   modal.className = 'modal smith-upgrade-modal';
+  modal.dataset.size = 'xl'; // body E: the chooser on the left, the inspector on the right
   modal.setAttribute('role', 'dialog');
   modal.setAttribute('aria-modal', 'true');
   modal.setAttribute('aria-labelledby', 'smith-modal-title');
   modal.setAttribute('aria-describedby', 'smith-modal-instruction');
   modal.tabIndex = -1;
   markUiComponent(modal, UI.smithUpgradeModal, initialModel.variant);
-  modal.innerHTML = `
-    <header class="smith-modal-head">
-      <div>
-        <span class="smith-modal-eyebrow">${esc(initialModel.properties.eyebrow)}</span>
-        <h2 id="smith-modal-title">${esc(initialModel.properties.title)}</h2>
-        <p id="smith-modal-instruction">${esc(initialModel.properties.instruction)}</p>
-      </div>
-      <span class="smith-modal-consequence">${esc(initialModel.properties.consequenceBadge)}</span>
-    </header>
-    <div class="smith-modal-body">
-      <section class="smith-candidate-region" aria-labelledby="smith-candidate-title">
-        <div class="smith-region-head">
-          <h3 id="smith-candidate-title">Choose an item</h3>
-          <span data-smith-count></span>
-        </div>
-        <div class="smith-card-list" role="listbox" aria-label="Items available to upgrade"></div>
-      </section>
-      <section class="smith-preview-region" aria-live="polite" aria-label="Selected upgrade preview"></section>
-    </div>
-    <footer class="smith-modal-footer">
-      <p>${esc(initialModel.properties.consequence)}</p>
-      <div class="smith-modal-actions">
-        <button type="button" class="subtle smith-back">${esc(initialModel.properties.backLabel)}</button>
-        <button type="button" class="smith-confirm"></button>
-      </div>
-    </footer>`;
+  // THE SHELL'S HEAD AND FOOT (kit §04): eyebrow + title, the consequence as
+  // a StatePill in the head's actions, the close box; the foot carries the
+  // consequence sentence as its note and the two ways out on the ladder.
+  const head = modalHead({
+    eyebrow: initialModel.properties.eyebrow,
+    title: initialModel.properties.title,
+    titleId: 'smith-modal-title',
+    extras: pill({ label: initialModel.properties.consequenceBadge, attrs: { class: 'smith-modal-consequence' } }),
+    closeLabel: initialModel.properties.backLabel,
+  });
+  const body = el('div', { class: 'modal-body smith-modal-body' }, [
+    el('section', { class: 'smith-candidate-region', 'aria-labelledby': 'smith-candidate-title' }, [
+      el('div', { class: 'smith-region-head' }, [
+        el('div', { class: 'as-labelstack' }, [
+          el('h3', { id: 'smith-candidate-title', class: 'as-title-s', text: 'Choose an item' }),
+          subtitle(initialModel.properties.instruction, { id: 'smith-modal-instruction' }),
+        ]),
+        el('span', { class: 'as-status', dataset: { smithCount: '' } }),
+      ]),
+      el('div', { class: 'smith-card-list', role: 'listbox', 'aria-label': 'Items available to upgrade' }),
+    ]),
+    el('section', { class: 'smith-preview-region', 'aria-live': 'polite', 'aria-label': 'Selected upgrade preview' }),
+  ]);
+  const backBtn = button({ label: initialModel.properties.backLabel, className: 'subtle smith-back' });
+  const confirmBtn = button({ label: '', weight: 'primary', className: 'smith-confirm' });
+  const foot = modalFooter({ note: initialModel.properties.consequence, secondary: [backBtn], primary: confirmBtn, className: 'smith-modal-footer', size: 'long' });
+  modal.append(head, body, foot);
   veil.appendChild(modal);
   host.appendChild(veil);
 
@@ -74644,6 +74632,10 @@ function mountSmithUpgradeModal(host, initialModel, {
   }
 
   back.addEventListener('click', backOut);
+
+  // The shell's close box is the same way out as Back.
+
+  modal.querySelector('.modal-close')?.addEventListener('click', backOut);
   window.addEventListener('keydown', onKeydown, true);
   draw(initialModel);
   queueMicrotask(() => modal.focus({ preventScroll: true }));
@@ -74772,9 +74764,9 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     if (fold && fold.openKey) openBar = fold.openKey;
     app.innerHTML = `
       <div class="screen" style="justify-content:flex-start;overflow-y:auto;gap:14px;padding-top:28px">
-        <h2 style="color:var(--gold);font-size:24px">THE WANDERING MERCHANT</h2>
-        <p class="subtitle">"I'VE CLIMBED HIGHER THAN YOU. I CAME BACK. DRAW YOUR OWN CONCLUSIONS."</p>
-        <p style="color:var(--gold)">Cinders: <b>${run.cinders}</b> · HP ${run.hp}/${run.maxHp}</p>
+        <h2>The Wandering Merchant</h2>
+        <p class="subtitle">"I've climbed higher than you. I came back. Draw your own conclusions."</p>
+        <p class="as-status" style="text-align:center">Cinders <b>${run.cinders}</b> · HP ${run.hp}/${run.maxHp}</p>
         <div class="shop-bars cz-disc">
           <div class="reward-row" id="shop-cards"></div>
           <div class="class-row" id="shop-relics"></div>
@@ -74789,7 +74781,7 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
           </div>
           <div class="class-row" id="shop-sell"></div>
         </div>
-        <button id="leave-shop">LEAVE</button>
+        <button id="leave-shop" class="primary">Leave</button>
       </div>`;
 
     const cardsRow = app.querySelector('#shop-cards');
@@ -74949,7 +74941,7 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
   function shopItem(title, desc, cost, affordable, onBuy, { titleHtml = false, costWord = 'cinders' } = {}) {
     const el = document.createElement('div');
     el.className = `class-pick${affordable ? '' : ' locked'}`;
-    el.innerHTML = `<h3 style="font-size:13px">${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} ${esc(costWord)}</span>`;
+    el.innerHTML = `<div class="cp-body"><h3>${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} ${esc(costWord)}</span></div>`;
     if (affordable && onBuy) {
       const itemName = el.querySelector('h3')?.textContent?.trim() || 'this item';
       arm(el, 'shopBuy', {
@@ -74988,6 +74980,7 @@ const { isEngaged, focusFirst } = require("src/ui/input.js");
 const { isBindingChoice } = require("src/framework/confirmationRule.js");
 const { availableEventChoices, recordEventChoice } = require("src/model/quests.js");
 const { beatArmer } = require("src/framework/optionDecision.js");
+const { el, html, modalHead, modalFooter, artWell, prose, options, optionCard, decide, button } = require("src/ui/kit/index.js");
 
 function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
   const def = registries.events.get(eventId);
@@ -75016,23 +75009,33 @@ function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
   // bound is what the fix adds (Law 2: named container, proven inside it).
   // The bars inside stretch to the column; their `min-height: var(--tap-floor)`
   // (button.ev-choice, ui.css) is untouched, so nothing shrinks under 44.
-  app.innerHTML = `
-    <div class="screen" style="gap:20px">
-      <div class="event-art" style="font-size:56px">${esc(def.art || '❖')}</div>
-      <h2 style="color:var(--gold);font-size:24px">${esc(def.name).toUpperCase()}</h2>
-      <p style="max-width:560px;text-align:center;line-height:1.7;color:var(--parchment)">${esc(def.text)}</p>
-      <div id="choices" style="display:flex;flex-direction:column;gap:10px;min-width:min(420px,100%)"></div>
-    </div>`;
+  // THE EVENT IS BODY C ON THE PAGE (kit §05/§12): the door's head names it,
+  // the body is ArtWell + prose + one OptionCard per choice, the foot carries
+  // the way on once a choice has been made. It stands on the page rather
+  // than over one, so it wears the door's box without the veil.
+  const head = modalHead({ eyebrow: 'Event', title: def.name, closeLabel: 'Event' });
+  head.querySelector('.modal-close').hidden = true; // a decision has no way out but a choice
+  const door = el('section', { class: 'modal event-door', dataset: { size: 'md' }, role: 'region', 'aria-label': def.name }, [
+    head,
+    el('div', { class: 'modal-body' }, decide({
+      children: [
+        artWell({ glyph: def.art || '❖' }),
+        prose(def.text),
+        options([], { id: 'choices', class: 'ev-choices' }),
+      ],
+    })),
+  ]);
+  app.innerHTML = '';
+  const screen = el('div', { class: 'screen event-screen' }, door);
+  app.appendChild(screen);
 
   const box = app.querySelector('#choices');
   const visibleChoices = availableEventChoices(eventChoicesWithHistory(def), run);
   visibleChoices.forEach(({ choice, index: i }, visibleIndex) => {
-    const btn = document.createElement('button');
-    // `ev-choice`, not a bare `.subtle`: these three bars are the only control
-    // on this screen and the floor belongs to THEM, not to every subtle button
-    // in the game. Law 4 is a ratchet, not a sweep — flooring `.subtle` would
-    // be the blanket conversion the law tells nobody to attempt.
-    btn.className = 'subtle ev-choice';
+    // Each choice is the kit's OptionCard: its label is the title; a price
+    // or a binding consequence rides as data the instruments read.
+    // No chevron: the hold hint the beat draws IS this card's affordance.
+    const btn = optionCard({ name: choice.label, className: 'ev-choice', arrow: false });
     // `style.fontSize = '13px'` was here, and it was Law 4 clause 1 backwards:
     // a px label does NOT answer the Text size control, while `.subtle`'s
     // `padding: 0.6rem` meant the BOX did. Text that will not grow inside a box
@@ -75040,7 +75043,6 @@ function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
     // question it answers is "how big is a letter".
     btn.dataset.choice = String(i);
     btn.style.animationDelay = `${visibleIndex * 70}ms`; // staggered entrance
-    btn.textContent = choice.label;
     // A PRICE IS A CONTENT FACT AND THE SCREEN PUBLISHES IT, whether or not the
     // player can pay today. Vira's finding, and it is my own sentence back at
     // me — latent is not fixed.
@@ -75089,7 +75091,7 @@ function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
 
     if (!meets(choice.requires)) {
       btn.disabled = true;
-      btn.textContent += ' (cannot afford)';
+      btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: 'Cannot afford' }));
     } else {
       const commit = () => {
         executeRunEffects({ run, registries, rng }, choice.effects);
@@ -75124,15 +75126,12 @@ function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
     // about — one screen's worth is nothing, thirteen floors of it is not.
     while (disarmers.length) disarmers.pop()();
     box.innerHTML = '';
-    const p = document.createElement('p');
-    p.style.cssText = 'max-width:560px;text-align:center;line-height:1.7;color:var(--muted);font-style:italic';
-    p.textContent = text;
-    const cont = document.createElement('button');
-    cont.textContent = run.combatEntered ? 'STEEL YOURSELF' : 'CONTINUE';
+    // The result reads as the decision's own sentence; the way on is the foot's primary.
+    box.appendChild(prose(text, { class: 'as-flavor event-result' }));
+    const cont = button({ label: run.combatEntered ? 'Steel yourself' : 'Continue', weight: 'primary' });
     cont.addEventListener('click', onDone);
-    box.appendChild(p);
-    box.appendChild(cont);
-    if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
+    door.appendChild(modalFooter({ primary: cont, size: 'medium' }));
+    if (isEngaged()) setTimeout(() => focusFirst('.event-door .modal-foot button'), 0);
   }
 }
 
