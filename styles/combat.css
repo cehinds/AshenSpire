@@ -304,14 +304,66 @@
   min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
 }
 .topbar.combat-hud .hud-cinders { color: var(--gold); }
+/* WHICH END AN OVERFLOW EATS, AND WHY IT IS THIS ROW'S WHOLE BUG.
+   This row is `overflow: hidden` and was `justify-content: flex-end` inside a
+   box sized `min(100%, --hud-metadata-max-width)` — a box that does NOT shrink
+   to its content. So whenever the fields needed more than the track gave them,
+   the surplus spilled off the LEFT edge and the row lost its FIRST field.
+
+   Measured 2026-09-03, sweeping the viewport and reading whether each field's
+   left edge sits outside the container (`?shot=combat`, one Chromium):
+
+     320  340  360  380  400  420  440 | 470  500  520 | 560  620  720
+     Act clipped at every width to 440 | fits           | Act AND Floor clipped
+     over by 25 21 18 14  8   4   -3   | -3   -3   -3   | 64   71   82
+
+   Two bands, not one — and the 560-720 band is the worse of them, where the
+   520 rung's smaller font has been given back but the grid track has not
+   widened to match. On a phone this read `FLOOR 1·  BUILD 0.5.4` with no Act
+   at all, and one build earlier `LOOR 1·`.
+
+   The ladder below promises the opposite of that: "Act and Floor remain the
+   phone player's primary run-position receipt". It could not keep the promise,
+   because no arrangement of rungs can — a rung is a guess about a width, and
+   the head of a right-aligned overflow is eaten at whatever width the guess
+   misses. THE DIRECTION IS THE FIX: the box now hugs its content
+   (`width: fit-content` under the same cap) and stays right-aligned through
+   `justify-self: end`, while the CONTENTS run from the start. An overflow now
+   eats the TAIL, and the tail is Build — the field the ladder already calls
+   the first to yield. Act and Floor cannot be reached by a clip.
+
+   `flex: 0 0 auto` on the fields is the other half: with shrinking allowed
+   every field was squeezed a few pixels under its own text (`ACT 1` rendered
+   27px wide against a 30px need at 390), so the row cut three words a little
+   instead of one word entirely. One clipped field at the end is legible; three
+   half-words are not. */
 .topbar.combat-hud.shared-hud .hud-run-meta {
   justify-self: end;
-  width: min(100%, var(--hud-metadata-max-width));
-  max-width: var(--hud-metadata-max-width);
+  width: fit-content;
+  max-width: min(100%, var(--hud-metadata-max-width));
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  flex-wrap: nowrap;
+  justify-content: flex-start;
+  /* WRAP, THEN CLIP THE SECOND LINE — a whole field yields, never a fragment.
+     The direction fix above makes the overflow eat the tail; this makes what it
+     eats a WORD rather than half of one. A field that does not fit wraps to a
+     line the row is not tall enough to show, so it disappears cleanly instead
+     of rendering as `· SEE` or `BU`.
+
+     THIS REPLACED A LADDER OF HAND-TUNED WIDTHS, and the reason is worth the
+     lines. I re-tuned those rungs first, from a sweep, and they were measured
+     in the wrong unit: `@container` evaluates in UNZOOMED css px while
+     getBoundingClientRect reports zoomed device px, and this tree scales the
+     whole app by `zoom: var(--ui-zoom)`. A 900px viewport and an 800px one both
+     present the container as ~1165 — the same query size, opposite outcomes —
+     so no container threshold can separate them. The box width can, and only
+     the layout knows it. Wrapping asks the layout instead of guessing.
+
+     The rungs below still stand: they decide what is WORTH the space at each
+     width, which is a judgement. This decides what happens when the judgement
+     is wrong, which is a guarantee. */
+  flex-wrap: wrap;
+  max-height: 1lh;
   gap: 0.5rem 0.8rem;
   min-width: 0;
   overflow: hidden;
@@ -320,7 +372,7 @@
   line-height: 1;
   letter-spacing: 0.06em;
 }
-.topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; }
+.topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; flex: 0 0 auto; }
 .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: inline; }
 :root[data-hud-metadata-show-totals='false'] .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 .topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { content: '·'; margin-right: 0.8rem; }
@@ -357,13 +409,25 @@
   }
   .topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { margin-right: 0.15rem; }
   .topbar.combat-hud.shared-hud .hud-identity .portrait { width: calc(28px * var(--hud-portrait-scale)); height: calc(28px * var(--hud-portrait-scale)); font-size: calc(15px * var(--hud-portrait-scale)); }
-}
-/* Optional provenance yields from least to most important as space tightens:
-   Source, Seed, then Build. Act and Floor remain the phone player's primary
-   run-position receipt. */
-@media (max-width: 350px) {
+  /* The totals join the ladder here rather than waiting for a 350px MEDIA
+     query — the odd rung out, measured in viewport pixels while every other
+     rung measures the container.
+
+     THIS IS NOT WHAT FIXED THE CLIPPING, and the first version of this comment
+     said it was. `/ 3` and `/ 12` are already `display: none` at every width in
+     the shipping profile (`data-hud-metadata-show-totals`), so they were never
+     in the row I measured and cost it nothing. The clipping fix is the overflow
+     DIRECTION, above. This rung matters only for a player who turns totals back
+     on, and for them it is the right order: a total yields before a field. */
   .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 }
+/* Optional provenance yields from least to most important as space tightens:
+   Source, Seed, the totals, then Build. Act and Floor remain the phone player's
+   primary run-position receipt — and now actually do, because the row clips
+   from its tail (see the direction note above) rather than its head. The rungs
+   are still worth having: they decide what is worth the space at each width,
+   and a field hidden by a rung reads better than one cut by a clip. What they
+   no longer have to be is COMPLETE, which is the property no ladder had. */
 .topbar.combat-hud.shared-hud .hud-resource-row,
 .topbar.combat-hud.shared-hud .hud-bottom {
   display: grid;

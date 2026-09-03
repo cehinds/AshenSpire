@@ -51,6 +51,7 @@ import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, resolveContinue, unseenIds } from '../../model/rewardplan.js';
 import { beatArmer } from '../../framework/optionDecision.js';
+import { modEffectLines } from '../../model/loadout.js';
 
 const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
@@ -185,7 +186,12 @@ export function mountRewards(app, {
         // stored until the row is taken (the roll is pure — main.js rollDrop),
         // so "Carried" before a take would be the f29d468 lie re-worded.
         const a = (registries.equipment.armaments || []).find((x) => x.id === row.armamentId);
-        const name = a ? `<b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` : 'An armament.';
+        // `a.mods` is the raw vocabulary (`strike.damage=+4`) and this line used
+        // to print it verbatim — engine keys on the screen where a reward is
+        // chosen. modEffectLines is the one home for turning them into a
+        // sentence (src/model/loadout.js).
+        const effects = modEffectLines(registries, a).join(', ');
+        const name = a ? `<b>${esc(a.name)}</b> — ${esc(effects || 'plain steel')}` : 'An armament.';
         // A full bag reads its refusal in the flask's own idiom — the copy
         // switches on the model's token (blockedBy), never a re-derivation.
         if (row.blockedBy === 'storage') return { title: 'Armament', body: `${name} — but your storage is full. It stays where it fell.` };

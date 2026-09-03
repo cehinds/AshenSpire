@@ -5138,6 +5138,17 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .title-slot-row.is-selected .title-slot-state { color: var(--gold); }
 .title-slot-pick > .hold-hint { position: absolute; right: 1.8rem; bottom: 0.72rem; margin: 0; }
 .title-slot-delete { align-self: center; min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.8rem; }
+/* THE GUTTER IS HELD OPEN BY THE SAME BOX THAT WOULD FILL IT.
+   A delete exists only on a FILLED slot, so a list with one save and two empties
+   drew rows of two widths: measured 1440x900, slot 1's pick ended at x=990 and
+   the empty rows ran to 1051 — 61px of ragged right edge that nothing about the
+   slots explains. A `::after` spacer was the first attempt and it could not be
+   made exact: the real control is a `button.subtle` carrying that rule's border
+   and padding, and a pseudo-element copying those numbers is a second home for
+   them that drifts the day one changes. So an empty row renders the SAME button,
+   hidden — `visibility: hidden` also takes it out of the tab order, and it is
+   `disabled` and `aria-hidden` besides, so it is furniture to every reader. */
+.title-slot-delete[data-slot-spacer] { visibility: hidden; }
 /* THE WORD DOES NOT FIT ON AN ICON — the `.slot-delete .hold-hint` rule above
    said it for the old title slot, and the ✕ moved into the LOAD selector
    without it: HOLD was drawn beside the glyph again, measured by
@@ -6139,14 +6150,66 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
 }
 .topbar.combat-hud .hud-cinders { color: var(--gold); }
+/* WHICH END AN OVERFLOW EATS, AND WHY IT IS THIS ROW'S WHOLE BUG.
+   This row is `overflow: hidden` and was `justify-content: flex-end` inside a
+   box sized `min(100%, --hud-metadata-max-width)` — a box that does NOT shrink
+   to its content. So whenever the fields needed more than the track gave them,
+   the surplus spilled off the LEFT edge and the row lost its FIRST field.
+
+   Measured 2026-09-03, sweeping the viewport and reading whether each field's
+   left edge sits outside the container (`?shot=combat`, one Chromium):
+
+     320  340  360  380  400  420  440 | 470  500  520 | 560  620  720
+     Act clipped at every width to 440 | fits           | Act AND Floor clipped
+     over by 25 21 18 14  8   4   -3   | -3   -3   -3   | 64   71   82
+
+   Two bands, not one — and the 560-720 band is the worse of them, where the
+   520 rung's smaller font has been given back but the grid track has not
+   widened to match. On a phone this read `FLOOR 1·  BUILD 0.5.4` with no Act
+   at all, and one build earlier `LOOR 1·`.
+
+   The ladder below promises the opposite of that: "Act and Floor remain the
+   phone player's primary run-position receipt". It could not keep the promise,
+   because no arrangement of rungs can — a rung is a guess about a width, and
+   the head of a right-aligned overflow is eaten at whatever width the guess
+   misses. THE DIRECTION IS THE FIX: the box now hugs its content
+   (`width: fit-content` under the same cap) and stays right-aligned through
+   `justify-self: end`, while the CONTENTS run from the start. An overflow now
+   eats the TAIL, and the tail is Build — the field the ladder already calls
+   the first to yield. Act and Floor cannot be reached by a clip.
+
+   `flex: 0 0 auto` on the fields is the other half: with shrinking allowed
+   every field was squeezed a few pixels under its own text (`ACT 1` rendered
+   27px wide against a 30px need at 390), so the row cut three words a little
+   instead of one word entirely. One clipped field at the end is legible; three
+   half-words are not. */
 .topbar.combat-hud.shared-hud .hud-run-meta {
   justify-self: end;
-  width: min(100%, var(--hud-metadata-max-width));
-  max-width: var(--hud-metadata-max-width);
+  width: fit-content;
+  max-width: min(100%, var(--hud-metadata-max-width));
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  flex-wrap: nowrap;
+  justify-content: flex-start;
+  /* WRAP, THEN CLIP THE SECOND LINE — a whole field yields, never a fragment.
+     The direction fix above makes the overflow eat the tail; this makes what it
+     eats a WORD rather than half of one. A field that does not fit wraps to a
+     line the row is not tall enough to show, so it disappears cleanly instead
+     of rendering as `· SEE` or `BU`.
+
+     THIS REPLACED A LADDER OF HAND-TUNED WIDTHS, and the reason is worth the
+     lines. I re-tuned those rungs first, from a sweep, and they were measured
+     in the wrong unit: `@container` evaluates in UNZOOMED css px while
+     getBoundingClientRect reports zoomed device px, and this tree scales the
+     whole app by `zoom: var(--ui-zoom)`. A 900px viewport and an 800px one both
+     present the container as ~1165 — the same query size, opposite outcomes —
+     so no container threshold can separate them. The box width can, and only
+     the layout knows it. Wrapping asks the layout instead of guessing.
+
+     The rungs below still stand: they decide what is WORTH the space at each
+     width, which is a judgement. This decides what happens when the judgement
+     is wrong, which is a guarantee. */
+  flex-wrap: wrap;
+  max-height: 1lh;
   gap: 0.5rem 0.8rem;
   min-width: 0;
   overflow: hidden;
@@ -6155,7 +6218,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   line-height: 1;
   letter-spacing: 0.06em;
 }
-.topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; }
+.topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; flex: 0 0 auto; }
 .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: inline; }
 :root[data-hud-metadata-show-totals='false'] .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 .topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { content: '·'; margin-right: 0.8rem; }
@@ -6192,13 +6255,25 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   }
   .topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { margin-right: 0.15rem; }
   .topbar.combat-hud.shared-hud .hud-identity .portrait { width: calc(28px * var(--hud-portrait-scale)); height: calc(28px * var(--hud-portrait-scale)); font-size: calc(15px * var(--hud-portrait-scale)); }
-}
-/* Optional provenance yields from least to most important as space tightens:
-   Source, Seed, then Build. Act and Floor remain the phone player's primary
-   run-position receipt. */
-@media (max-width: 350px) {
+  /* The totals join the ladder here rather than waiting for a 350px MEDIA
+     query — the odd rung out, measured in viewport pixels while every other
+     rung measures the container.
+
+     THIS IS NOT WHAT FIXED THE CLIPPING, and the first version of this comment
+     said it was. `/ 3` and `/ 12` are already `display: none` at every width in
+     the shipping profile (`data-hud-metadata-show-totals`), so they were never
+     in the row I measured and cost it nothing. The clipping fix is the overflow
+     DIRECTION, above. This rung matters only for a player who turns totals back
+     on, and for them it is the right order: a total yields before a field. */
   .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 }
+/* Optional provenance yields from least to most important as space tightens:
+   Source, Seed, the totals, then Build. Act and Floor remain the phone player's
+   primary run-position receipt — and now actually do, because the row clips
+   from its tail (see the direction note above) rather than its head. The rungs
+   are still worth having: they decide what is worth the space at each width,
+   and a field hidden by a rung reads better than one cut by a clip. What they
+   no longer have to be is COMPLETE, which is the property no ladder had. */
 .topbar.combat-hud.shared-hud .hud-resource-row,
 .topbar.combat-hud.shared-hud .hud-bottom {
   display: grid;
@@ -31810,6 +31885,54 @@ function parseMod(str) {
   };
 }
 
+/**
+ * modEffectLines(registries, piece) → the piece's mods, written the way a
+ * player reads them: `strike.damage=+4` → `Strike Damage +4`.
+ *
+ * THIS EXISTS BECAUSE THE ANSWER WAS ALREADY IN TWO PLACES AND THE THIRD SITE
+ * PRINTED THE RAW ROW. Measured 2026-09-03 on ?shot=reward: the Victory screen
+ * showed a player `Greatsword — strike.damage=+4, strike.cost=+1,
+ * strike.poise=+3` — engine keys, on the screen where a reward is chosen. The
+ * two existing renderers were `pieceEffects` (model/creationBrief.js, via
+ * parseMod) and `modSummary` (ui/screens/compendium.js, via its own regex),
+ * and they disagreed in two ways worth naming because this function had to
+ * pick one of each:
+ *
+ *   THE PREFIX. creationBrief dropped it ("Damage +4"); compendium kept it
+ *   ("Strike Damage +4"). KEPT — the prefix names WHICH CARD the mod rewrites,
+ *   and a weapon that changes two cards reads as two identical lines without
+ *   it.
+ *
+ *   AN UNKNOWN FIELD. creationBrief printed the raw row; compendium DROPPED the
+ *   line. RAW — and the reasoning is creationBrief's, quoted because it is
+ *   right: "A visible oddity is a bug report; a dropped line is a screen that
+ *   quietly under-describes a weapon." An unregistered field is already a hard
+ *   content failure (content/source/equipMods.csv), so reaching that branch
+ *   means the tables disagree and a player should see something.
+ *
+ * `set` mode reads `= 3` rather than a bare `3`, so "Cost = 0" cannot be
+ * misread as "Cost 0 added".
+ */
+function modEffectLines(registries, piece) {
+  const fields = (registries?.equipment || {}).modFields || {};
+  return (piece?.mods || []).map((raw) => modEffectLine(fields, raw));
+}
+
+/** One mod string, rendered. Split out so a caller holding only the vocabulary
+ *  (compendium walks a table, not a registry) reaches the same sentence. */
+function modEffectLine(fields, raw) {
+  const mod = parseMod(raw);
+  const spec = mod && (fields || {})[mod.field];
+  if (!spec) return String(raw);
+  const where = !mod.prefix || mod.prefix === 'self'
+    ? ''
+    : `${mod.prefix[0].toUpperCase()}${mod.prefix.slice(1)} `;
+  const amount = mod.mode === 'add'
+    ? `${mod.value >= 0 ? '+' : ''}${mod.value}`
+    : `= ${mod.value}`;
+  return `${where}${spec.label} ${amount}`;
+}
+
 // ---------------------------------------------------------------------------
 // Hands
 // ---------------------------------------------------------------------------
@@ -34190,7 +34313,7 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, ARMAMENT_INTRINSIC_STAT_FIELDS, armamentIntrinsicStatProblems, CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, moveEquipmentPool, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, WeaponCardPackageModel, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponDeckCompositionService, startingDeckRefs, reconcileGrantedCards, reconcileGrantedCardsInCombat, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
+Object.assign(module.exports, { parseMod, modEffectLines, modEffectLine, HANDS, EQUIPMENT_ROLES, ARMAMENT_INTRINSIC_STAT_FIELDS, armamentIntrinsicStatProblems, CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, moveEquipmentPool, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, WeaponCardPackageModel, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponDeckCompositionService, startingDeckRefs, reconcileGrantedCards, reconcileGrantedCardsInCombat, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
 
 },
 "src/framework/deck.js": function (module, exports, require) {
@@ -50263,7 +50386,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'd0074619d9';
+const SOURCE = 'bee22edd47';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -50297,7 +50420,7 @@ const SOURCE = 'd0074619d9';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '6';
+const ORDINAL = '7';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -54924,7 +55047,12 @@ function openSaveSlotSelector({
           <span class="title-slot-copy" data-component="title-save-slot-copy">${saveSlotCopyHtml({ slot, summary })}</span>
           <span class="title-slot-state" data-component="title-save-slot-state">${summary ? 'READY' : 'EMPTY'}</span>
         </button>
-        ${summary && onDelete ? `<button class="subtle title-slot-delete" data-component="title-save-slot-delete" type="button" data-slot-delete="${slot}" aria-label="Delete slot ${slot}">✕</button>` : ''}
+        ${onDelete ? (summary
+          ? `<button class="subtle title-slot-delete" data-component="title-save-slot-delete" type="button" data-slot-delete="${slot}" aria-label="Delete slot ${slot}">✕</button>`
+          // An empty slot has nothing to delete and still holds the gutter open,
+          // so every row in the list ends on the same edge. Hidden, disabled and
+          // aria-hidden: furniture, not a control (styles/ui.css).
+          : '<button class="subtle title-slot-delete" data-slot-spacer type="button" tabindex="-1" disabled aria-hidden="true">✕</button>') : ''}
       </div>`;
     }).join('');
 
@@ -55365,7 +55493,35 @@ function mountFloat({ tip, root, owner, visual, natural }) {
   });
   const ownerRect = owner.getBoundingClientRect();
   const gap = GAP;
-  const candidates = sideCandidates(ownerRect, natural, visual.bounds, gap);
+  // THE DIALOG IS A BOUNDARY, NOT JUST THE VIEWPORT.
+  //
+  // hardExclusions lists CONTROLS — slots, the delete, the close, the heading.
+  // The modal itself was never in the containment test, so a placement outside
+  // the panel entirely satisfied every rule this function checked. Measured
+  // 2026-09-03 at 1440x900 with a filled slot 1: the owner (the pick button)
+  // ends at x=990 because the delete button takes the row's trailing gutter, so
+  // `inline-end` starts at 1002 and lands ON that delete — excluded. The next
+  // candidate, `inline-start`, sits at 125..377 against a modal that starts at
+  // 340. It broke no rule and was chosen, and the player saw a caption floating
+  // in the dark to the LEFT of the dialog, describing a slot inside it.
+  //
+  // Intersecting the visual bounds with the dialog's own rect is the whole fix.
+  // Every side is now judged against the panel a reader is actually looking at,
+  // and when no side fits inside it — which is the common case, because a slot
+  // fills the panel's width — plan() falls through to mountReserve and the
+  // caption lands under its own row. That is the placement the narrow layout
+  // has always used, and it was the better one at both sizes.
+  const dialog = owner.closest('.title-menu-modal');
+  const dialogRect = dialog ? dialog.getBoundingClientRect() : null;
+  const bounds = dialogRect
+    ? {
+      left: Math.max(visual.bounds.left, dialogRect.left),
+      top: Math.max(visual.bounds.top, dialogRect.top),
+      right: Math.min(visual.bounds.right, dialogRect.right),
+      bottom: Math.min(visual.bounds.bottom, dialogRect.bottom),
+    }
+    : visual.bounds;
+  const candidates = sideCandidates(ownerRect, natural, bounds, gap);
   const exclusions = hardExclusions(root, owner);
   const chosen = candidates.find((candidate) => {
     const rect = {
@@ -55374,7 +55530,7 @@ function mountFloat({ tip, root, owner, visual, natural }) {
       right: candidate.left + natural.width,
       bottom: candidate.top + natural.height,
     };
-    return inside(candidate, natural, visual.bounds)
+    return inside(candidate, natural, bounds)
       && !intersects(rect, ownerRect)
       && exclusions.every((element) => !intersects(rect, element.getBoundingClientRect()));
   });
@@ -57834,24 +57990,14 @@ Object.assign(module.exports, { SEED_PROMISE, attachSeedField });
 
 const { splitByDisclosure } = require("src/model/disclosure.js");
 const { statProjection } = require("src/model/statProjection.js");
-const { equipmentRequirementReceipt, equippedPieces, parseMod } = require("src/model/loadout.js");
+const { equipmentRequirementReceipt, equippedPieces, modEffectLines } = require("src/model/loadout.js");
 const { orderedAttributes } = require("src/model/attributes.js");
 
-/** `mods` → player-readable effect lines, through the modFields vocabulary. */
-function pieceEffects(registries, piece) {
-  const fields = (registries.equipment || {}).modFields || {};
-  return (piece.mods || []).map((raw) => {
-    const mod = parseMod(raw);
-    const spec = mod && fields[mod.field];
-    // A mod the vocabulary does not know is refused at the content door, so
-    // reaching here means the tables disagree — say the raw row rather than
-    // drop it silently. A visible oddity is a bug report; a dropped line is a
-    // screen that quietly under-describes a weapon.
-    if (!spec) return raw;
-    const sign = mod.mode === 'add' && mod.value >= 0 ? '+' : '';
-    return `${spec.label} ${sign}${mod.value}`;
-  });
-}
+/** `mods` → player-readable effect lines, through the modFields vocabulary.
+ *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
+ *  the two copies that made a third site print the raw row. The reasoning about
+ *  an unknown field, which was written here, moved with it. */
+const pieceEffects = (registries, piece) => modEffectLines(registries, piece);
 
 function requirementLines(registries, piece, attributes) {
   const receipt = equipmentRequirementReceipt(registries, piece, attributes);
@@ -68557,6 +68703,7 @@ const { flaskSlotCap } = require("src/model/gracerefill.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { rewardPlan, resolveContinue, unseenIds } = require("src/model/rewardplan.js");
 const { beatArmer } = require("src/framework/optionDecision.js");
+const { modEffectLines } = require("src/model/loadout.js");
 
 const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
@@ -68691,7 +68838,12 @@ function mountRewards(app, {
         // stored until the row is taken (the roll is pure — main.js rollDrop),
         // so "Carried" before a take would be the f29d468 lie re-worded.
         const a = (registries.equipment.armaments || []).find((x) => x.id === row.armamentId);
-        const name = a ? `<b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` : 'An armament.';
+        // `a.mods` is the raw vocabulary (`strike.damage=+4`) and this line used
+        // to print it verbatim — engine keys on the screen where a reward is
+        // chosen. modEffectLines is the one home for turning them into a
+        // sentence (src/model/loadout.js).
+        const effects = modEffectLines(registries, a).join(', ');
+        const name = a ? `<b>${esc(a.name)}</b> — ${esc(effects || 'plain steel')}` : 'An armament.';
         // A full bag reads its refusal in the flask's own idiom — the copy
         // switches on the model's token (blockedBy), never a re-derivation.
         if (row.blockedBy === 'storage') return { title: 'Armament', body: `${name} — but your storage is full. It stays where it fell.` };
@@ -71170,22 +71322,15 @@ Object.assign(module.exports, { mountHistory });
 const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 const { pieceReveal } = require("src/model/unlocks.js");
-const { ownership } = require("src/model/loadout.js");
+const { ownership, modEffectLine } = require("src/model/loadout.js");
 const { LOCK_COPY, armamentKindLabel } = require("src/ui/uiContent.js");
 
-/** A piece's mods, written the way a player reads them. */
+/** A piece's mods, written the way a player reads them. The second regex over
+ *  the mod vocabulary lived here; the sentence is loadout.js's now, so this is
+ *  the walk over the piece and nothing else. An unknown field no longer
+ *  disappears — see modEffectLine for why that direction is the safe one. */
 function modSummary(modFields, piece) {
-  const parts = [];
-  for (const raw of piece.mods || []) {
-    const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
-    if (!m) continue;
-    const spec = (modFields || {})[m[2]];
-    if (!spec) continue;
-    const where = m[1] === 'self' ? '' : `${m[1][0].toUpperCase()}${m[1].slice(1)} `;
-    const sign = m[3][0] === '+' || m[3][0] === '-' ? m[3] : `= ${m[3]}`;
-    parts.push(`${where}${spec.label} ${sign}`);
-  }
-  return parts;
+  return (piece.mods || []).map((raw) => modEffectLine(modFields, raw));
 }
 
 /**
