@@ -103,37 +103,44 @@ const PROBE = `(() => {
     if ((dx > 1 || dy > 1) && !scrolls && !clamps && !ellipsis) {
       out.bleeds.push({ el: id(el), dx: Math.round(dx), dy: Math.round(dy), text: snippet(el) });
     }
-    // IS IT REACHABLE, NOT IS IT VISIBLE. The first cut of this check compared
-    // every rect to the viewport and reported 158 findings, nearly all of them
-    // rows scrolled out of a list that scrolls — reachable content, wrongly
-    // called escaped. A gate that cries wolf 158 times is worse than no gate,
-    // because the real 33 are then invisible inside it.
-    // So: find the nearest ancestor that CLIPS. If it scrolls, the element is
-    // reachable by scrolling and is not a finding, however far outside the
-    // viewport it currently sits. Only content clipped by something that
-    // CANNOT scroll — or by the document itself — has actually escaped.
+    // IS IT REACHABLE, AND ONLY WHAT CAN BE ANSWERED WITHOUT GUESSING.
+    //
+    // Two earlier cuts were wrong and both are worth recording, because the
+    // second looked right:
+    //   1. compare every rect to the viewport -> 158 findings, nearly all of
+    //      them rows scrolled out of a list that scrolls. Reachable content,
+    //      called escaped.
+    //   2. walk to the nearest ancestor with a non-visible overflow and
+    //      compare against THAT -> readable-looking findings that were still
+    //      nonsense ("[242,14,286,23] outside [71,9]"), because the walk stops
+    //      at elements that do not clip a positioned descendant at all, and
+    //      because an absolutely positioned child's containing block can sit
+    //      outside the ancestor the walk picked.
+    //
+    // So this asks the narrow question it CAN answer: is there any scroller
+    // above this element? If yes, the content is reachable by scrolling and
+    // this tool says nothing about it. If NO ancestor scrolls and the rect is
+    // still outside the viewport, the element genuinely cannot be reached.
+    // Deliberately CONSERVATIVE: it will miss an element clipped away inside a
+    // non-scrolling box, which the overflow check above catches only when the
+    // element's own text overflows. Named rather than papered over — a check
+    // that reports 153 things nobody can verify is worse than one that reports
+    // only the few it is sure of.
     const r = el.getBoundingClientRect();
     if (r.width > 0 && r.height > 0) {
-      let clip = el.parentElement;
-      let scrollable = false;
-      while (clip && clip !== document.body) {
-        const ps = getComputedStyle(clip);
-        const oflow = ps.overflowX + ' ' + ps.overflowY;
-        if (/hidden|auto|scroll|clip/.test(oflow)) {
-          scrollable = /auto|scroll/.test(oflow)
-            && (clip.scrollHeight > clip.clientHeight + 1 || clip.scrollWidth > clip.clientWidth + 1);
-          break;
+      let anc = el.parentElement;
+      let reachable = false;
+      while (anc) {
+        if (anc.scrollHeight > anc.clientHeight + 1 || anc.scrollWidth > anc.clientWidth + 1) {
+          const as = getComputedStyle(anc);
+          if (/auto|scroll/.test(as.overflowX + ' ' + as.overflowY)) { reachable = true; break; }
         }
-        clip = clip.parentElement;
+        anc = anc.parentElement;
       }
-      if (!scrollable) {
-        const box = clip && clip !== document.body
-          ? clip.getBoundingClientRect()
-          : { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
-        if (r.right > box.right + 1 || r.left < box.left - 1 || r.bottom > box.bottom + 1 || r.top < box.top - 1) {
-          out.escaped.push({ el: id(el), rect: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)],
-            view: [Math.round(box.right - box.left), Math.round(box.bottom - box.top)], text: snippet(el) });
-        }
+      const off = r.right > innerWidth + 1 || r.left < -1 || r.bottom > innerHeight + 1 || r.top < -1;
+      if (off && !reachable) {
+        out.escaped.push({ el: id(el), rect: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)],
+          view: [innerWidth, innerHeight], text: snippet(el) });
       }
     }
   }
