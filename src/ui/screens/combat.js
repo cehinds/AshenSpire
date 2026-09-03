@@ -35,6 +35,7 @@ import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { combatantFrame } from '../components/combatantFrame.js';
+import { statureFor } from '../components/stature.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { wireHudModeGrip } from '../components/hudModeGrip.js';
@@ -957,6 +958,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         meters: meterBars(enemy, { tooltips: false }),
         trailing: [statusRow(enemy, { tooltips: false })],
       });
+      box.dataset.stature = statureFor(registries, def.id);
       if (enemy.alive) {
         wireEnemyContext(box, enemy);
         box.addEventListener('click', (event) => {

@@ -93,7 +93,11 @@ function fillTemplate(def, tokens, baseTokens) {
 export function renderCard(registries, ref, opts = {}) {
   const def = resolveCard(registries, ref);
   const el = document.createElement('div');
-  el.className = `card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
+  // THE FACE IS THE KIT'S CARD (§10): a fixed box, fixed landmarks (name, art,
+  // type band), and one shared row budget below the band that tags and text
+  // divide. `as-card` is the recipe; the old class names stay as the hooks
+  // every tool and screen reads.
+  el.className = `card as-card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
   // Type presentation is data (balance.ui.cardTypes): corner radii carry the
   // type (attack squarest → power roundest) and each type owns its banner
   // colour. Renaming a label here never touches engine logic.
@@ -121,6 +125,7 @@ export function renderCard(registries, ref, opts = {}) {
   const tags = def.cardTags && def.cardTags.length
     ? service.resolve(def.cardTags)
     : service.tagsOf('card', def);
+  el.dataset.tagRows = tags.length ? '1' : '0';
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
   // The badge numbers come from the framework cost profile (a preview's
@@ -142,11 +147,15 @@ export function renderCard(registries, ref, opts = {}) {
     // Subtypes: authored in content/source/tagging.csv. Untagged cards
     // render nothing here, so the layout is unchanged for them.
     (tags.length
-      ? `<div class="ctags">${tags
-          .map((t) => `<span class="ctag" style="--tag-color:#${esc(t.color)}" title="${esc(t.blurb)}">${esc(t.glyph)} ${esc(t.label)}</span>`)
+      ? `<div class="cd-body"><div class="ctags cd-tags">${tags
+          .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb)}">${esc(t.glyph)} ${esc(t.label)}</span>`)
           .join('')}</div>`
-      : '') +
-    `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
+      : '<div class="cd-body">') +
+    `<div class="ctext cd-text">${fillTemplate(def, tokens, base)}</div></div>`;
+  // MEASURED, NOT GUESSED: the name shrinks to one line, tags past the second
+  // row defer to `+N`, and the text takes what the budget leaves. CSS cannot
+  // count or measure, so the renderer reports after the first paint.
+  requestAnimationFrame(() => fitCardFace(el));
 
   // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
   // number in the status row's own tint — "these cards just lit up" instead
@@ -169,10 +178,52 @@ export function renderCard(registries, ref, opts = {}) {
       : null;
     attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts)));
   }
-  if (opts.small) {
-    el.style.transform = 'scale(0.92)';
-  }
+  if (opts.small) el.dataset.small = 'true';
   return el;
+}
+
+/**
+ * fitCardFace(el) — the three facts CSS cannot compute, reported as data
+ * attributes the stylesheet reads (kit §10):
+ *   data-name      long | verylong  — the name stepped its type down to stay one line
+ *   data-tag-rows  0 | 1 | 2        — rows the tags took; text gets the rest
+ *   data-tags-hidden n              — tags deferred past the second row (+n)
+ *   data-truncated true             — both were full; the face carries the chevron
+ */
+export function fitCardFace(el) {
+  if (!el?.isConnected) return;
+  const name = el.querySelector('.cname');
+  if (name) {
+    el.dataset.name = '';
+    if (name.scrollWidth > name.clientWidth + 1) el.dataset.name = 'long';
+    if (name.scrollWidth > name.clientWidth + 1) el.dataset.name = 'verylong';
+  }
+  const tagsEl = el.querySelector('.ctags');
+  if (tagsEl) {
+    const chips = [...tagsEl.querySelectorAll('.ctag')];
+    tagsEl.querySelector('.as-tag.more')?.remove();
+    chips.forEach((chip) => { chip.hidden = false; });
+    const rowOf = (chip) => Math.round((chip.offsetTop - tagsEl.offsetTop) / Math.max(1, chip.offsetHeight + 2));
+    let hidden = 0;
+    let rows = chips.length ? 1 : 0;
+    for (const chip of chips) {
+      const row = rowOf(chip);
+      if (row >= 2) { chip.hidden = true; hidden += 1; } else rows = Math.max(rows, row + 1);
+    }
+    if (hidden) {
+      const more = document.createElement('span');
+      more.className = 'as-tag more';
+      more.textContent = `+${hidden}`;
+      more.dataset.tip = chips.filter((chip) => chip.hidden).map((chip) => chip.textContent.trim()).join(' · ');
+      tagsEl.appendChild(more);
+      // the remainder chip may itself wrap: hide one more and recount
+      if (rowOf(more) >= 2) { const last = chips.filter((chip) => !chip.hidden).pop(); if (last) { last.hidden = true; hidden += 1; more.textContent = `+${hidden}`; } }
+      el.dataset.tagsHidden = String(hidden);
+    } else delete el.dataset.tagsHidden;
+    el.dataset.tagRows = String(Math.min(2, rows));
+  }
+  const text = el.querySelector('.ctext');
+  el.dataset.truncated = text && text.scrollHeight > text.clientHeight + 1 ? 'true' : 'false';
 }
 
 /**

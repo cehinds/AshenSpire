@@ -429,123 +429,6 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
   --ui-tray-expanded-panel-max: 34%;
 }
 
-/* ---------- card ---------- */
-.card {
-  position: relative; width: 14rem; height: 19.6rem; border-radius: var(--card-radius, var(--r-3));
-  background: linear-gradient(#241e15, #1a1510);
-  border: 2px solid #5a5040; color: var(--parchment);
-  display: flex; flex-direction: column; align-items: center;
-  padding: 2.6rem 0.8rem 0.8rem; cursor: pointer; flex-shrink: 0;
-  transition: transform 140ms, box-shadow 140ms, border-color 140ms;
-}
-.card.rarity-uncommon { border-color: var(--frost); }
-.card.rarity-rare { border-color: var(--gold); }
-.card.rarity-special { border-color: #6a3a7a; }
-/* A NUMERAL IS NOT CENTRED BY `justify-content: center` ALONE, and the badge
-   showed it: with a `1` in it the cost read high and left, with an `8` it read
-   fine. Two causes, both here rather than nudged per instance.
-     PROPORTIONAL FIGURES give each digit its own advance width, so the ink
-     inside the centred box moves as the number changes — and a row of badges
-     stops agreeing with itself. `tabular-nums` gives every digit the same
-     width, which fixes the shift AND keeps sibling badges aligned.
-     LEADING is centred, not the glyph, whenever line-height exceeds the em
-     box; `1` makes that visible because its ink is short and narrow. */
-.card .cost {
-  position: absolute; top: -1rem; left: -1rem; width: 3rem; height: 3rem;
-  border-radius: var(--r-round); background: #1c1610; border: 2px solid var(--gold);
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 1.4rem; line-height: 1; color: var(--parchment);
-  font-variant-numeric: tabular-nums;
-}
-.card .mana-cost {
-  position: absolute; top: -0.7rem; right: -0.7rem; min-width: 3.2rem; height: 2.4rem;
-  border-radius: var(--r-pill); padding: 0 0.6rem; background: #111b35; border: 2px solid #4f82d8;
-  display: flex; align-items: center; justify-content: center; gap: 0.25rem;
-  font-weight: 700; font-size: 1rem; color: #cfe1ff;
-}
-.card .stamina-cost {
-  position: absolute; top: 1.9rem; right: -0.7rem; min-width: 3.2rem; height: 2.4rem;
-  border-radius: var(--r-pill); padding: 0 0.6rem; background: #142016; border: 2px solid #5f925d;
-  display: flex; align-items: center; justify-content: center; gap: 0.25rem;
-  font-weight: 700; font-size: 1rem; color: var(--parchment); z-index: 3;
-}
-.card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
-.card .cname { font-family: var(--font-display); font-size: 1.15rem; text-align: center; line-height: 1.15; min-height: 2.6rem; }
-.card.upgraded .cname { color: var(--green); }
-.card .art {
-  width: 11.6rem; height: 6.6rem; margin: 0.3rem 0; border-radius: var(--card-art-radius, var(--r-2));
-  background: #14100c; border: 1px solid var(--line);
-  display: flex; align-items: center; justify-content: center; font-size: 3.4rem;
-}
-.card .ctype { --track: 3px;
-  width: 11.6rem; border-radius: var(--r-2); background: #2a241c; color: var(--gold);
-  font-size: 0.9rem; letter-spacing: var(--track); text-align: center; padding: 0.3rem 0;
-  font-family: var(--font-display);
- text-indent: var(--track);}
-/* Two facts were tangled in one selector, and the tangle is what broke the
-   Smith preview. `.card .ctext` is HOW THE CARD FACE LAYS OUT ITS TEXT BLOCK —
-   it belongs to the card and stays keyed to it. The five rules below are HOW
-   CARD TEXT MARKS ITSELF: they style the spans fillTemplate() emits, and
-   fillTemplate() is one function whose output is drawn in two places — the card
-   face, and the Smith/coop upgrade preview inside #tooltip. Keying the marks to
-   `.card` keyed them to one of the two drawing sites, so the preview computed
-   exactly which numbers moved and then drew them like ordinary prose.
-   So they are keyed to `.ctext` — "this element holds card text" — and BOTH
-   drawing sites wear it. This is a re-key, not a widening: copying these five
-   rules under `#tooltip` would give every mark a second home to drift from.
-   COMPLETING THE RE-KEY (Sunna): five moved, and a SIXTH rule styling the same
-   span stayed behind on `.card` because it carried a hardcoded hex and had
-   nowhere else to live — `body.cb-safe .card .ctext .st-bleed`. Every rule
-   keyed to a TOKEN followed for free; the one keyed to a LITERAL did not, and
-   under Colorblind-friendly the same word read reddish-purple on a card face
-   and vermillion in the preview. `.st-bleed` now reads `--bleed` (base.css),
-   the palette override lives in the token block, and this rule needs no
-   palette clause at all. */
-.card .ctext { font-size: 1.1rem; text-align: center; line-height: 1.4; margin-top: 0.6rem; }
-.ctext .kw { color: var(--gold); }
-.ctext .st-bleed { color: var(--bleed); font-weight: 600; }
-.ctext .val { font-weight: 700; }
-.ctext .val.up { color: var(--green); }
-.ctext .val.down { color: var(--ember); }
-
-/* ---------- card TYPE: geometry + banner colour --------------------------- */
-/* Type reads as SHAPE first — attack squarest and chamfered, power roundest,
-   skill between (radii come from balance.ui.cardTypes as --card-radius /
-   --card-art-radius). Each type also owns its banner colour, kept to that one
-   small element so it doesn't fight rarity (border), class (wash) or accent
-   (chrome). */
-.card .ctype {
-  color: var(--card-type-color, var(--gold));
-  background: color-mix(in srgb, var(--card-type-color, var(--gold)) 15%, #2a241c);
-}
-/* Attack: clipped top-left / bottom-right, so the frame reads like an edge. */
-.card.type-attack .art {
-  clip-path: polygon(0.8rem 0, 100% 0, 100% calc(100% - 0.8rem), calc(100% - 0.8rem) 100%, 0 100%, 0 0.8rem);
-}
-.card.type-attack .ctype {
-  clip-path: polygon(0.5rem 0, 100% 0, calc(100% - 0.5rem) 100%, 0 100%);
-}
-/* Skill: the neutral middle — plain rounded banner. */
-.card.type-skill .ctype { border-radius: var(--r-2); }
-/* Power: fully rounded, with a keep-line inside the art to read as ongoing. */
-.card.type-power .ctype { border-radius: var(--r-pill); }
-.card.type-power .art { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--card-type-color) 40%, transparent); }
-
-/* Card subtypes (content/source/cardTagging.csv). A quiet strip under the type
-   banner — each chip takes its own registered colour, kept low-contrast so the
-   card's primary reads (name, numbers) still win the eye. */
-.card .ctags {
-  display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center;
-  margin-top: 0.3rem; line-height: 1;
-}
-.card .ctag {
-  font-size: 0.8rem; letter-spacing: 0.04em; white-space: nowrap;
-  color: var(--tag-color, var(--muted));
-  border: 1px solid color-mix(in srgb, var(--tag-color, var(--muted)) 45%, transparent);
-  background: color-mix(in srgb, var(--tag-color, var(--muted)) 12%, transparent);
-  border-radius: var(--r-1); padding: 0.1rem 0.35rem;
-}
-
 /* ---------- card colour motif (Settings → Display → Card motif) ------------ */
 /* Two independent axes, both player-chosen:
      class  → --card-tint, set per card from the class def's cardTint (data, so
@@ -8046,6 +7929,130 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
    and the panel is fixed-position so left/top mean what the placer wrote. */
 .modal-veil.qn-veil { display: block; padding: 0; background: rgba(0, 0, 0, 0.35); }
 .qn-panel { position: fixed; left: 0; top: 0; }
+
+/* ═══ THE CARD — one fixed box, fixed landmarks, one shared row budget ═════ */
+/* `.card` is the hook every screen and tool reads; `.as-card` is the recipe.
+   THE BOX IS FIXED — `height`, not a floor — and its total is spelled out from
+   its landmarks so a landmark that changes moves the box with it. Below the
+   band there is ONE budget of rows that tags and text share: one tag row
+   leaves three lines of text, two leave two. Both full is the only case that
+   truncates, and a truncated face carries the chevron (hover: the full text;
+   click: the detail door). */
+.card, .as-card {
+  --card-w: 14rem;
+  --card-name-h: 2.6rem;      /* FIXED. two lines' worth of room, one line of type */
+  --card-art-h: 6rem;         /* FIXED. */
+  --card-band-h: 1.7rem;      /* FIXED. */
+  --card-row: 1.5rem;         /* one row of the shared budget */
+  --card-body-rows: 4;
+  --card-pad: 0.8rem;
+  --card-gap: 0.4rem;
+  position: relative;
+  box-sizing: border-box;
+  width: var(--card-w);
+  height: calc(var(--card-name-h) + var(--card-art-h) + var(--card-band-h) + var(--card-body-rows) * var(--card-row) + 3 * var(--card-gap) + 2 * var(--card-pad) + 1.2rem);
+  padding: calc(var(--card-pad) + 1.2rem) var(--card-pad) var(--card-pad);
+  display: flex; flex-direction: column; align-items: stretch; gap: var(--card-gap);
+  background: var(--bg-raise);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  color: var(--parchment);
+  cursor: pointer; flex-shrink: 0;
+  transition: transform 140ms, box-shadow 140ms, border-color 140ms;
+}
+.card.rarity-uncommon { border-color: var(--frost); }
+.card.rarity-rare { border-color: var(--gold); }
+.card.rarity-special { border-color: #6a3a7a; }
+/* SELECTION CHANGES COLOUR, NEVER FOOTPRINT — the same signal as an OptionCard. */
+.card.selected, .card[data-selected="true"], .as-card[data-selected="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.4), 0 0 20px rgba(var(--accent-rgb), 0.2); }
+.card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
+.card[data-small="true"] { transform: scale(0.92); }
+/* CostMedallion — top-left, outside the frame, the only element allowed to break the edge. */
+.card .cost, .as-cost {
+  position: absolute; top: -1rem; left: -1rem;
+  display: grid; place-items: center;
+  width: 3rem; height: 3rem;
+  background: var(--bg); border: 2px solid var(--gold); border-radius: 50%;
+  font: 600 1.4rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment);
+}
+.card .mana-cost, .card .stamina-cost {
+  position: absolute; right: -0.7rem; min-width: 3.2rem; height: 2.4rem; padding: 0 0.6rem;
+  display: flex; align-items: center; justify-content: center; gap: 0.25rem;
+  border-radius: var(--r-pill); font: 600 1rem/1 var(--font-body); font-variant-numeric: tabular-nums; z-index: 3;
+}
+.card .mana-cost { top: -0.7rem; background: #111b35; border: 2px solid #4f82d8; color: #cfe1ff; }
+.card .stamina-cost { top: 1.9rem; background: #142016; border: 2px solid #5f925d; color: var(--parchment); }
+/* THE NAME IS ONE LINE IN A FIXED BOX. A long name steps its type down. */
+.card .cname, .as-card .cd-name {
+  --track: 0.02em;
+  flex: 0 0 var(--card-name-h); height: var(--card-name-h);
+  display: grid; place-items: center;
+  font: 600 1.2rem/1.15 var(--font-display); letter-spacing: var(--track); text-indent: var(--track);
+  text-align: center; white-space: nowrap; overflow: hidden; min-width: 0;
+}
+.card[data-name="long"] .cname { font-size: 1.05rem; }
+.card[data-name="verylong"] .cname { font-size: 0.92rem; }
+.card.upgraded .cname { color: var(--green); }
+/* ArtWell at a fixed landmark. */
+.card .art {
+  flex: 0 0 var(--card-art-h); height: var(--card-art-h); width: 100%;
+  display: grid; place-items: center;
+  background: #0f0c09; border: 1px solid var(--line); border-radius: var(--r-2);
+  font-size: 2.9rem; line-height: 1; color: var(--parchment);
+}
+/* TypeBand — the type's own tint, full card width, fixed landmark. */
+.card .ctype, .as-typeband {
+  --track: 0.22em;
+  flex: 0 0 var(--card-band-h); height: var(--card-band-h);
+  display: grid; place-items: center;
+  border-radius: var(--r-1);
+  font: 500 0.95rem/1 var(--font-body); letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase;
+  color: var(--card-type-color, var(--gold));
+  background: color-mix(in srgb, var(--card-type-color, var(--gold)) 15%, #2a241c);
+  white-space: nowrap; overflow: hidden; min-width: 0;
+}
+/* THE SHARED BUDGET. */
+.card .cd-body {
+  flex: 0 0 calc(var(--card-body-rows) * var(--card-row));
+  height: calc(var(--card-body-rows) * var(--card-row));
+  display: flex; flex-direction: column; gap: 0.3rem; overflow: hidden; min-width: 0;
+}
+.card .ctags { flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center; align-content: flex-start; line-height: 1; max-height: calc(2 * (1.5rem + 0.3rem)); overflow: hidden; }
+.card .ctag {
+  font-size: 0.85rem; letter-spacing: 0.04em; white-space: nowrap; line-height: 1.3;
+  color: var(--tag-color, var(--muted));
+  border: 1px solid color-mix(in srgb, var(--tag-color, var(--muted)) 45%, transparent);
+  background: color-mix(in srgb, var(--tag-color, var(--muted)) 12%, transparent);
+  border-radius: var(--r-1); padding: 0.1rem 0.4rem;
+}
+.card .ctag[hidden] { display: none; }
+.card .ctext {
+  flex: 1 1 auto; min-height: 0;
+  display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
+  line-height: var(--card-row); font-size: 1.1rem; text-align: center; color: var(--ink-dim);
+}
+.ctext b { color: var(--parchment); }
+.card[data-tag-rows="0"] .ctext { -webkit-line-clamp: 4; }
+.card[data-tag-rows="1"] .ctext { -webkit-line-clamp: 3; }
+.card[data-tag-rows="2"] .ctext { -webkit-line-clamp: 2; }
+/* Truncated is never a dead end: the chevron says there is more. */
+.card[data-truncated="true"]::after { content: '›'; position: absolute; bottom: 0.3rem; right: 0.5rem; color: var(--muted); font-size: 1.3rem; line-height: 1; }
+
+/* ═══ COMBATANT — one shape, three statures ════════════════════════════════ */
+/* Stature is DERIVED from the encounter pool (normal → normal, elite → large,
+   boss → huge). Only the sprite well scales; nameplate, bars and meters stay
+   where a player learned them. The player is always normal. */
+.combatant { --stature: 1; }
+.combatant[data-stature="large"] { --stature: 1.15; }
+.combatant[data-stature="huge"] { --stature: 1.3; }
+.combatant .sprite > img { transform-origin: bottom center; scale: var(--stature); }
+.combatant .meters { width: calc(13rem * var(--stature)); }
+/* The marks inside card text — the same in the fan and in the tooltip. */
+.ctext .kw { color: var(--gold); }
+.ctext .st-bleed { color: var(--bleed); font-weight: 600; }
+.ctext .val { font-weight: 700; }
+.ctext .val.up { color: var(--green); }
+.ctext .val.down { color: var(--ember); }
 
   </style>
 </head>
@@ -54301,7 +54308,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '862cb23bf6';
+const SOURCE = '8624c96039';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -54335,7 +54342,7 @@ const SOURCE = '862cb23bf6';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '17';
+const ORDINAL = '18';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -64985,7 +64992,11 @@ function fillTemplate(def, tokens, baseTokens) {
 function renderCard(registries, ref, opts = {}) {
   const def = resolveCard(registries, ref);
   const el = document.createElement('div');
-  el.className = `card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
+  // THE FACE IS THE KIT'S CARD (§10): a fixed box, fixed landmarks (name, art,
+  // type band), and one shared row budget below the band that tags and text
+  // divide. `as-card` is the recipe; the old class names stay as the hooks
+  // every tool and screen reads.
+  el.className = `card as-card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
   // Type presentation is data (balance.ui.cardTypes): corner radii carry the
   // type (attack squarest → power roundest) and each type owns its banner
   // colour. Renaming a label here never touches engine logic.
@@ -65013,6 +65024,7 @@ function renderCard(registries, ref, opts = {}) {
   const tags = def.cardTags && def.cardTags.length
     ? service.resolve(def.cardTags)
     : service.tagsOf('card', def);
+  el.dataset.tagRows = tags.length ? '1' : '0';
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
   // The badge numbers come from the framework cost profile (a preview's
@@ -65034,11 +65046,15 @@ function renderCard(registries, ref, opts = {}) {
     // Subtypes: authored in content/source/tagging.csv. Untagged cards
     // render nothing here, so the layout is unchanged for them.
     (tags.length
-      ? `<div class="ctags">${tags
-          .map((t) => `<span class="ctag" style="--tag-color:#${esc(t.color)}" title="${esc(t.blurb)}">${esc(t.glyph)} ${esc(t.label)}</span>`)
+      ? `<div class="cd-body"><div class="ctags cd-tags">${tags
+          .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb)}">${esc(t.glyph)} ${esc(t.label)}</span>`)
           .join('')}</div>`
-      : '') +
-    `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
+      : '<div class="cd-body">') +
+    `<div class="ctext cd-text">${fillTemplate(def, tokens, base)}</div></div>`;
+  // MEASURED, NOT GUESSED: the name shrinks to one line, tags past the second
+  // row defer to `+N`, and the text takes what the budget leaves. CSS cannot
+  // count or measure, so the renderer reports after the first paint.
+  requestAnimationFrame(() => fitCardFace(el));
 
   // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
   // number in the status row's own tint — "these cards just lit up" instead
@@ -65061,10 +65077,52 @@ function renderCard(registries, ref, opts = {}) {
       : null;
     attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts)));
   }
-  if (opts.small) {
-    el.style.transform = 'scale(0.92)';
-  }
+  if (opts.small) el.dataset.small = 'true';
   return el;
+}
+
+/**
+ * fitCardFace(el) — the three facts CSS cannot compute, reported as data
+ * attributes the stylesheet reads (kit §10):
+ *   data-name      long | verylong  — the name stepped its type down to stay one line
+ *   data-tag-rows  0 | 1 | 2        — rows the tags took; text gets the rest
+ *   data-tags-hidden n              — tags deferred past the second row (+n)
+ *   data-truncated true             — both were full; the face carries the chevron
+ */
+function fitCardFace(el) {
+  if (!el?.isConnected) return;
+  const name = el.querySelector('.cname');
+  if (name) {
+    el.dataset.name = '';
+    if (name.scrollWidth > name.clientWidth + 1) el.dataset.name = 'long';
+    if (name.scrollWidth > name.clientWidth + 1) el.dataset.name = 'verylong';
+  }
+  const tagsEl = el.querySelector('.ctags');
+  if (tagsEl) {
+    const chips = [...tagsEl.querySelectorAll('.ctag')];
+    tagsEl.querySelector('.as-tag.more')?.remove();
+    chips.forEach((chip) => { chip.hidden = false; });
+    const rowOf = (chip) => Math.round((chip.offsetTop - tagsEl.offsetTop) / Math.max(1, chip.offsetHeight + 2));
+    let hidden = 0;
+    let rows = chips.length ? 1 : 0;
+    for (const chip of chips) {
+      const row = rowOf(chip);
+      if (row >= 2) { chip.hidden = true; hidden += 1; } else rows = Math.max(rows, row + 1);
+    }
+    if (hidden) {
+      const more = document.createElement('span');
+      more.className = 'as-tag more';
+      more.textContent = `+${hidden}`;
+      more.dataset.tip = chips.filter((chip) => chip.hidden).map((chip) => chip.textContent.trim()).join(' · ');
+      tagsEl.appendChild(more);
+      // the remainder chip may itself wrap: hide one more and recount
+      if (rowOf(more) >= 2) { const last = chips.filter((chip) => !chip.hidden).pop(); if (last) { last.hidden = true; hidden += 1; more.textContent = `+${hidden}`; } }
+      el.dataset.tagsHidden = String(hidden);
+    } else delete el.dataset.tagsHidden;
+    el.dataset.tagRows = String(Math.min(2, rows));
+  }
+  const text = el.querySelector('.ctext');
+  el.dataset.truncated = text && text.scrollHeight > text.clientHeight + 1 ? 'true' : 'false';
 }
 
 /**
@@ -65176,7 +65234,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
 }
 
 
-Object.assign(module.exports, { staticTokens, relicText, renderCard, upgradePreviewHtml });
+Object.assign(module.exports, { staticTokens, relicText, renderCard, fitCardFace, upgradePreviewHtml });
 
 },
 "src/ui/components/equipmentReceipts.js": function (module, exports, require) {
@@ -70213,6 +70271,7 @@ const { mountHand } = require("src/ui/components/hand.js");
 const { hudShellHtml } = require("src/ui/components/hudmeta.js");
 const { runHudViewModel } = require("src/ui/viewModels/RunHudViewModel.js");
 const { combatantFrame } = require("src/ui/components/combatantFrame.js");
+const { statureFor } = require("src/ui/components/stature.js");
 const { UI_COMPONENTS: UI, uiComponentAttrs, markUiComponent } = require("src/ui/components/uiComponents.js");
 const { wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
 const { wireHudModeGrip } = require("src/ui/components/hudModeGrip.js");
@@ -71135,6 +71194,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         meters: meterBars(enemy, { tooltips: false }),
         trailing: [statusRow(enemy, { tooltips: false })],
       });
+      box.dataset.stature = statureFor(registries, def.id);
       if (enemy.alive) {
         wireEnemyContext(box, enemy);
         box.addEventListener('click', (event) => {
@@ -72767,6 +72827,33 @@ function combatantFrame({
 
 
 Object.assign(module.exports, { combatantFrame });
+
+},
+"src/ui/components/stature.js": function (module, exports, require) {
+// src/ui/components/stature.js — a combatant's STATURE, derived, never authored.
+//
+// Constantine, 2026-09-03: "combatant cards should be uniform but come in 3
+// sizes, normal (most enemies and player), large (elites), Huge (bosses)".
+// The encounter table already says which enemies are elites and bosses
+// (`pool`), and each enemy appears in exactly one pool — so the stature is
+// read off that table, and there is no second field to drift. If content
+// ever puts one enemy in two pools this fails LOUDLY: that is a content
+// question, not a rendering one.
+
+const BY_POOL = Object.freeze({ normal: 'normal', elite: 'large', boss: 'huge' });
+
+/** statureFor(registries, enemyId) → 'normal' | 'large' | 'huge' */
+function statureFor(registries, enemyId) {
+  const rows = registries?.encounters?.all ? registries.encounters.all() : [];
+  const pools = new Set();
+  for (const row of rows) if ((row.enemies || []).includes(enemyId)) pools.add(row.pool);
+  if (pools.size > 1) throw new Error(`stature: ${enemyId} is in ${[...pools].join(' and ')} pools — one enemy, one pool`);
+  const pool = [...pools][0];
+  return BY_POOL[pool] || 'normal';
+}
+
+
+Object.assign(module.exports, { statureFor });
 
 },
 "src/ui/models/BattlefieldStageModel.js": function (module, exports, require) {
