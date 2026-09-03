@@ -6,7 +6,20 @@
   "ticket": "AS-HD-040",
   "ref": "recovery/as-hd-040",
   "path_globs": [
-    "assets/classes/**"
+    "assets/classes/**",
+    "assets/sprites/**",
+    "src/**",
+    "AshenSpire.html",
+    "buildordinal.json",
+    "build/**",
+    "dist/**",
+    "docs/art-evidence/**",
+    "docs/preview/**",
+    "tools/**",
+    "docs/SPEC-RECONCILE.md",
+    "CHANGELOG.md",
+    "CREDITS.md",
+    "SPEC.md"
   ],
   "base_oid": "4a515339189c6f3ec003eef74e86dc38526f93fe",
   "actions": [
@@ -15,7 +28,17 @@
     "commit-on-isolated-branch",
     "record-blocker-and-continue-collision-free-work"
   ],
-  "issued": "2026-08-29T00:00:00Z",
+  "issued": "2026-09-03T00:00:00Z",
   "expiry": "2026-10-31T23:59:59Z",
-  "revoked": false
+  "revoked": false,
+  "path_grant_exception": {
+    "reason": "Constantine granted the art seat these exact paths for AS-HD-040 in an owner-authenticated session on 2026-09-03. tools/** is a genuine cross-role grant: git-ownership assigns tools/** to it-support, and the only files this ticket writes there are tools/concept-cutout.mjs and tools/screenshot.mjs, the cut-out and screenshot generators the class-art evidence packet is produced by. SPEC.md, CHANGELOG.md, CREDITS.md and docs/SPEC-RECONCILE.md are repo-level records that no git-ownership path declares at all; who owns them is a real governance question this reissue deliberately does not decide unilaterally, so the gap is recorded here as unresolved and tracked separately as help-desk issue #599 rather than closed by inventing an owner from inside a lease. Every other granted glob is declared and fully validated; this exception covers only the globs it names.",
+    "globs": [
+      "tools/**",
+      "docs/SPEC-RECONCILE.md",
+      "CHANGELOG.md",
+      "CREDITS.md",
+      "SPEC.md"
+    ]
+  }
 }
