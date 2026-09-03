@@ -42,4 +42,6 @@ layer: `.agentops/`, `docs/governance/`, generated dashboards, and scheduled
 agent-to-agent routines. It grew to 645 files and a 6,000-line rule checker that
 mostly coordinated itself, and its automated messages repeatedly asserted owner
 approval that had not been given. It was removed in favour of the rules above.
-The complete pre-removal tree is preserved at the git tag `office-archive`.
+The complete pre-removal tree is preserved in git history at commit
+`f87debcf` (`dev` immediately before the removal); the owner may tag it
+`office-archive` for convenience. Restoring it is one `git checkout` away.
