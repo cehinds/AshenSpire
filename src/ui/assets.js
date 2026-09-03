@@ -153,10 +153,10 @@ const CLASS_SVG = {
 // tint. Missing/unloadable art falls back to the inline SVG silhouette, so the
 // single-file dist and file:// play keep working with zero configuration.
 //
-// Art credit: these are NO LONGER Blender renders. They are cut out from the
-// class concept paintings (tools/concept-cutout.mjs). Their provenance is
-// UNKNOWN and unresolved — see the warning at the top of CREDITS.md. The
-// enemy sprites in the same folder are still Blender output.
+// Art credit: these are NO LONGER Blender renders. They are AI-generated with
+// ChatGPT Codex and cut out from the class concept art by
+// tools/concept-cutout.mjs — see the note at the top of CREDITS.md. The enemy
+// sprites in the same folder are still Blender output.
 // Derived, never restated: the tint slots ARE the customization tints, and the
 // classes with rendered art ARE the ones with a silhouette builder. Hand-listing
 // them again let the sprite lookup silently drift from the content it serves.
