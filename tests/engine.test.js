@@ -2786,6 +2786,51 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(validateEquipment(REG).length, 0, 'equipment likewise');
   });
 
+  // ---- 26t. the fifteenth round: absent is not zero, a fourth time --------
+  test('26t. a legacy save recovers its birth quota, and an absent role counts zero', () => {
+    // I MADE THIS MISTAKE INSIDE THE FIX THAT CLOSED IT. Rounds six and seven
+    // were both "a legitimate empty/zero read as absence, so the next source
+    // answered over the author". Round thirteen replaced the Armoury's role
+    // counts with a count of the deck — and merged that count over the legacy
+    // table, so a role the deck does NOT contain fell through to the authored
+    // number. Bias 1 builds eight attacks and no guards; the panel said four.
+    const biased = JSON.parse(JSON.stringify(contentBundle));
+    biased.balance.equipment.startingDeck.classes.reaver = { strikeBias: 1 };
+    const biasedReg = createRegistries(biased);
+    const run = createRunState({ seed: 9, classId: 'reaver', registries: biasedReg });
+    eq(run.deck.filter((c) => c.equipmentRole === 'guard').length, 0, 'this deck really has no guards');
+    const shown = Object.fromEntries(equipmentSurfaceReceipt(biasedReg, run).roles.map((r) => [r.role, r.copies]));
+    eq(shown.guard, 0, 'and the panel says zero rather than the authored four');
+    eq(shown.attack, 8, 'while the attacks it does have are counted');
+    // The deck is the COMPLETE answer when there is one — no merge to fall
+    // through, which is what makes the mistake unwritable here rather than
+    // guarded against.
+
+    // THE LEGACY SAVE. Every reader that falls back to counting a deck did so
+    // into a LOCAL, so a run saved before the field existed stayed `undefined`
+    // on the run itself — and createCombat then carried undefined onto the
+    // synthetic run, where the first mid-fight swap replans. The run's own deck
+    // is the record; the load door repairs it ONCE rather than every reader
+    // re-deriving it, which is the mistake four earlier rounds were about.
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    const fresh = createRunState({ seed: 21, classId: 'reaver', registries: REG });
+    const bornWith = fresh.equipmentAttackSlotCount;
+    assert(Number.isFinite(bornWith) && bornWith > 0, 'a new run records its quota');
+    delete fresh.equipmentAttackSlotCount; // exactly what a pre-field save holds
+    saves.saveRun(fresh, createRng(21));
+    const loaded = saves.loadRun(REG);
+    assert(loaded != null, 'the legacy-shaped save still loads');
+    eq(loaded.equipmentAttackSlotCount, bornWith, 'and its quota is recovered from its own deck');
+    eq(loaded.equipmentAttackSlotCount, loaded.deck.filter((c) => c.equipmentRole === 'attack').length,
+      'which is exactly what the deck holds');
+    // Repaired at the door means every downstream reader gets it for free —
+    // combat, the snapshot, and the panel — with no second derivation.
+    stampDeck(REG, loaded);
+    eq(loaded.deck.filter((c) => c.equipmentRole === 'attack').length, bornWith,
+      'so a restamp after loading plans the recovered quota');
+  });
+
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
   test('27. weapons and armour sets validate against the tag registry', () => {
     const tagIds = TAGS.map((t) => t.id);
