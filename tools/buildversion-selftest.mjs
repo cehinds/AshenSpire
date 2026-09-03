@@ -199,6 +199,20 @@ const PLANTS = [
     },
   },
   {
+    // THE SAME COLLISION AS THE TAG, THROUGH THE OTHER COMPONENT. versionPrefix
+    // folds a candidate into the third slot and has nowhere to put the target
+    // PATCH, so `0.5.2-rc.4` and `0.5.1-rc.4` both became `0.5.4` — two
+    // different releases-in-flight on one version. The regex was well-formed
+    // and the components were all numbers; what it lacked was a slot (#579
+    // review). Planted in both homes, so only the syntax check can fire.
+    name: 'a candidate spelling whose target patch the notation cannot hold, agreed by BOTH homes',
+    row: 'F ORDINAL ON THE BOX',
+    plant: (root) => {
+      editJson(root, (j) => ({ ...j, release: '0.5.2-rc.4' }));
+      edit(root, 'src/content/index.js', (t) => t.replace(/version: '[^']+'/, "version: '0.5.2-rc.4'"));
+    },
+  },
+  {
     // Isolates G: the NUMBER still matches the box, so F stays green and only
     // the "was this computed for this source" question can fire.
     name: 'the recorded digest HAND-EDITED — the number belongs to another tree',
@@ -513,6 +527,14 @@ function ordinalHistory() {
     [(j) => ({ ...j, ordinal: Number.MAX_SAFE_INTEGER + 1 }), 'unknown',
       `the tail advances WITHIN one release to a value it cannot be counted past (${Number.MAX_SAFE_INTEGER} → ${Number.MAX_SAFE_INTEGER + 1}, which is where +1 stops moving) — the release never changes, so this is the branch that used to skip the tuple entirely`,
       (j) => ({ ...j, ordinal: Number.MAX_SAFE_INTEGER })],
+    // TWO RELEASES-IN-FLIGHT ON ONE VERSION. Both spellings are well-formed by
+    // every earlier rule — three numeric components, an rc tag, a counting tail
+    // — and both folded to the same prefix, so the tail decided and a target
+    // patch moving 2 → 1 read as a RISE. Watched unknown: with the spelling
+    // refused there is no order to assert, and claiming a fall would invent one.
+    [(j) => ({ ...j, release: `${MAJOR}.${MINOR}.1-rc.${CANDIDATE}`, ordinal: 10 }), 'unknown',
+      `the target PATCH moves backward while the folded version rises (${MAJOR}.${MINOR}.2-rc.${CANDIDATE}.9 → ${MAJOR}.${MINOR}.1-rc.${CANDIDATE}.10) — two candidate lines the notation cannot tell apart`,
+      (j) => ({ ...j, release: `${MAJOR}.${MINOR}.2-rc.${CANDIDATE}`, ordinal: 9 })],
   ];
   if (BACKWARD === null) {
     console.log(`  skip  [H ORDINAL INCREASES] no earlier release exists to move back to from '${CURRENT}' — the backward case is reported skipped, not silently dropped`);

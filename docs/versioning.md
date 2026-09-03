@@ -85,6 +85,16 @@ The answer is semver's own pre-release segment, not a bent ladder:
   the ladder already names. Nothing else removes it.
 - The triple in the pre-release (`0.5.0` here) is the ladder's answer for the
   milestone in flight; it moves only when that answer changes.
+- **The candidate rides on the BASE PATCH, and `0.5.2-rc.1` is refused.** Not a
+  narrow regex — a slot that does not exist. The stamp holds major, minor,
+  candidate and build; a patch-bearing candidate is a fifth fact with nowhere
+  to go, so `0.5.2-rc.4` and `0.5.1-rc.4` would BOTH fold to `0.5.4` and two
+  different releases-in-flight would share one version. Review on #579 built
+  `0.5.2-rc.4.9 → 0.5.1-rc.4.10`: a rise by the folded version while the
+  release the candidate is *for* moved backward. It is the same collision the
+  `rc`-only rule refuses in the tag, through the other component, and the same
+  answer — the NOTATION would have to change before such a release could be
+  stamped, so until then it is refused rather than silently folded.
 
 ## The candidate is the third component (2026-09-01)
 

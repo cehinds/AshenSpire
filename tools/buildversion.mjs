@@ -502,10 +502,11 @@ export function releaseSyntaxError(releaseString) {
   // rather than merely unhandled. Admitting `[A-Za-z]+` here let
   // `0.5.0-beta.4` pass row F while versionTuple returned null and row H went
   // UNKNOWN — the two rows disagreeing about the same string (#579 review).
-  if (/^\d+\.\d+\.\d+-rc\.\d+$/.test(releaseString)) return null;
+  if (RC_RELEASE.test(releaseString)) return null;
   return `'${releaseString}' is not a release: the scheme admits three numeric components`
-    + ` (0.5.4), optionally with an rc candidate tag (0.5.0-rc.4). A component that is not a number`
-    + ` cannot be ordered against one that is, so nothing downstream can rank this build.`;
+    + ` (0.5.4), optionally with an rc candidate tag on the base patch (0.5.0-rc.4). A component that`
+    + ` cannot be ordered — or a candidate spelling whose target patch the notation has nowhere to put —`
+    + ` leaves nothing downstream able to rank this build.`;
 }
 
 /**
@@ -528,6 +529,23 @@ export function compareVersions(a, b) {
   return 0;
 }
 
+// THE CANDIDATE SPELLING, ONCE. Two copies of this pattern lived here — one in
+// versionPrefix and one in releaseSyntaxError — and round 6 of #579 tightened
+// only the second, so the tag agreed while the PATCH did not. versionPrefix
+// folds a candidate into the third component and has nowhere to put the target
+// patch, so `0.5.2-rc.4` and `0.5.1-rc.4` BOTH became `0.5.4`: review built
+// `0.5.2-rc.4.9 → 0.5.1-rc.4.10`, which reads as a rise while the release the
+// candidate is FOR moves backward. Same collision as the `beta` tag, through
+// the other component.
+//
+// So the notation admits one candidate line per minor, on the base patch. That
+// is a real limit, not a narrow regex: the compressed form holds major, minor,
+// candidate and build, and a patch-bearing candidate is a fifth fact with no
+// slot. A release wanting `0.5.2-rc.1` needs the NOTATION changed first, and
+// will be refused rather than silently folded until then.
+const CANDIDATE_BASE_PATCH = '0';
+const RC_RELEASE = new RegExp(`^(\\d+)\\.(\\d+)\\.${CANDIDATE_BASE_PATCH}-rc\\.(\\d+)$`);
+
 /**
  * The candidate-bearing prefix of a release string: `0.5.0-rc.4` → `0.5.4`.
  *
@@ -543,8 +561,8 @@ export function compareVersions(a, b) {
  * the owner when the directive was given; his call, recorded here.
  */
 export function versionPrefix(releaseString) {
-  const m = /^(\d+)\.(\d+)\.(\d+)-rc\.(\d+)$/.exec(releaseString);
-  if (m) return `${m[1]}.${m[2]}.${m[4]}`;
+  const m = RC_RELEASE.exec(releaseString);
+  if (m) return `${m[1]}.${m[2]}.${m[3]}`;
   return releaseString;
 }
 
