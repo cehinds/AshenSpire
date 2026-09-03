@@ -42,14 +42,25 @@ export function serializeCombatSnapshot(combat) {
 }
 
 /** Restore a snapshot without replaying combat start, draws, or enemy rolls. */
-export function restoreCombatSnapshot({ registries, rng, snapshot }) {
+/**
+ * `fallbackAttackSlotCount` is the RUN's birth quota, for a snapshot written
+ * before that field existed. The run is the authority — save.js recovers it at
+ * the load door from the run's own deck — and the snapshot carrying a copy is
+ * an optimisation, so the read falls back rather than the migration writing
+ * into stored data. Healing the snapshot instead would make migration
+ * non-idempotent for a current one, which tools/weapon-card-packages.mjs is
+ * right to assert against: a load must not rewrite a snapshot it understands.
+ */
+export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount }) {
   assertCombatSnapshot(snapshot);
   const saved = structuredClone(snapshot);
   const combat = {
     registries,
     rng,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
-    equipmentAttackSlotCount: saved.equipmentAttackSlotCount,
+    equipmentAttackSlotCount: Number.isFinite(saved.equipmentAttackSlotCount)
+      ? saved.equipmentAttackSlotCount
+      : (Number.isFinite(fallbackAttackSlotCount) ? fallbackAttackSlotCount : undefined),
     itemUpgradeLevels: saved.itemUpgradeLevels || Object.fromEntries(
       Object.entries(saved.armamentLevels || {}).map(([id, level]) => [`armament/${id}`, level]),
     ),

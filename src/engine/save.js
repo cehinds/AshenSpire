@@ -595,6 +595,30 @@ export function createSaveManager(storage) {
         // clears redundant flags and before an active-combat snapshot is
         // rebound. The snapshot restamp must consume the promoted tier; doing
         // this afterward would leave the resumed piles at tier zero.
+        // THE BIRTH QUOTA, RECOVERED FOR A RUN SAVED BEFORE IT EXISTED. A
+        // legacy save has no `equipmentAttackSlotCount`, and every reader that
+        // falls back to counting a deck only ever did so into a LOCAL — the run
+        // stayed undefined, so createCombat carried undefined onto the
+        // synthetic run and the first mid-fight swap replanned from the current
+        // loadout. Content that lowered strikeBias since the save then threw on
+        // a slot the replan had dropped.
+        //
+        // The run's own deck IS the record of what it was born with, and this
+        // is the migration door, so the number is recovered ONCE here rather
+        // than re-derived at each combat — a second derivation is what four
+        // earlier rounds were about. Runs saved with the field keep theirs.
+        if (!Number.isFinite(run.equipmentAttackSlotCount) && Array.isArray(run.deck)) {
+          const recovered = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
+          run.equipmentAttackSlotCount = recovered;
+          note(run, {
+            kind: 'heal',
+            site: 'save.js:recoverEquipmentAttackSlotCount',
+            field: 'equipmentAttackSlotCount',
+            was: undefined,
+            now: recovered,
+            why: 'run saved before the birth attack quota was recorded; its own deck is the record of what it was born with',
+          });
+        }
         const smithingReceipt = initializeRunSmithing(registries, run);
         const hydratedRunProfiles = hydrateMissingEquipmentProfiles(registries, run.equipmentProfileRuleSnapshot);
         const hydratedCombatProfiles = hydrateMissingEquipmentProfiles(registries, run.combatEntered?.snapshot?.equipmentProfileRuleSnapshot);

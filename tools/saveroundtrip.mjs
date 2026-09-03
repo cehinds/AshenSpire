@@ -315,6 +315,7 @@ const EXPLAINED_CHANGES = {
   damageBySchoolAdd: 'the host relic snapshot stamps the damage-school ledger absent before D22',
   streamCounters: 'saveRun re-stamps the RNG stream counters from the live rng',
   deck: 'stampDeck re-stamps carrier fields on a pre-carrier deck (ids checked separately)',
+  equipmentAttackSlotCount: 'the birth attack quota is recovered ONCE at the load door by counting the pre-field deck, which is the record of what that run was born with; from then on it is read, never re-derived',
   loadout: 'a pre-equipment save is healed with the class starting loadout',
   hp: 'pools are re-derived under the current rules; the ABSOLUTE deficit is checked separately',
   maxHp: 'pools are re-derived under the current rules; the ABSOLUTE deficit is checked separately',

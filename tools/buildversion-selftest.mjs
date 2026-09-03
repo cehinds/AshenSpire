@@ -59,7 +59,7 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { check, REPO_ROOT, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
+import { check, REPO_ROOT, release, versionPrefix, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
 const COPY = ['index.html', 'styles', 'src', 'assets', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
@@ -176,6 +176,41 @@ const PLANTS = [
     name: 'the recorded release HAND-EDITED — the number belongs to another candidate',
     row: 'F ORDINAL ON THE BOX',
     plant: (root) => editJson(root, (j) => ({ ...j, release: `${j.release}-planted` })),
+  },
+  {
+    // AGREEMENT IS NOT WELL-FORMEDNESS. Both homes carry the SAME malformed
+    // release here, so the agreement check above is satisfied and only the
+    // syntax check can fire. Review on #579 shipped exactly this through all
+    // eight rows: F saw two equal strings and H ranked an invented `0.6.0.0`
+    // over `0.5.4.4` because a non-numeric component was coerced to zero.
+    name: 'a pre-release tag the notation cannot represent, agreed by BOTH homes',
+    row: 'F ORDINAL ON THE BOX',
+    plant: (root) => {
+      editJson(root, (j) => ({ ...j, release: '0.5.0-beta.4' }));
+      edit(root, 'src/content/index.js', (t) => t.replace(/version: '[^']+'/, "version: '0.5.0-beta.4'"));
+    },
+  },
+  {
+    name: 'a release with a component that is not a number, agreed by BOTH homes',
+    row: 'F ORDINAL ON THE BOX',
+    plant: (root) => {
+      editJson(root, (j) => ({ ...j, release: '0.6.x' }));
+      edit(root, 'src/content/index.js', (t) => t.replace(/version: '[^']+'/, "version: '0.6.x'"));
+    },
+  },
+  {
+    // THE SAME COLLISION AS THE TAG, THROUGH THE OTHER COMPONENT. versionPrefix
+    // folds a candidate into the third slot and has nowhere to put the target
+    // PATCH, so `0.5.2-rc.4` and `0.5.1-rc.4` both became `0.5.4` — two
+    // different releases-in-flight on one version. The regex was well-formed
+    // and the components were all numbers; what it lacked was a slot (#579
+    // review). Planted in both homes, so only the syntax check can fire.
+    name: 'a candidate spelling whose target patch the notation cannot hold, agreed by BOTH homes',
+    row: 'F ORDINAL ON THE BOX',
+    plant: (root) => {
+      editJson(root, (j) => ({ ...j, release: '0.5.2-rc.4' }));
+      edit(root, 'src/content/index.js', (t) => t.replace(/version: '[^']+'/, "version: '0.5.2-rc.4'"));
+    },
   },
   {
     // Isolates G: the NUMBER still matches the box, so F stays green and only
@@ -352,42 +387,188 @@ function ordinalHistory() {
     console.log(`          ${detail}`);
   };
 
-  /** A committed tree, then a second commit that ships a new bundle. */
-  const build = (moveOrdinal) => {
+  /**
+   * A committed tree, then a second commit that ships a new bundle. `second`
+   * rewrites the ordinal record for that second commit, so one function reaches
+   * the continuation case AND the candidate-boundary cases review named on #574.
+   */
+  const build = (second, first = null) => {
     const dir = fresh();
     git(dir, 'init', '-q', '-b', 'main');
     git(dir, 'config', 'user.email', 'selftest@family.local');
     git(dir, 'config', 'user.name', 'selftest');
+    if (first) {
+      const p = resolve(dir, ORDINAL_HOME);
+      writeFileSync(p, `${JSON.stringify(first(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
+    }
     git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'the build that shipped');
     // A REAL change to the shipped artifact — the same door a rebuild enters by.
     appendFileSync(resolve(dir, 'build/AshenSpire.html'), '<!-- a later build -->\n');
-    if (moveOrdinal) {
+    if (second) {
       const p = resolve(dir, ORDINAL_HOME);
-      const j = JSON.parse(readFileSync(p, 'utf8'));
-      writeFileSync(p, `${JSON.stringify({ ...j, ordinal: j.ordinal + 1 }, null, 2)}\n`, 'utf8');
+      writeFileSync(p, `${JSON.stringify(second(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
     }
     git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'a second build');
     return dir;
   };
 
-  for (const [moved, label] of [[false, 'a NEW BUILD SHIPPED and the ordinal did not move — two builds, one number'],
-    [true, 'the control: the same commit with the ordinal moved must go GREEN']]) {
-    const dir = build(moved);
+  // `release` is written by the release home, not by hand — but these plants
+  // edit the RECORD to stage a parent/child pair the real repo would take a
+  // candidate cut to produce. Each names the version pair it stages.
+  const bump = (j) => ({ ...j, ordinal: j.ordinal + 1 });
+
+  // THE CANDIDATE FIXTURES ARE DERIVED FROM THE TREE, NEVER TYPED. Hardcoding
+  // '0.5.5' and '0.5.3' made the forward case forward only while the repo sat
+  // at 0.5.4: advance the real release to 0.5.5 and that plant stops changing
+  // the release at all, then goes BACKWARD past it — and since CI runs this
+  // selftest on every change, a routine candidate cut would have started
+  // failing unrelated PRs. Caught by review on #579. The two releases are
+  // built by moving the LAST number in the current release, which works for
+  // `0.5.4` and for `0.5.0-rc.4` alike.
+  const CURRENT = release(REPO_ROOT);
+  // BIGINT, NOT Number. The fixture has to be able to move any release the
+  // GRAMMAR admits, and production now orders components past 2^53 on purpose.
+  // Through Number, a current release of `0.5.9007199254740993` shifted +1
+  // came back `...992` — the "forward" case moving BACKWARD, turning the green
+  // case red and blocking every unrelated PR in CI. That is round 2's defect
+  // exactly: a fixture that cannot follow the tree it is derived from (#579
+  // review). Nothing here converts a component to a double.
+  const shiftLast = (rel, delta) => rel.replace(/(\d+)(?!.*\d)/, (n) => String(BigInt(n) + BigInt(delta)));
+  const lastNumber = BigInt((/(\d+)(?!.*\d)/.exec(CURRENT) || [0, '0'])[1]);
+  const FORWARD = shiftLast(CURRENT, +1);
+  // TWO SHAPES THE GRAMMAR FORBIDS, DERIVED THE SAME WAY. Both are staged on
+  // the PARENT, because row F reads only the current record: an unorderable
+  // parent is visible to row H alone, and the commit that carried it is gone
+  // by the time CI looks (#579 review).
+  const [MAJOR, MINOR, CANDIDATE] = versionPrefix(CURRENT).split('.');
+  // Drop the candidate component. Always differs from CURRENT and is never a
+  // release the repo can reach, since the grammar admits three components.
+  const TRUNCATED = `${MAJOR}.${MINOR}`;
+  // Past the double's integer ceiling, where Number() folds two distinct
+  // releases onto one value. Taken from the language's own constant rather
+  // than typed, so it stays the boundary if the boundary ever moves.
+  const UNSAFE = (n) => `${MAJOR}.${MINOR}.${BigInt(Number.MAX_SAFE_INTEGER) + BigInt(n)}`;
+  // TWO SPELLINGS OF ONE VERSION. The rc form and the folded form are always
+  // different STRINGS, so row H takes the release-changed branch, and they
+  // always fold to the same prefix, so the verdict falls entirely to the tail
+  // — which is what makes a tail defect visible at all. Both are derived, so
+  // the pair holds whichever form the tree currently carries.
+  const FOLDED = `${MAJOR}.${MINOR}.${CANDIDATE}`;
+  const RC_FORM = `${MAJOR}.${MINOR}.0-rc.${CANDIDATE}`;
+  // The boundary here is the LANGUAGE's, not one this fixture chose: 1e21 is
+  // where Number's own toString stops emitting digits and switches to
+  // exponential notation. 9e20 is strictly smaller and still renders as 21
+  // digits, so a comparison owed digits reads the pair backwards.
+  const EXPONENTIAL = 1e21;
+  const PLAIN_BUT_SMALLER = 9e20;
+  // A tail already at 0 cannot be decremented into a valid release, so the
+  // backward case walks left to the first component it CAN lower. If every
+  // component is 0 there is no earlier release to move back to, and the case
+  // reports itself skipped rather than planting a nonsense string.
+  const BACKWARD = lastNumber > 0n ? shiftLast(CURRENT, -1)
+    : (() => {
+      const parts = CURRENT.split(/(\d+)/);
+      for (let i = parts.length - 1; i >= 0; i--) {
+        if (/^\d+$/.test(parts[i]) && BigInt(parts[i]) > 0n) {
+          parts[i] = String(BigInt(parts[i]) - 1n);
+          return parts.join('');
+        }
+      }
+      return null;
+    })();
+
+  const CASES = [
+    [null, 'red', 'a NEW BUILD SHIPPED and the ordinal did not move — two builds, one number'],
+    [bump, 'green', 'the control: the same commit with the ordinal moved must go GREEN'],
+    // #574 review, caught after that PR merged: demanding a 0 tail on a release
+    // change was wrong in BOTH directions, so both are watched here.
+    [(j) => ({ ...j, release: FORWARD, ordinal: 3 }), 'green',
+      `the candidate ADVANCES after several branch builds (${CURRENT}.x → ${FORWARD}.3) — a non-zero tail is still a rise, and must go GREEN`],
+    ...(BACKWARD === null ? [] : [[(j) => ({ ...j, release: BACKWARD, ordinal: 0 }), 'red',
+      `the candidate moves BACKWARD onto a 0 tail (${CURRENT}.x → ${BACKWARD}.0) — the tail is what a new candidate starts at, and the build still went back`]]),
+    // The PARENT is the one that must predate the field, so it is the first
+    // commit that loses it — staged the other way round, this plant proved
+    // nothing and said so.
+    // A missing release is UNPROVABLE provenance, not a proven-legacy parent:
+    // the field may have been removed. UNKNOWN blocks, so this is watched as
+    // its own verdict rather than folded into green or red (#579 review).
+    [bump, 'unknown',
+      "the PARENT records an ordinal with no release — a legacy parent and a removed field look identical, so the row must not call it a pass",
+      ({ release, ...rest }) => ({ ...rest, ordinal: 9999 })],
+    // An ARITY the grammar forbids is not a release, and the old form ranked it
+    // anyway: [0, 5, 2] against [0, 5, 5, 3] read the parent's ORDINAL as its
+    // candidate number and called it a rise. Watched as unknown, not red — the
+    // pair has no order, and claiming it went backwards would be its own
+    // invention.
+    [(j) => ({ ...j, release: CURRENT, ordinal: 3 }), 'unknown',
+      `the PARENT records the arity-2 release '${TRUNCATED}' — a shape the grammar forbids, and the child's candidate would otherwise be ranked against the parent's TAIL`,
+      (j) => ({ ...j, release: TRUNCATED, ordinal: 2 })],
+    // The one plant here that says something about the comparison rather than
+    // the grammar: both releases are well-formed and the move is BACKWARD, but
+    // the two candidate components are one apart across the double's integer
+    // ceiling, where Number() maps them to the same value.
+    [(j) => ({ ...j, release: UNSAFE(1), ordinal: 3 }), 'red',
+      `the candidate moves BACKWARD by one past the safe-integer ceiling (${UNSAFE(2)}.2 → ${UNSAFE(1)}.3) — two releases that Number() cannot tell apart, so only the tail would have been compared`,
+      (j) => ({ ...j, release: UNSAFE(2), ordinal: 2 })],
+    // The tail's own version of the same defect, and the reason the two halves
+    // of the tuple are guarded differently: a release arrives as a STRING and
+    // keeps its digits, an ordinal arrives as a JSON NUMBER and does not.
+    [(j) => ({ ...j, release: FOLDED, ordinal: PLAIN_BUT_SMALLER }), 'unknown',
+      `the PARENT records a tail past the point Number stops rendering digits ('${String(EXPONENTIAL)}' → '${String(PLAIN_BUT_SMALLER)}', a DROP) while the release changes spelling only (${RC_FORM} → ${FOLDED}) — the verdict falls entirely to a tail that can no longer be read`,
+      (j) => ({ ...j, release: RC_FORM, ordinal: EXPONENTIAL })],
+    // THE BRANCH THE GUARDS NEVER REACHED. Every case above changes the
+    // release, and until #579's last round only that path built a tuple — a
+    // same-release build was compared with a bare `now.ordinal >
+    // before.ordinal`, so each bound added to versionTuple protected one branch
+    // of a row that has one rule. A tail advancing to the value it rounds to is
+    // `>` its predecessor, so the row said the build ROSE; worse, bumpOrdinal
+    // then recomputes that same value forever, so one wave-through wedges the
+    // counter and turns every later build in the release red.
+    [(j) => ({ ...j, ordinal: Number.MAX_SAFE_INTEGER + 1 }), 'unknown',
+      `the tail advances WITHIN one release to a value it cannot be counted past (${Number.MAX_SAFE_INTEGER} → ${Number.MAX_SAFE_INTEGER + 1}, which is where +1 stops moving) — the release never changes, so this is the branch that used to skip the tuple entirely`,
+      (j) => ({ ...j, ordinal: Number.MAX_SAFE_INTEGER })],
+    // TWO RELEASES-IN-FLIGHT ON ONE VERSION. Both spellings are well-formed by
+    // every earlier rule — three numeric components, an rc tag, a counting tail
+    // — and both folded to the same prefix, so the tail decided and a target
+    // patch moving 2 → 1 read as a RISE. Watched unknown: with the spelling
+    // refused there is no order to assert, and claiming a fall would invent one.
+    [(j) => ({ ...j, release: `${MAJOR}.${MINOR}.1-rc.${CANDIDATE}`, ordinal: 10 }), 'unknown',
+      `the target PATCH moves backward while the folded version rises (${MAJOR}.${MINOR}.2-rc.${CANDIDATE}.9 → ${MAJOR}.${MINOR}.1-rc.${CANDIDATE}.10) — two candidate lines the notation cannot tell apart`,
+      (j) => ({ ...j, release: `${MAJOR}.${MINOR}.2-rc.${CANDIDATE}`, ordinal: 9 })],
+  ];
+  if (BACKWARD === null) {
+    console.log(`  skip  [H ORDINAL INCREASES] no earlier release exists to move back to from '${CURRENT}' — the backward case is reported skipped, not silently dropped`);
+  }
+
+  // THREE VERDICTS, NOT TWO. `unknown` is its own expectation because it is its
+  // own outcome: check() treats null as blocking exactly as false does, and a
+  // case watched merely "not green" could not tell the two apart.
+  const WANT = { red: false, green: true, unknown: null };
+  for (const [second, want, label, first = null] of CASES) {
+    const dir = build(second, first);
     try {
       const row = check(dir).rows.find((r) => r.name === 'H ORDINAL INCREASES');
       const detail = row ? row.detail.split('\n')[0].trim() : 'NO SUCH ROW';
-      if (!moved) say(row && row.ok === false, label, detail);
+      const hit = row !== undefined && row.ok === WANT[want];
+      if (want === 'red') say(hit, label, detail);
       else {
-        const ok = row && row.ok === true;
-        if (!ok) failures += 1;
-        console.log(`  ${ok ? 'ok   ' : 'FAIL '} [H ORDINAL INCREASES] ${label}`);
+        if (!hit) failures += 1;
+        console.log(`  ${hit ? 'ok   ' : 'FAIL '} [H ORDINAL INCREASES] (${want}) ${label}`);
         console.log(`          ${detail}`);
       }
     } finally {
       removeTempTree(dir);
     }
   }
-  return failures;
+  // THE CORPUS REPORTS ITS OWN SIZE. It was counted a second time at the call
+  // site as a literal `2`, which stopped being true the moment cases were added
+  // — the run printed 25/25 while executing more than that, and any failure
+  // would have been reported against the wrong denominator. The count is also
+  // not fixed: the backward case drops itself when no earlier release exists.
+  // DEVELOPER.md warns against a second copy of a corpus size for exactly this,
+  // and this repo has paid for it before (opsctl.test.mjs spelled its contract
+  // count into its own label).
+  return { failures, cases: CASES.length };
 }
 
 /** Returns the number of failures; prints one line per case. */
@@ -507,8 +688,9 @@ export async function selftest() {
   console.log('');
   console.log('  Row H is a claim about a commit AND ITS PARENT, so it has its own door too:');
   console.log('  the real tree, made a git repo, committed twice, entered at check(root).');
-  const HIST = 2;
-  failures += ordinalHistory();
+  const hist = ordinalHistory();
+  const HIST = hist.cases;
+  failures += hist.failures;
 
   console.log('');
   console.log(`  the digest this tree derives: ${sourceDigest().digest}`);
@@ -523,8 +705,10 @@ export async function selftest() {
   console.log('  each by the row or command that owns it,');
   console.log(`  ${PLANTS.length} planted as real edits to a real tree and entered at check(root), ${TRACE} planted as a real`);
   console.log(`  git history and entered at whichCommits(), and ${HIST} planted as a real tree committed twice —`);
-  console.log('  the same three doors the real runs use. The last pair is watched RED and GREEN over');
-  console.log('  one variable, so a row that was red at every commit could not pass as a catch.');
+  console.log('  the same three doors the real runs use. That last group is watched across all three');
+  console.log('  verdicts — RED, GREEN and UNKNOWN — each case naming the one it expects, so a row');
+  console.log('  that was red at every commit could not pass as a catch, and a row that BLOCKED');
+  console.log('  could not pass as one that caught.');
   console.log('');
   console.log('BOUNDARY: this is a corpus, not a proof of completeness. It says these defects');
   console.log('  cannot pass; it says nothing about one nobody thought of, and nothing at all');

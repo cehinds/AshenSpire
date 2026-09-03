@@ -237,7 +237,7 @@ export function extractTemplateTokens(template) {
  *
  * Four rounds of review found the same shape at four addresses: a pass that
  * exists to ANSWER questions about content, crashing on content instead
- * (`dropOrder.join`, `keywords.map`, `global.grants` iteration, a non-string
+ * (`sourceOrder.join`, `keywords.map`, `global.grants` iteration, a non-string
  * tag `source`). Each was a real gap and each got a named rule, but fixing them
  * one at a time is how the fifth arrives. Malformed content is infinite and this
  * pass reads hundreds of fields, so the guarantee cannot rest on having guarded
@@ -249,22 +249,22 @@ export function extractTemplateTokens(template) {
  * them, not a substitute for them.
  */
 export function validateContent(bundle) {
+  // The accumulator is created HERE and handed in, so a throw partway through
+  // KEEPS every field-addressed error found before it. A floor that returns a
+  // fresh list erases the diagnosis it was meant to stand behind.
+  const errors = [];
   try {
-    return collectContentProblems(bundle);
+    return collectContentProblems(bundle, errors);
   } catch (error) {
-    return {
-      ok: false,
-      errors: [{
-        path: '<bundle>',
-        msg: `content validation could not finish reading this bundle: ${error && error.message} — a field is malformed in a way no rule names yet, so this is the floor rather than a diagnosis; the stack points at the field that threw`,
-      }],
-      scriptReport: null,
-    };
+    errors.push({
+      path: '<bundle>',
+      msg: `content validation could not finish reading this bundle: ${error && error.message} — a field is malformed in a way no rule names yet; any errors listed above were found before it, and the stack points at the field that threw`,
+    });
+    return { ok: false, errors, scriptReport: null };
   }
 }
 
-function collectContentProblems(bundle) {
-  const errors = [];
+function collectContentProblems(bundle, errors = []) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
 

@@ -51,3 +51,8 @@ item:blade,itemType,Blade,C9502E,⚔,"What this piece IS: the Armoury and the sm
 item:shield,itemType,Shield,7FA8C9,🛡,"What this piece IS: the Armoury and the smith name it Shield."
 item:magic-focus,itemType,Magic Focus,9FC3E8,✦,"What this piece IS: the Armoury and the smith name it Magic Focus."
 item:armor,itemType,Armor,B8B0A0,▣,"What this piece IS: the Armoury and the smith name it Armor."
+from:global,grantSource,Global,B8B0A0,🌐,"Dealt to every class whatever it wears — balance.equipment.startingDeck.global.grants."
+from:relic,grantSource,Relic,C9A227,◈,"Carried in by the starting relic."
+from:armor,grantSource,Armor,7FA8C9,▣,"Bound to the outfit the run begins wearing."
+from:weapon,grantSource,Weapon,C9502E,⚔,"Bound to an armament in hand at creation."
+from:class,grantSource,Class,9FC3E8,✦,"The class signature card."
