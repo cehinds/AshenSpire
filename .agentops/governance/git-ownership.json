@@ -124,6 +124,18 @@
       "note": "Art contracts and motif records authored alongside the assets they describe."
     },
     {
+      "glob": "docs/art-evidence/**",
+      "owner_role": "maker",
+      "serialized_lane": "product-docs",
+      "note": "Rendered art evidence packets — the screenshots an art change is judged on — authored alongside the assets they prove. Declared 2026-09-03 because it was owned by nobody: under the D5 path-grant rule no lease could legally grant it, yet the class-art lane writes its evidence here."
+    },
+    {
+      "glob": "docs/preview/**",
+      "owner_role": "maker",
+      "serialized_lane": "product-docs",
+      "note": "Preview stills published beside the art they show. Declared 2026-09-03 because it was owned by nobody: under the D5 path-grant rule no lease could legally grant it, yet the class-art lane writes here."
+    },
+    {
       "glob": "docs/hub/**",
       "owner_role": "maker",
       "serialized_lane": "product-docs",
@@ -168,6 +180,18 @@
       "glob": "review-approval-hub/**",
       "owner_role": "generator",
       "serialized_lane": "generated-artifact"
+    },
+    {
+      "glob": "build/**",
+      "owner_role": "maker",
+      "serialized_lane": "generated-artifact",
+      "note": "Generated build output, written by the build the authoring seat runs and never hand-edited. Declared 2026-09-03 because it was owned by nobody: under the D5 path-grant rule no lease could legally grant it, yet every build writes here."
+    },
+    {
+      "glob": "dist/**",
+      "owner_role": "maker",
+      "serialized_lane": "generated-artifact",
+      "note": "Generated distribution output, written by the build the authoring seat runs and never hand-edited. Declared 2026-09-03 because it was owned by nobody: under the D5 path-grant rule no lease could legally grant it, yet every build writes here."
     },
     {
       "glob": "buildordinal.json",
