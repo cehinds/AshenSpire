@@ -218,13 +218,38 @@ check('each adjacent CON point adds exactly the resolved HP gain', () => {
   eq(at15.maxHp - at14.maxHp, hp.gainPerTier, 'one CON point adds one resolved gain');
 });
 
-check('the legacy class coefficient is gone from the classes, not merely unread (#484)', () => {
+check('no class authors an HP-per-CON coefficient, and a resurrected one still moves nothing (#484)', () => {
+  // Two claims, because the first alone would rot. (a) The field is GONE from
+  // the authored classes — not merely unread, which is what it was for as long
+  // as it existed: authored 4/5/5/6 on the four classes and consulted by no
+  // rule. (b) HP still has exactly ONE authority, proven the only way absence
+  // can be: put the field back and show the number does not budge. Without (b)
+  // this check would pass the day someone re-authors the coefficient AND wires
+  // it in, which is the regression it exists to catch.
   for (const cls of contentBundle.classes) {
     assert(!('hpPerConTier' in cls), `${cls.id} still authors hpPerConTier — the field was removed because no rule read it`);
   }
-  const registries = createRegistries(cloneBundle());
-  const run = createRunState({ seed: 0x21, classId: 'reaver', registries });
-  eq(Number.isInteger(run.maxHp) && run.maxHp > 0, true, 'HP still derives from class maxHp + the CON rule with the field gone');
+
+  const maxHpFor = (bundle, classId) => createRunState({
+    seed: 0x21, classId, registries: createRegistries(bundle),
+  }).maxHp;
+
+  const resurrected = cloneBundle();
+  // 99, not the historical 4/5/5/6 — a live read of any shape (per-tier,
+  // flat, multiplier) would move HP by an amount no rounding could hide.
+  for (const cls of resurrected.classes) cls.hpPerConTier = 99;
+
+  for (const cls of contentBundle.classes) {
+    const clean = maxHpFor(cloneBundle(), cls.id);
+    assert(Number.isInteger(clean) && clean > 0, `${cls.id} derives no usable HP from class maxHp + the CON rule`);
+    eq(maxHpFor(resurrected, cls.id), clean, `${cls.id} HP moved when hpPerConTier was planted back — it has become a second authority`);
+  }
+
+  // A green here does NOT mean the content door rejects the field: it is
+  // ignored, not refused. It means HP answers to base maxHp and the CON rule
+  // in derivedStatRules alone, so a field that returns by merge, import, or
+  // copied fixture stays inert until someone deliberately wires it in.
+  return `${contentBundle.classes.length} classes clean, all inert under a planted coefficient`;
 });
 
 check('WIS 15 gives three Mana and the Starseer starter relic adds one flat Mana, total four', () => {
