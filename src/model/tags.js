@@ -141,6 +141,15 @@ export function tagContentProblems(bundle, keywordIds = []) {
   const familyBySource = new Map();
   for (const row of familyByName.values()) {
     if (!row.source) continue;
+    // A `source` IS A DOTTED PATH, and model/registries.js splits it to walk the
+    // bundle. The CSV compiler coerces a bare numeric cell to a number, so `7`
+    // arrives truthy and not a string, and boot then threw at `.split` — with
+    // nothing said here, because a family with no tagging rows reaches no other
+    // rule. Typed at the door, where the author can read it.
+    if (typeof row.source !== 'string') {
+      err(`tagFamilies.${row.family}.source`, `source must be a dotted path string (got ${JSON.stringify(row.source)}) — registries walks it to find the family's objects, and a non-string cannot be walked`);
+      continue;
+    }
     const first = familyBySource.get(row.source);
     if (first) {
       err(`tagFamilies.${row.family}.source`, `source '${row.source}' is already claimed by family '${first}' — two families cannot tag one collection, because materialisation keys on the source and the second would replace the first`);

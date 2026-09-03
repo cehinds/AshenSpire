@@ -253,7 +253,21 @@ export function cardEquipmentCompatibility(registries, { cardId, classId, pieceI
  * nothing, a hand named on one side and not the other, a piece no slot can
  * hold, and armour that leaves a class with no starting set (or two).
  */
+/**
+ * The same floor as validateContent: a door that answers questions about
+ * content is structurally unable to throw on content. Named rules first; this
+ * catches what no rule names yet, so a malformed field is a reported problem
+ * rather than an exception before the banner can render.
+ */
 export function validateEquipment(registries) {
+  try {
+    return collectEquipmentProblems(registries);
+  } catch (error) {
+    return [`equipment validation could not finish reading this content: ${error && error.message} — a field is malformed in a way no rule names yet; the stack points at the field that threw`];
+  }
+}
+
+function collectEquipmentProblems(registries) {
   const eq = registries.equipment || {};
   const fields = eq.modFields || {};
   const problems = [];
@@ -1355,8 +1369,13 @@ function startingDeckFindings(registries) {
       problems.push(`startingDeck.classes.${classId}.strikeBias must be between 0 and 1 (got ${bias})`);
     }
   }
-  for (const cardId of ((cfg.global || {}).grants) || []) {
-    if (!registries.cards.has(cardId)) problems.push(`startingDeck.global.grants names unknown card '${cardId}'`);
+  const globalGrants = (cfg.global || {}).grants;
+  if (globalGrants !== undefined && !Array.isArray(globalGrants)) {
+    problems.push(`startingDeck.global.grants must be an array of card ids (got ${JSON.stringify(globalGrants)})`);
+  } else {
+    for (const cardId of globalGrants || []) {
+      if (!registries.cards.has(cardId)) problems.push(`startingDeck.global.grants names unknown card '${cardId}'`);
+    }
   }
   problems.push(...boundGrantProblems(registries));
   if (cfg.enabled !== true || problems.length) return { problems, warnings };

@@ -232,7 +232,38 @@ export function extractTemplateTokens(template) {
  * validateContent(bundle) → { ok, errors: [{ path, msg }], scriptReport }.
  * `bundle` is the raw content bundle (same shape createRegistries takes).
  */
+/**
+ * A VALIDATION DOOR MAY NOT THROW — the structural half of that rule.
+ *
+ * Four rounds of review found the same shape at four addresses: a pass that
+ * exists to ANSWER questions about content, crashing on content instead
+ * (`dropOrder.join`, `keywords.map`, `global.grants` iteration, a non-string
+ * tag `source`). Each was a real gap and each got a named rule, but fixing them
+ * one at a time is how the fifth arrives. Malformed content is infinite and this
+ * pass reads hundreds of fields, so the guarantee cannot rest on having guarded
+ * every one — it rests on the door being structurally unable to throw.
+ *
+ * So the whole pass runs inside a catch, and an unexpected throw becomes the
+ * last problem in the list rather than an exception at the boot banner. Specific
+ * rules still come first and still say the useful thing; this is the floor under
+ * them, not a substitute for them.
+ */
 export function validateContent(bundle) {
+  try {
+    return collectContentProblems(bundle);
+  } catch (error) {
+    return {
+      ok: false,
+      errors: [{
+        path: '<bundle>',
+        msg: `content validation could not finish reading this bundle: ${error && error.message} — a field is malformed in a way no rule names yet, so this is the floor rather than a diagnosis; the stack points at the field that threw`,
+      }],
+      scriptReport: null,
+    };
+  }
+}
+
+function collectContentProblems(bundle) {
   const errors = [];
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
@@ -338,7 +369,8 @@ export function validateContent(bundle) {
 
   // The whole tag system in one pass: the registry, who may carry which
   // domain, and every carrier's tags (model/tags.js states the rules).
-  for (const problem of tagContentProblems(b, (b.keywords || []).map((k) => k && k.id))) {
+  const keywordIds = Array.isArray(b.keywords) ? b.keywords.map((k) => k && k.id) : [];
+  for (const problem of tagContentProblems(b, keywordIds)) {
     err(problem.path, problem.message);
   }
   // Effect-tag vocabulary, FROM THE JOIN rather than from memory. Effect `tags`
@@ -628,6 +660,13 @@ export function validateContent(bundle) {
     classes: SCHEMAS.class,
   };
   for (const type of REGISTRY_TYPES) {
+    // A registry that is present but not an array was SILENTLY SKIPPED here —
+    // every rule below read it as empty — and then a later unguarded `for…of`
+    // threw, so the bundle failed with a stack instead of an answer. Named, so
+    // the author is told which registry and what it should be.
+    if (b[type] !== undefined && !Array.isArray(b[type])) {
+      err(type, `must be an array of ${type} rows (got ${Array.isArray(b[type]) ? 'array' : typeof b[type]})`);
+    }
     const defs = Array.isArray(b[type]) ? b[type] : [];
     defs.forEach((def) => {
       const path = `${type}.${(def && def.id) || '?'}`;
@@ -1268,7 +1307,7 @@ export function validateContent(bundle) {
   const scriptUsers = [];
   let totalObjects = 0;
   for (const type of REGISTRY_TYPES) {
-    for (const def of b[type] || []) {
+    for (const def of Array.isArray(b[type]) ? b[type] : []) {
       totalObjects++;
       if (usesScript(def)) scriptUsers.push(`${type}.${def.id}`);
     }

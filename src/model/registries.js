@@ -141,7 +141,10 @@ function stampTags(bundle) {
   const { families, index, keyOf } = tagIndex(bundle);
   const stamped = new Map();
   for (const spec of families.values()) {
-    if (!spec.source) continue;
+    // A non-string source is refused BY NAME in model/tags.js. Skipping it here
+    // rather than splitting it keeps the order of events right: the validator
+    // gets to speak, instead of boot throwing before it can.
+    if (!spec.source || typeof spec.source !== 'string') continue;
     let node = bundle;
     for (const part of spec.source.split('.')) node = node && typeof node === 'object' ? node[part] : undefined;
     if (!Array.isArray(node)) continue;

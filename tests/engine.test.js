@@ -2729,6 +2729,59 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       "the 'armor'/'armour' spelling trap is named rather than silently ignored");
   });
 
+  // ---- 26s. the fourteenth round: a door that cannot throw ----------------
+  test('26s. malformed content is answered, never thrown at — named first, floored always', () => {
+    const clone = () => JSON.parse(JSON.stringify(contentBundle));
+
+    // FOUR ROUNDS FOUND ONE SHAPE at four addresses: a pass whose whole job is
+    // to ANSWER questions about content, crashing on content instead. Each got
+    // a named rule; the fifth address is how you learn that was not the fix.
+    // Malformed content is infinite and this pass reads hundreds of fields, so
+    // the guarantee cannot rest on having guarded each one. Named rules first —
+    // they say the useful thing — and a floor underneath so the door is
+    // STRUCTURALLY unable to throw.
+
+    // The three this round named, each formerly a crash:
+    const badSource = clone();
+    badSource.tagFamilies.push({ family: 'oops', source: 7, scopeField: '', label: 'X', blurb: '' });
+    badSource.tagFamilyDomains.push({ family: 'oops', domain: 'card' });
+    const sourceSaid = validateContent(badSource).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+    assert(/tagFamilies\.oops\.source: source must be a dotted path string/.test(sourceSaid),
+      `a non-string source is named — said ${JSON.stringify(sourceSaid.slice(0, 160))}`);
+    createRegistries(badSource); // and boot no longer throws before the validator can speak
+
+    const badKeywords = clone();
+    badKeywords.keywords = { a: 1 };
+    const kwResult = validateContent(badKeywords);
+    assert(!kwResult.ok, 'a non-array keywords registry fails');
+    assert(kwResult.errors.some((e) => e.path === 'keywords' && /must be an array/.test(e.msg)),
+      'and is named by path rather than reported as a crash');
+
+    const badGrants = clone();
+    badGrants.balance.equipment.startingDeck.global = { grants: {} };
+    assert(validateEquipment(createRegistries(badGrants)).some((p) => /global\.grants must be an array/.test(p)),
+      'a non-array global.grants is named');
+
+    // THE FLOOR ITSELF, and the point is that it does not depend on my having
+    // thought of the field. `enemies` as a bare number reaches an unguarded
+    // `for…of` no rule covers — I found it by REMOVING the floor and looking for
+    // something that still threw, which is the only honest way to test a
+    // backstop. With the floor it is a reported problem; without it, a stack.
+    const unforeseen = clone();
+    unforeseen.enemies = 3;
+    const floored = validateContent(unforeseen); // must not throw
+    assert(!floored.ok && floored.errors.length, 'an unforeseen malformation is a problem, not an exception');
+    assert(floored.errors.some((e) => e.path === '<bundle>' || e.path === 'enemies'),
+      'and it is attributed — to the field if a rule names it, to the floor if none does');
+
+    // The floor never fires on sound content — it is underneath the rules, not
+    // in front of them.
+    assert(validateContent(contentBundle).ok, 'the shipped bundle still validates clean');
+    assert(!validateContent(contentBundle).errors.some((e) => e.path === '<bundle>'),
+      'and never reports the floor');
+    eq(validateEquipment(REG).length, 0, 'equipment likewise');
+  });
+
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
   test('27. weapons and armour sets validate against the tag registry', () => {
     const tagIds = TAGS.map((t) => t.id);
