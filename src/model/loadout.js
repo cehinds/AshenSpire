@@ -308,17 +308,25 @@ export function cardEquipmentCompatibility(registries, { cardId, classId, pieceI
  * rather than an exception before the banner can render.
  */
 export function validateEquipment(registries) {
+  // THE FLOOR ADDS, IT NEVER REPLACES. The accumulator is created HERE and
+  // handed in, so a throw partway through keeps every field-addressed problem
+  // found before it. Returning a fresh array from the catch — which is what
+  // this did — turned a good diagnosis into a generic one: content that
+  // correctly reported `grantedCards[0] must name cardId` came back saying only
+  // "cannot read properties of null". A backstop that erases the answers it is
+  // standing behind is worse than no backstop.
+  const problems = [];
   try {
-    return collectEquipmentProblems(registries);
+    return collectEquipmentProblems(registries, problems);
   } catch (error) {
-    return [`equipment validation could not finish reading this content: ${error && error.message} — a field is malformed in a way no rule names yet; the stack points at the field that threw`];
+    problems.push(`equipment validation could not finish reading this content: ${error && error.message} — a field is malformed in a way no rule names yet; any problems listed above were found before it, and the stack points at the field that threw`);
+    return problems;
   }
 }
 
-function collectEquipmentProblems(registries) {
+function collectEquipmentProblems(registries, problems = []) {
   const eq = registries.equipment || {};
   const fields = eq.modFields || {};
-  const problems = [];
   const pieces = [...(eq.armaments || []), ...(eq.armour || [])];
   const profilesPresent = Array.isArray(eq.basicCardProfiles);
   const profiles = eq.basicCardProfiles || [];
@@ -1451,7 +1459,11 @@ function startingDeckFindings(registries) {
       const pkg = piece && piece.weaponCardPackage;
       const granted = pkg && pkg.grantedCards;
       if (Array.isArray(granted) && granted.length) {
-        problems.push(`equipment.armaments.${piece.id}: weaponCardPackage.grantedCards is not yet supported alongside the composed starting deck — these cards count against startingDeckSize at birth but leave with the weapon on a swap, so the deck would end up ${granted.reduce((n, g) => n + (g.count || 1), 0)} card(s) short of the authored ${registries.balance.startingDeckSize}; whether a package grant is a card the RUN owns or one the WEAPON lends is a design decision, and the composed deck needs it answered before this seam can carry data`);
+        // Count only entries shaped like grants. A malformed one (`[null]`, a
+        // missing cardId) is WeaponCardPackageModel's to name, and this
+        // diagnostic must not throw on its way to saying something else.
+        const shortfall = granted.reduce((n, g) => n + (g && Number.isInteger(g.count) ? g.count : 1), 0);
+        problems.push(`equipment.armaments.${piece.id}: weaponCardPackage.grantedCards is not yet supported alongside the composed starting deck — these cards count against startingDeckSize at birth but leave with the weapon on a swap, so the deck would end up ${shortfall} card(s) short of the authored ${registries.balance.startingDeckSize}; whether a package grant is a card the RUN owns or one the WEAPON lends is a design decision, and the composed deck needs it answered before this seam can carry data`);
       }
     }
   }

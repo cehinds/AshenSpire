@@ -2791,6 +2791,41 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(floored.errors.some((e) => e.path === '<bundle>' || e.path === 'enemies'),
       'and it is attributed — to the field if a rule names it, to the floor if none does');
 
+    // AND THE FLOOR ADDS RATHER THAN REPLACES. The first version created its
+    // result array in the catch, so a throw partway through DISCARDED every
+    // field-addressed problem found before it: content that correctly reported
+    // `grantedCards[0] must name cardId` came back saying only "cannot read
+    // properties of null". A backstop that erases the answers it stands behind
+    // is worse than none, so the accumulator is created outside the try and the
+    // floor message is appended to it.
+    const partial = clone();
+    const pkgPiece = partial.equipment.armaments.find((p) => p.id === 'straightSword');
+    pkgPiece.weaponCardPackage = {
+      compatibility: 'attack-v1',
+      fillerAttackProfileId: pkgPiece.attackProfile,
+      grantedCards: [null],
+    };
+    const partialSaid = validateEquipment(createRegistries(partial));
+    assert(partialSaid.some((p) => /grantedCards\[0\] must name cardId/.test(p)),
+      `the field-addressed problem survives — said ${JSON.stringify(partialSaid.slice(0, 2))}`);
+    assert(!partialSaid.some((p) => /could not finish reading/.test(p)),
+      'and this particular one no longer reaches the floor at all, because the diagnostic that threw was made safe');
+
+    // The additive property itself, on a bundle that DOES still reach the floor:
+    // a named rule fires early, an unguarded read throws late, and the result
+    // must carry both. This is the assertion that would have caught the erasing
+    // floor; the case above only proves one diagnostic stopped throwing.
+    const bothKinds = clone();
+    bothKinds.tagFamilies.push({ family: 'oops', source: 7, scopeField: '', label: 'X', blurb: '' });
+    bothKinds.tagFamilyDomains.push({ family: 'oops', domain: 'card' });
+    bothKinds.enemies = 3; // throws late, in a sweep no rule covers
+    const both = validateContent(bothKinds);
+    assert(both.errors.some((e) => e.path === 'tagFamilies.oops.source'),
+      'the named rule that fired before the throw is kept');
+    assert(both.errors.some((e) => e.path === '<bundle>'),
+      'and the floor is appended rather than substituted');
+    assert(both.errors.length > 2, `both kinds survive together (${both.errors.length} problems)`);
+
     // The floor never fires on sound content — it is underneath the rules, not
     // in front of them.
     assert(validateContent(contentBundle).ok, 'the shipped bundle still validates clean');
