@@ -308,9 +308,54 @@ rule is one row of `swapCostRules` with no code (proven by test 28q).
 in `model/loadout.js`, beside the functions that branch on them. A row naming anything else is a
 validation failure; before A8 it validated clean and silently did nothing.
 
-**Equipped weapon card packages.** The authored attack-slot count is fixed by
-`balance.equipment.roleCopies.attack`; changing equipment never changes that count or the total
-deck size. `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
+**The starting deck.** `balance.startingDeckSize` is a **cap on the BASE cards** — the
+strikes and defends the game mints for you — and it applies at **character creation and
+nowhere else**. The order is fixed:
+
+1. **Bound cards are dealt first.** Anything equipment brings: cards from a piece carrying
+   the `bound` tag (`equipmentGrants.csv`), a weapon package's `grantedCards`, its
+   `weaponArtDefaults`, the class signature, and `startingDeck.global.grants`. These are
+   never capped, never dropped and never refused. They belong to the equipment, not the run.
+2. **Base cards fill what the cap leaves.** `filler = max(0, cap − bound)`, split between
+   attack and guard by the class's `strikeBias`. An odd remainder goes to whichever role
+   `startingDeck.oddFillerGoesTo` names — `attack` by default.
+3. **What those base cards ARE comes from the equipped profile** — a sword-wielder's base
+   attacks are Slashing Strikes, and a bare hand's are the `unarmedProfiles` set. That is
+   the whole of "unarmed fills in": it supplies the identity of base cards, it does not top
+   up a floor.
+
+If equipment alone meets or exceeds the cap, no base cards are minted and the run begins
+with only its equipment cards. That is a **balance question for whoever authors the gear**,
+not a validation failure — `validateEquipment` says so as a warning, naming the class and
+the loadout, and refuses nothing.
+
+**After creation the cap does not apply.** Swapping to gear that lends fewer cards leaves a
+smaller deck; more, a larger one. There is no re-minting of base cards mid-run and no
+attempt to hold a total. What DOES hold mid-run is the attack count: a swap re-skins the
+attack slots the run was born with (`equipmentAttackSlotCount`, recorded at creation and
+read, never re-derived), so equipment never changes how many attacks you hold.
+
+**Every card has an owner: the run, or one item.** Run-owned cards are the run's for good —
+the base strikes and defends (gear only re-skins them), the class signature, global grants,
+rewards. Item-owned cards ride with the item: equip it and they arrive, unequip it and they
+leave, equip it again and they return identical. **If the item is not equipped, its cards are
+gone** (owner ruling, 2026-09-03). This is one rule with three authoring sources feeding it —
+a weapon package's `grantedCards`, its `weaponArtDefaults`, and the `bound` table
+(`equipmentGrants.csv`, gated by the `bound` tag on any piece, armour included) — and one
+reconcile that applies it on every equip transition, in or out of combat. Item-owned
+instances carry deterministic ids and the owner's namespaced ref, so the reconcile is
+idempotent and a save is stable across it.
+
+Everything above is data. The cap, the per-class bias and its default, the odd-split
+winner, and the grant-source vocabulary are all authored — the sources are rows in the
+`grantSource` tag domain, so adding one is a spreadsheet line rather than a code change.
+The engine mints bound cards at four seams (global, armor, weapon, class) and reads the
+tag each one stamps from `startingDeck.sources`, so RENAMING a source is a data edit too:
+the map, the tag row and `sourceOrder` move together, and a binding that names no
+registered source — or a seam left unbound — is refused by name rather than silently
+dealing that source's cards last.
+
+**Equipped weapon card packages.** `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
 priority list plus that profile as filler. `WeaponDeckCompositionService` builds an
 `EquippedWeaponCardPlan`, then rebinds the stable generated attack instances in place. No eligible
 weapon produces Unarmed in every attack slot; one eligible weapon in either hand owns every slot;

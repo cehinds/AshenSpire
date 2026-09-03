@@ -545,11 +545,22 @@ function check(name, cond, detail = '') {
   check('hub overview metrics are derived from current runtime state',
     home.includes(`<strong>${Object.keys(rt.capsules).length}</strong><span>Tracked tickets</span>`)
       && home.includes(`<span>Writer seats</span><small>active leases</small>`));
-  check('every current and future Hub route uses the versioned owner-page default',
-    pages.every((page) => page.text.includes(`data-owner-layout="${OWNER_PAGE_LAYOUT_ID}"`)
+  // The Owner HUD is an owner-facing page too. It sat on a retired palette of
+  // its own long after the Hub moved to the shared motif, so it is held to the
+  // same shell assertion as every Hub route and cannot drift off again.
+  const shellPages = [...pages, { rel: 'generated/hud/index.html', text: renderHud(contracts, rt) }];
+  check('every current and future owner page — Hub routes and the HUD — uses the versioned owner-page default',
+    shellPages.every((page) => page.text.includes(`data-owner-layout="${OWNER_PAGE_LAYOUT_ID}"`)
       && page.text.includes(`<meta name="ashenspire-owner-layout" content="${OWNER_PAGE_LAYOUT_ID}">`)
       && page.text.includes('<header class="hero">')),
-    pages.filter((page) => !page.text.includes(`data-owner-layout="${OWNER_PAGE_LAYOUT_ID}"`)).map((page) => page.rel).join(','));
+    shellPages.filter((page) => !page.text.includes(`data-owner-layout="${OWNER_PAGE_LAYOUT_ID}"`)).map((page) => page.rel).join(','));
+  // The hero title was authored already-escaped and then escaped again, so the
+  // page displayed the entity itself: "Review &amp; Approval Hub" in 48px serif.
+  // Escaping belongs to the renderer and happens exactly once; a doubled entity
+  // is the shape that mistake always takes, on any page and any character.
+  check('no hub page double-escapes an entity',
+    pages.every((page) => !/&amp;(amp|lt|gt|quot);/.test(page.text)),
+    pages.filter((page) => /&amp;(amp|lt|gt|quot);/.test(page.text)).map((page) => page.rel).join(','));
   const ticketPage = byRel['generated/hub/tickets/AS-HD-057.html'];
   check('a ticket page carries its live seal', ticketPage.includes(rt.capsules['AS-HD-057'].current_hash.slice(0, 23)));
   check('a ticket page replays its event chain',

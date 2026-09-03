@@ -825,6 +825,74 @@ export const balance = {
       receiptLimit: 64,
     },
     roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1 },
+
+    // ---- Composed starting deck (togglable) ---------------------------------
+    // `roleCopies` above is a FIXED distribution that must sum to
+    // startingDeckSize by hand: grant a class one more card and the sum breaks.
+    // This block derives the same deck instead. Named cards ("grants") are
+    // dealt first — the weapon's technique, the class signature, anything
+    // global — and whatever budget remains is FILLER, split between the attack
+    // and guard roles. Filler still resolves through equipped profiles, so a
+    // sword-wielder's filler attacks are Slashing Strikes, not generic ones.
+    //
+    // With the defaults below the composed path reproduces 4/4/1/1 exactly
+    // (grants = technique 1 + signature 1; filler 8 at bias 0.5 → 4/4), which
+    // is what makes it safe to ship enabled. Set `enabled: false` to fall back
+    // to roleCopies verbatim.
+    startingDeck: {
+      enabled: true,
+
+      // `growToFit` and `minFiller` lived here. Both decided who yields when
+      // grants got greedy — the deck size, or the content author. Under the cap
+      // rule (SPEC, "The starting deck") nobody yields: the cap governs how many
+      // BASE strikes and defends are minted, bound cards are never capped or
+      // dropped, and a floor of basic cards is simply what the cap leaves over.
+
+      // Card ids every class starts with, whatever it wears. Cards named here
+      // must exist in the card registry; each is granted exactly one copy.
+      global: { grants: [] },
+
+      // The order bound cards are DEALT in at creation. Was `dropOrder`, which
+      // named a behaviour that no longer exists — nothing is ever dropped. Each
+      // entry is a tag id in the `grantSource` domain, so adding a source is a
+      // row in tags.csv rather than an edit to loadout.js.
+      sourceOrder: ['from:global', 'from:relic', 'from:armor', 'from:weapon', 'from:class'],
+
+      // WHICH TAG EACH MINTING SEAM STAMPS. `sourceOrder` is the vocabulary's
+      // order; this is the binding between that vocabulary and the four places
+      // in loadout.js that actually mint a bound card. It exists because the
+      // ids used to be typed at those seams: renaming `from:weapon` here and in
+      // `sourceOrder` validated clean and then silently dealt the weapon's
+      // cards last, because the minting site still stamped the old id. Now the
+      // seam READS its id from this map, so a rename is a data edit and an
+      // unbound or misspelt role is refused by name.
+      //
+      // The KEYS are the engine's seams, not content vocabulary — there is a
+      // weapon seam whatever an author calls its source. `from:relic` has no
+      // key because nothing mints it yet; it is declared vocabulary waiting for
+      // a minter, and ranking it early costs nothing until one exists.
+      sources: {
+        global: 'from:global',
+        armor: 'from:armor',
+        weapon: 'from:weapon',
+        class: 'from:class',
+      },
+
+      // Which role wins the remainder when the cap leaves an odd number of base
+      // cards. Authored rather than assumed — it used to be a rounding rule
+      // buried in the arithmetic.
+      oddFillerGoesTo: 'attack',
+
+      // Per-class filler split. `strikeBias` is the share of base cards that go
+      // to attacks; the rest are guards. Classes absent here use
+      // `defaultStrikeBias`.
+      defaultStrikeBias: 0.5,
+      classes: {
+        reaver: { strikeBias: 0.5 },
+        starseer: { strikeBias: 0.5 },
+      },
+    },
+
     rarityBonuses: {
       common: { attack: 0, guard: 0 },
       uncommon: { attack: 1, guard: 1 },

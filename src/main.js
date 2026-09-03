@@ -1534,7 +1534,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   const enc = registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot }) : createCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount }) : createCombat({
     registries,
     rng,
     player: {
@@ -1550,6 +1550,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       drawPerTurn: run.drawPerTurn,
       damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+      equipmentAttackSlotCount: run.equipmentAttackSlotCount,
       equipmentPoolDeficits: run.equipmentPoolDeficits,
       itemUpgradeLevels: run.itemUpgradeLevels,
       armamentLevels: run.armamentLevels,
