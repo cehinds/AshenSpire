@@ -429,5 +429,40 @@ export function tagIndex(bundle) {
     if (list) list.push(row.tagId);
     else index.set(k, [row.tagId]);
   }
-  return { families, index, keyOf: rowKey };
+  // The scope half of a parent key, and the one call anything outside this
+  // module should need. registries.js walks `index` directly because it is
+  // stamping every family at once; a caller asking about ONE object should ask
+  // here rather than rebuilding the key and the scopeField rule.
+  const scopeOf = (family, object) => {
+    const spec = families.get(family);
+    if (!spec || !spec.scopeField) return '';
+    return (object && object[spec.scopeField]) || '';
+  };
+  const tagIdsOf = (family, object) => (object && object.id != null
+    ? (index.get(rowKey(family, scopeOf(family, object), object.id)) || [])
+    : []);
+  return { families, index, keyOf: rowKey, scopeOf, tagIdsOf };
+}
+
+/**
+ * domainIdsFor(bundle, family) -> [domainId]
+ *
+ * The domains a family may draw from, FROM THE BUNDLE'S OWN JOIN. The whole
+ * point of tagFamilyDomains.csv is that this is data; a caller that hard-codes
+ * the answer makes the table decorative for that family, which is what had
+ * happened to `effect` — its row said `card` and the validator said `card`
+ * independently, so editing the row changed nothing.
+ */
+export function domainIdsFor(bundle, family) {
+  return (Array.isArray(bundle && bundle.tagFamilyDomains) ? bundle.tagFamilyDomains : [])
+    .filter((row) => row && row.family === family)
+    .map((row) => row.domain);
+}
+
+/** Every tag id a family is permitted to carry, per that join. */
+export function tagIdsAllowedFor(bundle, family) {
+  const domains = new Set(domainIdsFor(bundle, family));
+  return (Array.isArray(bundle && bundle.tags) ? bundle.tags : [])
+    .filter((t) => t && domains.has(t.domain))
+    .map((t) => t.id);
 }

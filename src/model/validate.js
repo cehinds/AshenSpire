@@ -35,7 +35,7 @@ import {
   RELIC_MODIFIER_TAGS,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
-import { tagContentProblems, tagIdsInDomain } from './tags.js';
+import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
@@ -341,10 +341,13 @@ export function validateContent(bundle) {
   for (const problem of tagContentProblems(b, (b.keywords || []).map((k) => k && k.id))) {
     err(problem.path, problem.message);
   }
-  // Effect-tag vocabulary: the ONE registry rides the bundle (#61), and effect
-  // `tags` / taggedVulnerability lists draw from its CARD domain — the same
-  // words a card carries, never a creature kind.
-  const tagIds = new Set(tagIdsInDomain(b, 'card'));
+  // Effect-tag vocabulary, FROM THE JOIN rather than from memory. Effect `tags`
+  // and taggedVulnerability lists draw from whatever domains tagFamilyDomains
+  // pairs the `effect` family with — today `card`, which is why this reads the
+  // same as the hard-coded set it replaces. Hard-coding it made that row
+  // decorative: editing `effect,card` to `effect,item` changed the table and
+  // nothing else, so the normalised constraint was not actually the constraint.
+  const tagIds = new Set(tagIdsAllowedFor(b, 'effect'));
   // Creature identity is the creature domain of that same registry, so adding
   // a kind is a row in tags.csv rather than an edit to a frozen array.
   const creatureTagIds = tagIdsInDomain(b, 'creature');

@@ -1090,6 +1090,26 @@ export const WeaponCardPackageModel = Object.freeze({
     // mechanism validates and composes, and stays dormant until data exists.
     const grantedCardsRaw = source.grantedCards == null ? [] : source.grantedCards;
     if (!Array.isArray(grantedCardsRaw)) throw new Error(`${piece.id}: grantedCards must be an array`);
+    // A CARD THE RECONCILE CANNOT FIND AGAIN IS NOT GRANTABLE. Reconciliation is
+    // a SCAN of the four piles: an instance the scan does not see is treated as
+    // a missing grant and re-pushed under the same deterministic id. That is
+    // correct for every destination but one — a Power is REMOVED FROM PLAY when
+    // played, so it sits in no pile, and the next swap or snapshot migration
+    // would hand it straight back to be played and stacked again.
+    //
+    // The alternative is a ledger of grants that left play — new run state, a
+    // new save field, and a new thing to keep in sync — for a seam no shipped
+    // armament uses. The rule is cheaper and honest: if the reconcile cannot
+    // track a card's lifecycle, the package may not grant it, said at the door.
+    const trackable = (cardId, what) => {
+      const def = registries.cards.get(cardId);
+      const destination = registries.framework && typeof registries.framework.afterPlayDestination === 'function'
+        ? registries.framework.afterPlayDestination(def)
+        : 'DISCARD_PILE';
+      if (destination === 'REMOVED_FROM_PLAY') {
+        throw new Error(`${piece.id}: ${what} '${cardId}' is removed from play when played (a ${def && def.type}), and grant reconciliation finds its instances by scanning the piles — it would be handed back and replayable after every equipment swap; a package may only grant cards that stay in a pile`);
+      }
+    };
     const grantedSeen = new Set();
     const grantedCards = grantedCardsRaw.map((raw, index) => {
       const ref = typeof raw === 'string' ? { cardId: raw } : raw;
@@ -1100,6 +1120,7 @@ export const WeaponCardPackageModel = Object.freeze({
       const count = ref.count == null ? 1 : ref.count;
       if (!Number.isInteger(count) || count < 1) throw new Error(`${piece.id}: grantedCards[${index}].count must be a positive integer`);
       if (grantedSeen.has(ref.cardId)) throw new Error(`${piece.id}: duplicate granted card '${ref.cardId}'`);
+      trackable(ref.cardId, 'granted card');
       grantedSeen.add(ref.cardId);
       return { cardId: ref.cardId, count };
     });
@@ -1112,6 +1133,7 @@ export const WeaponCardPackageModel = Object.freeze({
       if (typeof artId !== 'string' || !artId) throw new Error(`${piece.id}: weaponArtDefaults[${index}] must name a card id`);
       if (!registries.cards.has(artId)) throw new Error(`${piece.id}: weapon art '${artId}' is unknown`);
       if (artSeen.has(artId)) throw new Error(`${piece.id}: duplicate weapon art '${artId}'`);
+      trackable(artId, 'weapon art');
       artSeen.add(artId);
       return artId;
     });

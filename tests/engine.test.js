@@ -9,8 +9,9 @@ import { MAP_SHAPE_LIMITS } from '../src/content/mapconfig.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { tagService } from '../src/model/tagService.js';
+import { importLegacyContent } from '../src/framework/importer.js';
 import { attackTagsFor } from '../src/engine/actions.js';
-import { tagContentProblems, itemTypeLabelFrom } from '../src/model/tags.js';
+import { tagContentProblems, itemTypeLabelFrom, tagIdsAllowedFor, tagIdsInDomain } from '../src/model/tags.js';
 import { boundGrantCardIds, boundGrantProblems } from '../src/model/loadout.js';
 import { itemTypeLabel } from '../src/content/equipment.js';
 import {
@@ -2568,6 +2569,67 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     stampDeck(REG, loaded);
     eq(loaded.deck.filter((c) => c.equipmentRole === 'attack').length, saved.equipmentAttackSlotCount,
       'so a restamp after loading still plans the born quota');
+  });
+
+  // ---- 26p. the eleventh round: the junction has other readers ------------
+  test('26p. the importer resolves the junction, the join is the authority, and a Power is not grantable', () => {
+    // THE THIRD CONSUMER OF THE OLD INLINE COLUMN. The framework importer reads
+    // the RAW bundle — the one registries never touched — so `piece.tags` was
+    // silently undefined and a cutover would have carried entities with no tag
+    // identity at all. It resolves the junction from THAT bundle, never from
+    // the module-global fold: an importer answering for the shipped rows while
+    // importing a supplied bundle is the defect of five earlier rounds again.
+    const imported = importLegacyContent(contentBundle);
+    const sword = imported.entities.find((e) => e.legacyId === 'straightSword' || String(e.id).includes('straightSword'));
+    assert(sword, 'the straight sword imports');
+    eq((sword.explicitOverrides.tags || []).join('|'), REG.equipment.armaments.find((p) => p.id === 'straightSword').tags.join('|'),
+      'and its imported tags equal the live stamped gameplay set, item types split off exactly as registries splits them');
+    assert(!(sword.explicitOverrides.tags || []).some((t) => String(t).startsWith('item:')),
+      'the item type is not smuggled into the gameplay set');
+
+    // THE JOIN IS THE AUTHORITY, OR THE TABLE IS DECORATION. tagFamilyDomains
+    // declares which domains the `effect` family may carry; the validator had
+    // the answer hard-coded, so editing that row changed the table and nothing
+    // else. Today the row says `card` and the derived answer is identical —
+    // which is the point: same behaviour, actually derived.
+    const kw = contentBundle.keywords.map((k) => k.id);
+    eq(tagIdsAllowedFor(contentBundle, 'effect').join('|'), tagIdsInDomain(contentBundle, 'card').join('|'),
+      'the derived effect vocabulary matches the card domain the row names');
+    const repaired = JSON.parse(JSON.stringify(contentBundle));
+    repaired.tagFamilyDomains = repaired.tagFamilyDomains
+      .map((r) => (r.family === 'effect' ? { ...r, domain: 'item' } : r));
+    const effectSaid = validateContent(repaired).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+    assert(/unknown effect tag 'blight'/.test(effectSaid),
+      `re-pairing the effect family now actually re-scopes effect tags — said ${JSON.stringify(effectSaid.slice(0, 200))}`);
+    eq(tagContentProblems(repaired, kw).length, 0, 'and the re-paired row is itself legal — this is a scope change, not a broken bundle');
+
+    // A CARD THE RECONCILE CANNOT FIND AGAIN IS NOT GRANTABLE. Reconciliation
+    // is a SCAN of the four piles, so an instance in none of them reads as a
+    // missing grant and is re-pushed under the same deterministic id. A Power
+    // is REMOVED FROM PLAY when played — it sits in no pile — so the next swap
+    // would hand it back, replayable, stacking its effect every time.
+    const power = contentBundle.cards.find((c) => c.type === 'power');
+    assert(power && REG.framework.afterPlayDestination(REG.cards.get(power.id)) === 'REMOVED_FROM_PLAY',
+      'a shipped Power leaves play rather than landing in a pile');
+    const granting = JSON.parse(JSON.stringify(contentBundle));
+    const piece = granting.equipment.armaments.find((p) => p.id === 'straightSword');
+    piece.weaponCardPackage = {
+      compatibility: 'attack-v1',
+      fillerAttackProfileId: piece.attackProfile,
+      grantedCards: [{ cardId: power.id, count: 1 }],
+    };
+    const powerSaid = validateEquipment(createRegistries(granting)).join(' | ');
+    assert(/removed from play when played/.test(powerSaid),
+      `granting a Power is refused by name — said ${JSON.stringify(powerSaid.slice(0, 200))}`);
+    // A skill grant is unaffected: this closes one lifecycle, not the seam.
+    const ordinary = JSON.parse(JSON.stringify(contentBundle));
+    const ordinaryPiece = ordinary.equipment.armaments.find((p) => p.id === 'straightSword');
+    ordinaryPiece.weaponCardPackage = {
+      compatibility: 'attack-v1',
+      fillerAttackProfileId: ordinaryPiece.attackProfile,
+      grantedCards: [{ cardId: 'defend', count: 1 }],
+    };
+    eq(validateEquipment(createRegistries(ordinary)).length, 0, 'an ordinary grant still passes');
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
