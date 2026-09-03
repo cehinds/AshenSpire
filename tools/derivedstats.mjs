@@ -376,61 +376,77 @@ check('the integrated dependency seam has one rules owner and value-only consume
   assert(!/content\/attributes|model\/attributes/.test(model), 'reader imports Phase 1 instead of accepting its allocation seam');
 });
 
-// NO PARSER. THREE ROUNDS OF REVIEW KILLED THREE TEXT SCANNERS HERE.
+// NO PARSER. FOUR ROUNDS OF REVIEW KILLED FOUR TEXT SCANNERS HERE.
 //
 //   a blanket quote strip     erased the smuggling it was hunting
 //   a comment regex           read `const url = 'https://x'` as a comment opener
 //   a hand-written lexer      took `/[/*]/` for a block comment and swallowed
 //                             the rest of the file
+//   a global subtraction      removed the approved sentence from EVERY place it
+//                             appeared, so code comparing against that exact
+//                             sentence had the word removed for it
 //
-// Every one was a correct fix for the previous defect and wrong in a new way,
-// because each needed to know JavaScript's grammar and none of them did. A
-// scanner that must decide "is this word prose or is it logic" is a parser, and
-// a hand-rolled parser guarding one word is a bigger liability than the word.
+// Every one was a correct fix for the previous defect and wrong in a new way.
+// The first three needed to know JavaScript's grammar and did not. The fourth
+// knew no grammar at all and still failed, for the reason that unites all four:
+// AN EXEMPTION APPLIED WHEREVER IT MATCHES IS NOT AN EXEMPTION, IT IS A HOLE.
 //
-// So this does not parse. Two arms, neither able to be confused by syntax:
+// So the exemption is pinned to the declaration and nothing else. Three arms:
 //
 //   THE DATA is walked as data — keys and values off the imported table, so no
-//   text is involved at all, and a row, a key or a non-prose value carrying the
+//   text is involved and a row, a key or a non-prose value carrying the
 //   vocabulary is caught by structure rather than by spelling.
 //
-//   THE TEXT is checked by exact-string subtraction: the prose values the table
-//   itself declares are removed literally (split/join, no pattern), and the word
-//   may not survive anywhere else.
+//   THE MODEL FILE gets NO exemption whatsoever. It is code; it declares no
+//   presentation prose, so there is nothing there to allow. Codex's example
+//   lived in this file, and this arm alone would have caught it.
 //
-// COMMENTS ARE NOT EXEMPT, and that is the deliberate price. Exempting them
-// means locating them, locating them means a parser, and the parser was the
-// problem. One comment in src/content/derivedStats.js was reworded to pay it;
-// the player-facing `sense` line directly beneath still names the roll, which is
-// where a reader looks anyway.
+//   THE CONTENT FILE has its declarations subtracted, KEY INCLUDED: the needle
+//   is `sense: '…'`, not `'…'`. A bare copy of the sentence in a comparison has
+//   no key in front of it, survives the subtraction, and fails. Each needle is
+//   subtracted ONCE, so a second declaration-shaped copy also survives.
 //
-// If a declared prose value were ever built by concatenation rather than
-// written as a literal, the subtraction would not find it and this check would
-// go RED, not quiet. It fails closed.
+// If a declared value were ever built by concatenation, or quoted in a form
+// this needle does not reproduce, the subtraction would not find it and the
+// check goes RED rather than quiet. It fails closed in every direction.
 const BANNED = /dodge|reaction|handMax/i;
 const PROSE_KEYS = new Set(['label', 'faceLabel', 'sense']);
+const CONTENT_FILE = 'src/content/derivedStats.js';
+const MODEL_FILE = 'src/model/derivedStats.js';
 
 check('no Dodge/reaction behavior or handMax policy is smuggled into the contract', () => {
-  const prose = [];
+  const declarations = [];
   const walk = (node, path) => {
     if (node === null || typeof node !== 'object') return;
     for (const [key, value] of Object.entries(node)) {
       assert(!BANNED.test(key), `banned vocabulary in key ${path}${key}`);
       if (typeof value === 'string') {
-        if (PROSE_KEYS.has(key)) { prose.push(value); continue; }
+        if (PROSE_KEYS.has(key)) { declarations.push([key, value]); continue; }
         assert(!BANNED.test(value), `banned vocabulary in value ${path}${key}: ${JSON.stringify(value)}`);
       } else walk(value, `${path}${key}.`);
     }
   };
   walk(derivedStatRules, '');
-  assert(prose.length > 0, 'no declared prose found — the walk is not reaching the presentation table');
+  assert(declarations.length > 0, 'no declared prose found — the walk is not reaching the presentation table');
 
-  for (const rel of ['src/content/derivedStats.js', 'src/model/derivedStats.js']) {
-    let residue = readFileSync(resolve(ROOT, rel), 'utf8');
-    for (const line of prose) residue = residue.split(line).join(' ');
-    const hit = residue.match(BANNED);
-    assert(!hit, `${rel}: '${hit && hit[0]}' appears outside a declared presentation string`);
+  // The model file is code and allows nothing.
+  const model = readFileSync(resolve(ROOT, MODEL_FILE), 'utf8');
+  const modelHit = model.match(BANNED);
+  assert(!modelHit, `${MODEL_FILE}: '${modelHit && modelHit[0]}' — this file declares no prose and allows none`);
+
+  // The content file allows each declaration, once, with its key attached.
+  let residue = readFileSync(resolve(ROOT, CONTENT_FILE), 'utf8');
+  for (const [key, value] of declarations) {
+    for (const quote of ["'", '"']) {
+      const needle = `${key}: ${quote}${value}${quote}`;
+      const at = residue.indexOf(needle);
+      if (at < 0) continue;
+      residue = residue.slice(0, at) + ' ' + residue.slice(at + needle.length);
+      break;                                     // ONCE. A second copy survives.
+    }
   }
+  const hit = residue.match(BANNED);
+  assert(!hit, `${CONTENT_FILE}: '${hit && hit[0]}' outside a single declared presentation value`);
 });
 
 console.log(`\n${failures ? 'FAIL' : 'PASS'} — ${checks - failures}/${checks} contract checks held, ${failures} failed.`);
