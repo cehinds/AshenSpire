@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `codex/remove-agentops-office`
-- Source commit: `120f6607e22a1e7744c3d92690822a4ef54fee83`
+- Source branch: `dev`
+- Source commit: `913fc6190ca760751b5f679067b5d2643480be14`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **876**.
-Extensions: `.bat` 1, `.css` 4, `.csv` 18, `.gitattributes` 1, `.gitignore` 2, `.html` 10, `.js` 249, `.json` 29, `.md` 60, `.mjs` 203, `.nojekyll` 1, `.png` 155, `.py` 5, `.sh` 4, `.svg` 11, `.txt` 12, `.webp` 106, `.yml` 4, `(none)` 1.
+Tracked files: **874**.
+Extensions: `.bat` 1, `.css` 4, `.csv` 18, `.gitattributes` 1, `.gitignore` 2, `.html` 10, `.js` 249, `.json` 29, `.md` 58, `.mjs` 203, `.nojekyll` 1, `.png` 155, `.py` 5, `.sh` 4, `.svg` 11, `.txt` 12, `.webp` 106, `.yml` 4, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
