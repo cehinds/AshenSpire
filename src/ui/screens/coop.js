@@ -36,6 +36,7 @@
 // this screen supplies is the VIEWER — who `me` is, and what `me` voted for.
 
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
+import { playPoseOn } from '../services/PoseAnimator.js';
 import { renderCard } from '../components/card.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
@@ -117,7 +118,23 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   // Every game intent carries the ACTIVE seat (`as`); the server validates
   // ownership and falls back to the connection's main seat.
-  const send = (obj) => conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
+  // The Animated style is offered in the lobby, so a co-op figure has to swing
+  // here too. Nothing on the wire names an attacker — the digest carries no
+  // cardPlayed, and receipts name only the target — but the seat playing the card
+  // is known right here, so the swing rides the local play as it is sent.
+  const send = (obj) => {
+    if (obj.t === 'playCard') swingSeat(obj.cardInstanceId);
+    return conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
+  };
+  const swingSeat = (cardInstanceId) => {
+    const seat = app.querySelector(`[data-seat="${CSS.escape(String(me))}"] .sprite`);
+    if (!seat) return;
+    const sc = latestWireSnap?.scene;
+    const mine = sc?.kind === 'combat' ? (sc.players || []).find((pl) => pl.id === me) : null;
+    const card = (mine?.hand || []).find((c) => c.instanceId === cardInstanceId);
+    const def = card ? cardDef(card) : null;
+    playPoseOn(seat, def && def.type === 'attack' ? 'attack' : 'guard', 420);
+  };
 
   const sendFlaskUse = ({ slot = null, targetId = undefined, chargeKind = null } = {}) => send({
     t: 'flaskIntent',
@@ -1207,7 +1224,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     };
     const recoil = (sel, heavy) => {
       const box = app.querySelector(sel);
-      if (box) box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
+      if (!box) return;
+      box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
+      playPoseOn(box, 'hit', heavy ? 380 : 220);
     };
     // Authoritative receipts own hit floats. Snapshot deltas remain the home
     // for healing, guard gain and legacy non-attack HP changes only.

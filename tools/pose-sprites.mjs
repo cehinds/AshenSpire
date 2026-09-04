@@ -33,12 +33,16 @@ mkdirSync(outDir, { recursive: true });
 const outManifest = join(outDir, 'pose-sprites.manifest.json');
 if (existsSync(outManifest)) {
   try {
-    const had = new Set((JSON.parse(readFileSync(outManifest, 'utf8')).sprites || []).map((s) => s.class));
-    const now = new Set(renders.renders.map((r) => r.class));
-    const dropped = [...had].filter((c) => !now.has(c));
+    // By class AND pose. Comparing class names alone passed a run that carried
+    // every class but only some of their poses — the clear below then took the
+    // rest of the poses with it, which is the same silent loss one level down.
+    const had = new Set((JSON.parse(readFileSync(outManifest, 'utf8')).sprites || []).map((s) => `${s.class}/${s.pose}`));
+    const now = new Set(renders.renders.map((r) => `${r.class}/${r.pose}`));
+    const dropped = [...had].filter((k) => !now.has(k));
     if (dropped.length) {
-      console.error(`pose-sprites: ${outDir} holds sprites for ${dropped.join(', ')}, and this run has none.`);
-      console.error('  Cut every class into one render folder (--append) and publish them together, or pass --out to a different folder.');
+      const shown = dropped.slice(0, 6).join(', ') + (dropped.length > 6 ? `, and ${dropped.length - 6} more` : '');
+      console.error(`pose-sprites: ${outDir} holds ${dropped.length} pose(s) this run does not carry: ${shown}.`);
+      console.error('  Cut every class and pose into one render folder (--append) and publish them together, or pass --out to a different folder.');
       process.exit(1);
     }
   } catch { /* an unreadable manifest is not a reason to stop */ }
