@@ -44,7 +44,7 @@ import { dirname, join, resolve } from 'node:path';
 // The medallion anchors are the game's, not this tool's — one home, two
 // readers. classArtAnchors.js is data only and touches no document, which is
 // what makes it importable from a build tool at all.
-import { medallionPct } from '../src/content/classArtAnchors.js';
+import { medallionPct, medallionDeclared } from '../src/content/classArtAnchors.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -519,12 +519,18 @@ mkdirSync(outDir, { recursive: true });
 // unmeasured figure gets no medallion at all. Caught here, at the top of the
 // run, so replacing a concept surfaces as "measure this" before any bytes are
 // written — not as a sigil silently missing from a shipped sprite.
-const unanchored = Object.keys(CONCEPTS).filter((c) => medallionPct(c) == null);
+// `medallionDeclared`, not `medallionPct != null`: a class may be measured and
+// found to have NO placeable anchor, which is a check rather than a gap and
+// ships with no overlay. Reading the percentage here instead would refuse that
+// class with "measure this" — a tool failing for a reason that is not true, and
+// the only way past it would be to invent a number.
+const unanchored = Object.keys(CONCEPTS).filter((c) => !medallionDeclared(c));
 if (unanchored.length) {
   console.error(
     `No medallion anchor for: ${unanchored.join(', ')}.\n`
     + '  Measure the chest position on each new figure and add it to\n'
-    + '  src/content/classArtAnchors.js — see that file for how the others were taken.',
+    + '  src/content/classArtAnchors.js — see that file for how the others were taken.\n'
+    + '  A figure with nowhere to put the disc is recorded as an explicit null there.',
   );
   process.exit(1);
 }

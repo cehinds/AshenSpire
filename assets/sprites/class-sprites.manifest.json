@@ -10,34 +10,33 @@
       "path": "assets/sprites/reaver_gold.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 30848,
-      "sha256": "4b97de17cbaa9f7435a6c42f86d68f24b7a7dcd76546e42a8c9b3809cf1bc83e",
+      "bytes": 27730,
+      "sha256": "c9e925fa13f74fc9b5e2197305c4befeaa33780782edc0c7937c3d97273e7cf0",
       "source_recipe": {
-        "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/reaver-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/reaver/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#c9a227",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 432,
-          "h": 429
+          "w": 375,
+          "h": 738
         },
         "placed_at_px": {
-          "x": 9,
-          "y": 130
+          "x": 91,
+          "y": 30
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 53
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -48,34 +47,33 @@
       "path": "assets/sprites/reaver_ember.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 29738,
-      "sha256": "c6f1ce938a1b1b49b93bea8ffc50130d1aa1ea0ff6432a516e252cb954b272c0",
+      "bytes": 26924,
+      "sha256": "f268c92f4ba94dea45e90d2714fb600d140d4ffb641bda06b5c1c071d904ce6b",
       "source_recipe": {
-        "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/reaver-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/reaver/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#c9502e",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 432,
-          "h": 429
+          "w": 375,
+          "h": 738
         },
         "placed_at_px": {
-          "x": 9,
-          "y": 130
+          "x": 91,
+          "y": 30
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 53
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -86,34 +84,33 @@
       "path": "assets/sprites/reaver_frost.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 30650,
-      "sha256": "a044121be9abcb0c24717710779183b54c3cf0d4f8ac85ecbf9baa01affbfe89",
+      "bytes": 27176,
+      "sha256": "2e46f937e6aa1ea3472d653719ab860b99ce069bb823e382b81aef34af71ee6a",
       "source_recipe": {
-        "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/reaver-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/reaver/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#7fa8c9",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 432,
-          "h": 429
+          "w": 375,
+          "h": 738
         },
         "placed_at_px": {
-          "x": 9,
-          "y": 130
+          "x": 91,
+          "y": 30
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 53
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -124,34 +121,33 @@
       "path": "assets/sprites/reaver_rot.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 30006,
-      "sha256": "b3abad48152705de82d217edbf6e3dc872c03297329e9761f9a10ed624ad9a7d",
+      "bytes": 26866,
+      "sha256": "630e2701a54364d51bcc95c7a997e4cf6775338fb52fd04ab1f1ec38410f0339",
       "source_recipe": {
-        "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/reaver-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/reaver/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#b5541c",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 432,
-          "h": 429
+          "w": 375,
+          "h": 738
         },
         "placed_at_px": {
-          "x": 9,
-          "y": 130
+          "x": 91,
+          "y": 30
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 53
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -162,34 +158,33 @@
       "path": "assets/sprites/reaver_grace.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 30216,
-      "sha256": "4fc2a5660fe462fd5b5b955f088a674a9451e5967d812ec81e5c6a53ad7a8a6f",
+      "bytes": 27360,
+      "sha256": "b6a309a34c2c160af1d467534c2786e5addfb23178494ca62bb15731c4f45da3",
       "source_recipe": {
-        "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/reaver-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/reaver/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#9fc3e8",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 432,
-          "h": 429
+          "w": 375,
+          "h": 738
         },
         "placed_at_px": {
-          "x": 9,
-          "y": 130
+          "x": 91,
+          "y": 30
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 53
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -200,34 +195,33 @@
       "path": "assets/sprites/starseer_gold.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 30872,
-      "sha256": "a37fb9511f9c05dc92f9ef8feed1db11c983c88d3233253e5edc0956c61a433d",
+      "bytes": 31562,
+      "sha256": "2a34f36d6864fdde684fe24f5f7ba2024c72fb825835ef6ef1fe0837181e62b8",
       "source_recipe": {
-        "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/starseer-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/starseer/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#c9a227",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 358,
-          "h": 432
+          "w": 377,
+          "h": 756
         },
         "placed_at_px": {
-          "x": 46,
-          "y": 127
+          "x": 90,
+          "y": 17
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 62
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -238,34 +232,33 @@
       "path": "assets/sprites/starseer_ember.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 29800,
-      "sha256": "c55619f379f44297620679135e84e893e9345e9aca22c1223fab164c208c22a4",
+      "bytes": 30998,
+      "sha256": "3b5166901f451b37d727ca3811be0c441418df47e24c7cf1c6e78bcb86990657",
       "source_recipe": {
-        "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/starseer-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/starseer/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#c9502e",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 358,
-          "h": 432
+          "w": 377,
+          "h": 756
         },
         "placed_at_px": {
-          "x": 46,
-          "y": 127
+          "x": 90,
+          "y": 17
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 62
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -276,34 +269,33 @@
       "path": "assets/sprites/starseer_frost.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 29258,
-      "sha256": "0814f2c16b24af37ac1ebb347d937a4d472c9633675445ead25338cb75d81efc",
+      "bytes": 30052,
+      "sha256": "10a73535a024e44dc68eec2ce07d09e0eedb65307abf0461ef86944830957262",
       "source_recipe": {
-        "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/starseer-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/starseer/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#7fa8c9",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 358,
-          "h": 432
+          "w": 377,
+          "h": 756
         },
         "placed_at_px": {
-          "x": 46,
-          "y": 127
+          "x": 90,
+          "y": 17
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 62
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -314,34 +306,33 @@
       "path": "assets/sprites/starseer_rot.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 29678,
-      "sha256": "b220d24c1d53ef089820944a37fea34b291a58fc85bbef0b5b32340822556e8f",
+      "bytes": 30850,
+      "sha256": "a1dfdaef20e94ea4f9de7cbf256f573d80dc12ae291cb9b9316e255165f95e01",
       "source_recipe": {
-        "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/starseer-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/starseer/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#b5541c",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 358,
-          "h": 432
+          "w": 377,
+          "h": 756
         },
         "placed_at_px": {
-          "x": 46,
-          "y": 127
+          "x": 90,
+          "y": 17
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 62
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -352,34 +343,33 @@
       "path": "assets/sprites/starseer_grace.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 29640,
-      "sha256": "0f9667aa11ca537ccf3c66da0809a5d18e1e8b82195d88191d8d74e54a14c5e7",
+      "bytes": 30598,
+      "sha256": "a0b14b6807823c557206fb911fcbef7f1cf7b236ad3a842e7e15798e90e5b3c9",
       "source_recipe": {
-        "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/starseer-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/starseer/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#9fc3e8",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 358,
-          "h": 432
+          "w": 377,
+          "h": 756
         },
         "placed_at_px": {
-          "x": 46,
-          "y": 127
+          "x": 90,
+          "y": 17
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 62
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -390,34 +380,33 @@
       "path": "assets/sprites/rogue_gold.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 31830,
-      "sha256": "548a3d299073fddc0894d0c57f5aa8f25ab0497d16a0c910ee746ef8c00321e7",
+      "bytes": 31696,
+      "sha256": "30d0f8bcf0d03c3a74fdfc8aa576b8c3bc3b5092795a2d5e97908e3e9168f3f5",
       "source_recipe": {
-        "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/rogue-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/rogue/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#c9a227",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 371,
-          "h": 430
+          "w": 373,
+          "h": 717
         },
         "placed_at_px": {
-          "x": 40,
-          "y": 129
+          "x": 92,
+          "y": 45
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 53
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -428,34 +417,33 @@
       "path": "assets/sprites/rogue_ember.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 30778,
-      "sha256": "10cfd656826085a6ffc4bcb6a2b98dcaed6625ce0e4c34a81dbdbe82dbe23620",
+      "bytes": 31340,
+      "sha256": "327a2116e3261519b1976944690c94d3d35d3a97b0e904db2186ae05b2e5e7b3",
       "source_recipe": {
-        "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/rogue-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/rogue/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#c9502e",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 371,
-          "h": 430
+          "w": 373,
+          "h": 717
         },
         "placed_at_px": {
-          "x": 40,
-          "y": 129
+          "x": 92,
+          "y": 45
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 53
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -466,34 +454,33 @@
       "path": "assets/sprites/rogue_frost.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 30944,
-      "sha256": "5338e8fd47e53b6de85f20fd2d4f68710162999c80ff98bb446dd36c4ca35794",
+      "bytes": 31220,
+      "sha256": "bbbbb7e9362849c1caf296e21fc9ba763f6d2397b45972cc9f0f76981ea1ddf4",
       "source_recipe": {
-        "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/rogue-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/rogue/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#7fa8c9",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 371,
-          "h": 430
+          "w": 373,
+          "h": 717
         },
         "placed_at_px": {
-          "x": 40,
-          "y": 129
+          "x": 92,
+          "y": 45
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 53
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -504,34 +491,33 @@
       "path": "assets/sprites/rogue_rot.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 30894,
-      "sha256": "ebe9d7f530abfee894c886c64fc23970b0222c4b224a1813c64a2b03f07ee492",
+      "bytes": 31136,
+      "sha256": "64c289086e9f709156264bcca10b266f378820b623934888b1843d73246eda94",
       "source_recipe": {
-        "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/rogue-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/rogue/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#b5541c",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 371,
-          "h": 430
+          "w": 373,
+          "h": 717
         },
         "placed_at_px": {
-          "x": 40,
-          "y": 129
+          "x": 92,
+          "y": 45
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 53
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -542,34 +528,33 @@
       "path": "assets/sprites/rogue_grace.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 30840,
-      "sha256": "2f049467c7ccf3c21de7709ddb0224e694f68335bc4bb18c9c5a8e4889f993a0",
+      "bytes": 31412,
+      "sha256": "4d891974ca10beec98f8202f1efc092bb09cc0dd421beb6ce08028710c7f8632",
       "source_recipe": {
-        "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/rogue-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/rogue/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#9fc3e8",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 371,
-          "h": 430
+          "w": 373,
+          "h": 717
         },
         "placed_at_px": {
-          "x": 40,
-          "y": 129
+          "x": 92,
+          "y": 45
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 53
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
