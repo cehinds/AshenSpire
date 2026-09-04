@@ -131,14 +131,14 @@
       "height": 325,
       "offset": [
         152,
-        326
+        332
       ],
       "root": [
         298,
-        504
+        510
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -149,14 +149,14 @@
       "height": 325,
       "offset": [
         152,
-        326
+        332
       ],
       "root": [
         298,
-        504
+        510
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -167,14 +167,14 @@
       "height": 325,
       "offset": [
         152,
-        326
+        332
       ],
       "root": [
         298,
-        504
+        510
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -185,14 +185,14 @@
       "height": 325,
       "offset": [
         152,
-        326
+        332
       ],
       "root": [
         298,
-        504
+        510
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -203,14 +203,14 @@
       "height": 325,
       "offset": [
         152,
-        326
+        332
       ],
       "root": [
         298,
-        504
+        510
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -221,14 +221,14 @@
       "height": 242,
       "offset": [
         115,
-        392
+        415
       ],
       "root": [
         253,
-        525
+        548
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -239,14 +239,14 @@
       "height": 242,
       "offset": [
         115,
-        392
+        415
       ],
       "root": [
         253,
-        525
+        548
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -257,14 +257,14 @@
       "height": 242,
       "offset": [
         115,
-        392
+        415
       ],
       "root": [
         253,
-        525
+        548
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -275,14 +275,14 @@
       "height": 242,
       "offset": [
         115,
-        392
+        415
       ],
       "root": [
         253,
-        525
+        548
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -293,14 +293,14 @@
       "height": 242,
       "offset": [
         115,
-        392
+        415
       ],
       "root": [
         253,
-        525
+        548
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -311,14 +311,14 @@
       "height": 246,
       "offset": [
         113,
-        340
+        411
       ],
       "root": [
         201,
-        475
+        546
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -329,14 +329,14 @@
       "height": 246,
       "offset": [
         113,
-        340
+        411
       ],
       "root": [
         201,
-        475
+        546
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -347,14 +347,14 @@
       "height": 246,
       "offset": [
         113,
-        340
+        411
       ],
       "root": [
         201,
-        475
+        546
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -365,14 +365,14 @@
       "height": 246,
       "offset": [
         113,
-        340
+        411
       ],
       "root": [
         201,
-        475
+        546
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -383,14 +383,14 @@
       "height": 246,
       "offset": [
         113,
-        340
+        411
       ],
       "root": [
         201,
-        475
+        546
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -401,14 +401,14 @@
       "height": 272,
       "offset": [
         136,
-        316
+        385
       ],
       "root": [
         270,
-        465
+        534
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -419,14 +419,14 @@
       "height": 272,
       "offset": [
         136,
-        316
+        385
       ],
       "root": [
         270,
-        465
+        534
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -437,14 +437,14 @@
       "height": 272,
       "offset": [
         136,
-        316
+        385
       ],
       "root": [
         270,
-        465
+        534
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -455,14 +455,14 @@
       "height": 272,
       "offset": [
         136,
-        316
+        385
       ],
       "root": [
         270,
-        465
+        534
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -473,14 +473,14 @@
       "height": 272,
       "offset": [
         136,
-        316
+        385
       ],
       "root": [
         270,
-        465
+        534
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -491,14 +491,14 @@
       "height": 265,
       "offset": [
         95,
-        330
+        392
       ],
       "root": [
         233,
-        475
+        537
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -509,14 +509,14 @@
       "height": 265,
       "offset": [
         95,
-        330
+        392
       ],
       "root": [
         233,
-        475
+        537
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -527,14 +527,14 @@
       "height": 265,
       "offset": [
         95,
-        330
+        392
       ],
       "root": [
         233,
-        475
+        537
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -545,14 +545,14 @@
       "height": 265,
       "offset": [
         95,
-        330
+        392
       ],
       "root": [
         233,
-        475
+        537
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -563,14 +563,14 @@
       "height": 265,
       "offset": [
         95,
-        330
+        392
       ],
       "root": [
         233,
-        475
+        537
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -581,14 +581,14 @@
       "height": 251,
       "offset": [
         124,
-        309
+        406
       ],
       "root": [
         219,
-        446
+        543
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -599,14 +599,14 @@
       "height": 251,
       "offset": [
         124,
-        309
+        406
       ],
       "root": [
         219,
-        446
+        543
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -617,14 +617,14 @@
       "height": 251,
       "offset": [
         124,
-        309
+        406
       ],
       "root": [
         219,
-        446
+        543
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -635,14 +635,14 @@
       "height": 251,
       "offset": [
         124,
-        309
+        406
       ],
       "root": [
         219,
-        446
+        543
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -653,14 +653,14 @@
       "height": 251,
       "offset": [
         124,
-        309
+        406
       ],
       "root": [
         219,
-        446
+        543
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -671,14 +671,14 @@
       "height": 325,
       "offset": [
         150,
-        254
+        332
       ],
       "root": [
         298,
-        432
+        510
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -689,14 +689,14 @@
       "height": 325,
       "offset": [
         150,
-        254
+        332
       ],
       "root": [
         298,
-        432
+        510
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -707,14 +707,14 @@
       "height": 325,
       "offset": [
         150,
-        254
+        332
       ],
       "root": [
         298,
-        432
+        510
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -725,14 +725,14 @@
       "height": 325,
       "offset": [
         150,
-        254
+        332
       ],
       "root": [
         298,
-        432
+        510
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -743,14 +743,14 @@
       "height": 325,
       "offset": [
         150,
-        254
+        332
       ],
       "root": [
         298,
-        432
+        510
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -761,14 +761,14 @@
       "height": 341,
       "offset": [
         192,
-        231
+        316
       ],
       "root": [
         291,
-        418
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -779,14 +779,14 @@
       "height": 341,
       "offset": [
         192,
-        231
+        316
       ],
       "root": [
         291,
-        418
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -797,14 +797,14 @@
       "height": 341,
       "offset": [
         192,
-        231
+        316
       ],
       "root": [
         291,
-        418
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -815,14 +815,14 @@
       "height": 341,
       "offset": [
         192,
-        231
+        316
       ],
       "root": [
         291,
-        418
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "rogue",
@@ -833,14 +833,14 @@
       "height": 341,
       "offset": [
         192,
-        231
+        316
       ],
       "root": [
         291,
-        418
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -851,14 +851,14 @@
       "height": 343,
       "offset": [
         178,
-        313
+        314
       ],
       "root": [
         277,
-        501
+        502
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -869,14 +869,14 @@
       "height": 343,
       "offset": [
         178,
-        313
+        314
       ],
       "root": [
         277,
-        501
+        502
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -887,14 +887,14 @@
       "height": 343,
       "offset": [
         178,
-        313
+        314
       ],
       "root": [
         277,
-        501
+        502
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -905,14 +905,14 @@
       "height": 343,
       "offset": [
         178,
-        313
+        314
       ],
       "root": [
         277,
-        501
+        502
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -923,14 +923,14 @@
       "height": 343,
       "offset": [
         178,
-        313
+        314
       ],
       "root": [
         277,
-        501
+        502
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1031,14 +1031,14 @@
       "height": 242,
       "offset": [
         135,
-        412
+        415
       ],
       "root": [
         250,
-        545
+        548
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1049,14 +1049,14 @@
       "height": 242,
       "offset": [
         135,
-        412
+        415
       ],
       "root": [
         250,
-        545
+        548
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1067,14 +1067,14 @@
       "height": 242,
       "offset": [
         135,
-        412
+        415
       ],
       "root": [
         250,
-        545
+        548
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1085,14 +1085,14 @@
       "height": 242,
       "offset": [
         135,
-        412
+        415
       ],
       "root": [
         250,
-        545
+        548
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1103,14 +1103,14 @@
       "height": 242,
       "offset": [
         135,
-        412
+        415
       ],
       "root": [
         250,
-        545
+        548
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1121,14 +1121,14 @@
       "height": 331,
       "offset": [
         142,
-        268
+        326
       ],
       "root": [
         286,
-        449
+        507
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1139,14 +1139,14 @@
       "height": 331,
       "offset": [
         142,
-        268
+        326
       ],
       "root": [
         286,
-        449
+        507
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1157,14 +1157,14 @@
       "height": 331,
       "offset": [
         142,
-        268
+        326
       ],
       "root": [
         286,
-        449
+        507
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1175,14 +1175,14 @@
       "height": 331,
       "offset": [
         142,
-        268
+        326
       ],
       "root": [
         286,
-        449
+        507
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1193,14 +1193,14 @@
       "height": 331,
       "offset": [
         142,
-        268
+        326
       ],
       "root": [
         286,
-        449
+        507
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1211,14 +1211,14 @@
       "height": 246,
       "offset": [
         101,
-        353
+        411
       ],
       "root": [
         298,
-        488
+        546
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1229,14 +1229,14 @@
       "height": 246,
       "offset": [
         101,
-        353
+        411
       ],
       "root": [
         298,
-        488
+        546
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1247,14 +1247,14 @@
       "height": 246,
       "offset": [
         101,
-        353
+        411
       ],
       "root": [
         298,
-        488
+        546
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1265,14 +1265,14 @@
       "height": 246,
       "offset": [
         101,
-        353
+        411
       ],
       "root": [
         298,
-        488
+        546
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1283,14 +1283,14 @@
       "height": 246,
       "offset": [
         101,
-        353
+        411
       ],
       "root": [
         298,
-        488
+        546
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1301,14 +1301,14 @@
       "height": 269,
       "offset": [
         79,
-        327
+        388
       ],
       "root": [
         209,
-        474
+        535
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1319,14 +1319,14 @@
       "height": 269,
       "offset": [
         79,
-        327
+        388
       ],
       "root": [
         209,
-        474
+        535
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1337,14 +1337,14 @@
       "height": 269,
       "offset": [
         79,
-        327
+        388
       ],
       "root": [
         209,
-        474
+        535
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1355,14 +1355,14 @@
       "height": 269,
       "offset": [
         79,
-        327
+        388
       ],
       "root": [
         209,
-        474
+        535
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1373,14 +1373,14 @@
       "height": 269,
       "offset": [
         79,
-        327
+        388
       ],
       "root": [
         209,
-        474
+        535
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1391,14 +1391,14 @@
       "height": 247,
       "offset": [
         116,
-        313
+        410
       ],
       "root": [
         224,
-        448
+        545
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1409,14 +1409,14 @@
       "height": 247,
       "offset": [
         116,
-        313
+        410
       ],
       "root": [
         224,
-        448
+        545
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1427,14 +1427,14 @@
       "height": 247,
       "offset": [
         116,
-        313
+        410
       ],
       "root": [
         224,
-        448
+        545
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1445,14 +1445,14 @@
       "height": 247,
       "offset": [
         116,
-        313
+        410
       ],
       "root": [
         224,
-        448
+        545
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1463,14 +1463,14 @@
       "height": 247,
       "offset": [
         116,
-        313
+        410
       ],
       "root": [
         224,
-        448
+        545
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1481,14 +1481,14 @@
       "height": 341,
       "offset": [
         157,
-        222
+        316
       ],
       "root": [
         284,
-        409
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1499,14 +1499,14 @@
       "height": 341,
       "offset": [
         157,
-        222
+        316
       ],
       "root": [
         284,
-        409
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1517,14 +1517,14 @@
       "height": 341,
       "offset": [
         157,
-        222
+        316
       ],
       "root": [
         284,
-        409
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1535,14 +1535,14 @@
       "height": 341,
       "offset": [
         157,
-        222
+        316
       ],
       "root": [
         284,
-        409
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1553,14 +1553,14 @@
       "height": 341,
       "offset": [
         157,
-        222
+        316
       ],
       "root": [
         284,
-        409
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1571,14 +1571,14 @@
       "height": 342,
       "offset": [
         179,
-        236
+        315
       ],
       "root": [
         277,
-        424
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1589,14 +1589,14 @@
       "height": 342,
       "offset": [
         179,
-        236
+        315
       ],
       "root": [
         277,
-        424
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1607,14 +1607,14 @@
       "height": 342,
       "offset": [
         179,
-        236
+        315
       ],
       "root": [
         277,
-        424
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1625,14 +1625,14 @@
       "height": 342,
       "offset": [
         179,
-        236
+        315
       ],
       "root": [
         277,
-        424
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "reaver",
@@ -1643,14 +1643,14 @@
       "height": 342,
       "offset": [
         179,
-        236
+        315
       ],
       "root": [
         277,
-        424
+        503
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1751,14 +1751,14 @@
       "height": 355,
       "offset": [
         159,
-        267
+        302
       ],
       "root": [
         263,
-        462
+        497
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1769,14 +1769,14 @@
       "height": 355,
       "offset": [
         159,
-        267
+        302
       ],
       "root": [
         263,
-        462
+        497
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1787,14 +1787,14 @@
       "height": 355,
       "offset": [
         159,
-        267
+        302
       ],
       "root": [
         263,
-        462
+        497
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1805,14 +1805,14 @@
       "height": 355,
       "offset": [
         159,
-        267
+        302
       ],
       "root": [
         263,
-        462
+        497
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1823,14 +1823,14 @@
       "height": 355,
       "offset": [
         159,
-        267
+        302
       ],
       "root": [
         263,
-        462
+        497
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1841,14 +1841,14 @@
       "height": 283,
       "offset": [
         117,
-        326
+        374
       ],
       "root": [
         248,
-        481
+        529
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1859,14 +1859,14 @@
       "height": 283,
       "offset": [
         117,
-        326
+        374
       ],
       "root": [
         248,
-        481
+        529
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1877,14 +1877,14 @@
       "height": 283,
       "offset": [
         117,
-        326
+        374
       ],
       "root": [
         248,
-        481
+        529
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1895,14 +1895,14 @@
       "height": 283,
       "offset": [
         117,
-        326
+        374
       ],
       "root": [
         248,
-        481
+        529
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1913,14 +1913,14 @@
       "height": 283,
       "offset": [
         117,
-        326
+        374
       ],
       "root": [
         248,
-        481
+        529
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1931,14 +1931,14 @@
       "height": 273,
       "offset": [
         94,
-        270
+        384
       ],
       "root": [
         225,
-        420
+        534
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1949,14 +1949,14 @@
       "height": 273,
       "offset": [
         94,
-        270
+        384
       ],
       "root": [
         225,
-        420
+        534
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1967,14 +1967,14 @@
       "height": 273,
       "offset": [
         94,
-        270
+        384
       ],
       "root": [
         225,
-        420
+        534
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -1985,14 +1985,14 @@
       "height": 273,
       "offset": [
         94,
-        270
+        384
       ],
       "root": [
         225,
-        420
+        534
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2003,14 +2003,14 @@
       "height": 273,
       "offset": [
         94,
-        270
+        384
       ],
       "root": [
         225,
-        420
+        534
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2021,14 +2021,14 @@
       "height": 297,
       "offset": [
         63,
-        246
+        360
       ],
       "root": [
         193,
-        409
+        523
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2039,14 +2039,14 @@
       "height": 297,
       "offset": [
         63,
-        246
+        360
       ],
       "root": [
         193,
-        409
+        523
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2057,14 +2057,14 @@
       "height": 297,
       "offset": [
         63,
-        246
+        360
       ],
       "root": [
         193,
-        409
+        523
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2075,14 +2075,14 @@
       "height": 297,
       "offset": [
         63,
-        246
+        360
       ],
       "root": [
         193,
-        409
+        523
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2093,14 +2093,14 @@
       "height": 297,
       "offset": [
         63,
-        246
+        360
       ],
       "root": [
         193,
-        409
+        523
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2111,14 +2111,14 @@
       "height": 273,
       "offset": [
         84,
-        271
+        384
       ],
       "root": [
         202,
-        422
+        535
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2129,14 +2129,14 @@
       "height": 273,
       "offset": [
         84,
-        271
+        384
       ],
       "root": [
         202,
-        422
+        535
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2147,14 +2147,14 @@
       "height": 273,
       "offset": [
         84,
-        271
+        384
       ],
       "root": [
         202,
-        422
+        535
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2165,14 +2165,14 @@
       "height": 273,
       "offset": [
         84,
-        271
+        384
       ],
       "root": [
         202,
-        422
+        535
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2183,14 +2183,14 @@
       "height": 273,
       "offset": [
         84,
-        271
+        384
       ],
       "root": [
         202,
-        422
+        535
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2201,14 +2201,14 @@
       "height": 324,
       "offset": [
         117,
-        197
+        333
       ],
       "root": [
         265,
-        375
+        511
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2219,14 +2219,14 @@
       "height": 324,
       "offset": [
         117,
-        197
+        333
       ],
       "root": [
         265,
-        375
+        511
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2237,14 +2237,14 @@
       "height": 324,
       "offset": [
         117,
-        197
+        333
       ],
       "root": [
         265,
-        375
+        511
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2255,14 +2255,14 @@
       "height": 324,
       "offset": [
         117,
-        197
+        333
       ],
       "root": [
         265,
-        375
+        511
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2273,14 +2273,14 @@
       "height": 324,
       "offset": [
         117,
-        197
+        333
       ],
       "root": [
         265,
-        375
+        511
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2291,14 +2291,14 @@
       "height": 356,
       "offset": [
         158,
-        164
+        301
       ],
       "root": [
         263,
-        359
+        496
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2309,14 +2309,14 @@
       "height": 356,
       "offset": [
         158,
-        164
+        301
       ],
       "root": [
         263,
-        359
+        496
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2327,14 +2327,14 @@
       "height": 356,
       "offset": [
         158,
-        164
+        301
       ],
       "root": [
         263,
-        359
+        496
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2345,14 +2345,14 @@
       "height": 356,
       "offset": [
         158,
-        164
+        301
       ],
       "root": [
         263,
-        359
+        496
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2363,14 +2363,14 @@
       "height": 356,
       "offset": [
         158,
-        164
+        301
       ],
       "root": [
         263,
-        359
+        496
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2381,14 +2381,14 @@
       "height": 410,
       "offset": [
         181,
-        151
+        247
       ],
       "root": [
         276,
-        376
+        472
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2399,14 +2399,14 @@
       "height": 410,
       "offset": [
         181,
-        151
+        247
       ],
       "root": [
         276,
-        376
+        472
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2417,14 +2417,14 @@
       "height": 410,
       "offset": [
         181,
-        151
+        247
       ],
       "root": [
         276,
-        376
+        472
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2435,14 +2435,14 @@
       "height": 410,
       "offset": [
         181,
-        151
+        247
       ],
       "root": [
         276,
-        376
+        472
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "starseer",
@@ -2453,14 +2453,14 @@
       "height": 410,
       "offset": [
         181,
-        151
+        247
       ],
       "root": [
         276,
-        376
+        472
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2561,14 +2561,14 @@
       "height": 355,
       "offset": [
         159,
-        297
+        302
       ],
       "root": [
         274,
-        492
+        497
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2579,14 +2579,14 @@
       "height": 355,
       "offset": [
         159,
-        297
+        302
       ],
       "root": [
         274,
-        492
+        497
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2597,14 +2597,14 @@
       "height": 355,
       "offset": [
         159,
-        297
+        302
       ],
       "root": [
         274,
-        492
+        497
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2615,14 +2615,14 @@
       "height": 355,
       "offset": [
         159,
-        297
+        302
       ],
       "root": [
         274,
-        492
+        497
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2633,14 +2633,14 @@
       "height": 355,
       "offset": [
         159,
-        297
+        302
       ],
       "root": [
         274,
-        492
+        497
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2651,14 +2651,14 @@
       "height": 308,
       "offset": [
         123,
-        338
+        349
       ],
       "root": [
         256,
-        507
+        518
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2669,14 +2669,14 @@
       "height": 308,
       "offset": [
         123,
-        338
+        349
       ],
       "root": [
         256,
-        507
+        518
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2687,14 +2687,14 @@
       "height": 308,
       "offset": [
         123,
-        338
+        349
       ],
       "root": [
         256,
-        507
+        518
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2705,14 +2705,14 @@
       "height": 308,
       "offset": [
         123,
-        338
+        349
       ],
       "root": [
         256,
-        507
+        518
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2723,14 +2723,14 @@
       "height": 308,
       "offset": [
         123,
-        338
+        349
       ],
       "root": [
         256,
-        507
+        518
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2741,14 +2741,14 @@
       "height": 324,
       "offset": [
         117,
-        283
+        333
       ],
       "root": [
         254,
-        461
+        511
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2759,14 +2759,14 @@
       "height": 324,
       "offset": [
         117,
-        283
+        333
       ],
       "root": [
         254,
-        461
+        511
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2777,14 +2777,14 @@
       "height": 324,
       "offset": [
         117,
-        283
+        333
       ],
       "root": [
         254,
-        461
+        511
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2795,14 +2795,14 @@
       "height": 324,
       "offset": [
         117,
-        283
+        333
       ],
       "root": [
         254,
-        461
+        511
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2813,14 +2813,14 @@
       "height": 324,
       "offset": [
         117,
-        283
+        333
       ],
       "root": [
         254,
-        461
+        511
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2831,14 +2831,14 @@
       "height": 317,
       "offset": [
         106,
-        290
+        340
       ],
       "root": [
         243,
-        464
+        514
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2849,14 +2849,14 @@
       "height": 317,
       "offset": [
         106,
-        290
+        340
       ],
       "root": [
         243,
-        464
+        514
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2867,14 +2867,14 @@
       "height": 317,
       "offset": [
         106,
-        290
+        340
       ],
       "root": [
         243,
-        464
+        514
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2885,14 +2885,14 @@
       "height": 317,
       "offset": [
         106,
-        290
+        340
       ],
       "root": [
         243,
-        464
+        514
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2903,14 +2903,14 @@
       "height": 317,
       "offset": [
         106,
-        290
+        340
       ],
       "root": [
         243,
-        464
+        514
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2921,14 +2921,14 @@
       "height": 322,
       "offset": [
         101,
-        285
+        335
       ],
       "root": [
         238,
-        462
+        512
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2939,14 +2939,14 @@
       "height": 322,
       "offset": [
         101,
-        285
+        335
       ],
       "root": [
         238,
-        462
+        512
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2957,14 +2957,14 @@
       "height": 322,
       "offset": [
         101,
-        285
+        335
       ],
       "root": [
         238,
-        462
+        512
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2975,14 +2975,14 @@
       "height": 322,
       "offset": [
         101,
-        285
+        335
       ],
       "root": [
         238,
-        462
+        512
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -2993,14 +2993,14 @@
       "height": 322,
       "offset": [
         101,
-        285
+        335
       ],
       "root": [
         238,
-        462
+        512
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3011,14 +3011,14 @@
       "height": 353,
       "offset": [
         155,
-        238
+        304
       ],
       "root": [
         281,
-        432
+        498
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3029,14 +3029,14 @@
       "height": 353,
       "offset": [
         155,
-        238
+        304
       ],
       "root": [
         281,
-        432
+        498
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3047,14 +3047,14 @@
       "height": 353,
       "offset": [
         155,
-        238
+        304
       ],
       "root": [
         281,
-        432
+        498
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3065,14 +3065,14 @@
       "height": 353,
       "offset": [
         155,
-        238
+        304
       ],
       "root": [
         281,
-        432
+        498
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3083,14 +3083,14 @@
       "height": 353,
       "offset": [
         155,
-        238
+        304
       ],
       "root": [
         281,
-        432
+        498
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3101,14 +3101,14 @@
       "height": 359,
       "offset": [
         161,
-        232
+        298
       ],
       "root": [
         275,
-        429
+        495
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3119,14 +3119,14 @@
       "height": 359,
       "offset": [
         161,
-        232
+        298
       ],
       "root": [
         275,
-        429
+        495
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3137,14 +3137,14 @@
       "height": 359,
       "offset": [
         161,
-        232
+        298
       ],
       "root": [
         275,
-        429
+        495
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3155,14 +3155,14 @@
       "height": 359,
       "offset": [
         161,
-        232
+        298
       ],
       "root": [
         275,
-        429
+        495
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3173,14 +3173,14 @@
       "height": 359,
       "offset": [
         161,
-        232
+        298
       ],
       "root": [
         275,
-        429
+        495
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3191,14 +3191,14 @@
       "height": 376,
       "offset": [
         209,
-        224
+        281
       ],
       "root": [
         280,
-        430
+        487
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3209,14 +3209,14 @@
       "height": 376,
       "offset": [
         209,
-        224
+        281
       ],
       "root": [
         280,
-        430
+        487
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3227,14 +3227,14 @@
       "height": 376,
       "offset": [
         209,
-        224
+        281
       ],
       "root": [
         280,
-        430
+        487
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3245,14 +3245,14 @@
       "height": 376,
       "offset": [
         209,
-        224
+        281
       ],
       "root": [
         280,
-        430
+        487
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     },
     {
       "class": "herald",
@@ -3263,14 +3263,14 @@
       "height": 376,
       "offset": [
         209,
-        224
+        281
       ],
       "root": [
         280,
-        430
+        487
       ],
       "ground": 656,
-      "touches_ground": false
+      "touches_ground": true
     }
   ]
 }

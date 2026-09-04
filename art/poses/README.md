@@ -130,22 +130,32 @@ figure in all four sheets is used as painted. Facing is read from the hood
 opening, not from which way a weapon points: a wind-up pose draws the arm back
 the other way and still faces forward.
 
-Run from the repository root. `art/poses` is cleared first because its manifest
-describes the whole folder and this is a deliberate replacement — the sprite step
-refuses a partial one.
+Run from the repository root. `--grounded` is the important one: every figure on
+these sheets stands, and without it the cutter reads how the painter placed each
+figure in its cell as a deliberate hover — the Reaver's idle came out recorded
+93px above the floor, so the figure floated and every pose change jumped.
+`art/poses` is cleared only after all four classes cut, because its manifest
+describes the whole folder and a partial publish would replace the shipped set
+with whatever the run managed to produce.
 
 ```sh
+set -euo pipefail   # a cutter that fails must not reach the publish below
+
 SHEETS=docs/art-evidence/2026-09-04/pose-sheets
 OUT=build/painted
 # --poses names the 3x3 in reading order, and the two groups differ (above)
 FIGHT=stand,guard,attack1,attack2,attack3,cast,hit,idle,idle2
 MAGE=idle,guard,attack1,attack2,attack3,cast,hit,brace,idle2
 
-rm -rf "$OUT" && rm -f art/poses/*.webp art/poses/pose-sprites.manifest.json
-node tools/painted-poses.mjs --sheet "$SHEETS/rogue.png"    --class rogue    --out "$OUT" --append --grid 3x3 --canvas 560x680 --poses "$FIGHT"
-node tools/painted-poses.mjs --sheet "$SHEETS/reaver.png"   --class reaver   --out "$OUT" --append --grid 3x3 --canvas 560x680 --poses "$FIGHT" --mirror attack2,idle
-node tools/painted-poses.mjs --sheet "$SHEETS/starseer.png" --class starseer --out "$OUT" --append --grid 3x3 --canvas 560x680 --poses "$MAGE"
-node tools/painted-poses.mjs --sheet "$SHEETS/herald.png"   --class herald   --out "$OUT" --append --grid 3x3 --canvas 560x680 --poses "$MAGE"
+rm -rf "$OUT"
+node tools/painted-poses.mjs --sheet "$SHEETS/rogue.png"    --class rogue    --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$FIGHT"
+node tools/painted-poses.mjs --sheet "$SHEETS/reaver.png"   --class reaver   --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$FIGHT" --mirror attack2,idle
+node tools/painted-poses.mjs --sheet "$SHEETS/starseer.png" --class starseer --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$MAGE"
+node tools/painted-poses.mjs --sheet "$SHEETS/herald.png"   --class herald   --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$MAGE"
+
+# only once all four cut: the manifest describes the whole folder, so a partial
+# publish would replace the shipped set with whatever this run managed to make
+rm -f art/poses/*.webp art/poses/pose-sprites.manifest.json
 node tools/pose-sprites.mjs --in "$OUT" --out art/poses
 node tools/pose-ship.mjs
 ```
