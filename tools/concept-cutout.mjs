@@ -519,6 +519,45 @@ mkdirSync(outDir, { recursive: true });
 // unmeasured figure gets no medallion at all. Caught here, at the top of the
 // run, so replacing a concept surfaces as "measure this" before any bytes are
 // written — not as a sigil silently missing from a shipped sprite.
+// ---- WHOSE ART IS ALREADY THERE ------------------------------------------
+// This tool ships the BUST concepts from its own pinned blobs, and it defaults
+// to assets/sprites. Once a class moves to full-body pose art shipped by
+// `pose-cutout.mjs --ship`, running this command again would overwrite that
+// art — and the manifest with it — putting the busts back silently. Relaxing
+// the anchor gate below to accept a measured `null` removed the accident that
+// used to stop it, so the protection has to be deliberate.
+//
+// The manifest already records which producer shipped each asset, so that is
+// what is read rather than a new list to keep in step: any row whose recipe
+// names another tool is art this one does not own.
+const OWN_COMMAND = 'concept-cutout';
+function foreignlyShipped(dir, classes) {
+  let manifest;
+  try { manifest = JSON.parse(readFileSync(join(dir, 'class-sprites.manifest.json'), 'utf8')); } catch { return []; }
+  if (!Array.isArray(manifest?.assets)) return [];
+  const foreign = new Map();
+  for (const row of manifest.assets) {
+    const cls = String(row?.asset_id || '').split('.')[2];
+    if (!cls || !classes.includes(cls)) continue;
+    const cmd = String(row?.source_recipe?.command || '');
+    if (cmd && !cmd.includes(OWN_COMMAND)) foreign.set(cls, cmd.trim());
+  }
+  return [...foreign].map(([cls, cmd]) => `${cls} (shipped by: ${cmd})`);
+}
+const foreign = foreignlyShipped(outDir, Object.keys(CONCEPTS));
+if (foreign.length && !process.argv.includes('--overwrite-foreign')) {
+  console.error(
+    `Refusing to overwrite art this tool did not ship:\n  ${foreign.join('\n  ')}\n\n`
+    + '  These classes are on full-body pose art. Re-shipping the bust concepts over\n'
+    + '  them would also drop their medallion anchors, which were re-measured for the\n'
+    + '  new figures. Ship poses with:\n'
+    + '    node tools/pose-cutout.mjs --ship --in docs/art-evidence/<date>/poses --out assets/sprites\n'
+    + '  If replacing the poses with the busts really is the intent, pass\n'
+    + '  --overwrite-foreign and re-measure src/content/classArtAnchors.js for the busts.',
+  );
+  process.exit(1);
+}
+
 // `medallionDeclared`, not `medallionPct != null`: a class may be measured and
 // found to have NO placeable anchor, which is a check rather than a gap and
 // ships with no overlay. Reading the percentage here instead would refuse that

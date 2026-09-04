@@ -270,7 +270,11 @@ if (ship) {
             tool_versions: { node: process.version, cwebp: cwebpVersion },
           },
           anchor: {
-            content_box_px: { w: cw, h: ch },
+            // The RESAMPLED box, not the source box. `ox`/`oy` are coordinates
+            // in the 450x570 destination, so recording the pre-scale `cw`/`ch`
+            // beside them described a 738px-tall figure inside a 570px image —
+            // internally inconsistent, and not what concept-cutout records.
+            content_box_px: { w: dw, h: dh },
             placed_at_px: { x: ox, y: oy },
             baseline: `bottom-aligned, ${MARGIN_BOTTOM * 100}% margin; shared scale across the shipped set`,
             medallion_center_pct: medallionPct(cls),
