@@ -119,15 +119,6 @@
 @keyframes bi-rule { from { transform: scaleX(0.2); opacity: 0; } }
 @keyframes bi-fade { to { opacity: 0; } }
 
-/* ---------- command log (Settings → Advanced) ---------- */
-.debug-modal { width: 72rem; max-width: 94%; }
-.debug-log-body {
-  margin-top: 1rem; max-height: 46%; overflow: auto; user-select: text;
-  background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-3);
-  padding: 1rem 1.2rem; font-family: Consolas, monospace; font-size: 1.1rem;
-  line-height: 1.55; color: var(--parchment); white-space: pre-wrap; word-break: break-word;
-}
-
 /* ---------- keyboard / gamepad focus cursor ---------- */
 .gp-focus {
   outline: 3px solid var(--gold) !important; outline-offset: 2px;
@@ -266,11 +257,7 @@ body.hide-hints .hint-bar { display: none; }
 }
 
 @media (max-width: 540px) {
-  .confirmation-veil { padding: 3%; }
-
-}
-
-.hx-custom { display: inline-block; margin-left: 0.6rem; padding: 0.1rem 0.5rem; border-radius: var(--r-2); font-size: 0.9rem; letter-spacing: 0.08em; background: rgba(201, 162, 39, 0.18); border: 1px solid var(--gold); color: var(--gold); }
+  .confirmation-veil { padding: 3%; }}
 .farewell { gap: 2.2rem; }
 .farewell .title-big { opacity: 0.9; }
 
@@ -357,58 +344,7 @@ body.hide-hints .hint-bar { display: none; }
   min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
   display: inline-flex; align-items: center; justify-content: center;
 }
-
-
-.coop-smithing-receipts {
-  display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--gold);
-  border-radius: var(--r-2); background: color-mix(in srgb, var(--panel) 92%, transparent);
-  color: var(--parchment);
-}
 .coop-smithing-receipts b { color: var(--gold); }
-.coop-smithing-receipts { margin: 8px auto; width: min(92vw, 64rem); }
-
-.stats-table { border-collapse: collapse; font-size: 1.3rem; }
-.stats-table td { padding: 0.4rem 1.4rem; }
-.stats-table td:first-child { color: var(--muted); text-align: right; }
-
-.deck-strip { display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: center; max-width: 86rem; }
-.deck-strip .mini {
-  font-size: 1.1rem; border: 1px solid var(--line-soft); border-radius: var(--r-2);
-  background: var(--panel); padding: 0.3rem 0.8rem;
-}
-.deck-strip .mini.upgraded { color: var(--green); }
-
-.validation-banner {
-  background: #3a1010; border-bottom: 2px solid #ff6b6b; color: #ffb3b3;
-  padding: 0.8rem 1.6rem; font-size: 1.2rem; font-family: monospace; white-space: pre-wrap;
-}
-
-/* The Command log door — the ONE control this banner offers, and until now the
-   only one in the game with no floor under it. Measured on the shipped bundle,
-   default UI size, with the banner raised by a real thrown click: 33.19 x 126.59
-   device px at 390x844 Text S against a --tap-floor of 44, and UNDER THE FLOOR
-   IN SIX OF EIGHT shape x text cells (both phone shapes at all four text sizes,
-   1200x730 at S and M). The two lines below are the same two `.choice`,
-   `.ov-tab` and the armoury ✕ already carry, for the same reason and read off
-   the same single home.
-
-   `min-height`, never `height` — Law 4 clause 4: the floor is an ergonomic
-   constant and the growth is granted by the glyphs actually in the label, so it
-   can neither clip at XL nor balloon. `--ui-zoom` is already inside --tap-floor
-   (base.css), so 44 means 44 AFTER zoom at every UI size.
-
-   `inline-flex` + centring is what makes the floor visible rather than merely
-   declared: a min-height on an inline-block leaves the label sitting on the
-   baseline with the extra height hanging under it, which is a bigger hit box
-   around a label that looks unchanged — and a control whose look and whose
-   target disagree is the class of defect this whole banner exists to end.
-   The top margin is box geometry (Law 4 clause 3), so it is px: the button must
-   not crowd the stack line above it, and that gap is not a letter. */
-.validation-banner .vb-log {
-  min-height: var(--tap-floor); min-width: var(--tap-floor); height: auto;
-  display: inline-flex; align-items: center; justify-content: center;
-  margin-top: 6px;
-}
 
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
@@ -702,122 +638,9 @@ body.hide-hints .hint-bar { display: none; }
   60% { opacity: 0.5; }
   100% { transform: translate(26px, -92vh); opacity: 0; }
 }
-
-/* ---------- cold-boot startup gate (#229) ---------------------------------
-   A separate surface from the title menu: the menu is not mounted behind it,
-   so hidden controls cannot leak into Tab order or the accessibility tree.
-   Copy and particle positions arrive through StartupGateModels.js; this block
-   owns layout only. */
-.startup-gate {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  place-items: center;
-  min-height: 100%;
-  overflow: hidden;
-  cursor: pointer;
-  background:
-    radial-gradient(circle at 50% 48%, rgba(var(--accent-rgb), 0.08), transparent 34%),
-    linear-gradient(180deg, rgba(16, 13, 10, 0.88), var(--bg));
-  transition: opacity 180ms ease-out;
-}
-.startup-gate:focus { outline: none; }
-.startup-gate:focus-visible { outline: 2px solid var(--gold); outline-offset: -0.45rem; }
-.startup-gate.is-revealing { opacity: 0; pointer-events: none; }
-.reduced-motion .startup-gate { transition-duration: 140ms; transition-timing-function: linear; }
-.startup-ash-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.startup-ash {
-  position: absolute;
-  left: var(--ash-left);
-  bottom: -1rem;
-  width: var(--ash-size);
-  height: var(--ash-size);
-  border-radius: var(--r-round);
-  background: var(--ember);
-  box-shadow: 0 0 0.55rem rgba(201, 80, 46, 0.55);
-  opacity: 0;
-  animation: startupAshRise var(--ash-duration) linear var(--ash-delay) infinite;
-}
-@keyframes startupAshRise {
-  0% { transform: translate3d(0, 0, 0); opacity: 0; }
-  14% { opacity: 0.62; }
-  72% { opacity: 0.28; }
-  100% { transform: translate3d(1.4rem, -78vh, 0); opacity: 0; }
-}
-.startup-anchor {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  bottom: 0;
-  /* body is zoomed by --ui-zoom; viewport lengths are not. Divide the shared
-     50vw ruler back into body-local coordinates so it still renders on the
-     physical viewport center at every responsive UI scale. */
-  left: calc(50vw / var(--ui-zoom, 1));
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  justify-items: center;
-  width: min(calc(94vw / var(--ui-zoom, 1)), calc(72rem / var(--ui-zoom, 1)));
-  transform: translateX(-50%);
-  background: transparent;
-}
-.startup-mark {
-  place-self: center;
-  display: grid;
-  justify-items: center;
-  gap: 1rem;
-  width: 100%;
-  padding: 2rem;
-  text-align: center;
-  animation: startupMarkIn 520ms ease-out both;
-}
-@keyframes startupMarkIn {
-  from { opacity: 0; transform: translateY(0.65rem); }
-  to { opacity: 1; transform: none; }
-}
-.startup-overline {
-  margin: 0;
-  color: var(--muted);
-  font-size: clamp(0.72rem, 1.8vw, 0.95rem);
-  letter-spacing: 0.38em;
-  text-indent: 0.38em;
-}
-.startup-wordmark {
-  margin: 0;
-  color: var(--gold);
-  font-family: var(--font-display);
-  font-size: clamp(3rem, 8vw, 6.8rem);
-  font-weight: 600;
-  line-height: 0.95;
-  letter-spacing: 0.16em;
-  text-indent: 0.16em;
-  text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38);
-}
-.startup-prompt {
-  margin: clamp(2.5rem, 8vh, 6rem) 0 0;
-  color: var(--parchment);
-  font-size: clamp(0.82rem, 2.2vw, 1.1rem);
-  letter-spacing: 0.2em;
-  text-indent: 0.2em;
-  opacity: 0.82;
-  animation: startupPromptPulse 1.8s ease-in-out infinite alternate;
-}
-@keyframes startupPromptPulse { from { opacity: 0.5; } to { opacity: 0.95; } }
-.startup-gate .build-stamp {
-  position: static;
-  width: max-content;
-  max-width: 100%;
-  margin-bottom: max(1rem, env(safe-area-inset-bottom));
-  transform: none;
-  color: var(--parchment);
-  text-align: center;
-  text-indent: 0.02em;
-}
 @media (max-width: 30rem) {
-  .startup-mark { width: 94vw; padding-inline: 0.8rem; }
-  .startup-wordmark { font-size: clamp(2.45rem, 12vw, 4.3rem); letter-spacing: 0.11em; text-indent: 0.11em; }
-  .startup-prompt { max-width: 20rem; line-height: 1.55; }
-  .startup-gate .build-stamp { font-size: 0.72rem; }
-}
+
+  .title-screen { padding: 1.2rem 0.8rem 1rem; }}
 
 /* E2 (#247): the merchant's bars ride the same fold vocabulary as the
    creation column (shop.js, THE BARS). The cap is the remove grid's own
@@ -829,35 +652,6 @@ body.hide-hints .hint-bar { display: none; }
    styles/kit.css), and tools/creationbrief.mjs plants against their text. */
 .disc-reveal .cz-opts { flex-wrap: wrap; row-gap: 0.8rem; }
 .disc-reveal .class-row { flex-wrap: wrap; row-gap: 1.2rem; }
-
-/* ---------- run history ---------- */
-.hx-byclass { color: var(--muted); font-size: 1.1rem; letter-spacing: 0.08em; }
-.hx-wrap { width: 100%; max-width: 72rem; overflow-y: auto; max-height: 58%; margin-top: 0.4rem; }
-.hx-table { border-collapse: collapse; width: 100%; font-size: 1.25rem; }
-.hx-table th {
-  color: var(--muted); text-align: left; font-weight: 400; font-size: 1rem;
-  letter-spacing: 0.15em; padding: 0.6rem 1.2rem; border-bottom: 1px solid var(--line);
-  position: sticky; top: 0; background: var(--bg);
-}
-.hx-table td { padding: 0.8rem 1.2rem; border-bottom: 1px solid var(--line-soft); }
-.hx-table td.hx-num { text-align: right; color: var(--muted); }
-.hx-table tbody tr:hover td { background: rgba(255, 255, 255, 0.03); }
-.hx-win { color: var(--gold); font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.08em; }
-.hx-loss { color: var(--blood); font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.08em; }
-.hx-seed { font-family: monospace; color: var(--muted); }
-.go-actions { display: flex; gap: 1.2rem; align-items: center; }
-
-.profile-archive-modal {
-  width: min(64rem, 94vw); max-height: min(80vh, 52rem); padding: 0; overflow: hidden;
-  display: flex; flex-direction: column;
-}
-.profile-archive-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  padding: 1rem 1.25rem; border-bottom: 1px solid var(--line);
-}
-.profile-archive-head p { margin: 0 0 0.15rem; color: var(--muted); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; }
-.profile-archive-head h2 { margin: 0; }
-.profile-archive-body { min-height: 0; overflow: auto; padding: 1rem 1.25rem 1.4rem; }
 
 /* EldenSpire#26 — the value the UI-size control actually applied. Muted like a
    note when the request was granted; accented when the fit had to hold it back,
@@ -1161,28 +955,6 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 @keyframes artFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 #choices button { animation: screenIn 260ms ease-out backwards; }
 
-/* ---- Forsaken Together: co-op (LAN) — layers on the shared solo board/map -- */
-/* The co-op combat/map/reward screens reuse the solo components + CSS; these
-   rules only add the co-op-specific bits: a seat per player, turn flags, the
-   party read-out, and the throw/mend affordances. */
-.coop-note { color: var(--muted); font-size: 1.3rem; padding: 1.8rem; text-align: center; }
-.coop-event-result { max-width: 56rem; margin: 0 auto; padding: 1.2rem 1.8rem; text-align: center; line-height: 1.7; color: var(--muted); font-style: italic; }
-.coop-choices { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; margin-top: 0.8rem; }
-.coop-take { border-color: var(--gold); }
-/* LAW 4 CLAUSE 4 ON EVERY REWARD CONTROL — Viki, 2026-08-14, measured before
-   claiming: at 390x844 `Take relic` rendered 36px tall, `#coop-leave` 24.8px,
-   catchup's `Skip` 36px, all under the 44px floor — and WHICH button was under
-   was incidental, decided by whose flex row it happened to share (the flask
-   button's inline icon stretched its rowmates to 48.3px; the relic row had no
-   such neighbour). A floor and intrinsic growth, never a height: the box is
-   chrome, the glyphs inside grant the growth. `#reward-continue` is the same
-   control on the SOLO reward screen — one subject, one rule (the pick rows
-   collapsed to one composition above; their controls collapse to one floor). */
-.coop-choices button, #coop-leave, #reward-continue {
-  min-height: var(--tap-floor); height: auto;
-  min-width: var(--tap-floor);
-}
-
 /* multiple player seats sit side-by-side in the combat player-zone */
 .combat.coop .player-zone {
   display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.4rem;
@@ -1211,34 +983,9 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 .combat.coop .combatant.player.down { filter: grayscale(1); opacity: .45; }
 .combat.coop .combatant.player.away { opacity: .45; }
 .combat.coop .combatant.player.throw-target { cursor: pointer; outline: 2px solid var(--gold); outline-offset: 4px; border-radius: var(--r-3); box-shadow: 0 0 12px rgba(200,160,70,.4); }
-.coop-seat-name {
-  width: 13rem; max-width: 100%; min-width: 0; margin-top: 0.3rem;
-  display: flex; flex-direction: column; align-items: center; gap: 0.1rem;
-  font-size: 1.1rem; color: #e0d4b8; text-align: center;
-}
-.coop-seat-player { max-width: 100%; overflow-wrap: anywhere; }
-.coop-seat-vitals { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.2rem 0.7rem; }
-.coop-seat-vitals > span { white-space: nowrap; }
-.coop-turnflag { color: var(--gold); font-size: 1rem; letter-spacing: .06em; }
 .combat.coop .combatant.enemy.selected-target { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: var(--r-3); }
-
-/* the party read-out in map/reward headers */
-.coop-partybar { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; }
-.coop-pc { display: inline-flex; align-items: center; gap: 0.6rem; background: rgba(16,13,10,.8); border: 1px solid var(--line-soft); border-radius: var(--r-2); padding: 0.3rem 0.9rem; font-size: 1.2rem; color: #ded1b6; }
-.coop-pc.me { border-color: var(--gold); }
-.coop-pc.away { opacity: .55; }
-.coop-pc.dead { opacity: .4; filter: grayscale(1); }
-.coop-pc-glyph { font-size: 1.5rem; }
-.coop-pc-hp { position: relative; display: inline-block; width: 7rem; height: 1.2rem; background: #24140f; border-radius: var(--r-1); overflow: hidden; }
-.coop-pc-hp i { position: absolute; inset: 0; width: 0; background: linear-gradient(90deg, var(--blood), #b8432f); }
-.coop-pc-hp b { position: relative; font-size: 0.9rem; color: #f2e6cf; padding-left: 0.5rem; line-height: 1.2rem; font-weight: 600; }
-
-/* flasks (throw-to-ally) */
-.coop-flasks { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin: 0.4rem 0; }
-.coop-flask { padding: 0.5rem 1.2rem; font-size: 1.3rem; }
 .combat.coop .coop-leave,
 .combat.coop .coop-flask { min-height: var(--tap-floor); height: auto; }
-.coop-flask.armed { border-color: var(--gold); box-shadow: 0 0 8px rgba(200,160,70,.5); }
 .card-unavailable-reason {
   position: absolute; left: 0.3rem; right: 0.3rem; bottom: 0.3rem; z-index: 3;
   padding: 0.2rem 0.35rem; border: 1px solid var(--blood); border-radius: var(--r-2);
@@ -1246,53 +993,15 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   line-height: 1.2; text-align: center;
 }
 
-.coop-arm { color: var(--gold); font-size: 1.3rem; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: var(--r-2); padding: 0.6rem 1.2rem; margin: 0.4rem auto; width: fit-content; }
-
 /* co-op: fork voting on the shared map */
 .map-node.my-vote > circle { stroke: var(--gold); stroke-width: 3; }
-.coop-voteline { color: var(--gold); letter-spacing: .12em; }
 .vote-pips { pointer-events: none; }
-
-/* co-op lobby: accent swatches (tint applies to your sprite for everyone) */
-.lb-tints { display: flex; gap: 1rem; justify-content: center; }
-.tint-dot { width: 2.8rem; height: 2.8rem; border-radius: var(--r-round); border: 2px solid transparent; cursor: pointer; padding: 0; }
-.tint-dot.chosen { border-color: var(--parchment); box-shadow: 0 0 10px rgba(255,255,255,.35); }
-
-/* co-op: turn banners + acting-enemy lunge (enemy-phase pacing) */
-.coop-turn-banner {
-  position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%);
-  z-index: 640; pointer-events: none; color: var(--gold);
-  font-family: var(--font-display); font-size: 4rem; letter-spacing: .3em;
-  text-shadow: 0 0 24px rgba(201, 162, 39, .5), 0 2px 8px #000;
-  animation: turn-banner 1100ms ease-out forwards;
-}
-.coop-turn-banner.small { font-size: 2.2rem; top: 30%; animation-duration: 900ms; }
-@keyframes turn-banner {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(.92); }
-  18% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  78% { opacity: 1; }
-  100% { opacity: 0; }
-}
-.reduced-motion .coop-turn-banner { animation: turn-banner 500ms ease-out forwards; }
 .combatant.enemy.acting .sprite > img { animation: enemy-lunge 400ms cubic-bezier(.25,.8,.35,1); }
 @keyframes enemy-lunge {
   0% { transform: translateX(0); }
   35% { transform: translateX(-22px) scale(1.05); filter: brightness(1.3); }
   100% { transform: translateX(0); }
 }
-
-/* co-op: couch-party seat tabs (shown only when this screen owns 2+ seats) */
-.coop-seat-tabs {
-  position: fixed; left: 50%; bottom: 4.6rem; transform: translateX(-50%);
-  display: flex; gap: 0.8rem; align-items: center; z-index: 620;
-}
-.seat-tab {
-  padding: 0.5rem 1.2rem; font-size: 1.2rem; border-radius: var(--r-2);
-  background: rgba(16,13,10,.9); border: 1.5px solid var(--line-soft); color: #ded1b6;
-}
-.seat-tab.on { background: #2a2418; color: var(--gold); box-shadow: 0 0 10px rgba(201,162,39,.35); }
-.seat-tab .pip { color: var(--gold); }
-.seat-hint { color: var(--muted); font-size: 1rem; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: var(--r-2); padding: 0.1rem 0.6rem; }
 
 /* Delegated card feedback is painted after the card's own background shorthand
    so touch and mouse see the same whole-surface progress fill. The source
@@ -1315,8 +1024,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   .armoury-equipment-receipts, .armoury-equipment-receipts * { min-width: 0; overflow-wrap: anywhere; }
   .armoury-equipment-receipts .equip-role-receipts > div { grid-template-columns: minmax(0, 1fr); }
   .armoury-equipment-receipts .equip-role-receipts small { grid-column: 1; }
-  .equipmentReceiptsCard .character-info-label { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
-}
+  .equipmentReceiptsCard .character-info-label { min-width: 0; white-space: normal; overflow-wrap: anywhere; }}
 
 /* ---------- ATTRIBUTES & RESOURCES — a label and its value are a PAIR --------
    Both screens that print `model/statProjection` — the Armoury strip and the
@@ -1367,21 +1075,6 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 
 .ef-tags { display: flex; gap: 0.3rem; flex-wrap: wrap; }
 .ef-run { color: var(--grace); font-size: 1.15rem; }
-
-/* Screenshot evidence poses use the real screen/readers but focus the camera on
-   the contract under review. They are query-gated dev surfaces; ordinary play
-   never carries either root attribute. */
-
-
-/* What a run earned you, shown where you find out you lost. */
-.go-earned {
-  border: 1px solid var(--gold); border-radius: var(--r-2); background: rgba(201, 162, 39, 0.07);
-  padding: 1rem 1.6rem; display: flex; flex-direction: column; gap: 0.5rem; min-width: 32rem;
-}
-.go-earned .subtitle { text-align: center; color: var(--gold); margin-bottom: 0.4rem; }
-.ge-row { display: flex; justify-content: space-between; gap: 1.6rem; font-size: 1.3rem; }
-.ge-name { color: var(--parchment); }
-.ge-kind { color: var(--muted); text-transform: uppercase; font-size: 1.05rem; letter-spacing: 1px; }
 
 
 /* ---------- EldenSpire#29 slice 3 — the orphaned class card -----------------
@@ -1574,8 +1267,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 .flask-inspect-lines p + p { color: var(--muted); font-size: 1.2rem; }
 @media (max-width: 640px) {
   .flask-inspect-body { flex-direction: column; align-items: center; text-align: center; padding: 1.2rem; }
-  .flask-inspect-lines { align-items: center; }
-}
+  .flask-inspect-lines { align-items: center; }}
 /* A menu ROW, not a button-shaped button: the base `button` rule is a gold
    2 px pill with 26 px of side padding, which in a 150 px column reads as three
    stacked call-to-actions. 44 px is the house tap floor and it is a FLOOR. */
@@ -1613,8 +1305,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   .ov-quick-action { min-width: var(--tap-floor); padding-inline: 6px; }
   .ov-qa-label { display: none; }
 
-  .set-action-status { max-width: 11rem; text-align: right; }
-}
+  .set-action-status { max-width: 11rem; text-align: right; }}
 
 /* Sunna's tap-target finding, taken in the cheapest moment it will ever have —
    and ONLY while the experiment is on, so "off" stays today exactly and the
@@ -1624,196 +1315,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   width: auto; height: auto;
   min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;
 }
-
-/* ---- profile notice (#67): the worst morning a person has with this game ----
-   Sunna's gate D7: button weight must be DESIGNED, not an accident of wrapping.
-   The destructive action sits on its own row, always subtle, in every state —
-   at 390 px it used to land alone by wrapping and read de-emphasised only by
-   luck of viewport. Box geometry is px (chrome — Law 4): it is a box, not text. */
-/* max-width makes this the only .screen narrower than its container, and a box
-   that names no horizontal placement is placed by whatever the container
-   happens to do — Law 2's "every positioned element names its container". It
-   hugged the left edge: measured -42px off centre at 390 and -430px at 1200,
-   on both doors, in the shipped release (Bjorn). margin-inline names the
-   placement; he falsified this remedy before I applied it. */
-.profile-notice { max-width: 34rem; margin-inline: auto; gap: 1.2rem; }
-.profile-notice h1 { font-size: 1.8rem; color: var(--gold); text-align: center; }
-.profile-notice .lead { text-align: center; line-height: 1.5; }
-.profile-notice .kept { text-align: center; color: var(--ink); font-weight: 600; }
-.profile-notice .where { text-align: center; color: var(--muted); font-size: 0.9rem; }
-.profile-notice .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-.profile-notice .actions.destructive { margin-top: 4px; }
-.profile-notice button { min-height: 44px; padding: 0 14px; }
-.profile-notice .result { text-align: center; color: var(--muted); min-height: 22px; line-height: 1.4; }
-.profile-notice .support { color: var(--muted); font-size: 0.85rem; }
-.profile-notice .support code { word-break: break-word; }
-
-.confirm-fresh {
-  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-  background: rgba(0, 0, 0, 0.72); z-index: 40; padding: 16px;
-}
-.confirm-fresh .confirm-box {
-  max-width: 26rem; background: var(--panel, #14110f); border: 2px solid var(--gold);
-  border-radius: var(--r-3); padding: 20px; display: flex; flex-direction: column; gap: 12px;
-}
-.confirm-fresh .confirm-box h2 { font-size: 1.3rem; color: var(--gold); }
-.confirm-fresh .confirm-box p { line-height: 1.5; }
-.confirm-fresh .actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
-.confirm-fresh button { min-height: 44px; padding: 0 14px; }
-
-/* ---- Settings → Profile (#67): the calm-moment route to the archive -------
-   Box geometry in px (chrome — Law 4). Entry actions wrap on narrow screens
-   without the destructive-by-accident weighting Sunna caught on the notice. */
-.prof-archive { display: flex; flex-direction: column; gap: 10px; }
-.prof-state { font-weight: 600; }
-.prof-entry {
-  display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-start;
-  border: 1px solid var(--line, #33291f); border-radius: var(--r-2); padding: 10px;
-}
-.prof-entry-what { flex: 1 1 14rem; min-width: 0; }
-.prof-entry-what .prof-why { opacity: 0.75; word-break: break-word; }
-.prof-entry-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.prof-entry-actions button { min-height: 44px; padding: 0 12px; }
-.prof-confirm { flex: 1 1 100%; border-top: 1px solid var(--line, #33291f); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-.prof-confirm p { line-height: 1.5; }
-.prof-result { min-height: 20px; color: var(--muted); line-height: 1.4; }
-.prof-empty { line-height: 1.5; }
-.prof-notice { color: var(--muted); line-height: 1.4; border-left: 3px solid var(--gold); padding-left: 10px; }
 .set-notice { color: var(--gold); line-height: 1.4; margin-bottom: 8px; }
-
-/* Settings → About: the AI-use acknowledgement, rendered from
-   src/content/aiDisclosure.js (#69). Reading text, not chrome — measure kept
-   short and the lead separated so a tired reader can stop after one paragraph
-   and still have been told the truth. */
-.about-ai { display: flex; flex-direction: column; gap: 0.9rem; }
-.about-ai .about-lead { line-height: 1.5; max-width: 62ch; }
-.about-ai .about-block { display: flex; flex-direction: column; gap: 0.15rem; }
-.about-ai .about-block b { font-size: 0.95em; letter-spacing: 0.02em; }
-.about-ai .about-block .set-note { line-height: 1.45; max-width: 62ch; }
-.about-ai .about-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.about-ai .about-result:empty { display: none; }
-/* The A4 version line is TWO rows and it has to be allowed to be two rows.
-   `.set-note` caps at 23rem = 207px at this shape, which is narrower than
-   either row, so each `<br>` row wrapped again and the line Constantine picked
-   rendered as FOUR. Its two siblings above already open to 62ch for the same
-   reason; this is that rule, not a new idea. Measured at 390x844. */
-.about-ai .about-ver { opacity: 0.75; max-width: 62ch; }
-
-/* ---- THE COMPENDIUM (Freja) ------------------------------------------------
-   Constantine: *"...its own menu on the main menu that keeps most things
-   hidden."* The whole look is one decision — LIGHT IS THE HIERARCHY. The grid
-   never moves; what you hold is the only lit thing in it, so the eye reaches
-   yours first without a single reorder.
-
-   LAW 4: every box here is text-independent (px, and --tap-floor for the one
-   ergonomic floor) and every glyph is rem. The art box is chrome — an icon that
-   grows with the text setting is Law 4 clause 3 exactly. The cell's own height
-   is a FLOOR with intrinsic growth (clause 4), so a long name at XL pushes the
-   cell taller instead of clipping, and nothing balloons.
-   LAW 2: no vw/vh below body; the scroller names its container.            */
-.compendium {
-  /* HOW PRESENT A SILHOUETTE IS, and this number is measured, not chosen. It was
-     0.26 with a `body.hi-contrast` override of 0.5, and BOTH halves of that were
-     wrong. High contrast is ON by default, so 0.26 never rendered in a single
-     shot I took — I authored a value and shipped it unseen, which is the exact
-     failure my own card names third. Measured across all 19 silhouettes at
-     1200x730 (freja-cp-probe.mjs, luminance of the inked pixels against the
-     panel): 0.26 → median 1.99:1, UNDER the 3:1 floor for a non-text graphic.
-     0.50 → median 4.10:1 but the thinnest staff at 1.76:1, still under.
-     ONE VALUE, NOT TWO: high contrast swaps text and line tokens and leaves the
-     panel alone, so both modes sit on the same background and the override was
-     a second home answering a question that never differed. */
-  --cp-ghost: 0.72;
-  justify-content: flex-start; gap: 14px; padding-top: 44px;
-}
-.compendium .title-big { font-size: 3.2rem; }
-/* The one number that turns absence into scale. A grid of dark shapes with no
-   count is a room; with the count it is a horizon. */
-.compendium .subtitle { color: var(--gold); letter-spacing: 0.28em; }
-
-.cp-scroll { width: 100%; max-width: 980px; overflow-y: auto; padding: 0 16px 8px; }
-.cp-sections { display: flex; flex-direction: column; gap: 20px; }
-.cp-head {
-  display: flex; align-items: baseline; gap: 10px;
-  font-family: var(--font-display); font-size: 1.25rem; letter-spacing: 0.2em;
-  color: var(--muted); border-bottom: 1px solid var(--line);
-  padding-bottom: 6px; margin-bottom: 10px;
-}
-/* Beside its heading, not flung to the far edge — one phrase at every width.
-   (My own #90 finding: `margin-left:auto` put a caret and its count 1600 px
-   apart at 1200 wide, which is two fragments a reader assembles.) */
-.cp-count { font-family: var(--font-body); font-size: 1.05rem; color: var(--gold); letter-spacing: 0.08em; }
-
-.cp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
-.cp-cell {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  min-height: var(--tap-floor); padding: 8px 4px;
-  border: 1px solid var(--line); border-radius: var(--r-1); background: var(--panel);
-  color: var(--parchment); font-family: var(--font-body); cursor: pointer;
-  text-align: center;
-}
-.cp-cell:hover { border-color: var(--line-soft); }
-.cp-art { width: 68px; height: 68px; display: flex; align-items: center; justify-content: center; }
-.cp-art img { width: 100%; height: 100%; object-fit: contain; }
-/* TWO LINES, ALWAYS RESERVED — and this is what makes the grid rigid. Measured
-   before: 'Gorefire Brand' and 'Emberlight Sceptre' wrap, and a grid row takes
-   the height of its tallest cell, so ONE long name made the STAVES row 110 px
-   against 97 for the others. My whole thesis is that the grid never moves and
-   only what is LIT changes; a row that grows when you find something is that
-   thesis falsified by its own screenshot.
-   `em` and not `rem`, deliberately: 2 lines x 1.25 line-height of THIS text is a
-   glyph metric, which is the one thing Law 4 says may track the text setting.
-   A box whose job is to hold exactly two lines of its own text is not chrome. */
-.cp-name {
-  font-size: 1.05rem; line-height: 1.25; min-height: 2.5em;
-  overflow-wrap: anywhere;
-}
-
-/* RARITY is the one thing a silhouette is allowed to tell you — the desire axis,
-   and it says how rare a hole is without saying what fills it. Same left-edge
-   language as the Armoury chips, so the two screens read as one hand.
-   THE SELECTOR STATES THE RULE, and it does not depend on source order — I
-   wrote this twice by ordering instead of saying, and got it wrong both times:
-   first the rarity stripe survived onto held cells where it means nothing, then
-   the dashed withheld border turned the stripe itself into a dashed segment,
-   which is noise where a band was the point. Named states, higher specificity,
-   no ordering to reason about.
-   WITHHELD ONLY, deliberately: on a piece that is yours the rarity is in the
-   tooltip and in the thing itself; on a withheld one it is one of only two facts
-   you get. The mark is kept exactly where it is load-bearing and dropped where
-   it is not, which is the whole of what my seat is for. */
-.cp-cell.state-teased.rarity-rare,
-.cp-cell.state-listed.rarity-rare { border-left: 3px solid var(--gold); }
-.cp-cell.state-teased.rarity-uncommon,
-.cp-cell.state-listed.rarity-uncommon { border-left: 3px solid var(--frost); }
-
-/* HELD — the lit plate. The separation is in the CELL'S GROUND, never in the
-   art: raising the silhouettes to clear the 3:1 legibility floor cost me most of
-   the luminance gap that was carrying the hierarchy, and the tempting repair is
-   to brighten the held icons — which is repainting someone else's authored
-   palette to win an argument about layout. So the held cell gets a lighter plate
-   (--panel over the screen's --bg) and a solid gold edge against the withheld
-   cells' dashed line, and the art of every piece is left exactly as drawn.
-   Sunna's floor is higher than my ceiling wherever they touch; this is what
-   paying that costs and where I put the cost. */
-.cp-cell.state-held { background: var(--panel); border: 1px solid var(--gold); }
-.cp-cell.state-held .cp-name { color: var(--parchment); }
-
-/* WITHHELD — the piece's OWN icon, painted out. No second asset, no new column:
-   the alpha channel already holds the shape, so this is the same file the
-   Armoury draws in colour, seen with the identity removed. Lifted to ash rather
-   than crushed to black, because black-on-near-black is a shape only I can see
-   in the file I authored it from. */
-.cp-cell.state-teased, .cp-cell.state-listed { background: transparent; border-style: dashed; }
-.cp-cell.state-teased .cp-art img, .cp-cell.state-listed .cp-art img {
-  filter: brightness(0) invert(1);
-  opacity: var(--cp-ghost);
-}
-.cp-cell.state-listed .cp-name { color: var(--muted); font-style: italic; }
-
-@media (prefers-reduced-motion: no-preference) {
-  .cp-cell { transition: border-color 120ms ease, background 120ms ease; }
-}
 .flask-identity {
   display: inline-flex;
   align-items: center;
@@ -2023,7 +1525,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 /* Motion is a nicety and this screen is not. Both doors: the player's setting
    (body.reduced-motion, main.js) and the OS's. */
 .reduced-motion .upright-phone { animation: none; }
-@media (prefers-reduced-motion: reduce) { .upright-phone { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .upright-phone { animation: none; }}
 
 /* ---------- the build stamp (src/ui/components/buildstamp.js) ---------------
    ONE RULE FOR THREE SURFACES. The stamp appears on the title screen, in the
@@ -2094,56 +1596,12 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 .title-screen > .hud-quick-settings { position: absolute; z-index: 80; }
 
 @media (max-width: 30rem) {
-  .title-screen { padding: 1.2rem 0.8rem 1rem; }
-
-}
-
-/* Folded companion to the title hall: the first interaction reveals the
-   already-existing title surface rather than exposing hidden menu controls. */
-.startup-gate {
-  background:
-    linear-gradient(180deg, rgba(11, 9, 6, 0.34), rgba(9, 7, 5, 0.96)),
-    url('../assets/bg/bg_act1.webp') center / cover;
-}
-.startup-gate::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(ellipse at 50% 20%, transparent 0, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.66) 100%);
-}
-.startup-mark {
-  width: 100%;
-  padding: 8.2rem 2.8rem 5.2rem;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.startup-wordmark {
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  color: var(--parchment);
-  font-size: clamp(3rem, 6vw, 7rem);
-  line-height: 0.95;
-  letter-spacing: 0.04em;
-  text-align: center;
-  text-indent: 0.04em;
-  white-space: nowrap;
-}
-.startup-subtitle { --track: 0.32em; width: 100%; margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: var(--track); text-align: center; text-indent: var(--track); white-space: nowrap; }
-.startup-rule { position: relative; width: min(46rem, 86%); height: 1px; margin-top: 1.6rem; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
-.startup-rule span { position: absolute; left: 50%; top: 50%; width: 0.9rem; height: 0.9rem; transform: translate(-50%, -50%) rotate(45deg); border: 1px solid var(--gold); background: var(--bg); }
-.startup-prompt { margin-top: 3.2rem; }
-.startup-gate:focus-visible { outline: none; }
-.startup-gate:focus-visible .startup-prompt { color: var(--gold); text-shadow: 0 0 1rem rgba(var(--accent-rgb), 0.48); }
+  .title-screen { padding: 1.2rem 0.8rem 1rem; }}
 @media (max-width: 30rem) {
-  .startup-mark { width: 92%; padding: 5.8rem 1.3rem 3.6rem; background: transparent; box-shadow: none; }
-  .startup-wordmark { font-size: clamp(3.9rem, 11.2vw, 4.6rem); letter-spacing: 0.015em; text-indent: 0.015em; }
   .startup-subtitle { font-size: 0.9rem; letter-spacing: 0.2em; }
   .startup-rule { width: 90%; }
-  .startup-prompt { margin-top: 2.4rem; font-size: 0.84rem; letter-spacing: 0.13em; }
-}
+
+  .title-screen { padding: 1.2rem 0.8rem 1rem; }}
 
 /* ---------------------------------------------------------------------------
    THE FIGURE FACES THE VIEWER, SO ITS RIGHT HAND IS ON YOUR LEFT (#48-adjacent).
@@ -2219,3 +1677,12 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    ONE MECHANISM, ONE MAGNITUDE: declare the tracking once as `--track`, use it
    for `letter-spacing`, and indent by the SAME token. A rule that is centred
    and tracked and does not do this is the bug this block exists to prevent. */
+
+
+.armoury-smithing-receipt {
+  display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--gold);
+  border-radius: var(--r-2); background: color-mix(in srgb, var(--panel) 92%, transparent);
+  color: var(--parchment);
+}
+
+.armoury-smithing-receipt b { color: var(--gold); }

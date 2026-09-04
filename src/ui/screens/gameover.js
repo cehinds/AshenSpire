@@ -1,49 +1,69 @@
 // src/ui/screens/gameover.js — YOU PERISHED / EMBER RESTORED (SPEC §7.4)
+//
+// THE RUN'S END IS A DECISION DOOR ON THE PAGE (kit §05 body C): Title·L and
+// the ornament say what happened, a DetailCard says who and where, a StatStrip
+// carries the numbers, a KitLine the final deck, and the ButtonRow the two
+// ways on. `.stats-table` stays on the strip as the landmark
+// tools/release-shots.mjs reads for `?shot=death`; it draws nothing.
 
 import { resolveCard } from '../../model/registries.js';
-import { esc } from '../components/tooltip.js';
 import { sfx } from '../sfx.js';
+import {
+  el, pageDoor, decide, detailCard, statStrip, chip, kitLine, kitItem, eyebrow, titleS, button, buttonRow, statusText,
+} from '../kit/index.js';
 
 export function mountGameOver(app, { registries, game, victory, onTitle, onHistory, earned = [] }) {
   sfx.play(victory ? 'victory' : 'youDied');
-  const title = victory ? 'EMBER RESTORED' : 'YOU PERISHED';
-  const color = victory ? 'var(--gold)' : 'var(--blood)';
+  const name = (game.customization && game.customization.name) || 'Forsaken';
+  const glyph = (game.customization && game.customization.glyph) || '';
+  const floors = game.mapGraph ? ` / ${game.mapGraph.floors}` : '';
 
-  app.innerHTML = `
-    <div class="screen" style="gap:22px">
-      <h1 class="title-big" style="color:${color}">${title}</h1>
-      <table class="stats-table">
-        <tr><td>Forsaken</td><td>${esc((game.customization && game.customization.name) || 'Forsaken')} ${esc((game.customization && game.customization.glyph) || '')}</td></tr>
-        <tr><td>Seed</td><td style="font-family:monospace">${esc(game.seedString)}</td></tr>
-        <tr><td>Floor reached</td><td>${game.floor}${game.mapGraph ? ` / ${game.mapGraph.floors}` : ''}</td></tr>
-        <tr><td>Fights won</td><td>${game.stats.fightsWon}</td></tr>
-        <tr><td>Damage dealt</td><td>${game.stats.damageDealt}</td></tr>
-        <tr><td>Damage taken</td><td>${game.stats.damageTaken}</td></tr>
-        <tr><td>Cinders held</td><td>${game.cinders}</td></tr>
-        <tr><td>Final HP</td><td>${victory ? game.hp : 0} / ${game.maxHp}</td></tr>
-      </table>
-      ${earned.length ? `<div class="go-earned">
-        <p class="subtitle">${earned.length === 1 ? 'EARNED' : 'EARNED'}</p>
-        ${earned.map((u) => `<div class="ge-row"><span class="ge-name">${esc(u.name)}</span><span class="ge-kind">${esc(u.kind)}</span></div>`).join('')}
-      </div>` : ''}
-      <div>
-        <p class="subtitle" style="text-align:center;margin-bottom:8px">FINAL DECK (${game.deck.length})</p>
-        <div class="deck-strip"></div>
-      </div>
-      <div class="go-actions">
-        <button id="to-title">RETURN TO TITLE</button>
-        <button class="subtle" id="to-history">RUN HISTORY</button>
-      </div>
-    </div>`;
+  const toTitle = button({ label: 'Return to title', weight: 'primary', id: 'to-title' });
+  const toHistory = onHistory ? button({ label: 'Run history', id: 'to-history' }) : null;
 
-  const strip = app.querySelector('.deck-strip');
-  for (const inst of game.deck) {
+  const deck = kitLine(game.deck.map((inst) => {
     const def = resolveCard(registries, inst);
-    const el = document.createElement('span');
-    el.className = `mini${inst.upgraded ? ' upgraded' : ''}`;
-    el.textContent = def.name;
-    strip.appendChild(el);
-  }
-  app.querySelector('#to-title').addEventListener('click', onTitle);
-  if (onHistory) app.querySelector('#to-history').addEventListener('click', onHistory);
+    return kitItem({ glyph: inst.upgraded ? '✦' : '◆', name: def.name, attrs: { class: `mini${inst.upgraded ? ' upgraded' : ''}` } });
+  }), { class: 'plain deck-strip' });
+
+  const body = decide({
+    title: victory ? 'Ember restored' : 'You perished',
+    children: [
+      detailCard({
+        eyebrow: 'Forsaken',
+        name: `${name} ${glyph}`.trim(),
+        line: `Floor ${game.floor}${floors} · ${game.stats.fightsWon} fight${game.stats.fightsWon === 1 ? '' : 's'} won`,
+        meta: `Seed ${game.seedString}`,
+      }),
+      statStrip([
+        chip({ key: 'Damage dealt', value: game.stats.damageDealt }),
+        chip({ key: 'Damage taken', value: game.stats.damageTaken }),
+        chip({ key: 'Cinders', value: game.cinders }),
+        chip({ key: 'Final HP', value: `${victory ? game.hp : 0} / ${game.maxHp}` }),
+      ], { class: 'stats-table' }),
+      earned.length ? el('div', { class: 'as-detailcard go-earned' }, [
+        el('span', { class: 'dc-eyebrow', text: 'Earned' }),
+        ...earned.map((u) => el('div', { class: 'dc-line' }, [u.name, ' ', statusText(u.kind)])),
+      ]) : null,
+      el('div', { class: 'set-section-head' }, [eyebrow('Final deck'), titleS(`${game.deck.length} card${game.deck.length === 1 ? '' : 's'}`, { tag: 'h3' })]),
+      deck,
+      buttonRow({ size: 'medium', buttons: [toHistory, toTitle] }),
+    ],
+  });
+  if (!victory) body.querySelector('.as-title-l').dataset.tone = 'loss';
+
+  const door = pageDoor({
+    eyebrow: victory ? 'The climb' : 'The climb ends',
+    title: victory ? 'Victory' : 'Defeat',
+    size: 'md',
+    body,
+    className: 'gameover-door',
+    attrs: { 'aria-label': victory ? 'Ember restored' : 'You perished' },
+  });
+  app.innerHTML = '';
+  app.appendChild(el('div', { class: 'screen gameover' }, door));
+
+  toTitle.addEventListener('click', onTitle);
+  if (toHistory) toHistory.addEventListener('click', onHistory);
+  toTitle.focus({ preventScroll: true });
 }

@@ -72,6 +72,9 @@ import { surfaceReport } from './ui/surfaces.js';
 // wrong" — the two boot checks below used to build that element by hand, and a
 // third hand-built copy is the defect this import exists to prevent.
 import { dlog, failureBanner } from './ui/debuglog.js';
+// The command log's chrome, on the kit (debuglog.js is a leaf; see debugChrome.js).
+import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
+void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
 
@@ -2208,7 +2211,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -2378,6 +2381,15 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.stats.damageTaken = 96;
     run.hp = 0;
     mountGameOver(app, { registries, game: run, victory: false, earned: [], onTitle: showTitle, onHistory: showHistory });
+  } else if (shotState === 'victory') {
+    // The other end of the same door as ?shot=death: the run won, the stats
+    // real, the deck the class's own — so the victory face is photographed
+    // rather than trusted from the defeat one.
+    run.floor = run.mapGraph ? run.mapGraph.floors : 12;
+    run.stats.fightsWon = 11;
+    run.stats.damageDealt = 640;
+    run.stats.damageTaken = 212;
+    mountGameOver(app, { registries, game: run, victory: true, earned: [{ name: 'Twinblade', kind: 'armament' }], onTitle: showTitle, onHistory: showHistory });
   } else if (shotState === 'boss') {
     // Straight into the act-1 boss; the intro card is held for the camera.
     enterCombat(run.mapGraph.startIds[0], 'bossOmen');
@@ -2625,6 +2637,33 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // `onCustom`), so a capture reaches it here, the way every other screen
   // without a door of its own does — same memory storage, same fixed seed.
   showCustomRun(1);
+} else if (shotState === 'history') {
+  // Run history with runs IN it, written through the real recorder
+  // (saves.recordResult → the same bytes finishRun writes), so the screen is
+  // read back the way a player's is. Three results, one of them custom, so
+  // the win-rate line, the per-class chips and the excluded tag all show.
+  saves.recordResult({ victory: true, className: 'Reaver', act: 3, floor: 12, fightsWon: 11, seed: 'SHOWCASE' });
+  saves.recordResult({ victory: false, className: 'Starseer', act: 1, floor: 4, fightsWon: 3, seed: 'GOLDBOUGH' });
+  saves.recordResult({ victory: false, className: 'Reaver', act: 2, floor: 7, fightsWon: 6, seed: 'ASHFALL', custom: true, ascension: 2 });
+  showHistory();
+} else if (shotState === 'lobby') {
+  // Forsaken Together's browse view. No launcher stands behind a ?shot= boot,
+  // so the fire list stays at "Scanning…" — which is the state a player who
+  // opened the page without run.bat sees, and the one worth photographing.
+  showLobby();
+} else if (shotState === 'about') {
+  // Settings → About, opened through the real door: the category rides in
+  // the profile the way a player's last-chosen tab does (settings.js CAT_KEY),
+  // posed here into the ephemeral shot store, and Settings opens from the
+  // title as it does for a player.
+  {
+    const posed = saves.loadMeta();
+    saves.saveMeta({ ...posed, settings: { ...(posed.settings || {}), settingsCategory: 'About' } });
+    activeMeta = saves.loadMeta();
+    activeSettings = activeMeta.settings || (activeMeta.settings = {});
+  }
+  showTitle();
+  showSettings();
 } else if (shotState === 'customize' || shotState === 'components') {
   // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
   // and #29's own boundary records what that cost: no sweep can open a screen
