@@ -32,10 +32,12 @@ if (process.argv.includes('--selftest')) {
     timeoutMs: 240000,
     plants: [
       {
+        // The creation foot is the kit's ModalFoot now (customize.js on the page
+        // door), so the floor under BEGIN is the shell's one rule in kit.css.
         name: 'the primary action floor follows root Text size again',
-        file: 'styles/ui.css',
-        find: '.cz-actions button { min-height: var(--tap-floor); height: auto; }',
-        replace: '.cz-actions button { min-height: 4.4rem; height: auto; }',
+        file: 'styles/kit.css',
+        find: '.modal-foot-actions button { min-height: var(--tap-floor); }',
+        replace: '.modal-foot-actions button { min-height: 4.4rem; }',
         expectRed: /action floor changed with Text size/,
       },
       {
@@ -314,10 +316,13 @@ async function main() {
     const selectedArtifact = artifact ? normalizeLines(readFileSync(artifact, 'utf8')) : null;
     const ownershipKind = selectedArtifact ? 'artifact' : 'source';
     const ui = selectedArtifact ?? normalizeLines(readFileSync(resolve(ROOT, 'styles/ui.css'), 'utf8'));
+    // The foot under BEGIN is the kit's ModalFoot (styles/kit.css) since the
+    // creation screen moved onto the page door; its floor seam lives there.
+    const kit = selectedArtifact ?? normalizeLines(readFileSync(resolve(ROOT, 'styles/kit.css'), 'utf8'));
     const assets = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/assets.js'), 'utf8');
     const settings = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/screens/settings.js'), 'utf8');
+    if (!kit.includes('.modal-foot-actions button { min-height: var(--tap-floor); }')) failures.push(`${ownershipKind} ownership seam missing: .modal-foot-actions button { min-height: var(--tap-floor); }`);
     for (const seam of [
-      '.cz-actions button { min-height: var(--tap-floor); height: auto; }',
       'min-height: var(--tap-floor); height: auto; padding: 0 1.6rem;',
       'min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;',
       'width: auto; height: auto;\n  min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;',
