@@ -695,7 +695,7 @@ def rogue_cowl(J, M):
 @component("rogue", "mantle", "spine")
 def rogue_mantle(J, M):
     m = paint("rogue", "mantle", "leather")
-    out = yoke("rogue_mantle", m, M["gold"], [(1.54, 0.44, 0.27, 0.53, 0.31, 1.30, 0.06, 0.20, False), (1.46, 0.34, 0.23, 0.42, 0.27, 1.14, 0.05, 0.15, False)], n=12, sq=0.88)
+    out = yoke("rogue_mantle", m, M["gold"], [(1.55, 0.25, 0.175, 0.47, 0.275, 1.30, 0.06, 0.20, False), (1.47, 0.20, 0.145, 0.375, 0.235, 1.14, 0.05, 0.15, False)], n=12, sq=0.88)
     out += [pyramid("rogue_mstud_l", (-0.46, -0.06, 1.23), 0.028, 0.04, M["gold"], toward=(-0.6, -1, 0)), pyramid("rogue_mstud_r", (0.46, -0.06, 1.23), 0.028, 0.04, M["gold"], toward=(0.6, -1, 0)),
             pyramid("rogue_mstud_c", (0.0, -0.27, 1.23), 0.03, 0.045, M["gold"]), pyramid("rogue_mstud_c2", (0.0, -0.22, 1.42), 0.024, 0.036, M["gold"])]
     return out
@@ -939,7 +939,7 @@ def starseer_cowl(J, M):
 @component("starseer", "mantle", "spine")
 def starseer_mantle(J, M):
     m = paint("starseer", "mantle", "cloth")
-    out = yoke("star_mantle", m, M["brass"], [(1.55, 0.42, 0.28, 0.50, 0.33, 1.30, 0.08, 0.15, True), (1.48, 0.33, 0.23, 0.40, 0.27, 1.15, 0.17, 0.10, True)], n=12, sq=0.80)
+    out = yoke("star_mantle", m, M["brass"], [(1.56, 0.24, 0.17, 0.45, 0.285, 1.29, 0.08, 0.16, True), (1.49, 0.20, 0.15, 0.355, 0.235, 1.14, 0.17, 0.10, True)], n=12, sq=0.80)
     out += [pyramid("star_mstud_l", (-0.455, -0.09, 1.20), 0.024, 0.036, M["gold"], toward=(-0.4, -1, 0)), pyramid("star_mstud_r", (0.455, -0.09, 1.20), 0.024, 0.036, M["gold"], toward=(0.4, -1, 0)),
             pyramid("star_throat", (0, -0.20, 1.33), 0.045, 0.055, M["gold"])]
     return out
@@ -1006,7 +1006,7 @@ def herald_hood(J, M):
 @component("herald", "mantle", "spine")
 def herald_mantle(J, M):
     m = paint("herald", "mantle", "cloth")
-    out = yoke("herald_mantle", m, M["brass"], [(1.56, 0.42, 0.28, 0.50, 0.32, 1.31, 0.08, 0.03, True), (1.50, 0.35, 0.24, 0.42, 0.28, 1.19, 0.15, 0.03, True), (1.44, 0.28, 0.20, 0.33, 0.22, 1.07, 0.19, 0.02, True)], n=12, sq=0.86)
+    out = yoke("herald_mantle", m, M["brass"], [(1.57, 0.24, 0.17, 0.44, 0.275, 1.30, 0.08, 0.03, True), (1.51, 0.21, 0.15, 0.365, 0.235, 1.18, 0.15, 0.03, True), (1.45, 0.18, 0.13, 0.295, 0.195, 1.06, 0.19, 0.02, True)], n=12, sq=0.86)
     out += [pyramid("herald_mstud_l", (-0.455, -0.09, 1.26), 0.026, 0.04, M["gold"], toward=(-0.4, -1, 0)), pyramid("herald_mstud_r", (0.455, -0.09, 1.26), 0.026, 0.04, M["gold"], toward=(0.4, -1, 0))]
     return out
 

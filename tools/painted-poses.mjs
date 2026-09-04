@@ -1,7 +1,8 @@
 // tools/painted-poses.mjs — cut a painted pose sheet into single-pose frames.
 //
 //   node tools/painted-poses.mjs --sheet SHEET.png --class rogue \
-//     --poses idle,guard,attack1,attack2,attack3,hit,kneel,down [--out DIR] [--append]
+//     --poses idle,guard,attack1,attack2,attack3,hit,kneel,down [--out DIR]
+//     [--append] [--canvas 720x900]
 //
 // A pose sheet is one image holding several paintings of the same character, laid
 // out in rows. This finds each figure (background is transparency, or whatever
@@ -12,7 +13,9 @@
 // The output folder gets `lowpoly-renders.manifest.json`, the same shape
 // tools/lowpoly-blender.py writes, so tools/pose-sprites.mjs dyes, tints, crops
 // and encodes these exactly as it does the Blender renders — painted or modelled,
-// the sprites downstream are identical in shape.
+// the sprites downstream are identical in shape. Every class appended to one
+// manifest shares one canvas; --canvas fixes that size up front when the classes
+// are cut in separate runs.
 //
 // A figure whose lowest pixels sit well above the sheet's floor (a lunge that
 // leaves the ground, a body lying down) keeps its own offset from that floor, so
@@ -36,8 +39,26 @@ if (!sheetPath || !cls || !outDir) {
   process.exit(2);
 }
 
-const img = decodePng(readFileSync(sheetPath));
-const { width: W, height: H, bpp } = img;
+// Sheets arrive as truecolour or greyscale, with or without alpha. Normalise to
+// RGBA up front so nothing downstream has to know which. A one-byte-per-pixel PNG
+// is either greyscale or palette-indexed and the decoder cannot tell them apart,
+// so that one is refused rather than silently rendered as grey mush.
+const raw = decodePng(readFileSync(sheetPath));
+if (raw.bpp === 1) {
+  console.error('painted-poses: greyscale or palette-indexed PNG is not supported — save the sheet as RGB or RGBA');
+  process.exit(2);
+}
+const img = raw.bpp === 4 ? raw : (() => {
+  const px = Buffer.alloc(raw.width * raw.height * 4);
+  for (let i = 0; i < raw.width * raw.height; i++) {
+    const o = i * raw.bpp, q = i * 4;
+    if (raw.bpp === 3) { px[q] = raw.px[o]; px[q + 1] = raw.px[o + 1]; px[q + 2] = raw.px[o + 2]; px[q + 3] = 255; }
+    else { px[q] = px[q + 1] = px[q + 2] = raw.px[o]; px[q + 3] = raw.px[o + 1]; }   // grey + alpha
+  }
+  return { width: raw.width, height: raw.height, px, bpp: 4 };
+})();
+const { width: W, height: H } = img;
+const bpp = 4;
 const at = (x, y) => (y * W + x) * bpp;
 
 // ---- foreground mask -------------------------------------------------------------
@@ -151,9 +172,25 @@ const PAD = 24;
 const maxW = Math.max(...figures.map(f => f.x1 - f.x0 + 1));
 const maxH = Math.max(...figures.map(f => f.y1 - f.y0 + 1));
 const maxLift = Math.max(...figures.slice(0, poses.length).map(f => f.lift));
-const CW = maxW + PAD * 2, CH = maxH + maxLift + PAD * 2;
-const ground = CH - PAD;                        // the floor every pose stands on
 mkdirSync(outDir, { recursive: true });
+const mfPath = join(outDir, 'lowpoly-renders.manifest.json');
+const prev = has('--append') && existsSync(mfPath) ? JSON.parse(readFileSync(mfPath, 'utf8')) : null;
+// Every class in a manifest has to share one canvas: the sprite tool writes a single
+// canvas declaration, and offsets, roots and floors are all read against it. An
+// appended class either fits the canvas already there or the run stops and says so.
+const forced = arg('--canvas', null);
+let CW = maxW + PAD * 2, CH = maxH + maxLift + PAD * 2;
+if (forced) {
+  const [fw, fh] = forced.split(/[x,]/).map(Number);
+  if (!(fw > 0 && fh > 0)) { console.error('painted-poses: --canvas wants WxH, e.g. 720x900'); process.exit(2); }
+  CW = fw; CH = fh;
+} else if (prev?.canvas?.w) { CW = prev.canvas.w; CH = prev.canvas.h; }
+if (CW < maxW + 2 || CH < maxH + maxLift + 2) {
+  console.error(`painted-poses: these figures need at least ${maxW + PAD * 2}x${maxH + maxLift + PAD * 2}, but the canvas is ${CW}x${CH}.`);
+  console.error('  Cut every class in one run, or give them all the same --canvas WxH.');
+  process.exit(1);
+}
+const ground = CH - PAD;                        // the floor every pose stands on
 const renders = [];
 for (let i = 0; i < poses.length; i++) {
   const f = figures[i], pose = poses[i];
@@ -173,12 +210,10 @@ for (let i = 0; i < poses.length; i++) {
   }
   const file = `${cls}_${pose}.png`;
   writeFileSync(join(outDir, file), encodePng(CW, CH, out));
-  renders.push({ class: cls, pose, file, root: [Math.round(count ? sumX / count : CW / 2), ground - Math.round(fh * 0.45)], ground });
+  renders.push({ class: cls, pose, file, root: [Math.round(count ? sumX / count : CW / 2), ground - f.lift - Math.round(fh * 0.45)], ground });
   console.log(`  ${pose}: ${fw}x${fh}`);
 }
 
-const mfPath = join(outDir, 'lowpoly-renders.manifest.json');
-const prev = has('--append') && existsSync(mfPath) ? JSON.parse(readFileSync(mfPath, 'utf8')) : null;
 const manifest = {
   schema: 'ashenspire/lowpoly-renders/v1',
   _: 'DERIVED — written by tools/painted-poses.mjs from painted pose sheets. Same shape as the Blender renders manifest so tools/pose-sprites.mjs can read either.',
