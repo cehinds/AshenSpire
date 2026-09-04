@@ -24,6 +24,12 @@ import { assetUrl } from '../assetmap.js';
 
 const key = (classId, pose, tint) => `${classId}_${pose}_${tint}`;
 
+// Ask for 'attack' and the figure throws its next swing. The rotation belongs to
+// the figure: a module-wide counter advanced on every attack in the fight — enemy
+// swings included, and those have no frames at all — so a player skipped frames
+// and the drift carried into later fights.
+const ATTACK_SEQUENCE = ['attack1', 'attack2', 'attack3'];
+
 /** The frame row for one pose, or null when this build does not ship it. */
 export function poseFrame(classId, pose, tint) {
   return POSE_FRAMES.get(key(classId, pose, tint)) || null;
@@ -95,6 +101,13 @@ export function createPoseStage(classId, tint) {
 
   let timer = null;
   let current = 'idle';
+  let swing = 0;
+  const swings = ATTACK_SEQUENCE.filter((p) => poseFrame(classId, p, tint));
+  const resolve = (pose) => {
+    if (pose !== 'attack') return pose;
+    if (!swings.length) return pose;
+    return swings[swing++ % swings.length];
+  };
   const settle = () => {
     if (timer) { clearTimeout(timer); timer = null; }
     if (current === 'idle') return;
@@ -121,7 +134,7 @@ export function createPoseStage(classId, tint) {
     play(pose, ms = 260) {
       if (document.body.classList.contains('reduced-motion')) return false;
       if (timer) { clearTimeout(timer); timer = null; }
-      if (!setPose(pose)) return false;
+      if (!setPose(resolve(pose))) return false;
       timer = setTimeout(settle, Math.max(60, ms));
       return true;
     },

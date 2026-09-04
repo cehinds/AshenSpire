@@ -36,6 +36,7 @@
 // this screen supplies is the VIEWER — who `me` is, and what `me` voted for.
 
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
+import { playPoseOn } from '../services/PoseAnimator.js';
 import { renderCard } from '../components/card.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
@@ -1095,6 +1096,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (box && !box.classList.contains('dead')) {
           box.classList.add('acting');
           setTimeout(() => box.classList.remove('acting'), 420);
+          // The Animated style is offered in the lobby, so it has to move here
+          // too: without this a co-op player who picked it fought as a statue.
+          playPoseOn(box, 'attack', 420);
         }
         await sleep(400);
       }
@@ -1207,7 +1211,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     };
     const recoil = (sel, heavy) => {
       const box = app.querySelector(sel);
-      if (box) box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
+      if (!box) return;
+      box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
+      playPoseOn(box, 'hit', heavy ? 380 : 220);
     };
     // Authoritative receipts own hit floats. Snapshot deltas remain the home
     // for healing, guard gain and legacy non-attack HP changes only.

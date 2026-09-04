@@ -545,11 +545,6 @@ function groupBeats(events) {
 // reports: every timeline must end in exactly one finish (done/watchdog/flush).
 const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
 
-// Which swing a figure throws next. Rotating beats replaying one frame all fight;
-// it is deliberately not random, so the same fight looks the same twice.
-const ATTACK_POSES = ['attack1', 'attack2', 'attack3'];
-let attackTurn = 0;
-
 export function playTimeline(events, ctx, done) {
   const speed = ANIM_SPEEDS[animSpeed];
   const reduced = document.body.classList.contains('reduced-motion');
@@ -622,15 +617,15 @@ export function playTimeline(events, ctx, done) {
 
     // 1) actor animation (lunge for attacks, glow-step otherwise)
     //
-    // A figure drawn in the animated style also changes pose for the beat: the
-    // three attack frames rotate so a multi-hit turn does not replay one swing,
-    // and anything else takes the guard frame. playPoseOn is a no-op for a
-    // figure with no pose frames, so this stays one line for every other style.
+    // A figure drawn in the animated style also changes pose for the beat. Asking
+    // for 'attack' lets the figure pick its own next swing, so a multi-hit turn
+    // does not replay one frame and an actor with no frames cannot advance
+    // anyone else's rotation. Anything else takes the guard frame, and
+    // playPoseOn is a no-op for a figure with no frames at all.
     const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
     if (actorEl) {
       safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
-      const pose = beat.kind === 'attack' ? ATTACK_POSES[attackTurn++ % ATTACK_POSES.length] : 'guard';
-      safe(() => playPoseOn(actorEl, pose, speed.lungeMs));
+      safe(() => playPoseOn(actorEl, beat.kind === 'attack' ? 'attack' : 'guard', speed.lungeMs));
     }
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered

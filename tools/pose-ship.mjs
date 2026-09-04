@@ -1,7 +1,7 @@
 // tools/pose-ship.mjs — publish a subset of the pose sprites into assets/.
 //
 //   node tools/pose-ship.mjs [--in art/poses] [--out assets/poses]
-//     [--poses idle,guard,attack1,attack2,attack3,hit] [--scale 0.6] [--quality 80]
+//     [--poses idle,guard,attack1,attack2,attack3,hit] [--scale 0.6] [--quality 78]
 //
 // art/poses holds every pose at render resolution — 160 files, 3.5 MB — and the
 // bundler inlines everything under assets/, so shipping that folder whole would
@@ -27,7 +27,9 @@ const inDir = arg('--in', 'art/poses');
 const outDir = arg('--out', 'assets/poses');
 const wanted = (arg('--poses', 'idle,guard,attack1,attack2,attack3,hit') || '').split(',').filter(Boolean);
 const scale = Number(arg('--scale', '0.6'));
-const quality = Number(arg('--quality', '80'));
+// 78 is what the committed set was cut at: a default that disagrees rewrites all
+// 120 files on a rerun that changed nothing.
+const quality = Number(arg('--quality', '78'));
 if (!(scale > 0 && scale <= 1)) { console.error('pose-ship: --scale must be between 0 and 1'); process.exit(2); }
 
 const srcManifest = join(inDir, 'pose-sprites.manifest.json');
