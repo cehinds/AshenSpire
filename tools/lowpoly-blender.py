@@ -51,13 +51,16 @@ scene.render.film_transparent = True
 scene.render.image_settings.file_format = "PNG"
 scene.render.image_settings.color_mode = "RGBA"
 scene.view_settings.view_transform = "Standard"
-scene.render.resolution_x, scene.render.resolution_y = 720, 900
+scene.render.resolution_x, scene.render.resolution_y = 1160, 900
 cam_data = bpy.data.cameras.new("cam"); cam_data.type = "ORTHO"
 cam_data.sensor_fit = "VERTICAL"; cam_data.ortho_scale = 2.8
 cam = bpy.data.objects.new("cam", cam_data); scene.collection.objects.link(cam)
-cam.location = (0.05, -12.0, 1.10); cam.rotation_euler = (math.radians(90), 0, 0)
+cam.location = (0.05, -12.0, 1.30); cam.rotation_euler = (math.radians(90), 0, 0)
 scene.camera = cam
-CANVAS = dict(ortho=2.8, cx=0.05, cz=1.10, w=720, h=900)   # world→pixel: see manifest
+CANVAS = dict(ortho=2.8, cx=0.05, cz=1.30, w=1160, h=900)   # world→pixel: see manifest
+# 960 wide, not 720: a lunge with a greatsword reached past the right edge of the
+# narrower frame, and the sword raised overhead reached past the top. The vertical
+# span is what ortho_scale fixes, so the extra width costs no scale.
 
 def light(name, kind, loc, energy, color=(1, 1, 1), rot=None, size=None):
     d = bpy.data.lights.new(name, kind); d.energy = energy; d.color = color
@@ -847,9 +850,11 @@ def reaver_pauldron(J, M, s_, sx):
         out.append(curved_plate(f"reaver_lame{i}.{s_}", pts, y, 0.055, m, thick=0.028))
     out.append(loft(f"reaver_boss.{s_}", [((X(0.30), sh.y - 0.215, 1.50), 0.055, 0.055), ((X(0.30), sh.y - 0.245, 1.50), 0.049, 0.049), ((X(0.30), sh.y - 0.27, 1.50), 0, 0)], M["gold"], n=10, cap_bottom=True))
     return out
-@component("reaver", "pauldron_l", "upper_arm.L")
+# on the spine, not the arm bone: these plates are shaped for the camera, and an
+# arm that swings through a strike would carry them out of position
+@component("reaver", "pauldron_l", "spine")
 def reaver_pauldron_l(J, M): return reaver_pauldron(J, M, "L", -1)
-@component("reaver", "pauldron_r", "upper_arm.R")
+@component("reaver", "pauldron_r", "spine")
 def reaver_pauldron_r(J, M): return reaver_pauldron(J, M, "R", 1)
 
 @component("reaver", "breastplate", "spine")
@@ -888,7 +893,9 @@ def reaver_sword(J, M):
         out.append(weapon_along(f"reaver_gripring{k}", J, "R", [((0, 0, k), 0.027, 0.027), ((0, 0, k + 0.02), 0.027, 0.027)], paint("reaver", "sword", "leather")))
     out.append(weapon_along("reaver_swordguard", J, "R", [((0, 0, 0.18), 0.13, 0.03), ((0, 0, 0.24), 0.13, 0.03)], M["steel"], cap=True, n=4))
     out.append(weapon_along("reaver_guardtrim", J, "R", [((0, 0, 0.235), 0.132, 0.032), ((0, 0, 0.25), 0.132, 0.032)], M["gold"], cap=True, n=4))
-    out.append(weapon_along("reaver_blade", J, "R", [((0, 0, 0.24), 0.058, 0.014), ((0, 0, 0.92), 0.048, 0.01), ((0, 0, 1.14), 0, 0)], M["steel"], n=4))
+    # 0.98 to the tip, not 1.14: the longer blade left the frame overhead in the
+    # wind-up and past the right edge in the follow-through
+    out.append(weapon_along("reaver_blade", J, "R", [((0, 0, 0.24), 0.060, 0.015), ((0, 0, 0.72), 0.050, 0.011), ((0, 0, 0.86), 0, 0)], M["steel"], n=4))
     out.append(weapon_along("reaver_pommel", J, "R", [((0, 0, -0.18), 0.042, 0.042), ((0, 0, -0.12), 0.042, 0.042)], M["gold"], cap=True, n=4))
     return out
 
@@ -1112,7 +1119,7 @@ POSES = {
                     "spine": (0.2, -0.2, 1), "neck": (0.1, -0.15, 1),
                     "upper_arm.L": (0.35, -0.9, 0.35), "forearm.L": (1, -0.6, -0.2), "hand.L": (1, -0.5, -0.3),
                     "upper_arm.R": (0.5, 0.2, -0.8), "forearm.R": (0.3, -0.6, -0.7)}),
-    "attack3": dict(turn=32, dx=0.3, dz=-0.1, aim={"thigh.R": (1, -0.25, -0.5), "shin.R": (0.35, -0.1, -1), "thigh.L": (-0.75, 0.15, -0.7), "shin.L": (-0.7, 0.15, -0.7),
+    "attack3": dict(turn=32, dx=0.12, dz=-0.1, aim={"thigh.R": (1, -0.25, -0.5), "shin.R": (0.35, -0.1, -1), "thigh.L": (-0.75, 0.15, -0.7), "shin.L": (-0.7, 0.15, -0.7),
                     "spine": (0.55, -0.15, 1), "neck": (0.3, -0.1, 1), "head": (0.2, -0.2, 1),
                     "upper_arm.R": (1, -0.3, 0.05), "forearm.R": (1, -0.25, 0.12), "hand.R": (1, -0.2, 0.1),
                     "upper_arm.L": (0.9, -0.45, -0.3), "forearm.L": (1, -0.35, 0.1), "hand.L": (1, -0.3, 0.1)}),

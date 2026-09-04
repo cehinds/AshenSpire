@@ -15,7 +15,7 @@ node tools/pose-sprites.mjs --in build/lowpoly --out art/poses
 |---|---|
 | `tools/lowpoly-blender.py` | the figures: a skin-modifier body over a stick skeleton, an armature with distance weights, class dressing as separate low-poly pieces, poses as world directions per bone |
 | `tools/pose-sprites.mjs` | dyes and rims each render with the class-sprite functions, cuts below the floor, crops, encodes WebP |
-| `pose-sprites.manifest.json` | one row per sprite: crop `offset`, `root` (pelvis) and `ground` line on the shared 720×900 canvas |
+| `pose-sprites.manifest.json` | one row per sprite: crop `offset`, `root` (pelvis) and `ground` line on the shared 1160×900 canvas |
 
 **Why a body and not cards.** The first attempt cut the paintings into flat
 parts on joints. The owner rejected it: arms came out of the torso, poses were
@@ -92,6 +92,14 @@ from the collar with a pointed outer corner and a brass edge under each,
 bowed toward the camera (`curved_plate()`) so they catch light like armour.
 The cape lost its slab shape for a drape that narrows at the shoulders and
 flares to the hem.
+
+**Frame.** The canvas is 1160×900 with the floor at z = 0. It used to be 720
+wide: a lunge with the greatsword reached past the right edge and the wind-up
+reached past the top, so ten frames shipped with the weapon cut off. The
+vertical span is what the orthographic scale fixes, so the extra width costs no
+scale. The greatsword also lost 25cm, the follow-through steps less far, and the
+Reaver's pauldrons hang off the spine rather than the arm bone — they are shaped
+for the camera, and an arm swinging through a strike carried them out of place.
 
 **Painted poses.** `tools/painted-poses.mjs` cuts a painted pose sheet — a
 single image holding one figure per pose — into single-pose frames and writes
