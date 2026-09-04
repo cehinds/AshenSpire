@@ -858,12 +858,23 @@ button.ev-choice {
 :root[data-layout='narrow'] .combat.coop .field {
   flex-direction: column; min-height: 0; overflow-y: auto;
 }
+/* BOTH ZONES YIELD BEFORE THE FIELD SCROLLS. `flex: N 0 auto` on either row
+   meant neither could give a pixel, so at 390x844 the two together wanted
+   449px of a 407px field and the enemy row ran 42px past the bottom — its
+   nameplates were clipped at the field's edge with the flask row sitting
+   under them, so "Blight Hound" and "Grave Wisp" read as half a line of
+   letters. They shrink now, in the order the text law sets: the row gives
+   height, the combatant is already capped to its row (COMBAT narrow), and the
+   sprite inside it yields with `object-fit: contain` — so the ART loses the
+   pixels and the name, meters and intent keep theirs. The field's own
+   `overflow-y: auto` above stays the last resort, for a phone genuinely too
+   short to hold both groups even at their smallest. */
 :root[data-layout='narrow'] .combat.coop .player-zone {
-  width: 100%; min-width: 0; flex: 0 0 auto; flex-wrap: nowrap;
+  width: 100%; min-width: 0; flex: 0 1 auto; min-height: 0; flex-wrap: nowrap;
   align-items: flex-end; justify-content: space-evenly; padding-bottom: 0.6rem;
 }
 :root[data-layout='narrow'] .combat.coop .enemy-row {
-  width: 100%; min-width: 0; flex: 1 0 auto; padding-bottom: 0.6rem;
+  width: 100%; min-width: 0; flex: 1 1 auto; min-height: 0; padding-bottom: 0.6rem;
 }
 :root[data-layout='narrow'] .combat.coop .hand { padding-inline: 1rem; }
 .combat.coop .combatant.player { position: relative; }
@@ -3947,6 +3958,18 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
      `.cv` and the "/ total" is the only ELEMENT in there, so counting elements
      from the second would keep the tail it is here to drop. */
   .as-statstrip.trail > .as-chip > .cv > * { display: none; }
+  /* THE CORNER TOOK THE TRACK. Reserving `--quick-corner` on the run header
+     left the trail's track narrower than the widest fact still standing after
+     the two rules above, and `justify-self: end` spills an over-wide grid item
+     LEFTWARDS — so the trail printed on top of the centred receipt. Caught at
+     390x844 on the map, whose place name ("ACT I — THE FALLOW MARCHES") is the
+     longest identity in the game and leaves the least track behind.
+     A narrow shape is a different composition: the trail drops to its own row
+     beneath the other two and reads left-to-right there. The centred receipt
+     stays centred over the identity, which is the middle track's whole point,
+     and no text meets the corner. */
+  .as-band-row.thirds { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.3rem; }
+  .as-band-row.thirds > :last-child { grid-column: 1 / -1; justify-self: start; }
 }
 /* A cluster is a group of IconButtons or Slots that share one gap. */
 .as-cluster { display: flex; align-items: center; gap: 0.6rem; flex: 0 0 auto; min-width: 0; }
@@ -46603,6 +46626,16 @@ function holdMs(settings, holdConfirm) {
  *   question     confirm form only — the sentence above the buttons.
  *   detailHtml   confirm form only — what the action actually does.
  *   confirmLabel confirm form only.
+ *   hintHost     where the HOLD word goes, when the armed control is a FIXED
+ *                box that cannot hold it. `armHold` has always taken this; the
+ *                door dropped it, so a shop card got the hint appended INSIDE
+ *                the kit's card — which clips its own overflow, and the word
+ *                came out as half a line of letters (photographed at 390x844).
+ *                A screen naming a host is not naming a form; the hint's
+ *                placement is the caller's geometry, and only the caller knows
+ *                which of its elements is the one with room.
+ *   hintBefore   the child of that host to insert the hint before (default:
+ *                appended last).
  *
  * EVERY ARMED CONTROL MARKS ITSELF, including the ones that owe no beat:
  * `data-beat="none|hold|confirm"` and `data-beat-action="<id>"`. That is not
@@ -46614,7 +46647,7 @@ function holdMs(settings, holdConfirm) {
 function beatArmer(meta, registries) {
   const dialMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
 
-  return function arm(el, actionId, { ctx = {}, onConfirm, question, detailHtml, confirmLabel } = {}) {
+  return function arm(el, actionId, { ctx = {}, onConfirm, question, detailHtml, confirmLabel, hintHost = null, hintBefore = null } = {}) {
     // `ctxOf` so a row whose stakes move with the game state (End Turn) is
     // evaluated at the moment the finger lands, not at the moment the screen
     // mounted. A screen passes a function; a static action passes an object.
@@ -46656,6 +46689,8 @@ function beatArmer(meta, registries) {
       onTap: review,
       tapOnEarlyRelease: true,
       id: actionId,
+      hintHost,
+      hintBefore,
     });
     // THE OTHER HALF OF "ALL INSTANCES" (S7 wide), and it is a REGISTRATION,
     // never a list. Some actions are reached without the focus cursor at all —
@@ -46974,9 +47009,16 @@ const ACTIONS = [
   { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
   { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
   { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
-  { id: 'deck', label: 'Open Armoury (Deck)', short: 'Armoury', kind: 'key', defKey: 'd', defBtn: 3, destination: 'cards' },
-  { id: 'relics', label: 'Open Armoury', short: 'Armoury', kind: 'key', defKey: 'r', defBtn: 4, destination: 'equipment' },
-  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Armoury', kind: 'key', defKey: 't', defBtn: 5, destination: 'character' },
+  // THREE DOORS, THREE NAMES. All three carried `short: 'Armoury'`, so the map's
+  // hint row read "D Armoury · R Armoury · T Armoury" — three keys that look
+  // like three ways to the same place when each one lands somewhere different.
+  // The short form names the DESTINATION each row declares below it, which is
+  // exactly what `actionShort`'s own note asks for ("the bar wants the short
+  // form"), and the middle row's full label stops being the only one that
+  // does not say where it goes.
+  { id: 'deck', label: 'Open Armoury (Deck)', short: 'Deck', kind: 'key', defKey: 'd', defBtn: 3, destination: 'cards' },
+  { id: 'relics', label: 'Open Armoury (Equipment)', short: 'Equipment', kind: 'key', defKey: 'r', defBtn: 4, destination: 'equipment' },
+  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Stats', kind: 'key', defKey: 't', defBtn: 5, destination: 'character' },
   // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
   // we give both a rebindable key per slot).
   { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
@@ -51811,7 +51853,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '4f927e3dc3';
+const SOURCE = '7571d1a365';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -51845,7 +51887,7 @@ const SOURCE = '4f927e3dc3';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '61';
+const ORDINAL = '62';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -73254,6 +73296,16 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       tag.className = 'mini';
       tag.textContent = `${item.cost} cinders`;
       tag.style.color = run.cinders >= item.cost ? 'var(--gold)' : 'var(--muted)';
+      // THE CARD IS A FIXED BOX (kit CARD: fixed name, fixed ArtWell, fixed
+      // band, one shared row budget below it). Appending the hold hint INTO it
+      // — which is what `arm` does with no host — put the word inside that
+      // budget, where the card's own bottom edge clipped it: photographed at
+      // 390x844 as half a line of letters under every price. The hint's host
+      // is the wrap that already holds the card and its price, so the word
+      // stands outside the box it describes. Both children are in place first,
+      // so HOLD reads last, after the cost.
+      wrap.appendChild(el);
+      wrap.appendChild(tag);
       if (run.cinders >= item.cost) {
         // ROUTED THROUGH THE MACHINERY EVEN THOUGH IT OWES NO BEAT, and that is
         // the falsifier for Law 0 on this control rather than a formality:
@@ -73262,6 +73314,7 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         // ZERO commits outside that table. An action wired with a bare
         // `addEventListener` can only ever be changed by editing this line.
         arm(el, 'shopBuy', {
+          hintHost: wrap,
           question: `Buy ${registries.cards.get(item.id).name} for ${item.cost} cinders? You have ${run.cinders}.`,
           confirmLabel: 'BUY IT',
           onConfirm: () => {
@@ -73276,8 +73329,6 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       } else {
         el.classList.add('unaffordable');
       }
-      wrap.appendChild(el);
-      wrap.appendChild(tag);
       cardsRow.appendChild(wrap);
     });
 
@@ -73324,7 +73375,12 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
           if (isEquipmentComposedInstance(inst)) return;
           const el = renderCard(registries, inst, { small: true });
           const def = registries.cards.get(inst.cardId);
+          // Same fixed box, same host: the hold hint stands under the card.
+          const wrap = document.createElement('div');
+          wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px';
+          wrap.appendChild(el);
           arm(el, 'shopRemove', {
+            hintHost: wrap,
             question: `Burn ${def.name} out of the deck? ${stock.removeCost} cinders, and the card is gone.`,
             confirmLabel: 'BURN IT',
             onConfirm: () => {
@@ -73337,7 +73393,7 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
               render();
             },
           });
-          grid.appendChild(el);
+          grid.appendChild(wrap);
         });
       });
     }
