@@ -1719,6 +1719,18 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
      `.cv` and the "/ total" is the only ELEMENT in there, so counting elements
      from the second would keep the tail it is here to drop. */
   .as-statstrip.trail > .as-chip > .cv > * { display: none; }
+  /* THE CORNER TOOK THE TRACK. Reserving `--quick-corner` on the run header
+     left the trail's track narrower than the widest fact still standing after
+     the two rules above, and `justify-self: end` spills an over-wide grid item
+     LEFTWARDS — so the trail printed on top of the centred receipt. Caught at
+     390x844 on the map, whose place name ("ACT I — THE FALLOW MARCHES") is the
+     longest identity in the game and leaves the least track behind.
+     A narrow shape is a different composition: the trail drops to its own row
+     beneath the other two and reads left-to-right there. The centred receipt
+     stays centred over the identity, which is the middle track's whole point,
+     and no text meets the corner. */
+  .as-band-row.thirds { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.3rem; }
+  .as-band-row.thirds > :last-child { grid-column: 1 / -1; justify-self: start; }
 }
 /* A cluster is a group of IconButtons or Slots that share one gap. */
 .as-cluster { display: flex; align-items: center; gap: 0.6rem; flex: 0 0 auto; min-width: 0; }

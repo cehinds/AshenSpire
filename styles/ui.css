@@ -441,12 +441,23 @@ button.ev-choice {
 :root[data-layout='narrow'] .combat.coop .field {
   flex-direction: column; min-height: 0; overflow-y: auto;
 }
+/* BOTH ZONES YIELD BEFORE THE FIELD SCROLLS. `flex: N 0 auto` on either row
+   meant neither could give a pixel, so at 390x844 the two together wanted
+   449px of a 407px field and the enemy row ran 42px past the bottom — its
+   nameplates were clipped at the field's edge with the flask row sitting
+   under them, so "Blight Hound" and "Grave Wisp" read as half a line of
+   letters. They shrink now, in the order the text law sets: the row gives
+   height, the combatant is already capped to its row (COMBAT narrow), and the
+   sprite inside it yields with `object-fit: contain` — so the ART loses the
+   pixels and the name, meters and intent keep theirs. The field's own
+   `overflow-y: auto` above stays the last resort, for a phone genuinely too
+   short to hold both groups even at their smallest. */
 :root[data-layout='narrow'] .combat.coop .player-zone {
-  width: 100%; min-width: 0; flex: 0 0 auto; flex-wrap: nowrap;
+  width: 100%; min-width: 0; flex: 0 1 auto; min-height: 0; flex-wrap: nowrap;
   align-items: flex-end; justify-content: space-evenly; padding-bottom: 0.6rem;
 }
 :root[data-layout='narrow'] .combat.coop .enemy-row {
-  width: 100%; min-width: 0; flex: 1 0 auto; padding-bottom: 0.6rem;
+  width: 100%; min-width: 0; flex: 1 1 auto; min-height: 0; padding-bottom: 0.6rem;
 }
 :root[data-layout='narrow'] .combat.coop .hand { padding-inline: 1rem; }
 .combat.coop .combatant.player { position: relative; }

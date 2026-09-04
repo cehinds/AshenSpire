@@ -135,10 +135,20 @@ function contract(s, { paths = changedPaths() } = {}) {
   const destinationFields = [...actions.matchAll(/destination: '([^']+)'/g)].map((match) => match[1]);
   const quickMap = "inventory: () => onArmoury('rack'), character: () => onArmoury('grid')";
   const quickCombat = "inventory: () => openCombatArmoury('rack'),\n          character: () => openCombatArmoury('grid')";
+  // The two card-grouping anchors name a FACT — the list and each row carry
+  // `data-component="armoury.cardList"` / `"armoury.cardRow"`, which is what a
+  // reader downstream matches on. They used to be spelled as assignments
+  // (`box.dataset.component = …`). The kit rebuild composes both elements
+  // through the kit's builders, which take the same values in their `dataset:`
+  // option, so the attributes still reach the page and only the SOURCE SPELLING
+  // moved. This tool reads source text, so the anchor follows the spelling
+  // rather than reporting a fact that is still true as missing. It is no
+  // weaker: the value string is the whole anchor either way, and deleting the
+  // marker still turns this red.
   const s6Anchors = [
     'onEquipmentChanged: captureEquipmentChanged',
-    "box.dataset.component = 'armoury.cardList';",
-    "row.dataset.component = 'armoury.cardRow';",
+    "component: 'armoury.cardList'",
+    "component: 'armoury.cardRow'",
     "host.dispatchEvent(new CustomEvent('ashenspire:equipmentChanged'",
   ];
   return [
