@@ -1,6 +1,7 @@
 # tools/lowpoly-blender.py — low-poly 3D class figures, rigged and posed.
 #
 #   blender --background --factory-startup --python tools/lowpoly-blender.py -- OUT_DIR [class,class] [pose,pose]
+#        [--palette build/components/palette.json] [--parts] [--res 2.5]
 #
 # Each class is a real body: a skin-modifier mesh grown over a stick skeleton
 # (so limbs join the torso as one surface, not as cones poked into a box),
@@ -18,10 +19,15 @@ from mathutils import Vector, Matrix, Quaternion
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 if not argv:
-    raise SystemExit("usage: -- OUT_DIR [class,class] [pose,pose] [--palette build/components/palette.json] [--parts]")
+    raise SystemExit("usage: -- OUT_DIR [class,class] [pose,pose] [--palette build/components/palette.json] [--parts] [--res 2.5]")
 PARTS_MODE = "--parts" in argv
+# How finely everything is built. 1.0 is the first four passes' coarse figures;
+# higher divides every ring and every step between rings, so a hood is a curved
+# shell of small facets rather than a seven-sided tent. Faces still shade flat —
+# this buys smoother silhouettes, not smooth shading.
+RES = float(argv[argv.index("--res") + 1]) if "--res" in argv else 2.5
 PALETTE_PATH = argv[argv.index("--palette") + 1] if "--palette" in argv else None
-argv = [a for i, a in enumerate(argv) if a not in ("--parts", "--palette") and not (i > 0 and argv[i - 1] == "--palette")]
+argv = [a for i, a in enumerate(argv) if a not in ("--parts", "--palette", "--res") and not (i > 0 and argv[i - 1] in ("--palette", "--res"))]
 OUT = argv[0]
 ONLY = argv[1].split(",") if len(argv) > 1 and argv[1] else None
 ONLY_POSES = argv[2].split(",") if len(argv) > 2 and argv[2] else None
@@ -45,13 +51,16 @@ scene.render.film_transparent = True
 scene.render.image_settings.file_format = "PNG"
 scene.render.image_settings.color_mode = "RGBA"
 scene.view_settings.view_transform = "Standard"
-scene.render.resolution_x, scene.render.resolution_y = 720, 900
+scene.render.resolution_x, scene.render.resolution_y = 1280, 900
 cam_data = bpy.data.cameras.new("cam"); cam_data.type = "ORTHO"
 cam_data.sensor_fit = "VERTICAL"; cam_data.ortho_scale = 2.8
 cam = bpy.data.objects.new("cam", cam_data); scene.collection.objects.link(cam)
-cam.location = (0.05, -12.0, 1.10); cam.rotation_euler = (math.radians(90), 0, 0)
+cam.location = (0.05, -12.0, 1.30); cam.rotation_euler = (math.radians(90), 0, 0)
 scene.camera = cam
-CANVAS = dict(ortho=2.8, cx=0.05, cz=1.10, w=720, h=900)   # world→pixel: see manifest
+CANVAS = dict(ortho=2.8, cx=0.05, cz=1.30, w=1280, h=900)   # world→pixel: see manifest
+# 960 wide, not 720: a lunge with a greatsword reached past the right edge of the
+# narrower frame, and the sword raised overhead reached past the top. The vertical
+# span is what ortho_scale fixes, so the extra width costs no scale.
 
 def light(name, kind, loc, energy, color=(1, 1, 1), rot=None, size=None):
     d = bpy.data.lights.new(name, kind); d.energy = energy; d.color = color
@@ -61,10 +70,10 @@ def light(name, kind, loc, energy, color=(1, 1, 1), rot=None, size=None):
     if rot: o.rotation_euler = rot
     return o
 # key from upper front-left, cool fill from the right, warm rim from behind
-light("key", "SUN", (0, 0, 5), 2.6, (1.0, 0.93, 0.84), rot=(math.radians(50), math.radians(-30), math.radians(-22)))
-light("fill", "SUN", (0, 0, 5), 0.6, (0.7, 0.8, 1.0), rot=(math.radians(70), math.radians(35), math.radians(30)))
-light("rim", "SUN", (0, 0, 5), 1.8, (1.0, 0.85, 0.6), rot=(math.radians(-60), 0, math.radians(180)))
-light("rim2", "SUN", (0, 0, 5), 3.0, (1.0, 0.58, 0.26), rot=(math.radians(-48), 0, math.radians(140)))
+light("key", "SUN", (0, 0, 5), 0.75, (1.0, 0.93, 0.84), rot=(math.radians(50), math.radians(-30), math.radians(-22)))
+light("fill", "SUN", (0, 0, 5), 0.16, (0.7, 0.8, 1.0), rot=(math.radians(70), math.radians(35), math.radians(30)))
+light("rim", "SUN", (0, 0, 5), 1.0, (1.0, 0.86, 0.66), rot=(math.radians(-60), 0, math.radians(180)))
+light("rim2", "SUN", (0, 0, 5), 1.5, (1.0, 0.60, 0.30), rot=(math.radians(-48), 0, math.radians(140)))
 scene.eevee.use_soft_shadows = True
 scene.eevee.use_gtao = True; scene.eevee.gtao_distance = 0.45; scene.eevee.gtao_factor = 1.3
 
@@ -78,37 +87,53 @@ def srgb(r, g, b):
 # Where the sampler is fooled — the painting's warm rim light dominates a crop's
 # lit quartile — the colour is pinned by eye against the painting instead.
 OVERRIDE = {("rogue", "tunic"): (36, 44, 26), ("rogue", "skirt"): (32, 40, 24), ("rogue", "hood"): (44, 40, 36), ("rogue", "cowl"): (38, 35, 32), ("rogue", "mantle"): (34, 30, 26),
-            ("starseer", "robe"): (28, 24, 30), ("starseer", "mantle"): (62, 52, 74), ("starseer", "hat"): (46, 48, 60), ("starseer", "cowl"): (26, 26, 32), ("starseer", "sleeve_r"): (34, 30, 40),
+            ("starseer", "robe"): (28, 24, 30), ("starseer", "mantle"): (86, 70, 104), ("starseer", "hat"): (46, 48, 60), ("starseer", "cowl"): (26, 26, 32), ("starseer", "sleeve_r"): (34, 30, 40),
             ("herald", "robe"): (64, 52, 35), ("herald", "mantle"): (54, 45, 32), ("herald", "hood"): (60, 49, 33), ("herald", "sleeve_l"): (58, 47, 31),
-            ("reaver", "cape"): (92, 36, 30), ("reaver", "helm"): (76, 74, 74), ("reaver", "gorget"): (66, 64, 64), ("reaver", "pauldron_r"): (72, 70, 70),
+            ("reaver", "cape"): (62, 22, 20), ("reaver", "helm"): (76, 74, 74), ("reaver", "gorget"): (66, 64, 64), ("reaver", "pauldron_r"): (72, 70, 70),
             ("reaver", "breastplate"): (70, 68, 68), ("reaver", "gauntlet_r"): (62, 60, 60), ("reaver", "gauntlet_l"): (52, 50, 50), ("reaver", "tasset"): (64, 62, 62), ("reaver", "sword"): (40, 32, 26)}
+# Measured against the crops slot by slot: with the light set to the paintings'
+# level, each class's cloth still sat brighter than its painting. These scale a
+# part's colour in linear light so a rendered slot lands within a fifth of the
+# painting's median. Gold, steel and skin are shared materials and are not scaled.
+TONE = {"rogue": 0.44, "reaver": 0.86, "starseer": 0.48, "herald": 0.68}
+def tone(cls, rgb):
+    f = TONE.get(cls, 1.0)
+    if f == 1.0: return tuple(rgb)
+    def one(v):
+        v /= 255.0
+        l = (v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4) * f
+        c = 12.92 * l if l <= 0.0031308 else 1.055 * l ** (1 / 2.4) - 0.055
+        return max(0, min(255, int(round(c * 255))))
+    return tuple(one(v) for v in rgb)
+
 def paint(cls, part, kind="cloth", fallback=(60, 60, 60)):
     if (cls, part) in OVERRIDE:
-        rgb = OVERRIDE[(cls, part)]
+        rgb = tone(cls, OVERRIDE[(cls, part)])
         return mat(f"{cls}_{part}", rgb, rough=(0.48 if kind == "plate" else 0.7 if kind == "leather" else 0.9), metal=(0.65 if kind == "plate" else 0.0))
     """A material coloured from the painting's crop of this part. Cloth and leather
     take the lit side of the crop (its mean sits in shadow); plate takes the mean and
     a metallic finish. Falls back to a fixed colour when no palette was sampled."""
     P = PALETTE.get(cls, {}).get(part)
-    if not P: return mat(f"{cls}_{part}", fallback)
+    if not P: return mat(f"{cls}_{part}", tone(cls, fallback))
     m, l = P["mean"], P["light"]
     if kind == "plate":
-        rgb = [int(0.5 * a + 0.5 * b) for a, b in zip(m, l)]
+        rgb = tone(cls, [int(0.5 * a + 0.5 * b) for a, b in zip(m, l)])
         return mat(f"{cls}_{part}", rgb, rough=0.48, metal=0.65)
     if kind == "leather":
-        rgb = [int(0.35 * a + 0.65 * b) for a, b in zip(m, l)]
+        rgb = tone(cls, [int(0.35 * a + 0.65 * b) for a, b in zip(m, l)])
         return mat(f"{cls}_{part}", rgb, rough=0.7)
-    rgb = [int(0.3 * a + 0.7 * b) for a, b in zip(m, l)]
+    rgb = tone(cls, [int(0.3 * a + 0.7 * b) for a, b in zip(m, l)])
     return mat(f"{cls}_{part}", rgb, rough=0.9)
 
 MATS = {}
-def mat(name, rgb, rough=0.85, metal=0.0, glow=0.0):
+def mat(name, rgb, rough=0.85, metal=0.0, glow=0.0, spec=None):
     if name in MATS: return MATS[name]
     m = bpy.data.materials.new(name); m.use_nodes = True
     b = m.node_tree.nodes["Principled BSDF"]
     b.inputs["Base Color"].default_value = srgb(*rgb)
     b.inputs["Roughness"].default_value = rough
     b.inputs["Metallic"].default_value = metal
+    if spec is not None: b.inputs["Specular IOR Level"].default_value = spec
     if glow:
         b.inputs["Emission Color"].default_value = srgb(*rgb)
         b.inputs["Emission Strength"].default_value = glow
@@ -135,9 +160,43 @@ def ring_folds(c, rx, ry, n, phase, fold, k):
         out.append((c[0] + rx * f * math.cos(a), c[1] + ry * f * math.sin(a), c[2]))
     return out
 
-def loft(name, rings, m, cap_bottom=False, cap_top=False, n=8, phase=0.0, fold=0.0, folds=5):
+def super_ring(c, rx, ry, n, sq=0.0, phase=-math.pi / 2, drops=None, fold=0.0, folds=0):
+    """A ring with squared-off corners (sq -> 1 is a rounded rectangle) whose vertices can
+    each hang down: the paintings' shoulder mantles are square yokes that come to points,
+    not cones. phase puts vertex 0 at the front centre, facing the camera."""
+    p = 1.0 - 0.62 * sq
+    out = []
+    for i in range(n):
+        a = 2 * math.pi * i / n + phase
+        ca, sa = math.cos(a), math.sin(a)
+        f = 1.0 + fold * math.cos(folds * a) if folds else 1.0
+        x = rx * f * math.copysign(abs(ca) ** p, ca)
+        y = ry * f * math.copysign(abs(sa) ** p, sa)
+        out.append((c[0] + x, c[1] + y, c[2] + (drops(i, a) if drops else 0.0)))
+    return out
+
+def rn(n):
+    """Ring resolution at the current --res. Four-sided shapes are shapes, not
+    approximations of a circle — a pyramid and a blade keep their four sides."""
+    return n if n <= 4 else max(6, int(round(n * RES)))
+
+def densify(rings, steps):
+    """Extra rings between the given ones, so a taper curves instead of stepping."""
+    if steps <= 1 or len(rings) < 2: return rings
+    out = []
+    for (ca, rxa, rya), (cb, rxb, ryb) in zip(rings, rings[1:]):
+        for s in range(steps):
+            t = s / steps
+            out.append((tuple(ca[k] + (cb[k] - ca[k]) * t for k in range(3)), rxa + (rxb - rxa) * t, rya + (ryb - rya) * t))
+    out.append(rings[-1])
+    return out
+
+def loft(name, rings, m, cap_bottom=False, cap_top=False, n=8, phase=0.0, fold=0.0, folds=5, sq=0.0, dense=True):
     """rings: list of (center, rx, ry). Faces between consecutive rings; a ring with rx=0 is a tip.
-    fold > 0 pleats the rings (deeper toward the last ring), for robes, skirts, hoods and capes."""
+    fold > 0 pleats the rings (deeper toward the last ring), for robes, skirts, hoods and capes.
+    sq > 0 squares the cross-section off, for helms and hoods built out of flat planes."""
+    n = rn(n)
+    if dense: rings = densify(rings, int(round(RES)))
     verts, faces = [], []
     idx = []
     for ri, (c, rx, ry) in enumerate(rings):
@@ -146,7 +205,9 @@ def loft(name, rings, m, cap_bottom=False, cap_top=False, n=8, phase=0.0, fold=0
         else:
             idx.append(list(range(len(verts), len(verts) + n)))
             depth = fold * (0.35 + 0.65 * ri / max(1, len(rings) - 1)) if fold else 0.0
-            verts += ring_folds(c, rx, ry, n, phase, depth, folds) if fold else ring(c, rx, ry, n, phase)
+            if sq: verts += super_ring(c, rx, ry, n, sq=sq, phase=phase, fold=depth, folds=folds if depth else 0)
+            elif fold: verts += ring_folds(c, rx, ry, n, phase, depth, folds)
+            else: verts += ring(c, rx, ry, n, phase)
     for a, b in zip(idx, idx[1:]):
         if len(a) == 1:
             for i in range(n): faces.append((a[0], b[(i + 1) % n], b[i]))
@@ -158,6 +219,24 @@ def loft(name, rings, m, cap_bottom=False, cap_top=False, n=8, phase=0.0, fold=0
     if cap_top and len(idx[-1]) > 1: faces.append(tuple(idx[-1]))
     return new_obj(name, verts, faces, m)
 
+def plate(name, pts, y, m, thick=0.012):
+    """A flat polygon standing in the screen plane (x, z) at depth y, facing the camera.
+    A lofted prism shows the camera its side, not its cross-section; this shows its face."""
+    n = len(pts)
+    verts = [(x, y - thick, z) for x, z in pts] + [(x, y + thick, z) for x, z in pts]
+    faces = [tuple(range(n))[::-1], tuple(range(n, 2 * n))]
+    for i in range(n): faces.append((i, (i + 1) % n, n + (i + 1) % n, n + i))
+    return new_obj(name, verts, faces, m)
+
+def hexagon(cx, cz, rx, rz):
+    """Points of a pointy-top hexagon: the shape of every hood opening in the paintings."""
+    return [(cx + rx * math.cos(math.pi / 2 + i * math.pi / 3), cz + rz * math.sin(math.pi / 2 + i * math.pi / 3)) for i in range(6)]
+
+def face_hole(prefix, cz, rx, rz, m, void, y=-0.13):
+    """A hood's face: the dark hexagon, and the hood's own lip standing proud around it."""
+    return [plate(f"{prefix}_facelip", hexagon(0, cz, rx * 1.20, rz * 1.16), y + 0.008, m, thick=0.010),
+            plate(f"{prefix}_face", hexagon(0, cz, rx, rz), y, void, thick=0.010)]
+
 def box(name, c, sx, sy, sz, m):
     x, y, z = c
     v = [(x - sx, y - sy, z - sz), (x + sx, y - sy, z - sz), (x + sx, y + sy, z - sz), (x - sx, y + sy, z - sz),
@@ -166,14 +245,16 @@ def box(name, c, sx, sy, sz, m):
     return new_obj(name, v, f, m)
 
 def sphere(name, c, r, m, n=8, k=5):
+    k = rn(k)                       # loft scales n itself; scaling it here too squares it
     rings = [((c[0], c[1], c[2] - r), 0, 0)]
     for i in range(1, k):
         a = math.pi * i / k
         rings.append(((c[0], c[1], c[2] - r * math.cos(a)), r * math.sin(a), r * math.sin(a)))
     rings.append(((c[0], c[1], c[2] + r), 0, 0))
-    return loft(name, rings, m, n=n)
+    return loft(name, rings, m, n=n, dense=False)
 
 def torus(name, c, R, r, m, n=14, k=6):
+    n, k = rn(n), rn(k)
     verts, faces = [], []
     for i in range(n):
         a = 2 * math.pi * i / n
@@ -312,7 +393,8 @@ def build_body(cls, props, regions):
     skin = ob.modifiers.new("skin", "SKIN"); skin.use_smooth_shade = False
     for i, n in enumerate(names):
         sv = me.skin_vertices[0].data[i]; sv.radius = J[n]["r"]; sv.use_root = (n == "pelvis")
-    sub = ob.modifiers.new("sub", "SUBSURF"); sub.levels = 1; sub.render_levels = 1
+    sub = ob.modifiers.new("sub", "SUBSURF")
+    sub.levels = sub.render_levels = 1 if RES <= 1.0 else 2
     body = evaluated_copy(ob, f"{cls}_body")
     # material regions by nearest skeleton segment
     seg = [(J[a]["p"], J[b]["p"], J[b]["region"] if J[b]["region"] != "tunic" else J[a]["region"]) for a, b in E]
@@ -411,7 +493,7 @@ def tiers(prefix, base_z, tiers_spec, m, n=10, phase=0.0):
 
 def pyramid(name, c, r, h, m, toward=(0, -1, 0)):
     """The paintings' signature ornament: a four-sided gold pyramid, base on the surface, tip toward the camera."""
-    ob = loft(name, [((0, 0, -0.01), r, r), ((0, 0, h), 0, 0)], m, n=4, cap_bottom=True, phase=math.pi / 4)
+    ob = loft(name, [((0, 0, -0.01), r, r), ((0, 0, h), 0, 0)], m, n=4, cap_bottom=True)
     ob.data.transform(Matrix.Translation(c) @ Vector(toward).to_track_quat("Z", "Y").to_matrix().to_4x4())
     return ob
 
@@ -498,11 +580,12 @@ def component(cls, name, bone):
     return deco
 
 def shared_materials():
-    return dict(gold=mat("gold", (212, 168, 62), rough=0.32, metal=0.85, glow=0.12), steel=mat("steel", (150, 148, 150), rough=0.35, metal=0.9),
-                skin=mat("skin", (150, 104, 76)), void=mat("void", (5, 4, 4), rough=1.0), glow=mat("star_glow", (255, 210, 140), rough=0.2, glow=3.0),
+    return dict(gold=mat("gold", (186, 145, 52), rough=0.36, metal=0.85, glow=0.07), steel=mat("steel", (86, 86, 92), rough=0.46, metal=0.9), brass=mat("brass", (128, 98, 44), rough=0.45, metal=0.8),
+                skin=mat("skin", (104, 72, 52)), void=mat("void", (3, 3, 3), rough=1.0, spec=0.0), glow=mat("star_glow", (255, 210, 140), rough=0.2, glow=3.0),
                 boot=mat("boot", (30, 26, 22)), wood=mat("wood", (44, 32, 24)))
 
 def pointed_tiers(prefix, m, gold, tiers, n=8, fold=0.03, dip=0.07):
+    n = rn(n)
     """Layered shoulder cape whose hem comes to hanging points — straight ahead and
     over each shoulder — the way the paintings' leather mantles do: every other
     hem vertex drops by `dip`. A folded-back inner ring gives the edge thickness.
@@ -538,18 +621,71 @@ def pointed_tiers(prefix, m, gold, tiers, n=8, fold=0.03, dip=0.07):
             out.append(new_obj(f"{prefix}_trim{i}", tv, tf, gold))
     return out
 
+def yoke(prefix, m, gold, tiers, n=12, sq=0.6):
+    n = rn(n)
+    """A squared shoulder yoke: flat panels across the shoulders, the hem falling to a point
+    at the front centre and over each shoulder, a folded-back inner edge and a gold band.
+    tiers: (top_z, rx, ry, hx, hy, hem_z, v_drop, corner_drop, trim), widest tier first."""
+    out = []
+    for ti, (top_z, rx, ry, hx, hy, hem_z, vdrop, cdrop, trim) in enumerate(tiers):
+        def drops(k, a, vdrop=vdrop, cdrop=cdrop):
+            f = math.cos(a + math.pi / 2)                 # 1 at the front centre, 0 at the sides
+            v = vdrop * max(0.0, f) ** 1.3
+            c = cdrop * abs(math.sin(a + math.pi / 2)) ** 4 * (1.0 if f > -0.3 else 0.35)
+            return -(v + c)
+        verts, faces = [], []
+        def push(rs):
+            base = len(verts); verts.extend(rs); return list(range(base, base + n))
+        r0 = push(super_ring((0, 0.01, top_z), rx, ry, n, sq=sq * 0.7))
+        r1 = push(super_ring((0, 0.01, hem_z + 0.06), hx * 0.92, hy * 0.92, n, sq=sq, drops=drops))
+        r2 = push(super_ring((0, 0.01, hem_z), hx, hy, n, sq=sq, drops=drops))
+        r3 = push(super_ring((0, 0.01, hem_z + 0.03), hx * 0.93, hy * 0.93, n, sq=sq, drops=drops))
+        for ra, rb in ((r0, r1), (r1, r2), (r2, r3)):
+            for k in range(n): faces.append((ra[k], ra[(k + 1) % n], rb[(k + 1) % n], rb[k]))
+        out.append(new_obj(f"{prefix}_yoke{ti}", verts, faces, m))
+        if trim:
+            tv, tf = [], []
+            def tpush(rs):
+                base = len(tv); tv.extend(rs); return list(range(base, base + n))
+            t0 = tpush(super_ring((0, 0.01, hem_z + 0.028), hx * 1.015, hy * 1.015, n, sq=sq, drops=drops))
+            t1 = tpush(super_ring((0, 0.01, hem_z - 0.004), hx * 1.015, hy * 1.015, n, sq=sq, drops=drops))
+            for k in range(n): tf.append((t0[k], t0[(k + 1) % n], t1[(k + 1) % n], t1[k]))
+            out.append(new_obj(f"{prefix}_trim{ti}", tv, tf, gold))
+    return out
+
+def on_surface(rings, x, z, push=1.03):
+    """The point on a lofted torso where a seam at (x, z) lies, pushed just proud of it."""
+    rx, ry = rings[-1][1], rings[-1][2]
+    for (z0, rx0, ry0), (z1, rx1, ry1) in zip(rings, rings[1:]):
+        if z0 >= z >= z1 or (z0, rx0, ry0) == rings[0] and z > z0:
+            t = max(0.0, min(1.0, (z0 - z) / (z0 - z1)))
+            rx, ry = rx0 + (rx1 - rx0) * t, ry0 + (ry1 - ry0) * t
+            break
+    q = min(1.0, abs(x) / rx)
+    return (x, -ry * math.sqrt(max(0.0, 1 - q * q)) * push, z)
+
+def seam(name, rings, a, b, halfw, m, n=6):
+    n = rn(n)
+    """A quilting seam laid over a lofted torso, from (x, z) a to b."""
+    verts, faces = [], []
+    for i in range(n + 1):
+        t = i / n
+        x, z = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
+        verts += [on_surface(rings, x - halfw, z), on_surface(rings, x + halfw, z)]
+    for i in range(n): faces.append((2 * i, 2 * i + 1, 2 * i + 3, 2 * i + 2))
+    return new_obj(name, verts, faces, m)
+
 # ---------------- ROGUE ----------------
 @component("rogue", "hood", "head")
 def rogue_hood(J, M):
     m = paint("rogue", "hood", "leather")
     # a deep shell that drapes to the shoulders, a thick rim round the face opening, the face in shadow, a scarf across the mouth
-    hood = loft("rogue_hood", [((0, 0.06, 1.40), 0.32, 0.25), ((0, 0.05, 1.50), 0.27, 0.22), ((0, 0.05, 1.60), 0.235, 0.21), ((0, 0.05, 1.70), 0.22, 0.20),
-                               ((0, 0.05, 1.80), 0.20, 0.185), ((0, 0.04, 1.88), 0.16, 0.15), ((0, 0.02, 1.95), 0.09, 0.09), ((0, 0.0, 1.985), 0, 0)],
-                m, n=10, fold=0.06, folds=2, phase=math.pi / 2)
-    rim = torus("rogue_hoodrim", (0, -0.12, 1.68), 0.16, 0.022, m, n=12, k=5)
-    face = loft("rogue_face", [((0, -0.125, 1.53), 0.145, 0.02), ((0, -0.125, 1.83), 0.14, 0.02)], M["void"], cap_bottom=True, cap_top=True, n=8)
-    mask = loft("rogue_mask", [((0, -0.15, 1.58), 0.10, 0.035), ((0, -0.155, 1.65), 0.10, 0.035)], paint("rogue", "cowl", "cloth"), cap_bottom=True, cap_top=True, n=8, fold=0.06, folds=3)
-    return [hood, rim, face, mask]
+    hood = loft("rogue_hood", [((0, 0.07, 1.38), 0.34, 0.27), ((0, 0.055, 1.56), 0.27, 0.225), ((0, 0.05, 1.74), 0.235, 0.21),
+                               ((0, 0.055, 1.88), 0.185, 0.17), ((0, 0.075, 1.98), 0.10, 0.10), ((0, 0.10, 2.03), 0, 0)],
+                m, n=7, sq=0.5, phase=math.pi / 2)
+    face = face_hole("rogue", 1.705, 0.128, 0.155, m, M["void"], y=-0.186)
+    mask = plate("rogue_mask", [(-0.105, 1.575), (0.105, 1.575), (0.118, 1.640), (0.0, 1.700), (-0.118, 1.640)], -0.202, paint("rogue", "cowl", "cloth"), thick=0.010)
+    return [hood] + face + [mask]
 
 @component("rogue", "cowl", "neck")
 def rogue_cowl(J, M):
@@ -562,7 +698,7 @@ def rogue_cowl(J, M):
 @component("rogue", "mantle", "spine")
 def rogue_mantle(J, M):
     m = paint("rogue", "mantle", "leather")
-    out = pointed_tiers("rogue_mantle", m, M["gold"], [(1.54, 0.17, 0.14, 0.48, 0.28, 1.19, False), (1.52, 0.16, 0.13, 0.39, 0.24, 1.30, False), (1.50, 0.15, 0.12, 0.30, 0.19, 1.40, False)])
+    out = yoke("rogue_mantle", m, M["gold"], [(1.55, 0.25, 0.175, 0.47, 0.275, 1.30, 0.06, 0.20, False), (1.47, 0.20, 0.145, 0.375, 0.235, 1.14, 0.05, 0.15, False)], n=12, sq=0.88)
     out += [pyramid("rogue_mstud_l", (-0.46, -0.06, 1.23), 0.028, 0.04, M["gold"], toward=(-0.6, -1, 0)), pyramid("rogue_mstud_r", (0.46, -0.06, 1.23), 0.028, 0.04, M["gold"], toward=(0.6, -1, 0)),
             pyramid("rogue_mstud_c", (0.0, -0.27, 1.23), 0.03, 0.045, M["gold"]), pyramid("rogue_mstud_c2", (0.0, -0.22, 1.42), 0.024, 0.036, M["gold"])]
     return out
@@ -570,11 +706,19 @@ def rogue_mantle(J, M):
 @component("rogue", "tunic", "spine")
 def rogue_tunic(J, M):
     mt = paint("rogue", "tunic", "cloth"); m = paint("rogue", "belt", "leather")
-    chest = loft("rogue_chest", [((0, 0, 1.52), 0.22, 0.14), ((0, 0, 1.40), 0.235, 0.15), ((0, 0, 1.26), 0.215, 0.14), ((0, 0, 1.10), 0.20, 0.135)], mt, n=10, fold=0.03, folds=5)
-    strap = box("rogue_strap", (0, 0, 0), 0.03, 0.012, 0.24, m)
-    strap.data.transform(Matrix.Translation((0.0, -0.155, 1.28)) @ Matrix.Rotation(math.radians(36), 4, "Y"))
+    rings = [(1.52, 0.22, 0.14), (1.40, 0.235, 0.15), (1.26, 0.215, 0.14), (1.10, 0.20, 0.135)]
+    chest = loft("rogue_chest", [((0, 0, z), rx, ry) for z, rx, ry in rings], mt, n=10, fold=0.03, folds=5)
+    out = [chest]
+    # quilting: seams crossing at a diamond, the way the painting's padded chest is stitched
+    mq = mat("rogue_quilt", tone("rogue", (74, 86, 58)), rough=0.95)
+    for k, x0 in enumerate((-0.20, -0.09, 0.02, 0.13)):
+        out.append(seam(f"rogue_quiltA{k}", rings, (x0, 1.49), (x0 + 0.20, 1.13), 0.006, mq))
+        out.append(seam(f"rogue_quiltB{k}", rings, (-x0, 1.49), (-x0 - 0.20, 1.13), 0.006, mq))
+    strap = seam("rogue_strap", rings, (-0.17, 1.50), (0.15, 1.11), 0.044, m, n=8)
+    strap2 = seam("rogue_strap2", rings, (0.16, 1.50), (-0.06, 1.14), 0.032, m, n=8)
+    buckle = plate("rogue_strapbuckle", [(-0.075, 1.235), (-0.035, 1.265), (0.005, 1.235), (-0.035, 1.205)], -0.163, M["gold"], thick=0.010)
     band = loft("rogue_chestband", [((0, 0, 1.19), 0.225, 0.145), ((0, 0, 1.15), 0.225, 0.145)], m, n=10)
-    return [chest, strap, band, pyramid("rogue_tstud", (0.0, -0.175, 1.30), 0.03, 0.045, M["gold"])]
+    return out + [strap, strap2, buckle, band, pyramid("rogue_tstud", (0.0, -0.175, 1.30), 0.03, 0.045, M["gold"])]
 
 @component("rogue", "belt", "pelvis")
 def rogue_belt(J, M):
@@ -593,7 +737,7 @@ def rogue_pouch(J, M):
 @component("rogue", "skirt", "soft")
 def rogue_skirt(J, M):
     m = paint("rogue", "skirt", "cloth"); ml = paint("rogue", "mantle", "leather")
-    out = pointed_tiers("rogue_skirt", m, M["gold"], [(1.04, 0.19, 0.14, 0.30, 0.21, 0.56, False), (1.02, 0.185, 0.135, 0.26, 0.185, 0.72, False)], n=8, fold=0.04)
+    out = yoke("rogue_skirt", m, M["gold"], [(1.04, 0.21, 0.155, 0.32, 0.22, 0.60, 0.16, 0.20, False), (1.02, 0.195, 0.145, 0.27, 0.19, 0.76, 0.11, 0.14, False)], n=10, sq=0.55)
     out.append(loft("rogue_skirtedge", [((0, 0.01, 0.585), 0.302, 0.212), ((0, 0.01, 0.555), 0.302, 0.212)], ml, n=8, phase=-math.pi / 2))
     out.append(pyramid("rogue_sstud", (0.0, -0.215, 0.60), 0.02, 0.03, M["gold"]))
     return out
@@ -646,18 +790,41 @@ def rogue_dagger_r(J, M): return rogue_dagger(J, M, "R")
 @component("rogue", "boots", "soft")
 def rogue_boots(J, M): return [ob for ob, _ in boots("rogue", J, M["boot"], paint("rogue", "belt", "leather"), cuff_h=0.05)]
 
+def curved_plate(name, pts, y, bulge, m, thick=0.02):
+    """A shaped plate standing in the screen plane, bowed toward the camera in the
+    middle so it catches light like armour instead of reading as cardboard. pts are
+    (x, z) corners in order; the bow is strongest at the middle of the span."""
+    n = len(pts)
+    xs = [p[0] for p in pts]
+    lo, hi = min(xs), max(xs)
+    def bow(x):
+        t = 0.0 if hi == lo else (x - lo) / (hi - lo)
+        return -bulge * math.sin(math.pi * t)
+    verts = [(x, y + bow(x), z) for x, z in pts] + [(x, y + bow(x) + thick, z) for x, z in pts]
+    faces = [tuple(range(n))[::-1], tuple(range(n, 2 * n))]
+    for i in range(n): faces.append((i, (i + 1) % n, n + (i + 1) % n, n + i))
+    return new_obj(name, verts, faces, m)
+
 # ---------------- REAVER ----------------
 @component("reaver", "helm", "head")
 def reaver_helm(J, M):
     m = paint("reaver", "helm", "plate")
-    helm = loft("reaver_helm", [((0, 0, 1.50), 0.215, 0.20), ((0, 0, 1.56), 0.20, 0.185), ((0, 0.0, 1.66), 0.195, 0.18), ((0, 0.0, 1.76), 0.185, 0.17), ((0, 0.0, 1.86), 0.15, 0.14), ((0, 0.0, 1.95), 0.085, 0.085), ((0, 0.0, 2.02), 0, 0)],
-                m, n=6, phase=math.pi / 2, fold=0.03, folds=3)
-    rim = loft("reaver_helmrim", [((0, 0, 1.485), 0.225, 0.21), ((0, 0, 1.515), 0.215, 0.20)], M["gold"], n=6, phase=math.pi / 2)
-    plate = loft("reaver_faceplate", [((0, -0.16, 1.56), 0.12, 0.03), ((0, -0.18, 1.66), 0.125, 0.035), ((0, -0.17, 1.76), 0.11, 0.03)], m, n=6, cap_bottom=True, cap_top=True)
-    out = [helm, rim, plate]
-    for x in (-0.08, -0.04, 0.0, 0.04, 0.08):
-        out.append(box(f"reaver_slit{x}", (x, -0.205, 1.63), 0.008, 0.01, 0.045, M["void"]))
-    out.append(loft("reaver_crest", [((0, -0.19, 1.74), 0.018, 0.01), ((0, -0.1, 1.98), 0.02, 0.01), ((0, 0.02, 2.0), 0.015, 0.01), ((0, 0.05, 1.99), 0, 0)], M["gold"], n=4, cap_bottom=True))
+    # flat planes, a broad face, a peaked crown: the painting's helm is built out of
+    # slabs, not a dome. sq squares the cross-section; the phase puts a face forward.
+    ph = math.pi / 8
+    helm = loft("reaver_helm", [((0, 0, 1.47), 0.215, 0.205), ((0, 0, 1.68), 0.218, 0.208), ((0, 0.0, 1.84), 0.20, 0.19),
+                                ((0, 0.0, 1.98), 0.125, 0.12), ((0, 0.0, 2.07), 0, 0)],
+                m, n=6, phase=ph, sq=0.75)
+    ridge = loft("reaver_ridge", [((0, -0.155, 1.83), 0.018, 0.022), ((0, -0.09, 1.97), 0.016, 0.02), ((0, 0.0, 2.06), 0, 0)], m, n=4, cap_bottom=True)
+    face = plate("reaver_faceplate", [(-0.175, 1.50), (0.175, 1.50), (0.19, 1.60), (0.175, 1.76), (0.0, 1.83), (-0.175, 1.76), (-0.19, 1.60)], -0.205, m, thick=0.016)
+    out = [helm, ridge, face]
+    for i in range(8):
+        x = -0.105 + i * 0.030
+        out.append(plate(f"reaver_slit{i}", [(x - 0.008, 1.605), (x + 0.008, 1.605), (x + 0.008, 1.695), (x - 0.008, 1.695)], -0.222, M["void"], thick=0.008))
+    # brass edging: a band under the visor and a rail down each side of the face
+    out.append(plate("reaver_visorband", [(-0.176, 1.495), (0.176, 1.495), (0.176, 1.525), (-0.176, 1.525)], -0.212, M["brass"], thick=0.012))
+    out.append(plate("reaver_facerim", [(-0.192, 1.49), (0.192, 1.49), (0.208, 1.60), (0.192, 1.775), (0.0, 1.85), (-0.192, 1.775), (-0.208, 1.60)], -0.198, M["brass"], thick=0.014))
+    out.append(loft("reaver_helmrim", [((0, 0, 1.462), 0.222, 0.212), ((0, 0, 1.482), 0.218, 0.208)], M["brass"], n=8, phase=ph, sq=0.62))
     return out
 
 @component("reaver", "gorget", "neck")
@@ -671,13 +838,23 @@ def reaver_gorget(J, M):
 def reaver_pauldron(J, M, s_, sx):
     m = paint("reaver", "pauldron_r", "plate")
     sh = J[f"shoulder.{s_}"]["p"]; out = []
-    for i, (dz, r0, r1, drop) in enumerate([(0.15, 0.0, 0.24, 0.14), (0.01, 0.19, 0.25, 0.13), (-0.12, 0.20, 0.23, 0.11)]):
-        out.append(loft(f"reaver_pauldron{i}.{s_}", [((sh.x + sx * 0.0, sh.y, sh.z + dz + 0.02), r0, r0 * 0.9), ((sh.x + sx * 0.03, sh.y, sh.z + dz - 0.03), r1, r1 * 0.9), ((sh.x + sx * 0.04, sh.y, sh.z + dz - drop), r1 * 0.95, r1 * 0.85)], m, n=8, phase=math.pi / 8, fold=0.03, folds=4))
-        out.append(loft(f"reaver_pedge{i}.{s_}", [((sh.x + sx * 0.04, sh.y, sh.z + dz - drop + 0.014), r1 * 0.96, r1 * 0.86), ((sh.x + sx * 0.04, sh.y, sh.z + dz - drop - 0.002), r1 * 0.96, r1 * 0.86)], M["gold"], n=8, phase=math.pi / 8))
+    X = lambda v: sx * v
+    # three lames stepping down and outward from the collar, each with a pointed
+    # outer corner and a brass edge showing under it — the painting's pauldron read
+    # from the front, which is the only view these sprites have
+    for i, (zt, zb, xo) in enumerate([(1.575, 1.475, 0.46), (1.495, 1.365, 0.515), (1.385, 1.235, 0.545)]):
+        pts = [(X(0.235), zt), (X(0.345), zt + 0.022), (X(xo - 0.07), zt - 0.018), (X(xo), zt - 0.07),
+               (X(xo - 0.035), zb), (X(0.32), zb + 0.022), (X(0.235), zb + 0.05)]
+        y = sh.y - 0.145 - 0.014 * i
+        out.append(curved_plate(f"reaver_lametrim{i}.{s_}", [(x, z - 0.024) for x, z in pts], y + 0.014, 0.055, M["brass"], thick=0.02))
+        out.append(curved_plate(f"reaver_lame{i}.{s_}", pts, y, 0.055, m, thick=0.028))
+    out.append(loft(f"reaver_boss.{s_}", [((X(0.30), sh.y - 0.215, 1.50), 0.055, 0.055), ((X(0.30), sh.y - 0.245, 1.50), 0.049, 0.049), ((X(0.30), sh.y - 0.27, 1.50), 0, 0)], M["gold"], n=10, cap_bottom=True))
     return out
-@component("reaver", "pauldron_l", "upper_arm.L")
+# on the spine, not the arm bone: these plates are shaped for the camera, and an
+# arm that swings through a strike would carry them out of position
+@component("reaver", "pauldron_l", "spine")
 def reaver_pauldron_l(J, M): return reaver_pauldron(J, M, "L", -1)
-@component("reaver", "pauldron_r", "upper_arm.R")
+@component("reaver", "pauldron_r", "spine")
 def reaver_pauldron_r(J, M): return reaver_pauldron(J, M, "R", 1)
 
 @component("reaver", "breastplate", "spine")
@@ -685,16 +862,13 @@ def reaver_breastplate(J, M):
     m = paint("reaver", "breastplate", "plate")
     plate = loft("reaver_plate", [((0, 0, 1.50), 0.22, 0.155), ((0, 0, 1.40), 0.24, 0.165), ((0, 0, 1.26), 0.225, 0.155), ((0, 0, 1.12), 0.21, 0.15)], m, n=8, phase=math.pi / 8)
     trim = loft("reaver_trim1", [((0, 0, 1.13), 0.215, 0.155), ((0, 0, 1.11), 0.215, 0.155)], M["gold"], n=8, phase=math.pi / 8)
-    out = [plate, trim, pyramid("reaver_chestgem", (0, -0.175, 1.30), 0.05, 0.06, M["gold"])]
-    for sx in (-1, 1):
-        out.append(sphere(f"reaver_disc{sx}", (sx * 0.17, -0.16, 1.46), 0.045, M["gold"], n=8, k=3))
-    return out
+    return [plate, trim, pyramid("reaver_chestgem", (0, -0.175, 1.30), 0.05, 0.06, M["gold"])]
 
 @component("reaver", "cape", "soft")
 def reaver_cape(J, M):
     m = paint("reaver", "cape", "cloth")
-    cape = loft("reaver_cape", [((0, 0.16, 1.54), 0.42, 0.012), ((0, 0.19, 1.30), 0.41, 0.02), ((0, 0.21, 1.00), 0.39, 0.03), ((0, 0.22, 0.70), 0.37, 0.03), ((0, 0.23, 0.40), 0.36, 0.03)], m, n=8, cap_bottom=True, cap_top=True, fold=0.10, folds=3)
-    drape = loft("reaver_drape", [((0, 0.02, 1.58), 0.16, 0.13), ((0, 0.03, 1.50), 0.32, 0.23), ((0, 0.05, 1.42), 0.36, 0.25)], m, n=10, phase=math.pi / 10, fold=0.06, folds=5)
+    cape = loft("reaver_cape", [((0, 0.14, 1.58), 0.26, 0.016), ((0, 0.17, 1.34), 0.31, 0.028), ((0, 0.19, 1.02), 0.35, 0.038), ((0, 0.21, 0.70), 0.39, 0.044), ((0, 0.22, 0.40), 0.42, 0.048), ((0, 0.22, 0.30), 0.41, 0.046)], m, n=12, cap_bottom=True, cap_top=True, fold=0.16, folds=5)
+    drape = loft("reaver_drape", [((0, 0.03, 1.60), 0.17, 0.15), ((0, 0.05, 1.51), 0.33, 0.25), ((0, 0.07, 1.40), 0.38, 0.28), ((0, 0.09, 1.30), 0.37, 0.27)], m, n=10, phase=math.pi / 10, fold=0.08, folds=5)
     return [cape, drape]
 
 def reaver_gauntlet(J, M, s_):
@@ -719,7 +893,9 @@ def reaver_sword(J, M):
         out.append(weapon_along(f"reaver_gripring{k}", J, "R", [((0, 0, k), 0.027, 0.027), ((0, 0, k + 0.02), 0.027, 0.027)], paint("reaver", "sword", "leather")))
     out.append(weapon_along("reaver_swordguard", J, "R", [((0, 0, 0.18), 0.13, 0.03), ((0, 0, 0.24), 0.13, 0.03)], M["steel"], cap=True, n=4))
     out.append(weapon_along("reaver_guardtrim", J, "R", [((0, 0, 0.235), 0.132, 0.032), ((0, 0, 0.25), 0.132, 0.032)], M["gold"], cap=True, n=4))
-    out.append(weapon_along("reaver_blade", J, "R", [((0, 0, 0.24), 0.058, 0.014), ((0, 0, 0.92), 0.048, 0.01), ((0, 0, 1.14), 0, 0)], M["steel"], n=4))
+    # 0.98 to the tip, not 1.14: the longer blade left the frame overhead in the
+    # wind-up and past the right edge in the follow-through
+    out.append(weapon_along("reaver_blade", J, "R", [((0, 0, 0.24), 0.060, 0.015), ((0, 0, 0.72), 0.050, 0.011), ((0, 0, 0.86), 0, 0)], M["steel"], n=4))
     out.append(weapon_along("reaver_pommel", J, "R", [((0, 0, -0.18), 0.042, 0.042), ((0, 0, -0.12), 0.042, 0.042)], M["gold"], cap=True, n=4))
     return out
 
@@ -737,6 +913,18 @@ def reaver_tasset(J, M):
             pl.data.transform(T); ed.data.transform(T); out += [pl, ed]
     return out
 
+@component("reaver", "greave", "soft")
+def reaver_greave(J, M):
+    """Plate legs. The painting stops at the waist, so these follow its plate — same
+    colour, same gold edge — rather than inventing a different armour."""
+    m = paint("reaver", "gauntlet_r", "plate"); out = []
+    for s_ in ("L", "R"):
+        h, k, a = J[f"hip.{s_}"]["p"], J[f"knee.{s_}"]["p"], J[f"ankle.{s_}"]["p"]
+        out.append(along(f"reaver_cuisse.{s_}", h, k, [((0, 0, 0.18 * (k - h).length), 0.125, 0.125), ((0, 0, 0.92 * (k - h).length), 0.105, 0.105)], m, n=6))
+        out.append(along(f"reaver_poleyn.{s_}", h, k, [((0, 0, 0.93 * (k - h).length), 0.115, 0.115), ((0, 0, 1.04 * (k - h).length), 0.10, 0.10)], M["brass"], n=6))
+        out.append(along(f"reaver_shin.{s_}", k, a, [((0, 0, 0.02 * (a - k).length), 0.10, 0.10), ((0, 0, 0.80 * (a - k).length), 0.088, 0.088)], m, n=6))
+    return out
+
 @component("reaver", "boots", "soft")
 def reaver_boots(J, M): return [ob for ob, _ in boots("reaver", J, M["boot"], paint("reaver", "gauntlet_r", "plate"), cuff_h=0.06, r=0.088)]
 
@@ -744,24 +932,24 @@ def reaver_boots(J, M): return [ob for ob, _ in boots("reaver", J, M["boot"], pa
 @component("starseer", "hat", "head")
 def starseer_hat(J, M):
     m = paint("starseer", "hat", "cloth")
-    brim = loft("star_brim", [((0, 0, 1.80), 0.13, 0.13), ((0, 0.02, 1.77), 0.40, 0.32), ((0, 0.03, 1.68), 0.68, 0.52), ((0, 0.03, 1.705), 0.68, 0.52), ((0, 0.02, 1.795), 0.40, 0.32), ((0, 0, 1.82), 0.13, 0.13)], m, n=14, cap_bottom=False, fold=0.09, folds=5)
-    crown = loft("star_crown", [((0, 0, 1.78), 0.20, 0.19), ((0.0, 0.0, 1.94), 0.18, 0.17), ((-0.02, 0.01, 2.10), 0.14, 0.13), ((-0.07, 0.03, 2.24), 0.095, 0.09), ((-0.16, 0.05, 2.34), 0.055, 0.05), ((-0.27, 0.06, 2.36), 0.025, 0.025), ((-0.34, 0.06, 2.33), 0, 0)], m, n=10, cap_bottom=True, fold=0.04, folds=3)
-    band = loft("star_band", [((0, 0, 1.80), 0.195, 0.185), ((0, 0, 1.87), 0.18, 0.17)], paint("starseer", "sash", "leather"), n=10)
-    return [brim, crown, band, pyramid("star_hatgem", (0, -0.185, 1.84), 0.035, 0.045, M["gold"])]
+    brim = loft("star_brim", [((0, 0, 1.83), 0.14, 0.14), ((0, 0.02, 1.755), 0.46, 0.36), ((0, 0.03, 1.545), 0.86, 0.62), ((0, 0.03, 1.575), 0.86, 0.62), ((0, 0.02, 1.785), 0.46, 0.36), ((0, 0, 1.855), 0.14, 0.14)], m, n=14, cap_bottom=False, fold=0.10, folds=5)
+    # the frame tops out at cz + ortho / 2 = 2.50: the crown leans over well below it
+    crown = loft("star_crown", [((0, 0, 1.79), 0.21, 0.20), ((0.0, 0.0, 1.99), 0.17, 0.16), ((-0.04, 0.01, 2.19), 0.12, 0.115), ((-0.12, 0.03, 2.34), 0.078, 0.074), ((-0.26, 0.05, 2.42), 0.044, 0.042), ((-0.40, 0.06, 2.415), 0.02, 0.02), ((-0.47, 0.06, 2.37), 0, 0)], m, n=9, cap_bottom=True, sq=0.35, fold=0.04, folds=3)
+    band = loft("star_band", [((0, 0, 1.815), 0.205, 0.195), ((0, 0, 1.90), 0.192, 0.182)], mat("star_hatband", tone("starseer", (86, 52, 58)), rough=0.8), n=10)
+    return [brim, crown, band, pyramid("star_hatgem", (0, -0.196, 1.858), 0.05, 0.06, M["gold"])]
 
 @component("starseer", "cowl", "head")
 def starseer_cowl(J, M):
     m = paint("starseer", "cowl", "cloth")
-    cowl = loft("star_cowl", [((0, 0.0, 1.48), 0.25, 0.20), ((0, 0.0, 1.60), 0.18, 0.15), ((0, 0.0, 1.72), 0.16, 0.145), ((0, 0.0, 1.80), 0.14, 0.13)], m, n=10, phase=math.pi / 10, fold=0.05, folds=4)
-    face = loft("star_face", [((0, -0.135, 1.54), 0.135, 0.02), ((0, -0.135, 1.80), 0.13, 0.02)], M["void"], cap_bottom=True, cap_top=True, n=8)
-    rim = torus("star_cowlrim", (0, -0.13, 1.67), 0.15, 0.02, m, n=12, k=5)
-    return [cowl, face, rim]
+    cowl = loft("star_cowl", [((0, 0.0, 1.46), 0.27, 0.21), ((0, 0.0, 1.58), 0.19, 0.16), ((0, 0.0, 1.70), 0.17, 0.15), ((0, 0.0, 1.80), 0.145, 0.135)], m, n=9, phase=math.pi / 2, sq=0.4, fold=0.05, folds=4)
+    return [cowl] + face_hole("star", 1.675, 0.125, 0.15, m, M["void"], y=-0.172)
 
 @component("starseer", "mantle", "spine")
 def starseer_mantle(J, M):
     m = paint("starseer", "mantle", "cloth")
-    out = pointed_tiers("star_mantle", m, M["gold"], [(1.54, 0.18, 0.14, 0.46, 0.29, 1.19, True), (1.52, 0.17, 0.13, 0.36, 0.23, 1.31, True)])
-    out += [pyramid("star_mstud_l", (-0.40, -0.11, 1.24), 0.024, 0.036, M["gold"], toward=(-0.4, -1, 0)), pyramid("star_mstud_r", (0.40, -0.11, 1.24), 0.024, 0.036, M["gold"], toward=(0.4, -1, 0))]
+    out = yoke("star_mantle", m, M["brass"], [(1.56, 0.24, 0.17, 0.45, 0.285, 1.29, 0.08, 0.16, True), (1.49, 0.20, 0.15, 0.355, 0.235, 1.14, 0.17, 0.10, True)], n=12, sq=0.80)
+    out += [pyramid("star_mstud_l", (-0.455, -0.09, 1.20), 0.024, 0.036, M["gold"], toward=(-0.4, -1, 0)), pyramid("star_mstud_r", (0.455, -0.09, 1.20), 0.024, 0.036, M["gold"], toward=(0.4, -1, 0)),
+            pyramid("star_throat", (0, -0.20, 1.33), 0.045, 0.055, M["gold"])]
     return out
 
 @component("starseer", "pendant", "spine")
@@ -773,17 +961,19 @@ def starseer_pendant(J, M):
 @component("starseer", "sash", "pelvis")
 def starseer_sash(J, M):
     m = paint("starseer", "sash", "leather")
-    return [loft("star_sash", [((0, 0, 1.11), 0.21, 0.155), ((0, 0, 1.03), 0.215, 0.16)], m, n=10), pyramid("star_sashgem", (0, -0.165, 1.07), 0.045, 0.05, M["gold"])]
+    return [loft("star_sash", [((0, 0, 1.12), 0.208, 0.153), ((0, 0, 1.06), 0.214, 0.159)], m, n=10),
+            loft("star_sash2", [((0, 0, 1.05), 0.216, 0.161), ((0, 0, 0.99), 0.220, 0.164)], m, n=10),
+            pyramid("star_sashgem", (0, -0.175, 1.055), 0.075, 0.075, M["gold"])]
 
 @component("starseer", "robe", "soft")
 def starseer_robe(J, M):
     m = paint("starseer", "robe", "cloth")
-    return [loft("star_robe", [((0, 0, 1.08), 0.20, 0.145), ((0, 0, 0.80), 0.24, 0.17), ((0, 0, 0.45), 0.28, 0.20), ((0, 0, 0.10), 0.31, 0.22)], m, n=12, cap_bottom=True, fold=0.08, folds=6)]
+    return [loft("star_robe", [((0, 0, 1.08), 0.20, 0.145), ((0, 0, 0.80), 0.24, 0.17), ((0, 0, 0.45), 0.28, 0.20), ((0, 0, 0.10), 0.31, 0.22)], m, n=14, cap_bottom=True, fold=0.11, folds=7)]
 
 def starseer_sleeve(J, M, s_):
     m = paint("starseer", "sleeve_r", "cloth")
     e, w = J[f"elbow.{s_}"]["p"], J[f"wrist.{s_}"]["p"]; L = (w - e).length
-    return [along(f"star_sleeve.{s_}", e, w, [((0, 0, 0.0), 0.078, 0.078), ((0, 0, 0.9 * L), 0.115, 0.115), ((0, 0, 1.0 * L), 0.115, 0.115)], m, n=8, fold=0.05, folds=4)]
+    return [along(f"star_sleeve.{s_}", e, w, [((0, 0, -0.05 * L), 0.082, 0.082), ((0, 0, 0.9 * L), 0.122, 0.122), ((0, 0, 1.12 * L), 0.118, 0.118)], m, n=8, fold=0.05, folds=4)]
 @component("starseer", "sleeve_l", "forearm.L")
 def starseer_sleeve_l(J, M): return starseer_sleeve(J, M, "L")
 @component("starseer", "sleeve_r", "forearm.R")
@@ -809,25 +999,23 @@ def starseer_boots(J, M): return [ob for ob, _ in boots("star", J, M["boot"])]
 # ---------------- HERALD ----------------
 @component("herald", "halo", "head")
 def herald_halo(J, M):
-    out = [torus("herald_halo", (0, 0.10, 1.88), 0.31, 0.014, M["gold"], n=18, k=5)]
+    out = [torus("herald_halo", (0, 0.17, 1.88), 0.285, 0.010, M["brass"], n=20, k=5)]
     for i in range(4):
         a = math.pi / 2 * i
-        out.append(pyramid(f"herald_spike{i}", (0.31 * math.cos(a), 0.10, 1.88 + 0.31 * math.sin(a)), 0.02, 0.05, M["gold"], toward=(math.cos(a), 0, math.sin(a))))
+        out.append(pyramid(f"herald_spike{i}", (0.285 * math.cos(a), 0.17, 1.88 + 0.285 * math.sin(a)), 0.022, 0.045, M["brass"], toward=(math.cos(a), 0, math.sin(a))))
     return out
 
 @component("herald", "hood", "head")
 def herald_hood(J, M):
     m = paint("herald", "hood", "cloth")
-    hood = loft("herald_hood", [((0, 0.03, 1.44), 0.30, 0.24), ((0, 0.03, 1.56), 0.24, 0.20), ((0, 0.03, 1.68), 0.21, 0.18), ((0, 0.02, 1.82), 0.18, 0.165), ((0, 0.0, 1.94), 0.13, 0.12), ((0, -0.01, 2.02), 0.055, 0.055), ((0, -0.02, 2.05), 0, 0)], m, n=10, fold=0.06, folds=3)
-    face = loft("herald_face", [((0, -0.145, 1.53), 0.145, 0.02), ((0, -0.145, 1.83), 0.14, 0.02)], M["void"], cap_bottom=True, cap_top=True, n=8)
-    rim = torus("herald_hoodrim", (0, -0.14, 1.68), 0.16, 0.022, m, n=12, k=5)
-    return [hood, face, rim]
+    hood = loft("herald_hood", [((0, 0.04, 1.42), 0.31, 0.25), ((0, 0.035, 1.56), 0.25, 0.21), ((0, 0.03, 1.70), 0.22, 0.19), ((0, 0.02, 1.84), 0.185, 0.17), ((0, 0.0, 1.96), 0.13, 0.12), ((0, -0.015, 2.05), 0.055, 0.055), ((0, -0.025, 2.08), 0, 0)], m, n=9, phase=math.pi / 2, sq=0.45, fold=0.05, folds=3)
+    return [hood] + face_hole("herald", 1.715, 0.128, 0.16, m, M["void"], y=-0.182)
 
 @component("herald", "mantle", "spine")
 def herald_mantle(J, M):
     m = paint("herald", "mantle", "cloth")
-    out = pointed_tiers("herald_mantle", m, M["gold"], [(1.54, 0.18, 0.14, 0.47, 0.29, 1.16, True), (1.52, 0.17, 0.13, 0.38, 0.24, 1.27, False), (1.50, 0.16, 0.12, 0.30, 0.19, 1.37, False)])
-    out += [pyramid("herald_mstud_l", (-0.41, -0.11, 1.21), 0.024, 0.036, M["gold"], toward=(-0.4, -1, 0)), pyramid("herald_mstud_r", (0.41, -0.11, 1.21), 0.024, 0.036, M["gold"], toward=(0.4, -1, 0))]
+    out = yoke("herald_mantle", m, M["brass"], [(1.57, 0.24, 0.17, 0.44, 0.275, 1.30, 0.08, 0.03, True), (1.51, 0.21, 0.15, 0.365, 0.235, 1.18, 0.15, 0.03, True), (1.45, 0.18, 0.13, 0.295, 0.195, 1.06, 0.19, 0.02, True)], n=12, sq=0.86)
+    out += [pyramid("herald_mstud_l", (-0.455, -0.09, 1.26), 0.026, 0.04, M["gold"], toward=(-0.4, -1, 0)), pyramid("herald_mstud_r", (0.455, -0.09, 1.26), 0.026, 0.04, M["gold"], toward=(0.4, -1, 0))]
     return out
 
 @component("herald", "gem", "spine")
@@ -839,16 +1027,16 @@ def herald_beads(J, M):
     m = paint("herald", "beads", "leather"); out = []
     chain = [(-0.12, 1.44), (-0.13, 1.36), (-0.13, 1.28), (-0.12, 1.20), (-0.10, 1.12), (-0.07, 1.05), (-0.03, 0.99), (0.03, 0.99), (0.07, 1.05), (0.10, 1.12), (0.12, 1.20), (0.13, 1.28), (0.13, 1.36), (0.12, 1.44)]
     for i, (x, z) in enumerate(chain):
-        if i % 4 == 2: out.append(pyramid(f"herald_orn{i}", (x * 1.3, -0.21, z), 0.026, 0.038, M["gold"]))
-        else: out.append(sphere(f"herald_bead{i}", (x * 1.3, -0.20, z), 0.034, m, n=6, k=3))
+        if i % 4 == 2: out.append(pyramid(f"herald_orn{i}", (x * 1.35, -0.215, z), 0.030, 0.042, M["gold"]))
+        else: out.append(sphere(f"herald_bead{i}", (x * 1.35, -0.205, z), 0.042, m, n=8, k=4))
     out.append(pyramid("herald_pendant", (0.0, -0.22, 0.92), 0.035, 0.06, M["gold"], toward=(0, -0.3, -1)))
     return out
 
 def herald_sleeve(J, M, s_):
     m = paint("herald", "sleeve_l", "cloth")
     e, w = J[f"elbow.{s_}"]["p"], J[f"wrist.{s_}"]["p"]; L = (w - e).length
-    return [along(f"herald_sleeve.{s_}", e, w, [((0, 0, 0.0), 0.082, 0.082), ((0, 0, 0.85 * L), 0.135, 0.135), ((0, 0, 1.0 * L), 0.135, 0.135)], m, n=8, fold=0.05, folds=4),
-            along(f"herald_cuff.{s_}", e, w, [((0, 0, 0.96 * L), 0.14, 0.14), ((0, 0, 1.02 * L), 0.14, 0.14)], M["gold"], n=8),
+    return [along(f"herald_sleeve.{s_}", e, w, [((0, 0, -0.05 * L), 0.086, 0.086), ((0, 0, 0.9 * L), 0.142, 0.142), ((0, 0, 1.14 * L), 0.138, 0.138)], m, n=8, fold=0.05, folds=4),
+            along(f"herald_cuff.{s_}", e, w, [((0, 0, 1.08 * L), 0.146, 0.146), ((0, 0, 1.16 * L), 0.144, 0.144)], M["brass"], n=8),
             along(f"herald_stripe.{s_}", e, w, [((0, -0.08, 0.05 * L), 0.012, 0.012), ((0, -0.135, 0.98 * L), 0.012, 0.012)], M["gold"], n=4)]
 @component("herald", "sleeve_l", "forearm.L")
 def herald_sleeve_l(J, M): return herald_sleeve(J, M, "L")
@@ -861,7 +1049,14 @@ def herald_hands(J, M): return [ob for ob, _ in fists("herald", J, M["skin"])]
 @component("herald", "robe", "soft")
 def herald_robe(J, M):
     m = paint("herald", "robe", "cloth")
-    return [loft("herald_robe", [((0, 0, 1.10), 0.21, 0.15), ((0, 0, 0.80), 0.25, 0.18), ((0, 0, 0.45), 0.29, 0.21), ((0, 0, 0.08), 0.33, 0.24)], m, n=12, cap_bottom=True, fold=0.08, folds=6)]
+    robe = loft("herald_robe", [((0, 0, 1.10), 0.21, 0.15), ((0, 0, 0.80), 0.25, 0.18), ((0, 0, 0.45), 0.29, 0.21), ((0, 0, 0.08), 0.33, 0.24)], m, n=14, cap_bottom=True, fold=0.11, folds=7)
+    # the painting's robe carries a stole: two broad bands off the shoulders that
+    # meet at the waist and run to the hem
+    out = [robe]
+    for sx in (-1, 1):
+        out.append(sheet(f"herald_stole{sx}", [(sx * 0.145, -0.135, 1.20), (sx * 0.10, -0.168, 1.00), (sx * 0.045, -0.196, 0.80)], 0.055, 0.05, M["brass"], thick=0.008))
+    out.append(sheet("herald_stolefoot", [(0, -0.196, 0.82), (0, -0.222, 0.46), (0, -0.246, 0.10)], 0.058, 0.062, M["brass"], thick=0.008))
+    return out
 
 @component("herald", "boots", "soft")
 def herald_boots(J, M): return [ob for ob, _ in boots("herald", J, M["boot"])]
@@ -924,7 +1119,7 @@ POSES = {
                     "spine": (0.2, -0.2, 1), "neck": (0.1, -0.15, 1),
                     "upper_arm.L": (0.35, -0.9, 0.35), "forearm.L": (1, -0.6, -0.2), "hand.L": (1, -0.5, -0.3),
                     "upper_arm.R": (0.5, 0.2, -0.8), "forearm.R": (0.3, -0.6, -0.7)}),
-    "attack3": dict(turn=32, dx=0.3, dz=-0.1, aim={"thigh.R": (1, -0.25, -0.5), "shin.R": (0.35, -0.1, -1), "thigh.L": (-0.75, 0.15, -0.7), "shin.L": (-0.7, 0.15, -0.7),
+    "attack3": dict(turn=32, dx=0.12, dz=-0.1, aim={"thigh.R": (1, -0.25, -0.5), "shin.R": (0.35, -0.1, -1), "thigh.L": (-0.75, 0.15, -0.7), "shin.L": (-0.7, 0.15, -0.7),
                     "spine": (0.55, -0.15, 1), "neck": (0.3, -0.1, 1), "head": (0.2, -0.2, 1),
                     "upper_arm.R": (1, -0.3, 0.05), "forearm.R": (1, -0.25, 0.12), "hand.R": (1, -0.2, 0.1),
                     "upper_arm.L": (0.9, -0.45, -0.3), "forearm.L": (1, -0.35, 0.1), "hand.L": (1, -0.3, 0.1)}),
@@ -985,7 +1180,7 @@ def teardown(objs):
 
 SLOT_ORDER = ["head", "shoulders", "chest", "belt", "coat", "arms", "legs", "feet", "weapon"]
 def slot_of(cls, name):
-    return INVENTORY.get(cls, {}).get(name, {}).get("slot", {"boots": "feet"}.get(name, "other"))
+    return INVENTORY.get(cls, {}).get(name, {}).get("slot", {"boots": "feet", "greave": "legs"}.get(name, "other"))
 
 for cls in CLASSES:
     if ONLY and cls not in ONLY: continue
@@ -1001,8 +1196,12 @@ for cls in CLASSES:
         groups = {}
         for name, obs in built.items():
             groups.setdefault(slot_of(cls, name), []).extend(obs)
-        # the legs slot is the body itself below the belt: show the body alone
+        # the legs slot is the body below the belt; where a floor-length robe covers
+        # them, show the robe too — bare legs are not what that slot looks like
         groups.setdefault("legs", []).append(body)
+        for covering in ("robe", "trousers"):
+            if covering in built: groups["legs"].extend(built[covering])
+        if "robe" in built and "chest" in groups: groups["chest"].extend(built["robe"])
         for slot in SLOT_ORDER:
             obs = groups.get(slot)
             if not obs: continue
