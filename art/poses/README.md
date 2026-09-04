@@ -40,6 +40,14 @@ pauldrons and tassets with gold edges, wrapped bracers, a split tunic flap, a
 drooping hat brim. Ambient occlusion and a stronger key light give the facets
 their read.
 
+**Third pass.** Cloth pleats: lofted rings swing in and out so robes, skirts,
+hoods, capes and mantle tiers hang in folds instead of smooth cones. Facet
+variation: every face gets one of four lighter or darker copies of its
+material, chosen deterministically, so a flat plane reads as low-poly facets
+rather than a smear. The rogue got bulk (wider chest and shoulders, leather
+shoulder plates, a third mantle tier) and a shorter hood; gold has a faint
+glow; the staff's star core is lit.
+
 **Limits, stated.** Stand-ins for painted poses, not the paintings: faces are
 the concept's dark hood-void, cloth is flat colour. Joint weights are by
 distance, so a deep bend can pinch; soft robes can clip a stepping leg.
