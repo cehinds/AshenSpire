@@ -27,6 +27,22 @@ let cwebpVersion = 'unknown';
 try { cwebpVersion = execFileSync('cwebp', ['-version'], { encoding: 'utf8' }).trim(); }
 catch { console.error('pose-sprites: cwebp is required (libwebp)'); process.exit(2); }
 mkdirSync(outDir, { recursive: true });
+// The output folder is described entirely by the manifest written here, so it is
+// cleared first. A run that carries fewer classes than the folder already held
+// would quietly drop the rest, so say so rather than letting it pass unnoticed.
+const outManifest = join(outDir, 'pose-sprites.manifest.json');
+if (existsSync(outManifest)) {
+  try {
+    const had = new Set((JSON.parse(readFileSync(outManifest, 'utf8')).sprites || []).map((s) => s.class));
+    const now = new Set(renders.renders.map((r) => r.class));
+    const dropped = [...had].filter((c) => !now.has(c));
+    if (dropped.length) {
+      console.error(`pose-sprites: ${outDir} holds sprites for ${dropped.join(', ')}, and this run has none.`);
+      console.error('  Cut every class into one render folder (--append) and publish them together, or pass --out to a different folder.');
+      process.exit(1);
+    }
+  } catch { /* an unreadable manifest is not a reason to stop */ }
+}
 for (const f of readdirSync(outDir)) if (f.endsWith('.webp')) rmSync(join(outDir, f));
 
 const sprites = [];

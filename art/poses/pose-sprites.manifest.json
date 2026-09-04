@@ -2,7 +2,7 @@
   "schema": "ashenspire/pose-sprites/v2",
   "_": "DERIVED — written by tools/pose-sprites.mjs from renders of tools/lowpoly-blender.py. Coordinates are pixels on the shared render canvas; a renderer registers poses by root and ground, not by frame.",
   "canvas": {
-    "width": 720,
+    "width": 1280,
     "height": 900
   },
   "source_manifest": "lowpoly-renders.manifest.json",
@@ -35,17 +35,17 @@
       "pose": "idle",
       "tint": "gold",
       "file": "rogue_idle_gold.webp",
-      "width": 308,
-      "height": 637,
+      "width": 316,
+      "height": 652,
       "offset": [
-        194,
-        165
+        466,
+        215
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -53,17 +53,17 @@
       "pose": "idle",
       "tint": "ember",
       "file": "rogue_idle_ember.webp",
-      "width": 308,
-      "height": 637,
+      "width": 316,
+      "height": 652,
       "offset": [
-        194,
-        165
+        466,
+        215
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -71,17 +71,17 @@
       "pose": "idle",
       "tint": "frost",
       "file": "rogue_idle_frost.webp",
-      "width": 308,
-      "height": 637,
+      "width": 316,
+      "height": 652,
       "offset": [
-        194,
-        165
+        466,
+        215
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -89,17 +89,17 @@
       "pose": "idle",
       "tint": "rot",
       "file": "rogue_idle_rot.webp",
-      "width": 308,
-      "height": 637,
+      "width": 316,
+      "height": 652,
       "offset": [
-        194,
-        165
+        466,
+        215
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -107,17 +107,17 @@
       "pose": "idle",
       "tint": "grace",
       "file": "rogue_idle_grace.webp",
-      "width": 308,
-      "height": 637,
+      "width": 316,
+      "height": 652,
       "offset": [
-        194,
-        165
+        466,
+        215
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -125,17 +125,17 @@
       "pose": "guard",
       "tint": "gold",
       "file": "rogue_guard_gold.webp",
-      "width": 298,
-      "height": 617,
+      "width": 329,
+      "height": 635,
       "offset": [
-        203,
-        188
+        470,
+        234
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -143,17 +143,17 @@
       "pose": "guard",
       "tint": "ember",
       "file": "rogue_guard_ember.webp",
-      "width": 298,
-      "height": 617,
+      "width": 329,
+      "height": 635,
       "offset": [
-        203,
-        188
+        470,
+        234
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -161,17 +161,17 @@
       "pose": "guard",
       "tint": "frost",
       "file": "rogue_guard_frost.webp",
-      "width": 298,
-      "height": 617,
+      "width": 329,
+      "height": 635,
       "offset": [
-        203,
-        188
+        470,
+        234
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -179,17 +179,17 @@
       "pose": "guard",
       "tint": "rot",
       "file": "rogue_guard_rot.webp",
-      "width": 298,
-      "height": 617,
+      "width": 329,
+      "height": 635,
       "offset": [
-        203,
-        188
+        470,
+        234
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -197,17 +197,17 @@
       "pose": "guard",
       "tint": "grace",
       "file": "rogue_guard_grace.webp",
-      "width": 298,
-      "height": 617,
+      "width": 329,
+      "height": 635,
       "offset": [
-        203,
-        188
+        470,
+        234
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -215,17 +215,17 @@
       "pose": "attack1",
       "tint": "gold",
       "file": "rogue_attack1_gold.webp",
-      "width": 507,
-      "height": 614,
+      "width": 630,
+      "height": 633,
       "offset": [
-        213,
-        175
+        487,
+        220
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -233,17 +233,17 @@
       "pose": "attack1",
       "tint": "ember",
       "file": "rogue_attack1_ember.webp",
-      "width": 507,
-      "height": 614,
+      "width": 630,
+      "height": 633,
       "offset": [
-        213,
-        175
+        487,
+        220
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -251,17 +251,17 @@
       "pose": "attack1",
       "tint": "frost",
       "file": "rogue_attack1_frost.webp",
-      "width": 507,
-      "height": 614,
+      "width": 630,
+      "height": 633,
       "offset": [
-        213,
-        175
+        487,
+        220
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -269,17 +269,17 @@
       "pose": "attack1",
       "tint": "rot",
       "file": "rogue_attack1_rot.webp",
-      "width": 507,
-      "height": 614,
+      "width": 630,
+      "height": 633,
       "offset": [
-        213,
-        175
+        487,
+        220
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -287,17 +287,17 @@
       "pose": "attack1",
       "tint": "grace",
       "file": "rogue_attack1_grace.webp",
-      "width": 507,
-      "height": 614,
+      "width": 630,
+      "height": 633,
       "offset": [
-        213,
-        175
+        487,
+        220
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -305,17 +305,17 @@
       "pose": "attack2",
       "tint": "gold",
       "file": "rogue_attack2_gold.webp",
-      "width": 373,
-      "height": 619,
+      "width": 395,
+      "height": 638,
       "offset": [
-        218,
-        179
+        476,
+        224
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -323,17 +323,17 @@
       "pose": "attack2",
       "tint": "ember",
       "file": "rogue_attack2_ember.webp",
-      "width": 373,
-      "height": 619,
+      "width": 395,
+      "height": 638,
       "offset": [
-        218,
-        179
+        476,
+        224
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -341,17 +341,17 @@
       "pose": "attack2",
       "tint": "frost",
       "file": "rogue_attack2_frost.webp",
-      "width": 373,
-      "height": 619,
+      "width": 395,
+      "height": 638,
       "offset": [
-        218,
-        179
+        476,
+        224
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -359,17 +359,17 @@
       "pose": "attack2",
       "tint": "rot",
       "file": "rogue_attack2_rot.webp",
-      "width": 373,
-      "height": 619,
+      "width": 395,
+      "height": 638,
       "offset": [
-        218,
-        179
+        476,
+        224
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -377,17 +377,17 @@
       "pose": "attack2",
       "tint": "grace",
       "file": "rogue_attack2_grace.webp",
-      "width": 373,
-      "height": 619,
+      "width": 395,
+      "height": 638,
       "offset": [
-        218,
-        179
+        476,
+        224
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -395,17 +395,17 @@
       "pose": "attack3",
       "tint": "gold",
       "file": "rogue_attack3_gold.webp",
-      "width": 537,
-      "height": 553,
+      "width": 725,
+      "height": 575,
       "offset": [
-        183,
-        219
+        404,
+        262
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -413,17 +413,17 @@
       "pose": "attack3",
       "tint": "ember",
       "file": "rogue_attack3_ember.webp",
-      "width": 537,
-      "height": 553,
+      "width": 725,
+      "height": 575,
       "offset": [
-        183,
-        219
+        404,
+        262
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -431,17 +431,17 @@
       "pose": "attack3",
       "tint": "frost",
       "file": "rogue_attack3_frost.webp",
-      "width": 537,
-      "height": 553,
+      "width": 725,
+      "height": 575,
       "offset": [
-        183,
-        219
+        404,
+        262
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -449,17 +449,17 @@
       "pose": "attack3",
       "tint": "rot",
       "file": "rogue_attack3_rot.webp",
-      "width": 537,
-      "height": 553,
+      "width": 725,
+      "height": 575,
       "offset": [
-        183,
-        219
+        404,
+        262
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -467,17 +467,17 @@
       "pose": "attack3",
       "tint": "grace",
       "file": "rogue_attack3_grace.webp",
-      "width": 537,
-      "height": 553,
+      "width": 725,
+      "height": 575,
       "offset": [
-        183,
-        219
+        404,
+        262
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -485,17 +485,17 @@
       "pose": "hit",
       "tint": "gold",
       "file": "rogue_hit_gold.webp",
-      "width": 368,
-      "height": 599,
+      "width": 374,
+      "height": 605,
       "offset": [
-        92,
-        188
+        372,
+        246
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -503,17 +503,17 @@
       "pose": "hit",
       "tint": "ember",
       "file": "rogue_hit_ember.webp",
-      "width": 368,
-      "height": 599,
+      "width": 374,
+      "height": 605,
       "offset": [
-        92,
-        188
+        372,
+        246
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -521,17 +521,17 @@
       "pose": "hit",
       "tint": "frost",
       "file": "rogue_hit_frost.webp",
-      "width": 368,
-      "height": 599,
+      "width": 374,
+      "height": 605,
       "offset": [
-        92,
-        188
+        372,
+        246
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -539,17 +539,17 @@
       "pose": "hit",
       "tint": "rot",
       "file": "rogue_hit_rot.webp",
-      "width": 368,
-      "height": 599,
+      "width": 374,
+      "height": 605,
       "offset": [
-        92,
-        188
+        372,
+        246
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -557,17 +557,17 @@
       "pose": "hit",
       "tint": "grace",
       "file": "rogue_hit_grace.webp",
-      "width": 368,
-      "height": 599,
+      "width": 374,
+      "height": 605,
       "offset": [
-        92,
-        188
+        372,
+        246
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -575,17 +575,17 @@
       "pose": "kneel",
       "tint": "gold",
       "file": "rogue_kneel_gold.webp",
-      "width": 342,
-      "height": 480,
+      "width": 349,
+      "height": 502,
       "offset": [
-        197,
-        325
+        470,
+        367
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -593,17 +593,17 @@
       "pose": "kneel",
       "tint": "ember",
       "file": "rogue_kneel_ember.webp",
-      "width": 342,
-      "height": 480,
+      "width": 349,
+      "height": 502,
       "offset": [
-        197,
-        325
+        470,
+        367
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -611,17 +611,17 @@
       "pose": "kneel",
       "tint": "frost",
       "file": "rogue_kneel_frost.webp",
-      "width": 342,
-      "height": 480,
+      "width": 349,
+      "height": 502,
       "offset": [
-        197,
-        325
+        470,
+        367
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -629,17 +629,17 @@
       "pose": "kneel",
       "tint": "rot",
       "file": "rogue_kneel_rot.webp",
-      "width": 342,
-      "height": 480,
+      "width": 349,
+      "height": 502,
       "offset": [
-        197,
-        325
+        470,
+        367
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -647,17 +647,17 @@
       "pose": "kneel",
       "tint": "grace",
       "file": "rogue_kneel_grace.webp",
-      "width": 342,
-      "height": 480,
+      "width": 349,
+      "height": 502,
       "offset": [
-        197,
-        325
+        470,
+        367
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -665,17 +665,17 @@
       "pose": "down",
       "tint": "gold",
       "file": "rogue_down_gold.webp",
-      "width": 680,
+      "width": 681,
       "height": 220,
       "offset": [
-        14,
-        585
+        293,
+        649
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -683,17 +683,17 @@
       "pose": "down",
       "tint": "ember",
       "file": "rogue_down_ember.webp",
-      "width": 680,
+      "width": 681,
       "height": 220,
       "offset": [
-        14,
-        585
+        293,
+        649
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -701,17 +701,17 @@
       "pose": "down",
       "tint": "frost",
       "file": "rogue_down_frost.webp",
-      "width": 680,
+      "width": 681,
       "height": 220,
       "offset": [
-        14,
-        585
+        293,
+        649
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -719,17 +719,17 @@
       "pose": "down",
       "tint": "rot",
       "file": "rogue_down_rot.webp",
-      "width": 680,
+      "width": 681,
       "height": 220,
       "offset": [
-        14,
-        585
+        293,
+        649
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -737,17 +737,17 @@
       "pose": "down",
       "tint": "grace",
       "file": "rogue_down_grace.webp",
-      "width": 680,
+      "width": 681,
       "height": 220,
       "offset": [
-        14,
-        585
+        293,
+        649
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -755,107 +755,107 @@
       "pose": "idle",
       "tint": "gold",
       "file": "reaver_idle_gold.webp",
-      "width": 378,
-      "height": 651,
+      "width": 337,
+      "height": 665,
       "offset": [
-        154,
-        154
+        471,
+        202
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
-      "touches_ground": true
+      "ground": 867.9,
+      "touches_ground": false
     },
     {
       "class": "reaver",
       "pose": "idle",
       "tint": "ember",
       "file": "reaver_idle_ember.webp",
-      "width": 378,
-      "height": 651,
+      "width": 337,
+      "height": 665,
       "offset": [
-        154,
-        154
+        471,
+        202
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
-      "touches_ground": true
+      "ground": 867.9,
+      "touches_ground": false
     },
     {
       "class": "reaver",
       "pose": "idle",
       "tint": "frost",
       "file": "reaver_idle_frost.webp",
-      "width": 378,
-      "height": 651,
+      "width": 337,
+      "height": 665,
       "offset": [
-        154,
-        154
+        471,
+        202
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
-      "touches_ground": true
+      "ground": 867.9,
+      "touches_ground": false
     },
     {
       "class": "reaver",
       "pose": "idle",
       "tint": "rot",
       "file": "reaver_idle_rot.webp",
-      "width": 378,
-      "height": 651,
+      "width": 337,
+      "height": 665,
       "offset": [
-        154,
-        154
+        471,
+        202
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
-      "touches_ground": true
+      "ground": 867.9,
+      "touches_ground": false
     },
     {
       "class": "reaver",
       "pose": "idle",
       "tint": "grace",
       "file": "reaver_idle_grace.webp",
-      "width": 378,
-      "height": 651,
+      "width": 337,
+      "height": 665,
       "offset": [
-        154,
-        154
+        471,
+        202
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
-      "touches_ground": true
+      "ground": 867.9,
+      "touches_ground": false
     },
     {
       "class": "reaver",
       "pose": "guard",
       "tint": "gold",
       "file": "reaver_guard_gold.webp",
-      "width": 379,
-      "height": 805,
+      "width": 381,
+      "height": 729,
       "offset": [
-        178,
-        0
+        433,
+        140
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -863,17 +863,17 @@
       "pose": "guard",
       "tint": "ember",
       "file": "reaver_guard_ember.webp",
-      "width": 379,
-      "height": 805,
+      "width": 381,
+      "height": 729,
       "offset": [
-        178,
-        0
+        433,
+        140
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -881,17 +881,17 @@
       "pose": "guard",
       "tint": "frost",
       "file": "reaver_guard_frost.webp",
-      "width": 379,
-      "height": 805,
+      "width": 381,
+      "height": 729,
       "offset": [
-        178,
-        0
+        433,
+        140
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -899,17 +899,17 @@
       "pose": "guard",
       "tint": "rot",
       "file": "reaver_guard_rot.webp",
-      "width": 379,
-      "height": 805,
+      "width": 381,
+      "height": 729,
       "offset": [
-        178,
-        0
+        433,
+        140
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -917,17 +917,17 @@
       "pose": "guard",
       "tint": "grace",
       "file": "reaver_guard_grace.webp",
-      "width": 379,
-      "height": 805,
+      "width": 381,
+      "height": 729,
       "offset": [
-        178,
-        0
+        433,
+        140
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -935,17 +935,17 @@
       "pose": "attack1",
       "tint": "gold",
       "file": "reaver_attack1_gold.webp",
-      "width": 536,
-      "height": 625,
+      "width": 814,
+      "height": 641,
       "offset": [
-        184,
-        164
+        431,
+        212
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -953,17 +953,17 @@
       "pose": "attack1",
       "tint": "ember",
       "file": "reaver_attack1_ember.webp",
-      "width": 536,
-      "height": 625,
+      "width": 814,
+      "height": 641,
       "offset": [
-        184,
-        164
+        431,
+        212
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -971,17 +971,17 @@
       "pose": "attack1",
       "tint": "frost",
       "file": "reaver_attack1_frost.webp",
-      "width": 536,
-      "height": 625,
+      "width": 814,
+      "height": 641,
       "offset": [
-        184,
-        164
+        431,
+        212
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -989,17 +989,17 @@
       "pose": "attack1",
       "tint": "rot",
       "file": "reaver_attack1_rot.webp",
-      "width": 536,
-      "height": 625,
+      "width": 814,
+      "height": 641,
       "offset": [
-        184,
-        164
+        431,
+        212
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1007,17 +1007,17 @@
       "pose": "attack1",
       "tint": "grace",
       "file": "reaver_attack1_grace.webp",
-      "width": 536,
-      "height": 625,
+      "width": 814,
+      "height": 641,
       "offset": [
-        184,
-        164
+        431,
+        212
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1025,17 +1025,17 @@
       "pose": "attack2",
       "tint": "gold",
       "file": "reaver_attack2_gold.webp",
-      "width": 391,
-      "height": 798,
+      "width": 417,
+      "height": 859,
       "offset": [
-        180,
-        0
+        429,
+        3
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1043,17 +1043,17 @@
       "pose": "attack2",
       "tint": "ember",
       "file": "reaver_attack2_ember.webp",
-      "width": 391,
-      "height": 798,
+      "width": 417,
+      "height": 859,
       "offset": [
-        180,
-        0
+        429,
+        3
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1061,17 +1061,17 @@
       "pose": "attack2",
       "tint": "frost",
       "file": "reaver_attack2_frost.webp",
-      "width": 391,
-      "height": 798,
+      "width": 417,
+      "height": 859,
       "offset": [
-        180,
-        0
+        429,
+        3
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1079,17 +1079,17 @@
       "pose": "attack2",
       "tint": "rot",
       "file": "reaver_attack2_rot.webp",
-      "width": 391,
-      "height": 798,
+      "width": 417,
+      "height": 859,
       "offset": [
-        180,
-        0
+        429,
+        3
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1097,17 +1097,17 @@
       "pose": "attack2",
       "tint": "grace",
       "file": "reaver_attack2_grace.webp",
-      "width": 391,
-      "height": 798,
+      "width": 417,
+      "height": 859,
       "offset": [
-        180,
-        0
+        429,
+        3
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1115,17 +1115,17 @@
       "pose": "attack3",
       "tint": "gold",
       "file": "reaver_attack3_gold.webp",
-      "width": 539,
-      "height": 564,
+      "width": 864,
+      "height": 580,
       "offset": [
-        181,
-        208
+        396,
+        257
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1133,17 +1133,17 @@
       "pose": "attack3",
       "tint": "ember",
       "file": "reaver_attack3_ember.webp",
-      "width": 539,
-      "height": 564,
+      "width": 864,
+      "height": 580,
       "offset": [
-        181,
-        208
+        396,
+        257
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1151,17 +1151,17 @@
       "pose": "attack3",
       "tint": "frost",
       "file": "reaver_attack3_frost.webp",
-      "width": 539,
-      "height": 564,
+      "width": 864,
+      "height": 580,
       "offset": [
-        181,
-        208
+        396,
+        257
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1169,17 +1169,17 @@
       "pose": "attack3",
       "tint": "rot",
       "file": "reaver_attack3_rot.webp",
-      "width": 539,
-      "height": 564,
+      "width": 864,
+      "height": 580,
       "offset": [
-        181,
-        208
+        396,
+        257
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1187,17 +1187,17 @@
       "pose": "attack3",
       "tint": "grace",
       "file": "reaver_attack3_grace.webp",
-      "width": 539,
-      "height": 564,
+      "width": 864,
+      "height": 580,
       "offset": [
-        181,
-        208
+        396,
+        257
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1205,17 +1205,17 @@
       "pose": "hit",
       "tint": "gold",
       "file": "reaver_hit_gold.webp",
-      "width": 413,
-      "height": 733,
+      "width": 429,
+      "height": 675,
       "offset": [
-        72,
-        54
+        352,
+        176
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1223,17 +1223,17 @@
       "pose": "hit",
       "tint": "ember",
       "file": "reaver_hit_ember.webp",
-      "width": 413,
-      "height": 733,
+      "width": 429,
+      "height": 675,
       "offset": [
-        72,
-        54
+        352,
+        176
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1241,17 +1241,17 @@
       "pose": "hit",
       "tint": "frost",
       "file": "reaver_hit_frost.webp",
-      "width": 413,
-      "height": 733,
+      "width": 429,
+      "height": 675,
       "offset": [
-        72,
-        54
+        352,
+        176
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1259,17 +1259,17 @@
       "pose": "hit",
       "tint": "rot",
       "file": "reaver_hit_rot.webp",
-      "width": 413,
-      "height": 733,
+      "width": 429,
+      "height": 675,
       "offset": [
-        72,
-        54
+        352,
+        176
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1277,17 +1277,17 @@
       "pose": "hit",
       "tint": "grace",
       "file": "reaver_hit_grace.webp",
-      "width": 413,
-      "height": 733,
+      "width": 429,
+      "height": 675,
       "offset": [
-        72,
-        54
+        352,
+        176
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1295,17 +1295,17 @@
       "pose": "kneel",
       "tint": "gold",
       "file": "reaver_kneel_gold.webp",
-      "width": 404,
-      "height": 486,
+      "width": 396,
+      "height": 500,
       "offset": [
-        170,
-        319
+        458,
+        369
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1313,17 +1313,17 @@
       "pose": "kneel",
       "tint": "ember",
       "file": "reaver_kneel_ember.webp",
-      "width": 404,
-      "height": 486,
+      "width": 396,
+      "height": 500,
       "offset": [
-        170,
-        319
+        458,
+        369
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1331,17 +1331,17 @@
       "pose": "kneel",
       "tint": "frost",
       "file": "reaver_kneel_frost.webp",
-      "width": 404,
-      "height": 486,
+      "width": 396,
+      "height": 500,
       "offset": [
-        170,
-        319
+        458,
+        369
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1349,17 +1349,17 @@
       "pose": "kneel",
       "tint": "rot",
       "file": "reaver_kneel_rot.webp",
-      "width": 404,
-      "height": 486,
+      "width": 396,
+      "height": 500,
       "offset": [
-        170,
-        319
+        458,
+        369
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1367,17 +1367,17 @@
       "pose": "kneel",
       "tint": "grace",
       "file": "reaver_kneel_grace.webp",
-      "width": 404,
-      "height": 486,
+      "width": 396,
+      "height": 500,
       "offset": [
-        170,
-        319
+        458,
+        369
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1385,17 +1385,17 @@
       "pose": "down",
       "tint": "gold",
       "file": "reaver_down_gold.webp",
-      "width": 707,
-      "height": 240,
+      "width": 775,
+      "height": 279,
       "offset": [
-        13,
-        565
+        293,
+        590
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1403,17 +1403,17 @@
       "pose": "down",
       "tint": "ember",
       "file": "reaver_down_ember.webp",
-      "width": 707,
-      "height": 240,
+      "width": 775,
+      "height": 279,
       "offset": [
-        13,
-        565
+        293,
+        590
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1421,17 +1421,17 @@
       "pose": "down",
       "tint": "frost",
       "file": "reaver_down_frost.webp",
-      "width": 707,
-      "height": 240,
+      "width": 775,
+      "height": 279,
       "offset": [
-        13,
-        565
+        293,
+        590
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1439,17 +1439,17 @@
       "pose": "down",
       "tint": "rot",
       "file": "reaver_down_rot.webp",
-      "width": 707,
-      "height": 240,
+      "width": 775,
+      "height": 279,
       "offset": [
-        13,
-        565
+        293,
+        590
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1457,17 +1457,17 @@
       "pose": "down",
       "tint": "grace",
       "file": "reaver_down_grace.webp",
-      "width": 707,
-      "height": 240,
+      "width": 775,
+      "height": 279,
       "offset": [
-        13,
-        565
+        293,
+        590
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1475,17 +1475,17 @@
       "pose": "idle",
       "tint": "gold",
       "file": "starseer_idle_gold.webp",
-      "width": 441,
-      "height": 758,
+      "width": 560,
+      "height": 778,
       "offset": [
-        122,
-        44
+        344,
+        89
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1493,17 +1493,17 @@
       "pose": "idle",
       "tint": "ember",
       "file": "starseer_idle_ember.webp",
-      "width": 441,
-      "height": 758,
+      "width": 560,
+      "height": 778,
       "offset": [
-        122,
-        44
+        344,
+        89
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1511,17 +1511,17 @@
       "pose": "idle",
       "tint": "frost",
       "file": "starseer_idle_frost.webp",
-      "width": 441,
-      "height": 758,
+      "width": 560,
+      "height": 778,
       "offset": [
-        122,
-        44
+        344,
+        89
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1529,17 +1529,17 @@
       "pose": "idle",
       "tint": "rot",
       "file": "starseer_idle_rot.webp",
-      "width": 441,
-      "height": 758,
+      "width": 560,
+      "height": 778,
       "offset": [
-        122,
-        44
+        344,
+        89
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1547,17 +1547,17 @@
       "pose": "idle",
       "tint": "grace",
       "file": "starseer_idle_grace.webp",
-      "width": 441,
-      "height": 758,
+      "width": 560,
+      "height": 778,
       "offset": [
-        122,
-        44
+        344,
+        89
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1565,17 +1565,17 @@
       "pose": "guard",
       "tint": "gold",
       "file": "starseer_guard_gold.webp",
-      "width": 430,
-      "height": 740,
+      "width": 549,
+      "height": 760,
       "offset": [
-        141,
-        65
+        362,
+        109
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1583,17 +1583,17 @@
       "pose": "guard",
       "tint": "ember",
       "file": "starseer_guard_ember.webp",
-      "width": 430,
-      "height": 740,
+      "width": 549,
+      "height": 760,
       "offset": [
-        141,
-        65
+        362,
+        109
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1601,17 +1601,17 @@
       "pose": "guard",
       "tint": "frost",
       "file": "starseer_guard_frost.webp",
-      "width": 430,
-      "height": 740,
+      "width": 549,
+      "height": 760,
       "offset": [
-        141,
-        65
+        362,
+        109
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1619,17 +1619,17 @@
       "pose": "guard",
       "tint": "rot",
       "file": "starseer_guard_rot.webp",
-      "width": 430,
-      "height": 740,
+      "width": 549,
+      "height": 760,
       "offset": [
-        141,
-        65
+        362,
+        109
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1637,17 +1637,17 @@
       "pose": "guard",
       "tint": "grace",
       "file": "starseer_guard_grace.webp",
-      "width": 430,
-      "height": 740,
+      "width": 549,
+      "height": 760,
       "offset": [
-        141,
-        65
+        362,
+        109
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -1655,17 +1655,17 @@
       "pose": "attack1",
       "tint": "gold",
       "file": "starseer_attack1_gold.webp",
-      "width": 537,
-      "height": 739,
+      "width": 643,
+      "height": 758,
       "offset": [
-        183,
-        50
+        431,
+        95
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1673,17 +1673,17 @@
       "pose": "attack1",
       "tint": "ember",
       "file": "starseer_attack1_ember.webp",
-      "width": 537,
-      "height": 739,
+      "width": 643,
+      "height": 758,
       "offset": [
-        183,
-        50
+        431,
+        95
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1691,17 +1691,17 @@
       "pose": "attack1",
       "tint": "frost",
       "file": "starseer_attack1_frost.webp",
-      "width": 537,
-      "height": 739,
+      "width": 643,
+      "height": 758,
       "offset": [
-        183,
-        50
+        431,
+        95
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1709,17 +1709,17 @@
       "pose": "attack1",
       "tint": "rot",
       "file": "starseer_attack1_rot.webp",
-      "width": 537,
-      "height": 739,
+      "width": 643,
+      "height": 758,
       "offset": [
-        183,
-        50
+        431,
+        95
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1727,17 +1727,17 @@
       "pose": "attack1",
       "tint": "grace",
       "file": "starseer_attack1_grace.webp",
-      "width": 537,
-      "height": 739,
+      "width": 643,
+      "height": 758,
       "offset": [
-        183,
-        50
+        431,
+        95
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1745,17 +1745,17 @@
       "pose": "attack2",
       "tint": "gold",
       "file": "starseer_attack2_gold.webp",
-      "width": 547,
-      "height": 746,
+      "width": 644,
+      "height": 765,
       "offset": [
-        173,
-        52
+        392,
+        97
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1763,17 +1763,17 @@
       "pose": "attack2",
       "tint": "ember",
       "file": "starseer_attack2_ember.webp",
-      "width": 547,
-      "height": 746,
+      "width": 644,
+      "height": 765,
       "offset": [
-        173,
-        52
+        392,
+        97
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1781,17 +1781,17 @@
       "pose": "attack2",
       "tint": "frost",
       "file": "starseer_attack2_frost.webp",
-      "width": 547,
-      "height": 746,
+      "width": 644,
+      "height": 765,
       "offset": [
-        173,
-        52
+        392,
+        97
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1799,17 +1799,17 @@
       "pose": "attack2",
       "tint": "rot",
       "file": "starseer_attack2_rot.webp",
-      "width": 547,
-      "height": 746,
+      "width": 644,
+      "height": 765,
       "offset": [
-        173,
-        52
+        392,
+        97
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1817,17 +1817,17 @@
       "pose": "attack2",
       "tint": "grace",
       "file": "starseer_attack2_grace.webp",
-      "width": 547,
-      "height": 746,
+      "width": 644,
+      "height": 765,
       "offset": [
-        173,
-        52
+        392,
+        97
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1835,17 +1835,17 @@
       "pose": "attack3",
       "tint": "gold",
       "file": "starseer_attack3_gold.webp",
-      "width": 550,
-      "height": 683,
+      "width": 712,
+      "height": 703,
       "offset": [
-        170,
-        89
+        386,
+        134
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1853,17 +1853,17 @@
       "pose": "attack3",
       "tint": "ember",
       "file": "starseer_attack3_ember.webp",
-      "width": 550,
-      "height": 683,
+      "width": 712,
+      "height": 703,
       "offset": [
-        170,
-        89
+        386,
+        134
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1871,17 +1871,17 @@
       "pose": "attack3",
       "tint": "frost",
       "file": "starseer_attack3_frost.webp",
-      "width": 550,
-      "height": 683,
+      "width": 712,
+      "height": 703,
       "offset": [
-        170,
-        89
+        386,
+        134
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1889,17 +1889,17 @@
       "pose": "attack3",
       "tint": "rot",
       "file": "starseer_attack3_rot.webp",
-      "width": 550,
-      "height": 683,
+      "width": 712,
+      "height": 703,
       "offset": [
-        170,
-        89
+        386,
+        134
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1907,17 +1907,17 @@
       "pose": "attack3",
       "tint": "grace",
       "file": "starseer_attack3_grace.webp",
-      "width": 550,
-      "height": 683,
+      "width": 712,
+      "height": 703,
       "offset": [
-        170,
-        89
+        386,
+        134
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1925,17 +1925,17 @@
       "pose": "hit",
       "tint": "gold",
       "file": "starseer_hit_gold.webp",
-      "width": 429,
-      "height": 685,
+      "width": 513,
+      "height": 695,
       "offset": [
-        53,
-        102
+        298,
+        156
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1943,17 +1943,17 @@
       "pose": "hit",
       "tint": "ember",
       "file": "starseer_hit_ember.webp",
-      "width": 429,
-      "height": 685,
+      "width": 513,
+      "height": 695,
       "offset": [
-        53,
-        102
+        298,
+        156
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1961,17 +1961,17 @@
       "pose": "hit",
       "tint": "frost",
       "file": "starseer_hit_frost.webp",
-      "width": 429,
-      "height": 685,
+      "width": 513,
+      "height": 695,
       "offset": [
-        53,
-        102
+        298,
+        156
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1979,17 +1979,17 @@
       "pose": "hit",
       "tint": "rot",
       "file": "starseer_hit_rot.webp",
-      "width": 429,
-      "height": 685,
+      "width": 513,
+      "height": 695,
       "offset": [
-        53,
-        102
+        298,
+        156
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -1997,17 +1997,17 @@
       "pose": "hit",
       "tint": "grace",
       "file": "starseer_hit_grace.webp",
-      "width": 429,
-      "height": 685,
+      "width": 513,
+      "height": 695,
       "offset": [
-        53,
-        102
+        298,
+        156
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2015,17 +2015,17 @@
       "pose": "kneel",
       "tint": "gold",
       "file": "starseer_kneel_gold.webp",
-      "width": 440,
-      "height": 591,
+      "width": 557,
+      "height": 610,
       "offset": [
-        140,
-        214
+        360,
+        259
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2033,17 +2033,17 @@
       "pose": "kneel",
       "tint": "ember",
       "file": "starseer_kneel_ember.webp",
-      "width": 440,
-      "height": 591,
+      "width": 557,
+      "height": 610,
       "offset": [
-        140,
-        214
+        360,
+        259
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2051,17 +2051,17 @@
       "pose": "kneel",
       "tint": "frost",
       "file": "starseer_kneel_frost.webp",
-      "width": 440,
-      "height": 591,
+      "width": 557,
+      "height": 610,
       "offset": [
-        140,
-        214
+        360,
+        259
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2069,17 +2069,17 @@
       "pose": "kneel",
       "tint": "rot",
       "file": "starseer_kneel_rot.webp",
-      "width": 440,
-      "height": 591,
+      "width": 557,
+      "height": 610,
       "offset": [
-        140,
-        214
+        360,
+        259
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2087,17 +2087,17 @@
       "pose": "kneel",
       "tint": "grace",
       "file": "starseer_kneel_grace.webp",
-      "width": 440,
-      "height": 591,
+      "width": 557,
+      "height": 610,
       "offset": [
-        140,
-        214
+        360,
+        259
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2105,17 +2105,17 @@
       "pose": "down",
       "tint": "gold",
       "file": "starseer_down_gold.webp",
-      "width": 706,
-      "height": 276,
+      "width": 771,
+      "height": 337,
       "offset": [
-        14,
-        529
+        293,
+        532
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2123,17 +2123,17 @@
       "pose": "down",
       "tint": "ember",
       "file": "starseer_down_ember.webp",
-      "width": 706,
-      "height": 276,
+      "width": 771,
+      "height": 337,
       "offset": [
-        14,
-        529
+        293,
+        532
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2141,17 +2141,17 @@
       "pose": "down",
       "tint": "frost",
       "file": "starseer_down_frost.webp",
-      "width": 706,
-      "height": 276,
+      "width": 771,
+      "height": 337,
       "offset": [
-        14,
-        529
+        293,
+        532
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2159,17 +2159,17 @@
       "pose": "down",
       "tint": "rot",
       "file": "starseer_down_rot.webp",
-      "width": 706,
-      "height": 276,
+      "width": 771,
+      "height": 337,
       "offset": [
-        14,
-        529
+        293,
+        532
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2177,17 +2177,17 @@
       "pose": "down",
       "tint": "grace",
       "file": "starseer_down_grace.webp",
-      "width": 706,
-      "height": 276,
+      "width": 771,
+      "height": 337,
       "offset": [
-        14,
-        529
+        293,
+        532
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2195,17 +2195,17 @@
       "pose": "idle",
       "tint": "gold",
       "file": "herald_idle_gold.webp",
-      "width": 302,
-      "height": 718,
+      "width": 307,
+      "height": 710,
       "offset": [
-        197,
-        84
+        473,
+        157
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2213,17 +2213,17 @@
       "pose": "idle",
       "tint": "ember",
       "file": "herald_idle_ember.webp",
-      "width": 302,
-      "height": 718,
+      "width": 307,
+      "height": 710,
       "offset": [
-        197,
-        84
+        473,
+        157
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2231,17 +2231,17 @@
       "pose": "idle",
       "tint": "frost",
       "file": "herald_idle_frost.webp",
-      "width": 302,
-      "height": 718,
+      "width": 307,
+      "height": 710,
       "offset": [
-        197,
-        84
+        473,
+        157
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2249,17 +2249,17 @@
       "pose": "idle",
       "tint": "rot",
       "file": "herald_idle_rot.webp",
-      "width": 302,
-      "height": 718,
+      "width": 307,
+      "height": 710,
       "offset": [
-        197,
-        84
+        473,
+        157
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2267,17 +2267,17 @@
       "pose": "idle",
       "tint": "grace",
       "file": "herald_idle_grace.webp",
-      "width": 302,
-      "height": 718,
+      "width": 307,
+      "height": 710,
       "offset": [
-        197,
-        84
+        473,
+        157
       ],
       "root": [
-        343.9,
-        488.6
+        623.9,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2285,17 +2285,17 @@
       "pose": "guard",
       "tint": "gold",
       "file": "herald_guard_gold.webp",
-      "width": 300,
-      "height": 702,
+      "width": 304,
+      "height": 694,
       "offset": [
-        202,
-        103
+        480,
+        175
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2303,17 +2303,17 @@
       "pose": "guard",
       "tint": "ember",
       "file": "herald_guard_ember.webp",
-      "width": 300,
-      "height": 702,
+      "width": 304,
+      "height": 694,
       "offset": [
-        202,
-        103
+        480,
+        175
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2321,17 +2321,17 @@
       "pose": "guard",
       "tint": "frost",
       "file": "herald_guard_frost.webp",
-      "width": 300,
-      "height": 702,
+      "width": 304,
+      "height": 694,
       "offset": [
-        202,
-        103
+        480,
+        175
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2339,17 +2339,17 @@
       "pose": "guard",
       "tint": "rot",
       "file": "herald_guard_rot.webp",
-      "width": 300,
-      "height": 702,
+      "width": 304,
+      "height": 694,
       "offset": [
-        202,
-        103
+        480,
+        175
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2357,17 +2357,17 @@
       "pose": "guard",
       "tint": "grace",
       "file": "herald_guard_grace.webp",
-      "width": 300,
-      "height": 702,
+      "width": 304,
+      "height": 694,
       "offset": [
-        202,
-        103
+        480,
+        175
       ],
       "root": [
-        343.9,
-        507.9
+        623.9,
+        572.1
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2375,17 +2375,17 @@
       "pose": "attack1",
       "tint": "gold",
       "file": "herald_attack1_gold.webp",
-      "width": 506,
-      "height": 700,
+      "width": 515,
+      "height": 693,
       "offset": [
-        176,
-        89
+        447,
+        160
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2393,17 +2393,17 @@
       "pose": "attack1",
       "tint": "ember",
       "file": "herald_attack1_ember.webp",
-      "width": 506,
-      "height": 700,
+      "width": 515,
+      "height": 693,
       "offset": [
-        176,
-        89
+        447,
+        160
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2411,17 +2411,17 @@
       "pose": "attack1",
       "tint": "frost",
       "file": "herald_attack1_frost.webp",
-      "width": 506,
-      "height": 700,
+      "width": 515,
+      "height": 693,
       "offset": [
-        176,
-        89
+        447,
+        160
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2429,17 +2429,17 @@
       "pose": "attack1",
       "tint": "rot",
       "file": "herald_attack1_rot.webp",
-      "width": 506,
-      "height": 700,
+      "width": 515,
+      "height": 693,
       "offset": [
-        176,
-        89
+        447,
+        160
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2447,17 +2447,17 @@
       "pose": "attack1",
       "tint": "grace",
       "file": "herald_attack1_grace.webp",
-      "width": 506,
-      "height": 700,
+      "width": 515,
+      "height": 693,
       "offset": [
-        176,
-        89
+        447,
+        160
       ],
       "root": [
-        382.5,
-        488.6
+        662.5,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2465,17 +2465,17 @@
       "pose": "attack2",
       "tint": "gold",
       "file": "herald_attack2_gold.webp",
-      "width": 456,
-      "height": 705,
+      "width": 460,
+      "height": 699,
       "offset": [
-        131,
-        93
+        411,
+        163
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2483,17 +2483,17 @@
       "pose": "attack2",
       "tint": "ember",
       "file": "herald_attack2_ember.webp",
-      "width": 456,
-      "height": 705,
+      "width": 460,
+      "height": 699,
       "offset": [
-        131,
-        93
+        411,
+        163
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2501,17 +2501,17 @@
       "pose": "attack2",
       "tint": "frost",
       "file": "herald_attack2_frost.webp",
-      "width": 456,
-      "height": 705,
+      "width": 460,
+      "height": 699,
       "offset": [
-        131,
-        93
+        411,
+        163
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2519,17 +2519,17 @@
       "pose": "attack2",
       "tint": "rot",
       "file": "herald_attack2_rot.webp",
-      "width": 456,
-      "height": 705,
+      "width": 460,
+      "height": 699,
       "offset": [
-        131,
-        93
+        411,
+        163
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2537,17 +2537,17 @@
       "pose": "attack2",
       "tint": "grace",
       "file": "herald_attack2_grace.webp",
-      "width": 456,
-      "height": 705,
+      "width": 460,
+      "height": 699,
       "offset": [
-        131,
-        93
+        411,
+        163
       ],
       "root": [
-        363.2,
-        495
+        643.2,
+        559.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2555,17 +2555,17 @@
       "pose": "attack3",
       "tint": "gold",
       "file": "herald_attack3_gold.webp",
-      "width": 559,
-      "height": 645,
+      "width": 599,
+      "height": 642,
       "offset": [
-        161,
-        132
+        377,
+        201
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2573,17 +2573,17 @@
       "pose": "attack3",
       "tint": "ember",
       "file": "herald_attack3_ember.webp",
-      "width": 559,
-      "height": 645,
+      "width": 599,
+      "height": 642,
       "offset": [
-        161,
-        132
+        377,
+        201
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2591,17 +2591,17 @@
       "pose": "attack3",
       "tint": "frost",
       "file": "herald_attack3_frost.webp",
-      "width": 559,
-      "height": 645,
+      "width": 599,
+      "height": 642,
       "offset": [
-        161,
-        132
+        377,
+        201
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2609,17 +2609,17 @@
       "pose": "attack3",
       "tint": "rot",
       "file": "herald_attack3_rot.webp",
-      "width": 559,
-      "height": 645,
+      "width": 599,
+      "height": 642,
       "offset": [
-        161,
-        132
+        377,
+        201
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2627,17 +2627,17 @@
       "pose": "attack3",
       "tint": "grace",
       "file": "herald_attack3_grace.webp",
-      "width": 559,
-      "height": 645,
+      "width": 599,
+      "height": 642,
       "offset": [
-        161,
-        132
+        377,
+        201
       ],
       "root": [
-        440.4,
-        520.7
+        662.5,
+        585
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2645,17 +2645,17 @@
       "pose": "hit",
       "tint": "gold",
       "file": "herald_hit_gold.webp",
-      "width": 416,
-      "height": 663,
+      "width": 423,
+      "height": 653,
       "offset": [
-        74,
-        124
+        350,
+        202
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2663,17 +2663,17 @@
       "pose": "hit",
       "tint": "ember",
       "file": "herald_hit_ember.webp",
-      "width": 416,
-      "height": 663,
+      "width": 423,
+      "height": 653,
       "offset": [
-        74,
-        124
+        350,
+        202
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2681,17 +2681,17 @@
       "pose": "hit",
       "tint": "frost",
       "file": "herald_hit_frost.webp",
-      "width": 416,
-      "height": 663,
+      "width": 423,
+      "height": 653,
       "offset": [
-        74,
-        124
+        350,
+        202
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2699,17 +2699,17 @@
       "pose": "hit",
       "tint": "rot",
       "file": "herald_hit_rot.webp",
-      "width": 416,
-      "height": 663,
+      "width": 423,
+      "height": 653,
       "offset": [
-        74,
-        124
+        350,
+        202
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2717,17 +2717,17 @@
       "pose": "hit",
       "tint": "grace",
       "file": "herald_hit_grace.webp",
-      "width": 416,
-      "height": 663,
+      "width": 423,
+      "height": 653,
       "offset": [
-        74,
-        124
+        350,
+        202
       ],
       "root": [
-        318.2,
-        488.6
+        598.2,
+        552.9
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": false
     },
     {
@@ -2735,17 +2735,17 @@
       "pose": "kneel",
       "tint": "gold",
       "file": "herald_kneel_gold.webp",
-      "width": 351,
-      "height": 563,
+      "width": 352,
+      "height": 564,
       "offset": [
-        197,
-        242
+        479,
+        305
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2753,17 +2753,17 @@
       "pose": "kneel",
       "tint": "ember",
       "file": "herald_kneel_ember.webp",
-      "width": 351,
-      "height": 563,
+      "width": 352,
+      "height": 564,
       "offset": [
-        197,
-        242
+        479,
+        305
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2771,17 +2771,17 @@
       "pose": "kneel",
       "tint": "frost",
       "file": "herald_kneel_frost.webp",
-      "width": 351,
-      "height": 563,
+      "width": 352,
+      "height": 564,
       "offset": [
-        197,
-        242
+        479,
+        305
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2789,17 +2789,17 @@
       "pose": "kneel",
       "tint": "rot",
       "file": "herald_kneel_rot.webp",
-      "width": 351,
-      "height": 563,
+      "width": 352,
+      "height": 564,
       "offset": [
-        197,
-        242
+        479,
+        305
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2807,17 +2807,17 @@
       "pose": "kneel",
       "tint": "grace",
       "file": "herald_kneel_grace.webp",
-      "width": 351,
-      "height": 563,
+      "width": 352,
+      "height": 564,
       "offset": [
-        197,
-        242
+        479,
+        305
       ],
       "root": [
-        343.9,
-        630
+        623.9,
+        694.3
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2825,17 +2825,17 @@
       "pose": "down",
       "tint": "gold",
       "file": "herald_down_gold.webp",
-      "width": 706,
-      "height": 202,
+      "width": 705,
+      "height": 209,
       "offset": [
-        14,
-        603
+        292,
+        660
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2843,17 +2843,17 @@
       "pose": "down",
       "tint": "ember",
       "file": "herald_down_ember.webp",
-      "width": 706,
-      "height": 202,
+      "width": 705,
+      "height": 209,
       "offset": [
-        14,
-        603
+        292,
+        660
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2861,17 +2861,17 @@
       "pose": "down",
       "tint": "frost",
       "file": "herald_down_frost.webp",
-      "width": 706,
-      "height": 202,
+      "width": 705,
+      "height": 209,
       "offset": [
-        14,
-        603
+        292,
+        660
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2879,17 +2879,17 @@
       "pose": "down",
       "tint": "rot",
       "file": "herald_down_rot.webp",
-      "width": 706,
-      "height": 202,
+      "width": 705,
+      "height": 209,
       "offset": [
-        14,
-        603
+        292,
+        660
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     },
     {
@@ -2897,17 +2897,17 @@
       "pose": "down",
       "tint": "grace",
       "file": "herald_down_grace.webp",
-      "width": 706,
-      "height": 202,
+      "width": 705,
+      "height": 209,
       "offset": [
-        14,
-        603
+        292,
+        660
       ],
       "root": [
-        321.6,
-        761.7
+        601.6,
+        826
       ],
-      "ground": 803.6,
+      "ground": 867.9,
       "touches_ground": true
     }
   ]
