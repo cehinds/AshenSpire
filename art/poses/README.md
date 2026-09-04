@@ -6,7 +6,8 @@ versions of the four class figures for combat, made in Blender, while painted
 per-pose art waits on image-generation quota.
 
 ```
-blender --background --factory-startup --python tools/lowpoly-blender.py -- build/lowpoly
+node tools/component-refs.mjs
+blender --background --factory-startup --python tools/lowpoly-blender.py -- build/lowpoly --palette build/components/palette.json
 node tools/pose-sprites.mjs --in build/lowpoly --out art/poses
 ```
 
@@ -47,6 +48,19 @@ material, chosen deterministically, so a flat plane reads as low-poly facets
 rather than a smear. The rogue got bulk (wider chest and shoulders, leather
 shoulder plates, a third mantle tier) and a shorter hood; gold has a faint
 glow; the staff's star core is lit.
+
+**Fourth pass — part by part from the painting.** Each painting is broken
+into its costume parts in `tools/lowpoly-components.json` (a crop box, the
+bone it hangs on, its equipment slot: head, shoulders, chest, belt, coat,
+arms, legs, feet, weapon). `tools/component-refs.mjs` cuts the reference
+crops and samples each part's palette; `tools/lowpoly-blender.py` builds
+every part as its own registered function, coloured from that crop (pinned
+by eye where the painting's rim light fools the sampler), and `--parts`
+renders each slot alone for a painting-beside-model table. Mantles now come
+to hanging points with gold pyramids, hoods have a real opening with the
+face in shadow, the starseer's brim droops and the crown bends, the reaver's
+pauldrons are the painting's size, the rogue has trousers, a green tunic, a
+split skirt, spiral-wrapped bracers and wider daggers.
 
 **Limits, stated.** Stand-ins for painted poses, not the paintings: faces are
 the concept's dark hood-void, cloth is flat colour. Joint weights are by
