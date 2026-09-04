@@ -118,11 +118,6 @@
     },
     {
       "tool": "tools/startup-gate.mjs",
-      "target": "src/ui/screens/settings.js",
-      "id": "425f6cab7daee778"
-    },
-    {
-      "tool": "tools/startup-gate.mjs",
       "target": "src/ui/components/saveSlotSelector.js",
       "id": "8b64c6f508683d30"
     },
@@ -328,7 +323,7 @@
     },
     "tools/startup-gate.mjs": {
       "count": 26,
-      "digest": "2b96d0fd673f41fc"
+      "digest": "36a530720670cced"
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,
