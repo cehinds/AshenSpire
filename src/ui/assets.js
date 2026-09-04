@@ -310,7 +310,17 @@ export function classSprite(classId, tint, sigil, tintId, style) {
     const stage = createPoseStage(classId, tintId);
     if (stage) {
       el.classList.add('animated');
-      el.appendChild(stage.el);
+      // Inside the facing layer, like the painting: an animated figure has a
+      // facing for exactly the same reason a still one does, and hanging the
+      // stage off `.class-sprite` instead would leave it as the one style that
+      // ignores the mirror. It also keeps the stage clear of the mirror in the
+      // other direction — `.pose-layer` carries its own inline
+      // `translateX(…)` to seat the pose's rotation anchor, and that is a
+      // second transform on a second element rather than two facts fighting
+      // over one. `stageFor()` searches DOWN from the combatant's `.sprite`,
+      // so the extra layer does not hide the stage from it; the key still
+      // rides `.class-sprite.animated`, which is what that search matches.
+      facing.appendChild(stage.el);
       registerStage(el, stage);
       return el;
     }
