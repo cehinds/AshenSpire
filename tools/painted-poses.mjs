@@ -182,11 +182,15 @@ if (gridArg) {
   figures = [...groups].sort((a, b) => (a.cellR - b.cellR) || (a.cellC - b.cellC));
   layout = `${gr}x${gc} grid`;
 } else {
+  // Rows are decided by the bodies alone. A staff reaching into the row above or a
+  // blade thrown into the one below would otherwise merge two rows into one, which
+  // gets both the pose names and the floors wrong; the expanded bounds are for
+  // cropping, nothing else.
   const rows = [];
-  for (const g of [...groups].sort((a, b) => a.y0 - b.y0)) {
-    const row = rows.find(r => Math.min(r.y1, g.y1) - Math.max(r.y0, g.y0) > 0.35 * Math.min(r.y1 - r.y0, g.y1 - g.y0));
-    if (row) { row.items.push(g); row.y0 = Math.min(row.y0, g.y0); row.y1 = Math.max(row.y1, g.y1); }
-    else rows.push({ y0: g.y0, y1: g.y1, items: [g] });
+  for (const g of [...groups].sort((a, b) => a.bodyY0 - b.bodyY0)) {
+    const row = rows.find(r => Math.min(r.y1, g.bodyY1) - Math.max(r.y0, g.bodyY0) > 0.35 * Math.min(r.y1 - r.y0, g.bodyY1 - g.bodyY0));
+    if (row) { row.items.push(g); row.y0 = Math.min(row.y0, g.bodyY0); row.y1 = Math.max(row.y1, g.bodyY1); }
+    else rows.push({ y0: g.bodyY0, y1: g.bodyY1, items: [g] });
   }
   for (const r of rows) {
     const floor = Math.max(...r.items.map(i => i.bodyY1));
@@ -251,6 +255,8 @@ for (let i = 0; i < poses.length; i++) {
   // the line instead would put the blade below it, and the sprite step clears
   // everything below the floor before it crops.
   const oy = ground - f.lift - (f.y1 - f.y0), ox = Math.round((CW - fw) / 2);
+  // the lower quarter of the body, in rows of this crop
+  const footLine = (f.bodyY0 - f.y0) + 0.75 * (f.bodyY1 - f.bodyY0);
   let sumX = 0, count = 0;
   for (let y = 0; y < fh; y++) {
     for (let x = 0; x < fw; x++) {
@@ -261,8 +267,10 @@ for (let i = 0; i < poses.length; i++) {
       out[d] = img.px[s]; out[d + 1] = img.px[s + 1]; out[d + 2] = img.px[s + 2];
       out[d + 3] = hasAlpha ? img.px[s + 3] : 255;
       // centre on the feet of the body itself — not on the cape, and not on a
-      // dropped blade lying beside it
-      if (isBody && y > fh * 0.75) { sumX += ox + x; count++; }
+      // dropped blade lying beside it. The quarter is of the body's own height:
+      // measured against the whole group, a long piece below the feet could put
+      // every body pixel above the line and leave nothing to average.
+      if (isBody && y > footLine) { sumX += ox + x; count++; }
     }
   }
   const file = `${cls}_${pose}.png`;
