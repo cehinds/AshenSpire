@@ -687,171 +687,6 @@ body.hide-hints .hint-bar { display: none; }
 
 }
 
-/* ---------- custom climb ---------- */
-.mod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
-.mod-chip {
-  text-align: left; padding: 0.8rem 1.2rem; border-radius: var(--r-3); cursor: pointer;
-  background: var(--panel); border: 1px solid var(--line-soft); color: var(--parchment);
-  display: flex; flex-direction: column; gap: 0.2rem; transition: border-color 140ms, background 140ms;
-}
-.mod-chip b { font-size: 1.2rem; }
-.mod-chip span { font-size: 1.05rem; color: var(--muted); line-height: 1.35; }
-.mod-chip:hover { border-color: var(--gold); }
-.mod-chip.on { background: rgba(201, 162, 39, 0.16); border-color: var(--gold); }
-.mod-chip.on b { color: var(--gold); }
-.mod-chip.forced { cursor: not-allowed; opacity: 0.85; }
-.mod-chip.forced::after { content: 'ASCENSION'; font-size: 0.8rem; letter-spacing: 0.12em; color: var(--ember); margin-top: 0.2rem; }
-.customrun .cz-label { color: var(--muted); font-size: 1.1rem; letter-spacing: 0.18em; margin-bottom: 0.6rem; }
-
-/* ---------- custom climb · run shape (the debug knobs) ----------
-   Freja, 2026-08-08. Constantine: "I only have the patience for 30 min runs.
-   perhaps add an advanced debug feature to limit the amount of max columns,
-   rows, and or columns with percent chance of certain nodes being more likely".
-
-   THE COMPOSITION CALL, stated because it is the part that is mine. This panel
-   sits below CLASS and ASCENSION and must not compete with them: it is folded
-   shut, its head is a quiet line, and the only bright thing inside it is the
-   NUMBER — one gold figure the eye lands on and watches move while a slider is
-   dragged. Everything else in here is muted on purpose. A debug panel that
-   shouts is a debug panel that gets read as the game.
-
-   LAW 5 — one axis. There is no horizontal strip anywhere in this panel and no
-   width-keyed variant of it: every row is a column (head line, then a full-width
-   slider), so the narrow shape IS the wide shape and there is no second
-   composition to drift. Nothing here can produce horizontal travel because
-   nothing here has a minimum width — the one flexible track is `minmax(0, 1fr)`
-   by construction.
-
-   LAW 4 — text metrics take the text unit; boxes do not. `font-size` and
-   `line-height` are rem. The tap floor, the track and the thumb are px through
-   `--tap-floor`, because a finger does not grow when Text size does. */
-.runshape { border: 1px solid var(--line); border-radius: var(--r-3); background: rgba(0, 0, 0, 0.18); }
-.runshape-toggle {
-  display: flex; align-items: center; gap: 8px; width: 100%;
-  min-height: var(--tap-floor); height: auto;
-  padding: 6px 12px; text-align: left; cursor: pointer;
-  background: none; border: 0; border-radius: var(--r-3); color: var(--muted);
-}
-.runshape-toggle:hover { color: var(--parchment); }
-.runshape .rs-title { font-size: 1.1rem; letter-spacing: 0.18em; flex: 1 1 auto; min-width: 0; }
-.runshape .rs-state {
-  font-size: 0.95rem; letter-spacing: 0.12em; color: var(--muted);
-  border: 1px solid var(--line-soft); border-radius: var(--r-2); padding: 1px 5px;
-}
-.runshape.shaped .rs-state { color: var(--gold); border-color: var(--gold); }
-.runshape.shaped .rs-title { color: var(--gold); }
-.runshape .rs-caret { transition: transform 140ms; flex: 0 0 auto; }
-.runshape.open .rs-caret { transform: rotate(90deg); }
-/* THE GAP BETWEEN KNOBS IS BIGGER THAN THE AIR INSIDE ONE, and it has to be
-   stated as a number rather than left to taste: a 44 px slider box carries ~20 px
-   of empty track above and below its ink, so at the first draft's 14 px each
-   knob's own NOTE sat closer to the NEXT knob's label than to the slider it
-   describes. Read off the photograph, not the stylesheet.
-   px, not rem, throughout this block's box geometry — Law 4 clause 3, applied as
-   the ratchet it is: new writes take it, the tree is not swept. */
-.runshape-body { display: flex; flex-direction: column; gap: 26px; padding: 0 12px 14px; }
-.runshape .rs-intro { max-width: none; }
-
-/* The readout — the whole feature. A knob without a number is the thing that
-   shipped last time (mapconfig.js says the same sentence about the act length).
-   `tabular-nums` so the figure does not jitter sideways while it is dragged. */
-.rs-readout {
-  display: flex; flex-direction: column; gap: 2px;
-  padding: 10px 12px; border-radius: var(--r-2);
-  background: var(--panel); border: 1px solid var(--line-soft);
-}
-.rs-readout b { color: var(--gold); font-size: 2rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.rs-readout span { color: var(--muted); font-size: 1.05rem; line-height: 1.4; }
-.rs-readout .rs-boundary { color: var(--muted); font-size: 0.95rem; opacity: 0.85; }
-/* The one place in this panel that goes loud. `--parchment` at 14.44:1 carries
-   the WORDS and `--ember` carries the RULE, for the reason base.css and the seed
-   refusal both give: ember measures 3.70:1 on --panel — over the 3:1 a UI
-   component needs, under AA for text — so colour marks WHERE and never says
-   WHAT. */
-.rs-readout .rs-boundary.warn {
-  color: var(--parchment); opacity: 1;
-  border-left: 2px solid var(--ember); padding-left: 8px; margin-top: 4px;
-}
-
-/* THREE TIERS, and the gaps are what say so. A 44 px slider box already carries
-   most of the air a row needs, so the spacing here is doing HIERARCHY, not
-   breathing room: `gap: 0` inside a knob binds its head, track and note into one
-   object; the body's `gap` between knobs is what separates them. The first draft
-   used one gap everywhere and the five weight rows read as an undifferentiated
-   stack with "Node odds" indistinguishable from "Monster" — measured by looking
-   at the photograph, which is the only way that class of mistake is ever found. */
-.rs-knob { display: flex; flex-direction: column; gap: 0; }
-.rs-knob-head {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
-  color: var(--parchment); font-size: 1.2rem;
-}
-.rs-knob-head .rs-val { color: var(--gold); font-variant-numeric: tabular-nums; }
-.rs-knob .rs-why { max-width: none; }
-/* Tier up: five weights are a GROUP, so their head reads as a section label and
-   not as a sixth control name. Same treatment `.cz-label` gives the sections
-   above it, so the panel borrows the screen's own hierarchy rather than a new one. */
-.rs-group-head {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
-  color: var(--muted); font-size: 1.1rem; letter-spacing: 0.18em;
-  padding-bottom: 4px; border-bottom: 1px solid var(--line);
-}
-.rs-group-head .rs-val { color: var(--muted); letter-spacing: 0; font-variant-numeric: tabular-nums; }
-.rs-group .rs-why { padding-top: 6px; }
-
-/* One slider rule for the panel. The BOX is the tap target (44 device px tall,
-   full width); the INK is small. Sunna's floor is about what a thumb can hit,
-   never about how loud a control looks — so the whole strip is draggable and
-   only the handle is drawn. */
-.rs-slider {
-  -webkit-appearance: none; appearance: none;
-  width: 100%; min-width: 0;
-  min-height: var(--tap-floor); height: var(--tap-floor);
-  background: none; cursor: pointer;
-}
-.rs-slider:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--r-2); }
-.rs-slider::-webkit-slider-runnable-track { height: 4px; border-radius: var(--r-1); background: var(--line-soft); }
-.rs-slider::-moz-range-track { height: 4px; border-radius: var(--r-1); background: var(--line-soft); }
-.rs-slider::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 18px; height: 18px; margin-top: -7px; border-radius: var(--r-round);
-  background: var(--gold); border: 1px solid var(--bg);
-}
-.rs-slider::-moz-range-thumb {
-  width: 18px; height: 18px; border-radius: var(--r-round);
-  background: var(--gold); border: 1px solid var(--bg);
-}
-
-/* Name and share on one line, the track on the row under it — two lines at
-   EVERY width, so the narrow shape is the wide shape (Law 5 note above). The
-   head is a flex row whose only flexible child is `minmax(0, …)` by way of
-   `min-width: 0`, so a long node type wraps instead of pushing the row wide. */
-.rs-weights { display: flex; flex-direction: column; padding-top: 6px; }
-.rs-wrow { display: flex; flex-direction: column; }
-.rs-whead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.rs-wrow .rs-wname {
-  color: var(--parchment); font-size: 1.1rem; text-transform: capitalize;
-  flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere;
-}
-.rs-wrow .rs-wpct {
-  color: var(--gold); font-size: 1.1rem; font-variant-numeric: tabular-nums; flex: 0 0 auto;
-}
-/* A zeroed weight reads as muted AND says "0%" — the word is the signal, the
-   colour is not (base.css: colour is never the only signal). */
-.rs-wrow .rs-wpct.zero { color: var(--muted); }
-/* `button.rs-reset`, not `.rs-reset` — MEASURED, not read. `button.subtle` in
-   base.css is (0,1,1) and a bare class is (0,1,0), so the first version of this
-   rule lost to it silently and the control came back 111.7 x 24.8 device px on a
-   390x844 phone: 56% of the floor it is supposed to clear, in a panel where the
-   thing beside it starts a run. Same specificity trap `button.ev-choice` above
-   is annotated for, found the same way — by photographing it, not by reading.
-   Law 4 clause 4: a fixed floor, `height: auto`, so it can neither clip at Text
-   XL nor balloon; px because a finger does not grow with Text size. */
-button.rs-reset {
-  align-self: flex-start;
-  min-height: var(--tap-floor); height: auto;
-  padding: 8px 20px;
-}
-.draft-grid { gap: 1.6rem; }
 .hx-custom { display: inline-block; margin-left: 0.6rem; padding: 0.1rem 0.5rem; border-radius: var(--r-2); font-size: 0.9rem; letter-spacing: 0.08em; background: rgba(201, 162, 39, 0.18); border: 1px solid var(--gold); color: var(--gold); }
 .farewell { gap: 2.2rem; }
 .farewell .title-big { opacity: 0.9; }
@@ -931,29 +766,6 @@ button.rs-reset {
   margin: 0 auto 10px;
   text-align: center;
 }
-.seed-line { color: var(--muted); font-size: 1.2rem; }
-.seed-line input {
-  background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
-  border-radius: var(--r-2); padding: 0.4rem 0.8rem; width: 11rem; font-family: monospace; text-align: center;
-}
-
-/* The seed refusal — a typed seed the run cannot be generated from names the
-   character that stopped it, at the field, the moment it lands
-   (ui/components/seedfield.js writes this element; no screen builds it).
-
-   THE COLOUR IS ON THE BORDER AND NOT ON THE SENTENCE, and that is measured,
-   not a preference: `--ember` (#c9502e) reaches 4.37:1 on `--bg` and 3.70:1 on
-   `--panel` — under AA for text, over the 3:1 a UI component needs. So the
-   BORDER carries the ember (it says WHERE) and the SENTENCE is `--parchment`
-   at 14.44:1 (it says WHAT). Colour is never the only signal: the words are.
-
-   Law 4 — `font-size`/`line-height` are text metrics and take the text unit;
-   `margin-top` and `max-width` are box geometry and do not answer Text size. */
-.seed-line .seed-problem {
-  display: block; color: var(--parchment); font-size: 1.1rem; line-height: 1.4;
-  margin-top: 6px; max-width: 320px;
-}
-.seed-line input[aria-invalid='true'] { border-color: var(--ember); }
 
 .shrine-option-grid { align-items: stretch; }
 
@@ -980,11 +792,6 @@ button.rs-reset {
 .level-cinder-cost { color: var(--ember); }
 .level-cinder-result { color: var(--parchment); }
 .level-cinder-result[hidden] { display: none; }
-.stat-allocation-card { min-width: 0; padding-top: 8px; border-top: 1px solid var(--line-soft); }
-.stat-allocation-card > h3 { color: var(--gold); text-align: center; }
-.stat-allocation-note { margin-top: 6px; color: var(--muted); font-size: 1rem; line-height: 1.35; text-align: center; }
-.stat-allocation-card .cc-stat-actions { justify-content: center; }
-.stat-allocation-card .se-step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
 
 .smith-modal-eyebrow, .smith-preview-label {
   color: var(--gold); font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase;
@@ -1775,416 +1582,6 @@ button.rs-reset {
   .startup-gate .build-stamp { font-size: 0.72rem; }
 }
 
-/* ---------- character customization ---------- */
-
-/* EldenSpire#29 slice 1. These three rules were inline `style=` attributes on
-   the markup, which is why the screen could not respond to anything: an inline
-   declaration outranks every stylesheet selector short of !important, so no
-   narrow layout could reach them. The VALUES are unchanged — 34px, 560px,
-   150px, 10px — and deliberately still px rather than rem, because px does not
-   answer to the Text size setting and rem does; converting them would have
-   changed the wide layout at text size L/XL, which nothing here measures. */
-/* `row-reverse`, and it is the one place on this screen where DOM order and
-   visual order disagree — so it is written down rather than discovered.
-   EldenSpire#29 slice 2 put `.cz-fields` FIRST in the markup, because on a
-   narrow screen the DOM order IS the reading order and the decisions have to
-   come before the identity pane (Sunna: 17% of the arrival screen went to a
-   name most players never change and a seed most never read, above the only
-   choice that changes the run). On wide there is no fold, nothing is hidden,
-   and the authored framing — portrait on the left — is Constantine's approved
-   screen, so it is kept by reversing the AXIS rather than the markup.
-   THE COST, stated: a sighted keyboard user on a wide screen tabs right-to-left
-   across these two blocks. It is two siblings and one inversion, on the layout
-   where every control is already visible. A screen reader follows the DOM and
-   therefore hears the better order on both. The alternative — reordering only
-   for narrow — needs a re-mount on every resize, which is a second layout
-   decider, which is #24 again. */
-.cz-cols { display: flex; flex-direction: row-reverse; gap: 34px; align-items: flex-start; }
-.cz-fields { display: flex; flex-direction: column; gap: 14px; max-width: 560px; }
-.preview-pane { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-
-/* ---------- EldenSpire#29 slice 2 — the way out is always on screen --------
-   Sunna's read of the FIXED screen, 2026-08-01: "reachable, and still not
-   finished." At 390x844 the arrival screen shows a portrait, a name, a seed and
-   three classes and then STOPS — it looks complete. BEGIN THE CLIMB was 374
-   device px below the fold (its bottom 410 px past it), inside 432 px of scroll
-   with no persistent footer, no scroll affordance and a 0 px scrollbar gutter.
-   A player who has picked a class has to GUESS that swiping is the way in.
-   The same defect exists on the desktop this screen was designed on, and was
-   written down there a week ago and not fixed: tools/tutorial-reach.mjs carries
-   the note "#cz-start lays out at top 1216 in a 1080px viewport, 136px below
-   the fold" and has to scrollIntoView to click it. One screen, one fix, both.
-
-   THERE IS NO RESERVED HEIGHT AND THAT IS THE POINT — the same reasoning as
-   .map-zoom (EldenSpire#28, styles/map.css; read its header). `.screen.customize`
-   stops being the scrollport, `.cz-scroll` becomes one, and `.cz-actions` is its
-   sibling — so the band the buttons occupy is the buttons' OWN computed height.
-   A reserved length here would be a second number that has to agree with the
-   button size, the text-size setting and --ui-zoom at once: three chances to
-   drift and nothing checking. `margin-top: auto` puts the row at the bottom when
-   the content is short, which is a bound and not a length.
-
-   ONE RULE, EVERY LAYOUT, not a narrow special case. Whether the button falls
-   below the fold is a coincidence of shape x --ui-zoom x text size x how many
-   classes and keepsakes the content tables happen to hold — and that last term
-   is Law 1's whole promise, so a fix aimed at today's row counts is a fix for
-   today's content. */
-.screen.customize { justify-content: flex-start; gap: 0; padding: 0; overflow: hidden; }
-.cz-scroll {
-  flex: 0 1 auto; min-height: 0; width: 100%; overflow-y: auto;
-  display: flex; flex-direction: column; align-items: center; gap: 1.6rem;
-  padding: 2.6rem 2.4rem 1.8rem;
-  /* Parity with .map-scroll, and honest about what it buys: under mobile
-     emulation — and on a real phone — scrollbars are OVERLAY, so the gutter is
-     0 px there either way, which is exactly what Sunna measured. This is the
-     desktop half. The phone's affordance is the opaque bar below, with the
-     content visibly passing under it. */
-  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
-}
-.cz-actions {
-  position: relative; flex-shrink: 0; margin-top: auto; width: 100%;
-  display: flex; justify-content: center; align-items: center; gap: 1.4rem;
-  padding: 1rem 2.4rem;
-  background: var(--panel); border-top: 1px solid var(--line);
-}
-/* The tap floor answers Minimum tap size and UI size, not Text size. Text may
-   still grow this control intrinsically when its content needs more room. */
-.cz-actions button { min-height: var(--tap-floor); height: auto; }
-/* The cue that says "there is more above me." The bar is opaque, so without
-   this the content just ends at a hard edge — which reads as finished, the
-   exact failure this block exists to remove. Bounded by .cz-actions (position:
-   relative, above); pointer-events: none so it can never answer a hit-test in
-   place of a control. */
-.cz-actions::before {
-  content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: 1.8rem;
-  background: linear-gradient(to top, var(--panel), transparent);
-  pointer-events: none;
-}
-/* Moved off the markup, VALUE UNCHANGED (24px stays 24px) — same reason as the
-   note above: an inline `style=` outranks every stylesheet selector short of
-   !important, so anything left inline is a rule no layout can answer. Whether
-   this 24px ought to be rem so it tracks Text size is a live Law 2 question and
-   is deliberately NOT answered here: changing it would change the wide layout
-   at L/XL, which nothing in this repo measures. */
-.cz-kicker {
-  display: flex; align-items: center; gap: 0.75rem; width: min(32rem, 90%); margin: 0 0 -1.25rem;
-  color: var(--muted); font-family: var(--font-display); font-size: 0.92rem; letter-spacing: 0.22em;
-}
-.cz-kicker::before, .cz-kicker::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-.cz-title { color: var(--gold); font-size: 24px; letter-spacing: 0.2em; margin-bottom: -1.25rem; }
-.cz-subtitle { margin: 0; color: var(--muted); font-size: 1rem; letter-spacing: 0.07em; }
-/* The name field had no label element, no placeholder and no aria-label — so
-   the label is a real <label for>, not a styled <p>, because the gap it closes
-   is a screen reader announcing an unlabelled text field. */
-.preview-pane .cz-label { margin-bottom: 0; }
-.cz-name { --track: 0.08em;
-  background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
-  border-radius: var(--r-3); padding: 6px 10px; width: 150px; text-align: center;
-  font-family: var(--font-display); letter-spacing: var(--track);
- text-indent: var(--track);}
-
-.cz-portrait {
-  width: 13rem; height: 16rem; border-radius: var(--r-4); background: #2a2418;
-  border: 3px solid var(--gold); display: flex; align-items: center; justify-content: center;
-  font-size: 6.4rem; transition: border-color 200ms, box-shadow 300ms;
-}
-.cz-label { color: var(--muted); font-size: 1rem; letter-spacing: 0.3em; margin-bottom: 0.6rem; }
-.cz-opts { display: flex; gap: 0.8rem; }
-.cz-opt {
-  width: 4rem; height: 4rem; border-radius: var(--r-3); background: var(--panel);
-  border: 2px solid var(--line-soft); display: flex; align-items: center; justify-content: center;
-  font-size: 2rem; cursor: pointer; transition: transform 120ms, border-color 120ms;
-}
-#cz-kits button.cz-opt,
-#cz-armours button.cz-opt {
-  /* Starting kits and starting armour carry words and commit a run-defining choice. The generic
-     sigil tile's 4rem square shrinks with body zoom; this specific interactive
-     row uses the on-glass floor and grows around its authored label. */
-  width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
-  padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
-}
-
-/* ---- E5 (#250): the stat-point editor -------------------------------------
-   Every NUMBER on this surface is written by customize.js from the creation
-   mode row (pool, floor, ceiling); this block is geometry only. Steppers sit
-   on the tap floor (base.css --tap-floor) because a thumb is the instrument;
-   aria-disabled dims without removing focus — an unfocusable control is
-   unaskable, the same ruling the BEGIN button carries. */
-.cz-statedit { display: flex; flex-direction: column; gap: 0.6rem; max-width: 24rem; }
-.se-modes { display: flex; gap: 0.8rem; }
-.se-modes .cz-opt.se-mode {
-  width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
-  padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
-}
-.se-pool { font-size: 1.1rem; color: var(--gold); letter-spacing: 0.04em; margin: 0; }
-.se-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0.55rem; }
-.se-name { width: 3.2rem; font-size: 1.05rem; letter-spacing: 0.06em; color: var(--muted); }
-.se-value { width: 2.2rem; text-align: center; font-size: 1.25rem; }
-.se-controls { display: flex; align-items: center; gap: 0.45rem; }
-.se-step {
-  width: var(--tap-floor); height: var(--tap-floor);
-  min-width: var(--tap-floor); min-height: var(--tap-floor);
-  border-radius: var(--r-3); background: var(--panel); border: 2px solid var(--line-soft);
-  color: var(--parchment); font-size: 1.4rem; line-height: 1; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: transform 120ms, border-color 120ms;
-}
-.se-step:hover { transform: translateY(-1px); border-color: var(--parchment); }
-.se-step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
-.se-step[aria-disabled='true']:hover { transform: none; border-color: var(--line-soft); }
-.cz-opt:hover { transform: translateY(-2px); }
-.cz-opt.chosen { border-color: var(--parchment); }
-.cz-opt.tint.chosen { outline: 2px solid var(--parchment); outline-offset: 2px; }
-.cz-class.chosen { border-color: var(--gold); box-shadow: 0 0 18px rgba(201, 162, 39, 0.25); }
-.cz-keepsakes { display: flex; flex-direction: column; gap: 0.8rem; }
-.cz-keepsake {
-  display: flex; gap: 1rem; align-items: center; background: var(--panel);
-  border: 1.5px solid var(--line-soft); border-radius: var(--r-3); padding: 0.8rem 1.2rem;
-  cursor: pointer; transition: border-color 120ms;
-}
-.cz-keepsake:hover { border-color: var(--muted); }
-.cz-keepsake.chosen { border-color: var(--gold); }
-.cz-keepsake .ks-icon { font-size: 2.2rem; }
-.cz-keepsake p { font-size: 1.1rem; color: var(--muted); }
-
-/* Character creation redesign: one themed section at a time. The four faces
-   keep the route compact; the open stage owns the richer layout. */
-.cz-flow { width: min(92rem, 100%); }
-.cz-flow > .disc-faces { width: 100%; }
-.cz-flow .disc-reveal { padding: 1.2rem; background: color-mix(in srgb, var(--panel) 88%, transparent); }
-.cz-stage { display: flex; flex-direction: column; gap: 1.4rem; width: 100%; }
-.cz-stage .class-row { justify-content: center; }
-.cz-next { align-self: flex-end; min-height: var(--tap-floor); }
-
-.cc-stage-toolbar {
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  min-height: var(--tap-floor); padding: 0.2rem 0;
-}
-.cc-stage-toolbar h3 {
-  margin: 0; color: var(--muted); font-size: 1rem; font-weight: 600;
-  letter-spacing: 0.18em;
-}
-.cc-stage-tools { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; min-width: 0; }
-.cc-auto-advance-note { color: var(--muted); font-size: 1rem; white-space: nowrap; }
-.cc-boolean-setting { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--muted); font-size: 1rem; }
-.cc-switch {
-  position: relative; width: 2.6rem; height: 1.45rem; min-width: 2.6rem; padding: 0.15rem;
-  border: 1px solid var(--line-soft); border-radius: var(--r-pill); background: var(--panel); cursor: pointer;
-}
-.cc-switch-knob {
-  display: block; width: 0.9rem; height: 0.9rem; border-radius: var(--r-round); background: var(--muted);
-  transform: translateX(0); transition: transform 120ms, background 120ms;
-}
-.cc-switch[aria-checked='true'] .cc-switch-knob { transform: translateX(1.05rem); background: var(--gold); }
-.cc-view-toggle {
-  display: inline-flex; align-items: stretch; border: 1px solid var(--line-soft);
-  border-radius: var(--r-3); overflow: hidden; background: color-mix(in srgb, var(--panel) 84%, transparent);
-}
-.cc-view-option {
-  min-width: 4.8rem; min-height: calc(var(--tap-floor) - 0.35rem); padding: 0.35rem 0.9rem;
-  border: 0; border-right: 1px solid var(--line); border-radius: 0;
-  color: var(--muted); background: transparent; font-family: var(--font-display);
-  letter-spacing: 0.06em; cursor: pointer;
-}
-.cc-view-option:last-child { border-right: 0; }
-.cc-view-option:hover { color: var(--parchment); background: rgba(255,255,255,0.025); }
-.cc-view-option.chosen { color: var(--gold); box-shadow: inset 0 0 0 1.5px var(--gold); }
-
-.cc-class-split {
-  --cc-class-preview-share: 30%;
-  display: grid; grid-template-columns: minmax(18rem, var(--cc-class-preview-share)) 1.15rem minmax(28rem, 1fr);
-  gap: 1.1rem; align-items: stretch; width: 100%;
-}
-.cc-class-preview-host, .cc-class-selection {
-  min-width: 0; border: 1px solid var(--line-soft); border-radius: var(--r-3);
-  background: color-mix(in srgb, var(--panel) 84%, transparent);
-}
-.cc-class-preview-host { display: flex; }
-.cc-class-selection { display: flex; flex-direction: column; gap: 0.85rem; padding: 1rem; }
-.cc-class-selection > .cz-next { margin-top: auto; }
-.cc-class-divider {
-  position: relative; justify-self: center; width: var(--tap-floor); min-width: var(--tap-floor); padding: 0; border: 0;
-  background: transparent;
-  cursor: col-resize;
-}
-.cc-class-divider::before {
-  content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
-  background: var(--line-soft);
-}
-.cc-class-divider::after { --track: 0.12em;
-  content: '‹\00a0›'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  min-width: 2rem; padding: 0.4rem 0.18rem; color: var(--muted); background: var(--panel);
-  font-family: var(--font-display); letter-spacing: var(--track);
-  text-align: center; white-space: nowrap;
- text-indent: var(--track);}
-.cc-class-divider:hover::after, .cc-class-divider:focus-visible::after { color: var(--gold); }
-.cc-class-preview {
-  display: flex; flex: 1; min-width: 0; flex-direction: column; align-items: stretch;
-  padding: 1.1rem; text-align: center;
-}
-.cc-class-preview h3 { margin: 0.15rem 0 0.2rem; color: var(--gold); font-size: 2rem; }
-.cc-preview-eyebrow {
-  display: flex; align-items: center; gap: 0.6rem; margin: 0;
-  color: var(--muted); font-size: 0.9rem; font-weight: 600; letter-spacing: 0.16em;
-}
-.cc-preview-eyebrow::before, .cc-preview-eyebrow::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-.cc-class-art { display: flex; align-items: center; justify-content: center; min-height: 15rem; overflow: hidden; }
-.cc-class-art .class-sprite { transform: scale(1.28); transform-origin: 50% 70%; }
-.cc-class-resource-grid {
-  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0.55rem 0 1.1rem;
-  border: 1px solid var(--line); border-radius: var(--r-3); overflow: hidden;
-}
-.cc-class-resource { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.65rem 0.25rem; border-right: 1px solid var(--line); }
-.cc-class-resource:last-child { border-right: 0; }
-.cc-class-resource span { color: var(--muted); font-size: 0.82rem; overflow-wrap: anywhere; }
-.cc-class-resource b { color: var(--parchment); font-size: 1.25rem; font-variant-numeric: tabular-nums; }
-.cc-class-relic { display: grid; grid-template-columns: 2.8rem 1fr; gap: 0.75rem; align-items: start; padding: 0.75rem 0 0; text-align: left; }
-.cc-class-relic-art { font-size: 2.2rem; text-align: center; }
-.cc-class-relic > span:last-child { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
-.cc-class-relic b { color: var(--parchment); font-size: 1.15rem; }
-.cc-class-relic small { color: var(--muted); font-size: 0.95rem; line-height: 1.35; }
-
-.cc-class-selection .class-row[data-view='list'] { flex-direction: column; flex-wrap: nowrap; gap: 0.7rem; width: 100%; }
-.cc-class-selection .class-row[data-view='list'] .class-pick {
-  width: 100%; padding: 1rem 1.25rem; display: grid; grid-template-columns: 5.5rem minmax(0, 1fr);
-  align-items: center; gap: 1rem; text-align: left;
-}
-.cc-class-selection .class-row[data-view='list'] .class-pick .glyph { margin: 0; font-size: 4rem; text-align: center; }
-.cc-class-selection .class-row[data-view='list'] .class-pick h3 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-.cc-class-selection .class-row[data-view='list'] .class-pick p { font-size: 1rem; line-height: 1.45; }
-.cc-class-selection .class-row[data-view='grid'] { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.8rem; }
-.cc-class-selection .class-row[data-view='grid'] .class-pick { width: 100%; min-width: 0; }
-
-.cc-character-grid {
-  display: grid; grid-template-columns: minmax(16rem, 1fr) minmax(13rem, 18rem);
-  gap: 2rem; align-items: start;
-}
-.cc-character-grid[data-sprite-side='left'] .cc-preview-side { grid-column: 1; grid-row: 1; }
-.cc-character-grid[data-sprite-side='left'] .cc-stats-side { grid-column: 2; grid-row: 1; }
-.cc-stats-side, .cc-preview-side { min-width: 0; }
-.cc-stats-side { display: flex; flex-direction: column; }
-.cc-preview-side { display: flex; justify-content: center; }
-.cc-name-row { display: flex; align-items: center; gap: 0.9rem; color: var(--muted); font-size: 0.95rem; letter-spacing: 0.18em; }
-.cc-name-row .cz-name { flex: 0 1 14rem; }
-.cc-character-fold { width: 100%; margin-top: 0.9rem; }
-.cc-character-fold > .disc-faces { width: 100%; }
-.cc-character-picker { display: flex; flex-direction: column; gap: 0.8rem; width: 100%; }
-.cc-character-picker .cz-opts { flex-wrap: wrap; }
-.cc-primary-stats { display: flex; flex-direction: column; gap: 0.45rem; }
-.cc-attribute-card { width: 100%; min-width: 0; container-type: inline-size; }
-.cc-attribute-card > .disc-faces { width: 100%; gap: 0.35rem; }
-.cc-primary-stat.disc-face {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
-  width: 100%; min-width: 0; justify-content: stretch;
-}
-.cc-primary-stat .disc-summary {
-  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  color: var(--muted); font-family: var(--font-body); font-size: 0.95rem;
-  font-weight: 400; letter-spacing: 0;
-}
-@container (max-width: 17rem) {
-  .cc-primary-stat .disc-summary { display: none; }
-}
-.cc-derived {
-  display: flex; flex-wrap: wrap; gap: 0.45rem 1rem; margin-top: 0.8rem;
-  color: var(--parchment); font-variant-numeric: tabular-nums;
-}
-.cc-derived span { white-space: nowrap; }
-.cc-derived b { color: var(--muted); font-weight: 600; }
-.cc-character-picker #cz-styles .cz-opt,
-.cc-catalog-specimen .cz-opt.style { width: auto; min-width: var(--tap-floor); padding: 0.5rem 0.9rem; font-size: 1.05rem; }
-.cc-character-picker .cz-statedit { margin-top: 0.15rem; }
-.cc-sprite-fold { width: 100%; margin-top: 0.2rem; }
-.cc-sprite-fold .disc-faces { flex-direction: column; }
-.cc-sprite-fold .disc-face { width: 100%; justify-content: space-between; }
-.cz-keepsake small { display: block; margin-top: 0.2rem; color: var(--muted); font-size: 1rem; }
-
-.cc-equipment-fold > .disc-faces { flex-direction: column; }
-.cc-equipment-fold > .disc-faces > .disc-face { width: 100%; justify-content: space-between; }
-.cc-selection-face { display: grid; grid-template-columns: minmax(10rem, 1fr) minmax(8rem, 1fr); gap: 1rem; align-items: center; width: 100%; }
-.cc-selection-face-art { grid-row: 1; color: var(--muted); }
-.cc-selection-face .disc-name { text-align: left; }
-.cc-selection-face .disc-value { text-align: left; color: var(--muted); }
-.cc-equipment-fold > .disc-faces > .disc-reveal { padding: 0.85rem; }
-.cc-equip-group { display: flex; flex-direction: column; gap: 0.5rem; }
-.cc-card-selectors { display: grid; gap: 0.7rem; }
-.cc-card-selectors[data-view='list'] { grid-template-columns: minmax(0, 1fr); }
-.cc-card-selectors[data-view='grid'] { grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
-.cc-card-selectors .equip-chip { width: 100%; }
-.cc-empty-slot { margin: 0; padding: 0.75rem; color: var(--muted); font-size: 1rem; }
-.cc-relic-card {
-  display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.25rem 0.75rem; align-items: center;
-  min-height: var(--tap-floor); padding: 0.7rem 0.9rem; text-align: left;
-  color: var(--parchment); background: var(--panel); border: 1px solid var(--line);
-  border-radius: var(--r-1); cursor: pointer;
-}
-.cc-relic-card > .cc-relic-art { grid-row: 1 / 3; font-size: 2rem; text-align: center; }
-.cc-relic-card small { color: var(--muted); }
-.cc-relic-card:hover { border-color: var(--line-soft); }
-.cc-relic-card.chosen { border-color: var(--gold); background: var(--bg); }
-.cc-move-note, .cc-seed-note { margin: 0; color: var(--muted); font-size: 1.05rem; }
-
-.cc-stat-overlay { z-index: 1300; }
-.cc-stat-modal { width: min(34rem, calc(100% - 2rem)); }
-.cc-allocation-rows { display: flex; flex-direction: column; gap: 0.7rem; margin: 1rem 0; }
-.cc-allocation-rows .se-row { width: 100%; }
-.cc-allocation-rows .se-attribute-card,
-.cc-allocation-rows .se-attribute-card > .disc-faces { display: contents; }
-.cc-allocation-rows .se-attribute-card .cc-primary-stat {
-  grid-column: 1; grid-row: 1; min-width: 0;
-}
-.cc-allocation-rows .se-controls { grid-column: 2; grid-row: 1; }
-.cc-allocation-rows .se-attribute-card .disc-reveal {
-  grid-column: 1 / -1; grid-row: 2; width: 100%; box-sizing: border-box;
-}
-.cc-stat-actions { display: flex; justify-content: flex-end; gap: 0.8rem; }
-.cc-stat-actions button { min-height: var(--tap-floor); }
-.cc-stat-actions [aria-disabled='true'] { opacity: 0.45; }
-
-/* The component catalogue is a dev-only ?shot=components reach state. It moves
-   the real creation panels into specimen folios; it does not copy their markup
-   or grow a second renderer that could drift from the player-facing screen. */
-.component-catalog .cz-scroll { gap: 1rem; }
-.cc-catalog-intro { width: min(72rem, 100%); margin: 0; color: var(--muted); font-size: 1.05rem; }
-.component-catalog .cz-flow { display: flex; flex-direction: column; gap: 1.3rem; }
-.cc-catalog-item {
-  display: flex; flex-direction: column; gap: 1rem; padding: 1.2rem;
-  border: 1px solid var(--line-soft); border-top-color: var(--gold);
-  background: color-mix(in srgb, var(--panel) 86%, transparent);
-}
-.cc-catalog-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--line-soft); padding-bottom: 0.65rem; }
-.cc-catalog-head h3 { margin: 0; color: var(--gold); font-size: 1.15rem; letter-spacing: 0.2em; }
-.cc-catalog-head span { color: var(--muted); font-size: 0.8rem; letter-spacing: 0.14em; }
-.component-catalog .cz-stage { padding: 0.2rem; }
-.cc-catalog-specimen { width: 100%; max-width: 48rem; }
-.cc-catalog-specimen.cz-opts,
-.cc-catalog-specimen.se-modes { display: flex; flex-wrap: wrap; gap: 0.8rem; }
-.cc-catalog-specimen.cc-primary-stats { margin-top: 0; }
-
-/* ---------- D26 — the short form: FACE, then REVEAL ------------------------
-   Constantine: "just the starting stats, starting armaments selection , and
-   then the ability to expand by clicking, with tool tips."
-
-   THE ROW WRAPS, IT NEVER SCROLLS SIDEWAYS (Law 5 clause 1: horizontal travel
-   on a narrow shape is ZERO, not small). Nine faces at 390 wrap to as many
-   rows as they need and the screen grows DOWN, where a thumb already goes —
-   `flex-wrap: wrap` plus `max-width: 100%` on the control and
-   `overflow-wrap: anywhere` on its words, so a long armament name breaks
-   instead of pushing the row off the side. No exemption is claimed here: this
-   is not a filmstrip and its horizontal run is not the content.
-
-   THE FLOOR IS `--tap-floor` AND THE HEIGHT IS `auto` (Law 4 clause 4): the
-   floor is the ergonomic constant, the growth is granted by the glyphs
-   actually inside, so a face can neither clip at Text XL nor balloon. Padding
-   is rem because it sits around read text; the floor is not, because a finger
-   does not grow when Text size does. */
-.cz-brief { width: 100%; display: flex; flex-direction: column; gap: 0.4rem; }
-/* The section labels need air ABOVE them, or an open reveal butts straight into
-   the next heading — measured on the 390 shot, not guessed. `.preview-pane
-   .cz-label` zeroes the house margin for the name field; this restores it for
-   the two headings that separate the tiers. */
-.cz-brief .cz-label { margin: 0.7rem 0 0.2rem; }
-.cz-disc { width: 100%; }
 /* E2 (#247): the merchant's bars ride the same fold vocabulary as the
    creation column (shop.js, THE BARS). The cap is the remove grid's own
    900px — the widest thing a bar folds — so the bars and their shelves
@@ -2671,10 +2068,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   background: rgba(24, 8, 7, 0.92); color: #ffd7cf; font-size: 0.75rem;
   line-height: 1.2; text-align: center;
 }
-.cz-stats summary {
-  min-height: var(--tap-floor); height: auto;
-  display: flex; align-items: center; cursor: pointer;
-}
+
 .coop-arm { color: var(--gold); font-size: 1.3rem; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: var(--r-2); padding: 0.6rem 1.2rem; margin: 0.4rem auto; width: fit-content; }
 
 /* co-op: fork voting on the shared map */
@@ -3081,11 +2475,7 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 .equip-role-receipts > div { display: grid; grid-template-columns: minmax(9rem, 1fr) 2fr; gap: 0.2rem 0.8rem; border-left: 2px solid var(--line-soft); padding-left: 0.8rem; }
 .equip-role-receipts span, .equip-role-receipts small { color: var(--muted); }
 .equip-role-receipts small { grid-column: 2; }
-.cz-kit { margin-top: 0.8rem; }
-.cz-kit summary { cursor: pointer; color: var(--gold); }
-.cz-kit ul { margin: 0.5rem 0 0; padding-left: 1.6rem; }
-.cz-kit li { margin: 0.25rem 0; }
-.cz-kit li span { color: var(--muted); }
+
 .equipment-requirements { display: grid; gap: 0.35rem; overflow-wrap: anywhere; }
 .equipment-requirements ul { margin: 0; padding-left: 1.4rem; }
 .equipment-requirements li { display: flex; gap: 0.5rem; flex-wrap: wrap; }
@@ -3296,9 +2686,6 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 /* Screenshot evidence poses use the real screen/readers but focus the camera on
    the contract under review. They are query-gated dev surfaces; ordinary play
    never carries either root attribute. */
-:root[data-shot-evidence='creation'] .customize .cz-fields > div:not(:has(#cz-kits)),
-:root[data-shot-evidence='creation'] .customize .preview-pane > :not(.cz-stats) { display: none; }
-:root[data-shot-evidence='creation'] .customize .cz-cols { align-items: flex-start; }
 :root[data-shot-evidence='armoury'] .armoury-left,
 :root[data-shot-evidence='armoury'] .armoury.picking .equip-slots { display: none; }
 :root[data-shot-evidence='armoury'] .armoury-body { min-height: 0; overflow: hidden; }
@@ -3398,40 +2785,6 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 :root[data-layout='narrow'] .equip-slots { justify-content: center; width: 100%; }
 :root[data-layout='narrow'] .armoury[data-slots='list'] .equip-slots { justify-content: center; }
 
-:root[data-layout='narrow'] .cz-cols {
-  flex-direction: column; align-items: center; gap: 1.8rem; width: 100%;
-}
-:root[data-layout='narrow'] .cz-fields { max-width: 100%; width: 100%; }
-:root[data-layout='narrow'] .cz-flow { width: 100%; }
-:root[data-layout='narrow'] .cc-class-split { display: flex; flex-direction: column; gap: 0.9rem; }
-:root[data-layout='narrow'] .cc-class-divider { display: none; }
-:root[data-layout='narrow'] .cc-class-preview-host,
-:root[data-layout='narrow'] .cc-class-selection { width: 100%; }
-:root[data-layout='narrow'] .cc-class-art { min-height: 12rem; }
-:root[data-layout='narrow'] .cc-class-art .class-sprite { transform: scale(1.08); }
-:root[data-layout='narrow'] .cc-class-resource-grid { grid-template-columns: repeat(5, minmax(3.2rem, 1fr)); overflow-x: auto; }
-:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='list'] .class-pick {
-  display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); padding: 0.9rem;
-}
-:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='list'] .class-pick .glyph { font-size: 3rem; }
-:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] {
-  grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem;
-}
-:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] .class-pick { padding: 0.75rem 0.55rem; }
-:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] .class-pick .glyph { margin-bottom: 0.35rem; font-size: 2.6rem; }
-:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] .class-pick h3 { margin-bottom: 0.2rem; font-size: 1.05rem; }
-:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] .class-pick p { display: none; }
-:root[data-layout='narrow'] .cc-stage-toolbar { align-items: flex-start; flex-wrap: wrap; }
-:root[data-layout='narrow'] .cc-stage-tools { width: 100%; flex-wrap: wrap; justify-content: space-between; }
-:root[data-layout='narrow'] .cc-auto-advance-note { white-space: normal; }
-:root[data-layout='narrow'] .cc-name-row { align-items: stretch; flex-direction: column; gap: 0.4rem; }
-:root[data-layout='narrow'] .cc-name-row .cz-name { flex: none; width: 100%; }
-:root[data-layout='narrow'] .cc-character-grid { display: flex; flex-direction: column; gap: 1.2rem; }
-:root[data-layout='narrow'] .cc-character-grid .cc-preview-side { order: -1; }
-:root[data-layout='narrow'] .cc-stats-side { width: 100%; }
-:root[data-layout='narrow'] .cc-card-selectors { grid-template-columns: 1fr; }
-:root[data-layout='narrow'] .cz-scroll { padding: 1.5rem 1rem 1rem; }
-:root[data-layout='narrow'] .cz-flow .disc-reveal { padding: 0.8rem; }
 /* ---------- EldenSpire#29 slice 3 — the orphaned class card -----------------
    Sunna, 2026-08-01, naming a thing that had never been put in front of anyone:
    three cards wrapped 2-then-1 and the lone card was centred under the pair.
@@ -3496,8 +2849,6 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
    the card overflows its own row — the flex default that has bitten this repo
    before. It is a bound, not a length. */
 :root[data-layout='narrow'] .cp-body { flex: 1; min-width: 0; }
-:root[data-layout='narrow'] .cz-opts { flex-wrap: wrap; justify-content: center; }
-:root[data-layout='narrow'] .cz-keepsakes { width: 100%; }
 
 /* ---------- flask action menu (combat / map / co-op) ---------------------- */
 /* IT HANGS OFF THE SLOT THE PLAYER TAPPED, AND UNTIL 2026-08-17 IT DID NOT
@@ -8001,6 +7352,129 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 
+/* ═══ PAGE DOOR — a door that stands on the page, edge to edge ═══════════ */
+/* Character creation and the Custom Climb are places, not questions: a head
+   that names them, a body that scrolls, a foot that never leaves the glass.
+   They wear the door's box without the veil (as the event does) and the box
+   takes the whole screen — the phone gets every pixel, a wide screen gets a
+   capped column with the page ground either side. */
+.screen.as-page { justify-content: flex-start; gap: 0; padding: 0; overflow: hidden; }
+.as-page > .modal.as-page-door {
+  width: 100%; max-width: 124rem; height: 100%; max-height: 100%;
+  border-radius: 0; border-width: 0 1px;
+}
+.as-page-door > .modal-body {
+  display: flex; flex-direction: column; align-items: stretch; gap: 1.6rem;
+  padding: var(--modal-inset);
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+.as-page-door > .modal-foot { background: var(--panel); }
+/* A pane that sits inside another inset (a fold's panel) carries none of its own. */
+.as-pane.flush { padding: 0; overflow: visible; }
+/* A pane's items never shrink into each other: the pane scrolls instead. */
+.as-pane > * { flex-shrink: 0; }
+.as-pane.flush > .as-hairline { margin: 1rem 0; }
+
+/* ═══ SPLIT — two panes and a draggable handle ══════════════════════════════ */
+/* Body D's two panes with a handle between them: `--split-share` is the left
+   pane's share, the handle is a real button on the tap floor (keys move it
+   too), and under a narrow box the split stacks and the handle goes. */
+.as-split {
+  --split-share: 30%;
+  display: grid; grid-template-columns: minmax(18rem, var(--split-share)) auto minmax(0, 1fr);
+  gap: 1.05rem; align-items: stretch; width: 100%; min-width: 0;
+}
+.as-split > .as-split-pane { min-width: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r-3); background: var(--panel); }
+.as-split > .as-split-pane > .as-pane { flex: 1 1 auto; }
+.as-split-handle {
+  position: relative; justify-self: center; align-self: stretch;
+  width: var(--tap-floor); min-width: var(--tap-floor); min-height: 0; padding: 0;
+  border: 0; border-radius: 0; background: transparent; cursor: col-resize;
+}
+.as-split-handle::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--line-soft); }
+.as-split-handle::after {
+  content: '‹ ›'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  padding: 0.4rem 0.3rem; color: var(--muted); background: var(--panel);
+  font: 500 1.2rem/1 var(--font-body); letter-spacing: 0.1em; white-space: nowrap;
+}
+.as-split-handle:hover, .as-split-handle:focus-visible { background: transparent; border: 0; box-shadow: none; }
+.as-split-handle:hover::after, .as-split-handle:focus-visible::after { color: var(--gold); }
+@container (max-width: 64rem) {
+  .as-split { grid-template-columns: minmax(0, 1fr); }
+  .as-split-handle { display: none; }
+}
+
+/* ═══ OPTIONS — list or grid, one atom ══════════════════════════════════════ */
+/* The same OptionCards, in a column (the default) or a grid: a `data-view` a
+   Segmented control writes. A card in either never keeps the class-pick
+   alias's row width — the container decides the footprint. */
+.as-options > .as-option.class-pick { max-width: none; flex: 0 0 auto; }
+.as-options[data-view="grid"] { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem; }
+.as-options[data-view="grid"] > * { min-width: 0; width: 100%; }
+.as-options[data-view="grid"] > .as-option { flex-direction: column; align-items: stretch; text-align: center; padding-right: 1.5rem; }
+.as-options[data-view="grid"] > .as-option::after { content: none; }
+.as-options[data-view="grid"] > .as-option .on { justify-content: center; }
+.as-options > .as-option .on > .as-pill { margin-left: 0.3rem; }
+
+/* ═══ SWATCH — a square pick: a sigil, a tint ═══════════════════════════════ */
+.as-swatches { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.as-swatch {
+  --swatch: var(--gold);
+  display: inline-grid; place-items: center;
+  width: var(--tap-floor); height: var(--tap-floor); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0; border-radius: var(--r-2);
+  font-size: 2rem; line-height: 1;
+}
+.as-swatch[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35); }
+.as-swatch.tint::before { content: ''; width: 55%; height: 55%; border-radius: 50%; background: var(--swatch); }
+
+/* ═══ FIGURE WELL — an ArtWell tall enough for a standing sprite ═══════════ */
+.as-artwell.figure { width: 16rem; height: 20rem; font-size: 6.4rem; border-width: 2px; transition: border-color 200ms, box-shadow 300ms; }
+.as-artwell.figure .class-sprite { transform: none; }
+
+/* ═══ STEPPER — a Segmented of − / value / + ════════════════════════════════ */
+.as-seg.stepper button { min-width: var(--tap-floor); min-height: calc(var(--tap-floor) - 2px); padding-inline: 0.9rem; font-size: 1.6rem; }
+.as-seg.stepper .seg-value {
+  display: inline-grid; place-items: center; min-width: 3.6rem; padding-inline: 0.6rem;
+  border-left: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft);
+  font: 600 1.5rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment);
+}
+.as-seg button[aria-disabled="true"] { color: var(--muted); cursor: default; background: transparent; }
+.as-seg button[aria-disabled="true"]:hover { background: transparent; color: var(--muted); }
+
+/* ═══ A FOLD INSIDE A ROW ═══════════════════════════════════════════════════ */
+/* A disclosure host in a settings row dissolves: its face and its reveal
+   become the row's own wrap items, so the reveal drops under the whole row
+   (trail included) with the row's own gap — the D26 mechanism, unchanged. */
+.as-row.setting > .as-row-fold, .as-row.setting > .as-row-fold > .disc-faces { display: contents; }
+.as-row.setting > .as-row-fold .disc-face { flex: 1 1 16rem; min-width: 0; }
+.as-row-fold > .disc-faces > .disc-face { flex: 1 1 100%; }
+/* An open reveal drops UNDER the whole row: the face and the trail keep their line. */
+.as-row.setting > .as-row-fold .disc-reveal { order: 2; }
+.as-row.setting:has(> .as-row-fold) { align-items: flex-start; }
+.disc-face > .as-row { padding: 0; min-height: 0; width: 100%; gap: 0.75rem; }
+.disc-face > .as-row > .as-labelstack { flex: 1 1 auto; }
+.disc-face > .as-row .ls-label { color: var(--gold); font: 600 1.5rem/1.2 var(--font-display); letter-spacing: 0.03em; }
+.disc-face > .as-row .ls-hint { font-family: var(--font-body); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.disc-face > .as-row > .as-status { font: 600 1.6rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); flex: 0 0 auto; }
+.disc-face > .as-row.face-lite .ls-label { color: var(--parchment); font: 500 1.3rem/1.2 var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; }
+.disc-face > .as-row.face-lite > .as-status { color: var(--muted); font: 500 1.28rem/1 var(--font-body); }
+
+/* ═══ FIELD NOTE — the sentence under a field that refuses ═════════════════ */
+.as-fieldnote { flex: 1 1 100%; margin: 0; padding-left: 0.8rem; border-left: 2px solid var(--danger); color: var(--parchment); font-size: 1.2rem; line-height: 1.4; }
+.as-row.setting input[aria-invalid="true"] { border-color: var(--danger); }
+
+/* ═══ STACK — a column of kit pieces with one gap ══════════════════════════ */
+.as-stack { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; width: 100%; }
+.as-stack.tight { gap: 0.6rem; }
+.as-pane > .as-statstrip { margin-top: 0.9rem; }
+.as-pane > .as-btnrow.end { margin-top: 1.2rem; }
+.as-pane-head { flex-wrap: wrap; row-gap: 0.6rem; }
+.as-pane-head > .set-section-head { min-width: 0; }
+.as-pane-head > .r-trail > .as-row.setting { width: auto; border-bottom: 0; padding-block: 0; min-height: 0; }
+.as-pane > .as-artwell, .as-stack > .as-artwell { align-self: center; }
+.as-pane-head > .r-trail { flex: 0 0 auto; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: flex-end; }
+
   </style>
 </head>
 <body>
@@ -9376,7 +8850,7 @@ function showCustomize(slot = 1, catalog = false) {
 function showCustomRun(slot = 1) {
   mountCustomRun(app, {
     registries,
-    defaultSeedString: randomSeedString(),
+    defaultSeedString: shotState === 'customrun' ? 'SHOWCASE' : randomSeedString(),
     onBack: showTitle,
     onStart: (config) => newRun({ ...config, slot }),
   });
@@ -10632,6 +10106,11 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // showTitle → showProfileNoticeIfNeeded → profileStatus().ok is false →
   // mountProfileNotice. Nothing on this branch mentions the notice screen.
   showTitle();
+} else if (shotState === 'customrun') {
+  // The Custom Climb has no entry on the title menu today (title.js voids
+  // `onCustom`), so a capture reaches it here, the way every other screen
+  // without a door of its own does — same memory storage, same fixed seed.
+  showCustomRun(1);
 } else if (shotState === 'customize' || shotState === 'components') {
   // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
   // and #29's own boundary records what that cost: no sweep can open a screen
@@ -54299,7 +53778,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '98ffd12c03';
+const SOURCE = '5798b731fa';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -54333,7 +53812,7 @@ const SOURCE = '98ffd12c03';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '24';
+const ORDINAL = '25';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -59863,6 +59342,19 @@ Object.assign(module.exports, { renderProfileSection, openProfileArchive });
 },
 "src/ui/screens/customize.js": function (module, exports, require) {
 // Character creation: four progressive sections backed by validated content.
+//
+// ON THE KIT. The screen is a page door (§05 without the veil): the head
+// names it, the body scrolls, the foot carries Back and Begin on the button
+// ladder and never leaves the glass. Every section is a Pane; the class
+// chooser is a Split (preview pane, handle, OptionCards in a list or a grid);
+// the character's name and seed are Row·setting fields; modes and sprite
+// styles are Segmented; sigils and tints are Swatches; keepsakes, relics and
+// classes are OptionCards; primary stats are the D26 fold faces carrying kit
+// Rows; and the point-buy is the md door through the one door-opener. The
+// hooks the instruments read (`.screen.customize`, `.cz-scroll`, `.cz-actions`,
+// `#cz-start`, `#cz-back`, `.cz-portrait`, `#cz-classes`, `.cc-class-*`,
+// `#cz-statedit .se-mode`, `.cc-stat-overlay`, `#seed-input`…) ride on the kit
+// elements and draw nothing of their own.
 
 const { LOCKED_CLASSES } = require("src/content/index.js");
 const { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } = require("src/ui/assets.js");
@@ -59893,6 +59385,23 @@ const { primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton, ti
 
 
 
+const { el, eyebrow, titleS, subtitle, flavour, hairline, artWell, options, row, labelStack, button, buttonRow, modalHead, modalFooter, pane } = require("src/ui/kit/index.js");
+
+
+
+
+/** A section's head: Eyebrow + Title·S on the left, its controls on the right. */
+function sectionHead(kicker, title, trail = []) {
+  return el('div', { class: 'as-pane-head' }, [
+    el('div', { class: 'set-section-head' }, [eyebrow(kicker), titleS(title, { tag: 'h3' })]),
+    trail.length ? el('span', { class: 'r-trail' }, trail) : null,
+  ]);
+}
+
+/** The way on from a section: one long button, at the end of the row. */
+function nextRow(label, next) {
+  return buttonRow({ size: 'long', className: 'end', buttons: [button({ label, className: 'cz-next', attrs: { dataset: { next } } })] });
+}
 
 function mountCustomize(app, {
   registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false, shotPose = null,
@@ -59935,7 +59444,7 @@ function mountCustomize(app, {
   }
 
   let previewAttributes = null;
-  let pointBuyOverlay = null;
+  let pointBuy = null;
   let pointBuyReturnFocus = null;
   let pointBuyKeydown = null;
   let refreshSectionFaces = () => {};
@@ -59945,69 +59454,87 @@ function mountCustomize(app, {
   const refreshFaces = () => { refreshSectionFaces(); refreshCharacterFaces(); refreshSpriteFaces(); refreshEquipmentFaces(); };
   let updateStartRefusal = () => {};
 
-  app.innerHTML = `
-    <div class="screen customize${catalog ? ' component-catalog' : ''}">
-      <div class="cz-scroll">
-        ${catalog ? '' : '<p class="cz-kicker">DIVIDED OATH</p>'}
-        <h2 class="cz-title">${catalog ? 'CHARACTER CREATION COMPONENTS' : 'PREPARE YOUR FORSAKEN'}</h2>
-        ${catalog ? '' : '<p class="cz-subtitle">Choose your path. The spire remembers.</p>'}
-        ${catalog ? '<p class="cc-catalog-intro">Interactive production specimens for every creation section, nested disclosure, and reusable selector card.</p>' : ''}
-        <div class="cz-flow cz-disc">
-          <section id="cz-class-panel" class="cz-stage">
-            <div class="cc-class-split" style="--cc-class-preview-share:${state.classPreviewPercent}%">
-              <div id="cz-class-preview-host" class="cc-class-preview-host"></div>
-              <button type="button" class="cc-class-divider" role="separator" aria-label="Resize class preview" aria-orientation="vertical" aria-valuemin="22" aria-valuemax="45" aria-valuenow="${state.classPreviewPercent}"></button>
-              <div class="cc-class-selection">
-                <header class="cc-stage-toolbar"><h3>CLASS SELECTION</h3><div id="cz-class-view-toggle"></div></header>
-                <div id="cz-classes" class="class-row cc-choice-collection" data-view="${state.classChoiceView}"></div>
-                <button type="button" class="cz-next" data-next="character">Continue to Character</button>
-              </div>
-            </div>
-          </section>
-          <section id="cz-character-panel" class="cz-stage">
-            <div class="cc-character-grid" data-sprite-side="${esc(registries.characterCreation.spritePreviewSide)}">
-              <div class="cc-stats-side">
-                <label class="cc-name-row" for="cz-name"><span>NAME</span><input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false" autocomplete="off" value="Forsaken"></label>
-                <div id="cz-character-fold" class="cc-character-fold cz-disc">
-                  <section id="cz-primary-group" class="cc-character-picker">
-                    <div id="cz-statedit" class="cz-statedit"></div>
-                    <div id="cz-primary-stats" class="cc-primary-stats"></div>
-                    <div id="cz-derived" class="cc-derived" aria-label="Derived resources"></div>
-                  </section>
-                  <section id="cz-sprite-group" class="cc-character-picker">
-                    <div id="cz-styles" class="cz-opts"></div>
-                    <div id="cz-sprite-fold" class="cc-sprite-fold cz-disc">
-                      <section id="cz-sigil-group" class="cc-character-picker"><div id="cz-glyphs" class="cz-opts"></div></section>
-                      <section id="cz-tint-group" class="cc-character-picker"><div id="cz-tints" class="cz-opts"></div></section>
-                    </div>
-                  </section>
-                  <section id="cz-keepsake-group" class="cc-character-picker"><div id="cz-keepsakes" class="cz-keepsakes"></div></section>
-                </div>
-              </div>
-              <div class="cc-preview-side">
-                <div id="cz-portrait" class="cz-portrait" aria-label="Live character preview"></div>
-              </div>
-            </div>
-            <button type="button" class="cz-next" data-next="equipment">Continue to Starting Equip</button>
-          </section>
-          <section id="cz-equipment-panel" class="cz-stage">
-            <header class="cc-stage-toolbar"><h3>STARTING EQUIPMENT</h3><div class="cc-stage-tools"><div id="cz-auto-advance-toggle"></div><div id="cz-equipment-view-toggle"></div></div></header>
-            <div id="cz-equipment-fold" class="cc-equipment-fold cz-disc"></div>
-            <div id="cz-equipment-receipts" class="cc-equip-group" aria-live="polite"></div>
-            <p class="cc-move-note">An armament is one carried object. Choosing it for the other hand moves it.</p>
-            <button type="button" class="cz-next" data-next="seed">Continue to Seed</button>
-          </section>
-          <section id="cz-seed-panel" class="cz-stage">
-            <label class="seed-line" for="seed-input">Seed <input id="seed-input" type="text" value="${esc(defaultSeedString)}"></label>
-            <p class="cc-seed-note">The same seed produces the same climb.</p>
-          </section>
-        </div>
-      </div>
-      <div class="cz-actions">
-        <button class="subtle" id="cz-back">Back</button>
-        <button id="cz-start">Begin</button>
-      </div>
-    </div>`;
+  // ---- the page door -------------------------------------------------------
+  const spriteSide = registries.characterCreation.spritePreviewSide;
+  const portrait = artWell({ glyph: '', attrs: { id: 'cz-portrait', class: 'figure cz-portrait', 'aria-label': 'Live character preview' } });
+  portrait.removeAttribute('aria-hidden');
+  const nameInput = el('input', { id: 'cz-name', class: 'cz-name', type: 'text', maxlength: '16', spellcheck: 'false', autocomplete: 'off', value: 'Forsaken', 'aria-labelledby': 'cz-name-label' });
+  const nameRow = row({ tag: 'div', setting: true, className: 'cc-name-row', labelNode: labelStack({ label: 'Name', hint: 'Up to 16 characters.' }), trail: nameInput });
+  nameRow.querySelector('.ls-label').id = 'cz-name-label';
+  const statsSide = el('div', { class: 'as-stack cc-stats-side' }, [
+    nameRow,
+    el('div', { id: 'cz-character-fold', class: 'cc-character-fold cz-disc' }, [
+      el('section', { id: 'cz-primary-group', class: 'as-stack cc-character-picker' }, [
+        el('div', { id: 'cz-statedit', class: 'cz-statedit' }),
+        el('div', { id: 'cz-primary-stats', class: 'as-stack tight cc-primary-stats' }),
+        el('div', { id: 'cz-derived', class: 'cc-derived', 'aria-label': 'Derived resources' }),
+      ]),
+      el('section', { id: 'cz-sprite-group', class: 'as-stack cc-character-picker' }, [
+        el('span', { id: 'cz-styles', class: 'as-seg cz-opts' }),
+        el('div', { id: 'cz-sprite-fold', class: 'cc-sprite-fold cz-disc' }, [
+          el('section', { id: 'cz-sigil-group', class: 'cc-character-picker' }, el('div', { id: 'cz-glyphs', class: 'as-swatches cz-opts' })),
+          el('section', { id: 'cz-tint-group', class: 'cc-character-picker' }, el('div', { id: 'cz-tints', class: 'as-swatches cz-opts' })),
+        ]),
+      ]),
+      el('section', { id: 'cz-keepsake-group', class: 'cc-character-picker' }, options([], { id: 'cz-keepsakes', class: 'cz-keepsakes' })),
+    ]),
+  ]);
+  const previewSide = el('div', { class: 'as-pane flush cc-preview-side' }, portrait);
+  const seedInput = el('input', { id: 'seed-input', type: 'text', value: defaultSeedString });
+  const seedRow = row({ tag: 'div', setting: true, className: 'seed-line', labelNode: labelStack({ label: 'Seed', hint: 'The same seed produces the same climb.' }), trail: seedInput });
+
+  const split = el('div', { class: 'as-split cc-class-split' }, [
+    el('div', { id: 'cz-class-preview-host', class: 'as-split-pane cc-class-preview-host' }),
+    el('button', {
+      type: 'button', class: 'as-split-handle cc-class-divider', role: 'separator', 'aria-label': 'Resize class preview',
+      'aria-orientation': 'vertical', 'aria-valuemin': '22', 'aria-valuemax': '45', 'aria-valuenow': String(state.classPreviewPercent),
+    }),
+    el('div', { class: 'as-split-pane cc-class-selection' }, el('div', { class: 'as-pane' }, [
+      sectionHead('Choose', 'Class', [el('div', { id: 'cz-class-view-toggle' })]),
+      hairline(),
+      options([], { id: 'cz-classes', class: 'cc-choice-collection', dataset: { view: state.classChoiceView } }),
+      nextRow('Continue to character', 'character'),
+    ])),
+  ]);
+  split.style.setProperty('--split-share', `${state.classPreviewPercent}%`);
+
+  const stages = {
+    class: el('section', { id: 'cz-class-panel', class: 'as-pane flush cz-stage' }, split),
+    character: el('section', { id: 'cz-character-panel', class: 'as-pane flush cz-stage' }, [
+      el('div', { class: 'as-splitbody cc-character-grid', dataset: { spriteSide: spriteSide } },
+        spriteSide === 'left' ? [previewSide, statsSide] : [statsSide, previewSide]),
+      nextRow('Continue to starting equipment', 'equipment'),
+    ]),
+    equipment: el('section', { id: 'cz-equipment-panel', class: 'as-pane flush cz-stage' }, [
+      sectionHead('Choose', 'Starting equipment', [el('div', { id: 'cz-auto-advance-toggle' }), el('div', { id: 'cz-equipment-view-toggle' })]),
+      hairline(),
+      el('div', { id: 'cz-equipment-fold', class: 'cc-equipment-fold cz-disc' }),
+      el('div', { id: 'cz-equipment-receipts', class: 'cc-equip-group', 'aria-live': 'polite' }),
+      flavour('An armament is one carried object. Choosing it for the other hand moves it.', { class: 'cc-move-note' }),
+      nextRow('Continue to seed', 'seed'),
+    ]),
+    seed: el('section', { id: 'cz-seed-panel', class: 'as-pane flush cz-stage' }, seedRow),
+  };
+  const flow = el('div', { class: 'cz-flow cz-disc' }, Object.values(stages));
+
+  const head = modalHead({
+    eyebrow: catalog ? 'Component catalogue' : 'Divided oath',
+    title: catalog ? 'Character creation components' : 'Prepare your Forsaken',
+    closeLabel: 'Back',
+  });
+  head.querySelector('.modal-close').hidden = true; // the way back is Back, in the foot
+  const back = button({ label: 'Back', id: 'cz-back' });
+  const start = button({ label: 'Begin', id: 'cz-start', weight: 'primary' });
+  const foot = modalFooter({ note: 'Choose your path. The spire remembers.', secondary: [back], primary: start, size: 'medium', className: 'cz-actions' });
+  const body = el('div', { class: 'modal-body cz-scroll' }, [
+    catalog ? subtitle('Interactive production specimens for every creation section, nested disclosure, and reusable selector card.', { class: 'cc-catalog-intro' }) : null,
+    flow,
+  ]);
+  const door = el('section', {
+    class: 'modal as-page-door', dataset: { size: 'xl' }, role: 'region',
+    'aria-label': catalog ? 'Character creation components' : 'Prepare your Forsaken',
+  }, [head, body, foot]);
+  app.replaceChildren(el('div', { class: `screen customize as-page${catalog ? ' component-catalog' : ''}` }, door));
 
   const $ = (selector) => app.querySelector(selector);
   const customizeScreen = $('.screen.customize');
@@ -60021,9 +59548,8 @@ function mountCustomize(app, {
 
   function setClassPreviewPercent(percent) {
     state.classPreviewPercent = Math.max(22, Math.min(45, Math.round(percent)));
-    $('.cc-class-split').style.setProperty('--cc-class-preview-share', `${state.classPreviewPercent}%`);
-    const divider = $('.cc-class-divider');
-    divider.setAttribute('aria-valuenow', String(state.classPreviewPercent));
+    split.style.setProperty('--split-share', `${state.classPreviewPercent}%`);
+    classDivider.setAttribute('aria-valuenow', String(state.classPreviewPercent));
   }
 
   const classDivider = $('.cc-class-divider');
@@ -60035,8 +59561,7 @@ function mountCustomize(app, {
     else setClassPreviewPercent(state.classPreviewPercent + (event.key === 'ArrowRight' ? 2 : -2));
   });
   classDivider.addEventListener('pointerdown', (event) => {
-    if (matchMedia('(max-width: 760px)').matches) return;
-    const split = $('.cc-class-split');
+    if (getComputedStyle(classDivider).display === 'none') return;
     const move = (moveEvent) => {
       const rect = split.getBoundingClientRect();
       setClassPreviewPercent(((moveEvent.clientX - rect.left) / rect.width) * 100);
@@ -60129,14 +59654,13 @@ function mountCustomize(app, {
   }
 
   function renderCharacterPreview() {
-    const portrait = $('#cz-portrait');
+    // The tint is the player's own choice, so the well's edge wears it.
     portrait.style.borderColor = tintCss(state.tint);
     portrait.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
-    portrait.innerHTML = '';
     const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
       ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, state.spriteStyle)
       : null;
-    if (sprite) portrait.appendChild(sprite); else portrait.textContent = state.glyph;
+    portrait.replaceChildren(sprite || state.glyph);
 
     const run = previewRun();
     const projection = statProjection(registries, run);
@@ -60145,8 +59669,7 @@ function mountCustomize(app, {
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
     }).map(primaryStatCard));
     const poise = playerPoiseThresholdReceipt(registries, run);
-    const resources = resourceStrip(projection.derived, poise);
-    $('#cz-derived').replaceChildren(...resources.childNodes);
+    $('#cz-derived').replaceChildren(resourceStrip(projection.derived, poise));
     renderClassPreview();
   }
 
@@ -60158,21 +59681,19 @@ function mountCustomize(app, {
       ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
-    const pane = classPreviewPane({
+    const previewPane = classPreviewPane({
       cls, sprite,
       resources: classResourceGrid(projection.derived.slice(0, 5)),
       relic,
       relicDescription: relicText(relic, registries),
     });
-    $('#cz-class-preview-host').replaceChildren(pane);
+    $('#cz-class-preview-host').replaceChildren(previewPane);
   }
 
   function renderModes() {
-    statBox.innerHTML = '';
-    const modes = document.createElement('div');
-    modes.className = 'se-modes';
+    const modes = el('span', { class: 'as-seg se-modes', role: 'group', 'aria-label': 'Attribute mode' });
     for (const mode of visibleModes) {
-      const button = modeChoiceButton(mode, state.attributeMode === mode.id, () => {
+      modes.appendChild(modeChoiceButton(mode, state.attributeMode === mode.id, () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
           if (!state.attributes) resetAttributes();
@@ -60182,47 +59703,117 @@ function mountCustomize(app, {
           previewAttributes = null;
         }
         renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-      });
-      modes.appendChild(button);
+      }));
     }
-    statBox.appendChild(modes);
+    statBox.replaceChildren(modes);
   }
 
+  // THE POINT-BUY IS A DOOR. Opened by the one door-opener (through the shared
+  // allocation card), so its veil, head, foot, Escape and veil-click are the
+  // shell's. What this screen adds is policy: what Escape MEANS here (back to
+  // Standard), the Tab ring, and scoping the page behind it.
   function closePointBuy({ restoreFocus = true } = {}) {
-    if (!pointBuyOverlay) return;
+    if (!pointBuy) return;
+    const door = pointBuy;
+    door.outcome = door.outcome || 'reopen';
+    door.restoreFocus = restoreFocus;
+    door.close();
+  }
+
+  function teardownPointBuy() {
     if (pointBuyKeydown) window.removeEventListener('keydown', pointBuyKeydown, true);
-    pointBuyOverlay.remove();
     customizeScreen.inert = false;
-    pointBuyOverlay = null;
     pointBuyKeydown = null;
-    if (restoreFocus) {
-      const target = pointBuyReturnFocus?.isConnected
-        ? pointBuyReturnFocus
-        : statBox.querySelector('.se-mode.chosen');
-      if (target) { target.focus(); focusElement(target); }
-    }
-    pointBuyReturnFocus = null;
+    pointBuy = null;
   }
 
   function openPointBuy() {
     closePointBuy({ restoreFocus: false });
     pointBuyReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-veil cc-stat-overlay';
-    overlay.setAttribute('role', 'dialog');
-    overlay.setAttribute('aria-modal', 'true');
-    overlay.setAttribute('aria-labelledby', 'cc-stat-title');
-    pointBuyOverlay = overlay;
-    app.appendChild(overlay);
     customizeScreen.inert = true;
-    let needsInitialFocus = true;
-    pointBuyKeydown = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault(); event.stopPropagation();
-        overlay.querySelector('[data-stat-cancel]')?.click();
-        return;
+    const mode = pointbuyMode();
+    const rowsNow = () => {
+      const remaining = remainingPoints();
+      const rules = previewRun().equipmentProfileRuleSnapshot?.profiles;
+      const cards = new Map(attributeCardModels(registries, state.attributes, { equipmentProfiles: rules }).map((card) => [card.id, card]));
+      return orderedAttributes(registries).map((def) => ({
+        id: def.id,
+        label: def.label,
+        shortLabel: def.shortLabel,
+        value: state.attributes[def.id],
+        card: cards.get(def.id),
+        canDecrease: state.attributes[def.id] > mode.minimum,
+        canIncrease: state.attributes[def.id] < mode.maximum && remaining > 0,
+      }));
+    };
+    let refreshDone = () => {};
+    const door = { outcome: null, restoreFocus: true, close: () => {} };
+    const step = (id, delta) => {
+      state.attributes[id] += delta;
+      if (!statsProblem()) previewAttributes = { ...state.attributes };
+      // The pressed stepper keeps the cursor across the redraw.
+      const overlay = allocation.card;
+      const focusedStep = overlay.querySelector('.se-step.gp-focus')
+        || (overlay.contains(document.activeElement) ? document.activeElement.closest('.se-step') : null);
+      const preservedFocus = focusedStep ? {
+        statId: focusedStep.dataset.statId,
+        action: focusedStep.dataset.statAction,
+        dom: document.activeElement === focusedStep,
+        cursor: focusedStep.classList.contains('gp-focus'),
+      } : null;
+      allocation.update({ remaining: remainingPoints(), rows: rowsNow() });
+      refreshDone();
+      if (preservedFocus) {
+        const replacement = [...overlay.querySelectorAll('.se-step')].find((control) => (
+          control.dataset.statId === preservedFocus.statId && control.dataset.statAction === preservedFocus.action
+        ));
+        if (replacement) {
+          if (preservedFocus.dom) replacement.focus();
+          if (preservedFocus.cursor) focusElement(replacement);
+        }
       }
+      renderCharacterPreview(); updateStartRefusal();
+    };
+    const allocation = renderStatAllocationCard(app, {
+      title: 'Assign points',
+      remaining: remainingPoints(),
+      modal: true,
+      cancelLabel: 'Standard',
+      rows: rowsNow(),
+      onDecrease: (id) => step(id, -1),
+      onIncrease: (id) => step(id, 1),
+      onCancel: () => { door.outcome = 'cancel'; allocation.close(); },
+      onClose: () => {
+        const outcome = door.outcome; // null: the shell dismissed it (Escape, the veil) — that is Standard
+        const restore = door.restoreFocus;
+        teardownPointBuy();
+        if (outcome === 'reopen') return;
+        if (outcome === 'done') {
+          previewAttributes = { ...state.attributes };
+          renderCharacterPreview();
+          if (restore) focusElement(statBox.querySelector('.se-mode.chosen'));
+          return;
+        }
+        state.attributeMode = STANDARD;
+        previewAttributes = null;
+        renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+        if (restore) {
+          const standard = statBox.querySelector('.se-mode.chosen');
+          standard?.focus(); focusElement(standard);
+        }
+      },
+    });
+    door.close = allocation.close;
+    pointBuy = door;
+    refreshDone = refusesWhen(allocation.done, statsProblem, 'Apply these stats');
+    allocation.done.addEventListener('click', () => {
+      if (statsProblem()) return;
+      door.outcome = 'done';
+      allocation.close();
+    });
+    pointBuyKeydown = (event) => {
       if (event.key !== 'Tab') return;
+      const overlay = allocation.card;
       const focusable = [...overlay.querySelectorAll('button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])')]
         .filter((element) => !element.hidden && element.getClientRects().length);
       if (!focusable.length) return;
@@ -60237,155 +59828,58 @@ function mountCustomize(app, {
       }
     };
     window.addEventListener('keydown', pointBuyKeydown, true);
-
-    const draw = () => {
-      const focusedStep = overlay.querySelector('.se-step.gp-focus')
-        || (overlay.contains(document.activeElement) ? document.activeElement.closest('.se-step') : null);
-      const preservedFocus = focusedStep ? {
-        statId: focusedStep.dataset.statId,
-        action: focusedStep.dataset.statAction,
-        dom: document.activeElement === focusedStep,
-        cursor: focusedStep.classList.contains('gp-focus'),
-      } : null;
-      const mode = pointbuyMode();
-      const remaining = remainingPoints();
-      const rules = previewRun().equipmentProfileRuleSnapshot?.profiles;
-      const cards = new Map(attributeCardModels(registries, state.attributes, { equipmentProfiles: rules }).map((card) => [card.id, card]));
-      const allocation = renderStatAllocationCard(overlay, {
-        title: 'ASSIGN POINTS',
-        remaining,
-        modal: true,
-        cancelLabel: 'Standard',
-        rows: orderedAttributes(registries).map((def) => ({
-          id: def.id,
-          label: def.label,
-          shortLabel: def.shortLabel,
-          value: state.attributes[def.id],
-          card: cards.get(def.id),
-          canDecrease: state.attributes[def.id] > mode.minimum,
-          canIncrease: state.attributes[def.id] < mode.maximum && remaining > 0,
-        })),
-        onDecrease: (id) => {
-          state.attributes[id] -= 1;
-          if (!statsProblem()) previewAttributes = { ...state.attributes };
-          draw(); renderCharacterPreview(); updateStartRefusal();
-        },
-        onIncrease: (id) => {
-          state.attributes[id] += 1;
-          if (!statsProblem()) previewAttributes = { ...state.attributes };
-          draw(); renderCharacterPreview(); updateStartRefusal();
-        },
-      });
-      const done = allocation.done;
-      refusesWhen(done, statsProblem, 'Apply these stats');
-      done.addEventListener('click', () => {
-        if (statsProblem()) return;
-        previewAttributes = { ...state.attributes };
-        closePointBuy(); renderCharacterPreview(); focusElement(statBox.querySelector('.se-mode.chosen'));
-      });
-      allocation.cancel.addEventListener('click', () => {
-        state.attributeMode = STANDARD;
-        previewAttributes = null;
-        closePointBuy(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-        const standard = statBox.querySelector('.se-mode.chosen');
-        standard?.focus(); focusElement(standard);
-      });
-      if (preservedFocus) {
-        const replacement = [...overlay.querySelectorAll('.se-step')].find((button) => (
-          button.dataset.statId === preservedFocus.statId && button.dataset.statAction === preservedFocus.action
-        ));
-        if (replacement) {
-          if (preservedFocus.dom) replacement.focus();
-          if (preservedFocus.cursor) focusElement(replacement);
-        }
-      } else if (needsInitialFocus) {
-        needsInitialFocus = false;
-        queueMicrotask(() => overlay.querySelector('.cc-stat-modal')?.focus());
-      }
-    };
-    draw();
+    void pointBuyReturnFocus;
   }
 
   function renderClasses() {
-    classBox.innerHTML = '';
     classBox.dataset.view = state.classChoiceView;
-    for (const cls of registries.classes.all()) {
-      const button = classChoiceCard(cls, {
-        selected: cls.id === state.classId,
-        visual: classGlyph(cls.id),
-        onChoose: () => {
+    const cards = registries.classes.all().map((cls) => classChoiceCard(cls, {
+      selected: cls.id === state.classId,
+      visual: classGlyph(cls.id),
+      onChoose: () => {
         if (state.classId === cls.id) return;
         state.classId = cls.id; resetClassChoices();
         renderClasses(); renderEquipment(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-        },
-      });
-      classBox.appendChild(button);
-    }
-    for (const cls of LOCKED_CLASSES) {
-      classBox.appendChild(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
-    }
+      },
+    }));
+    for (const cls of LOCKED_CLASSES) cards.push(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
+    classBox.replaceChildren(...cards);
     renderViewToggles();
   }
 
   function renderAppearance() {
-    const styleBox = $('#cz-styles');
-    styleBox.innerHTML = '';
-    for (const style of SPRITE_STYLES) {
-      const button = spriteChoiceButton(style, style.id === state.spriteStyle, () => {
-        state.spriteStyle = style.id; renderAppearance(); renderCharacterPreview(); refreshFaces();
-      });
-      styleBox.appendChild(button);
-    }
-    const tintBox = $('#cz-tints');
-    tintBox.innerHTML = '';
-    for (const tint of PORTRAIT_TINTS) {
-      const button = tintChoiceButton(tint, tint.id === state.tint, () => {
-        state.tint = tint.id; renderAppearance(); renderCharacterPreview(); refreshFaces();
-      });
-      tintBox.appendChild(button);
-    }
-    const glyphBox = $('#cz-glyphs');
-    glyphBox.innerHTML = '';
-    for (const glyph of PORTRAIT_GLYPHS) {
-      const button = sigilChoiceButton(glyph, glyph === state.glyph, () => {
-        state.glyph = glyph; renderAppearance(); renderCharacterPreview(); refreshFaces();
-      });
-      glyphBox.appendChild(button);
-    }
-    const keepsakeBox = $('#cz-keepsakes');
-    keepsakeBox.innerHTML = '';
-    for (const keepsake of registries.characterCreation.keepsakes) {
-      const button = keepsakeChoiceButton(keepsake, keepsake.id === state.keepsakeId, () => {
-        state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces();
-      });
-      keepsakeBox.appendChild(button);
-    }
+    $('#cz-styles').replaceChildren(...SPRITE_STYLES.map((style) => spriteChoiceButton(style, style.id === state.spriteStyle, () => {
+      state.spriteStyle = style.id; renderAppearance(); renderCharacterPreview(); refreshFaces();
+    })));
+    $('#cz-tints').replaceChildren(...PORTRAIT_TINTS.map((tint) => tintChoiceButton(tint, tint.id === state.tint, () => {
+      state.tint = tint.id; renderAppearance(); renderCharacterPreview(); refreshFaces();
+    })));
+    $('#cz-glyphs').replaceChildren(...PORTRAIT_GLYPHS.map((glyph) => sigilChoiceButton(glyph, glyph === state.glyph, () => {
+      state.glyph = glyph; renderAppearance(); renderCharacterPreview(); refreshFaces();
+    })));
+    $('#cz-keepsakes').replaceChildren(...registries.characterCreation.keepsakes.map((keepsake) => keepsakeChoiceButton(keepsake, keepsake.id === state.keepsakeId, () => {
+      state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces();
+    })));
   }
 
   function renderEquipment(preferredOpenId = null) {
     equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices() });
     equipmentNodes = new Map();
     for (const section of equipmentSectionViews) {
-      const node = document.createElement('section');
-      node.className = 'cc-equip-group';
-      node.dataset.equipmentSection = section.id;
-      const box = document.createElement('div');
-      box.className = 'cc-card-selectors cc-choice-collection';
-      box.dataset.view = state.equipmentChoiceView;
-      if (section.kind === 'armour') box.id = 'cz-armours';
-      else if (section.kind === 'relic') box.id = 'cz-relics';
-      else if (section.kind === 'hand') box.id = `cz-${section.slot === 'leftHand' ? 'left' : 'right'}-hand`;
-      else box.id = `cz-${section.id}`;
-      node.appendChild(box);
+      const boxId = section.kind === 'armour' ? 'cz-armours'
+        : section.kind === 'relic' ? 'cz-relics'
+          : section.kind === 'hand' ? `cz-${section.slot === 'leftHand' ? 'left' : 'right'}-hand`
+            : `cz-${section.id}`;
+      const box = options([], { id: boxId, class: 'cc-card-selectors cc-choice-collection', dataset: { view: state.equipmentChoiceView } });
+      const node = el('section', { class: 'cc-equip-group', dataset: { equipmentSection: section.id } }, box);
       equipmentNodes.set(section.id, node);
 
       for (const piece of section.choices) {
         if (section.kind === 'relic') {
-          const button = relicChoiceButton(piece, relicText(piece, registries), piece.id === state.startingRelicId, () => {
+          box.appendChild(relicChoiceButton(piece, relicText(piece, registries), piece.id === state.startingRelicId, () => {
             state.startingRelicId = piece.id;
             renderEquipment(section.id); renderCharacterPreview(); refreshFaces(); advanceEquipment(section.id);
-          });
-          box.appendChild(button);
+          }));
           continue;
         }
         const selected = section.kind === 'armour'
@@ -60393,19 +59887,19 @@ function mountCustomize(app, {
           : section.kind === 'hand'
             ? state.startingHands[section.slot] === piece.id
             : state.startingSlotChoices[section.id] === piece.id;
-        const button = pieceChip(registries, piece, { selected });
-        markUiComponent(button, UI.equipmentChoiceCard, section.id);
-        if (section.kind === 'armour') button.dataset.startingArmourId = piece.id;
-        else if (section.kind === 'hand') { button.dataset.hand = section.slot; button.dataset.armamentId = piece.id; }
-        else button.dataset.startingSlotItemId = piece.id;
-        button.setAttribute('aria-pressed', selected ? 'true' : 'false');
-        button.addEventListener('click', () => {
+        const chipButton = pieceChip(registries, piece, { selected });
+        markUiComponent(chipButton, UI.equipmentChoiceCard, section.id);
+        if (section.kind === 'armour') chipButton.dataset.startingArmourId = piece.id;
+        else if (section.kind === 'hand') { chipButton.dataset.hand = section.slot; chipButton.dataset.armamentId = piece.id; }
+        else chipButton.dataset.startingSlotItemId = piece.id;
+        chipButton.setAttribute('aria-pressed', selected ? 'true' : 'false');
+        chipButton.addEventListener('click', () => {
           if (section.kind === 'armour') state.startingArmourId = piece.id;
           else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
           else state.startingSlotChoices[section.id] = piece.id;
           renderEquipment(section.id); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(section.id);
         });
-        box.appendChild(button);
+        box.appendChild(chipButton);
       }
     }
 
@@ -60491,10 +59985,7 @@ function mountCustomize(app, {
   resetClassChoices();
   renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderCharacterPreview(); renderViewToggles(); refreshFaces();
 
-  const panels = {
-    class: $('#cz-class-panel'), character: $('#cz-character-panel'),
-    equipment: $('#cz-equipment-panel'), seed: $('#cz-seed-panel'),
-  };
+  const panels = stages;
   const selectedName = (id, rows, fallback = '—') => (rows.find((row) => row.id === id) || {}).name || fallback;
   const sectionRows = [
     { key: 'class', label: 'CLASS', node: panels.class, value: () => registries.classes.get(state.classId).name },
@@ -60503,27 +59994,27 @@ function mountCustomize(app, {
       const arms = registries.equipment.armaments;
       return `${selectedName(state.startingHands.leftHand, arms, 'Empty')} / ${selectedName(state.startingHands.rightHand, arms, 'Empty')}`;
     } },
-    { key: 'seed', label: 'SEED', node: panels.seed, value: () => $('#seed-input').value.trim() || '—' },
+    { key: 'seed', label: 'SEED', node: panels.seed, value: () => seedInput.value.trim() || '—' },
   ];
   let fold = null;
   if (catalog) {
-    const flow = $('.cz-flow');
+    // THE COMPONENT CATALOGUE is a dev-only ?shot=components reach state. It
+    // moves the real creation panels into specimen Panes; it does not copy
+    // their markup or grow a second renderer that could drift from the
+    // player-facing screen.
     const fragment = document.createDocumentFragment();
     const appendCatalogItem = (row, kind) => {
-      const article = document.createElement('article');
-      article.className = 'cc-catalog-item';
-      article.dataset.catalogComponent = row.key;
+      const item = pane({ eyebrow: kind, title: row.label, attrs: { class: 'flush cc-catalog-item', dataset: { catalogComponent: row.key } } });
       const headingId = `cc-catalog-${row.key}`;
-      article.innerHTML = `<header class="cc-catalog-head"><h3 id="${headingId}">${esc(row.label)}</h3><span>${esc(kind)}</span></header>`;
+      item.querySelector('h3').id = headingId;
       row.node.setAttribute('aria-labelledby', headingId);
-      article.appendChild(row.node);
-      fragment.appendChild(article);
+      item.appendChild(row.node);
+      fragment.appendChild(item);
     };
-    for (const row of sectionRows) appendCatalogItem(row, 'LIVE SECTION');
+    for (const row of sectionRows) appendCatalogItem(row, 'Live section');
 
     const choiceSpecimen = (className, choices, idFor, renderer, initial) => {
-      const host = document.createElement('div');
-      host.className = `cc-catalog-specimen ${className}`;
+      const host = el('div', { class: `cc-catalog-specimen ${className}` });
       let selected = initial;
       const draw = () => host.replaceChildren(...choices.map((choice) => renderer(
         choice, idFor(choice) === selected, () => { selected = idFor(choice); draw(); },
@@ -60537,13 +60028,9 @@ function mountCustomize(app, {
       projection: specimenProjection,
       equipmentProfiles: specimenRun.equipmentProfileRuleSnapshot?.profiles,
     });
-    const disclosureHost = document.createElement('div');
-    disclosureHost.className = 'cc-character-fold cc-catalog-specimen cz-disc';
-    const disclosureStat = document.createElement('div');
-    disclosureStat.className = 'cc-character-picker';
-    disclosureStat.appendChild(primaryStatCard(specimenAttributes[0]));
-    const disclosureKeepsake = document.createElement('div');
-    disclosureKeepsake.className = 'cc-character-picker cz-keepsakes';
+    const disclosureHost = el('div', { class: 'cc-character-fold cc-catalog-specimen cz-disc' });
+    const disclosureStat = el('div', { class: 'cc-character-picker' }, primaryStatCard(specimenAttributes[0]));
+    const disclosureKeepsake = options([], { class: 'cc-character-picker cz-keepsakes' });
     let disclosureKeepsakeId = registries.characterCreation.keepsakes[0].id;
     const drawDisclosureKeepsakes = () => disclosureKeepsake.replaceChildren(...registries.characterCreation.keepsakes.slice(0, 2).map((keepsake) => keepsakeChoiceButton(
       keepsake, keepsake.id === disclosureKeepsakeId,
@@ -60556,14 +60043,8 @@ function mountCustomize(app, {
     ]);
     markUiComponent(disclosureHost, UI.characterDisclosure);
     disclosureSpecimen.open('sample-primary');
-    const statHost = document.createElement('div');
-    statHost.className = 'cc-primary-stats cc-catalog-specimen';
-    statHost.append(...specimenAttributes.map(primaryStatCard));
-    const classChoiceSpecimen = document.createElement('div');
-    classChoiceSpecimen.className = 'cc-class-selection cc-catalog-specimen';
-    const classChoiceHost = document.createElement('div');
-    classChoiceHost.className = 'class-row';
-    classChoiceHost.dataset.view = 'list';
+    const statHost = el('div', { class: 'as-stack tight cc-primary-stats cc-catalog-specimen' }, specimenAttributes.map(primaryStatCard));
+    const classChoiceHost = options([], { class: 'cc-catalog-specimen', dataset: { view: 'list' } });
     let specimenClassId = state.classId;
     const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => classChoiceCard(cls, {
       selected: cls.id === specimenClassId,
@@ -60571,7 +60052,6 @@ function mountCustomize(app, {
       onChoose: () => { specimenClassId = cls.id; drawClassChoices(); },
     })));
     drawClassChoices();
-    classChoiceSpecimen.appendChild(classChoiceHost);
     const previewRelic = registries.relics.get(state.startingRelicId);
     const classPreviewHost = classPreviewPane({
       cls: registries.classes.get(state.classId),
@@ -60599,22 +60079,19 @@ function mountCustomize(app, {
       autoAdvanceSpecimen = next;
     };
     setCatalogAutoAdvance(true);
-    const armourSpecimen = document.createElement('div');
-    armourSpecimen.className = 'cc-card-selectors cc-catalog-specimen';
-    armourSpecimen.dataset.view = 'list';
+    const armourSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen', dataset: { view: 'list' } });
     const specimenArmours = armourChoices().slice(0, 2);
     let specimenArmourId = specimenArmours[0].id;
     const drawArmourChoices = () => armourSpecimen.replaceChildren(...specimenArmours.map((piece) => {
-      const button = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
-      button.setAttribute('aria-pressed', piece.id === specimenArmourId ? 'true' : 'false');
-      markUiComponent(button, UI.equipmentChoiceCard, 'armour');
-      button.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
-      return button;
+      const chipButton = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
+      chipButton.setAttribute('aria-pressed', piece.id === specimenArmourId ? 'true' : 'false');
+      markUiComponent(chipButton, UI.equipmentChoiceCard, 'armour');
+      chipButton.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
+      return chipButton;
     }));
     drawArmourChoices();
     const specimenRelics = creationRelicChoices(registries, state.classId).slice(0, 2);
-    const relicSpecimen = document.createElement('div');
-    relicSpecimen.className = 'cc-card-selectors cc-catalog-specimen';
+    const relicSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen' });
     let specimenRelicId = specimenRelics[0].id;
     const drawRelicChoices = () => relicSpecimen.replaceChildren(...specimenRelics.map((relic) => relicChoiceButton(
       relic, relicText(relic, registries), relic.id === specimenRelicId,
@@ -60624,39 +60101,39 @@ function mountCustomize(app, {
     const selectionFaceSpecimen = selectionSectionFace('STARTING ARMOUR', 'Ashen Vigil').node;
     selectionFaceSpecimen.classList.add('cc-catalog-specimen');
     const specimens = [
-      { key: 'character-disclosure', label: 'CHARACTER SUB-DISCLOSURE', node: disclosureHost },
-      { key: 'class-preview-pane', label: 'CLASS PREVIEW PANE', node: classPreviewHost },
-      { key: 'class-resource-grid', label: 'CLASS RESOURCE GRID', node: classResourceSpecimen },
-      { key: 'class-choice-card', label: 'CLASS CHOICE CARD', node: classChoiceSpecimen },
-      { key: 'view-mode-toggle', label: 'LIST / GRID TOGGLE', node: viewToggleHost },
-      { key: 'boolean-setting-toggle', label: 'BOOLEAN SETTING TOGGLE', node: autoAdvanceSpecimen },
-      { key: 'selection-section-face', label: 'SELECTION SUBCARD FACE', node: selectionFaceSpecimen },
-      { key: 'primary-stat-card', label: 'PRIMARY STAT CARD', node: statHost },
-      { key: 'resource-strip', label: 'RESOURCE STRIP', node: resourceStrip(
+      { key: 'character-disclosure', label: 'Character sub-disclosure', node: disclosureHost },
+      { key: 'class-preview-pane', label: 'Class preview pane', node: classPreviewHost },
+      { key: 'class-resource-grid', label: 'Class resource strip', node: classResourceSpecimen },
+      { key: 'class-choice-card', label: 'Class choice card', node: classChoiceHost },
+      { key: 'view-mode-toggle', label: 'List / grid toggle', node: viewToggleHost },
+      { key: 'boolean-setting-toggle', label: 'Boolean setting toggle', node: autoAdvanceSpecimen },
+      { key: 'selection-section-face', label: 'Selection subcard face', node: selectionFaceSpecimen },
+      { key: 'primary-stat-card', label: 'Primary stat card', node: statHost },
+      { key: 'resource-strip', label: 'Resource strip', node: resourceStrip(
         specimenProjection.derived, playerPoiseThresholdReceipt(registries, specimenRun),
       ) },
-      { key: 'mode-choice', label: 'STANDARD / ASSIGN POINTS', node: choiceSpecimen(
-        'se-modes', visibleModes, (row) => row.id, modeChoiceButton, state.attributeMode,
+      { key: 'mode-choice', label: 'Standard / assign points', node: choiceSpecimen(
+        'as-seg se-modes', visibleModes, (row) => row.id, modeChoiceButton, state.attributeMode,
       ) },
-      { key: 'sprite-choice', label: 'SPRITE CHOICE', node: choiceSpecimen(
-        'cz-opts', SPRITE_STYLES, (row) => row.id, spriteChoiceButton, state.spriteStyle,
+      { key: 'sprite-choice', label: 'Sprite choice', node: choiceSpecimen(
+        'as-seg cz-opts', SPRITE_STYLES, (row) => row.id, spriteChoiceButton, state.spriteStyle,
       ) },
-      { key: 'tint-choice', label: 'TINT SWATCH', node: choiceSpecimen(
-        'cz-opts', PORTRAIT_TINTS, (row) => row.id, tintChoiceButton, state.tint,
+      { key: 'tint-choice', label: 'Tint swatch', node: choiceSpecimen(
+        'as-swatches cz-opts', PORTRAIT_TINTS, (row) => row.id, tintChoiceButton, state.tint,
       ) },
-      { key: 'sigil-choice', label: 'SIGIL CHOICE', node: choiceSpecimen(
-        'cz-opts', PORTRAIT_GLYPHS, (glyph) => glyph, sigilChoiceButton, state.glyph,
+      { key: 'sigil-choice', label: 'Sigil choice', node: choiceSpecimen(
+        'as-swatches cz-opts', PORTRAIT_GLYPHS, (glyph) => glyph, sigilChoiceButton, state.glyph,
       ) },
-      { key: 'keepsake-choice', label: 'KEEPSAKE CARD', node: choiceSpecimen(
-        'cz-keepsakes', registries.characterCreation.keepsakes, (row) => row.id, keepsakeChoiceButton, state.keepsakeId,
+      { key: 'keepsake-choice', label: 'Keepsake card', node: choiceSpecimen(
+        'as-options cz-keepsakes', registries.characterCreation.keepsakes, (row) => row.id, keepsakeChoiceButton, state.keepsakeId,
       ) },
-      { key: 'equipment-choice-card', label: 'EQUIPMENT CHOICE CARD', node: armourSpecimen },
-      { key: 'relic-choice-card', label: 'RELIC CHOICE CARD', node: relicSpecimen },
+      { key: 'equipment-choice-card', label: 'Equipment choice card', node: armourSpecimen },
+      { key: 'relic-choice-card', label: 'Relic choice card', node: relicSpecimen },
     ];
-    for (const row of specimens) appendCatalogItem(row, 'REUSABLE COMPONENT');
+    for (const row of specimens) appendCatalogItem(row, 'Reusable component');
     flow.replaceChildren(fragment);
   } else {
-    fold = mountDisclosure($('.cz-flow'), sectionRows.map((row) => ({
+    fold = mountDisclosure(flow, sectionRows.map((row) => ({
       key: row.key, kind: 'pick', disclosure: 'face',
       face: { label: row.label, value: row.value() },
       reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
@@ -60665,36 +60142,35 @@ function mountCustomize(app, {
     fold.open('class');
   }
 
-  app.querySelectorAll('.cz-next').forEach((button) => button.addEventListener('click', () => {
+  app.querySelectorAll('.cz-next').forEach((control) => control.addEventListener('click', () => {
     if (catalog) {
-      const target = app.querySelector(`[data-catalog-component="${button.dataset.next}"]`);
+      const target = app.querySelector(`[data-catalog-component="${control.dataset.next}"]`);
       target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
       focusElement(target?.querySelector('button, input'));
       return;
     }
-    fold.open(button.dataset.next);
-    const target = app.querySelector(`[data-face="${button.dataset.next}"]`);
+    fold.open(control.dataset.next);
+    const target = app.querySelector(`[data-face="${control.dataset.next}"]`);
     if (target) focusElement(target);
   }));
 
-  const name = $('#cz-name');
-  name.addEventListener('input', () => { state.name = name.value.trim() || 'Forsaken'; refreshFaces(); });
-  attachTooltip(name, () => `Your character's name. Up to ${name.maxLength} characters.`);
-  const seed = attachSeedField($('#seed-input'));
+  nameInput.addEventListener('input', () => { state.name = nameInput.value.trim() || 'Forsaken'; refreshFaces(); });
+  attachTooltip(nameInput, () => `Your character's name. Up to ${nameInput.maxLength} characters.`);
+  const seed = attachSeedField(seedInput);
   seed.onChange(() => { refreshFaces(); updateStartRefusal(); });
 
-  updateStartRefusal = refusesWhen($('#cz-start'), () => seed.problem() || statsProblem(), () => {
+  updateStartRefusal = refusesWhen(start, () => seed.problem() || statsProblem(), () => {
     const cls = registries.classes.get(state.classId);
     const keepsake = registries.characterCreation.keepsakes.find((row) => row.id === state.keepsakeId);
     return `Begin as <b>${esc(cls.name)}</b> with <b>${esc(keepsake.name)}</b>.`;
   });
-  attachTooltip($('#cz-back'), () => 'Back to the title screen. Nothing here is saved.');
-  $('#cz-back').addEventListener('click', onBack);
-  $('#cz-start').addEventListener('click', () => {
+  attachTooltip(back, () => 'Back to the title screen. Nothing here is saved.');
+  back.addEventListener('click', onBack);
+  start.addEventListener('click', () => {
     if (seed.problem() || statsProblem()) return;
     onStart({
       classId: state.classId,
-      seedString: $('#seed-input').value.trim(),
+      seedString: seedInput.value.trim(),
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
       keepsakeId: state.keepsakeId,
       startingKitId: state.startingKitId,
@@ -61688,6 +61164,7 @@ Object.assign(module.exports, { refuses, refusesWhen, refusalOf });
 
 const { SEED_MAX_LEN, seedProblem } = require("src/engine/rng.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { el } = require("src/ui/kit/index.js");
 
 /**
  * The promise, once. It used to live as prose on one of the three fields; the
@@ -61723,11 +61200,12 @@ function attachSeedField(input, { promise = SEED_PROMISE } = {}) {
   // over). Set here so a fourth seed field cannot repeat it.
   if (!input.getAttribute('type')) input.setAttribute('type', 'text');
 
-  const note = document.createElement('span');
-  note.className = 'seed-problem';
-  note.setAttribute('role', 'alert');
+  // The kit's FieldNote — the sentence under a field that refuses. It lands
+  // in the field's own Row·setting (`.seed-line` is the hook every screen's
+  // seed row wears), so it drops under the field on the row's own wrap.
+  const note = el('span', { class: 'as-fieldnote seed-problem', role: 'alert' });
   note.hidden = true;
-  (input.closest('.seed-line') || input.parentElement || input).appendChild(note);
+  (input.closest('.seed-line') || input.closest('.as-row') || input.parentElement || input).appendChild(note);
 
   let listener = null;
 
@@ -66225,12 +65703,67 @@ Object.assign(module.exports, { FOLD_GLYPH, TRAY_FOLD_GLYPH });
 // Shared attribute-allocation card. Character creation and shrine levelling
 // provide policy (limits, remaining points, commit); this component owns the
 // common card, controls, semantics, and interaction shape.
-const { esc } = require("src/ui/components/tooltip.js");
+//
+// ON THE KIT: a Pane — Eyebrow + Title·S, a StatPair for the pool, a Flavour
+// note, one Row·setting per attribute (the attribute's fold face on the left,
+// a Segmented stepper −/value/+ on the right, the reveal dropping under the
+// whole row) and a ButtonRow for Clear/Done. In modal form the same body is
+// the md door's body and the ButtonRow is the door's own foot, through the
+// one door-opener — the head, the close control, Escape and focus return are
+// the shell's. The hooks the instruments read (`.se-pool`, `.se-row`,
+// `.se-step`, `.se-value`, `.se-controls`, `[data-stat-action]`,
+// `[data-stat-done]`, `[data-stat-cancel]`, `#cc-stat-title`, `.cc-stat-modal`,
+// `.cc-stat-overlay`) ride on the kit elements.
 const { primaryStatCard } = require("src/ui/components/creationCards.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { el, eyebrow, titleS, flavour, hairline, statPair, row, button, buttonRow, openModal } = require("src/ui/kit/index.js");
 
+
+
+function stepperFor(rowModel, { onDecrease, onIncrease }) {
+  const step = (glyph, action, allowed, label) => {
+    const control = el('button', {
+      type: 'button', class: 'se-step', text: glyph,
+      dataset: { statId: rowModel.id, statAction: action },
+      'aria-label': `${label} ${rowModel.label}`,
+      'aria-disabled': allowed ? 'false' : 'true',
+    });
+    control.addEventListener('click', () => { if (allowed) (action === 'decrease' ? onDecrease : onIncrease)?.(rowModel.id); });
+    return control;
+  };
+  return el('span', { class: 'as-seg stepper se-controls' }, [
+    step('−', 'decrease', rowModel.canDecrease, 'Decrease'),
+    el('span', { class: 'seg-value se-value', text: String(rowModel.value) }),
+    step('+', 'increase', rowModel.canIncrease, 'Increase'),
+  ]);
+}
+
+function drawRows(rowsHost, rows, handlers) {
+  rowsHost.replaceChildren(...rows.map((rowModel) => {
+    const attribute = primaryStatCard({
+      ...rowModel.card,
+      face: { ...rowModel.card.face, value: '' },
+    });
+    attribute.classList.add('se-attribute-card');
+    const line = row({
+      tag: 'div', setting: true, className: 'se-row',
+      labelNode: attribute,
+      trail: stepperFor(rowModel, handlers),
+    });
+    return markUiComponent(line, UI.statAllocationRow);
+  }));
+}
+
+/**
+ * renderStatAllocationCard(host, spec) → { card, rowsHost, cancel, done, close, update }
+ *
+ * `modal: false` draws the Pane into `host` (the shrine's level fold).
+ * `modal: true` opens the md door over `host` and returns its panel as the
+ * card; `update({ remaining, rows, doneDisabled })` redraws the rows and the
+ * pool in place, so a stepper press never re-opens the door.
+ */
 function renderStatAllocationCard(host, {
-  title = 'ASSIGN POINTS',
+  title = 'Assign points',
   remaining = 0,
   remainingLabel = 'Points to assign',
   note = '',
@@ -66243,59 +65776,49 @@ function renderStatAllocationCard(host, {
   onIncrease = null,
   onCancel = null,
   onDone = null,
+  onClose = null,
 } = {}) {
-  host.innerHTML = `<section class="${modal ? 'modal cc-stat-modal' : 'stat-allocation-card'}" tabindex="-1">`
-    + `<h3 id="cc-stat-title">${esc(title)}</h3>`
-    + `<p class="se-pool">${esc(remainingLabel)}: ${esc(String(remaining))}</p>`
-    + (note ? `<p class="stat-allocation-note">${esc(note)}</p>` : '')
-    + '<div class="cc-allocation-rows"></div>'
-    + `<div class="cc-stat-actions"><button type="button" class="subtle" data-stat-cancel>${esc(cancelLabel)}</button>`
-    + `<button type="button" data-stat-done aria-disabled="${doneDisabled ? 'true' : 'false'}">${esc(doneLabel)}</button></div>`
-    + '</section>';
+  let disabled = doneDisabled;
+  const pool = statPair({ key: remainingLabel, value: String(remaining), attrs: { class: 'se-pool' } });
+  const rowsHost = el('div', { class: 'as-stack tight cc-allocation-rows' });
+  drawRows(rowsHost, rows, { onDecrease, onIncrease });
+  const cancel = button({ label: cancelLabel, attrs: { 'data-stat-cancel': '' } });
+  const done = button({ label: doneLabel, weight: 'primary', attrs: { 'data-stat-done': '', 'aria-disabled': disabled ? 'true' : 'false' } });
+  cancel.addEventListener('click', () => onCancel && onCancel());
+  done.addEventListener('click', () => { if (!disabled && onDone) onDone(); });
 
-  const card = host.firstElementChild;
-  const rowsHost = card.querySelector('.cc-allocation-rows');
-  for (const rowModel of rows) {
-    const row = document.createElement('div');
-    row.className = 'se-row';
-    markUiComponent(row, UI.statAllocationRow);
-    const attribute = primaryStatCard({
-      ...rowModel.card,
-      face: { ...rowModel.card.face, value: '' },
+  const body = [pool, note ? flavour(note, { class: 'stat-allocation-note' }) : null, hairline(), rowsHost];
+  let card;
+  let close = () => {};
+  if (modal) {
+    const door = openModal({
+      size: 'md', className: 'cc-stat-modal', eyebrow: 'Attributes', title, titleId: 'cc-stat-title',
+      body: el('div', { class: 'as-pane stat-allocation-card' }, body),
+      secondary: [cancel], primary: done, footSize: 'medium', host, onClose,
     });
-    attribute.classList.add('se-attribute-card');
-    const minus = document.createElement('button');
-    minus.type = 'button'; minus.className = 'se-step'; minus.textContent = '−';
-    minus.dataset.statId = rowModel.id; minus.dataset.statAction = 'decrease';
-    minus.setAttribute('aria-label', `Decrease ${rowModel.label}`);
-    minus.setAttribute('aria-disabled', rowModel.canDecrease ? 'false' : 'true');
-    const number = document.createElement('span');
-    number.className = 'se-value'; number.textContent = rowModel.value;
-    const plus = document.createElement('button');
-    plus.type = 'button'; plus.className = 'se-step'; plus.textContent = '+';
-    plus.dataset.statId = rowModel.id; plus.dataset.statAction = 'increase';
-    plus.setAttribute('aria-label', `Increase ${rowModel.label}`);
-    plus.setAttribute('aria-disabled', rowModel.canIncrease ? 'false' : 'true');
-    minus.addEventListener('click', () => {
-      if (rowModel.canDecrease && onDecrease) onDecrease(rowModel.id);
-    });
-    plus.addEventListener('click', () => {
-      if (rowModel.canIncrease && onIncrease) onIncrease(rowModel.id);
-    });
-    const controls = document.createElement('div');
-    controls.className = 'se-controls';
-    controls.append(minus, number, plus);
-    row.append(attribute, controls);
-    rowsHost.appendChild(row);
+    door.veil.classList.add('cc-stat-overlay');
+    card = door.panel;
+    close = door.close;
+  } else {
+    card = el('section', { class: 'as-pane flush stat-allocation-card', tabindex: '-1' }, [
+      eyebrow('Attributes'),
+      titleS(title, { tag: 'h3', id: 'cc-stat-title' }),
+      ...body,
+      buttonRow({ size: 'medium', buttons: [cancel, done], className: 'cc-stat-actions' }),
+    ]);
+    host.innerHTML = '';
+    host.appendChild(card);
   }
 
-  const cancel = card.querySelector('[data-stat-cancel]');
-  const done = card.querySelector('[data-stat-done]');
-  cancel.addEventListener('click', () => onCancel && onCancel());
-  done.addEventListener('click', () => {
-    if (!doneDisabled && onDone) onDone();
-  });
-  return { card, rowsHost, cancel, done };
+  return {
+    card, rowsHost, cancel, done, close,
+    update({ remaining: nextRemaining = remaining, rows: nextRows = rows, doneDisabled: nextDisabled = disabled } = {}) {
+      pool.querySelector('.sp-v').textContent = String(nextRemaining);
+      drawRows(rowsHost, nextRows, { onDecrease, onIncrease });
+      disabled = nextDisabled;
+      done.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    },
+  };
 }
 
 
@@ -66303,278 +65826,226 @@ Object.assign(module.exports, { renderStatAllocationCard });
 
 },
 "src/ui/components/creationCards.js": function (module, exports, require) {
-// Reusable character-creation cards. The live screen and dev catalogue both
-// call these renderers, so a specimen is the production component rather than
-// a look-alike maintained beside it.
+// Reusable character-creation cards, composed from the kit and nothing else.
+// The live screen and the dev catalogue both call these renderers, so a
+// specimen is the production component rather than a look-alike maintained
+// beside it.
+//
+// EVERY PIECE IS A KIT PIECE. A class is an OptionCard, a keepsake and a relic
+// are OptionCards, a sprite style or a creation mode is one button of a
+// Segmented, a sigil or a tint is a Swatch, the derived resources are a
+// StatStrip of Chips, the class preview is a Pane, and a primary stat is the
+// D26 fold face carrying a kit Row (LabelStack + StatusText). The class names
+// the tools read (`class-pick`, `cz-opt`, `cz-keepsake`, `cc-primary-stat`,
+// `cc-class-resource`, `cc-switch`, `data-view-mode`…) ride on the kit
+// elements as hooks and draw nothing of their own.
 
-const { attachTooltip } = require("src/ui/components/tooltip.js");
+const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { mountDisclosure } = require("src/ui/components/disclosure.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { el, eyebrow, titleM, hairline, artWell, optionCard, statStrip, chip, segmented, toggle, row, labelStack, pill } = require("src/ui/kit/index.js");
 
-function appendVisual(host, visual) {
-  if (!visual) return;
-  if (visual instanceof Node) host.appendChild(visual);
-  else host.textContent = String(visual);
+
+
+
+function visualNode(visual) {
+  if (visual == null || visual === '') return null;
+  return visual instanceof Node ? visual : String(visual);
 }
 
-function choiceButton({ className, selected, label, text, onChoose }) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = `${className}${selected ? ' chosen' : ''}`;
-  button.textContent = text;
-  button.setAttribute('aria-pressed', selected ? 'true' : 'false');
-  if (label) button.setAttribute('aria-label', label);
-  if (onChoose) button.addEventListener('click', onChoose);
-  return button;
+/** A pressable choice: aria-pressed says which one is chosen; `.chosen` rides along for the pad cursor. */
+function pressable(node, selected, onChoose) {
+  node.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  node.classList.toggle('chosen', !!selected);
+  if (onChoose) node.addEventListener('click', onChoose);
+  return node;
 }
 
-function primaryStatCard(model) {
-  const host = document.createElement('div');
-  host.className = 'cc-attribute-card';
-  host.dataset.stat = model.id;
+/** One button of a Segmented: the kit's own `.on` + aria-pressed grammar. */
+function segmentButton({ label, ariaLabel, selected, className, dataset, onChoose }) {
+  const node = el('button', {
+    type: 'button', class: `${className}${selected ? ' on' : ''}`,
+    'aria-label': ariaLabel || null, dataset, text: label,
+  });
+  return pressable(node, selected, onChoose);
+}
+
+/**
+ * The attribute face: a Row (LabelStack label + summary, StatusText value)
+ * inside the D26 fold face, so the reveal (sense, derived lines) opens under
+ * it by the one fold renderer. `.disc-summary` rides on the hint for the
+ * instruments that read the folded summary.
+ */
+function primaryStatCard(input) {
+  const host = el('div', { class: 'cc-attribute-card as-row-fold' });
+  host.dataset.stat = input.id;
+  const face = row({
+    tag: 'span',
+    labelNode: labelStack({ label: input.reveal?.title || input.face.label, hint: input.face.summary || '' }),
+    status: input.face.value === '' || input.face.value == null ? '' : String(input.face.value),
+  });
+  face.querySelector('.ls-hint')?.classList.add('disc-summary');
+  const model = { ...input, face: { ...input.face, node: face } };
   mountDisclosure(host, [model]);
   host.querySelector('.disc-face')?.classList.add('cc-primary-stat');
   return markUiComponent(host, UI.primaryStatCard);
 }
 
+/** The derived resources: a StatStrip of Chips, each with its formula as its tooltip. */
 function resourceStrip(rows, poise) {
-  const strip = document.createElement('div');
-  strip.className = 'cc-derived';
-  strip.setAttribute('aria-label', 'Derived resources');
-  for (const row of rows) {
-    const item = document.createElement('span');
-    item.dataset.stat = row.id;
-    item.dataset.formula = row.formula;
-    item.title = row.formula;
-    const label = document.createElement('b');
-    label.textContent = row.faceLabel;
-    item.append(label, ` ${row.value}`);
-    strip.appendChild(item);
-  }
-  const poiseItem = document.createElement('span');
-  poiseItem.dataset.stat = 'poise';
-  const poiseLabel = document.createElement('b');
-  poiseLabel.textContent = 'Poise';
-  poiseItem.append(poiseLabel, ` ${poise.value}`);
-  strip.appendChild(poiseItem);
+  const chips = rows.map((entry) => {
+    const item = chip({ key: entry.faceLabel, value: entry.value, attrs: { dataset: { stat: entry.id, formula: entry.formula } } });
+    attachTooltip(item, () => esc(entry.formula));
+    return item;
+  });
+  chips.push(chip({ key: 'Poise', value: poise.value, attrs: { dataset: { stat: 'poise' } } }));
+  const strip = statStrip(chips, { class: 'cc-derived', 'aria-label': 'Derived resources' });
   return markUiComponent(strip, UI.resourceStrip);
 }
 
+/** List / Grid: a Segmented. */
 function viewModeToggle(value, onChoose, label = 'View choices') {
-  const group = document.createElement('div');
-  group.className = 'cc-view-toggle';
-  group.setAttribute('role', 'group');
-  group.setAttribute('aria-label', label);
-  for (const mode of ['list', 'grid']) {
-    const button = choiceButton({
-      className: 'cc-view-option', selected: value === mode,
-      text: mode === 'list' ? 'List' : 'Grid',
-      label: `${mode === 'list' ? 'List' : 'Grid'} view`,
-      onChoose: () => onChoose?.(mode),
-    });
-    button.dataset.viewMode = mode;
-    group.appendChild(button);
+  const group = segmented({
+    options: ['list', 'grid'].map((mode) => ({
+      label: mode === 'list' ? 'List' : 'Grid', value: mode, pressed: value === mode,
+      className: 'cc-view-option',
+      attrs: { dataset: { viewMode: mode }, 'aria-label': `${mode === 'list' ? 'List' : 'Grid'} view` },
+    })),
+    attrs: { class: 'cc-view-toggle', role: 'group', 'aria-label': label },
+  });
+  for (const button of group.querySelectorAll('button')) {
+    button.addEventListener('click', () => onChoose?.(button.dataset.viewMode));
   }
   return markUiComponent(group, UI.viewModeToggle);
 }
 
+/** A boolean setting: Row·setting with a LabelStack and a Toggle. */
 function booleanSettingToggle(label, value, onChoose) {
-  const wrapper = document.createElement('label');
-  wrapper.className = 'cc-boolean-setting';
-  const text = document.createElement('span');
-  text.textContent = label;
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'cc-switch';
-  button.setAttribute('role', 'switch');
-  button.setAttribute('aria-checked', value ? 'true' : 'false');
-  button.setAttribute('aria-label', label);
-  button.addEventListener('click', () => onChoose?.(!value));
-  const knob = document.createElement('span');
-  knob.className = 'cc-switch-knob';
-  button.appendChild(knob);
-  wrapper.append(text, button);
+  const control = toggle({ on: value, className: 'cc-switch', attrs: { 'aria-label': label } });
+  control.addEventListener('click', () => onChoose?.(!value));
+  const wrapper = row({ tag: 'div', setting: true, labelNode: labelStack({ label }), trail: control, className: 'cc-boolean-setting' });
   return markUiComponent(wrapper, UI.booleanSettingToggle);
 }
 
+/** A class: an OptionCard — Glyph, Title·S, prose, and a StatePill when it is still locked. */
 function classChoiceCard(cls, { selected = false, locked = false, visual = null, onChoose = null } = {}) {
-  const card = document.createElement(locked ? 'div' : 'button');
-  if (!locked) card.type = 'button';
-  card.className = `class-pick cz-class${selected ? ' chosen' : ''}${locked ? ' locked' : ''}`;
-  card.dataset.class = cls.id;
-  if (!locked) card.setAttribute('aria-pressed', selected ? 'true' : 'false');
-  const icon = document.createElement('div');
-  icon.className = 'glyph';
-  appendVisual(icon, visual);
-  const copy = document.createElement('div');
-  copy.className = 'cp-body';
-  const title = document.createElement('h3');
-  title.textContent = cls.name;
-  const description = document.createElement('p');
-  description.textContent = cls.description || '';
-  copy.append(title, description);
-  if (locked && cls.milestone) {
-    const milestone = document.createElement('span');
-    milestone.className = 'chip';
-    milestone.textContent = `ARRIVES IN ${cls.milestone}`;
-    copy.appendChild(milestone);
-  }
-  card.append(icon, copy);
+  const card = optionCard({
+    name: cls.name,
+    description: cls.description || '',
+    badge: locked && cls.milestone ? pill({ label: `Arrives in ${cls.milestone}` }) : null,
+    selected, disabled: locked, tag: locked ? 'div' : 'button',
+    className: `class-pick cz-class${selected ? ' chosen' : ''}${locked ? ' locked' : ''}`,
+    attrs: { dataset: { class: cls.id } },
+  });
+  card.prepend(el('span', { class: 'og', 'aria-hidden': 'true' }, visualNode(visual)));
   if (!locked && onChoose) card.addEventListener('click', onChoose);
   return markUiComponent(card, UI.classChoiceCard, locked ? 'locked' : 'available');
 }
 
+/** The class preview: a Pane — Eyebrow, Title·M, the figure in an ArtWell, the resources, the relic. */
 function classPreviewPane({ cls, sprite = null, resources = null, relic = null, relicDescription = '' }) {
-  const pane = document.createElement('article');
-  pane.className = 'cc-class-preview';
-  pane.setAttribute('aria-label', `${cls.name} class preview`);
-  const eyebrow = document.createElement('p');
-  eyebrow.className = 'cc-preview-eyebrow';
-  eyebrow.textContent = 'CLASS PREVIEW';
-  const title = document.createElement('h3');
-  title.textContent = cls.name;
-  const art = document.createElement('div');
-  art.className = 'cc-class-art';
-  appendVisual(art, sprite);
-  const resourceHeading = document.createElement('p');
-  resourceHeading.className = 'cc-preview-eyebrow';
-  resourceHeading.textContent = 'STARTING RESOURCES';
-  const resourceHost = document.createElement('div');
-  resourceHost.className = 'cc-class-resources';
-  if (resources) resourceHost.appendChild(resources);
-  const relicHeading = document.createElement('p');
-  relicHeading.className = 'cc-preview-eyebrow';
-  relicHeading.textContent = 'CLASS RELIC';
-  const relicRow = document.createElement('div');
-  relicRow.className = 'cc-class-relic';
-  if (relic) {
-    const icon = document.createElement('span');
-    icon.className = 'cc-class-relic-art';
-    appendVisual(icon, relic.icon || null);
-    const copy = document.createElement('span');
-    const name = document.createElement('b');
-    name.textContent = relic.name;
-    const description = document.createElement('small');
-    description.textContent = relicDescription;
-    copy.append(name, description);
-    relicRow.append(icon, copy);
-  }
-  pane.append(eyebrow, title, art, resourceHeading, resourceHost, relicHeading, relicRow);
+  const art = artWell({ glyph: '', attrs: { class: 'figure cc-class-art' } });
+  art.removeAttribute('aria-hidden');
+  if (sprite) art.appendChild(sprite);
+  const pane = el('article', { class: 'as-pane cc-class-preview', 'aria-label': `${cls.name} class preview` }, [
+    eyebrow('Class preview'),
+    titleM(cls.name, { tag: 'h3' }),
+    hairline(),
+    el('div', { class: 'as-stack' }, [
+      art,
+      el('div', { class: 'as-stack tight' }, [
+        eyebrow('Starting resources'),
+        resources,
+      ]),
+      el('div', { class: 'as-stack tight' }, [
+        eyebrow('Class relic'),
+        relic ? optionCard({
+          glyph: relic.icon || '◆', name: relic.name, description: relicDescription,
+          arrow: false, tag: 'div', className: 'cc-class-relic',
+        }) : null,
+      ]),
+    ]),
+  ]);
   return markUiComponent(pane, UI.classPreviewPane);
 }
 
+/** The five starting resources: a StatStrip of Chips. */
 function classResourceGrid(rows) {
-  const grid = document.createElement('div');
-  grid.className = 'cc-class-resource-grid';
-  grid.setAttribute('aria-label', 'Starting resources');
-  for (const row of rows) {
-    const item = document.createElement('div');
-    item.className = 'cc-class-resource';
-    item.dataset.stat = row.id;
-    const label = document.createElement('span');
-    label.textContent = row.faceLabel || row.label;
-    const value = document.createElement('b');
-    value.textContent = row.value;
-    item.append(label, value);
-    grid.appendChild(item);
-  }
-  return markUiComponent(grid, UI.classResourceGrid);
+  const strip = statStrip(rows.map((entry) => chip({
+    key: entry.faceLabel || entry.label, value: entry.value,
+    attrs: { class: 'cc-class-resource', dataset: { stat: entry.id } },
+  })), { class: 'cc-class-resource-grid', 'aria-label': 'Starting resources' });
+  return markUiComponent(strip, UI.classResourceGrid);
 }
 
+/** A section face: label left, the current choice right — a Row inside the fold face. */
 function selectionSectionFace(label, value, visual = null) {
-  const node = document.createElement('span');
-  node.className = 'cc-selection-face';
-  if (visual) {
-    const art = document.createElement('span');
-    art.className = 'cc-selection-face-art';
-    appendVisual(art, visual);
-    node.appendChild(art);
-  }
-  const name = document.createElement('b');
-  name.className = 'disc-name';
-  name.textContent = label;
-  const receipt = document.createElement('span');
-  receipt.className = 'disc-value';
-  receipt.textContent = value;
-  node.append(name, receipt);
+  const node = row({
+    tag: 'span', className: 'cc-selection-face face-lite',
+    glyph: visual instanceof Node ? '' : (visual || ''),
+    labelNode: labelStack({ label }),
+    status: value,
+  });
+  node.querySelector('.ls-label')?.classList.add('disc-name');
+  const receipt = node.querySelector('.as-status');
+  receipt?.classList.add('disc-value');
   return {
     node: markUiComponent(node, UI.selectionSectionFace),
-    setValue(next) { receipt.textContent = next; },
+    setValue(next) { if (receipt) receipt.textContent = next; },
   };
 }
 
+/** Standard / Assign points: one button of a Segmented. */
 function modeChoiceButton(mode, selected, onChoose) {
-  const button = choiceButton({
-    className: 'cz-opt se-mode', selected, text: mode.label,
-    label: `${mode.label} attributes`, onChoose,
+  const button = segmentButton({
+    label: mode.label, ariaLabel: `${mode.label} attributes`, selected,
+    className: 'cz-opt se-mode', dataset: { modeId: mode.id, creationMode: mode.id, val: mode.id }, onChoose,
   });
-  button.dataset.modeId = mode.id;
-  button.dataset.creationMode = mode.id;
   return markUiComponent(button, UI.modeChoice);
 }
 
+/** A sprite style: one button of a Segmented. */
 function spriteChoiceButton(style, selected, onChoose) {
-  const button = choiceButton({
-    className: 'cz-opt style', selected, text: style.name,
-    label: `${style.name} sprite`, onChoose,
+  const button = segmentButton({
+    label: style.name, ariaLabel: `${style.name} sprite`, selected,
+    className: 'cz-opt style', dataset: { spriteStyle: style.id, val: style.id }, onChoose,
   });
-  button.dataset.spriteStyle = style.id;
   return markUiComponent(button, UI.spriteChoice);
 }
 
+/** A tint: a Swatch showing its colour. */
 function tintChoiceButton(tint, selected, onChoose) {
-  const button = choiceButton({
-    className: 'cz-opt tint', selected, text: '', label: tint.name, onChoose,
-  });
-  button.dataset.tintId = tint.id;
-  button.style.background = tint.css;
-  button.title = tint.name;
-  attachTooltip(button, () => tint.name);
-  return markUiComponent(button, UI.tintChoice);
+  const button = el('button', { type: 'button', class: 'as-swatch tint cz-opt', 'aria-label': tint.name, dataset: { tintId: tint.id } });
+  button.style.setProperty('--swatch', tint.css);
+  attachTooltip(button, () => esc(tint.name));
+  return markUiComponent(pressable(button, selected, onChoose), UI.tintChoice);
 }
 
+/** A sigil: a Swatch showing its glyph. */
 function sigilChoiceButton(glyph, selected, onChoose) {
-  const button = choiceButton({
-    className: 'cz-opt sigil', selected, text: glyph,
-    label: `Sigil ${glyph}`, onChoose,
-  });
-  button.dataset.sigil = glyph;
-  return markUiComponent(button, UI.sigilChoice);
+  const button = el('button', { type: 'button', class: 'as-swatch sigil cz-opt', 'aria-label': `Sigil ${glyph}`, dataset: { sigil: glyph }, text: glyph });
+  return markUiComponent(pressable(button, selected, onChoose), UI.sigilChoice);
 }
 
+/** A keepsake: an OptionCard. */
 function keepsakeChoiceButton(keepsake, selected, onChoose) {
-  const button = choiceButton({
-    className: 'cz-keepsake', selected, text: '',
-    label: `${keepsake.name}. ${keepsake.desc}`, onChoose,
+  const button = optionCard({
+    glyph: keepsake.icon, name: keepsake.name, description: keepsake.desc, selected, arrow: false,
+    className: `cz-keepsake${selected ? ' chosen' : ''}`,
+    attrs: { dataset: { keepsakeId: keepsake.id }, 'aria-label': `${keepsake.name}. ${keepsake.desc}` },
   });
-  button.dataset.keepsakeId = keepsake.id;
-  const icon = document.createElement('span');
-  icon.className = 'ks-icon';
-  icon.textContent = keepsake.icon;
-  const copy = document.createElement('span');
-  const name = document.createElement('b');
-  name.textContent = keepsake.name;
-  const description = document.createElement('small');
-  description.textContent = keepsake.desc;
-  copy.append(name, description);
-  button.append(icon, copy);
+  if (onChoose) button.addEventListener('click', onChoose);
   return markUiComponent(button, UI.keepsakeChoice);
 }
 
+/** A starting relic: an OptionCard. */
 function relicChoiceButton(relic, description, selected, onChoose) {
-  const button = choiceButton({
-    className: 'cc-relic-card', selected, text: '',
-    label: `${relic.name}. ${description}`, onChoose,
+  const button = optionCard({
+    glyph: relic.icon || '◆', name: relic.name, description, selected, arrow: false,
+    className: `cc-relic-card${selected ? ' chosen' : ''}`,
+    attrs: { dataset: { relicId: relic.id }, 'aria-label': `${relic.name}. ${description}` },
   });
-  button.dataset.relicId = relic.id;
-  const icon = document.createElement('span');
-  icon.className = 'cc-relic-art';
-  appendVisual(icon, relic.icon || null);
-  const name = document.createElement('b');
-  name.textContent = relic.name;
-  const copy = document.createElement('small');
-  copy.textContent = description;
-  button.append(icon, name, copy);
+  if (onChoose) button.addEventListener('click', onChoose);
   return markUiComponent(button, UI.relicChoiceCard);
 }
 
@@ -66589,6 +66060,14 @@ Object.assign(module.exports, { primaryStatCard, resourceStrip, viewModeToggle, 
 // individual difficulty/chaos toggles, a deck mode, and a seed — then hand the
 // assembled { classId, seedString, custom } to the orchestrator. Custom runs
 // are flagged and kept out of win-rate telemetry (see history.js).
+//
+// ON THE KIT. A page door (head, scrolling body, the foot's Back / Begin on
+// the button ladder). The class is a list of OptionCards; Ascension is a
+// Row·setting with a range; every difficulty and chaos rule is a Row·setting
+// with a LabelStack and a Toggle (a StatePill when the ascension level holds
+// it on); the deck mode is a Segmented; the run shape is the D26 fold over
+// Rows·setting with ranges and a DetailCard for the readout; the seed is the
+// shared seed field in a Row·setting; and a DetailCard sums the climb up.
 
 const { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, activeMods } = require("src/content/customMods.js");
 
@@ -66601,10 +66080,32 @@ const { esc } = require("src/ui/components/tooltip.js");
 const { createRunState } = require("src/model/state.js");
 const { refusesWhen } = require("src/ui/components/refusal.js");
 const { attachSeedField } = require("src/ui/components/seedfield.js");
-const { FOLD_GLYPH } = require("src/ui/components/foldGlyph.js");
+const { mountDisclosure } = require("src/ui/components/disclosure.js");
+const { el, eyebrow, titleS, subtitle, flavour, hairline, statusText, options, optionCard, row, labelStack, toggle, segmented, pill, chip, statStrip, detailCard, button, buttonRow, modalHead, modalFooter } = require("src/ui/kit/index.js");
+
+
+
 
 /** How many seeds the live estimate averages. Named, because it is printed. */
 const ESTIMATE_SEEDS = 24;
+
+/** A section's head: Eyebrow + Title·S. */
+const sectionHead = (kicker, title) => el('div', { class: 'set-section-head' }, [eyebrow(kicker), titleS(title, { tag: 'h3' })]);
+
+/** A section: its head, a hairline, its rows. */
+const section = (kicker, title, children, attrs = {}) => el('section', { ...attrs, class: `as-pane flush${attrs.class ? ` ${attrs.class}` : ''}` }, [
+  sectionHead(kicker, title), hairline(), ...(Array.isArray(children) ? children : [children]),
+]);
+
+/** A range in a Row·setting: label + note on the left, the value and the track on the right. */
+function rangeRow({ id, label, hint, min, max, value, valueId, attrs = {} }) {
+  const input = el('input', { ...attrs, id, type: 'range', min: String(min), max: String(max), step: '1', value: String(value), 'aria-label': label });
+  const readout = statusText(String(value), { class: 'range-val', id: valueId });
+  return {
+    node: row({ tag: 'div', setting: true, labelNode: labelStack({ label, hint }), status: '', trail: [readout, input], attrs: { dataset: { range: id } } }),
+    input, readout,
+  };
+}
 
 function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -66679,107 +66180,124 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
     return null;
   }
 
-  app.innerHTML = `
-    <div class="screen customrun" style="justify-content:flex-start;overflow-y:auto;gap:16px;padding-top:26px">
-      <h2 style="color:var(--gold);font-size:24px;letter-spacing:.2em">CUSTOM CLIMB</h2>
-      <p class="subtitle">SHAPE YOUR OWN ASCENT — RESULTS ARE KEPT OUT OF WIN-RATE STATS</p>
+  // ---- the page door --------------------------------------------------------
+  const classes = options([], { id: 'cr-classes' });
+  const asc = el('input', { id: 'cr-asc', type: 'range', min: '0', max: String(MAX_ASCENSION), step: '1', value: '0', 'aria-label': 'Ascension' });
+  const ascValue = statusText('0', { class: 'range-val', id: 'cr-asc-val' });
+  const ascNote = flavour('No extra difficulty. Slide up to stack the rules below.', { id: 'cr-asc-note' });
+  const ascRow = row({ tag: 'div', setting: true, labelNode: labelStack({ label: `Ascension · up to ${MAX_ASCENSION}` }), trail: [ascValue, asc] });
+  const diffBox = el('div', { id: 'cr-diff', class: 'as-stack tight' });
+  const chaosBox = el('div', { id: 'cr-chaos', class: 'as-stack tight' });
+  const deckBox = el('div', { id: 'cr-deck' });
+  const seedInput = el('input', { id: 'cr-seed', type: 'text', value: defaultSeedString });
+  const seedRow = row({ tag: 'div', setting: true, className: 'seed-line', labelNode: labelStack({ label: 'Seed', hint: 'The same seed produces the same climb.' }), trail: seedInput });
+  const summary = detailCard({ eyebrow: 'Your climb', name: '—', line: '—', meta: '—', attrs: { id: 'cr-summary' } });
 
-      <div style="display:flex;flex-direction:column;gap:16px;max-width:680px;width:92%">
-        <div><p class="cz-label">CLASS</p><div id="cr-classes" class="class-row" style="flex-wrap:wrap;justify-content:center"></div></div>
+  // The run shape: a fold (the one fold renderer) over a readout and knobs.
+  let shapeHost = null;
+  let shapeBody = null;
+  let floorsKnob = null;
+  let colsKnob = null;
+  const weightRows = new Map();
+  let readout = null;
+  let oddsValue = null;
+  let weightsWhy = null;
+  let stateMark = null;
+  let resetShape = null;
+  if (shapeable) {
+    readout = detailCard({ eyebrow: 'Estimated length', name: '—', line: '—', meta: '—', attrs: { id: 'cr-shape-readout' } });
+    readout.querySelector('.dc-name').id = 'cr-shape-big';
+    readout.querySelector('.dc-line').id = 'cr-shape-sub';
+    readout.querySelector('.dc-meta').id = 'cr-shape-bound';
+    floorsKnob = rangeRow({ id: 'cr-shape-floors', label: 'Floors per act', hint: '…', min: floorsMin, max: floorsMax, value: floorsMax, valueId: 'cr-shape-floors-val' });
+    floorsKnob.node.querySelector('.ls-hint').id = 'cr-shape-floors-why';
+    colsKnob = rangeRow({
+      id: 'cr-shape-cols', label: 'Map width', hint: 'Columns the walkers may spread across. Narrower is a shorter, straighter act.',
+      min: MAP_SHAPE_LIMITS.minColumns, max: colsMax, value: colsMax, valueId: 'cr-shape-cols-val',
+    });
+    oddsValue = statusText('', { id: 'cr-shape-odds-val' });
+    weightsWhy = flavour('', { id: 'cr-shape-weights-why' });
+    const weightsBox = el('div', { id: 'cr-shape-weights', class: 'as-stack tight' });
+    for (const key of weightKeys) {
+      const knob = rangeRow({
+        id: `cr-shape-weight-${key}`, label: key, hint: '', min: 0, max: MAP_SHAPE_LIMITS.maxWeight,
+        value: baseCfg.typeWeights[key], valueId: `cr-shape-weight-${key}-val`, attrs: { dataset: { weight: key }, 'aria-label': `${key} roll weight` },
+      });
+      knob.readout.dataset.pct = key;
+      weightRows.set(key, knob);
+      weightsBox.appendChild(knob.node);
+    }
+    resetShape = button({ label: 'Reset run shape', id: 'cr-shape-reset' });
+    shapeBody = el('div', { id: 'cr-shape-body', class: 'as-pane flush as-stack' }, [
+      flavour('Shorten the climb. Caps the act, and biases what the map rolls — for testing a full run in one sitting.'),
+      readout,
+      el('div', { class: 'as-stack tight' }, [floorsKnob.node, colsKnob.node]),
+      el('div', { class: 'as-stack tight' }, [
+        el('div', { class: 'as-pane-head' }, [eyebrow('Node odds'), oddsValue]),
+        weightsBox,
+        weightsWhy,
+      ]),
+      buttonRow({ size: 'long', buttons: [resetShape] }),
+    ]);
+    stateMark = pill({ label: 'off', on: false, attrs: { id: 'cr-shape-state' } });
+    shapeHost = el('div', { id: 'cr-shape', class: 'cz-disc' }, shapeBody);
+  }
 
-        <div>
-          <p class="cz-label">ASCENSION <span id="cr-asc-val" style="color:var(--gold)">0</span> / ${MAX_ASCENSION}</p>
-          <input id="cr-asc" type="range" min="0" max="${MAX_ASCENSION}" step="1" value="0" style="width:100%;accent-color:var(--gold)">
-          <p class="set-note" id="cr-asc-note">No extra difficulty. Slide up to stack the rules below.</p>
-        </div>
-
-        <div><p class="cz-label">DIFFICULTY RULES</p><div id="cr-diff" class="mod-grid"></div></div>
-        <div><p class="cz-label">CHAOS</p><div id="cr-chaos" class="mod-grid"></div></div>
-        <div><p class="cz-label">STARTING DECK</p><div id="cr-deck" class="mod-grid"></div></div>
-
-        ${shapeable ? `
-        <div class="runshape" id="cr-shape">
-          <button class="runshape-toggle" id="cr-shape-toggle" aria-expanded="false" aria-controls="cr-shape-body">
-            <span class="rs-title">ADVANCED · DEBUG — RUN SHAPE</span>
-            <span class="rs-state" id="cr-shape-state">off</span>
-            <span class="rs-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
-          </button>
-          <div class="runshape-body" id="cr-shape-body" hidden>
-            <p class="set-note rs-intro">Shorten the climb. Caps the act, and biases what the map rolls — for testing a full run in one sitting.</p>
-
-            <div class="rs-readout">
-              <b id="cr-shape-big">—</b>
-              <span id="cr-shape-sub"></span>
-              <span class="rs-boundary" id="cr-shape-bound"></span>
-            </div>
-
-            <div class="rs-knob">
-              <label class="rs-knob-head" for="cr-shape-floors">
-                <span>Floors per act</span><span class="rs-val" id="cr-shape-floors-val">${floorsMax}</span>
-              </label>
-              <input class="rs-slider" id="cr-shape-floors" type="range"
-                     min="${floorsMin}" max="${floorsMax}" step="1" value="${floorsMax}">
-              <p class="set-note rs-why" id="cr-shape-floors-why"></p>
-            </div>
-
-            <div class="rs-knob">
-              <label class="rs-knob-head" for="cr-shape-cols">
-                <span>Map width</span><span class="rs-val" id="cr-shape-cols-val">${colsMax}</span>
-              </label>
-              <input class="rs-slider" id="cr-shape-cols" type="range"
-                     min="${MAP_SHAPE_LIMITS.minColumns}" max="${colsMax}" step="1" value="${colsMax}">
-              <p class="set-note rs-why">Columns the walkers may spread across. Narrower is a shorter, straighter act.</p>
-            </div>
-
-            <div class="rs-knob rs-group">
-              <p class="rs-group-head"><span>NODE ODDS</span><span class="rs-val" id="cr-shape-odds-val"></span></p>
-              <div class="rs-weights" id="cr-shape-weights"></div>
-              <p class="set-note rs-why" id="cr-shape-weights-why"></p>
-            </div>
-
-            <button class="subtle rs-reset" id="cr-shape-reset">Reset run shape</button>
-          </div>
-        </div>` : ''}
-
-        <div class="seed-line">Seed <input id="cr-seed" type="text" value="${esc(defaultSeedString)}"></div>
-      </div>
-
-      <div style="display:flex;gap:14px;padding-bottom:24px">
-        <button class="subtle" id="cr-back">Back</button>
-        <button id="cr-start">BEGIN THE CLIMB</button>
-      </div>
-    </div>`;
+  const head = modalHead({ eyebrow: 'Custom climb', title: 'Shape your own ascent', closeLabel: 'Back' });
+  head.querySelector('.modal-close').hidden = true; // the way back is Back, in the foot
+  const back = button({ label: 'Back', id: 'cr-back' });
+  const start = button({ label: 'Begin the climb', id: 'cr-start', weight: 'primary' });
+  const foot = modalFooter({ note: 'Results are kept out of win-rate stats.', secondary: [back], primary: start, size: 'medium' });
+  const body = el('div', { class: 'modal-body' }, [
+    subtitle('Results are kept out of win-rate stats.'),
+    section('Choose', 'Class', classes),
+    section('Difficulty', 'Ascension', [ascRow, ascNote]),
+    section('Rules', 'Difficulty rules', diffBox),
+    section('Rules', 'Chaos', chaosBox),
+    section('Deck', 'Starting deck', deckBox),
+    shapeable ? section('Advanced · debug', 'Run shape', shapeHost, { id: 'cr-shape-section' }) : null,
+    section('Seed', 'Seed', seedRow),
+    summary,
+  ]);
+  const door = el('section', { class: 'modal as-page-door', dataset: { size: 'xl' }, role: 'region', 'aria-label': 'Custom climb' }, [head, body, foot]);
+  app.replaceChildren(el('div', { class: 'screen customrun as-page' }, door));
 
   const $ = (s) => app.querySelector(s);
 
   // ---- class picks ----
-  const classes = $('#cr-classes');
+  const classCards = new Map();
   for (const cls of registries.classes.all()) {
-    const el = document.createElement('div');
-    el.className = 'class-pick cr-class';
-    el.dataset.classId = cls.id;
     // Derived HP from the run's own home (createRunState: class base +
     // attribute tiers + baseline kit), never bare cls.maxHp — a component
     // posing as a total, same defect Vega fixed on the customize chip (#175
     // rider). No profileMeta here and none needed: with no requested kit the
     // baseline resolves meta-free (startingKits.js: baseline is always
     // discovered), so this chip and the customize chip print the same number.
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><span class="chip">HP ${createRunState({ seed: 0, classId: cls.id, registries }).maxHp}</span></div>`;
-    el.addEventListener('click', () => {
-      state.classId = cls.id;
-      classes.querySelectorAll('.cr-class').forEach((x) => x.classList.toggle('chosen', x === el));
+    const hp = createRunState({ seed: 0, classId: cls.id, registries }).maxHp;
+    const card = optionCard({
+      glyph: classGlyph(cls.id), name: cls.name, selected: cls.id === state.classId,
+      body: statStrip([chip({ key: 'HP', value: hp })]),
+      className: `class-pick cr-class${cls.id === state.classId ? ' chosen' : ''}`,
+      attrs: { dataset: { classId: cls.id } },
     });
-    classes.appendChild(el);
+    card.addEventListener('click', () => {
+      state.classId = cls.id;
+      for (const [id, node] of classCards) {
+        const on = id === cls.id;
+        node.classList.toggle('chosen', on);
+        node.classList.toggle('is-selected', on);
+        node.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+      refreshSummary();
+    });
+    classCards.set(cls.id, card);
+    classes.appendChild(card);
   }
-  classes.querySelector('.cr-class').classList.add('chosen');
 
   // ---- ascension slider (enables the first N difficulty rules) ----
-  const ascLabel = $('#cr-asc-val');
-  const ascNote = $('#cr-asc-note');
-  const asc = $('#cr-asc');
   asc.addEventListener('input', () => {
     state.ascension = Number(asc.value);
-    ascLabel.textContent = state.ascension;
+    ascValue.textContent = String(state.ascension);
     const enabled = ASCENSION_ORDER.slice(0, state.ascension)
       .map((id) => DIFFICULTY_MODS.find((m) => m.id === id).label)
       .join(', ');
@@ -66787,49 +66305,60 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
     refreshModChips();
   });
 
-  // ---- mod toggle grids ----
-  function modChip(m) {
-    const el = document.createElement('button');
-    el.className = 'mod-chip';
-    el.dataset.mod = m.id;
-    el.innerHTML = `<b>${esc(m.label)}</b><span>${esc(m.desc)}</span>`;
-    el.addEventListener('click', () => {
-      if (el.classList.contains('forced')) return; // locked on by the ascension level
+  // ---- mod toggle rows ----
+  const modRows = new Map();
+  function modRow(m) {
+    const control = toggle({ on: false, className: 'mod-chip', attrs: { dataset: { mod: m.id }, 'aria-label': m.label } });
+    const held = pill({ label: 'Ascension', on: true });
+    held.hidden = true;
+    const line = row({ tag: 'div', setting: true, labelNode: labelStack({ label: m.label, hint: m.desc }), trail: [held, control], attrs: { dataset: { modRow: m.id } } });
+    control.addEventListener('click', () => {
+      if (control.classList.contains('forced')) return; // locked on by the ascension level
       state.mods[m.id] = !state.mods[m.id];
       refreshModChips();
     });
-    return el;
+    modRows.set(m.id, { line, control, held });
+    return line;
   }
-  const diffBox = $('#cr-diff');
-  const chaosBox = $('#cr-chaos');
-  DIFFICULTY_MODS.forEach((m) => diffBox.appendChild(modChip(m)));
-  CHAOS_MODS.forEach((m) => chaosBox.appendChild(modChip(m)));
+  DIFFICULTY_MODS.forEach((m) => diffBox.appendChild(modRow(m)));
+  CHAOS_MODS.forEach((m) => chaosBox.appendChild(modRow(m)));
 
   // Reflect both explicit toggles and ascension-enabled rules; ascension-forced
   // rules show as "locked on" (can't be turned off below the slider level).
   function refreshModChips() {
     const eff = activeMods(state);
     const forced = new Set(ASCENSION_ORDER.slice(0, state.ascension));
-    app.querySelectorAll('.mod-chip').forEach((el) => {
-      const id = el.dataset.mod;
-      el.classList.toggle('on', !!eff[id]);
-      el.classList.toggle('forced', forced.has(id));
-    });
+    for (const [id, { control, held }] of modRows) {
+      const on = !!eff[id];
+      control.classList.toggle('on', on);
+      control.setAttribute('aria-checked', on ? 'true' : 'false');
+      control.classList.toggle('forced', forced.has(id));
+      control.disabled = forced.has(id);
+      held.hidden = !forced.has(id);
+    }
+    refreshSummary();
   }
 
-  // ---- deck mode ----
-  const deckBox = $('#cr-deck');
-  DECK_MODES.forEach((m, i) => {
-    const el = document.createElement('button');
-    el.className = `mod-chip${i === 0 ? ' on' : ''}`;
-    el.dataset.deck = m.id;
-    el.innerHTML = `<b>${esc(m.label)}</b><span>${esc(m.desc)}</span>`;
-    el.addEventListener('click', () => {
-      state.deckMode = m.id;
-      deckBox.querySelectorAll('.mod-chip').forEach((x) => x.classList.toggle('on', x === el));
-    });
-    deckBox.appendChild(el);
+  // ---- deck mode: a Segmented ----
+  const deckSeg = segmented({
+    options: DECK_MODES.map((m, i) => ({ label: m.label, value: m.id, pressed: i === 0, attrs: { dataset: { deck: m.id }, 'aria-label': `${m.label} — ${m.desc}` } })),
+    attrs: { role: 'group', 'aria-label': 'Starting deck' },
   });
+  const deckNote = flavour(DECK_MODES[0].desc, { id: 'cr-deck-note' });
+  deckBox.appendChild(row({ tag: 'div', setting: true, labelNode: labelStack({ label: 'Deck mode' }), trail: deckSeg }));
+  deckBox.appendChild(deckNote);
+  for (const control of deckSeg.querySelectorAll('button')) {
+    control.addEventListener('click', () => {
+      state.deckMode = control.dataset.deck;
+      for (const other of deckSeg.querySelectorAll('button')) {
+        const on = other === control;
+        other.classList.toggle('on', on);
+        other.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+      deckNote.textContent = DECK_MODES.find((m) => m.id === state.deckMode)?.desc || '';
+      refreshSummary();
+    });
+  }
 
   // ---- the run shape: controls, and the number that answers the ask --------
   //
@@ -66840,48 +66369,36 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
   // on. So the readout is the feature, and it moves while he drags — one live
   // sample, `sampleActShape`, the same function tools/mapplan.mjs prints from.
   let refreshShape = () => {};
+  let shapeFold = null;
   if (shapeable) {
-    const weightsBox = $('#cr-shape-weights');
-    const sliders = {};
-    for (const key of weightKeys) {
-      const row = document.createElement('div');
-      row.className = 'rs-wrow';
-      row.innerHTML = `<span class="rs-whead">`
-        + `<span class="rs-wname">${esc(key)}</span>`
-        + `<span class="rs-wpct" data-pct="${esc(key)}">—</span></span>`
-        + `<input class="rs-slider" type="range" min="0" max="${MAP_SHAPE_LIMITS.maxWeight}" step="1"`
-        + ` value="${baseCfg.typeWeights[key]}" data-weight="${esc(key)}"`
-        + ` aria-label="${esc(key)} roll weight">`;
-      const input = row.querySelector('input');
-      input.addEventListener('input', () => {
-        shape.weights[key] = Number(input.value);
+    for (const [key, knob] of weightRows) {
+      knob.input.addEventListener('input', () => {
+        shape.weights[key] = Number(knob.input.value);
         refreshShape();
       });
-      sliders[key] = input;
-      weightsBox.appendChild(row);
     }
+    floorsKnob.input.addEventListener('input', () => { shape.floors = Number(floorsKnob.input.value); refreshShape(); });
+    colsKnob.input.addEventListener('input', () => { shape.columns = Number(colsKnob.input.value); refreshShape(); });
 
-    const floorsEl = $('#cr-shape-floors');
-    const colsEl = $('#cr-shape-cols');
-    floorsEl.addEventListener('input', () => { shape.floors = Number(floorsEl.value); refreshShape(); });
-    colsEl.addEventListener('input', () => { shape.columns = Number(colsEl.value); refreshShape(); });
+    // The fold: one face (the D26 renderer), the knobs behind it, shut on
+    // arrival. `#cr-shape-toggle` is the face; `#cr-shape-body` is what opens.
+    shapeFold = mountDisclosure(shapeHost, [{
+      key: 'shape', kind: 'pick', disclosure: 'face',
+      face: { label: 'Run shape', value: 'off' },
+      reveal: { node: shapeBody, sense: 'Shorten the climb: cap the act and bias what the map rolls.' },
+    }]);
+    const face = shapeHost.querySelector('[data-face="shape"]');
+    face.id = 'cr-shape-toggle';
+    face.appendChild(stateMark);
+    face.querySelector('.disc-value')?.remove();
 
-    const toggle = $('#cr-shape-toggle');
-    const body = $('#cr-shape-body');
-    toggle.addEventListener('click', () => {
-      const open = body.hasAttribute('hidden');
-      if (open) body.removeAttribute('hidden'); else body.setAttribute('hidden', '');
-      toggle.setAttribute('aria-expanded', String(open));
-      $('#cr-shape').classList.toggle('open', open);
-    });
-
-    $('#cr-shape-reset').addEventListener('click', () => {
+    resetShape.addEventListener('click', () => {
       shape.floors = floorsMax;
       shape.columns = colsMax;
       for (const k of weightKeys) shape.weights[k] = baseCfg.typeWeights[k];
-      floorsEl.value = String(floorsMax);
-      colsEl.value = String(colsMax);
-      for (const k of weightKeys) sliders[k].value = String(baseCfg.typeWeights[k]);
+      floorsKnob.input.value = String(floorsMax);
+      colsKnob.input.value = String(colsMax);
+      for (const k of weightKeys) weightRows.get(k).input.value = String(baseCfg.typeWeights[k]);
       refreshShape();
     });
 
@@ -66895,39 +66412,42 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
     refreshShape = () => {
       const resolved = resolveShape();
       const entry = mapShapeEntry();
-      $('#cr-shape-floors-val').textContent = String(shape.floors);
-      $('#cr-shape-cols-val').textContent = String(shape.columns);
-      $('#cr-shape-state').textContent = entry ? 'on' : 'off';
-      $('#cr-shape').classList.toggle('shaped', !!entry);
+      floorsKnob.readout.textContent = String(shape.floors);
+      colsKnob.readout.textContent = String(shape.columns);
+      stateMark.textContent = entry ? 'on' : 'off';
+      stateMark.dataset.on = entry ? 'true' : 'false';
+      shapeHost.classList.toggle('shaped', !!entry);
 
       // The derived share beside every weight — the "percent chance" he asked
       // for, computed from the weights rather than restated as one.
       const total = weightKeys.reduce((a, k) => a + shape.weights[k], 0);
       for (const key of weightKeys) {
-        const cell = weightsBox.querySelector(`[data-pct="${key}"]`);
+        const cell = weightRows.get(key).readout;
         cell.textContent = total > 0 ? `${Math.round((shape.weights[key] / total) * 100)}%` : '—';
         cell.classList.toggle('zero', shape.weights[key] === 0);
       }
-      $('#cr-shape-odds-val').textContent = total > 0 ? `${total} total weight` : 'no weight';
+      oddsValue.textContent = total > 0 ? `${total} total weight` : 'no weight';
       // THE CAVEATS ARE THE RESOLVER'S OWN SENTENCES, not this screen's. Every
       // way a weight can mean less than it looks — Monster's fallback, a type
       // the act force-places to keep a minimum — is written once, in
       // applyRunShape, and printed here. A second wording on the screen is a
       // second copy of a fact, and it would be the copy that goes stale.
       const notes = resolved.flatMap((r) => r.notes || []);
-      $('#cr-shape-weights-why').textContent =
+      weightsWhy.textContent =
         ['Share of the roll, not of the finished map — floor rules and the no-repeat-neighbour ban still override it.']
           .concat([...new Set(notes)]).join(' ');
 
       const problem = resolved.find((r) => r.errors.length);
-      const big = $('#cr-shape-big');
-      const sub = $('#cr-shape-sub');
-      const bound = $('#cr-shape-bound');
+      const big = readout.querySelector('#cr-shape-big');
+      const sub = readout.querySelector('#cr-shape-sub');
+      const bound = readout.querySelector('#cr-shape-bound');
       if (problem) {
         big.textContent = '—';
         sub.textContent = `Act ${problem.act}: ${problem.errors[0].msg}`;
         bound.textContent = '';
+        readout.classList.add('muted');
       } else {
+        readout.classList.remove('muted');
         const per = resolved.map((r) => sampleActShape(r.config, ESTIMATE_SEEDS));
         const climb = per.reduce((a, s) => a + s.nodes.mean, 0);
         const lo = per.reduce((a, s) => a + s.nodes.min, 0);
@@ -66965,34 +66485,46 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
       }
 
       seedRefusal();
+      refreshSummary();
     };
+  }
+
+  // ---- the summary: what the climb is, in one DetailCard ----
+  function refreshSummary() {
+    const cls = registries.classes.all().find((c) => c.id === state.classId);
+    const rules = Object.entries(activeMods(state)).filter(([, on]) => on).length;
+    const deck = DECK_MODES.find((m) => m.id === state.deckMode)?.label || state.deckMode;
+    summary.querySelector('.dc-name').textContent = cls ? cls.name : state.classId;
+    summary.querySelector('.dc-line').textContent = `Ascension ${state.ascension} · ${deck} deck · ${rules} rule${rules === 1 ? '' : 's'} on`;
+    const big = readout?.querySelector('#cr-shape-big')?.textContent;
+    summary.querySelector('.dc-meta').textContent = `Seed ${seedInput.value.trim() || '—'}${big && big !== '—' ? ` · ${big}` : ''}`;
   }
 
   // Custom Climb is the screen Constantine asked for so a short run could be
   // REPEATED, and this field is what makes a run repeatable. Same component,
   // same sentence, same refusal as the ordinary new-run screen — the vocabulary
   // is not retyped here, and there is no second place for it to drift.
-  const seed = attachSeedField($('#cr-seed'));
+  const seed = attachSeedField(seedInput);
   // ONE reason function for the one button. The seed field and the run shape
   // both refuse here, and they refuse through the same component for the same
   // reason: a control a player can see and cannot use has to say why, where
   // they are looking. Two independent guards on one button would be two chances
   // to disagree about whether it is usable.
   const startProblem = () => seed.problem() || shapeProblem();
-  const seedRefusal = refusesWhen($('#cr-start'), startProblem, () => {
+  const seedRefusal = refusesWhen(start, startProblem, () => {
     const cls = registries.classes.all().find((c) => c.id === state.classId);
     return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
       + ` at <b>Ascension ${state.ascension}</b>.<br>Results are kept out of win-rate stats.`;
   });
-  seed.onChange(() => seedRefusal());
+  seed.onChange(() => { seedRefusal(); refreshSummary(); });
 
-  $('#cr-back').addEventListener('click', onBack);
-  $('#cr-start').addEventListener('click', () => {
+  back.addEventListener('click', onBack);
+  start.addEventListener('click', () => {
     if (startProblem()) return; // the refusal already said why, at the button
     const mapShape = mapShapeEntry();
     onStart({
       classId: state.classId,
-      seedString: $('#cr-seed').value.trim(),
+      seedString: seedInput.value.trim(),
       custom: {
         ascension: state.ascension,
         mods: { ...state.mods },
@@ -67006,10 +66538,12 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
 
   refreshModChips();
   if (shapeable) {
-    $('#cr-shape-floors-why').textContent =
+    floorsKnob.node.querySelector('#cr-shape-floors-why').textContent =
       `${floorsMin} is the shortest act this content's own floor rules resolve at — below it two fixed ranks land on the same floor.`;
     refreshShape();
   }
+  refreshSummary();
+  void $;
 }
 
 
@@ -67022,9 +66556,14 @@ Object.assign(module.exports, { mountCustomRun });
 // Presents `rounds` rounds of `choices` cards from the class pool; the player
 // picks one each round to add to their starting deck. Deterministic on the
 // run's rng (stream 'cardRewards'), so a seed drafts the same offers.
+//
+// ON THE KIT: a page with the screen's banner (Eyebrow + Title·L), the round
+// as a Subtitle, the offer as the kit's Cards in a row, and the tally as a
+// StatPair.
 
 const { renderCard } = require("src/ui/components/card.js");
 const { createCardInstance, createIdGen } = require("src/model/state.js");
+const { el, eyebrow, titleL, subtitle, statPair } = require("src/ui/kit/index.js");
 
 function mountDraft(app, { registries, classId, rng, rounds = 3, choices = 3, onDone }) {
   const pool = registries.classes.get(classId).cardPool.slice();
@@ -67042,18 +66581,18 @@ function mountDraft(app, { registries, classId, rng, rounds = 3, choices = 3, on
       offer.push(id);
     }
 
-    app.innerHTML = `
-      <div class="screen" style="gap:18px">
-        <h2 style="color:var(--gold);font-size:24px;letter-spacing:.15em">DRAFT YOUR DECK</h2>
-        <p class="subtitle">PICK ${round + 1} OF ${rounds} — CHOOSE A CARD TO ADD</p>
-        <div class="grid draft-grid" style="justify-content:center"></div>
-        <p class="set-note">Drafted so far: <b id="draft-count">${picked.length}</b></p>
-      </div>`;
+    const grid = el('div', { class: 'reward-row draft-grid' });
+    app.replaceChildren(el('div', { class: 'screen draft' }, [
+      eyebrow('Custom climb'),
+      titleL('Draft your deck'),
+      subtitle(`Pick ${round + 1} of ${rounds} — choose a card to add`),
+      grid,
+      statPair({ key: 'Drafted so far', value: String(picked.length), attrs: { id: 'draft-count' } }),
+    ]));
 
-    const grid = app.querySelector('.draft-grid');
     for (const id of offer) {
-      const el = renderCard(registries, { instanceId: `preview_${id}`, cardId: id, upgraded: false }, {});
-      el.addEventListener('click', () => {
+      const card = renderCard(registries, { instanceId: `preview_${id}`, cardId: id, upgraded: false }, {});
+      card.addEventListener('click', () => {
         picked.push(createCardInstance(id, false, idGen));
         // Remove one copy from the pool so later rounds skew fresh.
         const idx = pool.indexOf(id);
@@ -67062,7 +66601,7 @@ function mountDraft(app, { registries, classId, rng, rounds = 3, choices = 3, on
         if (round >= rounds) onDone(picked);
         else renderRound();
       });
-      grid.appendChild(el);
+      grid.appendChild(card);
     }
   }
 

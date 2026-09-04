@@ -1364,7 +1364,7 @@ function showCustomize(slot = 1, catalog = false) {
 function showCustomRun(slot = 1) {
   mountCustomRun(app, {
     registries,
-    defaultSeedString: randomSeedString(),
+    defaultSeedString: shotState === 'customrun' ? 'SHOWCASE' : randomSeedString(),
     onBack: showTitle,
     onStart: (config) => newRun({ ...config, slot }),
   });
@@ -2620,6 +2620,11 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // showTitle → showProfileNoticeIfNeeded → profileStatus().ok is false →
   // mountProfileNotice. Nothing on this branch mentions the notice screen.
   showTitle();
+} else if (shotState === 'customrun') {
+  // The Custom Climb has no entry on the title menu today (title.js voids
+  // `onCustom`), so a capture reaches it here, the way every other screen
+  // without a door of its own does — same memory storage, same fixed seed.
+  showCustomRun(1);
 } else if (shotState === 'customize' || shotState === 'components') {
   // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
   // and #29's own boundary records what that cost: no sweep can open a screen
