@@ -281,6 +281,72 @@ export function titleMenu({ name, subtitle: sub = '', entries = [], foot = null,
   ]);
 }
 
+// ---- meters, banners, docks, folds, logs -----------------------------------
+/** meter({ value, max, tone: 'hp'|'mana'|'stamina'|'poise', label, inline }) — track + fill + (label · value). */
+export function meter({ value = 0, max = 1, tone = '', label = '', inline = false, showValue = true, attrs = {} } = {}) {
+  const pct = max > 0 ? Math.max(0, Math.min(100, (Math.max(0, value) / max) * 100)) : 0;
+  return el('div', {
+    ...attrs, class: cls('as-meter', inline ? 'inline' : '', attrs.class),
+    role: 'meter', 'aria-valuemin': '0', 'aria-valuemax': String(max), 'aria-valuenow': String(Math.max(0, value)),
+    'aria-label': label ? `${label} ${Math.max(0, value)} / ${max}` : `${Math.max(0, value)} / ${max}`,
+    dataset: { ...(attrs.dataset || {}), ...(tone ? { tone } : {}) },
+    style: { ...(typeof attrs.style === 'object' ? attrs.style : {}), '--meter-pct': `${pct}%` },
+  }, el('div', { class: 'm-track' }, [
+    el('div', { class: 'm-fill' }),
+    el('div', { class: 'm-text' }, [
+      label ? el('span', { class: 'm-label', text: label }) : null,
+      showValue ? el('span', { class: 'm-value', text: `${Math.max(0, value)}/${max}` }) : null,
+    ]),
+  ]));
+}
+/** swatch({ color, label, on, attrs, className }) — a colour you can pick; `swatches(list)` is the row. */
+export function swatch({ color = '', label = '', on = false, attrs = {}, className = '' } = {}) {
+  return el('button', {
+    ...attrs, type: 'button', class: cls('as-swatch', on ? 'on' : '', className),
+    'aria-label': label || null, 'aria-pressed': on ? 'true' : 'false',
+    style: { ...(typeof attrs.style === 'object' ? attrs.style : {}), '--swatch': color },
+  });
+}
+export const swatches = (items, attrs = {}) => el('div', { ...attrs, class: cls('as-swatches', attrs.class), role: attrs.role || 'group' }, items);
+/** banner(text, { small }) — a transient announcement; the caller removes it. */
+export const banner = (text, { small = false, attrs = {} } = {}) => el('div', { ...attrs, class: cls('as-banner', small ? 'small' : '', attrs.class), role: 'status', text });
+/** dock(tabs, { trail }) — a floating strip of Tabs with a trailing Keycap or Pill. */
+export const dock = (tabs, { trail = [], attrs = {} } = {}) => el('div', { ...attrs, class: cls('as-dock', attrs.class) }, [
+  el('div', { class: 'as-tabs', role: 'tablist' }, tabs),
+  ...(Array.isArray(trail) ? trail : [trail]).filter(Boolean),
+]);
+/** fold({ label, status, children, open, attrs }) — a <details> whose summary is a Row. */
+export function fold({ label = '', status = '', children = null, open = false, attrs = {}, className = '' } = {}) {
+  const node = el('details', { ...attrs, class: cls('as-fold', className) }, [
+    row({ glyph: '›', label, status, tag: 'summary', attrs: { 'aria-expanded': open ? 'true' : 'false' } }),
+    el('div', { class: 'fold-body' }, children),
+  ]);
+  if (open) node.open = true;
+  node.addEventListener('toggle', () => node.querySelector(':scope > summary')?.setAttribute('aria-expanded', node.open ? 'true' : 'false'));
+  return node;
+}
+/** logBox(text) — a monospace scroll box. */
+export const logBox = (text = '', attrs = {}) => el('pre', { ...attrs, class: cls('as-log', attrs.class), text });
+/**
+ * pageDoor({ eyebrow, title, size, body, note, secondary, primary, footSize, onClose, closeLabel, className, attrs })
+ * A door standing ON the page (no veil): the same head, body and foot as
+ * openModal, in the `.screen` frame. Without `onClose` the head has no way
+ * out — a decision is answered, not dismissed.
+ */
+export function pageDoor({ eyebrow: eb = '', title = '', size = 'md', body = null, bodyClassName = '', note = '', secondary = [], primary = null, footSize = 'medium', onClose = null, closeLabel = '', className = '', attrs = {} } = {}) {
+  const head = modalHead({ eyebrow: eb, title, closeLabel: closeLabel || (title ? `Close ${title}` : 'Close'), onClose: onClose || undefined });
+  if (!onClose) head.querySelector('.modal-close').hidden = true;
+  const bodyEl = el('div', { class: cls('modal-body', bodyClassName) }, body);
+  const ways = (Array.isArray(secondary) ? secondary : [secondary]).filter(Boolean);
+  const foot = (note || ways.length || primary) ? modalFooter({ note, secondary: ways, primary, size: footSize }) : null;
+  if (foot) foot.querySelector('.modal-foot-actions')?.classList.add('modal-btnrow');
+  const door = el('section', {
+    ...attrs, class: cls('modal as-pagedoor', className), dataset: { ...(attrs.dataset || {}), size },
+    role: attrs.role || 'region', 'aria-label': attrs['aria-label'] || title || null,
+  }, [head, bodyEl, foot]);
+  return Object.assign(door, { head, body: bodyEl, foot });
+}
+
 // ---- the tooltip's `full` tier ----------------------------------------------
 // A tooltip that outgrows `expanded`, or a click on an expandable target,
 // opens the same content as body B at the md rung — through the one

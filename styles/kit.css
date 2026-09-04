@@ -141,6 +141,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
   min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0;
 }
 .as-btnrow.end, .modal-btnrow.end { justify-content: end; margin-left: auto; }
+.as-btnrow.center, .modal-btnrow.center { margin-inline: auto; }
 
 /* Tab — switches SUBJECT. Underline, no box. */
 .as-tabs, .modal-tabs { display: flex; gap: 0.2rem; min-width: 0; }
@@ -860,3 +861,217 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .reward-door .reward-menu { max-width: none; width: 100%; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
+
+/* ═══ FOLDED TITLE — the gate is the TitleMenu before its entries ══════════ */
+/* A separate surface from the title menu: the menu is not mounted behind it,
+   so hidden controls cannot leak into Tab order or the accessibility tree.
+   Copy and particle positions arrive through StartupGateModels.js; this block
+   owns layout only — the lockup is the kit's TitleMenu, the stamp sits in the
+   grid's last row, and the ash is the gate's ambience (the title's embers). */
+.startup-gate {
+  position: relative; isolation: isolate;
+  display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center;
+  gap: 1.2rem; padding: 2.4rem; min-height: 100%; overflow: hidden; cursor: pointer;
+  background:
+    linear-gradient(180deg, rgba(11, 9, 6, 0.34), rgba(9, 7, 5, 0.96)),
+    url('../assets/bg/bg_act1.webp') center / cover;
+  transition: opacity 180ms ease-out;
+}
+.startup-gate::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 20%, transparent 0, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.66) 100%); }
+.startup-gate:focus { outline: none; }
+.startup-gate:focus-visible .startup-prompt { color: var(--gold); text-shadow: 0 0 1rem rgba(var(--accent-rgb), 0.48); }
+.startup-gate.is-revealing { opacity: 0; pointer-events: none; }
+.reduced-motion .startup-gate { transition-duration: 140ms; transition-timing-function: linear; }
+.startup-gate > .as-titlemenu { position: relative; z-index: 1; align-self: center; animation: startupMarkIn 520ms ease-out both; }
+.startup-gate > .as-titlemenu .tm-name { text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38); }
+.startup-gate > .as-titlemenu .tm-sub { margin-top: 0.75rem; }
+.startup-gate > .as-titlemenu > .as-ornament { margin-top: 1.5rem; }
+.startup-gate > .as-titlemenu .tm-foot { margin-top: 3rem; color: var(--parchment); opacity: 0.82; white-space: normal; animation: startupPromptPulse 1.8s ease-in-out infinite alternate; }
+.startup-gate > .build-stamp { position: relative; z-index: 1; align-self: end; margin-bottom: max(0.4rem, env(safe-area-inset-bottom)); color: var(--parchment); text-align: center; }
+@keyframes startupMarkIn { from { opacity: 0; transform: translateY(0.65rem); } to { opacity: 1; transform: none; } }
+@keyframes startupPromptPulse { from { opacity: 0.5; } to { opacity: 0.95; } }
+.reduced-motion .startup-gate > .as-titlemenu, .reduced-motion .startup-gate .tm-foot { animation: none; }
+.startup-ash-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.startup-ash {
+  position: absolute; left: var(--ash-left); bottom: -1rem;
+  width: var(--ash-size); height: var(--ash-size); border-radius: var(--r-round);
+  background: var(--ember); box-shadow: 0 0 0.55rem rgba(201, 80, 46, 0.55); opacity: 0;
+  animation: startupAshRise var(--ash-duration) linear var(--ash-delay) infinite;
+}
+@keyframes startupAshRise {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  14% { opacity: 0.62; }
+  72% { opacity: 0.28; }
+  100% { transform: translate3d(1.4rem, -78rem, 0); opacity: 0; }
+}
+@media (max-width: 640px) {
+  .startup-gate { padding: 1.2rem 0.8rem; }
+  .startup-gate > .as-titlemenu .tm-foot { margin-top: 2.4rem; }
+}
+
+/* ═══ METER ════════════════════════════════════════════════════════════════ */
+/* A resource read at a glance: track + fill + (label · value) on the bar.
+   `data-tone` picks the fill from the resource tokens; `.inline` is the
+   compact form for a party chip or a seat line. Geometry px, type rem. */
+.as-meter { --meter-fill: var(--gold); position: relative; display: block; width: 100%; min-width: 0; }
+.as-meter .m-track { position: relative; height: 1.5rem; overflow: hidden; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-1); }
+.as-meter .m-fill { position: absolute; inset: 0; width: var(--meter-pct, 0%); background: var(--meter-fill); transition: width 220ms ease-out; }
+.as-meter .m-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0 0.6rem; font: 600 1.02rem/1 var(--font-body); color: var(--parchment); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.as-meter .m-text > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.as-meter .m-value { margin-left: auto; }
+.as-meter[data-tone="hp"] { --meter-fill: var(--res-hp, var(--blood)); }
+.as-meter[data-tone="mana"] { --meter-fill: var(--res-mana, var(--frost)); }
+.as-meter[data-tone="stamina"] { --meter-fill: var(--res-stamina, var(--green)); }
+.as-meter[data-tone="poise"] { --meter-fill: var(--gold); }
+.as-meter.inline { display: inline-block; width: 8.4rem; vertical-align: middle; }
+.as-meter.inline .m-track { height: 1.35rem; }
+.as-meter.inline .m-text { font-size: 0.93rem; padding: 0 0.45rem; }
+@media (prefers-reduced-motion: reduce) { .as-meter .m-fill { transition: none; } }
+
+/* ═══ PARTY STRIP — who is here, and how they are ══════════════════════════ */
+/* One Member per seat: Glyph + inline Meter. State rides on `data-state`
+   (me · away · dead); the kit says it with the border and the ink. */
+.as-party { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 0.9rem; min-width: 0; }
+.as-member { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.25rem 0.6rem; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2); }
+.as-member > .as-glyph { flex-basis: auto; font-size: 1.5rem; }
+.as-member[data-state="me"] { border-color: var(--gold); }
+.as-member[data-state="away"] { opacity: 0.55; }
+.as-member[data-state="dead"] { opacity: 0.4; filter: grayscale(1); }
+/* A StatStrip centred under a figure (a seat's line on the board). */
+.as-statstrip.centered { justify-content: center; align-items: center; gap: 0.5rem 0.75rem; width: 13rem; max-width: 100%; margin-inline: auto; text-align: center; }
+.as-statstrip.centered > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.15rem; }
+/* A DetailCard that stands in a flow at its own width (an arming prompt). */
+.as-detailcard.floating { width: fit-content; max-width: 100%; margin: 0.4rem auto; }
+.as-detailcard.floating > .modal-btnrow { margin-top: 0.6rem; }
+/* A scene door over the board: the shared card row and choices inside a decide body. */
+.coop-scene > .as-party { flex: 0 0 auto; justify-content: center; }
+.as-pagedoor .as-decide > .reward-row { justify-content: center; flex-wrap: wrap; margin: 1.2rem 0; max-width: 100%; }
+.as-pagedoor .as-decide > .as-subtitle { margin-top: 0.6rem; }
+.as-pagedoor .as-decide > .as-options { margin-top: 1.2rem; }
+.as-pagedoor .as-decide > .as-flavor { display: block; margin-top: 0.6rem; }
+.as-pagedoor .as-decide > .as-blocker { margin: 0.6rem 0; }
+/* The dock's pending pip. */
+.as-dock .as-tab > .as-glyph { flex-basis: auto; }
+.as-dock .as-tab > .as-pill.round { padding-inline: 0.35rem; }
+
+/* ═══ SWATCH — a colour you can pick ═══════════════════════════════════════ */
+/* A round button whose face IS the value (`--swatch`); the chosen one wears
+   a parchment ring. A row of them is `.as-swatches`. Tap floor on both axes. */
+.as-swatches { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.as-swatch {
+  position: relative; display: inline-grid; place-items: center; flex: 0 0 auto;
+  width: var(--tap-floor); height: var(--tap-floor); min-height: 0; padding: 0;
+  background: transparent; border: 1px solid transparent; border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.as-swatch::before { content: ''; width: 2.8rem; height: 2.8rem; border-radius: 50%; background: var(--swatch, var(--gold)); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35); }
+.as-swatch:hover, .as-swatch:focus-visible { border-color: var(--line-soft); background: transparent; }
+.as-swatch[aria-pressed="true"], .as-swatch.on { border-color: var(--parchment); box-shadow: 0 0 10px rgba(255, 255, 255, 0.25); }
+
+/* ═══ BANNER — a transient display-face announcement ═══════════════════════ */
+/* ENEMY TURN / TURN 3: it stands over the board for a second and goes. Not a
+   modal (nothing to answer), not a status line (it is the moment itself). */
+.as-banner {
+  position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%);
+  z-index: 640; pointer-events: none;
+  margin: 0; color: var(--gold);
+  font: 700 4rem/1 var(--font-display); letter-spacing: 0.3em; text-indent: 0.3em; text-transform: uppercase; white-space: nowrap;
+  text-shadow: 0 0 24px rgba(var(--accent-rgb), 0.5), 0 2px 8px #000;
+  animation: as-banner 1100ms ease-out forwards;
+}
+.as-banner.small { font-size: 2.2rem; top: 30%; animation-duration: 900ms; }
+@keyframes as-banner {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.reduced-motion .as-banner { animation-duration: 500ms; }
+
+/* ═══ DOCK — a floating strip of Tabs ══════════════════════════════════════ */
+/* Seats on a couch: one Tab per subject, a Keycap for the switch, a StatePill
+   for "has something to do". It hangs off the bottom edge over the board. */
+.as-dock {
+  position: fixed; left: 50%; bottom: 4.6rem; transform: translateX(-50%);
+  z-index: 620; max-width: calc(100% - 2rem);
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  background: var(--bg-raise); border: 1px solid var(--line-soft); border-radius: var(--r-3);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+}
+.as-dock > .as-tabs { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
+.as-dock .as-tab { display: inline-flex; align-items: center; gap: 0.5rem; }
+
+/* ═══ FOLD — a Row that opens ══════════════════════════════════════════════ */
+/* A <details> whose summary is the kit's Row: label left, StatusText right,
+   caret in the Glyph column. What it opens is prose under a hairline. */
+.as-fold { border-bottom: 1px solid var(--rule); }
+.as-fold:last-child { border-bottom: 0; }
+.as-fold > summary { list-style: none; }
+.as-fold > summary::-webkit-details-marker { display: none; }
+.as-fold > summary > .as-glyph { transition: transform 150ms; }
+.as-fold[open] > summary > .as-glyph { transform: rotate(90deg); color: var(--gold); }
+.as-fold > .fold-body { display: flex; flex-direction: column; gap: 0.6rem; padding: 0 1.35rem 1rem calc(1.35rem + 1.75rem + 1.05rem); }
+.as-fold > .fold-body code { font-family: monospace; font-size: 1.2rem; color: var(--ink-dim); word-break: break-word; }
+@media (prefers-reduced-motion: reduce) { .as-fold > summary > .as-glyph { transition: none; } }
+
+/* ═══ LOG — a monospace scroll box ═════════════════════════════════════════ */
+.as-log {
+  margin: 0; flex: 1 1 auto; min-height: 18rem; max-height: 100%; overflow: auto;
+  padding: 1rem 1.2rem; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-2);
+  color: var(--ink-dim); font: 400 1.15rem/1.45 monospace; white-space: pre-wrap; word-break: break-word;
+  scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent;
+}
+
+/* ═══ PAGE DOORS — a door standing on the page, and a pane on the page ═════ */
+/* A screen that asks one thing (the run's end, the crisis notice) wears the
+   door's box without the veil, like the event. A screen that lists things
+   (history, the compendium) is a Pane bounded to a reading width. */
+.screen > .modal.as-pagedoor { flex: 0 1 auto; max-height: 100%; }
+.screen > .modal.as-pagedoor[data-size="lg"], .screen > .modal.as-pagedoor[data-size="xl"] { height: auto; max-height: 100%; }
+.screen > .modal.as-pagedoor > .modal-body { min-height: 0; }
+.as-pagedoor .as-decide > .as-detailcard + .as-detailcard { margin-top: 0.9rem; }
+.as-pagedoor .as-decide > .as-btnrow, .as-pagedoor .as-decide > .modal-btnrow { margin: 1.5rem auto 0; }
+.as-pagedoor .as-decide > .modal-btnrow + .modal-btnrow { margin-top: 0.8rem; }
+.as-pagedoor .as-decide > .as-kitline, .as-pagedoor .as-decide > .as-statstrip { justify-content: center; margin-top: 1.2rem; }
+.as-pagedoor .as-decide > .as-status { display: block; text-align: center; margin-top: 0.9rem; }
+.as-pagedoor .as-decide > .as-status:empty { display: none; }
+.as-pagedoor .as-decide > .as-fold { text-align: left; margin-top: 1.2rem; border-top: 1px solid var(--rule); border-bottom: 0; }
+.as-pagedoor .as-decide > .set-section-head { align-items: center; margin-top: 1.8rem; }
+.as-pagedoor .as-decide > .as-prose + .as-detailcard, .as-pagedoor .as-decide > .as-prose + .as-prose { margin-top: 1rem; }
+.as-title-l[data-tone="loss"] { color: var(--danger); }
+/* A DetailCard that carries its own actions and its own support fold. */
+.as-detailcard > .modal-btnrow, .as-detailcard > .as-btnrow { margin-top: 0.8rem; }
+.as-detailcard > .as-fold { border: 0; margin-top: 0.2rem; }
+.as-detailcard > .as-fold > summary { padding-inline: 0; }
+.as-detailcard > .as-fold > .fold-body { padding-inline: 0; }
+.as-detailcard > .as-prose { font-size: 1.32rem; }
+/* A RailItem with a count beside its label. */
+.as-railitem.with-status { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+.as-railitem.with-status > .as-status { flex: 0 0 auto; font-size: 1.05rem; }
+/* A railed screen scrolls its grid, never its pane. */
+.screen > .as-railed > .as-pane { overflow: hidden; }
+.as-pane > .as-options.grid { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 2px; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
+.screen > .as-pane { --modal-inset: 1.4rem; width: min(100%, 76rem); flex: 0 1 auto; max-height: 100%; }
+.screen > .as-railed { --modal-inset: 1.4rem; container-type: inline-size; width: min(100%, 96rem); flex: 1 1 auto; min-height: 0; max-height: 100%; background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-4); overflow: hidden; }
+@media (max-width: 640px) { .screen > .as-railed, .screen > .as-pane { --modal-inset: 1rem; } }
+/* A KitLine that lists rather than explains: no help underline, no help cursor. */
+.as-kitline.plain .ki { cursor: default; }
+.as-kitline.plain .ki .kn { border-bottom: 0; }
+.screen > .as-railed > .as-pane { height: 100%; }
+/* Rows that read a fact rather than choose one: the table's replacement. */
+.as-pane .as-row.setting > .r-label { flex: 0 1 auto; color: var(--muted); }
+.as-pane .as-row.setting > .as-status { color: var(--parchment); text-align: right; }
+/* A pane's foot: the ButtonRow under a hairline. */
+.as-pane > .as-btnrow, .as-pane > .modal-btnrow { margin-top: 1.4rem; flex: 0 0 auto; }
+.as-pane > .as-options { flex: 0 0 auto; }
+/* An OptionCard whose Glyph is an ArtWell (a piece's own icon). */
+.as-option > .as-artwell { flex: 0 0 auto; }
+.as-option.is-ghost > .as-artwell img { filter: brightness(0) invert(1); opacity: 0.72; }
+.as-option.is-ghost { border-style: dashed; background: transparent; }
+.as-option.is-ghost .on { color: var(--muted); font-style: italic; }
+.as-option[data-rarity="rare"]:not(.is-selected) { border-left: 3px solid var(--gold); }
+.as-option[data-rarity="uncommon"]:not(.is-selected) { border-left: 3px solid var(--frost); }
+/* A grid of OptionCards: the compendium's constant grid. */
+.as-options.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); align-content: start; }
+.as-options.grid > .as-option { width: auto; }
