@@ -192,8 +192,7 @@ if (process.argv.includes('--selftest')) {
         name: 'END TURN clips its key label, so a wide rebound label disappears',
         edits: [{
           file: 'styles/combat.css',
-          find: '  box-sizing: border-box; width: var(--action-end-size); max-width: 100%; min-width: 0;',
-          replace: '  box-sizing: border-box; width: 4rem; max-width: 4rem; min-width: 0; overflow: hidden; white-space: nowrap;',
+          append: '.combat-action-row > .end-turn { width: 4rem; max-width: 4rem; justify-self: center; overflow: hidden; white-space: nowrap; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -218,8 +217,7 @@ if (process.argv.includes('--selftest')) {
         name: 'a stylesheet hides the DRAW pile and the row measures four controls where five are declared',
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat-action-row > .pile.draw { grid-area: draw; }',
-          replace: '.combat-action-row > .pile.draw { grid-area: draw; display: none; }',
+          append: '.combat-action-row > .pile.draw { display: none; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -230,8 +228,7 @@ if (process.argv.includes('--selftest')) {
         name: 'a stylesheet makes the DISCARD pile visibility:hidden and the row still measures five boxes',
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat-action-row > .pile.discard { grid-area: discard; }',
-          replace: '.combat-action-row > .pile.discard { grid-area: discard; visibility: hidden; }',
+          append: '.combat-action-row > .pile.discard { visibility: hidden; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -242,8 +239,7 @@ if (process.argv.includes('--selftest')) {
         name: 'a stylesheet makes the DISCARD pile opacity:0 and the row still measures five boxes',
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat-action-row > .pile.discard { grid-area: discard; }',
-          replace: '.combat-action-row > .pile.discard { grid-area: discard; opacity: 0; }',
+          append: '.combat-action-row > .pile.discard { opacity: 0; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -267,9 +263,9 @@ if (process.argv.includes('--selftest')) {
         // label's scroll box. Red by name on H3 at the desk WIDE cell.
         name: 'END TURN\'s key label is width-capped with overflow:hidden and the wide rebound label is cut off inside it',
         edits: [{
-          file: 'styles/combat.css',
-          find: '.end-turn .et-key {\n  display: block; width: max-content;',
-          replace: '.end-turn .et-key {\n  display: block; width: max-content; max-width: 1rem; overflow: hidden;',
+          file: 'styles/kit.css',
+          find: '.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; }',
+          replace: '.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; max-width: 1rem; overflow: hidden; }',
         }],
         expectRed: /BAD\s+H3 1200x730 WIDE/,
       },
@@ -429,9 +425,9 @@ if (process.argv.includes('--selftest')) {
         // emulated) can see it; under a fine pointer this plant is invisible.
         name: 'the coarse-pointer rule stops withholding END TURN\'s key label and the phone draws a key it cannot press',
         edits: [{
-          file: 'styles/combat.css',
-          find: '  .combat .et-key,\n  .combat .flask-key,',
-          replace: '  .combat .flask-key,',
+          file: 'styles/kit.css',
+          find: '@media (pointer: coarse) { .as-slot > .as-keycap, .as-btn > .as-keycap, .as-keycap.float { display: none; } }',
+          replace: '@media (pointer: coarse) { .as-slot > .as-keycap, .as-keycap.float { display: none; } }',
         }],
         expectRed: /BAD\s+H3 390x844/,
       },
@@ -442,9 +438,9 @@ if (process.argv.includes('--selftest')) {
         // no key. Red by name on H3.
         name: 'a stylesheet makes END TURN\'s key label visibility:hidden and the row still reads the binding',
         edits: [{
-          file: 'styles/combat.css',
-          find: '.end-turn .et-key {\n  display: block; width: max-content;',
-          replace: '.end-turn .et-key {\n  visibility: hidden; display: block; width: max-content;',
+          file: 'styles/kit.css',
+          find: '.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; }',
+          replace: '.as-btnrow > button.tall > .as-keycap { visibility: hidden; font-size: 0.9rem; }',
         }],
         expectRed: /BAD\s+H3 1200x730/,
       },
@@ -455,8 +451,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the row stops rendering and no H check may green on the empty population',
         edits: [{
           file: 'src/ui/screens/combat.js',
-          find: '<div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)}',
-          replace: '<div class="combat-action-row-planted-away" ${uiComponentAttrs(UI.combatActionRail)}',
+          find: '<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
+          replace: '<div class="combat-action-row-planted-away as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
         }],
         expectRed: /BAD\s+H0 /,
       },
@@ -509,8 +505,15 @@ const EXPECTED_CONTROLS = (() => {
   // empty-population red, not a thrown "could not read the template".
   const row = src.match(/<div class="combat-action-row[^"]*"[\s\S]*?<\/div>\s*<!-- Context hints/);
   if (!row) throw new Error('hintstrip: could not read the action row out of src/ui/screens/combat.js');
-  const named = [...row[0].matchAll(/<(?:div|button) class="([^"]+)"/g)].map((m) => m[1])
-    .filter((cls) => !cls.startsWith('combat-action-row') && cls !== 'n');
+  // THE KIT SWEEP (2026-09-04): the row's controls are kit builders, so the
+  // hook classes are read off the builder calls — the StatPair's `class:`,
+  // `pileButton('<kind>')`, End Turn's `className:` — the same names the
+  // rendered elements carry.
+  const named = [
+    ...[...row[0].matchAll(/class: '([^']+)'/g)].map((m) => m[1].split(/\s+/).filter((k) => k === 'energy-orb').join(' ')),
+    ...[...row[0].matchAll(/pileButton\('([a-z]+)'/g)].map((m) => `pile ${m[1]}`),
+    ...[...row[0].matchAll(/className: '([^']+)'/g)].map((m) => m[1].split(/\s+/).filter((k) => k === 'end-turn').join(' ')),
+  ].filter(Boolean);
   const sameSet = (x) => x.split(/\s+/).sort().join(' ');
   const missing = DECLARED_CONTROLS.filter((d) => !named.some((n) => sameSet(n) === sameSet(d)));
   const extra = named.filter((n) => !DECLARED_CONTROLS.some((d) => sameSet(n) === sameSet(d)));

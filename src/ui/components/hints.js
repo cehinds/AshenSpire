@@ -111,8 +111,9 @@ function chipsHtml(context, pad) {
       // button in a game screen is a page reload waiting for a keyboard.
       // `data-action` is the id, read back at PRESS TIME rather than closed over,
       // so the strip can be rebuilt under a live press without stranding it.
-      return `<button type="button" class="hint" data-action="${id}" data-action-hint="${id}"`
-        + ` title="${actionHint(id)}" aria-label="${actionHint(id)}"><kbd>${key}</kbd>${actionShort(id)}</button>`;
+      // A kit Button carrying a Keycap — the same box as every other control.
+      return `<button type="button" class="as-btn hint" data-action="${id}" data-action-hint="${id}"`
+        + ` title="${actionHint(id)}" aria-label="${actionHint(id)}"><kbd class="as-keycap">${key}</kbd>${actionShort(id)}</button>`;
     })
     .join('');
 }
@@ -127,7 +128,9 @@ export function hintBarHtml(context) {
   // decoration is five controls a screen reader cannot find. `role="toolbar"`
   // says what it is — a set of sibling controls, not a list and not a tab strip
   // (Law 3: a tab set is a different thing and takes the bumpers).
-  return `<div class="hint-bar hint-${context}${pad ? ' hint-pad' : ''}" role="toolbar" aria-label="Controls">${chipsHtml(context, pad)}</div>`;
+  // A kit ButtonRow on the `short` step: every chip the same width, the row
+  // no wider than its chips need.
+  return `<div class="hint-bar hint-${context}${pad ? ' hint-pad' : ''} as-btnrow" data-size="short" role="toolbar" aria-label="Controls">${chipsHtml(context, pad)}</div>`;
 }
 
 // ---- the press, delegated once at the document -------------------------------

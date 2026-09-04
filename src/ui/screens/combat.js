@@ -28,7 +28,7 @@ import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
-import { flaskPresentation, flaskTooltipHtml, mountFlaskActionMenu } from '../components/flask.js';
+import { flaskIdentityHtml, flaskTooltipHtml, mountFlaskActionMenu } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
@@ -41,6 +41,16 @@ import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
+import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, iconButton, button, html } from '../kit/index.js';
+
+/** A pile control: a kit button carrying a stacked StatPair (count over name). */
+function pileButton(kind, label) {
+  const count = statPair({ key: label, value: '0', attrs: { class: 'stack' } });
+  count.querySelector('.sp-v').classList.add('n'); // the hook the instruments count by
+  const node = button({ label: '', className: `pile ${kind} tall` });
+  node.appendChild(count);
+  return node;
+}
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -88,8 +98,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       </div>
       <div class="hand-area">
         <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
-          <button class="hand-page hand-prev" type="button" data-focusable hidden
-            aria-controls="combat-hand" aria-label="Previous card" title="Previous card">&#8249;</button>
+          ${html(iconButton({ glyph: '‹', label: 'Previous card', className: 'hand-page hand-prev', attrs: { 'data-focusable': '', hidden: '', 'aria-controls': 'combat-hand' } }))}
           <!-- The strip itself — cards, fan, key hints, the inspect hold, the
                overlap arm and the Law 5 exemption — is components/hand.js, THE
                one hand renderer (both surfaces; the exemption's home is
@@ -97,22 +106,23 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
                live previewCard entries off the paced snapshot, and the local
                dispatch wiring (wireCardInput). -->
           <div class="hand" id="combat-hand"></div>
-          <button class="hand-page hand-next" type="button" data-focusable hidden
-            aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
+          ${html(iconButton({ glyph: '›', label: 'Next card', className: 'hand-page hand-next', attrs: { 'data-focusable': '', hidden: '', 'aria-controls': 'combat-hand' } }))}
         </div>
-        <!-- One grid owns every persistent combat action destination. Actions
-             and Exhaust pin the two safe-area edges while Draw, End Turn and
-             Discard form one tight, symmetric centre cluster. Exhaust stays
-             present at zero so no control appears late or shifts the row. -->
-        <div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
-          <div class="energy-orb" role="status" aria-label="Actions remaining"></div>
-          <button class="pile draw" type="button"><span class="n"></span><small>DRAW</small></button>
-          <button class="end-turn" type="button">END TURN</button>
-          <button class="pile discard" type="button"><span class="n"></span><small>DISCARD</small></button>
-          <button class="pile exhaust" type="button"><span class="n"></span><small>EXHAUSTED</small></button>
+        <!-- THE ACTION ROW IS A KIT ButtonRow: the Actions receipt as a StatPair,
+             the three piles as buttons carrying a StatPair each, End Turn the
+             primary at twice the width with its Keycap and, from the second-beat
+             machinery, its HOLD hint. Exhaust stays present at zero so no
+             control appears late or shifts the row. -->
+        <div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
+          ${html(statPair({ key: 'Actions', value: '', attrs: { class: 'energy-orb cell stack lg', role: 'status', 'aria-label': 'Actions remaining' } }))}
+          ${html(pileButton('draw', 'Draw'))}
+          ${html(button({ label: 'End Turn', weight: 'primary', className: 'end-turn wide tall' }))}
+          ${html(pileButton('discard', 'Discard'))}
+          ${html(pileButton('exhaust', 'Exhausted'))}
         </div>
-        <!-- Context hints remain a separate auxiliary strip. -->
-        ${hintBarHtml('combat')}
+        <!-- Context hints: the strip is mounted for its readers but stays hidden
+             on this screen — the action row carries every key it would name. -->
+        ${hintBarHtml('combat').replace('<div class="hint-bar', '<div hidden class="hint-bar')}
       </div>
       <div class="fx-layer"></div>
       <svg id="target-arrow" width="100%" height="100%" style="display:none">
@@ -644,11 +654,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     relics.innerHTML = '';
     for (const rid of p.relicIds) {
       const def = registries.relics.get(rid);
-      const el = document.createElement('div');
-      el.className = 'relic';
-      el.dataset.relicId = rid;
+      const el = slot({ art: def.icon || '◆', small: true, static: true, tag: 'div', label: def.name, className: 'relic', attrs: { dataset: { relicId: rid } } });
       markUiComponent(el, UI.relicSlot);
-      el.textContent = def.icon || '◆';
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
       relics.appendChild(el);
     }
@@ -658,53 +665,52 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const potions = $('.topbar .hud-potions');
     chargeFlasks.innerHTML = '';
     potions.innerHTML = '';
+    // THE KEYCAP IS DERIVED, NEVER TYPED: the live binding and the connected
+    // device, so a rebind moves the cap with the key and a pad shows its glyph.
+    const flaskHotkey = (hotkeySlot) => {
+      if (hotkeySlot >= 3) return '';
+      const id = `flask${hotkeySlot + 1}`;
+      return hasGamepad() ? padLabel(id) || keyLabel(id) : keyLabel(id);
+    };
     const appendFlaskHotkey = (el, hotkeySlot) => {
       if (hotkeySlot >= 3) return;
       el.dataset.flaskHotkeySlot = String(hotkeySlot);
-      const kb = document.createElement('span');
-      kb.className = 'flask-key';
-      const id = `flask${hotkeySlot + 1}`;
-      kb.textContent = hasGamepad() ? padLabel(id) || keyLabel(id) : keyLabel(id);
-      el.appendChild(kb);
+      el.querySelector('.sl-key')?.classList.add('flask-key');
     };
+    const flaskArt = (def) => el('span', { class: 'sl-art', 'aria-hidden': 'true', html: flaskIdentityHtml(def, { showName: false }) });
     for (const [hotkeySlot, kind] of CHARGE_FLASK_KINDS.entries()) {
       const def = chargeFlaskDefinition(registries, kind);
       const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
-      const el = document.createElement('button');
-      el.className = 'relic flask-slot flask-charge';
-      el.type = 'button';
+      // The charge flask is a kit Slot: art, its count as a round StatePill,
+      // its key as a Keycap — one box, at the IconButton's size.
+      const el = slot({
+        art: flaskArt(def), count: current, key: flaskHotkey(hotkeySlot), label: def.name,
+        disabled: current <= 0, className: 'relic flask-slot flask-charge',
+      });
       markUiComponent(el, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
-      el.setAttribute('aria-disabled', String(current <= 0));
-      el.appendChild(flaskPresentation(def, { showName: false }));
-      const count = document.createElement('b');
-      count.className = 'flask-charge-count';
-      count.textContent = String(current);
-      el.appendChild(count);
+      el.querySelector('.sl-count').classList.add('flask-charge-count');
       appendFlaskHotkey(el, hotkeySlot);
       attachTooltip(el, () => flaskTooltipHtml(def, { charges: current }));
       el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current, charges: current, useActionId: hotkeySlot < 3 ? `flask${hotkeySlot + 1}` : null }));
       chargeFlasks.appendChild(el);
     }
-    p.flasks.forEach((f, slot) => {
+    p.flasks.forEach((f, slotIndex) => {
       const def = registries.flasks.get(f.flaskId);
-      const el = document.createElement('button');
-      el.type = 'button';
-      el.className = 'relic flask-slot';
-      markUiComponent(el, UI.potionControl);
-      el.dataset.flaskSlot = String(slot);
-      el.style.cursor = 'pointer';
-      if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
-      el.appendChild(flaskPresentation(def, { showName: false }));
       // Health and Mana own the first two HUD flask shortcuts. The first
       // carried potion receives the third; every remaining potion stays
       // reachable through ordinary spatial focus.
-      appendFlaskHotkey(el, CHARGE_FLASK_KINDS.length + slot);
+      const el = slot({
+        art: flaskArt(def), key: flaskHotkey(CHARGE_FLASK_KINDS.length + slotIndex), label: def.name,
+        selected: selectedFlask === slotIndex, className: 'relic flask-slot', attrs: { dataset: { flaskSlot: String(slotIndex) } },
+      });
+      markUiComponent(el, UI.potionControl);
+      appendFlaskHotkey(el, CHARGE_FLASK_KINDS.length + slotIndex);
       // THE LABEL READS THE BEAT, IT DOES NOT RESTATE IT. `data-beat` is written
       // by the machinery from the table, so the sentence a player reads and the
       // gesture the button actually wants cannot drift — and the icon is far too
-      // small for the HOLD word the event bars carry (hidden in ui.css).
+      // small for the HOLD word the event bars carry (hidden by the kit).
       attachTooltip(el, () => flaskTooltipHtml(def, { hint: 'Open actions to Use or Inspect.' }));
-      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot, useActionId: (CHARGE_FLASK_KINDS.length + slot) < 3 ? `flask${CHARGE_FLASK_KINDS.length + slot + 1}` : null }));
+      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot: slotIndex, useActionId: (CHARGE_FLASK_KINDS.length + slotIndex) < 3 ? `flask${CHARGE_FLASK_KINDS.length + slotIndex + 1}` : null }));
       potions.appendChild(el);
     });
     potions.closest('.shared-hud').dataset.hasUtilityPotions = potions.children.length ? 'true' : 'false';
@@ -1085,21 +1091,21 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
 
   function renderControls() {
     const energy = $('.energy-orb');
-    energy.textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    energy.querySelector('.sp-v').textContent = `${combat.player.energy}/${combat.player.energyMax}`;
     energy.setAttribute('aria-label', `Actions ${combat.player.energy} of ${combat.player.energyMax}`);
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
-    $('.end-turn').innerHTML = `END TURN <kbd class="et-key">${esc(etKey)}</kbd>`;
+    $('.end-turn').replaceChildren('End Turn', keycap(etKey, { class: 'et-key' }));
     $('.end-turn').classList.toggle('pulse', endTurnHasPlayable());
     // The innerHTML above just dropped the HOLD hint on the floor. `refresh()`
     // re-reads the action's state and re-dresses the button — and it is the
     // reason a beat can live on a control its own screen repaints every frame
     // without any screen tracking the dressing.
     if (endTurnBeat) endTurnBeat.refresh();
-    $('.pile.draw .n').textContent = combat.piles.draw.length;
-    $('.pile.discard .n').textContent = combat.piles.discard.length;
-    $('.pile.exhaust .n').textContent = combat.piles.exhaust.length;
+    $('.pile.draw .sp-v').textContent = combat.piles.draw.length;
+    $('.pile.discard .sp-v').textContent = combat.piles.discard.length;
+    $('.pile.exhaust .sp-v').textContent = combat.piles.exhaust.length;
     $('.pile.draw').setAttribute('aria-label', `Draw pile, ${combat.piles.draw.length}`);
     $('.pile.discard').setAttribute('aria-label', `Discard pile, ${combat.piles.discard.length}`);
     $('.pile.exhaust').setAttribute('aria-label', `Exhausted pile, ${combat.piles.exhaust.length}`);

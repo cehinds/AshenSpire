@@ -462,7 +462,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         ${armedFlask != null ? `<div class="coop-arm">Throwing <b>${esc(registries.flasks.get(meP.flasks[armedFlask].flaskId).name)}</b> — click a hero seat to give it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
         ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — choose a highlighted hero. <button class="subtle" id="coop-cancel-target">Cancel</button></div>` : ''}
         <div class="hand-area">
-          <div class="energy-orb">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</div>
+          <!-- The kit's StatPair and Button (styles/kit.css): the co-op board's
+               two hand-rolled controls wear the same atoms the solo action row
+               does, so neither surface carries a shape of its own. -->
+          <span class="as-statpair energy-orb cell stack lg" role="status" aria-label="Actions remaining"><span class="sp-k">Actions</span><span class="sp-v">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</span></span>
           <!-- The strip is components/hand.js — THE one hand renderer, the same
                one solo combat mounts, so this hand honors data-hand-layout
                (overlap overlaps, paging pages), carries the inspect hold, and
@@ -473,7 +476,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
                supplies only the viewer half below: snapshot-fed entries with
                spelled-out reasons, and network intents as the play wiring. -->
           <div class="hand"></div>
-          <button class="end-turn" id="coop-endturn">END TURN</button>
+          <button type="button" class="as-btn primary end-turn tall" id="coop-endturn">End Turn</button>
         </div>
         <div class="fx-layer"></div>
       </div>`;

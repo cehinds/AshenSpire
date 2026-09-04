@@ -6712,15 +6712,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const html = hudQuickSettingsHtml(model);
     assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
     assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
-    assert(/data-card-background="true"/.test(html), 'the compact card presentation reaches the shared renderer');
-    assert(/--hud-quick-card-size:40px/.test(html)
-      && /--hud-quick-glyph-size:28px/.test(html) && /--hud-quick-state-dot:6px/.test(html)
-      && /--hud-quick-active-tint:14%/.test(html),
-      'the data-owned compact visual sizes reach CSS without a second renderer');
-    assert(/hud-fullscreen-enter/.test(html) && /hud-fullscreen-exit/.test(html),
-      'Fullscreen renders the conventional enter and exit action icons');
-    assert(/♫/.test(html) && /&#x0338;/.test(html),
-      'Music renders the authored on and slashed-off symbols');
+    // THE KIT SWEEP (2026-09-04): the two controls are kit IconButtons, the
+    // same box as Armoury, the menu and every door's close — one class, one
+    // size, one inset — so the compact-card tokens the old renderer inlined
+    // (`--hud-quick-card-size` and friends) no longer reach the DOM.
+    assert((html.match(/class="as-iconbtn modal-iconbtn hud-quick-setting/g) || []).length === 2,
+      'Fullscreen and Music are two kit IconButtons');
+    assert(/data-hud-quick-action="fullscreen"[^>]*>⛶</.test(html),
+      'Fullscreen renders the kit fullscreen glyph');
+    assert(/data-hud-quick-action="music"[^>]*>♫</.test(html),
+      'Music renders the kit music glyph');
 
     const audibleMusic = musicQuickSettingsPlan({});
     eq(audibleMusic.active, true, 'Music is enabled by default');

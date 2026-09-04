@@ -35,7 +35,7 @@ import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
-import { flaskPresentation, flaskTooltipHtml, mountFlaskActionMenu } from '../components/flask.js';
+import { flaskIdentityHtml, flaskTooltipHtml, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { actRouteStripHtml } from '../components/actRouteStrip.js';
@@ -46,6 +46,7 @@ import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
+import { el as kitEl, slot, popover, row, html } from '../kit/index.js';
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -194,30 +195,22 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const strip = app.querySelector('.hud-relics');
   for (const rid of run.relics) {
     const def = registries.relics.get(rid);
-    const el = document.createElement('div');
-    el.className = 'relic';
+    const el = slot({ art: def.icon || '◆', small: true, static: true, tag: 'div', label: def.name, className: 'relic' });
     markUiComponent(el, UI.relicSlot);
-    el.textContent = def.icon || '◆';
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
     strip.appendChild(el);
   }
 
+  const flaskArt = (def) => kitEl('span', { class: 'sl-art', 'aria-hidden': 'true', html: flaskIdentityHtml(def, { showName: false }) });
   const chargeWrap = app.querySelector('.hud-charge-flasks');
   for (const kind of CHARGE_FLASK_KINDS) {
     const def = chargeFlaskDefinition(registries, kind);
     if (!def) continue;
     const current = run.flaskCharges ? run.flaskCharges[`${kind}Current`] : 0;
-    const el = document.createElement('button');
-    el.type = 'button';
-    el.className = 'relic flask-slot flask-charge';
-    el.dataset.flaskKind = kind;
+    // The same kit Slot combat draws: art, count as a round StatePill.
+    const el = slot({ art: flaskArt(def), count: current, label: def.name, disabled: current <= 0, className: 'relic flask-slot flask-charge', attrs: { dataset: { flaskKind: kind } } });
     markUiComponent(el, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
-    el.setAttribute('aria-disabled', String(current <= 0));
-    el.appendChild(flaskPresentation(def, { showName: false }));
-    const count = document.createElement('b');
-    count.className = 'flask-charge-count';
-    count.textContent = String(current);
-    el.appendChild(count);
+    el.querySelector('.sl-count').classList.add('flask-charge-count');
     attachTooltip(el, () => flaskTooltipHtml(def, { charges: current }));
     el.addEventListener('click', () => {
       const plan = flaskActionPlan({
@@ -235,14 +228,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const flaskWrap = app.querySelector('.hud-potions');
   for (const f of run.flasks) {
     const def = registries.flasks.get(f.flaskId);
-    const el = document.createElement('button');
-    el.type = 'button';
     // The shared HUD lives inside CHROME, so `.flask-slot` is the deliberate
     // unified-cursor exception in input.js. Keep utility flasks reachable by
     // keyboard/gamepad Confirm as well as pointer click.
-    el.className = 'mh-flask flask-slot';
+    const el = slot({ art: flaskArt(def), label: def.name, className: 'mh-flask flask-slot' });
     markUiComponent(el, UI.potionControl);
-    el.appendChild(flaskPresentation(def, { showName: false }));
     attachTooltip(el, () => flaskTooltipHtml(def));
     el.addEventListener('click', () => {
       const plan = flaskActionPlan({

@@ -524,7 +524,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* ═══ HOUSEKEEPING ═════════════════════════════════════════════════════════ */
 /* `hidden` wins over any display a kit class sets — a detail card the caller
    hid must not draw its border. */
-.as-detailcard[hidden], .as-option[hidden], .as-row[hidden], .modal-foot-note[hidden], .as-pane [hidden], .modal-head [hidden], .as-iconbtn[hidden], .modal-close[hidden] { display: none !important; }
+.as-detailcard[hidden], .as-option[hidden], .as-row[hidden], .modal-foot-note[hidden], .as-pane [hidden], .modal-head [hidden], .as-iconbtn[hidden], .modal-close[hidden], .as-btnrow[hidden], .as-band[hidden], .as-pop[hidden], .as-slot[hidden] { display: none !important; }
 /* A hold-armed IconButton keeps its glyph; the hold hint is the tooltip's job. */
 .as-iconbtn .hold-hint, .modal-iconbtn .hold-hint, .modal-close .hold-hint { display: none; }
 /* THE SCROLL OWNERS INSIDE A DOOR wear the house scrollbar, not Chromium's. */
@@ -860,3 +860,193 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .reward-door .reward-menu { max-width: none; width: 100%; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
+
+/* The kit's danger tint (the kit page's rgba(212, 98, 46)); nothing in
+   base.css named it, so every `.danger` weight read an unset variable. */
+:root { --danger: #d4622e; }
+
+/* ═══ METER — a resource read at a glance ══════════════════════════════════ */
+/* Label · value · track. The TRACK's length is data (the surface writes its
+   width inline: max ÷ reference, so a bigger pool is a longer bar), the fill is
+   cur ÷ max. `.skinny` is the poise weight: no label, no value, a hairline
+   track. `.inset` puts the value inside the track for the under-model strip,
+   where there is no room beside it. Tones name the resource, never a screen. */
+.as-meter { --meter-h: 10px; --meter-tone: var(--gold); position: relative; display: flex; align-items: center; gap: 0.6rem; min-width: 0; width: 100%; }
+.as-meter > .m-plate { flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 0.5rem; min-width: 0; white-space: nowrap; }
+.as-meter .m-label { flex: 0 0 auto; white-space: nowrap; font: 600 1.05rem/1 var(--font-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.as-meter .m-value { flex: 0 0 auto; white-space: nowrap; font: 600 1.15rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
+.as-meter > .m-well { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
+.as-meter .m-track { position: relative; flex: 0 0 auto; box-sizing: border-box; width: 100%; max-width: 100%; height: var(--meter-h); min-width: 0; padding: 0; border: 0; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); border-radius: var(--r-pill); overflow: hidden; }
+.as-meter .m-fill { position: absolute; inset: 0 auto 0 0; background: var(--meter-tone); border-radius: inherit; }
+.as-meter[data-tone="hp"] { --meter-tone: var(--res-hp, var(--blood)); }
+.as-meter[data-tone="mp"], .as-meter[data-tone="mana"] { --meter-tone: #4f82d8; }
+.as-meter[data-tone="sp"], .as-meter[data-tone="stamina"] { --meter-tone: #5f925d; }
+.as-meter[data-tone="poise"] { --meter-tone: var(--gold); }
+.as-meter[data-tone="arcane"] { --meter-tone: #8a6fd6; }
+.as-meter[data-tone="danger"] { --meter-tone: var(--danger); }
+.as-meter.inset { --meter-h: 13px; }
+.as-meter.inset .m-label { display: none; }
+.as-meter.inset > .m-plate { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 1; }
+.as-meter.inset .m-value { font-size: 0.95rem; letter-spacing: 0.04em; text-shadow: 0 1px 2px #000; }
+.as-meter.skinny { --meter-h: 4px; }
+.as-meter.skinny > .m-plate { display: none; }
+.as-meter.pulse .m-fill { animation: pulse-gold 600ms infinite alternate; }
+.reduced-motion .as-meter.pulse .m-fill { animation: none; }
+/* A dashed rim says "this length is the floor, not the data". */
+.as-meter .m-track[data-floored="1"] { box-shadow: none; border: 1px dashed var(--line-soft); }
+/* A meter that is locked reads dimmed; a striped fill says a resistance holds. */
+.as-meter.locked { opacity: 0.6; }
+.as-meter.resisted .m-fill { background: repeating-linear-gradient(45deg, var(--meter-tone) 0 4px, transparent 4px 8px); }
+/* A stack of meters, one under the other, tight. */
+.as-meters { display: flex; flex-direction: column; gap: 0.3rem; width: 100%; min-width: 0; }
+.as-meters.tight { gap: 2px; }
+
+/* ═══ SLOT — a square control that holds one thing: art, a count, a key ═══ */
+/* Flasks, relics, quick items. The box is the IconButton's (a control) or `sm`
+   (a chip that is only read). The count is a round StatePill on the corner,
+   the key a Keycap in the other. */
+.as-slot { position: relative; display: inline-grid; place-items: center; flex: 0 0 auto; box-sizing: border-box; width: var(--iconbtn-size); height: var(--iconbtn-size); min-width: var(--iconbtn-size); min-height: var(--iconbtn-size); padding: 0; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2); color: var(--parchment); cursor: pointer; overflow: visible; }
+.as-slot:hover, .as-slot:focus-visible { border-color: var(--gold); background: var(--panel); outline: none; }
+.as-slot:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
+.as-slot.is-selected { border-color: var(--parchment); box-shadow: 0 0 0 1px var(--parchment); }
+.as-slot[aria-disabled="true"] > .sl-art { opacity: 0.5; filter: grayscale(0.6); }
+.as-slot.sm { width: 3rem; height: 3rem; min-width: 3rem; min-height: 3rem; }
+.as-slot.static { cursor: default; }
+.as-slot.static:hover { border-color: var(--line-soft); }
+.as-slot > .sl-art { display: grid; place-items: center; width: 72%; height: 72%; font-size: 1.8rem; line-height: 1; }
+.as-slot.sm > .sl-art { font-size: 1.4rem; }
+.as-slot > .sl-art img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* Whatever art is handed to the well fills it, wrappers and all. */
+.as-slot > .sl-art > *, .as-slot > .sl-art > * > * { display: grid; place-items: center; width: 100%; height: 100%; max-width: 100%; max-height: 100%; min-width: 0; margin: 0; }
+.as-slot > .as-pill.round { position: absolute; top: 1px; right: 1px; padding: 0 0.4rem; background: var(--bg); border-color: var(--gold); color: var(--parchment); font-size: 1rem; line-height: 1.5; letter-spacing: 0; }
+.as-slot > .as-keycap { position: absolute; right: 1px; bottom: 1px; min-width: 1.5rem; padding: 0 0.3rem; font-size: 0.9rem; line-height: 1.4; }
+.as-slot[aria-disabled="true"] > .as-pill.round { border-color: var(--line-soft); color: var(--muted); }
+/* A gamepad's glyph is round; the keycap follows the device. */
+body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
+/* While a thumb is driving there is no key to press: every keycap on a
+   control leaves — a Slot's, a Button's, the one floating on a card. */
+@media (pointer: coarse) { .as-slot > .as-keycap, .as-btn > .as-keycap, .as-keycap.float { display: none; } }
+
+/* ═══ BAND — a page-level chrome strip (the HUD, an action row, a zoom bar) ═ */
+/* `.topbar` is the hook co-op's bar still writes; the kit name is the recipe. */
+.as-band, .topbar { display: flex; align-items: center; gap: 1.2rem; flex: 0 0 auto; min-width: 0; padding: 0.6rem 1.6rem; background: var(--bg-raise); border-bottom: 1px solid var(--line); }
+.as-band.foot { border-bottom: 0; border-top: 1px solid var(--line); }
+.as-band.stack { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+.as-band.quiet { background: transparent; border: 0; }
+.as-band-row { display: flex; align-items: center; gap: 1.2rem; min-width: 0; width: 100%; }
+.as-band-row > .grow { flex: 1 1 auto; min-width: 0; }
+.as-band-row.split { justify-content: space-between; }
+.as-band-row.end { justify-content: flex-end; }
+.as-band-row.center { justify-content: center; }
+/* Three tracks: identity, a centred receipt, the trail — the run header's shape. */
+.as-band-row.thirds { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
+.as-band-row.thirds > :last-child { justify-self: end; }
+/* On a phone the three tracks stay three — the centred receipt is centred at
+   every width, which is the whole point of the middle track — and what yields
+   is DETAIL: a trail keeps the first part of each compound fact and drops the
+   rest (a build keeps its number, drops its source). */
+@media (max-width: 640px) {
+  .as-band-row.thirds { gap: 0.5rem; }
+  .as-statstrip.trail > * > :nth-child(n+2) { display: none; }
+}
+/* A cluster is a group of IconButtons or Slots that share one gap. */
+.as-cluster { display: flex; align-items: center; gap: 0.6rem; flex: 0 0 auto; min-width: 0; }
+.as-cluster.wrap { flex-wrap: wrap; }
+.as-cluster.stack { flex-direction: column; align-items: stretch; }
+.as-cluster.end { margin-left: auto; }
+/* A band's grip hangs off its bottom edge, centred: the control that folds it. */
+.as-band { position: relative; }
+.as-band > .as-grip { position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 50%); z-index: 90; width: var(--iconbtn-size); height: 2.2rem; min-height: 2.2rem; padding: 0; border-radius: var(--r-pill); font-size: 1.2rem; line-height: 1; color: var(--muted); }
+.as-band > .as-grip:hover, .as-band > .as-grip:focus-visible { color: var(--gold); }
+/* A band that folds: `data-fold="compact"` hides what is marked foldable. */
+.as-band[data-hud-mode="compact"] .fold, .as-band[data-fold="compact"] .fold { display: none; }
+
+/* ═══ CARD GRID — faces in a scrolling body, wrapped, one gap ══════════════ */
+.as-cardgrid { display: flex; flex-wrap: wrap; gap: 1.4rem; align-content: flex-start; }
+
+/* ═══ HOLD — the second beat on a control ══════════════════════════════════ */
+/* `.beat-hold` is written by the machinery (components/holdconfirm.js) on any
+   control the second-beat table arms; `--hold` is 0..1 per frame. The fill is a
+   BACKGROUND (paints under a bare text node), never eased (an abort must read
+   instantly), and it survives reduced-motion because it is state, not motion.
+   `.hold-hint` is the word beside the label; it leaves an icon-sized control
+   and leaves the control a focus cursor is on (a pad confirms in one press). */
+.beat-hold, .beat-hold:hover, .beat-hold:focus, .beat-hold:active {
+  background-image: linear-gradient(to right, rgba(var(--accent-rgb), 0.30) 0 100%);
+  background-repeat: no-repeat;
+  background-size: calc(var(--hold, 0) * 100%) 100%;
+  transition-property: border-color, color, transform;
+}
+.beat-hold[data-hold-feedback="delegated"], .beat-hold[data-hold-feedback="delegated"]:hover,
+.beat-hold[data-hold-feedback="delegated"]:focus, .beat-hold[data-hold-feedback="delegated"]:active { background-image: none; }
+.beat-hold[data-hold="holding"] { border-color: var(--gold); }
+.hold-hint { margin-left: 0.6em; font-size: 0.75em; letter-spacing: 0.14em; color: var(--gold); opacity: 0.75; }
+.gp-focus > .hold-hint, .as-slot .hold-hint, .flask-slot .hold-hint { display: none; }
+/* The armed control stays identified while its question stands. */
+.beat-armed { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* The confirm form (the Smith, the brazier) is a DetailCard with a ButtonRow. */
+.beat-confirm { flex-basis: 100%; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; margin: 6px 0 2px; padding: 1.05rem 1.35rem; max-width: 34rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-2); }
+.beat-confirm .beat-q { margin: 0; color: var(--parchment); font-size: 1.32rem; text-align: center; }
+.beat-confirm .beat-detail { color: var(--muted); font-size: 1.2rem; text-align: center; }
+.beat-confirm .beat-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.beat-confirm .beat-actions button { min-height: var(--tap-floor); min-width: var(--tap-floor); }
+
+/* ═══ SPOTLIGHT — a coaching bubble over a live board ══════════════════════ */
+/* The veil takes no input: the board beneath keeps answering. Only the bubble
+   (a Popover with a Title·S, prose and a ButtonRow) is pressable. */
+.as-spot-veil { position: fixed; inset: 0; z-index: 800; pointer-events: none; }
+.as-spot { position: absolute; border: 2px solid var(--gold); border-radius: var(--r-3); box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.25), 0 0 0 9999px rgba(0, 0, 0, 0.55); pointer-events: none; transition: left 200ms, top 200ms, width 200ms, height 200ms; }
+.as-spot-veil > .as-pop { position: absolute; pointer-events: auto; padding: 1.35rem 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.as-spot-veil > .as-pop > .as-btnrow { margin-top: 0.6rem; margin-left: auto; }
+.reduced-motion .as-spot { transition: none; }
+
+/* ═══ PILL TONES · STATPAIR SIZES · KEYCAP FLOAT · BUTTONROW WIDE ══════════ */
+/* An intent, a block count, a stance: a StatePill in the fact's own tint. */
+.as-pill[data-tone="danger"] { border-color: var(--danger); color: var(--danger); }
+.as-pill[data-tone="frost"] { border-color: var(--frost); color: var(--frost); }
+.as-pill[data-tone="gold"] { border-color: var(--gold); color: var(--gold); }
+.as-pill[data-tone="green"] { border-color: var(--green); color: var(--green); }
+.as-pill[data-tone="violet"] { border-color: #a07ad6; color: #a07ad6; }
+.as-pill[data-tone="ember"] { border-color: var(--ember); color: var(--ember); }
+.as-pill.lg { padding: 0.35rem 0.9rem; font: 700 1.35rem/1.3 var(--font-body); letter-spacing: 0.06em; background: var(--bg-raise); }
+.as-pill.lg .as-glyph { display: inline; flex: none; font-size: 1.2rem; color: inherit; margin-right: 0.4rem; }
+.as-pill.dashed { border-style: dashed; }
+.as-pill.solid { background: var(--frost); color: #0d0b08; border-color: var(--frost); font-weight: 800; }
+/* A StatPair that stands alone reads large; `.stack` puts the value over the key. */
+.as-statpair.lg .sp-v { font-size: 2rem; }
+.as-statpair.stack { flex-direction: column; align-items: center; gap: 0.15rem; }
+.as-statpair.stack .sp-k { font-size: 0.85rem; letter-spacing: 0.1em; }
+.as-statpair.stack .sp-v { font-size: 1.5rem; line-height: 1.1; }
+/* A keycap that floats on its subject's top edge (a card's positional key). */
+.as-keycap.float { position: absolute; top: -1rem; left: 50%; transform: translateX(-50%); z-index: 3; min-width: 2rem; font-weight: 700; font-size: 1.05rem; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55); pointer-events: none; }
+body.pad-mode .as-keycap.float { display: none; }
+/* A pill pinned to its subject's foot (a card's unavailability reason). */
+.as-pill.foot { position: absolute; left: 0.3rem; right: 0.3rem; bottom: 0.3rem; z-index: 3; text-align: center; white-space: normal; background: var(--bg); text-transform: none; letter-spacing: 0; font-size: 0.85rem; line-height: 1.2; }
+/* A keycap inside a button sits before its verb with one gap. */
+.as-btn > .as-keycap:first-child { margin-right: 0.5rem; }
+/* A ButtonRow member that deserves twice the width (the primary). */
+.as-btnrow > .wide, .modal-btnrow > .wide { grid-column: span 2; }
+.as-btnrow > button.tall, .modal-btnrow > button.tall { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; white-space: normal; line-height: 1.1; }
+.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; }
+/* `.cell` — a StatPair that STANDS IN A ROW OF CONTROLS and therefore has to
+   read as one: the panel ground, the line, the row's radius, the tap floor's
+   height. It is still read and not pressed (no hover, no pointer). Measured:
+   on bare ground a receipt in the combat action row painted 3% of its box, and
+   an instrument that asks whether a control is drawn could not see it. */
+.as-statpair.cell {
+  box-sizing: border-box; justify-content: center; gap: 0.2rem;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0.4rem 0.6rem;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-3);
+  cursor: default;
+}
+/* A StatPair standing in a ButtonRow fills its track like a button would, so
+   the row's edges are the row's and it is as tall as the button beside it. */
+.as-btnrow > .as-statpair { justify-self: stretch; align-self: stretch; }
+.as-btnrow > button > .as-statpair { pointer-events: none; }
+/* A pip: a round badge with a glyph and a count, for statuses in a row. */
+.as-pips { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; min-width: 0; }
+.as-pip { position: relative; display: inline-grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--panel); border: 1.5px solid var(--pip-tone, var(--muted)); font-size: 1.1rem; line-height: 1; color: var(--parchment); cursor: default; }
+.as-pip > .as-pill.round { position: absolute; right: -0.5rem; bottom: -0.5rem; padding: 0 0.3rem; background: var(--bg); color: var(--parchment); border-color: var(--line); font-size: 0.85rem; letter-spacing: 0; line-height: 1.4; }
+.as-pip.ring { color: #fff; text-shadow: 0 0 2px #000; }
+/* Legend rows and other read-only Rows: no hover, no cursor. */
+.as-row.static, .as-row.static:hover { cursor: default; background: transparent; }

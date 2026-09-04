@@ -1887,10 +1887,10 @@
   {
    "id": "H3",
    "by": "Bjorn",
-   "read": "src/ui/components/resbars.js (the ONE renderer for every resource bar; .resbar-<weight>, .l-num cur/max) · src/ui/screens/combat.js (.resbars-host in the topbar) · hudbars at train two: 24 assertions, exit 0",
+   "read": "src/ui/components/resbars.js (the ONE renderer for every resource bar; .resbar-<weight> on the kit Meter's track, .m-value cur/max on its plate) · src/ui/screens/combat.js (.resbars-host in the topbar) · hudbars at train two: 24 assertions, exit 0",
    "anchors": [
     "resbars-host",
-    "l-num"
+    "m-value"
    ],
    "screen": "combat › the resource bars, one per resource, each scaled to its own max",
    "reach": [
@@ -1912,7 +1912,7 @@
      }
     ],
     "measure": {
-     "bars": "[...document.querySelectorAll('.topbar .resbars-host .resbar')].map(e=>(e.className.match(/resbar-[a-z]+/)||['?'])[0]+' '+((e.querySelector('.l-num')||e.querySelector('.l-full')||{}).textContent||'').trim()).join(' | ')",
+     "bars": "[...document.querySelectorAll('.topbar .resbars-host .resbar')].map(e=>(e.className.match(/resbar-[a-z]+/)||['?'])[0]+' '+((e.closest('.as-meter')?.querySelector('.m-value')||{}).textContent||'').trim()).join(' | ')",
      "widthsPx": "[...document.querySelectorAll('.topbar .resbars-host .resbar')].map(e=>Math.round(e.getBoundingClientRect().width)).join('/')"
     }
    }

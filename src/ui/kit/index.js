@@ -52,7 +52,14 @@ export function el(tag, attrs = {}, children = null) {
     else if (key === 'html') node.innerHTML = String(value);
     else if (key === 'dataset') for (const [k, v] of Object.entries(value)) { if (v != null) node.dataset[k] = String(v); }
     else if (key === 'aria') for (const [k, v] of Object.entries(value)) { if (v != null) node.setAttribute(`aria-${k}`, String(v)); }
-    else if (key === 'style' && typeof value === 'object') Object.assign(node.style, value);
+    else if (key === 'style' && typeof value === 'object') {
+      // Custom properties (`--tone`) need setProperty; Object.assign ignores them.
+      for (const [prop, v] of Object.entries(value)) {
+        if (v == null) continue;
+        if (prop.startsWith('--')) node.style.setProperty(prop, String(v));
+        else node.style[prop] = v;
+      }
+    }
     else node.setAttribute(key, value === true ? '' : String(value));
   }
   append(node, children);
@@ -236,6 +243,69 @@ export function delta({ from, to, attrs = {} } = {}) {
   ]);
 }
 export const blocker = (text, { placement = '', attrs = {} } = {}) => el('div', { ...attrs, class: cls('as-blocker', placement, attrs.class), text });
+
+// ---- the meter, the slot, the pip -------------------------------------------
+/**
+ * meter({ label, value, cur, max, pct, lengthPct, tone, skinny, inset, pulse,
+ *         id, attrs, trackAttrs }) → `.as-meter`.
+ * `pct` is the FILL (cur ÷ max, 0..100); `lengthPct` is the TRACK's own length
+ * (max ÷ reference), so a bigger pool is a longer bar — the surface derives
+ * both; the atom draws them. The track carries the machine-readable facts
+ * (data-cur / data-max, role=img) so an instrument never reads the label.
+ */
+export function meter({ label = '', value = '', cur = null, max = null, pct = 100, lengthPct = 100, tone = '', skinny = false, inset = false, pulse = false, id = '', attrs = {}, trackAttrs = {}, ariaLabel = '' } = {}) {
+  const track = el('span', {
+    ...trackAttrs, class: cls('m-track', trackAttrs.class), role: 'img',
+    'aria-label': ariaLabel || (label ? `${label} ${cur ?? value} of ${max ?? ''}`.trim() : null),
+    dataset: { ...(trackAttrs.dataset || {}), ...(id ? { res: id } : {}), ...(cur != null ? { cur: String(cur) } : {}), ...(max != null ? { max: String(max) } : {}) },
+    style: { width: `${Number(lengthPct).toFixed(3)}%` },
+  }, el('i', { class: 'm-fill fill', style: { width: `${Math.max(0, Math.min(100, Number(pct))).toFixed(2)}%` } }));
+  return el('div', {
+    ...attrs, class: cls('as-meter', skinny ? 'skinny' : '', inset ? 'inset' : '', pulse ? 'pulse' : '', attrs.class),
+    dataset: { ...(attrs.dataset || {}), ...(tone ? { tone } : {}), ...(id ? { res: id } : {}) },
+  }, [
+    (label || (value !== '' && value != null)) ? el('span', { class: 'm-plate' }, [
+      label ? el('span', { class: 'm-label', text: label }) : null,
+      value !== '' && value != null ? el('span', { class: 'm-value', text: value }) : null,
+    ]) : null,
+    el('span', { class: 'm-well' }, track),
+  ]);
+}
+export const meters = (items, attrs = {}) => el('div', { ...attrs, class: cls('as-meters', attrs.class) }, items);
+/**
+ * slot({ art, count, key, label, small, static, selected, disabled, tag, attrs, className })
+ * → `.as-slot`: a square that holds one thing. `art` is a node or a glyph string.
+ */
+export function slot({ art = '', count = null, key = '', label = '', small = false, static: isStatic = false, selected = false, disabled = false, tag = 'button', id = '', attrs = {}, className = '' } = {}) {
+  const node = el(tag, {
+    ...attrs, type: tag === 'button' ? 'button' : null, id: id || null,
+    class: cls('as-slot', small ? 'sm' : '', isStatic ? 'static' : '', selected ? 'is-selected' : '', className),
+    'aria-label': label || attrs['aria-label'] || null,
+    'aria-disabled': disabled ? 'true' : (attrs['aria-disabled'] ?? null),
+  }, [
+    typeof art === 'string' ? el('span', { class: 'sl-art', 'aria-hidden': 'true', text: art }) : art,
+    count != null ? pill({ label: String(count), round: true, attrs: { class: 'sl-count' } }) : null,
+    key ? keycap(key, { class: 'sl-key' }) : null,
+  ]);
+  return node;
+}
+/** pip({ glyph, count, tone, ring, attrs }) → a round status badge with a count. */
+export function pip({ glyph: g = '?', count = null, tone = '', ring = false, attrs = {} } = {}) {
+  return el('div', { ...attrs, class: cls('as-pip', ring ? 'ring' : '', attrs.class), style: { ...(attrs.style || {}), ...(tone ? { '--pip-tone': tone } : {}) } }, [
+    document.createTextNode(String(g)),
+    count != null && count !== '' ? pill({ label: String(count), round: true, attrs: { class: 'stk' } }) : null,
+  ]);
+}
+export const pips = (items, attrs = {}) => el('div', { ...attrs, class: cls('as-pips', attrs.class) }, items);
+
+// ---- bands: page-level chrome ----------------------------------------------
+/** band({ foot, stack, quiet, tag, attrs, children }) → `.as-band`, a chrome strip. */
+export function band({ foot = false, stack = false, quiet = false, tag = 'div', attrs = {}, children = null } = {}) {
+  return el(tag, { ...attrs, class: cls('as-band', foot ? 'foot' : '', stack ? 'stack' : '', quiet ? 'quiet' : '', attrs.class) }, children);
+}
+export const bandRow = (children, attrs = {}) => el('div', { ...attrs, class: cls('as-band-row', attrs.class) }, children);
+export const cluster = (children, attrs = {}) => el('div', { ...attrs, class: cls('as-cluster', attrs.class) }, children);
+export const cardGrid = (children, attrs = {}) => el('div', { ...attrs, class: cls('as-cardgrid', attrs.class) }, children);
 
 // ---- assemblies -------------------------------------------------------------
 /** pane({ eyebrow, title, subtitle, children, attrs }) — Eyebrow + Title·M + Subtitle + Hairline + rows. */
