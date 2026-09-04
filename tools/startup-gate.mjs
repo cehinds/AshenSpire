@@ -125,7 +125,9 @@ if (args.includes('--selftest')) {
         file: 'src/ui/components/saveSlotSelector.js',
         find: '        onTap: () => activateSlot(slot),',
         replace: '        onTap: () => activateSlot(Number.NaN), // startup-gate selftest plant',
-        expectRed: /RED A8\.LOAD-SLOT-RESELECT/,
+        // A tap opens the decision door for the slot it read; a NaN slot opens
+        // the wrong door (no save → "empty"), which is the review check's red.
+        expectRed: /RED A8\.LOAD-SLOT-REVIEW/,
       },
       {
         name: 'activating a slot no longer opens the load review',
