@@ -1,0 +1,769 @@
+{
+  "schema": "ashenspire.binary-asset-manifest/1",
+  "ticket": "AS-HD-040",
+  "covers": "RUNBOOKS/art.md §3 — binary asset manifest",
+  "generated_by": "node tools/concept-cutout.mjs",
+  "replaces": "the previous Blender-rendered class sprites (tools/sprites-blender.py); enemy_*.webp in the same folder are still Blender output and are not covered here",
+  "assets": [
+    {
+      "asset_id": "class.sprite.reaver.gold",
+      "path": "assets/sprites/reaver_gold.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 30848,
+      "sha256": "4b97de17cbaa9f7435a6c42f86d68f24b7a7dcd76546e42a8c9b3809cf1bc83e",
+      "source_recipe": {
+        "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/reaver-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9a227",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 432,
+          "h": 429
+        },
+        "placed_at_px": {
+          "x": 9,
+          "y": 130
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.reaver.ember",
+      "path": "assets/sprites/reaver_ember.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 29738,
+      "sha256": "c6f1ce938a1b1b49b93bea8ffc50130d1aa1ea0ff6432a516e252cb954b272c0",
+      "source_recipe": {
+        "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/reaver-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9502e",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 432,
+          "h": 429
+        },
+        "placed_at_px": {
+          "x": 9,
+          "y": 130
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.reaver.frost",
+      "path": "assets/sprites/reaver_frost.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 30650,
+      "sha256": "a044121be9abcb0c24717710779183b54c3cf0d4f8ac85ecbf9baa01affbfe89",
+      "source_recipe": {
+        "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/reaver-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#7fa8c9",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 432,
+          "h": 429
+        },
+        "placed_at_px": {
+          "x": 9,
+          "y": 130
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.reaver.rot",
+      "path": "assets/sprites/reaver_rot.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 30006,
+      "sha256": "b3abad48152705de82d217edbf6e3dc872c03297329e9761f9a10ed624ad9a7d",
+      "source_recipe": {
+        "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/reaver-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#b5541c",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 432,
+          "h": 429
+        },
+        "placed_at_px": {
+          "x": 9,
+          "y": 130
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.reaver.grace",
+      "path": "assets/sprites/reaver_grace.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 30216,
+      "sha256": "4fc2a5660fe462fd5b5b955f088a674a9451e5967d812ec81e5c6a53ad7a8a6f",
+      "source_recipe": {
+        "source_blob": "1769879947b4e9e908e6846b21047d3336386d80",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/reaver-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#9fc3e8",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 432,
+          "h": 429
+        },
+        "placed_at_px": {
+          "x": 9,
+          "y": 130
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.starseer.gold",
+      "path": "assets/sprites/starseer_gold.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 30872,
+      "sha256": "a37fb9511f9c05dc92f9ef8feed1db11c983c88d3233253e5edc0956c61a433d",
+      "source_recipe": {
+        "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/starseer-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9a227",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 358,
+          "h": 432
+        },
+        "placed_at_px": {
+          "x": 46,
+          "y": 127
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 62
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.starseer.ember",
+      "path": "assets/sprites/starseer_ember.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 29800,
+      "sha256": "c55619f379f44297620679135e84e893e9345e9aca22c1223fab164c208c22a4",
+      "source_recipe": {
+        "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/starseer-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9502e",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 358,
+          "h": 432
+        },
+        "placed_at_px": {
+          "x": 46,
+          "y": 127
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 62
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.starseer.frost",
+      "path": "assets/sprites/starseer_frost.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 29258,
+      "sha256": "0814f2c16b24af37ac1ebb347d937a4d472c9633675445ead25338cb75d81efc",
+      "source_recipe": {
+        "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/starseer-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#7fa8c9",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 358,
+          "h": 432
+        },
+        "placed_at_px": {
+          "x": 46,
+          "y": 127
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 62
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.starseer.rot",
+      "path": "assets/sprites/starseer_rot.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 29678,
+      "sha256": "b220d24c1d53ef089820944a37fea34b291a58fc85bbef0b5b32340822556e8f",
+      "source_recipe": {
+        "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/starseer-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#b5541c",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 358,
+          "h": 432
+        },
+        "placed_at_px": {
+          "x": 46,
+          "y": 127
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 62
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.starseer.grace",
+      "path": "assets/sprites/starseer_grace.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 29640,
+      "sha256": "0f9667aa11ca537ccf3c66da0809a5d18e1e8b82195d88191d8d74e54a14c5e7",
+      "source_recipe": {
+        "source_blob": "a4f3dd20961dae978d003baea8615a46847972df",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/starseer-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#9fc3e8",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 358,
+          "h": 432
+        },
+        "placed_at_px": {
+          "x": 46,
+          "y": 127
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 62
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.rogue.gold",
+      "path": "assets/sprites/rogue_gold.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 31830,
+      "sha256": "548a3d299073fddc0894d0c57f5aa8f25ab0497d16a0c910ee746ef8c00321e7",
+      "source_recipe": {
+        "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/rogue-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9a227",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 371,
+          "h": 430
+        },
+        "placed_at_px": {
+          "x": 40,
+          "y": 129
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.rogue.ember",
+      "path": "assets/sprites/rogue_ember.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 30778,
+      "sha256": "10cfd656826085a6ffc4bcb6a2b98dcaed6625ce0e4c34a81dbdbe82dbe23620",
+      "source_recipe": {
+        "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/rogue-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9502e",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 371,
+          "h": 430
+        },
+        "placed_at_px": {
+          "x": 40,
+          "y": 129
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.rogue.frost",
+      "path": "assets/sprites/rogue_frost.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 30944,
+      "sha256": "5338e8fd47e53b6de85f20fd2d4f68710162999c80ff98bb446dd36c4ca35794",
+      "source_recipe": {
+        "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/rogue-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#7fa8c9",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 371,
+          "h": 430
+        },
+        "placed_at_px": {
+          "x": 40,
+          "y": 129
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.rogue.rot",
+      "path": "assets/sprites/rogue_rot.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 30894,
+      "sha256": "ebe9d7f530abfee894c886c64fc23970b0222c4b224a1813c64a2b03f07ee492",
+      "source_recipe": {
+        "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/rogue-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#b5541c",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 371,
+          "h": 430
+        },
+        "placed_at_px": {
+          "x": 40,
+          "y": 129
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.rogue.grace",
+      "path": "assets/sprites/rogue_grace.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 30840,
+      "sha256": "2f049467c7ccf3c21de7709ddb0224e694f68335bc4bb18c9c5a8e4889f993a0",
+      "source_recipe": {
+        "source_blob": "401945b10fa11d016fde229adbfac1fa1c0960d0",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/rogue-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#9fc3e8",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 371,
+          "h": 430
+        },
+        "placed_at_px": {
+          "x": 40,
+          "y": 129
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 53
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.herald.gold",
+      "path": "assets/sprites/herald_gold.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 28370,
+      "sha256": "5ceef02b9afd3c9357e4e9aa829273547abf4df6b681bbdc11241df10226cd3f",
+      "source_recipe": {
+        "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/herald-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9a227",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 297,
+          "h": 436
+        },
+        "placed_at_px": {
+          "x": 77,
+          "y": 123
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 61
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.herald.ember",
+      "path": "assets/sprites/herald_ember.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 26828,
+      "sha256": "8286a9ae246eb8eb73ea8f0d865cd51f848a5113647e5c4aa0bee928b18027df",
+      "source_recipe": {
+        "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/herald-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#c9502e",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 297,
+          "h": 436
+        },
+        "placed_at_px": {
+          "x": 77,
+          "y": 123
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 61
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.herald.frost",
+      "path": "assets/sprites/herald_frost.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 27306,
+      "sha256": "aeb114bf46cc15f3c6dbef16fae8b04c2d38d0cafa95a1b77d27489a5d88eeb4",
+      "source_recipe": {
+        "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/herald-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#7fa8c9",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 297,
+          "h": 436
+        },
+        "placed_at_px": {
+          "x": 77,
+          "y": 123
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 61
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.herald.rot",
+      "path": "assets/sprites/herald_rot.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 27338,
+      "sha256": "9d9c1650e8d653a965dd890504002bb1fbe942123057264edbf59bf955b25bc1",
+      "source_recipe": {
+        "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/herald-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#b5541c",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 297,
+          "h": 436
+        },
+        "placed_at_px": {
+          "x": 77,
+          "y": 123
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 61
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    },
+    {
+      "asset_id": "class.sprite.herald.grace",
+      "path": "assets/sprites/herald_grace.webp",
+      "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
+      "dimensions": "450x570",
+      "bytes": 27650,
+      "sha256": "26ea379ba99e2b64537253b2e29d51a8115c71d4bf77e84cdf3ab90c29f36dae",
+      "source_recipe": {
+        "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
+        "source_path": "docs/art-evidence/2026-09-03/concepts/herald-concept-v1.png",
+        "command": "node tools/concept-cutout.mjs",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "tint_rgb": "#9fc3e8",
+        "tool_versions": {
+          "node": "v22.22.2",
+          "cwebp": "cwebp 1.3.2"
+        }
+      },
+      "anchor": {
+        "content_box_px": {
+          "w": 297,
+          "h": 436
+        },
+        "placed_at_px": {
+          "x": 77,
+          "y": 123
+        },
+        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
+        "medallion_center_pct": 61
+      },
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
+      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "consumers": [
+        "src/ui/assets.js renderedSpriteUrl()",
+        "src/ui/assets.js classSprite()"
+      ]
+    }
+  ]
+}

@@ -216,6 +216,31 @@ export const ACTIONS = Object.freeze({
     hazard: 'choosing',
     note: 'twenty small cards in a wrapped grid; the preview only ever existed on hover',
   },
+  smithExtract: {
+    of: 'lifting a card out of an item at the smith',
+    lives: 'src/ui/screens/rest.js',
+    surface: 'rest',
+    // The owner's third ruling (2026-09-03). The card becomes the run's own
+    // and the mount it left shows its fallback — reversible only by seating
+    // something back, which is a second transaction. Same shape as an
+    // upgrade: the player has to SEE which mount and say yes.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'choosing',
+    note: 'an item, then one of its mounts; the Dodge Roll takes the mount until something is seated',
+  },
+  smithInstall: {
+    of: 'seating a deck card in an item\'s mount at the smith',
+    lives: 'src/ui/screens/rest.js',
+    surface: 'rest',
+    // The reverse of extract: the deck copy leaves and the card rides with
+    // the item from then on. Three choices — item, mount, card — so the
+    // review is where a wrong card is caught, not the deck strip later.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'choosing',
+    note: 'item, mount, then a card from the deck; the card is the item\'s until extracted again',
+  },
   shopSell: {
     of: 'selling a possession back to the merchant',
     lives: 'src/ui/screens/shop.js',

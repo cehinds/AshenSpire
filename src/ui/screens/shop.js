@@ -49,9 +49,15 @@ import { isEngaged, focusFirst } from '../input.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { flaskIdentityHtml } from '../components/flask.js';
+import { isEquipmentComposedInstance } from '../../model/loadout.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import { settingOn } from './settings.js';
+import { commitSmithing, smithingPlan } from '../../model/smithing.js';
+import { smithSelectionModel } from '../models/SmithSelectionModel.js';
+import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
+import { mountServiceOffer, openMountService } from './smithServices.js';
+import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 
 /**
  * The merchant's buy-back price, DERIVED — never typed per item. The base is
@@ -110,9 +116,9 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     if (fold && fold.openKey) openBar = fold.openKey;
     app.innerHTML = `
       <div class="screen" style="justify-content:flex-start;overflow-y:auto;gap:14px;padding-top:28px">
-        <h2 style="color:var(--gold);font-size:24px">THE WANDERING MERCHANT</h2>
-        <p class="subtitle">"I'VE CLIMBED HIGHER THAN YOU. I CAME BACK. DRAW YOUR OWN CONCLUSIONS."</p>
-        <p style="color:var(--gold)">Cinders: <b>${run.cinders}</b> · HP ${run.hp}/${run.maxHp}</p>
+        <h2>The Wandering Merchant</h2>
+        <p class="subtitle">"I've climbed higher than you. I came back. Draw your own conclusions."</p>
+        <p class="as-status" style="text-align:center">Cinders <b>${run.cinders}</b> · HP ${run.hp}/${run.maxHp}</p>
         <div class="shop-bars cz-disc">
           <div class="reward-row" id="shop-cards"></div>
           <div class="class-row" id="shop-relics"></div>
@@ -126,8 +132,9 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
             <div id="remove-grid" class="deck-strip" style="display:none;max-width:900px"></div>
           </div>
           <div class="class-row" id="shop-sell"></div>
+          <div class="class-row" id="shop-smith"></div>
         </div>
-        <button id="leave-shop">LEAVE</button>
+        <button id="leave-shop" class="primary">Leave</button>
       </div>`;
 
     const cardsRow = app.querySelector('#shop-cards');
@@ -202,10 +209,11 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         grid.style.gap = '14px';
         grid.style.justifyContent = 'center';
         run.deck.forEach((inst, idx) => {
-          // An equipment-granted instance (grantedBy) is a package output the
-          // next authoritative reconcile would recreate under the same id —
-          // selling its removal would charge cinders for nothing.
-          if (inst.grantedBy) return;
+          // An equipment-COMPOSED instance is one the next authoritative
+          // reconcile recreates under the same id — a package output
+          // (grantedBy) or a generated attack slot. Offering either would
+          // charge cinders for a card that comes straight back.
+          if (isEquipmentComposedInstance(inst)) return;
           const el = renderCard(registries, inst, { small: true });
           const def = registries.cards.get(inst.cardId);
           arm(el, 'shopRemove', {
@@ -250,6 +258,70 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       sellRow.appendChild(el);
     });
 
+    // ---- THE SMITH THE MERCHANT KEEPS, when the roll at the door said so ----
+    // `stock.smith` is smithServicesAt(registries, 'merchant', rng), rolled
+    // ONCE on arrival (main.js) on the smith's own stream and persisted with
+    // the stock, so a reload does not roll again. Which services appear is
+    // that table's word; each one is the same modal the Shrine opens, and a
+    // commit here never leaves — the merchant is a place you stay.
+    const smithRow = app.querySelector('#shop-smith');
+    const smithHere = stock.smith && stock.smith.offered ? stock.smith.services : [];
+    const smithCards = [];
+    const smithOption = (id, glyph, title, summary, available, open) => {
+      const el = document.createElement('div');
+      el.className = `class-pick${available ? '' : ' locked'}`;
+      el.id = id;
+      el.setAttribute('role', 'button');
+      el.tabIndex = available ? 0 : -1;
+      el.setAttribute('aria-disabled', String(!available));
+      el.innerHTML = `<div class="glyph">${glyph}</div><div class="cp-body"><h3>${esc(title)}</h3><p>${esc(summary)}</p></div>`;
+      markUiComponent(el, UI.shopSmithCard, id.replace('shop-', ''));
+      if (available) {
+        el.addEventListener('click', open);
+        el.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          open();
+        });
+      }
+      smithRow.appendChild(el);
+      smithCards.push(el);
+      return el;
+    };
+    if (smithHere.includes('upgrade')) {
+      const plan = smithingPlan(registries, run);
+      const el = smithOption('shop-upgrade', '⚒', 'Upgrade an Item',
+        plan.candidates.length ? `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'} · choose one owned armament.` : 'No owned armament has an effective tier remaining.',
+        plan.candidates.length > 0, () => {
+          let selectedItemRef = null;
+          const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse: true });
+          const modal = mountSmithUpgradeModal(app, model(), {
+            registries, meta, returnFocusElement: el,
+            onSelect: (itemRef) => { selectedItemRef = itemRef; modal.update(model()); },
+            onBack: () => {},
+            onConfirm: (itemRef) => {
+              commitSmithing(registries, run, itemRef);
+              sfx.play('shrine');
+              onChanged();
+              render();
+            },
+          });
+        });
+    }
+    for (const service of ['extract', 'install']) {
+      if (!smithHere.includes(service)) continue;
+      const offer = mountServiceOffer(registries, run, service);
+      const el = smithOption(`shop-${service}`, service === 'extract' ? '⚙' : '⚒',
+        service === 'extract' ? 'Extract a Card' : 'Seat a Card', offer.summary, offer.available, () => openMountService(app, {
+          service, registries, run, meta, returnFocusElement: el, multiUse: true, place: 'merchant',
+          onCommitted: () => {
+            sfx.play('shrine');
+            onChanged();
+            render();
+          },
+        }));
+    }
+
     app.querySelector('#leave-shop').addEventListener('click', onLeave);
 
     // ---- the fold: one mount, one open bar, faces that answer in words ----
@@ -270,6 +342,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       ...(sellOn() ? [{ key: 'bar:sell', label: 'SELL', node: sellRow,
         value: () => (goods.length ? `${goods.length} the merchant will take` : 'nothing he wants'),
         tip: 'The merchant buys back relics and flasks, at his prices.' }] : []),
+      // ABSENT when the roll at the door said no smith travels with him.
+      ...(smithCards.length ? [{ key: 'bar:smith', label: 'THE SMITH', node: smithRow,
+        value: () => `${smithCards.filter((el) => !el.classList.contains('locked')).length} of ${smithCards.length} services open`,
+        tip: 'A smith travels with this merchant: upgrade an item, lift a card out of one, or seat a card in one.' }] : []),
     ];
     fold = mountDisclosure(app.querySelector('.shop-bars'), BARS.map((bar) => ({
       key: bar.key, kind: 'pick', disclosure: 'face',
@@ -286,7 +362,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
   function shopItem(title, desc, cost, affordable, onBuy, { titleHtml = false, costWord = 'cinders' } = {}) {
     const el = document.createElement('div');
     el.className = `class-pick${affordable ? '' : ' locked'}`;
-    el.innerHTML = `<h3 style="font-size:13px">${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} ${esc(costWord)}</span>`;
+    el.innerHTML = `<div class="cp-body"><h3>${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} ${esc(costWord)}</span></div>`;
     if (affordable && onBuy) {
       const itemName = el.querySelector('h3')?.textContent?.trim() || 'this item';
       arm(el, 'shopBuy', {

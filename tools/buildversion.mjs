@@ -99,16 +99,25 @@ export const RUN_PATH_SERVE = 'source tree';
 
 /** Where the ORDERING half lives. Outside the digest roots, and see below. */
 export const ORDINAL_HOME = 'buildordinal.json';
-/** Fixed width, so eye-order and string-order agree. */
-export const ORDINAL_PAD = 4;
 /**
- * Padding buys correct string ordering only inside the decade it was chosen
- * for. `0999` sorts below `10000` because `0` < `1`; `99999` does NOT sort
- * below `100000`, because `9` > `1`. The scheme is sound to 99999 and inverts
- * at 100000, so row F refuses the ordinal AT that line rather than leaving the
- * trap armed for whoever is here in eighty thousand commits.
+ * UNPADDED, AND THE GUARANTEE IT COSTS IS NAMED RATHER THAN DROPPED QUIETLY.
+ *
+ * Constantine, 2026-09-01, re-reading the stamp he had been shipped: "I must
+ * have misunderstood the ordinal ... I thought it was going to be something
+ * like 0.5.3.2" — and then the rule, in his words: the tail "should restart the
+ * ordinal to 0.5.4.0 and increment from there". A counter that restarts per
+ * candidate is small by construction, and `0.5.4.0000` is not the string he
+ * asked for.
+ *
+ * The old scheme padded to four so that a naive STRING sort of the whole
+ * version agreed with eye order. That property is gone and cannot be recovered
+ * by padding, because the candidate now lives in the third component: `0.5.10.0`
+ * string-sorts below `0.5.9.0` no matter how the tail is padded. Version
+ * comparison is COMPONENT-WISE NUMERIC from here — split on `.`, compare as
+ * numbers — which is what every semver reader already does and what row H
+ * enforces on the one axis that can still be checked mechanically.
  */
-export const ORDINAL_CEILING = 10 ** (ORDINAL_PAD + 1);
+export const ORDINAL_PAD = 1;
 
 // 10 hex = 40 bits = 1.1e12 names. At ten thousand builds the chance any two
 // collide is about 5e-5. Stated rather than felt, because "it's a hash, it's
@@ -414,6 +423,150 @@ export function padOrdinal(n) {
 }
 
 /**
+ * A build as a COMPARABLE TUPLE — the release's three components, then the
+ * tail, each held as a DIGIT STRING. `0.5.4` + 2 → ['0', '5', '4', '2'].
+ * Returns null for anything the scheme cannot order; nothing is invented.
+ */
+export function versionTuple(releaseString, ordinal) {
+  // ONE HOME FOR THE GRAMMAR. This restated two thirds of the release syntax
+  // here — split on '.', test each part for digits — and so admitted every
+  // ARITY the real grammar forbids. Review on #579 found the hole: a parent
+  // recording the release `0.5` produced [0, 5, ordinal], and a valid `0.5.5`
+  // child at ordinal 3 came out as [0, 5, 5, 3] > [0, 5, 2] — a RISE assembled
+  // by reading the parent's ORDINAL as its candidate number. Row F validates
+  // only the CURRENT record, so an invalid intermediate parent is hidden by
+  // the next commit and nothing else would ever look at it. releaseSyntaxError
+  // owns the grammar; ask it rather than keep a second copy of part of it.
+  //
+  // NO SUBSTITUTED ZEROES, which is the same rule one layer down. The earlier
+  // form coerced a non-numeric component to 0 and said in its own comment that
+  // row F refused a malformed release — a guarantee asserted without reading
+  // the row, which does not make it. That shipped `0.6.x` through all eight
+  // checks: F compared the two release strings and found them equal, and H
+  // read the invented `0.6.0.0` as a rise over `0.5.4.4`.
+  if (releaseSyntaxError(releaseString) !== null) return null;
+  // The tail is subject to the same rule. Row F checks the ordinal on the
+  // CURRENT record; the parent's is read straight out of git and checked
+  // nowhere, so a record whose tail is not a counting number is unorderable
+  // here rather than ranked on whatever `String()` makes of it.
+  //
+  // SAFE, NOT MERELY INTEGER — and this is the one place a ceiling is the
+  // HONEST answer rather than the lazy one. The release arrives as a STRING,
+  // so its digits survive to be compared and no bound has to be chosen; the
+  // ordinal arrives as a JSON NUMBER, so past 2^53 its digits were destroyed
+  // by the parse and there is nothing left to preserve. Refusing to order a
+  // value we can no longer read is the same rule as everywhere else here, and
+  // `Number.isInteger` was not it: `1e21` passes it, `String()` renders it
+  // `'1e+21'`, and compareDigits — which is owed decimal digits — read that
+  // 5-character string as SMALLER than a 21-digit one. Review on #579 built
+  // the transition that needs: `0.5.0-rc.4` → `0.5.4` folds to the same
+  // prefix, so the verdict fell entirely to the tail and a drop from `1e21`
+  // to `9e20` was reported as a rise. Nothing but a genuine counting number
+  // renders as digits, so the guard is the range and not a second regex.
+  if (!Number.isSafeInteger(ordinal) || ordinal < 0) return null;
+  // DIGIT STRINGS, NOT NUMBERS. `Number('9007199254740993')` is
+  // 9007199254740992: two distinct releases collapsing onto one value, so a
+  // BACKWARD move from `0.5.9007199254740993.2` to `0.5.9007199254740992.3`
+  // compared EQUAL at the candidate and rose at the tail — reported green
+  // (#579 review). The grammar admits a digit string of any length, so the
+  // comparison has to hold every length the grammar admits, not the ones that
+  // happen to fit in a double. Comparing the digits directly has no ceiling to
+  // choose, which is why it is preferred to rejecting large components — for
+  // the RELEASE, whose digits arrive intact. The tail is the other case, and
+  // the guard above says why it is bounded instead.
+  return [...versionPrefix(releaseString).split('.'), String(ordinal)];
+}
+
+/**
+ * Numeric order of two digit strings, without a numeric type: more digits is
+ * larger once leading zeroes are gone, and equal lengths compare lexically.
+ */
+function compareDigits(a, b) {
+  const x = a.replace(/^0+(?=\d)/, '');
+  const y = b.replace(/^0+(?=\d)/, '');
+  if (x.length !== y.length) return x.length < y.length ? -1 : 1;
+  return x < y ? -1 : x > y ? 1 : 0;
+}
+
+/**
+ * The release syntax the scheme admits: three numeric components, optionally
+ * carrying a pre-release tag. Returns null when it parses, or the reason.
+ */
+export function releaseSyntaxError(releaseString) {
+  if (/^\d+\.\d+\.\d+$/.test(releaseString)) return null;
+  // ONLY `rc`, AND THAT IS THE SCHEME RATHER THAN A NARROW REGEX. versionPrefix
+  // folds a candidate into the third component, so `0.5.0-rc.4` and a
+  // hypothetical `0.5.0-beta.4` would BOTH become `0.5.4` — two distinct
+  // pre-release lines colliding on one version. The compressed notation can
+  // represent exactly one candidate line, so a second tag is unrepresentable
+  // rather than merely unhandled. Admitting `[A-Za-z]+` here let
+  // `0.5.0-beta.4` pass row F while versionTuple returned null and row H went
+  // UNKNOWN — the two rows disagreeing about the same string (#579 review).
+  if (RC_RELEASE.test(releaseString)) return null;
+  return `'${releaseString}' is not a release: the scheme admits three numeric components`
+    + ` (0.5.4), optionally with an rc candidate tag on the base patch (0.5.0-rc.4). A component that`
+    + ` cannot be ordered — or a candidate spelling whose target patch the notation has nowhere to put —`
+    + ` leaves nothing downstream able to rank this build.`;
+}
+
+/**
+ * Component-wise compare of two versionTuple results, or null when the two
+ * cannot be placed side by side at all.
+ *
+ * THE SHORTER SIDE IS NOT PADDED. It was: `(a[i] ?? 0)` filled a missing
+ * component with a zero nobody wrote, which is the same substituted zero
+ * versionTuple above spent #579 removing — and it is what let an arity-2
+ * parent be ranked against an arity-3 child instead of refused. versionTuple
+ * admits one shape, so a mismatch means a caller built a tuple some other way;
+ * that is unorderable, and unorderable is a null rather than a guess.
+ */
+export function compareVersions(a, b) {
+  if (a.length !== b.length) return null;
+  for (let i = 0; i < a.length; i++) {
+    const d = compareDigits(a[i], b[i]);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+
+// THE CANDIDATE SPELLING, ONCE. Two copies of this pattern lived here — one in
+// versionPrefix and one in releaseSyntaxError — and round 6 of #579 tightened
+// only the second, so the tag agreed while the PATCH did not. versionPrefix
+// folds a candidate into the third component and has nowhere to put the target
+// patch, so `0.5.2-rc.4` and `0.5.1-rc.4` BOTH became `0.5.4`: review built
+// `0.5.2-rc.4.9 → 0.5.1-rc.4.10`, which reads as a rise while the release the
+// candidate is FOR moves backward. Same collision as the `beta` tag, through
+// the other component.
+//
+// So the notation admits one candidate line per minor, on the base patch. That
+// is a real limit, not a narrow regex: the compressed form holds major, minor,
+// candidate and build, and a patch-bearing candidate is a fifth fact with no
+// slot. A release wanting `0.5.2-rc.1` needs the NOTATION changed first, and
+// will be refused rather than silently folded until then.
+const CANDIDATE_BASE_PATCH = '0';
+const RC_RELEASE = new RegExp(`^(\\d+)\\.(\\d+)\\.${CANDIDATE_BASE_PATCH}-rc\\.(\\d+)$`);
+
+/**
+ * The candidate-bearing prefix of a release string: `0.5.0-rc.4` → `0.5.4`.
+ *
+ * Constantine's scheme puts the CANDIDATE NUMBER in the third component, so the
+ * pre-release tag is not decoration on the patch number — it IS the third
+ * component, and the patch number a candidate carries (`0.5.0`'s `0`) is the
+ * release it is auditioning for rather than anything about this build.
+ *
+ * A release with no `-rc.N` keeps its own three components, so a shipped
+ * `0.5.0` reads `0.5.0.<n>`. THAT SORTS BELOW ITS OWN CANDIDATES and the cost
+ * is stated where the code is rather than discovered later: under this scheme a
+ * release must be numbered past its last candidate to outsort it. Raised with
+ * the owner when the directive was given; his call, recorded here.
+ */
+export function versionPrefix(releaseString) {
+  const m = RC_RELEASE.exec(releaseString);
+  if (m) return `${m[1]}.${m[2]}.${m[3]}`;
+  return releaseString;
+}
+
+/**
  * readOrdinal(root) → { ordinal, digest, built } from its one home. Throws if
  * absent. `built` rides in this file rather than in one of its own for the
  * reason the ordinal does: it is a fact of history that the build computes once
@@ -422,7 +575,13 @@ export function padOrdinal(n) {
  */
 export function readOrdinal(root = REPO_ROOT) {
   const raw = JSON.parse(readFileSync(resolve(root, ORDINAL_HOME), 'utf8'));
-  return { ordinal: Number(raw.ordinal), digest: raw.digest ?? null, built: raw.built ?? null };
+  return {
+    ordinal: Number(raw.ordinal), digest: raw.digest ?? null, built: raw.built ?? null,
+    // The release the ordinal was counted under. Without it a reset is
+    // indistinguishable from a hand-edit that lowered the number, and row H
+    // could not tell the two apart.
+    release: raw.release ?? null,
+  };
 }
 
 /** The build date, UTC, as a build writes it. One format, one place. */
@@ -438,19 +597,26 @@ export function today(now = new Date()) {
  * rebuild of an unchanged tree finds the digests equal, writes nothing, injects
  * the same number and reproduces the committed bundle byte for byte.
  *
- * THE NEW VALUE IS `max(recorded + 1, commit count)`, AND THE `max` IS NOT
- * BELT-AND-BRACES — IT IS THE WHOLE GUARANTEE. Constantine asked for the commit
- * count, and the commit count ALONE does not increase between two builds of the
- * same commit: edit, build, edit again, build again, and `rev-list --count`
- * returns the same number twice while the source has moved. That is the defect
- * this scheme exists to remove, reintroduced one level down. So the value
- * tracks the commit count and is FLOORED to strictly increasing, and it is
- * stated plainly rather than described as "the commit count" when it is the
- * commit count raised whenever two builds would otherwise share a number.
+ * THE NEW VALUE IS `recorded + 1`, RESET TO 0 WHEN THE RELEASE STRING MOVES.
+ * Constantine, 2026-09-01: the tail "should restart the ordinal to 0.5.4.0 and
+ * increment from there". So this counts BUILDS WITHIN A CANDIDATE, and the
+ * candidate itself is the third component, read from the release home.
  *
- * IT REFUSES RATHER THAN GUESSING. Without git there is no count, and MR-263 is
- * the standing rule: when the version cannot be derived, fail loudly, never
- * emit a plausible one. `0.4.0.0000` is precisely a plausible one.
+ * IT NO LONGER CONSULTS `rev-list --count`, AND THAT IS A SIMPLIFICATION THE
+ * NEW RULE EARNS RATHER THAN A CHECK QUIETLY DROPPED. The old value was
+ * `max(recorded + 1, count)`: the count supplied Constantine's original "commit
+ * count" ask, and the `max` existed because the count ALONE does not move
+ * between two builds of one commit. Under a per-candidate counter the count
+ * cannot be the value — it does not reset — so the floor is the whole rule, and
+ * `recorded + 1` is that floor with nothing left to raise it above. One
+ * consequence, stated: the number no longer approximates the commit count, and
+ * nothing should read it as one. The digest still identifies the tree exactly,
+ * which is the job the count was never doing.
+ *
+ * THE RECORDED RELEASE IS WRITTEN IN THE SAME ACT, for the reason the date is:
+ * a reset is only legitimate if the release moved, and a reader that cannot see
+ * WHICH release the number was counted under cannot tell a reset from a
+ * hand-edit that lowered it. Row H asks exactly that question.
  */
 export function bumpOrdinal(root = REPO_ROOT) {
   const digest = sourceDigest(root).digest;
@@ -462,26 +628,22 @@ export function bumpOrdinal(root = REPO_ROOT) {
   // also the truth: the artifact was built on the day it was built.
   if (rec.digest === digest) return { ordinal: rec.ordinal, bumped: false, digest, built: rec.built };
 
-  let count;
-  try {
-    count = Number(execFileSync('git', ['-C', root, 'rev-list', '--count', 'HEAD'], { encoding: 'utf8' }).trim());
-  } catch (e) {
-    throw new Error(
-      `the build ordinal could not be derived — git could not count commits in ${root} (${e.message}).`
-      + ` Refusing to invent one: a plausible build number is worse than none.`);
-  }
-  if (!Number.isFinite(count)) throw new Error('git returned a commit count that is not a number');
-
-  const ordinal = Math.max(rec.ordinal + 1, count);
+  const rel = release(root);
+  // A release the recorded number was NOT counted under restarts the count.
+  // `rec.release === null` is the pre-scheme file: it has no release to compare,
+  // so it is treated as a different one and the counter starts where the
+  // directive says a candidate starts.
+  const ordinal = rec.release === rel ? rec.ordinal + 1 : 0;
   const built = today();
   writeFileSync(resolve(root, ORDINAL_HOME),
     `${JSON.stringify({
       _: 'DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.',
+      release: rel,
       ordinal,
       digest,
       built,
     }, null, 2)}\n`, 'utf8');
-  return { ordinal, bumped: true, digest, built };
+  return { ordinal, bumped: true, digest, built, release: rel };
 }
 
 /** The release string, read from its one home rather than re-typed. */
@@ -498,7 +660,7 @@ export function release(root = REPO_ROOT) {
  * F and G's question, not this function's.
  */
 export function buildVersion(root = REPO_ROOT) {
-  return `${release(root)}.${padOrdinal(readOrdinal(root).ordinal)}`;
+  return `${versionPrefix(release(root))}.${padOrdinal(readOrdinal(root).ordinal)}`;
 }
 
 /**
@@ -826,13 +988,24 @@ export function check(root = REPO_ROOT) {
     if (found.length !== 1) problems.push(`${BUNDLE} carries ${found.length} ORDINAL literals, expected exactly 1`);
     else if (found[0] !== want) problems.push(`${BUNDLE} carries ORDINAL '${found[0]}', ${ORDINAL_HOME} holds '${want}' — the box and the file disagree`);
     if (!Number.isInteger(recorded.ordinal) || recorded.ordinal < 0) problems.push(`${ORDINAL_HOME} ordinal is not a non-negative integer: ${JSON.stringify(recorded.ordinal)}`);
-    if (want.length < ORDINAL_PAD) problems.push(`'${want}' is narrower than the ${ORDINAL_PAD}-wide pad — an unpadded tail string-sorts wrong`);
-    // The ceiling is refused BEFORE it can invert, not after. Past 99999 a
-    // 4-wide pad puts '99999' above '100000' and the whole promise reverses.
-    if (recorded.ordinal >= ORDINAL_CEILING) problems.push(`ordinal ${recorded.ordinal} has reached ${ORDINAL_CEILING}, where a ${ORDINAL_PAD}-wide pad stops sorting: widen ORDINAL_PAD before the next build`);
+    // THE RECORDED RELEASE IS LOCKED HERE TOO, and it has to be: the counter
+    // resets when that field moves, so a hand-edit of the release alone would
+    // license a reset the tree never earned. F is where a committed fact is
+    // compared to a committed fact, and this is one.
+    if (recorded.release === null) problems.push(`${ORDINAL_HOME} records no release — the ordinal is a count within a release, and a count with no release named is a number with no subject`);
+    else if (recorded.release !== release(root)) problems.push(`${ORDINAL_HOME} counted ordinal ${recorded.ordinal} under release '${recorded.release}', but ${RELEASE_HOME} now says '${release(root)}' — the number belongs to a different candidate`);
+    // AND THE RELEASE MUST BE A RELEASE. Agreement is not well-formedness: two
+    // homes can hold the same malformed string and this row was satisfied by
+    // that alone, which let `0.6.x` reach an ordering comparison (#579 review).
+    // This is the row that owns "the number on the box is well-formed" — it
+    // already says so of the ordinal and the date — so the release joins them.
+    else {
+      const bad = releaseSyntaxError(recorded.release);
+      if (bad) problems.push(`${ORDINAL_HOME} records release ${bad}`);
+    }
     add(problems.length === 0, 'F ORDINAL ON THE BOX',
       problems.length === 0
-        ? `${BUNDLE} carries ORDINAL '${want}' and BUILT '${wantDate}', which are ${ORDINAL_HOME}'s; the ordinal is padded to ${ORDINAL_PAD} and below the ${ORDINAL_CEILING} sort ceiling`
+        ? `${BUNDLE} carries ORDINAL '${want}' and BUILT '${wantDate}', which are ${ORDINAL_HOME}'s, counted under release '${recorded.release}'`
         : problems.join('\n      '));
   }
 
@@ -865,7 +1038,10 @@ export function check(root = REPO_ROOT) {
   // UNKNOWN in its own words does not also need git shouting between the rows.
   const g = (...a) => execFileSync('git', ['-C', root, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   const at = (rev) => {
-    try { return Number(JSON.parse(g('show', `${rev}:${ORDINAL_HOME}`)).ordinal); } catch { return null; }
+    try {
+      const raw = JSON.parse(g('show', `${rev}:${ORDINAL_HOME}`));
+      return { ordinal: Number(raw.ordinal), release: raw.release ?? null };
+    } catch { return null; }
   };
   try {
     const parents = g('rev-list', '--parents', '-n', '1', 'HEAD').trim().split(/\s+/);
@@ -882,12 +1058,91 @@ export function check(root = REPO_ROOT) {
         add(true, 'H ORDINAL INCREASES', `${parent.slice(0, 7)} has no ${ORDINAL_HOME} — the scheme did not exist at the parent (n/a, stated)`);
       } else if (now === null) {
         add(false, 'H ORDINAL INCREASES', `HEAD changed ${BUNDLE} and has no readable ${ORDINAL_HOME} — a build shipped with no number`);
+      } else if (before.release === null) {
+        // THE TWO NUMBERS ARE NOT IN THE SAME SPACE — 2259 was a position in
+        // the retired global sequence and 2 is a count within a candidate — so
+        // no comparison can be invented here. What CANNOT be concluded from
+        // that is that everything is fine.
+        //
+        // This branch said green, and review on #579 named the hole: a missing
+        // field is not proof of provenance. After the migration a branch can
+        // drop `release` in one commit and restore it in the next alongside a
+        // changed bundle and a LOWER version; at that second commit rows F and
+        // G both pass, and a green here would wave the ordering question
+        // through entirely. The intermediate commit is red at row F, which is
+        // no help when CI reads only the head.
+        //
+        // So it resolves to UNKNOWN, which blocks. That is this file's own
+        // stated rule, ten lines below in the catch: a question we could not
+        // put ourselves in a position to ask resolves to unknown, never to a
+        // green. A branch based before the migration meets it and merges `dev`
+        // to clear it, which is the same thing it needed to do anyway.
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${parent.slice(0, 7)} records an ordinal with no release beside it, so its era cannot be established:`
+          + ` a parent that predates the release-scoped counter and one that had the field removed look identical from here,`
+          + ` and only the first is harmless. Merge a base that records its release rather than reading this as a pass.`);
       } else {
-        add(now > before, 'H ORDINAL INCREASES',
-          now > before
-            ? `${BUNDLE} changed between ${parent.slice(0, 7)} and HEAD, and the ordinal went ${before} → ${now}`
-            : `${BUNDLE} CHANGED between ${parent.slice(0, 7)} and HEAD and the ordinal went ${before} → ${now}.`
-              + ` Two different builds that do not sort apart is the whole defect this scheme replaced.`);
+        // ONE RULE, ONE PATH — the release moving or not decides the WORDING
+        // and nothing else. It used to decide the comparison too: a release
+        // change went through the version tuple while a same-release build
+        // used a bare `now.ordinal > before.ordinal`, so every guard added to
+        // the tuple protected one branch of a row that has one rule. Review on
+        // #579 walked in through the unprotected one: a tail advancing from
+        // MAX_SAFE_INTEGER to the value it rounds to is `>` its predecessor, so
+        // the row said the build ROSE — and `bumpOrdinal` then recomputes that
+        // same value forever, wedging the counter, so a defect waved through
+        // once turns every later build in the release red.
+        //
+        // WHAT MUST HOLD IS THAT THE VERSION WENT UP, NOT THAT THE TAIL IS 0.
+        // The counter restarts at 0 on a new candidate, so a lower tail is
+        // correct there and would be the defect anywhere else — but demanding
+        // EXACTLY 0 was wrong in both directions, and review on #574 named
+        // both. A candidate that advances after several builds on the branch
+        // lands on a non-zero tail and is perfectly ordered (`0.5.5.3` beats
+        // `0.5.4.9`), yet the old form called it red. And a candidate moving
+        // BACKWARD to a `.0` tail — `0.5.3.0` after `0.5.4.7` — passed, which
+        // is the one thing this row exists to refuse. Within one release the
+        // whole-version comparison reduces to the tail on its own, because the
+        // first three components are equal by construction; it does not need a
+        // second form to say so.
+        const moved = before.release !== now.release;
+        const beforeV = versionTuple(before.release, before.ordinal);
+        const nowV = versionTuple(now.release, now.ordinal);
+        // ONE NULL CHANNEL, NOT TWO. compareVersions can also decline, so the
+        // order is read first and every way of failing to get one lands here.
+        // Reading `compareVersions(...) > 0` directly would have turned its
+        // null into a plain `false` — a RED asserting the build went backwards,
+        // on a pair nothing established an order for.
+        const order = beforeV === null || nowV === null ? null : compareVersions(nowV, beforeV);
+        if (order === null) {
+          // An unorderable version is not a fallen one and not a risen one.
+          // This row declines to rank what it cannot read rather than inventing
+          // a verdict from substituted zeroes — and it must, because row F
+          // reads only the CURRENT record. A parent's release is checked
+          // nowhere else, so an unorderable one blocks here or never at all.
+          const unreadable = beforeV === null
+            ? `${parent.slice(0, 7)} records release '${before.release}' at ordinal ${before.ordinal}`
+            : nowV === null
+              ? `HEAD records release '${now.release}' at ordinal ${now.ordinal}`
+              : `${parent.slice(0, 7)} and HEAD record versions of different shapes`;
+          add(null, 'H ORDINAL INCREASES',
+            `UNKNOWN — ${unreadable}, which the scheme cannot order: it admits three numeric components (0.5.4),`
+            + ` optionally with an rc candidate tag (0.5.0-rc.4), over a counting tail no larger than`
+            + ` Number.MAX_SAFE_INTEGER. Row F names the malformation when it is on the CURRENT record;`
+            + ` when it is on the parent's, this is the only row that can see it.`);
+          return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+        }
+        const rose = order > 0;
+        const where = moved
+          ? `the release moved '${before.release}' → '${now.release}' between ${parent.slice(0, 7)} and HEAD`
+          : `${BUNDLE} changed between ${parent.slice(0, 7)} and HEAD within release '${now.release}'`;
+        add(rose, 'H ORDINAL INCREASES',
+          rose
+            ? `${where}, and the version rose ${beforeV.join('.')} → ${nowV.join('.')}`
+            : `${where}, and the version went ${beforeV.join('.')} → ${nowV.join('.')}, which does not rise.`
+              + (moved
+                ? ` A new candidate may restart the tail; it may not move the build backwards.`
+                : ` Two different builds that do not sort apart is the whole defect this scheme replaced.`));
       }
     }
   } catch (e) {

@@ -33,9 +33,9 @@ import {
   MUSIC_BED_SCHEMA,
   DAMAGE_SCHOOLS,
   RELIC_MODIFIER_TAGS,
-  CREATURE_TAGS,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
+import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
@@ -51,6 +51,7 @@ import {
   UPGRADE_COST_TAG,
 } from './itemUpgrades.js';
 import { normalizeSmithingRules } from './smithingRules.js';
+import { normalizeCardMountRules } from './cardMounts.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -93,7 +94,11 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'unlocks',
   'sfx',
   'music',
-  'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
+  'tagDomains', // what a tag can be about — the domain lookup
+  'tags', // THE tag registry — one vocabulary for every carrier (#61)
+  'tagFamilies', // what can be tagged: its collection, and how its id is keyed
+  'tagFamilyDomains', // family x domain — which words each family may carry
+  'tagging', // family, scope, objectId, tagId — the only home a tag is written
   'attributeRules',
   'derivedStatRules',
   'characterCreation',
@@ -228,8 +233,39 @@ export function extractTemplateTokens(template) {
  * validateContent(bundle) → { ok, errors: [{ path, msg }], scriptReport }.
  * `bundle` is the raw content bundle (same shape createRegistries takes).
  */
+/**
+ * A VALIDATION DOOR MAY NOT THROW — the structural half of that rule.
+ *
+ * Four rounds of review found the same shape at four addresses: a pass that
+ * exists to ANSWER questions about content, crashing on content instead
+ * (`sourceOrder.join`, `keywords.map`, `global.grants` iteration, a non-string
+ * tag `source`). Each was a real gap and each got a named rule, but fixing them
+ * one at a time is how the fifth arrives. Malformed content is infinite and this
+ * pass reads hundreds of fields, so the guarantee cannot rest on having guarded
+ * every one — it rests on the door being structurally unable to throw.
+ *
+ * So the whole pass runs inside a catch, and an unexpected throw becomes the
+ * last problem in the list rather than an exception at the boot banner. Specific
+ * rules still come first and still say the useful thing; this is the floor under
+ * them, not a substitute for them.
+ */
 export function validateContent(bundle) {
+  // The accumulator is created HERE and handed in, so a throw partway through
+  // KEEPS every field-addressed error found before it. A floor that returns a
+  // fresh list erases the diagnosis it was meant to stand behind.
   const errors = [];
+  try {
+    return collectContentProblems(bundle, errors);
+  } catch (error) {
+    errors.push({
+      path: '<bundle>',
+      msg: `content validation could not finish reading this bundle: ${error && error.message} — a field is malformed in a way no rule names yet; any errors listed above were found before it, and the stack points at the field that threw`,
+    });
+    return { ok: false, errors, scriptReport: null };
+  }
+}
+
+function collectContentProblems(bundle, errors = []) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
 
@@ -324,6 +360,33 @@ export function validateContent(bundle) {
   } catch (error) {
     err('balance.smithing', error?.message || 'must be a complete Smithing economy block');
   }
+  // Card mounts: the block is optional (a bundle without it composes as it
+  // always did) but when authored it must be whole, and the tag it names as
+  // "extractable" must be a registered card-domain tag — otherwise nothing
+  // could ever carry it and every mount would be sealed in silence.
+  if (b.balance && b.balance.equipment && b.balance.equipment.cardMounts !== undefined) {
+    try {
+      const rules = normalizeCardMountRules(b.balance.equipment.cardMounts);
+      const tag = (b.tags || []).find((row) => row && row.id === rules.extractableTag);
+      if (!tag) err('balance.equipment.cardMounts.extractableTag', `names unknown tag '${rules.extractableTag}' — add a row to tags.csv in the card domain`);
+      else if (tag.domain !== 'card') err('balance.equipment.cardMounts.extractableTag', `'${rules.extractableTag}' is in the ${tag.domain} domain, not card — a card could never carry it`);
+      for (const [kind, spec] of Object.entries(rules.kinds)) {
+        for (const accepted of spec.accepts) {
+          if (!(b.tags || []).some((row) => row && row.id === accepted && row.domain === 'card')) {
+            err(`balance.equipment.cardMounts.kinds.${kind}.accepts`, `names unknown card tag '${accepted}'`);
+          }
+        }
+        if (spec.fallback && spec.fallback.cardId && !(b.cards || []).some((card) => card && card.id === spec.fallback.cardId)) {
+          err(`balance.equipment.cardMounts.kinds.${kind}.fallback`, `names unknown card '${spec.fallback.cardId}'`);
+        }
+        if (spec.fallback && spec.fallback.unarmedProfile && !((b.balance.equipment.unarmedProfiles || {})[spec.fallback.unarmedProfile])) {
+          err(`balance.equipment.cardMounts.kinds.${kind}.fallback`, `names unarmed profile role '${spec.fallback.unarmedProfile}', which balance.equipment.unarmedProfiles does not author`);
+        }
+      }
+    } catch (error) {
+      err('balance.equipment.cardMounts', error?.message || 'must be a complete card-mount block');
+    }
+  }
   for (const cls of Array.isArray(b.classes) ? b.classes : []) {
     const a = cls && cls.startingFlaskAllocation;
     if (!a || !Number.isInteger(a.hp) || a.hp < 0 || !Number.isInteger(a.mana) || a.mana < 0
@@ -332,9 +395,22 @@ export function validateContent(bundle) {
     }
   }
 
-  // Effect-tag vocabulary: the card-tag registry rides the bundle so effect
-  // `tags` and taggedVulnerability lists validate against ONE home (#61).
-  const tagIds = new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => t && t.id).filter(Boolean));
+  // The whole tag system in one pass: the registry, who may carry which
+  // domain, and every carrier's tags (model/tags.js states the rules).
+  const keywordIds = Array.isArray(b.keywords) ? b.keywords.map((k) => k && k.id) : [];
+  for (const problem of tagContentProblems(b, keywordIds)) {
+    err(problem.path, problem.message);
+  }
+  // Effect-tag vocabulary, FROM THE JOIN rather than from memory. Effect `tags`
+  // and taggedVulnerability lists draw from whatever domains tagFamilyDomains
+  // pairs the `effect` family with — today `card`, which is why this reads the
+  // same as the hard-coded set it replaces. Hard-coding it made that row
+  // decorative: editing `effect,card` to `effect,item` changed the table and
+  // nothing else, so the normalised constraint was not actually the constraint.
+  const tagIds = new Set(tagIdsAllowedFor(b, 'effect'));
+  // Creature identity is the creature domain of that same registry, so adding
+  // a kind is a row in tags.csv rather than an edit to a frozen array.
+  const creatureTagIds = tagIdsInDomain(b, 'creature');
   const vctx = { ids, err, tagIds };
 
   // Equipment profiles are nested tables, but receive the same strict central
@@ -368,6 +444,16 @@ export function validateContent(bundle) {
     // Intrinsic armament facts are an authored presentation contract, not a
     // second route into generated-card or combat arithmetic. Missing values
     // fail here rather than being displayed as plausible zeroes.
+    // The armament slice of the tag junction, folded once for the rules below.
+    const armamentTags = new Map();
+    for (const row of Array.isArray(b.tagging) ? b.tagging : []) {
+      if (!row || row.family !== 'armament') continue;
+      const list = armamentTags.get(row.objectId);
+      if (list) list.push(row.tagId);
+      else armamentTags.set(row.objectId, [row.tagId]);
+    }
+    const armamentTagIds = (id) => armamentTags.get(id) || [];
+
     const intrinsicFields = ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost'];
     for (const row of Array.isArray(equipment.armaments) ? equipment.armaments : []) {
       const id = row && row.id || '?';
@@ -380,7 +466,10 @@ export function validateContent(bundle) {
       if (Number.isInteger(row?.weight) && row.weight !== row.poiseThreshold) {
         err(`equipment.armaments.${id}.weight`, `must equal authored poiseThreshold ${JSON.stringify(row.poiseThreshold)}`);
       }
-      const isStaffTechnique = (row?.itemTypeTags || []).includes('item:magic-focus')
+      // Item-type tags are tagging.csv rows now, so the boot door reads them
+      // from the junction: this pass sees the bundle, which is BEFORE
+      // model/registries.js stamps `itemTypeTags` onto the piece.
+      const isStaffTechnique = armamentTagIds(id).includes('item:magic-focus')
         && row?.techniqueProfile === 'staffTechnique';
       const expectedManaCost = isStaffTechnique ? 1 : 0;
       if (row?.weaponArtManaCost !== expectedManaCost) {
@@ -403,7 +492,8 @@ export function validateContent(bundle) {
       if (!Number.isInteger(profile && profile.exposureBuildupPerHit) || profile.exposureBuildupPerHit < 0) err(`equipment.basicCardProfiles.${id}.exposureBuildupPerHit`, 'must be a non-negative integer');
       if (profile && profile.cap !== '' && profile.cap != null && !Number.isFinite(profile.cap)) err(`equipment.basicCardProfiles.${id}.cap`, 'must be blank or finite');
       if (profile && profile.compatibility !== `${profile.role}-v1`) err(`equipment.basicCardProfiles.${id}.compatibility`, `must match role '${profile.role}-v1'`);
-      for (const tag of (profile && profile.tags) || []) if (!tagIds.has(tag)) err(`equipment.basicCardProfiles.${id}.tags`, `unknown tag '${tag}'`);
+      // A profile's tags are tagging.csv rows now, checked with every other
+      // carrier's by tagContentProblems above — one rule, one message, for all.
     }
 
     // Validate the raw authored carrier rows before their map is joined onto
@@ -598,6 +688,13 @@ export function validateContent(bundle) {
     classes: SCHEMAS.class,
   };
   for (const type of REGISTRY_TYPES) {
+    // A registry that is present but not an array was SILENTLY SKIPPED here —
+    // every rule below read it as empty — and then a later unguarded `for…of`
+    // threw, so the bundle failed with a stack instead of an answer. Named, so
+    // the author is told which registry and what it should be.
+    if (b[type] !== undefined && !Array.isArray(b[type])) {
+      err(type, `must be an array of ${type} rows (got ${Array.isArray(b[type]) ? 'array' : typeof b[type]})`);
+    }
     const defs = Array.isArray(b[type]) ? b[type] : [];
     defs.forEach((def) => {
       const path = `${type}.${(def && def.id) || '?'}`;
@@ -1170,8 +1267,8 @@ export function validateContent(bundle) {
       }
       if (p.resistance) {
         for (const tag of p.resistance.tags || []) {
-          if (!CREATURE_TAGS.includes(tag)) {
-            err(`${path}.proc.resistance.tags`, `unknown creature tag '${tag}' (legal: ${CREATURE_TAGS.join(', ')})`);
+          if (!creatureTagIds.includes(tag)) {
+            err(`${path}.proc.resistance.tags`, `unknown creature tag '${tag}' (legal: ${creatureTagIds.join(', ')})`);
           }
         }
         // Empty tag list = a resistance the proc can never grant — same dead
@@ -1218,11 +1315,8 @@ export function validateContent(bundle) {
 
   for (const enemy of b.enemies || []) {
     const path = `enemies.${enemy.id}`;
-    for (const tag of enemy.tags || []) {
-      if (!CREATURE_TAGS.includes(tag)) {
-        err(`${path}.tags`, `unknown creature tag '${tag}' (legal: ${CREATURE_TAGS.join(', ')})`);
-      }
-    }
+    // An enemy's own tags are checked with every other carrier's, by
+    // tagContentProblems above — one rule, one message, for all of them.
     const moveIds = new Set(Object.keys(enemy.moves || {}));
     if (enemy.firstMove != null && !moveIds.has(enemy.firstMove)) {
       err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is not one of this enemy's moves`);
@@ -1241,7 +1335,7 @@ export function validateContent(bundle) {
   const scriptUsers = [];
   let totalObjects = 0;
   for (const type of REGISTRY_TYPES) {
-    for (const def of b[type] || []) {
+    for (const def of Array.isArray(b[type]) ? b[type] : []) {
       totalObjects++;
       if (usesScript(def)) scriptUsers.push(`${type}.${def.id}`);
     }

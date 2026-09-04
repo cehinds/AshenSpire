@@ -1,5 +1,5 @@
 # CLAUDE.md
 
-See [AGENTS.md](AGENTS.md) and [`.agentops/BOOTSTRAP.md`](.agentops/BOOTSTRAP.md).
-Resume: `node .agentops/tools/opsctl.mjs verify`. Load a contract only when the
-current action needs it; do not preload history or the reconstruction bundle.
+Read [AGENTS.md](AGENTS.md) — the whole rulebook is one page. Build and test
+commands are in [DEVELOPER.md](DEVELOPER.md); game mechanics are governed by
+[SPEC.md](SPEC.md).

@@ -2,6 +2,7 @@
 // It never derives carriers, applies damage, or mutates a meter.
 
 import { esc, attachTooltip } from './tooltip.js';
+import { meter, pill, glyph, statusText } from '../kit/index.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 const EVENT_TYPES = new Set(['arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak']);
@@ -58,22 +59,44 @@ export function renderArcaneExposure(registries, enemySnapshot, recentEvents = [
   if (!receipt) return null;
   const el = document.createElement('div');
   if (receipt.mode === 'immune') {
+    // Immune is a StatePill: a state, scannable, in the gold tone.
     el.className = 'arcane-exposure-immune';
     el.setAttribute('role', 'img');
     el.setAttribute('aria-label', `${receipt.label} — ${receipt.badge}`);
-    el.innerHTML = `<span class="arcane-exposure-glyph" aria-hidden="true">${receipt.glyph}</span><span>${esc(receipt.label)} — ${esc(receipt.badge)}</span>${eventHtml(receipt.event, registries)}`;
+    const chip = pill({ label: `${receipt.label} — ${receipt.badge}`, attrs: { dataset: { tone: 'gold' } } });
+    chip.prepend(glyph(receipt.glyph, { class: 'arcane-exposure-glyph' }));
+    el.appendChild(chip);
+    const immuneEvent = eventHtml(receipt.event, registries);
+    if (immuneEvent) el.insertAdjacentHTML('beforeend', immuneEvent);
     markUiComponent(el, UI.arcaneExposureBar, 'immune');
     if (tooltips) attachTooltip(el, () => esc(receipt.tooltip));
     return el;
   }
+  // The exposure meter is the kit's Meter: its glyph and name on the plate, its
+  // value beside them, the build-up as the fill. Locked dims the whole meter.
   el.className = `arcane-exposure-meter${receipt.locked ? ' locked' : ''}`;
   markUiComponent(el, UI.arcaneExposureBar, receipt.locked ? 'locked' : 'active');
+  const label = `${receipt.label}: ${receipt.value} of ${receipt.threshold}${receipt.locked ? ', locked' : ''}`;
   el.setAttribute('role', 'img');
-  el.setAttribute('aria-label', `${receipt.label}: ${receipt.value} of ${receipt.threshold}${receipt.locked ? ', locked' : ''}`);
-  el.innerHTML = `<div class="arcane-exposure-head"><span class="arcane-exposure-glyph" aria-hidden="true">${receipt.glyph}</span><span class="arcane-exposure-label">${esc(receipt.label)}</span><strong>${receipt.value} / ${receipt.threshold}</strong>${receipt.locked ? '<em>Locked</em>' : ''}</div>`
-    + `<div class="arcane-exposure-track"><span style="width:${receipt.fillPercent}%"></span></div>`
-    + (receipt.status ? `<div class="magic-vulnerable-receipt">${esc(receipt.status.label)} ${receipt.status.value}% · ${receipt.status.duration} turns</div>` : '')
-    + eventHtml(receipt.event, registries);
+  el.setAttribute('aria-label', label);
+  const bar = meter({
+    id: 'arcane', tone: 'arcane', stack: true,
+    label: receipt.label,
+    value: `${receipt.value} / ${receipt.threshold}`,
+    cur: receipt.value, max: receipt.threshold, pct: receipt.fillPercent,
+    ariaLabel: label,
+    attrs: { class: `arcane-exposure-head${receipt.locked ? ' locked' : ''}` },
+    trackAttrs: { class: 'arcane-exposure-track' },
+  });
+  // HUE IS NEVER THE ONLY CHANNEL: the school's own mark leads the plate.
+  bar.querySelector('.m-plate').prepend(glyph(receipt.glyph, { class: 'arcane-exposure-glyph' }));
+  el.appendChild(bar);
+  if (receipt.locked) el.appendChild(pill({ label: 'Locked', attrs: { class: 'arcane-exposure-lock', dataset: { tone: 'gold' } } }));
+  if (receipt.status) {
+    el.appendChild(statusText(`${receipt.status.label} ${receipt.status.value}% · ${receipt.status.duration} turns`, { class: 'magic-vulnerable-receipt' }));
+  }
+  const event = eventHtml(receipt.event, registries);
+  if (event) el.insertAdjacentHTML('beforeend', event);
   if (tooltips) attachTooltip(el, () => esc(receipt.tooltip));
   return el;
 }

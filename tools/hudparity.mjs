@@ -248,7 +248,13 @@ const READ = `(() => {
       || !!frameStyle && !frameTransparent;
     const bl = parseFloat(cs.borderLeftWidth) || 0;
     const br = parseFloat(cs.borderRightWidth) || 0;
+    const unitStyle = unitEl ? getComputedStyle(unitEl) : null;
+    const unitBorder = unitStyle ? (parseFloat(unitStyle.borderLeftWidth) || 0) + (parseFloat(unitStyle.borderRightWidth) || 0)
+      + (parseFloat(unitStyle.borderTopWidth) || 0) + (parseFloat(unitStyle.borderBottomWidth) || 0) : 0;
+    const unitBackground = unitStyle ? unitStyle.backgroundColor : '';
+    const unitPainted = !!unitStyle && (unitBorder > 0 || !(unitBackground === 'transparent' || unitBackground.endsWith(', 0)')));
     bars.push({
+      unitPainted, unitBorder: unitStyle ? unitStyle.border : '', unitBackground,
       id: el.dataset.res || null,
       cur: el.dataset.cur == null ? null : Number(el.dataset.cur),
       max: el.dataset.max == null ? null : Number(el.dataset.max),
@@ -587,18 +593,18 @@ function judgeCell(cell, mapR, comR, refTable) {
       }
     }
 
-    // P7 INVISIBLE REFERENCE FRAME — the reference frame may remain in the DOM
-    // for measurement, but the shared Vitals design does not paint a card around
-    // the longest resource. The trough and label remain the visible geometry.
+    // P7 NO PAINTED CARD — the shared Vitals design does not paint a card
+    // around the longest resource: the trough and label are the visible
+    // geometry. Since the kit sweep (2026-09-04) the unit is the kit Meter and
+    // carries no reference frame at all; a frame that IS present (an older
+    // renderer) must be invisible, and the unit itself must not paint a box.
     for (const [who, b] of [['map', m], ['combat', c]]) {
-      if (!b.frame) {
-        fail(`FINDING P7/card ${tag} ${who} — no .rescard-frame; the full reference track is still the visible bordered card.`);
-        continue;
-      }
-      if (b.frame.painted) {
+      if (b.unitPainted) {
+        fail(`FINDING P7/card ${tag} ${who} — the resource unit paints a card (${b.unitBorder} ${b.unitBackground}); the trough and label are the visible geometry.`);
+      } else if (b.frame && b.frame.painted) {
         fail(`FINDING P7/card ${tag} ${who} — .rescard-frame still paints ${b.frame.border} ${b.frame.background}; the Vitals reference frame must be invisible.`);
       } else {
-        ok(`P7/card ${tag} ${who} — reference frame retained for measurement but transparent and borderless`);
+        ok(`P7/card ${tag} ${who} — no painted card around the trough${b.frame ? ' (reference frame retained, transparent)' : ''}`);
       }
     }
     if (readable) ok(`P2B/readable ${tag} — both asks are plain percentages`);
@@ -942,17 +948,24 @@ async function selftest() {
       // #498: all five hudmeta plants died when the monolithic HUD template was
       // split into component builders (cindersCounterHtml, buildMetadataTrailHtml).
       // Same intents, re-pointed at the builders' own emit lines.
+      // AND ONE LAYER DOWN AGAIN, 2026-09: the builders now compose kit atoms, so
+      // there is no `<span class="hud-cinders">` string left to patch — there is a
+      // Chip-shaped el() call carrying that hook. Same five intents once more.
+      // Duplication is planted as a NESTED hook rather than a second sibling,
+      // because the tool counts with querySelectorAll over the top row: a second
+      // `.hud-cinders` inside the first is two receipts by exactly the measure the
+      // assertion uses, and it cannot desynchronise from the builder's arity.
       name: 'the shared HUD drops Cinders',
       file: 'src/ui/components/hudmeta.js',
-      find: '    <span class="hud-cinders">⛁ ${esc(model.properties.value)}</span>',
-      replace: '    <!-- Cinders removed by plant -->',
+      find: "el('span', { class: 'as-chip hud-cinders' }",
+      replace: "el('span', { class: 'as-chip cinders-removed-by-plant' }",
       expectRed: /FINDING P8\/top-row .*cinders-count=0/,
     },
     {
       name: 'the shared HUD duplicates Cinders',
       file: 'src/ui/components/hudmeta.js',
-      find: '    <span class="hud-cinders">⛁ ${esc(model.properties.value)}</span>',
-      replace: '    <span class="hud-cinders">⛁ ${esc(model.properties.value)}</span><span class="hud-cinders">⛁ ${esc(model.properties.value)}</span>',
+      find: "el(\'span\', { class: \'ck\', text: \'Cinders\' })",
+      replace: "el(\'span\', { class: \'as-chip hud-cinders\', text: \'Cinders\' })",
       expectRed: /FINDING P8\/top-row .*cinders-count=2/,
     },
     {
@@ -962,32 +975,32 @@ async function selftest() {
       name: 'Cinders moves from the centre into right metadata',
       edits: [{
         file: 'src/ui/components/hudmeta.js',
-        find: '    <span class="hud-cinders">⛁ ${esc(model.properties.value)}</span>',
-        replace: '    <span>⛁ ${esc(model.properties.value)}</span>',
+        find: "el('span', { class: 'as-chip hud-cinders' }",
+        replace: "el('span', { class: 'as-chip' }",
       }, {
         file: 'src/ui/components/hudmeta.js',
-        find: "    <span class=\"hud-act\" ${uiComponentAttrs(UI.metadataField, 'act')}>${progressHtml(act.value, act.total, act.label)}</span>",
-        replace: "    <span class=\"hud-act hud-cinders\" ${uiComponentAttrs(UI.metadataField, 'act')}>${progressHtml(act.value, act.total, act.label)}</span>",
+        find: "progressChip('hud-act', uiComponentAttrs(UI.metadataField, 'act'), act)",
+        replace: "progressChip('hud-act hud-cinders', uiComponentAttrs(UI.metadataField, 'act'), act)",
       }],
       expectRed: /FINDING P8\/top-row .*cinders-placement/,
     },
     {
       name: 'the shared HUD drops Floor',
       file: 'src/ui/components/hudmeta.js',
-      find: "    <span class=\"hud-floor\" ${uiComponentAttrs(UI.metadataField, 'floor')}>${progressHtml(floor.value, floor.total, floor.label)}</span>",
-      replace: '    <!-- Floor removed by plant -->',
+      find: "progressChip('hud-floor', uiComponentAttrs(UI.metadataField, 'floor'), floor)",
+      replace: "progressChip('floor-removed-by-plant', uiComponentAttrs(UI.metadataField, 'floor'), floor)",
       expectRed: /FINDING P8\/top-row .*floor-count=0/,
     },
     {
       name: 'Floor moves from right metadata into the centre',
       edits: [{
         file: 'src/ui/components/hudmeta.js',
-        find: "    <span class=\"hud-floor\" ${uiComponentAttrs(UI.metadataField, 'floor')}>${progressHtml(floor.value, floor.total, floor.label)}</span>",
-        replace: '',
+        find: "progressChip('hud-floor', uiComponentAttrs(UI.metadataField, 'floor'), floor)",
+        replace: "progressChip('floor-moved-by-plant', uiComponentAttrs(UI.metadataField, 'floor'), floor)",
       }, {
         file: 'src/ui/components/hudmeta.js',
-        find: '    <span class="hud-cinders">⛁ ${esc(model.properties.value)}</span>',
-        replace: "    <span class=\"hud-cinders\">⛁ ${esc(model.properties.value)}</span><span class=\"hud-floor\">${esc(model.properties.value)}</span>",
+        find: "el('span', { class: 'ck', text: 'Cinders' })",
+        replace: "el('span', { class: 'ck hud-floor', text: 'Cinders' })",
       }],
       expectRed: /FINDING P8\/top-row .*floor-placement/,
     },
@@ -1021,12 +1034,11 @@ async function selftest() {
       expectRed: /FINDING P1\/rows .*missing-from-map=\["poise"\]/,
     },
     {
-      // The reference track may remain full width only if it is invisible.
-      name: 'the visible card frame is removed, exposing the full reference track',
-      file: 'src/ui/components/resbars.js',
-      find: '  unit.appendChild(frame);',
-      replace: '  /* card frame removed by plant */',
-      expectRed: /FINDING P7\/card .*no \.rescard-frame/,
+      // The unit may not paint a card around the trough.
+      name: 'the resource unit paints a bordered card again',
+      file: 'styles/kit.css',
+      append: '.as-meter.resunit { background: #120f0c; border: 1px solid #4c3b1f; }',
+      expectRed: /FINDING P7\/card .*paints a card/,
     },
     {
       // MP and SP must not silently return to their former horizontal band.
@@ -1097,9 +1109,16 @@ async function selftest() {
       // 5 — AN ABSOLUTE FLOOR OVERRIDES THE PERCENTAGE. This is the pre-decision
       // shape that collapsed several maxima to the same 16 px trough.
       name: 'an absolute minimum width overrides the requested percentage',
-      file: 'styles/combat.css',
-      find: '  min-width: 0;\n}\n.resbar > .fill',
-      replace: '  min-width: 16px;\n}\n.resbar > .fill',
+      // The trough is the kit Meter's track now (styles/kit.css § METER), wearing
+      // `.resbar` as the hook this tool reads, so the pre-decision shape is the
+      // same one line appended on the element P4 measures. Two wrong aims,
+      // both observed: `.m-fill` reds P5/ink and not P4 (the fill is not the
+      // trough), and `.resbar` alone stays GREEN — one class cannot out-specify
+      // the kit's own `.as-meter .m-track { min-width: 0 }`, so the plant never
+      // reached the cascade. It is written at the kit's own specificity, later
+      // in the same file, which is how a real regression would arrive.
+      file: 'styles/kit.css',
+      append: '\n.as-meter .m-track { min-width: 16px; }\n',
       expectRed: /FINDING P4\/percentage .*min-width=16px/,
     },
     {

@@ -9,7 +9,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
+import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
 import { classAttributePreset, creationModeSnapshot, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
@@ -150,6 +150,14 @@ export function createRunState({
     smithingRewardClaims: [],
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
+    // THE BIRTH QUOTA, WRITTEN DOWN. How many attack slots this run was composed
+    // with is a fact about the run, not something to re-derive from whatever
+    // cards happen to be in hand — four review rounds went into deriving it, and
+    // the derivation was still inert on the path that mattered, because combat's
+    // swap builds a synthetic run with `deck: []` and there was nothing to
+    // derive it from. So it is recorded here, once, and carried like the
+    // profile snapshot beside it.
+    equipmentAttackSlotCount: null, // filled in below, from the deck just built
     relics: [startingRelic.id],
     damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
@@ -160,6 +168,9 @@ export function createRunState({
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  // The quota, from the deck that was just composed — before anything else can
+  // touch it. Recorded even when it is zero, because zero is a quota.
+  run.equipmentAttackSlotCount = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
   // THE DOOR OPENS HERE. Everything below this line writes to a run that
   // already exists, and until today none of it said so. `hp`/`maxHp` above are
   // the FIRST of three writers; initializeRunDerivedStats is the second and
@@ -193,6 +204,11 @@ export function createRunState({
     preserveDeficits: false,
   });
   stampDeck(registries, run);
+  // ORDERED ONCE, HERE. stampDeck has just reconciled the package grants and
+  // weapon arts onto the deck, so this is the first moment the whole opening
+  // deck exists — and "bound cards are dealt first, in sourceOrder" is a
+  // statement about the deck a run BEGINS with, not about later arrivals.
+  orderStartingDeck(registries, run);
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
@@ -507,6 +523,9 @@ export const RUN_SHAPE = [
   // Optional only for the one pre-derived migration at the load door.
   { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
   { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
+  // Optional only for runs saved before the quota was written down; stampDeck
+  // falls back to counting a run's own deck for exactly those.
+  { key: 'equipmentAttackSlotCount', type: 'number', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
@@ -528,6 +547,13 @@ export const RUN_SHAPE = [
   { key: 'armamentLevels', type: 'object', optional: true },
   { key: 'smithingRewardClaims', type: 'array', optional: true },
   { key: 'lastSmithingReceipt', type: 'object', optional: true },
+  // Card mounts (owner ruling, 2026-09-03): what a smith has done to the
+  // mounts on the run's items, the last such transaction, and a counter that
+  // keeps extracted-card instance ids unique. All optional — absent means
+  // untouched — so no migration has to invent them.
+  { key: 'itemMounts', type: 'object', optional: true },
+  { key: 'lastMountReceipt', type: 'object', optional: true },
+  { key: 'mountTransactions', type: 'number', optional: true },
   { key: 'pendingReward', type: 'object', optional: true },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
@@ -634,6 +660,28 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
         problems.push(`itemUpgradeLevels.${itemRef || '<empty>'} must be a namespaced item ref with a non-negative integer tier`);
       }
     }
+  }
+  if (run.itemMounts !== undefined && typeOk(run.itemMounts, 'object')) {
+    for (const [itemRef, entries] of Object.entries(run.itemMounts)) {
+      if (!/^(armament\/[^/]+|armor\/[^/]+\/[^/]+)$/.test(itemRef)) {
+        problems.push(`itemMounts.${itemRef || '<empty>'} must be a namespaced equipment ref`);
+        continue;
+      }
+      if (!entries || typeof entries !== 'object' || Array.isArray(entries)) {
+        problems.push(`itemMounts.${itemRef} must be an object of mount entries`);
+        continue;
+      }
+      for (const [mountKey, entry] of Object.entries(entries)) {
+        const sound = mountKey && entry && typeof entry === 'object' && !Array.isArray(entry)
+          && (entry.card === null || (typeof entry.card === 'string' && entry.card))
+          && (entry.upgraded === undefined || typeof entry.upgraded === 'boolean')
+          && (entry.extractions === undefined || (Number.isInteger(entry.extractions) && entry.extractions >= 0));
+        if (!sound) problems.push(`itemMounts.${itemRef}.${mountKey || '<empty>'} must be { card: id|null, upgraded?, extractions? }`);
+      }
+    }
+  }
+  if (run.mountTransactions !== undefined && (!Number.isInteger(run.mountTransactions) || run.mountTransactions < 0)) {
+    problems.push('mountTransactions must be a non-negative integer');
   }
   if (run.smithingRewardClaims !== undefined && Array.isArray(run.smithingRewardClaims)) {
     const seenClaims = new Set();

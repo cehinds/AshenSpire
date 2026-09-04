@@ -10,12 +10,9 @@
 
 ## Coordination and release boundary
 
-The project-specific operating contract for routine ownership, evidence,
-status reports, cross-family handoffs, and release authority is documented in
-[docs/COORDINATION-WORKFLOW.md](docs/COORDINATION-WORKFLOW.md). Routine review
-or approval may permit integration to `dev`; it never grants authority to
-promote `release` or `main`, create a release tag, publish a release, or approve
-final release quality control.
+How work is branched, reviewed, and merged is in [AGENTS.md](AGENTS.md).
+Review or approval may permit integration to `dev`; only the owner merges to
+`main`, creates a release tag, or publishes a release.
 
 ## Branch model
 

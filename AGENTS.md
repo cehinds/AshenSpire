@@ -1,30 +1,47 @@
-# AGENTS.md
+# AGENTS.md — how work happens here
 
-AshenSpire runs under a repository-native control plane in
-[`.agentops/`](.agentops/). Git history and the validated JSON there are
-authoritative; chat, dashboards, and model memory are projections only.
+AshenSpire is a solo-owned game. AI agents help build it. There is no org chart,
+no permission system, and no self-scheduling — just the rules on this page.
 
-Resume from a clean clone:
+## The three rules
 
-```sh
-node .agentops/tools/opsctl.mjs verify   # validate contracts + check generated views
-```
+1. **Only the owner (Constantine, `cehinds`) merges into `main`.** `main` is the
+   released game. Nothing lands there without the owner's explicit yes. Branch
+   protection on `main` backs this up; it is not just a convention.
+2. **One task → one branch → one draft pull request.** Work on a branch off
+   `dev`, open a *draft* PR targeting `dev`, and let the owner review and merge.
+   Never push directly to `dev`, `main`, `test`, or `release`. Never merge your
+   own PR.
+3. **Never assume approval.** An agent does not infer a "yes" from chat, from
+   history, from a green check, or from another agent. Anything destructive,
+   irreversible, outward-facing (publishing, deploying, tagging, deleting), or
+   that changes who may do what, gets asked about first and waits for the owner.
 
-Then read, in order and no more than needed: `.agentops/BOOTSTRAP.md`,
-`.agentops/project.json`, and the single contract your current action touches.
-Do not preload the reconstruction bundle, full history, or unrelated trees.
+## Working conventions
 
-Stable invariants:
+- **Generated files are rebuilt, never hand-edited.** `AshenSpire.html`,
+  `build/`, `dist/` and `buildordinal.json` come from
+  `node tools/launch.mjs --build-only`; content tables from
+  `node tools/content-build.mjs`. Edit the source, rerun the tool.
+- **Tests green before a PR is ready:** `node tests/run-node.mjs`, plus the
+  checks in `.github/workflows/ci.yml` (`verify-shipped`, `buildversion
+  --check`). See [DEVELOPER.md](DEVELOPER.md).
+- **The spec wins.** [SPEC.md](SPEC.md) is the source of truth for mechanics.
+  Change it first, in its own PR, then implement.
+- **Tasks live in GitHub Issues.** One issue per piece of work. There is no
+  parallel ticket system.
+- **Say what you did, plainly.** A PR description states what changed, why, and
+  how it was verified. No jargon, no invented process.
+- **If two agents would touch the same files at the same time, stop and ask.**
+  Serialize the work; do not build machinery for it.
 
-- Reversible, collision-free local work proceeds without approval.
-- One writer per overlapping path or ref (`git-ownership.json`).
-- Protected transitions — push, PR, merge, direct `dev`/`main` update,
-  destructive cleanup or history rewrite, publication/Pages/deploy/release,
-  credential/privacy crossings, overriding an independent QA verdict — need
-  their own exact separate authority; local readiness never implies it.
-- `UNKNOWN` never means approval; `LOCAL`/`PUSHED`/`MERGED`/`RELEASED` are
-  distinct facts.
-- Never hand-edit a `generated/` view.
+## What was removed, and why
 
-More specific `AGENTS.md` files and the game's `SPEC.md`/`DEVELOPER.md` still
-apply to their areas.
+Until September 2026 this repository carried a large multi-agent "governance"
+layer: `.agentops/`, `docs/governance/`, generated dashboards, and scheduled
+agent-to-agent routines. It grew to 645 files and a 6,000-line rule checker that
+mostly coordinated itself, and its automated messages repeatedly asserted owner
+approval that had not been given. It was removed in favour of the rules above.
+The complete pre-removal tree is preserved in git history at commit
+`f87debcf` (`dev` immediately before the removal); the owner may tag it
+`office-archive` for convenience. Restoring it is one `git checkout` away.

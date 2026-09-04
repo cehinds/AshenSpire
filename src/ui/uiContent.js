@@ -144,17 +144,23 @@ export const INTENT_ICONS = { attack: '⚔', block: '🛡', buff: '↑', debuff:
 const isUnknownIntent = (iv) => !iv || iv.kind === 'unknown' || iv.moveId === null;
 
 /** The badge shown over an enemy → { cls, html }. */
+// An intent is one StatePill in the fact's own tone (styles/kit.css): the kind
+// picks the tone, the glyph and the number are the pill's label. `cls` stays
+// the hook the tools and the fx layer read; `tone` is what the kit draws with.
 export function intentBadge(iv) {
-  if (isUnknownIntent(iv)) return { cls: 'unknown', html: '?' };
-  if (iv.kind === 'staggered') return { cls: 'staggered', html: '✦ STAGGERED' };
+  if (isUnknownIntent(iv)) return { cls: 'unknown', tone: '', glyph: '', label: '?' };
+  if (iv.kind === 'staggered') return { cls: 'staggered', tone: 'gold', glyph: '✦', label: 'Staggered' };
   if (iv.damage != null) {
     const n = iv.hits > 1 ? `${iv.damage}×${iv.hits}` : `${iv.damage}`;
-    return { cls: `attack${iv.delayed ? ' delayed' : ''}`, html: `<span class="ic">${INTENT_ICONS.attack}</span>${n}${iv.delayed ? ' ⌛' : ''}` };
+    return {
+      cls: `attack${iv.delayed ? ' delayed' : ''}`, tone: 'danger', glyph: INTENT_ICONS.attack,
+      label: `${n}${iv.delayed ? ' ⌛' : ''}`, dashed: !!iv.delayed,
+    };
   }
-  if (iv.block != null) return { cls: 'block', html: `<span class="ic">${INTENT_ICONS.block}</span>` };
-  if (iv.kind === 'buff') return { cls: 'buff', html: `<span class="ic">${INTENT_ICONS.buff}</span>` };
-  if (iv.kind === 'debuff') return { cls: 'debuff', html: `<span class="ic">${INTENT_ICONS.debuff}</span>` };
-  return { cls: iv.kind || 'unknown', html: '?' };
+  if (iv.block != null) return { cls: 'block', tone: 'frost', glyph: INTENT_ICONS.block, label: String(iv.block) };
+  if (iv.kind === 'buff') return { cls: 'buff', tone: 'gold', glyph: INTENT_ICONS.buff, label: '' };
+  if (iv.kind === 'debuff') return { cls: 'debuff', tone: 'violet', glyph: INTENT_ICONS.debuff, label: '' };
+  return { cls: iv.kind || 'unknown', tone: '', glyph: '', label: '?' };
 }
 
 /** Intent hover tooltip. `victim` names who attacks/debuffs hit ('you' solo,

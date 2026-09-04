@@ -10,10 +10,6 @@ export const outfits = [
     "plateLt": "64907F",
     "leather": "4B3522",
     "under": "332A1E",
-    "tags": [
-      "item:armor",
-      "guard"
-    ],
     "mods": "",
     "unlock": "",
     "blurb": "The armour you were buried in.",
@@ -27,11 +23,6 @@ export const outfits = [
     "plateLt": "4A433A",
     "leather": "241C16",
     "under": "1A1712",
-    "tags": [
-      "item:armor",
-      "guard",
-      "ash"
-    ],
     "mods": "defend.block=+2",
     "unlock": "beatStitchedKing",
     "blurb": "Blackened at the court that broke.",
@@ -45,11 +36,6 @@ export const outfits = [
     "plateLt": "E0CB8C",
     "leather": "5A4626",
     "under": "3A3020",
-    "tags": [
-      "item:armor",
-      "guard",
-      "oath"
-    ],
     "mods": [
       "defend.block=+1",
       "self.strength=+1"
@@ -66,11 +52,6 @@ export const outfits = [
     "plateLt": "64798E",
     "leather": "3A3226",
     "under": "24272A",
-    "tags": [
-      "item:armor",
-      "guard",
-      "heavy"
-    ],
     "mods": [
       "defend.block=+3",
       "strike.damage=-1"
@@ -87,10 +68,6 @@ export const outfits = [
     "plateLt": "26406E",
     "leather": "4B3522",
     "under": "332A1E",
-    "tags": [
-      "item:armor",
-      "starstone"
-    ],
     "mods": "",
     "unlock": "",
     "blurb": "Dyed with the dark between stars.",
@@ -104,11 +81,6 @@ export const outfits = [
     "plateLt": "2E2B47",
     "leather": "2A2118",
     "under": "17151F",
-    "tags": [
-      "item:armor",
-      "starstone",
-      "ritual"
-    ],
     "mods": "power.potency=+1",
     "unlock": "winAsStarseer",
     "blurb": "Worn only when the moon is eaten.",
@@ -122,11 +94,6 @@ export const outfits = [
     "plateLt": "93AEE2",
     "leather": "3A3226",
     "under": "242A40",
-    "tags": [
-      "item:armor",
-      "starstone",
-      "flourish"
-    ],
     "mods": [
       "strike.hits=+1",
       "strike.damage=-1"
@@ -143,11 +110,6 @@ export const outfits = [
     "plateLt": "9327A0",
     "leather": "3A2E4A",
     "under": "241E33",
-    "tags": [
-      "item:armor",
-      "starstone",
-      "oath"
-    ],
     "mods": [
       "power.potency=+2",
       "defend.block=-1"
@@ -164,10 +126,6 @@ export const outfits = [
     "plateLt": "3A2A2A",
     "leather": "4B3522",
     "under": 241413,
-    "tags": [
-      "item:armor",
-      "ritual"
-    ],
     "mods": "",
     "unlock": "",
     "blurb": "Plain cloth, plainly kept.",
@@ -181,11 +139,6 @@ export const outfits = [
     "plateLt": 555047,
     "leather": "2A2622",
     "under": "1E1B18",
-    "tags": [
-      "item:armor",
-      "ritual",
-      "blight"
-    ],
     "mods": "strike.blight=+1",
     "unlock": "beatBlightedValkyrie",
     "blurb": "Threaded through with quiet bone.",
@@ -199,11 +152,6 @@ export const outfits = [
     "plateLt": "B4602A",
     "leather": "3A2618",
     "under": "2A1C12",
-    "tags": [
-      "item:armor",
-      "ritual",
-      "oath"
-    ],
     "mods": [
       "power.potency=+1",
       "self.regen=+1"
@@ -220,11 +168,6 @@ export const outfits = [
     "plateLt": "747A5C",
     "leather": "3A3226",
     "under": "2A2418",
-    "tags": [
-      "item:armor",
-      "ritual",
-      "guard"
-    ],
     "mods": [
       "defend.block=+2",
       "self.maxHp=+4"
@@ -241,10 +184,6 @@ export const outfits = [
     "plateLt": "52665D",
     "leather": "3C2E25",
     "under": "1D211F",
-    "tags": [
-      "item:armor",
-      "flourish"
-    ],
     "mods": "",
     "unlock": "",
     "blurb": "Quiet leather for a loud profession.",
@@ -258,11 +197,6 @@ export const outfits = [
     "plateLt": "3B4B4A",
     "leather": "211F25",
     "under": 151719,
-    "tags": [
-      "item:armor",
-      "flourish",
-      "ash"
-    ],
     "mods": "defend.block=+2",
     "unlock": "rogueBeatWarden",
     "blurb": "Dark cloth that swallows the outline.",
@@ -276,11 +210,6 @@ export const outfits = [
     "plateLt": "78909A",
     "leather": "43362C",
     "under": "25282A",
-    "tags": [
-      "item:armor",
-      "flourish",
-      "pierce"
-    ],
     "mods": [
       "strike.hits=+1",
       "strike.damage=-1"
@@ -297,11 +226,6 @@ export const outfits = [
     "plateLt": 534066,
     "leather": "2A2430",
     "under": "17131F",
-    "tags": [
-      "item:armor",
-      "flourish",
-      "venom"
-    ],
     "mods": "self.strength=+1",
     "unlock": "rogueReachCrown",
     "blurb": "The hem remembers every alley.",

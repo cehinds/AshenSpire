@@ -12,11 +12,6 @@ export const weapons = [
     "scale": 1,
     "metal": "B8B0A0",
     "accent": "C9A227",
-    "tags": [
-      "item:blade",
-      "blade",
-      "basic"
-    ],
     "attackProfile": "bladeAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
@@ -42,11 +37,6 @@ export const weapons = [
     "scale": 1,
     "metal": "B8B0A0",
     "accent": "C9A227",
-    "tags": [
-      "item:blade",
-      "blade",
-      "heavy"
-    ],
     "attackProfile": "bladeAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
@@ -76,12 +66,6 @@ export const weapons = [
     "scale": 1,
     "metal": "C0B8A6",
     "accent": "C9A227",
-    "tags": [
-      "item:blade",
-      "blade",
-      "pierce",
-      "flourish"
-    ],
     "attackProfile": "daggerPierceAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
@@ -107,12 +91,6 @@ export const weapons = [
     "scale": 1,
     "metal": "C0B8A6",
     "accent": "C9A227",
-    "tags": [
-      "item:blade",
-      "pierce",
-      "ranged",
-      "precision"
-    ],
     "attackProfile": "bowPierceAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "bowTechnique",
@@ -138,12 +116,6 @@ export const weapons = [
     "scale": 1,
     "metal": "C6BEAC",
     "accent": "C9502E",
-    "tags": [
-      "item:blade",
-      "blade",
-      "blood",
-      "flourish"
-    ],
     "attackProfile": "bladeAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
@@ -172,11 +144,6 @@ export const weapons = [
     "scale": 1,
     "metal": "A8A090",
     "accent": "C9A227",
-    "tags": [
-      "item:blade",
-      "blade",
-      "heavy"
-    ],
     "attackProfile": "bladeAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
@@ -206,10 +173,6 @@ export const weapons = [
     "scale": 1,
     "metal": "8E8678",
     "accent": "C9A227",
-    "tags": [
-      "item:blade",
-      "heavy"
-    ],
     "attackProfile": "bladeAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
@@ -238,11 +201,6 @@ export const weapons = [
     "scale": 1,
     "metal": "C0B8A6",
     "accent": "7FA8C9",
-    "tags": [
-      "item:blade",
-      "blade",
-      "flourish"
-    ],
     "attackProfile": "bladeAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
@@ -272,11 +230,6 @@ export const weapons = [
     "scale": 1,
     "metal": "A8A090",
     "accent": "C9502E",
-    "tags": [
-      "item:blade",
-      "blade",
-      "heavy"
-    ],
     "attackProfile": "bladeAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
@@ -305,11 +258,6 @@ export const weapons = [
     "scale": 0.8,
     "metal": "8E8678",
     "accent": "C9A227",
-    "tags": [
-      "item:shield",
-      "guard",
-      "flourish"
-    ],
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
@@ -335,10 +283,6 @@ export const weapons = [
     "scale": 1,
     "metal": "8E8678",
     "accent": "C9A227",
-    "tags": [
-      "item:shield",
-      "guard"
-    ],
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
@@ -367,11 +311,6 @@ export const weapons = [
     "scale": 1,
     "metal": "7E766A",
     "accent": "C9A227",
-    "tags": [
-      "item:shield",
-      "guard",
-      "heavy"
-    ],
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
@@ -401,11 +340,6 @@ export const weapons = [
     "scale": 1,
     "metal": "8E8678",
     "accent": "7FA8C9",
-    "tags": [
-      "item:shield",
-      "guard",
-      "basic"
-    ],
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
@@ -431,12 +365,6 @@ export const weapons = [
     "scale": 1,
     "metal": "8E8678",
     "accent": "C9502E",
-    "tags": [
-      "item:shield",
-      "item:blade",
-      "guard",
-      "blade"
-    ],
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
@@ -465,10 +393,6 @@ export const weapons = [
     "scale": 0.85,
     "metal": "6B5D45",
     "accent": "C9A227",
-    "tags": [
-      "item:shield",
-      "guard"
-    ],
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
@@ -497,10 +421,6 @@ export const weapons = [
     "scale": 0.9,
     "metal": "6B5D45",
     "accent": "C9502E",
-    "tags": [
-      "item:shield",
-      "gorefire"
-    ],
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
@@ -526,12 +446,6 @@ export const weapons = [
     "scale": 0.85,
     "metal": "C0B8A6",
     "accent": "7FA8C9",
-    "tags": [
-      "item:blade",
-      "item:shield",
-      "guard",
-      "flourish"
-    ],
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
@@ -560,11 +474,6 @@ export const weapons = [
     "scale": 1,
     "metal": "6B5D45",
     "accent": "C9A227",
-    "tags": [
-      "item:magic-focus",
-      "ritual",
-      "basic"
-    ],
     "attackProfile": "staffMagicAttack",
     "guardProfile": "staffGuard",
     "techniqueProfile": "staffTechnique",
@@ -590,10 +499,6 @@ export const weapons = [
     "scale": 1,
     "metal": "6B5D45",
     "accent": "7FA8C9",
-    "tags": [
-      "item:magic-focus",
-      "starstone"
-    ],
     "attackProfile": "staffMagicAttack",
     "guardProfile": "staffGuard",
     "techniqueProfile": "staffTechnique",
@@ -623,11 +528,6 @@ export const weapons = [
     "scale": 1,
     "metal": "B8AE98",
     "accent": "B5541C",
-    "tags": [
-      "item:magic-focus",
-      "ritual",
-      "blight"
-    ],
     "attackProfile": "sceptreArcaneAttack",
     "guardProfile": "sceptreGuard",
     "techniqueProfile": "staffTechnique",
@@ -656,11 +556,6 @@ export const weapons = [
     "scale": 1,
     "metal": "6B5D45",
     "accent": "C9A227",
-    "tags": [
-      "item:magic-focus",
-      "ritual",
-      "oath"
-    ],
     "attackProfile": "sceptreArcaneAttack",
     "guardProfile": "sceptreGuard",
     "techniqueProfile": "staffTechnique",
@@ -686,11 +581,6 @@ export const weapons = [
     "scale": 1,
     "metal": "6B5D45",
     "accent": "C9A227",
-    "tags": [
-      "item:magic-focus",
-      "ritual",
-      "oath"
-    ],
     "attackProfile": "sceptreArcaneAttack",
     "guardProfile": "sceptreGuard",
     "techniqueProfile": "staffTechnique",
@@ -719,10 +609,6 @@ export const weapons = [
     "scale": 0.95,
     "metal": "4B3522",
     "accent": "B5541C",
-    "tags": [
-      "item:magic-focus",
-      "blight"
-    ],
     "attackProfile": "sceptreArcaneAttack",
     "guardProfile": "sceptreGuard",
     "techniqueProfile": "staffTechnique",
@@ -751,11 +637,6 @@ export const weapons = [
     "scale": 0.95,
     "metal": "4B3522",
     "accent": "C9502E",
-    "tags": [
-      "item:magic-focus",
-      "gorefire",
-      "blood"
-    ],
     "attackProfile": "sceptreArcaneAttack",
     "guardProfile": "sceptreGuard",
     "techniqueProfile": "staffTechnique",
@@ -784,11 +665,6 @@ export const weapons = [
     "scale": 1,
     "metal": "B8AE98",
     "accent": "C9A227",
-    "tags": [
-      "item:magic-focus",
-      "ritual",
-      "heavy"
-    ],
     "attackProfile": "sceptreArcaneAttack",
     "guardProfile": "staffGuard",
     "techniqueProfile": "staffTechnique",
