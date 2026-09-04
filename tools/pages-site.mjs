@@ -535,7 +535,19 @@ try {
     rmSync(dir, { recursive: true, force: true });
     if (!repairClean) process.exitCode = 1;
     if (!fixtureOk) process.exitCode = 1;
-    if (!process.exitCode) console.log(`pages-site selftest: OK — fixture exact, 2 known-bads, 2 caught (${discovered.length} page(s) discovered from the real tree)`);
+    // THE VERDICT LINE IS A GRAMMAR, NOT A SENTENCE OF MY CHOOSING. tools/verdict.mjs
+    // accepts `label: OK — N <words>, N caught` and nothing else that fits here:
+    // a NUMBER right after `OK —`, and the line ENDING at `caught`. This line had
+    // drifted out of that grammar twice — first by appending `(N page(s)
+    // discovered)`, then by prefixing `fixture exact,` — so `verdict` refused it
+    // as SILENCE and the assemble job has failed on every push to dev since
+    // 2026-09-02, while the selftest itself was passing all four of its checks.
+    // The facts go on their own line ABOVE; the verdict line carries the counts
+    // and stops. A fact worth printing is not worth breaking the verdict for.
+    if (!process.exitCode) {
+      console.log(`pages-site selftest: fixture exact, ${discovered.length} page(s) discovered from the real tree`);
+      console.log(`pages-site selftest: OK — 2 known-bads, 2 caught`);
+    }
   } else if (has('--check')) {
     const n = check(flag('--check', '_site'));
     if (!process.exitCode) console.log(`pages-site --check: OK — ${n} checks passed`);
