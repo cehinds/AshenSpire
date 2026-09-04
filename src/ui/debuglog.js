@@ -4,6 +4,14 @@
 // comes back: dispatches, rejections, ignored inputs, timeline lifecycle, and
 // uncaught page errors. Exists so a stuck game can be diagnosed from inside the
 // game — open the log, read the last commands, copy them into a bug report.
+//
+// ON THE KIT: the viewer is a lg door through openModal (Eyebrow "Advanced",
+// Title·S "Command log", the log as the kit's LogBox, Copy · Refresh · Close
+// on the foot's ladder); the failure banner is the kit's Blocker with a
+// Title·S, Prose and the one Button. `.validation-banner` stays on the blocker
+// as the hook tools/release-shots.mjs scores; it draws nothing.
+
+import { el, openModal, button, logBox, flavour, prose, titleS, blocker } from './kit/index.js';
 
 const MAX_ENTRIES = 300;
 const entries = [];
@@ -104,28 +112,21 @@ export function failureBanner(key, title, body) {
     overflowed.add(key);
     const last = standing[standing.length - 1];
     if (!last.more) {
-      last.more = document.createElement('div');
+      last.more = flavour('');
       last.el.insertBefore(last.more, last.open);
     }
     const n = overflowed.size;
     last.more.textContent = ` · …and ${n} more kind${n === 1 ? '' : 's'} of failure — all of them are in the Command log.`;
     return last.el;
   }
-  const el = document.createElement('div');
-  el.className = 'validation-banner';
-  const head = document.createElement('div');
-  head.textContent = title;
-  const text = document.createElement('div');
-  text.textContent = body;
-  const open = document.createElement('button');
-  open.type = 'button';
-  open.className = 'vb-log';
-  open.textContent = 'Command log';
+  const head = titleS(title, { tag: 'div' });
+  const open = button({ label: 'Command log', className: 'vb-log' });
   open.addEventListener('click', () => openDebugLog());
-  el.append(head, text, open);
-  document.body.prepend(el);
-  banners.set(key, { el, head, open, more: null, n: 1 });
-  return el;
+  const node = blocker('', { attrs: { class: 'validation-banner', role: 'alert' } });
+  node.append(head, ...String(body).split('\n').map((line) => prose(line)), open);
+  document.body.prepend(node);
+  banners.set(key, { el: node, head, open, more: null, n: 1 });
+  return node;
 }
 
 // Uncaught errors are invisible in most consoles players look at — capture them
@@ -169,35 +170,36 @@ export function logText() {
 
 /** Open the log viewer modal (usable over the in-run overlay). */
 export function openDebugLog() {
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil';
-  veil.style.zIndex = '700'; // above the in-run overlay
-  veil.innerHTML = `
-    <div class="modal debug-modal">
-      <h2>COMMAND LOG</h2>
-      <p class="set-note">The last ${MAX_ENTRIES} commands and results between the interface and the engine, newest at the bottom. Copy this into a bug report if the game misbehaves.</p>
-      <pre class="debug-log-body"></pre>
-      <div class="set-actions" style="gap:8px">
-        <button class="subtle" id="dbg-copy">Copy</button>
-        <button class="subtle" id="dbg-refresh">Refresh</button>
-        <button id="dbg-close">Close</button>
-      </div>
-    </div>`;
-  document.body.appendChild(veil);
+  const body = logBox('', { class: 'debug-log-body' });
+  const copy = button({ label: 'Copy', id: 'dbg-copy' });
+  const refresh = button({ label: 'Refresh', id: 'dbg-refresh' });
+  const close = button({ label: 'Close', weight: 'primary', id: 'dbg-close' });
+  const door = openModal({
+    size: 'lg',
+    className: 'debug-modal',
+    eyebrow: 'Advanced',
+    title: 'Command log',
+    body: el('div', { class: 'as-pane' }, [
+      flavour(`The last ${MAX_ENTRIES} commands and results between the interface and the engine, newest at the bottom. Copy this into a bug report if the game misbehaves.`),
+      body,
+    ]),
+    secondary: [copy, refresh],
+    primary: close,
+    footSize: 'short',
+  });
+  door.veil.style.zIndex = '700'; // above the in-run overlay
 
-  const body = veil.querySelector('.debug-log-body');
   const fill = () => {
     body.textContent = logText();
     body.scrollTop = body.scrollHeight;
   };
   fill();
 
-  veil.querySelector('#dbg-refresh').addEventListener('click', fill);
-  veil.querySelector('#dbg-copy').addEventListener('click', async () => {
-    const btn = veil.querySelector('#dbg-copy');
+  refresh.addEventListener('click', fill);
+  copy.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(logText());
-      btn.textContent = 'Copied';
+      copy.textContent = 'Copied';
     } catch (e) {
       // Clipboard blocked (e.g. file://): select the text for manual copy.
       const range = document.createRange();
@@ -205,13 +207,9 @@ export function openDebugLog() {
       const sel = getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
-      btn.textContent = 'Select+Ctrl C';
+      copy.textContent = 'Select+Ctrl C';
     }
-    setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    setTimeout(() => (copy.textContent = 'Copy'), 1500);
   });
-  const close = () => veil.remove();
-  veil.querySelector('#dbg-close').addEventListener('click', close);
-  veil.addEventListener('click', (e) => {
-    if (e.target === veil) close();
-  });
+  close.addEventListener('click', door.close);
 }

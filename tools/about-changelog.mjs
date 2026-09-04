@@ -1622,8 +1622,13 @@ async function selftest() {
       expect: 'Done did not return to title',
     },
     {
-      name: 'non-keyboard changelog row', file: 'src/ui/screens/about.js',
-      find: '<summary class="region-fold">', replace: '<div class="region-fold">', expect: 'Changelog did not mount',
+      // The changelog row is the kit's Fold (src/ui/kit/index.js): a <details>
+      // whose summary is a Row. The tag is decided in ONE place, so the plant
+      // lands there — a Row that is a <div> instead of a <summary> is a fold
+      // no keyboard can open, and the tool's wait for `details.about-change
+      // summary` is what catches it.
+      name: 'non-keyboard changelog row', file: 'src/ui/kit/index.js',
+      find: "row({ glyph: '›', label, status, tag: 'summary',", replace: "row({ glyph: '›', label, status, tag: 'div',", expect: 'Changelog did not mount',
     },
     {
       name: 'missing Pages development link', file: 'src/ui/screens/about.js',
