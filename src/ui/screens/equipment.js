@@ -526,7 +526,7 @@ function inventoryReveal(registries, row, {
     const actionVerb = action?.textContent?.trim() || 'equip this item';
     const actionInstruction = cardOwnsAction
       ? (holdDuration > 0
-        ? ` Press and hold this card to ${actionVerb}.`
+        ? ` Press and hold to ${actionVerb}.`
         : ` Activate this card to ${actionVerb}.`)
       : '';
     el.setAttribute('aria-label', comparisonPresentation === 'inline'
