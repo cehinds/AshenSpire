@@ -47,3 +47,8 @@ _site/
 # does not touch them, so a committed copy would go stale unnoticed.
 # Regenerate with: node tools/component-refs.mjs
 build/components/
+
+# Cut frames from the painted pose sheets (tools/painted-poses.mjs), the input to
+# the sprite step. The sprites it produces are committed under art/poses; these
+# are the intermediate, rebuilt by the recipe in art/poses/README.md.
+build/painted/

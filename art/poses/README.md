@@ -130,15 +130,23 @@ figure in all four sheets is used as painted. Facing is read from the hood
 opening, not from which way a weapon points: a wind-up pose draws the arm back
 the other way and still faces forward.
 
-```
+Run from the repository root. `art/poses` is cleared first because its manifest
+describes the whole folder and this is a deliberate replacement — the sprite step
+refuses a partial one.
+
+```sh
+SHEETS=docs/art-evidence/2026-09-04/pose-sheets
+OUT=build/painted
 # --poses names the 3x3 in reading order, and the two groups differ (above)
 FIGHT=stand,guard,attack1,attack2,attack3,cast,hit,idle,idle2
 MAGE=idle,guard,attack1,attack2,attack3,cast,hit,brace,idle2
-node tools/painted-poses.mjs --sheet ROGUE.png    --class rogue    --out build/painted --append --grid 3x3 --canvas 560x680 --poses $FIGHT
-node tools/painted-poses.mjs --sheet REAVER.png   --class reaver   --out build/painted --append --grid 3x3 --canvas 560x680 --poses $FIGHT --mirror attack2,idle
-node tools/painted-poses.mjs --sheet STARSEER.png --class starseer --out build/painted --append --grid 3x3 --canvas 560x680
-node tools/painted-poses.mjs --sheet HERALD.png   --class herald   --out build/painted --append --grid 3x3 --canvas 560x680 --poses $MAGE
-node tools/pose-sprites.mjs --in build/painted --out art/poses
+
+rm -rf "$OUT" && rm -f art/poses/*.webp art/poses/pose-sprites.manifest.json
+node tools/painted-poses.mjs --sheet "$SHEETS/rogue.png"    --class rogue    --out "$OUT" --append --grid 3x3 --canvas 560x680 --poses "$FIGHT"
+node tools/painted-poses.mjs --sheet "$SHEETS/reaver.png"   --class reaver   --out "$OUT" --append --grid 3x3 --canvas 560x680 --poses "$FIGHT" --mirror attack2,idle
+node tools/painted-poses.mjs --sheet "$SHEETS/starseer.png" --class starseer --out "$OUT" --append --grid 3x3 --canvas 560x680 --poses "$MAGE"
+node tools/painted-poses.mjs --sheet "$SHEETS/herald.png"   --class herald   --out "$OUT" --append --grid 3x3 --canvas 560x680 --poses "$MAGE"
+node tools/pose-sprites.mjs --in "$OUT" --out art/poses
 node tools/pose-ship.mjs
 ```
 
