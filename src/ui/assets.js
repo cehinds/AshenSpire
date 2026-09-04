@@ -54,37 +54,46 @@ export function enemySprite(enemyDef) {
   const el = document.createElement('div');
   const placeholder = () => {
     el.innerHTML = '';
-    // This REPLACES cssText, so the facing has to be restated or a missing
-    // render would quietly un-mirror the fighter. The glyph is text, though,
-    // and mirrored text reads as a rendering fault — so the placeholder keeps
-    // the wrapper unmirrored on purpose and says so here rather than looking
-    // like an omission.
+    // This drops the facing layer with the rest of the children, and that is
+    // right rather than an omission: what replaces the art is a GLYPH, and
+    // mirrored text reads as a rendering fault. A placeholder therefore always
+    // draws as-drawn.
     el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};border-radius:10px;` +
       `background:var(--panel);border:2px solid ${tint};display:flex;align-items:center;` +
       `justify-content:center;font-size:${px(tier.font)};position:relative;` +
       `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
     el.textContent = enemyDef.art || '☠';
   };
-  // THE MIRROR RIDES THIS WRAPPER, and both halves of that are deliberate.
+  // THE MIRROR GETS ITS OWN LAYER, because every other element here is
+  // something's animation target and a CSS animation on `transform` sits in a
+  // HIGHER CASCADE ORIGIN than a normal declaration — inline styles included.
+  // An animated transform REPLACES the inline one rather than composing, so
+  // wherever the mirror sits, an animation reaching that element un-mirrors the
+  // fighter for as long as it runs.
   //
-  // Not the combatant frame outside it, because that frame carries the block
-  // badge and the resource meters, and mirroring those would flip a number.
+  // The three elements that are NOT available, each ruled out by measurement:
+  //   · the combatant frame outside this one — it carries the block badge and
+  //     the resource meters, and mirroring those would flip a number.
+  //   · this wrapper — `styles/combat.css` aims `hitflash`/`hit-enemy`,
+  //     `wobble` and `crumble` at `.sprite > :first-child`, and this wrapper IS
+  //     that first child. Driven on the board: hitflash took the wrapper to
+  //     `matrix(1,0,0,1,12.8,0)`, wobble held `matrix(1,…)` for its whole
+  //     550ms, and crumble interpolated -1 → -0.43, flipping THROUGH the
+  //     mirror and ending the death animation facing the wrong way.
+  //   · the `img` — `sprite-idle` (infinite) and `enemy-lunge` are aimed at
+  //     `.combatant .sprite > img`. Those selectors are dead today, because
+  //     the img is a grandchild of `.sprite` rather than a child, so the mirror
+  //     would survive there by accident; the day that selector is repaired it
+  //     would break, and it is already carded to be repaired.
   //
-  // Not the `img` inside it either, which is where this started: a CSS
-  // animation on `transform` sits in a HIGHER CASCADE ORIGIN than a normal
-  // declaration, inline styles included, so an animated transform REPLACES an
-  // inline one rather than composing with it. `styles/combat.css` aims
-  // `sprite-idle` (infinite) and `styles/ui.css` aims `enemy-lunge` at
-  // `.combatant .sprite > img`, and the day either selector starts matching,
-  // an img-borne mirror would silently stop facing the fighter the right way.
-  // (Today neither matches — this function returns a wrapper, so the img is a
-  // GRANDCHILD of `.sprite` and both animations are dead selectors on dev as
-  // well as here. Measured: 8 samples across the idle period with
-  // `reduced-motion` false, the mirror holds and no animation is running on
-  // the img. That is luck, not design, and this wrapper is what makes it
-  // design: nothing animates the wrapper, so facing and motion cannot fight.)
+  // So: a layer between them that nothing selects. It carries the facing and
+  // only the facing.
   el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};position:relative;`
-    + 'display:flex;align-items:flex-end;justify-content:center;'
+    + 'display:flex;align-items:flex-end;justify-content:center;';
+  const facing = document.createElement('div');
+  facing.dataset.facing = spriteMirror(enemyDef.artFaces) ? 'mirrored' : 'as-drawn';
+  facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;'
+    + 'justify-content:center;'
     + (spriteMirror(enemyDef.artFaces) ? 'transform:scaleX(-1);' : '');
   const img = document.createElement('img');
   img.src = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
@@ -92,7 +101,8 @@ export function enemySprite(enemyDef) {
   img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
     `filter:drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
   img.addEventListener('error', placeholder);
-  el.appendChild(img);
+  facing.appendChild(img);
+  el.appendChild(facing);
   return el;
 }
 

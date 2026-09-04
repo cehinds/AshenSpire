@@ -152,6 +152,46 @@ if (ship) {
     process.exit(1);
   }
 
+  // AND SO IS THE MANIFEST — loaded here, before any bytes, for the same
+  // reason the anchor gate is here rather than at the end.
+  //
+  // This tool does not WRITE the inventory, it MERGES into one: it ships a
+  // SUBSET of the class set (three of four, the day this was written), so the
+  // classes it did not touch must keep their existing rows. That makes an
+  // existing, parseable manifest a precondition of the run and not an optional
+  // extra. Read at the end and merged only "if we found one", a missing or
+  // malformed file meant 15 WebPs on disk, `manifest: none found beside the
+  // output`, and exit 0 printing SHIPPED — art shipped with no inventory row,
+  // which is the one thing RUNBOOKS/art.md §3 exists to prevent, reported as
+  // success.
+  //
+  // A missing file is not treated as "first run, write a fresh one" ON PURPOSE:
+  // the manifest is tracked beside the sprites, so its absence means `--out`
+  // does not point at the sprite folder — the same typo that would otherwise
+  // scatter a set of WebPs somewhere nobody looks. Failing names it.
+  const manifestPath = join(outDir, 'class-sprites.manifest.json');
+  let manifest;
+  try {
+    manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  } catch (err) {
+    console.error(
+      `pose-cutout --ship: cannot read the asset manifest at ${manifestPath}\n`
+      + `  ${err.message}\n`
+      + '  This tool merges rows into that inventory rather than writing it, so\n'
+      + '  it stops before shipping instead of leaving sprites with no manifest\n'
+      + '  row (RUNBOOKS/art.md §3). If --out is not assets/sprites, that is the\n'
+      + '  bug; if the manifest is genuinely gone, restore it from git or\n'
+      + '  regenerate the whole set with tools/concept-cutout.mjs.',
+    );
+    process.exit(1);
+  }
+  if (!Array.isArray(manifest.assets)) {
+    console.error(
+      `pose-cutout --ship: ${manifestPath} has no \`assets\` array — nothing to merge into.`,
+    );
+    process.exit(1);
+  }
+
   // Cut every class first, because the scale below is shared and cannot be
   // chosen until the whole set has been measured.
   const shipCuts = {};
@@ -243,56 +283,53 @@ if (ship) {
   // back off the bytes that were just written. Only the rows for the classes
   // this run shipped are replaced — a class still on its old art keeps its own
   // row, because rewriting it would be claiming a recipe that did not run.
-  const manifestPath = join(outDir, 'class-sprites.manifest.json');
-  let manifest = null;
-  try { manifest = JSON.parse(readFileSync(manifestPath, 'utf8')); } catch { manifest = null; }
-  if (manifest && Array.isArray(manifest.assets)) {
-    const cwebpVersion = execFileSync('cwebp', ['-version'], { encoding: 'utf8' }).split('\n')[0].trim();
-    for (const { cls, cw, ch, dw, dh, ox, oy } of rows) {
-      for (const tid of Object.keys(TINTS)) {
-        const rel = `assets/sprites/${cls}_${tid}.webp`;
-        const bytes = readFileSync(join(outDir, `${cls}_${tid}.webp`));
-        const row = {
-          asset_id: `class.sprite.${cls}.${tid}`,
-          path: rel,
-          format: 'WebP, lossy q88, alpha_q 100, -exact (RGBA)',
-          dimensions: `${OUT_W}x${OUT_H}`,
-          bytes: bytes.length,
-          sha256: createHash('sha256').update(bytes).digest('hex'),
-          source_recipe: {
-            source_path: `${inDir}/${cls}/${poseName}.png`,
-            command: `node tools/pose-cutout.mjs --ship --in ${inDir} --out ${outDir}`,
-            steps: 'edge flood-fill background removal, enclosed-pocket removal, '
-              + 'detached-speck removal, 3x3 feather, un-premultiply against white, '
-              + `box-filter downscale, bottom-align on ${OUT_W}x${OUT_H}, `
-              + 'garment dye, accent rim all round (the figure is complete, so no crop edge)',
-            tint_rgb: `#${TINTS[tid].map((v) => v.toString(16).padStart(2, '0')).join('')}`,
-            tool_versions: { node: process.version, cwebp: cwebpVersion },
-          },
-          anchor: {
-            // The RESAMPLED box, not the source box. `ox`/`oy` are coordinates
-            // in the 450x570 destination, so recording the pre-scale `cw`/`ch`
-            // beside them described a 738px-tall figure inside a 570px image —
-            // internally inconsistent, and not what concept-cutout records.
-            content_box_px: { w: dw, h: dh },
-            placed_at_px: { x: ox, y: oy },
-            baseline: `bottom-aligned, ${MARGIN_BOTTOM * 100}% margin; shared scale across the shipped set`,
-            medallion_center_pct: medallionPct(cls),
-          },
-          runtime_budget: 'embedded base64 in the single-file build; WebP chosen over PNG for that reason',
-          fallback_id: `CLASS_SVG.${cls} — inline SVG silhouette in src/ui/assets.js`,
-          provenance: 'AI-generated for this project; CC0. See CREDITS.md and the source folder README.',
-          consumers: ['src/ui/assets.js renderedSpriteUrl()', 'src/ui/assets.js classSprite()'],
-        };
-        const at = manifest.assets.findIndex((x) => x.asset_id === row.asset_id);
-        if (at >= 0) manifest.assets[at] = row; else manifest.assets.push(row);
-      }
+  //
+  // `manifest` and `manifestPath` were loaded and validated BEFORE the cut, so
+  // by the time execution reaches here there is somewhere to merge into. The
+  // rows are still built here, because they hash the bytes.
+  const cwebpVersion = execFileSync('cwebp', ['-version'], { encoding: 'utf8' }).split('\n')[0].trim();
+  for (const { cls, cw, ch, dw, dh, ox, oy } of rows) {
+    for (const tid of Object.keys(TINTS)) {
+      const rel = `assets/sprites/${cls}_${tid}.webp`;
+      const bytes = readFileSync(join(outDir, `${cls}_${tid}.webp`));
+      const row = {
+        asset_id: `class.sprite.${cls}.${tid}`,
+        path: rel,
+        format: 'WebP, lossy q88, alpha_q 100, -exact (RGBA)',
+        dimensions: `${OUT_W}x${OUT_H}`,
+        bytes: bytes.length,
+        sha256: createHash('sha256').update(bytes).digest('hex'),
+        source_recipe: {
+          source_path: `${inDir}/${cls}/${poseName}.png`,
+          command: `node tools/pose-cutout.mjs --ship --in ${inDir} --out ${outDir}`,
+          steps: 'edge flood-fill background removal, enclosed-pocket removal, '
+            + 'detached-speck removal, 3x3 feather, un-premultiply against white, '
+            + `box-filter downscale, bottom-align on ${OUT_W}x${OUT_H}, `
+            + 'garment dye, accent rim all round (the figure is complete, so no crop edge)',
+          tint_rgb: `#${TINTS[tid].map((v) => v.toString(16).padStart(2, '0')).join('')}`,
+          tool_versions: { node: process.version, cwebp: cwebpVersion },
+        },
+        anchor: {
+          // The RESAMPLED box, not the source box. `ox`/`oy` are coordinates
+          // in the 450x570 destination, so recording the pre-scale `cw`/`ch`
+          // beside them described a 738px-tall figure inside a 570px image —
+          // internally inconsistent, and not what concept-cutout records.
+          content_box_px: { w: dw, h: dh },
+          placed_at_px: { x: ox, y: oy },
+          baseline: `bottom-aligned, ${MARGIN_BOTTOM * 100}% margin; shared scale across the shipped set`,
+          medallion_center_pct: medallionPct(cls),
+        },
+        runtime_budget: 'embedded base64 in the single-file build; WebP chosen over PNG for that reason',
+        fallback_id: `CLASS_SVG.${cls} — inline SVG silhouette in src/ui/assets.js`,
+        provenance: 'AI-generated for this project; CC0. See CREDITS.md and the source folder README.',
+        consumers: ['src/ui/assets.js renderedSpriteUrl()', 'src/ui/assets.js classSprite()'],
+      };
+      const at = manifest.assets.findIndex((x) => x.asset_id === row.asset_id);
+      if (at >= 0) manifest.assets[at] = row; else manifest.assets.push(row);
     }
-    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-    console.log(`manifest: ${rows.length * Object.keys(TINTS).length} row(s) rewritten in ${manifestPath}`);
-  } else {
-    console.log('manifest: none found beside the output — nothing to rewrite');
   }
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  console.log(`manifest: ${rows.length * Object.keys(TINTS).length} row(s) rewritten in ${manifestPath}`);
 
   console.log(`\nSHIPPED ${rows.length} class(es) x 5 tints to ${outDir}`);
   console.log(`shared scale ${scale.toFixed(4)} from tallest ${tallest}px, widest ${widest}px`);
