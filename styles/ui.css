@@ -2548,15 +2548,6 @@ button.ev-choice {
   .set-action-status { max-width: 11rem; text-align: right; }
 }
 
-/* Sunna's tap-target finding, taken in the cheapest moment it will ever have —
-   and ONLY while the experiment is on, so "off" stays today exactly and the
-   control in this comparison is a real control. */
-:root[data-quicknav='mirror'] .topbar .topbar-btn,
-:root[data-quicknav='switcher'] .topbar .topbar-btn {
-  width: auto; height: auto;
-  min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;
-}
-
 /* ---- profile notice (#67): the worst morning a person has with this game ----
    Sunna's gate D7: button weight must be DESIGNED, not an accident of wrapping.
    The destructive action sits on its own row, always subtle, in every state —
