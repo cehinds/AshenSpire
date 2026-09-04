@@ -158,12 +158,13 @@ export function artWell({ glyph: g = '', src = '', alt = '', small = false, cool
   return el('div', { ...attrs, class: cls('as-artwell', small ? 'sm' : '', cool ? 'cool' : '', attrs.class), 'aria-hidden': src ? null : 'true' },
     src ? el('img', { src, alt }) : g);
 }
-export function detailCard({ eyebrow: eb = '', name = '', line = '', meta = '', muted = false, attrs = {} } = {}) {
-  return el('div', { ...attrs, class: cls('as-detailcard', muted ? 'muted' : '', attrs.class) }, [
+export function detailCard({ eyebrow: eb = '', name = '', line = '', meta = '', muted = false, children = null, tag = 'div', attrs = {} } = {}) {
+  return el(tag, { ...attrs, class: cls('as-detailcard', muted ? 'muted' : '', attrs.class) }, [
     eb ? el('span', { class: 'dc-eyebrow', text: eb }) : null,
     name ? el('p', { class: 'dc-name', text: name }) : null,
     line ? el('div', { class: 'dc-line', text: line }) : null,
     meta ? el('span', { class: 'dc-meta', text: meta }) : null,
+    children,
   ]);
 }
 
@@ -193,7 +194,7 @@ export function row({ glyph: g = '', label = '', labelNode = null, status = '', 
  * optionCard({ glyph, name, badge, description, meta, body, selected, disabled, arrow, attrs, className })
  * Glyph + Title·S + prose. Selection changes colour, never footprint.
  */
-export function optionCard({ glyph: g = '', name = '', badge = null, description = '', meta = '', body = null, trail = [], selected = false, disabled = false, arrow = true, tag = 'button', attrs = {}, className = '' } = {}) {
+export function optionCard({ glyph: g = '', art = null, name = '', badge = null, description = '', meta = '', body = null, trail = [], selected = false, disabled = false, arrow = true, tag = 'button', attrs = {}, className = '' } = {}) {
   const trailNodes = (Array.isArray(trail) ? trail : [trail]).filter(Boolean);
   const node = el(tag, {
     ...attrs, type: tag === 'button' ? 'button' : null,
@@ -202,7 +203,7 @@ export function optionCard({ glyph: g = '', name = '', badge = null, description
     'aria-checked': attrs.role === 'radio' ? (selected ? 'true' : 'false') : null,
     'aria-disabled': disabled ? 'true' : null,
   }, [
-    g ? el('span', { class: 'og', 'aria-hidden': 'true', text: g }) : null,
+    art || (g ? el('span', { class: 'og', 'aria-hidden': 'true', text: g }) : null),
     el('span', { class: 'ob' }, [
       name ? el('span', { class: 'on' }, [name, badge]) : null,
       description ? el('span', { class: 'od', text: description }) : null,
@@ -216,6 +217,27 @@ export function optionCard({ glyph: g = '', name = '', badge = null, description
 }
 export const options = (cards, attrs = {}) => el('div', { ...attrs, class: cls('as-options', attrs.class) }, cards);
 export const optionRow = (card, trailing, attrs = {}) => el('div', { ...attrs, class: cls('as-optionrow', attrs.class) }, [card, trailing]);
+/** optionGrid(cards) — OptionCards in as many columns as fit (`--opt-min` is the column floor). */
+export const optionGrid = (cards, attrs = {}) => el('div', { ...attrs, class: cls('as-options grid', attrs.class) }, cards);
+/**
+ * face({ name, badge, description, meta, trail, attrs, className }) — the CONTENT of an option
+ * card as its own element, for a card whose host (a disclosure button, a hold
+ * target) must stay bare so the face can paint the whole surface. Hang it on
+ * an `.as-option.hosts-face`.
+ */
+export function face({ name = '', nameNode = null, badge = null, description = '', meta = '', body = null, trail = [], art = null, tag = 'span', attrs = {}, className = '' } = {}) {
+  const trailNodes = (Array.isArray(trail) ? trail : [trail]).filter(Boolean);
+  return el(tag, { ...attrs, class: cls('as-face', className) }, [
+    art,
+    el('span', { class: 'ob' }, [
+      nameNode || (name ? el('span', { class: 'on' }, [name, badge]) : null),
+      description ? el('span', { class: 'od', text: description }) : null,
+      meta ? el('span', { class: 'om', text: meta }) : null,
+      body,
+    ]),
+    trailNodes.length ? el('span', { class: 'r-trail' }, trailNodes) : null,
+  ]);
+}
 
 // ---- number atoms -----------------------------------------------------------
 export const statPair = ({ key, value, attrs = {} } = {}) => el('span', { ...attrs, class: cls('as-statpair', attrs.class) }, [
@@ -236,6 +258,45 @@ export function delta({ from, to, attrs = {} } = {}) {
   ]);
 }
 export const blocker = (text, { placement = '', attrs = {} } = {}) => el('div', { ...attrs, class: cls('as-blocker', placement, attrs.class), text });
+/** statRow({ name, hint, values, drill, flat, tag, attrs }) — body E's row: the group's name and kind left, its StatPairs / deltas right. */
+export function statRow({ name = '', nameNode = null, hint = '', hintNode = null, values = [], drill = false, flat = false, tag = 'div', attrs = {}, className = '' } = {}) {
+  const valueNodes = (Array.isArray(values) ? values : [values]).filter(Boolean);
+  return el(tag, { ...attrs, class: cls('as-statrow', drill ? 'drill' : '', flat ? 'flat' : '', className) }, [
+    el('span', { class: 'sr-id' }, [
+      nameNode || (name ? el('span', { class: 'sr-name', text: name }) : null),
+      hintNode || (hint ? el('span', { class: 'sr-hint', text: hint }) : null),
+    ]),
+    valueNodes.length ? el('span', { class: 'sr-vals' }, valueNodes) : null,
+  ]);
+}
+/**
+ * stepper({ value, dec, inc, attrs }) — a −/count/+ unit of two tap-floor buttons.
+ * `dec`/`inc`: { label, disabled, attrs }. Disabled is `aria-disabled`, never
+ * `disabled`: a disabled button fires no pointer events, so its tooltip could
+ * never say why it will not move.
+ */
+export function stepper({ value, dec = {}, inc = {}, valueClass = '', valueAttrs = {}, attrs = {}, className = '' } = {}) {
+  const step = (glyphChar, spec) => el('button', {
+    ...(spec.attrs || {}), type: 'button', class: cls('as-btn', spec.className), 'aria-label': spec.label || null,
+    'aria-disabled': spec.disabled ? 'true' : 'false', text: glyphChar,
+  });
+  return el('span', { ...attrs, class: cls('as-stepper', className) }, [
+    step('−', dec),
+    el('b', { ...valueAttrs, class: cls('st-value', valueClass), text: String(value) }),
+    step('+', inc),
+  ]);
+}
+/**
+ * tray({ edge, collapsed, sized, head, body, tag, attrs }) — the Folding Tray's
+ * frame: a docked region that folds to its header. `head` is a Row (caret
+ * Glyph + Title·S + StatusText) beside an IconButton; `body` is a Pane.
+ */
+export function tray({ edge = 'bottom', collapsed = false, sized = false, head = null, body = null, tag = 'section', attrs = {}, className = '' } = {}) {
+  return el(tag, {
+    ...attrs, class: cls('as-tray', className),
+    dataset: { ...(attrs.dataset || {}), trayEdge: edge, collapsed: collapsed ? '1' : '0', sized: sized ? '1' : '0' },
+  }, [head, body]);
+}
 
 // ---- assemblies -------------------------------------------------------------
 /** pane({ eyebrow, title, subtitle, children, attrs }) — Eyebrow + Title·M + Subtitle + Hairline + rows. */
