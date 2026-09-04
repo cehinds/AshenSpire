@@ -13,8 +13,7 @@ import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
 import { armHold, beatArmer } from '../../framework/optionDecision.js';
-import { hideTooltip } from './tooltip.js';
-import { mountTitleSaveSlotTooltip } from './titleSaveSlotTooltip.js';
+import { attachTooltip, hideTooltip, esc } from './tooltip.js';
 import {
   el, html, modalHead, modalFooter, button, iconButton, optionCard, optionRow, options, decide, detailCard, ornament, pill,
 } from '../kit/index.js';
@@ -45,7 +44,7 @@ export function slotOption({ slot, summary, selected = false, selectable = true,
     className: `title-slot-pick${summary ? ' is-filled' : ''}`,
     attrs: {
       dataset: { slotPick: slot },
-      ...(hint ? { title: hint.title, 'aria-label': hint.label } : {}),
+      ...(hint ? { 'aria-label': hint.label } : {}),
     },
   });
   card.querySelector('.ob').classList.add('title-slot-copy');
@@ -110,7 +109,7 @@ const SLOT_DECISIONS = {
   'load:occupied': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-review', title: (n) => `Load slot ${n}?`, prompt: 'Load this saved climb now?', back: 'Back to Saves', confirm: 'Load Save', action: 'review-load', card: true, danger: false },
   'load:empty': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-empty', title: (n) => `Slot ${n} is empty`, prompt: 'Nothing is saved here yet. Start a new climb in this slot?', back: 'Back to Saves', confirm: 'New Game', action: 'review-new', card: false, danger: false },
   'new:empty': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-start', title: (n) => `Start in slot ${n}?`, prompt: 'This slot is empty. The new climb will be saved here.', back: 'Back to Slots', confirm: 'Start', action: 'review-new', card: false, danger: false },
-  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-overwrite', title: (n) => `Overwrite slot ${n}?`, prompt: 'Starting here erases this saved climb. There is no way back.', back: 'Back to Slots', confirm: 'Overwrite', action: 'review-new', card: true, danger: true },
+  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-overwrite', title: (n) => `Overwrite slot ${n}?`, prompt: 'Starting here deletes this saved climb and begins a new one. There is no way back.', back: 'Back to Slots', confirm: 'Overwrite', action: 'review-new', card: true, danger: true },
 };
 
 export function slotDecisionDoor({ kind, slot, summary = null }) {
@@ -146,6 +145,24 @@ export function slotDecisionDoor({ kind, slot, summary = null }) {
     dataset: { size: 'sm', component: UI.titleMenuModal, variant: spec.variant },
     role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'title-modal-heading',
   }, [head, body, foot]);
+}
+
+/**
+ * attachSlotTooltips(root, slots) → the kit's tooltip on every slot row: the
+ * save's facts, then what a tap and a hold do. One tooltip machine for the
+ * whole game (components/tooltip.js) — the title's own pinned singleton is gone.
+ */
+export function attachSlotTooltips(root, slots, { kind = 'load' } = {}) {
+  root.querySelectorAll('[data-slot-pick]').forEach((control) => {
+    const slot = Number(control.dataset.slotPick);
+    const summary = slots.find((record) => record.slot === slot)?.summary || null;
+    const what = summary
+      ? (kind === 'new' ? 'Tap to start a new game here — it replaces this save.' : 'Tap to review this save. Hold to load it now.')
+      : 'Tap to start a new game here.';
+    attachTooltip(control, () => (summary
+      ? `<div class="tt-title">Slot ${slot} · ${esc(summary.className)}</div>${esc(slotFacts(summary))}<div class="ti-detail">${esc(what)}</div>`
+      : `<div class="tt-title">Slot ${slot}</div>Empty.<div class="ti-detail">${esc(what)}</div>`));
+  });
 }
 
 export function closeSaveSlotSelector({ restoreFocus = true } = {}) {
@@ -229,13 +246,9 @@ export function openSaveSlotSelector({
       const { slot, selectable, selected } = properties;
       const record = slots.find((candidate) => candidate.slot === slot);
       const summary = record?.summary || null;
-      const hint = summary ? {
-        title: `Select slot ${slot}. Hold to ${inlineReview ? 'load now' : 'review this load'}; activate the selected slot again to review.`,
-        label: `Slot ${slot}, ${summary.className}. Hold to ${inlineReview ? 'load now' : 'review this load'}; activate twice to review.`,
-      } : {
-        title: `Slot ${slot} is empty. Select it, then Continue to start a new climb here.`,
-        label: `Slot ${slot}, empty. Activate twice to start a new game here.`,
-      };
+      const hint = summary
+        ? { label: `Slot ${slot}, ${summary.className}. Tap to review this save; hold to load it now.` }
+        : { label: `Slot ${slot}, empty. Tap to start a new game here.` };
       return slotOption({ slot, summary, selected, selectable, deletable: !!(onDelete && summary), hint });
     });
 
@@ -327,21 +340,19 @@ export function openSaveSlotSelector({
       });
     }
 
-    tooltipCleanup = mountTitleSaveSlotTooltip({
-      root: veil,
-      owner: selectedButton(),
-    });
+    attachSlotTooltips(veil, slots, { kind: 'load' });
   };
 
   const activateSlot = (slot) => {
     hideTooltip();
-    if (selectedSlot === slot && activatedLoadSlot === slot) {
-      if (inlineReview) openReview(slot);
-      else requestLoad(slot, 'repeat');
-      return;
-    }
+    const repeat = selectedSlot === slot && activatedLoadSlot === slot;
     selectedSlot = slot;
     activatedLoadSlot = slot;
+    // A TAP ASKS (Constantine, 2026-09-04): the decision door is the
+    // confirmation, so the first activation opens it; Back returns to the
+    // list with this slot selected. A hold on an occupied slot still loads.
+    if (inlineReview) { openReview(slot); return; }
+    if (repeat) { requestLoad(slot, 'repeat'); return; }
     render();
     focus(`[data-slot-pick="${selectedSlot}"]`);
   };

@@ -191,6 +191,10 @@ try {
     'NEW-SLOT-INITIAL', `next empty slot is selected, focused, and actionable (${JSON.stringify(initial)})`);
 
   await click('[data-slot-pick="3"]');
+  // A tap asks: the decision door opens on slot 3; Back returns with it selected.
+  await until(`!!document.querySelector('[data-title-action="review-new"][data-action-slot="3"]')`, 'decision door for slot 3');
+  await click('[data-title-action="review-back"]');
+  await until(`!!document.querySelector('[data-slot-pick="3"]')`, 'slot list after Back');
   const changed = await ev(`(() => {
     const row=document.querySelector('[data-slot-pick="3"]')?.closest('.title-slot-row');
     const button=document.querySelector('[data-slot-pick="3"]');

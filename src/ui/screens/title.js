@@ -7,7 +7,7 @@
 import { beatArmer } from '../../framework/optionDecision.js';
 import { buildStampHtml } from '../components/buildstamp.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
-import { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
+import { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor, attachSlotTooltips } from '../components/saveSlotSelector.js';
 import { html, titleMenu } from '../kit/index.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
@@ -39,6 +39,7 @@ export function mountTitle(app, {
   onCustom,
   onLan,
   onCompendium,
+  reopen = null, // 'new' | 'load' — re-open that door after a remount (a delete returns to where it was)
 }) {
   const occupied = slots.filter(({ summary }) => !!summary);
   let modal = null;
@@ -159,7 +160,7 @@ export function mountTitle(app, {
       returnFocusElement: launcher,
       onRequestLoad: (slot) => onContinue(slot),
       onRequestNew: (slot) => onNew(slot),
-      onDelete,
+      onDelete: (slot) => onDelete(slot, 'load'),
     });
   };
 
@@ -184,16 +185,16 @@ export function mountTitle(app, {
   };
 
   const activateSlot = (slot) => {
+    // A tap asks: the decision door (Start / Overwrite) opens on the slot.
     selectedSlot = slot;
-    render();
-    focusModal(`[data-slot-pick="${selectedSlot}"]`);
+    openNewReview(slot);
   };
 
   const wireDelete = (root) => {
     if (!onDelete) return;
     const arm = beatArmer(meta, registries);
     root.querySelectorAll('.title-slot-delete').forEach((button) => {
-      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slotDelete) });
+      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slotDelete, 'new') });
       button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
     });
   };
@@ -255,6 +256,7 @@ export function mountTitle(app, {
         activateSlot(+button.dataset.slotPick);
       });
     });
+    if (modal) attachSlotTooltips(root, slots, { kind: modal });
     wireDelete(root);
     if (onHistory) void onHistory;
     if (onProfile) void onProfile;
@@ -263,6 +265,10 @@ export function mountTitle(app, {
   }
 
   render();
+  // Back where the player was: a delete remounts the title, and the door it
+  // was done from re-opens with the slot now empty.
+  if (reopen === 'new') openModal('new');
+  else if (reopen === 'load') openLoadSelector(app.querySelector('[data-title-action="load"]'));
 
   window.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;

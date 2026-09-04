@@ -1026,7 +1026,7 @@ function showCollapsedTitle() {
   showTitle();
 }
 
-function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true } = {}) {
+function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true, reopen = null } = {}) {
   if (showProfileNoticeIfNeeded()) return;
   audio.music('title');
   resetArmouryTraySession();
@@ -1039,15 +1039,17 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   const slots = saveSlotRecords();
   mountTitle(app, {
     slots,
+    reopen,
     // The delete beat rides the shared machinery now: the armer reads the
     // dial from meta.settings and the table from the registries.
     meta: saves.loadMeta(),
     registries,
     onContinue: (slot) => resumeRun(slot),
     onNew: (slot) => showCustomize(slot),
-    onDelete: (slot) => {
+    // A delete returns to the door it came from, with the slot now empty.
+    onDelete: (slot, from = null) => {
       saves.clearRun(slot);
-      showTitle();
+      showTitle({ reopen: from });
     },
     onHistory: showHistory,
     onCompendium: showCompendium,

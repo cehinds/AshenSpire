@@ -117,11 +117,6 @@
       "id": "fecde7a543a0e80c"
     },
     {
-      "tool": "tools/startup-gate.mjs",
-      "target": "src/ui/components/saveSlotSelector.js",
-      "id": "8b64c6f508683d30"
-    },
-    {
       "tool": "tools/text-geometry.mjs",
       "target": "AshenSpire.html",
       "id": "1353252b7cd6554a"
@@ -323,7 +318,7 @@
     },
     "tools/startup-gate.mjs": {
       "count": 26,
-      "digest": "36a530720670cced"
+      "digest": "9abfde2c2b0b2048"
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,
@@ -352,10 +347,6 @@
     "tools/title-new-slot.mjs": {
       "count": 4,
       "digest": "edaf8f33b2ee919a"
-    },
-    "tools/title-save-slot-tooltip.mjs": {
-      "count": 14,
-      "digest": "0ed6c230774b7fc6"
     },
     "tools/tutorial-reach.mjs": {
       "count": 1,

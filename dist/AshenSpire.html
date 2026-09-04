@@ -9038,7 +9038,7 @@ function showCollapsedTitle() {
   showTitle();
 }
 
-function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true } = {}) {
+function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true, reopen = null } = {}) {
   if (showProfileNoticeIfNeeded()) return;
   audio.music('title');
   resetArmouryTraySession();
@@ -9051,15 +9051,17 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   const slots = saveSlotRecords();
   mountTitle(app, {
     slots,
+    reopen,
     // The delete beat rides the shared machinery now: the armer reads the
     // dial from meta.settings and the table from the registries.
     meta: saves.loadMeta(),
     registries,
     onContinue: (slot) => resumeRun(slot),
     onNew: (slot) => showCustomize(slot),
-    onDelete: (slot) => {
+    // A delete returns to the door it came from, with the slot now empty.
+    onDelete: (slot, from = null) => {
       saves.clearRun(slot);
-      showTitle();
+      showTitle({ reopen: from });
     },
     onHistory: showHistory,
     onCompendium: showCompendium,
@@ -47990,7 +47992,7 @@ Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_
 const { beatArmer } = require("src/framework/optionDecision.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { hudQuickSettingsHtml, wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
-const { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor } = require("src/ui/components/saveSlotSelector.js");
+const { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor, attachSlotTooltips } = require("src/ui/components/saveSlotSelector.js");
 const { html, titleMenu } = require("src/ui/kit/index.js");
 const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
 const { saveSlotSelectionModel } = require("src/ui/models/SaveSlotSelectionModel.js");
@@ -48022,6 +48024,7 @@ function mountTitle(app, {
   onCustom,
   onLan,
   onCompendium,
+  reopen = null, // 'new' | 'load' — re-open that door after a remount (a delete returns to where it was)
 }) {
   const occupied = slots.filter(({ summary }) => !!summary);
   let modal = null;
@@ -48142,7 +48145,7 @@ function mountTitle(app, {
       returnFocusElement: launcher,
       onRequestLoad: (slot) => onContinue(slot),
       onRequestNew: (slot) => onNew(slot),
-      onDelete,
+      onDelete: (slot) => onDelete(slot, 'load'),
     });
   };
 
@@ -48167,16 +48170,16 @@ function mountTitle(app, {
   };
 
   const activateSlot = (slot) => {
+    // A tap asks: the decision door (Start / Overwrite) opens on the slot.
     selectedSlot = slot;
-    render();
-    focusModal(`[data-slot-pick="${selectedSlot}"]`);
+    openNewReview(slot);
   };
 
   const wireDelete = (root) => {
     if (!onDelete) return;
     const arm = beatArmer(meta, registries);
     root.querySelectorAll('.title-slot-delete').forEach((button) => {
-      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slotDelete) });
+      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slotDelete, 'new') });
       button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
     });
   };
@@ -48238,6 +48241,7 @@ function mountTitle(app, {
         activateSlot(+button.dataset.slotPick);
       });
     });
+    if (modal) attachSlotTooltips(root, slots, { kind: modal });
     wireDelete(root);
     if (onHistory) void onHistory;
     if (onProfile) void onProfile;
@@ -48246,6 +48250,10 @@ function mountTitle(app, {
   }
 
   render();
+  // Back where the player was: a delete remounts the title, and the door it
+  // was done from re-opens with the slot now empty.
+  if (reopen === 'new') openModal('new');
+  else if (reopen === 'load') openLoadSelector(app.querySelector('[data-title-action="load"]'));
 
   window.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
@@ -54283,7 +54291,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '02c285a71e';
+const SOURCE = 'f7c00db4a9';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -54317,7 +54325,7 @@ const SOURCE = '02c285a71e';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '22';
+const ORDINAL = '23';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58810,8 +58818,7 @@ const { saveSlotSelectionModel } = require("src/ui/models/SaveSlotSelectionModel
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { focusElement } = require("src/ui/input.js");
 const { armHold, beatArmer } = require("src/framework/optionDecision.js");
-const { hideTooltip } = require("src/ui/components/tooltip.js");
-const { mountTitleSaveSlotTooltip } = require("src/ui/components/titleSaveSlotTooltip.js");
+const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.js");
 const { el, html, modalHead, modalFooter, button, iconButton, optionCard, optionRow, options, decide, detailCard, ornament, pill } = require("src/ui/kit/index.js");
 
 
@@ -58842,7 +58849,7 @@ function slotOption({ slot, summary, selected = false, selectable = true, deleta
     className: `title-slot-pick${summary ? ' is-filled' : ''}`,
     attrs: {
       dataset: { slotPick: slot },
-      ...(hint ? { title: hint.title, 'aria-label': hint.label } : {}),
+      ...(hint ? { 'aria-label': hint.label } : {}),
     },
   });
   card.querySelector('.ob').classList.add('title-slot-copy');
@@ -58907,7 +58914,7 @@ const SLOT_DECISIONS = {
   'load:occupied': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-review', title: (n) => `Load slot ${n}?`, prompt: 'Load this saved climb now?', back: 'Back to Saves', confirm: 'Load Save', action: 'review-load', card: true, danger: false },
   'load:empty': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-empty', title: (n) => `Slot ${n} is empty`, prompt: 'Nothing is saved here yet. Start a new climb in this slot?', back: 'Back to Saves', confirm: 'New Game', action: 'review-new', card: false, danger: false },
   'new:empty': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-start', title: (n) => `Start in slot ${n}?`, prompt: 'This slot is empty. The new climb will be saved here.', back: 'Back to Slots', confirm: 'Start', action: 'review-new', card: false, danger: false },
-  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-overwrite', title: (n) => `Overwrite slot ${n}?`, prompt: 'Starting here erases this saved climb. There is no way back.', back: 'Back to Slots', confirm: 'Overwrite', action: 'review-new', card: true, danger: true },
+  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-overwrite', title: (n) => `Overwrite slot ${n}?`, prompt: 'Starting here deletes this saved climb and begins a new one. There is no way back.', back: 'Back to Slots', confirm: 'Overwrite', action: 'review-new', card: true, danger: true },
 };
 
 function slotDecisionDoor({ kind, slot, summary = null }) {
@@ -58943,6 +58950,24 @@ function slotDecisionDoor({ kind, slot, summary = null }) {
     dataset: { size: 'sm', component: UI.titleMenuModal, variant: spec.variant },
     role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'title-modal-heading',
   }, [head, body, foot]);
+}
+
+/**
+ * attachSlotTooltips(root, slots) → the kit's tooltip on every slot row: the
+ * save's facts, then what a tap and a hold do. One tooltip machine for the
+ * whole game (components/tooltip.js) — the title's own pinned singleton is gone.
+ */
+function attachSlotTooltips(root, slots, { kind = 'load' } = {}) {
+  root.querySelectorAll('[data-slot-pick]').forEach((control) => {
+    const slot = Number(control.dataset.slotPick);
+    const summary = slots.find((record) => record.slot === slot)?.summary || null;
+    const what = summary
+      ? (kind === 'new' ? 'Tap to start a new game here — it replaces this save.' : 'Tap to review this save. Hold to load it now.')
+      : 'Tap to start a new game here.';
+    attachTooltip(control, () => (summary
+      ? `<div class="tt-title">Slot ${slot} · ${esc(summary.className)}</div>${esc(slotFacts(summary))}<div class="ti-detail">${esc(what)}</div>`
+      : `<div class="tt-title">Slot ${slot}</div>Empty.<div class="ti-detail">${esc(what)}</div>`));
+  });
 }
 
 function closeSaveSlotSelector({ restoreFocus = true } = {}) {
@@ -59026,13 +59051,9 @@ function openSaveSlotSelector({
       const { slot, selectable, selected } = properties;
       const record = slots.find((candidate) => candidate.slot === slot);
       const summary = record?.summary || null;
-      const hint = summary ? {
-        title: `Select slot ${slot}. Hold to ${inlineReview ? 'load now' : 'review this load'}; activate the selected slot again to review.`,
-        label: `Slot ${slot}, ${summary.className}. Hold to ${inlineReview ? 'load now' : 'review this load'}; activate twice to review.`,
-      } : {
-        title: `Slot ${slot} is empty. Select it, then Continue to start a new climb here.`,
-        label: `Slot ${slot}, empty. Activate twice to start a new game here.`,
-      };
+      const hint = summary
+        ? { label: `Slot ${slot}, ${summary.className}. Tap to review this save; hold to load it now.` }
+        : { label: `Slot ${slot}, empty. Tap to start a new game here.` };
       return slotOption({ slot, summary, selected, selectable, deletable: !!(onDelete && summary), hint });
     });
 
@@ -59124,21 +59145,19 @@ function openSaveSlotSelector({
       });
     }
 
-    tooltipCleanup = mountTitleSaveSlotTooltip({
-      root: veil,
-      owner: selectedButton(),
-    });
+    attachSlotTooltips(veil, slots, { kind: 'load' });
   };
 
   const activateSlot = (slot) => {
     hideTooltip();
-    if (selectedSlot === slot && activatedLoadSlot === slot) {
-      if (inlineReview) openReview(slot);
-      else requestLoad(slot, 'repeat');
-      return;
-    }
+    const repeat = selectedSlot === slot && activatedLoadSlot === slot;
     selectedSlot = slot;
     activatedLoadSlot = slot;
+    // A TAP ASKS (Constantine, 2026-09-04): the decision door is the
+    // confirmation, so the first activation opens it; Back returns to the
+    // list with this slot selected. A hold on an occupied slot still loads.
+    if (inlineReview) { openReview(slot); return; }
+    if (repeat) { requestLoad(slot, 'repeat'); return; }
     render();
     focus(`[data-slot-pick="${selectedSlot}"]`);
   };
@@ -59200,7 +59219,7 @@ function saveSlotCopyHtml({ slot, summary }) {
 }
 
 
-Object.assign(module.exports, { slotFacts, slotOption, slotDoor, slotDecisionDoor, closeSaveSlotSelector, openSaveSlotSelector, saveSlotCopyHtml });
+Object.assign(module.exports, { slotFacts, slotOption, slotDoor, slotDecisionDoor, attachSlotTooltips, closeSaveSlotSelector, openSaveSlotSelector, saveSlotCopyHtml });
 
 },
 "src/ui/models/SaveSlotSelectionModel.js": function (module, exports, require) {
@@ -59284,339 +59303,6 @@ function saveSlotSelectionModel(slots, { kind, selectedSlot = null } = {}) {
 
 
 Object.assign(module.exports, { saveSlotSelectionModel });
-
-},
-"src/ui/components/titleSaveSlotTooltip.js": function (module, exports, require) {
-// Title/save-slot-only tooltip adapter.
-//
-// This deliberately owns presentation geometry only. The selected save-slot
-// button remains the focus, input, activation, hold, and load authority.
-
-const TITLE_SAVE_SLOT_TOOLTIP_COPY = 'Activate again—or hold—to load.';
-
-const TOOLTIP_ID = 'title-save-slot-tooltip';
-const NARROW_MAX_WIDTH = 480;
-const FLOAT_WIDTH = 252;
-const GAP = 12;
-let activeCleanup = null;
-
-const numberValue = (value) => {
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
-};
-
-function measuredSafeInsets() {
-  const rootStyle = getComputedStyle(document.documentElement);
-  const explicit = (side) => numberValue(rootStyle.getPropertyValue(`--title-tooltip-safe-${side}`));
-  const probe = document.createElement('div');
-  probe.setAttribute('aria-hidden', 'true');
-  Object.assign(probe.style, {
-    position: 'fixed',
-    visibility: 'hidden',
-    pointerEvents: 'none',
-    paddingTop: 'env(safe-area-inset-top, 0px)',
-    paddingRight: 'env(safe-area-inset-right, 0px)',
-    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-    paddingLeft: 'env(safe-area-inset-left, 0px)',
-  });
-  document.body.appendChild(probe);
-  const style = getComputedStyle(probe);
-  const safe = {
-    top: Math.max(explicit('top'), numberValue(style.paddingTop)),
-    right: Math.max(explicit('right'), numberValue(style.paddingRight)),
-    bottom: Math.max(explicit('bottom'), numberValue(style.paddingBottom)),
-    left: Math.max(explicit('left'), numberValue(style.paddingLeft)),
-  };
-  probe.remove();
-  return safe;
-}
-
-function visualPlan() {
-  const viewport = window.visualViewport || {
-    offsetLeft: 0,
-    offsetTop: 0,
-    width: window.innerWidth,
-    height: window.innerHeight,
-  };
-  const safe = measuredSafeInsets();
-  return {
-    width: viewport.width,
-    height: viewport.height,
-    safe,
-    bounds: {
-      left: viewport.offsetLeft + safe.left,
-      top: viewport.offsetTop + safe.top,
-      right: viewport.offsetLeft + viewport.width - safe.right,
-      bottom: viewport.offsetTop + viewport.height - safe.bottom,
-    },
-  };
-}
-
-const intersects = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
-  * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)) > 0.01;
-
-const inside = (candidate, size, bounds) => candidate.left >= bounds.left
-  && candidate.top >= bounds.top
-  && candidate.left + size.width <= bounds.right
-  && candidate.top + size.height <= bounds.bottom;
-
-function addDescription(owner, id) {
-  const ids = new Set((owner.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean));
-  ids.add(id);
-  owner.setAttribute('aria-describedby', [...ids].join(' '));
-}
-
-function removeDescription(owner, id) {
-  const ids = (owner.getAttribute('aria-describedby') || '').split(/\s+/).filter((entry) => entry && entry !== id);
-  if (ids.length) owner.setAttribute('aria-describedby', ids.join(' '));
-  else owner.removeAttribute('aria-describedby');
-}
-
-function resetNaturalSize(tip) {
-  tip.style.width = 'auto';
-  tip.style.height = 'auto';
-  tip.style.maxWidth = 'none';
-  tip.style.maxHeight = 'none';
-}
-
-function hardExclusions(root, owner) {
-  return [...root.querySelectorAll(
-    '[data-slot-pick], [data-slot-delete], .title-modal-close, .title-modal-actions button, #title-modal-heading, .title-modal-rule, .hold-hint',
-  )].filter((element) => element !== owner && element.getClientRects().length);
-}
-
-function sideCandidates(ownerRect, size, bounds, gap) {
-  return [
-    { side: 'block-end', left: Math.min(ownerRect.right - size.width, bounds.right - size.width), top: ownerRect.bottom + gap },
-    { side: 'inline-end', left: ownerRect.right + gap, top: ownerRect.top + (ownerRect.height - size.height) / 2 },
-    { side: 'inline-start', left: ownerRect.left - size.width - gap, top: ownerRect.top + (ownerRect.height - size.height) / 2 },
-    { side: 'block-start', left: Math.min(ownerRect.right - size.width, bounds.right - size.width), top: ownerRect.top - size.height - gap },
-  ];
-}
-
-function baseStyles(tip) {
-  Object.assign(tip.style, {
-    boxSizing: 'border-box',
-    zIndex: '940',
-    minHeight: '44px',
-    padding: '8px 12px',
-    border: '1px solid rgba(200, 155, 76, 0.72)',
-    borderRadius: '10px',
-    background: 'rgba(18, 14, 10, 0.98)',
-    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.38)',
-    color: '#f4e7c8',
-    font: '600 14px/1.35 system-ui, sans-serif',
-    letterSpacing: '0.01em',
-    textAlign: 'left',
-    whiteSpace: 'normal',
-    overflowWrap: 'anywhere',
-  });
-  tip.style.overflow = 'visible';
-  tip.style.pointerEvents = 'none';
-  tip.style.transition = 'none';
-  tip.style.setProperty('transition', 'none', 'important');
-  tip.style.animation = 'none';
-  tip.style.setProperty('animation', 'none', 'important');
-}
-
-function mountReserve({ tip, owner, root, visual, natural }) {
-  const row = owner.closest('.title-slot-row');
-  const modal = owner.closest('.title-menu-modal');
-  const zoom = numberValue(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
-  if (!row) return false;
-  tip.remove();
-  row.appendChild(tip);
-  Object.assign(row.style, { flexWrap: 'wrap', rowGap: '0px' });
-  Object.assign(tip.style, {
-    position: 'relative',
-    inset: 'auto',
-    flex: '1 0 100%',
-    width: '100%',
-    height: `${Math.ceil(natural.height) / zoom}px`,
-    maxWidth: '100%',
-    margin: '0',
-  });
-  tip.dataset.placement = 'reserve';
-  if (modal) {
-    modal.style.boxSizing = 'border-box';
-    modal.style.maxHeight = `${Math.max(1, visual.bounds.bottom - visual.bounds.top) / zoom}px`;
-    modal.style.overflowY = 'auto';
-    modal.style.overflowX = 'hidden';
-    const rect = tip.getBoundingClientRect();
-    if (rect.bottom > visual.bounds.bottom) modal.scrollTop += rect.bottom - visual.bounds.bottom + GAP;
-    if (rect.top < visual.bounds.top) modal.scrollTop -= visual.bounds.top - rect.top + GAP;
-    requestAnimationFrame(() => {
-      if (!tip.isConnected) return;
-      const settled = tip.getBoundingClientRect();
-      if (settled.bottom > visual.bounds.bottom) modal.scrollTop += settled.bottom - visual.bounds.bottom;
-      if (settled.top < visual.bounds.top) modal.scrollTop -= visual.bounds.top - settled.top;
-    });
-  }
-  return true;
-}
-
-function mountFloat({ tip, root, owner, visual, natural }) {
-  const zoom = numberValue(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
-  tip.remove();
-  root.appendChild(tip);
-  Object.assign(tip.style, {
-    position: 'fixed',
-    width: `${Math.ceil(natural.width) / zoom}px`,
-    height: `${Math.ceil(natural.height) / zoom}px`,
-    maxWidth: `${Math.ceil(natural.width) / zoom}px`,
-    margin: '0',
-  });
-  const ownerRect = owner.getBoundingClientRect();
-  const gap = GAP;
-  // THE DIALOG IS A BOUNDARY, NOT JUST THE VIEWPORT.
-  //
-  // hardExclusions lists CONTROLS — slots, the delete, the close, the heading.
-  // The modal itself was never in the containment test, so a placement outside
-  // the panel entirely satisfied every rule this function checked. Measured
-  // 2026-09-03 at 1440x900 with a filled slot 1: the owner (the pick button)
-  // ends at x=990 because the delete button takes the row's trailing gutter, so
-  // `inline-end` starts at 1002 and lands ON that delete — excluded. The next
-  // candidate, `inline-start`, sits at 125..377 against a modal that starts at
-  // 340. It broke no rule and was chosen, and the player saw a caption floating
-  // in the dark to the LEFT of the dialog, describing a slot inside it.
-  //
-  // Intersecting the visual bounds with the dialog's own rect is the whole fix.
-  // Every side is now judged against the panel a reader is actually looking at,
-  // and when no side fits inside it — which is the common case, because a slot
-  // fills the panel's width — plan() falls through to mountReserve and the
-  // caption lands under its own row. That is the placement the narrow layout
-  // has always used, and it was the better one at both sizes.
-  const dialog = owner.closest('.title-menu-modal');
-  const dialogRect = dialog ? dialog.getBoundingClientRect() : null;
-  const bounds = dialogRect
-    ? {
-      left: Math.max(visual.bounds.left, dialogRect.left),
-      top: Math.max(visual.bounds.top, dialogRect.top),
-      right: Math.min(visual.bounds.right, dialogRect.right),
-      bottom: Math.min(visual.bounds.bottom, dialogRect.bottom),
-    }
-    : visual.bounds;
-  const candidates = sideCandidates(ownerRect, natural, bounds, gap);
-  const exclusions = hardExclusions(root, owner);
-  const chosen = candidates.find((candidate) => {
-    const rect = {
-      left: candidate.left,
-      top: candidate.top,
-      right: candidate.left + natural.width,
-      bottom: candidate.top + natural.height,
-    };
-    return inside(candidate, natural, bounds)
-      && !intersects(rect, ownerRect)
-      && exclusions.every((element) => !intersects(rect, element.getBoundingClientRect()));
-  });
-  if (!chosen) {
-    if (visual.width <= NARROW_MAX_WIDTH) {
-      const forced = candidates[0];
-      tip.style.left = `${forced.left / zoom}px`;
-      tip.style.top = `${forced.top / zoom}px`;
-      tip.dataset.placement = forced.side;
-      return true;
-    }
-    return false;
-  }
-  tip.style.left = `${chosen.left / zoom}px`;
-  tip.style.top = `${chosen.top / zoom}px`;
-  tip.dataset.placement = chosen.side;
-  return true;
-}
-
-function plan(context) {
-  const { tip, owner, root } = context;
-  const zoom = numberValue(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
-  if (!owner.isConnected || !root.isConnected) return false;
-  owner.style.removeProperty('min-height');
-  resetNaturalSize(tip);
-  tip.remove();
-  root.appendChild(tip);
-  Object.assign(tip.style, {
-    position: 'fixed',
-    visibility: 'hidden',
-    width: `${Math.min(FLOAT_WIDTH, Math.max(44, visualPlan().width - 2 * GAP)) / zoom}px`,
-  });
-  const measured = tip.getBoundingClientRect();
-  const visual = visualPlan();
-  const natural = {
-    width: Math.min(FLOAT_WIDTH, Math.max(44, visual.bounds.right - visual.bounds.left - 2 * GAP)),
-    height: Math.ceil(measured.height),
-  };
-  tip.dataset.safeInsets = JSON.stringify(visual.safe);
-  tip.style.visibility = 'visible';
-  const next = { ...context, visual, natural };
-  if (visual.width <= NARROW_MAX_WIDTH) return mountReserve(next);
-  if (mountFloat(next)) return true;
-  return mountReserve(next);
-}
-
-function mountTitleSaveSlotTooltip({ root, owner } = {}) {
-  activeCleanup?.();
-  if (!(root instanceof HTMLElement) || !(owner instanceof HTMLButtonElement) || !owner.isConnected) return () => {};
-
-  const tip = document.createElement('div');
-  tip.id = TOOLTIP_ID;
-  tip.dataset.titleSaveSlotTooltip = '';
-  tip.setAttribute('role', 'tooltip');
-  tip.setAttribute('data-component', 'tooltip');
-  tip.textContent = TITLE_SAVE_SLOT_TOOLTIP_COPY;
-  baseStyles(tip);
-  addDescription(owner, TOOLTIP_ID);
-
-  const row = owner.closest('.title-slot-row');
-  const modal = owner.closest('.title-menu-modal');
-  const saved = {
-    rowFlexWrap: row?.style.flexWrap || '',
-    rowGap: row?.style.rowGap || '',
-    modalBoxSizing: modal?.style.boxSizing || '',
-    modalMaxHeight: modal?.style.maxHeight || '',
-    modalOverflowY: modal?.style.overflowY || '',
-    modalOverflowX: modal?.style.overflowX || '',
-  };
-  let frame = 0;
-  const replan = () => {
-    cancelAnimationFrame(frame);
-    frame = requestAnimationFrame(() => plan({ tip, owner, root }));
-  };
-  const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(replan) : null;
-  resizeObserver?.observe(owner);
-  window.addEventListener('resize', replan);
-  window.visualViewport?.addEventListener('resize', replan);
-  window.visualViewport?.addEventListener('scroll', replan);
-  plan({ tip, owner, root });
-  document.fonts?.ready.then(replan).catch(() => {});
-
-  let cleaned = false;
-  const cleanup = () => {
-    if (cleaned) return;
-    cleaned = true;
-    cancelAnimationFrame(frame);
-    resizeObserver?.disconnect();
-    window.removeEventListener('resize', replan);
-    window.visualViewport?.removeEventListener('resize', replan);
-    window.visualViewport?.removeEventListener('scroll', replan);
-    removeDescription(owner, TOOLTIP_ID);
-    tip.remove();
-    if (row) {
-      row.style.flexWrap = saved.rowFlexWrap;
-      row.style.rowGap = saved.rowGap;
-    }
-    if (modal) {
-      modal.style.boxSizing = saved.modalBoxSizing;
-      modal.style.maxHeight = saved.modalMaxHeight;
-      modal.style.overflowY = saved.modalOverflowY;
-      modal.style.overflowX = saved.modalOverflowX;
-    }
-    if (activeCleanup === cleanup) activeCleanup = null;
-  };
-  activeCleanup = cleanup;
-  return cleanup;
-}
-
-
-Object.assign(module.exports, { TITLE_SAVE_SLOT_TOOLTIP_COPY, mountTitleSaveSlotTooltip });
 
 },
 "src/ui/screens/profileNotice.js": function (module, exports, require) {
