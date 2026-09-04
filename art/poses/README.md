@@ -117,18 +117,29 @@ figures whether the sheet is transparent or flat, keeps small pieces (a spell
 burst, a dropped blade) with the figure they belong to, and stands every pose on
 one floor line.
 
-`art/poses` is described entirely by its manifest, so every class has to be in
-the render folder before it is published — cut them all with `--append`, then run
-the sprite step once. Publishing a folder that carries fewer classes than
-`art/poses` already holds is refused rather than silently dropping the rest.
+`art/poses` is described entirely by its manifest, so every class and pose has to
+be in the render folder before it is published — cut them all with `--append`,
+then run the sprite step once. Publishing a folder that carries fewer than
+`art/poses` already holds is refused rather than silently dropping the rest, and
+that refusal counts poses, not only classes.
+
+Every class in one manifest shares one canvas, and the first run would otherwise
+set it from its own sheet alone — a later class whose lunge is wider is then
+refused, with the frames already written too small to hold it. So name the canvas
+up front, big enough for the widest pose of any class, and give every command the
+same one:
 
 ```
-node tools/painted-poses.mjs --sheet ROGUE.png    --class rogue    --out build/painted --append
-node tools/painted-poses.mjs --sheet REAVER.png   --class reaver   --out build/painted --append
-node tools/painted-poses.mjs --sheet STARSEER.png --class starseer --out build/painted --append
-node tools/painted-poses.mjs --sheet HERALD.png   --class herald   --out build/painted --append
+node tools/painted-poses.mjs --sheet ROGUE.png    --class rogue    --out build/painted --append --canvas 1280x900
+node tools/painted-poses.mjs --sheet REAVER.png   --class reaver   --out build/painted --append --canvas 1280x900
+node tools/painted-poses.mjs --sheet STARSEER.png --class starseer --out build/painted --append --canvas 1280x900
+node tools/painted-poses.mjs --sheet HERALD.png   --class herald   --out build/painted --append --canvas 1280x900
 node tools/pose-sprites.mjs --in build/painted --out art/poses
 ```
+
+1280x900 is what the Blender renders use, so painted sheets cut at that size line
+up with them frame for frame. A run whose figures do not fit says the size they
+need, so start there and raise it if it asks.
 
 To replace only some classes, render the rest into the same folder first — the
 Blender script writes the same manifest shape, so modelled and painted poses can

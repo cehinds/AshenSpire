@@ -2,7 +2,7 @@
 //
 //   node tools/painted-poses.mjs --sheet SHEET.png --class rogue \
 //     --poses idle,guard,attack1,attack2,attack3,hit,kneel,down [--out DIR]
-//     [--append] [--canvas 720x900] [--grid 3x3]
+//     [--append] [--canvas 720x900] [--grid 3x3] [--mirror attack1,hit]
 //
 // A pose sheet is one image holding several paintings of the same character, laid
 // out in rows. This finds each figure (background is transparency, or whatever
@@ -34,6 +34,11 @@ const outDir = arg('--out', null);
 const alphaMin = Number(arg('--alpha', '40'));
 const minArea = Number(arg('--min-area', '0.0015'));   // fraction of the sheet a real figure must cover
 const speckArea = Number(arg('--speck', '0.00004'));  // below this is noise, not a piece of the art
+// Poses a sheet painted facing the other way. Combat has the player on the left
+// facing right, so a pose that swings left is drawn flipped; the flip happens as
+// the frame is written, which keeps the recorded root and floor honest because
+// both are measured from what was actually drawn.
+const mirrored = new Set((arg('--mirror', '') || '').split(',').filter(Boolean));
 if (!sheetPath || !cls || !outDir) {
   console.error('painted-poses: --sheet FILE --class NAME --out DIR are required');
   process.exit(2);
@@ -291,20 +296,22 @@ for (let i = 0; i < poses.length; i++) {
   const oy = ground - f.lift - (f.y1 - f.y0), ox = Math.round((CW - fw) / 2);
   // the lower quarter of the body, in rows of this crop
   const footLine = (f.bodyY0 - f.y0) + 0.75 * (f.bodyY1 - f.bodyY0);
+  const flip = mirrored.has(pose);
   let sumX = 0, count = 0;
   for (let y = 0; y < fh; y++) {
     for (let x = 0; x < fw; x++) {
       const sx = f.x0 + x, sy = f.y0 + y, si = sy * W + sx;
       if (label[si] < 0 || !f.ids.includes(label[si])) continue;
       const isBody = label[si] === f.ids[0];
-      const s = at(sx, sy), d = ((oy + y) * CW + ox + x) * 4;
+      const dx = flip ? fw - 1 - x : x;
+      const s = at(sx, sy), d = ((oy + y) * CW + ox + dx) * 4;
       out[d] = img.px[s]; out[d + 1] = img.px[s + 1]; out[d + 2] = img.px[s + 2];
       out[d + 3] = hasAlpha ? img.px[s + 3] : 255;
       // centre on the feet of the body itself — not on the cape, and not on a
       // dropped blade lying beside it. The quarter is of the body's own height:
       // measured against the whole group, a long piece below the feet could put
       // every body pixel above the line and leave nothing to average.
-      if (isBody && y > footLine) { sumX += ox + x; count++; }
+      if (isBody && y > footLine) { sumX += ox + dx; count++; }
     }
   }
   const file = `${cls}_${pose}.png`;
