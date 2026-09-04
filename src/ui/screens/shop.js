@@ -146,6 +146,16 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       tag.className = 'mini';
       tag.textContent = `${item.cost} cinders`;
       tag.style.color = run.cinders >= item.cost ? 'var(--gold)' : 'var(--muted)';
+      // THE CARD IS A FIXED BOX (kit CARD: fixed name, fixed ArtWell, fixed
+      // band, one shared row budget below it). Appending the hold hint INTO it
+      // — which is what `arm` does with no host — put the word inside that
+      // budget, where the card's own bottom edge clipped it: photographed at
+      // 390x844 as half a line of letters under every price. The hint's host
+      // is the wrap that already holds the card and its price, so the word
+      // stands outside the box it describes. Both children are in place first,
+      // so HOLD reads last, after the cost.
+      wrap.appendChild(el);
+      wrap.appendChild(tag);
       if (run.cinders >= item.cost) {
         // ROUTED THROUGH THE MACHINERY EVEN THOUGH IT OWES NO BEAT, and that is
         // the falsifier for Law 0 on this control rather than a formality:
@@ -154,6 +164,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         // ZERO commits outside that table. An action wired with a bare
         // `addEventListener` can only ever be changed by editing this line.
         arm(el, 'shopBuy', {
+          hintHost: wrap,
           question: `Buy ${registries.cards.get(item.id).name} for ${item.cost} cinders? You have ${run.cinders}.`,
           confirmLabel: 'BUY IT',
           onConfirm: () => {
@@ -168,8 +179,6 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       } else {
         el.classList.add('unaffordable');
       }
-      wrap.appendChild(el);
-      wrap.appendChild(tag);
       cardsRow.appendChild(wrap);
     });
 
@@ -216,7 +225,12 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
           if (isEquipmentComposedInstance(inst)) return;
           const el = renderCard(registries, inst, { small: true });
           const def = registries.cards.get(inst.cardId);
+          // Same fixed box, same host: the hold hint stands under the card.
+          const wrap = document.createElement('div');
+          wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px';
+          wrap.appendChild(el);
           arm(el, 'shopRemove', {
+            hintHost: wrap,
             question: `Burn ${def.name} out of the deck? ${stock.removeCost} cinders, and the card is gone.`,
             confirmLabel: 'BURN IT',
             onConfirm: () => {
@@ -229,7 +243,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
               render();
             },
           });
-          grid.appendChild(el);
+          grid.appendChild(wrap);
         });
       });
     }

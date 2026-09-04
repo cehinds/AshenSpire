@@ -103,13 +103,23 @@ function refFor(branch) {
   for (const r of [`${REMOTE}/${branch}`, branch]) {
     try { git(['rev-parse', '--verify', '--quiet', `${r}^{commit}`]); return r; } catch { /* next */ }
   }
-  throw new Error(`no ref for branch '${branch}' (tried ${REMOTE}/${branch}, ${branch})`);
+  return null;
 }
+
+// A BRANCH THAT IS NOT THERE IS A FACT TO REPORT, NOT A CRASH — and not a
+// silence either. `refFor` used to throw, so one deleted branch took the whole
+// site down (2026-09-04: `test` was auto-deleted as the merged head of the
+// test → release promotion, and this job then failed on dev, release and main).
+// Now the branch is skipped, its name is collected here, and the summary line
+// prints it. Publishing three of four branches while saying so is a service;
+// publishing three and claiming four is the defect this file is built against.
+const missingBranches = [];
 function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
 /** Every distinct build on a branch, newest first: [{ordinal, digest, built, sha, date, version}] */
 function buildsOf(branch, keep) {
   const ref = refFor(branch);
+  if (!ref) { if (!missingBranches.includes(branch)) missingBranches.push(branch); return { head: null, builds: [] }; }
   const log = git(['log', '--first-parent', '--format=%H%x09%cI', ref, '--', 'buildordinal.json']).trim();
   const seen = new Set();
   const out = [];
@@ -295,8 +305,14 @@ ${otherPages.length ? `<ul>${otherPages.map((pg) => `<li><a href="${esc(pg.href)
 }
 
 function branchIndex(branch, builds, head, generatedAt) {
+  // NO HEAD MEANS THE BRANCH IS GONE, and the page says exactly that rather
+  // than linking a commit that does not exist. `head` is null only on that
+  // path — buildsOf returns it for a branch with no ref.
+  const headLine = head
+    ? `branch head <a href="${REPO_URL}/commit/${head}">${head.slice(0, 10)}</a>`
+    : '<b>this branch does not exist on the remote</b> — nothing to publish for it';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — ${esc(branch)} builds</title><style>${CSS}</style></head><body><main>
-<p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · branch head <a href="${REPO_URL}/commit/${head}">${head.slice(0, 10)}</a></p>
+<p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · ${headLine}</p>
 ${builds.length ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a> <a class="play" href="latest/">/latest/ alias</a></p>` : '<p class="meta">no build on this branch</p>'}
 ${rowsTable(builds, '../')}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
@@ -307,7 +323,12 @@ function assemble(outDir, keep) {
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   // 1. main's tree is the base so every existing URL keeps resolving.
+  // `main` is the site's BASE TREE, not one branch among four — without it
+  // there is no site to publish, so this one absence is still fatal. That is
+  // the difference the skip below turns on: a missing publish TARGET costs its
+  // own section; a missing FOUNDATION costs the run, and says which it was.
   const mainRef = refFor('main');
+  if (!mainRef) throw new Error("no ref for 'main' — it is the site's base tree, so nothing can be assembled without it");
   const tmp = mkdtempSync(join(tmpdir(), 'pages-site-main-'));
   execFileSync('sh', ['-c', `git -C "${ROOT}" archive --format=tar "${mainRef}" | tar -x -C "${tmp}"`]);
   cpSync(tmp, outDir, { recursive: true });
@@ -555,6 +576,8 @@ try {
     const outDir = resolve(ROOT, flag('--out', '_site'));
     const { checks, branchData } = assemble(outDir, KEEP);
     for (const d of branchData) console.log(`  ${d.branch}: ${d.builds.length} build(s), latest ${d.builds[0] ? stampOf(d.builds[0]) : 'none'}`);
+    // Named on its own line, above the verdict, so it cannot hide inside a green.
+    if (missingBranches.length) console.log(`  MISSING: ${missingBranches.join(', ')} — no such branch on ${REMOTE}; assembled without it`);
     console.log(`pages-site: OK — ${checks} checks passed`);
   }
   boundary();

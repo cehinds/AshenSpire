@@ -923,6 +923,16 @@ export function holdMs(settings, holdConfirm) {
  *   question     confirm form only — the sentence above the buttons.
  *   detailHtml   confirm form only — what the action actually does.
  *   confirmLabel confirm form only.
+ *   hintHost     where the HOLD word goes, when the armed control is a FIXED
+ *                box that cannot hold it. `armHold` has always taken this; the
+ *                door dropped it, so a shop card got the hint appended INSIDE
+ *                the kit's card — which clips its own overflow, and the word
+ *                came out as half a line of letters (photographed at 390x844).
+ *                A screen naming a host is not naming a form; the hint's
+ *                placement is the caller's geometry, and only the caller knows
+ *                which of its elements is the one with room.
+ *   hintBefore   the child of that host to insert the hint before (default:
+ *                appended last).
  *
  * EVERY ARMED CONTROL MARKS ITSELF, including the ones that owe no beat:
  * `data-beat="none|hold|confirm"` and `data-beat-action="<id>"`. That is not
@@ -934,7 +944,7 @@ export function holdMs(settings, holdConfirm) {
 export function beatArmer(meta, registries) {
   const dialMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
 
-  return function arm(el, actionId, { ctx = {}, onConfirm, question, detailHtml, confirmLabel } = {}) {
+  return function arm(el, actionId, { ctx = {}, onConfirm, question, detailHtml, confirmLabel, hintHost = null, hintBefore = null } = {}) {
     // `ctxOf` so a row whose stakes move with the game state (End Turn) is
     // evaluated at the moment the finger lands, not at the moment the screen
     // mounted. A screen passes a function; a static action passes an object.
@@ -976,6 +986,8 @@ export function beatArmer(meta, registries) {
       onTap: review,
       tapOnEarlyRelease: true,
       id: actionId,
+      hintHost,
+      hintBefore,
     });
     // THE OTHER HALF OF "ALL INSTANCES" (S7 wide), and it is a REGISTRATION,
     // never a list. Some actions are reached without the focus cursor at all —
