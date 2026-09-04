@@ -62,6 +62,34 @@ face in shadow, the starseer's brim droops and the crown bends, the reaver's
 pauldrons are the painting's size, the rogue has trousers, a green tunic, a
 split skirt, spiral-wrapped bracers and wider daggers.
 
+**Fifth pass — measured against the paintings, and a route for painted
+poses.** Every slot render was measured against its painting crop: the models
+were sitting about twice as bright in median luminance as the art. The lights
+came down (key 2.6 → 0.75, the orange rim 3.0 → 1.5, so it catches edges
+instead of whole planes) and each class got a measured `TONE` factor that
+scales its part colours in linear light. The whole set now sits within a few
+per cent of the paintings' median. Shapes followed the same evidence: the
+mantles are squared yokes that step down from the shoulder line to a V at the
+chest (`yoke()`), not cones; hoods and the great helm are built from flat
+planes (`loft(sq=)`); the face openings are hexagons with the hood's own lip
+around them, matte black and specular-free; the gold pyramids sit corner-up
+so they read as diamonds rather than squares; the rogue's chest is quilted with
+seams laid on the surface; the reaver has a slitted visor, brass edging,
+shoulder bosses and plate legs; the herald has a stole and rounder beads.
+
+**Painted poses.** `tools/painted-poses.mjs` cuts a painted pose sheet — a
+single image holding one figure per pose — into single-pose frames and writes
+the same renders manifest the Blender script writes, so `tools/pose-sprites.mjs`
+dyes, tints and encodes painted frames exactly as it does renders. It finds the
+figures whether the sheet is transparent or flat, keeps small pieces (a spell
+burst, a dropped blade) with the figure they belong to, and stands every pose on
+one floor line.
+
+```
+node tools/painted-poses.mjs --sheet SHEET.png --class rogue --out build/painted --append
+node tools/pose-sprites.mjs --in build/painted --out art/poses
+```
+
 **Limits, stated.** Stand-ins for painted poses, not the paintings: faces are
 the concept's dark hood-void, cloth is flat colour. Joint weights are by
 distance, so a deep bend can pinch; soft robes can clip a stepping leg.
