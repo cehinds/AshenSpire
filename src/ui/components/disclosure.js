@@ -110,22 +110,32 @@
 // REMOVAL CONDITION: deleted with model/disclosure.js — it has no other job.
 
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
+import { detailCard } from '../kit/index.js';
 
+// THE KIT DRAWS IT (2026-09-04, the sweep). A face is an OptionCard
+// (`.as-option`, kit §03) — a node face rides in a bare `hosts-face` card so the
+// face can paint the whole surface — and the one reveal is a DetailCard. The
+// `.disc-*` names stay on the kit elements because the tools read them; the
+// stylesheet draws nothing for those names.
+
+/** The reveal's words as a DetailCard's parts: name, the sense as prose, the derived lines, the receipt last. */
 function revealHtml(entry) {
   const lines = (entry.reveal.lines || []).filter(Boolean);
-  return `<h4>${esc(entry.reveal.title)}</h4>`
-    + (entry.reveal.sense ? `<p class="disc-sense">${esc(entry.reveal.sense)}</p>` : '')
-    + (lines.length ? `<ul class="disc-lines">${lines.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>` : '')
-    + (entry.reveal.receipt ? `<p class="disc-receipt">${esc(entry.reveal.receipt)}</p>` : '');
+  return `<p class="dc-name">${esc(entry.reveal.title)}</p>`
+    + (entry.reveal.sense ? `<p class="as-prose disc-sense">${esc(entry.reveal.sense)}</p>` : '')
+    + (lines.length ? `<ul class="dc-lines disc-lines">${lines.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>` : '')
+    + (entry.reveal.receipt ? `<span class="dc-meta disc-receipt">${esc(entry.reveal.receipt)}</span>` : '');
 }
 
-/** A FACE IS A LABEL, AN OPTIONAL ONE-LINE SUMMARY, AND A VALUE. One home for that markup, because it is
- *  drawn at mount and re-drawn every time a folded picker's choice changes;
+/** A FACE IS A LABEL, AN OPTIONAL ONE-LINE SUMMARY, AND A VALUE — an OptionCard's
+ *  name, description and trailing StatusText. One home for that markup, because
+ *  it is drawn at mount and re-drawn every time a folded picker's choice changes;
  *  two spellings of it would be two answers to "what did I pick?". */
 function faceHtml(entry) {
-  return `<b class="disc-name">${esc(entry.face.label)}</b>`
-    + (entry.face.summary ? `<span class="disc-summary">${esc(entry.face.summary)}</span>` : '')
-    + (entry.face.value === '' || entry.face.value == null ? '' : `<span class="disc-value">${esc(entry.face.value)}</span>`);
+  return `<span class="ob"><span class="on"><b class="disc-name">${esc(entry.face.label)}</b></span>`
+    + (entry.face.summary ? `<span class="od disc-summary">${esc(entry.face.summary)}</span>` : '')
+    + '</span>'
+    + (entry.face.value === '' || entry.face.value == null ? '' : `<span class="r-trail"><span class="as-status disc-value">${esc(entry.face.value)}</span></span>`);
 }
 
 /** The same words the panel shows, for the hover/focus tip. One source.
@@ -136,7 +146,11 @@ function tipHtml(entry) {
   if (entry.reveal && entry.reveal.node) {
     return entry.reveal.sense ? `<p class="disc-sense">${esc(entry.reveal.sense)}</p>` : '';
   }
-  return revealHtml(entry);
+  const lines = (entry.reveal.lines || []).filter(Boolean);
+  return `<div class="tt-title">${esc(entry.reveal.title)}</div>`
+    + (entry.reveal.sense ? `<p>${esc(entry.reveal.sense)}</p>` : '')
+    + (lines.length ? `<ul class="ti-list">${lines.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>` : '')
+    + (entry.reveal.receipt ? `<span class="as-flavor">${esc(entry.reveal.receipt)}</span>` : '');
 }
 
 /**
@@ -151,7 +165,7 @@ function tipHtml(entry) {
  * adopted into the panel at mount and the panel starts `hidden`, so the
  * arrival screen is short and one tap opens it. Default folded — his word.
  */
-export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = null } = {}) {
+export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = null, layout = 'flow' } = {}) {
   const rows = [...(entries || [])];
   const faces = rows.filter((entry) => entry.disclosure === 'face');
   const behind = rows.filter((entry) => entry.disclosure !== 'face');
@@ -160,9 +174,17 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
   // and the gap it lands with is the container's own `row-gap` (see WHERE IT
   // OPENS, top of file). While shut it is `hidden` — `display: none` — so it is
   // not a flex item at all and contributes no row and no gap.
-  host.innerHTML = `<div class="disc-faces"><div class="disc-reveal" hidden></div></div>`;
+  //
+  // The faces are the kit's option list — a wrapping `flow` of self-sized
+  // cards, or a `column` where every face is a full-width row (the Armoury's
+  // inventory and character numbers). The panel starts LAST, not first: an
+  // instrument asking for "the first inventory item" must meet a face, never
+  // the shut reveal that carries the same item key.
+  // `innerHTML`, deliberately: tools/foldsurvivors.mjs watches THIS setter to
+  // see the wipe at the instant it happens (a MutationObserver fires too late).
+  host.innerHTML = `<div class="as-options disc-faces${layout === 'column' ? '' : ' flow'}"></div>`;
   const faceBox = host.querySelector('.disc-faces');
-  const panel = host.querySelector('.disc-reveal');
+  const panel = detailCard({ attrs: { class: 'disc-reveal', hidden: true } });
   const buttons = new Map();
   let openKey = null;
   // The live nodes this host folds — ONE PER ENTRY since E4 (#249), because a
@@ -209,6 +231,7 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
     for (const button of buttons.values()) {
       button.setAttribute('aria-expanded', 'false');
       button.dataset.reveal = 'closed';
+      button.classList.remove('is-selected');
     }
   }
 
@@ -258,6 +281,7 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
     if (button) {
       button.setAttribute('aria-expanded', 'true');
       button.dataset.reveal = 'open';
+      button.classList.add('is-selected');
     }
   }
 
@@ -277,7 +301,8 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
   function drawFace(entry) {
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = `disc-face disc-${entry.kind}`;
+    // An OptionCard without the chevron: the tap opens under it, not onward.
+    button.className = `as-option noarrow disc-face disc-${entry.kind}${entry.face && entry.face.node ? ' hosts-face' : ''}${entry.face && entry.face.compact ? ' compact' : ''}`;
     button.dataset.face = entry.key;
     // The tier as the ENTRY declared it, echoed on the control that was drawn.
     // A screen that stopped reading the field prints the contradiction here.
@@ -314,16 +339,19 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
   }
 
   for (const entry of faces) drawFace(entry);
+  // The panel joins the row AFTER the faces (see the note at the top of this
+  // function); open() moves it under the tapped face's line.
+  faceBox.appendChild(panel);
 
   // The expander exists only if the data put something behind it, and its
   // count is counted.
   if (behind.length) {
     const more = document.createElement('button');
     more.type = 'button';
-    more.className = 'disc-face disc-more';
+    more.className = 'as-option noarrow more disc-face disc-more';
     more.dataset.more = String(behind.length);
     more.setAttribute('aria-expanded', 'false');
-    more.innerHTML = `<b class="disc-name">+${behind.length} ${esc(moreLabel)}</b>`;
+    more.innerHTML = `<span class="ob"><span class="on"><b class="disc-name">+${behind.length} ${esc(moreLabel)}</b></span></span>`;
     more.addEventListener('click', () => {
       const opened = more.getAttribute('aria-expanded') === 'true';
       if (opened) {

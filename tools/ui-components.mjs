@@ -109,6 +109,7 @@ export function receipt() {
     equipment: read('src/ui/screens/equipment.js'),
     css: read('styles/combat.css'),
     uiCss: read('styles/ui.css'),
+    kitCss: read('styles/kit.css'),
     spec: read('SPEC.md'),
   };
 }
@@ -319,10 +320,15 @@ export function findings(r) {
       || !/content\.hidden = !tray\.expanded/.test(r.trayComponents)
       || !/if \(tray\.sortable && tray\.expanded\)/.test(r.trayComponents)
       || !/if \(renderContent\) renderContent\(content, contentModel\.children\)/.test(r.trayComponents)
-      || !/\.tray-header \.tray-count\s*\{[^}]*margin-left:\s*auto;/.test(r.uiCss)
-      || !/--ui-section-control-gap/.test(r.uiCss)
-      || !/--ui-tray-side-margin/.test(r.uiCss)
-      || !/--ui-tray-resize-surface:\s*44px/.test(r.uiCss)
+      // 2026-09-04 (the sweep): the Folding Tray is the kit's `.as-tray`
+      // (styles/kit.css FOLDING TRAY). Its header is a kit Row — the count is
+      // the Row's StatusText, pushed to the trailing edge by the Row's own rule
+      // — the side trays carry their margin on the kit frame, and the resize
+      // grip's touch surface is the tap floor itself, not a typed 44px.
+      || !/\.as-row > \.as-status, \.as-row > \.r-trail \{ margin-left: auto; \}/.test(r.kitCss)
+      || !/\.as-tray > \.tray-header \{[^}]*gap: 0\.75rem;/.test(r.kitCss)
+      || !/\.as-tray\[data-tray-edge="left"\] \{ margin-block: 0\.6rem; margin-left: 0\.6rem; \}/.test(r.kitCss)
+      || !/\.as-tray > \.tray-resize-handle\[data-ui-variant="top"\], \.as-tray > \.tray-resize-handle\[data-ui-variant="bottom"\] \{[^}]*height: var\(--tap-floor\);/.test(r.kitCss)
       || !/pointerdown/.test(r.trayComponents)
       || !/sizeService\.write/.test(r.trayComponents)
       || !/reset\(\)/.test(r.traySizeService)
@@ -332,9 +338,15 @@ export function findings(r) {
       || !/"snapRatios": \[0\.3, 0\.4, 0\.5, 0\.6, 0\.7, 0\.8, 0\.9\]/.test(r.armouryUiSource)
       || /meta\.settings\.armouryTrayHeights/.test(r.equipment)
       || !/resetArmouryTraySession/.test(r.equipment)
-      || !/window\.visualViewport\?\.height \|\| window\.innerHeight/.test(r.equipment)
-      || !/style\.minHeight = `\$\{layout\.trays\.multipleExpandedMinimumRatio \* 100\}vh`/.test(r.equipment)
-      || !/style\.height = `\$\{savedRatio \* 100\}vh`/.test(r.equipment)
+      // 2026-09-04 (the sweep): a tray's share is a share of the DOOR'S BODY,
+      // never of the glass — `vh` below the zoomed <body> is the law this file
+      // is named for. The remembered height is a percentage of the host the
+      // screen measures (`hostHeight`), and an arrival without one hugs its
+      // content under the kit's compact cap instead of claiming a share.
+      || !/const hostHeight = \(\) => Math\.max\(1, wrap\.querySelector\('\.armoury-shell-body'\)\?\.clientHeight \|\| 1\)/.test(r.equipment)
+      || !/style\.minHeight = `\$\{layout\.trays\.multipleExpandedMinimumRatio \* 100\}%`/.test(r.equipment)
+      || !/style\.height = `\$\{savedRatio \* 100\}%`/.test(r.equipment)
+      || /\d\s*}?vh`/.test(r.equipment)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.trayModels)) {
     bad.push('C15 folding regions no longer use the shared edge-aware Tray model and renderer');
   }

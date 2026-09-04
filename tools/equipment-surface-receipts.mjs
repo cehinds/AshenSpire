@@ -271,7 +271,9 @@ if (equipmentSurfaceReceipt) {
 const customize = fs.readFileSync(new URL('../src/ui/screens/customize.js', import.meta.url), 'utf8');
 const armoury = fs.readFileSync(new URL('../src/ui/screens/equipment.js', import.meta.url), 'utf8');
 const receiptComponents = fs.readFileSync(new URL('../src/ui/components/equipmentReceipts.js', import.meta.url), 'utf8');
-const css = fs.readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8');
+// The Armoury's rules moved to the kit (styles/kit.css, 2026-09-04 sweep); ui.css draws nothing for it any more.
+const css = fs.readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8')
+  + fs.readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
 for (const [source, label] of [[customize, 'creation'], [armoury, 'Armoury']]) {
   check(/equipmentSurfaceReceipt/.test(source), `${label} consumes the shared equipment presentation reader`);
   check(/renderEquipmentRequirements/.test(source), `${label} renders the shared requirement receipt`);
