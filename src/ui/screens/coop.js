@@ -433,12 +433,18 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return b;
   }
   function intentEl(intent) {
-    const el = document.createElement('div');
+    // ONE INTENT PIECE, the kit's StatePill in the fact's own tone — the same
+    // composition solo combat draws (screens/combat.js intentEl). This read
+    // `badge.html`, which intentBadge has never returned, so the co-op board
+    // printed the word "undefined" over every enemy.
     const badge = intentBadge(intent);
-    el.className = `intent ${badge.cls}`;
-    el.innerHTML = badge.html;
-    attachTooltip(el, () => intentTooltip(intent, { victim: 'each hero' }));
-    return el;
+    const node = pill({
+      label: badge.label,
+      attrs: { class: `intent lg ${badge.cls}${badge.dashed ? ' dashed' : ''}`, dataset: { tone: badge.tone || undefined } },
+    });
+    if (badge.glyph) node.prepend(kitGlyph(badge.glyph, { class: 'ic' }));
+    attachTooltip(node, () => intentTooltip(intent, { victim: 'each hero' }));
+    return node;
   }
 
   // ---- combat (parity board) ------------------------------------------------

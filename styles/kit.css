@@ -759,6 +759,46 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* The full read, in a door: the same sections the edge tray renders. */
 .combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
 
+/* ═══ QUICK SETTINGS — one corner, every surface ═══════════════════════════ */
+/* Fullscreen and music are the two controls that belong to the PAGE, not to
+   whatever is on it (Constantine, 2026-09-04: "move full screen and music, for
+   all current windows that use them, to anchored to top right corner and not
+   block any text"). They lived in the HUD's flow, so on the map they landed
+   beside the route title and in combat under the icon row. One anchored home
+   now: the top-right corner, clear of the notch, above the content layer, and
+   out of the flow entirely so no surface has to make room in its own layout.
+   `--hud-quick-edge-gap` is authored (balance.ui.hudQuickSettings.edgeGapPx,
+   planted on <html> by main.js) and divided by the zoom, so the gap is the
+   same on glass at every UI size. */
+/* THE CORNER'S FOOTPRINT, as one token every surface reserves. Two IconButtons
+   and their gap, plus the edge gap on both sides — so a top row can keep its
+   own text clear of the pair without any surface measuring it again. */
+:root { --quick-corner: calc((2 * var(--iconbtn-size)) + 0.6rem + (2 * var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))); }
+.hud-quick-settings {
+  position: fixed; z-index: 80;
+  top: calc(env(safe-area-inset-top, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  right: calc(env(safe-area-inset-right, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  margin: 0; padding: 0;
+}
+/* The notice speaks under the pair rather than pushing it out of the corner. */
+.hud-quick-settings > .hud-quick-notice {
+  position: absolute; top: calc(var(--iconbtn-size) + 0.4rem); right: 0;
+  max-width: 22rem; text-align: right; white-space: normal;
+}
+.hud-quick-settings > .hud-quick-notice[hidden] { display: none; }
+/* Every surface that shows the pair keeps its own top row out of that corner:
+   the run HUD's rows, and the co-op board's dock and scene header. */
+.topbar.combat-hud > .hud-top,
+.coop-scene > .as-banner,
+.coop-board > .coop-top,
+.topbar.map-header { padding-inline-end: var(--quick-corner); }
+/* A narrow map header cannot hold its whole line AND the corner, and `nowrap`
+   made its actions overflow INTO the corner rather than yield. It wraps: the
+   way out drops to its own line under the pair (kit law — a narrow shape is a
+   different composition), which is what keeps the corner clear of text. */
+.topbar.map-header { flex-wrap: wrap; row-gap: 0.4rem; }
+
 /* ═══ SCREENS — a page wears the same atoms a door does ═══════════════════ */
 /* A screen's banner is Title·L over an Eyebrow-weight subtitle; the same
    two atoms the kit's TitleMenu and Pane use, centred because a screen's

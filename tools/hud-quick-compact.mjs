@@ -75,9 +75,23 @@ function findings(r) {
   if (Math.abs(r.stack.height - icon) > 0.5) {
     bad.push(`the quick controls are ${r.stack.height.toFixed(2)}px tall, expected the icon box ${icon.toFixed(2)}`);
   }
-  // THE SAME CLUSTER AS ARMOURY AND THE MENU: same row, same top edge.
-  if (r.actionsRow && Math.abs(r.stack.top - r.actionsRow.top) > 0.5) {
-    bad.push(`the quick controls sit ${(r.stack.top - r.actionsRow.top).toFixed(2)}px off the Armoury/Menu row`);
+  // THE PAGE'S CORNER, NOT THE HUD'S ROW (Constantine, 2026-09-04: "move full
+  // screen and music, for all current windows that use them, to anchored to top
+  // right corner and not block any text"). They used to be measured against
+  // `.hud-actions` because they sat in the HUD's flow; they are fixed to the
+  // viewport's top-right corner now, at the authored edge gap, so THAT is what
+  // this asserts — on every surface, whatever its own top row is doing. The
+  // overlap checks below are the "not block any text" half and are unchanged.
+  const edge = r.edgeGapPx == null ? 4 : r.edgeGapPx;
+  const slack = 1.5;
+  if (Math.abs(r.stack.top - edge) > slack) {
+    bad.push(`the quick controls sit ${r.stack.top.toFixed(2)}px from the top, expected the authored edge gap ${edge.toFixed(2)}`);
+  }
+  if (Math.abs((r.viewport.width - r.stack.right) - edge) > slack) {
+    bad.push(`the quick controls sit ${(r.viewport.width - r.stack.right).toFixed(2)}px from the right, expected the authored edge gap ${edge.toFixed(2)}`);
+  }
+  if (r.position !== 'fixed') {
+    bad.push(`the quick controls are ${r.position}, expected fixed — an anchored corner cannot ride a surface's flow`);
   }
   if (r.quickTargets.some((target) => target.width < icon - 0.5 || target.height < icon - 0.5)) {
     bad.push(`a Quick Access target is under the icon box ${icon.toFixed(2)}px`);
@@ -108,8 +122,11 @@ function parityFindings(map, combat) {
     bad.push(`Map route strip is ${map.route.width.toFixed(2)}px, expected about 80vw`);
   }
   if (combat.route && (combat.route.width > 0.5 || combat.route.height > 0.5)) bad.push('Combat still renders the Map-only route strip');
-  if (Math.abs(map.stack.right - map.quickPanel.right) > 0.75) bad.push('Map Fullscreen/Music stack is not flush with Quick Access');
-  if (Math.abs(combat.stack.right - combat.quickPanel.right) > 0.75) bad.push('Combat Fullscreen/Music stack is not flush with Quick Access');
+  // The pair used to be flush with Quick Access because it lived in that
+  // panel; it is the PAGE's corner now (see the corner assertions above), so
+  // what carries across surfaces is that the corner is the SAME corner — the
+  // right edge already checked equal above — and that the panel it left still
+  // sits clear of it, which the overlap checks cover.
   return bad;
 }
 
@@ -222,6 +239,8 @@ try {
           const horizontal=getComputedStyle(stack).flexDirection==='row';
           return {
             viewport:{width:innerWidth,height:innerHeight}, stack:sr, buttons:painted,
+            position: stack ? getComputedStyle(stack).position : '',
+            edgeGapPx: (() => { const raw = getComputedStyle(document.documentElement).getPropertyValue('--hud-quick-edge-gap').trim(); const n = Number.parseFloat(raw); const zoom = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1; return Number.isFinite(n) ? n / zoom : null; })(),
             iconSize, clusterGap, actionsRow, horizontal,
             rightGap:innerWidth-sr.right,
             buttonGap:painted.length===2?(horizontal?painted[1].left-painted[0].right:painted[1].top-painted[0].bottom):null,

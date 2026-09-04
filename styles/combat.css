@@ -54,7 +54,7 @@
   flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1;
   box-sizing: border-box;
   padding-block: var(--battlefield-hud-clearance, 0) var(--battlefield-action-clearance, 0);
-  padding-inline-end: calc(var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  padding-inline-end: var(--quick-corner);
 }
 :root[data-short='false'] .field { min-height: 0; }
 .player-zone {
@@ -637,7 +637,7 @@
   /* ---- battlefield: give the enemies the width ---- */
   :root[data-layout='narrow'] .field {
     padding-block: var(--battlefield-hud-clearance, 0) var(--battlefield-action-clearance, 0);
-    padding-inline: 1.2rem calc(1.2rem + var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+    padding-inline: 1.2rem calc(1.2rem + var(--quick-corner));
   }
 
   :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }

@@ -7520,8 +7520,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(cards.map((card) => card.key).join(','), REG.attributes.ids().map((id) => `attribute:${id}`).join(','),
       'stable attribute ids drive every card key');
     const constitution = cards.find((card) => card.id === 'constitution');
-    eq(constitution.face.summary, 'What your body takes before the climb ends.',
-      'the folded summary is derived from the authored description');
+    // THE FACE SAYS WHAT A POINT BUYS (Constantine, 2026-09-04: "stats show
+    // flavor text instead of useful information"). Still derived, never copied
+    // prose — from `derivedStatRules`, the run's own derivation — and each
+    // fact carries its own cadence because they differ. The authored sentence
+    // is still there, as the fold's flavour.
+    eq(constitution.face.summary, '+2 HP per pt · +1 Stamina per 5 pts',
+      'the face summary is derived from the rules that read the attribute');
+    eq(constitution.reveal.flavour, 'What your body takes before the climb ends.',
+      'the authored description is still derived, as the fold\'s flavour');
     assert(constitution.reveal.lines.some((line) => /^HP \+2 every 1 point$/.test(line))
       && constitution.reveal.lines.some((line) => /^Stamina \+1 every 5 points$/.test(line)),
     'multiple mechanical benefits are projected as separate bullets');

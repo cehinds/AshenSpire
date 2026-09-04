@@ -310,10 +310,6 @@
 
 /* ---------- main menu ambience ---------- */
 .title-screen { position: relative; overflow: hidden; }
-.title-screen > .hud-quick-settings {
-  top: calc(env(safe-area-inset-top, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
-}
-
 .title-glow { animation: titleGlow 3.2s ease-in-out infinite alternate; }
 @keyframes titleGlow {
   from { text-shadow: 0 0 26px rgba(201, 162, 39, 0.25); }
@@ -665,7 +661,10 @@ button.ev-choice {
   position: relative;
   isolation: isolate;
   gap: 0;
-  padding: 2.2rem 1.6rem 8rem;
+  /* The lockup centres in what is left after this padding, so an 8rem bottom
+     was pushing the wordmark UP into the backdrop's focal mass (Constantine,
+     2026-09-04: "NAME IS NOT LINED UP"). Even padding centres it. */
+  padding: 2.2rem 1.6rem;
   background:
     linear-gradient(180deg, rgba(12, 9, 6, 0.22), rgba(10, 8, 6, 0.96)),
     url('../assets/bg/bg_act1.webp') center / cover;
@@ -676,10 +675,12 @@ button.ev-choice {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(ellipse at 50% 18%, transparent 0, rgba(0, 0, 0, 0.08) 40%, rgba(0, 0, 0, 0.62) 100%);
+  /* The vignette's clear centre sat at 18% — the same band the wordmark lands
+     in, so the art stayed brightest exactly under the name. Centred on the
+     lockup instead: the art reads at the edges, the name reads over it. */
+  background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0.42) 0, rgba(0, 0, 0, 0.28) 40%, rgba(0, 0, 0, 0.68) 100%);
 }
 .title-screen > * { position: relative; z-index: 1; }
-.title-screen > .hud-quick-settings { position: absolute; z-index: 80; }
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }}
