@@ -18,6 +18,29 @@ import { assetUrl } from './assetmap.js';
 const SIZE_TIERS = balance.ui.spriteTiers;
 const px = (value) => `${value}px`;
 
+// ── WHICH WAY A FIGHTER LOOKS ────────────────────────────────────────────────
+//
+// Owner, 2026-09-04: "adjust so that all characters are facing the same
+// direction (to the right)". One convention, in one place, so no surface
+// decides it and no second copy can disagree.
+//
+// The other half of the fact is per ASSET and lives with the rest of that
+// asset's art facts (`artFaces` on the enemy def, beside `art`, `size` and
+// `tint`): which way the painting or the render was drawn. Only the mismatch
+// between the two is a flip, which is what the poses README already asks for —
+// "Mirrored facings are a code flip, never a generated frame."
+//
+// `front` is not a third direction and never flips. A figure looking at the
+// viewer has no left or right to turn: mirroring one only swaps which hand
+// holds the sword. Most of the roster is front-facing, so most of it declares
+// nothing and this rule leaves it exactly as drawn — the honest outcome, and
+// the reason this is a per-asset fact rather than a blanket transform.
+const FACES = 'right';
+export function spriteMirror(artFaces) {
+  if (artFaces === 'front' || artFaces == null) return false;
+  return artFaces !== FACES;
+}
+
 /**
  * Enemy sprite: the Blender-rendered PNG when it exists
  * (assets/sprites/enemy_<id>.webp, tools/sprites-blender.py), else the style
@@ -31,14 +54,38 @@ export function enemySprite(enemyDef) {
   const el = document.createElement('div');
   const placeholder = () => {
     el.innerHTML = '';
+    // This REPLACES cssText, so the facing has to be restated or a missing
+    // render would quietly un-mirror the fighter. The glyph is text, though,
+    // and mirrored text reads as a rendering fault — so the placeholder keeps
+    // the wrapper unmirrored on purpose and says so here rather than looking
+    // like an omission.
     el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};border-radius:10px;` +
       `background:var(--panel);border:2px solid ${tint};display:flex;align-items:center;` +
       `justify-content:center;font-size:${px(tier.font)};position:relative;` +
       `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
     el.textContent = enemyDef.art || '☠';
   };
-  el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};position:relative;` +
-    'display:flex;align-items:flex-end;justify-content:center;';
+  // THE MIRROR RIDES THIS WRAPPER, and both halves of that are deliberate.
+  //
+  // Not the combatant frame outside it, because that frame carries the block
+  // badge and the resource meters, and mirroring those would flip a number.
+  //
+  // Not the `img` inside it either, which is where this started: a CSS
+  // animation on `transform` sits in a HIGHER CASCADE ORIGIN than a normal
+  // declaration, inline styles included, so an animated transform REPLACES an
+  // inline one rather than composing with it. `styles/combat.css` aims
+  // `sprite-idle` (infinite) and `styles/ui.css` aims `enemy-lunge` at
+  // `.combatant .sprite > img`, and the day either selector starts matching,
+  // an img-borne mirror would silently stop facing the fighter the right way.
+  // (Today neither matches — this function returns a wrapper, so the img is a
+  // GRANDCHILD of `.sprite` and both animations are dead selectors on dev as
+  // well as here. Measured: 8 samples across the idle period with
+  // `reduced-motion` false, the mirror holds and no animation is running on
+  // the img. That is luck, not design, and this wrapper is what makes it
+  // design: nothing animates the wrapper, so facing and motion cannot fight.)
+  el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};position:relative;`
+    + 'display:flex;align-items:flex-end;justify-content:center;'
+    + (spriteMirror(enemyDef.artFaces) ? 'transform:scaleX(-1);' : '');
   const img = document.createElement('img');
   img.src = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
   img.alt = enemyDef.name || enemyDef.id;

@@ -63,6 +63,9 @@ export const act2Enemies = [
     poiseMax: 8,
     levelProfile: { min: 6, max: 8 },
     art: '🐩',
+    // Drawn in profile looking LEFT; the board looks right (assets.js FACES),
+    // so this one is mirrored. Read off the sprite, not assumed.
+    artFaces: 'left',
     moves: {
       maul: { intent: 'attack', damage: 4, hits: 2, weight: 60 },
       rend: {
