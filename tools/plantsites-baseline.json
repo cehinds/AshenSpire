@@ -206,7 +206,7 @@
     },
     "tools/flaskbox.mjs": {
       "count": 7,
-      "digest": "40b7fd34a5fe7c4a"
+      "digest": "c208baac2a56615b"
     },
     "tools/fullscreen-control.mjs": {
       "count": 5,
@@ -330,7 +330,7 @@
     },
     "tools/swap-row-reads.mjs": {
       "count": 9,
-      "digest": "dcaa9ef9c58aab6e"
+      "digest": "28d38caac71dcf38"
     },
     "tools/tapsize.mjs": {
       "count": 2,

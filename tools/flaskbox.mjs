@@ -230,8 +230,9 @@ if (process.argv.includes('--selftest')) {
         name: 'the capacity+1 split buttons come back beside the increment rows',
         edits: [{
           file: 'src/ui/screens/rest.js',
-          find: '            <p class="flask-increment-total">',
-          replace: '            <div class="flask-allocation-controls">${Array.from({ length: charge.capacity + 1 }, (_, hp) => `<button type="button" data-hp="${hp}">${hp}/${charge.capacity - hp}</button>`).join(\'\')}</div>\n            <p class="flask-increment-total">',
+          // The total is the kit's StatusText since the 2026-09-04 sweep (it was a <p>); the plant still puts the old split buttons in front of it.
+          find: '            ${html(statusText(`${charge.assigned} of ${charge.capacity} assigned`, { class: \'flask-increment-total\' }))}',
+          replace: '            <div class="flask-allocation-controls">${Array.from({ length: charge.capacity + 1 }, (_, hp) => `<button type="button" data-hp="${hp}">${hp}/${charge.capacity - hp}</button>`).join(\'\')}</div>\n            ${html(statusText(`${charge.assigned} of ${charge.capacity} assigned`, { class: \'flask-increment-total\' }))}',
         }],
         expectRed: /BAD\s+B4 .*old capacity\+1 split buttons/,
       },

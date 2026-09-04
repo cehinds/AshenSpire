@@ -191,6 +191,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
       className: `smith-candidate-card smith-weapon-card rarity-${item.rarity}${item.selected ? ' selected' : ''}`,
       attrs: { role: 'option', 'aria-selected': String(item.selected), dataset: { itemRef: item.itemRef, ...(item.armamentId ? { armamentId: item.armamentId } : {}) } },
     });
+    card.dataset.itemRef = item.itemRef;
     card.querySelector('.on').replaceChildren(el('strong', { class: 'smith-weapon-name', text: item.name }));
     card.prepend(pill({ label: String(item.inventoryCount), attrs: { class: 'smith-weapon-count', 'aria-label': `${item.inventoryCount} in inventory` } }));
     const art = well.querySelector('img');
