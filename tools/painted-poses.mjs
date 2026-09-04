@@ -227,7 +227,9 @@ const manifest = {
   schema: 'ashenspire/lowpoly-renders/v1',
   _: 'DERIVED — written by tools/painted-poses.mjs from painted pose sheets. Same shape as the Blender renders manifest so tools/pose-sprites.mjs can read either.',
   canvas: { ortho: null, cx: null, cz: null, w: CW, h: CH },
-  strip: poses,
+  // the strip names every pose in the manifest, so an appended class adds its own
+  // names to the ones already there rather than replacing them
+  strip: prev?.strip ? [...prev.strip, ...poses.filter((p) => !prev.strip.includes(p))] : poses,
   renders: [...(prev?.renders || []).filter(r => r.class !== cls), ...renders],
 };
 writeFileSync(mfPath, JSON.stringify(manifest, null, 2) + '\n');
