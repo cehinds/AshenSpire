@@ -127,10 +127,10 @@ if (args.includes('--selftest')) {
         replace: '        onTap: () => activateSlot(Number.NaN), // startup-gate selftest plant',
         // A tap opens the decision door for the slot it read; a NaN slot opens
         // the wrong door (no save → "empty"), which is the review check's red.
-        expectRed: /RED A8\.LOAD-SLOT-REVIEW/,
+        expectRed: /RED A8\.LOAD-SLOT-RESELECT/,
       },
       {
-        name: 'activating a slot no longer opens the load review',
+        name: 'second activation no longer opens the load review',
         file: 'src/ui/components/saveSlotSelector.js',
         find: '    loadReviewSlot = slot;\n    render();',
         replace: '    loadReviewSlot = null; // startup-gate selftest plant\n    render();',
@@ -703,8 +703,18 @@ async function assertLoadSlotSelection() {
     `390x844 Close and occupied-slot Delete each render at least 44x44 (${JSON.stringify(mobileTargets)})`);
   if (CAPTURE_SHOTS) await p.screenshot('qa-load-slot-list-mobile-390x844.png');
 
-  // A tap asks (2026-09-04): the first activation opens the slot's decision
-  // door; Back and Escape return to the list with that slot selected.
+  await p.click('[data-slot-pick="1"]');
+  const reselected = await p.ev(`(() => {
+    const selected=document.querySelector('[data-slot-pick][aria-pressed="true"]');
+    const focused=document.querySelector('[data-slot-pick].gp-focus');
+    return {selected:selected?.dataset.slotPick||null, focused:focused?.dataset.slotPick||null,
+      continueEnabled:document.querySelector('[data-title-action="modal-continue"]')?.disabled===false};
+  })()`);
+  verdict(reselected.selected === '1' && reselected.focused === '1' && reselected.continueEnabled,
+    'A8.LOAD-SLOT-RESELECT', `the first press highlights the slot and leaves Continue enabled (${JSON.stringify(reselected)})`);
+
+  // Two taps (Constantine, 2026-09-04): the second press on the highlighted
+  // slot opens its decision door; Back and Escape return with it highlighted.
   await p.click('[data-slot-pick="1"]');
   const review = await p.ev(`(() => ({
     review:document.querySelector('.title-load-review')?.dataset.variant||'',
@@ -715,7 +725,7 @@ async function assertLoadSlotSelection() {
   // Case-insensitive: the kit's head sets the case in the stylesheet, so the
   // words are the acceptance, not their shouting.
   verdict(review.review === 'load-review' && /^load slot 1\?$/i.test(review.heading) && /^load save$/i.test(review.load) && /^back to saves$/i.test(review.back),
-    'A8.LOAD-SLOT-REVIEW', `activating an occupied slot opens its decision door with explicit Load and Back actions (${JSON.stringify(review)})`);
+    'A8.LOAD-SLOT-REVIEW', `the second press opens the selected save's decision door with explicit Load and Back actions (${JSON.stringify(review)})`);
   if (CAPTURE_SHOTS) await p.screenshot('qa-load-slot-review-mobile-390x844.png');
 
   await p.click('[data-title-action="review-back"]');
@@ -771,13 +781,12 @@ async function assertLoadSlotSelection() {
   // A tap asks (2026-09-04): one activation opens the decision door — no
   // timed hold, no bypass. Escape returns to the list with the slot kept, and
   // the next activation opens the same door pointer input opens.
-  const keyedFirst = await keyed.ev(`({review:!!document.querySelector('.title-load-review'), load:!!document.querySelector('.title-load-review [data-title-action="review-load"]')})`);
-  verdict(keyedFirst.review && keyedFirst.load, 'A8.LOAD-SLOT-KEY-FIRST',
-    `keyboard activation opens the slot's decision door without bypassing it (${JSON.stringify(keyedFirst)})`);
-  const keyEscapeRelease = await keyed.key('Escape'); await keyEscapeRelease();
+  const keyedFirst = await keyed.ev(`({review:!!document.querySelector('.title-load-review'), selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null})`);
+  verdict(!keyedFirst.review && keyedFirst.selected === '1', 'A8.LOAD-SLOT-KEY-FIRST',
+    `keyboard activation highlights without bypassing the decision door (${JSON.stringify(keyedFirst)})`);
   const secondKeyRelease = await keyed.key('Enter'); await secondKeyRelease();
   verdict(await keyed.ev(`!!document.querySelector('.title-load-review [data-title-action="review-load"]')`),
-    'A8.LOAD-SLOT-KEY-REVIEW', 'after Escape, the next keyboard activation opens the same review used by pointer input');
+    'A8.LOAD-SLOT-KEY-REVIEW', 'a second keyboard activation opens the same review used by pointer input');
   if (CAPTURE_SHOTS) await keyed.screenshot('qa-load-slot-review-wide-1200x730.png');
   await keyed.close();
 
@@ -787,14 +796,13 @@ async function assertLoadSlotSelection() {
   await padded.click('[data-title-action="load"]');
   await padded.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await padded.ev(`window.__startupPad.set(0,false)`); await wait(180);
-  const padFirst = await padded.ev(`({review:!!document.querySelector('.title-load-review'), load:!!document.querySelector('.title-load-review [data-title-action="review-load"]')})`);
-  verdict(padFirst.review && padFirst.load, 'A8.LOAD-SLOT-PAD-FIRST',
-    `controller activation opens the slot's decision door without becoming a timed hold (${JSON.stringify(padFirst)})`);
-  const padEscapeRelease = await padded.key('Escape'); await padEscapeRelease();
+  const padFirst = await padded.ev(`({review:!!document.querySelector('.title-load-review'), selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null})`);
+  verdict(!padFirst.review && padFirst.selected === '1', 'A8.LOAD-SLOT-PAD-FIRST',
+    `controller activation highlights without becoming a timed hold (${JSON.stringify(padFirst)})`);
   await padded.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await padded.ev(`window.__startupPad.set(0,false)`); await wait(180);
   verdict(await padded.ev(`!!document.querySelector('.title-load-review [data-title-action="review-load"]')`),
-    'A8.LOAD-SLOT-PAD-REVIEW', 'after Escape, the next controller activation deterministically opens the same review');
+    'A8.LOAD-SLOT-PAD-REVIEW', 'a second controller activation deterministically opens the same review');
   await padded.close();
 }
 

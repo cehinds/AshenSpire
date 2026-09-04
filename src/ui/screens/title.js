@@ -7,7 +7,7 @@
 import { beatArmer } from '../../framework/optionDecision.js';
 import { buildStampHtml } from '../components/buildstamp.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
-import { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor, attachSlotTooltips } from '../components/saveSlotSelector.js';
+import { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
 import { html, titleMenu } from '../kit/index.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
@@ -45,6 +45,7 @@ export function mountTitle(app, {
   let modal = null;
   let selectedSlot = null;
   let newReviewSlot = null; // the slot the New Game decision door is asking about
+  let activatedSlot = null; // the slot the last tap landed on — a second tap on it opens the door
 
   // Only one title mount may own the global Cancel action. render() replaces
   // the title DOM in place, so this listener lives for the mount rather than
@@ -145,6 +146,7 @@ export function mountTitle(app, {
 
   const openModal = (kind) => {
     modal = kind;
+    activatedSlot = null;
     selectedSlot = saveSlotSelectionModel(slots, { kind }).properties.selectedSlot;
     render();
     focusModal(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`);
@@ -180,14 +182,20 @@ export function mountTitle(app, {
     modal = null;
     selectedSlot = null;
     newReviewSlot = null;
+    activatedSlot = null;
     render();
     focusTitleDefault(app, { showCursor: false });
   };
 
   const activateSlot = (slot) => {
-    // A tap asks: the decision door (Start / Overwrite) opens on the slot.
+    // Two taps: the first highlights, the second on the highlighted slot opens
+    // its decision door (Start / Overwrite). Continue opens it as well.
+    const repeat = selectedSlot === slot && activatedSlot === slot;
     selectedSlot = slot;
-    openNewReview(slot);
+    activatedSlot = slot;
+    if (repeat) { openNewReview(slot); return; }
+    render();
+    focusModal(`[data-slot-pick="${selectedSlot}"]`);
   };
 
   const wireDelete = (root) => {
@@ -256,7 +264,6 @@ export function mountTitle(app, {
         activateSlot(+button.dataset.slotPick);
       });
     });
-    if (modal) attachSlotTooltips(root, slots, { kind: modal });
     wireDelete(root);
     if (onHistory) void onHistory;
     if (onProfile) void onProfile;

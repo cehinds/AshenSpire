@@ -48000,7 +48000,7 @@ Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_
 const { beatArmer } = require("src/framework/optionDecision.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { hudQuickSettingsHtml, wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
-const { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor, attachSlotTooltips } = require("src/ui/components/saveSlotSelector.js");
+const { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor } = require("src/ui/components/saveSlotSelector.js");
 const { html, titleMenu } = require("src/ui/kit/index.js");
 const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
 const { saveSlotSelectionModel } = require("src/ui/models/SaveSlotSelectionModel.js");
@@ -48038,6 +48038,7 @@ function mountTitle(app, {
   let modal = null;
   let selectedSlot = null;
   let newReviewSlot = null; // the slot the New Game decision door is asking about
+  let activatedSlot = null; // the slot the last tap landed on — a second tap on it opens the door
 
   // Only one title mount may own the global Cancel action. render() replaces
   // the title DOM in place, so this listener lives for the mount rather than
@@ -48138,6 +48139,7 @@ function mountTitle(app, {
 
   const openModal = (kind) => {
     modal = kind;
+    activatedSlot = null;
     selectedSlot = saveSlotSelectionModel(slots, { kind }).properties.selectedSlot;
     render();
     focusModal(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`);
@@ -48173,14 +48175,20 @@ function mountTitle(app, {
     modal = null;
     selectedSlot = null;
     newReviewSlot = null;
+    activatedSlot = null;
     render();
     focusTitleDefault(app, { showCursor: false });
   };
 
   const activateSlot = (slot) => {
-    // A tap asks: the decision door (Start / Overwrite) opens on the slot.
+    // Two taps: the first highlights, the second on the highlighted slot opens
+    // its decision door (Start / Overwrite). Continue opens it as well.
+    const repeat = selectedSlot === slot && activatedSlot === slot;
     selectedSlot = slot;
-    openNewReview(slot);
+    activatedSlot = slot;
+    if (repeat) { openNewReview(slot); return; }
+    render();
+    focusModal(`[data-slot-pick="${selectedSlot}"]`);
   };
 
   const wireDelete = (root) => {
@@ -48249,7 +48257,6 @@ function mountTitle(app, {
         activateSlot(+button.dataset.slotPick);
       });
     });
-    if (modal) attachSlotTooltips(root, slots, { kind: modal });
     wireDelete(root);
     if (onHistory) void onHistory;
     if (onProfile) void onProfile;
@@ -53697,8 +53704,34 @@ function fitRung(el, pinned) {
  * place it beside its anchor. Every entry point is this function plus an
  * anchor, so the "how" cannot drift while the "where" differs.
  */
+// ---- A TOOLTIP DIES WITH THE SURFACE IT WAS ON (Constantine, 2026-09-04:
+// "in modal changes tool tips from the previous screen should auto close").
+// One observer: when the level-0 anchor leaves the document, or a veil that
+// does not contain it is raised over it, the tooltip closes at once — no
+// surface has to remember to call hideTooltip() on its way out.
+let sceneWatch = null;
+let sceneAnchor = null;
+function watchScene() {
+  if (sceneWatch) return;
+  sceneWatch = new MutationObserver((records) => {
+    if (!sceneAnchor) return;
+    if (!sceneAnchor.isConnected) { hideTooltip(); return; }
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (node.nodeType !== 1) continue;
+        const veil = node.matches?.('.modal-veil') ? node : node.querySelector?.('.modal-veil');
+        if (veil && !veil.contains(sceneAnchor)) { hideTooltip(); return; }
+      }
+    }
+  });
+  sceneWatch.observe(document.documentElement, { childList: true, subtree: true });
+}
+
 function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0, align = 'start', level = 0, target = null) {
   if (!html) return false;
+  // `anchor` is a rect; `target` is the element it was measured from (null
+  // for a caller-owned rect — then there is no surface to watch).
+  if (level === 0) { sceneAnchor = target instanceof Node ? target : null; watchScene(); }
   if (level === 0) { unstick(); hide(1); }
   clearTimers();
   const t = level === 0 ? ensure() : panel(1);
@@ -53855,6 +53888,7 @@ function showTooltipAt(x, y, html) {
   return showWith(html, { left: x, top: y, width: 0, height: 0 });
 }
 function hideTooltip() {
+  sceneAnchor = null;
   unstick();
   clearTimers();
   clearTimeout(openTimer);
@@ -54299,7 +54333,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '98ffd12c03';
+const SOURCE = 'ce58a04668';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -54333,7 +54367,7 @@ const SOURCE = '98ffd12c03';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '24';
+const ORDINAL = '25';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58875,7 +58909,7 @@ const { saveSlotSelectionModel } = require("src/ui/models/SaveSlotSelectionModel
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { focusElement } = require("src/ui/input.js");
 const { armHold, beatArmer } = require("src/framework/optionDecision.js");
-const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.js");
+const { hideTooltip } = require("src/ui/components/tooltip.js");
 const { el, html, modalHead, modalFooter, button, iconButton, optionCard, optionRow, options, decide, detailCard, ornament, pill } = require("src/ui/kit/index.js");
 
 
@@ -59007,24 +59041,6 @@ function slotDecisionDoor({ kind, slot, summary = null }) {
     dataset: { size: 'sm', component: UI.titleMenuModal, variant: spec.variant },
     role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'title-modal-heading',
   }, [head, body, foot]);
-}
-
-/**
- * attachSlotTooltips(root, slots) → the kit's tooltip on every slot row: the
- * save's facts, then what a tap and a hold do. One tooltip machine for the
- * whole game (components/tooltip.js) — the title's own pinned singleton is gone.
- */
-function attachSlotTooltips(root, slots, { kind = 'load' } = {}) {
-  root.querySelectorAll('[data-slot-pick]').forEach((control) => {
-    const slot = Number(control.dataset.slotPick);
-    const summary = slots.find((record) => record.slot === slot)?.summary || null;
-    const what = summary
-      ? (kind === 'new' ? 'Tap to start a new game here — it replaces this save.' : 'Tap to review this save. Hold to load it now.')
-      : 'Tap to start a new game here.';
-    attachTooltip(control, () => (summary
-      ? `<div class="tt-title">Slot ${slot} · ${esc(summary.className)}</div>${esc(slotFacts(summary))}<div class="ti-detail">${esc(what)}</div>`
-      : `<div class="tt-title">Slot ${slot}</div>Empty.<div class="ti-detail">${esc(what)}</div>`));
-  });
 }
 
 function closeSaveSlotSelector({ restoreFocus = true } = {}) {
@@ -59202,19 +59218,23 @@ function openSaveSlotSelector({
       });
     }
 
-    attachSlotTooltips(veil, slots, { kind: 'load' });
+
   };
 
   const activateSlot = (slot) => {
     hideTooltip();
+    // TWO TAPS (Constantine, 2026-09-04): the first highlights the slot, the
+    // second on the highlighted slot opens its decision door (Continue opens
+    // it too). Back returns to the list with the slot still highlighted, so
+    // the next tap opens it again. A hold on an occupied slot still loads.
     const repeat = selectedSlot === slot && activatedLoadSlot === slot;
     selectedSlot = slot;
     activatedLoadSlot = slot;
-    // A TAP ASKS (Constantine, 2026-09-04): the decision door is the
-    // confirmation, so the first activation opens it; Back returns to the
-    // list with this slot selected. A hold on an occupied slot still loads.
-    if (inlineReview) { openReview(slot); return; }
-    if (repeat) { requestLoad(slot, 'repeat'); return; }
+    if (repeat) {
+      if (inlineReview) openReview(slot);
+      else requestLoad(slot, 'repeat');
+      return;
+    }
     render();
     focus(`[data-slot-pick="${selectedSlot}"]`);
   };
@@ -59276,7 +59296,7 @@ function saveSlotCopyHtml({ slot, summary }) {
 }
 
 
-Object.assign(module.exports, { slotFacts, slotOption, slotDoor, slotDecisionDoor, attachSlotTooltips, closeSaveSlotSelector, openSaveSlotSelector, saveSlotCopyHtml });
+Object.assign(module.exports, { slotFacts, slotOption, slotDoor, slotDecisionDoor, closeSaveSlotSelector, openSaveSlotSelector, saveSlotCopyHtml });
 
 },
 "src/ui/models/SaveSlotSelectionModel.js": function (module, exports, require) {

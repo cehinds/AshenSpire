@@ -13,7 +13,7 @@ import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
 import { armHold, beatArmer } from '../../framework/optionDecision.js';
-import { attachTooltip, hideTooltip, esc } from './tooltip.js';
+import { hideTooltip } from './tooltip.js';
 import {
   el, html, modalHead, modalFooter, button, iconButton, optionCard, optionRow, options, decide, detailCard, ornament, pill,
 } from '../kit/index.js';
@@ -145,24 +145,6 @@ export function slotDecisionDoor({ kind, slot, summary = null }) {
     dataset: { size: 'sm', component: UI.titleMenuModal, variant: spec.variant },
     role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'title-modal-heading',
   }, [head, body, foot]);
-}
-
-/**
- * attachSlotTooltips(root, slots) → the kit's tooltip on every slot row: the
- * save's facts, then what a tap and a hold do. One tooltip machine for the
- * whole game (components/tooltip.js) — the title's own pinned singleton is gone.
- */
-export function attachSlotTooltips(root, slots, { kind = 'load' } = {}) {
-  root.querySelectorAll('[data-slot-pick]').forEach((control) => {
-    const slot = Number(control.dataset.slotPick);
-    const summary = slots.find((record) => record.slot === slot)?.summary || null;
-    const what = summary
-      ? (kind === 'new' ? 'Tap to start a new game here — it replaces this save.' : 'Tap to review this save. Hold to load it now.')
-      : 'Tap to start a new game here.';
-    attachTooltip(control, () => (summary
-      ? `<div class="tt-title">Slot ${slot} · ${esc(summary.className)}</div>${esc(slotFacts(summary))}<div class="ti-detail">${esc(what)}</div>`
-      : `<div class="tt-title">Slot ${slot}</div>Empty.<div class="ti-detail">${esc(what)}</div>`));
-  });
 }
 
 export function closeSaveSlotSelector({ restoreFocus = true } = {}) {
@@ -340,19 +322,23 @@ export function openSaveSlotSelector({
       });
     }
 
-    attachSlotTooltips(veil, slots, { kind: 'load' });
+
   };
 
   const activateSlot = (slot) => {
     hideTooltip();
+    // TWO TAPS (Constantine, 2026-09-04): the first highlights the slot, the
+    // second on the highlighted slot opens its decision door (Continue opens
+    // it too). Back returns to the list with the slot still highlighted, so
+    // the next tap opens it again. A hold on an occupied slot still loads.
     const repeat = selectedSlot === slot && activatedLoadSlot === slot;
     selectedSlot = slot;
     activatedLoadSlot = slot;
-    // A TAP ASKS (Constantine, 2026-09-04): the decision door is the
-    // confirmation, so the first activation opens it; Back returns to the
-    // list with this slot selected. A hold on an occupied slot still loads.
-    if (inlineReview) { openReview(slot); return; }
-    if (repeat) { requestLoad(slot, 'repeat'); return; }
+    if (repeat) {
+      if (inlineReview) openReview(slot);
+      else requestLoad(slot, 'repeat');
+      return;
+    }
     render();
     focus(`[data-slot-pick="${selectedSlot}"]`);
   };

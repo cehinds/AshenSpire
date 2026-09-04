@@ -173,8 +173,34 @@ function fitRung(el, pinned) {
  * place it beside its anchor. Every entry point is this function plus an
  * anchor, so the "how" cannot drift while the "where" differs.
  */
+// ---- A TOOLTIP DIES WITH THE SURFACE IT WAS ON (Constantine, 2026-09-04:
+// "in modal changes tool tips from the previous screen should auto close").
+// One observer: when the level-0 anchor leaves the document, or a veil that
+// does not contain it is raised over it, the tooltip closes at once — no
+// surface has to remember to call hideTooltip() on its way out.
+let sceneWatch = null;
+let sceneAnchor = null;
+function watchScene() {
+  if (sceneWatch) return;
+  sceneWatch = new MutationObserver((records) => {
+    if (!sceneAnchor) return;
+    if (!sceneAnchor.isConnected) { hideTooltip(); return; }
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (node.nodeType !== 1) continue;
+        const veil = node.matches?.('.modal-veil') ? node : node.querySelector?.('.modal-veil');
+        if (veil && !veil.contains(sceneAnchor)) { hideTooltip(); return; }
+      }
+    }
+  });
+  sceneWatch.observe(document.documentElement, { childList: true, subtree: true });
+}
+
 function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0, align = 'start', level = 0, target = null) {
   if (!html) return false;
+  // `anchor` is a rect; `target` is the element it was measured from (null
+  // for a caller-owned rect — then there is no surface to watch).
+  if (level === 0) { sceneAnchor = target instanceof Node ? target : null; watchScene(); }
   if (level === 0) { unstick(); hide(1); }
   clearTimers();
   const t = level === 0 ? ensure() : panel(1);
@@ -331,6 +357,7 @@ export function showTooltipAt(x, y, html) {
   return showWith(html, { left: x, top: y, width: 0, height: 0 });
 }
 export function hideTooltip() {
+  sceneAnchor = null;
   unstick();
   clearTimers();
   clearTimeout(openTimer);
