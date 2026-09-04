@@ -8,6 +8,7 @@ import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/co
 import { resolveCard } from '../../model/registries.js';
 import { openPileModal } from '../components/piles.js';
 import { attachTooltip, ensureTooltip, hideTooltip, showTooltipForRect, esc } from '../components/tooltip.js';
+import { combatantDetailBody } from '../components/combatantInspector.js';
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
@@ -41,7 +42,7 @@ import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
-import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html } from '../kit/index.js';
+import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal } from '../kit/index.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -348,6 +349,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       if (stance) skills.push({ name: stance.name, detail: stance.tooltip || 'Current stance.', active: true });
       skills.push({ name: classDef.name, detail: classDef.description || 'Current combat role.', active: true });
       return {
+        role: 'player',
         name: (run.customization?.name || classDef.name).toUpperCase(),
         subtitle: `${classDef.name} · Level ${run.level}`,
         resources: [
@@ -372,6 +374,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     }));
     const current = currentMoveId && def.moves?.[currentMoveId];
     return {
+      role: 'enemy',
       name: def.name,
       subtitle: (def.tags || []).map(words).join(' · ') || 'Enemy',
       resources: [
@@ -397,7 +400,32 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     return `<div class="tt-title">${esc(subject.name)}</div>`
       + `<div class="tt-combatant-line"><b>HP</b> ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</div>`
       + `<div class="tt-combatant-line"><b>Poise</b> ${esc(poise?.value ?? '—')}/${esc(poise?.max ?? '—')}</div>`
-      + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`;
+      + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`
+      + `<div class="ti-detail">Press <b>I</b>${subject.role === 'enemy' ? ', or tap the name,' : ''} for the full read.</div>`;
+  }
+
+  /**
+   * openCombatantDoor(subject) — THE FULL READ, in the kit's own door
+   * (Constantine, 2026-09-04: "no way to expand combatant tooltip to see more
+   * details"). The tooltip is the glance: HP, poise, effects. This is the
+   * study: pools as Meters, the current intent, the whole move set, every
+   * active effect — `combatantDetailBody`, the same sections the edge tray
+   * renders, so the two can never drift.
+   */
+  function openCombatantDoor(subject) {
+    if (!subject?.name) return;
+    hideTooltip();
+    openModal({
+      size: 'md',
+      className: 'combatant-door',
+      eyebrow: subject.subtitle || 'Combatant',
+      title: subject.name,
+      closeLabel: `Close ${subject.name}`,
+      bodyClassName: 'combatant-inspector-body',
+      body: (host) => host.replaceChildren(...combatantDetailBody(subject, { heading: false })),
+      primary: button({ label: 'Close', weight: 'primary', attrs: { 'data-focusable': 'true' } }),
+      footSize: 'short',
+    });
   }
 
   function renderedContentRect(el) {
@@ -957,6 +985,23 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       // The nameplate is a LabelStack: the name, and under it what kind of
       // thing it is (its stature reads from the frame, so the hint is the tags).
       const nm = labelStack({ label: def.name, attrs: { class: 'nm' } });
+      // The name is the way into the full read on touch, where there is no `I`.
+      // It stops the frame's own click so tapping the name never plays a card
+      // or retargets — the door is a reading, not a move.
+      nm.classList.add('nm-inspect');
+      nm.setAttribute('role', 'button');
+      nm.tabIndex = 0;
+      nm.setAttribute('aria-label', `${def.name} — the full read`);
+      const openThisRead = (event) => {
+        event.stopPropagation();
+        openCombatantDoor(combatantSubject('enemy', enemy));
+      };
+      nm.addEventListener('click', openThisRead);
+      nm.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        openThisRead(event);
+      });
       const box = combatantFrame({
         role: 'enemy',
         entityId: enemy.id,
@@ -1364,6 +1409,16 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // the in-combat Armoury, both shapes: tools/veil-owns-input.mjs.
     if (veilIsOpen()) return;
 
+    // `I` is Inspect, everywhere: the full read of whatever the player is
+    // looking at — the enemy they selected, else themselves (Constantine,
+    // 2026-09-04: "no way to expand combatant tooltip to see more details").
+    if (ev.key === 'i' || ev.key === 'I') {
+      ev.preventDefault();
+      const selected = combat.enemies.find((enemy) => enemy.id === selectedEnemyId && enemy.alive);
+      openCombatantDoor(combatantSubject(selected ? 'enemy' : 'player', selected || combat.player));
+      return;
+    }
+
     // The menu key opens Settings. The legacy Deck/Stats/Relics bindings all
     // land in Armoury now that it owns every run-information surface.
     const armouryAction = actionDestinationForEvent(ev);
@@ -1659,6 +1714,27 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   $('.pile.draw').addEventListener('click', showDraw);
   $('.pile.discard').addEventListener('click', showDiscard);
   $('.pile.exhaust').addEventListener('click', showExhaust);
+  // THE BOTTOM ROW SAYS WHAT IT IS (Constantine, 2026-09-04: "no tool tips on
+  // bottom row for end turn, draw, end turn, discard and exhaust"). Every
+  // other control on this screen carries a tooltip; the five that decide a
+  // turn carried none. Counts are read at open time, so the panel is never a
+  // stale copy of a number the row already shows.
+  attachTooltip($('.energy-orb'), () => `<div class="tt-title">Actions</div>`
+    + `${dv(combat.player).energy ?? combat.player.energy} of ${combat.player.energyMax} left this turn.`
+    + `<div class="ti-detail">Playing a card spends its cost. Unspent actions do not carry over.</div>`);
+  attachTooltip($('.pile.draw'), () => `<div class="tt-title">Draw pile</div>`
+    + `${combat.piles.draw.length} card${combat.piles.draw.length === 1 ? '' : 's'} left to draw.`
+    + `<div class="ti-detail">Tap to look through it. When it empties, the discard pile is shuffled back in.</div>`);
+  attachTooltip($('.pile.discard'), () => `<div class="tt-title">Discard pile</div>`
+    + `${combat.piles.discard.length} card${combat.piles.discard.length === 1 ? '' : 's'} played or dropped.`
+    + `<div class="ti-detail">Tap to look through it. It returns to the draw pile when that runs out.</div>`);
+  attachTooltip($('.pile.exhaust'), () => `<div class="tt-title">Exhausted</div>`
+    + `${combat.piles.exhaust.length} card${combat.piles.exhaust.length === 1 ? '' : 's'} gone for this fight.`
+    + `<div class="ti-detail">Tap to look through it. Exhausted cards do not come back until the fight ends.</div>`);
+  attachTooltip($('.end-turn'), () => `<div class="tt-title">End Turn</div>`
+    + `Hand off to the enemies, then draw a fresh hand.`
+    + `<div class="ti-detail">Block expires at the start of your next turn. `
+    + `Press <b>${esc(hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn'))}</b>, or hold this.</div>`);
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
   $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.

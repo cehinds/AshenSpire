@@ -40,6 +40,28 @@ function section(title, rows, empty) {
   ]);
 }
 
+/**
+ * combatantDetailBody(subject) → THE FULL READ, as kit pieces. One home for
+ * it: the edge tray renders this, and so does the door the combatant's
+ * tooltip expands into (Constantine, 2026-09-04: "no way to expand combatant
+ * tooltip to see more details"). A second copy of these sections is exactly
+ * how the tray and the door would drift.
+ */
+export function combatantDetailBody(subject, { heading = true } = {}) {
+  if (!subject?.name) throw new Error('combatantDetailBody requires a named subject');
+  // `heading: false` for a door whose HEAD already names the subject — the
+  // tray has no head, so it keeps the LabelStack.
+  return [
+    el('div', { class: 'combatant-inspector-summary' }, [
+      heading ? labelStack({ label: subject.name, hint: subject.subtitle || '' }) : null,
+      resourceMeters(subject.resources),
+    ]),
+    ...(subject.intent ? [section('Current intent', [subject.intent], 'No current intent.')] : []),
+    section(subject.skillLabel || 'Skills', subject.skills, 'No active skills.'),
+    section('Active effects', subject.statuses, 'No active effects.'),
+  ];
+}
+
 export function mountCombatantInspector(host, model, { onToggle = null } = {}) {
   if (!host) throw new Error('Combatant inspector requires a host');
   if (!model || model.component !== UI.combatantInspector) throw new Error('Combatant inspector requires its Component Model');
@@ -55,16 +77,7 @@ export function mountCombatantInspector(host, model, { onToggle = null } = {}) {
   const rendered = renderTray(tray, {
     onToggle: () => onToggle?.(!model.properties.expanded),
     renderContent: (content) => {
-      const subject = model.properties.subject;
-      content.replaceChildren(
-        el('div', { class: 'combatant-inspector-summary' }, [
-          labelStack({ label: subject.name, hint: subject.subtitle || '' }),
-          resourceMeters(subject.resources),
-        ]),
-        ...(subject.intent ? [section('Current intent', [subject.intent], 'No current intent.')] : []),
-        section(subject.skillLabel || 'Skills', subject.skills, 'No active skills.'),
-        section('Active effects', subject.statuses, 'No active effects.'),
-      );
+      content.replaceChildren(...combatantDetailBody(model.properties.subject));
     },
   });
   rendered.element.dataset.role = 'context';

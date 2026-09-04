@@ -170,7 +170,14 @@ export function findings(r) {
   if (!/UI\.battlefieldStage/.test(r.combat)
       || !/centerHeightRatio/.test(r.battlefieldStageModel)
       || !/availableHeight \* centerHeightRatio/.test(r.battlefieldStage)
-      || !/scaleFrame\(frame, model\.tokens\.intentGapPx, model\.tokens\.centerHeightRatio\)/.test(r.battlefieldStage)
+      || !/measureFrame\(frame, model\.tokens\.intentGapPx, model\.tokens\.centerHeightRatio\)/.test(r.battlefieldStage)
+      // ONE SCALE FOR THE STAGE (2026-09-04). The stage used to divide each
+      // card by its OWN sprite's natural height, so every combatant rendered a
+      // different width. It now measures every frame and applies the smallest
+      // scale any of them needs — this asserts the reduce and the apply, so a
+      // return to per-frame scaling is red.
+      || !/measures\.reduce\(\(least, m\) => Math\.min\(least, m\.fits\), 1\)/.test(r.battlefieldStage)
+      || !/for \(const measure of measures\) applyFrame\(measure, scale\)/.test(r.battlefieldStage)
       || !/function renderCombatantStage\(\)[\s\S]*?renderPlayer\(\);\s*renderEnemies\(\);[\s\S]*?battlefieldStage\.refresh\(\);[\s\S]*?function render\(\)/.test(r.combat)
       || (r.combat.match(/renderCombatantStage\(\);/g) || []).length < 2
       || !/UI\.playerHandTray/.test(r.combat)

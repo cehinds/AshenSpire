@@ -2976,6 +2976,16 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .ctext .val.up { color: var(--green); }
 .ctext .val.down { color: var(--ember); }
 
+/* The nameplate is the way into a combatant's full read on touch (there is no
+   `I` on a phone). It reads as a control without becoming a button-shaped box
+   over the battlefield: the hit area is the tap floor, the affordance is the
+   cursor and the focus ring. */
+.combatant .nm-inspect { cursor: help; min-height: var(--tap-floor); display: flex; flex-direction: column; justify-content: center; }
+.combatant .nm-inspect:hover .ls-label, .combatant .nm-inspect:focus-visible .ls-label { color: var(--gold); }
+.combatant .nm-inspect:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1); }
+/* The full read, in a door: the same sections the edge tray renders. */
+.combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
+
 /* ═══ SCREENS — a page wears the same atoms a door does ═══════════════════ */
 /* A screen's banner is Title·L over an Eyebrow-weight subtitle; the same
    two atoms the kit's TitleMenu and Pane use, centred because a screen's
@@ -51760,7 +51770,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '2954b92ed1';
+const SOURCE = '682ccbad29';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -51794,7 +51804,7 @@ const SOURCE = '2954b92ed1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '59';
+const ORDINAL = '60';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -67678,6 +67688,7 @@ const { dispatch, previewCard, previewIntent, getEntity } = require("src/engine/
 const { resolveCard } = require("src/model/registries.js");
 const { openPileModal } = require("src/ui/components/piles.js");
 const { attachTooltip, ensureTooltip, hideTooltip, showTooltipForRect, esc } = require("src/ui/components/tooltip.js");
+const { combatantDetailBody } = require("src/ui/components/combatantInspector.js");
 const { relicText } = require("src/ui/components/card.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
@@ -67711,7 +67722,7 @@ const { wireHudModeGrip } = require("src/ui/components/hudModeGrip.js");
 const { battlefieldStageModel } = require("src/ui/models/BattlefieldStageModel.js");
 const { wireBattlefieldStage } = require("src/ui/components/battlefieldStage.js");
 const { tooltipPlacementModel } = require("src/ui/models/TooltipPlacementModel.js");
-const { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html } = require("src/ui/kit/index.js");
+const { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal } = require("src/ui/kit/index.js");
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -68018,6 +68029,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       if (stance) skills.push({ name: stance.name, detail: stance.tooltip || 'Current stance.', active: true });
       skills.push({ name: classDef.name, detail: classDef.description || 'Current combat role.', active: true });
       return {
+        role: 'player',
         name: (run.customization?.name || classDef.name).toUpperCase(),
         subtitle: `${classDef.name} · Level ${run.level}`,
         resources: [
@@ -68042,6 +68054,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     }));
     const current = currentMoveId && def.moves?.[currentMoveId];
     return {
+      role: 'enemy',
       name: def.name,
       subtitle: (def.tags || []).map(words).join(' · ') || 'Enemy',
       resources: [
@@ -68067,7 +68080,32 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     return `<div class="tt-title">${esc(subject.name)}</div>`
       + `<div class="tt-combatant-line"><b>HP</b> ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</div>`
       + `<div class="tt-combatant-line"><b>Poise</b> ${esc(poise?.value ?? '—')}/${esc(poise?.max ?? '—')}</div>`
-      + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`;
+      + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`
+      + `<div class="ti-detail">Press <b>I</b>${subject.role === 'enemy' ? ', or tap the name,' : ''} for the full read.</div>`;
+  }
+
+  /**
+   * openCombatantDoor(subject) — THE FULL READ, in the kit's own door
+   * (Constantine, 2026-09-04: "no way to expand combatant tooltip to see more
+   * details"). The tooltip is the glance: HP, poise, effects. This is the
+   * study: pools as Meters, the current intent, the whole move set, every
+   * active effect — `combatantDetailBody`, the same sections the edge tray
+   * renders, so the two can never drift.
+   */
+  function openCombatantDoor(subject) {
+    if (!subject?.name) return;
+    hideTooltip();
+    openModal({
+      size: 'md',
+      className: 'combatant-door',
+      eyebrow: subject.subtitle || 'Combatant',
+      title: subject.name,
+      closeLabel: `Close ${subject.name}`,
+      bodyClassName: 'combatant-inspector-body',
+      body: (host) => host.replaceChildren(...combatantDetailBody(subject, { heading: false })),
+      primary: button({ label: 'Close', weight: 'primary', attrs: { 'data-focusable': 'true' } }),
+      footSize: 'short',
+    });
   }
 
   function renderedContentRect(el) {
@@ -68627,6 +68665,23 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       // The nameplate is a LabelStack: the name, and under it what kind of
       // thing it is (its stature reads from the frame, so the hint is the tags).
       const nm = labelStack({ label: def.name, attrs: { class: 'nm' } });
+      // The name is the way into the full read on touch, where there is no `I`.
+      // It stops the frame's own click so tapping the name never plays a card
+      // or retargets — the door is a reading, not a move.
+      nm.classList.add('nm-inspect');
+      nm.setAttribute('role', 'button');
+      nm.tabIndex = 0;
+      nm.setAttribute('aria-label', `${def.name} — the full read`);
+      const openThisRead = (event) => {
+        event.stopPropagation();
+        openCombatantDoor(combatantSubject('enemy', enemy));
+      };
+      nm.addEventListener('click', openThisRead);
+      nm.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        openThisRead(event);
+      });
       const box = combatantFrame({
         role: 'enemy',
         entityId: enemy.id,
@@ -69034,6 +69089,16 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     // the in-combat Armoury, both shapes: tools/veil-owns-input.mjs.
     if (veilIsOpen()) return;
 
+    // `I` is Inspect, everywhere: the full read of whatever the player is
+    // looking at — the enemy they selected, else themselves (Constantine,
+    // 2026-09-04: "no way to expand combatant tooltip to see more details").
+    if (ev.key === 'i' || ev.key === 'I') {
+      ev.preventDefault();
+      const selected = combat.enemies.find((enemy) => enemy.id === selectedEnemyId && enemy.alive);
+      openCombatantDoor(combatantSubject(selected ? 'enemy' : 'player', selected || combat.player));
+      return;
+    }
+
     // The menu key opens Settings. The legacy Deck/Stats/Relics bindings all
     // land in Armoury now that it owns every run-information surface.
     const armouryAction = actionDestinationForEvent(ev);
@@ -69329,6 +69394,27 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   $('.pile.draw').addEventListener('click', showDraw);
   $('.pile.discard').addEventListener('click', showDiscard);
   $('.pile.exhaust').addEventListener('click', showExhaust);
+  // THE BOTTOM ROW SAYS WHAT IT IS (Constantine, 2026-09-04: "no tool tips on
+  // bottom row for end turn, draw, end turn, discard and exhaust"). Every
+  // other control on this screen carries a tooltip; the five that decide a
+  // turn carried none. Counts are read at open time, so the panel is never a
+  // stale copy of a number the row already shows.
+  attachTooltip($('.energy-orb'), () => `<div class="tt-title">Actions</div>`
+    + `${dv(combat.player).energy ?? combat.player.energy} of ${combat.player.energyMax} left this turn.`
+    + `<div class="ti-detail">Playing a card spends its cost. Unspent actions do not carry over.</div>`);
+  attachTooltip($('.pile.draw'), () => `<div class="tt-title">Draw pile</div>`
+    + `${combat.piles.draw.length} card${combat.piles.draw.length === 1 ? '' : 's'} left to draw.`
+    + `<div class="ti-detail">Tap to look through it. When it empties, the discard pile is shuffled back in.</div>`);
+  attachTooltip($('.pile.discard'), () => `<div class="tt-title">Discard pile</div>`
+    + `${combat.piles.discard.length} card${combat.piles.discard.length === 1 ? '' : 's'} played or dropped.`
+    + `<div class="ti-detail">Tap to look through it. It returns to the draw pile when that runs out.</div>`);
+  attachTooltip($('.pile.exhaust'), () => `<div class="tt-title">Exhausted</div>`
+    + `${combat.piles.exhaust.length} card${combat.piles.exhaust.length === 1 ? '' : 's'} gone for this fight.`
+    + `<div class="ti-detail">Tap to look through it. Exhausted cards do not come back until the fight ends.</div>`);
+  attachTooltip($('.end-turn'), () => `<div class="tt-title">End Turn</div>`
+    + `Hand off to the enemies, then draw a fresh hand.`
+    + `<div class="ti-detail">Block expires at the start of your next turn. `
+    + `Press <b>${esc(hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn'))}</b>, or hold this.</div>`);
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
   $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
@@ -69510,6 +69596,99 @@ function openPileModal(registries, title, cards, { shuffleForDisplay = false } =
 
 
 Object.assign(module.exports, { openPileModal });
+
+},
+"src/ui/components/combatantInspector.js": function (module, exports, require) {
+// THE COMBATANT INSPECTOR — the expanded reading of one fighter, in a Folding
+// Tray at the field's edge. The tray is components/trayComponents.js (the kit's
+// tray assembly); everything INSIDE it is kit pieces and nothing else:
+//
+//   the subject   a LabelStack (name over what it is)
+//   its pools     one Meter per resource, stacked, values on their plates
+//   its intent    a Pane heading (Eyebrow + Title·S) over one Row, tone
+//                 `current`, whose status line is what the move does
+//   its skills    the same Rows, the live one toned `current`
+//   its effects   the same Rows, or one disabled Row saying there are none
+//
+// It owns no shape: the host's edge and width are tokens the model carries.
+const { childModel } = require("src/ui/models/ComponentModel.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { renderTray } = require("src/ui/components/trayComponents.js");
+const { el, eyebrow, titleS, hairline, labelStack, meter, meters, row, statusText } = require("src/ui/kit/index.js");
+
+function resourceMeters(resources) {
+  return meters((resources || []).map((r) => meter({
+    id: String(r.label).toLowerCase(),
+    tone: String(r.label).toLowerCase(),
+    label: r.label,
+    value: r.max == null ? String(r.value) : `${r.value} / ${r.max}`,
+    cur: r.value, max: r.max == null ? r.value : r.max,
+    pct: r.max ? Math.max(0, Math.min(100, (r.value / r.max) * 100)) : (r.value > 0 ? 100 : 0),
+    stack: true,
+    attrs: { class: 'combatant-inspector-resource' },
+  })), { class: 'combatant-inspector-resources' });
+}
+
+function section(title, rows, empty) {
+  const list = (rows || []).length
+    ? rows.map((r) => row({
+      label: r.name, status: r.detail || '', tag: 'div',
+      tone: r.active ? 'current' : '', className: 'combatant-inspector-row',
+    }))
+    : [row({ label: empty, tag: 'div', disabled: true, className: 'combatant-inspector-row' })];
+  return el('section', { class: 'combatant-inspector-section' }, [
+    eyebrow(title), hairline(), ...list,
+  ]);
+}
+
+/**
+ * combatantDetailBody(subject) → THE FULL READ, as kit pieces. One home for
+ * it: the edge tray renders this, and so does the door the combatant's
+ * tooltip expands into (Constantine, 2026-09-04: "no way to expand combatant
+ * tooltip to see more details"). A second copy of these sections is exactly
+ * how the tray and the door would drift.
+ */
+function combatantDetailBody(subject, { heading = true } = {}) {
+  if (!subject?.name) throw new Error('combatantDetailBody requires a named subject');
+  // `heading: false` for a door whose HEAD already names the subject — the
+  // tray has no head, so it keeps the LabelStack.
+  return [
+    el('div', { class: 'combatant-inspector-summary' }, [
+      heading ? labelStack({ label: subject.name, hint: subject.subtitle || '' }) : null,
+      resourceMeters(subject.resources),
+    ]),
+    ...(subject.intent ? [section('Current intent', [subject.intent], 'No current intent.')] : []),
+    section(subject.skillLabel || 'Skills', subject.skills, 'No active skills.'),
+    section('Active effects', subject.statuses, 'No active effects.'),
+  ];
+}
+
+function mountCombatantInspector(host, model, { onToggle = null } = {}) {
+  if (!host) throw new Error('Combatant inspector requires a host');
+  if (!model || model.component !== UI.combatantInspector) throw new Error('Combatant inspector requires its Component Model');
+  const tray = childModel(model, UI.foldingTray);
+  host.innerHTML = '';
+  host.hidden = false;
+  host.className = `combatant-inspector-host ${model.properties.edge}`;
+  host.style.setProperty('--combatant-inspector-width-rem', String(model.tokens.widthRem));
+  host.style.setProperty('--combatant-inspector-mobile-vw', `${model.tokens.mobileWidthViewportPct}vw`);
+  host.setAttribute('aria-label', model.accessibility.label);
+  markUiComponent(host, model.component, model.variant);
+
+  const rendered = renderTray(tray, {
+    onToggle: () => onToggle?.(!model.properties.expanded),
+    renderContent: (content) => {
+      content.replaceChildren(...combatantDetailBody(model.properties.subject));
+    },
+  });
+  rendered.element.dataset.role = 'context';
+  host.appendChild(rendered.element);
+  host.addEventListener('click', (event) => event.stopPropagation());
+  return rendered;
+}
+
+
+Object.assign(module.exports, { combatantDetailBody, mountCombatantInspector });
 
 },
 "src/ui/components/tutorial.js": function (module, exports, require) {
@@ -70348,14 +70527,22 @@ const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComp
 
 let releaseActiveStage = null;
 
-function scaleFrame(frame, intentGapPx, centerHeightRatio) {
+/**
+ * measureFrame → what this frame WOULD need, and what it naturally is. The
+ * scale is not applied here, because a scale chosen per frame is what made
+ * every combatant a different size: each card was divided by its OWN sprite's
+ * natural height, so a tall soldier shrank to 0.68 and a low hound stayed at
+ * 1.00 — 260px and 384px side by side (Constantine, 2026-09-04: "combatant
+ * card sizes should be uniform, this one is too narrow").
+ */
+function measureFrame(frame, intentGapPx, centerHeightRatio) {
   const stack = frame.querySelector(':scope > .combatant-stack');
   const leading = stack?.querySelector(':scope > .combatant-leading');
   const card = stack?.querySelector(':scope > .combatant-card');
-  if (!stack || !leading || !card) return;
+  if (!stack || !leading || !card) return null;
   const availableHeight = frame.clientHeight;
   const availableWidth = frame.clientWidth;
-  if (!(availableHeight > 0) || !(availableWidth > 0)) return;
+  if (!(availableHeight > 0) || !(availableWidth > 0)) return null;
 
   const rootStyle = getComputedStyle(document.documentElement);
   const uiZoom = Number.parseFloat(rootStyle.getPropertyValue('--ui-zoom')) || 1;
@@ -70367,11 +70554,17 @@ function scaleFrame(frame, intentGapPx, centerHeightRatio) {
   // Intent is critical combat information, so it keeps its authored size.
   // Only the card beneath it scales; the two still move as one centered unit.
   const centeredHeight = availableHeight * centerHeightRatio;
-  const scale = Math.max(0.01, Math.min(
+  const fits = Math.max(0.01, Math.min(
     1,
     Math.max(0, centeredHeight - leadingHeight - gap) / Math.max(1, naturalCardHeight),
     availableWidth / Math.max(1, naturalCardWidth),
   ));
+  return { stack, frame, leadingHeight, gap, naturalCardHeight, fits };
+}
+
+/** applyFrame → the stage's ONE scale, so every card renders the same box. */
+function applyFrame(measure, scale) {
+  const { stack, frame, leadingHeight, gap, naturalCardHeight } = measure;
   const cardOffset = leadingHeight + gap;
   const visualHeight = cardOffset + (naturalCardHeight * scale);
   stack.style.setProperty('--combatant-stack-height', `${visualHeight}px`);
@@ -70400,9 +70593,16 @@ function wireBattlefieldStage(field, model) {
     cancelAnimationFrame(frameRequest);
     frameRequest = requestAnimationFrame(() => {
       if (!field.isConnected) return;
-      field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]').forEach((frame) => {
-        scaleFrame(frame, model.tokens.intentGapPx, model.tokens.centerHeightRatio);
-      });
+      // ONE SCALE FOR THE STAGE: measure every frame, then apply the smallest
+      // scale any of them needs. Uniform boxes, and nobody overflows its cell.
+      // Stature still differentiates an elite or a boss — that multiplier is
+      // on the sprite inside the card (kit.css COMBATANT), not on the card.
+      const measures = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')]
+        .map((frame) => measureFrame(frame, model.tokens.intentGapPx, model.tokens.centerHeightRatio))
+        .filter(Boolean);
+      if (!measures.length) return;
+      const scale = measures.reduce((least, m) => Math.min(least, m.fits), 1);
+      for (const measure of measures) applyFrame(measure, scale);
     });
   };
   const resizeObserver = new ResizeObserver(refresh);

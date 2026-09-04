@@ -749,6 +749,16 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .ctext .val.up { color: var(--green); }
 .ctext .val.down { color: var(--ember); }
 
+/* The nameplate is the way into a combatant's full read on touch (there is no
+   `I` on a phone). It reads as a control without becoming a button-shaped box
+   over the battlefield: the hit area is the tap floor, the affordance is the
+   cursor and the focus ring. */
+.combatant .nm-inspect { cursor: help; min-height: var(--tap-floor); display: flex; flex-direction: column; justify-content: center; }
+.combatant .nm-inspect:hover .ls-label, .combatant .nm-inspect:focus-visible .ls-label { color: var(--gold); }
+.combatant .nm-inspect:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1); }
+/* The full read, in a door: the same sections the edge tray renders. */
+.combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
+
 /* ═══ SCREENS — a page wears the same atoms a door does ═══════════════════ */
 /* A screen's banner is Title·L over an Eyebrow-weight subtitle; the same
    two atoms the kit's TitleMenu and Pane use, centred because a screen's
