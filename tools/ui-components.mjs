@@ -216,7 +216,11 @@ export function findings(r) {
       || !/componentModel\(UI\.startupGate/.test(r.startupGateModel)
       || !/export function mountStartupGate/.test(r.startupGate)
       || !/buildStampHtml\('startup'\)/.test(r.startupGate)
-      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`))
+      // The gate's lockup is built by the kit's element factory now
+      // (src/ui/kit/index.js `el`), which spells the same attribute as
+      // `dataset: { component: '<id>' }`; the ash field and the section are
+      // still template strings. Either spelling is the one attribute.
+      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`) || r.startupGate.includes(`component: '${id}'`))
       || !titleParts.every((id) => mentionsId(r.title + r.saveSlotSelector, id))
       || ![...startupParts, ...titleParts].every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`['${id}'`))

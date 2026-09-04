@@ -26,15 +26,26 @@ import {
 // Re-exported one name per line: tools/bundle.mjs reads `export const NAME`
 // and `export function NAME` only, so a bare `export { … }` list would fail
 // the standalone build by name.
-export const buttonRow = shellButtonRow;
-export const BUTTON_ROW_SIZES = SHELL_BUTTON_ROW_SIZES;
-export const modalHead = shellModalHead;
-export const modalFooter = shellModalFooter;
-export const modalCloseButton = shellModalCloseButton;
-export const modalCloseButtonHtml = shellModalCloseButtonHtml;
-export const openModal = shellOpenModal;
-export const MODAL_SIZES = SHELL_MODAL_SIZES;
-export const bindModalDismiss = shellBindModalDismiss;
+//
+// AS FUNCTIONS, NOT CONSTS, and the reason is the import graph: the kit is
+// reached from a leaf (ui/debuglog.js, which fx.js and tooltip.js sit above),
+// so `modalShell → tooltip → fx → debuglog → kit → modalShell` is a cycle. A
+// module that enters the cycle from modalShell's side evaluates this file
+// BEFORE modalShell.js, and `export const x = shellX` would read a binding in
+// its temporal dead zone (tools/modal-shell-contract.mjs met exactly that).
+// A function body reads the binding when it is CALLED, by which time every
+// module has evaluated — so the wrappers are cycle-proof at no cost. The two
+// size lists are frozen arrays the shell owns; they are exposed as getters
+// of the same names for the same reason.
+export function buttonRow(options) { return shellButtonRow(options); }
+export function modalHead(options) { return shellModalHead(options); }
+export function modalFooter(options) { return shellModalFooter(options); }
+export function modalCloseButton(options) { return shellModalCloseButton(options); }
+export function modalCloseButtonHtml(options) { return shellModalCloseButtonHtml(options); }
+export function openModal(options) { return shellOpenModal(options); }
+export function bindModalDismiss(options) { return shellBindModalDismiss(options); }
+export function BUTTON_ROW_SIZES() { return SHELL_BUTTON_ROW_SIZES; }
+export function MODAL_SIZES() { return SHELL_MODAL_SIZES; }
 
 // ---- the one element factory ------------------------------------------------
 /**
@@ -352,10 +363,13 @@ export function pageDoor({ eyebrow: eb = '', title = '', size = 'md', body = nul
 // opens the same content as body B at the md rung — through the one
 // door-opener, so it has a head, a foot, a way out and a scroll container.
 import { registerTooltipExpander } from '../components/tooltip.js';
-registerTooltipExpander((markup, { title = '', eyebrow = 'Detail' } = {}) => {
+// Registered on the next microtask, not at evaluation: on the cycle named
+// above this file can evaluate before tooltip.js, whose `expander` slot would
+// still be in its dead zone. By the microtask every module has run.
+queueMicrotask(() => registerTooltipExpander((markup, { title = '', eyebrow = 'Detail' } = {}) => {
   const body = el('div', { class: 'as-detailbody' }, el('div', { class: 'lines', html: markup }));
   const done = button({ label: 'Close', weight: 'primary' });
   const door = openModal({ size: 'md', eyebrow, title: title || 'Detail', body, primary: done, footSize: 'short' });
   done.addEventListener('click', door.close);
   return door;
-});
+}));
