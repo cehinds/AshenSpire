@@ -860,3 +860,126 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .reward-door .reward-menu { max-width: none; width: 100%; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
+
+/* ═══ PAGE DOOR — a door that stands on the page, edge to edge ═══════════ */
+/* Character creation and the Custom Climb are places, not questions: a head
+   that names them, a body that scrolls, a foot that never leaves the glass.
+   They wear the door's box without the veil (as the event does) and the box
+   takes the whole screen — the phone gets every pixel, a wide screen gets a
+   capped column with the page ground either side. */
+.screen.as-page { justify-content: flex-start; gap: 0; padding: 0; overflow: hidden; }
+.as-page > .modal.as-page-door {
+  width: 100%; max-width: 124rem; height: 100%; max-height: 100%;
+  border-radius: 0; border-width: 0 1px;
+}
+.as-page-door > .modal-body {
+  display: flex; flex-direction: column; align-items: stretch; gap: 1.6rem;
+  padding: var(--modal-inset);
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+.as-page-door > .modal-foot { background: var(--panel); }
+/* A pane that sits inside another inset (a fold's panel) carries none of its own. */
+.as-pane.flush { padding: 0; overflow: visible; }
+/* A pane's items never shrink into each other: the pane scrolls instead. */
+.as-pane > * { flex-shrink: 0; }
+.as-pane.flush > .as-hairline { margin: 1rem 0; }
+
+/* ═══ SPLIT — two panes and a draggable handle ══════════════════════════════ */
+/* Body D's two panes with a handle between them: `--split-share` is the left
+   pane's share, the handle is a real button on the tap floor (keys move it
+   too), and under a narrow box the split stacks and the handle goes. */
+.as-split {
+  --split-share: 30%;
+  display: grid; grid-template-columns: minmax(18rem, var(--split-share)) auto minmax(0, 1fr);
+  gap: 1.05rem; align-items: stretch; width: 100%; min-width: 0;
+}
+.as-split > .as-split-pane { min-width: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r-3); background: var(--panel); }
+.as-split > .as-split-pane > .as-pane { flex: 1 1 auto; }
+.as-split-handle {
+  position: relative; justify-self: center; align-self: stretch;
+  width: var(--tap-floor); min-width: var(--tap-floor); min-height: 0; padding: 0;
+  border: 0; border-radius: 0; background: transparent; cursor: col-resize;
+}
+.as-split-handle::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--line-soft); }
+.as-split-handle::after {
+  content: '‹ ›'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  padding: 0.4rem 0.3rem; color: var(--muted); background: var(--panel);
+  font: 500 1.2rem/1 var(--font-body); letter-spacing: 0.1em; white-space: nowrap;
+}
+.as-split-handle:hover, .as-split-handle:focus-visible { background: transparent; border: 0; box-shadow: none; }
+.as-split-handle:hover::after, .as-split-handle:focus-visible::after { color: var(--gold); }
+@container (max-width: 64rem) {
+  .as-split { grid-template-columns: minmax(0, 1fr); }
+  .as-split-handle { display: none; }
+}
+
+/* ═══ OPTIONS — list or grid, one atom ══════════════════════════════════════ */
+/* The same OptionCards, in a column (the default) or a grid: a `data-view` a
+   Segmented control writes. A card in either never keeps the class-pick
+   alias's row width — the container decides the footprint. */
+.as-options > .as-option.class-pick { max-width: none; flex: 0 0 auto; }
+.as-options[data-view="grid"] { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem; }
+.as-options[data-view="grid"] > * { min-width: 0; width: 100%; }
+.as-options[data-view="grid"] > .as-option { flex-direction: column; align-items: stretch; text-align: center; padding-right: 1.5rem; }
+.as-options[data-view="grid"] > .as-option::after { content: none; }
+.as-options[data-view="grid"] > .as-option .on { justify-content: center; }
+.as-options > .as-option .on > .as-pill { margin-left: 0.3rem; }
+
+/* ═══ SWATCH — a square pick: a sigil, a tint ═══════════════════════════════ */
+.as-swatches { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.as-swatch {
+  --swatch: var(--gold);
+  display: inline-grid; place-items: center;
+  width: var(--tap-floor); height: var(--tap-floor); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0; border-radius: var(--r-2);
+  font-size: 2rem; line-height: 1;
+}
+.as-swatch[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35); }
+.as-swatch.tint::before { content: ''; width: 55%; height: 55%; border-radius: 50%; background: var(--swatch); }
+
+/* ═══ FIGURE WELL — an ArtWell tall enough for a standing sprite ═══════════ */
+.as-artwell.figure { width: 16rem; height: 20rem; font-size: 6.4rem; border-width: 2px; transition: border-color 200ms, box-shadow 300ms; }
+.as-artwell.figure .class-sprite { transform: none; }
+
+/* ═══ STEPPER — a Segmented of − / value / + ════════════════════════════════ */
+.as-seg.stepper button { min-width: var(--tap-floor); min-height: calc(var(--tap-floor) - 2px); padding-inline: 0.9rem; font-size: 1.6rem; }
+.as-seg.stepper .seg-value {
+  display: inline-grid; place-items: center; min-width: 3.6rem; padding-inline: 0.6rem;
+  border-left: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft);
+  font: 600 1.5rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment);
+}
+.as-seg button[aria-disabled="true"] { color: var(--muted); cursor: default; background: transparent; }
+.as-seg button[aria-disabled="true"]:hover { background: transparent; color: var(--muted); }
+
+/* ═══ A FOLD INSIDE A ROW ═══════════════════════════════════════════════════ */
+/* A disclosure host in a settings row dissolves: its face and its reveal
+   become the row's own wrap items, so the reveal drops under the whole row
+   (trail included) with the row's own gap — the D26 mechanism, unchanged. */
+.as-row.setting > .as-row-fold, .as-row.setting > .as-row-fold > .disc-faces { display: contents; }
+.as-row.setting > .as-row-fold .disc-face { flex: 1 1 16rem; min-width: 0; }
+.as-row-fold > .disc-faces > .disc-face { flex: 1 1 100%; }
+/* An open reveal drops UNDER the whole row: the face and the trail keep their line. */
+.as-row.setting > .as-row-fold .disc-reveal { order: 2; }
+.as-row.setting:has(> .as-row-fold) { align-items: flex-start; }
+.disc-face > .as-row { padding: 0; min-height: 0; width: 100%; gap: 0.75rem; }
+.disc-face > .as-row > .as-labelstack { flex: 1 1 auto; }
+.disc-face > .as-row .ls-label { color: var(--gold); font: 600 1.5rem/1.2 var(--font-display); letter-spacing: 0.03em; }
+.disc-face > .as-row .ls-hint { font-family: var(--font-body); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.disc-face > .as-row > .as-status { font: 600 1.6rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); flex: 0 0 auto; }
+.disc-face > .as-row.face-lite .ls-label { color: var(--parchment); font: 500 1.3rem/1.2 var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; }
+.disc-face > .as-row.face-lite > .as-status { color: var(--muted); font: 500 1.28rem/1 var(--font-body); }
+
+/* ═══ FIELD NOTE — the sentence under a field that refuses ═════════════════ */
+.as-fieldnote { flex: 1 1 100%; margin: 0; padding-left: 0.8rem; border-left: 2px solid var(--danger); color: var(--parchment); font-size: 1.2rem; line-height: 1.4; }
+.as-row.setting input[aria-invalid="true"] { border-color: var(--danger); }
+
+/* ═══ STACK — a column of kit pieces with one gap ══════════════════════════ */
+.as-stack { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; width: 100%; }
+.as-stack.tight { gap: 0.6rem; }
+.as-pane > .as-statstrip { margin-top: 0.9rem; }
+.as-pane > .as-btnrow.end { margin-top: 1.2rem; }
+.as-pane-head { flex-wrap: wrap; row-gap: 0.6rem; }
+.as-pane-head > .set-section-head { min-width: 0; }
+.as-pane-head > .r-trail > .as-row.setting { width: auto; border-bottom: 0; padding-block: 0; min-height: 0; }
+.as-pane > .as-artwell, .as-stack > .as-artwell { align-self: center; }
+.as-pane-head > .r-trail { flex: 0 0 auto; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: flex-end; }
