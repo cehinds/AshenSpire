@@ -30,6 +30,7 @@ const poses = (arg('--poses', 'idle,guard,attack1,attack2,attack3,hit,kneel,down
 const outDir = arg('--out', null);
 const alphaMin = Number(arg('--alpha', '40'));
 const minArea = Number(arg('--min-area', '0.0015'));   // fraction of the sheet a real figure must cover
+const speckArea = Number(arg('--speck', '0.00004'));  // below this is noise, not a piece of the art
 if (!sheetPath || !cls || !outDir) {
   console.error('painted-poses: --sheet FILE --class NAME --out DIR are required');
   process.exit(2);
@@ -104,15 +105,17 @@ for (let start = 0; start < W * H; start++) {
 // Effects break off from the body — a spell burst, a thrown spark, the tip of a
 // staff past a gap. Anything overlapping a figure's column and near it in height
 // belongs to that figure.
-const keep = boxes.map((b, i) => ({ ...b, id: i })).filter(b => b.area >= minArea * W * H);
-keep.sort((a, b) => b.area - a.area);
+const parts = boxes.map((b, i) => ({ ...b, id: i })).filter(b => b.area >= speckArea * W * H);
+parts.sort((a, b) => b.area - a.area);
 // A body is one big blob; a spell burst or a dropped blade is a small one beside it.
-// Big blobs are always separate figures — only small ones get adopted, and only by
-// the figure they are actually next to.
-const big = keep[0]?.area || 1;
-const groups = keep.filter(b => b.area >= 0.22 * big)
+// Only blobs that clear the figure threshold start a figure; everything larger than
+// a speck stays a candidate for adoption, however small — that is what the effects
+// and detached blades are.
+const big = parts[0]?.area || 1;
+const bodyFloor = Math.max(minArea * W * H, 0.22 * big);
+const groups = parts.filter(b => b.area >= bodyFloor)
   .map(b => ({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, area: b.area, ids: [b.id] }));
-for (const b of keep.filter(b => b.area < 0.22 * big)) {
+for (const b of parts.filter(b => b.area < bodyFloor)) {
   let best = null, bestGap = Infinity;
   for (const g of groups) {
     const gap = Math.max(0, Math.max(g.x0 - b.x1, b.x0 - g.x1)) + Math.max(0, Math.max(g.y0 - b.y1, b.y0 - g.y1));
@@ -130,6 +133,12 @@ for (const g of [...groups].sort((a, b) => a.y0 - b.y0)) {
   if (row) { row.items.push(g); row.y0 = Math.min(row.y0, g.y0); row.y1 = Math.max(row.y1, g.y1); }
   else rows.push({ y0: g.y0, y1: g.y1, items: [g] });
 }
+// Each row of a sheet stands on its own floor; a figure ending above its row's
+// floor is off the ground on purpose and keeps that gap.
+for (const r of rows) {
+  const floor = Math.max(...r.items.map(i => i.y1));
+  for (const g of r.items) g.lift = floor - g.y1;
+}
 const figures = rows.flatMap(r => r.items.sort((a, b) => a.x0 - b.x0));
 console.log(`${basename(sheetPath)}: ${figures.length} figures in ${rows.length} row(s)`);
 if (figures.length < poses.length) {
@@ -141,18 +150,16 @@ if (figures.length < poses.length) {
 const PAD = 24;
 const maxW = Math.max(...figures.map(f => f.x1 - f.x0 + 1));
 const maxH = Math.max(...figures.map(f => f.y1 - f.y0 + 1));
-const CW = maxW + PAD * 2, CH = maxH + PAD * 2;
+const maxLift = Math.max(...figures.slice(0, poses.length).map(f => f.lift));
+const CW = maxW + PAD * 2, CH = maxH + maxLift + PAD * 2;
 const ground = CH - PAD;                        // the floor every pose stands on
-const sheetFloor = Math.max(...figures.map(f => f.y1));
 mkdirSync(outDir, { recursive: true });
 const renders = [];
 for (let i = 0; i < poses.length; i++) {
   const f = figures[i], pose = poses[i];
   const fw = f.x1 - f.x0 + 1, fh = f.y1 - f.y0 + 1;
   const out = Buffer.alloc(CW * CH * 4);
-  // a figure that ends above the sheet's floor is off the ground on purpose
-  const lift = Math.round((sheetFloor - f.y1) * (CH - PAD * 2) / Math.max(1, maxH) * 0);
-  const oy = ground - fh - lift, ox = Math.round((CW - fw) / 2);
+  const oy = ground - fh - f.lift, ox = Math.round((CW - fw) / 2);
   let sumX = 0, count = 0;
   for (let y = 0; y < fh; y++) {
     for (let x = 0; x < fw; x++) {
