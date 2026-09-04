@@ -156,9 +156,13 @@ export function findings(r) {
       || /\.hud-run-meta[^{]*\{/.test(r.css + r.uiCss)) {
     bad.push('C6 Run Header is not the corrected one-row Act/Floor/Build/Seed/Source trail');
   }
-  // On a phone a trail keeps the first part of each compound fact: the build
-  // stamp keeps its number (first) and drops its source (second).
-  if (!/@media \(max-width: 640px\) \{[\s\S]*?\.as-statstrip\.trail > \* > :nth-child\(n\+2\) \{ display: none; \}/.test(r.kit)
+  // On a phone a trail keeps the HEAD of each compound fact and drops its TAIL,
+  // and there are two shapes of fact in it: the build stamp keeps its number and
+  // drops its source, and a progress Chip keeps its value and drops the "/ total"
+  // — never the value itself, which one blanket `:nth-child(n+2)` did (measured
+  // at 390x844: "ACT" and "FLOOR" with no numbers under them).
+  if (!/@media \(max-width: 640px\) \{[\s\S]*?\.as-statstrip\.trail > \.build-stamp > :nth-child\(n\+2\) \{ display: none; \}/.test(r.kit)
+      || !/@media \(max-width: 640px\) \{[\s\S]*?\.as-statstrip\.trail > \.as-chip > \.cv > \* \{ display: none; \}/.test(r.kit)
       || !/build-number[\s\S]*build-source/.test(r.buildstamp)) {
     bad.push('C7 metadata does not hide Source then Seed while preserving Build ink');
   }
@@ -438,7 +442,10 @@ function selftest() {
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['restore a second header row', 'C6 ', (r) => ({ ...r, css: `${r.css}\n.hud-run-meta { grid-row: 2; }\n` })],
-    ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > * > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > * > :nth-child(n+1) { display: none; }') })],
+    ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
+    // The other half of the same rung: a phone that drops the chip's VALUE
+    // instead of its total is the defect the photograph caught.
+    ['the phone trail drops each fact value instead of its tail', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .as-chip > .cv > * { display: none; }', '.as-statstrip.trail > .as-chip > :nth-child(n+2) { display: none; }') })],
     ['remove Hand reference', 'C8 ', (r) => ({ ...r, combat: r.combat.replace('UI.playerHandTray', "'anonymous-hand'") })],
     ['bottom-align enemies', 'C9 ', (r) => ({ ...r, css: r.css.replace('align-items: center; justify-content: space-evenly;', 'align-items: flex-end; justify-content: space-evenly;') })],
     ['remove public id from spec', 'C10 ', (r) => ({ ...r, spec: r.spec.replace('`potion-tray`', 'Potion tray') })],

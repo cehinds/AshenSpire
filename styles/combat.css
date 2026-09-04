@@ -207,6 +207,30 @@
   grid-template-columns: var(--tap-floor) minmax(0, 1fr) var(--tap-floor);
   grid-template-areas: "prev hand next";
 }
+/* THE PAGER ARROWS ARE THE KIT'S IconButtons NOW, AND THIS IS THEIR PLACEMENT:
+   the three asks the old painted `.hand-page` block carried alongside its paint,
+   kept because each one is measured and none of them is decoration.
+   • `grid-area` names their columns, so the overlay's "prev hand next" holds
+     whatever order the markup is written in.
+   • `align-self: center` with `z-index: 70` puts them ON TOP of the strip, at
+     its midline. The cards spread on a -1.8rem margin, so a hand of eight is
+     WIDER than its own column and paints over both pager columns: with the
+     arrows sitting at the strip's bottom instead, `elementFromPoint` at the
+     centre of `.hand-next` (916,616 at 1200x730, ?shot=combat&shotHand=8)
+     returned a CARD — the pager could not be tapped at all, and a click there
+     selected that card and armed targeting. That is the finding
+     tools/hybrid-input-parity.mjs reports as "Previous/Next moves the real hand
+     focus"; on the same fixture the arrow reads as itself at 916,485.
+   • The wide-shape lift keeps the right-hand arrow off the wide End Turn's hit
+     surface at large text sizes — one ergonomic target, not a nudge.
+   Nothing here paints: the box, the border, the hover and the glyph are the
+   kit's IconButton. */
+.hand-page { align-self: center; z-index: 70; }
+.hand-prev { grid-area: prev; }
+.hand-next { grid-area: next; }
+:root:not([data-layout='narrow']) .hand-page {
+  transform: translateY(calc(-1 * var(--tap-floor)));
+}
 /* padding-top RESERVES THE FAN'S LIFT, and the number is not written here.
    components/hand.js anchors the fan on its DEEPEST card and publishes the lift
    it used as `--fan-lift` on this element (FAN_LIFT_PROP — one home, Law 0

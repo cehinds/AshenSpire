@@ -963,7 +963,19 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
    rest (a build keeps its number, drops its source). */
 @media (max-width: 640px) {
   .as-band-row.thirds { gap: 0.5rem; }
-  .as-statstrip.trail > * > :nth-child(n+2) { display: none; }
+  /* TWO SELECTORS, NOT ONE, and the phone photograph is why. A trail carries two
+     shapes of compound fact: the build stamp (number · source) and a progress
+     Chip (key, then value / total). `> * > :nth-child(n+2)` hit both — right for
+     the stamp, wrong for the chip, where the second child IS the value: at
+     390x844 the header read "ACT" and "FLOOR" with no numbers at all, which is a
+     label announcing nothing. So the head of each fact stays and only its tail
+     goes: the stamp keeps BUILD and drops src, the chip keeps "1" and drops
+     "/ 12". */
+  .as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }
+  /* `> *` and not `:nth-child(n+2)`: the value itself is a TEXT NODE inside
+     `.cv` and the "/ total" is the only ELEMENT in there, so counting elements
+     from the second would keep the tail it is here to drop. */
+  .as-statstrip.trail > .as-chip > .cv > * { display: none; }
 }
 /* A cluster is a group of IconButtons or Slots that share one gap. */
 .as-cluster { display: flex; align-items: center; gap: 0.6rem; flex: 0 0 auto; min-width: 0; }
@@ -1107,9 +1119,16 @@ body.pad-mode .as-keycap.float { display: none; }
    StatStrip whose two ends are Eyebrows with a rail between them. It is a
    receipt — no pointer, nothing to tap — and it leaves the HUD's right gutter
    free so the utility rail never lands on it. */
+/* THE STRIP CLEARS THE BAND'S GRIP, which hangs half its own height below the
+   HUD's bottom edge (§ BAND: `translate(-50%, 50%)` of a 2.2rem pill = 11 px of
+   overhang). The map is the one screen with READ TEXT directly under the band,
+   and measured at 1200x730 ?shot=map the grip's box ran 183->188 straight over
+   the top of "ACT I — THE FALLOW MARCHES" (title top 183, grip bottom 188).
+   12 px of top padding is that overhang plus a hairline, and it is padding
+   rather than margin so the strip's own ground still meets the band's. */
 .mapscreen > .act-route-strip {
   box-sizing: border-box; flex-direction: column; align-items: center; gap: 3px;
-  width: 80%; margin-inline: auto; padding: 5px 12px 6px;
+  width: 80%; margin-inline: auto; padding: 12px 12px 6px;
   border-bottom: 1px solid var(--line); background: var(--bg-raise);
   pointer-events: none; user-select: none; cursor: default;
 }
@@ -1264,4 +1283,27 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 @media (max-width: 640px) {
   .flask-inspect-body { flex-direction: column; align-items: center; text-align: center; }
   .flask-inspect-lines { align-items: center; }
+}
+
+/* ═══ A SEGMENTED CONTROL MAY WRAP RATHER THAN LOSE ITS TAIL ═══════════════ */
+/* Measured at 390x844 in the run's Settings pane (☰ → Settings → Game): the Map
+   zoom row's seven options are 342 px of content inside a 311 px pane, so the
+   last option — 200 — fell outside the pane, and `.as-seg`'s own
+   `overflow: hidden` cut it in half. A choice the player cannot see is a choice
+   they do not have, and the pane's `overflow-x: auto` is not the answer either:
+   nothing on the row says there is more of it to the right.
+   So on a narrow shape the group wraps. It grows downward, where the pane
+   already scrolls on purpose, and every option keeps its own tap box. The
+   separator between two buttons is dropped when it wraps because a border-left
+   on the first button of a new line is a hairline hanging off nothing; the
+   group's own border still says where the control begins and ends. */
+@media (max-width: 700px) {
+  /* The trail has to be ALLOWED to be narrower than its contents first: it is
+     `flex: 0 0 auto` on a nowrap row, so the group was handed its max-content
+     295 px inside a 311 px pane and never wrapped at all (measured; wrapping
+     `.as-seg` alone changed nothing). */
+  .as-row > .r-trail, .as-option > .r-trail { flex: 0 1 auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .as-seg { flex-wrap: wrap; }
+  .as-seg button + button { border-left: 0; }
+  .as-seg button { border: 1px solid var(--line-soft); margin: -1px 0 0 -1px; }
 }
