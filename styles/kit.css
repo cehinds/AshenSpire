@@ -1171,7 +1171,9 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 .smith-upgrade-fold.is-unused { opacity: 0.46; }
 .smith-fold-detail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.2rem; }
 .smith-fold-detail.no-card { grid-template-columns: minmax(0, 1fr); }
-.smith-card-sprite { min-width: 0; overflow: hidden; }
+/* The CostMedallion is the one element allowed to break a card's edge (kit
+   §03), so the sprite box leaves it room instead of clipping it off. */
+.smith-card-sprite { min-width: 0; padding: 1rem 0 0 1rem; }
 .smith-card-sprite .card { transform: none !important; }
 .smith-card-facts { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
 .smith-preview-empty { margin: auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; color: var(--muted); }
