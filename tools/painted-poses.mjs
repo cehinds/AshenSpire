@@ -183,9 +183,18 @@ let CW = maxW + PAD * 2, CH = maxH + maxLift + PAD * 2;
 if (forced) {
   const [fw, fh] = forced.split(/[x,]/).map(Number);
   if (!(fw > 0 && fh > 0)) { console.error('painted-poses: --canvas wants WxH, e.g. 720x900'); process.exit(2); }
+  // frames already in the manifest were placed on the canvas it names; a different
+  // one here would leave their offsets and floors describing a canvas that is gone
+  if (prev?.canvas?.w && (prev.canvas.w !== fw || prev.canvas.h !== fh)) {
+    console.error(`painted-poses: this manifest is on a ${prev.canvas.w}x${prev.canvas.h} canvas and --canvas says ${fw}x${fh}.`);
+    console.error('  Pass the canvas the manifest already uses, or cut every class again in one run.');
+    process.exit(1);
+  }
   CW = fw; CH = fh;
 } else if (prev?.canvas?.w) { CW = prev.canvas.w; CH = prev.canvas.h; }
-if (CW < maxW + 2 || CH < maxH + maxLift + 2) {
+// the floor sits PAD above the bottom, so a figure needs its own height, its lift
+// off the floor, and that padding — anything less places it off the top edge
+if (CW < maxW || CH < maxH + maxLift + PAD) {
   console.error(`painted-poses: these figures need at least ${maxW + PAD * 2}x${maxH + maxLift + PAD * 2}, but the canvas is ${CW}x${CH}.`);
   console.error('  Cut every class in one run, or give them all the same --canvas WxH.');
   process.exit(1);
