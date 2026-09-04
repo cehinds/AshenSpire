@@ -31,6 +31,7 @@ import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
+import { mountServiceOffer, openMountService, mountReceiptLine } from './smithServices.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
@@ -80,11 +81,11 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, services, ...extra,
   });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
@@ -94,7 +95,13 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // player does not carry.
   const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
   const smith = smithingPlan(registries, run);
-  const canInspectSmithing = smith.candidates.length > 0;
+  // WHICH SERVICES THIS SMITH OFFERS is the table in balance.smithing.services,
+  // resolved at the door (main.js) and handed in; a screen mounted without it
+  // — a fixture, an older caller — keeps the Shrine it always had.
+  const offered = services && Array.isArray(services.services) ? services.services : ['upgrade'];
+  const canInspectSmithing = offered.includes('upgrade') && smith.candidates.length > 0;
+  const extract = offered.includes('extract') ? mountServiceOffer(registries, run, 'extract') : null;
+  const install = offered.includes('install') ? mountServiceOffer(registries, run, 'install') : null;
   const arm = beatArmer(meta, registries);
   // `hpCharge` / `manaCharge` are GONE, and their absence is the point: this
   // screen no longer names a charge kind at all. It used to reach for exactly
@@ -144,6 +151,24 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
               : 'No owned armament has an effective tier remaining.'}</p>
           </div>
         </div>
+        ${extract ? `<div class="class-pick${extract.available ? '' : ' locked'}" id="extract-opt"
+             role="button" tabindex="${extract.available ? '0' : '-1'}"
+             aria-disabled="${extract.available ? 'false' : 'true'}">
+          <div class="glyph">⚙</div>
+          <div class="cp-body">
+            <h3>Extract a Card</h3>
+            <p>${esc(extract.summary)}</p>
+          </div>
+        </div>` : ''}
+        ${install ? `<div class="class-pick${install.available ? '' : ' locked'}" id="install-opt"
+             role="button" tabindex="${install.available ? '0' : '-1'}"
+             aria-disabled="${install.available ? 'false' : 'true'}">
+          <div class="glyph">⚒</div>
+          <div class="cp-body">
+            <h3>Seat a Card</h3>
+            <p>${esc(install.summary)}</p>
+          </div>
+        </div>` : ''}
         <details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
           <summary>
             <span class="shrine-fold-glyph">⚗</span>
@@ -245,8 +270,12 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
+    ['#extract-opt', 'extract'], ['#install-opt', 'install'],
     ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
-  ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
+  ]) {
+    const element = app.querySelector(selector);
+    if (element) markUiComponent(element, UI.shrineOptionCard, variant);
+  }
   const leave = app.querySelector('#shrine-leave');
   if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
@@ -381,6 +410,34 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       openSmith();
+    });
+  }
+  // THE CARD SERVICES, the same reversible modal transaction as the upgrade:
+  // open and select are presentation state; Back and Escape return with the
+  // run untouched; Confirm is the one commit, and — like an upgrade — the one
+  // path that leaves the Shrine unless multi-use holds it open.
+  for (const [selector, offer] of [['#extract-opt', extract], ['#install-opt', install]]) {
+    const option = app.querySelector(selector);
+    if (!option || !offer || !offer.available) continue;
+    const open = () => openMountService(app, {
+      service: offer.service,
+      registries,
+      run,
+      meta,
+      returnFocusElement: option,
+      multiUse,
+      place: 'shrine',
+      onCommitted: (receipt) => {
+        sfx.play('shrine');
+        if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
+        onDone(mountReceiptLine(receipt));
+      },
+    });
+    option.addEventListener('click', open);
+    option.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      open();
     });
   }
 }

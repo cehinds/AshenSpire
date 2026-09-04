@@ -146,7 +146,12 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   // resumed fight and land newly-granted ones in the discard pile — stamped
   // by the same pass as every other card. The same door a live mid-combat
   // swap goes through.
-  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout }, snapshot.piles);
+  // The mounts travel too, or an extracted art comes back at this door: the
+  // snapshot's own record wins, a fight saved before mounts existed reads the
+  // run's, and neither is written back — a load must not rewrite a snapshot
+  // it understands (tools/weapon-card-packages.mjs holds that line).
+  const itemMounts = snapshot.itemMounts !== undefined ? snapshot.itemMounts : run.itemMounts;
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts }, snapshot.piles);
   const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
   // THE BIRTH QUOTA REACHES THE MIGRATION TOO. Persisting it on the run and the
   // combat snapshot is only half the job: this door builds its own plan and
@@ -171,6 +176,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
     equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
     equipmentAttackSlotCount: bornWith,
+    itemMounts,
     deck: cards,
   }, cards, {
     adoptEquipmentBonuses: false,

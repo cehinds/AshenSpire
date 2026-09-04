@@ -12,7 +12,9 @@ import { tagService } from '../src/model/tagService.js';
 import { importLegacyContent } from '../src/framework/importer.js';
 import { attackTagsFor } from '../src/engine/actions.js';
 import { tagContentProblems, itemTypeLabelFrom, tagIdsAllowedFor, tagIdsInDomain } from '../src/model/tags.js';
-import { boundGrantCardIds, boundGrantProblems, isItemOwned, pieceItemRef, reconcileGrantedCardsInCombat } from '../src/model/loadout.js';
+import { boundGrantCardIds, boundGrantProblems, isItemOwned, pieceItemRef, reconcileGrantedCardsInCombat, itemMountInstances } from '../src/model/loadout.js';
+import { extractionPlan, commitExtraction, installPlan, commitInstall, smithServicesAt, mountRows } from '../src/model/cardExtraction.js';
+import { ownerItemRef, mountKey as mountKeyOf } from '../src/model/cardMounts.js';
 import { itemTypeLabel } from '../src/content/equipment.js';
 import {
   validateContent,
@@ -3170,6 +3172,241 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const plan = startingDeckPlan(reg, createLoadout(reg, 'reaver'), 'reaver');
     assert(!plan.grants.some((g) => g.grantSource === undefined && g.sourceId), 'no bound-table ref rides in the deal-out list');
     assert(plan.packageCards >= 2, `the sword's two cards are counted where the package cards are (${plan.packageCards})`);
+  });
+
+  // ---- 26w. the owner's third ruling: a smith moves cards between an item and the run ----
+  test('26w. extract lifts a card out of a mount and the mount shows its fallback; install seats one back — priced, saved, and never a strike', () => {
+    // A MOUNT is where an item's card sits. What a smith did to it is
+    // `run.itemMounts`; the composer reads that through one door, so an
+    // extracted art is gone from the sword on every restamp and the mount
+    // shows the Dodge Roll (the owner's fallback) until something is seated.
+    const fixture = (tweak = () => {}) => {
+      const b = JSON.parse(JSON.stringify(contentBundle));
+      b.equipment.armaments = b.equipment.armaments.map((piece) => (piece.id === 'straightSword'
+        ? { ...piece, weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack', grantedCards: [{ cardId: 'quickstep', count: 1 }], weaponArtDefaults: ['crimsonCleave'] } }
+        : piece));
+      b.tagging.push({ family: 'card', scope: '', objectId: 'crimsonCleave', tagId: 'extractable' });
+      b.tagging.push({ family: 'card', scope: '', objectId: 'quickstep', tagId: 'extractable' });
+      b.scripts = contentBundle.scripts; // functions do not survive JSON, and the door checks script references
+      tweak(b);
+      return b;
+    };
+    const reg = createRegistries(fixture());
+    const run = createRunState({ seed: 21, classId: 'reaver', registries: reg });
+    const sword = 'armament/straightSword';
+    const artKey = mountKeyOf.weaponArt('straightSword', 'crimsonCleave');
+    const grantKey = mountKeyOf.granted('straightSword', 'quickstep', 0);
+    const byId = (id) => run.deck.find((c) => c.instanceId === id) || null;
+    const dodge = reg.equipment.basicCardProfiles.find((p) => p.id === contentBundle.balance.equipment.unarmedProfiles.technique).baseCardId;
+
+    // THE PLAN NAMES EXACTLY THE EXTRACTABLE MOUNTS. Two on the sword — its art
+    // and its granted Quickstep, both tagged — and none of the run's strikes,
+    // which carry no such tag today. That tag is the whole rule.
+    const plan = extractionPlan(reg, run);
+    eq(plan.candidates.map((c) => c.itemRef).join('|'), sword, 'only the sword lends anything extractable');
+    eq(plan.candidates[0].mounts.map((m) => m.mountKey).sort().join('|'), [artKey, grantKey].sort().join('|'),
+      'both of its tagged mounts, and nothing else');
+    eq(plan.cost, 0, 'free, by the owner\'s word — and configurable, see below');
+    assert(!run.deck.some((c) => c.equipmentRole === 'attack' && reg.cards.get(c.cardId).tags.includes('extractable')),
+      'no strike carries the tag, so no strike is on offer');
+
+    // EXTRACT THE ART. The item-owned instance leaves; a run-owned copy
+    // arrives; the mount keeps its KEY and shows the Dodge Roll.
+    const receipt = commitExtraction(reg, run, sword, artKey);
+    eq(receipt.service, 'extract');
+    eq(receipt.cardId, 'crimsonCleave');
+    eq(receipt.fallbackCardId, dodge, 'the receipt says what the emptied mount now shows');
+    const extracted = byId(receipt.instanceId);
+    assert(extracted && !isItemOwned(extracted) && extracted.cardId === 'crimsonCleave', 'the run owns a Crimson Cleave now');
+    eq(ownerItemRef(extracted), null, 'and no item owns it');
+    const mountNow = byId(artKey);
+    assert(mountNow && mountNow.cardId === dodge && isItemOwned(mountNow), `the art mount shows the fallback under the same key (${mountNow && mountNow.cardId})`);
+    eq(run.deck.filter((c) => c.cardId === dodge).length, 1, 'one Dodge Roll, not one per hand');
+    eq(run.itemMounts[sword][artKey].card, null, 'the run records the mount as emptied');
+    eq(run.itemMounts[sword][artKey].extractions, 1, 'and counts the extraction');
+
+    // UNEQUIP: the fallback leaves with the sword; the extracted card stays.
+    run.loadout.sets.rightHand[0] = null;
+    stampDeck(reg, run);
+    eq(byId(artKey), null, 'the emptied mount leaves with its item');
+    assert(byId(receipt.instanceId), 'what was extracted is the run\'s and stays');
+    // The carried sword is still on the plan — a smith works on what you
+    // carry, not only what you wear (the Smith upgrade grid learned this in #528).
+    run.loadout.storage = [...(run.loadout.storage || []), 'straightSword'];
+    const carried = extractionPlan(reg, run).candidates.find((c) => c.itemRef === sword);
+    assert(carried && carried.equipped === false && carried.mounts.some((m) => m.mountKey === grantKey),
+      'a carried, unequipped sword still offers its granted Quickstep');
+    run.loadout.storage = run.loadout.storage.filter((id) => id !== 'straightSword');
+    run.loadout.sets.rightHand[0] = 'straightSword';
+    stampDeck(reg, run);
+    assert(byId(artKey) && byId(artKey).cardId === dodge, 're-equipping brings the fallback back');
+
+    // INSTALL IT BACK. The run-owned instance leaves the deck; the mount
+    // holds Crimson Cleave again under the same key.
+    const open = installPlan(reg, run);
+    const target = open.candidates.find((c) => c.itemRef === sword);
+    assert(target && target.mounts.some((m) => m.mountKey === artKey && m.state === 'fallback'), 'the emptied mount is open for install');
+    assert(target.mounts.find((m) => m.mountKey === artKey).cards.some((c) => c.instanceId === receipt.instanceId),
+      'and the extracted Crimson Cleave is a card it would take');
+    const seated = commitInstall(reg, run, sword, artKey, receipt.instanceId);
+    eq(seated.service, 'install');
+    eq(seated.replacedFallbackCardId, dodge, 'the receipt names the fallback it displaced');
+    eq(byId(receipt.instanceId), null, 'the run-owned copy is gone');
+    assert(byId(artKey) && byId(artKey).cardId === 'crimsonCleave' && isItemOwned(byId(artKey)), 'the sword owns its art again');
+    eq(run.itemMounts[sword][artKey].card, 'crimsonCleave');
+
+    // A DIFFERENT CARD IN THE SAME MOUNT: extract the art, extract the
+    // Quickstep, seat the Quickstep where the art was.
+    commitExtraction(reg, run, sword, artKey);
+    const quick = commitExtraction(reg, run, sword, grantKey);
+    commitInstall(reg, run, sword, artKey, quick.instanceId);
+    assert(byId(artKey) && byId(artKey).cardId === 'quickstep', 'the art mount now holds a Quickstep');
+    eq(byId(grantKey), null, 'the granted mount is empty and shows nothing — its kind has no fallback');
+    eq(mountRows(reg, run, { itemRef: sword, piece: reg.equipment.armaments.find((a) => a.id === 'straightSword') })
+      .find((m) => m.mountKey === grantKey).state, 'empty');
+
+    // SAVED AND LOADED, whole. The mounts, the counter, the receipt.
+    const loaded = deserializeRun(serializeRun(run));
+    eq(validateRunShape(loaded).length, 0, 'the run shape validates with mounts recorded');
+    eq(JSON.stringify(loaded.itemMounts), JSON.stringify(run.itemMounts), 'mounts survive a save');
+    eq(loaded.mountTransactions, run.mountTransactions);
+    stampDeck(reg, loaded);
+    eq(loaded.deck.map((c) => `${c.instanceId}=${c.cardId}`).sort().join('|'), run.deck.map((c) => `${c.instanceId}=${c.cardId}`).sort().join('|'),
+      'and a restamp after load composes the same deck');
+
+    // PRICED, when balance says so. Three Stones, purse empty: refused by
+    // name; `free` (an event granting the service) goes through.
+    const pricedReg = createRegistries(fixture((b) => { b.balance.smithing.services.extract.cost = 3; }));
+    const poor = createRunState({ seed: 21, classId: 'reaver', registries: pricedReg });
+    const pricedPlan = extractionPlan(pricedReg, poor);
+    eq(pricedPlan.cost, 3);
+    assert(pricedPlan.candidates[0].affordable === false && pricedPlan.candidates[0].shortfall === 3, 'the plan says what is short');
+    let said = '';
+    try { commitExtraction(pricedReg, poor, sword, artKey); } catch (e) { said = e.message; }
+    assert(/Insufficient Smithing Stones \(shortfall 3\)/.test(said), `refused by name — ${said}`);
+    poor.smithingStones = 3;
+    const paid = commitExtraction(pricedReg, poor, sword, artKey);
+    eq(paid.spent, 3);
+    eq(poor.smithingStones, 0, 'the purse paid');
+
+    // EXTRA MOUNTS behind the flag (the rune seam). Off: no open mount. On:
+    // one open mount per item, seated and emptied under a `mount:` key.
+    assert(!installPlan(reg, run).candidates.some((c) => c.mounts.some((m) => m.state === 'open')), 'the flag is off, so nothing is open');
+    const runeReg = createRegistries(fixture((b) => { b.balance.equipment.cardMounts.extraMounts = { enabled: true, perItem: 1, kind: 'granted' }; }));
+    const runeRun = createRunState({ seed: 21, classId: 'reaver', registries: runeReg });
+    const lifted = commitExtraction(runeReg, runeRun, sword, grantKey);
+    const extraKey = mountKeyOf.extra(sword, 0);
+    const openMount = installPlan(runeReg, runeRun).candidates.find((c) => c.itemRef === sword).mounts.find((m) => m.mountKey === extraKey);
+    assert(openMount && openMount.state === 'open' && openMount.extra, 'the flag opens one extra mount on the sword');
+    commitInstall(runeReg, runeRun, sword, extraKey, lifted.instanceId);
+    const extraInst = runeRun.deck.find((c) => c.instanceId === extraKey);
+    assert(extraInst && extraInst.cardId === 'quickstep' && extraInst.equipmentRole === 'granted' && ownerItemRef(extraInst) === sword,
+      'the extra mount is an item-owned granted instance');
+    assert(!installPlan(runeReg, runeRun).candidates.some((c) => c.itemRef === sword && c.mounts.some((m) => m.mountKey === extraKey)),
+      'and with perItem 1 there is no second one');
+    commitExtraction(runeReg, runeRun, sword, extraKey);
+    assert(!(runeRun.itemMounts[sword] || {})[extraKey], 'emptying an extra mount deletes it, which is what makes it open again');
+
+    // WHO OFFERS WHAT is a table. The Shrine promises (no roll consumed); the
+    // merchant rolls on the smith's own stream; an unnamed kind offers nothing.
+    const draws = [];
+    const rng = { chance: (stream, pct) => { draws.push(`${stream}:${pct}`); return true; } };
+    eq(smithServicesAt(reg, 'shrine', rng).services.join('|'), 'upgrade|extract|install');
+    eq(draws.length, 0, 'a promise consumes no roll');
+    const merchant = smithServicesAt(reg, 'merchant', rng);
+    eq(draws.join('|'), 'smith:25', 'the merchant rolls once, on the smith stream, at the authored chance');
+    assert(merchant.offered && merchant.rolled, 'and this visit keeps a smith');
+    eq(smithServicesAt(reg, 'monster', rng).offered, false);
+
+    // THE DOOR REFUSES BY NAME: an extractable tag nobody registered, a
+    // fallback profile balance does not author, a chance over 100, a service
+    // the smith does not do.
+    const refused = (tweak) => { const v = validateContent(fixture(tweak)); return v.ok ? '' : v.errors.map((e) => `${e.path}: ${e.msg}`).join(' | '); };
+    assert(/cardMounts\.extractableTag: names unknown tag 'liftable'/.test(refused((b) => { b.balance.equipment.cardMounts.extractableTag = 'liftable'; })), 'unknown extractable tag');
+    assert(/kinds\.weaponArt\.fallback: names unarmed profile role 'stance'/.test(refused((b) => { b.balance.equipment.cardMounts.kinds.weaponArt.fallback = { unarmedProfile: 'stance' }; })), 'unauthored fallback profile');
+    assert(/offeredAt\.merchant\.chance must be 0\.\.100/.test(refused((b) => { b.balance.smithing.services.offeredAt.merchant.chance = 150; })), 'chance over 100');
+    assert(/names unknown service 'reforge'/.test(refused((b) => { b.balance.smithing.services.offeredAt.shrine.services.push('reforge'); })), 'unknown service');
+    eq(refused(), '', 'and the fixture itself is clean');
+  });
+
+  // ---- 26x. the mounts travel: through the swap door and the save door ----
+  test('26x. an extracted art stays extracted through a mid-fight swap and a saved fight', () => {
+    // Both doors build a synthetic run with no deck; both used to build it
+    // with no mounts. Driven end to end here — the real dispatch, the real
+    // save manager — rather than by calling the reconcile with a hand-made
+    // run, because that is exactly the kind of proof that let the birth
+    // quota go undelivered for four rounds.
+    const b = JSON.parse(JSON.stringify(contentBundle));
+    b.equipment.armaments = b.equipment.armaments.map((piece) => (piece.id === 'straightSword'
+      ? { ...piece, weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack', weaponArtDefaults: ['crimsonCleave'] } }
+      : piece));
+    b.tagging.push({ family: 'card', scope: '', objectId: 'crimsonCleave', tagId: 'extractable' });
+    b.scripts = contentBundle.scripts;
+    const reg = createRegistries(b);
+    const run = createRunState({ seed: 23, classId: 'reaver', registries: reg });
+    const sword = 'armament/straightSword';
+    const artKey = mountKeyOf.weaponArt('straightSword', 'crimsonCleave');
+    const dodge = reg.equipment.basicCardProfiles.find((p) => p.id === contentBundle.balance.equipment.unarmedProfiles.technique).baseCardId;
+    run.loadout.sets.rightHand[1] = 'dagger'; // a second set to swap to, mid-fight
+    stampDeck(reg, run);
+    const lifted = commitExtraction(reg, run, sword, artKey);
+    const cleaves = (cards) => cards.filter((c) => c && c.cardId === 'crimsonCleave');
+    const allPiles = (combat) => [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust].flat();
+
+    const player = () => ({
+      classId: run.class, attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
+      maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
+      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, damageBySchoolAdd: run.damageBySchoolAdd,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+      equipmentAttackSlotCount: run.equipmentAttackSlotCount,
+      equipmentPoolDeficits: run.equipmentPoolDeficits, itemUpgradeLevels: run.itemUpgradeLevels,
+      itemMounts: run.itemMounts,
+      deck: run.deck, relicIds: run.relics, flasks: run.flasks, flaskCharges: run.flaskCharges,
+      loadout: run.loadout,
+    });
+    const combat = createCombat({ registries: reg, rng: createRng(23), enemyIds: [contentBundle.enemies[0].id], player: player() });
+    eq(JSON.stringify(combat.itemMounts), JSON.stringify(run.itemMounts), 'combat carries the mounts, like the quota beside them');
+    eq(cleaves(allPiles(combat)).length, 1, 'the fight opens with one Crimson Cleave — the run\'s own');
+
+    // SWAP TO THE DAGGER AND BACK. The sword's art mount comes back as the
+    // Dodge Roll, not as a second Crimson Cleave.
+    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+    eq(cleaves(allPiles(combat)).length, 1, 'swapping the sword out leaves the extracted card where it is');
+    assert(!allPiles(combat).some((c) => c.instanceId === artKey), 'and the sword\'s mount left with the sword');
+    combat.player.energy = combat.player.energyMax; // the swap is priced; pay for the second one
+    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 0 });
+    const mountBack = allPiles(combat).find((c) => c.instanceId === artKey);
+    assert(mountBack && mountBack.cardId === dodge, `swapping the sword back seats the fallback in its mount, not the extracted art (${mountBack && mountBack.cardId})`);
+    eq(cleaves(allPiles(combat)).length, 1, 'still exactly one Crimson Cleave, and it is the run\'s');
+    eq(cleaves(allPiles(combat))[0].instanceId, lifted.instanceId);
+
+    // SAVE THE FIGHT, LOAD IT. The migration door rebuilds its own synthetic
+    // run; with the mounts on the snapshot the loaded piles say the same.
+    run.combatEntered = { nodeId: 'n1', encounterId: 'e1', snapshot: serializeCombatSnapshot(combat) };
+    assert(run.combatEntered.snapshot.itemMounts && run.combatEntered.snapshot.itemMounts[sword], 'the snapshot carries the mounts');
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    storage.setItem(RUN_KEY, serializeRun(run));
+    const loaded = saves.loadRun(reg);
+    assert(loaded, `the save loads — ${saves.runStatus().reason || ''}`);
+    const loadedPiles = ['hand', 'draw', 'discard', 'exhaust'].flatMap((p) => loaded.combatEntered.snapshot.piles[p]);
+    eq(cleaves(loadedPiles).length, 1, 'one Crimson Cleave after the load');
+    const loadedMount = loadedPiles.find((c) => c.instanceId === artKey);
+    assert(loadedMount && loadedMount.cardId === dodge, 'the mount still shows the Dodge Roll in the resumed fight');
+    eq(JSON.stringify(loaded.itemMounts), JSON.stringify(run.itemMounts), 'and the run\'s record of the mounts came through whole');
+
+    // A FIGHT SAVED BEFORE MOUNTS EXISTED reads the run's record at the door,
+    // and the door does not write it back into the stored snapshot.
+    const legacy = JSON.parse(serializeRun(run));
+    delete legacy.combatEntered.snapshot.itemMounts;
+    const storage2 = createMemoryStorage();
+    const saves2 = createSaveManager(storage2);
+    storage2.setItem(RUN_KEY, JSON.stringify(legacy));
+    const loaded2 = saves2.loadRun(reg);
+    assert(loaded2, `the legacy fight loads — ${saves2.runStatus().reason || ''}`);
+    const legacyPiles = ['hand', 'draw', 'discard', 'exhaust'].flatMap((p) => loaded2.combatEntered.snapshot.piles[p]);
+    assert(legacyPiles.find((c) => c.instanceId === artKey)?.cardId === dodge, 'the run\'s mounts stand in for the snapshot\'s');
+    eq(loaded2.combatEntered.snapshot.itemMounts, undefined, 'and the snapshot is not rewritten to carry them');
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------

@@ -89,6 +89,12 @@ export function createCombat({
     // Namespaced item tiers are the sole current authority. The legacy armament
     // map is accepted only at the load/migration door, never written here.
     itemUpgradeLevels: structuredClone(player.itemUpgradeLevels || {}),
+    // What a smith did to the run's item mounts (cardMounts.js), carried for
+    // the same reason the quota above is: the swap door below builds a
+    // synthetic run with `deck: []`, and without this an extracted art would
+    // be re-minted from the item's authoring mid-fight. Read only in combat —
+    // no smith works during a fight — so a plain copy is the whole contract.
+    itemMounts: structuredClone(player.itemMounts || {}),
     equipmentPoolDeficits: player.equipmentPoolDeficits
       ? { ...player.equipmentPoolDeficits }
       : { hp: Math.max(0, player.maxHp - player.hp), mana: Math.max(0, maxMana - (player.mana ?? maxMana)), stamina: Math.max(0, (player.maxStamina || 0) - (player.stamina ?? player.maxStamina ?? 0)) },
@@ -647,6 +653,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     // pile stamp replans from the CURRENT loadout — and the pile holding the
     // slot the replan dropped throws mid-swap.
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
+    itemMounts: combat.itemMounts,
   };
   // Pile stamps are subset calls, so granted/weaponArt instances reconcile
   // here explicitly, BEFORE the stamps: the swapped-out armament's leave every

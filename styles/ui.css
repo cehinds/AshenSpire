@@ -5693,6 +5693,34 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-attributes .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-relics .disc-faces { grid-template-columns: 1fr; }
 
+/* ---- the smith's card services (mount-service-modal) -------------------
+   Same frame as the upgrade modal; only the preview differs: a list of the
+   item's mounts, then (seating) the deck cards that mount takes. */
+/* The instruction used to sit in a hand-built head; the shell's head has no slot
+   for a sentence, so it is the body grid's first, full-width row. The rows are
+   NAMED because the body grid stretches auto rows to fill the pane: left implicit,
+   the instruction row took half the height and the chooser sat at the bottom. */
+.mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 1fr); }
+.mount-service-modal .mount-modal-instruction { grid-column: 1 / -1; margin: 0; padding: 8px 20px 0; color: var(--muted); line-height: 1.35; }
+@media (max-width: 720px) {
+  .mount-service-modal .smith-modal-body { grid-template-rows: auto auto minmax(0, 1fr); }
+}
+.mount-row-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
+.mount-row {
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px;
+  padding: 8px 10px; border: 1px solid var(--line, rgba(255,255,255,0.14)); border-radius: 8px;
+  background: rgba(0,0,0,0.25); cursor: pointer;
+}
+.mount-row:focus-visible, .mount-row:hover { border-color: var(--gold); outline: none; }
+.mount-row.selected { border-color: var(--gold); background: rgba(201,162,39,0.12); }
+.mount-row > em { grid-row: 1 / span 2; align-self: center; font-style: normal; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.mount-row > b { font-size: 13px; }
+.mount-row > small { font-size: 11px; color: var(--muted); }
+.mount-row.is-extra > em { color: var(--gold); }
+.mount-card-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 6px 0 10px; }
+.mount-card-list .card { cursor: pointer; }
+.mount-card-list .card.selected { outline: 2px solid var(--gold); outline-offset: 2px; }
+
 /* ── CENTRED + TRACKED TEXT, AND THE HALF-TRACKING BUG ────────────────────
    `letter-spacing` adds its space after the LAST glyph as well as between the
    others, so a centred tracked string sits left of true centre by half its
