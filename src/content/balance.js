@@ -42,7 +42,11 @@ export const balance = {
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
   rewards: {
     cardChoices: 3,
-    cinders: { normal: [15, 25], elite: [35, 50], boss: [75, 90] },
+    // ×3 the first ladder (Constantine, 2026-09-04: "3x the amount for the
+    // base") — cinders are granted on arrival at the reward door now, so the
+    // faucet is the whole economy lever; the level ladder (levelUp below) and
+    // shop prices are unchanged and read against this.
+    cinders: { normal: [45, 75], elite: [105, 150], boss: [225, 270] },
     rarityWeights: {
       normal: { common: 60, uncommon: 35, rare: 5 },
       elite: { common: 45, uncommon: 40, rare: 15 },

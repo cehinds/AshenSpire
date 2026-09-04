@@ -7545,7 +7545,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
   padding: var(--modal-inset);
   border-top: 1px solid var(--line);
 }
-.as-foot-note, .modal-foot-note { flex: 1 12 27rem; max-width: max-content; min-width: 0; container-type: inline-size; color: var(--muted); font-size: 1.23rem; }
+.as-foot-note, .modal-foot-note { flex: 1 12 27rem; min-width: 0; container-type: inline-size; color: var(--muted); font-size: 1.23rem; }
 .as-foot-note > span, .modal-foot-note > span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @container (max-width: 9rem) { .modal-foot-note > span { visibility: hidden; } .as-foot-note > span { visibility: hidden; } }
 .modal-foot-actions, .as-foot-actions { margin-left: auto; flex: 0 1 auto; justify-content: end; }
@@ -7990,6 +7990,16 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .shrine-fold[open] > summary { border-bottom: 1px solid var(--line-soft); }
 .shrine-fold-content { display: grid; gap: 1.05rem; padding: 1.28rem 1.5rem 1.5rem; }
 .shrine-fold-detail { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.2rem; align-items: center; }
+
+/* ═══ REWARDS — a decision door over the battlefield ═══════════════════════ */
+/* Victory is a modal, not a screen: the md door stands on the veil over the
+   field it was won on (or the map, or a bare backdrop after a reload). Rows
+   are OptionCards; the foot carries the hold copy and Continue on the ladder. */
+.reward-backdrop { min-height: 100%; }
+.reward-door > .modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: var(--modal-inset); }
+.reward-door .reward-menu { max-width: none; width: 100%; }
+.reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
+.reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 
   </style>
 </head>
@@ -10805,7 +10815,11 @@ const balance = {
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
   rewards: {
     cardChoices: 3,
-    cinders: { normal: [15, 25], elite: [35, 50], boss: [75, 90] },
+    // ×3 the first ladder (Constantine, 2026-09-04: "3x the amount for the
+    // base") — cinders are granted on arrival at the reward door now, so the
+    // faucet is the whole economy lever; the level ladder (levelUp below) and
+    // shop prices are unchanged and read against this.
+    cinders: { normal: [45, 75], elite: [105, 150], boss: [225, 270] },
     rarityWeights: {
       normal: { common: 60, uncommon: 35, rare: 5 },
       elite: { common: 45, uncommon: 40, rare: 15 },
@@ -47976,7 +47990,7 @@ Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_
 const { beatArmer } = require("src/framework/optionDecision.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { hudQuickSettingsHtml, wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
-const { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor } = require("src/ui/components/saveSlotSelector.js");
+const { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor } = require("src/ui/components/saveSlotSelector.js");
 const { html, titleMenu } = require("src/ui/kit/index.js");
 const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
 const { saveSlotSelectionModel } = require("src/ui/models/SaveSlotSelectionModel.js");
@@ -48012,6 +48026,7 @@ function mountTitle(app, {
   const occupied = slots.filter(({ summary }) => !!summary);
   let modal = null;
   let selectedSlot = null;
+  let newReviewSlot = null; // the slot the New Game decision door is asking about
 
   // Only one title mount may own the global Cancel action. render() replaces
   // the title DOM in place, so this listener lives for the mount rather than
@@ -48084,6 +48099,10 @@ function mountTitle(app, {
 
   const modalHtml = () => {
     if (!modal) return '';
+    if (newReviewSlot != null) {
+      const summary = slots.find((record) => record.slot === newReviewSlot)?.summary || null;
+      return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>${html(slotDecisionDoor({ kind: 'new', slot: newReviewSlot, summary }))}</div>`;
+    }
     const model = selectionModel();
     const door = slotDoor({
       eyebrow: 'New game',
@@ -48122,13 +48141,27 @@ function mountTitle(app, {
       inlineReview: true,
       returnFocusElement: launcher,
       onRequestLoad: (slot) => onContinue(slot),
+      onRequestNew: (slot) => onNew(slot),
       onDelete,
     });
   };
 
+  const openNewReview = (slot) => {
+    if (slot == null) return;
+    newReviewSlot = slot;
+    render();
+    focusModal('[data-title-action="review-new"]');
+  };
+  const closeNewReview = () => {
+    const slot = newReviewSlot;
+    newReviewSlot = null;
+    render();
+    focusModal(`[data-slot-pick="${slot}"]`);
+  };
   const closeModal = () => {
     modal = null;
     selectedSlot = null;
+    newReviewSlot = null;
     render();
     focusTitleDefault(app, { showCursor: false });
   };
@@ -48164,7 +48197,8 @@ function mountTitle(app, {
       if (event.key === 'Escape' && modal) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        closeModal();
+        if (newReviewSlot != null) closeNewReview();
+        else closeModal();
       } else if (event.key === 'Tab' && modal) {
         const controls = [...root.querySelectorAll('.title-menu-modal button:not([disabled])')];
         const first = controls[0];
@@ -48188,10 +48222,11 @@ function mountTitle(app, {
         else if (action === 'settings') onSettings();
         else if (action === 'quit' && onQuit) onQuit();
         else if (action === 'close-modal' || action === 'back') closeModal();
-        else if (action === 'modal-continue') {
-          const target = selectionModel().properties.actionSlot;
-          if (target == null) return;
-          onNew(target);
+        else if (action === 'modal-continue') openNewReview(selectionModel().properties.actionSlot);
+        else if (action === 'review-back') closeNewReview();
+        else if (action === 'review-new') {
+          if (newReviewSlot == null) return;
+          onNew(newReviewSlot);
         }
       });
     });
@@ -53394,8 +53429,11 @@ function openModal({
   opener = document.activeElement,
   host = document.body,
   role = 'dialog',
+  titleId: givenTitleId = '',
 } = {}) {
-  const titleId = `modal-title-${Math.random().toString(36).slice(2, 8)}`;
+  // A caller may name the heading (an instrument reads `aria-labelledby` by
+  // that name); otherwise the id is minted here so the label always resolves.
+  const titleId = givenTitleId || `modal-title-${Math.random().toString(36).slice(2, 8)}`;
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
 
@@ -54245,7 +54283,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'd3504179f7';
+const SOURCE = '02c285a71e';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -54279,7 +54317,7 @@ const SOURCE = 'd3504179f7';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '20';
+const ORDINAL = '22';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -54306,7 +54344,7 @@ const ORDINAL = '20';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-09-03';
+const BUILT = '2026-09-04';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -56117,6 +56155,7 @@ function openSettings({ meta, onChange, saves = null }) {
   const door = openModal({
     size: 'lg',
     className: 'settings-modal',
+    titleId: 'settings-modal-title',
     eyebrow: 'Title',
     title: 'Settings',
     closeLabel: 'Close Settings',
@@ -58839,7 +58878,7 @@ function slotDoor({ eyebrow, title, closeLabel, rows, backLabel = 'Back', contin
   const body = el('div', { class: 'modal-body' }, decide({
     children: [
       ornament({ 'data-component': UI.titleModalDivider }),
-      options(rows, { 'data-component': UI.titleSaveSlotList, 'aria-label': 'Save slots' }),
+      options(rows, { class: 'title-slot-list', 'data-component': UI.titleSaveSlotList, 'aria-label': 'Save slots' }),
     ],
   }));
   return el('section', {
@@ -58849,32 +58888,59 @@ function slotDoor({ eyebrow, title, closeLabel, rows, backLabel = 'Back', contin
   }, [head, body, foot]);
 }
 
-/** reviewDoor({ record }) → body C: "LOAD SLOT n?" over the DetailCard of what is at stake. */
-function reviewDoor(record) {
-  const { slot, summary } = record;
-  const head = modalHead({ eyebrow: 'Load game', title: `Slot ${slot}`, titleId: 'title-modal-heading', closeLabel: 'Close Load Game' });
+/**
+ * THE SLOT DECISION DOOR — body C, one shape for the four questions a slot
+ * can ask (Constantine, 2026-09-04: "a dynamic modal for loading, overwriting
+ * or starting a new game confirmation"). The head asks the question, the
+ * body shows what is at stake (the DetailCard of the save, when there is
+ * one) and the foot answers it: Back, or the one committing action.
+ *
+ *   load + occupied → "Load slot n?"       Load Save     (review-load)
+ *   load + empty    → "Slot n is empty"    New Game      (review-new)
+ *   new  + empty    → "Start in slot n?"   Start         (review-new)
+ *   new  + occupied → "Overwrite slot n?"  Overwrite     (review-new, danger)
+ *
+ * `.title-load-review` and `data-variant` are the hooks the instruments read;
+ * `title-modal-heading` is the door's one heading.
+ */
+const SLOT_DECISIONS = {
+  'load:occupied': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-review', title: (n) => `Load slot ${n}?`, prompt: 'Load this saved climb now?', back: 'Back to Saves', confirm: 'Load Save', action: 'review-load', card: true, danger: false },
+  'load:empty': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-empty', title: (n) => `Slot ${n} is empty`, prompt: 'Nothing is saved here yet. Start a new climb in this slot?', back: 'Back to Saves', confirm: 'New Game', action: 'review-new', card: false, danger: false },
+  'new:empty': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-start', title: (n) => `Start in slot ${n}?`, prompt: 'This slot is empty. The new climb will be saved here.', back: 'Back to Slots', confirm: 'Start', action: 'review-new', card: false, danger: false },
+  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-overwrite', title: (n) => `Overwrite slot ${n}?`, prompt: 'Starting here erases this saved climb. There is no way back.', back: 'Back to Slots', confirm: 'Overwrite', action: 'review-new', card: true, danger: true },
+};
+
+function slotDecisionDoor({ kind, slot, summary = null }) {
+  const spec = SLOT_DECISIONS[`${kind}:${summary ? 'occupied' : 'empty'}`];
+  if (!spec) throw new Error(`slotDecisionDoor: no decision for kind '${kind}'`);
+  const head = modalHead({ eyebrow: spec.eyebrow, title: spec.title(slot), titleId: 'title-modal-heading', closeLabel: spec.closeLabel });
   const close = head.querySelector('.modal-close');
   close.classList.add('title-modal-close');
   close.dataset.component = UI.titleModalCloseControl;
   close.dataset.titleAction = 'close-modal';
   head.querySelector('#title-modal-heading').dataset.component = UI.titleModalHeading;
-  const card = detailCard({ eyebrow: `Slot ${slot}`, name: summary.className, line: slotFacts(summary), meta: `Seed ${summary.seedString}` });
-  card.classList.add('title-load-review-slot');
-  card.dataset.component = UI.titleSaveSlot;
-  card.setAttribute('aria-label', 'Selected save summary');
+  let card = null;
+  if (spec.card && summary) {
+    card = detailCard({ eyebrow: `Slot ${slot}`, name: summary.className, line: slotFacts(summary), meta: `Seed ${summary.seedString}` });
+    card.classList.add('title-load-review-slot');
+    if (spec.danger) card.classList.add('muted');
+    card.dataset.component = UI.titleSaveSlot;
+    card.setAttribute('aria-label', 'Selected save summary');
+  }
   const body = el('div', { class: 'modal-body' }, decide({
-    title: `Load slot ${slot}?`,
-    children: card,
-    prompt: 'Load this saved climb now?',
+    children: [ornament({ 'data-component': UI.titleModalDivider }), card],
+    prompt: spec.prompt,
   }));
-  body.querySelector('.as-ornament').dataset.component = UI.titleModalDivider;
-  const back = button({ label: 'Back to Saves', className: 'title-modal-back title-load-review-back', attrs: { dataset: { titleAction: 'review-back', component: UI.titleModalBackControl } } });
-  const load = button({ label: 'Load Save', weight: 'primary', className: 'title-load-review-confirm', attrs: { dataset: { titleAction: 'review-load', component: UI.titleModalContinueControl } } });
-  const foot = modalFooter({ secondary: [back], primary: load, size: 'medium' });
+  const back = button({ label: spec.back, className: 'title-modal-back title-load-review-back', attrs: { dataset: { titleAction: 'review-back', component: UI.titleModalBackControl } } });
+  const confirm = button({
+    label: spec.confirm, weight: 'primary', className: `title-load-review-confirm${spec.danger ? ' danger' : ''}`,
+    attrs: { dataset: { titleAction: spec.action, component: UI.titleModalContinueControl, actionSlot: slot } },
+  });
+  const foot = modalFooter({ secondary: [back], primary: confirm, size: 'medium' });
   foot.querySelector('.modal-foot-actions').dataset.component = UI.titleModalActions;
   return el('section', {
     class: 'modal title-menu-modal title-load-review',
-    dataset: { size: 'sm', component: UI.titleMenuModal, variant: 'load-review' },
+    dataset: { size: 'sm', component: UI.titleMenuModal, variant: spec.variant },
     role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'title-modal-heading',
   }, [head, body, foot]);
 }
@@ -58891,6 +58957,7 @@ function openSaveSlotSelector({
   returnFocusElement = null,
   inlineReview = false,
   onRequestLoad,
+  onRequestNew = null,
   onDelete = null,
 } = {}) {
   closeSaveSlotSelector({ restoreFocus: false });
@@ -58940,6 +59007,18 @@ function openSaveSlotSelector({
     close({ restoreFocus: false });
     onRequestLoad(slot, { trigger, returnFocusElement });
   };
+  // An empty slot's one answer: start a new climb there (the title's onNew).
+  const requestNew = (slot, trigger) => {
+    if (slot == null || typeof onRequestNew !== 'function') return;
+    close({ restoreFocus: false });
+    onRequestNew(slot, { trigger, returnFocusElement });
+  };
+  const openReview = (slot) => {
+    if (slot == null) return;
+    loadReviewSlot = slot;
+    render();
+    focus('[data-title-action="review-load"], [data-title-action="review-new"]');
+  };
 
   const slotRows = (selection) => selection.children
     .filter((child) => child.component === UI.titleSaveSlot)
@@ -58950,7 +59029,10 @@ function openSaveSlotSelector({
       const hint = summary ? {
         title: `Select slot ${slot}. Hold to ${inlineReview ? 'load now' : 'review this load'}; activate the selected slot again to review.`,
         label: `Slot ${slot}, ${summary.className}. Hold to ${inlineReview ? 'load now' : 'review this load'}; activate twice to review.`,
-      } : '';
+      } : {
+        title: `Slot ${slot} is empty. Select it, then Continue to start a new climb here.`,
+        label: `Slot ${slot}, empty. Activate twice to start a new game here.`,
+      };
       return slotOption({ slot, summary, selected, selectable, deletable: !!(onDelete && summary), hint });
     });
 
@@ -58962,11 +59044,8 @@ function openSaveSlotSelector({
     veil.innerHTML = '';
     if (inlineReview && loadReviewSlot != null) {
       const record = slots.find(({ slot }) => slot === loadReviewSlot);
-      if (record?.summary) {
-        veil.appendChild(reviewDoor(record));
-        return;
-      }
-      loadReviewSlot = null;
+      veil.appendChild(slotDecisionDoor({ kind: 'load', slot: loadReviewSlot, summary: record?.summary || null }));
+      return;
     }
 
     const selection = model();
@@ -59054,13 +59133,8 @@ function openSaveSlotSelector({
   const activateSlot = (slot) => {
     hideTooltip();
     if (selectedSlot === slot && activatedLoadSlot === slot) {
-      if (inlineReview) {
-        loadReviewSlot = slot;
-        render();
-        focus('[data-title-action="review-load"]');
-      } else {
-        requestLoad(slot, 'repeat');
-      }
+      if (inlineReview) openReview(slot);
+      else requestLoad(slot, 'repeat');
       return;
     }
     selectedSlot = slot;
@@ -59081,7 +59155,12 @@ function openSaveSlotSelector({
       render();
       focus(`[data-slot-pick="${slot}"]`);
     } else if (action === 'review-load') requestLoad(loadReviewSlot, 'review');
-    else if (action === 'modal-continue') requestLoad(model().properties.actionSlot, 'continue');
+    else if (action === 'review-new') requestNew(loadReviewSlot, 'review');
+    else if (action === 'modal-continue') {
+      // Continue asks before it acts: the decision door is the confirmation.
+      if (inlineReview) openReview(model().properties.actionSlot);
+      else requestLoad(model().properties.actionSlot, 'continue');
+    }
     else if (control.dataset.slotPick && !control.classList.contains('is-filled')) activateSlot(Number(control.dataset.slotPick));
   });
   veil.addEventListener('keydown', (event) => {
@@ -59121,7 +59200,7 @@ function saveSlotCopyHtml({ slot, summary }) {
 }
 
 
-Object.assign(module.exports, { slotFacts, slotOption, slotDoor, closeSaveSlotSelector, openSaveSlotSelector, saveSlotCopyHtml });
+Object.assign(module.exports, { slotFacts, slotOption, slotDoor, slotDecisionDoor, closeSaveSlotSelector, openSaveSlotSelector, saveSlotCopyHtml });
 
 },
 "src/ui/models/SaveSlotSelectionModel.js": function (module, exports, require) {
@@ -59140,11 +59219,15 @@ function saveSlotSelectionModel(slots, { kind, selectedSlot = null } = {}) {
   const records = (Array.isArray(slots) ? slots : []).map(({ slot, summary }) => ({
     slot: Number(slot),
     hasSave: Boolean(summary),
-    selectable: kind === 'new' || Boolean(summary),
+    // Every row is selectable in both doors (Constantine, 2026-09-04): an
+    // empty Load row leads to "start a new game here", an occupied New Game
+    // row to "overwrite?". The decision door says which; this model only
+    // names the command.
+    selectable: true,
   }));
   const requestedSlot = Number(selectedSlot);
   const requested = records.find((record) => record.slot === requestedSlot && record.selectable) || null;
-  const preferred = records.find((record) => record.selectable && (kind !== 'new' || !record.hasSave))
+  const preferred = records.find((record) => record.selectable && (kind === 'new' ? !record.hasSave : record.hasSave))
     || records.find((record) => record.selectable)
     || null;
   // An absent selection chooses the authored default. An explicit invalid
@@ -59181,7 +59264,7 @@ function saveSlotSelectionModel(slots, { kind, selectedSlot = null } = {}) {
     accessibility: { role: 'button', disabled: actionSlot == null },
     behaviors: actionSlot == null ? [] : [behaviorModel(`${kind}-selected-save-slot`, {
       event: 'activate',
-      command: kind === 'new' ? 'create-in-save-slot' : 'load-save-slot',
+      command: kind === 'new' || !selected.hasSave ? 'create-in-save-slot' : 'load-save-slot',
       payload: { slot: actionSlot },
     })],
   });
@@ -72986,6 +73069,7 @@ const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { rewardPlan, resolveContinue, unseenIds } = require("src/model/rewardplan.js");
 const { beatArmer } = require("src/framework/optionDecision.js");
 const { modEffectLines } = require("src/model/loadout.js");
+const { el, modalHead, modalFooter, button } = require("src/ui/kit/index.js");
 
 const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
@@ -73097,7 +73181,7 @@ function mountRewards(app, {
     const state = states[row.kind];
     switch (row.kind) {
       case 'cinders':
-        return { title: `${row.amount} cinders`, body: state === 'taken' ? `${run.cinders} total` : 'The climb’s coin.' };
+        return { title: `${row.amount} cinders`, body: state === 'taken' ? `Granted · ${run.cinders} total` : 'The climb’s coin.' };
       case 'smithingStone':
         return {
           title: `${row.amount} Smithing Stone${row.amount === 1 ? '' : 's'}`,
@@ -73161,39 +73245,75 @@ function mountRewards(app, {
     return dial.modes.includes(settings.rewardCollect) ? settings.rewardCollect : dial.def;
   }
 
+  // ---- THE DOOR: a decision modal OVER whatever stands beneath ---------------
+  // Constantine: victory is a modal over the battlefield, and the cinders are
+  // granted on arrival. Each view (menu, detail, chooser) is the same md door
+  // rebuilt: kit head (Eyebrow + Title, no way out but a choice), a body, and
+  // a foot on the button ladder. It lives inside `app`, so the next screen's
+  // own mount clears it exactly as it cleared the old full-screen menu.
+  function door({ eyebrow, title, body, foot, attrs = {} }) {
+    app.querySelector('.reward-veil')?.remove();
+    if (!app.firstElementChild) app.appendChild(el('div', { class: 'screen reward-backdrop' }));
+    const head = modalHead({ eyebrow, title, closeLabel: 'Rewards' });
+    head.querySelector('.modal-close').hidden = true;
+    const modal = el('section', {
+      class: 'modal reward-door', dataset: { size: 'md' }, role: 'dialog', 'aria-modal': 'true', 'aria-label': title, ...attrs,
+    }, [head, el('div', { class: 'modal-body reward-body' }, body), foot]);
+    const veil = el('div', { class: 'modal-veil reward-veil' }, modal);
+    app.appendChild(veil);
+    return modal;
+  }
+  function grantCinders() {
+    const row = plan.rows.find((r) => r.kind === 'cinders');
+    if (!row || states.cinders || row.blockedBy) return;
+    if (apply.cinders(row)) {
+      states.cinders = 'taken';
+      persistProgress();
+    }
+  }
+
   // ---- the menu ------------------------------------------------------------
   function renderMenu(focusKind = null) {
     const mode = collectMode();
     const pending = plan.rows.filter((r) => !states[r.kind] && !r.blockedBy);
-    app.innerHTML = `
-      <div class="screen" style="padding-bottom:calc(var(--tap-floor, 44px) + 16px)">
-        <h2>${esc(rewards.title || 'Victory')}</h2>
-        ${plan.rows.length ? '<p class="subtitle">Claim your spoils</p>' : ''}
-        <div class="class-row reward-menu">
-          ${plan.rows.map((row) => {
-            const state = states[row.kind] || (row.blockedBy ? 'blocked' : 'pending');
-            const { title, body } = rowBody(row);
-            return `
-            <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}"
-                 data-kind="${esc(row.kind)}" data-state="${esc(state)}"
-                 data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
-              <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
-              <div class="cp-body">
-                <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
-                <p>${body}</p>
-                ${state === 'taken' ? '<span class="chip">Taken</span>'
-                  : state === 'blocked' ? '<span class="chip">Full — choose Skip to leave it behind</span>'
-                  : state === 'skipped' ? '<span class="chip">Skipped</span>'
-                  : ''}
-              </div>
-              ${state === 'blocked' ? `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true" aria-label="Skip unavailable ${esc(title)} reward">Skip</button>` : ''}
-            </div>`;
-          }).join('')}
-        </div>
-        <button class="primary" id="reward-continue" data-focusable="true" aria-describedby="reward-hold-copy">${
-          mode === 'auto' && pending.length ? 'Continue — take the rest' : 'Continue — leave the rest'}</button>
-        <p id="reward-hold-copy" class="subtitle" aria-live="polite">Press and hold to continue</p>
-      </div>`;
+    const rowsHtml = plan.rows.map((row) => {
+      const state = states[row.kind] || (row.blockedBy ? 'blocked' : 'pending');
+      const { title, body } = rowBody(row);
+      return `
+        <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}"
+             data-kind="${esc(row.kind)}" data-state="${esc(state)}"
+             data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
+          <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
+          <div class="cp-body">
+            <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
+            <p>${body}</p>
+            ${state === 'taken' ? '<span class="chip">Taken</span>'
+              : state === 'blocked' ? '<span class="chip">Full — choose Skip to leave it behind</span>'
+              : state === 'skipped' ? '<span class="chip">Skipped</span>'
+              : ''}
+          </div>
+          ${state === 'blocked' ? `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true" aria-label="Skip unavailable ${esc(title)} reward">Skip</button>` : ''}
+        </div>`;
+    }).join('');
+    // The button is the verb; the FootNote says what the verb does here (the
+    // E11 dial: auto-collect takes the rest, manual leaves it) and how to press.
+    const cont = button({
+      label: 'Continue',
+      weight: 'primary', id: 'reward-continue', attrs: { 'aria-describedby': 'reward-hold-copy' },
+    });
+    const foot = modalFooter({
+      note: mode === 'auto' && pending.length ? 'Hold to continue — takes the rest' : 'Hold to continue — leaves the rest',
+      primary: cont, className: 'reward-foot', size: 'medium',
+    });
+    const note = foot.querySelector('.modal-foot-note');
+    note.id = 'reward-hold-copy';
+    note.setAttribute('aria-live', 'polite');
+    door({
+      eyebrow: plan.rows.length ? 'Claim your spoils' : 'Spoils',
+      title: rewards.title || 'Victory',
+      body: el('div', { class: 'class-row reward-menu', html: rowsHtml }),
+      foot,
+    });
 
     for (const el of app.querySelectorAll('.reward-kind')) {
       const kind = el.dataset.kind;
@@ -73229,7 +73349,6 @@ function mountRewards(app, {
       });
     }
 
-    const cont = app.querySelector('#reward-continue');
     attachTooltip(cont, () => (mode === 'auto'
       ? `<div class="tt-title">Continue</div>${esc('Takes every pending reward; a card offer is picked for you.')}`
       : `<div class="tt-title">Continue</div>${esc('Done — only what you chose comes along.')}`));
@@ -73269,19 +73388,19 @@ function mountRewards(app, {
   function renderDetail(row) {
     const body = rowBody(row);
     const isFlask = row.kind === 'flask';
-    app.innerHTML = `
-      <div class="screen" data-reward-detail="${esc(row.kind)}">
-        <h2 style="color:var(--gold);font-size:26px">${isFlask ? 'POTION' : 'ARMAMENT'}</h2>
-        <p class="subtitle">${isFlask ? 'Inspect the potion' : 'Inspect the armament'}</p>
+    const takeButton = button({ label: `Take ${isFlask ? 'potion' : 'armament'}`, weight: 'primary', id: 'reward-detail-take' });
+    const backButton = button({ label: 'Back', id: 'reward-back', className: 'subtle' });
+    door({
+      eyebrow: isFlask ? 'Inspect the potion' : 'Inspect the armament',
+      title: isFlask ? 'Potion' : 'Armament',
+      attrs: { dataset: { size: 'md', rewardDetail: row.kind } },
+      body: el('div', { class: 'class-row reward-menu', html: `
         <div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
           <div class="glyph">${KIND_GLYPHS[row.kind]}</div>
           <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-          <button class="primary" id="reward-detail-take" data-focusable="true">Take ${isFlask ? 'potion' : 'armament'}</button>
-          <button class="subtle" id="reward-back" data-focusable="true">Back</button>
-        </div>
-      </div>`;
+        </div>` }),
+      foot: modalFooter({ secondary: [backButton], primary: takeButton, className: 'reward-foot', size: 'medium' }),
+    });
     app.querySelector('#reward-detail-take').addEventListener('click', () => take(row, row.kind));
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">Back</div>${esc('Return without collecting; your other choices keep.')}`);
@@ -73292,13 +73411,13 @@ function mountRewards(app, {
   // ---- the card chooser: opens from the card row, Back returns -------------
   function renderChooser() {
     const row = plan.rows.find((r) => r.kind === 'card');
-    app.innerHTML = `
-      <div class="screen">
-        <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
-        <p class="subtitle">Choose a card</p>
-        <div class="reward-row"></div>
-        <button class="subtle" id="reward-back" data-focusable="true">Back</button>
-      </div>`;
+    const backButton = button({ label: 'Back', id: 'reward-back', className: 'subtle' });
+    door({
+      eyebrow: 'Choose a card',
+      title: rewards.title || 'Victory',
+      body: el('div', { class: 'reward-row' }),
+      foot: modalFooter({ secondary: [backButton], className: 'reward-foot', size: 'medium' }),
+    });
     const strip = app.querySelector('.reward-row');
     for (const cardId of row.cardIds) {
       const el = renderCard(registries, { cardId, upgraded: false }, {});
@@ -73325,6 +73444,7 @@ function mountRewards(app, {
   }
 
   sfx.play('victory');
+  grantCinders();
   renderMenu();
 }
 
@@ -73515,7 +73635,7 @@ Object.assign(module.exports, { REWARD_KIND_ORDER, rewardPlan, resolveContinue, 
 // characteristics; this screen names its actions.
 
 const { shrineHealAmount } = require("src/engine/encounters.js");
-const { levelUpPlan, applyLevelUp } = require("src/model/levelup.js");
+const { levelUpPlan, applyLevelUp, levelUpBudget } = require("src/model/levelup.js");
 const { attributeCardModels } = require("src/model/creationBrief.js");
 const { passiveFlag } = require("src/model/registries.js");
 const { commitSmithing, smithingPlan } = require("src/model/smithing.js");
@@ -73609,6 +73729,9 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
   // pricing, caps, persistence, and pool reconciliation; the screen only fixes
   // the size of this one interaction.
   const level = levelUpPlan(registries, run, { pointsPerLevel: 1 });
+  // How many levels IN A ROW the purse covers — the card offers them all at
+  // once and commits them one ladder step at a time (model/levelup.js).
+  const budget = levelUpBudget(registries, run);
   const shrinePresentation = registries.balance?.ui?.shrinePresentation || {};
   const authoredShrineLayout = shrinePresentation.optionLayout;
   const shrineLayout = authoredShrineLayout === 'grid' ? 'grid' : 'list';
@@ -73714,7 +73837,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
              data-short="${level.short}">
           <summary>
             <span class="glyph shrine-fold-glyph">✦</span>
-            <span class="ob shrine-fold-summary"><b class="on">Level up</b><small class="om">${level.capped ? 'Level cap reached' : `${level.cost} cinders · +1 point`}</small></span>
+            <span class="ob shrine-fold-summary"><b class="on">Level up</b><small class="om">${level.capped ? 'Level cap reached' : level.offerable ? `${budget.levels} level${budget.levels === 1 ? '' : 's'} affordable · from ${level.cost} cinders` : `${level.cost} cinders · +1 point`}</small></span>
             <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </summary>
           <div class="shrine-fold-content">
@@ -73802,39 +73925,54 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
   // policy: existing values are immutable, one and only one plus may be chosen,
   // and the run is not mutated until Done commits it through applyLevelUp.
   if (level.offerable) {
-    let pendingAttribute = null;
+    // Pending points per attribute. Up to `budget.levels` in total; each one
+    // is a level, so Done walks the ladder once per point, in order.
+    const pending = Object.fromEntries(level.attributes.map((attr) => [attr.id, 0]));
+    const pendingTotal = () => Object.values(pending).reduce((sum, n) => sum + n, 0);
     const mount = app.querySelector('#level-opt .shrine-stat-mount');
     const drawLevelCard = () => {
+      const count = pendingTotal();
+      const spend = budget.costs.slice(0, count).reduce((sum, cost) => sum + cost, 0);
       const result = app.querySelector('#level-opt [data-level-cinder-result]');
-      if (result) result.hidden = !pendingAttribute;
+      if (result) {
+        result.hidden = !count;
+        result.innerHTML = `→ <b>${level.cinders - spend} remaining</b>`;
+      }
+      const costLabel = app.querySelector('#level-opt .level-cinder-cost');
+      if (costLabel) costLabel.textContent = `${count ? spend : level.cost} cinders`;
       const values = Object.fromEntries(level.attributes.map((attr) => [
         attr.id,
-        run.attributes[attr.id] + (pendingAttribute === attr.id ? 1 : 0),
+        run.attributes[attr.id] + pending[attr.id],
       ]));
       const cards = new Map(attributeCardModels(registries, values, {
         equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
       }).map((card) => [card.id, card]));
       renderStatAllocationCard(mount, {
-        title: 'ASSIGN 1 POINT',
-        remaining: pendingAttribute ? 0 : 1,
-        note: 'Choose one attribute. Existing points cannot be reduced.',
+        title: budget.levels === 1 ? 'ASSIGN 1 POINT' : `ASSIGN UP TO ${budget.levels} POINTS`,
+        remaining: budget.levels - count,
+        note: budget.levels === 1
+          ? 'Choose one attribute. Existing points cannot be reduced.'
+          : 'Each point is a level and pays the next price on the ladder. Existing points cannot be reduced.',
         cancelLabel: 'Clear',
-        doneLabel: 'Level up',
-        doneDisabled: !pendingAttribute,
+        doneLabel: count > 1 ? `Level up ×${count}` : 'Level up',
+        doneDisabled: !count,
         rows: level.attributes.map((attr) => ({
           id: attr.id,
           label: attr.label,
           shortLabel: attr.shortLabel,
           value: values[attr.id],
           card: cards.get(attr.id),
-          canDecrease: false,
-          canIncrease: !pendingAttribute,
+          canDecrease: pending[attr.id] > 0,
+          canIncrease: count < budget.levels,
         })),
-        onIncrease: (id) => { pendingAttribute = id; drawLevelCard(); },
-        onCancel: () => { pendingAttribute = null; drawLevelCard(); },
+        onIncrease: (id) => { pending[id] += 1; drawLevelCard(); },
+        onDecrease: (id) => { if (pending[id] > 0) pending[id] -= 1; drawLevelCard(); },
+        onCancel: () => { for (const id of Object.keys(pending)) pending[id] = 0; drawLevelCard(); },
         onDone: () => {
-          if (!pendingAttribute) return;
-          applyLevelUp(registries, run, pendingAttribute, { pointsPerLevel: 1 });
+          if (!pendingTotal()) return;
+          for (const attr of level.attributes) {
+            for (let i = 0; i < pending[attr.id]; i++) applyLevelUp(registries, run, attr.id, { pointsPerLevel: 1 });
+          }
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
           remount({ openPanel: 'level' });
@@ -74094,6 +74232,35 @@ function levelUpPlan(registries, run, { pointsPerLevel = null } = {}) {
  * granted, the door reads what the run recorded, and no setting can refuse a
  * save. A friendlier error message would have been the wrong fix.
  */
+/**
+ * levelUpBudget(registries, run) → how many levels the run can buy IN A ROW
+ * from the cinders it holds, and what each one costs.
+ *
+ *   { levels, costs, total }
+ *
+ * Constantine, 2026-09-04: "why can't I use multiple points for level up if I
+ * have enough cinders for it. Instead I gotta confirm each point." The shrine
+ * card reads this to offer up to `levels` points at once; Done then commits
+ * them one applyLevelUp at a time, in order, so each level pays the price the
+ * ladder says (`levelCost` walks with levelsTaken) and the run is never asked
+ * to pay a total this function computed rather than the ladder. The cap
+ * (maxLevels) bounds the walk exactly as it bounds a single purchase.
+ */
+function levelUpBudget(registries, run) {
+  const t = table(registries);
+  const levelsTaken = Number.isInteger(run && run.levelUps) ? run.levelUps : 0;
+  let cinders = Number.isFinite(run && run.cinders) ? run.cinders : 0;
+  const costs = [];
+  for (let k = 0; ; k++) {
+    if (Number.isInteger(t.maxLevels) && levelsTaken + k >= t.maxLevels) break;
+    const cost = levelCost(registries, levelsTaken + k);
+    if (cinders < cost) break;
+    cinders -= cost;
+    costs.push(cost);
+  }
+  return { levels: costs.length, costs, total: costs.reduce((sum, cost) => sum + cost, 0) };
+}
+
 function applyLevelUp(registries, run, attributeId, { pointsPerLevel = null } = {}) {
   const plan = levelUpPlan(registries, run, { pointsPerLevel });
   const ids = plan.attributes.map((a) => a.id);
@@ -74142,7 +74309,7 @@ function applyLevelUp(registries, run, attributeId, { pointsPerLevel = null } = 
 }
 
 
-Object.assign(module.exports, { levelCost, levelsAffordable, levelUpPlan, applyLevelUp });
+Object.assign(module.exports, { levelCost, levelsAffordable, levelUpPlan, levelUpBudget, applyLevelUp });
 
 },
 "src/ui/models/SmithSelectionModel.js": function (module, exports, require) {

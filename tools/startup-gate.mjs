@@ -582,6 +582,9 @@ async function assertReturnBypass() {
   await p.click('[data-title-action="new"]');
   await p.until(`!!document.querySelector('.title-menu-modal [data-title-action="modal-continue"]:not([disabled])')`, 'new-game slot selection');
   await p.click('.title-menu-modal [data-title-action="modal-continue"]');
+  // Continue opens the decision door ("Start in slot n?"); its primary starts.
+  await p.until(`!!document.querySelector('[data-title-action="review-new"]')`, 'new-game decision door');
+  await p.click('[data-title-action="review-new"]');
   await p.until(`!!document.querySelector('#cz-back')`, 'character creation');
   await p.click('#cz-back');
   await p.until(`!!document.querySelector('.title-screen,.startup-gate')`, 'returned title route');
@@ -709,7 +712,9 @@ async function assertLoadSlotSelection() {
     load:document.querySelector('[data-title-action="review-load"]')?.textContent.trim()||'',
     back:document.querySelector('[data-title-action="review-back"]')?.textContent.trim()||''
   }))()`);
-  verdict(review.review === 'load-review' && review.heading === 'LOAD SLOT 1?' && review.load === 'LOAD SAVE' && review.back === 'BACK TO SAVES',
+  // Case-insensitive: the kit's head sets the case in the stylesheet, so the
+  // words are the acceptance, not their shouting.
+  verdict(review.review === 'load-review' && /^load slot 1\?$/i.test(review.heading) && /^load save$/i.test(review.load) && /^back to saves$/i.test(review.back),
     'A8.LOAD-SLOT-REVIEW', `second activation opens the selected save review with explicit Load and Back actions (${JSON.stringify(review)})`);
   if (CAPTURE_SHOTS) await p.screenshot('qa-load-slot-review-mobile-390x844.png');
 

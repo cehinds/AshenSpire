@@ -417,10 +417,10 @@ export function findings(r) {
       || !/componentModel\(UI\.titleSaveSlot,/.test(r.saveSlotSelectionModel)
       || !/componentModel\(UI\.titleModalContinueControl/.test(r.saveSlotSelectionModel)
       || !/command: 'select-save-slot'/.test(r.saveSlotSelectionModel)
-      || !/command: kind === 'new' \? 'create-in-save-slot' : 'load-save-slot'/.test(r.saveSlotSelectionModel)
+      || !/command: kind === 'new' \|\| !selected\.hasSave \? 'create-in-save-slot' : 'load-save-slot'/.test(r.saveSlotSelectionModel)
       || !/import \{ saveSlotSelectionModel \}/.test(r.title)
       || !/const selectionModel = \(kind = modal\) => saveSlotSelectionModel\(slots, \{ kind, selectedSlot \}\)/.test(r.title)
-      || !/const target = selectionModel\(\)\.properties\.actionSlot/.test(r.title)) {
+      || !/openNewReview\(selectionModel\(\)\.properties\.actionSlot\)/.test(r.title)) {
     bad.push('C20 title save slots no longer derive selected styling and the primary command target from one immutable model');
   }
   const controlsIds = ['controls-rebind-capture', 'controls-key-rebind-control'];

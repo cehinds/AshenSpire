@@ -18,7 +18,7 @@
 // characteristics; this screen names its actions.
 
 import { shrineHealAmount } from '../../engine/encounters.js';
-import { levelUpPlan, applyLevelUp } from '../../model/levelup.js';
+import { levelUpPlan, applyLevelUp, levelUpBudget } from '../../model/levelup.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { passiveFlag } from '../../model/registries.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
@@ -112,6 +112,9 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // pricing, caps, persistence, and pool reconciliation; the screen only fixes
   // the size of this one interaction.
   const level = levelUpPlan(registries, run, { pointsPerLevel: 1 });
+  // How many levels IN A ROW the purse covers — the card offers them all at
+  // once and commits them one ladder step at a time (model/levelup.js).
+  const budget = levelUpBudget(registries, run);
   const shrinePresentation = registries.balance?.ui?.shrinePresentation || {};
   const authoredShrineLayout = shrinePresentation.optionLayout;
   const shrineLayout = authoredShrineLayout === 'grid' ? 'grid' : 'list';
@@ -217,7 +220,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
              data-short="${level.short}">
           <summary>
             <span class="glyph shrine-fold-glyph">✦</span>
-            <span class="ob shrine-fold-summary"><b class="on">Level up</b><small class="om">${level.capped ? 'Level cap reached' : `${level.cost} cinders · +1 point`}</small></span>
+            <span class="ob shrine-fold-summary"><b class="on">Level up</b><small class="om">${level.capped ? 'Level cap reached' : level.offerable ? `${budget.levels} level${budget.levels === 1 ? '' : 's'} affordable · from ${level.cost} cinders` : `${level.cost} cinders · +1 point`}</small></span>
             <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </summary>
           <div class="shrine-fold-content">
@@ -305,39 +308,54 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // policy: existing values are immutable, one and only one plus may be chosen,
   // and the run is not mutated until Done commits it through applyLevelUp.
   if (level.offerable) {
-    let pendingAttribute = null;
+    // Pending points per attribute. Up to `budget.levels` in total; each one
+    // is a level, so Done walks the ladder once per point, in order.
+    const pending = Object.fromEntries(level.attributes.map((attr) => [attr.id, 0]));
+    const pendingTotal = () => Object.values(pending).reduce((sum, n) => sum + n, 0);
     const mount = app.querySelector('#level-opt .shrine-stat-mount');
     const drawLevelCard = () => {
+      const count = pendingTotal();
+      const spend = budget.costs.slice(0, count).reduce((sum, cost) => sum + cost, 0);
       const result = app.querySelector('#level-opt [data-level-cinder-result]');
-      if (result) result.hidden = !pendingAttribute;
+      if (result) {
+        result.hidden = !count;
+        result.innerHTML = `→ <b>${level.cinders - spend} remaining</b>`;
+      }
+      const costLabel = app.querySelector('#level-opt .level-cinder-cost');
+      if (costLabel) costLabel.textContent = `${count ? spend : level.cost} cinders`;
       const values = Object.fromEntries(level.attributes.map((attr) => [
         attr.id,
-        run.attributes[attr.id] + (pendingAttribute === attr.id ? 1 : 0),
+        run.attributes[attr.id] + pending[attr.id],
       ]));
       const cards = new Map(attributeCardModels(registries, values, {
         equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
       }).map((card) => [card.id, card]));
       renderStatAllocationCard(mount, {
-        title: 'ASSIGN 1 POINT',
-        remaining: pendingAttribute ? 0 : 1,
-        note: 'Choose one attribute. Existing points cannot be reduced.',
+        title: budget.levels === 1 ? 'ASSIGN 1 POINT' : `ASSIGN UP TO ${budget.levels} POINTS`,
+        remaining: budget.levels - count,
+        note: budget.levels === 1
+          ? 'Choose one attribute. Existing points cannot be reduced.'
+          : 'Each point is a level and pays the next price on the ladder. Existing points cannot be reduced.',
         cancelLabel: 'Clear',
-        doneLabel: 'Level up',
-        doneDisabled: !pendingAttribute,
+        doneLabel: count > 1 ? `Level up ×${count}` : 'Level up',
+        doneDisabled: !count,
         rows: level.attributes.map((attr) => ({
           id: attr.id,
           label: attr.label,
           shortLabel: attr.shortLabel,
           value: values[attr.id],
           card: cards.get(attr.id),
-          canDecrease: false,
-          canIncrease: !pendingAttribute,
+          canDecrease: pending[attr.id] > 0,
+          canIncrease: count < budget.levels,
         })),
-        onIncrease: (id) => { pendingAttribute = id; drawLevelCard(); },
-        onCancel: () => { pendingAttribute = null; drawLevelCard(); },
+        onIncrease: (id) => { pending[id] += 1; drawLevelCard(); },
+        onDecrease: (id) => { if (pending[id] > 0) pending[id] -= 1; drawLevelCard(); },
+        onCancel: () => { for (const id of Object.keys(pending)) pending[id] = 0; drawLevelCard(); },
         onDone: () => {
-          if (!pendingAttribute) return;
-          applyLevelUp(registries, run, pendingAttribute, { pointsPerLevel: 1 });
+          if (!pendingTotal()) return;
+          for (const attr of level.attributes) {
+            for (let i = 0; i < pending[attr.id]; i++) applyLevelUp(registries, run, attr.id, { pointsPerLevel: 1 });
+          }
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
           remount({ openPanel: 'level' });

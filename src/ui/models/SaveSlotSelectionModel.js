@@ -13,11 +13,15 @@ export function saveSlotSelectionModel(slots, { kind, selectedSlot = null } = {}
   const records = (Array.isArray(slots) ? slots : []).map(({ slot, summary }) => ({
     slot: Number(slot),
     hasSave: Boolean(summary),
-    selectable: kind === 'new' || Boolean(summary),
+    // Every row is selectable in both doors (Constantine, 2026-09-04): an
+    // empty Load row leads to "start a new game here", an occupied New Game
+    // row to "overwrite?". The decision door says which; this model only
+    // names the command.
+    selectable: true,
   }));
   const requestedSlot = Number(selectedSlot);
   const requested = records.find((record) => record.slot === requestedSlot && record.selectable) || null;
-  const preferred = records.find((record) => record.selectable && (kind !== 'new' || !record.hasSave))
+  const preferred = records.find((record) => record.selectable && (kind === 'new' ? !record.hasSave : record.hasSave))
     || records.find((record) => record.selectable)
     || null;
   // An absent selection chooses the authored default. An explicit invalid
@@ -54,7 +58,7 @@ export function saveSlotSelectionModel(slots, { kind, selectedSlot = null } = {}
     accessibility: { role: 'button', disabled: actionSlot == null },
     behaviors: actionSlot == null ? [] : [behaviorModel(`${kind}-selected-save-slot`, {
       event: 'activate',
-      command: kind === 'new' ? 'create-in-save-slot' : 'load-save-slot',
+      command: kind === 'new' || !selected.hasSave ? 'create-in-save-slot' : 'load-save-slot',
       payload: { slot: actionSlot },
     })],
   });

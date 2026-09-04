@@ -7,7 +7,7 @@
 import { beatArmer } from '../../framework/optionDecision.js';
 import { buildStampHtml } from '../components/buildstamp.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
-import { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor } from '../components/saveSlotSelector.js';
+import { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
 import { html, titleMenu } from '../kit/index.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
@@ -43,6 +43,7 @@ export function mountTitle(app, {
   const occupied = slots.filter(({ summary }) => !!summary);
   let modal = null;
   let selectedSlot = null;
+  let newReviewSlot = null; // the slot the New Game decision door is asking about
 
   // Only one title mount may own the global Cancel action. render() replaces
   // the title DOM in place, so this listener lives for the mount rather than
@@ -115,6 +116,10 @@ export function mountTitle(app, {
 
   const modalHtml = () => {
     if (!modal) return '';
+    if (newReviewSlot != null) {
+      const summary = slots.find((record) => record.slot === newReviewSlot)?.summary || null;
+      return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>${html(slotDecisionDoor({ kind: 'new', slot: newReviewSlot, summary }))}</div>`;
+    }
     const model = selectionModel();
     const door = slotDoor({
       eyebrow: 'New game',
@@ -153,13 +158,27 @@ export function mountTitle(app, {
       inlineReview: true,
       returnFocusElement: launcher,
       onRequestLoad: (slot) => onContinue(slot),
+      onRequestNew: (slot) => onNew(slot),
       onDelete,
     });
   };
 
+  const openNewReview = (slot) => {
+    if (slot == null) return;
+    newReviewSlot = slot;
+    render();
+    focusModal('[data-title-action="review-new"]');
+  };
+  const closeNewReview = () => {
+    const slot = newReviewSlot;
+    newReviewSlot = null;
+    render();
+    focusModal(`[data-slot-pick="${slot}"]`);
+  };
   const closeModal = () => {
     modal = null;
     selectedSlot = null;
+    newReviewSlot = null;
     render();
     focusTitleDefault(app, { showCursor: false });
   };
@@ -195,7 +214,8 @@ export function mountTitle(app, {
       if (event.key === 'Escape' && modal) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        closeModal();
+        if (newReviewSlot != null) closeNewReview();
+        else closeModal();
       } else if (event.key === 'Tab' && modal) {
         const controls = [...root.querySelectorAll('.title-menu-modal button:not([disabled])')];
         const first = controls[0];
@@ -219,10 +239,11 @@ export function mountTitle(app, {
         else if (action === 'settings') onSettings();
         else if (action === 'quit' && onQuit) onQuit();
         else if (action === 'close-modal' || action === 'back') closeModal();
-        else if (action === 'modal-continue') {
-          const target = selectionModel().properties.actionSlot;
-          if (target == null) return;
-          onNew(target);
+        else if (action === 'modal-continue') openNewReview(selectionModel().properties.actionSlot);
+        else if (action === 'review-back') closeNewReview();
+        else if (action === 'review-new') {
+          if (newReviewSlot == null) return;
+          onNew(newReviewSlot);
         }
       });
     });

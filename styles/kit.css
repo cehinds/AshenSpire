@@ -405,7 +405,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
   padding: var(--modal-inset);
   border-top: 1px solid var(--line);
 }
-.as-foot-note, .modal-foot-note { flex: 1 12 27rem; max-width: max-content; min-width: 0; container-type: inline-size; color: var(--muted); font-size: 1.23rem; }
+.as-foot-note, .modal-foot-note { flex: 1 12 27rem; min-width: 0; container-type: inline-size; color: var(--muted); font-size: 1.23rem; }
 .as-foot-note > span, .modal-foot-note > span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @container (max-width: 9rem) { .modal-foot-note > span { visibility: hidden; } .as-foot-note > span { visibility: hidden; } }
 .modal-foot-actions, .as-foot-actions { margin-left: auto; flex: 0 1 auto; justify-content: end; }
@@ -850,3 +850,13 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .shrine-fold[open] > summary { border-bottom: 1px solid var(--line-soft); }
 .shrine-fold-content { display: grid; gap: 1.05rem; padding: 1.28rem 1.5rem 1.5rem; }
 .shrine-fold-detail { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.2rem; align-items: center; }
+
+/* ═══ REWARDS — a decision door over the battlefield ═══════════════════════ */
+/* Victory is a modal, not a screen: the md door stands on the veil over the
+   field it was won on (or the map, or a bare backdrop after a reload). Rows
+   are OptionCards; the foot carries the hold copy and Continue on the ladder. */
+.reward-backdrop { min-height: 100%; }
+.reward-door > .modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: var(--modal-inset); }
+.reward-door .reward-menu { max-width: none; width: 100%; }
+.reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
+.reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }

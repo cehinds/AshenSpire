@@ -122,6 +122,11 @@
       "id": "425f6cab7daee778"
     },
     {
+      "tool": "tools/startup-gate.mjs",
+      "target": "src/ui/components/saveSlotSelector.js",
+      "id": "8b64c6f508683d30"
+    },
+    {
       "tool": "tools/text-geometry.mjs",
       "target": "AshenSpire.html",
       "id": "1353252b7cd6554a"
@@ -130,6 +135,11 @@
       "tool": "tools/text-geometry.mjs",
       "target": "AshenSpire.html",
       "id": "c1dce040250e8564"
+    },
+    {
+      "tool": "tools/title-new-slot.mjs",
+      "target": "src/ui/models/SaveSlotSelectionModel.js",
+      "id": "d905e8929851cbd2"
     }
   ],
   "unreadable": {

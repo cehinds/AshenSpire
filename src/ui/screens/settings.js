@@ -1530,6 +1530,7 @@ export function openSettings({ meta, onChange, saves = null }) {
   const door = openModal({
     size: 'lg',
     className: 'settings-modal',
+    titleId: 'settings-modal-title',
     eyebrow: 'Title',
     title: 'Settings',
     closeLabel: 'Close Settings',

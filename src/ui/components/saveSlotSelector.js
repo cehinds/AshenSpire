@@ -81,7 +81,7 @@ export function slotDoor({ eyebrow, title, closeLabel, rows, backLabel = 'Back',
   const body = el('div', { class: 'modal-body' }, decide({
     children: [
       ornament({ 'data-component': UI.titleModalDivider }),
-      options(rows, { 'data-component': UI.titleSaveSlotList, 'aria-label': 'Save slots' }),
+      options(rows, { class: 'title-slot-list', 'data-component': UI.titleSaveSlotList, 'aria-label': 'Save slots' }),
     ],
   }));
   return el('section', {
@@ -91,32 +91,59 @@ export function slotDoor({ eyebrow, title, closeLabel, rows, backLabel = 'Back',
   }, [head, body, foot]);
 }
 
-/** reviewDoor({ record }) → body C: "LOAD SLOT n?" over the DetailCard of what is at stake. */
-function reviewDoor(record) {
-  const { slot, summary } = record;
-  const head = modalHead({ eyebrow: 'Load game', title: `Slot ${slot}`, titleId: 'title-modal-heading', closeLabel: 'Close Load Game' });
+/**
+ * THE SLOT DECISION DOOR — body C, one shape for the four questions a slot
+ * can ask (Constantine, 2026-09-04: "a dynamic modal for loading, overwriting
+ * or starting a new game confirmation"). The head asks the question, the
+ * body shows what is at stake (the DetailCard of the save, when there is
+ * one) and the foot answers it: Back, or the one committing action.
+ *
+ *   load + occupied → "Load slot n?"       Load Save     (review-load)
+ *   load + empty    → "Slot n is empty"    New Game      (review-new)
+ *   new  + empty    → "Start in slot n?"   Start         (review-new)
+ *   new  + occupied → "Overwrite slot n?"  Overwrite     (review-new, danger)
+ *
+ * `.title-load-review` and `data-variant` are the hooks the instruments read;
+ * `title-modal-heading` is the door's one heading.
+ */
+const SLOT_DECISIONS = {
+  'load:occupied': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-review', title: (n) => `Load slot ${n}?`, prompt: 'Load this saved climb now?', back: 'Back to Saves', confirm: 'Load Save', action: 'review-load', card: true, danger: false },
+  'load:empty': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-empty', title: (n) => `Slot ${n} is empty`, prompt: 'Nothing is saved here yet. Start a new climb in this slot?', back: 'Back to Saves', confirm: 'New Game', action: 'review-new', card: false, danger: false },
+  'new:empty': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-start', title: (n) => `Start in slot ${n}?`, prompt: 'This slot is empty. The new climb will be saved here.', back: 'Back to Slots', confirm: 'Start', action: 'review-new', card: false, danger: false },
+  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-overwrite', title: (n) => `Overwrite slot ${n}?`, prompt: 'Starting here erases this saved climb. There is no way back.', back: 'Back to Slots', confirm: 'Overwrite', action: 'review-new', card: true, danger: true },
+};
+
+export function slotDecisionDoor({ kind, slot, summary = null }) {
+  const spec = SLOT_DECISIONS[`${kind}:${summary ? 'occupied' : 'empty'}`];
+  if (!spec) throw new Error(`slotDecisionDoor: no decision for kind '${kind}'`);
+  const head = modalHead({ eyebrow: spec.eyebrow, title: spec.title(slot), titleId: 'title-modal-heading', closeLabel: spec.closeLabel });
   const close = head.querySelector('.modal-close');
   close.classList.add('title-modal-close');
   close.dataset.component = UI.titleModalCloseControl;
   close.dataset.titleAction = 'close-modal';
   head.querySelector('#title-modal-heading').dataset.component = UI.titleModalHeading;
-  const card = detailCard({ eyebrow: `Slot ${slot}`, name: summary.className, line: slotFacts(summary), meta: `Seed ${summary.seedString}` });
-  card.classList.add('title-load-review-slot');
-  card.dataset.component = UI.titleSaveSlot;
-  card.setAttribute('aria-label', 'Selected save summary');
+  let card = null;
+  if (spec.card && summary) {
+    card = detailCard({ eyebrow: `Slot ${slot}`, name: summary.className, line: slotFacts(summary), meta: `Seed ${summary.seedString}` });
+    card.classList.add('title-load-review-slot');
+    if (spec.danger) card.classList.add('muted');
+    card.dataset.component = UI.titleSaveSlot;
+    card.setAttribute('aria-label', 'Selected save summary');
+  }
   const body = el('div', { class: 'modal-body' }, decide({
-    title: `Load slot ${slot}?`,
-    children: card,
-    prompt: 'Load this saved climb now?',
+    children: [ornament({ 'data-component': UI.titleModalDivider }), card],
+    prompt: spec.prompt,
   }));
-  body.querySelector('.as-ornament').dataset.component = UI.titleModalDivider;
-  const back = button({ label: 'Back to Saves', className: 'title-modal-back title-load-review-back', attrs: { dataset: { titleAction: 'review-back', component: UI.titleModalBackControl } } });
-  const load = button({ label: 'Load Save', weight: 'primary', className: 'title-load-review-confirm', attrs: { dataset: { titleAction: 'review-load', component: UI.titleModalContinueControl } } });
-  const foot = modalFooter({ secondary: [back], primary: load, size: 'medium' });
+  const back = button({ label: spec.back, className: 'title-modal-back title-load-review-back', attrs: { dataset: { titleAction: 'review-back', component: UI.titleModalBackControl } } });
+  const confirm = button({
+    label: spec.confirm, weight: 'primary', className: `title-load-review-confirm${spec.danger ? ' danger' : ''}`,
+    attrs: { dataset: { titleAction: spec.action, component: UI.titleModalContinueControl, actionSlot: slot } },
+  });
+  const foot = modalFooter({ secondary: [back], primary: confirm, size: 'medium' });
   foot.querySelector('.modal-foot-actions').dataset.component = UI.titleModalActions;
   return el('section', {
     class: 'modal title-menu-modal title-load-review',
-    dataset: { size: 'sm', component: UI.titleMenuModal, variant: 'load-review' },
+    dataset: { size: 'sm', component: UI.titleMenuModal, variant: spec.variant },
     role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'title-modal-heading',
   }, [head, body, foot]);
 }
@@ -133,6 +160,7 @@ export function openSaveSlotSelector({
   returnFocusElement = null,
   inlineReview = false,
   onRequestLoad,
+  onRequestNew = null,
   onDelete = null,
 } = {}) {
   closeSaveSlotSelector({ restoreFocus: false });
@@ -182,6 +210,18 @@ export function openSaveSlotSelector({
     close({ restoreFocus: false });
     onRequestLoad(slot, { trigger, returnFocusElement });
   };
+  // An empty slot's one answer: start a new climb there (the title's onNew).
+  const requestNew = (slot, trigger) => {
+    if (slot == null || typeof onRequestNew !== 'function') return;
+    close({ restoreFocus: false });
+    onRequestNew(slot, { trigger, returnFocusElement });
+  };
+  const openReview = (slot) => {
+    if (slot == null) return;
+    loadReviewSlot = slot;
+    render();
+    focus('[data-title-action="review-load"], [data-title-action="review-new"]');
+  };
 
   const slotRows = (selection) => selection.children
     .filter((child) => child.component === UI.titleSaveSlot)
@@ -192,7 +232,10 @@ export function openSaveSlotSelector({
       const hint = summary ? {
         title: `Select slot ${slot}. Hold to ${inlineReview ? 'load now' : 'review this load'}; activate the selected slot again to review.`,
         label: `Slot ${slot}, ${summary.className}. Hold to ${inlineReview ? 'load now' : 'review this load'}; activate twice to review.`,
-      } : '';
+      } : {
+        title: `Slot ${slot} is empty. Select it, then Continue to start a new climb here.`,
+        label: `Slot ${slot}, empty. Activate twice to start a new game here.`,
+      };
       return slotOption({ slot, summary, selected, selectable, deletable: !!(onDelete && summary), hint });
     });
 
@@ -204,11 +247,8 @@ export function openSaveSlotSelector({
     veil.innerHTML = '';
     if (inlineReview && loadReviewSlot != null) {
       const record = slots.find(({ slot }) => slot === loadReviewSlot);
-      if (record?.summary) {
-        veil.appendChild(reviewDoor(record));
-        return;
-      }
-      loadReviewSlot = null;
+      veil.appendChild(slotDecisionDoor({ kind: 'load', slot: loadReviewSlot, summary: record?.summary || null }));
+      return;
     }
 
     const selection = model();
@@ -296,13 +336,8 @@ export function openSaveSlotSelector({
   const activateSlot = (slot) => {
     hideTooltip();
     if (selectedSlot === slot && activatedLoadSlot === slot) {
-      if (inlineReview) {
-        loadReviewSlot = slot;
-        render();
-        focus('[data-title-action="review-load"]');
-      } else {
-        requestLoad(slot, 'repeat');
-      }
+      if (inlineReview) openReview(slot);
+      else requestLoad(slot, 'repeat');
       return;
     }
     selectedSlot = slot;
@@ -323,7 +358,12 @@ export function openSaveSlotSelector({
       render();
       focus(`[data-slot-pick="${slot}"]`);
     } else if (action === 'review-load') requestLoad(loadReviewSlot, 'review');
-    else if (action === 'modal-continue') requestLoad(model().properties.actionSlot, 'continue');
+    else if (action === 'review-new') requestNew(loadReviewSlot, 'review');
+    else if (action === 'modal-continue') {
+      // Continue asks before it acts: the decision door is the confirmation.
+      if (inlineReview) openReview(model().properties.actionSlot);
+      else requestLoad(model().properties.actionSlot, 'continue');
+    }
     else if (control.dataset.slotPick && !control.classList.contains('is-filled')) activateSlot(Number(control.dataset.slotPick));
   });
   veil.addEventListener('keydown', (event) => {

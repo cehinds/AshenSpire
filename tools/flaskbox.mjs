@@ -476,8 +476,11 @@ async function main() {
       return {
         changed: after.filter((n, i) => n !== before[i]).length,
         delta: after.reduce((n, value, i) => n + value - before[i], 0),
-        minusLocked: [...level.querySelectorAll('[data-stat-action="decrease"]')].every((x) => x.getAttribute('aria-disabled') === 'true'),
-        plusLocked: [...level.querySelectorAll('[data-stat-action="increase"]')].every((x) => x.getAttribute('aria-disabled') === 'true'),
+        // Multi-point (Constantine, 2026-09-04): the pending row's minus is the
+        // one undo, every plus stays live while the purse still covers a level.
+        minusOpen: [...level.querySelectorAll('[data-stat-action="decrease"]')].filter((x) => x.getAttribute('aria-disabled') === 'false').length,
+        plusOpen: [...level.querySelectorAll('[data-stat-action="increase"]')].filter((x) => x.getAttribute('aria-disabled') === 'false').length,
+        poolLeft: Number((level.querySelector('.se-pool')?.textContent || '').match(/\\d+/)?.[0] || 0),
         doneReady: level.querySelector('[data-stat-done]').getAttribute('aria-disabled') === 'false',
         cinderPreviewHiddenBefore,
         cinderPreviewVisibleAfter: cinderResultAfter?.hidden === false,
@@ -485,10 +488,11 @@ async function main() {
         cinderCostStyled: cinderCost ? getComputedStyle(cinderCost).color !== getComputedStyle(level).color : false
       };
     })()`);
-    if (assignment.changed !== 1 || assignment.delta !== 1 || !assignment.minusLocked || !assignment.plusLocked || !assignment.doneReady
+    const plusRight = assignment.poolLeft > 0 ? assignment.plusOpen === 5 : assignment.plusOpen === 0;
+    if (assignment.changed !== 1 || assignment.delta !== 1 || assignment.minusOpen !== 1 || !plusRight || !assignment.doneReady
       || !assignment.cinderPreviewHiddenBefore || !assignment.cinderPreviewVisibleAfter || !/remaining/.test(assignment.cinderPreviewText) || !assignment.cinderCostStyled) {
-      bad('B4', shape, `level assignment did not lock to one added point and preview its cinder spend (changed ${assignment.changed}, delta ${assignment.delta}, minusLocked ${assignment.minusLocked}, plusLocked ${assignment.plusLocked}, doneReady ${assignment.doneReady}, cinders ${assignment.cinderPreviewText})`);
-    } else ok('B4', shape, 'level assignment previews exactly one added point, the remaining cinders, and never enables a decrease');
+      bad('B4', shape, `level assignment did not add one point, offer its one undo, keep the rest of the purse's points open and preview the cinder spend (changed ${assignment.changed}, delta ${assignment.delta}, minusOpen ${assignment.minusOpen}, plusOpen ${assignment.plusOpen}, poolLeft ${assignment.poolLeft}, doneReady ${assignment.doneReady}, cinders ${assignment.cinderPreviewText})`);
+    } else ok('B4', shape, 'level assignment adds one point, offers only its undo, keeps further affordable points open, and previews the remaining cinders');
     await ev(`(() => { document.querySelector('#level-opt').open = false; document.querySelector('#flask-reallocate').open = true; return true; })()`);
     await wait(40);
     const READ_INC = `(() => {

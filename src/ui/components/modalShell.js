@@ -353,8 +353,11 @@ export function openModal({
   opener = document.activeElement,
   host = document.body,
   role = 'dialog',
+  titleId: givenTitleId = '',
 } = {}) {
-  const titleId = `modal-title-${Math.random().toString(36).slice(2, 8)}`;
+  // A caller may name the heading (an instrument reads `aria-labelledby` by
+  // that name); otherwise the id is minted here so the label always resolves.
+  const titleId = givenTitleId || `modal-title-${Math.random().toString(36).slice(2, 8)}`;
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
 
