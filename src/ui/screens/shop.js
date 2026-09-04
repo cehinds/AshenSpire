@@ -116,9 +116,9 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     if (fold && fold.openKey) openBar = fold.openKey;
     app.innerHTML = `
       <div class="screen" style="justify-content:flex-start;overflow-y:auto;gap:14px;padding-top:28px">
-        <h2 style="color:var(--gold);font-size:24px">THE WANDERING MERCHANT</h2>
-        <p class="subtitle">"I'VE CLIMBED HIGHER THAN YOU. I CAME BACK. DRAW YOUR OWN CONCLUSIONS."</p>
-        <p style="color:var(--gold)">Cinders: <b>${run.cinders}</b> · HP ${run.hp}/${run.maxHp}</p>
+        <h2>The Wandering Merchant</h2>
+        <p class="subtitle">"I've climbed higher than you. I came back. Draw your own conclusions."</p>
+        <p class="as-status" style="text-align:center">Cinders <b>${run.cinders}</b> · HP ${run.hp}/${run.maxHp}</p>
         <div class="shop-bars cz-disc">
           <div class="reward-row" id="shop-cards"></div>
           <div class="class-row" id="shop-relics"></div>
@@ -134,7 +134,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
           <div class="class-row" id="shop-sell"></div>
           <div class="class-row" id="shop-smith"></div>
         </div>
-        <button id="leave-shop">LEAVE</button>
+        <button id="leave-shop" class="primary">Leave</button>
       </div>`;
 
     const cardsRow = app.querySelector('#shop-cards');
@@ -362,7 +362,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
   function shopItem(title, desc, cost, affordable, onBuy, { titleHtml = false, costWord = 'cinders' } = {}) {
     const el = document.createElement('div');
     el.className = `class-pick${affordable ? '' : ' locked'}`;
-    el.innerHTML = `<h3 style="font-size:13px">${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} ${esc(costWord)}</span>`;
+    el.innerHTML = `<div class="cp-body"><h3>${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} ${esc(costWord)}</span></div>`;
     if (affordable && onBuy) {
       const itemName = el.querySelector('h3')?.textContent?.trim() || 'this item';
       arm(el, 'shopBuy', {

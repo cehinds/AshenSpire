@@ -9,6 +9,11 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8');
 
+// A composition names a stable id as the literal attribute, or through the
+// ONE home of ids (UI.<camelKey>) when it builds its markup from the kit.
+const camel = (id) => id.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+const mentionsId = (src, id) => src.includes(`data-component="${id}"`) || src.includes(`UI.${camel(id)}`);
+
 const REQUIRED_IDS = Object.freeze([
   'startup-gate', 'startup-ash-field', 'startup-ash-particle', 'startup-mark',
   'startup-wordmark', 'startup-subtitle', 'startup-divider', 'startup-prompt',
@@ -90,6 +95,7 @@ export function receipt() {
     startupGate: read('src/ui/components/startupGate.js'),
     startupGateModel: read('src/ui/models/StartupGateModels.js'),
     title: read('src/ui/screens/title.js'),
+    saveSlotSelector: read('src/ui/components/saveSlotSelector.js'),
     balance: read('src/content/balance.js'),
     main: read('src/main.js'),
     validate: read('src/model/validate.js'),
@@ -102,7 +108,9 @@ export function receipt() {
     input: read('src/ui/input.js'),
     equipment: read('src/ui/screens/equipment.js'),
     css: read('styles/combat.css'),
+    kit: read('styles/kit.css'),
     uiCss: read('styles/ui.css'),
+    kitCss: read('styles/kit.css'),
     spec: read('SPEC.md'),
   };
 }
@@ -139,20 +147,37 @@ export function findings(r) {
       || /\b(run|combat)\s*=/.test(r.hud + r.quickSettings + r.frame + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels)) {
     bad.push('C5 reusable component modules crossed the simulation-state boundary');
   }
+  // THE KIT SWEEP (2026-09-04): the trail is a kit StatStrip (`.as-statstrip
+  // trail`) — one wrapping row of StatChips, Act then Floor then the build
+  // stamp — and no HUD stylesheet lays it out any more.
   if (!/hud-act[\s\S]*hud-floor[\s\S]*buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
-      || /(?:\.hud-run-meta|\.hud-context)[^{]*\{[^}]*grid-row:\s*2/.test(r.hud + r.css.replace(/\/\* Variant D — Strict Compact HUD[\s\S]*?\/\* End Variant D \*\//g, ''))
-      || !/flex-wrap:\s*nowrap/.test(r.css)) {
+      || !/class="hud-run-meta as-statstrip trail"/.test(r.hud)
+      || !/\.as-statstrip, \.as-kitline \{ display: flex; flex-wrap: wrap;/.test(r.kit)
+      || /\.hud-run-meta[^{]*\{/.test(r.css + r.uiCss)) {
     bad.push('C6 Run Header is not the corrected one-row Act/Floor/Build/Seed/Source trail');
   }
-  if (!/max-width:\s*720px[\s\S]*build-source[\s\S]*max-width:\s*620px[\s\S]*build-stamp\[data-seed\]::before[\s\S]*max-width:\s*520px/.test(r.css)
-      || /max-width:\s*520px[\s\S]{0,500}build-number\s*\{[^}]*display:\s*none/.test(r.css)) {
+  // On a phone a trail keeps the HEAD of each compound fact and drops its TAIL,
+  // and there are two shapes of fact in it: the build stamp keeps its number and
+  // drops its source, and a progress Chip keeps its value and drops the "/ total"
+  // — never the value itself, which one blanket `:nth-child(n+2)` did (measured
+  // at 390x844: "ACT" and "FLOOR" with no numbers under them).
+  if (!/@media \(max-width: 640px\) \{[\s\S]*?\.as-statstrip\.trail > \.build-stamp > :nth-child\(n\+2\) \{ display: none; \}/.test(r.kit)
+      || !/@media \(max-width: 640px\) \{[\s\S]*?\.as-statstrip\.trail > \.as-chip > \.cv > \* \{ display: none; \}/.test(r.kit)
+      || !/build-number[\s\S]*build-source/.test(r.buildstamp)) {
     bad.push('C7 metadata does not hide Source then Seed while preserving Build ink');
   }
   if (!/UI\.battlefieldStage/.test(r.combat)
       || !/centerHeightRatio/.test(r.battlefieldStageModel)
       || !/availableHeight \* centerHeightRatio/.test(r.battlefieldStage)
-      || !/scaleFrame\(frame, model\.tokens\.intentGapPx, model\.tokens\.centerHeightRatio\)/.test(r.battlefieldStage)
+      || !/measureFrame\(frame, model\.tokens\.intentGapPx, model\.tokens\.centerHeightRatio\)/.test(r.battlefieldStage)
+      // ONE SCALE FOR THE STAGE (2026-09-04). The stage used to divide each
+      // card by its OWN sprite's natural height, so every combatant rendered a
+      // different width. It now measures every frame and applies the smallest
+      // scale any of them needs — this asserts the reduce and the apply, so a
+      // return to per-frame scaling is red.
+      || !/measures\.reduce\(\(least, m\) => Math\.min\(least, m\.fits\), 1\)/.test(r.battlefieldStage)
+      || !/for \(const measure of measures\) applyFrame\(measure, scale\)/.test(r.battlefieldStage)
       || !/function renderCombatantStage\(\)[\s\S]*?renderPlayer\(\);\s*renderEnemies\(\);[\s\S]*?battlefieldStage\.refresh\(\);[\s\S]*?function render\(\)/.test(r.combat)
       || (r.combat.match(/renderCombatantStage\(\);/g) || []).length < 2
       || !/UI\.playerHandTray/.test(r.combat)
@@ -210,8 +235,12 @@ export function findings(r) {
       || !/componentModel\(UI\.startupGate/.test(r.startupGateModel)
       || !/export function mountStartupGate/.test(r.startupGate)
       || !/buildStampHtml\('startup'\)/.test(r.startupGate)
-      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`))
-      || !titleParts.every((id) => r.title.includes(`data-component="${id}"`))
+      // The gate's lockup is built by the kit's element factory now
+      // (src/ui/kit/index.js `el`), which spells the same attribute as
+      // `dataset: { component: '<id>' }`; the ash field and the section are
+      // still template strings. Either spelling is the one attribute.
+      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`) || r.startupGate.includes(`component: '${id}'`))
+      || !titleParts.every((id) => mentionsId(r.title + r.saveSlotSelector, id))
       || ![...startupParts, ...titleParts].every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`['${id}'`))
       || /from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.startupGate + r.startupGateModel)) {
@@ -223,34 +252,19 @@ export function findings(r) {
       || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'panelPadPx', 'mobilePanelPadPx', 'mobileControlGapPx', 'mobileOuterPadPx', 'mobileRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'cardSizePx', 'glyphSizePx', 'stateDotPx', 'activeTintPct', 'showCardBackground', 'showLabels'].every((name) => r.validate.includes(name))) {
     bad.push('C11 HUD presentation defaults are no longer data-owned, projected, and validated');
   }
-  if (!/build-stamp\[data-seed\]\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*flex-wrap:\s*nowrap;/.test(r.css)
-      || !/font-size:\s*calc\(var\(--hud-metadata-font-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
-      || !/background:\s*color-mix\(in srgb, var\(--panel\) var\(--hud-component-background-opacity\), transparent\)/.test(r.css)
-      || !/gap:\s*calc\(var\(--hud-belt-item-gap-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
-      || !/width:\s*calc\(3\.8rem \* var\(--hud-portrait-scale\)\)/.test(r.css)
-      || !/gap:\s*calc\(var\(--hud-primary-row-gap-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
-      || !/gap:\s*calc\(var\(--hud-resource-row-gap-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
-      || !/grid-template-columns:\s*minmax\(0, 1fr\) fit-content\(var\(--hud-cinders-max-width\)\) minmax\(0, 1fr\)/.test(r.css)
-      // THE METADATA BOX HUGS ITS CONTENT NOW, and the cap it once wrote as
-      // `width` it writes as `max-width`. The token is what C12 guards — that
-      // the row is bounded by --hud-metadata-max-width rather than by a number
-      // — and it still is. The change is the box's SIZING: a fixed-width box
-      // right-aligning its contents spilled its overflow off the left edge and
-      // ate the Act and Floor fields (styles/combat.css has the sweep).
-      || !/max-width:\s*min\(100%, var\(--hud-metadata-max-width\)\)/.test(r.css)
-      || !/\.hud-run-meta\s*\{[\s\S]*?width:\s*fit-content;/.test(r.css)
-      || !/data-hud-metadata-show-totals='false'/.test(r.css)
-      || !/\.hud-potions \.flask-slot\s*\{[^}]*width:\s*var\(--hud-utility-visual-size\);[^}]*min-width:\s*var\(--hud-utility-visual-size\);/.test(r.css)
-      // The totals' yield moved from a 350px MEDIA query into the container
-      // ladder with every other rung, so this asserts the rule exists inside a
-      // `@container run-header` block rather than naming the old viewport
-      // number. What it guards is unchanged: the totals have somewhere to yield.
-      || !/@container run-header \(max-width: 520px\)[\s\S]*?hud-progress-total\s*\{\s*display:\s*none;/.test(r.css)
-      || !/\.hud-quick-settings\s*\{[\s\S]*flex-direction:\s*column;/.test(r.uiCss)
-      || !/\.hud-quick-setting\s*\{[\s\S]*border:\s*0;[\s\S]*background:\s*transparent;/.test(r.uiCss)
-      || !/\.hud-quick-setting-face\s*\{[\s\S]*--hud-quick-card-size[\s\S]*border:\s*1px solid var\(--line-soft\);/.test(r.uiCss)
-      || !/\.hud-quick-setting-glyph\s*\{[\s\S]*--hud-quick-glyph-size/.test(r.uiCss)
-      || !/data-layout='narrow'[\s\S]*--hud-mobile-control-gap-px[\s\S]*--hud-mobile-panel-pad-px/.test(r.css)
+  // THE RENDERED HUD IS KIT ATOMS: a Band of rows, identity as a LabelStack,
+  // receipts as StatChips, controls as IconButtons at --iconbtn-size, flasks as
+  // Slots at the same size, resources as Meters — and the map alone carries the
+  // act route strip.
+  if (!/class="topbar combat-hud shared-hud as-band stack/.test(r.hud)
+      || !/class: 'hud-identity as-labelstack'/.test(r.hud)
+      || !/class: 'as-chip hud-cinders'/.test(r.hud)
+      || !/iconButton\(\{/.test(r.hud)
+      || !/class="as-iconbtn modal-iconbtn hud-quick-setting/.test(r.quickSettings)
+      || !/\.as-iconbtn, \.modal-iconbtn, \.modal-close \{[\s\S]*?width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
+      || !/\.as-slot \{[^}]*width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
+      || !/\.as-meter \{/.test(r.kit)
+      || /^\s*\.(?:topbar|hud-top|hud-info-row|hud-resource-row|hud-bottom|hud-control-grid|hud-quick-setting)\b[^{]*\{/m.test(r.css)
       || !/actRouteStripHtml\(\{\s*title:\s*actTitle\(run\.actNumber\)\s*\}\)/.test(r.map)
       || /routeTitle|actRouteStripHtml|act-route-strip/.test(r.combat)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
@@ -313,10 +327,15 @@ export function findings(r) {
       || !/content\.hidden = !tray\.expanded/.test(r.trayComponents)
       || !/if \(tray\.sortable && tray\.expanded\)/.test(r.trayComponents)
       || !/if \(renderContent\) renderContent\(content, contentModel\.children\)/.test(r.trayComponents)
-      || !/\.tray-header \.tray-count\s*\{[^}]*margin-left:\s*auto;/.test(r.uiCss)
-      || !/--ui-section-control-gap/.test(r.uiCss)
-      || !/--ui-tray-side-margin/.test(r.uiCss)
-      || !/--ui-tray-resize-surface:\s*44px/.test(r.uiCss)
+      // 2026-09-04 (the sweep): the Folding Tray is the kit's `.as-tray`
+      // (styles/kit.css FOLDING TRAY). Its header is a kit Row — the count is
+      // the Row's StatusText, pushed to the trailing edge by the Row's own rule
+      // — the side trays carry their margin on the kit frame, and the resize
+      // grip's touch surface is the tap floor itself, not a typed 44px.
+      || !/\.as-row > \.as-status, \.as-row > \.r-trail \{ margin-left: auto; \}/.test(r.kitCss)
+      || !/\.as-tray > \.tray-header \{[^}]*gap: 0\.75rem;/.test(r.kitCss)
+      || !/\.as-tray\[data-tray-edge="left"\] \{ margin-block: 0\.6rem; margin-left: 0\.6rem; \}/.test(r.kitCss)
+      || !/\.as-tray > \.tray-resize-handle\[data-ui-variant="top"\], \.as-tray > \.tray-resize-handle\[data-ui-variant="bottom"\] \{[^}]*height: var\(--tap-floor\);/.test(r.kitCss)
       || !/pointerdown/.test(r.trayComponents)
       || !/sizeService\.write/.test(r.trayComponents)
       || !/reset\(\)/.test(r.traySizeService)
@@ -326,9 +345,15 @@ export function findings(r) {
       || !/"snapRatios": \[0\.3, 0\.4, 0\.5, 0\.6, 0\.7, 0\.8, 0\.9\]/.test(r.armouryUiSource)
       || /meta\.settings\.armouryTrayHeights/.test(r.equipment)
       || !/resetArmouryTraySession/.test(r.equipment)
-      || !/window\.visualViewport\?\.height \|\| window\.innerHeight/.test(r.equipment)
-      || !/style\.minHeight = `\$\{layout\.trays\.multipleExpandedMinimumRatio \* 100\}vh`/.test(r.equipment)
-      || !/style\.height = `\$\{savedRatio \* 100\}vh`/.test(r.equipment)
+      // 2026-09-04 (the sweep): a tray's share is a share of the DOOR'S BODY,
+      // never of the glass — `vh` below the zoomed <body> is the law this file
+      // is named for. The remembered height is a percentage of the host the
+      // screen measures (`hostHeight`), and an arrival without one hugs its
+      // content under the kit's compact cap instead of claiming a share.
+      || !/const hostHeight = \(\) => Math\.max\(1, wrap\.querySelector\('\.armoury-shell-body'\)\?\.clientHeight \|\| 1\)/.test(r.equipment)
+      || !/style\.minHeight = `\$\{layout\.trays\.multipleExpandedMinimumRatio \* 100\}%`/.test(r.equipment)
+      || !/style\.height = `\$\{savedRatio \* 100\}%`/.test(r.equipment)
+      || /\d\s*}?vh`/.test(r.equipment)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.trayModels)) {
     bad.push('C15 folding regions no longer use the shared edge-aware Tray model and renderer');
   }
@@ -382,8 +407,9 @@ export function findings(r) {
       || !/export function mountSmithUpgradeModal/.test(r.smithUpgradeModal)
       || !/role', 'dialog'/.test(r.smithUpgradeModal)
       || !/aria-modal/.test(r.smithUpgradeModal)
-      || !/<button[^>]+smith-back/.test(r.smithUpgradeModal)
-      || !/<button[^>]+smith-confirm/.test(r.smithUpgradeModal)
+      // The two ways out are kit buttons now (builder form), or literal markup.
+      || !/(<button[^>]+smith-back|className: '[^']*smith-back')/.test(r.smithUpgradeModal)
+      || !/(<button[^>]+smith-confirm|className: '[^']*smith-confirm')/.test(r.smithUpgradeModal)
       || !/attachTooltip\(card/.test(r.smithUpgradeModal)
       || !/card\.dataset\.itemRef = item\.itemRef/.test(r.smithUpgradeModal)
       || !/Tier \$\{item\.currentLevel\} → \$\{item\.nextLevel\}/.test(r.smithUpgradeModal)
@@ -410,10 +436,10 @@ export function findings(r) {
       || !/componentModel\(UI\.titleSaveSlot,/.test(r.saveSlotSelectionModel)
       || !/componentModel\(UI\.titleModalContinueControl/.test(r.saveSlotSelectionModel)
       || !/command: 'select-save-slot'/.test(r.saveSlotSelectionModel)
-      || !/command: kind === 'new' \? 'create-in-save-slot' : 'load-save-slot'/.test(r.saveSlotSelectionModel)
+      || !/command: kind === 'new' \|\| !selected\.hasSave \? 'create-in-save-slot' : 'load-save-slot'/.test(r.saveSlotSelectionModel)
       || !/import \{ saveSlotSelectionModel \}/.test(r.title)
       || !/const selectionModel = \(kind = modal\) => saveSlotSelectionModel\(slots, \{ kind, selectedSlot \}\)/.test(r.title)
-      || !/const target = selectionModel\(\)\.properties\.actionSlot/.test(r.title)) {
+      || !/openNewReview\(selectionModel\(\)\.properties\.actionSlot\)/.test(r.title)) {
     bad.push('C20 title save slots no longer derive selected styling and the primary command target from one immutable model');
   }
   const controlsIds = ['controls-rebind-capture', 'controls-key-rebind-control'];
@@ -439,12 +465,15 @@ function selftest() {
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['restore a second header row', 'C6 ', (r) => ({ ...r, css: `${r.css}\n.hud-run-meta { grid-row: 2; }\n` })],
-    ['remove Source priority', 'C7 ', (r) => ({ ...r, css: r.css.replace('@container run-header (max-width: 720px)', '@container run-header (max-width: 721px)') })],
+    ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
+    // The other half of the same rung: a phone that drops the chip's VALUE
+    // instead of its total is the defect the photograph caught.
+    ['the phone trail drops each fact value instead of its tail', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .as-chip > .cv > * { display: none; }', '.as-statstrip.trail > .as-chip > :nth-child(n+2) { display: none; }') })],
     ['remove Hand reference', 'C8 ', (r) => ({ ...r, combat: r.combat.replace('UI.playerHandTray', "'anonymous-hand'") })],
     ['bottom-align enemies', 'C9 ', (r) => ({ ...r, css: r.css.replace('align-items: center; justify-content: space-evenly;', 'align-items: flex-end; justify-content: space-evenly;') })],
     ['remove public id from spec', 'C10 ', (r) => ({ ...r, spec: r.spec.replace('`potion-tray`', 'Potion tray') })],
     ['change transparent default', 'C11 ', (r) => ({ ...r, balance: r.balance.replace('componentBackgroundOpacityPct: 0', 'componentBackgroundOpacityPct: 25') })],
-    ['let metadata grid into rows', 'C12 ', (r) => ({ ...r, css: r.css.replace('display: inline-flex;', 'display: inline-grid;') })],
+    ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
     ['hand-roll an Armoury tray', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('renderTray(', 'renderLegacyRegion(') })],

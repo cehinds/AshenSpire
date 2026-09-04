@@ -152,6 +152,10 @@ const SCREENS = [
   { name: 'combat-procs', query: '?shot=fx', landmark: '.combat', state: 'fx', poseWait: 1900 },
   { name: 'boss', query: '?shot=boss', landmark: '.combat', state: 'boss' },
   { name: 'death', query: '?shot=death', landmark: '.stats-table', state: 'death' },
+  { name: 'victory', query: '?shot=victory', landmark: '.stats-table', state: 'victory' },
+  { name: 'history', query: '?shot=history', landmark: '.history .as-row', state: 'history' },
+  { name: 'lobby', query: '?shot=lobby', landmark: '#lb-name', state: 'lobby' },
+  { name: 'about', query: '?shot=about', landmark: '.settings-modal .about-ai', state: 'about' },
   { name: 'customize', query: '?shot=customize', landmark: '.customize', state: 'customize' },
   { name: 'component-catalog', query: '?shot=components', landmark: '.customize.component-catalog', state: 'components' },
   {

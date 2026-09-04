@@ -209,6 +209,35 @@ export function levelUpPlan(registries, run, { pointsPerLevel = null } = {}) {
  * granted, the door reads what the run recorded, and no setting can refuse a
  * save. A friendlier error message would have been the wrong fix.
  */
+/**
+ * levelUpBudget(registries, run) → how many levels the run can buy IN A ROW
+ * from the cinders it holds, and what each one costs.
+ *
+ *   { levels, costs, total }
+ *
+ * Constantine, 2026-09-04: "why can't I use multiple points for level up if I
+ * have enough cinders for it. Instead I gotta confirm each point." The shrine
+ * card reads this to offer up to `levels` points at once; Done then commits
+ * them one applyLevelUp at a time, in order, so each level pays the price the
+ * ladder says (`levelCost` walks with levelsTaken) and the run is never asked
+ * to pay a total this function computed rather than the ladder. The cap
+ * (maxLevels) bounds the walk exactly as it bounds a single purchase.
+ */
+export function levelUpBudget(registries, run) {
+  const t = table(registries);
+  const levelsTaken = Number.isInteger(run && run.levelUps) ? run.levelUps : 0;
+  let cinders = Number.isFinite(run && run.cinders) ? run.cinders : 0;
+  const costs = [];
+  for (let k = 0; ; k++) {
+    if (Number.isInteger(t.maxLevels) && levelsTaken + k >= t.maxLevels) break;
+    const cost = levelCost(registries, levelsTaken + k);
+    if (cinders < cost) break;
+    cinders -= cost;
+    costs.push(cost);
+  }
+  return { levels: costs.length, costs, total: costs.reduce((sum, cost) => sum + cost, 0) };
+}
+
 export function applyLevelUp(registries, run, attributeId, { pointsPerLevel = null } = {}) {
   const plan = levelUpPlan(registries, run, { pointsPerLevel });
   const ids = plan.attributes.map((a) => a.id);

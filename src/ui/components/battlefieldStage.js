@@ -2,14 +2,22 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 let releaseActiveStage = null;
 
-function scaleFrame(frame, intentGapPx, centerHeightRatio) {
+/**
+ * measureFrame → what this frame WOULD need, and what it naturally is. The
+ * scale is not applied here, because a scale chosen per frame is what made
+ * every combatant a different size: each card was divided by its OWN sprite's
+ * natural height, so a tall soldier shrank to 0.68 and a low hound stayed at
+ * 1.00 — 260px and 384px side by side (Constantine, 2026-09-04: "combatant
+ * card sizes should be uniform, this one is too narrow").
+ */
+function measureFrame(frame, intentGapPx, centerHeightRatio) {
   const stack = frame.querySelector(':scope > .combatant-stack');
   const leading = stack?.querySelector(':scope > .combatant-leading');
   const card = stack?.querySelector(':scope > .combatant-card');
-  if (!stack || !leading || !card) return;
+  if (!stack || !leading || !card) return null;
   const availableHeight = frame.clientHeight;
   const availableWidth = frame.clientWidth;
-  if (!(availableHeight > 0) || !(availableWidth > 0)) return;
+  if (!(availableHeight > 0) || !(availableWidth > 0)) return null;
 
   const rootStyle = getComputedStyle(document.documentElement);
   const uiZoom = Number.parseFloat(rootStyle.getPropertyValue('--ui-zoom')) || 1;
@@ -21,11 +29,17 @@ function scaleFrame(frame, intentGapPx, centerHeightRatio) {
   // Intent is critical combat information, so it keeps its authored size.
   // Only the card beneath it scales; the two still move as one centered unit.
   const centeredHeight = availableHeight * centerHeightRatio;
-  const scale = Math.max(0.01, Math.min(
+  const fits = Math.max(0.01, Math.min(
     1,
     Math.max(0, centeredHeight - leadingHeight - gap) / Math.max(1, naturalCardHeight),
     availableWidth / Math.max(1, naturalCardWidth),
   ));
+  return { stack, frame, leadingHeight, gap, naturalCardHeight, fits };
+}
+
+/** applyFrame → the stage's ONE scale, so every card renders the same box. */
+function applyFrame(measure, scale) {
+  const { stack, frame, leadingHeight, gap, naturalCardHeight } = measure;
   const cardOffset = leadingHeight + gap;
   const visualHeight = cardOffset + (naturalCardHeight * scale);
   stack.style.setProperty('--combatant-stack-height', `${visualHeight}px`);
@@ -54,9 +68,16 @@ export function wireBattlefieldStage(field, model) {
     cancelAnimationFrame(frameRequest);
     frameRequest = requestAnimationFrame(() => {
       if (!field.isConnected) return;
-      field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]').forEach((frame) => {
-        scaleFrame(frame, model.tokens.intentGapPx, model.tokens.centerHeightRatio);
-      });
+      // ONE SCALE FOR THE STAGE: measure every frame, then apply the smallest
+      // scale any of them needs. Uniform boxes, and nobody overflows its cell.
+      // Stature still differentiates an elite or a boss — that multiplier is
+      // on the sprite inside the card (kit.css COMBATANT), not on the card.
+      const measures = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')]
+        .map((frame) => measureFrame(frame, model.tokens.intentGapPx, model.tokens.centerHeightRatio))
+        .filter(Boolean);
+      if (!measures.length) return;
+      const scale = measures.reduce((least, m) => Math.min(least, m.fits), 1);
+      for (const measure of measures) applyFrame(measure, scale);
     });
   };
   const resizeObserver = new ResizeObserver(refresh);

@@ -117,8 +117,8 @@ try {
       && invalid.properties.canContinue === false,
     'NEW-SLOT-MODEL-INVALID', 'an explicit invalid selection fails closed instead of targeting another slot');
   check(loadDefault.properties.selectedSlot === 1 && loadDefault.properties.actionSlot === 1
-      && row(loadDefault, 2)?.properties.selectable === false,
-    'NEW-SLOT-MODEL-LOAD', 'the shared model preserves Load selection and disables empty Load rows');
+      && row(loadDefault, 2)?.properties.selectable === true,
+    'NEW-SLOT-MODEL-LOAD', 'the shared model prefers the occupied Load slot and keeps an empty Load row selectable (it leads to a new game)');
 
   if (!browserPath) throw new Error('no supported Chrome or Edge binary found');
   ({ server, port: serverPort } = await serve({ root: ROOT, port: 8252, open: false }));
@@ -218,6 +218,8 @@ try {
   if (CAPTURE_SHOTS) await screenshot('qa-new-slot-selected-mobile-390x844.png');
 
   await click('[data-title-action="modal-continue"]');
+  await until(`!!document.querySelector('[data-title-action="review-new"]')`, 'new-game decision door for slot 3');
+  await click('[data-title-action="review-new"]');
   await until(`!!document.querySelector('#cz-start')`, 'character creation for slot 3');
   await click('#cz-start');
   await until(`!!document.querySelector('#open-menu')`, 'new run map');

@@ -70,11 +70,11 @@ check('ordinary rows have zero Skip controls and labels', await ev(`!document.qu
 check('rewardContinue is rendered through the shared second-beat registry', await ev(`(()=>{const e=document.querySelector('#reward-continue');return e?.dataset.beatAction==='rewardContinue'&&e?.dataset.beat==='hold'&&Number(e?.dataset.holdMs)===600})()`));
 await click('.reward-kind[data-kind="cinders"]');
 await click('.reward-kind[data-kind="flask"]');
-check('Potion opens a distinct non-collecting detail', await ev(`document.querySelector('[data-reward-detail="flask"]')?.textContent.includes('INSPECT THE POTION')`));
+check('Potion opens a distinct non-collecting detail', await ev(`/inspect the potion/i.test(document.querySelector('[data-reward-detail="flask"]')?.textContent||'')`));
 await click('#reward-back');
 check('Potion Back preserves prior Taken state', await ev(`document.querySelector('[data-kind="cinders"]')?.dataset.state==='taken'`));
 await click('.reward-kind[data-kind="armament"]');
-check('Armament opens a distinct non-collecting detail', await ev(`document.querySelector('[data-reward-detail="armament"]')?.textContent.includes('INSPECT THE ARMAMENT')`));
+check('Armament opens a distinct non-collecting detail', await ev(`/inspect the armament/i.test(document.querySelector('[data-reward-detail="armament"]')?.textContent||'')`));
 await click('#reward-back');
 const beforeCard = await ev(`window.__spoils()`);
 await click('.reward-kind[data-kind="card"]'); await click('#reward-back');

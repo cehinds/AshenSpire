@@ -6949,15 +6949,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const html = hudQuickSettingsHtml(model);
     assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
     assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
-    assert(/data-card-background="true"/.test(html), 'the compact card presentation reaches the shared renderer');
-    assert(/--hud-quick-card-size:40px/.test(html)
-      && /--hud-quick-glyph-size:28px/.test(html) && /--hud-quick-state-dot:6px/.test(html)
-      && /--hud-quick-active-tint:14%/.test(html),
-      'the data-owned compact visual sizes reach CSS without a second renderer');
-    assert(/hud-fullscreen-enter/.test(html) && /hud-fullscreen-exit/.test(html),
-      'Fullscreen renders the conventional enter and exit action icons');
-    assert(/♫/.test(html) && /&#x0338;/.test(html),
-      'Music renders the authored on and slashed-off symbols');
+    // THE KIT SWEEP (2026-09-04): the two controls are kit IconButtons, the
+    // same box as Armoury, the menu and every door's close — one class, one
+    // size, one inset — so the compact-card tokens the old renderer inlined
+    // (`--hud-quick-card-size` and friends) no longer reach the DOM.
+    assert((html.match(/class="as-iconbtn modal-iconbtn hud-quick-setting/g) || []).length === 2,
+      'Fullscreen and Music are two kit IconButtons');
+    assert(/data-hud-quick-action="fullscreen"[^>]*>⛶</.test(html),
+      'Fullscreen renders the kit fullscreen glyph');
+    assert(/data-hud-quick-action="music"[^>]*>♫</.test(html),
+      'Music renders the kit music glyph');
 
     const audibleMusic = musicQuickSettingsPlan({});
     eq(audibleMusic.active, true, 'Music is enabled by default');
@@ -7519,8 +7520,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(cards.map((card) => card.key).join(','), REG.attributes.ids().map((id) => `attribute:${id}`).join(','),
       'stable attribute ids drive every card key');
     const constitution = cards.find((card) => card.id === 'constitution');
-    eq(constitution.face.summary, 'What your body takes before the climb ends.',
-      'the folded summary is derived from the authored description');
+    // THE FACE SAYS WHAT A POINT BUYS (Constantine, 2026-09-04: "stats show
+    // flavor text instead of useful information"). Still derived, never copied
+    // prose — from `derivedStatRules`, the run's own derivation — and each
+    // fact carries its own cadence because they differ. The authored sentence
+    // is still there, as the fold's flavour.
+    eq(constitution.face.summary, '+2 HP per pt · +1 Stamina per 5 pts',
+      'the face summary is derived from the rules that read the attribute');
+    eq(constitution.reveal.flavour, 'What your body takes before the climb ends.',
+      'the authored description is still derived, as the fold\'s flavour');
     assert(constitution.reveal.lines.some((line) => /^HP \+2 every 1 point$/.test(line))
       && constitution.reveal.lines.some((line) => /^Stamina \+1 every 5 points$/.test(line)),
     'multiple mechanical benefits are projected as separate bullets');

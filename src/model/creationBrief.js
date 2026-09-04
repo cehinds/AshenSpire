@@ -167,35 +167,67 @@ export function attributeCardModels(registries, attributes, { projection = null,
   const projected = new Map(((projection && projection.derived) || []).map((row) => [row.id, row]));
   return orderedAttributes(registries).map((authored) => {
     const def = { ...authored, value: attributes?.[authored.id] };
-    const feeds = Object.entries(rules)
+    // WHAT THIS ATTRIBUTE FEEDS, as facts before prose. Derived once here so
+    // the fold's line and the face's summary are the same numbers — the rules
+    // are `registries.derivedStatRules`, the run's own derivation.
+    const feedFacts = Object.entries(rules)
       .filter(([, rule]) => rule.sourceStat === def.id)
       .sort((a, b) => (presentation[a[0]].order || 0) - (presentation[b[0]].order || 0))
       .map(([id, rule]) => {
         const gain = Number.isFinite(rule.gainPerTier) ? rule.gainPerTier : null;
         const points = rule.pointsPerTier || ((registries.derivedStatRules || {}).defaults || {}).pointsPerTier;
-        const label = presentation[id].label;
         // A class-field gain (hp) is a different number per class, so it is
         // read off the projection's own receipt rather than restated here.
-        const perTier = gain == null
-          ? projected.get(id)?.gainPerTier
-          : gain;
-        return Number.isFinite(perTier)
-          ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`
-          : `${label} scales with ${def.label}`;
+        const perTier = gain == null ? projected.get(id)?.gainPerTier : gain;
+        return { label: presentation[id].label, perTier, points };
       });
     const unlocks = unlockLines(registries, def.id);
     const scaling = equipmentScalingLines(registries, def.id, equipmentProfiles);
+    const feeds = feedFacts.map(({ label, perTier, points }) => (Number.isFinite(perTier)
+      ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`
+      : `${label} scales with ${def.label}`));
+    // The FACE says what a point buys (Constantine, 2026-09-04: "stats show
+    // flavor text instead of useful information"). The flavour is still the
+    // fold's opening sentence — it is colour, and colour is not what a player
+    // choosing where to spend a level needs on the row itself.
+    // Each fact carries its OWN cadence, because they differ: HP every point
+    // and Stamina every five in the same row would read as one rate if the
+    // divisor sat at the end. `per N pts`, not `/N`, because a label may
+    // already hold a slash ("Actions / turn") and two would read as one rate.
+    const cadence = (points) => (points === 1 ? 'per pt' : `per ${points} pts`);
+    const faceFacts = feedFacts
+      .filter(({ perTier }) => Number.isFinite(perTier))
+      .map(({ label, perTier, points }) => `+${perTier} ${label} ${cadence(points)}`);
+    // An attribute whose only reader is the equipment profile (Strength feeds
+    // attack scaling, not a derived stat) still has a fact to state — read from
+    // its own authored line rather than left to flavour.
+    // Two equipped profiles can scale off one attribute at DIFFERENT rates and
+    // carry the same label ("Physical attacks" for a sword and a staff), so the
+    // face states each label once, at its most frequent gain — the fold below
+    // still lists every rate, which is where a player compares them.
+    const scalingFacts = faceFacts.length ? [] : [...scaling
+      .map((line) => line.match(/^(.*) \+(\d+) every (\d+) points?$/))
+      .filter(Boolean)
+      .reduce((best, [, label, gain, points]) => {
+        const seen = best.get(label);
+        if (!seen || Number(points) < seen.points) best.set(label, { gain: Number(gain), points: Number(points) });
+        return best;
+      }, new Map())]
+      .map(([label, { gain, points }]) => `+${gain} ${label} ${cadence(points)}`);
+    const stated = [...faceFacts, ...scalingFacts];
+    const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
     const lines = [...feeds, ...scaling, ...unlocks];
     return {
       id: def.id,
       key: `attribute:${def.id}`,
       kind: 'attribute',
       disclosure: def.disclosure,
-      face: { label: def.shortLabel, summary: foldedSummary(def.sense), value: def.value },
+      face: { label: def.shortLabel, summary: faceSummary, value: def.value },
       reveal: {
         title: def.label,
         sense: def.sense,
         lines: lines.length ? lines : ['Nothing reads it yet.'],
+        flavour: foldedSummary(def.sense),
         receipt: '',
       },
     };

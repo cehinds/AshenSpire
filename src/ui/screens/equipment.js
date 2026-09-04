@@ -54,9 +54,20 @@ import { renderTray } from '../components/trayComponents.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { traySizeService } from '../services/TraySizeService.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
+// THE KIT (2026-09-04, the sweep): every piece inside the door is a kit builder
+// — OptionCards for the positions, the inventory faces and the card rows,
+// DetailCards for the character's numbers and the open item, StatPairs and
+// KitLines for the facts, Flavour for the hints, a Blocker for a refusal —
+// and styles/ui.css draws nothing for this screen any more.
+import {
+  el, eyebrow, titleS, subtitle, statusText, flavour, prose, pill, tagChip, artWell, detailCard, optionCard, options, optionGrid,
+  face, row, button, chip, statStrip, kitLine, kitItem, blocker,
+} from '../kit/index.js';
 
 const CFG = () => balance.equipment;
 const armouryTraySession = { folded: new Map(), heights: new Map() };
+/** The view-toggle IconButton's glyph, by the view it switches TO. */
+const VIEW_TOGGLE_GLYPH = Object.freeze({ grid: '⊞', list: '≡' });
 
 export function resetArmouryTraySession() {
   armouryTraySession.folded.clear();
@@ -336,25 +347,19 @@ function buildArmoury(L, ui) {
   const itemCount = positionsBySlot.reduce((sum, row) => (
     sum + row.positions.filter((position) => position.state === 'occupied').length
   ), 0);
-  const slots = document.createElement('div');
-  slots.className = 'equip-slots armoury-position-list';
+  // The positions are OptionCards: a column of them in the list view, a grid
+  // of tiles per slot (the slot's label an Eyebrow) with one shared Details
+  // card in the grid view.
+  const slots = options([], { class: 'equip-slots armoury-position-list' });
   if (!ui.armamentsFolded && ui.armamentView === 'list') {
     for (const { slot, positions } of positionsBySlot) {
       slots.appendChild(ui.positionGroup(slot, positions, 'list'));
     }
   } else if (!ui.armamentsFolded) {
     slots.classList.add('armoury-position-grid-groups');
-    slots.style.setProperty('--armoury-position-grid-columns', String(ui.armamentGridColumns));
     for (const { slot, positions } of positionsBySlot) {
-      const group = document.createElement('section');
-      group.className = 'armoury-position-grid-group';
-      group.dataset.equipmentGroup = slot.id;
-      group.innerHTML = `<h4>${esc(slot.label)}</h4>`;
-      const tiles = document.createElement('div');
-      tiles.className = 'armoury-position-grid-tiles';
-      tiles.appendChild(ui.positionGroup(slot, positions, 'grid'));
-      group.appendChild(tiles);
-      slots.appendChild(group);
+      const tiles = el('div', { class: 'armoury-position-grid-tiles' }, optionGrid([ui.positionGroup(slot, positions, 'grid')]));
+      slots.appendChild(el('section', { class: 'armoury-position-grid-group', dataset: { equipmentGroup: slot.id } }, [eyebrow(slot.label), tiles]));
     }
     slots.appendChild(ui.armamentGridDetail(ordered));
   }
@@ -388,10 +393,9 @@ function buildArmoury(L, ui) {
     const next = ui.armamentView === 'list' ? 'grid' : 'list';
     rendered.sort.classList.add('armoury-card-view-toggle', 'armoury-armament-view-toggle');
     rendered.sort.dataset.component = 'armoury.armamentViewToggle';
-    rendered.sort.innerHTML = `<span class="armoury-view-mode-label">${esc(next === 'grid' ? 'Grid' : 'List')}</span>`
-      + (ui.armamentView === 'list'
-        ? '<span class="card-view-glyph grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
-        : '<span class="card-view-glyph list" aria-hidden="true"><i></i><i></i><i></i></span>');
+    // The IconButton's glyph names the view it switches TO; the tooltip says it in words.
+    rendered.sort.textContent = VIEW_TOGGLE_GLYPH[next];
+    rendered.sort.setAttribute('aria-label', `Show Armaments as ${next}`);
     attachTooltip(rendered.sort, () => `<div class="tt-title">${esc(next === 'grid' ? 'Grid view' : 'List view')}</div><p>${esc(next === 'grid' ? 'Show compact position tiles and one shared Details pane.' : 'Show every equipment position as a full detail row.')}</p>`);
   }
   if (ui.viewMode.pane === 'inventory') ui.left.appendChild(equipment);
@@ -452,49 +456,29 @@ function modSummary(registries, piece) {
 // author to see `locked: false` at every call site would reasonably conclude the
 // picker still has a locked state to reach.
 //
-// TWO WRAPPERS, ONE MARKUP (Viki, 2026-08-21). The card is now BOTH a control in
-// its own right and the face of a disclosure — and a <button> inside a <button>
-// is not a thing the parser keeps, so the face wants the same card built out of
-// phrasing content instead. That is a second SHAPE, and it must not become a
-// second MARKUP: `pieceChipHtml` is the one home, and the two functions below
-// differ only in the element they hang it on.
-function pieceChipHtml(registries, piece) {
-  const mods = modSummary(registries, piece);
-  return `<img class="ec-art" src="${esc(thumbSrc(piece))}" alt="">`
-    + `<span class="ec-name">${esc(piece.name)}</span>`
-    + `<span class="ec-tags">${(piece.tags || []).map((t) => `<em>${esc(t)}</em>`).join('')}</span>`
-    + `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>`;
+/** A piece's thumbnail in an ArtWell; the art dies quietly if the file is
+ *  missing — the single-file dist and file:// play both depend on this. */
+function pieceArt(piece, fallback = '⚔') {
+  const well = artWell({ src: thumbSrc(piece), alt: '', small: true });
+  const image = well.querySelector('img');
+  image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: piece.icon || fallback })));
+  return well;
 }
 
-/** The art element dies quietly if the file is missing — the single-file dist
- *  and file:// play both depend on this and it is easy to drop in a refactor. */
-function dropArtOnError(el) {
-  const art = el.querySelector('.ec-art');
-  if (art) art.addEventListener('error', () => art.remove());
-  return el;
-}
-
+/** The kit picker's chip (creation's starting kit): an OptionCard — art, name, mods, tags. `.ec-*` are the hooks the tools read. */
 export function pieceChip(registries, piece, { selected }) {
-  const el = document.createElement('button');
-  el.className = `equip-chip rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
-  el.type = 'button';
-  el.innerHTML = pieceChipHtml(registries, piece);
-  return dropArtOnError(el);
-}
-
-/** The same card as phrasing content, for use INSIDE the disclosure face. */
-function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
-  const el = document.createElement('span');
-  el.className = `equip-chip as-face rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
-  el.innerHTML = pieceChipHtml(registries, piece);
-  if (equippedLabel) {
-    const tags = el.querySelector('.ec-tags');
-    const badge = document.createElement('em');
-    badge.className = 'ec-equipped';
-    badge.textContent = equippedLabel;
-    tags.appendChild(badge);
-  }
-  return dropArtOnError(el);
+  const mods = modSummary(registries, piece);
+  const card = optionCard({
+    art: pieceArt(piece),
+    name: piece.name,
+    description: mods.length ? mods.join(' · ') : '—',
+    body: el('span', { class: 'tags ec-tags' }, (piece.tags || []).map((t) => tagChip({ label: t }))),
+    selected, arrow: false,
+    className: `equip-chip compact rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`,
+  });
+  card.querySelector('.on').classList.add('ec-name');
+  card.querySelector('.od').classList.add('ec-mods');
+  return card;
 }
 
 function inventoryFace(row, {
@@ -503,7 +487,8 @@ function inventoryFace(row, {
   const el = renderInventoryItemCard(inventoryItemCardModel(row, {
     selected, draggable, classModel,
   }));
-  if (actionLabel) el.insertAdjacentHTML('beforeend', `<strong class="inventory-inline-action">${esc(actionLabel)}</strong>`);
+  // While a position is selected the face says what the tap will do — a StatePill, lit.
+  if (actionLabel) el.querySelector('.r-trail').appendChild(pill({ label: actionLabel, on: true, attrs: { class: 'inventory-inline-action' } }));
   return el;
 }
 
@@ -541,7 +526,7 @@ function inventoryReveal(registries, row, {
     const actionVerb = action?.textContent?.trim() || 'equip this item';
     const actionInstruction = cardOwnsAction
       ? (holdDuration > 0
-        ? ` Press and hold this card to ${actionVerb}.`
+        ? ` Press and hold to ${actionVerb}.`
         : ` Activate this card to ${actionVerb}.`)
       : '';
     el.setAttribute('aria-label', comparisonPresentation === 'inline'
@@ -958,64 +943,61 @@ export function mountEquipment(host, {
     });
   }
 
-  function positionLabelHtml(position) {
-    return `<span class="armoury-position-label-pane"><strong>${esc(position.label)}</strong>`
-      + `<em>${esc(position.code)}</em></span>`;
-  }
+  /** The position's code (R1, L2…) as the card's badge, so a row of cards reads as a rack. */
+  const positionBadge = (position) => pill({ label: position.code, attrs: { class: 'armoury-position-code' } });
 
+  // A POSITION IS AN OPTIONCARD: art, name, the combat bonus as its description,
+  // the category and weight as its meta, tags as Tags, the act (Equip /
+  // Equipped) trailing. Locked and empty are the same card in other states.
   function positionCard(slot, position) {
     const selected = picking && picking.slotId === slot.id && picking.setIndex === position.index;
     if (position.state === 'locked') {
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = 'armoury-position-card is-locked';
-      card.dataset.component = 'armoury.lockedPositionCard';
-      card.dataset.slotPosition = `${slot.id}:${position.index}`;
-      card.innerHTML = positionLabelHtml(position)
-        + `<span class="armoury-position-locked-pane"><span aria-hidden="true">🔒</span>`
-        + `<strong>Locked</strong><small>${esc(position.rung?.name || 'Locked position')}</small></span>`;
+      const card = optionCard({
+        glyph: '🔒', name: position.label, badge: positionBadge(position),
+        description: position.rung?.name || 'Locked position', meta: 'Locked', arrow: false,
+        className: 'armoury-position-card is-locked',
+        attrs: { dataset: { component: 'armoury.lockedPositionCard', slotPosition: `${slot.id}:${position.index}` } },
+      });
       refuses(card, () => position.rung?.hint || 'This equipment position is locked.');
-      attachTooltip(card, () => `<div class="tt-title">${esc(position.label)}: Locked</div><p>${esc(position.rung?.hint || 'This equipment position is not unlocked yet.')}</p>`);
       return card;
     }
 
     if (position.state === 'empty') {
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = `armoury-position-card is-empty${selected ? ' is-selected' : ''}`;
-      card.dataset.component = 'armoury.emptyPositionCard';
-      card.dataset.slotPosition = `${slot.id}:${position.index}`;
-      card.innerHTML = positionLabelHtml(position)
-        + '<span class="armoury-position-sprite-pane"><span class="armoury-position-empty-icon">＋</span></span>'
-        + '<span class="armoury-position-summary-pane"><span class="armoury-position-headings"><small>Category</small><small>Name</small><small>Combat</small></span>'
-        + '<span class="armoury-position-values"><em>Empty</em><strong>Empty position</strong><span>—</span></span>'
-        + '<span class="armoury-position-footer"><span class="armoury-position-empty-hint">Select or drop a compatible item</span></span></span>';
+      const card = optionCard({
+        glyph: '＋', name: 'Empty position', badge: positionBadge(position),
+        description: 'Select or drop a compatible item', meta: position.label, arrow: false, selected: !!selected,
+        className: `armoury-position-card is-empty${selected ? ' is-selected' : ''}`,
+        attrs: { dataset: { component: 'armoury.emptyPositionCard', slotPosition: `${slot.id}:${position.index}` } },
+      });
       card.addEventListener('click', () => activatePosition(slot, position, { openPicker: true }));
       attachPositionDropTarget(card, slot, position);
       attachTooltip(card, () => `<div class="tt-title">${esc(position.label)}: Empty</div><p>Select this position, then choose an item from Inventory, or drag a compatible item here.</p>`);
       return card;
     }
 
-    const card = document.createElement('details');
-    card.className = `armoury-position-card is-occupied${position.active ? ' is-active' : ''}${selected ? ' is-selected' : ''}`;
-    card.dataset.component = 'armoury.equipmentPositionCard';
-    card.dataset.slotPosition = `${slot.id}:${position.index}`;
-    card.dataset.positionState = position.action;
-    const head = document.createElement('summary');
-    head.className = 'armoury-position-summary';
-    const tags = position.summary.tags.map((tag) => `<em>${esc(tag)}</em>`).join('') || '<em>untagged</em>';
-    const actionLabel = position.action === 'equipped'
-      ? `Equipped: ${position.equippedLabel}` : 'Equip';
-    head.innerHTML = positionLabelHtml(position)
-      + `<span class="armoury-position-sprite-pane"><img src="${esc(thumbSrc(position.summary.item))}" alt=""></span>`
-      + '<span class="armoury-position-summary-pane"><span class="armoury-position-headings"><small>Category</small><small>Name</small><small>Combat</small></span>'
-      + `<span class="armoury-position-values"><em>${esc(position.summary.category)}</em><strong>${esc(position.summary.name)}</strong><span>${esc(position.summary.bonus)}</span></span>`
-      + `<span class="armoury-position-footer"><span class="armoury-position-tags">${tags}</span>`
-      + `<span class="armoury-position-weight">${esc(position.summary.weight)}</span>`
-      + `<button type="button" class="armoury-position-action ${position.action}">${esc(actionLabel)}</button></span></span>`;
-    const image = head.querySelector('img');
-    image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: position.summary.item.icon || '◆' })));
-    const action = head.querySelector('.armoury-position-action');
+    const card = el('details', {
+      class: `armoury-position-card is-occupied${position.active ? ' is-active' : ''}${selected ? ' is-selected' : ''}`,
+      dataset: { component: 'armoury.equipmentPositionCard', slotPosition: `${slot.id}:${position.index}`, positionState: position.action },
+    });
+    const action = button({
+      label: position.action === 'equipped' ? 'Equipped' : 'Equip',
+      weight: position.action === 'equipped' ? 'secondary' : 'primary',
+      className: `armoury-position-action ${position.action}`,
+    });
+    const head = optionCard({
+      tag: 'summary',
+      art: pieceArt(position.summary.item, position.summary.item.icon || '◆'),
+      name: position.summary.name, badge: positionBadge(position),
+      description: position.summary.bonus,
+      meta: `${position.summary.category} · ${position.summary.weight}`,
+      body: el('span', { class: 'tags armoury-position-tags' }, (position.summary.tags.length ? position.summary.tags : ['untagged']).map((tag) => tagChip({ label: tag }))),
+      trail: action, arrow: false, selected: !!selected,
+      className: 'armoury-position-summary',
+    });
+    // The name stands in a <strong> the tools read (`.armoury-position-values strong`).
+    const nameSlot = head.querySelector('.on');
+    nameSlot.replaceChildren(el('strong', { text: position.summary.name }), positionBadge(position));
+    head.querySelector('.ob').classList.add('armoury-position-values');
     action.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -1035,26 +1017,23 @@ export function mountEquipment(host, {
     wrap.querySelector('.armoury-armament-view-toggle')?.focus();
   }
 
+  /** A grid tile is the same OptionCard stood on end: art over name, the code as its badge. */
   function positionGridCard(slot, position) {
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = `armoury-position-grid-card is-${position.state}`;
-    card.dataset.component = `armoury.${position.state}PositionGridCard`;
-    card.dataset.slotPosition = `${slot.id}:${position.index}`;
     if (!armamentGridSelection && position.active && position.state === 'occupied') {
       armamentGridSelection = { slotId: slot.id, index: position.index };
     }
     const selected = armamentGridSelection
       && armamentGridSelection.slotId === slot.id
       && armamentGridSelection.index === position.index;
-    if (selected) card.classList.add('is-selected');
-    let art = '<span aria-hidden="true">＋</span>';
-    if (position.state === 'locked') art = '<span aria-hidden="true">🔒</span>';
-    else if (position.summary.item) art = `<img src="${esc(thumbSrc(position.summary.item))}" alt="">`;
-    card.innerHTML = `<strong>${esc(position.code)}</strong><span class="armoury-position-grid-sprite">${art}</span>`
-      + `<span class="armoury-position-grid-name">${esc(position.state === 'locked' ? 'Locked' : position.summary.name)}</span>`;
-    const image = card.querySelector('img');
-    if (image) image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: position.summary.item?.icon || '◆' })));
+    const art = position.state === 'locked' ? artWell({ glyph: '🔒', small: true })
+      : position.summary.item ? pieceArt(position.summary.item, position.summary.item.icon || '◆')
+        : artWell({ glyph: '＋', small: true });
+    const card = optionCard({
+      art, name: position.state === 'locked' ? 'Locked' : position.summary.name, badge: positionBadge(position),
+      arrow: false, selected: !!selected,
+      className: `armoury-position-grid-card is-${position.state}${selected ? ' is-selected' : ''}`,
+      attrs: { dataset: { component: `armoury.${position.state}PositionGridCard`, slotPosition: `${slot.id}:${position.index}` } },
+    });
     if (position.state === 'locked') {
       refuses(card, () => position.rung?.hint || 'This equipment position is locked.');
     } else {
@@ -1079,13 +1058,10 @@ export function mountEquipment(host, {
     if (!selected) selected = positions.find(({ position }) => position.active && position.state === 'occupied')
       || positions.find(({ position }) => position.state !== 'locked') || positions[0] || null;
     if (selected) armamentGridSelection = { slotId: selected.slot.id, index: selected.position.index };
-    const detail = document.createElement('section');
-    detail.className = 'armoury-position-grid-detail';
-    detail.dataset.component = 'armoury.armamentGridDetails';
-    detail.innerHTML = '<h4>Details</h4>';
-    if (!selected) detail.insertAdjacentHTML('beforeend', '<p class="ep-hint">No equipment positions are available.</p>');
+    const detail = el('section', { class: 'armoury-position-grid-detail', dataset: { component: 'armoury.armamentGridDetails' } }, eyebrow('Details'));
+    if (!selected) detail.appendChild(flavour('No equipment positions are available.', { class: 'ep-hint' }));
     else if (selected.position.state === 'occupied') detail.appendChild(armamentDetail(selected.slot, selected.position.summary));
-    else detail.insertAdjacentHTML('beforeend', `<p class="ep-hint">${esc(selected.position.label)} is ${esc(selected.position.state)}.</p>`);
+    else detail.appendChild(flavour(`${selected.position.label} is ${selected.position.state}.`, { class: 'ep-hint' }));
     return detail;
   }
 
@@ -1230,15 +1206,14 @@ export function mountEquipment(host, {
           registries, run.loadout, target.slot.id, target.setIndex, target.pieceId
         );
         const wholeCardHold = inventoryItemClass.holdAction && holdDuration > 0 && seal.ok && transition.ok;
-        actionButton = document.createElement(wholeCardHold ? 'span' : 'button');
-        if (!wholeCardHold) actionButton.type = 'button';
-        actionButton.className = target.kind === 'unequip' ? 'ep-equip danger' : 'ep-equip';
+        // The act is a kit Button — danger for an unequip, primary for an equip.
+        // When the whole card is the hold target the act is a lit StatePill that
+        // names it, not a second control.
+        actionButton = wholeCardHold
+          ? pill({ label: actionLabel, on: true, attrs: { class: 'ep-equip inventory-card-action-label', 'aria-hidden': 'true' } })
+          : button({ label: actionLabel, weight: target.kind === 'unequip' ? 'danger' : 'primary', className: 'ep-equip' });
         actionButton.dataset.act = target.kind;
-        actionButton.textContent = actionLabel;
-        if (wholeCardHold) {
-          actionButton.classList.add('inventory-card-action-label');
-          actionButton.setAttribute('aria-hidden', 'true');
-        } else {
+        if (!wholeCardHold) {
           actionButton.addEventListener('pointerdown', (event) => event.stopPropagation());
           actionButton.addEventListener('click', (event) => event.stopPropagation());
         }
@@ -1265,6 +1240,7 @@ export function mountEquipment(host, {
         face: {
           label: row.name,
           node: face,
+          compact: true,
           className: 'inventoryItem',
           classModel: inventoryItemClass,
         },
@@ -1287,6 +1263,7 @@ export function mountEquipment(host, {
     });
     inventoryDisclosure = mountDisclosure(box, entries, {
       moreLabel: 'more items',
+      layout: 'column',
       armFace: ({ button, entry, onTap }) => {
         const draggableRow = draggableRows.get(entry.key);
         if (draggableRow) attachInventoryDrag(button, draggableRow);
@@ -1323,18 +1300,13 @@ export function mountEquipment(host, {
       },
     });
     box.dataset.inventoryCount = String(inventoryItemCount(rows));
-    if (!entries.length) box.insertAdjacentHTML('beforeend', selectedSlot
-      ? `<p class="ep-hint">Nothing in Inventory fits ${esc(selectedSlot.label)}.</p>`
-      : '<p class="ep-hint">Inventory is empty.</p>');
+    if (!entries.length) box.appendChild(flavour(selectedSlot ? `Nothing in Inventory fits ${selectedSlot.label}.` : 'Inventory is empty.', { class: 'ep-hint' }));
     return box;
   }
 
   /** The equipment-derived cards this loadout produces right now. */
   function cardStrip() {
-    const box = document.createElement('div');
-    box.className = 'equip-cards armoury-card-list';
-    box.dataset.component = 'armoury.cardList';
-    box.dataset.cardView = cardView;
+    const box = options([], { class: 'equip-cards armoury-card-list', dataset: { component: 'armoury.cardList', cardView } });
     const gridColumns = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
       ? layout.responsive.phone.cardsGridColumns
       : layout.cards.gridColumns;
@@ -1363,63 +1335,52 @@ export function mountEquipment(host, {
       const fullText = text ? text.textContent.trim() : '';
       const combatText = fullText.match(/^.*?[.!?](?:\s|$)/)?.[0].trim() || fullText;
 
-      const row = document.createElement('details');
-      row.className = 'armoury-card-row';
-      row.dataset.cardRow = '1';
-      row.dataset.component = 'armoury.cardRow';
-      const summary = document.createElement('summary');
-      summary.className = 'armoury-card-row-summary';
-      summary.innerHTML = `<span class="armoury-card-row-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>`
-        + `<span class="armoury-card-row-icon" aria-hidden="true">${esc(art)}</span>`
-        + `<strong class="armoury-card-row-name">${esc(def.name)}</strong>`
-        + `<span class="armoury-card-row-type">${esc(type)}</span>`
-        + `<span class="armoury-card-row-cost">◆ ${esc(cost)}${mana ? ` ${esc(mana.textContent.trim())}` : ''}</span>`
-        + `<span class="armoury-card-row-tags">${tags ? tags.textContent.trim() : ''}</span>`
-        + `<em class="armoury-card-row-count role-copy-count">x${esc(String(copyCount))}</em>`;
+      // A CARD ROW is an OptionCard (glyph, name, type · cost, tags, the copy
+      // count as a StatePill) that opens a DetailCard: the art in an ArtWell
+      // beside the combat line, the full text and the flavour.
+      const tagList = tags ? [...tags.querySelectorAll('.ctag')].map((tag) => tag.textContent.trim()) : [];
+      const costLine = `${type} · ◆ ${cost}${mana ? ` · ${mana.textContent.trim()}` : ''}`;
+      const row = el('details', { class: 'armoury-card-row', dataset: { cardRow: '1', component: 'armoury.cardRow' } });
+      const summary = optionCard({
+        tag: 'summary', glyph: art, name: def.name, meta: costLine,
+        body: tagList.length ? el('span', { class: 'tags' }, tagList.map((tag) => tagChip({ label: tag }))) : null,
+        trail: pill({ label: `x${copyCount}`, attrs: { class: 'armoury-card-row-count role-copy-count' } }),
+        arrow: false, className: 'armoury-card-row-summary compact',
+      });
+      summary.querySelector('.on').replaceChildren(el('strong', { class: 'armoury-card-row-name', text: def.name }));
       attachTooltip(summary, () => `<div class="tt-title">${esc(def.name)}</div><p>Tap to expand the card details.</p>`);
 
-      const detail = document.createElement('div');
-      detail.className = 'armoury-card-row-detail';
-      const iconPane = document.createElement('div');
-      iconPane.className = 'armoury-card-icon-pane';
-      iconPane.innerHTML = `<div class="armoury-card-art" aria-hidden="true">${esc(art)}</div>`
-        + '<span class="armoury-card-combat-label">Combat data</span>'
-        + `<div class="armoury-card-combat">${esc(combatText || 'No combat data authored.')}</div>`;
-      if (tags) {
-        const tagClone = tags.cloneNode(true);
-        tagClone.className = 'armoury-card-detail-tags';
-        iconPane.appendChild(tagClone);
-      }
-      const detailsPane = document.createElement('div');
-      detailsPane.className = 'armoury-card-details-pane';
-      detailsPane.innerHTML = `<h4>${esc(def.name)}</h4><p class="armoury-card-detail-meta">${esc(type)} · ◆ ${esc(cost)}${mana ? ` · ${esc(mana.textContent.trim())}` : ''} · x${esc(String(copyCount))}</p>`;
+      const detailsPane = el('div', { class: 'armoury-card-details-pane' }, [
+        eyebrow('Combat data'),
+        prose(combatText || 'No combat data authored.', { class: 'armoury-card-combat' }),
+      ]);
       if (text) {
         const textClone = text.cloneNode(true);
-        textClone.className = 'armoury-card-detail-text';
+        textClone.className = 'as-prose armoury-card-detail-text';
         detailsPane.appendChild(textClone);
       }
-      if (def.flavor) detailsPane.insertAdjacentHTML('beforeend', `<p class="armoury-card-detail-flavor">${esc(def.flavor)}</p>`);
-      detail.append(iconPane, detailsPane);
+      if (def.flavor) detailsPane.appendChild(flavour(def.flavor));
+      const detail = detailCard({
+        eyebrow: costLine, name: def.name,
+        children: el('div', { class: 'armoury-card-row-detail' }, [artWell({ glyph: art }), detailsPane]),
+      });
       row.append(summary, detail);
       box.appendChild(row);
     }
-    if (!groups.size) box.insertAdjacentHTML('beforeend', '<p class="ep-hint">No equipment cards are active.</p>');
+    if (!groups.size) box.appendChild(flavour('No equipment cards are active.', { class: 'ep-hint' }));
     return box;
   }
 
   function equipmentReceiptPanel(surface) {
-    const panel = document.createElement('section');
-    panel.className = 'armoury-equipment-receipts';
-    panel.innerHTML = '<section class="equip-role-receipts"><b>Equipment card packages</b>'
-      + renderRoleCopies(surface)
-      + '</section>'
+    const panel = el('section', { class: 'armoury-equipment-receipts' });
+    panel.innerHTML = `<section class="equip-role-receipts"><span class="as-eyebrow">Equipment card packages</span>${renderRoleCopies(surface)}</section>`
       + renderEquipmentRequirements(surface.requirements)
       + renderPlayerPoise(surface.poise)
       + renderPlayerLoad(surface.load);
     return panel;
   }
 
-  /** A compact, separate Stats tray; Cards owns no stat receipts. */
+  /** A compact, separate Stats tray; Cards owns no stat receipts. DetailCards of StatChips. */
   function statsComparison() {
     const projection = statProjection(registries, run);
     const surface = equipmentSurfaceReceipt(registries, run);
@@ -1427,24 +1388,20 @@ export function mountEquipment(host, {
     const valueFor = (role) => surface.roles.find((row) => row.role === role)?.receipt.value ?? 0;
     const labelFor = (role) => layout.combatPower.cards.find((card) => card.role === role)?.label || role;
     const derived = (id) => projection.derived.find((row) => row.id === id)?.value ?? '—';
-    const box = document.createElement('div');
-    box.className = 'armoury-stats-summary';
-    box.dataset.component = 'armoury.statsSummary';
-    const attributes = projection.attributes.map((row) => `${row.shortLabel || row.label} ${row.value}`).join(' · ');
     const relicNames = (run.relics || []).map((id) => registries.relics.get(id)?.name || id);
     const runStats = run.stats || {};
-    box.innerHTML = `<section class="armoury-stats-identity"><strong>${esc(cls?.name || run.class)}</strong><span>Level ${esc(String(run.level || 1))}</span></section>`
-      + `<section class="armoury-stats-group"><b>Combat</b><span>Strike ${esc(String(valueFor('attack')))}</span>`
-      + `<span>${esc(labelFor('technique'))} ${esc(String(valueFor('technique')))}</span>`
-      + `<span>Defense ${esc(String(valueFor('guard')))}</span></section>`
-      + `<section class="armoury-stats-group"><b>Attributes</b><span>${esc(attributes || 'No attributes')}</span></section>`
-      + `<section class="armoury-stats-group"><b>Resources</b><span>Actions ${esc(String(derived('energy')))}</span>`
-      + `<span>Hand ${esc(String(derived('draw')))}</span><span>Resistance —</span></section>`
-      + `<section class="armoury-stats-group"><b>Run</b><span>Fights won ${esc(String(runStats.fightsWon || 0))}</span>`
-      + `<span>Damage dealt ${esc(String(runStats.damageDealt || 0))}</span>`
-      + `<span>Damage taken ${esc(String(runStats.damageTaken || 0))}</span></section>`
-      + `<section class="armoury-stats-group"><b>Relics</b><span>${esc(relicNames.length ? `${relicNames.length}: ${relicNames.join(' · ')}` : '0 equipped')}</span></section>`;
-    box.appendChild(equipmentReceiptPanel(surface));
+    const group = (title, chips, attrs = {}) => detailCard({ eyebrow: title, muted: true, attrs: { class: 'armoury-stats-group', ...attrs }, children: statStrip(chips.map(([key, value]) => chip({ key, value: String(value) }))) });
+    const box = el('div', { class: 'armoury-stats-summary', dataset: { component: 'armoury.statsSummary' } }, [
+      detailCard({ eyebrow: 'Character', name: cls?.name || run.class, meta: `Level ${run.level || 1}`, attrs: { class: 'armoury-stats-identity' } }),
+      group('Combat', [['Strike', valueFor('attack')], [labelFor('technique'), valueFor('technique')], ['Defense', valueFor('guard')]]),
+      group('Attributes', projection.attributes.map((attr) => [attr.shortLabel || attr.label, attr.value])),
+      group('Resources', [['Actions', derived('energy')], ['Hand', derived('draw')], ['Resistance', '—']]),
+      group('Run', [['Fights won', runStats.fightsWon || 0], ['Damage dealt', runStats.damageDealt || 0], ['Damage taken', runStats.damageTaken || 0]]),
+      detailCard({ eyebrow: 'Relics', muted: true, attrs: { class: 'armoury-stats-group' }, children: relicNames.length
+        ? kitLine(relicNames.map((name) => kitItem({ glyph: '◆', name })))
+        : flavour('0 equipped') }),
+      equipmentReceiptPanel(surface),
+    ]);
     return box;
   }
 
@@ -1456,16 +1413,18 @@ export function mountEquipment(host, {
       const formula = row
         ? `${row.receipt.base} base + ${row.receipt.tier} tier × ${row.receipt.gainPerTier} tier gain + ${row.receipt.rarityBonus} rarity`
         : 'No armament receipt is active.';
-      const face = document.createElement('span');
-      face.className = 'combat-power-face';
-      face.innerHTML = `<span class="combat-power-label">${esc(card.label)}</span>`
-        + `<span class="combat-power-bonus">${esc(row ? `+${row.receipt.rarityBonus} gear` : '—')}</span>`
-        + `<strong class="combat-power-value">${esc(String(value))}</strong>`;
+      // A power face: the label, its gear bonus as the description, the value trailing as StatusText.
+      const powerFace = face({
+        nameNode: el('span', { class: 'on' }, el('span', { class: 'combat-power-label', text: card.label })),
+        description: row ? `+${row.receipt.rarityBonus} gear` : '—',
+        trail: statusText(String(value), { class: 'combat-power-value' }),
+        className: 'combat-power-face',
+      });
       return {
         key: card.id,
         kind: 'power',
         disclosure: 'face',
-        face: { label: card.fullLabel, value: String(value), node: face },
+        face: { label: card.fullLabel, value: String(value), node: powerFace, compact: true },
         reveal: { title: card.fullLabel, sense: `${card.fullLabel}. Tap to expand the calculation.`, lines: [formula] },
       };
     };
@@ -1492,25 +1451,25 @@ export function mountEquipment(host, {
     const surface = equipmentSurfaceReceipt(registries, run);
     const expanded = viewMode().character === 'expanded';
 
+    // AN INFORMATION CARD is a fold-open DetailCard: its head a Row (caret
+    // Glyph, the label as Title·S, the one-line summary as StatusText), its
+    // body the group's faces.
     function informationCard({ id, label, summary, body }) {
-      const card = document.createElement('details');
-      card.className = `character-info-card ${id}`;
-      card.dataset.component = `armoury.${id}`;
+      const head = el('summary', {}, row({
+        glyph: FOLD_GLYPH.collapsed,
+        labelNode: titleS(label, { tag: 'span', class: 'r-label character-info-label' }),
+        status: summary, tag: 'div', className: 'character-info-head',
+      }));
+      head.querySelector('.as-glyph').classList.add('caret');
+      const card = detailCard({ tag: 'details', attrs: { class: `character-info-card ${id}`, dataset: { component: `armoury.${id}` } }, children: [head, body] });
       card.open = expanded;
-      const head = document.createElement('summary');
-      head.innerHTML = `<span class="character-info-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>`
-        + `<span class="character-info-label">${esc(label)}</span>`
-        + `<span class="character-info-summary">${esc(summary)}</span>`;
       attachTooltip(head, () => `<div class="tt-title">${esc(label)}</div><p>${esc(card.open ? `Fold ${label}.` : `Expand ${label} for its full calculation and details.`)}</p>`);
-      card.append(head, body);
       return card;
     }
 
-    const powers = document.createElement('section');
-    powers.className = 'character-power-cards';
-    powers.dataset.component = 'armoury.combatPowerGroup';
+    const powers = el('section', { class: 'character-power-cards', dataset: { component: 'armoury.combatPowerGroup' } });
     const powerEntries = characterPowerEntries();
-    mountDisclosure(powers, powerEntries, { moreLabel: 'more powers' });
+    mountDisclosure(powers, powerEntries, { moreLabel: 'more powers', layout: 'column' });
     box.appendChild(informationCard({
       id: 'combatPowerCard',
       label: layout.combatPower.groupLabel,
@@ -1518,14 +1477,14 @@ export function mountEquipment(host, {
       body: powers,
     }));
 
-    const attributes = document.createElement('section');
-    attributes.className = 'character-attributes';
-    const attributeHost = document.createElement('div');
+    const attributes = el('section', { class: 'character-attributes' });
+    const attributeHost = el('div');
     const attributeRows = attributeCardModels(registries, run.attributes, {
       projection,
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
     });
-    mountDisclosure(attributeHost, attributeRows, { moreLabel: 'more attributes' });
+    for (const entry of attributeRows) entry.face = { ...entry.face, compact: true };
+    mountDisclosure(attributeHost, attributeRows, { moreLabel: 'more attributes', layout: 'column' });
     attributes.appendChild(attributeHost);
     box.appendChild(informationCard({
       id: 'attributesCard',
@@ -1534,12 +1493,12 @@ export function mountEquipment(host, {
       body: attributes,
     }));
 
-    const relics = document.createElement('section');
-    relics.className = 'character-relics';
-    const relicHost = document.createElement('div');
+    const relics = el('section', { class: 'character-relics' });
+    const relicHost = el('div');
     const entries = relicEntries();
-    if (entries.length) mountDisclosure(relicHost, entries, { moreLabel: 'more relics' });
-    else relicHost.innerHTML = '<p class="ep-hint">No relics equipped.</p>';
+    for (const entry of entries) entry.face = { ...entry.face, compact: true };
+    if (entries.length) mountDisclosure(relicHost, entries, { moreLabel: 'more relics', layout: 'column' });
+    else relicHost.appendChild(flavour('No relics equipped.', { class: 'ep-hint' }));
     relics.appendChild(relicHost);
     box.appendChild(informationCard({
       id: 'relicsCard',
@@ -1556,13 +1515,14 @@ export function mountEquipment(host, {
     return box;
   }
 
+  /** The character's summary is a LabelStack: Eyebrow (the case is the stylesheet's), Title·S, Subtitle. */
   function characterSummaryPanel() {
     const cls = registries.classes.get(run.class);
-    const box = document.createElement('header');
-    box.className = 'character-summary';
-    box.innerHTML = `<p class="character-kicker">FORSAKEN · ${esc(cls.name.toUpperCase())} · LEVEL ${Number(run.level || 1)}</p>`
-      + `<h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p>`;
-    return box;
+    return el('header', { class: 'character-summary as-labelstack' }, [
+      eyebrow(`Forsaken · ${cls.name} · Level ${Number(run.level || 1)}`, { class: 'character-kicker' }),
+      titleS(cls.name, { tag: 'h3' }),
+      subtitle(cls.description || ''),
+    ]);
   }
 
   function slotSummary(slot, setIndex = run.loadout.active?.[slot.id] || 0) {
@@ -1657,14 +1617,14 @@ export function mountEquipment(host, {
     }).element;
   }
 
+  // THE ITEM'S DETAILS are a DetailCard: Eyebrow (the slot), the name, the lore
+  // as Flavour, then every fact as a StatRow (`Smithing tier` is the row the
+  // Smith tool reads), the last smithing as a StatRow, the tags as a KitLine
+  // whose items carry their meaning in the tooltip.
   function armamentDetail(slot, summaryItem) {
-    const card = document.createElement('article');
-    card.className = 'armoury-position-detail';
-    card.dataset.component = 'armoury.armamentItemCard';
     const item = summaryItem.item;
     if (!item) {
-      card.innerHTML = '<p class="armoury-armament-empty">No item is assigned to this equipment position.</p>';
-      return card;
+      return detailCard({ muted: true, attrs: { class: 'armoury-position-detail', dataset: { component: 'armoury.armamentItemCard' } }, children: flavour('No item is assigned to this equipment position.', { class: 'armoury-armament-empty' }) });
     }
 
     const tags = Array.isArray(item.tags) ? item.tags : (item.tags ? [item.tags] : []);
@@ -1674,13 +1634,6 @@ export function mountEquipment(host, {
     });
     const mods = modSummary(registries, item);
     const intrinsic = summaryItem.intrinsic;
-    const intrinsicRows = intrinsic
-      ? `<div><dt>Attack rating (AR)</dt><dd>${intrinsic.attackRating}</dd></div>`
-        + `<div><dt>Defense rating (DEF)</dt><dd>${intrinsic.defenseRating}</dd></div>`
-        + `<div><dt>Weight</dt><dd>${intrinsic.weight}</dd></div>`
-        + `<div><dt>Weapon Art Mana</dt><dd>${intrinsic.weaponArtManaCost}</dd></div>`
-        + `<div><dt>Unique Skill Stamina</dt><dd>${intrinsic.uniqueSkillStaminaCost}</dd></div>`
-      : '';
     const itemRef = `armament/${item.id}`;
     const smithingLevel = Number.isInteger(run.itemUpgradeLevels?.[itemRef])
       ? run.itemUpgradeLevels[itemRef]
@@ -1688,36 +1641,58 @@ export function mountEquipment(host, {
     const smithingReceipt = (run.lastSmithingReceipt?.itemRef === itemRef || run.lastSmithingReceipt?.armamentId === item.id)
       ? run.lastSmithingReceipt
       : null;
-
-    const detail = document.createElement('section');
-    detail.className = 'armoury-armament-details';
-    detail.dataset.component = 'armoury.armamentDetailPane';
-    detail.innerHTML = `<h4>${esc(item.name)} details</h4>`
-      + `<p class="armoury-armament-lore">${esc(item.blurb || 'No lore text authored.')}</p>`
-      + `<dl><div><dt>Type</dt><dd>${esc(summaryItem.category)} · ${esc(item.rarity || 'standard')}</dd></div>`
-      + `<div><dt>Effects</dt><dd>${esc(mods.length ? mods.join(' · ') : 'No additional equipment effects authored.')}</dd></div>`
-      + `<div><dt>Combat bonuses</dt><dd>${esc(summaryItem.bonus)}</dd></div>`
-      + `<div><dt>Smithing tier</dt><dd>${smithingLevel}</dd></div>`
-      + `${intrinsicRows}</dl>`
-      + (smithingReceipt
-        ? `<p class="armoury-smithing-receipt"><b>Last Smithing</b><span>Tier ${smithingReceipt.beforeLevel} → ${smithingReceipt.afterLevel} · ${smithingReceipt.cost} Stone · ${smithingReceipt.affectedCards.length} basic cards improved</span></p>`
-        : '')
-      + `<div class="armoury-armament-tag-details">${tagRows.map((tag) => `<p><strong>${esc(tag.label)}</strong><span>${esc(tag.description)}</span></p>`).join('') || '<p><strong>Tags</strong><span>No tags authored.</span></p>'}</div>`;
-    card.append(detail);
+    const fact = (name, value, attrs = {}) => statRowFlat(name, value, attrs);
+    const facts = [
+      fact('Type', `${summaryItem.category} · ${item.rarity || 'standard'}`),
+      fact('Effects', mods.length ? mods.join(' · ') : 'No additional equipment effects authored.'),
+      fact('Combat bonuses', summaryItem.bonus),
+      fact('Smithing tier', String(smithingLevel)),
+      ...(intrinsic ? [
+        fact('Attack rating (AR)', String(intrinsic.attackRating)),
+        fact('Defense rating (DEF)', String(intrinsic.defenseRating)),
+        fact('Weight', String(intrinsic.weight)),
+        fact('Weapon Art Mana', String(intrinsic.weaponArtManaCost)),
+        fact('Unique Skill Stamina', String(intrinsic.uniqueSkillStaminaCost)),
+      ] : []),
+    ];
+    const tagLine = kitLine(tagRows.length
+      ? tagRows.map((tag) => {
+        const item = kitItem({ glyph: '◆', name: tag.label });
+        attachTooltip(item, () => `<div class="tt-title">${esc(tag.label)}</div><p>${esc(tag.description)}</p>`);
+        return item;
+      })
+      : [kitItem({ glyph: '◆', name: 'No tags authored.' })], { class: 'armoury-armament-tag-details' });
+    const detail = el('section', { class: 'armoury-armament-details', dataset: { component: 'armoury.armamentDetailPane' } }, [
+      flavour(item.blurb || 'No lore text authored.', { class: 'armoury-armament-lore' }),
+      ...facts,
+      smithingReceipt ? el('div', { class: 'as-statrow flat armoury-smithing-receipt' }, [
+        el('span', { class: 'sr-id' }, el('b', { class: 'sr-name', text: 'Last Smithing' })),
+        el('span', { class: 'sr-vals' }, el('span', { class: 'sp-v', text: `Tier ${smithingReceipt.beforeLevel} → ${smithingReceipt.afterLevel} · ${smithingReceipt.cost} Stone · ${smithingReceipt.affectedCards.length} basic cards improved` })),
+      ]) : null,
+      tagLine,
+    ]);
+    const card = detailCard({
+      eyebrow: slot.label, name: `${item.name} details`,
+      attrs: { class: 'armoury-position-detail', dataset: { component: 'armoury.armamentItemCard' } },
+      children: detail,
+    });
     attachTooltip(card, () => `<div class="tt-title">${esc(`${slot.label}: ${item.name}`)}</div><p>${esc(summaryItem.bonus)} · ${esc(summaryItem.weight)}</p>`);
     return card;
   }
 
+  /** One fact as a flat StatRow: the name left, its value right. */
+  function statRowFlat(name, value, attrs = {}) {
+    return el('div', { ...attrs, class: 'as-statrow flat' }, [
+      el('span', { class: 'sr-id' }, el('span', { class: 'sr-name', text: name })),
+      el('span', { class: 'sr-vals' }, el('span', { class: 'sp-v', text: value })),
+    ]);
+  }
+
+  /** The character pane: the summary LabelStack, the figure in an ArtWell, the numbers. */
   function characterPanel() {
-    const panel = document.createElement('section');
-    panel.className = 'armoury-character';
-    panel.appendChild(characterSummaryPanel());
-    const sprite = document.createElement('div');
-    sprite.className = 'armoury-sprite-pane';
+    const sprite = artWell({ attrs: { class: 'armoury-sprite-pane' } });
     sprite.appendChild(figureFor(registries, run, cz));
-    panel.appendChild(sprite);
-    panel.appendChild(characterStatsPanel());
-    return panel;
+    return el('section', { class: 'armoury-character' }, [characterSummaryPanel(), sprite, characterStatsPanel()]);
   }
 
   function commit(settingChange = null) {
@@ -1746,15 +1721,20 @@ export function mountEquipment(host, {
     const shut = folded.get(r.id) === true;
     const fillsInventoryPane = r.id === 'inventory' && viewMode().pane === 'inventory';
     const count = r.count(source);
+    // The folded Stats header says the level and the combat and resource chips, read off the cards themselves.
     const summary = r.id === 'stats' ? (() => {
-      const identity = source.querySelector('.armoury-stats-identity span')?.textContent?.replace(/^Level\s+/i, 'Lv. ') || '';
+      const identity = source.querySelector('.armoury-stats-identity .dc-meta')?.textContent?.replace(/^Level\s+/i, 'Lv. ') || '';
       const groups = [...source.querySelectorAll('.armoury-stats-group')];
-      return [identity, ...groups.slice(0, 1).flatMap((group) => [...group.querySelectorAll('span')].map((span) => span.textContent)),
-        ...groups.slice(2, 3).flatMap((group) => [...group.querySelectorAll('span')].map((span) => span.textContent))]
-        .filter(Boolean).join(' · ');
+      const chipsOf = (group) => [...group.querySelectorAll('.as-chip')].map((c) => `${c.querySelector('.ck')?.textContent} ${c.querySelector('.cv')?.textContent}`);
+      return [identity, ...groups.slice(0, 1).flatMap(chipsOf), ...groups.slice(2, 3).flatMap(chipsOf)].filter(Boolean).join(' · ');
     })() : '';
+    // THE HOST IS THE DOOR'S BODY, NEVER THE GLASS: a tray's share is a share of
+    // the panel it sits in (no vh below body — the body is zoomed). A remembered
+    // height is that share; an arrival without one HUGS ITS CONTENT under the
+    // kit's compact cap, so the subject keeps the room.
+    const hostHeight = () => Math.max(1, wrap.querySelector('.armoury-shell-body')?.clientHeight || 1);
+    const remembered = armouryTraySession.heights.has(r.id);
     const savedRatio = trayHeights.get(r.id) || layout.trays.defaultHeightRatio;
-    const viewportHeight = () => Math.max(1, window.visualViewport?.height || window.innerHeight || 1);
     const model = trayModel({
       id: r.id,
       name: r.label,
@@ -1766,7 +1746,7 @@ export function mountEquipment(host, {
       sortable: r.id === 'cards',
       sortLabel: `Toggle ${r.label} list or grid`,
       resizable: !fillsInventoryPane,
-      minExpandedSize: Math.max(96, Math.round(layout.trays.minimumHeightRatio * viewportHeight())),
+      minExpandedSize: Math.max(96, Math.round(layout.trays.minimumHeightRatio * hostHeight())),
       items: [],
     });
     const snapRatio = (raw) => {
@@ -1793,10 +1773,13 @@ export function mountEquipment(host, {
         wrap.querySelector('[data-tray-id="cards"] .tray-sort')?.focus();
       } : null,
       onResize: (_id, size) => {
-        const next = snapRatio(size / viewportHeight());
+        const next = snapRatio(size / hostHeight());
         trayHeights.set(r.id, next);
         armouryTraySession.heights.set(r.id, next);
-        rendered.element.style.height = `${next * 100}vh`;
+        rendered.element.dataset.sized = '1';
+        rendered.element.style.minHeight = `${layout.trays.multipleExpandedMinimumRatio * 100}%`;
+        rendered.element.style.maxHeight = `${layout.trays.maximumHeightRatio * 100}%`;
+        rendered.element.style.height = `${next * 100}%`;
       },
       renderContent: (content) => {
         while (source.firstChild) content.appendChild(source.firstChild);
@@ -1807,19 +1790,17 @@ export function mountEquipment(host, {
     rendered.element.dataset.role = 'context';
     rendered.element.dataset.cardView = r.id === 'cards' ? cardView : '';
     source.replaceWith(rendered.element);
-    if (!shut && !fillsInventoryPane) {
+    if (!shut && !fillsInventoryPane && remembered) {
       rendered.element.dataset.sized = '1';
-      rendered.element.style.minHeight = `${layout.trays.multipleExpandedMinimumRatio * 100}vh`;
-      rendered.element.style.maxHeight = `${layout.trays.maximumHeightRatio * 100}vh`;
-      rendered.element.style.height = `${savedRatio * 100}vh`;
+      rendered.element.style.minHeight = `${layout.trays.multipleExpandedMinimumRatio * 100}%`;
+      rendered.element.style.maxHeight = `${layout.trays.maximumHeightRatio * 100}%`;
+      rendered.element.style.height = `${savedRatio * 100}%`;
     }
     if (r.id === 'cards' && rendered.sort) {
       const next = cardView === 'list' ? 'grid' : 'list';
       rendered.sort.classList.add('armoury-card-view-toggle');
-      rendered.sort.innerHTML = `<span class="armoury-view-mode-label">${esc(next === 'grid' ? 'Grid' : 'List')}</span>`
-        + (cardView === 'list'
-          ? '<span class="card-view-glyph grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
-          : '<span class="card-view-glyph list" aria-hidden="true"><i></i><i></i><i></i></span>');
+      rendered.sort.textContent = VIEW_TOGGLE_GLYPH[next];
+      rendered.sort.setAttribute('aria-label', `Show ${r.label} as ${next}`);
     }
     attachTooltip(rendered.fold, () => `<div class="tt-title">${shut ? 'Show' : 'Hide'} ${esc(r.label)}</div><p>${shut
       ? esc(summary || `${count || 0} ${r.unit}${count === 1 ? '' : 's'} in here.`)
@@ -1975,10 +1956,7 @@ export function mountEquipment(host, {
       console.error(`[content] the armoury view ${JSON.stringify(view)} has no layout`
         + ` — its row must ask for a combination the screen has: ${viewCellsSay()}`
         + ' in src/content/balance.js. This line is the defect, not a fallback.');
-      const dead = document.createElement('p');
-      dead.className = 'armoury-notice';
-      dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
-      right.appendChild(dead);
+      right.appendChild(blocker(`The "${view}" view is declared but has no layout. Pick another view above.`, { attrs: { class: 'armoury-notice' } }));
     }
     const inventory = wrap.querySelector('.armoury-inventory');
     if (inventory) inventory.appendChild(inventoryBlock());

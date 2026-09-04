@@ -300,7 +300,7 @@ async function bootTreasure({ settings = null, storage = null } = {}) {
   if (!clicked) throw new Error('treasure node vanished before the click');
   await waitFor(`!!document.querySelector('.reward-menu')`, 'the reward menu');
 }
-const title = () => ev(`(()=>{const h=document.querySelector('.screen h2');return h?h.textContent.trim():''})()`);
+const title = () => ev(`(()=>{const h=document.querySelector('.reward-door h2, .screen h2');return h?h.textContent.trim():''})()`);
 
 // ---- S1: auto mode, tap Take — pre-take ownership, NEW, exactly-once -------
 await bootTreasure();
