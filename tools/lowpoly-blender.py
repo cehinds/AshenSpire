@@ -51,13 +51,13 @@ scene.render.film_transparent = True
 scene.render.image_settings.file_format = "PNG"
 scene.render.image_settings.color_mode = "RGBA"
 scene.view_settings.view_transform = "Standard"
-scene.render.resolution_x, scene.render.resolution_y = 1160, 900
+scene.render.resolution_x, scene.render.resolution_y = 1280, 900
 cam_data = bpy.data.cameras.new("cam"); cam_data.type = "ORTHO"
 cam_data.sensor_fit = "VERTICAL"; cam_data.ortho_scale = 2.8
 cam = bpy.data.objects.new("cam", cam_data); scene.collection.objects.link(cam)
 cam.location = (0.05, -12.0, 1.30); cam.rotation_euler = (math.radians(90), 0, 0)
 scene.camera = cam
-CANVAS = dict(ortho=2.8, cx=0.05, cz=1.30, w=1160, h=900)   # world→pixel: see manifest
+CANVAS = dict(ortho=2.8, cx=0.05, cz=1.30, w=1280, h=900)   # world→pixel: see manifest
 # 960 wide, not 720: a lunge with a greatsword reached past the right edge of the
 # narrower frame, and the sword raised overhead reached past the top. The vertical
 # span is what ortho_scale fixes, so the extra width costs no scale.
