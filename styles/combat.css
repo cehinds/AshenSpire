@@ -765,3 +765,13 @@
 @keyframes bi-rise { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
 @keyframes bi-rule { from { transform: scaleX(0.2); opacity: 0; } }
 @keyframes bi-fade { to { opacity: 0; } }
+
+/* Animated class figure (src/ui/services/PoseAnimator.js).
+   The layer is a canvas-shaped box positioned so the pose art's floor line sits
+   on the bottom of the figure box; frames are placed inside it by percentage, so
+   a swap keeps the feet planted. A lunge reaches past the box on purpose, which
+   is why nothing here clips. */
+.class-sprite.animated { overflow: visible; }
+.pose-stage { position: relative; width: 100%; height: 100%; }
+.pose-layer { position: absolute; left: 50%; }
+.pose-frame { position: absolute; image-rendering: auto; pointer-events: none; }

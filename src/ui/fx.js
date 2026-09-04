@@ -7,6 +7,7 @@
 import { sfx } from './sfx.js';
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
+import { playPoseOn } from './services/PoseAnimator.js';
 
 const STEP_MS = 80;
 
@@ -544,6 +545,11 @@ function groupBeats(events) {
 // reports: every timeline must end in exactly one finish (done/watchdog/flush).
 const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
 
+// Which swing a figure throws next. Rotating beats replaying one frame all fight;
+// it is deliberately not random, so the same fight looks the same twice.
+const ATTACK_POSES = ['attack1', 'attack2', 'attack3'];
+let attackTurn = 0;
+
 export function playTimeline(events, ctx, done) {
   const speed = ANIM_SPEEDS[animSpeed];
   const reduced = document.body.classList.contains('reduced-motion');
@@ -615,8 +621,17 @@ export function playTimeline(events, ctx, done) {
     }
 
     // 1) actor animation (lunge for attacks, glow-step otherwise)
+    //
+    // A figure drawn in the animated style also changes pose for the beat: the
+    // three attack frames rotate so a multi-hit turn does not replay one swing,
+    // and anything else takes the guard frame. playPoseOn is a no-op for a
+    // figure with no pose frames, so this stays one line for every other style.
     const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
-    if (actorEl) safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
+    if (actorEl) {
+      safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
+      const pose = beat.kind === 'attack' ? ATTACK_POSES[attackTurn++ % ATTACK_POSES.length] : 'guard';
+      safe(() => playPoseOn(actorEl, pose, speed.lungeMs));
+    }
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
     const visuals = beat.events.map((e) => visualFor(e, beat.kind)).filter(Boolean);
@@ -675,6 +690,9 @@ function visualFor(e, beatKind) {
         // recoil further (hit-heavy) and kick the screen.
         if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
         flash(anchor, 'hitflash', heavy ? 380 : 220);
+        // An animated figure recoils in its own art as well as in CSS, and holds
+        // it as long as the flash it belongs to.
+        playPoseOn(anchor, 'hit', heavy ? 380 : 220);
         if (heavy) {
           flash(anchor, 'hit-heavy', 380);
           shake(ctx.combatEl);

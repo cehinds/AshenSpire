@@ -8,6 +8,7 @@
 import { balance } from '../content/balance.js';
 import { medallionPct } from '../content/classArtAnchors.js';
 import { assetUrl } from './assetmap.js';
+import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
 
 // Sprite size tiers (the display dimensions each enemy def's `size` selects) are
 // data — content/balance.js → ui.spriteTiers. Sizes are generous on purpose: the
@@ -175,6 +176,7 @@ function renderedSpriteUrl(classId, tintId) {
 // was replaced — the same stale description as the lobby tooltip one file over.
 export const SPRITE_STYLES = [
   { id: 'rendered', name: 'Rendered' },
+  { id: 'animated', name: 'Animated' },
   { id: 'classic', name: 'Classic' },
   { id: 'glyph', name: 'Sigil' },
 ];
@@ -198,6 +200,21 @@ export function classSprite(classId, tint, sigil, tintId, style) {
     }
   };
 
+  // 'animated': the figure that changes pose when it swings, from the shipped
+  // pose frames. It is a separate style rather than the default because the
+  // 'rendered' figure is a painting and these frames are modelled — mixing the
+  // two inside one animation would swap art styles mid-swing. A class with no
+  // shipped frames falls through to the painting, so the choice is never a
+  // blank figure.
+  if (style === 'animated' && hasPoses(classId, tintId)) {
+    const stage = createPoseStage(classId, tintId);
+    if (stage) {
+      el.classList.add('animated');
+      el.appendChild(stage.el);
+      registerStage(el, stage);
+      return el;
+    }
+  }
   const url = style === 'classic' ? null : renderedSpriteUrl(classId, tintId);
   if (!url) {
     fallbackToSvg();
