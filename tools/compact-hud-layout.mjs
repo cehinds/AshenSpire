@@ -34,8 +34,13 @@ check(/data-has-utility-potions="false"/.test(files.hud),
   'D3 the shared HUD does not default to an empty collapsed potion row');
 check(/class: 'hud-identity as-labelstack'/.test(files.hud) && /hud-context fold/.test(files.hud),
   'D4 the identity\'s context line is not part of the fold');
-check(/@media \(max-width: 640px\)[\s\S]*?\.as-statstrip\.trail > \* > :nth-child\(n\+2\) \{ display: none; \}/.test(kit),
-  'D5 the run trail has no rung at which Build\'s source and Seed yield');
+// D5 reads the rung in the two halves it became: the build stamp drops its
+// source, and a progress Chip drops its "/ total" — never the value, which one
+// blanket `:nth-child(n+2)` did (photographed at 390x844: "ACT" and "FLOOR"
+// labelling nothing).
+check(/@media \(max-width: 640px\)[\s\S]*?\.as-statstrip\.trail > \.build-stamp > :nth-child\(n\+2\) \{ display: none; \}/.test(kit)
+    && /@media \(max-width: 640px\)[\s\S]*?\.as-statstrip\.trail > \.as-chip > \.cv > \* \{ display: none; \}/.test(kit),
+  'D5 the run trail has no rung at which Build\'s source and each fact\'s tail yield');
 check(/iconButton\(\{[\s\S]*?className: 'hud-mode-grip as-grip'/.test(files.hud)
     && /grip\.textContent = mode === 'compact' \? '⌄' : '⌃'/.test(grip),
   'D6 the fold control is not one kit IconButton whose glyph says which way it folds');

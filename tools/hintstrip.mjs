@@ -146,8 +146,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the row is pinned over the topbar',
         edits: [{
           file: 'styles/combat.css',
-          find: '  position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 30;',
-          replace: '  position: fixed; inset-inline: 1.6rem; top: 0; bottom: auto; z-index: 30;',
+          find: '  position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 60;',
+          replace: '  position: fixed; inset-inline: 1.6rem; top: 0; bottom: auto; z-index: 60;',
         }],
         expectRed: /BAD\s+H2 /,
       },
@@ -348,8 +348,7 @@ if (process.argv.includes('--selftest')) {
         name: "the DRAW pile's own ::after paints an opaque sheet over its count and label",
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat-action-row > .pile.draw { grid-area: draw; }',
-          replace: ".combat-action-row > .pile.draw { grid-area: draw; position: relative; }\n.combat-action-row > .pile.draw::after { content: ''; position: absolute; inset: 0; background: #000; border-radius: 8px; }",
+          append: "\n.combat-action-row > .pile.draw { position: relative; }\n.combat-action-row > .pile.draw::after { content: ''; position: absolute; inset: 0; background: #000; border-radius: 8px; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -362,8 +361,7 @@ if (process.argv.includes('--selftest')) {
         name: "the DRAW pile's label, a flex item given z-index: 1, paints an opaque block over its count",
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat-action-row > .pile.draw { grid-area: draw; }',
-          replace: ".combat-action-row > .pile.draw { grid-area: draw; }\n.combat-action-row > .pile.draw > small { z-index: 1; background: #000; color: #000; margin-top: -2.6rem; padding-top: 2.6rem; width: 100%; text-align: center; }",
+          append: "\n.combat-action-row > .pile.draw > .as-statpair > .sp-k { z-index: 1; background: #000; color: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; text-align: center; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -374,8 +372,7 @@ if (process.argv.includes('--selftest')) {
         name: "the DRAW pile's label, given scale: 1 and nothing else, paints an opaque block over its count",
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat-action-row > .pile.draw { grid-area: draw; }',
-          replace: ".combat-action-row > .pile.draw { grid-area: draw; }\n.combat-action-row > .pile.draw > small { scale: 1; background: #000; color: #000; margin-top: -2.6rem; padding-top: 2.6rem; width: 100%; text-align: center; }",
+          append: "\n.combat-action-row > .pile.draw > .as-statpair > .sp-k { scale: 1; background: #000; color: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; text-align: center; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -384,11 +381,18 @@ if (process.argv.includes('--selftest')) {
         // negative margin alone — positioned nowhere, no z-index, no transform,
         // no stacking context; a later box in tree order that paints above the
         // count's text where it overlaps it (Codex, #550).
-        name: "the DRAW pile's label, pulled over its count by a negative margin and nothing else, paints an opaque block over it",
+        name: "the DRAW pile's count, pulled over its label by a negative margin and nothing else, paints an opaque block over it",
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat-action-row > .pile.draw { grid-area: draw; }',
-          replace: ".combat-action-row > .pile.draw { grid-area: draw; }\n.combat-action-row > .pile.draw > small { background: #000; color: #000; margin-top: -2.6rem; padding-top: 2.6rem; width: 100%; text-align: center; }",
+          // THIS ONE PULLS THE COUNT OVER THE LABEL, not the label over the count,
+      // and the reason is the whole point of the variant: with no stacking
+      // context the later box in TREE ORDER is the one that paints on top, and
+      // the StatPair's order is label (`.sp-k`) then value (`.sp-v`) — the
+      // reverse of the old markup, which counted first and labelled second.
+      // Pulling `.sp-k` up here went UNCAUGHT for exactly that reason: the
+      // count painted back over it and nothing was hidden. Measured, not
+      // reasoned: 3 of 4 caught before this line, 4 of 4 after.
+      append: "\n.combat-action-row > .pile.draw > .as-statpair > .sp-v { background: #000; color: #000; margin-top: -2.6rem; padding-top: 2.6rem; width: 100%; text-align: center; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },

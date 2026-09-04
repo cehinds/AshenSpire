@@ -49,8 +49,11 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     {
       name: 'the Energy hit target becomes a rounded visual instead of its full cell',
       file: 'styles/kit.css',
-      find: '.as-btnrow > .as-statpair { justify-self: stretch; align-self: stretch; justify-content: center; min-height: var(--tap-floor); }',
-      replace: '.as-btnrow > .as-statpair { justify-self: center; align-self: center; justify-content: center; min-height: 0; }',
+      // The stretch is the whole ask; the StatPair's own centring and floor moved
+      // into the atom (styles/kit.css § NUMBERS), so the plant no longer has to
+      // restate them to take the cell away.
+      find: '.as-btnrow > .as-statpair { justify-self: stretch; align-self: stretch; }',
+      replace: '.as-btnrow > .as-statpair { justify-self: center; align-self: center; }',
       expectRed: /combat-action-row: RED/,
     },
     {

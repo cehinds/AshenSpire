@@ -57,10 +57,17 @@ if (process.argv.includes('--selftest')) {
       // above is the one that guards the combat figure too. A plant against a
       // string that is no longer in the file can never turn red.
       {
-        name: 'the quick-nav tap floor becomes a hard ceiling around Text XL',
-        file: 'styles/ui.css',
-        find: '  min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;',
-        replace: '  width: var(--tap-floor); height: var(--tap-floor); min-width: 0; min-height: 0; font-size: 1.8rem;',
+        // WHERE THE TOP-ROW BUTTON'S BOX LIVES NOW: it is the kit's IconButton
+        // (styles/kit.css § IconButton), sized from `--iconbtn-size`, and the
+        // quick-nav copy of that fact in ui.css — `width: auto; height: auto;
+        // min-width/min-height: var(--tap-floor); font-size: 1.8rem` — is gone
+        // with the kit sweep, because the atom already carries it and the copy
+        // won on specificity. The plant is the same act at the new home: take
+        // the box down to a size the glyph cannot fit.
+        name: 'the top-row IconButton becomes a hard ceiling around Text XL',
+        file: 'styles/kit.css',
+        find: '  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;\n  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);',
+        replace: '  width: 12px; height: 12px; flex: 0 0 auto;\n  min-width: 0; min-height: 0;',
         expectRed: /quick-nav button clips its Text XL glyph/,
       },
       {
@@ -314,15 +321,24 @@ async function main() {
     const selectedArtifact = artifact ? normalizeLines(readFileSync(artifact, 'utf8')) : null;
     const ownershipKind = selectedArtifact ? 'artifact' : 'source';
     const ui = selectedArtifact ?? normalizeLines(readFileSync(resolve(ROOT, 'styles/ui.css'), 'utf8'));
+    // The kit is a second ownership home: since the kit sweep the controls this
+    // tool measures (the top row's buttons) take their box from an atom there,
+    // so the seam that used to sit in ui.css is read from kit.css in source mode
+    // and from the artifact — which inlines both — in artifact mode.
+    const kit = selectedArtifact ?? normalizeLines(readFileSync(resolve(ROOT, 'styles/kit.css'), 'utf8'));
     const assets = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/assets.js'), 'utf8');
     const settings = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/screens/settings.js'), 'utf8');
     for (const seam of [
       '.cz-actions button { min-height: var(--tap-floor); height: auto; }',
       'min-height: var(--tap-floor); height: auto; padding: 0 1.6rem;',
       'min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;',
-      'width: auto; height: auto;\n  min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;',
     ]) {
       if (!ui.includes(seam)) failures.push(`${ownershipKind} ownership seam missing: ${seam}`);
+    }
+    for (const seam of [
+      '  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;\n  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);',
+    ]) {
+      if (!kit.includes(seam)) failures.push(`${ownershipKind} ownership seam missing (kit): ${seam}`);
     }
     if (!assets.includes('const px = (value) => `${value}px`;')) failures.push(`${ownershipKind} ownership seam missing: sprite px emitter`);
     if (!assets.includes("width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;")) failures.push(`${ownershipKind} ownership seam missing: class sprite fixed px geometry`);

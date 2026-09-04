@@ -161,8 +161,8 @@
       "digest": "bb50920dc80f5ed8"
     },
     "tools/combat-action-row.mjs": {
-      "count": 9,
-      "digest": "d73a36e6733cecf1"
+      "count": 6,
+      "digest": "6bc20cf585308b00"
     },
     "tools/combat-save.mjs": {
       "count": 3,
@@ -205,8 +205,8 @@
       "digest": "fd574eb2f9dd3290"
     },
     "tools/flaskbox.mjs": {
-      "count": 7,
-      "digest": "40b7fd34a5fe7c4a"
+      "count": 6,
+      "digest": "84a9ab81f11b26a5"
     },
     "tools/fullscreen-control.mjs": {
       "count": 5,
@@ -229,20 +229,20 @@
       "digest": "6e4b0b0ed61d0e1b"
     },
     "tools/hintstrip.mjs": {
-      "count": 24,
-      "digest": "f5057d66824fab0e"
+      "count": 16,
+      "digest": "6a0897cc74d22742"
     },
     "tools/hudbars.mjs": {
-      "count": 2,
-      "digest": "6ee99c7a0270142e"
+      "count": 1,
+      "digest": "e7ab8b142a458ba6"
     },
     "tools/hudparity.mjs": {
-      "count": 18,
-      "digest": "9808853c19bbcbf3"
+      "count": 16,
+      "digest": "e67ec7649f7c26b6"
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
-      "digest": "60e136235f05f921"
+      "digest": "2712d3b78c7030e9"
     },
     "tools/menufit.mjs": {
       "count": 1,
@@ -262,7 +262,7 @@
     },
     "tools/placement.mjs": {
       "count": 8,
-      "digest": "e7cba52baafb1e40"
+      "digest": "b57e6a9496fd3591"
     },
     "tools/player-poise-threshold.mjs": {
       "count": 4,
@@ -342,7 +342,7 @@
     },
     "tools/text-geometry.mjs": {
       "count": 9,
-      "digest": "6e81c0662cab3913"
+      "digest": "460b9ce1dcdcad00"
     },
     "tools/title-new-slot.mjs": {
       "count": 4,

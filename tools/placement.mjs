@@ -282,9 +282,13 @@ if (process.argv.includes('--selftest')) {
         // zero so the plant is line-ending independent and cannot accidentally
         // edit `.qn-panel`, which declares the same numeric gap.
         name: 'the flask menu\'s gap has NO home — .flask-action-menu resolves --place-gap to zero',
-        file: 'styles/ui.css',
-        find: '.flask-action-menu {',
-        replace: '.flask-action-menu {\n  --place-gap: 0 !important; /* planted: no declared placement gap */',
+        // The menu is the kit's Popover with a surface ask of its own, so its
+        // `--place-gap` declaration moved from ui.css to kit.css § FLASK. Still
+        // the unique selector, so the plant still cannot reach `.qn-panel`,
+        // which declares the same number for its own placed panel.
+        file: 'styles/kit.css',
+        find: '.as-pop.flask-action-menu {',
+        replace: '.as-pop.flask-action-menu {\n  --place-gap: 0 !important; /* planted: no declared placement gap */',
         expectRed: /P1 .*flask menu/,
       },
     ],
