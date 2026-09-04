@@ -2,7 +2,7 @@
 //
 //   node tools/painted-poses.mjs --sheet SHEET.png --class rogue \
 //     --poses idle,guard,attack1,attack2,attack3,hit,kneel,down [--out DIR]
-//     [--append] [--canvas 720x900]
+//     [--append] [--canvas 720x900] [--grid 3x3]
 //
 // A pose sheet is one image holding several paintings of the same character, laid
 // out in rows. This finds each figure (background is transparency, or whatever
@@ -158,21 +158,46 @@ for (const b of parts.filter(b => b.area < bodyFloor)) {
   best.x1 = Math.max(best.x1, b.x1); best.y1 = Math.max(best.y1, b.y1);
   best.ids.push(b.id); best.area += b.area;
 }
-// reading order: rows top to bottom, then left to right inside a row
-const rows = [];
-for (const g of [...groups].sort((a, b) => a.y0 - b.y0)) {
-  const row = rows.find(r => Math.min(r.y1, g.y1) - Math.max(r.y0, g.y0) > 0.35 * Math.min(r.y1 - r.y0, g.y1 - g.y0));
-  if (row) { row.items.push(g); row.y0 = Math.min(row.y0, g.y0); row.y1 = Math.max(row.y1, g.y1); }
-  else rows.push({ y0: g.y0, y1: g.y1, items: [g] });
+// Reading order and floors. A figure ending above the floor is off the ground on
+// purpose and keeps that gap, so the floor has to come from somewhere: normally
+// the other figures in its row, or from the cells of a declared grid.
+let figures, layout;
+const gridArg = arg('--grid', null);
+if (gridArg) {
+  // --grid RxC: the sheet is a regular grid, so each figure's floor is the bottom of
+  // its own cell, less the margin the artist left under the lowest-standing figure.
+  // This is the only way to see lift on a sheet with one figure per row — with no
+  // peers beside it, a single figure has nothing to be higher than.
+  const [gr, gc] = gridArg.split(/[x,]/).map(Number);
+  if (!(gr > 0 && gc > 0)) { console.error('painted-poses: --grid wants RxC, e.g. 3x3'); process.exit(2); }
+  const cellH = H / gr, cellW = W / gc;
+  const cell = (g) => {
+    const r = Math.min(gr - 1, Math.max(0, Math.floor(((g.bodyY0 + g.bodyY1) / 2) / cellH)));
+    const c = Math.min(gc - 1, Math.max(0, Math.floor(((g.x0 + g.x1) / 2) / cellW)));
+    return { r, c, bottom: (r + 1) * cellH };
+  };
+  for (const g of groups) { const k = cell(g); g.cellR = k.r; g.cellC = k.c; g.gap = k.bottom - g.bodyY1; }
+  const margin = Math.min(...groups.map((g) => g.gap));
+  for (const g of groups) g.lift = Math.round(g.gap - margin);
+  figures = [...groups].sort((a, b) => (a.cellR - b.cellR) || (a.cellC - b.cellC));
+  layout = `${gr}x${gc} grid`;
+} else {
+  const rows = [];
+  for (const g of [...groups].sort((a, b) => a.y0 - b.y0)) {
+    const row = rows.find(r => Math.min(r.y1, g.y1) - Math.max(r.y0, g.y0) > 0.35 * Math.min(r.y1 - r.y0, g.y1 - g.y0));
+    if (row) { row.items.push(g); row.y0 = Math.min(row.y0, g.y0); row.y1 = Math.max(row.y1, g.y1); }
+    else rows.push({ y0: g.y0, y1: g.y1, items: [g] });
+  }
+  for (const r of rows) {
+    const floor = Math.max(...r.items.map(i => i.bodyY1));
+    for (const g of r.items) g.lift = floor - g.bodyY1;
+  }
+  figures = rows.flatMap(r => r.items.sort((a, b) => a.x0 - b.x0));
+  layout = `${rows.length} row(s)`;
+  const alone = rows.filter((r) => r.items.length === 1).length;
+  if (alone) console.log(`  ${alone} row(s) hold one figure: with no peers to be higher than, those stand on the floor. Pass --grid RxC to measure them against the sheet's cells instead.`);
 }
-// Each row of a sheet stands on its own floor; a figure ending above its row's
-// floor is off the ground on purpose and keeps that gap.
-for (const r of rows) {
-  const floor = Math.max(...r.items.map(i => i.bodyY1));
-  for (const g of r.items) g.lift = floor - g.bodyY1;
-}
-const figures = rows.flatMap(r => r.items.sort((a, b) => a.x0 - b.x0));
-console.log(`${basename(sheetPath)}: ${figures.length} figures in ${rows.length} row(s)`);
+console.log(`${basename(sheetPath)}: ${figures.length} figures in ${layout}`);
 if (figures.length < poses.length) {
   console.error(`painted-poses: found ${figures.length} figures but ${poses.length} pose names were given`);
   process.exit(1);
@@ -242,7 +267,10 @@ for (let i = 0; i < poses.length; i++) {
   }
   const file = `${cls}_${pose}.png`;
   writeFileSync(join(outDir, file), encodePng(CW, CH, out));
-  renders.push({ class: cls, pose, file, root: [Math.round(count ? sumX / count : CW / 2), ground - f.lift - Math.round((f.bodyY1 - f.bodyY0) * 0.45)], ground });
+  // the body's feet sit `below` above the floor when something hangs past them, and
+  // the pelvis rides up with it
+  const below = f.y1 - f.bodyY1;
+  renders.push({ class: cls, pose, file, root: [Math.round(count ? sumX / count : CW / 2), ground - f.lift - below - Math.round((f.bodyY1 - f.bodyY0) * 0.45)], ground });
   console.log(`  ${pose}: ${fw}x${fh}`);
 }
 

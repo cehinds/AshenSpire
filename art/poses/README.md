@@ -93,6 +93,14 @@ bowed toward the camera (`curved_plate()`) so they catch light like armour.
 The cape lost its slab shape for a drape that narrows at the shoulders and
 flares to the hem.
 
+**Cutting a painted sheet.** `tools/painted-poses.mjs` finds each figure, names
+them in reading order and writes the same manifest the Blender script writes.
+A figure ending above its row's floor keeps that gap. The floor comes from the
+other figures in the row, so a sheet with one figure per row has nothing to
+measure against and every pose stands on the floor; `--grid RxC` reads the
+floors from the sheet's cells instead and recovers the lift. The tool says which
+case it is on every run.
+
 **Frame.** The canvas is 1280×900 with the floor at z = 0. It used to be 720
 wide: a lunge with the greatsword reached past the right edge and the wind-up
 reached past the top, so ten frames shipped with the weapon cut off. The
