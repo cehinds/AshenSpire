@@ -3970,6 +3970,24 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
      and no text meets the corner. */
   .as-band-row.thirds { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.3rem; }
   .as-band-row.thirds > :last-child { grid-column: 1 / -1; justify-self: start; }
+  /* ONE LINE FOR THE IDENTITY'S EYEBROW, so the run HUD is the SAME HEIGHT on
+     every screen that draws it. The context line beneath it is already nowrap;
+     the eyebrow was not, so it wrapped wherever its track was tightest — and
+     the map's track is tighter than combat's, which made the map's HUD 19px
+     taller than the same HUD one screen earlier (hud-quick-compact:
+     "Map and Combat draw different HUDs"). A HUD that changes height as you
+     walk through a door moves every control under it. It truncates instead,
+     which is the step the text law names after the box has stopped yielding. */
+  .hud-identity > .as-eyebrow { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* PADDING YIELDS BEFORE THE ROW WRAPS, which is the first step of the text
+     law and the second half of the same equal-height problem. `.hud-top` is
+     content-sized, so the trail's track is as wide as the widest row beside it
+     — 159px on the map, which carries no flask belt, against 247px in combat.
+     At the kit's 1.35rem column gap the map's three facts wanted 168px, so the
+     build stamp dropped to a second line and the map's HUD grew a row. The
+     gap gives up 8.5px instead; all three facts keep their whole text and both
+     screens draw the same HUD. */
+  .as-statstrip.trail { gap: 0.75rem 0.5rem; }
 }
 /* A cluster is a group of IconButtons or Slots that share one gap. */
 .as-cluster { display: flex; align-items: center; gap: 0.6rem; flex: 0 0 auto; min-width: 0; }
@@ -51853,7 +51871,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '7571d1a365';
+const SOURCE = 'c6d2c26f96';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -51887,7 +51905,7 @@ const SOURCE = '7571d1a365';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '62';
+const ORDINAL = '63';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
