@@ -250,10 +250,16 @@ if (args.includes('--selftest')) {
         // FOR THIS DOOR rather than in modalShell.js — a mutation there would
         // take Escape off all four modals at once, which is a wider defect than
         // the one A8 is asserting about.
+        // Settings opens through the shell now (openModal binds dismissal for
+        // every door, and Escape closes the TOPMOST aria-modal element), so the
+        // plant parks a bare aria-modal element above this one door: Settings
+        // is no longer topmost, and Escape leaves it up over the title. Still
+        // one door, still this defect only — the nested plant A8 appends later
+        // still lands on top and still closes on its own Escape.
         name: 'Settings stops owning Escape above the expanded title',
         file: 'src/ui/screens/settings.js',
-        find: '  release = bindModalDismiss({ veil, panel: modal, close, opener });',
-        replace: '  release = () => {}; // startup-gate selftest plant',
+        find: "  done.addEventListener('click', door.close);",
+        replace: "  done.addEventListener('click', door.close);\n  document.body.appendChild(document.createElement('div')).setAttribute('aria-modal', 'true'); // startup-gate selftest plant",
         expectRed: /RED A8\.SETTINGS-ESCAPE-PRECEDENCE/,
       },
     ],
