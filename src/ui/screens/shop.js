@@ -53,6 +53,11 @@ import { isEquipmentComposedInstance } from '../../model/loadout.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import { settingOn } from './settings.js';
+import { commitSmithing, smithingPlan } from '../../model/smithing.js';
+import { smithSelectionModel } from '../models/SmithSelectionModel.js';
+import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
+import { mountServiceOffer, openMountService } from './smithServices.js';
+import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 
 /**
  * The merchant's buy-back price, DERIVED — never typed per item. The base is
@@ -127,6 +132,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
             <div id="remove-grid" class="deck-strip" style="display:none;max-width:900px"></div>
           </div>
           <div class="class-row" id="shop-sell"></div>
+          <div class="class-row" id="shop-smith"></div>
         </div>
         <button id="leave-shop" class="primary">Leave</button>
       </div>`;
@@ -252,6 +258,70 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       sellRow.appendChild(el);
     });
 
+    // ---- THE SMITH THE MERCHANT KEEPS, when the roll at the door said so ----
+    // `stock.smith` is smithServicesAt(registries, 'merchant', rng), rolled
+    // ONCE on arrival (main.js) on the smith's own stream and persisted with
+    // the stock, so a reload does not roll again. Which services appear is
+    // that table's word; each one is the same modal the Shrine opens, and a
+    // commit here never leaves — the merchant is a place you stay.
+    const smithRow = app.querySelector('#shop-smith');
+    const smithHere = stock.smith && stock.smith.offered ? stock.smith.services : [];
+    const smithCards = [];
+    const smithOption = (id, glyph, title, summary, available, open) => {
+      const el = document.createElement('div');
+      el.className = `class-pick${available ? '' : ' locked'}`;
+      el.id = id;
+      el.setAttribute('role', 'button');
+      el.tabIndex = available ? 0 : -1;
+      el.setAttribute('aria-disabled', String(!available));
+      el.innerHTML = `<div class="glyph">${glyph}</div><div class="cp-body"><h3>${esc(title)}</h3><p>${esc(summary)}</p></div>`;
+      markUiComponent(el, UI.shopSmithCard, id.replace('shop-', ''));
+      if (available) {
+        el.addEventListener('click', open);
+        el.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          open();
+        });
+      }
+      smithRow.appendChild(el);
+      smithCards.push(el);
+      return el;
+    };
+    if (smithHere.includes('upgrade')) {
+      const plan = smithingPlan(registries, run);
+      const el = smithOption('shop-upgrade', '⚒', 'Upgrade an Item',
+        plan.candidates.length ? `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'} · choose one owned armament.` : 'No owned armament has an effective tier remaining.',
+        plan.candidates.length > 0, () => {
+          let selectedItemRef = null;
+          const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse: true });
+          const modal = mountSmithUpgradeModal(app, model(), {
+            registries, meta, returnFocusElement: el,
+            onSelect: (itemRef) => { selectedItemRef = itemRef; modal.update(model()); },
+            onBack: () => {},
+            onConfirm: (itemRef) => {
+              commitSmithing(registries, run, itemRef);
+              sfx.play('shrine');
+              onChanged();
+              render();
+            },
+          });
+        });
+    }
+    for (const service of ['extract', 'install']) {
+      if (!smithHere.includes(service)) continue;
+      const offer = mountServiceOffer(registries, run, service);
+      const el = smithOption(`shop-${service}`, service === 'extract' ? '⚙' : '⚒',
+        service === 'extract' ? 'Extract a Card' : 'Seat a Card', offer.summary, offer.available, () => openMountService(app, {
+          service, registries, run, meta, returnFocusElement: el, multiUse: true, place: 'merchant',
+          onCommitted: () => {
+            sfx.play('shrine');
+            onChanged();
+            render();
+          },
+        }));
+    }
+
     app.querySelector('#leave-shop').addEventListener('click', onLeave);
 
     // ---- the fold: one mount, one open bar, faces that answer in words ----
@@ -272,6 +342,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       ...(sellOn() ? [{ key: 'bar:sell', label: 'SELL', node: sellRow,
         value: () => (goods.length ? `${goods.length} the merchant will take` : 'nothing he wants'),
         tip: 'The merchant buys back relics and flasks, at his prices.' }] : []),
+      // ABSENT when the roll at the door said no smith travels with him.
+      ...(smithCards.length ? [{ key: 'bar:smith', label: 'THE SMITH', node: smithRow,
+        value: () => `${smithCards.filter((el) => !el.classList.contains('locked')).length} of ${smithCards.length} services open`,
+        tip: 'A smith travels with this merchant: upgrade an item, lift a card out of one, or seat a card in one.' }] : []),
     ];
     fold = mountDisclosure(app.querySelector('.shop-bars'), BARS.map((bar) => ({
       key: bar.key, kind: 'pick', disclosure: 'face',

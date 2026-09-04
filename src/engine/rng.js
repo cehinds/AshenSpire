@@ -21,6 +21,11 @@ export const STREAM_NAMES = Object.freeze([
   'events',
   'shop',
   'misc',
+  // The smith's own stream: a merchant rolls once per visit for whether it
+  // keeps a smith, and that roll must not shift what the shop stocks or any
+  // later reward draws in an existing seed (the same reason `armaments` is
+  // its own stream). A save written before the stream existed starts it at 0.
+  'smith',
 ]);
 
 const MULBERRY_INC = 0x6d2b79f5;

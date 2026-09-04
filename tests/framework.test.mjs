@@ -853,6 +853,34 @@ test('a mid-combat swap reconciles granted instances across the combat piles', (
   eq(piles.discard[0].damageSchool, 'physical', 'the landed art is stamped by the following pile pass');
 });
 
+test('a mid-combat swap keeps what the smith did: an emptied art mount stays a Dodge Roll through the swap door', () => {
+  // The swap door builds a synthetic run with `deck: []`, so everything the
+  // composer needs travels on the combat — the birth quota, and now the
+  // mounts. Without `itemMounts` on that run the extracted Crimson Cleave
+  // would be re-minted from the sword's authoring the first time the player
+  // swapped hands mid-fight, and the run would hold two of it.
+  const { reconcileGrantedCardsInCombat } = compositionDoor;
+  const REG2 = grantFixtureRegistries({ straightSword: {
+    compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack', weaponArtDefaults: ['crimsonCleave'],
+  } });
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: REG2 });
+  const artKey = 'weaponArt:straightSword:crimsonCleave';
+  const dodge = REG2.equipment.basicCardProfiles.find((p) => p.id === REG2.balance.equipment.unarmedProfiles.technique).baseCardId;
+  // What a smith did, as the run records it (cardExtraction.js writes this).
+  run.itemMounts = { 'armament/straightSword': { [artKey]: { card: null, extractions: 1 } } };
+  const piles = { hand: [], draw: [{ instanceId: artKey, cardId: 'crimsonCleave', equipmentRole: 'weaponArt', grantedBy: 'straightSword', upgraded: false, damageSchool: 'physical', exposureBuildupPerHit: 0 }], discard: [], exhaust: [] };
+  // The synthetic run the swap door hands over, mounts included.
+  reconcileGrantedCardsInCombat(REG2, { class: run.class, loadout: run.loadout, itemMounts: run.itemMounts }, piles);
+  const inPlace = piles.draw.find((c) => c.instanceId === artKey);
+  eq(inPlace && inPlace.cardId, dodge, 'the mount keeps its key and shows the Dodge Roll, in place in the draw pile');
+  eq(inPlace.damageSchool, undefined, 'and it is a FRESH instance, not the old card wearing a new id — the pile stamp will stamp it');
+  eq(piles.discard.length, 0, 'nothing landed in the discard pile — the mount was already held');
+  // The same run WITHOUT the mounts is the defect: the authoring wins.
+  const stale = { hand: [], draw: [{ instanceId: artKey, cardId: 'crimsonCleave', equipmentRole: 'weaponArt', grantedBy: 'straightSword', upgraded: false }], discard: [], exhaust: [] };
+  reconcileGrantedCardsInCombat(REG2, { class: run.class, loadout: run.loadout }, stale);
+  eq(stale.draw[0].cardId, 'crimsonCleave', 'without the mounts the swap door would re-mint the extracted art — which is why the combat carries them');
+});
+
 test('a granted instance is never a per-copy upgrade candidate', () => {
   const { executeAction } = actionsHome;
   const REG2 = grantFixtureRegistries({ straightSword: {

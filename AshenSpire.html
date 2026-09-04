@@ -2073,6 +2073,34 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
 
 button.armoury-position-card { display: grid; grid-template-columns: var(--armoury-position-label-width) var(--armoury-position-sprite-width) minmax(0, 1fr); padding: 0; text-align: left; }
 
+/* ---- the smith's card services (mount-service-modal) -------------------
+   Same frame as the upgrade modal; only the preview differs: a list of the
+   item's mounts, then (seating) the deck cards that mount takes. */
+/* The instruction used to sit in a hand-built head; the shell's head has no slot
+   for a sentence, so it is the body grid's first, full-width row. The rows are
+   NAMED because the body grid stretches auto rows to fill the pane: left implicit,
+   the instruction row took half the height and the chooser sat at the bottom. */
+.mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 1fr); }
+.mount-service-modal .mount-modal-instruction { grid-column: 1 / -1; margin: 0; padding: 8px 20px 0; color: var(--muted); line-height: 1.35; }
+@media (max-width: 720px) {
+  .mount-service-modal .smith-modal-body { grid-template-rows: auto auto minmax(0, 1fr); }
+}
+.mount-row-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
+.mount-row {
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px;
+  padding: 8px 10px; border: 1px solid var(--line, rgba(255,255,255,0.14)); border-radius: 8px;
+  background: rgba(0,0,0,0.25); cursor: pointer;
+}
+.mount-row:focus-visible, .mount-row:hover { border-color: var(--gold); outline: none; }
+.mount-row.selected { border-color: var(--gold); background: rgba(201,162,39,0.12); }
+.mount-row > em { grid-row: 1 / span 2; align-self: center; font-style: normal; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.mount-row > b { font-size: 13px; }
+.mount-row > small { font-size: 11px; color: var(--muted); }
+.mount-row.is-extra > em { color: var(--gold); }
+.mount-card-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 6px 0 10px; }
+.mount-card-list .card { cursor: pointer; }
+.mount-card-list .card.selected { outline: 2px solid var(--gold); outline-offset: 2px; }
+
 /* ── CENTRED + TRACKED TEXT, AND THE HALF-TRACKING BUG ────────────────────
    `letter-spacing` adds its space after the LAST glyph as well as between the
    others, so a centred tracked string sits left of true centre by half its
@@ -6007,6 +6035,7 @@ const { createRegistries } = require("src/model/registries.js");
 const { createRunState, createDeck, createIdGen } = require("src/model/state.js");
 const { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } = require("src/model/loadout.js");
 const { grantSmithingReward, smithingPlan } = require("src/model/smithing.js");
+const { smithServicesAt } = require("src/model/cardExtraction.js");
 const { recordProgress, evaluateUnlocks } = require("src/model/unlocks.js");
 const { recordArmamentDiscovery } = require("src/model/startingKits.js");
 const { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } = require("src/content/customMods.js");
@@ -7472,6 +7501,10 @@ function enterNode(nodeId) {
         }
         stock.removeCost = Math.ceil(stock.removeCost * pm);
       }
+      // Does a smith travel with him? Rolled once here, on the smith's own
+      // stream (balance.smithing.services.offeredAt.merchant), and kept with
+      // the stock so leaving and re-entering the screen does not roll again.
+      stock.smith = smithServicesAt(registries, 'merchant', rng);
       run.shopStock = stock;
       persist();
       return showShop();
@@ -7560,6 +7593,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       equipmentAttackSlotCount: run.equipmentAttackSlotCount,
       equipmentPoolDeficits: run.equipmentPoolDeficits,
       itemUpgradeLevels: run.itemUpgradeLevels,
+      itemMounts: run.itemMounts,
       armamentLevels: run.armamentLevels,
       deck: run.deck,
       relicIds: run.relics,
@@ -7837,6 +7871,9 @@ function showRest() {
     healMult,
     refill,
     meta: saves.loadMeta(),
+    // Which smith services this Shrine offers — the table's word, resolved
+    // here so the screen reads one answer (a chance of 100 consumes no roll).
+    services: smithServicesAt(registries, 'shrine', rng),
     // HIS LEVEL-VALUE DIAL, resolved at the door of the screen that spends it,
     // so turning it applies to the NEXT level bought — in any run, including
     // one already in progress. Unlike the tier size it needs no new run,
@@ -8893,6 +8930,25 @@ const balance = {
     // Item/tier costs, card changes, and requirement changes are authored in
     // itemUpgradeChanges.csv. Balance owns only the reward faucet.
     rewardByPool: { normal: 0, elite: 1, boss: 1, treasure: 0 },
+
+    // THE SMITH'S SERVICES, AND WHO OFFERS THEM (owner ruling, 2026-09-03).
+    // A smith does three things: upgrade an item (the tier promotion above),
+    // EXTRACT a card from one of an item's mounts so it becomes the run's own,
+    // and INSTALL a run-owned card into an emptied or open mount. Which node
+    // kinds offer which services is this table — a merchant rolls `chance`
+    // once per visit on its own RNG stream, so adding the roll cannot shift
+    // what any later reward draws in an existing seed. 100 means always, no
+    // roll consumed; 0 means never.
+    services: {
+      offeredAt: {
+        shrine: { chance: 100, services: ['upgrade', 'extract', 'install'] },
+        merchant: { chance: 25, services: ['upgrade', 'extract', 'install'] },
+      },
+      // Priced in Smithing Stones, the same purse as an upgrade. Free by the
+      // owner's word, configurable because he said so in the same breath.
+      extract: { cost: 0 },
+      install: { cost: 0 },
+    },
   },
 
   // ---- canonical hidden level semantics (#237) ---------------------------
@@ -9720,6 +9776,27 @@ const balance = {
       attack: 'unarmedAttack',
       guard: 'unarmedGuard',
       technique: 'unarmedTechnique',
+    },
+
+    // CARD MOUNTS (owner ruling, 2026-09-03). Every card an item lends sits in
+    // a MOUNT on that item; a smith can extract it (it becomes the run's own,
+    // the mount empties) or refill the mount with another card. What is
+    // extractable is a TAG on the card — strikes and defends do not carry it
+    // today, and the day the game changes its mind that is a spreadsheet
+    // edit. What an emptied mount shows is a FALLBACK per mount kind: a
+    // weapon-art mount falls back to the unarmed technique (the Dodge Roll),
+    // read from `unarmedProfiles` above rather than typed here, and any item
+    // may override that under `fallbackByItem`. `extraMounts` is the seam a
+    // later rune feature opens: mounts beyond the authored ones, per item,
+    // behind a flag that is off.
+    cardMounts: {
+      extractableTag: 'extractable',
+      kinds: {
+        weaponArt: { accepts: ['extractable'], fallback: { unarmedProfile: 'technique' } },
+        granted: { accepts: ['extractable'], fallback: null },
+      },
+      fallbackByItem: {},
+      extraMounts: { enabled: false, perItem: 1, kind: 'granted' },
     },
     enabled: true,
 
@@ -15958,6 +16035,14 @@ const tags = [
     "color": "7FAF63",
     "glyph": "☠",
     "blurb": "Poisons that punish enemies over time."
+  },
+  {
+    "id": "extractable",
+    "domain": "card",
+    "label": "Extractable",
+    "color": "C9A227",
+    "glyph": "⚙",
+    "blurb": "A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today."
   },
   {
     "id": "bound",
@@ -22356,6 +22441,7 @@ const { itemRefIdentity, itemUpgradeTagMatchesKind, parseItemUpgradeTag, UPGRADE
 
 
 const { normalizeSmithingRules } = require("src/model/smithingRules.js");
+const { normalizeCardMountRules } = require("src/model/cardMounts.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -22663,6 +22749,33 @@ function collectContentProblems(bundle, errors = []) {
     normalizeSmithingRules(b.balance && b.balance.smithing);
   } catch (error) {
     err('balance.smithing', error?.message || 'must be a complete Smithing economy block');
+  }
+  // Card mounts: the block is optional (a bundle without it composes as it
+  // always did) but when authored it must be whole, and the tag it names as
+  // "extractable" must be a registered card-domain tag — otherwise nothing
+  // could ever carry it and every mount would be sealed in silence.
+  if (b.balance && b.balance.equipment && b.balance.equipment.cardMounts !== undefined) {
+    try {
+      const rules = normalizeCardMountRules(b.balance.equipment.cardMounts);
+      const tag = (b.tags || []).find((row) => row && row.id === rules.extractableTag);
+      if (!tag) err('balance.equipment.cardMounts.extractableTag', `names unknown tag '${rules.extractableTag}' — add a row to tags.csv in the card domain`);
+      else if (tag.domain !== 'card') err('balance.equipment.cardMounts.extractableTag', `'${rules.extractableTag}' is in the ${tag.domain} domain, not card — a card could never carry it`);
+      for (const [kind, spec] of Object.entries(rules.kinds)) {
+        for (const accepted of spec.accepts) {
+          if (!(b.tags || []).some((row) => row && row.id === accepted && row.domain === 'card')) {
+            err(`balance.equipment.cardMounts.kinds.${kind}.accepts`, `names unknown card tag '${accepted}'`);
+          }
+        }
+        if (spec.fallback && spec.fallback.cardId && !(b.cards || []).some((card) => card && card.id === spec.fallback.cardId)) {
+          err(`balance.equipment.cardMounts.kinds.${kind}.fallback`, `names unknown card '${spec.fallback.cardId}'`);
+        }
+        if (spec.fallback && spec.fallback.unarmedProfile && !((b.balance.equipment.unarmedProfiles || {})[spec.fallback.unarmedProfile])) {
+          err(`balance.equipment.cardMounts.kinds.${kind}.fallback`, `names unarmed profile role '${spec.fallback.unarmedProfile}', which balance.equipment.unarmedProfiles does not author`);
+        }
+      }
+    } catch (error) {
+      err('balance.equipment.cardMounts', error?.message || 'must be a complete card-mount block');
+    }
   }
   for (const cls of Array.isArray(b.classes) ? b.classes : []) {
     const a = cls && cls.startingFlaskAllocation;
@@ -24966,6 +25079,31 @@ const ACTIONS = Object.freeze({
     undo: 'none',
     hazard: 'choosing',
     note: 'twenty small cards in a wrapped grid; the preview only ever existed on hover',
+  },
+  smithExtract: {
+    of: 'lifting a card out of an item at the smith',
+    lives: 'src/ui/screens/rest.js',
+    surface: 'rest',
+    // The owner's third ruling (2026-09-03). The card becomes the run's own
+    // and the mount it left shows its fallback — reversible only by seating
+    // something back, which is a second transaction. Same shape as an
+    // upgrade: the player has to SEE which mount and say yes.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'choosing',
+    note: 'an item, then one of its mounts; the Dodge Roll takes the mount until something is seated',
+  },
+  smithInstall: {
+    of: 'seating a deck card in an item\'s mount at the smith',
+    lives: 'src/ui/screens/rest.js',
+    surface: 'rest',
+    // The reverse of extract: the deck copy leaves and the card rides with
+    // the item from then on. Three choices — item, mount, card — so the
+    // review is where a wrong card is caught, not the deck strip later.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'choosing',
+    note: 'item, mount, then a card from the deck; the card is the item\'s until extracted again',
   },
   shopSell: {
     of: 'selling a possession back to the merchant',
@@ -31615,6 +31753,51 @@ function integer(value, label, { minimum = 0 } = {}) {
   return value;
 }
 
+/** The closed set of things a smith does. `upgrade` is the tier promotion; the other two move cards between an item's mounts and the run. */
+const SMITH_SERVICES = Object.freeze(['upgrade', 'extract', 'install']);
+
+/**
+ * The inert service table: the Shrine upgrades, nobody extracts or installs,
+ * nothing costs anything. What a bundle without `smithing.services` gets, so
+ * a hand-built fixture keeps the Shrine it had before services were a table.
+ */
+const INERT_SMITH_SERVICES = Object.freeze({
+  offeredAt: Object.freeze({ shrine: Object.freeze({ chance: 100, services: Object.freeze(['upgrade']) }) }),
+  extract: Object.freeze({ cost: 0 }),
+  install: Object.freeze({ cost: 0 }),
+});
+
+function normalizeServices(raw) {
+  if (raw == null) return INERT_SMITH_SERVICES;
+  const source = ownObject(raw, 'smithing.services');
+  const offeredRaw = ownObject(source.offeredAt, 'smithing.services.offeredAt');
+  const offeredAt = {};
+  for (const [nodeKind, row] of Object.entries(offeredRaw)) {
+    const label = `smithing.services.offeredAt.${nodeKind}`;
+    if (!nodeKind) throw new Error('smithing.services.offeredAt: empty node kind');
+    const spec = ownObject(row, label);
+    const chance = integer(spec.chance, `${label}.chance`);
+    if (chance > 100) throw new Error(`${label}.chance must be 0..100`);
+    if (!Array.isArray(spec.services) || !spec.services.length) throw new Error(`${label}.services must be a non-empty array`);
+    const seen = new Set();
+    for (const service of spec.services) {
+      if (!SMITH_SERVICES.includes(service)) throw new Error(`${label}.services names unknown service '${service}' (known: ${SMITH_SERVICES.join(', ')})`);
+      if (seen.has(service)) throw new Error(`${label}.services lists '${service}' twice`);
+      seen.add(service);
+    }
+    offeredAt[nodeKind] = Object.freeze({ chance, services: Object.freeze([...spec.services]) });
+  }
+  const priced = {};
+  for (const service of ['extract', 'install']) {
+    const row = ownObject(source[service], `smithing.services.${service}`);
+    priced[service] = Object.freeze({ cost: integer(row.cost, `smithing.services.${service}.cost`) });
+  }
+  for (const key of Object.keys(source)) {
+    if (!['offeredAt', 'extract', 'install'].includes(key)) throw new Error(`smithing.services.${key}: unknown key`);
+  }
+  return Object.freeze({ offeredAt: Object.freeze(offeredAt), ...priced });
+}
+
 /** Validate and freeze the balance-owned Smithing rules. */
 function normalizeSmithingRules(raw) {
   const source = ownObject(raw, 'smithing rules');
@@ -31628,11 +31811,263 @@ function normalizeSmithingRules(raw) {
   }
   return Object.freeze({
     rewardByPool: Object.freeze(rewardByPool),
+    services: normalizeServices(source.services),
   });
 }
 
 
-Object.assign(module.exports, { normalizeSmithingRules });
+Object.assign(module.exports, { SMITH_SERVICES, INERT_SMITH_SERVICES, normalizeSmithingRules });
+
+},
+"src/model/cardMounts.js": function (module, exports, require) {
+// src/model/cardMounts.js — where an item's cards sit, and what has happened
+// to them since they were authored.
+//
+// A MOUNT is one position on an item that a card occupies. An item's mounts
+// are whatever its authoring lends: a row in the `bound` table, a package's
+// grantedCards, its weaponArtDefaults. Each mount has a deterministic key —
+// the instance id the composer mints for it — so "the sword's second
+// Quickstep" is the same mount on every restamp, every save and every fight.
+//
+// `run.itemMounts` records what a smith has done to a mount:
+//
+//   { [itemRef]: { [mountKey]: { card, upgraded?, extractions } } }
+//
+//   card === null   EMPTIED. The card was extracted and is now the run's own.
+//                   The mount shows its kind's FALLBACK (the Dodge Roll, for a
+//                   weapon-art mount — the owner's rule) until it is refilled.
+//   card === id     REFILLED with another card.
+//   absent          untouched: the authored card.
+//
+// Extra mounts (`extraMounts`, behind a flag so a later rune feature can add
+// slots) are keyed `mount:<itemRef>:<n>` and exist only while an entry names
+// a card; emptying one deletes it, which is what makes it "open" again.
+//
+// Every tag, number and fallback here is balance (equipment.cardMounts). The
+// model is deliberately free of engine imports so the content door, the
+// composer and the smith services all read one normaliser.
+
+const MOUNT_KINDS = Object.freeze(['granted', 'weaponArt']);
+
+const EXTRA_MOUNT_PREFIX = 'mount:';
+
+/**
+ * The one place a mount key is spelled. The composer mints instances with
+ * these ids; the smith services address mounts by them; `run.itemMounts`
+ * is keyed by them. Three readers, one spelling.
+ */
+const mountKey = Object.freeze({
+  bound: (ownerRef, cardId, index) => `bound:${ownerRef}:${cardId}:${index}`,
+  granted: (weaponId, cardId, index) => `granted:${weaponId}:${cardId}:${index}`,
+  weaponArt: (weaponId, artId) => `weaponArt:${weaponId}:${artId}`,
+  extra: (ownerRef, index) => `${EXTRA_MOUNT_PREFIX}${ownerRef}:${index}`,
+});
+
+function isExtraMountKey(key) {
+  return typeof key === 'string' && key.startsWith(EXTRA_MOUNT_PREFIX);
+}
+
+/**
+ * The item an instance rides with, as the namespaced ref the rest of the
+ * model keys on (`armament/<id>`, `armor/<class>/<id>`). Null for a run-owned
+ * card and for the empty hand's Dodge Roll, which no item owns. Package
+ * instances write the bare armament id in `grantedBy` (a save-stable legacy
+ * spelling); it is normalised here rather than at every reader.
+ */
+function ownerItemRef(inst) {
+  const by = inst && inst.grantedBy;
+  if (typeof by !== 'string' || !by) return null;
+  if (by.startsWith('unarmed:')) return null;
+  return by.includes('/') ? by : `armament/${by}`;
+}
+
+// ---- rules -----------------------------------------------------------------
+
+function ownObject(value, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${label} must be an object`);
+  return value;
+}
+
+function nonEmptyString(value, label) {
+  if (typeof value !== 'string' || !value) throw new Error(`${label} must be a non-empty string`);
+  return value;
+}
+
+function stringList(value, label) {
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string' || !entry)) {
+    throw new Error(`${label} must be an array of non-empty strings`);
+  }
+  return value;
+}
+
+function integer(value, label, { minimum = 0 } = {}) {
+  if (!Number.isInteger(value) || value < minimum) throw new Error(`${label} must be an integer >= ${minimum}`);
+  return value;
+}
+
+const ITEM_REF_RE = /^(armament\/[^/]+|armor\/[^/]+\/[^/]+)$/;
+
+/**
+ * A fallback names a card one of two ways: outright (`cardId`), or by the
+ * unarmed profile whose base card it is (`unarmedProfile: 'technique'` is the
+ * Dodge Roll, read from balance.equipment.unarmedProfiles rather than typed).
+ * Exactly one of the two.
+ */
+function normalizeFallback(raw, label) {
+  if (raw === null) return null;
+  const src = ownObject(raw, label);
+  const keys = Object.keys(src);
+  if (keys.length !== 1 || !['cardId', 'unarmedProfile'].includes(keys[0])) {
+    throw new Error(`${label} must name exactly one of cardId or unarmedProfile`);
+  }
+  return Object.freeze({ [keys[0]]: nonEmptyString(src[keys[0]], `${label}.${keys[0]}`) });
+}
+
+/**
+ * The inert rules: nothing is extractable, an emptied mount shows nothing,
+ * no extra mounts. What a bundle without the block gets, so a hand-built
+ * fixture composes exactly as it did before mounts existed.
+ */
+const INERT_CARD_MOUNT_RULES = Object.freeze({
+  extractableTag: null,
+  kinds: Object.freeze(Object.fromEntries(MOUNT_KINDS.map((kind) => [kind, Object.freeze({ accepts: Object.freeze([]), fallback: null })]))),
+  fallbackByItem: Object.freeze({}),
+  extraMounts: Object.freeze({ enabled: false, perItem: 0, kind: 'granted' }),
+});
+
+/** Validate and freeze balance.equipment.cardMounts. Throws by name. */
+function normalizeCardMountRules(raw) {
+  const src = ownObject(raw, 'equipment.cardMounts');
+  const extractableTag = nonEmptyString(src.extractableTag, 'equipment.cardMounts.extractableTag');
+  const kindsRaw = ownObject(src.kinds, 'equipment.cardMounts.kinds');
+  const kinds = {};
+  for (const kind of MOUNT_KINDS) {
+    const label = `equipment.cardMounts.kinds.${kind}`;
+    const row = ownObject(kindsRaw[kind], label);
+    kinds[kind] = Object.freeze({
+      accepts: Object.freeze([...stringList(row.accepts, `${label}.accepts`)]),
+      fallback: normalizeFallback(row.fallback === undefined ? null : row.fallback, `${label}.fallback`),
+    });
+  }
+  for (const key of Object.keys(kindsRaw)) {
+    if (!MOUNT_KINDS.includes(key)) throw new Error(`equipment.cardMounts.kinds.${key}: unknown mount kind (known: ${MOUNT_KINDS.join(', ')})`);
+  }
+  const byItemRaw = src.fallbackByItem === undefined ? {} : ownObject(src.fallbackByItem, 'equipment.cardMounts.fallbackByItem');
+  const fallbackByItem = {};
+  for (const [itemRef, perKind] of Object.entries(byItemRaw)) {
+    if (!ITEM_REF_RE.test(itemRef)) throw new Error(`equipment.cardMounts.fallbackByItem.${itemRef}: not a namespaced item ref`);
+    const rows = ownObject(perKind, `equipment.cardMounts.fallbackByItem.${itemRef}`);
+    const out = {};
+    for (const [kind, fallback] of Object.entries(rows)) {
+      if (!MOUNT_KINDS.includes(kind)) throw new Error(`equipment.cardMounts.fallbackByItem.${itemRef}.${kind}: unknown mount kind`);
+      out[kind] = normalizeFallback(fallback, `equipment.cardMounts.fallbackByItem.${itemRef}.${kind}`);
+    }
+    fallbackByItem[itemRef] = Object.freeze(out);
+  }
+  const extraRaw = ownObject(src.extraMounts, 'equipment.cardMounts.extraMounts');
+  if (typeof extraRaw.enabled !== 'boolean') throw new Error('equipment.cardMounts.extraMounts.enabled must be boolean');
+  const perItem = integer(extraRaw.perItem, 'equipment.cardMounts.extraMounts.perItem');
+  if (!MOUNT_KINDS.includes(extraRaw.kind)) throw new Error(`equipment.cardMounts.extraMounts.kind must be one of ${MOUNT_KINDS.join(', ')}`);
+  return Object.freeze({
+    extractableTag,
+    kinds: Object.freeze(kinds),
+    fallbackByItem: Object.freeze(fallbackByItem),
+    extraMounts: Object.freeze({ enabled: extraRaw.enabled, perItem, kind: extraRaw.kind }),
+  });
+}
+
+/** The rules a registry carries, or the inert set when it authors none. */
+function cardMountRules(registries) {
+  const raw = registries?.balance?.equipment?.cardMounts;
+  return raw == null ? INERT_CARD_MOUNT_RULES : normalizeCardMountRules(raw);
+}
+
+/**
+ * The card an EMPTIED mount shows: the item's own override when one is
+ * authored, else its kind's. Null means the mount shows nothing.
+ */
+function resolveFallbackCard(registries, rules, itemRef, kind) {
+  const perItem = rules.fallbackByItem[itemRef];
+  const fallback = perItem && Object.hasOwn(perItem, kind) ? perItem[kind] : (rules.kinds[kind] || {}).fallback;
+  if (!fallback) return null;
+  if (fallback.cardId) return fallback.cardId;
+  const profileId = ((registries.balance || {}).equipment || {}).unarmedProfiles?.[fallback.unarmedProfile];
+  const profile = ((registries.equipment || {}).basicCardProfiles || []).find((row) => row.id === profileId);
+  return profile && profile.baseCardId ? profile.baseCardId : null;
+}
+
+/** The mount entries recorded for one item, or an empty object. */
+function itemMountEntries(run, itemRef) {
+  const all = run && run.itemMounts;
+  const entries = all && typeof all === 'object' ? all[itemRef] : null;
+  return entries && typeof entries === 'object' ? entries : {};
+}
+
+/**
+ * applyMountOverrides(registries, run, desired) -> desired'
+ *
+ * The composer mints what an item's authoring says it lends; this is where
+ * what a smith has DONE to those mounts is applied. An emptied mount shows
+ * its fallback or nothing; a refilled one shows the installed card. Ids are
+ * kept — the mount is the same mount whatever sits in it — so the reconcile's
+ * sweep and every save stay stable across an extraction.
+ */
+function applyMountOverrides(registries, run, desired) {
+  const rules = cardMountRules(registries);
+  const out = [];
+  for (const inst of desired) {
+    const itemRef = ownerItemRef(inst);
+    const entry = itemRef ? itemMountEntries(run, itemRef)[inst.instanceId] : null;
+    if (!entry) { out.push(inst); continue; }
+    if (entry.card) {
+      out.push({ ...inst, cardId: entry.card, upgraded: entry.upgraded === true });
+      continue;
+    }
+    const fallback = resolveFallbackCard(registries, rules, itemRef, inst.equipmentRole);
+    if (fallback) out.push({ ...inst, cardId: fallback, upgraded: false });
+  }
+  return out;
+}
+
+/**
+ * The extra-mount instances an item currently carries: one per recorded
+ * `mount:` entry naming a card. The flag gates INSTALLING into an extra
+ * mount, not showing one already filled — turning the flag off must not make
+ * an installed card vanish from a saved run.
+ */
+function extraMountInstances(registries, run, itemRef, { grantSource = null } = {}) {
+  const rules = cardMountRules(registries);
+  const out = [];
+  for (const [key, entry] of Object.entries(itemMountEntries(run, itemRef))) {
+    if (!isExtraMountKey(key) || !entry || !entry.card) continue;
+    out.push({
+      instanceId: key,
+      cardId: entry.card,
+      upgraded: entry.upgraded === true,
+      equipmentRole: rules.extraMounts.kind,
+      grantedBy: itemRef,
+      ...(grantSource ? { grantSource } : {}),
+    });
+  }
+  return out;
+}
+
+/** The next open extra-mount key for an item, or null when the flag or the cap says no. */
+function openExtraMountKey(registries, run, itemRef) {
+  const rules = cardMountRules(registries);
+  if (!rules.extraMounts.enabled) return null;
+  const used = Object.entries(itemMountEntries(run, itemRef)).filter(([key, entry]) => isExtraMountKey(key) && entry && entry.card).length;
+  if (used >= rules.extraMounts.perItem) return null;
+  for (let index = 0; index < rules.extraMounts.perItem; index++) {
+    const key = mountKey.extra(itemRef, index);
+    const entry = itemMountEntries(run, itemRef)[key];
+    if (!entry || !entry.card) return key;
+  }
+  return null;
+}
+
+
+Object.assign(module.exports, { MOUNT_KINDS, mountKey, isExtraMountKey, ownerItemRef, INERT_CARD_MOUNT_RULES, normalizeCardMountRules, cardMountRules, resolveFallbackCard, itemMountEntries, applyMountOverrides, extraMountInstances, openExtraMountKey });
 
 },
 "src/model/registries.js": function (module, exports, require) {
@@ -32134,6 +32569,9 @@ Object.assign(module.exports, { deepFreeze, createRegistries, passiveMult, passi
 },
 "src/model/loadout.js": function (module, exports, require) {
 const { tokenRe } = require("src/model/validate.js");
+const { applyMountOverrides, extraMountInstances, mountKey, ownerItemRef } = require("src/model/cardMounts.js");
+
+
 const { deriveAttributeTierReceipt, deriveStat } = require("src/model/derivedStats.js");
 const { startingKitProblems, armourIsStartingEligible } = require("src/model/startingKits.js");
 const { resolveCreationHands, classCreationConfig } = require("src/model/characterCreation.js");
@@ -34106,24 +34544,43 @@ function pieceItemRef(piece) {
   return piece.kind === 'armor' ? `armor/${piece.classId}/${piece.id}` : `armament/${piece.id}`;
 }
 
+/** The inverse read: the item an instance rides with. Lives in cardMounts.js; re-exported so readers of this module find both halves together. */
+
+
 /** The tagFamilies.csv family a piece belongs to, from its kind. */
 function pieceFamily(piece) {
   return piece && piece.kind === 'armor' ? 'armour' : 'armament';
 }
 
+/**
+ * The instance a pile should hold for a wanted mount: the one it has, unless
+ * the mount's CARD changed under the same key — a smith emptied it down to
+ * its fallback, or seated another card — in which case the fresh instance
+ * replaces it in place. Fresh, not patched: a stamped instance carries the
+ * old card's carrier fields (`damageSchool`, `mods`), and stampDeck treats a
+ * stamped non-equipment card as immutable, so patching `cardId` alone would
+ * leave a Dodge Roll wearing Crimson Cleave's stamp.
+ */
+function adoptWanted(inst, wanted) {
+  return inst.cardId === wanted.cardId && (inst.upgraded === true) === (wanted.upgraded === true) ? inst : wanted;
+}
+
 function reconcileGrantedCards(registries, run) {
   if (!run.deck) run.deck = [];
   const desired = desiredGrantInstances(registries, run);
-  const wanted = new Set(desired.map((d) => d.instanceId));
+  const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
   // In place, not a reassignment: stampDeck captures its stamping list before
   // reconciling, so an appended instance must land in the SAME array to flow
   // through the carrier/mod stamping that follows.
-  const kept = run.deck.filter((inst) => {
-    if (!isItemOwned(inst)) return true;
-    if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
-    return false;
-  });
+  const kept = [];
+  for (const inst of run.deck) {
+    if (!isItemOwned(inst)) { kept.push(inst); continue; }
+    const want = wanted.get(inst.instanceId);
+    if (!want) continue;
+    present.add(inst.instanceId);
+    kept.push(adoptWanted(inst, want));
+  }
   run.deck.length = 0;
   run.deck.push(...kept);
   for (const d of desired) if (!present.has(d.instanceId)) run.deck.push(d);
@@ -34143,28 +34600,13 @@ function desiredGrantInstances(registries, run) {
   // Stamped from the authored binding, not typed here — see grantSourceFor.
   const settings = startingDeckSettings(registries);
   const weaponSource = grantSourceFor(settings, 'weapon');
-  const desired = [];
+  let desired = [];
 
   // THE BOUND TABLE. Every worn piece carrying the `bound` tag lends the cards
   // equipmentGrants.csv names for it — armour as much as armaments, because
-  // the tag is the gate and it does not care what kind of thing wears it. The
-  // owner is written as the piece's namespaced ref, so an outfit id that
-  // repeats per class still names exactly one wearer. Copies of the same card
-  // are numbered, which is what keeps the id deterministic and the sweep
-  // idempotent when a row lists a card twice.
+  // the tag is the gate and it does not care what kind of thing wears it.
   for (const piece of equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: run.itemUpgradeLevels || {} })) {
-    const family = pieceFamily(piece);
-    const owner = pieceItemRef(piece);
-    const copies = new Map();
-    for (const cardId of boundGrantCardIds(registries, piece, family)) {
-      const i = copies.get(cardId) || 0;
-      copies.set(cardId, i + 1);
-      desired.push({
-        instanceId: `bound:${owner}:${cardId}:${i}`,
-        cardId, upgraded: false, equipmentRole: 'granted', grantedBy: owner,
-        grantSource: grantSourceFor(settings, family === 'armour' ? 'armor' : 'weapon'),
-      });
-    }
+    desired.push(...boundMountInstances(registries, settings, piece));
   }
 
   const sources = { right: null, left: null };
@@ -34175,15 +34617,7 @@ function desiredGrantInstances(registries, run) {
   for (const hand of ['right', 'left']) {
     const source = sources[hand];
     if (!source) continue;
-    for (const grant of source.package.grantedCards) {
-      for (let i = 0; i < grant.count; i++) {
-        desired.push({
-          instanceId: `granted:${source.package.weaponId}:${grant.cardId}:${i}`,
-          cardId: grant.cardId, upgraded: false, equipmentRole: 'granted', grantedBy: source.package.weaponId,
-          grantSource: weaponSource,
-        });
-      }
-    }
+    desired.push(...packageGrantInstances(source.package, weaponSource));
   }
   const arts = sources.right && sources.left
     ? splitAuthoredWeaponArts(sources.right.package.weaponArtDefaults, sources.left.package.weaponArtDefaults)
@@ -34191,13 +34625,14 @@ function desiredGrantInstances(registries, run) {
       ? sources[hand].package.weaponArtDefaults.map((id) => ({ id, hand }))
       : []));
   for (const art of arts) {
-    const weaponId = sources[art.hand].package.weaponId;
-    desired.push({
-      instanceId: `weaponArt:${weaponId}:${art.id}`,
-      cardId: art.id, upgraded: false, equipmentRole: 'weaponArt', grantedBy: weaponId,
-      grantSource: weaponSource,
-    });
+    desired.push(weaponArtInstance(sources[art.hand].package.weaponId, art.id, weaponSource));
   }
+
+  // WHAT A SMITH HAS DONE TO THOSE MOUNTS, applied before the empty-hand rule
+  // below so an art mount emptied down to its Dodge Roll fallback counts as a
+  // Dodge Roll already installed — one, not one per hand.
+  desired = applyMountOverrides(registries, run, desired);
+
   // THE EMPTY HAND'S ART: the Dodge Roll rides as long as one hand is empty
   // (the owner's rule, 2026-09-02) — not only when both are. With one hand
   // armed, the technique slot is that armament's (its installed art, A-6)
@@ -34220,7 +34655,88 @@ function desiredGrantInstances(registries, run) {
       });
     }
   }
+
+  // EXTRA MOUNTS a smith has filled on worn pieces (the rune seam).
+  for (const piece of equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: run.itemUpgradeLevels || {} })) {
+    desired.push(...extraMountInstances(registries, run, pieceItemRef(piece), {
+      grantSource: grantSourceFor(settings, pieceFamily(piece) === 'armour' ? 'armor' : 'weapon'),
+    }));
+  }
   return desired;
+}
+
+// ---- the three minters, one spelling each --------------------------------
+
+/** The `bound` table's cards for one piece, as item-owned instances. Copies of the same card are numbered. */
+function boundMountInstances(registries, settings, piece) {
+  const family = pieceFamily(piece);
+  const owner = pieceItemRef(piece);
+  const copies = new Map();
+  const out = [];
+  for (const cardId of boundGrantCardIds(registries, piece, family)) {
+    const i = copies.get(cardId) || 0;
+    copies.set(cardId, i + 1);
+    out.push({
+      instanceId: mountKey.bound(owner, cardId, i),
+      cardId, upgraded: false, equipmentRole: 'granted', grantedBy: owner,
+      grantSource: grantSourceFor(settings, family === 'armour' ? 'armor' : 'weapon'),
+    });
+  }
+  return out;
+}
+
+/** A package's grantedCards, as item-owned instances. */
+function packageGrantInstances(pkg, weaponSource) {
+  const out = [];
+  for (const grant of pkg.grantedCards) {
+    for (let i = 0; i < grant.count; i++) {
+      out.push({
+        instanceId: mountKey.granted(pkg.weaponId, grant.cardId, i),
+        cardId: grant.cardId, upgraded: false, equipmentRole: 'granted', grantedBy: pkg.weaponId,
+        grantSource: weaponSource,
+      });
+    }
+  }
+  return out;
+}
+
+/** One authored weapon art, as an item-owned instance. */
+function weaponArtInstance(weaponId, artId, weaponSource) {
+  return {
+    instanceId: mountKey.weaponArt(weaponId, artId),
+    cardId: artId, upgraded: false, equipmentRole: 'weaponArt', grantedBy: weaponId,
+    grantSource: weaponSource,
+  };
+}
+
+/**
+ * itemMountInstances(registries, run, piece, { authored }) -> [instance]
+ *
+ * Everything ONE piece lends, whether or not it is equipped — the bound table,
+ * the package's grants, ALL of its arts (the two-hand split that keeps a
+ * shared art to one copy is a question about a pair, not about this piece)
+ * and, unless `authored` is asked for, what a smith has done to those mounts
+ * plus any extra mounts filled. The smith services enumerate an item's mounts
+ * through this one door so a carried, unequipped sword can be worked on.
+ */
+function itemMountInstances(registries, run, piece, { authored = false } = {}) {
+  if (!piece) return [];
+  const settings = startingDeckSettings(registries);
+  const weaponSource = grantSourceFor(settings, 'weapon');
+  const list = boundMountInstances(registries, settings, piece);
+  const pkg = piece.kind === 'armor' ? null : WeaponCardPackageModel.fromPiece(registries, piece);
+  if (pkg) {
+    list.push(...packageGrantInstances(pkg, weaponSource));
+    for (const artId of pkg.weaponArtDefaults) list.push(weaponArtInstance(pkg.weaponId, artId, weaponSource));
+  }
+  if (authored) return list;
+  const itemRef = pieceItemRef(piece);
+  return [
+    ...applyMountOverrides(registries, run, list),
+    ...extraMountInstances(registries, run, itemRef, {
+      grantSource: grantSourceFor(settings, pieceFamily(piece) === 'armour' ? 'armor' : 'weapon'),
+    }),
+  ];
 }
 
 /**
@@ -34233,14 +34749,17 @@ function desiredGrantInstances(registries, run) {
  */
 function reconcileGrantedCardsInCombat(registries, run, piles) {
   const desired = desiredGrantInstances(registries, run);
-  const wanted = new Set(desired.map((d) => d.instanceId));
+  const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
   for (const pile of [piles.hand, piles.draw, piles.discard, piles.exhaust]) {
-    const kept = pile.filter((inst) => {
-      if (!isItemOwned(inst)) return true;
-      if (wanted.has(inst.instanceId)) { present.add(inst.instanceId); return true; }
-      return false;
-    });
+    const kept = [];
+    for (const inst of pile) {
+      if (!isItemOwned(inst)) { kept.push(inst); continue; }
+      const want = wanted.get(inst.instanceId);
+      if (!want) continue;
+      present.add(inst.instanceId);
+      kept.push(adoptWanted(inst, want));
+    }
     pile.length = 0;
     pile.push(...kept);
   }
@@ -35372,7 +35891,7 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
 }
 
 
-Object.assign(module.exports, { parseMod, modEffectLines, modEffectLine, HANDS, EQUIPMENT_ROLES, ARMAMENT_INTRINSIC_STAT_FIELDS, armamentIntrinsicStatProblems, CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, moveEquipmentPool, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, isEquipmentComposedInstance, WeaponCardPackageModel, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponDeckCompositionService, startingDeckProblems, startingDeckWarnings, BOUND_GRANT_TAG, boundGrantProblems, boundGrantCardIds, sortBySourceOrder, startingDeckPlan, startingDeckRefs, orderStartingDeck, ITEM_OWNED_ROLES, isItemOwned, pieceItemRef, reconcileGrantedCards, reconcileGrantedCardsInCombat, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
+Object.assign(module.exports, { parseMod, modEffectLines, modEffectLine, HANDS, EQUIPMENT_ROLES, ARMAMENT_INTRINSIC_STAT_FIELDS, armamentIntrinsicStatProblems, CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, moveEquipmentPool, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, isEquipmentComposedInstance, WeaponCardPackageModel, buildEquippedWeaponCardPlan, applyEquippedWeaponCardPlan, WeaponDeckCompositionService, startingDeckProblems, startingDeckWarnings, BOUND_GRANT_TAG, boundGrantProblems, boundGrantCardIds, sortBySourceOrder, startingDeckPlan, startingDeckRefs, orderStartingDeck, ITEM_OWNED_ROLES, isItemOwned, pieceItemRef, ownerItemRef, reconcileGrantedCards, itemMountInstances, reconcileGrantedCardsInCombat, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
 
 },
 "src/model/tagService.js": function (module, exports, require) {
@@ -39515,6 +40034,13 @@ const RUN_SHAPE = [
   { key: 'armamentLevels', type: 'object', optional: true },
   { key: 'smithingRewardClaims', type: 'array', optional: true },
   { key: 'lastSmithingReceipt', type: 'object', optional: true },
+  // Card mounts (owner ruling, 2026-09-03): what a smith has done to the
+  // mounts on the run's items, the last such transaction, and a counter that
+  // keeps extracted-card instance ids unique. All optional — absent means
+  // untouched — so no migration has to invent them.
+  { key: 'itemMounts', type: 'object', optional: true },
+  { key: 'lastMountReceipt', type: 'object', optional: true },
+  { key: 'mountTransactions', type: 'number', optional: true },
   { key: 'pendingReward', type: 'object', optional: true },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
@@ -39621,6 +40147,28 @@ function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger
         problems.push(`itemUpgradeLevels.${itemRef || '<empty>'} must be a namespaced item ref with a non-negative integer tier`);
       }
     }
+  }
+  if (run.itemMounts !== undefined && typeOk(run.itemMounts, 'object')) {
+    for (const [itemRef, entries] of Object.entries(run.itemMounts)) {
+      if (!/^(armament\/[^/]+|armor\/[^/]+\/[^/]+)$/.test(itemRef)) {
+        problems.push(`itemMounts.${itemRef || '<empty>'} must be a namespaced equipment ref`);
+        continue;
+      }
+      if (!entries || typeof entries !== 'object' || Array.isArray(entries)) {
+        problems.push(`itemMounts.${itemRef} must be an object of mount entries`);
+        continue;
+      }
+      for (const [mountKey, entry] of Object.entries(entries)) {
+        const sound = mountKey && entry && typeof entry === 'object' && !Array.isArray(entry)
+          && (entry.card === null || (typeof entry.card === 'string' && entry.card))
+          && (entry.upgraded === undefined || typeof entry.upgraded === 'boolean')
+          && (entry.extractions === undefined || (Number.isInteger(entry.extractions) && entry.extractions >= 0));
+        if (!sound) problems.push(`itemMounts.${itemRef}.${mountKey || '<empty>'} must be { card: id|null, upgraded?, extractions? }`);
+      }
+    }
+  }
+  if (run.mountTransactions !== undefined && (!Number.isInteger(run.mountTransactions) || run.mountTransactions < 0)) {
+    problems.push('mountTransactions must be a non-negative integer');
   }
   if (run.smithingRewardClaims !== undefined && Array.isArray(run.smithingRewardClaims)) {
     const seenClaims = new Set();
@@ -40767,6 +41315,386 @@ function ownedSmithingItems(registries, run) {
 Object.assign(module.exports, { normalizeSmithingRules, SMITHING_ROLES, SMITHING_SCHEMA_VERSION, sourceArmamentId, smithingCardReceipt, smithingPlan, restampSmithingCards, commitItemUpgrade, commitSmithing, grantSmithingReward, initializeRunSmithing, migrateLegacySmithing, ownedSmithingArmaments, ownedSmithingItems });
 
 },
+"src/model/cardExtraction.js": function (module, exports, require) {
+// src/model/cardExtraction.js — the smith's two card services: EXTRACT a card
+// out of an item's mount so it becomes the run's own, and INSTALL a run-owned
+// card into an emptied or open mount. Owner ruling, 2026-09-03.
+//
+// Same shape as smithing.js, on purpose: a PLAN that enumerates every legal
+// transaction with its exact cost and consequence, and a COMMIT that
+// revalidates through that same plan before touching the run. The screen
+// renders the plan and calls the commit; it prices nothing and decides
+// nothing. A third service is this file's pattern again, not a new one.
+//
+// Ownership is the one idea underneath (loadout.js, "Card ownership"): a card
+// is the run's or one item's. Extraction moves a card from an item to the run
+// — the item-owned instance leaves on the next restamp and a run-owned one
+// with the same card arrives; the mount it left shows its kind's fallback.
+// Installation is the reverse. Neither touches an item's authoring: what the
+// smith did is `run.itemMounts`, read by the composer through cardMounts.js.
+
+const { itemRefIdentity, resolveUpgradedItem } = require("src/model/itemUpgrades.js");
+const { carriedIds, equippedPieces, isItemOwned, itemMountInstances, pieceItemRef, stampDeck } = require("src/model/loadout.js");
+const { cardMountRules, isExtraMountKey, itemMountEntries, openExtraMountKey, resolveFallbackCard } = require("src/model/cardMounts.js");
+
+
+const { normalizeSmithingRules, SMITH_SERVICES } = require("src/model/smithingRules.js");
+
+
+const MOUNT_RECEIPT_SCHEMA_VERSION = 1;
+
+function ownObject(value, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${label} must be an object`);
+  return value;
+}
+
+function integer(value, label, { minimum = 0 } = {}) {
+  if (!Number.isInteger(value) || value < minimum) throw new Error(`${label} must be an integer >= ${minimum}`);
+  return value;
+}
+
+/** The service table, from balance or the caller. */
+function smithServiceRules(registries, explicit = undefined) {
+  return normalizeSmithingRules(explicit || registries?.balance?.smithing).services;
+}
+
+function stoneBalance(run) {
+  return integer(run?.smithingStones == null ? 0 : run.smithingStones, 'run.smithingStones');
+}
+
+function cardTags(registries, cardId) {
+  const def = registries.cards.get(cardId);
+  return def ? (def.tags || []) : [];
+}
+
+function cardName(registries, cardId) {
+  const def = registries.cards.get(cardId);
+  return def ? def.name : cardId;
+}
+
+function itemByRef(registries, itemRef) {
+  const identity = itemRefIdentity(itemRef);
+  if (!identity || !['armament', 'armor'].includes(identity.itemKind)) return null;
+  try { return resolveUpgradedItem(registries, itemRef, 0); } catch { return null; }
+}
+
+/**
+ * Every item the run can bring to a smith: worn pieces, carried armaments
+ * (Inventory and the inactive hand sets — the same reader the Smith's upgrade
+ * grid uses), and the worn outfit. Each once, worn first.
+ */
+function ownedMountItems(registries, run) {
+  const out = [];
+  const seen = new Set();
+  const push = (piece, equipped) => {
+    const itemRef = pieceItemRef(piece);
+    if (!itemRef || seen.has(itemRef)) return;
+    seen.add(itemRef);
+    out.push({ itemRef, piece, equipped });
+  };
+  for (const piece of equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: run.itemUpgradeLevels || {} })) push(piece, true);
+  for (const id of carriedIds(run.loadout)) {
+    const piece = (registries.equipment.armaments || []).find((row) => row.id === id);
+    if (piece) push(piece, false);
+  }
+  return out;
+}
+
+/**
+ * mountRows(registries, run, item) -> [row]
+ *
+ * One row per mount on the item, authored and extra alike, each saying what
+ * sits in it now and how it got there:
+ *   state 'authored'   the card the item was authored with
+ *         'installed'  a card a smith seated
+ *         'fallback'   emptied; showing its kind's fallback
+ *         'empty'      emptied; showing nothing
+ *         'open'       an extra mount nothing has been seated in
+ * Only 'authored' and 'installed' mounts hold a card that can be extracted;
+ * a fallback is the mount's, not the item's, and is never lifted out.
+ */
+function mountRows(registries, run, { itemRef, piece }) {
+  const rules = cardMountRules(registries);
+  const entries = itemMountEntries(run, itemRef);
+  const authored = itemMountInstances(registries, run, piece, { authored: true });
+  const current = itemMountInstances(registries, run, piece);
+  const rows = authored.map((inst) => {
+    const entry = entries[inst.instanceId];
+    const live = current.find((row) => row.instanceId === inst.instanceId) || null;
+    const state = !entry ? 'authored' : entry.card ? 'installed' : (live ? 'fallback' : 'empty');
+    const cardId = live ? live.cardId : null;
+    return Object.freeze({
+      mountKey: inst.instanceId,
+      kind: inst.equipmentRole,
+      state,
+      authoredCardId: inst.cardId,
+      cardId,
+      cardName: cardId ? cardName(registries, cardId) : null,
+      upgraded: live ? live.upgraded === true : false,
+      extractable: Boolean(cardId) && (state === 'authored' || state === 'installed')
+        && Boolean(rules.extractableTag) && cardTags(registries, cardId).includes(rules.extractableTag),
+      fallbackCardId: resolveFallbackCard(registries, rules, itemRef, inst.equipmentRole),
+      accepts: (rules.kinds[inst.equipmentRole] || {}).accepts || [],
+      extractions: entry && Number.isInteger(entry.extractions) ? entry.extractions : 0,
+      extra: false,
+    });
+  });
+  for (const [key, entry] of Object.entries(entries)) {
+    if (!isExtraMountKey(key) || !entry || !entry.card) continue;
+    rows.push(Object.freeze({
+      mountKey: key,
+      kind: rules.extraMounts.kind,
+      state: 'installed',
+      authoredCardId: null,
+      cardId: entry.card,
+      cardName: cardName(registries, entry.card),
+      upgraded: entry.upgraded === true,
+      extractable: Boolean(rules.extractableTag) && cardTags(registries, entry.card).includes(rules.extractableTag),
+      fallbackCardId: null,
+      accepts: (rules.kinds[rules.extraMounts.kind] || {}).accepts || [],
+      extractions: Number.isInteger(entry.extractions) ? entry.extractions : 0,
+      extra: true,
+    }));
+  }
+  const open = openExtraMountKey(registries, run, itemRef);
+  if (open) {
+    rows.push(Object.freeze({
+      mountKey: open,
+      kind: rules.extraMounts.kind,
+      state: 'open',
+      authoredCardId: null,
+      cardId: null,
+      cardName: null,
+      upgraded: false,
+      extractable: false,
+      fallbackCardId: null,
+      accepts: (rules.kinds[rules.extraMounts.kind] || {}).accepts || [],
+      extractions: 0,
+      extra: true,
+    }));
+  }
+  return Object.freeze(rows);
+}
+
+function identityFields(registries, itemRef, piece) {
+  const identity = itemRefIdentity(itemRef);
+  return {
+    itemRef,
+    itemKind: identity.itemKind,
+    itemId: identity.itemId,
+    itemName: piece.name,
+    ...(identity.classId ? { classId: identity.classId } : {}),
+  };
+}
+
+function priced(cost, stones) {
+  const shortfall = Math.max(0, cost - stones);
+  return { cost, stones, shortfall, affordable: shortfall === 0 };
+}
+
+// ---- extract ---------------------------------------------------------------
+
+/** Every extractable mount on every owned item, priced. */
+function extractionPlan(registries, run, explicitRules = undefined) {
+  const rules = smithServiceRules(registries, explicitRules);
+  const stones = stoneBalance(run);
+  const cost = rules.extract.cost;
+  const candidates = [];
+  for (const item of ownedMountItems(registries, run)) {
+    const mounts = mountRows(registries, run, item).filter((row) => row.extractable);
+    if (!mounts.length) continue;
+    candidates.push(Object.freeze({
+      ...identityFields(registries, item.itemRef, item.piece),
+      equipped: item.equipped,
+      ...priced(cost, stones),
+      mounts,
+    }));
+  }
+  return Object.freeze({ schemaVersion: MOUNT_RECEIPT_SCHEMA_VERSION, service: 'extract', stones, cost, candidates: Object.freeze(candidates) });
+}
+
+function nextTransaction(run) {
+  const n = integer(run.mountTransactions == null ? 0 : run.mountTransactions, 'run.mountTransactions') + 1;
+  run.mountTransactions = n;
+  return n;
+}
+
+function writeMount(run, itemRef, mountKey, entry) {
+  const entries = { ...itemMountEntries(run, itemRef) };
+  if (entry === null) delete entries[mountKey];
+  else entries[mountKey] = entry;
+  const all = { ...(run.itemMounts || {}) };
+  if (Object.keys(entries).length) all[itemRef] = entries;
+  else delete all[itemRef];
+  run.itemMounts = all;
+}
+
+/**
+ * Lift the card out of one mount. The mount empties (an extra mount is
+ * deleted, which is what "open" means); a run-owned instance of the card
+ * joins the deck; the restamp sweeps the item-owned instance and seats the
+ * fallback. Revalidated through the plan; `free` is for an event that grants
+ * the service.
+ */
+function commitExtraction(registries, run, itemRef, mountKey, explicitRules = undefined, { free = false } = {}) {
+  const plan = extractionPlan(registries, run, explicitRules);
+  const candidate = plan.candidates.find((row) => row.itemRef === itemRef);
+  if (!candidate) throw new Error(`Item '${itemRef}' has no extractable mount`);
+  const mount = candidate.mounts.find((row) => row.mountKey === mountKey);
+  if (!mount) throw new Error(`Mount '${mountKey}' on '${itemRef}' is not extractable`);
+  if (!free && !candidate.affordable) throw new Error(`Insufficient Smithing Stones (shortfall ${candidate.shortfall})`);
+  const before = plan.stones;
+  run.smithingStones = free ? before : before - candidate.cost;
+  const n = nextTransaction(run);
+  writeMount(run, itemRef, mountKey, mount.extra ? null : { card: null, extractions: mount.extractions + 1 });
+  const instanceId = `extracted:${n}:${mount.cardId}`;
+  if (!Array.isArray(run.deck)) run.deck = [];
+  run.deck.push({ instanceId, cardId: mount.cardId, upgraded: mount.upgraded === true });
+  stampDeck(registries, run);
+  const receipt = Object.freeze({
+    schemaVersion: MOUNT_RECEIPT_SCHEMA_VERSION,
+    service: 'extract',
+    ...identityFields(registries, itemRef, ownedMountItems(registries, run).find((item) => item.itemRef === itemRef)?.piece || { name: candidate.itemName }),
+    mountKey,
+    kind: mount.kind,
+    cardId: mount.cardId,
+    cardName: mount.cardName,
+    instanceId,
+    fallbackCardId: mount.extra ? null : mount.fallbackCardId,
+    authoredCost: candidate.cost,
+    spent: free ? 0 : candidate.cost,
+    cost: free ? 0 : candidate.cost,
+    stoneBalanceBefore: before,
+    stoneBalanceAfter: run.smithingStones,
+    free,
+    transaction: n,
+  });
+  run.lastMountReceipt = receipt;
+  return receipt;
+}
+
+// ---- install ---------------------------------------------------------------
+
+/** The run-owned cards a mount of `accepts` could seat. */
+function installableCards(registries, run, accepts) {
+  return (run.deck || [])
+    .filter((inst) => inst && !isItemOwned(inst) && !inst.equipmentRole)
+    .filter((inst) => cardTags(registries, inst.cardId).some((tag) => accepts.includes(tag)))
+    .map((inst) => Object.freeze({
+      instanceId: inst.instanceId,
+      cardId: inst.cardId,
+      cardName: cardName(registries, inst.cardId),
+      upgraded: inst.upgraded === true,
+    }));
+}
+
+/** Every open mount on every owned item, with the deck cards it would take, priced. */
+function installPlan(registries, run, explicitRules = undefined) {
+  const rules = smithServiceRules(registries, explicitRules);
+  const stones = stoneBalance(run);
+  const cost = rules.install.cost;
+  const candidates = [];
+  for (const item of ownedMountItems(registries, run)) {
+    const mounts = [];
+    for (const row of mountRows(registries, run, item)) {
+      if (!['fallback', 'empty', 'open'].includes(row.state)) continue;
+      const cards = installableCards(registries, run, row.accepts);
+      if (!cards.length) continue;
+      mounts.push(Object.freeze({ ...row, cards: Object.freeze(cards) }));
+    }
+    if (!mounts.length) continue;
+    candidates.push(Object.freeze({
+      ...identityFields(registries, item.itemRef, item.piece),
+      equipped: item.equipped,
+      ...priced(cost, stones),
+      mounts: Object.freeze(mounts),
+    }));
+  }
+  return Object.freeze({ schemaVersion: MOUNT_RECEIPT_SCHEMA_VERSION, service: 'install', stones, cost, candidates: Object.freeze(candidates) });
+}
+
+/**
+ * Seat one run-owned deck card in one open mount. The deck instance leaves
+ * (the card is the item's now); the restamp mints the item-owned instance in
+ * that mount if the item is worn. Revalidated through the plan.
+ */
+function commitInstall(registries, run, itemRef, mountKey, instanceId, explicitRules = undefined, { free = false } = {}) {
+  const plan = installPlan(registries, run, explicitRules);
+  const candidate = plan.candidates.find((row) => row.itemRef === itemRef);
+  if (!candidate) throw new Error(`Item '${itemRef}' has no open mount`);
+  const mount = candidate.mounts.find((row) => row.mountKey === mountKey);
+  if (!mount) throw new Error(`Mount '${mountKey}' on '${itemRef}' is not open`);
+  const card = mount.cards.find((row) => row.instanceId === instanceId);
+  if (!card) throw new Error(`Deck card '${instanceId}' cannot be seated in mount '${mountKey}'`);
+  if (!free && !candidate.affordable) throw new Error(`Insufficient Smithing Stones (shortfall ${candidate.shortfall})`);
+  const before = plan.stones;
+  run.smithingStones = free ? before : before - candidate.cost;
+  const n = nextTransaction(run);
+  const at = run.deck.findIndex((inst) => inst && inst.instanceId === instanceId);
+  if (at === -1) throw new Error(`Deck card '${instanceId}' vanished between plan and commit`);
+  run.deck.splice(at, 1);
+  writeMount(run, itemRef, mountKey, { card: card.cardId, upgraded: card.upgraded, extractions: mount.extractions });
+  stampDeck(registries, run);
+  const receipt = Object.freeze({
+    schemaVersion: MOUNT_RECEIPT_SCHEMA_VERSION,
+    service: 'install',
+    ...identityFields(registries, itemRef, ownedMountItems(registries, run).find((item) => item.itemRef === itemRef)?.piece || { name: candidate.itemName }),
+    mountKey,
+    kind: mount.kind,
+    cardId: card.cardId,
+    cardName: card.cardName,
+    instanceId,
+    replacedFallbackCardId: mount.state === 'fallback' ? mount.cardId : null,
+    authoredCost: candidate.cost,
+    spent: free ? 0 : candidate.cost,
+    cost: free ? 0 : candidate.cost,
+    stoneBalanceBefore: before,
+    stoneBalanceAfter: run.smithingStones,
+    free,
+    transaction: n,
+  });
+  run.lastMountReceipt = receipt;
+  return receipt;
+}
+
+// ---- who offers what -------------------------------------------------------
+
+/**
+ * smithServicesAt(registries, nodeKind, rng) -> { offered, services, rolled }
+ *
+ * The services a node of this kind offers on THIS visit. A chance of 100 is a
+ * promise and consumes no roll; 0 is a refusal; anything between is one draw
+ * on the smith's own RNG stream, so the roll cannot shift a later reward in
+ * an existing seed. A node kind the table does not name offers nothing.
+ */
+function smithServicesAt(registries, nodeKind, rng, explicitRules = undefined) {
+  const rules = smithServiceRules(registries, explicitRules);
+  const row = rules.offeredAt[nodeKind];
+  if (!row) return Object.freeze({ nodeKind, offered: false, rolled: false, chance: 0, services: Object.freeze([]) });
+  const rolled = row.chance > 0 && row.chance < 100;
+  const offered = row.chance >= 100 ? true : row.chance <= 0 ? false : rng.chance('smith', row.chance);
+  return Object.freeze({ nodeKind, offered, rolled, chance: row.chance, services: offered ? row.services : Object.freeze([]) });
+}
+
+/** Validate a stored `run.lastMountReceipt` against the registry. Throws by name. */
+function validateLastMountReceipt(registries, run) {
+  if (run.lastMountReceipt == null) return;
+  const receipt = ownObject(run.lastMountReceipt, 'run.lastMountReceipt');
+  if (!['extract', 'install'].includes(receipt.service)) throw new Error('run.lastMountReceipt.service must be extract or install');
+  if (!itemByRef(registries, receipt.itemRef)) throw new Error(`run.lastMountReceipt.itemRef '${receipt.itemRef}' is unknown`);
+  if (!registries.cards.has(receipt.cardId)) throw new Error(`run.lastMountReceipt.cardId '${receipt.cardId}' is unknown`);
+  for (const key of ['authoredCost', 'spent', 'cost', 'stoneBalanceBefore', 'stoneBalanceAfter', 'transaction']) {
+    integer(receipt[key], `run.lastMountReceipt.${key}`);
+  }
+  if (receipt.stoneBalanceBefore - receipt.stoneBalanceAfter !== receipt.spent || receipt.cost !== receipt.spent) {
+    throw new Error('run.lastMountReceipt cost/balance does not describe its transaction');
+  }
+}
+
+
+Object.assign(module.exports, { SMITH_SERVICES, MOUNT_RECEIPT_SCHEMA_VERSION, smithServiceRules, ownedMountItems, mountRows, extractionPlan, commitExtraction, installPlan, commitInstall, smithServicesAt, validateLastMountReceipt });
+
+},
 "src/model/unlocks.js": function (module, exports, require) {
 // src/model/unlocks.js — earning things, evaluated from durable progress.
 //
@@ -41113,6 +42041,11 @@ const STREAM_NAMES = Object.freeze([
   'events',
   'shop',
   'misc',
+  // The smith's own stream: a merchant rolls once per visit for whether it
+  // keeps a smith, and that roll must not shift what the shop stocks or any
+  // later reward draws in an existing seed (the same reason `armaments` is
+  // its own stream). A save written before the stream existed starts it at 0.
+  'smith',
 ]);
 
 const MULBERRY_INC = 0x6d2b79f5;
@@ -41441,6 +42374,12 @@ function createCombat({
     // Namespaced item tiers are the sole current authority. The legacy armament
     // map is accepted only at the load/migration door, never written here.
     itemUpgradeLevels: structuredClone(player.itemUpgradeLevels || {}),
+    // What a smith did to the run's item mounts (cardMounts.js), carried for
+    // the same reason the quota above is: the swap door below builds a
+    // synthetic run with `deck: []`, and without this an extracted art would
+    // be re-minted from the item's authoring mid-fight. Read only in combat —
+    // no smith works during a fight — so a plain copy is the whole contract.
+    itemMounts: structuredClone(player.itemMounts || {}),
     equipmentPoolDeficits: player.equipmentPoolDeficits
       ? { ...player.equipmentPoolDeficits }
       : { hp: Math.max(0, player.maxHp - player.hp), mana: Math.max(0, maxMana - (player.mana ?? maxMana)), stamina: Math.max(0, (player.maxStamina || 0) - (player.stamina ?? player.maxStamina ?? 0)) },
@@ -41999,6 +42938,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     // pile stamp replans from the CURRENT loadout — and the pile holding the
     // slot the replan dropped throws mid-swap.
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
+    itemMounts: combat.itemMounts,
   };
   // Pile stamps are subset calls, so granted/weaponArt instances reconcile
   // here explicitly, BEFORE the stamps: the swapped-out armament's leave every
@@ -44099,6 +45039,7 @@ function serializeCombatSnapshot(combat) {
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     itemUpgradeLevels: combat.itemUpgradeLevels,
+    itemMounts: combat.itemMounts,
     equipmentPoolDeficits: combat.equipmentPoolDeficits,
     equipmentChanged: !!combat.equipmentChanged,
     turn: combat.turn,
@@ -44145,6 +45086,10 @@ function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCo
     itemUpgradeLevels: saved.itemUpgradeLevels || Object.fromEntries(
       Object.entries(saved.armamentLevels || {}).map(([id, level]) => [`armament/${id}`, level]),
     ),
+    // Absent on a snapshot written before mounts existed, and left absent:
+    // every reader treats a missing map as "nothing done", and writing `{}`
+    // here would rewrite a snapshot the load already understood.
+    itemMounts: saved.itemMounts,
     equipmentPoolDeficits: saved.equipmentPoolDeficits,
     equipmentChanged: saved.equipmentChanged,
     turn: saved.turn,
@@ -45176,7 +46121,12 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   // resumed fight and land newly-granted ones in the discard pile — stamped
   // by the same pass as every other card. The same door a live mid-combat
   // swap goes through.
-  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout }, snapshot.piles);
+  // The mounts travel too, or an extracted art comes back at this door: the
+  // snapshot's own record wins, a fight saved before mounts existed reads the
+  // run's, and neither is written back — a load must not rewrite a snapshot
+  // it understands (tools/weapon-card-packages.mjs holds that line).
+  const itemMounts = snapshot.itemMounts !== undefined ? snapshot.itemMounts : run.itemMounts;
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts }, snapshot.piles);
   const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
   // THE BIRTH QUOTA REACHES THE MIGRATION TOO. Persisting it on the run and the
   // combat snapshot is only half the job: this door builds its own plan and
@@ -45201,6 +46151,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
     equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
     equipmentAttackSlotCount: bornWith,
+    itemMounts,
     deck: cards,
   }, cards, {
     adoptEquipmentBonuses: false,
@@ -50570,6 +51521,11 @@ const UI_COMPONENTS = Object.freeze({
   smithUpgradeModal: 'smith-upgrade-modal',
   smithCandidateCard: 'smith-candidate-card',
   smithUpgradePreview: 'smith-upgrade-preview',
+  mountServiceModal: 'mount-service-modal',
+  mountCandidateCard: 'mount-candidate-card',
+  mountRow: 'mount-row',
+  mountServicePreview: 'mount-service-preview',
+  shopSmithCard: 'shop-smith-card',
   resourceStrip: 'resource-strip',
   modeChoice: 'mode-choice',
   spriteChoice: 'sprite-choice',
@@ -52515,7 +53471,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '811cf50962';
+const SOURCE = '6c6ec40af6';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52549,7 +53505,7 @@ const SOURCE = '811cf50962';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '32';
+const ORDINAL = '25';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -71854,6 +72810,7 @@ const { renderStatAllocationCard } = require("src/ui/components/statAllocationCa
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 const { smithSelectionModel } = require("src/ui/models/SmithSelectionModel.js");
 const { mountSmithUpgradeModal } = require("src/ui/components/smithUpgradeModal.js");
+const { mountServiceOffer, openMountService, mountReceiptLine } = require("src/ui/screens/smithServices.js");
 const { FOLD_GLYPH } = require("src/ui/components/foldGlyph.js");
 // THE FOLDS' INSIDES ARE THE KIT'S (2026-09-04, the sweep): a flask row is a
 // kit Row — the flask's identity as its LabelStack, a −/count/+ Stepper of
@@ -71909,11 +72866,11 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false }) {
+function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, services, ...extra,
   });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
@@ -71923,7 +72880,13 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
   // player does not carry.
   const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
   const smith = smithingPlan(registries, run);
-  const canInspectSmithing = smith.candidates.length > 0;
+  // WHICH SERVICES THIS SMITH OFFERS is the table in balance.smithing.services,
+  // resolved at the door (main.js) and handed in; a screen mounted without it
+  // — a fixture, an older caller — keeps the Shrine it always had.
+  const offered = services && Array.isArray(services.services) ? services.services : ['upgrade'];
+  const canInspectSmithing = offered.includes('upgrade') && smith.candidates.length > 0;
+  const extract = offered.includes('extract') ? mountServiceOffer(registries, run, 'extract') : null;
+  const install = offered.includes('install') ? mountServiceOffer(registries, run, 'install') : null;
   const arm = beatArmer(meta, registries);
   // `hpCharge` / `manaCharge` are GONE, and their absence is the point: this
   // screen no longer names a charge kind at all. It used to reach for exactly
@@ -72005,6 +72968,24 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
               : 'No owned armament has an effective tier remaining.'}</p>
           </div>
         </div>
+        ${extract ? `<div class="class-pick${extract.available ? '' : ' locked'}" id="extract-opt"
+             role="button" tabindex="${extract.available ? '0' : '-1'}"
+             aria-disabled="${extract.available ? 'false' : 'true'}">
+          <div class="glyph">⚙</div>
+          <div class="cp-body">
+            <h3>Extract a Card</h3>
+            <p>${esc(extract.summary)}</p>
+          </div>
+        </div>` : ''}
+        ${install ? `<div class="class-pick${install.available ? '' : ' locked'}" id="install-opt"
+             role="button" tabindex="${install.available ? '0' : '-1'}"
+             aria-disabled="${install.available ? 'false' : 'true'}">
+          <div class="glyph">⚒</div>
+          <div class="cp-body">
+            <h3>Seat a Card</h3>
+            <p>${esc(install.summary)}</p>
+          </div>
+        </div>` : ''}
         <details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
           <summary>
             <span class="glyph shrine-fold-glyph">⚗</span>
@@ -72079,8 +73060,12 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
+    ['#extract-opt', 'extract'], ['#install-opt', 'install'],
     ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
-  ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
+  ]) {
+    const element = app.querySelector(selector);
+    if (element) markUiComponent(element, UI.shrineOptionCard, variant);
+  }
   const leave = app.querySelector('#shrine-leave');
   if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
@@ -72230,6 +73215,34 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       openSmith();
+    });
+  }
+  // THE CARD SERVICES, the same reversible modal transaction as the upgrade:
+  // open and select are presentation state; Back and Escape return with the
+  // run untouched; Confirm is the one commit, and — like an upgrade — the one
+  // path that leaves the Shrine unless multi-use holds it open.
+  for (const [selector, offer] of [['#extract-opt', extract], ['#install-opt', install]]) {
+    const option = app.querySelector(selector);
+    if (!option || !offer || !offer.available) continue;
+    const open = () => openMountService(app, {
+      service: offer.service,
+      registries,
+      run,
+      meta,
+      returnFocusElement: option,
+      multiUse,
+      place: 'shrine',
+      onCommitted: (receipt) => {
+        sfx.play('shrine');
+        if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
+        onDone(mountReceiptLine(receipt));
+      },
+    });
+    option.addEventListener('click', open);
+    option.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      open();
     });
   }
 }
@@ -73065,6 +74078,501 @@ function mountSmithUpgradeModal(host, initialModel, {
 Object.assign(module.exports, { mountSmithUpgradeModal });
 
 },
+"src/ui/screens/smithServices.js": function (module, exports, require) {
+// src/ui/screens/smithServices.js — the smith's card services, opened the
+// same way from wherever a smith is standing (the Shrine, a merchant who
+// rolled one). The screen that calls this owns the run and what happens
+// after a commit; this module owns the reversible selection loop between
+// the plan, the model and the modal, and the one commit call.
+const { extractionPlan, installPlan, commitExtraction, commitInstall } = require("src/model/cardExtraction.js");
+const { mountServiceModel } = require("src/ui/models/MountServiceModel.js");
+const { mountMountServiceModal } = require("src/ui/components/mountServiceModal.js");
+
+/** How the screen decides whether to show a service at all. */
+function mountServiceOffer(registries, run, service) {
+  const plan = service === 'extract' ? extractionPlan(registries, run) : installPlan(registries, run);
+  return Object.freeze({
+    service,
+    plan,
+    available: plan.candidates.length > 0,
+    stones: plan.stones,
+    cost: plan.cost,
+    summary: plan.candidates.length
+      ? `${plan.cost === 0 ? 'Free' : `${plan.cost} Smithing Stone${plan.cost === 1 ? '' : 's'}`} · ${plan.candidates.length} item${plan.candidates.length === 1 ? '' : 's'} to work on.`
+      : (service === 'extract' ? 'Nothing you carry lends a card a smith can lift out.' : 'No item has an open mount, or no deck card would fit one.'),
+  });
+}
+
+/**
+ * openMountService(host, { service, registries, run, meta, ... }) -> modal
+ *
+ * Selection is presentation state until Confirm: Back and Escape return with
+ * the run byte-for-byte untouched. Confirm is the one commit, revalidated
+ * by the model through the same plan the modal was drawn from.
+ */
+function openMountService(host, {
+  service, registries, run, meta, returnFocusElement,
+  multiUse = false, place = 'shrine', onCommitted, onBack = () => {},
+}) {
+  const planner = service === 'extract' ? extractionPlan : installPlan;
+  let selection = {};
+  const model = () => mountServiceModel(registries, planner(registries, run), selection, { multiUse, place });
+  const modal = mountMountServiceModal(host, model(), {
+    registries,
+    meta,
+    returnFocusElement,
+    onSelectItem: (itemRef) => { selection = selection.itemRef === itemRef ? selection : { itemRef }; modal.update(model()); },
+    onSelectMount: (mountKey) => { selection = { itemRef: selection.itemRef, mountKey }; modal.update(model()); },
+    onSelectCard: (instanceId) => { selection = { ...selection, instanceId }; modal.update(model()); },
+    onBack,
+    onConfirm: (chosen) => {
+      const receipt = service === 'extract'
+        ? commitExtraction(registries, run, chosen.itemRef, chosen.mountKey)
+        : commitInstall(registries, run, chosen.itemRef, chosen.mountKey, chosen.instanceId);
+      onCommitted(receipt);
+    },
+  });
+  return modal;
+}
+
+/** The one-line story of a receipt, for the map log and the merchant's counter. */
+function mountReceiptLine(receipt) {
+  if (!receipt) return '';
+  const cost = receipt.spent ? ` Spent ${receipt.spent} Stone.` : '';
+  return receipt.service === 'extract'
+    ? `Extracted ${receipt.cardName} from ${receipt.itemName}.${cost}`
+    : `Seated ${receipt.cardName} in ${receipt.itemName}.${cost}`;
+}
+
+
+Object.assign(module.exports, { mountServiceOffer, openMountService, mountReceiptLine });
+
+},
+"src/ui/models/MountServiceModel.js": function (module, exports, require) {
+// A DOM-free read model for the smith's two card services — extract and
+// install — in the shape the Smith upgrade model already has: the screen
+// hands it a plan (model/cardExtraction.js) and a selection, and every
+// sentence, label, cost pair and enabled state the modal shows comes out of
+// here. Selection is reversible; only the modal's explicit Confirm commits.
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+
+const freeze = (value) => Object.freeze(value);
+
+const KIND_LABEL = Object.freeze({ weaponArt: 'Weapon Art', granted: 'Granted' });
+const STATE_LABEL = Object.freeze({
+  authored: 'as forged',
+  installed: 'seated',
+  fallback: 'emptied',
+  empty: 'empty',
+  open: 'open',
+});
+
+function pieceFor(registries, candidate) {
+  if (candidate.itemKind === 'armor') {
+    return (registries.equipment.armour || []).find((row) => row.classId === candidate.classId && row.id === candidate.itemId) || null;
+  }
+  return (registries.equipment.armaments || []).find((row) => row.id === candidate.itemId) || null;
+}
+
+const COPY = Object.freeze({
+  extract: freeze({
+    title: 'Extract a Card',
+    instruction: 'Choose an item, then the card to lift out of it. The card is yours from then on; the mount shows its fallback until you seat another.',
+    verb: 'Extract',
+    label: 'Cards available to extract',
+    idle: 'Select an item to see which of its cards can be lifted out.',
+    decisionId: 'smithExtract',
+  }),
+  install: freeze({
+    title: 'Seat a Card',
+    instruction: 'Choose an item, one of its open mounts, and a card from your deck to seat in it. The card rides with the item from then on.',
+    verb: 'Seat',
+    label: 'Mounts open for a card',
+    idle: 'Select an item to see its open mounts.',
+    decisionId: 'smithInstall',
+  }),
+});
+
+/**
+ * mountServiceModel(registries, plan, selection, { multiUse, place })
+ *
+ * `selection` is { itemRef?, mountKey?, instanceId? } — the item, one of its
+ * mounts, and (install only) the deck card to seat. `place` is where the
+ * smith is standing: at the Shrine a commit leaves unless multi-use is on;
+ * at the merchant it never leaves.
+ */
+function mountServiceModel(registries, plan, selection = {}, { multiUse = false, place = 'shrine' } = {}) {
+  const service = plan.service;
+  const copy = COPY[service];
+  if (!copy) throw new Error(`Unknown mount service '${service}'`);
+  const items = plan.candidates.map((candidate) => {
+    const piece = pieceFor(registries, candidate);
+    if (!piece) throw new Error(`Unknown mount item '${candidate.itemRef}'`);
+    const selected = candidate.itemRef === selection.itemRef;
+    const mounts = candidate.mounts.map((mount) => {
+      const mountSelected = selected && mount.mountKey === selection.mountKey;
+      const cards = (mount.cards || []).map((card) => freeze({
+        ...card,
+        selected: mountSelected && card.instanceId === selection.instanceId,
+      }));
+      return freeze({
+        ...mount,
+        kindLabel: KIND_LABEL[mount.kind] || mount.kind,
+        stateLabel: STATE_LABEL[mount.state] || mount.state,
+        selected: mountSelected,
+        cards: freeze(cards),
+      });
+    });
+    return freeze({
+      itemRef: candidate.itemRef,
+      itemKind: candidate.itemKind,
+      itemId: candidate.itemId,
+      name: candidate.itemName,
+      selected,
+      equipped: candidate.equipped,
+      whereLabel: candidate.equipped ? 'worn' : 'carried',
+      artAsset: candidate.itemKind === 'armor'
+        ? `assets/equipment/body_${candidate.classId}_${piece.artKey || piece.id}.webp`
+        : `assets/equipment/icon_${piece.artKey || piece.id}.webp`,
+      rarity: piece.rarity || 'common',
+      kindLabel: candidate.itemKind === 'armor' ? 'Armor' : 'Armament',
+      itemTypes: freeze((piece.itemTypes || []).map((type) => freeze({ ...type }))),
+      tags: freeze([...(piece.tags || [])]),
+      cost: candidate.cost,
+      stones: candidate.stones,
+      shortfall: candidate.shortfall,
+      affordable: candidate.affordable,
+      mounts: freeze(mounts),
+    });
+  });
+  const selected = items.find((item) => item.selected) || null;
+  const selectedMount = selected ? selected.mounts.find((mount) => mount.selected) || null : null;
+  const selectedCard = service === 'install' && selectedMount ? selectedMount.cards.find((card) => card.selected) || null : null;
+  const complete = service === 'extract' ? Boolean(selectedMount) : Boolean(selectedCard);
+  const canConfirm = complete && Boolean(selected && selected.affordable);
+  const blockedReasons = [];
+  if (selected && !selected.affordable) blockedReasons.push(`Need ${selected.shortfall} more Smithing Stone${selected.shortfall === 1 ? '' : 's'}.`);
+  if (selected && !selectedMount) blockedReasons.push(service === 'extract' ? 'Choose the card to extract.' : 'Choose an open mount.');
+  if (service === 'install' && selectedMount && !selectedCard) blockedReasons.push('Choose the deck card to seat.');
+  const leaves = place === 'shrine' && !multiUse;
+  const stays = place === 'merchant' ? 'You stay with the merchant.' : (multiUse ? 'You stay at the Shrine.' : 'The work leaves the Shrine.');
+  const what = service === 'extract'
+    ? (selectedMount ? `${selectedMount.cardName} leaves ${selected.name} and joins your deck` : 'the card joins your deck')
+    : (selectedCard ? `${selectedCard.cardName} leaves your deck and is seated in ${selected.name}` : 'the card is seated in the item');
+  return freeze({
+    component: UI.mountServiceModal,
+    variant: selected ? (complete ? 'review' : 'choose-mount') : 'choose',
+    properties: freeze({
+      service,
+      title: copy.title,
+      eyebrow: place === 'merchant' ? 'The merchant\'s smith' : 'Shrine action',
+      instruction: copy.instruction,
+      listLabel: copy.label,
+      idle: copy.idle,
+      decisionId: copy.decisionId,
+      staysAtShrine: !leaves,
+      consequence: `Click ${copy.verb} to review the change and cost. Hold ${copy.verb} to commit immediately. ${stays}`,
+      consequenceBadge: place === 'merchant' ? 'STAYS WITH THE MERCHANT' : (multiUse ? 'STAYS AT SHRINE' : 'LEAVES SHRINE'),
+      decisionConsequence: `${what}${leaves ? ', and the work leaves the Shrine' : ''}`,
+      purseLabel: `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'}`,
+      cost: plan.cost,
+      candidates: freeze(items),
+      selected,
+      selectedMount,
+      selectedCard,
+      canConfirm,
+      blockedReasons: freeze(blockedReasons),
+      backLabel: place === 'merchant' ? 'Back to the merchant' : 'Back to Shrine',
+      confirmLabel: !selected ? 'Select an item' : `${copy.verb} (${selected.cost})`,
+      verb: copy.verb,
+    }),
+    accessibility: freeze({
+      label: copy.title,
+      description: `${copy.instruction} Or return without changing the run.`,
+    }),
+  });
+}
+
+
+Object.assign(module.exports, { mountServiceModel });
+
+},
+"src/ui/components/mountServiceModal.js": function (module, exports, require) {
+// The smith's card-service overlay: extract a card from an item's mount, or
+// seat a deck card in one. Same dialog contract as smithUpgradeModal.js —
+// the component owns rendering and the confirm decision; the screen owns run
+// mutation. Three columns of choice at most (item, mount, card), every one
+// reversible until the explicit Confirm.
+//
+// THE CHROME IS THE SHELL'S. This door opens through modalShell.js, so the
+// head (eyebrow, title, one ✕), the foot (the way out left, the way forward
+// right), Escape, the veil click and focus return are the same here as on
+// every other door — none of it is assembled in this file. What this file
+// owns is the BODY: the item chooser, the mount list and (seating) the deck
+// cards the chosen mount takes.
+const { assetUrl } = require("src/ui/assetmap.js");
+const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
+const { renderCard } = require("src/ui/components/card.js");
+const { armOptionDecision } = require("src/framework/optionDecision.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { openModal } = require("src/ui/components/modalShell.js");
+
+function mountMountServiceModal(host, initialModel, {
+  registries,
+  meta,
+  onSelectItem,
+  onSelectMount,
+  onSelectCard,
+  onBack,
+  onConfirm,
+  returnFocusElement,
+}) {
+  const opener = returnFocusElement instanceof HTMLElement
+    ? returnFocusElement
+    : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+  const p0 = initialModel.properties;
+
+  const badge = document.createElement('span');
+  badge.className = 'smith-modal-consequence';
+  badge.textContent = p0.consequenceBadge;
+
+  const back = document.createElement('button');
+  back.type = 'button';
+  back.className = 'subtle smith-back';
+  back.textContent = p0.backLabel;
+
+  const confirm = document.createElement('button');
+  confirm.type = 'button';
+  confirm.className = 'smith-confirm mount-confirm';
+
+  let currentModel = initialModel;
+  let closed = false;
+  // Why the door closed: the ✕, Escape and the veil are all "back"; Confirm is
+  // not, and a programmatic close from the screen is neither.
+  let leaving = 'back';
+  let disarmDecision = null;
+
+  const shell = openModal({
+    size: 'xl',
+    className: 'smith-upgrade-modal mount-service-modal',
+    eyebrow: p0.eyebrow,
+    title: p0.title,
+    headExtras: badge,
+    bodyClassName: 'smith-modal-body',
+    body: (bodyHost) => {
+      bodyHost.innerHTML = `
+        <p class="mount-modal-instruction" id="mount-modal-instruction">${esc(p0.instruction)}</p>
+        <section class="smith-candidate-region" aria-labelledby="mount-candidate-title">
+          <div class="smith-region-head">
+            <h3 id="mount-candidate-title">Choose an item</h3>
+            <span data-mount-count></span>
+          </div>
+          <div class="smith-card-list" role="listbox" aria-label="Items with a mount to work on"></div>
+        </section>
+        <section class="smith-preview-region" aria-live="polite" aria-label="Selected item's mounts"></section>`;
+    },
+    note: p0.consequence,
+    secondary: [back],
+    primary: confirm,
+    onClose: () => {
+      if (closed) return;
+      closed = true;
+      disarmDecision?.();
+      disarmDecision = null;
+      if (leaving === 'back') onBack();
+    },
+    opener,
+    host,
+  });
+  // The shrine pane sits above the rest screen's own veil; same stacking the
+  // upgrade door uses.
+  shell.veil.classList.add('smith-modal-veil');
+  shell.panel.setAttribute('aria-describedby', 'mount-modal-instruction');
+  const modal = shell.panel;
+  markUiComponent(modal, UI.mountServiceModal, initialModel.variant);
+
+  const cardsHost = shell.body.querySelector('.smith-card-list');
+  const previewHost = shell.body.querySelector('.smith-preview-region');
+  const count = shell.body.querySelector('[data-mount-count]');
+
+  const costPairHtml = (selected) => `<span class="smith-cost-pair">
+      <em>REQ</em><i aria-hidden="true">/</i><em>AVAIL</em>
+      <strong class="smith-cost-required">${selected.cost}</strong><i aria-hidden="true">/</i><strong class="smith-cost-available">${selected.stones}</strong>
+    </span>`;
+
+  const mountRowHtml = (mount) => `
+    <div class="mount-row${mount.selected ? ' selected' : ''}${mount.extra ? ' is-extra' : ''}" role="option" aria-selected="${String(mount.selected)}"
+         data-mount-key="${esc(mount.mountKey)}" tabindex="${mount.selected ? 0 : -1}">
+      <em>${esc(mount.kindLabel)}</em>
+      <b>${mount.cardId ? esc(mount.cardName) : (mount.state === 'open' ? 'Open mount' : 'Nothing seated')}</b>
+      <small>${esc(mount.stateLabel)}${mount.state === 'fallback' && mount.cardName ? ` · showing ${esc(mount.cardName)}` : ''}${mount.fallbackCardId && mount.state !== 'fallback' && currentModel.properties.service === 'extract' ? ` · falls back to ${esc(registries.cards.get(mount.fallbackCardId)?.name || mount.fallbackCardId)}` : ''}</small>
+    </div>`;
+
+  const confirmationDetails = (p) => `
+    <div class="confirmation-cost ${p.selected.affordable ? 'affordable' : 'unaffordable'}">
+      <span class="smith-economy-values"><span class="smith-stone-icon" aria-hidden="true">🪨</span><b>Smithing Stone Cost</b>${costPairHtml(p.selected)}</span>
+    </div>
+    <div class="confirmation-change-list">
+      <div><b>${esc(p.selected.name)}</b><span>${esc(p.selectedMount ? `${p.selectedMount.kindLabel} mount · ${p.selectedMount.stateLabel}` : '')}</span></div>
+      ${p.service === 'extract' && p.selectedMount ? `<div><b>${esc(p.selectedMount.cardName)}</b><span>leaves the item and joins your deck${p.selectedMount.fallbackCardId ? `; the mount shows ${esc(registries.cards.get(p.selectedMount.fallbackCardId)?.name || p.selectedMount.fallbackCardId)}` : '; the mount shows nothing'}</span></div>` : ''}
+      ${p.service === 'install' && p.selectedCard ? `<div><b>${esc(p.selectedCard.cardName)}</b><span>leaves your deck and is seated in ${esc(p.selected.name)}</span></div>` : ''}
+    </div>`;
+
+  function commitSelected() {
+    const p = currentModel.properties;
+    if (!p.canConfirm) return;
+    const selection = { itemRef: p.selected.itemRef, mountKey: p.selectedMount.mountKey, instanceId: p.selectedCard ? p.selectedCard.instanceId : undefined };
+    leaving = 'confirm';
+    shell.close();
+    onConfirm(selection);
+  }
+
+  function draw(model, { focusSelection = false } = {}) {
+    currentModel = model;
+    const p = model.properties;
+    markUiComponent(modal, UI.mountServiceModal, model.variant);
+    cardsHost.innerHTML = '';
+    count.textContent = `${p.purseLabel} · ${p.candidates.length} eligible`;
+    for (const item of p.candidates) {
+      const card = document.createElement('div');
+      card.className = `smith-candidate-card smith-weapon-card rarity-${item.rarity}`;
+      card.classList.toggle('selected', item.selected);
+      card.setAttribute('role', 'option');
+      card.setAttribute('aria-selected', String(item.selected));
+      card.dataset.itemRef = item.itemRef;
+      const typeHtml = item.itemTypes.length
+        ? item.itemTypes.map((type) => `<em data-item-type="${esc(type.tag)}">${esc(type.label)}</em>`).join('')
+        : `<em>${esc(item.kindLabel)}</em>`;
+      card.innerHTML = `
+        <span class="smith-weapon-count" aria-label="${esc(item.whereLabel)}">${item.equipped ? '⚔' : '▣'}</span>
+        <strong class="smith-weapon-name">${esc(item.name)}</strong>
+        <span class="smith-weapon-art"><img src="${esc(assetUrl(item.artAsset))}" alt=""></span>
+        <span class="smith-item-type-row">${typeHtml}</span>
+        <span class="smith-weapon-tags"><em>${esc(item.whereLabel)}</em><em>${item.mounts.length} mount${item.mounts.length === 1 ? '' : 's'}</em></span>`;
+      const art = card.querySelector('.smith-weapon-art img');
+      art?.addEventListener('error', () => art.remove());
+      card.setAttribute('aria-label', `${item.name}, ${item.whereLabel}, ${item.mounts.length} mount${item.mounts.length === 1 ? '' : 's'}, costs ${item.cost} Smithing Stone. Select to choose a mount.`);
+      attachTooltip(card, () => `<div class="tt-title">${esc(item.name)} · ${esc(item.whereLabel)}</div>`
+        + `<div>${item.mounts.map((mount) => `${esc(mount.kindLabel)}: ${esc(mount.cardName || mount.stateLabel)}`).join('<br>')}</div>`
+        + `<div>Smith Stone Cost: 🪨 ${item.cost}/${item.stones} available.</div>`);
+      card.tabIndex = item.selected || (!p.selected && cardsHost.childElementCount === 0) ? 0 : -1;
+      markUiComponent(card, UI.mountCandidateCard, item.selected ? 'selected' : 'available');
+      const choose = () => onSelectItem(item.itemRef);
+      card.addEventListener('click', choose);
+      card.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        choose();
+      });
+      cardsHost.appendChild(card);
+    }
+
+    const selected = p.selected;
+    previewHost.innerHTML = selected
+      ? `<div class="smith-preview-card" data-ui-component="${UI.mountServicePreview}">
+          <div class="smith-summary-grid">
+            <div class="smith-summary-cell smith-selected-head"><span class="smith-preview-label">Selected item</span><b>${esc(selected.name)}</b><span>${esc(selected.whereLabel)} · ${selected.mounts.length} mount${selected.mounts.length === 1 ? '' : 's'}</span></div>
+            <div class="smith-summary-cell smith-preview-economy ${selected.affordable ? 'affordable' : 'unaffordable'}">
+              <span class="smith-economy-values"><span class="smith-stone-icon" aria-hidden="true">🪨</span><b>Smithing Stone Cost</b>${costPairHtml(selected)}</span>
+            </div>
+          </div>
+          <div class="smith-data-row">
+            <span class="smith-data-heading"><b>${esc(p.listLabel)}</b><small>${p.service === 'extract' ? 'choose one' : 'choose a mount'}</small></span>
+          </div>
+          <div class="mount-row-list" role="listbox" aria-label="${esc(p.listLabel)}">${selected.mounts.map(mountRowHtml).join('')}</div>
+          ${p.service === 'install' && p.selectedMount ? `
+          <div class="smith-data-row">
+            <span class="smith-data-heading"><b>From your deck</b><small>${p.selectedMount.cards.length} card${p.selectedMount.cards.length === 1 ? '' : 's'} this mount takes</small></span>
+          </div>
+          <div class="mount-card-list" role="listbox" aria-label="Deck cards this mount takes"></div>` : ''}
+          ${selected.affordable ? '' : `<div class="smith-preview-shortfall">Short ${selected.shortfall} Smithing Stone${selected.shortfall === 1 ? '' : 's'}.</div>`}
+        </div>`
+      : `<div class="smith-preview-empty" data-ui-component="${UI.mountServicePreview}">
+          <span class="smith-preview-glyph" aria-hidden="true">⚙</span>
+          <b>${esc(p.idle)}</b>
+          <span>Nothing changes until you confirm, or deliberately hold ${esc(p.verb)}.</span>
+        </div>`;
+    if (selected) {
+      for (const row of previewHost.querySelectorAll('.mount-row')) {
+        markUiComponent(row, UI.mountRow, row.classList.contains('selected') ? 'selected' : 'available');
+        const choose = () => onSelectMount(row.dataset.mountKey);
+        row.addEventListener('click', choose);
+        row.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          choose();
+        });
+      }
+      const cardList = previewHost.querySelector('.mount-card-list');
+      if (cardList && p.selectedMount) {
+        for (const card of p.selectedMount.cards) {
+          const el = renderCard(registries, { cardId: card.cardId, upgraded: card.upgraded, instanceId: card.instanceId }, { small: true });
+          el.classList.toggle('selected', card.selected);
+          el.setAttribute('role', 'option');
+          el.setAttribute('aria-selected', String(card.selected));
+          el.dataset.instanceId = card.instanceId;
+          el.tabIndex = 0;
+          const choose = () => onSelectCard(card.instanceId);
+          el.addEventListener('click', choose);
+          el.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            choose();
+          });
+          cardList.appendChild(el);
+        }
+      }
+    }
+    disarmDecision?.();
+    disarmDecision = null;
+    confirm.disabled = !selected;
+    confirm.textContent = p.confirmLabel;
+    confirm.setAttribute('aria-disabled', String(!p.canConfirm));
+    confirm.dataset.smithActionState = !selected ? 'unselected' : (p.canConfirm ? 'actionable' : 'blocked');
+    if (selected) {
+      confirm.setAttribute('aria-label', `${p.verb} for ${selected.cost} Smithing Stone${selected.cost === 1 ? '' : 's'}`);
+      disarmDecision = armOptionDecision(confirm, {
+        meta,
+        registries,
+        id: p.decisionId,
+        title: `${p.verb} ${p.service === 'extract' ? (p.selectedMount ? p.selectedMount.cardName : 'a card') : (p.selectedCard ? p.selectedCard.cardName : 'a card')}?`,
+        message: `${p.decisionConsequence}. This spends the shown Stone cost.`,
+        consequence: 'PERMANENT FOR THIS RUN',
+        detailsHtml: confirmationDetails(p),
+        confirmLabel: `${p.verb} (${selected.cost})`,
+        cancelLabel: 'Keep reviewing',
+        onCommit: commitSelected,
+        canCommit: () => Boolean(currentModel.properties.canConfirm),
+        blockedTitle: `Cannot ${p.verb.toLowerCase()} yet`,
+        blockedMessage: p.blockedReasons.join(' ') || 'This service is not currently available.',
+        blockedDetailsHtml: confirmationDetails(p),
+        returnFocusElement: confirm,
+      });
+    }
+    if (focusSelection && selected) {
+      queueMicrotask(() => (previewHost.querySelector('.mount-row.selected') || cardsHost.querySelector('[aria-selected="true"]'))?.focus({ preventScroll: true }));
+    }
+  }
+
+  // Back is a way out, and the shell's ✕, Escape and veil click are the same
+  // way out — all four land on onBack through onClose.
+  back.addEventListener('click', shell.close);
+  draw(initialModel);
+  queueMicrotask(() => modal.focus({ preventScroll: true }));
+
+  return {
+    update(model) { draw(model, { focusSelection: true }); },
+    close() {
+      leaving = 'screen';
+      shell.close();
+    },
+  };
+}
+
+
+Object.assign(module.exports, { mountMountServiceModal });
+
+},
 "src/ui/screens/shop.js": function (module, exports, require) {
 // src/ui/screens/shop.js — the wandering merchant (SPEC §7.1; prices from
 // balance.shop via engine/encounters.js buildShopStock)
@@ -73121,6 +74629,11 @@ const { isEquipmentComposedInstance } = require("src/model/loadout.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
 const { mountDisclosure } = require("src/ui/components/disclosure.js");
 const { settingOn } = require("src/ui/screens/settings.js");
+const { commitSmithing, smithingPlan } = require("src/model/smithing.js");
+const { smithSelectionModel } = require("src/ui/models/SmithSelectionModel.js");
+const { mountSmithUpgradeModal } = require("src/ui/components/smithUpgradeModal.js");
+const { mountServiceOffer, openMountService } = require("src/ui/screens/smithServices.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 /**
  * The merchant's buy-back price, DERIVED — never typed per item. The base is
@@ -73195,6 +74708,7 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
             <div id="remove-grid" class="deck-strip" style="display:none;max-width:900px"></div>
           </div>
           <div class="class-row" id="shop-sell"></div>
+          <div class="class-row" id="shop-smith"></div>
         </div>
         <button id="leave-shop" class="primary">Leave</button>
       </div>`;
@@ -73320,6 +74834,70 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       sellRow.appendChild(el);
     });
 
+    // ---- THE SMITH THE MERCHANT KEEPS, when the roll at the door said so ----
+    // `stock.smith` is smithServicesAt(registries, 'merchant', rng), rolled
+    // ONCE on arrival (main.js) on the smith's own stream and persisted with
+    // the stock, so a reload does not roll again. Which services appear is
+    // that table's word; each one is the same modal the Shrine opens, and a
+    // commit here never leaves — the merchant is a place you stay.
+    const smithRow = app.querySelector('#shop-smith');
+    const smithHere = stock.smith && stock.smith.offered ? stock.smith.services : [];
+    const smithCards = [];
+    const smithOption = (id, glyph, title, summary, available, open) => {
+      const el = document.createElement('div');
+      el.className = `class-pick${available ? '' : ' locked'}`;
+      el.id = id;
+      el.setAttribute('role', 'button');
+      el.tabIndex = available ? 0 : -1;
+      el.setAttribute('aria-disabled', String(!available));
+      el.innerHTML = `<div class="glyph">${glyph}</div><div class="cp-body"><h3>${esc(title)}</h3><p>${esc(summary)}</p></div>`;
+      markUiComponent(el, UI.shopSmithCard, id.replace('shop-', ''));
+      if (available) {
+        el.addEventListener('click', open);
+        el.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          open();
+        });
+      }
+      smithRow.appendChild(el);
+      smithCards.push(el);
+      return el;
+    };
+    if (smithHere.includes('upgrade')) {
+      const plan = smithingPlan(registries, run);
+      const el = smithOption('shop-upgrade', '⚒', 'Upgrade an Item',
+        plan.candidates.length ? `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'} · choose one owned armament.` : 'No owned armament has an effective tier remaining.',
+        plan.candidates.length > 0, () => {
+          let selectedItemRef = null;
+          const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse: true });
+          const modal = mountSmithUpgradeModal(app, model(), {
+            registries, meta, returnFocusElement: el,
+            onSelect: (itemRef) => { selectedItemRef = itemRef; modal.update(model()); },
+            onBack: () => {},
+            onConfirm: (itemRef) => {
+              commitSmithing(registries, run, itemRef);
+              sfx.play('shrine');
+              onChanged();
+              render();
+            },
+          });
+        });
+    }
+    for (const service of ['extract', 'install']) {
+      if (!smithHere.includes(service)) continue;
+      const offer = mountServiceOffer(registries, run, service);
+      const el = smithOption(`shop-${service}`, service === 'extract' ? '⚙' : '⚒',
+        service === 'extract' ? 'Extract a Card' : 'Seat a Card', offer.summary, offer.available, () => openMountService(app, {
+          service, registries, run, meta, returnFocusElement: el, multiUse: true, place: 'merchant',
+          onCommitted: () => {
+            sfx.play('shrine');
+            onChanged();
+            render();
+          },
+        }));
+    }
+
     app.querySelector('#leave-shop').addEventListener('click', onLeave);
 
     // ---- the fold: one mount, one open bar, faces that answer in words ----
@@ -73340,6 +74918,10 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       ...(sellOn() ? [{ key: 'bar:sell', label: 'SELL', node: sellRow,
         value: () => (goods.length ? `${goods.length} the merchant will take` : 'nothing he wants'),
         tip: 'The merchant buys back relics and flasks, at his prices.' }] : []),
+      // ABSENT when the roll at the door said no smith travels with him.
+      ...(smithCards.length ? [{ key: 'bar:smith', label: 'THE SMITH', node: smithRow,
+        value: () => `${smithCards.filter((el) => !el.classList.contains('locked')).length} of ${smithCards.length} services open`,
+        tip: 'A smith travels with this merchant: upgrade an item, lift a card out of one, or seat a card in one.' }] : []),
     ];
     fold = mountDisclosure(app.querySelector('.shop-bars'), BARS.map((bar) => ({
       key: bar.key, kind: 'pick', disclosure: 'face',

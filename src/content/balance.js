@@ -84,6 +84,25 @@ export const balance = {
     // Item/tier costs, card changes, and requirement changes are authored in
     // itemUpgradeChanges.csv. Balance owns only the reward faucet.
     rewardByPool: { normal: 0, elite: 1, boss: 1, treasure: 0 },
+
+    // THE SMITH'S SERVICES, AND WHO OFFERS THEM (owner ruling, 2026-09-03).
+    // A smith does three things: upgrade an item (the tier promotion above),
+    // EXTRACT a card from one of an item's mounts so it becomes the run's own,
+    // and INSTALL a run-owned card into an emptied or open mount. Which node
+    // kinds offer which services is this table — a merchant rolls `chance`
+    // once per visit on its own RNG stream, so adding the roll cannot shift
+    // what any later reward draws in an existing seed. 100 means always, no
+    // roll consumed; 0 means never.
+    services: {
+      offeredAt: {
+        shrine: { chance: 100, services: ['upgrade', 'extract', 'install'] },
+        merchant: { chance: 25, services: ['upgrade', 'extract', 'install'] },
+      },
+      // Priced in Smithing Stones, the same purse as an upgrade. Free by the
+      // owner's word, configurable because he said so in the same breath.
+      extract: { cost: 0 },
+      install: { cost: 0 },
+    },
   },
 
   // ---- canonical hidden level semantics (#237) ---------------------------
@@ -911,6 +930,27 @@ export const balance = {
       attack: 'unarmedAttack',
       guard: 'unarmedGuard',
       technique: 'unarmedTechnique',
+    },
+
+    // CARD MOUNTS (owner ruling, 2026-09-03). Every card an item lends sits in
+    // a MOUNT on that item; a smith can extract it (it becomes the run's own,
+    // the mount empties) or refill the mount with another card. What is
+    // extractable is a TAG on the card — strikes and defends do not carry it
+    // today, and the day the game changes its mind that is a spreadsheet
+    // edit. What an emptied mount shows is a FALLBACK per mount kind: a
+    // weapon-art mount falls back to the unarmed technique (the Dodge Roll),
+    // read from `unarmedProfiles` above rather than typed here, and any item
+    // may override that under `fallbackByItem`. `extraMounts` is the seam a
+    // later rune feature opens: mounts beyond the authored ones, per item,
+    // behind a flag that is off.
+    cardMounts: {
+      extractableTag: 'extractable',
+      kinds: {
+        weaponArt: { accepts: ['extractable'], fallback: { unarmedProfile: 'technique' } },
+        granted: { accepts: ['extractable'], fallback: null },
+      },
+      fallbackByItem: {},
+      extraMounts: { enabled: false, perItem: 1, kind: 'granted' },
     },
     enabled: true,
 

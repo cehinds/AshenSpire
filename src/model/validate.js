@@ -51,6 +51,7 @@ import {
   UPGRADE_COST_TAG,
 } from './itemUpgrades.js';
 import { normalizeSmithingRules } from './smithingRules.js';
+import { normalizeCardMountRules } from './cardMounts.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -358,6 +359,33 @@ function collectContentProblems(bundle, errors = []) {
     normalizeSmithingRules(b.balance && b.balance.smithing);
   } catch (error) {
     err('balance.smithing', error?.message || 'must be a complete Smithing economy block');
+  }
+  // Card mounts: the block is optional (a bundle without it composes as it
+  // always did) but when authored it must be whole, and the tag it names as
+  // "extractable" must be a registered card-domain tag — otherwise nothing
+  // could ever carry it and every mount would be sealed in silence.
+  if (b.balance && b.balance.equipment && b.balance.equipment.cardMounts !== undefined) {
+    try {
+      const rules = normalizeCardMountRules(b.balance.equipment.cardMounts);
+      const tag = (b.tags || []).find((row) => row && row.id === rules.extractableTag);
+      if (!tag) err('balance.equipment.cardMounts.extractableTag', `names unknown tag '${rules.extractableTag}' — add a row to tags.csv in the card domain`);
+      else if (tag.domain !== 'card') err('balance.equipment.cardMounts.extractableTag', `'${rules.extractableTag}' is in the ${tag.domain} domain, not card — a card could never carry it`);
+      for (const [kind, spec] of Object.entries(rules.kinds)) {
+        for (const accepted of spec.accepts) {
+          if (!(b.tags || []).some((row) => row && row.id === accepted && row.domain === 'card')) {
+            err(`balance.equipment.cardMounts.kinds.${kind}.accepts`, `names unknown card tag '${accepted}'`);
+          }
+        }
+        if (spec.fallback && spec.fallback.cardId && !(b.cards || []).some((card) => card && card.id === spec.fallback.cardId)) {
+          err(`balance.equipment.cardMounts.kinds.${kind}.fallback`, `names unknown card '${spec.fallback.cardId}'`);
+        }
+        if (spec.fallback && spec.fallback.unarmedProfile && !((b.balance.equipment.unarmedProfiles || {})[spec.fallback.unarmedProfile])) {
+          err(`balance.equipment.cardMounts.kinds.${kind}.fallback`, `names unarmed profile role '${spec.fallback.unarmedProfile}', which balance.equipment.unarmedProfiles does not author`);
+        }
+      }
+    } catch (error) {
+      err('balance.equipment.cardMounts', error?.message || 'must be a complete card-mount block');
+    }
   }
   for (const cls of Array.isArray(b.classes) ? b.classes : []) {
     const a = cls && cls.startingFlaskAllocation;

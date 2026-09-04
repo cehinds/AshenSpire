@@ -139,6 +139,14 @@ export const tags = [
     "blurb": "Poisons that punish enemies over time."
   },
   {
+    "id": "extractable",
+    "domain": "card",
+    "label": "Extractable",
+    "color": "C9A227",
+    "glyph": "⚙",
+    "blurb": "A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today."
+  },
+  {
     "id": "bound",
     "domain": "item",
     "label": "Bound",

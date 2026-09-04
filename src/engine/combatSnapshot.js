@@ -18,6 +18,7 @@ export function serializeCombatSnapshot(combat) {
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     itemUpgradeLevels: combat.itemUpgradeLevels,
+    itemMounts: combat.itemMounts,
     equipmentPoolDeficits: combat.equipmentPoolDeficits,
     equipmentChanged: !!combat.equipmentChanged,
     turn: combat.turn,
@@ -64,6 +65,10 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     itemUpgradeLevels: saved.itemUpgradeLevels || Object.fromEntries(
       Object.entries(saved.armamentLevels || {}).map(([id, level]) => [`armament/${id}`, level]),
     ),
+    // Absent on a snapshot written before mounts existed, and left absent:
+    // every reader treats a missing map as "nothing done", and writing `{}`
+    // here would rewrite a snapshot the load already understood.
+    itemMounts: saved.itemMounts,
     equipmentPoolDeficits: saved.equipmentPoolDeficits,
     equipmentChanged: saved.equipmentChanged,
     turn: saved.turn,

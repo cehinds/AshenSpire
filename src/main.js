@@ -13,6 +13,7 @@ import { createRegistries } from './model/registries.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
 import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
 import { grantSmithingReward, smithingPlan } from './model/smithing.js';
+import { smithServicesAt } from './model/cardExtraction.js';
 import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
@@ -1478,6 +1479,10 @@ function enterNode(nodeId) {
         }
         stock.removeCost = Math.ceil(stock.removeCost * pm);
       }
+      // Does a smith travel with him? Rolled once here, on the smith's own
+      // stream (balance.smithing.services.offeredAt.merchant), and kept with
+      // the stock so leaving and re-entering the screen does not roll again.
+      stock.smith = smithServicesAt(registries, 'merchant', rng);
       run.shopStock = stock;
       persist();
       return showShop();
@@ -1566,6 +1571,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       equipmentAttackSlotCount: run.equipmentAttackSlotCount,
       equipmentPoolDeficits: run.equipmentPoolDeficits,
       itemUpgradeLevels: run.itemUpgradeLevels,
+      itemMounts: run.itemMounts,
       armamentLevels: run.armamentLevels,
       deck: run.deck,
       relicIds: run.relics,
@@ -1843,6 +1849,9 @@ function showRest() {
     healMult,
     refill,
     meta: saves.loadMeta(),
+    // Which smith services this Shrine offers — the table's word, resolved
+    // here so the screen reads one answer (a chance of 100 consumes no roll).
+    services: smithServicesAt(registries, 'shrine', rng),
     // HIS LEVEL-VALUE DIAL, resolved at the door of the screen that spends it,
     // so turning it applies to the NEXT level bought — in any run, including
     // one already in progress. Unlike the tier size it needs no new run,

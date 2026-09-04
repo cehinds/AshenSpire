@@ -41,6 +41,7 @@ ranged,card,Ranged,7FA8C9,➶,"Authored ranged presentation; no position system.
 precision,card,Precision,C9A227,◎,"Deliberate aim and finesse; presentation only."
 guile,card,Guile,647B73,◇,"Preparation, misdirection, and stolen openings."
 venom,card,Venom,7FAF63,☠,"Poisons that punish enemies over time."
+extractable,card,Extractable,C9A227,⚙,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today."
 bound,item,Bound,C9A227,⛓,"Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv."
 beast,creature,Beast,7A6F5A,🐾,"Animal, unreasoning, driven by hunger."
 humanoid,creature,Humanoid,B8B0A0,👤,"Two arms, two legs, and a reason for being here."

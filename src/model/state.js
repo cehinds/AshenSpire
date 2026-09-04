@@ -547,6 +547,13 @@ export const RUN_SHAPE = [
   { key: 'armamentLevels', type: 'object', optional: true },
   { key: 'smithingRewardClaims', type: 'array', optional: true },
   { key: 'lastSmithingReceipt', type: 'object', optional: true },
+  // Card mounts (owner ruling, 2026-09-03): what a smith has done to the
+  // mounts on the run's items, the last such transaction, and a counter that
+  // keeps extracted-card instance ids unique. All optional — absent means
+  // untouched — so no migration has to invent them.
+  { key: 'itemMounts', type: 'object', optional: true },
+  { key: 'lastMountReceipt', type: 'object', optional: true },
+  { key: 'mountTransactions', type: 'number', optional: true },
   { key: 'pendingReward', type: 'object', optional: true },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
@@ -653,6 +660,28 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
         problems.push(`itemUpgradeLevels.${itemRef || '<empty>'} must be a namespaced item ref with a non-negative integer tier`);
       }
     }
+  }
+  if (run.itemMounts !== undefined && typeOk(run.itemMounts, 'object')) {
+    for (const [itemRef, entries] of Object.entries(run.itemMounts)) {
+      if (!/^(armament\/[^/]+|armor\/[^/]+\/[^/]+)$/.test(itemRef)) {
+        problems.push(`itemMounts.${itemRef || '<empty>'} must be a namespaced equipment ref`);
+        continue;
+      }
+      if (!entries || typeof entries !== 'object' || Array.isArray(entries)) {
+        problems.push(`itemMounts.${itemRef} must be an object of mount entries`);
+        continue;
+      }
+      for (const [mountKey, entry] of Object.entries(entries)) {
+        const sound = mountKey && entry && typeof entry === 'object' && !Array.isArray(entry)
+          && (entry.card === null || (typeof entry.card === 'string' && entry.card))
+          && (entry.upgraded === undefined || typeof entry.upgraded === 'boolean')
+          && (entry.extractions === undefined || (Number.isInteger(entry.extractions) && entry.extractions >= 0));
+        if (!sound) problems.push(`itemMounts.${itemRef}.${mountKey || '<empty>'} must be { card: id|null, upgraded?, extractions? }`);
+      }
+    }
+  }
+  if (run.mountTransactions !== undefined && (!Number.isInteger(run.mountTransactions) || run.mountTransactions < 0)) {
+    problems.push('mountTransactions must be a non-negative integer');
   }
   if (run.smithingRewardClaims !== undefined && Array.isArray(run.smithingRewardClaims)) {
     const seenClaims = new Set();
