@@ -4,10 +4,3 @@
 build/AshenSpire.html -text
 dist/AshenSpire.html -text
 AshenSpire.html -text
-
-# AgentOps generated views and their published mirrors are also byte-identity
-# gates. Keep their committed LF bytes unchanged in Windows clean clones.
-.agentops/generated/** -text
-hud/** -text
-review-approval-hub/** -text
-.github/ISSUE_TEMPLATE/help-desk-ticket.yml -text

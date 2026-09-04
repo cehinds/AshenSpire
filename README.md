@@ -61,16 +61,9 @@ player-facing changes. The current Smith modal write-up is
 **[CHANGELOG.md](CHANGELOG.md)** — what changed, newest first, each entry
 naming the pull request that landed it and the build number it shipped in.
 
-**[Development governance](docs/governance/README.md)** — the versioned
-authority, lifecycle, ticket, quality, decision, and runbook control plane.
-The legacy **[coordination workflow](docs/COORDINATION-WORKFLOW.md)** remains a
-compatibility entry point. The **[Art integration runbook](docs/governance/RUNBOOKS/art.md)**
-defines the Proposal → Approved → Active lifecycle and, when active, the
-mandatory integration package triggered by an approved art suggestion without
-granting implementation, publication, or release authority. Its independently
-reviewed governance head is Approved before canonical integration and Active
-when that exact head is contained in canonical `dev`; no merge-time status or
-version edit is required.
+**[Working rules](AGENTS.md)** — how contributors and AI agents work here:
+one task per branch, draft pull requests into `dev`, and only the owner merges
+to `main`.
 
 **[Architecture map](docs/ARCHITECTURE-MAP.md)** — the stable
 composition/component redesign contract. The [current-`dev` architecture
@@ -84,22 +77,9 @@ beside it. This is a **development preview**, not a release, tag, or
 production approval. Release status remains governed separately and is currently
 **RED**.
 
-Work reaches `main` only through the promotion gates in
-[decision 0009](docs/governance/DECISIONS/0009-promotion-gates-a-through-f.md);
-`dev` is the integration branch and is not published. A change merged to `dev`
-is therefore not yet visible at the preview URL.
-
-### Owner-facing views
-
-Both are generated from validated repository state by `opsctl render` and
-drift-gated by `opsctl verify`, so neither can quietly diverge from the control
-plane it reports on:
-
-- **[Review &amp; Approval Hub](https://cehinds.github.io/AshenSpire/review-approval-hub/)**
-  — what needs the owner, every ticket with its authority and event chain,
-  live writer leases, the authority tiers, and where a question goes.
-- **[Owner HUD](https://cehinds.github.io/AshenSpire/hud/)** — the compact
-  read-only status projection, with compare-and-swap decision links.
+Work reaches `main` only when the owner merges it; `dev` is the integration
+branch and is not published. A change merged to `dev` is therefore not yet
+visible at the preview URL.
 
 For offline play, download [`AshenSpire.html`](AshenSpire.html) from the
 repository root and double-click it. It is a self-contained file and requires

@@ -52,13 +52,10 @@ if (process.argv.includes('--selftest')) {
         replace: "el.style.cssText = 'width:15rem;height:19rem;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';",
         expectRed: /class sprite geometry changed with Text size/,
       },
-      {
-        name: 'the equipped combat player sprite returns to rem geometry',
-        file: 'src/ui/assets.js',
-        find: "el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';",
-        replace: "el.style.cssText = 'width:15rem;height:19rem;flex:0 0 auto;position:relative;';",
-        expectRed: /player sprite geometry changed with Text size/,
-      },
+      // The fighter used to have its own fixed-px box in playerSprite(); since
+      // AS-HD-040 a fight draws the class sprite, so the class-sprite plant
+      // above is the one that guards the combat figure too. A plant against a
+      // string that is no longer in the file can never turn red.
       {
         name: 'the quick-nav tap floor becomes a hard ceiling around Text XL',
         file: 'styles/ui.css',
@@ -329,7 +326,6 @@ async function main() {
     }
     if (!assets.includes('const px = (value) => `${value}px`;')) failures.push(`${ownershipKind} ownership seam missing: sprite px emitter`);
     if (!assets.includes("width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;")) failures.push(`${ownershipKind} ownership seam missing: class sprite fixed px geometry`);
-    if (!assets.includes("width:150px;height:190px;flex:0 0 auto;position:relative;")) failures.push(`${ownershipKind} ownership seam missing: equipped player sprite fixed px geometry`);
     // #498: this pinned the pre-rework copy after the Text-size rework shipped
     // the browser-baseline wording in both settings.js and the built artifact,
     // so the check could only fail — masked in CI because the `tests` job died

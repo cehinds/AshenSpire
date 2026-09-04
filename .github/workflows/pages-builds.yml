@@ -5,9 +5,9 @@
 #   /<branch>/<ordinal>/   that exact build, playable (byte-identical to the commit's AshenSpire.html)
 #   /<branch>/latest/      alias for the branch's newest build
 #
-# Everything the site served before (/AshenSpire.html, /hud/, /review-approval-hub/,
-# /docs/…) is still served: the whole `main` tree is the base of the artifact and the
-# only replaced file is the root index.html (main's own is kept at /index-game.html).
+# Everything the site served before (/AshenSpire.html, /docs/…) is still served:
+# the whole `main` tree is the base of the artifact and the only replaced file is
+# the root index.html (main's own is kept at /index-game.html).
 #
 # PUBLICATION IS ITS OWN AUTHORITY (AGENTS.md: push and publication/Pages/deploy are
 # separate protected transitions; local readiness — or push authority — never implies
@@ -84,14 +84,10 @@ jobs:
       # /test /release served stale builds for hours with every run green.
       #
       # A first attempt at this fixed it by publishing automatically behind a
-      # repository-variable switch. Codex refused that twice and the contract is
-      # why: `.agentops/governance/promotion-gates.json` marks Pages deployment a
-      # Gate F `separate_action` with `authority_is_per_action: true`, and its
-      # rules say no gate grants Pages authority "except Gate F, and there only
-      # per individual action", and that Gate F "cannot be delegated, waived or
-      # satisfied by a deputy". A standing switch IS a delegation to every future
-      # push. So this step reports; it does not publish, and nothing here should
-      # ever grow the ability to.
+      # repository-variable switch. That was rejected: publishing the site is an
+      # owner action, taken deliberately each time, and a standing switch is a
+      # delegation to every future push. So this step reports; it does not
+      # publish, and nothing here should ever grow the ability to.
       # SAY WHAT THIS RUN DID, BECAUSE NOBODY WAS BEING TOLD.
       #
       # #553: after #543 correctly took the deploy credential off the push path,
@@ -99,13 +95,10 @@ jobs:
       # /test /release served stale builds for hours with every run green.
       #
       # A first attempt fixed that by publishing automatically behind a repository
-      # variable. Codex refused it twice and the contract is why:
-      # `.agentops/governance/promotion-gates.json` makes "Pages source or
-      # deployment" a Gate F `separate_action` with `authority_is_per_action: true`,
-      # its rules grant Pages authority "only per individual action", and Gate F
-      # "cannot be delegated, waived or satisfied by a deputy". A standing switch IS
-      # a delegation to every future push. So this step reports; it does not
-      # publish, and nothing here should ever grow the ability to.
+      # variable. That was rejected: publishing the site is an owner action, taken
+      # deliberately each time, and a standing switch is a delegation to every
+      # future push. So this step reports; it does not publish, and nothing here
+      # should ever grow the ability to.
       - name: Report what this run did with the site
         env:
           GH_TOKEN: ${{ github.token }}

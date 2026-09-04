@@ -1,18 +1,10 @@
 name: dev preview
 
-# GitHub Pages serves exactly one source per repository, and this repository's
-# is `main` (decision 0005; switching it is owner-exclusive and needs a recorded
-# rollback). So `dev` has no hosted URL, and Gate B's hosted verification cannot
-# complete for a dev delivery.
+# GitHub Pages serves `main`, so `dev` has no hosted URL. This workflow gives
+# every push to `dev` (and every PR targeting it) an inspectable artifact of the
+# playable build at that exact commit, without deploying or publishing anything.
 #
-# This is the workable substitute: every push to `dev`, and every PR targeting
-# it, builds nothing — the Hub and HUD are already generated and committed — and
-# attaches the owner-facing surfaces as a downloadable artifact, alongside a
-# verification that they are in sync with the control plane at that exact SHA.
-#
-# It is deliberately NOT a deployment. It publishes nothing, touches no ref, and
-# claims no Pages authority. Gate B still records hosted verification as UNKNOWN
-# for a dev SHA; this makes the artifact inspectable in the meantime.
+# It is deliberately NOT a deployment: it publishes nothing and touches no ref.
 
 on:
   push:
@@ -38,17 +30,11 @@ jobs:
         with:
           node-version: '20'
 
-      # An artifact of a drifted view would be worse than none: it would look
-      # authoritative while disagreeing with the state it reports on.
-      - name: Verify the surfaces match the control plane at this SHA
-        run: node .agentops/tools/opsctl.mjs verify
-
       # #498: 28 plant sites had drifted and only one gate went red — the rest
-      # stayed green while unable to fail, because the only detector was each
-      # gate's own --selftest in the dispatch-only lane. This is the cheap
-      # static detector (no execution, no browser, <1s), so it runs on every
-      # PR: any NEW drifted find-string fails here the day the refactor lands,
-      # and the checked-in baseline holds the known backlog to exactly itself.
+      # stayed green while unable to fail. This cheap static detector (no
+      # execution, no browser, <1s) runs on every PR: any NEW drifted
+      # find-string fails here the day the refactor lands, and the checked-in
+      # baseline holds the known backlog to exactly itself.
       - name: No plant site has drifted beyond the recorded baseline
         run: node tools/plantsites.mjs --check
 
@@ -85,12 +71,10 @@ jobs:
       - name: The file a player is handed matches the tree that claims it
         run: node tools/verify-shipped.mjs
 
-      - name: Collect the owner-facing surfaces
+      - name: Collect the playable build
         run: |
           set -euo pipefail
           mkdir -p preview
-          cp -r review-approval-hub preview/review-approval-hub
-          cp -r hud preview/hud
           cp AshenSpire.html preview/AshenSpire.html
           cp index.html preview/index.html
           {
@@ -99,11 +83,10 @@ jobs:
             echo "ref:      ${GITHUB_REF}"
             echo "built:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo
-            echo "Open review-approval-hub/index.html or hud/index.html locally."
+            echo "Open AshenSpire.html locally to play this exact commit."
             echo
             echo "This is an inspection artifact, not a deployment. Pages serves main;"
-            echo "dev has no hosted URL, so Gate B hosted verification stays UNKNOWN"
-            echo "for this SHA. See docs/governance/DECISIONS/0005-dev-delivery-promotion-and-pages.md"
+            echo "dev has no hosted URL."
           } > preview/README.txt
           echo "collected $(find preview -type f | wc -l) files"
 

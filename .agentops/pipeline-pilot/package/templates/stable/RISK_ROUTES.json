@@ -1,9 +1,0 @@
-{
-  "schema": "task-pipeline-risk-routes/v1",
-  "routes": {
-    "analysis": ["intake", "ready", "executing", "closed"],
-    "reversible-change": ["intake", "ready", "executing", "review", "integrate", "closed"],
-    "user-visible": ["intake", "ready", "executing", "review", "integrate", "delivered", "closed"],
-    "protected": ["intake", "ready", "executing", "review", "integrate", "delivered", "closed"]
-  }
-}
