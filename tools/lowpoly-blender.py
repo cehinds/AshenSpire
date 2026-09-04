@@ -242,7 +242,7 @@ def box(name, c, sx, sy, sz, m):
     return new_obj(name, v, f, m)
 
 def sphere(name, c, r, m, n=8, k=5):
-    n, k = rn(n), rn(k)
+    k = rn(k)                       # loft scales n itself; scaling it here too squares it
     rings = [((c[0], c[1], c[2] - r), 0, 0)]
     for i in range(1, k):
         a = math.pi * i / k
@@ -926,7 +926,8 @@ def reaver_boots(J, M): return [ob for ob, _ in boots("reaver", J, M["boot"], pa
 def starseer_hat(J, M):
     m = paint("starseer", "hat", "cloth")
     brim = loft("star_brim", [((0, 0, 1.83), 0.14, 0.14), ((0, 0.02, 1.755), 0.46, 0.36), ((0, 0.03, 1.545), 0.86, 0.62), ((0, 0.03, 1.575), 0.86, 0.62), ((0, 0.02, 1.785), 0.46, 0.36), ((0, 0, 1.855), 0.14, 0.14)], m, n=14, cap_bottom=False, fold=0.10, folds=5)
-    crown = loft("star_crown", [((0, 0, 1.79), 0.21, 0.20), ((0.0, 0.0, 2.02), 0.17, 0.16), ((-0.04, 0.01, 2.26), 0.12, 0.115), ((-0.11, 0.03, 2.46), 0.078, 0.074), ((-0.24, 0.05, 2.58), 0.044, 0.042), ((-0.38, 0.06, 2.585), 0.02, 0.02), ((-0.46, 0.06, 2.54), 0, 0)], m, n=9, cap_bottom=True, sq=0.35, fold=0.04, folds=3)
+    # the frame tops out at cz + ortho / 2 = 2.50: the crown leans over well below it
+    crown = loft("star_crown", [((0, 0, 1.79), 0.21, 0.20), ((0.0, 0.0, 1.99), 0.17, 0.16), ((-0.04, 0.01, 2.19), 0.12, 0.115), ((-0.12, 0.03, 2.34), 0.078, 0.074), ((-0.26, 0.05, 2.42), 0.044, 0.042), ((-0.40, 0.06, 2.415), 0.02, 0.02), ((-0.47, 0.06, 2.37), 0, 0)], m, n=9, cap_bottom=True, sq=0.35, fold=0.04, folds=3)
     band = loft("star_band", [((0, 0, 1.815), 0.205, 0.195), ((0, 0, 1.90), 0.192, 0.182)], mat("star_hatband", tone("starseer", (86, 52, 58)), rough=0.8), n=10)
     return [brim, crown, band, pyramid("star_hatgem", (0, -0.196, 1.858), 0.05, 0.06, M["gold"])]
 
