@@ -30,7 +30,9 @@ import {
   selectionSectionFace,
 } from '../components/creationCards.js';
 
-export function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false }) {
+export function mountCustomize(app, {
+  registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false, shotPose = null,
+}) {
   const firstClass = registries.classes.all()[0];
   const creationLayout = registries.characterCreation.layout || {};
   const visibleModes = creationModeViews(registries);
@@ -53,6 +55,21 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     classPreviewPercent: creationLayout.classPreviewPercent,
     equipmentAutoAdvance: creationLayout.equipmentAutoAdvance,
   };
+
+  // A capture can pose the class figure: ?shot=customize&shotClass=rogue&shotTint=ember.
+  // Applied here so everything derived from classId (relic, kit) follows the
+  // pose rather than the default. Unknown ids are ignored — a screenshot list
+  // should not be able to fail a boot.
+  if (shotPose) {
+    if (shotPose.classId && registries.classes.all().some((c) => c.id === shotPose.classId)) {
+      state.classId = shotPose.classId;
+      state.startingRelicId = registries.classes.get(shotPose.classId).startingRelic;
+    }
+    if (shotPose.tint && PORTRAIT_TINTS.some((t) => t.id === shotPose.tint)) {
+      state.tint = shotPose.tint;
+    }
+  }
+
   let previewAttributes = null;
   let pointBuyOverlay = null;
   let pointBuyReturnFocus = null;

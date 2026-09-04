@@ -6,6 +6,7 @@
 // with a CREDITS.md row — no game-code changes.
 
 import { balance } from '../content/balance.js';
+import { medallionPct } from '../content/classArtAnchors.js';
 import { assetUrl } from './assetmap.js';
 
 // Sprite size tiers (the display dimensions each enemy def's `size` selects) are
@@ -149,11 +150,14 @@ const CLASS_SVG = {
     </svg>`,
 };
 
-// Rendered class sprites (tools/sprites-blender.py → assets/sprites/): one
-// transparent PNG per class × accent tint. Missing/unloadable art falls back
-// to the inline SVG silhouette, so the single-file dist and file:// play keep
-// working with zero configuration. Art credit: procedurally generated in
-// Blender by this repo (see CREDITS.md).
+// Class sprites (assets/sprites/): one transparent WebP per class × accent
+// tint. Missing/unloadable art falls back to the inline SVG silhouette, so the
+// single-file dist and file:// play keep working with zero configuration.
+//
+// Art credit: these are NO LONGER Blender renders. They are AI-generated with
+// ChatGPT Codex and cut out from the class concept art by
+// tools/concept-cutout.mjs — see the note at the top of CREDITS.md. The enemy
+// sprites in the same folder are still Blender output.
 // Derived, never restated: the tint slots ARE the customization tints, and the
 // classes with rendered art ARE the ones with a silhouette builder. Hand-listing
 // them again let the sprite lookup silently drift from the content it serves.
@@ -165,8 +169,10 @@ function renderedSpriteUrl(classId, tintId) {
   return assetUrl(`assets/sprites/${classId}_${t}.webp`);
 }
 
-// Player sprite styles: 'rendered' (Blender PNG), 'classic' (inline SVG
-// silhouette), 'glyph' (sigil-in-a-panel). Chosen per character.
+// Player sprite styles: 'rendered' (the painted class figure, WebP), 'classic'
+// (inline SVG silhouette), 'glyph' (sigil-in-a-panel). Chosen per character.
+// "Blender PNG" until 2026-09-03, which stopped being true when the class art
+// was replaced — the same stale description as the lobby tooltip one file over.
 export const SPRITE_STYLES = [
   { id: 'rendered', name: 'Rendered' },
   { id: 'classic', name: 'Classic' },
@@ -204,7 +210,17 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   img.addEventListener('error', fallbackToSvg); // dist / file:// → SVG
   el.appendChild(img);
   // The chosen sigil rides the rendered art as a chest medallion overlay.
-  if (sigil) {
+  //
+  // WHERE IT SITS IS PER CLASS AND MEASURED (src/content/classArtAnchors.js).
+  // This was one shared `top:53%` for all four, which is a claim that every
+  // figure keeps its chest at the same height — true of the Blender builders,
+  // one rig in four palettes, and false of four separately painted figures. At
+  // 53% the disc landed on the Starseer's face under the hat brim and inside
+  // the Herald's hood opening. No anchor means NO OVERLAY: a default would be
+  // the same shared assumption, and it would cover an unmeasured figure's face
+  // in silence rather than showing up as a missing medallion.
+  const medTop = medallionPct(classId);
+  if (sigil && medTop != null) {
     const med = document.createElement('span');
     med.textContent = sigil;
     // `scaleX(-1)` UNDOES the figure mirror this element inherits (styles/ui.css,
@@ -212,7 +228,7 @@ export function classSprite(classId, tint, sigil, tintId, style) {
     // for a GLYPH: a sigil is text, and mirrored text reads as a rendering fault.
     // The medallion is centred on the chest, so flipping it back moves nothing.
     med.style.cssText =
-      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%) scaleX(-1);` +
+      `position:absolute;left:50%;top:${medTop}%;transform:translate(-50%,-50%) scaleX(-1);` +
       `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
       'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
     el.appendChild(med);
@@ -267,16 +283,23 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
  * With `equip` ({ armourId, rightId, leftId, rightMirror, leftMirror }) it composites the layered
  * equipment figure; without it, the single rendered class PNG as before.
  */
-export function playerSprite(customization = {}, classId, equip = null) {
+// THE FIGURE YOU FIGHT AS IS THE FIGURE YOU PICKED. Until 2026-09-03 this took
+// a third argument — the equipment spec — and, whenever the player had gear and
+// the style was `rendered`, drew equippedFigure() instead: the low-poly Blender
+// body in the armour set's palette with the held weapons composited on. That
+// was the right call while the class art was ALSO Blender output. Once the
+// class figures became paintings (#590) it meant the character builder showed
+// one figure and the fight drew a different one, in a different style — and the
+// Rogue's combat body was the Reaver's rig repainted, so two classes fought as
+// the same shape. Owner's instruction: combat uses the class sprites.
+//
+// What this gives up, stated rather than hidden: the armour-set palette and the
+// held-weapon overlay no longer show on the fighter. equippedFigure() still
+// exists and the Armoury preview (screens/equipment.js) still calls it, so the
+// composite is not dead — it is just no longer the combat figure.
+export function playerSprite(customization = {}, classId) {
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || 'rendered';
-  if (equip && spritesEnabled && style === 'rendered' && SPRITE_CLASSES.includes(classId)) {
-    const el = document.createElement('div');
-    el.className = 'class-sprite';
-    el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';
-    el.appendChild(equippedFigure({ classId, ...equip }));
-    return el;
-  }
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
     return classSprite(classId, tint, customization.glyph, customization.tint, style);
   }

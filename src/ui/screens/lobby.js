@@ -257,7 +257,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       b.className = `mod-chip lb-style${st.id === state.spriteStyle ? ' on' : ''}`;
       b.style.cssText = 'padding:5px 12px;font-size:12px;';
       b.innerHTML = `<b>${esc(st.name)}</b>`;
-      attachTooltip(b, () => `<div class="tt-title">${esc(st.name)}</div>${st.id === 'rendered' ? 'The rendered low-poly figure.' : st.id === 'classic' ? 'The classic hand-drawn silhouette.' : 'Your sigil in a tinted panel.'}`);
+      attachTooltip(b, () => `<div class="tt-title">${esc(st.name)}</div>${st.id === 'rendered' ? 'The painted class figure.' : st.id === 'classic' ? 'The classic hand-drawn silhouette.' : 'Your sigil in a tinted panel.'}`);
       b.addEventListener('click', () => {
         state.spriteStyle = st.id;
         localStorage.setItem('sote_lan_style', st.id);

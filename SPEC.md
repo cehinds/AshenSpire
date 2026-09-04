@@ -61,18 +61,24 @@ the module**, and the load-bearing runtime claim (*no AI runs while you play*) i
 named string** that both the player and the falsifier are given — it previously existed twice,
 in different words, so no comparison could ever have caught them diverging.
 
-**`approved: true` since 2026-08-07 — and this spec says so because it is true.** The wording
-was Constantine's call at release and he made it; the flag records whose words these are and
-**nothing reads it to decide whether to render** — the acknowledgement always shows. Approval
-is a release gate (§9), not a display condition. **The flag is about THIS wording:** any edit
-to the text returns it to `false` in the same act, or it stops recording anything.
+**The approval flag lives in `src/content/aiDisclosure.js` and this spec no longer restates
+its value.** Read it there, or run `node tools/ai-disclosure.mjs`, which prints the current
+state. The flag records whose words the wording is and **nothing reads it to decide whether to
+render** — the acknowledgement always shows. Approval is a release gate (§9), not a display
+condition. **The flag is about THIS wording:** any edit to the text returns it to `false` in
+the same act, or it stops recording anything.
 
-> **This sentence is a SECOND COPY of a boolean and it went stale the day the boolean moved**
-> *(Saga, 2026-08-07)*. `docs/SPEC-RECONCILE.md` carries a third. Nothing syncs the three —
-> Law 1 clause 2, in the file that states the arrangement. **The honest fix is for the spec to
-> cite the module rather than restate its value**; I am correcting the value rather than
-> restructuring another seat's file, and naming the defect here so the next reader does not
-> have to rediscover it.
+> **This paragraph used to be a SECOND COPY of that boolean, and it went stale exactly as
+> predicted** *(Saga, 2026-08-07: "this sentence is a second copy of a boolean and it went
+> stale the day the boolean moved")*. It said `approved: true` while the module said `false`,
+> giving the release gate two authoritative answers.
+>
+> **Saga named the honest fix and it is now done: the spec cites the module rather than
+> restating its value.** The 2026-08-07 note declined it only to avoid restructuring another
+> seat's file. `docs/SPEC-RECONCILE.md` still carries a third prose copy; it is a historical
+> row recording what change #73 did, and it is annotated rather than rewritten — but it is
+> the remaining copy, and it will go stale the next time the flag moves.
+> *(AS-HD-040, 2026-09-03.)*
 
 *Falsify:* `node tools/ai-disclosure.mjs --check` after the last bundle rebuild — a stale
 bundle ships an acknowledgement that disagrees with the store page. The runtime claim carries
