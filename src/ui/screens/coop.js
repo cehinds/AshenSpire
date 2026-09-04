@@ -118,7 +118,23 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   // Every game intent carries the ACTIVE seat (`as`); the server validates
   // ownership and falls back to the connection's main seat.
-  const send = (obj) => conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
+  // The Animated style is offered in the lobby, so a co-op figure has to swing
+  // here too. Nothing on the wire names an attacker — the digest carries no
+  // cardPlayed, and receipts name only the target — but the seat playing the card
+  // is known right here, so the swing rides the local play as it is sent.
+  const send = (obj) => {
+    if (obj.t === 'playCard') swingSeat(obj.cardInstanceId);
+    return conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
+  };
+  const swingSeat = (cardInstanceId) => {
+    const seat = app.querySelector(`[data-seat="${CSS.escape(String(me))}"] .sprite`);
+    if (!seat) return;
+    const sc = latestWireSnap?.scene;
+    const mine = sc?.kind === 'combat' ? (sc.players || []).find((pl) => pl.id === me) : null;
+    const card = (mine?.hand || []).find((c) => c.instanceId === cardInstanceId);
+    const def = card ? cardDef(card) : null;
+    playPoseOn(seat, def && def.type === 'attack' ? 'attack' : 'guard', 420);
+  };
 
   const sendFlaskUse = ({ slot = null, targetId = undefined, chargeKind = null } = {}) => send({
     t: 'flaskIntent',
@@ -1096,9 +1112,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (box && !box.classList.contains('dead')) {
           box.classList.add('acting');
           setTimeout(() => box.classList.remove('acting'), 420);
-          // The Animated style is offered in the lobby, so it has to move here
-          // too: without this a co-op player who picked it fought as a statue.
-          playPoseOn(box, 'attack', 420);
         }
         await sleep(400);
       }

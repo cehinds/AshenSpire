@@ -30,6 +30,12 @@ const key = (classId, pose, tint) => `${classId}_${pose}_${tint}`;
 // and the drift carried into later fights.
 const ATTACK_SEQUENCE = ['attack1', 'attack2', 'attack3'];
 
+// Where a figure is up to in its swings. NOT on the stage: combat rebuilds the
+// player zone before every timeline, so a stage-local counter was new — and back
+// at attack1 — for every single attack. Keyed by who the figure is, it outlives
+// the DOM the figure is drawn into.
+const swings = new Map();
+
 /** The frame row for one pose, or null when this build does not ship it. */
 export function poseFrame(classId, pose, tint) {
   return POSE_FRAMES.get(key(classId, pose, tint)) || null;
@@ -59,7 +65,7 @@ function place(img, frame) {
  * `el` fills its parent and draws the idle frame. `play(pose, ms)` holds another
  * frame for ms, then settles back to idle; a second call replaces the first.
  */
-export function createPoseStage(classId, tint) {
+export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
   const idle = poseFrame(classId, 'idle', tint);
   if (!idle) return null;
   const { width: cw, height: ch } = POSE_CANVAS;
@@ -101,12 +107,12 @@ export function createPoseStage(classId, tint) {
 
   let timer = null;
   let current = 'idle';
-  let swing = 0;
-  const swings = ATTACK_SEQUENCE.filter((p) => poseFrame(classId, p, tint));
+  const throwable = ATTACK_SEQUENCE.filter((p) => poseFrame(classId, p, tint));
   const resolve = (pose) => {
-    if (pose !== 'attack') return pose;
-    if (!swings.length) return pose;
-    return swings[swing++ % swings.length];
+    if (pose !== 'attack' || !throwable.length) return pose;
+    const n = swings.get(id) || 0;
+    swings.set(id, n + 1);
+    return throwable[n % throwable.length];
   };
   const settle = () => {
     if (timer) { clearTimeout(timer); timer = null; }
@@ -139,6 +145,8 @@ export function createPoseStage(classId, tint) {
       return true;
     },
     settle,
+    /** Who this figure is, for the swing rotation that outlives its DOM. */
+    id,
     /** Keep the preloaded frames reachable for as long as the stage lives. */
     warmed,
   });
