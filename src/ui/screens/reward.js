@@ -46,7 +46,7 @@ import { esc, attachTooltip } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
-import { flaskIdentityHtml } from '../components/flask.js';
+import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, resolveContinue, unseenIds } from '../../model/rewardplan.js';
@@ -180,7 +180,15 @@ export function mountRewards(app, {
       case 'flask': {
         const def = registries.flasks.get(row.flaskId);
         if (row.blockedBy === 'slots') return { title: 'Flask', body: `A ${esc(def.name)} — but your flask slots are full. It stays in the mud.` };
-        return { title: 'Flask', body: `<b>${flaskIdentityHtml(def)}</b>` };
+        // WHAT IT DOES, ON THE ROW (Constantine, 2026-09-04: "I have no idea
+        // what this potion does"). The relic row has always carried its
+        // sentence and the shop shows `textTemplate`; a flask offered as
+        // spoils showed a name and an icon alone, and Take was a blind choice.
+        // `flaskDetailLines` is that sentence's one home (components/flask.js),
+        // the same lines the flask menu and its inspect door read — not a
+        // tooltip: a player deciding whether to take it must SEE it.
+        const lines = flaskDetailLines(def).map((line) => esc(line)).join('<br>');
+        return { title: 'Flask', body: `<b>${flaskIdentityHtml(def)}</b>${lines ? `<br>${lines}` : ''}` };
       }
       case 'armament': {
         // The copy tracks the STATE, because the state is now true: nothing is

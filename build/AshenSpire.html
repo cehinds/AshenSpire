@@ -51760,7 +51760,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '417cfe6740';
+const SOURCE = '2954b92ed1';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -51794,7 +51794,7 @@ const SOURCE = '417cfe6740';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '58';
+const ORDINAL = '59';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -70476,7 +70476,7 @@ const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { sfx } = require("src/ui/sfx.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
-const { flaskIdentityHtml } = require("src/ui/components/flask.js");
+const { flaskIdentityHtml, flaskDetailLines } = require("src/ui/components/flask.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { rewardPlan, resolveContinue, unseenIds } = require("src/model/rewardplan.js");
@@ -70610,7 +70610,15 @@ function mountRewards(app, {
       case 'flask': {
         const def = registries.flasks.get(row.flaskId);
         if (row.blockedBy === 'slots') return { title: 'Flask', body: `A ${esc(def.name)} — but your flask slots are full. It stays in the mud.` };
-        return { title: 'Flask', body: `<b>${flaskIdentityHtml(def)}</b>` };
+        // WHAT IT DOES, ON THE ROW (Constantine, 2026-09-04: "I have no idea
+        // what this potion does"). The relic row has always carried its
+        // sentence and the shop shows `textTemplate`; a flask offered as
+        // spoils showed a name and an icon alone, and Take was a blind choice.
+        // `flaskDetailLines` is that sentence's one home (components/flask.js),
+        // the same lines the flask menu and its inspect door read — not a
+        // tooltip: a player deciding whether to take it must SEE it.
+        const lines = flaskDetailLines(def).map((line) => esc(line)).join('<br>');
+        return { title: 'Flask', body: `<b>${flaskIdentityHtml(def)}</b>${lines ? `<br>${lines}` : ''}` };
       }
       case 'armament': {
         // The copy tracks the STATE, because the state is now true: nothing is
