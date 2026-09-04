@@ -135,7 +135,9 @@ parts.sort((a, b) => b.area - a.area);
 const big = parts[0]?.area || 1;
 const bodyFloor = Math.max(minArea * W * H, 0.22 * big);
 const groups = parts.filter(b => b.area >= bodyFloor)
-  .map(b => ({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, area: b.area, ids: [b.id] }));
+  // bodyY0/bodyY1 stay the body's own bounds: a spark below the feet or a staff
+  // above the head must not move where this figure stands
+  .map(b => ({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, bodyY0: b.y0, bodyY1: b.y1, area: b.area, ids: [b.id] }));
 for (const b of parts.filter(b => b.area < bodyFloor)) {
   let best = null, bestGap = Infinity;
   for (const g of groups) {
@@ -157,8 +159,8 @@ for (const g of [...groups].sort((a, b) => a.y0 - b.y0)) {
 // Each row of a sheet stands on its own floor; a figure ending above its row's
 // floor is off the ground on purpose and keeps that gap.
 for (const r of rows) {
-  const floor = Math.max(...r.items.map(i => i.y1));
-  for (const g of r.items) g.lift = floor - g.y1;
+  const floor = Math.max(...r.items.map(i => i.bodyY1));
+  for (const g of r.items) g.lift = floor - g.bodyY1;
 }
 const figures = rows.flatMap(r => r.items.sort((a, b) => a.x0 - b.x0));
 console.log(`${basename(sheetPath)}: ${figures.length} figures in ${rows.length} row(s)`);
@@ -169,9 +171,14 @@ if (figures.length < poses.length) {
 
 // ---- lay them out on one canvas --------------------------------------------------
 const PAD = 24;
-const maxW = Math.max(...figures.map(f => f.x1 - f.x0 + 1));
-const maxH = Math.max(...figures.map(f => f.y1 - f.y0 + 1));
-const maxLift = Math.max(...figures.slice(0, poses.length).map(f => f.lift));
+const used = figures.slice(0, poses.length);
+const maxW = Math.max(...used.map(f => f.x1 - f.x0 + 1));
+// above the floor line and below it are measured apart: a figure is placed by where
+// its feet are, and anything hanging past them needs room of its own
+const maxAbove = Math.max(...used.map(f => f.bodyY1 - f.y0 + 1));
+const maxBelow = Math.max(0, ...used.map(f => f.y1 - f.bodyY1));
+const maxLift = Math.max(...used.map(f => f.lift));
+const maxH = maxAbove + maxBelow;
 mkdirSync(outDir, { recursive: true });
 const mfPath = join(outDir, 'lowpoly-renders.manifest.json');
 const prev = has('--append') && existsSync(mfPath) ? JSON.parse(readFileSync(mfPath, 'utf8')) : null;
@@ -179,7 +186,7 @@ const prev = has('--append') && existsSync(mfPath) ? JSON.parse(readFileSync(mfP
 // canvas declaration, and offsets, roots and floors are all read against it. An
 // appended class either fits the canvas already there or the run stops and says so.
 const forced = arg('--canvas', null);
-let CW = maxW + PAD * 2, CH = maxH + maxLift + PAD * 2;
+let CW = maxW + PAD * 2, CH = maxAbove + maxLift + maxBelow + PAD * 2;
 if (forced) {
   const [fw, fh] = forced.split(/[x,]/).map(Number);
   if (!(fw > 0 && fh > 0)) { console.error('painted-poses: --canvas wants WxH, e.g. 720x900'); process.exit(2); }
@@ -194,18 +201,20 @@ if (forced) {
 } else if (prev?.canvas?.w) { CW = prev.canvas.w; CH = prev.canvas.h; }
 // the floor sits PAD above the bottom, so a figure needs its own height, its lift
 // off the floor, and that padding — anything less places it off the top edge
-if (CW < maxW || CH < maxH + maxLift + PAD) {
-  console.error(`painted-poses: these figures need at least ${maxW + PAD * 2}x${maxH + maxLift + PAD * 2}, but the canvas is ${CW}x${CH}.`);
+if (CW < maxW || CH < maxAbove + maxLift + maxBelow + PAD) {
+  console.error(`painted-poses: these figures need at least ${maxW + PAD * 2}x${maxAbove + maxLift + maxBelow + PAD * 2}, but the canvas is ${CW}x${CH}.`);
   console.error('  Cut every class in one run, or give them all the same --canvas WxH.');
   process.exit(1);
 }
-const ground = CH - PAD;                        // the floor every pose stands on
+const ground = CH - PAD - maxBelow;             // the floor every pose stands on
 const renders = [];
 for (let i = 0; i < poses.length; i++) {
   const f = figures[i], pose = poses[i];
   const fw = f.x1 - f.x0 + 1, fh = f.y1 - f.y0 + 1;
   const out = Buffer.alloc(CW * CH * 4);
-  const oy = ground - fh - f.lift, ox = Math.round((CW - fw) / 2);
+  // the feet land on the floor line, less this figure's lift off it; whatever hangs
+  // below the feet goes below that line
+  const oy = ground - f.lift - (f.bodyY1 - f.y0), ox = Math.round((CW - fw) / 2);
   let sumX = 0, count = 0;
   for (let y = 0; y < fh; y++) {
     for (let x = 0; x < fw; x++) {
@@ -219,7 +228,7 @@ for (let i = 0; i < poses.length; i++) {
   }
   const file = `${cls}_${pose}.png`;
   writeFileSync(join(outDir, file), encodePng(CW, CH, out));
-  renders.push({ class: cls, pose, file, root: [Math.round(count ? sumX / count : CW / 2), ground - f.lift - Math.round(fh * 0.45)], ground });
+  renders.push({ class: cls, pose, file, root: [Math.round(count ? sumX / count : CW / 2), ground - f.lift - Math.round((f.bodyY1 - f.bodyY0) * 0.45)], ground });
   console.log(`  ${pose}: ${fw}x${fh}`);
 }
 
@@ -230,7 +239,9 @@ const manifest = {
   // the strip names every pose in the manifest, so an appended class adds its own
   // names to the ones already there rather than replacing them
   strip: prev?.strip ? [...prev.strip, ...poses.filter((p) => !prev.strip.includes(p))] : poses,
-  renders: [...(prev?.renders || []).filter(r => r.class !== cls), ...renders],
+  // replace only the (class, pose) rows this run supplies: a second sheet for a
+  // class that carries other poses must not delete the ones already cut
+  renders: [...(prev?.renders || []).filter(r => !(r.class === cls && poses.includes(r.pose))), ...renders],
 };
 writeFileSync(mfPath, JSON.stringify(manifest, null, 2) + '\n');
 console.log(`painted-poses -> ${outDir} (canvas ${CW}x${CH}, floor ${ground})`);
