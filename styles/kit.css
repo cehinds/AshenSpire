@@ -1315,6 +1315,15 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 .level-cinder-preview { margin: 0; }
 .level-cinder-preview > .level-cinder-cost { color: var(--ember); font-weight: 600; }
 .level-cinder-result[hidden] { display: none; }
+/* A flask button carries a name AND a charge count. The COUNT holds — it is
+   the number a player spends — and the NAME yields to an ellipsis inside the
+   ladder's step. Measured on the co-op board at 1200x730, where "Crimson
+   Flask" ran 16px over its own count. */
+.coop-flask { min-width: 0; }
+.coop-flask > .flask-identity { min-width: 0; overflow: hidden; }
+.coop-flask .flask-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coop-flask > b { flex: 0 0 auto; }
+
 /* ═══ FOLDED TITLE — the gate is the TitleMenu before its entries ══════════ */
 /* A separate surface from the title menu: the menu is not mounted behind it,
    so hidden controls cannot leak into Tab order or the accessibility tree.
@@ -1501,7 +1510,12 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 .as-detailcard > .as-prose { font-size: 1.32rem; }
 /* A RailItem with a count beside its label. */
 .as-railitem.with-status { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+/* The count is the half a narrow rail must not eat: it holds its size and the
+   NAME yields — first by wrapping onto its own line, then by ellipsis. Measured
+   at 390x844, where "WEAPONS 0/9" clipped its count against the rail's end. */
+.as-railitem.with-status { flex-wrap: wrap; row-gap: 0.15rem; white-space: normal; }
 .as-railitem.with-status > .as-status { flex: 0 0 auto; font-size: 1.05rem; }
+.as-railitem.with-status > :not(.as-status) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* A railed screen scrolls its grid, never its pane. */
 .screen > .as-railed > .as-pane { overflow: hidden; }
 .as-pane > .as-options.grid { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 2px; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
