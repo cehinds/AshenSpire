@@ -111,6 +111,29 @@ if (hasAlpha) {
     const i = stack.pop(), x = i % W, y = (i - x) / W;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) push(x + dx, y + dy);
   }
+  // The fill only reaches background the border touches. Background sealed inside a
+  // figure — the hole in a halo, the gap between a looped arm and the body — is
+  // still background, and left as figure it would come out as a solid disc of sheet
+  // colour. Sweep the pockets: a region the fill never reached, made entirely of
+  // background colour, is background too.
+  const pocket = new Uint8Array(W * H);
+  for (let start = 0; start < W * H; start++) {
+    if (filled[start] || pocket[start] || !isBg(start * 4)) continue;
+    // An enclosed pocket is by definition walled in by figure pixels, so it always
+    // touches them: what makes it background is that the border fill never got here
+    // and it is the sheet's own colour.
+    const stack = [start]; pocket[start] = 1; filled[start] = 1;
+    while (stack.length) {
+      const i = stack.pop(), x = i % W, y = (i - x) / W;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+        const ni = ny * W + nx;
+        if (filled[ni] || pocket[ni] || !isBg(ni * 4)) continue;
+        pocket[ni] = 1; filled[ni] = 1; stack.push(ni);
+      }
+    }
+  }
   for (let i = 0; i < W * H; i++) fg[i] = filled[i] ? 0 : 1;
 }
 
@@ -151,7 +174,7 @@ const bodyFloor = Math.max(minArea * W * H, 0.22 * big);
 const groups = parts.filter(b => b.area >= bodyFloor)
   // bodyY0/bodyY1 stay the body's own bounds: a spark below the feet or a staff
   // above the head must not move where this figure stands
-  .map(b => ({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, bodyY0: b.y0, bodyY1: b.y1, area: b.area, ids: [b.id] }));
+  .map(b => ({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, bodyX0: b.x0, bodyX1: b.x1, bodyY0: b.y0, bodyY1: b.y1, area: b.area, ids: [b.id] }));
 for (const b of parts.filter(b => b.area < bodyFloor)) {
   let best = null, bestGap = Infinity;
   for (const g of groups) {
@@ -178,7 +201,7 @@ if (gridArg) {
   const cellH = H / gr, cellW = W / gc;
   const cell = (g) => {
     const r = Math.min(gr - 1, Math.max(0, Math.floor(((g.bodyY0 + g.bodyY1) / 2) / cellH)));
-    const c = Math.min(gc - 1, Math.max(0, Math.floor(((g.x0 + g.x1) / 2) / cellW)));
+    const c = Math.min(gc - 1, Math.max(0, Math.floor(((g.bodyX0 + g.bodyX1) / 2) / cellW)));
     return { r, c, bottom: (r + 1) * cellH };
   };
   for (const g of groups) { const k = cell(g); g.cellR = k.r; g.cellC = k.c; g.gap = k.bottom - g.bodyY1; }
@@ -201,7 +224,7 @@ if (gridArg) {
     const floor = Math.max(...r.items.map(i => i.bodyY1));
     for (const g of r.items) g.lift = floor - g.bodyY1;
   }
-  figures = rows.flatMap(r => r.items.sort((a, b) => a.x0 - b.x0));
+  figures = rows.flatMap(r => r.items.sort((a, b) => a.bodyX0 - b.bodyX0));
   layout = `${rows.length} row(s)`;
   const alone = rows.filter((r) => r.items.length === 1).length;
   if (alone) console.log(`  ${alone} row(s) hold one figure: with no peers to be higher than, those stand on the floor. Pass --grid RxC to measure them against the sheet's cells instead.`);
