@@ -117,10 +117,22 @@ figures whether the sheet is transparent or flat, keeps small pieces (a spell
 burst, a dropped blade) with the figure they belong to, and stands every pose on
 one floor line.
 
+`art/poses` is described entirely by its manifest, so every class has to be in
+the render folder before it is published — cut them all with `--append`, then run
+the sprite step once. Publishing a folder that carries fewer classes than
+`art/poses` already holds is refused rather than silently dropping the rest.
+
 ```
-node tools/painted-poses.mjs --sheet SHEET.png --class rogue --out build/painted --append
+node tools/painted-poses.mjs --sheet ROGUE.png    --class rogue    --out build/painted --append
+node tools/painted-poses.mjs --sheet REAVER.png   --class reaver   --out build/painted --append
+node tools/painted-poses.mjs --sheet STARSEER.png --class starseer --out build/painted --append
+node tools/painted-poses.mjs --sheet HERALD.png   --class herald   --out build/painted --append
 node tools/pose-sprites.mjs --in build/painted --out art/poses
 ```
+
+To replace only some classes, render the rest into the same folder first — the
+Blender script writes the same manifest shape, so modelled and painted poses can
+share one folder while the art is part-finished.
 
 **Limits, stated.** Stand-ins for painted poses, not the paintings: faces are
 the concept's dark hood-void, cloth is flat colour. Joint weights are by

@@ -66,8 +66,13 @@ const at = (x, y) => (y * W + x) * bpp;
 // a checkerboard behind the art) are read from the border inwards: everything the
 // background colours reach is background, everything they cannot reach is figure.
 const fg = new Uint8Array(W * H);
-let hasAlpha = false;
-if (bpp === 4) for (let i = 0; i < W * H && !hasAlpha; i++) if (img.px[i * 4 + 3] < 250) hasAlpha = true;
+// Whether the sheet is cut out or flat is decided by its border, not by any one
+// pixel: a flat sheet with a single soft edge somewhere in the art would otherwise
+// switch to the alpha path, where its opaque background reads as one huge figure.
+let clear = 0, edge = 0;
+for (let x = 0; x < W; x++) for (const y of [0, H - 1]) { edge++; if (img.px[(y * W + x) * 4 + 3] < alphaMin) clear++; }
+for (let y = 0; y < H; y++) for (const x of [0, W - 1]) { edge++; if (img.px[(y * W + x) * 4 + 3] < alphaMin) clear++; }
+const hasAlpha = clear >= 0.6 * edge;
 if (hasAlpha) {
   for (let i = 0; i < W * H; i++) fg[i] = img.px[i * 4 + 3] >= alphaMin ? 1 : 0;
 } else {
@@ -202,8 +207,14 @@ if (gridArg) {
   if (alone) console.log(`  ${alone} row(s) hold one figure: with no peers to be higher than, those stand on the floor. Pass --grid RxC to measure them against the sheet's cells instead.`);
 }
 console.log(`${basename(sheetPath)}: ${figures.length} figures in ${layout}`);
-if (figures.length < poses.length) {
+if (figures.length !== poses.length) {
+  // Taking the first few would be worse than stopping: one stray blob early in
+  // reading order shifts every pose name after it, and the run would still report
+  // success.
   console.error(`painted-poses: found ${figures.length} figures but ${poses.length} pose names were given`);
+  console.error(figures.length > poses.length
+    ? '  Name every figure with --poses, or raise --min-area so stray artwork is not read as a figure.'
+    : '  Name fewer poses with --poses, or lower --min-area so a small figure is not missed.');
   process.exit(1);
 }
 
