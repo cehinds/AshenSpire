@@ -29,5 +29,6 @@ the three attacks and `hit`; `stand`, `brace`, `cast` and `idle2` are cut and
 kept but not shipped.
 
 Combat has the player facing right. Two Reaver figures are painted facing left —
-`attack2` and `brace` — and are cut with `--mirror`; every other figure is used
+`attack2` and `idle` — figures 4 and 8, and the Reaver's 8 is its `idle` — and
+are cut with `--mirror`; every other figure is used
 as painted. The commands are in `art/poses/README.md`.
