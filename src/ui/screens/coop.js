@@ -938,11 +938,23 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (snap.scene.next) {
       const text = (snap.scene.results && snap.scene.results[me]) || '';
       const acked = !!(snap.scene.ack && snap.scene.ack[me]);
+      // A FALLEN SEAT IS NOT IN THIS EVENT, and must not be handed a control
+      // that cannot work. The host refuses `eventContinue` from a member whose
+      // `alive` is false, and `settleEvent` waits only on connectedMembers()
+      // — which is `connected && alive` — so this seat's ack is never wanted
+      // and never arrives. The result: `acked` stays false forever, and the
+      // branch below drew CONTINUE for a click the host answers by
+      // rebroadcasting the same snapshot, leaving the button exactly where it
+      // was. Every other surface in this file already asks `alive` before
+      // offering an action (the flask menu, card affordability, targeting,
+      // End Turn); the event result was the one that did not.
+      const fallen = !(myMember() || {}).alive;
       sceneDoor({
         title: ev ? ev.name : 'A Happening',
         children: [
           prose(text, { class: 'coop-event-result' }),
-          acked ? waiting('Waiting for the party…') : options([
+          fallen ? waiting('You have fallen. The party reads on without you.')
+            : acked ? waiting('Waiting for the party…') : options([
             choice({ glyph: '›', name: snap.scene.next.kind === 'combat' ? 'Steel yourself' : 'Continue', attrs: { dataset: { evContinue: '1' } } }),
           ], { class: 'coop-choices' }),
         ],
