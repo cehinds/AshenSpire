@@ -109,7 +109,7 @@
 // Exit: 0 waived exactly · 1 a new finding OR a stale waiver · 2 unknown.
 
 import { resolve, dirname, join } from 'node:path';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser, resolveBrowser } from './browser.mjs';
@@ -146,8 +146,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the row is pinned over the topbar',
         edits: [{
           file: 'styles/combat.css',
-          find: '  position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 30;',
-          replace: '  position: fixed; inset-inline: 1.6rem; top: 0; bottom: auto; z-index: 30;',
+          find: '  position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 60;',
+          replace: '  position: fixed; inset-inline: 1.6rem; top: 0; bottom: auto; z-index: 60;',
         }],
         expectRed: /BAD\s+H2 /,
       },
@@ -192,8 +192,7 @@ if (process.argv.includes('--selftest')) {
         name: 'END TURN clips its key label, so a wide rebound label disappears',
         edits: [{
           file: 'styles/combat.css',
-          find: '  box-sizing: border-box; width: var(--action-end-size); max-width: 100%; min-width: 0;',
-          replace: '  box-sizing: border-box; width: 4rem; max-width: 4rem; min-width: 0; overflow: hidden; white-space: nowrap;',
+          append: '.combat-action-row > .end-turn { width: 4rem; max-width: 4rem; justify-self: center; overflow: hidden; white-space: nowrap; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -218,8 +217,7 @@ if (process.argv.includes('--selftest')) {
         name: 'a stylesheet hides the DRAW pile and the row measures four controls where five are declared',
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat-action-row > .pile.draw { grid-area: draw; }',
-          replace: '.combat-action-row > .pile.draw { grid-area: draw; display: none; }',
+          append: '.combat-action-row > .pile.draw { display: none; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -230,8 +228,7 @@ if (process.argv.includes('--selftest')) {
         name: 'a stylesheet makes the DISCARD pile visibility:hidden and the row still measures five boxes',
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat-action-row > .pile.discard { grid-area: discard; }',
-          replace: '.combat-action-row > .pile.discard { grid-area: discard; visibility: hidden; }',
+          append: '.combat-action-row > .pile.discard { visibility: hidden; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -242,8 +239,7 @@ if (process.argv.includes('--selftest')) {
         name: 'a stylesheet makes the DISCARD pile opacity:0 and the row still measures five boxes',
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat-action-row > .pile.discard { grid-area: discard; }',
-          replace: '.combat-action-row > .pile.discard { grid-area: discard; opacity: 0; }',
+          append: '.combat-action-row > .pile.discard { opacity: 0; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -267,9 +263,9 @@ if (process.argv.includes('--selftest')) {
         // label's scroll box. Red by name on H3 at the desk WIDE cell.
         name: 'END TURN\'s key label is width-capped with overflow:hidden and the wide rebound label is cut off inside it',
         edits: [{
-          file: 'styles/combat.css',
-          find: '.end-turn .et-key {\n  display: block; width: max-content;',
-          replace: '.end-turn .et-key {\n  display: block; width: max-content; max-width: 1rem; overflow: hidden;',
+          file: 'styles/kit.css',
+          find: '.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; }',
+          replace: '.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; max-width: 1rem; overflow: hidden; }',
         }],
         expectRed: /BAD\s+H3 1200x730 WIDE/,
       },
@@ -343,6 +339,64 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 .*painted over/,
       },
       {
+        // THE CONTROL'S OWN PAINT OVER ITS TEXT: the DRAW pile's ::after as an
+        // opaque sheet over its own box. No element is before the pile in the
+        // stack (the sheet hit-tests as the pile), the pile still hit-tests as
+        // itself, and hiding the pile hides the sheet too, so the whole-
+        // control read counts the sheet as the pile's own paint; the read of
+        // its text does not (Codex, #540).
+        name: "the DRAW pile's own ::after paints an opaque sheet over its count and label",
+        edits: [{
+          file: 'styles/combat.css',
+          append: "\n.combat-action-row > .pile.draw { position: relative; }\n.combat-action-row > .pile.draw::after { content: ''; position: absolute; inset: 0; background: #000; border-radius: 8px; }\n",
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
+      },
+      {
+        // A FLEX ITEM WITH A z-index OVER THE COUNT: the DRAW pile is a flex
+        // column, and its label — an in-flow item, positioned nowhere — is
+        // pulled up over the count with a negative margin, an opaque
+        // background and z-index: 1, which makes it a stacking context that
+        // paints in z-order above the count's in-flow text (Codex, #550).
+        name: "the DRAW pile's label, a flex item given z-index: 1, paints an opaque block over its count",
+        edits: [{
+          file: 'styles/combat.css',
+          append: "\n.combat-action-row > .pile.draw > .as-statpair > .sp-k { z-index: 1; background: #000; color: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; text-align: center; }\n",
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
+      },
+      {
+        // AN INDIVIDUAL TRANSFORM ON THE LABEL: the same block over the count,
+        // but a stacking context by `scale: 1` alone — the transform
+        // shorthand stays "none" and the item has no z-index (Codex, #550).
+        name: "the DRAW pile's label, given scale: 1 and nothing else, paints an opaque block over its count",
+        edits: [{
+          file: 'styles/combat.css',
+          append: "\n.combat-action-row > .pile.draw > .as-statpair > .sp-k { scale: 1; background: #000; color: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; text-align: center; }\n",
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
+      },
+      {
+        // AN IN-FLOW BOX OVER THE TEXT: the label pulled up over the count by a
+        // negative margin alone — positioned nowhere, no z-index, no transform,
+        // no stacking context; a later box in tree order that paints above the
+        // count's text where it overlaps it (Codex, #550).
+        name: "the DRAW pile's count, pulled over its label by a negative margin and nothing else, paints an opaque block over it",
+        edits: [{
+          file: 'styles/combat.css',
+          // THIS ONE PULLS THE COUNT OVER THE LABEL, not the label over the count,
+      // and the reason is the whole point of the variant: with no stacking
+      // context the later box in TREE ORDER is the one that paints on top, and
+      // the StatPair's order is label (`.sp-k`) then value (`.sp-v`) — the
+      // reverse of the old markup, which counted first and labelled second.
+      // Pulling `.sp-k` up here went UNCAUGHT for exactly that reason: the
+      // count painted back over it and nothing was hidden. Measured, not
+      // reasoned: 3 of 4 caught before this line, 4 of 4 after.
+      append: "\n.combat-action-row > .pile.draw > .as-statpair > .sp-v { background: #000; color: #000; margin-top: -2.6rem; padding-top: 2.6rem; width: 100%; text-align: center; }\n",
+        }],
+        expectRed: /BAD\s+H3 .*painted over/,
+      },
+      {
         // A PARTIAL SHEET: the same layer as a thin black band (3vh) along the
         // bottom of the viewport, over the lower edge of every control. Most
         // of each control still reaches the eye, its centre hit-tests as
@@ -375,9 +429,9 @@ if (process.argv.includes('--selftest')) {
         // emulated) can see it; under a fine pointer this plant is invisible.
         name: 'the coarse-pointer rule stops withholding END TURN\'s key label and the phone draws a key it cannot press',
         edits: [{
-          file: 'styles/combat.css',
-          find: '  .combat .et-key,\n  .combat .flask-key,',
-          replace: '  .combat .flask-key,',
+          file: 'styles/kit.css',
+          find: '@media (pointer: coarse) { .as-slot > .as-keycap, .as-btn > .as-keycap, .as-keycap.float { display: none; } }',
+          replace: '@media (pointer: coarse) { .as-slot > .as-keycap, .as-keycap.float { display: none; } }',
         }],
         expectRed: /BAD\s+H3 390x844/,
       },
@@ -388,9 +442,9 @@ if (process.argv.includes('--selftest')) {
         // no key. Red by name on H3.
         name: 'a stylesheet makes END TURN\'s key label visibility:hidden and the row still reads the binding',
         edits: [{
-          file: 'styles/combat.css',
-          find: '.end-turn .et-key {\n  display: block; width: max-content;',
-          replace: '.end-turn .et-key {\n  visibility: hidden; display: block; width: max-content;',
+          file: 'styles/kit.css',
+          find: '.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; }',
+          replace: '.as-btnrow > button.tall > .as-keycap { visibility: hidden; font-size: 0.9rem; }',
         }],
         expectRed: /BAD\s+H3 1200x730/,
       },
@@ -401,8 +455,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the row stops rendering and no H check may green on the empty population',
         edits: [{
           file: 'src/ui/screens/combat.js',
-          find: '<div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)}',
-          replace: '<div class="combat-action-row-planted-away" ${uiComponentAttrs(UI.combatActionRail)}',
+          find: '<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
+          replace: '<div class="combat-action-row-planted-away as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
         }],
         expectRed: /BAD\s+H0 /,
       },
@@ -455,8 +509,15 @@ const EXPECTED_CONTROLS = (() => {
   // empty-population red, not a thrown "could not read the template".
   const row = src.match(/<div class="combat-action-row[^"]*"[\s\S]*?<\/div>\s*<!-- Context hints/);
   if (!row) throw new Error('hintstrip: could not read the action row out of src/ui/screens/combat.js');
-  const named = [...row[0].matchAll(/<(?:div|button) class="([^"]+)"/g)].map((m) => m[1])
-    .filter((cls) => !cls.startsWith('combat-action-row') && cls !== 'n');
+  // THE KIT SWEEP (2026-09-04): the row's controls are kit builders, so the
+  // hook classes are read off the builder calls — the StatPair's `class:`,
+  // `pileButton('<kind>')`, End Turn's `className:` — the same names the
+  // rendered elements carry.
+  const named = [
+    ...[...row[0].matchAll(/class: '([^']+)'/g)].map((m) => m[1].split(/\s+/).filter((k) => k === 'energy-orb').join(' ')),
+    ...[...row[0].matchAll(/pileButton\('([a-z]+)'/g)].map((m) => `pile ${m[1]}`),
+    ...[...row[0].matchAll(/className: '([^']+)'/g)].map((m) => m[1].split(/\s+/).filter((k) => k === 'end-turn').join(' ')),
+  ].filter(Boolean);
   const sameSet = (x) => x.split(/\s+/).sort().join(' ');
   const missing = DECLARED_CONTROLS.filter((d) => !named.some((n) => sameSet(n) === sameSet(d)));
   const extra = named.filter((n) => !DECLARED_CONTROLS.some((d) => sameSet(n) === sameSet(d)));
@@ -651,7 +712,7 @@ const decodePng = (buf) => {
       out[dst + x] = v & 255; } }
   return { w, h, bpp, px: out };
 };
-// FOUR CAPTURES PER CONTROL, ALL IN SITU, read as MAGNITUDES, not as a
+// SIX CAPTURES PER CONTROL, ALL IN SITU, read as MAGNITUDES, not as a
 // yes/no per pixel (a translucent sheet still changes every covered pixel a
 // little, so a binary "did it change" mask would read it as fully seen):
 //   inSitu       — the page as shipped;
@@ -661,7 +722,11 @@ const decodePng = (buf) => {
 //                  control hidden: the control over its own in-situ
 //                  background, which is the reference an overlay cannot touch;
 //   uncoveredBg  — the same with the control hidden too: the in-situ
-//                  background itself.
+//                  background itself;
+//   inSituText, uncoveredText — the first and third with the control's text
+//                  made transparent: the text's own paint, in situ and
+//                  uncovered, read by the same arithmetic (a cover the
+//                  control itself draws over its text — Codex, #540).
 // WHAT IS ABOVE THE CONTROL is found by geometry, not by guessing:
 // document.elementsFromPoint at a grid of points over the control's box,
 // with pointer-events forced to auto on every element for the read (so a
@@ -684,6 +749,10 @@ const decode4 = (...bufs) => { const P = bufs.map(decodePng);
   if (P.some((p) => p.w !== P[0].w || p.h !== P[0].h)) throw new Error('the captures differ in size');
   return P; };
 const mag = (P, Q, o) => Math.abs(P.px[o] - Q.px[o]) + Math.abs(P.px[o + 1] - Q.px[o + 1]) + Math.abs(P.px[o + 2] - Q.px[o + 2]);
+// The text's paint in one pair: the summed change, by magnitude, between a
+// capture and the same capture with the text made transparent.
+const textPaint = (withText, without) => { const [A, B] = decode4(withText, without); let sum = 0;
+  for (let i = 0, n = A.w * A.h; i < n; i++) { const d = mag(A, B, i * A.bpp); if (d > 12) sum += d; } return sum; };
 const paintOfCaptures = (inSitu, inSituHidden, uncovered, uncoveredBg) => {
   const [A, B, C, G] = decode4(inSitu, inSituHidden, uncovered, uncoveredBg);
   const n = A.w * A.h; let ownPx = 0, owed = 0, delivered = 0;
@@ -722,7 +791,7 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
   const prior = new Map();
   for (const n of document.querySelectorAll('*')) { prior.set(n, [n.style.getPropertyValue('pointer-events'), n.style.getPropertyPriority('pointer-events')]); n.style.setProperty('pointer-events', 'auto', 'important'); }
   const style = document.createElement('style'); style.textContent = 'html :not(#hs1):not(#hs2):not(#hs3):not(#hs4)::before, html :not(#hs1):not(#hs2):not(#hs3):not(#hs4)::after { pointer-events: auto !important; }'; document.head.appendChild(style);
-  const found = [], above = new Map(); // ancestor -> the points it was above the control at
+  const found = [], above = new Map(), texts = [], ownPseudo = new Map(), inflow = []; // ancestor -> the points it was above the control at; the control's text rects; a text ancestor -> its pseudo-element hits; in-flow descendants hit at a text point, for the paint read
   const overAt = (x, y) => { const stack = document.elementsFromPoint(x, y); const at = stack.findIndex((n) => n === el || el.contains(n)); return at < 0 ? null : stack.slice(0, at); };
   try {
     // THE GRID IS DENSE ENOUGH THAT NO COVER WORTH THE TOLERANCE SLIPS
@@ -743,7 +812,73 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
         if (!found.includes(n)) found.push(n);
       }
     }
-    // WHICH PSEUDO-ELEMENT of an ancestor is the one above: hide ::after alone
+    // THE CONTROL'S OWN PAINT OVER ITS TEXT. A cover the hit-test reports as
+    // the control itself — its own ::after with a background over its label,
+    // a positioned child drawn over the count — is no element before the
+    // control in the stack, and hiding the control hides it too, so the
+    // whole-control read counts it as the control's paint (Codex, #540). So
+    // the control's TEXT is read on its own: at a grid over each text node's
+    // rects, with the boxes of the text's own ancestors inside the control
+    // made non-hit-testable (their pseudo-elements stay hit-testable, so a
+    // hit reported as one of them IS one of its pseudo-elements), whatever
+    // the stack lists inside the control is a candidate, and it is a cover
+    // of the text when CSS paint order puts it above in-flow inline content
+    // (CSS 2.1 Appendix E): positioned with z-index auto or >= 0, a flex or
+    // grid item with a z-index >= 0 (which forms a stacking context and
+    // paints in z-order as a positioned box does — Codex, #550), or a
+    // stacking context of its own (transform — the shorthand or an
+    // individual translate/rotate/scale, which leave the shorthand "none" —
+    // opacity, filter, backdrop-filter, clip-path, mask, perspective,
+    // isolation, blend mode, contain, will-change naming one of these). An
+    // in-flow box with none of these —
+    // the pile's label under its count, an inline ::after — is laid out
+    // beside the text, not over it; a z-index:-1 glow or item paints below
+    // the text; both stay in both capture pairs.
+    { const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (let t; (t = walker.nextNode());) { if (!t.data.trim()) continue;
+      const rg = document.createRange(); rg.selectNodeContents(t);
+      for (const b of rg.getClientRects()) if (b.width >= 1 && b.height >= 1 && b.right > r.left && b.left < r.right && b.bottom > r.top && b.top < r.bottom) texts.push({ t, b }); } }
+    const stacks = (cs) => cs.transform !== 'none' || (cs.translate || 'none') !== 'none' || (cs.rotate || 'none') !== 'none' || (cs.scale || 'none') !== 'none'
+      || cs.opacity !== '1' || cs.filter !== 'none' || (cs.backdropFilter || 'none') !== 'none'
+      || cs.clipPath !== 'none' || (cs.maskImage || cs.webkitMaskImage || 'none') !== 'none' || cs.perspective !== 'none'
+      || cs.isolation === 'isolate' || cs.mixBlendMode !== 'normal' || /paint|layout|strict|content/.test(cs.contain || '')
+      || /transform|opacity|filter|perspective/.test(cs.willChange || '');
+    const flexOrGridItem = (n, which) => { const host = which ? n : n.parentElement; if (!host) return false; const d = getComputedStyle(host).display; return /flex|grid/.test(d); };
+    const aboveText = (n, which) => { const cs = getComputedStyle(n, which ? '::' + which : null);
+      if (cs.position !== 'static') return cs.zIndex === 'auto' || Number(cs.zIndex) >= 0;
+      if (cs.zIndex !== 'auto' && flexOrGridItem(n, which)) return Number(cs.zIndex) >= 0;
+      return stacks(cs); };
+    for (const { t, b } of texts) {
+      const chain = []; for (let n = t.parentElement; n && (n === el || el.contains(n)); n = n.parentElement) chain.push(n);
+      const ts = Math.max(1, Math.floor(Math.min(b.width, b.height) * ${PAINT_LOST} / 2));
+      const pts = []; for (let y = b.top + 0.5; y < b.bottom; y += ts) for (let x = b.left + 0.5; x < b.right; x += ts) pts.push([x, y]);
+      // OUTSIDE THE CONTROL, only what the paint stack lists ABOVE it at the
+      // text point is a cover — the same boundary the box read keeps — so a
+      // sibling painted beneath a translucent control (an underlay) stays in
+      // both capture pairs and cannot move the text's background (Codex,
+      // #550). Read before the text's ancestors are made non-hit-testable,
+      // which would drop that boundary from the stack.
+      for (const [x, y] of pts) for (const n of (overAt(x, y) || [])) { if (n.contains(el)) { if (!above.has(n)) above.set(n, []); above.get(n).push([x, y]); } else if (!found.includes(n)) found.push(n); }
+      for (const n of chain) n.style.setProperty('pointer-events', 'none', 'important');
+      try {
+        for (const [x, y] of pts) {
+          for (const n of document.elementsFromPoint(x, y)) {
+            if (!(n === el || el.contains(n))) continue; // outside the control: judged above, by the paint stack
+            if (chain.includes(n)) { if (!ownPseudo.has(n)) ownPseudo.set(n, { t, pts: [] }); ownPseudo.get(n).pts.push([x, y]); }
+            else if (!n.contains(t) && aboveText(n, null)) { if (!found.includes(n)) found.push(n); }
+            // AN IN-FLOW DESCENDANT hit at a text point — positioned nowhere, no
+            // stacking context — paints above the text only where it overlaps
+            // it as a later box (a negative margin), which no rule of the
+            // computed style says; it is listed for the PAINT read in paintOf,
+            // which hides it alone and asks whether the text came back
+            // (Codex, #550).
+            else if (!n.contains(t) && !inflow.includes(n)) inflow.push(n);
+          }
+        }
+      } finally { for (const n of chain) n.style.setProperty('pointer-events', 'auto', 'important'); }
+    }
+    // WHICH PSEUDO-ELEMENT of an ancestor is the one above — read after BOTH
+    // scans, since the text scan lists ancestors the box grid did not meet
+    // (Codex, #550) — is the one above: hide ::after alone
     // and look again at the points it was above at; if it is no longer above
     // there, ::after was the paint; else ::before; else both. Only that one is
     // hidden for the uncovered captures, so an ancestor whose OTHER pseudo-
@@ -755,10 +890,23 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
         try { return pts.some(([x, y]) => (overAt(x, y) || []).includes(n)); } finally { st.remove(); n.removeAttribute('data-hintstrip-probe'); } };
       n.setAttribute('data-hintstrip-cover-anc', !stillAbove('after') ? 'after' : !stillAbove('before') ? 'before' : 'both');
     }
+    for (const [n, { pts }] of ownPseudo) {
+      // WHICH of its pseudo-elements was hit (hide ::after alone, look again),
+      // and is it above the text by paint order: only that one is hidden.
+      const hitStill = (which) => { const st = document.createElement('style'); st.textContent = '[data-hintstrip-probe]::' + which + ' { visibility: hidden !important; }';
+        n.setAttribute('data-hintstrip-probe', ''); document.head.appendChild(st); n.style.setProperty('pointer-events', 'none', 'important');
+        try { return pts.some(([x, y]) => document.elementsFromPoint(x, y).includes(n)); } finally { st.remove(); n.removeAttribute('data-hintstrip-probe'); n.style.setProperty('pointer-events', 'auto', 'important'); } };
+      const which = !hitStill('after') ? ['after'] : !hitStill('before') ? ['before'] : ['after', 'before'];
+      const hide = which.filter((w) => aboveText(n, w));
+      if (hide.length) { n.setAttribute('data-hintstrip-cover-anc', hide.length === 2 ? 'both' : hide[0]); n.setAttribute('data-hintstrip-cover-own', hide.map((w) => '::' + w).join(' and ')); }
+    }
   } finally { style.remove(); for (const [n, [v, p]] of prior) { if (v) n.style.setProperty('pointer-events', v, p); else n.style.removeProperty('pointer-events'); } }
   const name = (n) => (String(n.className).split(' ')[0] || n.tagName.toLowerCase());
   found.forEach((n, i) => n.setAttribute('data-hintstrip-cover', String(i)));
-  return found.map(name).concat([...above.keys()].map((n) => 'ancestor ' + name(n) + ' (its ::' + n.getAttribute('data-hintstrip-cover-anc') + ' above the control)')); })()`;
+  inflow.forEach((n, i) => n.setAttribute('data-hintstrip-inflow', String(i)));
+  return { text: texts.length, inflow: inflow.map(name), names: found.map((n) => (el.contains(n) ? 'its ' + name(n) + ' over its text' : name(n)))
+    .concat([...above.keys()].map((n) => 'ancestor ' + name(n) + ' (its ::' + n.getAttribute('data-hintstrip-cover-anc') + ' above the control)'))
+    .concat([...ownPseudo.keys()].filter((n) => n.hasAttribute('data-hintstrip-cover-own')).map((n) => (n === el ? 'its own ' : 'its ' + name(n) + ' ') + n.getAttribute('data-hintstrip-cover-own') + ' over its text')) }; })()`;
 const COVERS_HIDE = `(() => {
   for (const n of document.querySelectorAll('[data-hintstrip-cover]')) { n.setAttribute('data-hintstrip-cover-vis', n.style.getPropertyValue('visibility') || ''); n.style.setProperty('visibility', 'hidden', 'important'); }
   const st = document.createElement('style'); st.id = 'hintstrip-cover-style';
@@ -766,27 +914,81 @@ const COVERS_HIDE = `(() => {
   document.head.appendChild(st); return 1; })()`;
 const COVERS_RESTORE = `(() => {
   for (const n of document.querySelectorAll('[data-hintstrip-cover]')) { const v = n.getAttribute('data-hintstrip-cover-vis'); if (v) n.style.setProperty('visibility', v); else n.style.removeProperty('visibility'); n.removeAttribute('data-hintstrip-cover'); n.removeAttribute('data-hintstrip-cover-vis'); }
-  for (const n of document.querySelectorAll('[data-hintstrip-cover-anc]')) n.removeAttribute('data-hintstrip-cover-anc');
+  for (const n of document.querySelectorAll('[data-hintstrip-cover-anc]')) { n.removeAttribute('data-hintstrip-cover-anc'); n.removeAttribute('data-hintstrip-cover-own'); }
+  for (const n of document.querySelectorAll('[data-hintstrip-inflow]')) n.removeAttribute('data-hintstrip-inflow');
   const st = document.getElementById('hintstrip-cover-style'); if (st) st.remove(); return 1; })()`;
+// THE TEXT MADE TRANSPARENT, in place: the fill, the shadow and the stroke of
+// every element in the control (inline, !important; priors put back), so the
+// captures with and without it differ in the text's paint alone — a
+// currentColor border is not the text and keeps its colour.
+const TEXT_PROPS = ['-webkit-text-fill-color', 'text-shadow', '-webkit-text-stroke-color'];
+const TEXT_HIDE = (sel) => `(() => { const el = document.querySelector(${JSON.stringify(sel)}); const props = ${JSON.stringify(TEXT_PROPS)};
+  for (const n of [el, ...el.querySelectorAll('*')]) { n.setAttribute('data-hintstrip-text', JSON.stringify(props.map((p) => [n.style.getPropertyValue(p), n.style.getPropertyPriority(p)])));
+    n.style.setProperty(props[0], 'transparent', 'important'); n.style.setProperty(props[1], 'none', 'important'); n.style.setProperty(props[2], 'transparent', 'important'); }
+  return 1; })()`;
+const TEXT_RESTORE = `(() => { const props = ${JSON.stringify(TEXT_PROPS)};
+  for (const n of document.querySelectorAll('[data-hintstrip-text]')) { const prior = JSON.parse(n.getAttribute('data-hintstrip-text'));
+    props.forEach((p, i) => { const [v, pr] = prior[i]; if (v) n.style.setProperty(p, v, pr); else n.style.removeProperty(p); }); n.removeAttribute('data-hintstrip-text'); }
+  return 1; })()`;
+// ANIMATION IS FROZEN FOR THE READ (play-state paused, transitions off, in
+// place): END TURN's pulse moving between two captures is a change of the
+// background under its text, not paint over it, and the six captures of a
+// control must be of the same frame. Restored after the last control.
+const FREEZE = `(() => { const st = document.createElement('style'); st.id = 'hintstrip-freeze';
+  st.textContent = '*, *::before, *::after { animation-play-state: paused !important; transition: none !important; }'; document.head.appendChild(st); return 1; })()`;
+const THAW = `(() => { const st = document.getElementById('hintstrip-freeze'); if (st) st.remove(); return 1; })()`;
 async function paintOf(ev, shot) {
+  await ev(FREEZE);
+  try { return await paintOfFrozen(ev, shot); } finally { await ev(THAW).catch(() => {}); }
+}
+async function paintOfFrozen(ev, shot) {
   const out = [];
   for (const t of await ev(PAINT_TARGETS)) {
     if (!t.shown) { out.push({ name: t.name }); continue; }
     const clip = { x: Math.floor(t.x), y: Math.floor(t.y), width: Math.ceil(t.w), height: Math.ceil(t.h), scale: 1 };
     const vis = (v) => ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.setProperty('visibility', ${JSON.stringify(v)}, 'important'); return 1; })()`);
-    const restore = async () => { await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.removeProperty('visibility'); return 1; })()`); await ev(COVERS_RESTORE); };
+    const restore = async () => { await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.removeProperty('visibility'); return 1; })()`); await ev(TEXT_RESTORE); await ev(COVERS_RESTORE); };
     try {
       const inSitu = await shot(clip);
       await vis('hidden');
       const inSituHidden = await shot(clip);
       await vis('visible');
-      const covers = await ev(COVERS_OF(t.sel));
+      await ev(TEXT_HIDE(t.sel));
+      const inSituText = await shot(clip);
+      await ev(TEXT_RESTORE);
+      const { text, names: covers, inflow } = await ev(COVERS_OF(t.sel));
+      // AN IN-FLOW DESCENDANT OVER THE TEXT is found by paint, not by rule:
+      // hidden alone (in place), does the text deliver more than it delivers
+      // in situ? A later box pulled over the text by a negative margin paints
+      // above it in tree order (CSS 2.1 Appendix E) and gives it back when
+      // hidden; the label laid out beside its count changes nothing of the
+      // count's paint. One that gives back more than PAINT_LOST is a cover,
+      // hidden for the uncovered captures like any other (Codex, #550).
+      for (let i = 0; i < (inflow || []).length; i++) {
+        const sel = '[data-hintstrip-inflow="' + i + '"]';
+        await ev(`(() => { const n = document.querySelector(${JSON.stringify(sel)}); n.setAttribute('data-hintstrip-inflow-vis', n.style.getPropertyValue('visibility') || ''); n.style.setProperty('visibility', 'hidden', 'important'); return 1; })()`);
+        const alone = await shot(clip);
+        await ev(TEXT_HIDE(t.sel));
+        const aloneText = await shot(clip);
+        await ev(TEXT_RESTORE);
+        await ev(`(() => { const n = document.querySelector(${JSON.stringify(sel)}); const v = n.getAttribute('data-hintstrip-inflow-vis'); if (v) n.style.setProperty('visibility', v); else n.style.removeProperty('visibility'); n.removeAttribute('data-hintstrip-inflow-vis'); return 1; })()`);
+        const given = textPaint(alone, aloneText), had = textPaint(inSitu, inSituText);
+        if (given > had * (1 + PAINT_LOST) + 12 * 4) { await ev(`(() => { document.querySelector(${JSON.stringify(sel)}).setAttribute('data-hintstrip-cover', 'inflow-' + ${i}); return 1; })()`); covers.push('its ' + inflow[i] + ' over its text (an in-flow box, by paint)'); }
+      }
       await ev(COVERS_HIDE);
       const uncovered = await shot(clip);
+      await ev(TEXT_HIDE(t.sel));
+      const uncoveredText = await shot(clip);
+      await ev(TEXT_RESTORE);
       await vis('hidden');
       const uncoveredBg = await shot(clip);
       await restore();
-      out.push({ name: t.name, covers, ...paintOfCaptures(inSitu, inSituHidden, uncovered, uncoveredBg) });
+      // THE TEXT'S OWN READ, the same arithmetic over the same pixels: what
+      // the text contributes with the covers hidden against what it delivers
+      // in situ; text that contributes nothing even uncovered is wholly lost.
+      const textRead = text ? paintOfCaptures(inSitu, inSituText, uncovered, uncoveredText) : null;
+      if (process.env.HINTSTRIP_DUMP) { const d = process.env.HINTSTRIP_DUMP; mkdirSync(d, { recursive: true }); const tag = (t.name + '-' + clip.width + 'x' + clip.height).replace(/[^A-Za-z0-9]+/g, '_'); [['inSitu', inSitu], ['inSituHidden', inSituHidden], ['inSituText', inSituText], ['uncovered', uncovered], ['uncoveredText', uncoveredText], ['uncoveredBg', uncoveredBg]].forEach(([k, b]) => writeFileSync(join(d, tag + '-' + k + '.png'), b)); }
+      out.push({ name: t.name, covers, ...paintOfCaptures(inSitu, inSituHidden, uncovered, uncoveredBg), ...(textRead ? { textLost: textRead.own > 0 ? textRead.lost : 1 } : {}) });
     } catch (e) { await restore().catch(() => {}); throw e; }
   }
   return out;
@@ -859,8 +1061,9 @@ function judge(r, cell, wide, pointer) {
   const keyOut = !r.coarse && r.key && r.endTurn ? !(inside(r.key.box, r.endTurn) && inside(r.key.textBox, r.endTurn)) : false;
   const keyCut = !r.coarse && r.key ? r.key.textClipped : null;
   const paint = Array.isArray(r.paint) ? r.paint : [];
-  const obscured = paint.filter((p) => p.own !== undefined && (p.own < PAINT_FLOOR || p.lost > PAINT_LOST));
-  const paintLine = paint.filter((p) => p.own !== undefined).map((p) => `${p.name} paints ${(p.own * 100).toFixed(0)}% of its box, ${(p.lost * 100).toFixed(0)}% lost${(p.covers && p.covers.length) ? ' (over it: ' + p.covers.join(', ') + ')' : ''}`).join('; ');
+  const obscured = paint.filter((p) => p.own !== undefined && (p.own < PAINT_FLOOR || p.lost > PAINT_LOST || (p.textLost !== undefined && p.textLost > PAINT_LOST)));
+  const textOf = (p) => (p.textLost !== undefined ? `, its text ${(p.textLost * 100).toFixed(0)}% lost` : '');
+  const paintLine = paint.filter((p) => p.own !== undefined).map((p) => `${p.name} paints ${(p.own * 100).toFixed(0)}% of its box, ${(p.lost * 100).toFixed(0)}% lost${textOf(p)}${(p.covers && p.covers.length) ? ' (over it: ' + p.covers.join(', ') + ')' : ''}`).join('; ');
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
   // A control is matched by CONTAINING its declared classes (END TURN gains
   // `pulse` while it hints, the piles gain state classes), not by equality.
@@ -883,8 +1086,8 @@ function judge(r, cell, wide, pointer) {
     bad('H3', cell, 'no paint-coverage reading reached the judge — the probe that photographs each control did not run, so nothing says a control is not painted over');
   } else if (obscured.length) {
     bad('H3', cell, `${obscured.length} control(s) painted over — `
-      + obscured.map((p) => `"${p.name}" paints ${(p.own * 100).toFixed(0)}% of its box against its background and ${(p.lost * 100).toFixed(0)}% of that paint does not reach the eye in situ (drawn over it: ${(p.covers || []).join(', ') || 'nothing found by geometry'})`).join(', ')
-      + ` (a control must paint at least ${PAINT_FLOOR * 100}% of its box and lose at most ${PAINT_LOST * 100}% of it; a layer over any part of the rail, pointer-events or not, is measured here rather than by the hit-test)`);
+      + obscured.map((p) => `"${p.name}" paints ${(p.own * 100).toFixed(0)}% of its box against its background and ${(p.lost * 100).toFixed(0)}% of that paint does not reach the eye in situ${p.textLost !== undefined ? `, ${(p.textLost * 100).toFixed(0)}% of its text's paint does not` : ''} (drawn over it: ${(p.covers || []).join(', ') || 'nothing found by geometry'})`).join(', ')
+      + ` (a control must paint at least ${PAINT_FLOOR * 100}% of its box and lose at most ${PAINT_LOST * 100}% of it, and of its text's paint; a layer over any part of the rail, pointer-events or not, or the control's own paint over its text, is measured here rather than by the hit-test)`);
   } else if (outside.length || keyOut || keyCut || over) {
     bad('H3', cell, `${outside.length} of ${r.chips.length} control(s) drawn outside the row`
       + (keyOut ? ` and END TURN's key label "${r.key.text}" is drawn outside END TURN (box ${JSON.stringify(r.key.box)}, text ${JSON.stringify(r.key.textBox)} vs ${JSON.stringify(r.endTurn)})` : '')
@@ -983,8 +1186,13 @@ async function main() {
     process.exit(2);
   }
   console.log(`      browser: ${browserPath}`);
+  // TEXT IS RASTERISED ONE WAY for the paint read: Chromium draws glyphs with
+  // coloured subpixel (LCD) anti-aliasing on an opaque layer and grey on a
+  // composited one, so hiding a layer over a control for the uncovered
+  // captures changed the colour of its glyph edges — a fifth of a small
+  // label's paint — with nothing painted over it. Grey everywhere.
   const { wsUrl, close: dropBrowser } = await launchBrowser({
-    prefix: 'hintstrip-', browser: browserPath, timeoutMs: 15000,
+    prefix: 'hintstrip-', browser: browserPath, timeoutMs: 15000, args: ['--disable-lcd-text'],
   });
   const cdp = connectCdp(wsUrl); await cdp.ready;
 

@@ -1,18 +1,10 @@
 name: dev preview
 
-# GitHub Pages serves exactly one source per repository, and this repository's
-# is `main` (decision 0005; switching it is owner-exclusive and needs a recorded
-# rollback). So `dev` has no hosted URL, and Gate B's hosted verification cannot
-# complete for a dev delivery.
+# GitHub Pages serves `main`, so `dev` has no hosted URL. This workflow gives
+# every push to `dev` (and every PR targeting it) an inspectable artifact of the
+# playable build at that exact commit, without deploying or publishing anything.
 #
-# This is the workable substitute: every push to `dev`, and every PR targeting
-# it, builds nothing — the Hub and HUD are already generated and committed — and
-# attaches the owner-facing surfaces as a downloadable artifact, alongside a
-# verification that they are in sync with the control plane at that exact SHA.
-#
-# It is deliberately NOT a deployment. It publishes nothing, touches no ref, and
-# claims no Pages authority. Gate B still records hosted verification as UNKNOWN
-# for a dev SHA; this makes the artifact inspectable in the meantime.
+# It is deliberately NOT a deployment: it publishes nothing and touches no ref.
 
 on:
   push:
@@ -38,26 +30,51 @@ jobs:
         with:
           node-version: '20'
 
-      # An artifact of a drifted view would be worse than none: it would look
-      # authoritative while disagreeing with the state it reports on.
-      - name: Verify the surfaces match the control plane at this SHA
-        run: node .agentops/tools/opsctl.mjs verify
-
       # #498: 28 plant sites had drifted and only one gate went red — the rest
-      # stayed green while unable to fail, because the only detector was each
-      # gate's own --selftest in the dispatch-only lane. This is the cheap
-      # static detector (no execution, no browser, <1s), so it runs on every
-      # PR: any NEW drifted find-string fails here the day the refactor lands,
-      # and the checked-in baseline holds the known backlog to exactly itself.
+      # stayed green while unable to fail. This cheap static detector (no
+      # execution, no browser, <1s) runs on every PR: any NEW drifted
+      # find-string fails here the day the refactor lands, and the checked-in
+      # baseline holds the known backlog to exactly itself.
       - name: No plant site has drifted beyond the recorded baseline
         run: node tools/plantsites.mjs --check
 
-      - name: Collect the owner-facing surfaces
+      # THE ARTIFACT-IDENTITY GATES, AND WHY THEY BELONG HERE RATHER THAN IN
+      # THE DISPATCH-ONLY LANE.
+      #
+      # `dev` went red on these three times on 2026-09-03 — after #575, after
+      # #580's merge, and after the #588/#589/#591/#592 batch — and each time
+      # the artifact a player is handed was not this source. The third was the
+      # worst: build/AshenSpire.html carried two modules that no longer existed
+      # in the tree at all.
+      #
+      # EVERY ONE OF THOSE PULL REQUESTS WAS GREEN ON ITS OWN BRANCH, because
+      # the branch rebuilt. A `pull_request` run checks out `refs/pull/N/merge`,
+      # so it does test a merge — but the merge against the base AS IT STOOD
+      # THEN. Two PRs both green against base X, A merges, and B's green now
+      # describes a tree that no longer exists. The tree produced by merging
+      # them is the one nobody built, and until now nothing looked at it.
+      #
+      # The `push: branches: [dev]` half of this workflow is that missing look:
+      # it runs on the real post-merge result. It does not PREVENT the drift —
+      # preventing it means rebuilding as part of merging, which is a change to
+      # how merges are done and not this file's to make — but it turns "found a
+      # day later by a seat running a tool by hand" into "red within a minute,
+      # on dev, by name".
+      #
+      # Same reasoning as the plant-site detector above, and the same budget:
+      # both are pure reads, no execution and no browser, well under a second,
+      # on the runner this job already pays for. The 3-OS matrix in ci.yml stays
+      # dispatch-only; nothing here re-enables it or spends a Windows minute.
+      - name: The shipped artifact is this source, and the number on it is ours
+        run: node tools/buildversion.mjs --check
+
+      - name: The file a player is handed matches the tree that claims it
+        run: node tools/verify-shipped.mjs
+
+      - name: Collect the playable build
         run: |
           set -euo pipefail
           mkdir -p preview
-          cp -r review-approval-hub preview/review-approval-hub
-          cp -r hud preview/hud
           cp AshenSpire.html preview/AshenSpire.html
           cp index.html preview/index.html
           {
@@ -66,11 +83,10 @@ jobs:
             echo "ref:      ${GITHUB_REF}"
             echo "built:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo
-            echo "Open review-approval-hub/index.html or hud/index.html locally."
+            echo "Open AshenSpire.html locally to play this exact commit."
             echo
             echo "This is an inspection artifact, not a deployment. Pages serves main;"
-            echo "dev has no hosted URL, so Gate B hosted verification stays UNKNOWN"
-            echo "for this SHA. See docs/governance/DECISIONS/0005-dev-delivery-promotion-and-pages.md"
+            echo "dev has no hosted URL."
           } > preview/README.txt
           echo "collected $(find preview -type f | wc -l) files"
 

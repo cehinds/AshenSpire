@@ -146,9 +146,24 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   // resumed fight and land newly-granted ones in the discard pile — stamped
   // by the same pass as every other card. The same door a live mid-combat
   // swap goes through.
-  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout }, snapshot.piles);
+  // The mounts travel too, or an extracted art comes back at this door: the
+  // snapshot's own record wins, a fight saved before mounts existed reads the
+  // run's, and neither is written back — a load must not rewrite a snapshot
+  // it understands (tools/weapon-card-packages.mjs holds that line).
+  const itemMounts = snapshot.itemMounts !== undefined ? snapshot.itemMounts : run.itemMounts;
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts }, snapshot.piles);
   const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
-  const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId);
+  // THE BIRTH QUOTA REACHES THE MIGRATION TOO. Persisting it on the run and the
+  // combat snapshot is only half the job: this door builds its own plan and
+  // hands stampDeck its own synthetic run, so without it a fight saved after a
+  // grant-bearing swap replans from the CURRENT loadout and the load is
+  // rejected — the run archived for a mismatch it did not have when saved. The
+  // snapshot's own number wins; a fight saved before the field existed falls
+  // back to the run's, and a run older than both replans as it always did.
+  const bornWith = Number.isFinite(snapshot.equipmentAttackSlotCount)
+    ? snapshot.equipmentAttackSlotCount
+    : (Number.isFinite(run.equipmentAttackSlotCount) ? run.equipmentAttackSlotCount : undefined);
+  const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId, { attackSlotCount: bornWith });
   // Full-pile order is the one legacy assignment door: draw, hand, discard,
   // exhaust. No card moves; missing ids bind once to attack:0..N-1. Applying
   // even when zero attacks were recognized keeps the authored count fail closed.
@@ -160,6 +175,8 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     itemUpgradeLevels: runLevels,
     equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
     equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
+    equipmentAttackSlotCount: bornWith,
+    itemMounts,
     deck: cards,
   }, cards, {
     adoptEquipmentBonuses: false,
@@ -584,6 +601,30 @@ export function createSaveManager(storage) {
         // clears redundant flags and before an active-combat snapshot is
         // rebound. The snapshot restamp must consume the promoted tier; doing
         // this afterward would leave the resumed piles at tier zero.
+        // THE BIRTH QUOTA, RECOVERED FOR A RUN SAVED BEFORE IT EXISTED. A
+        // legacy save has no `equipmentAttackSlotCount`, and every reader that
+        // falls back to counting a deck only ever did so into a LOCAL — the run
+        // stayed undefined, so createCombat carried undefined onto the
+        // synthetic run and the first mid-fight swap replanned from the current
+        // loadout. Content that lowered strikeBias since the save then threw on
+        // a slot the replan had dropped.
+        //
+        // The run's own deck IS the record of what it was born with, and this
+        // is the migration door, so the number is recovered ONCE here rather
+        // than re-derived at each combat — a second derivation is what four
+        // earlier rounds were about. Runs saved with the field keep theirs.
+        if (!Number.isFinite(run.equipmentAttackSlotCount) && Array.isArray(run.deck)) {
+          const recovered = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
+          run.equipmentAttackSlotCount = recovered;
+          note(run, {
+            kind: 'heal',
+            site: 'save.js:recoverEquipmentAttackSlotCount',
+            field: 'equipmentAttackSlotCount',
+            was: undefined,
+            now: recovered,
+            why: 'run saved before the birth attack quota was recorded; its own deck is the record of what it was born with',
+          });
+        }
         const smithingReceipt = initializeRunSmithing(registries, run);
         const hydratedRunProfiles = hydrateMissingEquipmentProfiles(registries, run.equipmentProfileRuleSnapshot);
         const hydratedCombatProfiles = hydrateMissingEquipmentProfiles(registries, run.combatEntered?.snapshot?.equipmentProfileRuleSnapshot);

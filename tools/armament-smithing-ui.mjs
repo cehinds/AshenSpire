@@ -259,6 +259,7 @@ async function main() {
           }),
           confirm:{text:confirm?.textContent?.trim()||'',disabled:!!confirm?.disabled,aria:confirm?.getAttribute('aria-disabled'),state:confirm?.dataset.smithActionState||'',hold:confirm?.dataset.optionHold||''},
           summaryHeights:[...document.querySelectorAll('.smith-summary-cell')].map((node)=>rect(node).height),
+          summaryTops:[...document.querySelectorAll('.smith-summary-cell')].map((node)=>rect(node).top),
           summaryBorders:[...document.querySelectorAll('.smith-summary-cell')].map((node)=>getComputedStyle(node).borderTopWidth),
           summaryGrid:document.querySelector('.smith-summary-grid')?{
             columns:getComputedStyle(document.querySelector('.smith-summary-grid')).gridTemplateColumns,
@@ -277,7 +278,7 @@ async function main() {
             availableColor:getComputedStyle(document.querySelector('.smith-cost-available')).color,
             requiredColor:getComputedStyle(document.querySelector('.smith-cost-required')).color,
             costColor:getComputedStyle(document.querySelector('.smith-economy-values b')).color,
-            slashXs:[...document.querySelectorAll('.smith-preview-economy .smith-cost-pair > i')].map((node)=>{const r=rect(node);return (r.left+r.right)/2;}),
+            slashXs:[...document.querySelectorAll('.smith-preview-economy .smith-cost-pair i')].map((node)=>{const r=rect(node);return (r.left+r.right)/2;}),
             headerBottom:Math.max(...[...document.querySelectorAll('.smith-preview-economy .smith-cost-pair em')].map((node)=>rect(node).bottom)),
             numberTop:Math.min(...[...document.querySelectorAll('.smith-preview-economy .smith-cost-pair strong')].map((node)=>rect(node).top)),
             labelHeight:rect(document.querySelector('.smith-economy-values b')).height,
@@ -289,8 +290,9 @@ async function main() {
           selectedNameStyle:document.querySelector('.smith-selected-head > b')?{
             color:getComputedStyle(document.querySelector('.smith-selected-head > b')).color,
             fontSize:getComputedStyle(document.querySelector('.smith-selected-head > b')).fontSize,
-            foldColor:getComputedStyle(document.querySelector('.smith-upgrade-row > summary > span:first-child > b')).color,
-            foldFontSize:getComputedStyle(document.querySelector('.smith-upgrade-row > summary > span:first-child > b')).fontSize,
+            // The fold's title is the kit StatRow's name (.sr-name) since the 2026-09-04 sweep; it was summary > span:first-child > b.
+            foldColor:getComputedStyle(document.querySelector('.smith-upgrade-row > summary .sr-name')).color,
+            foldFontSize:getComputedStyle(document.querySelector('.smith-upgrade-row > summary .sr-name')).fontSize,
           }:null,
           intrinsic:document.querySelector('.smith-intrinsic-stats')?{
             title:document.querySelector('.smith-intrinsic-stats .smith-data-heading b')?.textContent.trim()||'',
@@ -301,8 +303,8 @@ async function main() {
             radius:getComputedStyle(document.querySelector('.smith-intrinsic-stats')).borderRadius,
           }:null,
           affected:[...document.querySelectorAll('.smith-upgrade-folds .smith-upgrade-row')].map((node)=>({
-            title:node.querySelector('summary b')?.textContent.trim()||'',
-            role:node.querySelector('summary small')?.textContent.trim()||'',
+            title:node.querySelector('summary .sr-name')?.textContent.trim()||'',
+            role:node.querySelector('summary .sr-hint')?.textContent.trim()||'',
             unused:node.classList.contains('is-unused'),
             opacity:Number.parseFloat(getComputedStyle(node).opacity),
             text:(node.textContent||'').replace(/\\s+/g,' ').trim(),
@@ -385,25 +387,31 @@ async function main() {
           && zero.text.includes('Scales with STR') && zero.text.includes('Weapon Technique') && zero.text.includes('GUARD 3 → 5')
           && zero.text.includes('Short 1 Smithing Stone'),
         `SMITH-UI-${upper}-ZERO-DELTAS`, `selected zero-purse preview names cost, requirement reduction, active Strike/Technique, grey unused Defense, scaling, and shortfall (${JSON.stringify(zero.text)})`);
-      check(zero.summaryHeights.length === 2 && Math.max(...zero.summaryHeights) - Math.min(...zero.summaryHeights) <= 1
+      // 2026-09-04 (the sweep): the summary is the kit's DetailCard — the item's
+      // name and tier, then the stone cost as ONE inline StatPair ("REQ/AVAIL
+      // 1/0") under it. The old 3:1 two-cell row, the stacked pair whose two
+      // slashes shared an x anchor, and the header-above-number geometry were
+      // that bespoke layout's; what stays checked is every fact and colour.
+      check(zero.summaryHeights.length === 2
           && zero.summaryBorders.every((width) => width === '0px')
           && zero.economy?.reference === 'REQ/AVAIL' && zero.economy?.icon === '🪨'
           && zero.economy?.label === 'Smithing Stone Cost' && zero.economy?.required === '1' && zero.economy?.available === '0'
-          && zero.economy.headerBottom <= zero.economy.numberTop + 1
-          && zero.economy.slashXs.length === 2 && Math.abs(zero.economy.slashXs[0] - zero.economy.slashXs[1]) <= 0.5
+          && zero.economy.slashXs.length === 2
           && zero.economy.labelHeight <= zero.economy.labelLineHeight + 1
           && zero.economy.valuesScrollWidth <= zero.economy.valuesClientWidth + 1
           && zero.economy.availableColor !== zero.economy.requiredColor && zero.economy.requiredColor === zero.economy.costColor,
-        `SMITH-UI-${upper}-SUMMARY-GRID`, `Selected Item and Cost use borderless equal-height 3:1 cells; the two slash glyphs share one x anchor (${JSON.stringify({ heights: zero.summaryHeights, borders: zero.summaryBorders, economy: zero.economy })})`);
+        `SMITH-UI-${upper}-SUMMARY-GRID`, `Selected Item and Cost are two borderless cells of one DetailCard; the cost is one inline REQ/AVAIL pair that does not overflow (${JSON.stringify({ heights: zero.summaryHeights, borders: zero.summaryBorders, economy: zero.economy })})`);
       check(zero.summaryFonts.length === 2
           && new Set(zero.summaryFonts.map((row) => row.label)).size === 1
           && new Set(zero.summaryFonts.map((row) => row.value)).size === 1,
         `SMITH-UI-${upper}-SUMMARY-TYPE`, `the two summary components share one header size and one primary-value size (${JSON.stringify(zero.summaryFonts)})`);
       const summaryColumns = zero.summaryGrid?.columns.trim().split(/\s+/).map((value) => Number.parseFloat(value)) || [];
-      check(zero.summaryGrid && summaryColumns.length === 2 && Math.abs(summaryColumns[0] / summaryColumns[1] - 3) <= 0.05
+      // One column since the sweep: the cost stands UNDER the selected item (it shared a 3:1 row).
+      check(zero.summaryGrid && summaryColumns.length === 1
+          && zero.summaryTops.length === 2 && zero.summaryTops[1] >= zero.summaryTops[0]
           && Math.abs(zero.summaryGrid.requirementWidth - zero.summaryGrid.gridWidth) <= 1
           && Math.abs(zero.summaryGrid.selectedToStatsGap) <= 1,
-        `SMITH-UI-${upper}-SUMMARY-ORDER`, `Selected Item and Cost share the first row; Equipment Stats begins immediately below and Requirements spans the full row (${JSON.stringify(zero.summaryGrid)})`);
+        `SMITH-UI-${upper}-SUMMARY-ORDER`, `Selected Item then Cost in one column; Equipment Stats begins immediately below and Requirements spans the full row (${JSON.stringify({ ...zero.summaryGrid, tops: zero.summaryTops })})`);
       check(zero.requirementRow?.border !== '0px' && zero.requirementRow?.borderLeft === '0px'
           && zero.requirementRow?.borderRight === '0px' && zero.requirementRow?.radius === '0px'
           && zero.requirementRow?.nestedBorder === '0px'
@@ -515,8 +523,9 @@ async function main() {
           if(name==='Slashing Strike+'||name==='Weapon Technique+')row.open=true;
         }
         const receiptDetailPane=receipt?.closest('.armoury-armament-details');
-        const tier=[...(receiptDetailPane?.querySelectorAll('dl div') || [])]
-          .find((row)=>row.querySelector('dt')?.textContent?.trim()==='Smithing tier')?.querySelector('dd')?.textContent?.trim()||'';
+        // The item's facts are the kit's StatRows since the 2026-09-04 sweep (name in .sr-name, value in .sr-vals); they were a dl.
+        const tier=[...(receiptDetailPane?.querySelectorAll('.as-statrow') || [])]
+          .find((row)=>row.querySelector('.sr-name')?.textContent?.trim()==='Smithing tier')?.querySelector('.sr-vals')?.textContent?.trim()||'';
         const cards=rows.map((row)=>({
           name:row.querySelector('.armoury-card-row-name')?.textContent?.trim()||'',
           combat:(row.querySelector('.armoury-card-combat')?.textContent||'').replace(/\\s+/g,' ').trim(),

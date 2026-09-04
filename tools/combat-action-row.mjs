@@ -42,29 +42,31 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     {
       name: 'the five controls lose their one semantic owner',
       file: 'src/ui/screens/combat.js',
-      find: '<div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
-      replace: '<div class="combat-action-split" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
+      find: '<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
+      replace: '<div class="combat-action-split as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
       expectRed: /combat-action-row: RED/,
     },
     {
       name: 'the Energy hit target becomes a rounded visual instead of its full cell',
-      file: 'styles/combat.css',
-      find: 'grid-area: energy; position: relative; left: auto; bottom: auto; isolation: isolate;',
-      replace: 'grid-area: energy; position: static; left: auto; bottom: auto; isolation: isolate;',
+      file: 'styles/kit.css',
+      // The stretch is the whole ask; the StatPair's own centring and floor moved
+      // into the atom (styles/kit.css § NUMBERS), so the plant no longer has to
+      // restate them to take the cell away.
+      find: '.as-btnrow > .as-statpair { justify-self: stretch; align-self: stretch; }',
+      replace: '.as-btnrow > .as-statpair { justify-self: center; align-self: center; }',
       expectRed: /combat-action-row: RED/,
     },
     {
       name: 'the narrow row stacks its centre cluster into End Turn',
-      file: 'styles/combat.css',
-      find: '    grid-template-areas: "energy . draw end discard . exhaust";',
-      replace: '    grid-template-areas: "energy . end end end . exhaust";',
+      file: 'styles/kit.css',
+      find: '.as-btnrow > .wide, .modal-btnrow > .wide { grid-column: span 2; }',
+      replace: '.as-btnrow > .wide, .modal-btnrow > .wide { grid-column: span 3; }',
       expectRed: /combat-action-row: RED/,
     },
     {
       name: 'pile targets shrink below the device tap floor',
       file: 'styles/combat.css',
-      find: '    width: var(--action-pile-size); max-width: 100%; height: max(4.2rem, var(--tap-floor));',
-      replace: 'width: 2rem; max-width: 100%; height: 2rem; min-width: 0; min-height: 0;',
+      append: '.combat-action-row > .pile { height: 2rem; min-height: 0; }',
       expectRed: /combat-action-row: RED/,
     },
     {
@@ -77,22 +79,20 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     {
       name: 'Exhaust is hidden until it has content',
       file: 'styles/combat.css',
-      find: '.combat-action-row > .pile.exhaust {\n  grid-area: exhaust; width: var(--action-edge-size);\n}',
-      replace: '.combat-action-row > .pile.exhaust {\n  grid-area: exhaust; width: var(--action-edge-size); display: none;\n}',
+      append: '.combat-action-row > .pile.exhaust { display: none; }',
       expectRed: /combat-action-row: RED/,
     },
     {
       name: 'the centre cluster loses its equal close gap',
-      file: 'styles/combat.css',
-      find: '--action-cluster-gap: calc(4px / var(--ui-zoom, 1));',
-      replace: '--action-cluster-gap: 2rem;',
+      file: 'styles/kit.css',
+      find: '  align-items: stretch; gap: 8px; min-width: 0;\n  --n: 1; --step: 15rem;',
+      replace: '  align-items: stretch; gap: 2rem; min-width: 0;\n  --n: 1; --step: 15rem;',
       expectRed: /combat-action-row: RED/,
     },
     {
       name: 'Energy placement leaks out of the solo action-row owner into co-op',
       file: 'styles/combat.css',
-      find: '.combat-action-row > .energy-orb {',
-      replace: '.energy-orb {',
+      append: '.combat-action-row > .energy-orb { position: absolute; }',
       expectRed: /combat-action-row: RED/,
     },
     {
@@ -426,8 +426,10 @@ async function main() {
             console.log(`\n  ${tag}`);
             check(now.owner.exists && now.owner.display === 'grid' && now.owned,
               'one semantic grid owns Actions, Draw, End Turn, Discard, and Exhaust', JSON.stringify(now.owner));
-            check((now.owner.columns?.match(/px/g)||[]).length===7,
-              'the action rail resolves to seven bounded layout tracks', JSON.stringify(now.owner));
+            // THE KIT SWEEP (2026-09-04): the row is a kit ButtonRow — six equal
+            // tracks, End Turn spanning two — not the old seven-column grid.
+            check((now.owner.columns?.match(/px/g)||[]).length===6,
+              'the action rail resolves to six equal ButtonRow tracks', JSON.stringify(now.owner));
             check(now.pairs.length === 0, 'action controls have zero pairwise hit-box intersections', JSON.stringify(now.pairs));
             check(now.foreign.length === 0, 'action controls intersect no card or pager', JSON.stringify(now.foreign));
             check(now.onGlass && now.minTap >= 43.99,

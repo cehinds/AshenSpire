@@ -2,6 +2,16 @@
   "note": "Known-drifted plant sites (the #498 backlog), sites the static scan cannot read, and a per-tool count+digest over EVERY readable site. plantsites.mjs --check fails on any difference from the live tree, in either direction — regenerate with --write-baseline only alongside the change that explains it.",
   "drifted": [
     {
+      "tool": "tools/about-changelog.mjs",
+      "target": "src/ui/screens/title.js",
+      "id": "32ec77c8477b6c85"
+    },
+    {
+      "tool": "tools/about-changelog.mjs",
+      "target": "src/ui/screens/settings.js",
+      "id": "a4b9117dca401cd5"
+    },
+    {
       "tool": "tools/armoury-picked-up.mjs",
       "target": "src/ui/screens/equipment.js",
       "id": "0afb5288f599e996"
@@ -55,6 +65,71 @@
       "tool": "tools/armoury-picked-up.mjs",
       "target": "src/ui/screens/equipment.js",
       "id": "ebb60d6e25b61c32"
+    },
+    {
+      "tool": "tools/confirmation-modal.mjs",
+      "target": "styles/ui.css",
+      "id": "638e687db59857ee"
+    },
+    {
+      "tool": "tools/confirmation-modal.mjs",
+      "target": "styles/ui.css",
+      "id": "9fb86f9153777bc0"
+    },
+    {
+      "tool": "tools/displayfirst.mjs",
+      "target": "src/ui/screens/settings.js",
+      "id": "8ca41891dcb1ae85"
+    },
+    {
+      "tool": "tools/menufit.mjs",
+      "target": "styles/ui.css",
+      "id": "7b52b505469be5a0"
+    },
+    {
+      "tool": "tools/music-toggle-parity.mjs",
+      "target": "src/ui/components/menuComponents.js",
+      "id": "1bd723d53273b515"
+    },
+    {
+      "tool": "tools/placement.mjs",
+      "target": "styles/ui.css",
+      "id": "d6870f4a9cfa5e42"
+    },
+    {
+      "tool": "tools/placement.mjs",
+      "target": "styles/ui.css",
+      "id": "d6870f4a9cfa5e42"
+    },
+    {
+      "tool": "tools/quicknav-reach.mjs",
+      "target": "styles/ui.css",
+      "id": "0aa79cd7b469d989"
+    },
+    {
+      "tool": "tools/quicknav-reach.mjs",
+      "target": "styles/ui.css",
+      "id": "ffe6b4614dd92feb"
+    },
+    {
+      "tool": "tools/rebind-capture.mjs",
+      "target": "styles/ui.css",
+      "id": "fecde7a543a0e80c"
+    },
+    {
+      "tool": "tools/text-geometry.mjs",
+      "target": "AshenSpire.html",
+      "id": "1353252b7cd6554a"
+    },
+    {
+      "tool": "tools/text-geometry.mjs",
+      "target": "AshenSpire.html",
+      "id": "c1dce040250e8564"
+    },
+    {
+      "tool": "tools/title-new-slot.mjs",
+      "target": "src/ui/models/SaveSlotSelectionModel.js",
+      "id": "d905e8929851cbd2"
     }
   ],
   "unreadable": {
@@ -71,7 +146,7 @@
   "sites": {
     "tools/about-changelog.mjs": {
       "count": 52,
-      "digest": "f0880ab6cd60b326"
+      "digest": "b96046e966deac53"
     },
     "tools/armoury-picked-up.mjs": {
       "count": 14,
@@ -86,8 +161,8 @@
       "digest": "bb50920dc80f5ed8"
     },
     "tools/combat-action-row.mjs": {
-      "count": 9,
-      "digest": "d73a36e6733cecf1"
+      "count": 6,
+      "digest": "6bc20cf585308b00"
     },
     "tools/combat-save.mjs": {
       "count": 3,
@@ -130,8 +205,8 @@
       "digest": "fd574eb2f9dd3290"
     },
     "tools/flaskbox.mjs": {
-      "count": 7,
-      "digest": "40b7fd34a5fe7c4a"
+      "count": 6,
+      "digest": "be113152db0960cf"
     },
     "tools/fullscreen-control.mjs": {
       "count": 5,
@@ -154,20 +229,20 @@
       "digest": "6e4b0b0ed61d0e1b"
     },
     "tools/hintstrip.mjs": {
-      "count": 20,
-      "digest": "57f05fa007690494"
+      "count": 16,
+      "digest": "6a0897cc74d22742"
     },
     "tools/hudbars.mjs": {
-      "count": 2,
-      "digest": "6ee99c7a0270142e"
+      "count": 1,
+      "digest": "e7ab8b142a458ba6"
     },
     "tools/hudparity.mjs": {
-      "count": 18,
-      "digest": "9808853c19bbcbf3"
+      "count": 16,
+      "digest": "e67ec7649f7c26b6"
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
-      "digest": "60e136235f05f921"
+      "digest": "2712d3b78c7030e9"
     },
     "tools/menufit.mjs": {
       "count": 1,
@@ -183,11 +258,11 @@
     },
     "tools/onevocab.mjs": {
       "count": 10,
-      "digest": "af9727cc8c259637"
+      "digest": "c36293eabaf8a2d6"
     },
     "tools/placement.mjs": {
       "count": 8,
-      "digest": "e7cba52baafb1e40"
+      "digest": "b57e6a9496fd3591"
     },
     "tools/player-poise-threshold.mjs": {
       "count": 4,
@@ -243,7 +318,7 @@
     },
     "tools/startup-gate.mjs": {
       "count": 26,
-      "digest": "37545e8f2e23a208"
+      "digest": "9abfde2c2b0b2048"
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,
@@ -255,7 +330,7 @@
     },
     "tools/swap-row-reads.mjs": {
       "count": 9,
-      "digest": "dcaa9ef9c58aab6e"
+      "digest": "cbdfdc82c68de702"
     },
     "tools/tapsize.mjs": {
       "count": 2,
@@ -266,16 +341,12 @@
       "digest": "a99316891d40357e"
     },
     "tools/text-geometry.mjs": {
-      "count": 10,
-      "digest": "fa6d147626555108"
+      "count": 9,
+      "digest": "52448ef30ad89ec6"
     },
     "tools/title-new-slot.mjs": {
       "count": 4,
       "digest": "edaf8f33b2ee919a"
-    },
-    "tools/title-save-slot-tooltip.mjs": {
-      "count": 14,
-      "digest": "09d5ac5570def086"
     },
     "tools/tutorial-reach.mjs": {
       "count": 1,

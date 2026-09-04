@@ -25,13 +25,13 @@ import { act3Encounters } from './encounters/act3.js';
 import { events, eventHistoryRequirements } from './events.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
-import { cardTags } from './generated/cardTags.js';
+import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING } from './tags.js';
 import { scripts } from './scripts.js';
 import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
 import {
   ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES, CARD_EXPOSURE, STARTING_KITS,
-  EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, ARMOURY_UI,
+  EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, EQUIPMENT_GRANTS, ARMOURY_UI,
   ITEM_UPGRADE_CHANGES,
 } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
@@ -49,7 +49,21 @@ const cards = authoredCards.map((card) => {
 });
 
 export const contentBundle = {
-  version: '0.5.0-rc.2',
+  // THE RELEASE HALF, AND THE CANDIDATE NUMBER IS THE THIRD COMPONENT.
+  //
+  // Constantine, 2026-09-01, on reading `0.5.0-rc.4.1959`: "I thought it was
+  // going to be something like 0.5.3.2" — the candidate in slot three, and a
+  // build counter in slot four that "should restart ... to 0.5.4.0 and
+  // increment from there". So `0.5.0-rc.4` is written `0.5.4`: the fourth
+  // candidate of the 0.5 line, and tools/buildversion.mjs appends the count of
+  // builds within it.
+  //
+  // WHAT THAT COSTS, STATED HERE RATHER THAN DISCOVERED LATER: the patch number
+  // of the release being auditioned no longer appears, so a shipped `0.5.0`
+  // would sort BELOW the `0.5.4` that led to it. A release under this scheme
+  // must be numbered past its last candidate. Raised with him when the
+  // directive was given; the scheme is his call and this is the note.
+  version: '0.5.4',
   balance,
   cards,
   relics,
@@ -88,12 +102,20 @@ export const contentBundle = {
     itemUpgradeChanges: ITEM_UPGRADE_CHANGES,
     cardEquipmentExceptions: CARD_EQUIPMENT_EXCEPTIONS,
     cardTagging: CARD_EQUIPMENT_TAGGING,
+    equipmentGrants: EQUIPMENT_GRANTS,
     armouryUi: ARMOURY_UI,
   },
   unlocks,
-  // The card-tag registry rides the bundle so effect `tags` and
-  // taggedVulnerability lists validate against ONE vocabulary home (#61).
-  tags: cardTags,
+  // The tag schema rides the bundle so every carrier — effect `tags`,
+  // taggedVulnerability lists, creature kinds, equipment, relics — validates
+  // against ONE vocabulary home (#61). Five normalised tables: the domain
+  // lookup, the registry, what can be tagged, who may carry which domain, and
+  // the association rows themselves (content/tags.js says why five).
+  tagDomains: TAG_DOMAINS,
+  tags: TAGS,
+  tagFamilies: TAG_FAMILIES,
+  tagFamilyDomains: TAG_FAMILY_DOMAINS,
+  tagging: TAGGING,
   attributes,
   creationModes,
   // `retired` is composed HERE, from its own file, so that reverting

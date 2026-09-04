@@ -4,7 +4,7 @@ import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
 export function identityClusterModel(identity) {
   return componentModel(UI.identityCluster, {
-    properties: { name: identity.name, classLabel: identity.classLabel },
+    properties: { name: identity.name, classLabel: identity.classLabel, context: identity.context || '' },
     children: [
       componentModel(UI.portraitBadge, { properties: { glyph: identity.glyph, tint: identity.tint } }),
       componentModel(UI.characterTitle, { properties: { name: identity.name, classLabel: identity.classLabel } }),

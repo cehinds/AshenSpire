@@ -61,18 +61,24 @@ the module**, and the load-bearing runtime claim (*no AI runs while you play*) i
 named string** that both the player and the falsifier are given — it previously existed twice,
 in different words, so no comparison could ever have caught them diverging.
 
-**`approved: true` since 2026-08-07 — and this spec says so because it is true.** The wording
-was Constantine's call at release and he made it; the flag records whose words these are and
-**nothing reads it to decide whether to render** — the acknowledgement always shows. Approval
-is a release gate (§9), not a display condition. **The flag is about THIS wording:** any edit
-to the text returns it to `false` in the same act, or it stops recording anything.
+**The approval flag lives in `src/content/aiDisclosure.js` and this spec no longer restates
+its value.** Read it there, or run `node tools/ai-disclosure.mjs`, which prints the current
+state. The flag records whose words the wording is and **nothing reads it to decide whether to
+render** — the acknowledgement always shows. Approval is a release gate (§9), not a display
+condition. **The flag is about THIS wording:** any edit to the text returns it to `false` in
+the same act, or it stops recording anything.
 
-> **This sentence is a SECOND COPY of a boolean and it went stale the day the boolean moved**
-> *(Saga, 2026-08-07)*. `docs/SPEC-RECONCILE.md` carries a third. Nothing syncs the three —
-> Law 1 clause 2, in the file that states the arrangement. **The honest fix is for the spec to
-> cite the module rather than restate its value**; I am correcting the value rather than
-> restructuring another seat's file, and naming the defect here so the next reader does not
-> have to rediscover it.
+> **This paragraph used to be a SECOND COPY of that boolean, and it went stale exactly as
+> predicted** *(Saga, 2026-08-07: "this sentence is a second copy of a boolean and it went
+> stale the day the boolean moved")*. It said `approved: true` while the module said `false`,
+> giving the release gate two authoritative answers.
+>
+> **Saga named the honest fix and it is now done: the spec cites the module rather than
+> restating its value.** The 2026-08-07 note declined it only to avoid restructuring another
+> seat's file. `docs/SPEC-RECONCILE.md` still carries a third prose copy; it is a historical
+> row recording what change #73 did, and it is annotated rather than rewritten — but it is
+> the remaining copy, and it will go stale the next time the flag moves.
+> *(AS-HD-040, 2026-09-03.)*
 
 *Falsify:* `node tools/ai-disclosure.mjs --check` after the last bundle rebuild — a stale
 bundle ships an acknowledgement that disagrees with the store page. The runtime claim carries
@@ -308,9 +314,84 @@ rule is one row of `swapCostRules` with no code (proven by test 28q).
 in `model/loadout.js`, beside the functions that branch on them. A row naming anything else is a
 validation failure; before A8 it validated clean and silently did nothing.
 
-**Equipped weapon card packages.** The authored attack-slot count is fixed by
-`balance.equipment.roleCopies.attack`; changing equipment never changes that count or the total
-deck size. `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
+**The starting deck.** `balance.startingDeckSize` is a **cap on the BASE cards** — the
+strikes and defends the game mints for you — and it applies at **character creation and
+nowhere else**. The order is fixed:
+
+1. **Bound cards are dealt first.** Anything equipment brings: cards from a piece carrying
+   the `bound` tag (`equipmentGrants.csv`), a weapon package's `grantedCards`, its
+   `weaponArtDefaults`, the class signature, and `startingDeck.global.grants`. These are
+   never capped, never dropped and never refused. They belong to the equipment, not the run.
+2. **Base cards fill what the cap leaves.** `filler = max(0, cap − bound)`, split between
+   attack and guard by the class's `strikeBias`. An odd remainder goes to whichever role
+   `startingDeck.oddFillerGoesTo` names — `attack` by default.
+3. **What those base cards ARE comes from the equipped profile** — a sword-wielder's base
+   attacks are Slashing Strikes, and a bare hand's are the `unarmedProfiles` set. That is
+   the whole of "unarmed fills in": it supplies the identity of base cards, it does not top
+   up a floor.
+
+If equipment alone meets or exceeds the cap, no base cards are minted and the run begins
+with only its equipment cards. That is a **balance question for whoever authors the gear**,
+not a validation failure — `validateEquipment` says so as a warning, naming the class and
+the loadout, and refuses nothing.
+
+**After creation the cap does not apply.** Swapping to gear that lends fewer cards leaves a
+smaller deck; more, a larger one. There is no re-minting of base cards mid-run and no
+attempt to hold a total. What DOES hold mid-run is the attack count: a swap re-skins the
+attack slots the run was born with (`equipmentAttackSlotCount`, recorded at creation and
+read, never re-derived), so equipment never changes how many attacks you hold.
+
+**Every card has an owner: the run, or one item.** Run-owned cards are the run's for good —
+the base strikes and defends (gear only re-skins them), the class signature, global grants,
+rewards. Item-owned cards ride with the item: equip it and they arrive, unequip it and they
+leave, equip it again and they return identical. **If the item is not equipped, its cards are
+gone** (owner ruling, 2026-09-03). This is one rule with three authoring sources feeding it —
+a weapon package's `grantedCards`, its `weaponArtDefaults`, and the `bound` table
+(`equipmentGrants.csv`, gated by the `bound` tag on any piece, armour included) — and one
+reconcile that applies it on every equip transition, in or out of combat. Item-owned
+instances carry deterministic ids and the owner's namespaced ref, so the reconcile is
+idempotent and a save is stable across it.
+
+Everything above is data. The cap, the per-class bias and its default, the odd-split
+winner, and the grant-source vocabulary are all authored — the sources are rows in the
+`grantSource` tag domain, so adding one is a spreadsheet line rather than a code change.
+The engine mints bound cards at four seams (global, armor, weapon, class) and reads the
+tag each one stamps from `startingDeck.sources`, so RENAMING a source is a data edit too:
+the map, the tag row and `sourceOrder` move together, and a binding that names no
+registered source — or a seam left unbound — is refused by name rather than silently
+dealing that source's cards last.
+
+**Card mounts: the smith's other two services.** Every card an item lends sits in a **mount**
+on that item, keyed by the instance id the composer mints for it, so "the sword's art" is the
+same mount on every restamp, save and fight. A smith — the Shrine's, or one a merchant rolls —
+does three things: **upgrade** an item (the tier promotion), **extract** a card out of one of
+its mounts, and **seat** a run-owned card in an emptied or open mount.
+
+- **Extract.** The card becomes the run's own — a run-owned instance joins the deck and stays
+  whatever the item does — and the mount it left is never dead: it shows its kind's **fallback**
+  until something is seated. A weapon-art mount falls back to the unarmed technique (the Dodge
+  Roll), read from `unarmedProfiles`; a granted mount falls back to nothing; any item may
+  override its fallback under `cardMounts.fallbackByItem`. A fallback is the mount's, not the
+  item's, and is never itself extractable.
+- **What is extractable is a tag on the card** (`cardMounts.extractableTag`, `extractable`
+  today). Strikes and defends do not carry it; the day the game changes its mind, that is a
+  spreadsheet edit. A mount accepts a card carrying any tag in its kind's `accepts` list.
+- **Seat.** The reverse: the deck instance leaves, the card rides with the item from then on,
+  and is extractable again. Extra mounts beyond the authored ones (`cardMounts.extraMounts`,
+  per item, a kind) sit behind a flag that is off — the seam a later rune feature opens.
+- **Priced in Smithing Stones** (`smithing.services.extract.cost`, `.install.cost`), free by
+  the owner's word. **Who offers what** is `smithing.services.offeredAt`: a node kind, a chance
+  and a service list. A chance of 100 is a promise and consumes no roll; a merchant's 25 rolls
+  once per visit on the smith's own RNG stream and rides with the stock, so a reload does not
+  roll again and the roll shifts no later reward in an existing seed.
+
+What a smith did is `run.itemMounts` — per item, per mount: emptied, or the card seated —
+read by the composer on every restamp and carried into combat and into a saved fight the way
+the birth quota is, so a mid-fight swap or a load cannot re-mint an extracted card from the
+item's authoring. Nothing here touches an item's authoring, and absent means untouched, so no
+migration invents the field.
+
+**Equipped weapon card packages.** `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
 priority list plus that profile as filler. `WeaponDeckCompositionService` builds an
 `EquippedWeaponCardPlan`, then rebinds the stable generated attack instances in place. No eligible
 weapon produces Unarmed in every attack slot; one eligible weapon in either hand owns every slot;
@@ -821,7 +902,7 @@ Faithful to StS's published algorithm, simplified where invisible to the player.
 
 - Per act: **`floors` × `columns`** grid (shipped: 12 × 7). The **top floor is always a single Shrine** row and the Boss sits above it — typed by the generator before any rule runs, so the floors a rule can reach are **1..`floors`-1**. That band is called the **rollable band** and it is the denominator for every fraction below.
 - Generate **6 paths** bottom-to-top: each starts at a random column on floor 1 (first 2 paths must start at distinct columns); each step moves to column −1/0/+1 on the next floor; edges may merge but must not cross (swap targets when a crossing would occur — StS's rule).
-- **Every floor a rule names is an ANCHOR, never an index.** An absolute floor number is a constant whose *meaning* moves when `floors` changes while the constant does not — measured: `9: 'treasure'` deletes the treasure rank entirely below 10 floors (**4.00 → 0.00 nodes per act, 24 seeds**), `noEliteOrShrineBefore: 6` gates **36 % of a 15-floor act and 56 % of a 10-floor one**, and `15: 'shrine'` **never fired at any shipped act length** because floor 15 is not rollable. The closed set of anchor kinds lives in `model/floorplan.js` and a new kind is an engine change (Law 1):
+- **Every floor a rule names is an ANCHOR, never an index.** An absolute floor number is a constant whose *meaning* moves when `floors` changes while the constant does not — measured: `9: 'treasure'` deletes the treasure rank entirely below 10 floors (**4.00 → 0.00 nodes per act, 24 seeds**), `noEliteOrShrineBefore: 6` (the single gate these two replaced) gated **36 % of a 15-floor act and 56 % of a 10-floor one**, and `15: 'shrine'` **never fired at any shipped act length** because floor 15 is not rollable. The closed set of anchor kinds lives in `model/floorplan.js` and a new kind is an engine change (Law 1):
 
   | anchor | resolves to |
   |---|---|
@@ -831,7 +912,8 @@ Faithful to StS's published algorithm, simplified where invisible to the player.
   | `{ at: 'fraction', of: f }` | `round(f × rollable)`, `f` ∈ (0, 1] |
 
   `resolveFloorPlan()` is the **only** place an anchor becomes a floor; the generator, the boot validator and `tools/mapplan.mjs` all read that one resolution, so they cannot disagree about what a rule meant. An anchor that will not resolve is a **boot error naming the entry** (Law 1 clause 5) and `mapgen` throws rather than generating an unauthored map.
-- **Node typing** (StS proportions): fixed ranks — Monster at `{ at: 'first' }`, Treasure at `{ at: 'fraction', of: 0.64 }` (floor 7 of 11 at the shipped shape). Remaining nodes rolled: Monster 45 %, Event(?) 22 %, Elite 8 %, Shrine 12 %, Merchant 5 %, remainder Monster; with constraints: no Elite/Shrine before `noEliteOrShrineBefore` (`{ at: 'fraction', of: 0.43 }` → floor 5), no Shrine on `noShrineOn` (`{ at: 'last' }` → floor 11), no two identical non-Monster types adjacent along an edge, **`minElites` ≥ 2 and `minMerchants` ≥ 1 per act** (regenerate typing if violated, map RNG stream, bounded retries → relax weakest constraint).
+- **Node typing** (StS proportions): fixed ranks — Monster at `{ at: 'first' }`, Treasure at `{ at: 'fraction', of: 0.64 }` (floor 7 of 11 at the shipped shape). Remaining nodes rolled: Monster 45 %, Event(?) 22 %, Elite 8 %, Shrine 12 %, Merchant 5 %, remainder Monster; with constraints: no Shrine before `noShrineBefore` (`{ at: 'fraction', of: 0.27 }` → floor 3), no Elite before `noEliteBefore` (`{ at: 'fraction', of: 0.43 }` → floor 5), no Shrine on `noShrineOn` (`{ at: 'last' }` → floor 11), no two identical non-Monster types adjacent along an edge, **`minElites` ≥ 2 and `minMerchants` ≥ 1 per act** (regenerate typing if violated, map RNG stream, bounded retries → relax weakest constraint).
+- **`restBeforeElite`: a map that holds an Elite holds a Shrine on some EARLIER floor.** E13 — Constantine asked for a rest "so eletes, maybe shop, and definitely before a boss"; before-a-boss the top-floor Shrine always kept, before-elites nothing did (**124 of 180 maps over the canonical seed stream carried an Elite with no Shrine below it**; 0 of 180 now). It is why the gate is TWO anchors and not one: a single `noEliteOrShrineBefore` opened rests and Elites on the same floor, so a rest could never sit below the first Elite, and the schema now REJECTS that key rather than reading it as both. Kept the way the counts are kept — the roll is barred, and a final step on **every** exit path opens the rest when the finished graph holds an Elite without one, on a floor `resolveFloorPlan` certified at boot. Enforcing it only where the generator relaxes was not enough: a **fixed Elite rank** bypasses every gate (`typeOnce` assigns fixed ranks before any rule runs) and can satisfy `minElites` on its own, so the relax path never ran — 10 of 40 maps broke the promise that way. Two arrangements are boot errors instead, because the generator cannot fix them for itself: a fixed Elite with no floor beneath it able to hold a rest, and an act whose gates and fixed ranks leave no rest floor at all. A **fixed Shrine** below the Elite gate is itself the rest and needs no floor held free. Two things it does not claim: it is a fact about the GRAPH, not a path — a walker may still route past the rest to an Elite, and `tools/mapplan.mjs` measures how often rather than this line promising otherwise — and it moved the shortest act these rules describe from 4 floors to 7, which narrows the debug run-shape cap.
 - **`minElites` counts nodes in the graph; it is not a reachability promise.** It was called `minReachableElites` and never measured reachability — a measurable fraction of starts can reach no Elite at the shipped shape, and the fraction **grows as the act shortens**. The numbers are deliberately not restated here: a sample restated in prose drifts (three homes carried three different samples within a day of each other). **`node tools/mapplan.mjs` measures and prints them on every run**; nothing gates on them, and making the generator honour it is an open design call.
 - **What a `?` node resolves to is `mapConfigs[act].unknownWeights`** — beside the geometry it describes, per act. It was `balance.unknownNode`, a flat global that could not vary per act while the map it belongs to does.
 - **Any claim about generated maps is a distribution, never a seed.** Node count's mean and range are **deliberately not restated here** — the previous edition of this sentence carried 59.2 over 50–69, which the 12-floor act made false the moment it landed, which is this rule proving itself two bullets after it was written. `tools/mapplan.mjs` prints them at the current shape on every run. Stops per run is exactly **`floors` + 1** at every shape measured — that one is a formula, not a sample, and a formula does not drift. A tool that generates one map and reports a number has said nothing — the same green a tool gives when it checked nothing. `tools/mapplan.mjs` prints mean and range for every figure and refuses to report at all if its own seeds did not vary.

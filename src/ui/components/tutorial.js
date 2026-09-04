@@ -16,6 +16,7 @@
 import { anchorLocalBox } from '../fx.js';
 import { veilIsOpen } from './veil.js';
 import { actionLabel } from '../input.js';
+import { el, button, buttonRow, titleS, prose } from '../kit/index.js';
 
 // `text` IS A FUNCTION WHEREVER IT NAMES A CONTROL, and that is the whole of the
 // change here. The End Turn step shipped as *"Done? End Turn (or press E)."* — a
@@ -42,18 +43,20 @@ export function mountTutorial(root, { onDone }) {
   const steps = STEPS.filter((s) => root.querySelector(s.sel));
   if (!steps.length) return onDone();
 
-  const veil = document.createElement('div');
-  veil.className = 'tut-veil';
-  veil.innerHTML = `
-    <div class="tut-spot"></div>
-    <div class="tut-bubble">
-      <div class="tut-title"></div>
-      <p class="tut-text"></p>
-      <div class="tut-row">
-        <button class="subtle tut-skip">Skip</button>
-        <button class="tut-next"></button>
-      </div>
-    </div>`;
+  // THE CALLOUT IS THE KIT'S SPOTLIGHT (styles/kit.css §SPOTLIGHT): a veil that
+  // takes no input, the lit box, and a Popover holding a Title·S, Prose and a
+  // ButtonRow. The veil's `pointer-events: none` is the backstop this file's
+  // header is about, and it is the atom's, not this file's.
+  const skipButton = button({ label: 'Skip', className: 'tut-skip' });
+  const nextButton = button({ label: '', weight: 'primary', className: 'tut-next' });
+  const veil = el('div', { class: 'as-spot-veil tut-veil' }, [
+    el('div', { class: 'as-spot tut-spot' }),
+    el('div', { class: 'as-pop tut-bubble' }, [
+      titleS(''), prose('', { class: 'tut-text' }),
+      buttonRow({ size: 'short', buttons: [skipButton, nextButton], className: 'tut-row' }),
+    ]),
+  ]);
+  veil.querySelector('.as-title-s').classList.add('tut-title');
   root.appendChild(veil);
 
   const spot = veil.querySelector('.tut-spot');

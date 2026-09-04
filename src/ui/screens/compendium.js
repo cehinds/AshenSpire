@@ -55,6 +55,16 @@
 // first. A constant grid that fills in reads as a map of what exists; a
 // re-sorting list reads as a scoreboard.
 //
+// ON THE KIT (kit §04 body A): the sections are a NavRail — one RailItem per
+// kind, its held count as StatusText — and the Pane shows the current kind:
+// Eyebrow + Title·M + Subtitle (the whole count), a PaneHead naming the kind,
+// and a grid of OptionCards. Each card is the kit's OptionCard with an ArtWell
+// for its Glyph: name as Title·S, rarity · hand as meta; a withheld piece is
+// the `is-ghost` variant (dashed, the icon painted out, no name) and carries
+// its rarity on the card's edge. The Back button is the pane's ButtonRow.
+// The hooks tools read (`.compendium[data-surface]`, `.cp-cell`, `.cp-grid`,
+// `.cp-scroll`, `#cp-back`) ride on kit parts and draw nothing.
+//
 // ---- WHAT AN AUTHOR WRITES, AND WHAT DERIVES (Law 0 clause 1) ---------------
 //
 // NOTHING. There is no compendium table and there must never be one. A row here
@@ -97,15 +107,15 @@
 // it. Recorded here because the sentence it replaces gave a REASON for excluding
 // armour, and that reason has expired: whether armour joins this screen is a
 // design call for Freja and Constantine ("weapons" was his word), not a
-// resolution I take while merging someone else's branch.
+// resolution I take while merging someone else's branch. The rail is where a
+// further category (armour, cards, relics, flasks) would join: one RailItem,
+// one pane of the same OptionCards.
 //
-// LAW 3: this screen declares NO TAB SET. Three sections in one scroll are a
-// list, not tabs (clause 6's corollary), so the bumpers stay with whatever owns
-// them and there is nothing here to cycle — stated rather than left undefined,
-// because clause 6 makes an unanswered context the defect. Every cell is a
-// control and carries a tooltip for hover AND the focus cursor (clause 4), which
-// is also where a locked cell's reason lives: printing "not yet found" twenty
-// three times IS the wall of grey, and the wall is the thing to avoid.
+// LAW 3: the rail switches SECTION (kit §03 RailItem), not tabs — the bumpers
+// stay with whatever owns them. Every cell is a control and carries a tooltip
+// for hover AND the focus cursor (clause 4), which is also where a locked
+// cell's reason lives: printing "not yet found" twenty three times IS the wall
+// of grey, and the wall is the thing to avoid.
 //
 // TWO OPEN, NEITHER THIS BRANCH'S AND NEITHER FIXED HERE (Freja, carried by Viki
 // so the next reader does not rediscover them):
@@ -121,22 +131,18 @@
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { assetUrl } from '../assetmap.js';
 import { pieceReveal } from '../../model/unlocks.js';
-import { ownership } from '../../model/loadout.js';
+import { ownership, modEffectLine } from '../../model/loadout.js';
 import { LOCK_COPY, armamentKindLabel } from '../uiContent.js';
+import {
+  el, railed, rail, railItem, pane, optionCard, options, artWell, button, buttonRow, titleS, statusText,
+} from '../kit/index.js';
 
-/** A piece's mods, written the way a player reads them. */
+/** A piece's mods, written the way a player reads them. The second regex over
+ *  the mod vocabulary lived here; the sentence is loadout.js's now, so this is
+ *  the walk over the piece and nothing else. An unknown field no longer
+ *  disappears — see modEffectLine for why that direction is the safe one. */
 function modSummary(modFields, piece) {
-  const parts = [];
-  for (const raw of piece.mods || []) {
-    const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
-    if (!m) continue;
-    const spec = (modFields || {})[m[2]];
-    if (!spec) continue;
-    const where = m[1] === 'self' ? '' : `${m[1][0].toUpperCase()}${m[1].slice(1)} `;
-    const sign = m[3][0] === '+' || m[3][0] === '-' ? m[3] : `= ${m[3]}`;
-    parts.push(`${where}${spec.label} ${sign}`);
-  }
-  return parts;
+  return (piece.mods || []).map((raw) => modEffectLine(modFields, raw));
 }
 
 /**
@@ -160,22 +166,25 @@ function sections(rows) {
 function cell(piece, { state, hint, gate }, modFields) {
   const held = state === 'held';
   const named = held || state === 'listed';
-  const el = document.createElement('button');
-  el.type = 'button';
-  el.className = `cp-cell rarity-${piece.rarity || 'common'} state-${state}`;
-  el.dataset.member = piece.id;
   // A held piece is announced by name; a withheld one is announced as what it
   // is, which is a shape you do not have. Screen readers get the same deal the
   // eye does — the alternative is an accessible label that leaks every name the
   // picture is deliberately hiding.
-  el.setAttribute('aria-label', named ? piece.name : `Unknown ${piece.kind}`);
-  el.innerHTML =
-    `<span class="cp-art"><img src="${esc(assetUrl(`assets/equipment/icon_${piece.artKey || piece.id}.webp`))}" alt=""></span>`
-    + `<span class="cp-name">${named ? esc(piece.name) : ''}</span>`;
-  const art = el.querySelector('img');
-  art.addEventListener('error', () => art.remove());
+  const card = optionCard({
+    name: named ? piece.name : `Unknown ${piece.kind}`,
+    meta: `${piece.rarity || 'common'} · ${piece.hand} hand`,
+    arrow: false,
+    className: `cp-cell rarity-${piece.rarity || 'common'} state-${state}${held ? '' : ' is-ghost'}`,
+    attrs: {
+      'aria-label': named ? piece.name : `Unknown ${piece.kind}`,
+      dataset: { member: piece.id, rarity: piece.rarity || 'common', state },
+    },
+  });
+  const art = artWell({ src: assetUrl(`assets/equipment/icon_${piece.artKey || piece.id}.webp`), alt: '', small: true });
+  art.querySelector('img').addEventListener('error', (e) => e.target.remove());
+  card.insertBefore(art, card.firstChild);
 
-  attachTooltip(el, () => {
+  attachTooltip(card, () => {
     if (held) {
       const mods = modSummary(modFields, piece);
       return `<b>${esc(piece.name)}</b><br>${esc(piece.rarity)} · ${esc(piece.hand)} hand`
@@ -184,14 +193,14 @@ function cell(piece, { state, hint, gate }, modFields) {
         + (piece.blurb ? `<br><i>${esc(piece.blurb)}</i>` : '');
     }
     // WITHHELD, and the tooltip is held to the same line the picture is. It says
-    // the rarity and the hand — which the ring and the section already say, so
+    // the rarity and the hand — which the edge and the section already say, so
     // it reveals nothing new — and then why it is not yours. It does NOT say the
     // name, the tags, the mods or the blurb, because a tooltip is not a loophole
     // in the design; it is the same decision at a different magnification.
     const head = named ? `<b>${esc(piece.name)}</b><br>` : '';
     return `${head}${esc(piece.rarity)} · ${esc(piece.hand)} hand<br><i>${esc(hint || LOCK_COPY[gate] || '')}</i>`;
   });
-  return el;
+  return card;
 }
 
 /**
@@ -229,27 +238,47 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
   }
   const total = drawn.length;
   const heldCount = drawn.filter(({ r }) => r.state === 'held').length;
-
-  app.innerHTML = `
-    <div class="screen compendium" data-surface="compendium">
-      <h1 class="title-big">ARMAMENTS</h1>
-      <p class="subtitle">${heldCount} OF ${total} HELD</p>
-      <div class="cp-scroll"><div class="cp-sections"></div></div>
-      <button id="cp-back">BACK</button>
-    </div>`;
-
-  const host = app.querySelector('.cp-sections');
-  for (const sec of sections(drawn.map(({ piece }) => piece))) {
+  const kinds = sections(drawn.map(({ piece }) => piece)).map((sec) => {
     const mine = drawn.filter(({ piece }) => piece.kind === sec.kind);
-    const have = mine.filter(({ r }) => r.state === 'held').length;
-    const box = document.createElement('section');
-    box.className = 'cp-section';
-    box.innerHTML = `<h2 class="cp-head">${esc(sec.label)}<span class="cp-count">${have}/${mine.length}</span></h2>`
-      + '<div class="cp-grid"></div>';
-    const grid = box.querySelector('.cp-grid');
-    for (const { piece, r } of mine) grid.appendChild(cell(piece, r, eq.modFields));
-    host.appendChild(box);
-  }
+    return { ...sec, mine, have: mine.filter(({ r }) => r.state === 'held').length };
+  });
 
-  app.querySelector('#cp-back').addEventListener('click', onBack);
+  let current = kinds[0]?.kind || null;
+  const items = kinds.map((sec) => {
+    const item = railItem({ label: sec.label, member: sec.kind, current: sec.kind === current, className: 'with-status cp-kind' });
+    item.appendChild(statusText(`${sec.have}/${sec.mine.length}`));
+    item.addEventListener('click', () => { current = sec.kind; render(); });
+    return item;
+  });
+  const back = button({ label: 'Back', id: 'cp-back' });
+  const grid = options([], { class: 'grid cp-grid cp-scroll' });
+  const head = el('div', { class: 'as-pane-head' });
+  const panel = pane({
+    eyebrow: 'Compendium',
+    title: 'Armaments',
+    subtitle: `${heldCount} of ${total} held`,
+    children: [head, grid, buttonRow({ size: 'short', buttons: [back] })],
+    attrs: { class: 'cp-pane' },
+  });
+
+  function render() {
+    for (const item of items) {
+      const on = item.dataset.member === current;
+      item.classList.toggle('on', on);
+      item.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
+    }
+    const sec = kinds.find((k) => k.kind === current);
+    head.innerHTML = '';
+    grid.innerHTML = '';
+    if (!sec) return;
+    head.append(titleS(sec.label, { tag: 'h3' }), statusText(`${sec.have} of ${sec.mine.length} held`));
+    for (const { piece, r } of sec.mine) grid.appendChild(cell(piece, r, eq.modFields));
+  }
+  render();
+
+  app.innerHTML = '';
+  app.appendChild(el('div', { class: 'screen compendium', dataset: { surface: 'compendium' } },
+    railed(rail(items, { 'aria-label': 'Armament kinds' }), panel)));
+  back.addEventListener('click', onBack);
 }

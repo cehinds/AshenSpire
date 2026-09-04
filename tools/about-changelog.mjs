@@ -11,6 +11,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+// THE ORDERING RULE HAS ONE HOME, AND IT IS NOT HERE. See stampKey below.
+import { versionTuple, compareVersions } from './buildversion.mjs';
 
 const SCRIPT = fileURLToPath(import.meta.url);
 const SCRIPT_ROOT = resolve(dirname(SCRIPT), '..');
@@ -667,7 +669,93 @@ export function flattenInline(text, where, labels = new Set()) {
 // ordinal 1 (#517 review); the shape is pinned by the selftest corpus.
 const STAMP = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/;
 
-export function parseChangelog(markdown, { currentOrdinal, projecting = false } = {}) {
+// THE SCHEME ELEMENT — which numbering a stamp counts in. A legacy `-rc.N`
+// stamp is numbered in the retired GLOBAL space; everything since 2026-09-01
+// counts WITHIN a release. It sits between the candidate and the tail so a
+// legacy stamp sorts first within one candidate and its ordinal is never
+// weighed against a new one. Named here because the value and the slot are one
+// fact, and a caller that spells either inline is a second copy of it.
+const SCHEME_SLOT = 3;
+const LEGACY = '0';
+const RELEASE_SCOPED = '1';
+
+/**
+ * A stamp as a COMPARABLE TUPLE, because the ordinal alone stopped ordering on
+ * 2026-09-01.
+ *
+ * Until then every build carried one global, never-resetting ordinal, so two
+ * receipts could be ordered by that number alone. Constantine's scheme puts the
+ * CANDIDATE in the third component and restarts the tail inside each one, so
+ * `0.5.4.0` is newer than `0.5.3.2` while its ordinal is lower — comparing
+ * ordinals would report every candidate boundary as history running backwards.
+ *
+ * THE FOURTH ELEMENT IS THE SCHEME ITSELF, and it is here rather than in a
+ * migration that rewrote history. A stamp still wearing the retired `-rc.N`
+ * notation is a build numbered under the old global ordinal; one without it,
+ * inside a candidate line, is numbered under the new per-candidate counter. The
+ * two number spaces are not comparable — 1956 and 0 are not 1956 apart, they
+ * are one build apart — so within one candidate the legacy stamp sorts first
+ * and its ordinal is never weighed against a new one. That is exactly true of
+ * the boundary: `0.5.0-rc.4.1956` is rc.4's first build and `0.5.4.0` is its
+ * second, and this is the only place that fact has to be encoded.
+ */
+export function stampKey(release, ordinal) {
+  // ONE HOME FOR "ORDER TWO BUILDS", AND IT IS tools/buildversion.mjs. This
+  // used to be a PARALLEL IMPLEMENTATION of that rule — its own release regex,
+  // its own Number() coercion, its own padded comparison — and it carried the
+  // defects of four review rounds on #579 that were fixed only in the gate:
+  //
+  //   round 6  '0.5.0-beta.4'  accepted here, folded to 0.5.4 — the very
+  //            collision the gate refuses as unrepresentable, since rc.4 folds
+  //            there too and two pre-release lines cannot share one version
+  //   round 7  compareStamps padded the shorter side with `(a[i] ?? 0)`
+  //   round 8  an ordinal past 2^53 keyed as `1e+21`, five characters that a
+  //            length-first comparison ranks BELOW a twenty-one digit tail
+  //   round 9  release components through Number(), so this tool called a
+  //            transition a RISE that the gate called a FALL
+  //
+  // Two tools certifying opposite answers about one pair of stamps is row B's
+  // defect — NO SECOND COPY — applied to a rule rather than a value, and it is
+  // why each fix kept drawing the next finding: the reviewer kept meeting the
+  // same defect class alive in the copy that had not been consolidated. So the
+  // version and the tail come from versionTuple, whole, and nothing is re-read
+  // or re-coerced here.
+  const version = versionTuple(release, ordinal);
+  if (version === null) return null;
+  // THE ONE FACT THAT IS GENUINELY THIS TOOL'S. Legacy `0.5.0-rc.4.1956` and
+  // new `0.5.4.0` are the same candidate under two spellings, so the version
+  // alone cannot separate them; the scheme element does, and it belongs to the
+  // changelog because nothing else has to read stamps written under both. It
+  // sits between the candidate and the tail so the legacy stamp sorts first
+  // WITHIN a candidate and its ordinal is never weighed against a new one.
+  return [...version.slice(0, 3), /-rc\.\d+$/.test(release) ? LEGACY : RELEASE_SCOPED, version[3]];
+}
+
+/**
+ * Which numbering a stamp was written under — the ONE reader of the scheme
+ * element, because the slot and its value are this function's private encoding
+ * and nowhere else should know either.
+ *
+ * The ceiling loop used to spell it `r.key[3] === 0`, a second copy of both
+ * facts, and consolidating stampKey onto buildversion's digit-string tuple
+ * turned that `0` into `'0'` — so the strict test silently went false, legacy
+ * receipts stopped being skipped, and a perfectly good `0.5.0-rc.4.1956` was
+ * refused as a build that has not happened (#579 review). The type is the
+ * caller's business no longer.
+ */
+export function isLegacyStamp(key) {
+  return key !== null && key[SCHEME_SLOT] === LEGACY;
+}
+
+/**
+ * Order two stampKey tuples. The comparison itself is buildversion's — this
+ * name is kept because it is what this file's ordering means, not because the
+ * rule is different. Null when the pair cannot be ordered, which stampKey's
+ * own output can never be: it always returns five components or null.
+ */
+export const compareStamps = compareVersions;
+
+export function parseChangelog(markdown, { currentOrdinal, currentRelease = null, projecting = false } = {}) {
   const entries = [];
   const receipts = [];
   const labels = linkDefinitionLabels(markdown);
@@ -688,7 +776,26 @@ export function parseChangelog(markdown, { currentOrdinal, projecting = false } 
     if (!stamp && /^\d/.test(build)) {
       throw new Error(`${where}: build stamp \`${build}\` looks like a version but is not \`<release>.<ordinal>\` — the ordinal is a receipt from buildordinal.json, not free text`);
     }
-    receipts.push({ where, group, date, ordinal: stamp ? Number(stamp[2]) : null });
+    const key = stamp ? stampKey(stamp[1], Number(stamp[2])) : null;
+    // A STAMP THIS TOOL CANNOT ORDER IS REFUSED, NOT SKIPPED. STAMP's shape is
+    // looser than the scheme — it admits any alphabetic pre-release tag and any
+    // length of ordinal — so consolidating stampKey onto buildversion's grammar
+    // made it return null for stamps this regex still matches. Left as `key:
+    // null` those receipts drop silently out of the ordering loop below, and a
+    // row that goes quiet on the input it cannot judge is the defect this whole
+    // review has been about. It throws instead: the ordering check either ranks
+    // a receipt or refuses it, and there is no third door.
+    if (stamp && key === null) {
+      throw new Error(`${where}: build stamp \`${build}\` cannot be ordered — the scheme admits three numeric components`
+        + ` (0.5.4), optionally with an rc candidate tag (0.5.0-rc.4), over a counting ordinal no larger than`
+        + ` Number.MAX_SAFE_INTEGER. tools/buildversion.mjs owns that grammar and this file does not keep a second copy of it.`);
+    }
+    receipts.push({
+      where, group, date, build,
+      ordinal: stamp ? Number(stamp[2]) : null,
+      release: stamp ? stamp[1] : null,
+      key,
+    });
     entries.push({
       id: `pr-${pullRequest}`,
       date,
@@ -708,21 +815,36 @@ export function parseChangelog(markdown, { currentOrdinal, projecting = false } 
   const groups = [];
   for (const r of receipts) {
     if (!groups.length || groups[groups.length - 1].group !== r.group) {
-      groups.push({ group: r.group, date: r.date, ordinals: [] });
+      groups.push({ group: r.group, date: r.date, stamps: [] });
     }
-    if (r.ordinal !== null) groups[groups.length - 1].ordinals.push(r.ordinal);
+    if (r.key !== null) groups[groups.length - 1].stamps.push(r);
   }
   for (let i = 1; i < groups.length; i++) {
     const newer = groups[i - 1], older = groups[i];
     if (older.date > newer.date) {
       throw new Error(`date group '${older.group}' sits below '${newer.group}' but is newer — this file runs newest first`);
     }
-    if (newer.ordinals.length && older.ordinals.length
-      && Math.max(...older.ordinals) > Math.min(...newer.ordinals)) {
-      throw new Error(`ordinal runs backward: group '${older.group}' cites build ${Math.max(...older.ordinals)}, newer group '${newer.group}' cites ${Math.min(...newer.ordinals)} — an older merge cannot ship a newer build`);
+    if (newer.stamps.length && older.stamps.length) {
+      // Compared as whole versions, not as bare ordinals: the tail restarts
+      // inside each candidate, so `0.5.4.0` is newer than `0.5.3.2` with the
+      // lower number. The pair is named in the message because "runs backward"
+      // with two ordinals that legitimately fall was the confusing half.
+      const highestOld = older.stamps.reduce((a, b) => (compareStamps(a.key, b.key) >= 0 ? a : b));
+      const lowestNew = newer.stamps.reduce((a, b) => (compareStamps(a.key, b.key) <= 0 ? a : b));
+      if (compareStamps(highestOld.key, lowestNew.key) > 0) {
+        throw new Error(`build runs backward: group '${older.group}' cites \`${highestOld.build}\`, newer group '${newer.group}' cites \`${lowestNew.build}\` — an older merge cannot ship a newer build`);
+      }
     }
   }
   if (typeof currentOrdinal === 'number') {
+    // THE CEILING IS SCOPED TO THE CURRENT RELEASE, and it has to be from
+    // 2026-09-01: the ordinal counts builds WITHIN a release, so `2` in
+    // `0.5.3.2` and `2` in `0.5.4.2` are different builds of different
+    // candidates. Weighed against one global ceiling every historical receipt
+    // would outrun a freshly-restarted counter and the row would refuse the
+    // whole file. A receipt from an older release names a build that already
+    // happened — that is what makes it history — so only the current line is
+    // bounded, which is the only line buildordinal.json can speak for.
     // A receipt shipped IN ITS OWN PR names the build its projection will
     // produce: `--write` projects it, the rebuild that must follow bumps the
     // ordinal by exactly one, and from then on the receipt is ≤ the ordinal
@@ -731,10 +853,36 @@ export function parseChangelog(markdown, { currentOrdinal, projecting = false } 
     // that has not happened. The plain check never allows the extra one — a
     // merged tree whose receipt outruns its buildordinal is a receipt with no
     // build behind it, which is exactly what #310 refuses.
+    // A SCOPED CEILING NEEDS ITS SCOPE. Since 2026-09-01 the ordinal counts
+    // builds WITHIN a release, so `5` means five builds of THAT release and
+    // says nothing about any other. Given the count without the release this
+    // loop was weighing every non-`-rc` receipt against it, and CHANGELOG.md
+    // states plainly that the retained `0.4.0.<ordinal>` line "keeps its
+    // ordinals, which are that line's own receipts and were never
+    // candidate-scoped" — so `0.4.0.1888` came out as a build that has not
+    // happened (#579 review). The real run has always passed both, which is
+    // why the file itself has never been misjudged; the hazard was the API,
+    // and fixtures calling it that way were testing a configuration the tool
+    // does not have.
+    //
+    // It REFUSES rather than skipping the ceiling, because skipping is a check
+    // going quiet on the input it cannot judge — the failure this whole review
+    // has been about — and because a tree recording an ordinal with no release
+    // beside it is already refused by buildversion row F. Same rule, same era,
+    // stated in both places.
+    if (currentRelease === null) {
+      throw new Error('a release-scoped ceiling was given without its scope: currentOrdinal counts builds WITHIN a release,'
+        + ' so weighing a receipt against it requires currentRelease. Pass both, or neither.');
+    }
     const ceiling = currentOrdinal + (projecting ? 1 : 0);
     for (const r of receipts) {
-      if (r.ordinal !== null && r.ordinal > ceiling) {
-        throw new Error(`${r.where}: cites build ${r.ordinal}, but buildordinal.json says only ${currentOrdinal} builds exist${projecting ? ' (projecting allows the one build the following rebuild produces)' : ''} — a receipt cannot name a build that has not happened`);
+      if (r.ordinal === null) continue;
+      // A legacy `-rc.N` stamp is numbered in the retired global space and the
+      // current counter cannot speak for it at all.
+      if (isLegacyStamp(r.key)) continue;
+      if (currentRelease !== null && r.release !== currentRelease) continue;
+      if (r.ordinal > ceiling) {
+        throw new Error(`${r.where}: cites build ${r.ordinal} of release ${r.release ?? '(unknown)'}, but buildordinal.json says only ${currentOrdinal + 1} build(s) of that release exist${projecting ? ' (projecting allows the one build the following rebuild produces)' : ''} — a receipt cannot name a build that has not happened`);
       }
     }
   }
@@ -753,8 +901,14 @@ function currentOrdinal() {
   catch { return undefined; } // absent in a plant root; the other #310 checks still run
 }
 
+/** The release the current ordinal counts within — the ceiling's scope. */
+function currentRelease() {
+  try { return JSON.parse(readFileSync(resolve(ROOT, 'buildordinal.json'), 'utf8')).release ?? null; }
+  catch { return null; }
+}
+
 async function checkProjection() {
-  const expected = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal() });
+  const expected = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), currentRelease: currentRelease() });
   const got = await generatedEntries();
   if (JSON.stringify(got) !== JSON.stringify(expected)) throw new Error('generated changelog drifted from CHANGELOG.md; run --write');
   return expected;
@@ -824,7 +978,7 @@ async function browserRoute(entries, {
     const title = await evaluate(`(() => ({
       settingsCount: document.querySelectorAll('.title-menu #settings').length,
       changelogTopLevel: [...document.querySelectorAll('.title-menu button')].some((button) => /changelog/i.test(button.textContent)),
-      titleText: document.querySelector('.title-big')?.textContent?.trim()
+      titleText: document.querySelector('.as-titlemenu .tm-name, .title-big')?.textContent?.trim()
     }))()`);
     if (title.settingsCount !== 1 || title.changelogTopLevel || title.titleText !== 'ASHEN SPIRE') {
       throw new Error(`title route changed (${JSON.stringify(title)})`);
@@ -942,7 +1096,7 @@ async function browserCheck(entries, { sourceOnly = false, screenshotDir = null 
 }
 
 async function selftest() {
-  const good = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal() });
+  const good = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), currentRelease: currentRelease() });
   const parserPlants = [
     ['malformed receipt', '- **No metadata**'],
     ['mismatched PR', '- **Mismatch** ([#1](https://github.com/cehinds/AshenSpire/pull/2), `0.4.0.1`).'],
@@ -954,28 +1108,86 @@ async function selftest() {
     catch { caught++; console.log(`CAUGHT ${name}`); }
   }
 
-  // #310 plants: the ordinal column can refuse. Four must be CAUGHT; the fifth,
-  // inverted, proves the shapes the real file uses (within-group ascent, a
-  // shared ordinal across groups, a prose stamp) still PASS.
+  // #310 plants: the ordinal column can refuse. EVERY entry below must be
+  // CAUGHT; the inverted case after the loop proves the shapes the real file
+  // uses (within-group ascent, a shared ordinal across groups, a prose stamp)
+  // still PASS. The header said "Four" while the list held seven — a count
+  // spelled beside a corpus instead of read from it, which is the defect #579
+  // fixed in buildversion-selftest and which had a second copy right here.
+  // Rises where an inverted case is actually counted, so the census below reads
+  // the corpus instead of spelling it — and EXPECTED_INVERTED stays a literal
+  // beside it, because `inverted++` sits on the same statement as `caught++`.
+  // Derived alone, that term is a TAUTOLOGY: the census `caught !== grandTotal`
+  // can never fire for it, so an inverted case that stops running is invisible.
+  // Measured: stubbing that line reports `OK — 68 known-bads, 68 caught` at
+  // exit 0 without this declaration, and exit 1 with it.
+  const EXPECTED_INVERTED = 1;
+  let inverted = 0;
   const receipt = (pr, stamp) => `- **E${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${stamp}\`).`;
   const ordinalPlants = [
     ['version-shaped stamp that is not <release>.<ordinal>', `## 2026-08-20\n\n${receipt(1, '0.4.77')}\n`, {}],
-    ['pre-release stamp with no ordinal (the tag must not be read as one)', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1')}\n`, { currentOrdinal: 5 }],
-    ['pre-release stamp whose ordinal is missing after the tag', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1905')}\n`, { currentOrdinal: 5 }],
+    ['pre-release stamp with no ordinal (the tag must not be read as one)', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1')}\n`, { currentOrdinal: 5, currentRelease: '0.5.4' }],
+    ['pre-release stamp whose ordinal is missing after the tag', `## 2026-08-20\n\n${receipt(1, '0.5.0-rc.1905')}\n`, { currentOrdinal: 5, currentRelease: '0.5.4' }],
     ['ordinal rising into an older group', `## 2026-08-21\n\n${receipt(1, '0.4.0.5')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.9')}\n`, {}],
     ['date groups out of order', `## 2026-08-19\n\n${receipt(1, '0.4.0.9')}\n\n## 2026-08-20\n\n${receipt(2, '0.4.0.5')}\n`, {}],
-    ['receipt citing a build that does not exist yet', `## 2026-08-20\n\n${receipt(1, '0.4.0.101')}\n`, { currentOrdinal: 100 }],
-    ['receipt two builds ahead even while projecting (one is the rebuild to come; two is not)', `## 2026-08-20\n\n${receipt(1, '0.4.0.102')}\n`, { currentOrdinal: 100, projecting: true }],
+    ['receipt citing a build that does not exist yet', `## 2026-08-20\n\n${receipt(1, '0.4.0.101')}\n`, { currentOrdinal: 100, currentRelease: '0.4.0' }],
+    ['receipt two builds ahead even while projecting (one is the rebuild to come; two is not)', `## 2026-08-20\n\n${receipt(1, '0.4.0.102')}\n`, { currentOrdinal: 100, currentRelease: '0.4.0', projecting: true }],
+    // THE THREE THE SECOND COPY USED TO LET THROUGH (#579 review). STAMP's
+    // shape is looser than the scheme, so each of these matched it, keyed
+    // cleanly under the old parallel implementation, and was ordered on a
+    // value nobody could defend. Delegating to buildversion refuses them —
+    // and they are refused rather than dropped, which is why they are plants
+    // and not a quiet gap.
+    ['pre-release tag the notation cannot represent (rc.4 and beta.4 would fold to one version)',
+      `## 2026-08-20\n\n${receipt(1, '0.5.0-beta.4.1')}\n`, {}],
+    ['ordinal past the point a JSON number keeps its digits',
+      `## 2026-08-20\n\n${receipt(1, '0.5.4.9007199254740993')}\n`, {}],
+    // The pair from the round-9 report: two candidates one apart across the
+    // double's integer ceiling. The gate called this transition BACKWARD while
+    // this tool called it a rise — two checks certifying opposite answers about
+    // one pair of stamps. It is caught here now because both read one rule.
+    ['candidates one apart past the safe-integer ceiling, running backward across groups',
+      `## 2026-08-21\n\n${receipt(1, '0.5.9007199254740992.3')}\n\n## 2026-08-20\n\n${receipt(2, '0.5.9007199254740993.2')}\n`, {}],
+    // A SCOPED CEILING WITH NO SCOPE. `5` means five builds of one release and
+    // says nothing about any other, so weighing a receipt against it without
+    // naming that release is a question with no referent. It used to answer
+    // anyway, and the retained `0.4.0.<ordinal>` line — global receipts that
+    // were never candidate-scoped — came out as builds that had not happened.
+    //
+    // THE ORDINAL HERE IS BELOW THE CEILING ON PURPOSE. The obvious plant uses
+    // `0.4.0.1888`, the receipt review named — but that throws either way, the
+    // old code for the wrong reason and the new code for the right one, so it
+    // proves nothing about this change. Drafted exactly that and caught it only
+    // because the pre-fix run came back clean. A receipt UNDER the ceiling is
+    // silently accepted by the old form and refused by the new, which is the
+    // difference this plant is for.
+    ['a release-scoped ceiling given without the release it counts within',
+      `## 2026-08-20\n\n${receipt(1, '0.4.0.3')}\n`, { currentOrdinal: 5 }],
   ];
   for (const [name, body, opts] of ordinalPlants) {
     try { parseChangelog(`# Test\n\n${body}`, opts); console.error(`MISS ${name}`); process.exitCode = 1; }
     catch { caught++; console.log(`CAUGHT ${name}`); }
   }
   try {
-    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.7')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7 });
+    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.7')}\n${receipt(2, '0.4.0.7')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n${receipt(4, 'dev artifact; exact BUILD in PR evidence')}\n`, { currentOrdinal: 7, currentRelease: '0.4.0' });
     // The in-PR receipt shape: one build ahead is legal while projecting.
-    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.8')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n`, { currentOrdinal: 7, projecting: true });
-    caught++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse');
+    parseChangelog(`# Test\n\n## 2026-08-21\n\n${receipt(1, '0.5.0-rc.1.8')}\n\n## 2026-08-20\n\n${receipt(3, '0.4.0.5')}\n`, { currentOrdinal: 7, currentRelease: '0.4.0', projecting: true });
+    // A LEGACY STAMP FAR ABOVE THE RELEASE-SCOPED CEILING MUST PASS. Its 1956
+    // counts in the retired GLOBAL space, which the current counter cannot
+    // speak for at all, so the ceiling has to skip it. Nothing exercised that
+    // skip: the case above sits AT the ceiling, where the skip and its absence
+    // look identical. Consolidating stampKey turned the scheme element from
+    // numeric 0 into '0' and the strict test silently went false — legacy
+    // receipts stopped being skipped and this receipt was refused as a build
+    // that has not happened, with the whole corpus still green (#579 review).
+    parseChangelog(`# Test\n\n## 2026-08-20\n\n${receipt(1, '0.5.0-rc.4.1956')}\n`, { currentOrdinal: 5, currentRelease: '0.5.4' });
+    // AND THE RETAINED 0.4 LINE, which CHANGELOG.md says "keeps its ordinals,
+    // which are that line's own receipts and were never candidate-scoped". Its
+    // 1888 dwarfs any release-scoped ceiling and must still pass: the scope
+    // names 0.5.4, and a counter for 0.5.4 cannot speak for a 0.4.0 receipt.
+    // Nothing exercised a retained 0.4 receipt against a ceiling at all.
+    parseChangelog(`# Test\n\n## 2026-08-20\n\n${receipt(1, '0.4.0.1888')}\n`, { currentOrdinal: 5, currentRelease: '0.5.4' });
+    caught++; inverted++; console.log('CAUGHT (inverted) legitimate ordinal shapes still parse, legacy global ordinals included');
   } catch (error) {
     console.error(`MISS legitimate shapes refused: ${error.message}`); process.exitCode = 1;
   }
@@ -1073,9 +1285,10 @@ async function selftest() {
     console.log('PASS escaped backticks stay literal instead of opening a code span');
   } catch (error) { console.error(`FAIL escaped backticks: ${error.message}`); process.exitCode = 1; }
   // Census over EVERY family that does caught++ — the ordinal plants and the
-  // inverted legitimate-shapes control (+1) count themselves too; omitting
-  // them made the selftest exit 1 with all plants caught and zero MISS (#498).
-  const total = parserPlants.length + ordinalPlants.length + 1 + modelPlants.length;
+  // inverted legitimate-shapes control count themselves too; omitting them made
+  // the selftest exit 1 with all plants caught and zero MISS (#498). `inverted`
+  // is checked against its declaration above, since this term alone cannot.
+  const total = parserPlants.length + ordinalPlants.length + inverted + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
   // the file rather than from a string handed to the parser. All three of these
@@ -1398,14 +1611,24 @@ async function selftest() {
       find: "Changelog: { mount: 'set-changelog-mount'", replace: "Changelog: { mount: 'set-changelog-missing'", expect: 'Changelog did not mount',
     },
     {
+      // The Done control is BUILT here now rather than found in a template —
+      // the settings modal wears the shared chrome (src/ui/components/
+      // modalShell.js), which puts the way forward in a footer instead of a
+      // `.set-actions` div. Same plant, same assertion: sever Done's click and
+      // the door stops returning to the title.
       name: 'broken Done navigation', file: 'src/ui/screens/settings.js',
-      find: "veil.querySelector('#set-close').addEventListener('click', close);",
-      replace: "veil.querySelector('#set-close').addEventListener('click', () => {});",
+      find: "  done.addEventListener('click', close);",
+      replace: "  done.addEventListener('click', () => {});",
       expect: 'Done did not return to title',
     },
     {
-      name: 'non-keyboard changelog row', file: 'src/ui/screens/about.js',
-      find: '<summary class="region-fold">', replace: '<div class="region-fold">', expect: 'Changelog did not mount',
+      // The changelog row is the kit's Fold (src/ui/kit/index.js): a <details>
+      // whose summary is a Row. The tag is decided in ONE place, so the plant
+      // lands there — a Row that is a <div> instead of a <summary> is a fold
+      // no keyboard can open, and the tool's wait for `details.about-change
+      // summary` is what catches it.
+      name: 'non-keyboard changelog row', file: 'src/ui/kit/index.js',
+      find: "row({ glyph: '›', label, status, tag: 'summary',", replace: "row({ glyph: '›', label, status, tag: 'div',", expect: 'Changelog did not mount',
     },
     {
       name: 'missing Pages development link', file: 'src/ui/screens/about.js',
@@ -1472,6 +1695,11 @@ async function selftest() {
     }
   }
   const grandTotal = total + treePlants.length;
+  if (inverted !== EXPECTED_INVERTED) {
+    console.error(`about-changelog selftest: RED — ${inverted} inverted case(s) ran, ${EXPECTED_INVERTED} declared.`
+      + ' Update EXPECTED_INVERTED in this file, or restore the case that stopped running.');
+    process.exitCode = 1;
+  }
   if (caught !== grandTotal || !good.length) process.exitCode = 1;
   // Terminal line in a verdict.mjs-accepted form ("label: OK — N <words>, N caught").
   else if (!process.exitCode) console.log(`about-changelog selftest: OK — ${caught} known-bads, ${caught} caught`);
@@ -1482,7 +1710,7 @@ async function selftest() {
 // a boundary they cannot is how a narrow check gets cited as a wide one.
 try {
   if (process.argv.includes('--write')) {
-    const entries = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), projecting: true });
+    const entries = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), currentRelease: currentRelease(), projecting: true });
     writeFileSync(GENERATED, generatedText(entries));
     console.log(`wrote ${entries.length} receipts to ${GENERATED}`);
   } else if (process.argv.includes('--selftest')) {

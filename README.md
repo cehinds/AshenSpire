@@ -1,12 +1,12 @@
 # AshenSpire — Ashen Spire
 
-A single-player roguelike deckbuilder for the browser. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**. Built with vanilla ES-module JavaScript, HTML, and CSS — no framework, no build step.
+A roguelike deckbuilder for the browser — single-player, with optional LAN co-op. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**. Built with vanilla ES-module JavaScript, HTML, and CSS — no framework, no build step.
 
 > **Status: feature-complete core loop.** Four classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
-> **README content updated:** 2026-09-01T15:37:00-08:00 (Alaska)
-> **Updated by:** Help Desk (AS-HD-053) on the owner's instruction — playable build numbers, their source branches, and the per-branch builds site
-> **Source change:** Pull request adding `tools/pages-site.mjs` and `.github/workflows/pages-builds.yml` alongside this README update
+> **README content updated:** 2026-09-02T00:45:00-08:00 (Alaska)
+> **Updated by:** Claude Code, on the owner's instruction — the feature list now names equip load and Weight Class, Stamina with the class-priced Dodge Roll and the empty hand that brings it, the first quest chain, and Forsaken Together (the LAN co-op); the opening line no longer calls the game single-player only
+> **Source change:** Pull request #555, the README pass and its CHANGELOG receipt at `0.5.0-rc.2.1944`
 > **Scope:** README content-currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
 
 ## Play a build
@@ -61,16 +61,9 @@ player-facing changes. The current Smith modal write-up is
 **[CHANGELOG.md](CHANGELOG.md)** — what changed, newest first, each entry
 naming the pull request that landed it and the build number it shipped in.
 
-**[Development governance](docs/governance/README.md)** — the versioned
-authority, lifecycle, ticket, quality, decision, and runbook control plane.
-The legacy **[coordination workflow](docs/COORDINATION-WORKFLOW.md)** remains a
-compatibility entry point. The **[Art integration runbook](docs/governance/RUNBOOKS/art.md)**
-defines the Proposal → Approved → Active lifecycle and, when active, the
-mandatory integration package triggered by an approved art suggestion without
-granting implementation, publication, or release authority. Its independently
-reviewed governance head is Approved before canonical integration and Active
-when that exact head is contained in canonical `dev`; no merge-time status or
-version edit is required.
+**[Working rules](AGENTS.md)** — how contributors and AI agents work here:
+one task per branch, draft pull requests into `dev`, and only the owner merges
+to `main`.
 
 **[Architecture map](docs/ARCHITECTURE-MAP.md)** — the stable
 composition/component redesign contract. The [current-`dev` architecture
@@ -84,22 +77,9 @@ beside it. This is a **development preview**, not a release, tag, or
 production approval. Release status remains governed separately and is currently
 **RED**.
 
-Work reaches `main` only through the promotion gates in
-[decision 0009](docs/governance/DECISIONS/0009-promotion-gates-a-through-f.md);
-`dev` is the integration branch and is not published. A change merged to `dev`
-is therefore not yet visible at the preview URL.
-
-### Owner-facing views
-
-Both are generated from validated repository state by `opsctl render` and
-drift-gated by `opsctl verify`, so neither can quietly diverge from the control
-plane it reports on:
-
-- **[Review &amp; Approval Hub](https://cehinds.github.io/AshenSpire/review-approval-hub/)**
-  — what needs the owner, every ticket with its authority and event chain,
-  live writer leases, the authority tiers, and where a question goes.
-- **[Owner HUD](https://cehinds.github.io/AshenSpire/hud/)** — the compact
-  read-only status projection, with compare-and-swap decision links.
+Work reaches `main` only when the owner merges it; `dev` is the integration
+branch and is not published. A change merged to `dev` is therefore not yet
+visible at the preview URL.
 
 For offline play, download [`AshenSpire.html`](AshenSpire.html) from the
 repository root and double-click it. It is a self-contained file and requires
@@ -205,6 +185,10 @@ No install, no framework, no build step for the source.
 - **One data-driven Armoury:** Character, Inventory, and Hybrid are presentations of the same equipment owner. Character places the contained figure beside expandable Combat Power, Attributes, and Relics; Inventory pairs procedural Armaments with the one shared carried-item list; Hybrid keeps the compact Character stack beside Armaments. Armaments, Inventory, Cards, and Stats use the shared Folding Tray grammar. Equipment cards drag as one surface and, when hold-confirm is enabled, fill across the whole folded or expanded card while equipping, moving, or unequipping. The fixed authored attack slots rebind in place to the active weapon package: a lone left- or right-hand weapon owns all of them, dual wield splits them right-first without deck growth, and the comparison receipt shows the exact before/after counts.
 - **Faithful StS mechanics:** 3 energy / draw 5 turns, block that expires, telegraphed enemy intents, exhaust/ethereal/retain keywords, exact StS damage-order math.
 - **Elden Ring flavor with real mechanics:** Bleed as a build-up meter that bursts for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and a Poise/Stagger system that skips enemy turns and opens damage windows.
+- **Equip load and Weight Class:** what your hands and armour weigh counts against a capacity set by Constitution and Strength, and the percentage lands you in Light, Medium or Heavy. The Armoury shows the load, the capacity and the class, and comparing a piece shows the load and class the swap would leave you at.
+- **Stamina, and hands that fight empty:** a turn in which you spend no Stamina recovers some at its end, and the Dodge Roll checks Dexterity against a d20 to land a temporary guard. Its price is your Weight Class — Light 1 Stamina, Medium 2 Stamina and 1 action, Heavy 3 Stamina and 2 actions — quoted the same way on the card face, in the tooltip and by the engine. An empty hand brings the Dodge Roll to your deck: with one hand armed the armed hand keeps its own technique, with both hands empty every guard slot is Evasive Guard and every technique slot the Dodge Roll. A shield counts as a full hand.
+- **Quests that remember what you did:** an event choice is written into your run's history, and a quest step your history has not earned is kept out of the event pool entirely. Earn it and it becomes eligible at the Unknown nodes of maps built after that — a chance the map rolls, not a node that opens on cue — and a step you have already answered never comes back. The Grave of the Nameless is the first chain: dig for cinders and the keeper may come to collect, or pay your respects and be thanked with the Gravetender's Bell, a relic no shop or drop will ever hand over.
+- **Forsaken Together — LAN co-op:** a party shares one map, votes on the fork and fights one shared combat, each seat playing its own deck, relics and flasks. Events are answered seat by seat, and a seat that drops out comes back to a catch-up queue that replays what it missed against the choices its history had earned at the time. Served by the launcher's own Node server, so a `file://`-opened build stays single-player.
 - **Character creation, one panel at a time:** six folded picks — class, starting kit, keepsake, sigil, tint, sprite — each pick opens the next, and the column reads your choices back in words. Below them, **starting armour** and **stat points** sit open as rows of their own: both change the run, so neither folds, and editing them never marches you on to the next section. Mouse, keyboard, and pad all walk the same flow; pressing Confirm repeatedly accepts the defaults.
 - **Rewards you open before you collect:** post-fight spoils are a menu — cinders, cards, flasks, armaments, relics — and nothing joins your run until you take it, so you can look first and back out unchanged. A reward you have no room for says so on its own row, and is the only row that offers Skip. Continue is always pressable; Settings → Advanced → Reward collection decides whether it sweeps up the rest for you or simply means *done*.
 - **A merchant who buys back:** the shop is five collapsing bars — cards, relics, flasks, remove-a-card, and Sell — one open at a time. He buys back relics and flasks at half his own cheapest price, and the Sell bar can be switched off entirely in Settings.

@@ -1,0 +1,321 @@
+# content/source/tagging.csv — who carries which tag (Ashen Spire)
+#
+# THE association table, and the ONLY home for a tag on anything. One row per
+# (family, scope, objectId, tagId) — third normal form, so there is no cell
+# holding a list and no second place a tag can be written.
+#
+# WHY ONE ROW PER TAG rather than a pipe-separated cell: a repeating group in a
+# cell is a 1NF break, and it is what let the old inline `tags` columns exist as
+# a second home. With one row per tag there is nothing to keep in sync — a tag
+# is a row, and adding one is adding a row.
+#
+# family    a row in tagFamilies.csv. That row names the collection the objectId
+#           must exist in, and (via tagFamilyDomains.csv) the domains it may carry.
+# scope     the value of the family's `scopeField`, or empty when it has none.
+#           Only `armour` uses it today: outfit ids repeat per class, so classId
+#           is part of the parent key and must be part of this one.
+# objectId  the id of the thing being tagged, in that family and scope.
+# tagId     a row in tags.csv, whose domain the family must be allowed to carry.
+#
+# Display order is file order: the first row for an object is its first chip.
+#
+# The validator refuses, BY NAME: an unknown family, an unknown tag, a tag from a
+# domain that family may not carry, an objectId no object has, a scope on a family
+# with no scopeField (or a missing one on a family that has one), and a duplicate
+# (family, scope, objectId, tagId).
+#
+# columns: family, scope, objectId, tagId
+family,scope,objectId,tagId
+# ---- class ---------------------------------------------------------------------
+# A class's leaning, in the same vocabulary its cards use. Read by the
+# composed starting deck (balance.equipment.startingDeck).
+class,,reaver,blade
+class,,reaver,guard
+class,,reaver,blood
+class,,starseer,starstone
+class,,starseer,ranged
+class,,rogue,guile
+class,,rogue,flourish
+class,,herald,ritual
+class,,herald,oath
+# ---- card ----------------------------------------------------------------------
+# Card schools. What KIND of attack, which school a skill belongs to.
+card,,ambush,guile
+card,,ambush,blade
+card,,rogueShiv,blade
+card,,rogueShiv,flourish
+card,,smokePellet,guile
+card,,smokePellet,ash
+card,,quickCut,blade
+card,,quickCut,flourish
+card,,feint,guile
+card,,backstep,flourish
+card,,backstep,guard
+card,,twinPrick,blade
+card,,twinPrick,flourish
+card,,pocketSand,guile
+card,,pocketSand,ash
+card,,hamstringRogue,blade
+card,,hamstringRogue,guile
+card,,serratedShiv,blade
+card,,serratedShiv,blood
+card,,smokeVeil,guile
+card,,smokeVeil,guard
+card,,ricochet,pierce
+card,,ricochet,ranged
+card,,lowBlow,blade
+card,,lowBlow,guile
+card,,pilfer,guile
+card,,vanish,guile
+card,,vanish,ash
+card,,cheapShot,blade
+card,,cheapShot,guile
+card,,bladeDanceRogue,blade
+card,,bladeDanceRogue,flourish
+card,,garrote,blade
+card,,garrote,blood
+card,,fanOfKnives,pierce
+card,,fanOfKnives,ranged
+card,,setupRogue,guile
+card,,acrobaticsRogue,flourish
+card,,disorient,guile
+card,,coupDeGrace,blade
+card,,coupDeGrace,precision
+card,,sap,guile
+card,,shadowstep,flourish
+card,,shadowstep,guile
+card,,afterimageCard,flourish
+card,,afterimageCard,oath
+card,,bloodletterRogue,blade
+card,,bloodletterRogue,blood
+card,,venomcoat,venom
+card,,venomcoat,oath
+card,,misdirect,guile
+card,,misdirect,guard
+card,,assassinate,blade
+card,,assassinate,precision
+card,,thousandCutsRogue,blade
+card,,thousandCutsRogue,flourish
+card,,deadlyTempoCard,flourish
+card,,deadlyTempoCard,oath
+card,,opportunistCard,guile
+card,,opportunistCard,oath
+card,,envenomCard,venom
+card,,envenomCard,oath
+card,,toxicVolley,venom
+card,,toxicVolley,ranged
+card,,smokeBomb,guile
+card,,smokeBomb,ash
+card,,executionWindow,blade
+card,,executionWindow,precision
+card,,perfectHeist,guile
+card,,deathblow,blade
+card,,deathblow,precision
+card,,strike,blade
+card,,defend,guard
+card,,gorefireSlash,blade
+card,,gorefireSlash,blood
+card,,gorefireSlash,gorefire
+card,,crimsonCleave,blade
+card,,crimsonCleave,blood
+card,,shieldBash,guard
+card,,shieldBash,blade
+card,,quickstep,flourish
+card,,guardCounter,guard
+card,,guardCounter,flourish
+card,,ironResolve,guard
+card,,serratedBlade,blade
+card,,serratedBlade,blood
+card,,enterGorefire,gorefire
+card,,enterGorefire,oath
+card,,enterBulwark,guard
+card,,enterBulwark,oath
+card,,riposte,guard
+card,,riposte,flourish
+card,,starstonePebble,starstone
+card,,cometFragment,starstone
+card,,starbladePhalanx,starstone
+card,,starbladePhalanx,guard
+card,,frostNova,starstone
+card,,gildedOath,ritual
+card,,gildedOath,oath
+card,,urgentHeal,ritual
+card,,bloodPact,blood
+card,,bloodPact,ritual
+card,,blightTouch,blight
+card,,blightTouch,ritual
+# ---- enemy ---------------------------------------------------------------------
+# Creature identity. Gates proc resistance at runtime.
+enemy,,wanderingSoldier,humanoid
+enemy,,blightHound,beast
+enemy,,huskBrute,undead
+enemy,,huskBrute,humanoid
+enemy,,graveWisp,spirit
+enemy,,wyrmAspirant,beast
+enemy,,fellWarden,humanoid
+enemy,,fellWarden,undead
+enemy,,gildedKnight,humanoid
+enemy,,courtSurgeon,humanoid
+enemy,,stitchedHound,undead
+enemy,,stitchedHound,beast
+enemy,,courtMarionette,construct
+enemy,,livingArmor,construct
+enemy,,courtDuelist,humanoid
+enemy,,stitchedKing,undead
+enemy,,stitchedKing,humanoid
+enemy,,ashRevenant,undead
+enemy,,ashRevenant,spirit
+enemy,,emberStarvedPilgrim,humanoid
+enemy,,valkyrieShade,spirit
+enemy,,charredColossus,construct
+enemy,,wyrmLord,beast
+enemy,,blightedValkyrie,humanoid
+enemy,,blightedValkyrie,spirit
+# ---- armament ------------------------------------------------------------------
+# Weapons, shields and staves. `item:*` tags (domain itemType) are what the
+# Armoury and the smith call the piece; the rest are card schools and item behaviour.
+armament,,straightSword,item:blade
+armament,,straightSword,blade
+armament,,straightSword,basic
+armament,,greatsword,item:blade
+armament,,greatsword,blade
+armament,,greatsword,heavy
+armament,,dagger,item:blade
+armament,,dagger,blade
+armament,,dagger,pierce
+armament,,dagger,flourish
+armament,,shortbow,item:blade
+armament,,shortbow,pierce
+armament,,shortbow,ranged
+armament,,shortbow,precision
+armament,,katana,item:blade
+armament,,katana,blade
+armament,,katana,blood
+armament,,katana,flourish
+armament,,halberd,item:blade
+armament,,halberd,blade
+armament,,halberd,heavy
+armament,,warhammer,item:blade
+armament,,warhammer,heavy
+armament,,twinblade,item:blade
+armament,,twinblade,blade
+armament,,twinblade,flourish
+armament,,battleaxe,item:blade
+armament,,battleaxe,blade
+armament,,battleaxe,heavy
+armament,,buckler,item:shield
+armament,,buckler,guard
+armament,,buckler,flourish
+armament,,kiteShield,item:shield
+armament,,kiteShield,guard
+armament,,towerShield,item:shield
+armament,,towerShield,guard
+armament,,towerShield,heavy
+armament,,roundShield,item:shield
+armament,,roundShield,guard
+armament,,roundShield,basic
+armament,,spikedShield,item:shield
+armament,,spikedShield,item:blade
+armament,,spikedShield,guard
+armament,,spikedShield,blade
+armament,,lantern,item:shield
+armament,,lantern,guard
+armament,,torch,item:shield
+armament,,torch,gorefire
+armament,,parryDagger,item:blade
+armament,,parryDagger,item:shield
+armament,,parryDagger,guard
+armament,,parryDagger,flourish
+armament,,ashStaff,item:magic-focus
+armament,,ashStaff,ritual
+armament,,ashStaff,basic
+armament,,starstoneStaff,item:magic-focus
+armament,,starstoneStaff,starstone
+armament,,boneSceptre,item:magic-focus
+armament,,boneSceptre,ritual
+armament,,boneSceptre,blight
+armament,,emberlightSceptre,item:magic-focus
+armament,,emberlightSceptre,ritual
+armament,,emberlightSceptre,oath
+armament,,goldboughBranch,item:magic-focus
+armament,,goldboughBranch,ritual
+armament,,goldboughBranch,oath
+armament,,blightRod,item:magic-focus
+armament,,blightRod,blight
+armament,,gorefireBrand,item:magic-focus
+armament,,gorefireBrand,gorefire
+armament,,gorefireBrand,blood
+armament,,wyrmhornStaff,item:magic-focus
+armament,,wyrmhornStaff,ritual
+armament,,wyrmhornStaff,heavy
+# ---- armour --------------------------------------------------------------------
+# Armour sets. SCOPED BY classId: outfit ids repeat across classes on purpose,
+# so the class is part of the key. Every other family leaves scope empty.
+armour,reaver,default,item:armor
+armour,reaver,default,guard
+armour,reaver,vigil,item:armor
+armour,reaver,vigil,guard
+armour,reaver,vigil,ash
+armour,reaver,oathsworn,item:armor
+armour,reaver,oathsworn,guard
+armour,reaver,oathsworn,oath
+armour,reaver,warden,item:armor
+armour,reaver,warden,guard
+armour,reaver,warden,heavy
+armour,starseer,default,item:armor
+armour,starseer,default,starstone
+armour,starseer,eclipse,item:armor
+armour,starseer,eclipse,starstone
+armour,starseer,eclipse,ritual
+armour,starseer,starlit,item:armor
+armour,starseer,starlit,starstone
+armour,starseer,starlit,flourish
+armour,starseer,astral,item:armor
+armour,starseer,astral,starstone
+armour,starseer,astral,oath
+armour,herald,default,item:armor
+armour,herald,default,ritual
+armour,herald,ossuary,item:armor
+armour,herald,ossuary,ritual
+armour,herald,ossuary,blight
+armour,herald,emberhabit,item:armor
+armour,herald,emberhabit,ritual
+armour,herald,emberhabit,oath
+armour,herald,pilgrim,item:armor
+armour,herald,pilgrim,ritual
+armour,herald,pilgrim,guard
+armour,rogue,default,item:armor
+armour,rogue,default,flourish
+armour,rogue,nightveil,item:armor
+armour,rogue,nightveil,flourish
+armour,rogue,nightveil,ash
+armour,rogue,duelist,item:armor
+armour,rogue,duelist,flourish
+armour,rogue,duelist,pierce
+armour,rogue,shadow,item:armor
+armour,rogue,shadow,flourish
+armour,rogue,shadow,venom
+# ---- basicCardProfile ----------------------------------------------------------
+# Equipment-bound core card profiles.
+basicCardProfile,,unarmedAttack,basic
+basicCardProfile,,shieldAttack,guard
+basicCardProfile,,bladeAttack,blade
+basicCardProfile,,daggerPierceAttack,pierce
+basicCardProfile,,daggerPierceAttack,flourish
+basicCardProfile,,bowPierceAttack,pierce
+basicCardProfile,,bowPierceAttack,ranged
+basicCardProfile,,bowPierceAttack,precision
+basicCardProfile,,staffMagicAttack,starstone
+basicCardProfile,,sceptreArcaneAttack,ritual
+basicCardProfile,,sceptreArcaneAttack,blight
+basicCardProfile,,unarmedGuard,guard
+basicCardProfile,,weaponGuard,guard
+basicCardProfile,,shieldGuard,guard
+basicCardProfile,,staffGuard,starstone
+basicCardProfile,,sceptreGuard,ritual
+basicCardProfile,,unarmedTechnique,flourish
+basicCardProfile,,weaponTechnique,blade
+basicCardProfile,,weaponTechnique,flourish
+basicCardProfile,,bowTechnique,ranged
+basicCardProfile,,bowTechnique,precision
+basicCardProfile,,staffTechnique,ritual

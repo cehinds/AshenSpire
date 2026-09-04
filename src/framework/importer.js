@@ -14,6 +14,7 @@
 // be a silently-accepted unknown, which the authority boundaries forbid.
 
 import { EQUIPMENT_CATEGORIES, EQUIPMENT_RARITIES } from './schema.js';
+import { tagIndex } from '../model/tags.js';
 
 export class ImportError extends Error {
   constructor(message) { super(`import: ${message}`); this.name = 'ImportError'; }
@@ -147,6 +148,30 @@ export function isPureDodge(card) {
  * assertNoTerminologyDrift.
  */
 export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
+  // TAGS ARE NOT ON THE ROWS ANY MORE. They are rows in tagging.csv, and the
+  // live game sees them because model/registries.js resolves the junction at
+  // boot. This importer reads the RAW bundle, which registries never touched,
+  // so `piece.tags` was silently undefined here and a framework cutover would
+  // have carried entities with no tag identity at all.
+  //
+  // It resolves the junction from THIS BUNDLE — never from the module-global
+  // fold in content/tags.js. That distinction is the whole subject of five
+  // earlier review rounds on this branch: an importer answering for the shipped
+  // rows while importing a supplied bundle is the same defect one more time.
+  const tags = tagIndex(bundle);
+  const tagsOf = (family, object) => {
+    const ids = tags.tagIdsOf(family, object);
+    return ids.length ? ids : undefined;
+  };
+  // Equipment carries two kinds of tag in one junction, and registries.js splits
+  // them when it stamps: `item:*` rows become the piece's TYPE (itemTypeTags /
+  // itemTypes) and everything else stays the gameplay `tags` set. The imported
+  // entity's `tags` is that same gameplay set, so what the framework sees equals
+  // what the live registry holds rather than the unsplit union.
+  const gameplayTagsOf = (family, object) => {
+    const ids = tags.tagIdsOf(family, object).filter((id) => !String(id).startsWith('item:'));
+    return ids.length ? ids : undefined;
+  };
   const entities = [];
   const terms = [];
   const assets = [];
@@ -236,7 +261,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         rounding: profile.rounding,
         cap: profile.cap,
         icon: profile.icon,
-        tags: profile.tags,
+        tags: tagsOf('basicCardProfile', profile),
         compatibility: profile.compatibility,
       },
     });
@@ -276,7 +301,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         category: checkCategory(piece.kind === 'shield' ? 'SHIELD' : piece.kind === 'staff' ? 'STAFF' : 'WEAPON', `armament ${piece.id}`),
         hand: piece.hand,
         rarity: checkRarity(piece.rarity, `armament ${piece.id}`),
-        tags: piece.tags,
+        tags: gameplayTagsOf('armament', piece),
         mods: piece.mods,
         requirements: piece.requirements,
         poiseThreshold: piece.poiseThreshold,
@@ -319,7 +344,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         legacyClassId: outfit.classId,
         category: checkCategory('ARMOR', `armour ${outfit.classId}/${outfit.id}`),
         rarity: checkRarity(outfit.rarity, `armour ${outfit.classId}/${outfit.id}`),
-        tags: outfit.tags,
+        tags: gameplayTagsOf('armour', outfit),
         mods: outfit.mods,
         artKey: outfit.artKey,
         // Outfits author no weight column; the legacy identity `weight ==
@@ -368,7 +393,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         poiseMax: enemy.poiseMax,
         levelProfile: enemy.levelProfile,
         moves: enemy.moves,
-        tags: enemy.tags,
+        tags: tagsOf('enemy', enemy),
         arcaneExposure: enemy.arcaneExposure,
         art: enemy.art,
         size: enemy.size,

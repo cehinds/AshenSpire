@@ -255,6 +255,15 @@ test('a left-hand-only weapon receives the complete package', () => {
   eq(left, right, 'hand does not change a solo package');
 });
 
+test('one hand armed, one empty → the empty slot installs the Dodge Roll beside the armament\'s arts', () => {
+  const plan = buildEquippedWeaponCardPlan({ rightHand: 'sword' }, helpers);
+  eq(plan.source, 'single', 'a single package');
+  eq(plan.weaponArts.includes('framework.dodgeRoll'), true, `the empty slot's art rides (${plan.weaponArts.join(',')})`);
+  eq(plan.weaponArts.filter((id) => id === 'framework.dodgeRoll').length, 1, 'once');
+  const both = buildEquippedWeaponCardPlan({ rightHand: 'sword', leftHand: 'sword' }, helpers);
+  eq(both.weaponArts.includes('framework.dodgeRoll'), false, 'two armed hands install no empty-slot art');
+});
+
 test('dual wield splits slots ceil/floor with RIGHT_THEN_LEFT unique preference', () => {
   const plan = buildEquippedWeaponCardPlan({ rightHand: 'sword', leftHand: 'dagger' }, helpers);
   eq(plan.weaponArts[0], 'art.cleave', 'right picks first');
@@ -792,7 +801,9 @@ test('grants and weapon arts compose at creation and reconcile through equip tra
   const savedSets = structuredClone(run.loadout.sets);
   run.loadout.sets.rightHand = run.loadout.sets.rightHand.map(() => null);
   reconcileGrantedCards(REG2, run);
-  eq(composed(), [], 'unequip removes every granted instance');
+  // The sword's grants leave with it; the hand it left is EMPTY beside the
+  // shield, and an empty hand carries the Dodge Roll (the owner's rule).
+  eq(composed(), ['weaponArt:unarmed:right:dodgeRoll'], 'unequip removes every granted instance; the emptied hand carries the Dodge Roll');
   run.loadout.sets.rightHand = savedSets.rightHand;
   reconcileGrantedCards(REG2, run);
   eq(composed(), before, 're-equip restores them exactly');
@@ -840,6 +851,34 @@ test('a mid-combat swap reconciles granted instances across the combat piles', (
   // carrier-stamped by the same pass as every other card.
   compositionDoor.stampDeck(REG2, run, piles.discard);
   eq(piles.discard[0].damageSchool, 'physical', 'the landed art is stamped by the following pile pass');
+});
+
+test('a mid-combat swap keeps what the smith did: an emptied art mount stays a Dodge Roll through the swap door', () => {
+  // The swap door builds a synthetic run with `deck: []`, so everything the
+  // composer needs travels on the combat — the birth quota, and now the
+  // mounts. Without `itemMounts` on that run the extracted Crimson Cleave
+  // would be re-minted from the sword's authoring the first time the player
+  // swapped hands mid-fight, and the run would hold two of it.
+  const { reconcileGrantedCardsInCombat } = compositionDoor;
+  const REG2 = grantFixtureRegistries({ straightSword: {
+    compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack', weaponArtDefaults: ['crimsonCleave'],
+  } });
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: REG2 });
+  const artKey = 'weaponArt:straightSword:crimsonCleave';
+  const dodge = REG2.equipment.basicCardProfiles.find((p) => p.id === REG2.balance.equipment.unarmedProfiles.technique).baseCardId;
+  // What a smith did, as the run records it (cardExtraction.js writes this).
+  run.itemMounts = { 'armament/straightSword': { [artKey]: { card: null, extractions: 1 } } };
+  const piles = { hand: [], draw: [{ instanceId: artKey, cardId: 'crimsonCleave', equipmentRole: 'weaponArt', grantedBy: 'straightSword', upgraded: false, damageSchool: 'physical', exposureBuildupPerHit: 0 }], discard: [], exhaust: [] };
+  // The synthetic run the swap door hands over, mounts included.
+  reconcileGrantedCardsInCombat(REG2, { class: run.class, loadout: run.loadout, itemMounts: run.itemMounts }, piles);
+  const inPlace = piles.draw.find((c) => c.instanceId === artKey);
+  eq(inPlace && inPlace.cardId, dodge, 'the mount keeps its key and shows the Dodge Roll, in place in the draw pile');
+  eq(inPlace.damageSchool, undefined, 'and it is a FRESH instance, not the old card wearing a new id — the pile stamp will stamp it');
+  eq(piles.discard.length, 0, 'nothing landed in the discard pile — the mount was already held');
+  // The same run WITHOUT the mounts is the defect: the authoring wins.
+  const stale = { hand: [], draw: [{ instanceId: artKey, cardId: 'crimsonCleave', equipmentRole: 'weaponArt', grantedBy: 'straightSword', upgraded: false }], discard: [], exhaust: [] };
+  reconcileGrantedCardsInCombat(REG2, { class: run.class, loadout: run.loadout }, stale);
+  eq(stale.draw[0].cardId, 'crimsonCleave', 'without the mounts the swap door would re-mint the extracted art — which is why the combat carries them');
 });
 
 test('a granted instance is never a per-copy upgrade candidate', () => {
@@ -954,6 +993,28 @@ test('an unarmed run composes Evasive Guard and Dodge Roll from the unarmed prof
   const techniques = run.deck.filter((c) => c.equipmentRole === 'technique').map((c) => c.cardId);
   eq(guards.length > 0 && guards.every((id) => id === 'evasiveGuard'), true, `every unarmed guard slot is Evasive Guard (${guards.join(',')})`);
   eq(techniques.length > 0 && techniques.every((id) => id === 'dodgeRoll'), true, `every unarmed technique slot is Dodge Roll (${techniques.join(',')})`);
+});
+
+test('one empty hand composes the Dodge Roll beside the armed hand\'s technique, and loses it when the hand is filled', () => {
+  const { stampDeck } = compositionDoor;
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  const leftBefore = run.loadout.sets.leftHand.slice();
+  run.loadout.sets.leftHand = run.loadout.sets.leftHand.map(() => null);
+  stampDeck(LEGACY_REG, run);
+  const arts = run.deck.filter((c) => c.equipmentRole === 'weaponArt');
+  const dodge = arts.filter((c) => c.cardId === 'dodgeRoll');
+  const techniques = run.deck.filter((c) => c.equipmentRole === 'technique').map((c) => c.cardId);
+  eq(dodge.length, 1, `the empty left hand carries one Dodge Roll (arts: ${arts.map((c) => c.cardId).join(',') || 'none'})`);
+  eq(dodge[0] && dodge[0].grantedBy, 'unarmed:left', 'attributed to the empty hand');
+  eq(techniques.length > 0 && techniques.every((id) => id !== 'dodgeRoll'), true, `the armed hand's technique slot stays its own (${techniques.join(',')})`);
+  run.loadout.sets.leftHand = leftBefore;
+  stampDeck(LEGACY_REG, run);
+  eq(run.deck.some((c) => c.equipmentRole === 'weaponArt' && c.cardId === 'dodgeRoll'), false, 'filling the hand takes the dodge away');
+  run.loadout.sets.leftHand = leftBefore.map(() => null);
+  run.loadout.sets.rightHand = run.loadout.sets.rightHand.map(() => null);
+  stampDeck(LEGACY_REG, run);
+  eq(run.deck.some((c) => c.equipmentRole === 'weaponArt' && c.cardId === 'dodgeRoll'), false, 'both hands empty is the unarmed package, not an extra art');
+  eq(run.deck.filter((c) => c.equipmentRole === 'technique').every((c) => c.cardId === 'dodgeRoll'), true, 'every unarmed technique slot is the Dodge Roll');
 });
 
 test('the dodge roll lands as Block through the framework check, priced by the class, and idle turns recover stamina', () => {
