@@ -160,7 +160,7 @@ export function mountCustomize(app, {
     character: el('section', { id: 'cz-character-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { class: 'as-splitbody cc-character-grid', dataset: { spriteSide: spriteSide } },
         spriteSide === 'left' ? [previewSide, statsSide] : [statsSide, previewSide]),
-      nextRow('Continue to starting equipment', 'equipment'),
+      nextRow('Continue to equipment', 'equipment'),
     ]),
     equipment: el('section', { id: 'cz-equipment-panel', class: 'as-pane flush cz-stage' }, [
       sectionHead('Choose', 'Starting equipment', [el('div', { id: 'cz-auto-advance-toggle' }), el('div', { id: 'cz-equipment-view-toggle' })]),
