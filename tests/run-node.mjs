@@ -859,7 +859,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   console.log(
     `${bad.length ? 'FAIL' : 'PASS'}  79. every shipped pose frame has a file and registers on its floor` +
       ` — ${bad.length ? `${bad.length} bad: ${bad.slice(0, 3).join('; ')}` : `${want}/${want} frames over ${classes.length} classes x ${tints.length} tints x ${POSE_STRIP.length} poses.`}` +
-      ' (`node tools/pose-ship.mjs` regenerates both sides)'
+      ' (tools/pose-ship.mjs regenerates both sides; this check reads them, it does not run it)'
   );
   if (bad.length) zoomExtra++;
   else zoomPassed++;
