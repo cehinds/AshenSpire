@@ -110,7 +110,7 @@
 // REMOVAL CONDITION: deleted with model/disclosure.js — it has no other job.
 
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
-import { el, detailCard } from '../kit/index.js';
+import { detailCard } from '../kit/index.js';
 
 // THE KIT DRAWS IT (2026-09-04, the sweep). A face is an OptionCard
 // (`.as-option`, kit §03) — a node face rides in a bare `hosts-face` card so the
@@ -180,7 +180,9 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
   // inventory and character numbers). The panel starts LAST, not first: an
   // instrument asking for "the first inventory item" must meet a face, never
   // the shut reveal that carries the same item key.
-  host.replaceChildren(el('div', { class: `as-options disc-faces${layout === 'column' ? '' : ' flow'}` }));
+  // `innerHTML`, deliberately: tools/foldsurvivors.mjs watches THIS setter to
+  // see the wipe at the instant it happens (a MutationObserver fires too late).
+  host.innerHTML = `<div class="as-options disc-faces${layout === 'column' ? '' : ' flow'}"></div>`;
   const faceBox = host.querySelector('.disc-faces');
   const panel = detailCard({ attrs: { class: 'disc-reveal', hidden: true } });
   const buttons = new Map();
