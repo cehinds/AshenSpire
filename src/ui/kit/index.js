@@ -460,7 +460,7 @@ export const logBox = (text = '', attrs = {}) => el('pre', { ...attrs, class: cl
  * openModal, in the `.screen` frame. Without `onClose` the head has no way
  * out — a decision is answered, not dismissed.
  */
-export function pageDoor({ eyebrow: eb = '', title = '', size = 'md', body = null, bodyClassName = '', note = '', secondary = [], primary = null, footSize = 'medium', onClose = null, closeLabel = '', className = '', attrs = {} } = {}) {
+export function pageDoor({ eyebrow: eb = '', title = '', size = 'md', full = false, body = null, bodyClassName = '', note = '', secondary = [], primary = null, footSize = 'medium', onClose = null, closeLabel = '', className = '', attrs = {} } = {}) {
   const head = modalHead({ eyebrow: eb, title, closeLabel: closeLabel || (title ? `Close ${title}` : 'Close'), onClose: onClose || undefined });
   if (!onClose) head.querySelector('.modal-close').hidden = true;
   const bodyEl = el('div', { class: cls('modal-body', bodyClassName) }, body);
@@ -468,7 +468,7 @@ export function pageDoor({ eyebrow: eb = '', title = '', size = 'md', body = nul
   const foot = (note || ways.length || primary) ? modalFooter({ note, secondary: ways, primary, size: footSize }) : null;
   if (foot) foot.querySelector('.modal-foot-actions')?.classList.add('modal-btnrow');
   const door = el('section', {
-    ...attrs, class: cls('modal as-pagedoor', className), dataset: { ...(attrs.dataset || {}), size },
+    ...attrs, class: cls('modal as-pagedoor', full ? 'full' : '', className), dataset: { ...(attrs.dataset || {}), size },
     role: attrs.role || 'region', 'aria-label': attrs['aria-label'] || title || null,
   }, [head, bodyEl, foot]);
   return Object.assign(door, { head, body: bodyEl, foot });

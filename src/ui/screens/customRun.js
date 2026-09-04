@@ -203,7 +203,8 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
     section('Seed', 'Seed', seedRow),
     summary,
   ]);
-  const door = el('section', { class: 'modal as-page-door', dataset: { size: 'xl' }, role: 'region', 'aria-label': 'Custom climb' }, [head, body, foot]);
+  // ONE page door, the kit's, on its `full` rung (kit.css PAGE DOOR).
+  const door = el('section', { class: 'modal as-pagedoor full', dataset: { size: 'xl' }, role: 'region', 'aria-label': 'Custom climb' }, [head, body, foot]);
   app.replaceChildren(el('div', { class: 'screen customrun as-page' }, door));
 
   const $ = (s) => app.querySelector(s);

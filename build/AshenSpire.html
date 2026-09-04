@@ -3212,22 +3212,23 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 
 /* ═══ PAGE DOOR — a door that stands on the page, edge to edge ═══════════ */
-/* Character creation and the Custom Climb are places, not questions: a head
-   that names them, a body that scrolls, a foot that never leaves the glass.
-   They wear the door's box without the veil (as the event does) and the box
-   takes the whole screen — the phone gets every pixel, a wide screen gets a
-   capped column with the page ground either side. */
+/* A PAGE DOOR wears the door's box without the veil (as the event does), in
+   two rungs. The DEFAULT hugs its content and stands on the page ground — a
+   result, a question, a notice. `full` takes the whole screen for a place you
+   work in (creation, the Custom Climb): the phone gets every pixel, a wide
+   screen a capped column with the ground either side. The rules for the
+   default rung are in the PAGE DOORS section below; `full` overrides them. */
 .screen.as-page { justify-content: flex-start; gap: 0; padding: 0; overflow: hidden; }
-.as-page > .modal.as-page-door {
-  width: 100%; max-width: 124rem; height: 100%; max-height: 100%;
+.as-page > .modal.as-pagedoor.full, .screen > .modal.as-pagedoor.full {
+  width: 100%; max-width: 124rem; height: 100%; max-height: 100%; flex: 1 1 auto;
   border-radius: 0; border-width: 0 1px;
 }
-.as-page-door > .modal-body {
+.as-pagedoor.full > .modal-body {
   display: flex; flex-direction: column; align-items: stretch; gap: 1.6rem;
   padding: var(--modal-inset);
   scrollbar-width: thin; scrollbar-color: var(--line) transparent;
 }
-.as-page-door > .modal-foot { background: var(--panel); }
+.as-pagedoor.full > .modal-foot { background: var(--panel); }
 /* A pane that sits inside another inset (a fold's panel) carries none of its own. */
 .as-pane.flush { padding: 0; overflow: visible; }
 /* A pane's items never shrink into each other: the pane scrolls instead. */
@@ -3612,6 +3613,11 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 .as-party { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 0.9rem; min-width: 0; }
 .as-member { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.25rem 0.6rem; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2); }
 .as-member > .as-glyph { flex-basis: auto; font-size: 1.5rem; }
+/* A member's Meter has a FLOOR: its inset value ("61/72") must read whole, so
+   the track never squeezes below it and the strip wraps to a second line
+   instead. Measured on the co-op map header at 1200x730, where two members'
+   values overlapped by 16px. */
+.as-member > .as-meter { flex: 0 0 auto; width: 8.4rem; min-width: 8.4rem; }
 .as-member[data-state="me"] { border-color: var(--gold); }
 .as-member[data-state="away"] { opacity: 0.55; }
 .as-member[data-state="dead"] { opacity: 0.4; filter: grayscale(1); }
@@ -4102,6 +4108,9 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
    carries the count, the body is a CardGrid of the same faces the fan draws.
    Only the door's own insets are here. */
 .pile-body { padding: var(--modal-inset); }
+/* Body B inside the flask's inspect door takes the SAME inset as every other
+   bar of every door — one token, four sides (tools/modal-shell-contract). */
+.flask-inspect-body { padding: var(--modal-inset); }
 .pile-body .as-cardgrid { justify-content: center; }
 .pile-empty { padding: 2rem; }
 
@@ -50453,7 +50462,7 @@ const logBox = (text = '', attrs = {}) => el('pre', { ...attrs, class: cls('as-l
  * openModal, in the `.screen` frame. Without `onClose` the head has no way
  * out — a decision is answered, not dismissed.
  */
-function pageDoor({ eyebrow: eb = '', title = '', size = 'md', body = null, bodyClassName = '', note = '', secondary = [], primary = null, footSize = 'medium', onClose = null, closeLabel = '', className = '', attrs = {} } = {}) {
+function pageDoor({ eyebrow: eb = '', title = '', size = 'md', full = false, body = null, bodyClassName = '', note = '', secondary = [], primary = null, footSize = 'medium', onClose = null, closeLabel = '', className = '', attrs = {} } = {}) {
   const head = modalHead({ eyebrow: eb, title, closeLabel: closeLabel || (title ? `Close ${title}` : 'Close'), onClose: onClose || undefined });
   if (!onClose) head.querySelector('.modal-close').hidden = true;
   const bodyEl = el('div', { class: cls('modal-body', bodyClassName) }, body);
@@ -50461,7 +50470,7 @@ function pageDoor({ eyebrow: eb = '', title = '', size = 'md', body = null, body
   const foot = (note || ways.length || primary) ? modalFooter({ note, secondary: ways, primary, size: footSize }) : null;
   if (foot) foot.querySelector('.modal-foot-actions')?.classList.add('modal-btnrow');
   const door = el('section', {
-    ...attrs, class: cls('modal as-pagedoor', className), dataset: { ...(attrs.dataset || {}), size },
+    ...attrs, class: cls('modal as-pagedoor', full ? 'full' : '', className), dataset: { ...(attrs.dataset || {}), size },
     role: attrs.role || 'region', 'aria-label': attrs['aria-label'] || title || null,
   }, [head, bodyEl, foot]);
   return Object.assign(door, { head, body: bodyEl, foot });
@@ -51751,7 +51760,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '9e1f5053c2';
+const SOURCE = '417cfe6740';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -51785,7 +51794,7 @@ const SOURCE = '9e1f5053c2';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '57';
+const ORDINAL = '58';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -57508,8 +57517,9 @@ function mountCustomize(app, {
     catalog ? subtitle('Interactive production specimens for every creation section, nested disclosure, and reusable selector card.', { class: 'cc-catalog-intro' }) : null,
     flow,
   ]);
+  // ONE page door, the kit's, on its `full` rung (kit.css PAGE DOOR).
   const door = el('section', {
-    class: 'modal as-page-door', dataset: { size: 'xl' }, role: 'region',
+    class: 'modal as-pagedoor full', dataset: { size: 'xl' }, role: 'region',
     'aria-label': catalog ? 'Character creation components' : 'Prepare your Forsaken',
   }, [head, body, foot]);
   app.replaceChildren(el('div', { class: `screen customize as-page${catalog ? ' component-catalog' : ''}` }, door));
@@ -64308,7 +64318,8 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
     section('Seed', 'Seed', seedRow),
     summary,
   ]);
-  const door = el('section', { class: 'modal as-page-door', dataset: { size: 'xl' }, role: 'region', 'aria-label': 'Custom climb' }, [head, body, foot]);
+  // ONE page door, the kit's, on its `full` rung (kit.css PAGE DOOR).
+  const door = el('section', { class: 'modal as-pagedoor full', dataset: { size: 'xl' }, role: 'region', 'aria-label': 'Custom climb' }, [head, body, foot]);
   app.replaceChildren(el('div', { class: 'screen customrun as-page' }, door));
 
   const $ = (s) => app.querySelector(s);

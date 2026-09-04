@@ -187,8 +187,9 @@ export function mountCustomize(app, {
     catalog ? subtitle('Interactive production specimens for every creation section, nested disclosure, and reusable selector card.', { class: 'cc-catalog-intro' }) : null,
     flow,
   ]);
+  // ONE page door, the kit's, on its `full` rung (kit.css PAGE DOOR).
   const door = el('section', {
-    class: 'modal as-page-door', dataset: { size: 'xl' }, role: 'region',
+    class: 'modal as-pagedoor full', dataset: { size: 'xl' }, role: 'region',
     'aria-label': catalog ? 'Character creation components' : 'Prepare your Forsaken',
   }, [head, body, foot]);
   app.replaceChildren(el('div', { class: `screen customize as-page${catalog ? ' component-catalog' : ''}` }, door));
