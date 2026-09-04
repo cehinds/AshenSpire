@@ -846,9 +846,9 @@
   {
    "id": "G5",
    "by": "Bjorn",
-   "read": "src/ui/components/mapboard.js (.map-zoom and #zoom-out / #zoom-reset / #zoom-in — they LEFT src/ui/screens/map.js and the old citation pointed at a line past the end of it)",
+   "read": "src/ui/components/mapboard.js (the zoom bar is a kit Band — `map-zoom as-band foot` — of four IconButtons #zoom-out / #zoom-reset / #zoom-in / #map-legend; they LEFT src/ui/screens/map.js and the old citation pointed at a line past the end of it)",
    "anchors": [
-    "class=\"map-zoom\"",
+    "map-zoom as-band",
     "zoom-reset"
    ],
    "screen": "the act map › the zoom bar",

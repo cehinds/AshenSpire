@@ -253,7 +253,7 @@ export const blocker = (text, { placement = '', attrs = {} } = {}) => el('div', 
  * both; the atom draws them. The track carries the machine-readable facts
  * (data-cur / data-max, role=img) so an instrument never reads the label.
  */
-export function meter({ label = '', value = '', cur = null, max = null, pct = 100, lengthPct = 100, tone = '', skinny = false, inset = false, pulse = false, id = '', attrs = {}, trackAttrs = {}, ariaLabel = '' } = {}) {
+export function meter({ label = '', value = '', cur = null, max = null, pct = 100, lengthPct = 100, tone = '', skinny = false, inset = false, stack = false, pulse = false, id = '', attrs = {}, trackAttrs = {}, ariaLabel = '' } = {}) {
   const track = el('span', {
     ...trackAttrs, class: cls('m-track', trackAttrs.class), role: 'img',
     'aria-label': ariaLabel || (label ? `${label} ${cur ?? value} of ${max ?? ''}`.trim() : null),
@@ -261,7 +261,7 @@ export function meter({ label = '', value = '', cur = null, max = null, pct = 10
     style: { width: `${Number(lengthPct).toFixed(3)}%` },
   }, el('i', { class: 'm-fill fill', style: { width: `${Math.max(0, Math.min(100, Number(pct))).toFixed(2)}%` } }));
   return el('div', {
-    ...attrs, class: cls('as-meter', skinny ? 'skinny' : '', inset ? 'inset' : '', pulse ? 'pulse' : '', attrs.class),
+    ...attrs, class: cls('as-meter', skinny ? 'skinny' : '', inset ? 'inset' : '', stack ? 'stack' : '', pulse ? 'pulse' : '', attrs.class),
     dataset: { ...(attrs.dataset || {}), ...(tone ? { tone } : {}), ...(id ? { res: id } : {}) },
   }, [
     (label || (value !== '' && value != null)) ? el('span', { class: 'm-plate' }, [

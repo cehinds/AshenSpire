@@ -128,9 +128,10 @@ export function hintBarHtml(context) {
   // decoration is five controls a screen reader cannot find. `role="toolbar"`
   // says what it is — a set of sibling controls, not a list and not a tab strip
   // (Law 3: a tab set is a different thing and takes the bumpers).
-  // A kit ButtonRow on the `short` step: every chip the same width, the row
-  // no wider than its chips need.
-  return `<div class="hint-bar hint-${context}${pad ? ' hint-pad' : ''} as-btnrow" data-size="short" role="toolbar" aria-label="Controls">${chipsHtml(context, pad)}</div>`;
+  // A kit ButtonRow on the `medium` step: every chip the same width, the row no
+  // wider than its chips need, and the step is the one that holds the longest
+  // label these chips carry ("Armoury") without truncating it.
+  return `<div class="hint-bar hint-${context}${pad ? ' hint-pad' : ''} as-btnrow" data-size="medium" role="toolbar" aria-label="Controls">${chipsHtml(context, pad)}</div>`;
 }
 
 // ---- the press, delegated once at the document -------------------------------

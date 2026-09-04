@@ -56,6 +56,7 @@
 // is the board, not the screen.
 
 import { attachTooltip } from './tooltip.js';
+import { html, iconButton } from '../kit/index.js';
 import { assetUrl } from '../assetmap.js';
 import { nodeIcon, actTitle, parchmentAsset, parchmentClass } from '../uiContent.js';
 import { trackGesture } from '../gesture.js';
@@ -323,7 +324,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
          proposal: "a line that says the same thing every time you open the
          screen is not a warning, it is decoration with a worried face."
          Every number in it is READ, never typed. -->
-    <p class="map-tapnote" hidden></p>
+    <p class="as-status map-tapnote" hidden></p>
     <!-- THE OFF-SCREEN CHOICE, SAID WHERE THE PLAYER IS — the tap note's
          sibling, same discipline: SILENT whenever the promise is kept. It
          exists because the camera owns the horizontal axis now (sizeSvg): a
@@ -335,7 +336,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
          nothing but a line of edge ink to say so. report() drives it from
          the same overflow the confession reads, so the note and data-framing
          cannot disagree. Still no backticks. -->
-    <p class="map-clipnote" hidden></p>
+    <p class="as-status map-clipnote" hidden></p>
     <!-- OUTSIDE the scrollport, and that is the whole fix (EldenSpire#28).
          The zoom controls used to be the last child of .map-scroll,
          absolutely positioned over it, so they covered a piece of the pannable
@@ -344,11 +345,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
          see and could not tap. A sibling is laid out in the flow beside the
          scrollport, so the scrollport is smaller by exactly the bar and there is
          no offset left for a node to be trapped at. Still no backticks. -->
-    <div class="map-zoom">
-      <button class="zbtn zoom-out" id="zoom-out" title="Zoom out">−</button>
-      <button class="zbtn zoom-reset" id="zoom-reset" title="Reset / center">⊙</button>
-      <button class="zbtn zoom-in" id="zoom-in" title="Zoom in">+</button>
-      ${showLegendControl ? '<button class="zbtn map-legend-btn" id="map-legend" title="Map legend" aria-label="Map legend">?</button>' : ''}
+    <div class="map-zoom as-band foot as-band-row end">
+      ${html(iconButton({ glyph: '−', label: 'Zoom out', id: 'zoom-out', className: 'zbtn zoom-out' }))}
+      ${html(iconButton({ glyph: '⊙', label: 'Reset / center', id: 'zoom-reset', className: 'zbtn zoom-reset' }))}
+      ${html(iconButton({ glyph: '+', label: 'Zoom in', id: 'zoom-in', className: 'zbtn zoom-in' }))}
+      ${showLegendControl ? html(iconButton({ glyph: '?', label: 'Map legend', id: 'map-legend', className: 'zbtn map-legend-btn' })) : ''}
     </div>`);
 
   const scroll = host.querySelector('.map-scroll');

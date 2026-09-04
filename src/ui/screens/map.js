@@ -95,9 +95,21 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const className = registries.classes.get(run.class).name;
   const heroName = (cz.name || className).toUpperCase();
   const atEntrance = !run.mapNodeId;
-  const legendHtml = `<div class="map-legend-pop" hidden>
-    ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
-  </div>`;
+  // THE LEGEND IS THE KIT'S POPOVER: one Row per node kind, its icon the Row's
+  // Glyph in the kind's own tint. It hangs off the ? in the zoom bar and is
+  // read, never chosen — so the Rows are static.
+  const legendPopover = () => popover({
+    caption: 'Map legend',
+    className: 'map-legend-pop',
+    attrs: { hidden: '' },
+    groups: [legendEntries().map((e) => {
+      const legendRow = row({ glyph: e.icon, label: e.name, tag: 'div', className: 'static' });
+      const g = legendRow.querySelector('.as-glyph');
+      g.classList.add('ic');
+      if (e.tint) g.style.color = e.tint;
+      return legendRow;
+    })],
+  });
 
   app.innerHTML = `
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
@@ -127,7 +139,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        overlayHtml: legendHtml,
+        overlayHtml: '',
       }))}
       ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
     </div>`;
@@ -174,6 +186,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // the hint pill sat on top of the − and the ⊙ (map.css, `.mapscreen
   // .hint-bar`). It was never unpressable, so the reach sweep was right to stay
   // green — this was only ever visible to an eye.
+  // The legend belongs to the corner it opens from — the ? in the zoom bar — so
+  // it is mounted with the board's chrome, not on the HUD.
   const board = mountMapBoard(app.querySelector('.mapscreen'), {
     act: { nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId },
     showLegendControl: true,
@@ -191,6 +205,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     },
     chromeHtml: hintBarHtml('map'),
   });
+
+  // The legend hangs off the ? IN THE ZOOM BAR, so it is mounted inside that
+  // Band — the Band is its containing block, which is how `bottom: 100%` means
+  // "above the bar" at every shape (Law 2: a positioned thing names its box).
+  app.querySelector('.map-zoom').appendChild(legendPopover());
 
   const strip = app.querySelector('.hud-relics');
   for (const rid of run.relics) {

@@ -41,7 +41,7 @@ import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
-import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, iconButton, button, html } from '../kit/index.js';
+import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html } from '../kit/index.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -741,8 +741,9 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
 
   function statusRow(entity, { tooltips = true } = {}) {
-    const row = document.createElement('div');
-    row.className = 'statuses';
+    // The status row is the kit's Pips: one round badge per effect, its count a
+    // round StatePill on the corner.
+    const row = pips([], { class: 'statuses' });
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
@@ -752,25 +753,22 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       // M1's "absent at zero", applied to pips too: a spent proc row (💧0
       // after a burst) is an empty frame, not information (Sunna's S-flag).
       if (def.proc && stacks <= 0) continue;
-      const el = document.createElement('div');
-      el.className = 'status-icon';
+      const shownValue = def.resists && inst.duration != null ? inst.duration : presentation.valueText;
+      const el = pip({ glyph: def.icon || '?', count: shownValue, tone: def.tint || 'var(--muted)', ring: plan.pips.includes(sid), attrs: { class: 'status-icon' } });
       const semanticAttrs = statusInstanceSemanticAttrs(presentation);
       el.setAttribute('data-status-id', semanticAttrs['data-status-id']);
       el.setAttribute('data-status-value-token', semanticAttrs['data-status-value-token']);
       el.setAttribute('aria-label', semanticAttrs['aria-label']);
-      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       // Collapsed proc meter (M4 display cap): ring-fill pip — the pip's own
       // background is a conic fill in the row's tint, same value/threshold
-      // semantics as the bar it stands in for.
+      // semantics as the bar it stands in for. A resistance pip's number is its
+      // countdown (M3 — the receipt reads in turns); every other pip keeps its
+      // stack count, and that choice is made where `shownValue` is derived.
       if (plan.pips.includes(sid)) {
         const fillPct = Math.min(100, (inst.meter.value / inst.meter.max) * 100);
         el.classList.add('proc-pip');
         el.style.background = `conic-gradient(${def.tint || 'var(--muted)'} ${fillPct}%, transparent ${fillPct}%)`;
       }
-      // A resistance pip's number is its countdown (M3 — the receipt reads in
-      // turns); every other pip keeps its stack count.
-      const shown = def.resists && inst.duration != null ? inst.duration : presentation.valueText;
-      el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${shown}</span>`;
       if (tooltips) {
         attachTooltip(el, () => {
           let extra = '';
@@ -807,8 +805,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
 
   function meterBars(entity, { tooltips = true } = {}) {
     const v = dv(entity);
-    const wrap = document.createElement('div');
-    wrap.className = 'meters';
+    const wrap = meters([], { class: 'meters tight' });
     // THE UNDER-MODEL HUD — "should really just show health and poise", his
     // words. Same renderer, same table, different surface: the rows carry which
     // surfaces they appear on, so the two-HUD split he drew is DATA and neither
@@ -828,8 +825,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // on this screen rather than moving into the shared renderer.
     for (const bar of plan) {
       if (bar.id === 'poise' && bar.cur >= bar.max * 0.75) {
-        const el = bars.querySelector('[data-res="poise"]');
-        if (el) el.classList.add('full');
+        const el = bars.querySelector('.as-meter[data-res="poise"]');
+        if (el) el.classList.add('pulse', 'full');
       }
     }
     while (bars.firstChild) wrap.appendChild(bars.firstChild);
@@ -846,31 +843,35 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         // read the paced snapshot like every other meter on this card.
         const inst = v.statuses[sid];
         const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
-        const bar = document.createElement('div');
-        bar.className = 'bar procbar';
-        markUiComponent(bar, UI.procStatusBar, sid);
-        bar.dataset.status = sid;
-        // S2: an active resistance dims the meter — the state reads without
-        // opening a tooltip.
-        if (hasResistAgainst(entity, sid)) bar.classList.add('resisted');
-        bar.style.setProperty('--proc-tint', def.tint || 'var(--muted)');
-        bar.innerHTML =
-          `<div class="fill" style="width:${Math.min(100, (inst.meter.value / inst.meter.max) * 100)}%"></div>` +
-          `<span class="glyph">${esc(def.icon || '?')}</span>`; // hue is never the only channel
-        if (tooltips) attachTooltip(bar, () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`);
-        wrap.appendChild(bar);
+        // A threshold-proc row is a skinny Meter in the row's own tint, with the
+        // row's glyph as its plate — hue is never the only channel. S2: an
+        // active resistance stripes the fill, so the state reads without a
+        // tooltip.
+        const resisted = hasResistAgainst(entity, sid);
+        const meterEl = meter({
+          id: sid, value: def.icon || '?',
+          cur: inst.meter.value, max: inst.meter.max,
+          pct: Math.min(100, (inst.meter.value / inst.meter.max) * 100),
+          ariaLabel: `${def.name} ${inst.meter.value} of ${inst.meter.max}`,
+          attrs: { class: `procbar${resisted ? ' resisted' : ''}`, style: { '--meter-tone': def.tint || 'var(--muted)' } },
+          trackAttrs: { class: 'bar procbar-track', dataset: { status: sid } },
+        });
+        meterEl.dataset.status = sid;
+        markUiComponent(meterEl, UI.procStatusBar, sid);
+        if (tooltips) attachTooltip(meterEl, () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`);
+        wrap.appendChild(meterEl);
       }
     }
     return wrap;
   }
 
+  // Block is a StatePill in the frost tone, filled: a number a player reads off
+  // the sprite at a glance.
   function blockBadge(entity, { tooltips = true } = {}) {
     const v = dv(entity);
     if (v.block <= 0) return null;
-    const b = document.createElement('div');
-    b.className = 'block-badge';
+    const b = pill({ label: String(v.block), round: true, attrs: { class: 'block-badge solid lg' } });
     markUiComponent(b, UI.blockBadge);
-    b.textContent = v.block;
     if (tooltips) attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
     return b;
   }
@@ -882,9 +883,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const trailing = [];
     if (p.stanceId) {
       const st = registries.frameworkTerms.withStanceWords(registries.stances.get(p.stanceId));
-      const chip = document.createElement('div');
-      chip.className = `stance-chip ${p.stanceId}`;
-      chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
+      // The stance is a StatePill in its own tone — ember by default, frost for
+      // Bulwark, which is the stance's own colour and not this screen's.
+      const chip = pill({
+        label: st.name,
+        attrs: { class: `stance-chip lg ${p.stanceId}`, dataset: { tone: p.stanceId === 'bulwark' ? 'frost' : 'ember' } },
+      });
+      if (st.icon) chip.prepend(glyph(st.icon, { class: 'ic' }));
       trailing.push(chip);
     }
     trailing.push(statusRow(p, { tooltips: false }));
@@ -920,14 +925,18 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     zone.appendChild(box);
   }
 
+  // The intent is one StatePill in the fact's own tone, glyph first — the kit's
+  // `pill.lg` (uiContent.js intentBadge picks the tone and the words).
   function intentEl(enemy) {
     const iv = previewIntent(combat, enemy.id);
-    const el = document.createElement('div');
     const badge = intentBadge(iv);
-    el.className = `intent ${badge.cls}`;
-    markUiComponent(el, UI.intentIndicator, badge.cls);
-    el.innerHTML = badge.html;
-    return el;
+    const node = pill({
+      label: badge.label,
+      attrs: { class: `intent lg ${badge.cls}${badge.dashed ? ' dashed' : ''}`, dataset: { tone: badge.tone || undefined } },
+    });
+    if (badge.glyph) node.prepend(glyph(badge.glyph, { class: 'ic' }));
+    markUiComponent(node, UI.intentIndicator, badge.cls);
+    return node;
   }
 
   function renderEnemies() {
@@ -942,16 +951,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       // Target-number badge for keyboard targeting (SPEC §7.3).
       if (enemy.alive && targeting) {
         const idx = living.indexOf(enemy);
-        if (idx < 9) {
-          const kh = document.createElement('span');
-          kh.className = 'enemy-key';
-          kh.textContent = idx + 1;
-          leading.push(kh);
-        }
+        // The target number is a Keycap, the same atom every other key wears.
+        if (idx < 9) leading.push(keycap(String(idx + 1), { class: 'enemy-key' }));
       }
-      const nm = document.createElement('div');
-      nm.className = 'nm';
-      nm.textContent = def.name;
+      // The nameplate is a LabelStack: the name, and under it what kind of
+      // thing it is (its stature reads from the frame, so the hint is the tags).
+      const nm = labelStack({ label: def.name, attrs: { class: 'nm' } });
       const box = combatantFrame({
         role: 'enemy',
         entityId: enemy.id,

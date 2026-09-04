@@ -55,33 +55,6 @@
 }
 :root[data-card-motif='band'] .card .art { border-bottom: 2px solid var(--gold); }
 
-/* The pile viewer's body — a scrolling grid of small card faces. The panel,
-   its head and its way out are the shell's (piles.js adopts openModal). */
-.pile-modal { padding: 0; display: flex; flex-direction: column; }
-.pile-body { padding: var(--modal-inset); }
-.pile-body .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
-.pile-empty { margin: 0; padding: 2rem; color: var(--muted); }
-
-.overlay-settings-actions { display: flex; align-items: center; gap: 6px; }
-.overlay-settings-actions[hidden] { display: none; }
-.ov-quick-action {
-  min-height: var(--tap-floor); height: auto; padding: 0.55rem 0.8rem;
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  white-space: nowrap;
-}
-.ov-quick-action.on { color: var(--gold); border-color: var(--gold); }
-.ov-quick-action.armed { background: rgba(140, 30, 30, 0.3); border-color: var(--ember); }
-
-.ov-relic-grid { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 0.8rem; }
-.ov-relic { display: flex; gap: 1rem; align-items: flex-start; padding: 0.8rem 1rem; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-3); }
-.ov-relic-ic { font-size: 2rem; flex-shrink: 0; }
-.ov-relic b { color: var(--parchment); font-size: 1.3rem; }
-.ov-relic p { color: var(--muted); font-size: 1.1rem; margin-top: 0.2rem; line-height: 1.4; }
-.ov-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem 2.2rem; max-width: 52rem; }
-.ov-stat { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line-soft); padding: 0.6rem 0; }
-.ov-stat span { color: var(--muted); font-size: 1.2rem; }
-.ov-stat b { color: var(--parchment); font-size: 1.2rem; }
-
 .set-row-unavailable { opacity: 0.86; }
 .set-action-status {
   max-width: 24rem; color: var(--muted); font-size: 1.05rem; line-height: 1.35; text-align: right;
@@ -89,35 +62,6 @@
 
 .subtle.danger { border-color: var(--blood); color: var(--ember); }
 .subtle.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
-.ov-save-actions { display: flex; flex-direction: column; gap: 1rem; align-items: stretch; margin-top: 1.4rem; max-width: 32rem; }
-.ov-save-actions button { text-align: left; padding: 1.1rem 1.6rem; }
-
-/* ---------- boss-intro title card ---------- */
-.boss-intro {
-  position: fixed; inset: 0; z-index: 650; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(ellipse 70% 50% at 50% 46%, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.88));
-  animation: bi-veil 480ms ease-out;
-}
-.boss-intro .bi-stack { text-align: center; animation: bi-rise 700ms cubic-bezier(0.2, 0.8, 0.3, 1); }
-.boss-intro .bi-tag {
-  color: var(--muted); font-family: var(--font-display); font-size: 1.3rem;
-  letter-spacing: 0.5em; margin-bottom: 1.4rem;
-}
-.boss-intro .bi-name {
-  color: var(--gold); font-size: 5.4rem; letter-spacing: 0.12em; line-height: 1.15;
-  max-width: 80%; text-shadow: 0 0 34px rgba(var(--accent-rgb), 0.55), 0 2px 10px #000;
-}
-.boss-intro .bi-rule {
-  width: 34rem; max-width: 60%; height: 1px; margin: 2rem auto 0;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  animation: bi-rule 900ms ease-out;
-}
-.boss-intro.bi-out { animation: bi-fade 460ms ease-in forwards; }
-@keyframes bi-veil { from { opacity: 0; } }
-@keyframes bi-rise { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
-@keyframes bi-rule { from { transform: scaleX(0.2); opacity: 0; } }
-@keyframes bi-fade { to { opacity: 0; } }
 
 /* ---------- command log (Settings → Advanced) ---------- */
 .debug-modal { width: 72rem; max-width: 94%; }
@@ -1698,35 +1642,6 @@ button.ev-choice {
   padding: 8px 20px;
 }
 
-/* ---------- first-run tutorial overlay ---------- */
-/* pointer-events:none is load-bearing, not tidiness. The veil covers the whole
-   viewport only to host the spotlight's shadow — but swallowing clicks turned a
-   mispositioned callout into a permanent lockout of the first fight, since the
-   veil is removed only by its own two buttons (the only writers of
-   `seenTutorial`, so a reload brought it straight back). The coach marks explain
-   the board; they must never stand between the player and it. The bubble takes
-   pointer events back for its buttons. */
-.tut-veil { position: fixed; inset: 0; z-index: 800; pointer-events: none; }
-/* absolute, not fixed: this makes the veil their containing block, so the veil
-   IS the layer their inline left/top is measured in — which is what tutorial.js
-   hands anchorLocalBox(). As `fixed` the two agreed only because the veil
-   happens to be inset:0; changing that inset would have silently skewed every
-   callout again. */
-.tut-spot {
-  position: absolute; border: 2px solid var(--gold); border-radius: var(--r-3);
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72), 0 0 22px rgba(201, 162, 39, 0.55);
-  transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
-  pointer-events: none;
-}
-.tut-bubble {
-  position: absolute; width: 30rem; background: var(--bg-raise); border: 1px solid var(--gold);
-  border-radius: var(--r-4); padding: 1.4rem 1.6rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
-  animation: screenIn 200ms ease-out; pointer-events: auto;
-}
-.tut-bubble .tut-title { color: var(--gold); font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.6rem; }
-.tut-bubble .tut-text { font-size: 1.25rem; color: var(--parchment); line-height: 1.5; margin-bottom: 1.2rem; }
-.tut-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-
 /* ---------- event screen ---------- */
 .event-art { display: inline-block; animation: artFloat 4s ease-in-out infinite; }
 @keyframes artFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
@@ -2274,13 +2189,11 @@ button.ev-choice {
   min-width: 7.2rem; max-width: 100%; box-sizing: border-box;
   overflow-wrap: anywhere; color: var(--frost); font-size: 0.92rem;
 }
-.arcane-exposure-head { display: flex; align-items: center; gap: 0.25rem; }
-.arcane-exposure-head strong { margin-left: auto; white-space: nowrap; color: var(--parchment); }
-.arcane-exposure-head em { color: var(--gold); font-style: normal; }
-.arcane-exposure-glyph { color: var(--frost); }
-.arcane-exposure-track { height: 0.35rem; background: var(--line); border-radius: var(--r-pill); overflow: hidden; }
-.arcane-exposure-track > span { display: block; height: 100%; background: var(--frost); }
-.arcane-exposure-meter.locked .arcane-exposure-track > span { background: var(--gold); }
+/* The exposure receipt is the kit's Meter (`.as-meter`, arcane tone) with the
+   school's glyph on its plate; `.arcane-exposure-immune` is one StatePill.
+   Nothing here draws either — what is left is the RECEIPT'S OWN BOX: the 72 px
+   floor and the wrap that keep it legible under a combatant at 320/390, which
+   is this surface's geometry and not the atom's. */
 .arcane-exposure-immune { display: flex; gap: 0.3rem; align-items: center; }
 .magic-vulnerable-receipt, .arcane-exposure-event { color: var(--muted); line-height: 1.2; }
 .arcane-refusal-receipt { color: var(--gold); }
@@ -2788,8 +2701,6 @@ button.ev-choice {
 
 @media (max-width: 720px) {
 
-  .overlay-settings-actions { gap: 3px; }
-  .ov-quick-action { min-width: var(--tap-floor); padding-inline: 6px; }
   .ov-qa-label { display: none; }
 
   .set-action-status { max-width: 11rem; text-align: right; }
@@ -3026,130 +2937,6 @@ button.ev-choice {
   position: relative;
   z-index: 2;
 }
-/* The relic beside it stays small ON PURPOSE and the line is principled, not a
-   leftover: a relic chip is READ (tooltip only, map.js:152 / combat.js:444), a
-   flask is TAPPED. The thing a thumb aims at gets the floor; the thing an eye
-   reads does not. */
-
-/* ---------- the orientation gate (components/upright.js) -------------------- */
-/* THE DECISION AND ITS REASONS LIVE IN THAT FILE'S HEADER, NOT HERE. This
-   stylesheet measures nothing and decides nothing — main.js's resolveLayout()
-   already made the call in the same breath as the zoom, and a
-   `@media (orientation: landscape)` here would be the second decider that
-   caused #24. The only thing this block does is make the refusal readable.
-
-   Z-INDEX 900, ABOVE THE SIX AT 500. components/veil.js sorts by paint order, so
-   this owns input even when it rises over an already-open overlay. It stays a
-   child of <body> at `position: fixed`, which is the precondition that file
-   states for the comparison being valid at all.
-
-   NO `vh`, NO `vw` (Law 2). `.modal-veil` is `inset: 0` and this inherits it;
-   the card is capped in px and in %, both of which resolve inside the zoomed
-   body the way every panel below <body> in this tree does.
-
-   TYPE DIVIDED BY --ui-zoom, DELIBERATELY, and it is the one carve-out here:
-   this is the message about the app having zoomed itself down to its floor, so
-   scaling it by that zoom shrinks the sentence exactly when it matters most.
-   Same idiom and same reason as `--tap-floor` in base.css. Law 4 is untouched —
-   the unit is still rem, so Text size still scales these glyphs and only these
-   glyphs; what is cancelled is UI size, which is the thing being reported on. */
-.upright-veil {
-  z-index: 900;
-  /* NEAR-SOLID, and 0.95 was not enough — I looked at it. At 400x400 an enemy
-     HP bar showed through the reassurance line, so "Your run is safe" sat on a
-     red bar. A refusal has to be calm to be believed. */
-  background: rgba(8, 6, 4, 0.985);
-  padding: 24px;
-  /* Law 5: a refusal that scrolls sideways is a joke at the player's expense. */
-  overflow: hidden;
-}
-.upright-card {
-  max-width: 460px;
-  text-align: center;
-  color: var(--parchment);
-}
-.upright-veil h2 {
-  color: var(--gold);
-  font-size: calc(2.4rem / var(--ui-zoom, 1));
-  line-height: 1.25;
-  margin-bottom: 14px;
-}
-.upright-say {
-  font-size: calc(1.6rem / var(--ui-zoom, 1));
-  line-height: 1.5;
-  margin-bottom: 12px;
-}
-.upright-safe {
-  font-size: calc(1.4rem / var(--ui-zoom, 1));
-  line-height: 1.5;
-  color: var(--muted);
-}
-/* THE WAY OUT, NAMED (Constantine's amendment, 2026-08-17). Third and smallest of
-   the three lines, on purpose: the instruction is the heading, the reassurance
-   answers "have I lost my run", and this answers a question only some players
-   have. Dimmer and a size down so it cannot outrank either.
-   It is a POINTER AND NOT A CONTROL — the gate still has no interactive element
-   in it, which is what keeps the ruling in this file's header intact. Same
-   `/ var(--ui-zoom)` carve-out as its siblings and for the same reason written
-   there: this is the message ABOUT the app having zoomed itself to its floor. */
-.upright-hint {
-  font-size: calc(1.25rem / var(--ui-zoom, 1));
-  line-height: 1.5;
-  margin-top: 14px;
-  color: var(--muted);
-  opacity: 0.78;
-}
-/* The glyph is a phone standing up. Box geometry in px — chrome, not type
-   (Law 4 clause 3) — and it is `aria-hidden`, so a reader that cannot see it
-   loses nothing the sentences do not already say. */
-.upright-glyph {
-  display: grid;
-  place-items: center;
-  height: 76px;
-  margin-bottom: 18px;
-}
-.upright-phone {
-  display: block;
-  width: 34px;
-  height: 56px;
-  border: 2px solid var(--gold);
-  border-radius: var(--r-2);
-  transform-origin: 50% 50%;
-  animation: upright-turn 2.6s ease-in-out infinite;
-}
-.upright-veil[data-advice='resize'] .upright-phone {
-  /* Not a phone to turn — a window to grow. Widen the box and hold it still. */
-  width: 56px; height: 40px; animation: none;
-}
-/* #27 — below the compact combat composition's rendered floor, the refusal is
-   still the only truthful screen. Its ordinary phone glyph used 94px before a
-   word was drawn (76px row + 18px margin), which made the 844x339 Text XL card
-   itself 26px taller than the viewport. `data-short` is the layout decider's
-   existing answer; this selector measures nothing and creates no breakpoint.
-   Keep every sentence and only compress chrome/spacing, so the fallback remains
-   wholly readable at the first height where the game must refuse again.
-
-   AND THE 44px GLYPH WAS STILL 17px TOO MANY — measured, not argued (Sten,
-   2026-08-21, `uprightgate --text XL` at dev 68d8011): at 844x339 Text XL the
-   card read top -8.47 bottom 347.47 in a 339px viewport, on all three surfaces,
-   while this block's paragraph above promised readability. So below the compact
-   floor the glyph goes entirely: it is `aria-hidden` decoration whose message
-   ("turn") the heading already carries in words, and at the one height where it
-   competes with a sentence for pixels, the sentence wins (every mark
-   load-bearing or gone). Chrome removed, not type shrunk — Law 4 untouched. */
-:root[data-short='true'] .upright-veil { padding: 12px 24px; }
-:root[data-short='true'] .upright-glyph { display: none; }
-:root[data-short='true'] .upright-veil h2 { margin-bottom: 8px; }
-:root[data-short='true'] .upright-say { margin-bottom: 6px; }
-:root[data-short='true'] .upright-hint { margin-top: 8px; }
-@keyframes upright-turn {
-  0%, 18% { transform: rotate(-90deg); }
-  55%, 100% { transform: rotate(0deg); }
-}
-/* Motion is a nicety and this screen is not. Both doors: the player's setting
-   (body.reduced-motion, main.js) and the OS's. */
-.reduced-motion .upright-phone { animation: none; }
-@media (prefers-reduced-motion: reduce) { .upright-phone { animation: none; } }
 
 /* ---------- the build stamp (src/ui/components/buildstamp.js) ---------------
    ONE RULE FOR THREE SURFACES. The stamp appears on the title screen, in the

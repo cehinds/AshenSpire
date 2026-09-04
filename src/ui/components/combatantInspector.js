@@ -1,25 +1,43 @@
+// THE COMBATANT INSPECTOR — the expanded reading of one fighter, in a Folding
+// Tray at the field's edge. The tray is components/trayComponents.js (the kit's
+// tray assembly); everything INSIDE it is kit pieces and nothing else:
+//
+//   the subject   a LabelStack (name over what it is)
+//   its pools     one Meter per resource, stacked, values on their plates
+//   its intent    a Pane heading (Eyebrow + Title·S) over one Row, tone
+//                 `current`, whose status line is what the move does
+//   its skills    the same Rows, the live one toned `current`
+//   its effects   the same Rows, or one disabled Row saying there are none
+//
+// It owns no shape: the host's edge and width are tokens the model carries.
 import { childModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { renderTray } from './trayComponents.js';
-import { esc } from './tooltip.js';
+import { el, eyebrow, titleS, hairline, labelStack, meter, meters, row, statusText } from '../kit/index.js';
 
-function resourceRows(resources) {
-  return (resources || []).map((row) => `
-    <div class="combatant-inspector-resource">
-      <span>${esc(row.label)}</span>
-      <strong>${esc(row.value)}${row.max == null ? '' : ` / ${esc(row.max)}`}</strong>
-    </div>`).join('');
+function resourceMeters(resources) {
+  return meters((resources || []).map((r) => meter({
+    id: String(r.label).toLowerCase(),
+    tone: String(r.label).toLowerCase(),
+    label: r.label,
+    value: r.max == null ? String(r.value) : `${r.value} / ${r.max}`,
+    cur: r.value, max: r.max == null ? r.value : r.max,
+    pct: r.max ? Math.max(0, Math.min(100, (r.value / r.max) * 100)) : (r.value > 0 ? 100 : 0),
+    stack: true,
+    attrs: { class: 'combatant-inspector-resource' },
+  })), { class: 'combatant-inspector-resources' });
 }
 
-function detailRows(title, rows, empty) {
-  const body = (rows || []).length
-    ? rows.map((row) => `
-      <li${row.active ? ' class="active"' : ''}>
-        <strong>${esc(row.name)}</strong>
-        ${row.detail ? `<span>${esc(row.detail)}</span>` : ''}
-      </li>`).join('')
-    : `<li class="empty">${esc(empty)}</li>`;
-  return `<section class="combatant-inspector-section"><h4>${esc(title)}</h4><ul>${body}</ul></section>`;
+function section(title, rows, empty) {
+  const list = (rows || []).length
+    ? rows.map((r) => row({
+      label: r.name, status: r.detail || '', tag: 'div',
+      tone: r.active ? 'current' : '', className: 'combatant-inspector-row',
+    }))
+    : [row({ label: empty, tag: 'div', disabled: true, className: 'combatant-inspector-row' })];
+  return el('section', { class: 'combatant-inspector-section' }, [
+    eyebrow(title), hairline(), ...list,
+  ]);
 }
 
 export function mountCombatantInspector(host, model, { onToggle = null } = {}) {
@@ -38,17 +56,15 @@ export function mountCombatantInspector(host, model, { onToggle = null } = {}) {
     onToggle: () => onToggle?.(!model.properties.expanded),
     renderContent: (content) => {
       const subject = model.properties.subject;
-      content.innerHTML = `
-        <div class="combatant-inspector-summary">
-          <div>
-            <strong>${esc(subject.name)}</strong>
-            <span>${esc(subject.subtitle || '')}</span>
-          </div>
-          <div class="combatant-inspector-resources">${resourceRows(subject.resources)}</div>
-        </div>
-        ${subject.intent ? detailRows('Current intent', [subject.intent], 'No current intent.') : ''}
-        ${detailRows(subject.skillLabel || 'Skills', subject.skills, 'No active skills.')}
-        ${detailRows('Active effects', subject.statuses, 'No active effects.')}`;
+      content.replaceChildren(
+        el('div', { class: 'combatant-inspector-summary' }, [
+          labelStack({ label: subject.name, hint: subject.subtitle || '' }),
+          resourceMeters(subject.resources),
+        ]),
+        ...(subject.intent ? [section('Current intent', [subject.intent], 'No current intent.')] : []),
+        section(subject.skillLabel || 'Skills', subject.skills, 'No active skills.'),
+        section('Active effects', subject.statuses, 'No active effects.'),
+      );
     },
   });
   rendered.element.dataset.role = 'context';
