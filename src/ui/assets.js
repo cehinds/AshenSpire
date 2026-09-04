@@ -18,6 +18,29 @@ import { assetUrl } from './assetmap.js';
 const SIZE_TIERS = balance.ui.spriteTiers;
 const px = (value) => `${value}px`;
 
+// ── WHICH WAY A FIGHTER LOOKS ────────────────────────────────────────────────
+//
+// Owner, 2026-09-04: "adjust so that all characters are facing the same
+// direction (to the right)". One convention, in one place, so no surface
+// decides it and no second copy can disagree.
+//
+// The other half of the fact is per ASSET and lives with the rest of that
+// asset's art facts (`artFaces` on the enemy def, beside `art`, `size` and
+// `tint`): which way the painting or the render was drawn. Only the mismatch
+// between the two is a flip, which is what the poses README already asks for —
+// "Mirrored facings are a code flip, never a generated frame."
+//
+// `front` is not a third direction and never flips. A figure looking at the
+// viewer has no left or right to turn: mirroring one only swaps which hand
+// holds the sword. Most of the roster is front-facing, so most of it declares
+// nothing and this rule leaves it exactly as drawn — the honest outcome, and
+// the reason this is a per-asset fact rather than a blanket transform.
+const FACES = 'right';
+export function spriteMirror(artFaces) {
+  if (artFaces === 'front' || artFaces == null) return false;
+  return artFaces !== FACES;
+}
+
 /**
  * Enemy sprite: the Blender-rendered PNG when it exists
  * (assets/sprites/enemy_<id>.webp, tools/sprites-blender.py), else the style
@@ -42,7 +65,10 @@ export function enemySprite(enemyDef) {
   const img = document.createElement('img');
   img.src = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
   img.alt = enemyDef.name || enemyDef.id;
+  // The mirror rides the IMG, not the frame: the frame carries the block badge
+  // and the meters, and mirroring those would flip a number.
   img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
+    (spriteMirror(enemyDef.artFaces) ? 'transform:scaleX(-1);' : '') +
     `filter:drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
   img.addEventListener('error', placeholder);
   el.appendChild(img);

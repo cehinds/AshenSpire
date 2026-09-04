@@ -42,6 +42,9 @@ export const act1Enemies = [
     poiseMax: 6,
     levelProfile: { min: 1, max: 3 },
     art: '🐕',
+    // Drawn in profile looking LEFT; the board looks right (assets.js FACES),
+    // so this one is mirrored. Read off the sprite, not assumed.
+    artFaces: 'left',
     moves: {
       bite: { intent: 'attack', damage: 6, weight: 60 },
       lunge: { intent: 'attack', damage: 3, hits: 2, weight: 40 },
