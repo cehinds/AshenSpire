@@ -978,8 +978,6 @@ async function browserRoute(entries, {
     const title = await evaluate(`(() => ({
       settingsCount: document.querySelectorAll('.title-menu #settings').length,
       changelogTopLevel: [...document.querySelectorAll('.title-menu button')].some((button) => /changelog/i.test(button.textContent)),
-      // The wordmark is the kit's TitleMenu name (src/ui/screens/title.js);
-      // `.title-big` left the page with the old chrome.
       titleText: document.querySelector('.as-titlemenu .tm-name, .title-big')?.textContent?.trim()
     }))()`);
     if (title.settingsCount !== 1 || title.changelogTopLevel || title.titleText !== 'ASHEN SPIRE') {
