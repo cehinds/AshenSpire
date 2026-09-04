@@ -32,6 +32,12 @@ import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
+// THE FOLDS' INSIDES ARE THE KIT'S (2026-09-04, the sweep): a flask row is a
+// kit Row — the flask's identity as its LabelStack, a −/count/+ Stepper of
+// tap-floor buttons trailing — the total is StatusText, the cinder preview
+// a KitLine with a StatPair and a delta. The `.flask-*` / `.level-cinder-*`
+// names stay on the kit elements because tools/flaskbox.mjs reads them.
+import { el, html, row, stepper, statusText, subtitle, statPair } from '../kit/index.js';
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
   const parsed = Number(value);
@@ -123,6 +129,35 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   const foldedCardHeightViewportPct = boundedNumber(shrinePresentation.foldedCardHeightViewportPct, 10, 6, 18);
   const foldedCardMaxHeightRem = boundedNumber(shrinePresentation.foldedCardMaxHeightRem, 7, 4, 12);
 
+  // THE FLASK ROWS. One kit Row per charge kind: identity left, the stepper
+  // trailing. THE STEPPER IS ONE UNIT AND WRAPS AS ONE — on a narrow shape the
+  // whole group drops under the name (the Row's `setting` variant wraps)
+  // instead of the `+` walking off the right edge (measured 390x844 before:
+  // 2 controls outside the viewport). Every button is `aria-disabled`, never
+  // `disabled`: a disabled button fires no pointer events, so its tooltip
+  // could never say why it will not move.
+  const flaskRowsHtml = html(charge.rows.map((flaskRow) => {
+    const name = (flaskRow.def && flaskRow.def.name) || flaskRow.kind;
+    return row({
+      tag: 'div', setting: true, className: 'flask-increment-row', attrs: { dataset: { kind: flaskRow.kind } },
+      labelNode: el('span', { class: 'as-labelstack flask-increment-id', html: flaskIdentityHtml(flaskRow.def) }),
+      trail: stepper({
+        value: flaskRow.count, className: 'flask-increment-steps', valueClass: 'flask-increment-count', valueAttrs: { dataset: { kind: flaskRow.kind } },
+        dec: { label: `One fewer ${name}`, disabled: !flaskRow.canSub, className: 'flask-step', attrs: { dataset: { step: '-1', kind: flaskRow.kind, focusable: 'true' } } },
+        inc: { label: `One more ${name}`, disabled: !flaskRow.canAdd, className: 'flask-step', attrs: { dataset: { step: '1', kind: flaskRow.kind, focusable: 'true' } } },
+      }),
+    });
+  }));
+  // THE CINDER LINE: what you hold, what a level costs, and — once a point is
+  // pending — what remains, as the kit's delta.
+  const cinderLineHtml = level.capped ? '' : html(el('p', { class: 'as-kitline level-cinder-preview', dataset: { levelCinderPreview: '' } }, [
+    statPair({ key: 'You hold', value: String(level.cinders) }),
+    el('strong', { class: 'level-cinder-cost', text: `− ${level.cost} cinders` }),
+    el('span', { class: 'as-delta level-cinder-result', dataset: { levelCinderResult: '', dir: 'down' }, hidden: true }, [
+      el('span', { class: 'd-arrow', text: '→' }), el('span', { class: 'd-to', text: `${level.cinders - level.cost} remaining` }),
+    ]),
+  ]));
+
   app.innerHTML = `
     <div class="screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem">
       <h2>Shrine of Ember</h2>
@@ -165,29 +200,10 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
                went red on "relevant controls remain inside the viewport" and
                that is how I found it, not by looking. The capacity stays,
                because it is the one number the rows do NOT say. -->
-          <p>Fixed capacity ${charge.capacity}</p>
+          ${html(subtitle(`Fixed capacity ${charge.capacity}`))}
           <div class="flask-increment">
-            ${charge.rows.map((row) => `
-              <div class="flask-increment-row" data-kind="${esc(row.kind)}">
-                <span class="flask-increment-id">${flaskIdentityHtml(row.def)}</span>
-                <!-- THE STEPPER IS ONE UNIT AND WRAPS AS ONE. Read order is the
-                     reading order — "Crimson Flask: − 2 +" — and on a narrow
-                     shape the whole group drops to its own line under the name
-                     instead of the `+` walking off the right edge, which is
-                     what it did when the buttons were loose children of the row
-                     (measured 390x844: 2 controls outside the viewport). Law 5
-                     clause 3: a narrow shape is a different composition. -->
-                <span class="flask-increment-steps">
-                  <button type="button" class="flask-step" data-step="-1" data-kind="${esc(row.kind)}"
-                          data-focusable="true" aria-disabled="${String(!row.canSub)}"
-                          aria-label="One fewer ${esc((row.def && row.def.name) || row.kind)}">−</button>
-                  <b class="flask-increment-count" data-kind="${esc(row.kind)}">${row.count}</b>
-                  <button type="button" class="flask-step" data-step="1" data-kind="${esc(row.kind)}"
-                          data-focusable="true" aria-disabled="${String(!row.canAdd)}"
-                          aria-label="One more ${esc((row.def && row.def.name) || row.kind)}">+</button>
-                </span>
-              </div>`).join('')}
-            <p class="flask-increment-total">${charge.assigned} of ${charge.capacity} assigned</p>
+            ${flaskRowsHtml}
+            ${html(statusText(`${charge.assigned} of ${charge.capacity} assigned`, { class: 'flask-increment-total' }))}
           </div>
           </div>
           </div>
@@ -227,12 +243,8 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           <div class="shrine-fold-detail">
             <div class="cp-body">
             ${level.capped
-            ? `<p>You have taken every level this climb allows (${level.levelsTaken}).</p>`
-            : `<p class="level-cinder-preview" data-level-cinder-preview>
-                <span aria-hidden="true">✦</span>
-                <span>You hold <b>${level.cinders}</b> − <strong class="level-cinder-cost">${level.cost} cinders</strong> to level up.</span>
-                <span class="level-cinder-result" data-level-cinder-result hidden>→ <b>${level.cinders - level.cost} remaining</b></span>
-              </p>`}
+            ? html(subtitle(`You have taken every level this climb allows (${level.levelsTaken}).`))
+            : cinderLineHtml}
             </div>
           </div>
           <div class="shrine-stat-mount"></div>
@@ -319,10 +331,10 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       const result = app.querySelector('#level-opt [data-level-cinder-result]');
       if (result) {
         result.hidden = !count;
-        result.innerHTML = `→ <b>${level.cinders - spend} remaining</b>`;
+        result.replaceChildren(el('span', { class: 'd-arrow', text: '→' }), el('span', { class: 'd-to', text: `${level.cinders - spend} remaining` }));
       }
       const costLabel = app.querySelector('#level-opt .level-cinder-cost');
-      if (costLabel) costLabel.textContent = `${count ? spend : level.cost} cinders`;
+      if (costLabel) costLabel.textContent = `− ${count ? spend : level.cost} cinders`;
       const values = Object.fromEntries(level.attributes.map((attr) => [
         attr.id,
         run.attributes[attr.id] + pending[attr.id],
