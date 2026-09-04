@@ -75,21 +75,30 @@ if (hasAlpha) {
   // a checkerboard. Collect those, then flood inwards over pixels close to any of
   // them, so a soft shadow cannot walk the fill into the figure.
   const tol = Number(arg('--tolerance', '42'));
-  const bg = [];
-  const noteBg = (x, y) => {
+  // Count what the border is made of rather than trusting every sample: a figure
+  // that runs off the edge of the sheet puts its own colour on the border, and
+  // taking that for background would flood the fill straight into the figure.
+  // Only colours covering a real share of the border count.
+  const seen = [];
+  const note = (x, y) => {
     const o = at(x, y);
     const c = [img.px[o], img.px[o + 1], img.px[o + 2]];
-    if (!bg.some(b => Math.abs(b[0] - c[0]) + Math.abs(b[1] - c[1]) + Math.abs(b[2] - c[2]) <= tol)) bg.push(c);
+    const hit = seen.find(b => Math.abs(b.c[0] - c[0]) + Math.abs(b.c[1] - c[1]) + Math.abs(b.c[2] - c[2]) <= tol);
+    if (hit) hit.n++; else seen.push({ c, n: 1 });
   };
-  for (let x = 0; x < W; x += 3) { noteBg(x, 0); noteBg(x, H - 1); }
-  for (let y = 0; y < H; y += 3) { noteBg(0, y); noteBg(W - 1, y); }
+  for (let x = 0; x < W; x++) { note(x, 0); note(x, H - 1); }
+  for (let y = 0; y < H; y++) { note(0, y); note(W - 1, y); }
+  const samples = 2 * (W + H);
+  const share = Number(arg('--bg-share', '0.06'));
+  const bg = seen.filter((b) => b.n >= share * samples).map((b) => b.c);
+  if (!bg.length) bg.push(seen.sort((a, b) => b.n - a.n)[0].c);   // nothing dominant: the commonest wins
   const isBg = (o) => bg.some(b => Math.abs(b[0] - img.px[o]) + Math.abs(b[1] - img.px[o + 1]) + Math.abs(b[2] - img.px[o + 2]) <= tol);
-  const seen = new Uint8Array(W * H);
+  const filled = new Uint8Array(W * H);
   const stack = [];
   const push = (x, y) => {
     if (x < 0 || y < 0 || x >= W || y >= H) return;
     const i = y * W + x;
-    if (!seen[i] && isBg(at(x, y))) { seen[i] = 1; stack.push(i); }
+    if (!filled[i] && isBg(at(x, y))) { filled[i] = 1; stack.push(i); }
   };
   for (let x = 0; x < W; x++) { push(x, 0); push(x, H - 1); }
   for (let y = 0; y < H; y++) { push(0, y); push(W - 1, y); }
@@ -97,7 +106,7 @@ if (hasAlpha) {
     const i = stack.pop(), x = i % W, y = (i - x) / W;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) push(x + dx, y + dy);
   }
-  for (let i = 0; i < W * H; i++) fg[i] = seen[i] ? 0 : 1;
+  for (let i = 0; i < W * H; i++) fg[i] = filled[i] ? 0 : 1;
 }
 
 // ---- find the figures ------------------------------------------------------------
@@ -206,24 +215,29 @@ if (CW < maxW || CH < maxAbove + maxLift + maxBelow + PAD) {
   console.error('  Cut every class in one run, or give them all the same --canvas WxH.');
   process.exit(1);
 }
-const ground = CH - PAD - maxBelow;             // the floor every pose stands on
+const ground = CH - PAD;                        // the lowest line a figure rests on
 const renders = [];
 for (let i = 0; i < poses.length; i++) {
   const f = figures[i], pose = poses[i];
   const fw = f.x1 - f.x0 + 1, fh = f.y1 - f.y0 + 1;
   const out = Buffer.alloc(CW * CH * 4);
-  // the feet land on the floor line, less this figure's lift off it; whatever hangs
-  // below the feet goes below that line
-  const oy = ground - f.lift - (f.bodyY1 - f.y0), ox = Math.round((CW - fw) / 2);
+  // The floor line is the lowest ink in the figure, so a blade lying past its feet
+  // rests on the floor and the body stands that much above it. Placing the feet on
+  // the line instead would put the blade below it, and the sprite step clears
+  // everything below the floor before it crops.
+  const oy = ground - f.lift - (f.y1 - f.y0), ox = Math.round((CW - fw) / 2);
   let sumX = 0, count = 0;
   for (let y = 0; y < fh; y++) {
     for (let x = 0; x < fw; x++) {
       const sx = f.x0 + x, sy = f.y0 + y, si = sy * W + sx;
       if (label[si] < 0 || !f.ids.includes(label[si])) continue;
+      const isBody = label[si] === f.ids[0];
       const s = at(sx, sy), d = ((oy + y) * CW + ox + x) * 4;
       out[d] = img.px[s]; out[d + 1] = img.px[s + 1]; out[d + 2] = img.px[s + 2];
       out[d + 3] = hasAlpha ? img.px[s + 3] : 255;
-      if (y > fh * 0.75) { sumX += ox + x; count++; }        // centre on the feet, not the cape
+      // centre on the feet of the body itself — not on the cape, and not on a
+      // dropped blade lying beside it
+      if (isBody && y > fh * 0.75) { sumX += ox + x; count++; }
     }
   }
   const file = `${cls}_${pose}.png`;
