@@ -77,6 +77,22 @@ so they read as diamonds rather than squares; the rogue's chest is quilted with
 seams laid on the surface; the reaver has a slitted visor, brass edging,
 shoulder bosses and plate legs; the herald has a stole and rounder beads.
 
+**Sixth pass — resolution.** The figures were built at the coarsest count that
+still made a shape, and it showed: a hood was a seven-sided tent, a helm a
+faceted bullet. `--res` (2.5 by default) now scales every ring count and
+subdivides between the rings of a loft, and the body carries a second
+subdivision level, so silhouettes curve instead of stepping. Faces still shade
+flat and still take facet variation — this buys smoother outlines, not smooth
+shading. Four-sided shapes are shapes rather than coarse circles, so pyramids
+and blades keep their four sides at any resolution.
+
+Resolution alone made the Reaver's ring-built pauldrons rounder rather than
+better, so they were rebuilt: three shaped plates stepping down and outward
+from the collar with a pointed outer corner and a brass edge under each,
+bowed toward the camera (`curved_plate()`) so they catch light like armour.
+The cape lost its slab shape for a drape that narrows at the shoulders and
+flares to the hem.
+
 **Painted poses.** `tools/painted-poses.mjs` cuts a painted pose sheet — a
 single image holding one figure per pose — into single-pose frames and writes
 the same renders manifest the Blender script writes, so `tools/pose-sprites.mjs`

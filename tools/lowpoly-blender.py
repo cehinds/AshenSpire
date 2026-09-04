@@ -1,6 +1,7 @@
 # tools/lowpoly-blender.py — low-poly 3D class figures, rigged and posed.
 #
 #   blender --background --factory-startup --python tools/lowpoly-blender.py -- OUT_DIR [class,class] [pose,pose]
+#        [--palette build/components/palette.json] [--parts] [--res 2.5]
 #
 # Each class is a real body: a skin-modifier mesh grown over a stick skeleton
 # (so limbs join the torso as one surface, not as cones poked into a box),
@@ -18,10 +19,15 @@ from mathutils import Vector, Matrix, Quaternion
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 if not argv:
-    raise SystemExit("usage: -- OUT_DIR [class,class] [pose,pose] [--palette build/components/palette.json] [--parts]")
+    raise SystemExit("usage: -- OUT_DIR [class,class] [pose,pose] [--palette build/components/palette.json] [--parts] [--res 2.5]")
 PARTS_MODE = "--parts" in argv
+# How finely everything is built. 1.0 is the first four passes' coarse figures;
+# higher divides every ring and every step between rings, so a hood is a curved
+# shell of small facets rather than a seven-sided tent. Faces still shade flat —
+# this buys smoother silhouettes, not smooth shading.
+RES = float(argv[argv.index("--res") + 1]) if "--res" in argv else 2.5
 PALETTE_PATH = argv[argv.index("--palette") + 1] if "--palette" in argv else None
-argv = [a for i, a in enumerate(argv) if a not in ("--parts", "--palette") and not (i > 0 and argv[i - 1] == "--palette")]
+argv = [a for i, a in enumerate(argv) if a not in ("--parts", "--palette", "--res") and not (i > 0 and argv[i - 1] in ("--palette", "--res"))]
 OUT = argv[0]
 ONLY = argv[1].split(",") if len(argv) > 1 and argv[1] else None
 ONLY_POSES = argv[2].split(",") if len(argv) > 2 and argv[2] else None
@@ -166,10 +172,28 @@ def super_ring(c, rx, ry, n, sq=0.0, phase=-math.pi / 2, drops=None, fold=0.0, f
         out.append((c[0] + x, c[1] + y, c[2] + (drops(i, a) if drops else 0.0)))
     return out
 
-def loft(name, rings, m, cap_bottom=False, cap_top=False, n=8, phase=0.0, fold=0.0, folds=5, sq=0.0):
+def rn(n):
+    """Ring resolution at the current --res. Four-sided shapes are shapes, not
+    approximations of a circle — a pyramid and a blade keep their four sides."""
+    return n if n <= 4 else max(6, int(round(n * RES)))
+
+def densify(rings, steps):
+    """Extra rings between the given ones, so a taper curves instead of stepping."""
+    if steps <= 1 or len(rings) < 2: return rings
+    out = []
+    for (ca, rxa, rya), (cb, rxb, ryb) in zip(rings, rings[1:]):
+        for s in range(steps):
+            t = s / steps
+            out.append((tuple(ca[k] + (cb[k] - ca[k]) * t for k in range(3)), rxa + (rxb - rxa) * t, rya + (ryb - rya) * t))
+    out.append(rings[-1])
+    return out
+
+def loft(name, rings, m, cap_bottom=False, cap_top=False, n=8, phase=0.0, fold=0.0, folds=5, sq=0.0, dense=True):
     """rings: list of (center, rx, ry). Faces between consecutive rings; a ring with rx=0 is a tip.
     fold > 0 pleats the rings (deeper toward the last ring), for robes, skirts, hoods and capes.
     sq > 0 squares the cross-section off, for helms and hoods built out of flat planes."""
+    n = rn(n)
+    if dense: rings = densify(rings, int(round(RES)))
     verts, faces = [], []
     idx = []
     for ri, (c, rx, ry) in enumerate(rings):
@@ -218,14 +242,16 @@ def box(name, c, sx, sy, sz, m):
     return new_obj(name, v, f, m)
 
 def sphere(name, c, r, m, n=8, k=5):
+    n, k = rn(n), rn(k)
     rings = [((c[0], c[1], c[2] - r), 0, 0)]
     for i in range(1, k):
         a = math.pi * i / k
         rings.append(((c[0], c[1], c[2] - r * math.cos(a)), r * math.sin(a), r * math.sin(a)))
     rings.append(((c[0], c[1], c[2] + r), 0, 0))
-    return loft(name, rings, m, n=n)
+    return loft(name, rings, m, n=n, dense=False)
 
 def torus(name, c, R, r, m, n=14, k=6):
+    n, k = rn(n), rn(k)
     verts, faces = [], []
     for i in range(n):
         a = 2 * math.pi * i / n
@@ -364,7 +390,8 @@ def build_body(cls, props, regions):
     skin = ob.modifiers.new("skin", "SKIN"); skin.use_smooth_shade = False
     for i, n in enumerate(names):
         sv = me.skin_vertices[0].data[i]; sv.radius = J[n]["r"]; sv.use_root = (n == "pelvis")
-    sub = ob.modifiers.new("sub", "SUBSURF"); sub.levels = 1; sub.render_levels = 1
+    sub = ob.modifiers.new("sub", "SUBSURF")
+    sub.levels = sub.render_levels = 1 if RES <= 1.0 else 2
     body = evaluated_copy(ob, f"{cls}_body")
     # material regions by nearest skeleton segment
     seg = [(J[a]["p"], J[b]["p"], J[b]["region"] if J[b]["region"] != "tunic" else J[a]["region"]) for a, b in E]
@@ -555,6 +582,7 @@ def shared_materials():
                 boot=mat("boot", (30, 26, 22)), wood=mat("wood", (44, 32, 24)))
 
 def pointed_tiers(prefix, m, gold, tiers, n=8, fold=0.03, dip=0.07):
+    n = rn(n)
     """Layered shoulder cape whose hem comes to hanging points — straight ahead and
     over each shoulder — the way the paintings' leather mantles do: every other
     hem vertex drops by `dip`. A folded-back inner ring gives the edge thickness.
@@ -591,6 +619,7 @@ def pointed_tiers(prefix, m, gold, tiers, n=8, fold=0.03, dip=0.07):
     return out
 
 def yoke(prefix, m, gold, tiers, n=12, sq=0.6):
+    n = rn(n)
     """A squared shoulder yoke: flat panels across the shoulders, the hem falling to a point
     at the front centre and over each shoulder, a folded-back inner edge and a gold band.
     tiers: (top_z, rx, ry, hx, hy, hem_z, v_drop, corner_drop, trim), widest tier first."""
@@ -633,6 +662,7 @@ def on_surface(rings, x, z, push=1.03):
     return (x, -ry * math.sqrt(max(0.0, 1 - q * q)) * push, z)
 
 def seam(name, rings, a, b, halfw, m, n=6):
+    n = rn(n)
     """A quilting seam laid over a lofted torso, from (x, z) a to b."""
     verts, faces = [], []
     for i in range(n + 1):
@@ -757,6 +787,21 @@ def rogue_dagger_r(J, M): return rogue_dagger(J, M, "R")
 @component("rogue", "boots", "soft")
 def rogue_boots(J, M): return [ob for ob, _ in boots("rogue", J, M["boot"], paint("rogue", "belt", "leather"), cuff_h=0.05)]
 
+def curved_plate(name, pts, y, bulge, m, thick=0.02):
+    """A shaped plate standing in the screen plane, bowed toward the camera in the
+    middle so it catches light like armour instead of reading as cardboard. pts are
+    (x, z) corners in order; the bow is strongest at the middle of the span."""
+    n = len(pts)
+    xs = [p[0] for p in pts]
+    lo, hi = min(xs), max(xs)
+    def bow(x):
+        t = 0.0 if hi == lo else (x - lo) / (hi - lo)
+        return -bulge * math.sin(math.pi * t)
+    verts = [(x, y + bow(x), z) for x, z in pts] + [(x, y + bow(x) + thick, z) for x, z in pts]
+    faces = [tuple(range(n))[::-1], tuple(range(n, 2 * n))]
+    for i in range(n): faces.append((i, (i + 1) % n, n + (i + 1) % n, n + i))
+    return new_obj(name, verts, faces, m)
+
 # ---------------- REAVER ----------------
 @component("reaver", "helm", "head")
 def reaver_helm(J, M):
@@ -790,10 +835,17 @@ def reaver_gorget(J, M):
 def reaver_pauldron(J, M, s_, sx):
     m = paint("reaver", "pauldron_r", "plate")
     sh = J[f"shoulder.{s_}"]["p"]; out = []
-    for i, (dz, r0, r1, drop) in enumerate([(0.16, 0.0, 0.27, 0.15), (0.01, 0.21, 0.285, 0.14), (-0.14, 0.22, 0.265, 0.12)]):
-        out.append(loft(f"reaver_pauldron{i}.{s_}", [((sh.x + sx * 0.0, sh.y, sh.z + dz + 0.02), r0, r0 * 0.9), ((sh.x + sx * 0.03, sh.y, sh.z + dz - 0.03), r1, r1 * 0.9), ((sh.x + sx * 0.04, sh.y, sh.z + dz - drop), r1 * 0.95, r1 * 0.85)], m, n=8, phase=math.pi / 8, fold=0.03, folds=4))
-        out.append(loft(f"reaver_pedge{i}.{s_}", [((sh.x + sx * 0.04, sh.y, sh.z + dz - drop + 0.014), r1 * 0.96, r1 * 0.86), ((sh.x + sx * 0.04, sh.y, sh.z + dz - drop - 0.002), r1 * 0.96, r1 * 0.86)], M["gold"], n=8, phase=math.pi / 8))
-    out.append(loft(f"reaver_boss.{s_}", [((sh.x + sx * 0.01, sh.y - 0.145, sh.z + 0.13), 0.055, 0.055), ((sh.x + sx * 0.01, sh.y - 0.175, sh.z + 0.13), 0.05, 0.05), ((sh.x + sx * 0.01, sh.y - 0.195, sh.z + 0.13), 0, 0)], M["gold"], n=10, cap_bottom=True))
+    X = lambda v: sx * v
+    # three lames stepping down and outward from the collar, each with a pointed
+    # outer corner and a brass edge showing under it — the painting's pauldron read
+    # from the front, which is the only view these sprites have
+    for i, (zt, zb, xo) in enumerate([(1.575, 1.475, 0.46), (1.495, 1.365, 0.515), (1.385, 1.235, 0.545)]):
+        pts = [(X(0.235), zt), (X(0.345), zt + 0.022), (X(xo - 0.07), zt - 0.018), (X(xo), zt - 0.07),
+               (X(xo - 0.035), zb), (X(0.32), zb + 0.022), (X(0.235), zb + 0.05)]
+        y = sh.y - 0.145 - 0.014 * i
+        out.append(curved_plate(f"reaver_lametrim{i}.{s_}", [(x, z - 0.024) for x, z in pts], y + 0.014, 0.055, M["brass"], thick=0.02))
+        out.append(curved_plate(f"reaver_lame{i}.{s_}", pts, y, 0.055, m, thick=0.028))
+    out.append(loft(f"reaver_boss.{s_}", [((X(0.30), sh.y - 0.215, 1.50), 0.055, 0.055), ((X(0.30), sh.y - 0.245, 1.50), 0.049, 0.049), ((X(0.30), sh.y - 0.27, 1.50), 0, 0)], M["gold"], n=10, cap_bottom=True))
     return out
 @component("reaver", "pauldron_l", "upper_arm.L")
 def reaver_pauldron_l(J, M): return reaver_pauldron(J, M, "L", -1)
@@ -810,7 +862,7 @@ def reaver_breastplate(J, M):
 @component("reaver", "cape", "soft")
 def reaver_cape(J, M):
     m = paint("reaver", "cape", "cloth")
-    cape = loft("reaver_cape", [((0, 0.15, 1.56), 0.33, 0.014), ((0, 0.18, 1.30), 0.35, 0.024), ((0, 0.20, 1.00), 0.35, 0.032), ((0, 0.22, 0.70), 0.34, 0.034), ((0, 0.23, 0.34), 0.33, 0.034)], m, n=10, cap_bottom=True, cap_top=True, fold=0.13, folds=4)
+    cape = loft("reaver_cape", [((0, 0.14, 1.58), 0.26, 0.016), ((0, 0.17, 1.34), 0.31, 0.028), ((0, 0.19, 1.02), 0.35, 0.038), ((0, 0.21, 0.70), 0.39, 0.044), ((0, 0.22, 0.40), 0.42, 0.048), ((0, 0.22, 0.30), 0.41, 0.046)], m, n=12, cap_bottom=True, cap_top=True, fold=0.16, folds=5)
     drape = loft("reaver_drape", [((0, 0.03, 1.60), 0.17, 0.15), ((0, 0.05, 1.51), 0.33, 0.25), ((0, 0.07, 1.40), 0.38, 0.28), ((0, 0.09, 1.30), 0.37, 0.27)], m, n=10, phase=math.pi / 10, fold=0.08, folds=5)
     return [cape, drape]
 
