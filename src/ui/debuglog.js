@@ -5,15 +5,18 @@
 // uncaught page errors. Exists so a stuck game can be diagnosed from inside the
 // game — open the log, read the last commands, copy them into a bug report.
 //
-// ON THE KIT: the viewer is a lg door through openModal (Eyebrow "Advanced",
-// Title·S "Command log", the log as the kit's LogBox, Copy · Refresh · Close
-// on the foot's ladder); the failure banner is the kit's Blocker with a
-// Title·S, Prose and the one Button. `.validation-banner` stays on the blocker
-// as the hook tools/release-shots.mjs scores; it draws nothing.
+// THIS MODULE IS A LEAF, AND THAT IS LOAD-BEARING: fx.js imports `dlog`,
+// tooltip.js imports fx.js, the shell imports tooltip.js and the kit
+// re-exports the shell — so this file may not import the kit, or the graph
+// closes into a loop that tools/bundle.mjs evaluates in one order (tooltip
+// before fx: `viewportLocalBox is not a function` in the shipped bundle).
+// The chrome — the failure banner as the kit's Blocker, the viewer as a lg
+// door — lives in ui/components/debugChrome.js and registers itself here
+// through registerDebugChrome(); main.js imports that module once. Until it
+// has, a banner still stands (plain DOM wearing the kit's classes) — a
+// failure at boot must never wait for chrome.
 
-import { el, openModal, button, logBox, flavour, prose, titleS, blocker } from './kit/index.js';
-
-const MAX_ENTRIES = 300;
+export const MAX_ENTRIES = 300;
 const entries = [];
 
 /** Append one entry: dlog('dispatch', 'playCard strike_3 -> e1', {events: 12}) */
@@ -69,6 +72,35 @@ export function getEntries() {
 
 const banners = new Map();
 
+let chrome = null;
+/** registerDebugChrome({ banner, door }) — the kit's pieces, handed in by ui/components/debugChrome.js. */
+export function registerDebugChrome(impl) { chrome = impl; }
+
+/** The banner without chrome: the same classes, plain DOM, for a failure before the chrome has loaded. */
+function bareBanner({ title, body, onOpen }) {
+  const node = document.createElement('div');
+  node.className = 'as-blocker validation-banner';
+  node.setAttribute('role', 'alert');
+  const head = document.createElement('div');
+  head.className = 'as-title-s';
+  head.textContent = title;
+  node.appendChild(head);
+  for (const line of String(body).split('\n')) {
+    const p = document.createElement('p');
+    p.className = 'as-prose';
+    p.textContent = line;
+    node.appendChild(p);
+  }
+  const open = document.createElement('button');
+  open.type = 'button';
+  open.className = 'as-btn vb-log';
+  open.textContent = 'Command log';
+  open.addEventListener('click', onOpen);
+  node.appendChild(open);
+  const more = () => { const m = document.createElement('span'); m.className = 'as-flavor'; node.insertBefore(m, open); return m; };
+  return { el: node, head, open, more };
+}
+
 // AND THE SCREEN IS FINITE — the half the dedupe does not cover. Deduping on
 // the message string is right and it only reaches IDENTICAL messages; a message
 // carrying a varying number ("reading 'card7'") never repeats, so N distinct
@@ -111,22 +143,15 @@ export function failureBanner(key, title, body) {
   if (standing.length >= MAX_BANNERS) {
     overflowed.add(key);
     const last = standing[standing.length - 1];
-    if (!last.more) {
-      last.more = flavour('');
-      last.el.insertBefore(last.more, last.open);
-    }
+    if (!last.more) last.more = last.makeMore();
     const n = overflowed.size;
     last.more.textContent = ` · …and ${n} more kind${n === 1 ? '' : 's'} of failure — all of them are in the Command log.`;
     return last.el;
   }
-  const head = titleS(title, { tag: 'div' });
-  const open = button({ label: 'Command log', className: 'vb-log' });
-  open.addEventListener('click', () => openDebugLog());
-  const node = blocker('', { attrs: { class: 'validation-banner', role: 'alert' } });
-  node.append(head, ...String(body).split('\n').map((line) => prose(line)), open);
-  document.body.prepend(node);
-  banners.set(key, { el: node, head, open, more: null, n: 1 });
-  return node;
+  const built = (chrome ? chrome.banner : bareBanner)({ title, body, onOpen: () => openDebugLog() });
+  document.body.prepend(built.el);
+  banners.set(key, { el: built.el, head: built.head, open: built.open, makeMore: built.more, more: null, n: 1 });
+  return built.el;
 }
 
 // Uncaught errors are invisible in most consoles players look at — capture them
@@ -170,46 +195,11 @@ export function logText() {
 
 /** Open the log viewer modal (usable over the in-run overlay). */
 export function openDebugLog() {
-  const body = logBox('', { class: 'debug-log-body' });
-  const copy = button({ label: 'Copy', id: 'dbg-copy' });
-  const refresh = button({ label: 'Refresh', id: 'dbg-refresh' });
-  const close = button({ label: 'Close', weight: 'primary', id: 'dbg-close' });
-  const door = openModal({
-    size: 'lg',
-    className: 'debug-modal',
-    eyebrow: 'Advanced',
-    title: 'Command log',
-    body: el('div', { class: 'as-pane' }, [
-      flavour(`The last ${MAX_ENTRIES} commands and results between the interface and the engine, newest at the bottom. Copy this into a bug report if the game misbehaves.`),
-      body,
-    ]),
-    secondary: [copy, refresh],
-    primary: close,
-    footSize: 'short',
-  });
-  door.veil.style.zIndex = '700'; // above the in-run overlay
-
-  const fill = () => {
-    body.textContent = logText();
-    body.scrollTop = body.scrollHeight;
-  };
-  fill();
-
-  refresh.addEventListener('click', fill);
-  copy.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(logText());
-      copy.textContent = 'Copied';
-    } catch (e) {
-      // Clipboard blocked (e.g. file://): select the text for manual copy.
-      const range = document.createRange();
-      range.selectNodeContents(body);
-      const sel = getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-      copy.textContent = 'Select+Ctrl C';
-    }
-    setTimeout(() => (copy.textContent = 'Copy'), 1500);
-  });
-  close.addEventListener('click', door.close);
+  if (chrome) return chrome.door();
+  // No chrome registered: the log is still reachable, as text on the page.
+  const pre = document.createElement('pre');
+  pre.className = 'as-log debug-log-body';
+  pre.textContent = logText();
+  document.body.appendChild(pre);
+  return null;
 }

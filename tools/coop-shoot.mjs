@@ -25,6 +25,8 @@ import { serve } from './serve.mjs';
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const OUT = resolve(ROOT, 'docs/preview');
 const BROWSERS = [
+  process.env.CHROME,
+  '/opt/pw-browsers/chromium',
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',

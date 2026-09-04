@@ -72,6 +72,9 @@ import { surfaceReport } from './ui/surfaces.js';
 // wrong" — the two boot checks below used to build that element by hand, and a
 // third hand-built copy is the defect this import exists to prevent.
 import { dlog, failureBanner } from './ui/debuglog.js';
+// The command log's chrome, on the kit (debuglog.js is a leaf; see debugChrome.js).
+import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
+void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
 

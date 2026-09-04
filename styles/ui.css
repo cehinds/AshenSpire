@@ -3251,6 +3251,9 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   background: radial-gradient(ellipse at 50% 18%, transparent 0, rgba(0, 0, 0, 0.08) 40%, rgba(0, 0, 0, 0.62) 100%);
 }
 .title-screen > * { position: relative; z-index: 1; }
+/* The quick-settings stack stays out of the lockup's flow on the title — the
+   rule above puts every child in flow; this one takes the stack back out. */
+.title-screen > .hud-quick-settings { position: absolute; z-index: 80; }
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }

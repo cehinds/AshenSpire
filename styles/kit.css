@@ -142,6 +142,9 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 }
 .as-btnrow.end, .modal-btnrow.end { justify-content: end; margin-left: auto; }
 .as-btnrow.center, .modal-btnrow.center { margin-inline: auto; }
+/* A button that carries an identity (a flask's art + name) keeps the art
+   inside its own box: the line grows to the art, never the reverse. */
+.as-btnrow > button:has(.flask-identity), .modal-btnrow > button:has(.flask-identity) { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; line-height: 1.3; }
 
 /* Tab — switches SUBJECT. Underline, no box. */
 .as-tabs, .modal-tabs { display: flex; gap: 0.2rem; min-width: 0; }
