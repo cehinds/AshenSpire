@@ -904,7 +904,7 @@ details.armoury-position-card > .as-detailcard { border-radius: 0 0 var(--r-3) v
 .armoury[data-responsive="phone"] .inventory-detail { grid-template-columns: minmax(0, 1fr); }
 .armoury[data-responsive="phone"] .inventory-detail > .inventory-model { justify-self: center; }
 /* THE COMPARISON — a fold of StatRows and deltas inside the reveal. */
-.equip-candidate-comparison { min-width: 0; }
+.equip-candidate-comparison { min-width: 0; overflow-wrap: anywhere; }
 .equip-candidate-comparison > summary { display: flex; align-items: center; gap: 0.75rem; min-height: var(--tap-floor); cursor: pointer; list-style: none; }
 .equip-candidate-comparison > summary::-webkit-details-marker { display: none; }
 .equip-candidate-comparison > summary > .as-eyebrow { color: var(--gold); }

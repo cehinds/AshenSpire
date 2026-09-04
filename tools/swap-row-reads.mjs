@@ -1242,7 +1242,7 @@ const PLANTS = [
   {
     name: 'the comparison stops wrapping — one long note bleeds the column sideways (LAW 5)',
     file: 'styles/kit.css',
-    find: '.equip-candidate-comparison { min-width: 0; }',
+    find: '.equip-candidate-comparison { min-width: 0; overflow-wrap: anywhere; }',
     replace: '.equip-candidate-comparison { min-width: 0; overflow-wrap: normal; white-space: nowrap; overflow-x: auto; }',
     expect: /LAW 5/,
   },
