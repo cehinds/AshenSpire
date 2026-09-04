@@ -14,32 +14,46 @@ const files = {
 const failures = [];
 const check = (condition, message) => { if (!condition) failures.push(message); };
 
-const compact = files.css.match(/\/\* Variant D — Strict Compact HUD[\s\S]*?\/\* End Variant D \*\//)?.[0] || '';
-check(compact, 'D1 missing the authored Variant D compact-HUD block');
-check(/grid-template-areas:\s*["']vitals center right["'][\s\S]*["']relics center right["']/.test(compact)
-    && (compact.match(/grid-area:\s*right/g) || []).length >= 2
-    && /\.hud-info-row\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/.test(compact)
-    && /\.hud-potions\s*\{[\s\S]*margin-top:\s*var\(--compact-right-step\)/.test(compact),
-  'D2 utility potions do not own the compact HUD second right-rail row');
-check(/data-has-utility-potions='false'[\s\S]*\.hud-potions\s*\{\s*display:\s*none/.test(compact),
-  'D3 an empty utility-potion row does not collapse');
-check(/\.hud-potions\s*\{[\s\S]*justify-self:\s*end[\s\S]*max-width:\s*calc\(\(var\(--compact-control-cell\) \* 4\)/.test(compact)
-    && /\.hud-quick-settings\s*\{[\s\S]*position:\s*absolute[\s\S]*top:\s*calc\(100%[\s\S]*right:[\s\S]*flex-direction:\s*column/.test(compact),
-  'D4 other potions do not retain the full second row or Fullscreen/Music are not vertically stacked below the HUD');
-check(/\.build-stamp\[data-seed\]\s*\{\s*display:\s*none\s*!important/.test(compact),
-  'D5 Build/Seed/Source can leak into compact mode');
-check(/\.hud-mode-grip\s*>\s*span[\s\S]*width:\s*calc\(18px[\s\S]*height:\s*calc\(2px/.test(files.css),
-  'D6 resize affordance is not the approved 18x2px border dash');
-check(!/height:\s*calc\(132px/.test(compact),
+// THE COMPACT HUD, AFTER THE KIT SWEEP (2026-09-04).
+//
+// Variant D was a second composition: its own grid areas, its own control cell,
+// its own absolute rail for Fullscreen/Music, its own 18×2 px dash. The HUD is
+// one kit Band now (styles/kit.css `.as-band`), and compact is that Band FOLDED
+// — `data-hud-mode="compact"` hides whatever the composition marked `.fold`,
+// which is one statement in one place instead of thirty overrides. So these
+// contracts hold the fold, not the variant; every clause below is the same
+// promise its D-number made, restated against what the game now draws.
+const kit = read('styles/kit.css');
+const grip = read('src/ui/components/hudModeGrip.js');
+
+check(/\.as-band\[data-hud-mode="compact"\] \.fold, \.as-band\[data-fold="compact"\] \.fold \{ display: none; \}/.test(kit),
+  'D1 the kit Band has no compact fold, so there is no compact HUD');
+check(/class="hud-bottom as-band-row fold"/.test(files.hud),
+  'D2 the belt of relics and potions is not what compact folds away');
+check(/data-has-utility-potions="false"/.test(files.hud),
+  'D3 the shared HUD does not default to an empty collapsed potion row');
+check(/class: 'hud-identity as-labelstack'/.test(files.hud) && /hud-context fold/.test(files.hud),
+  'D4 the identity\'s context line is not part of the fold');
+// D5 reads the rung in the two halves it became: the build stamp drops its
+// source, and a progress Chip drops its "/ total" — never the value, which one
+// blanket `:nth-child(n+2)` did (photographed at 390x844: "ACT" and "FLOOR"
+// labelling nothing).
+check(/@media \(max-width: 640px\)[\s\S]*?\.as-statstrip\.trail > \.build-stamp > :nth-child\(n\+2\) \{ display: none; \}/.test(kit)
+    && /@media \(max-width: 640px\)[\s\S]*?\.as-statstrip\.trail > \.as-chip > \.cv > \* \{ display: none; \}/.test(kit),
+  'D5 the run trail has no rung at which Build\'s source and each fact\'s tail yield');
+check(/iconButton\(\{[\s\S]*?className: 'hud-mode-grip as-grip'/.test(files.hud)
+    && /grip\.textContent = mode === 'compact' \? '⌄' : '⌃'/.test(grip),
+  'D6 the fold control is not one kit IconButton whose glyph says which way it folds');
+check(!/height:\s*calc\(132px/.test(files.css),
   'D7 compact HUD still has the rejected fixed 132px height');
 
-const topStart = files.hud.indexOf('<div class="hud-top">');
-const quickStart = files.hud.indexOf('${hudQuickSettingsHtml', topStart);
-const topEnd = files.hud.indexOf('</div>', quickStart);
-check(topStart >= 0 && quickStart > topStart && topEnd > quickStart,
-  'D8 Fullscreen/Music are not mounted inside the compact grid host');
-check(/data-has-utility-potions="false"/.test(files.hud),
-  'D9 shared HUD does not default to an empty collapsed potion row');
+const actionsStart = files.hud.indexOf('<div class="hud-actions as-cluster">');
+const quickStart = files.hud.indexOf('${quickSettingsHtml}', actionsStart);
+const actionsEnd = files.hud.indexOf('</div>', quickStart);
+check(actionsStart >= 0 && quickStart > actionsStart && actionsEnd > quickStart,
+  'D8 Fullscreen/Music are not in the same cluster as Armoury and the Menu');
+check(/class="as-iconbtn modal-iconbtn hud-quick-setting/.test(read('src/ui/components/hudQuickSettings.js')),
+  'D9 Fullscreen/Music are not kit IconButtons');
 
 for (const [surface, source] of [['map', files.map], ['combat', files.combat]]) {
   check(/dataset\.hasUtilityPotions\s*=\s*[^;]*children\.length\s*\?\s*'true'\s*:\s*'false'/.test(source),
@@ -49,9 +63,11 @@ for (const [surface, source] of [['map', files.map], ['combat', files.combat]]) 
 check(/actRouteStripHtml\(\{\s*title:\s*actTitle\(run\.actNumber\)\s*\}\)/.test(files.map)
     && !/routeTitle|actRouteStripHtml|act-route-strip/.test(files.combat),
   'D11 the Act route strip is not Map-only');
-check(/function actRouteStripHtml[\s\S]*class="act-route-strip map-entrance-orientation"/.test(files.route)
+check(/export function actRouteStripHtml[\s\S]*class: 'act-route-strip map-entrance-orientation'/.test(files.route)
     && !/actRouteStripHtml|act-route-strip|routeTitle/.test(files.hud),
   'D12 the Act route strip remains owned by the shared HUD instead of a Map component');
+check(/band\(\{[\s\S]*quiet: true/.test(files.route),
+  'D13 the Act route strip is not a quiet kit Band');
 
 if (failures.length) {
   console.error(`compact-hud-layout: ${failures.length} failure(s)`);

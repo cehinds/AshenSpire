@@ -16,6 +16,7 @@
 
 import { renderCard } from './card.js';
 import { openModal } from './modalShell.js';
+import { button, cardGrid, flavour, statusText } from '../kit/index.js';
 
 export function openPileModal(registries, title, cards, { shuffleForDisplay = false } = {}) {
   let list = [...cards];
@@ -26,19 +27,13 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
     }
   }
 
-  const done = document.createElement('button');
-  done.type = 'button';
-  done.className = 'pile-done';
-  done.dataset.focusable = 'true';
-  done.textContent = 'Close';
+  const done = button({ label: 'Close', weight: 'primary', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
 
   // The COUNT is the head's status, not part of the title: "Draw pile" names
   // the door and stays put while `(5)` changes underneath it. The old markup
   // baked the number into the <h2>, so the thing a player reads as the name
   // of the surface changed every time a card moved.
-  const status = document.createElement('span');
-  status.className = 'modal-head-status';
-  status.textContent = `${list.length} ${list.length === 1 ? 'card' : 'cards'}`;
+  const status = statusText(`${list.length} ${list.length === 1 ? 'card' : 'cards'}`, { class: 'modal-head-status' });
 
   const shell = openModal({
     size: 'xl',
@@ -48,15 +43,10 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
     headExtras: status,
     bodyClassName: 'pile-body',
     body: (host) => {
-      const grid = document.createElement('div');
-      grid.className = 'grid';
-      for (const inst of list) grid.appendChild(renderCard(registries, inst, { small: true }));
-      if (!list.length) {
-        const empty = document.createElement('p');
-        empty.className = 'pile-empty';
-        empty.textContent = 'Empty.';
-        grid.appendChild(empty);
-      }
+      // The body is the kit's CardGrid: the same faces the fan draws, wrapped,
+      // at one gap. An empty pile says so in Flavour rather than drawing air.
+      const grid = cardGrid(list.map((inst) => renderCard(registries, inst, { small: true })), { class: 'grid' });
+      if (!list.length) grid.appendChild(flavour('Empty.', { class: 'pile-empty' }));
       host.appendChild(grid);
     },
     primary: done,

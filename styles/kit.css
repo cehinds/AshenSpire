@@ -58,11 +58,13 @@
 .as-pill, .as-tag, .as-chip .cv, .as-chip .ck,
 .as-row > .r-label, .as-option .on, .cb-name, .cd-name, .as-status,
 .as-statrow .sr-name, .as-detailcard .dc-name, .modal-head-status,
-.as-labelstack .ls-label, .as-labelstack .ls-hint {
+.as-labelstack .ls-label, .as-labelstack .ls-hint,
+.as-meter .m-label, .as-meter .m-value, .as-statpair .sp-k, .as-statpair .sp-v {
   min-width: 0; overflow: hidden; text-overflow: ellipsis;
 }
 .as-btnrow, .as-head, .as-head-id, .as-head-actions, .as-row, .as-option,
 .as-statrow, .as-statstrip, .as-kitline, .as-tabs, .as-pane-head, .as-labelstack,
+.as-meter, .as-meter > .m-plate, .as-meters, .as-cluster, .as-band-row,
 .as-detailbody, .as-detailbody .lines { min-width: 0; }
 .as-btnrow > *, .as-row > *, .as-option > *, .as-statrow > *, .as-pane-head > * { min-width: 0; }
 
@@ -222,8 +224,11 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
   font: 500 1.05rem/1.5 var(--font-body); color: var(--ink-dim);
 }
 
-/* Glyph — a fixed-width icon column so labels align with or without one. */
-.as-glyph { flex: 0 0 1.75rem; color: var(--muted); font-size: 1.42rem; line-height: 1; text-align: center; }
+/* Glyph — an icon column wide enough that labels align with or without one.
+   `min-width` and not a fixed basis: a keyboard or a die is a WIDE emoji (⌨ is
+   20 px against a 17.5 px column, measured) and a fixed basis clipped it, which
+   is the one thing §02 says a mark may never do. Narrow glyphs still align. */
+.as-glyph { flex: 0 0 auto; min-width: 1.75rem; color: var(--muted); font-size: 1.42rem; line-height: 1; text-align: center; }
 
 /* LabelStack — what a control does, and one line on how. */
 .as-labelstack { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
@@ -528,7 +533,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* ═══ HOUSEKEEPING ═════════════════════════════════════════════════════════ */
 /* `hidden` wins over any display a kit class sets — a detail card the caller
    hid must not draw its border. */
-.as-detailcard[hidden], .as-option[hidden], .as-row[hidden], .modal-foot-note[hidden], .as-pane [hidden], .modal-head [hidden], .as-iconbtn[hidden], .modal-close[hidden] { display: none !important; }
+.as-detailcard[hidden], .as-option[hidden], .as-row[hidden], .modal-foot-note[hidden], .as-pane [hidden], .modal-head [hidden], .as-iconbtn[hidden], .modal-close[hidden], .as-btnrow[hidden], .as-band[hidden], .as-pop[hidden], .as-slot[hidden] { display: none !important; }
 /* A hold-armed IconButton keeps its glyph; the hold hint is the tooltip's job. */
 .as-iconbtn .hold-hint, .modal-iconbtn .hold-hint, .modal-close .hold-hint { display: none; }
 /* THE SCROLL OWNERS INSIDE A DOOR wear the house scrollbar, not Chromium's. */
@@ -1371,25 +1376,9 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
   .startup-gate > .as-titlemenu .tm-foot { margin-top: 2.4rem; }
 }
 
-/* ═══ METER ════════════════════════════════════════════════════════════════ */
-/* A resource read at a glance: track + fill + (label · value) on the bar.
-   `data-tone` picks the fill from the resource tokens; `.inline` is the
-   compact form for a party chip or a seat line. Geometry px, type rem. */
-.as-meter { --meter-fill: var(--gold); position: relative; display: block; width: 100%; min-width: 0; }
-.as-meter .m-track { position: relative; height: 1.5rem; overflow: hidden; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-1); }
-.as-meter .m-fill { position: absolute; inset: 0; width: var(--meter-pct, 0%); background: var(--meter-fill); transition: width 220ms ease-out; }
-.as-meter .m-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0 0.6rem; font: 600 1.02rem/1 var(--font-body); color: var(--parchment); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.as-meter .m-text > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.as-meter .m-value { margin-left: auto; }
-.as-meter[data-tone="hp"] { --meter-fill: var(--res-hp, var(--blood)); }
-.as-meter[data-tone="mana"] { --meter-fill: var(--res-mana, var(--frost)); }
-.as-meter[data-tone="stamina"] { --meter-fill: var(--res-stamina, var(--green)); }
-.as-meter[data-tone="poise"] { --meter-fill: var(--gold); }
-.as-meter.inline { display: inline-block; width: 8.4rem; vertical-align: middle; }
-.as-meter.inline .m-track { height: 1.35rem; }
-.as-meter.inline .m-text { font-size: 0.93rem; padding: 0 0.45rem; }
-@media (prefers-reduced-motion: reduce) { .as-meter .m-fill { transition: none; } }
-
+/* METER lives once — see the HUD's METER section: a plate beside a well.
+   C's overlay-text meter was folded into it at the merge (one home per fact);
+   the co-op party strip reads as `inset`, which puts the plate in the track. */
 /* ═══ PARTY STRIP — who is here, and how they are ══════════════════════════ */
 /* One Member per seat: Glyph + inline Meter. State rides on `data-state`
    (me · away · dead); the kit says it with the border and the ink. */
@@ -1542,3 +1531,474 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 /* A grid of OptionCards: the compendium's constant grid. */
 .as-options.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); align-content: start; }
 .as-options.grid > .as-option { width: auto; }
+/* The kit's danger tint (the kit page's rgba(212, 98, 46)); nothing in
+   base.css named it, so every `.danger` weight read an unset variable. */
+:root { --danger: #d4622e; }
+
+/* ═══ METER — a resource read at a glance ══════════════════════════════════ */
+/* Label · value · track. The TRACK's length is data (the surface writes its
+   width inline: max ÷ reference, so a bigger pool is a longer bar), the fill is
+   cur ÷ max. `.skinny` is the poise weight: no label, no value, a hairline
+   track. `.inset` puts the value inside the track for the under-model strip,
+   where there is no room beside it. Tones name the resource, never a screen. */
+.as-meter { --meter-h: 10px; --meter-tone: var(--gold); position: relative; display: flex; align-items: center; gap: 0.6rem; min-width: 0; width: 100%; container-type: inline-size; }
+/* THE LADDER, MEASURED, NOT GUESSED (§02): a meter too narrow for its name
+   drops the NAME and keeps the glyph and the value, because the value is the
+   fact and the glyph is the identity. Only then does anything truncate. */
+/* 9rem, AND rem RATHER THAN em, both measured. This rung was written `8em` and
+   never fired once: font-relative units in a container query resolve against the
+   container's OWN font-size, and these meters inherit 0.92rem = 9.2px, so 8em
+   was 73.6 px — under every column the game actually draws (the arcane receipt's
+   container is 130 px at 1200x730 and 80 px at 390x844, in the LOCAL px a
+   container query compares, which the battlefield's scale then renders as 88 and
+   68). The name stayed and clipped instead: "ARCANE …" at the desk, "A…" on the
+   phone. 9rem = 90 px falls between those two columns, which is the cut this
+   ladder is about — wide enough for HP/MP/SP wherever they are drawn (120 px at
+   320 px of viewport), too narrow for a word. */
+@container (max-width: 9rem) { .as-meter > .m-plate > .m-label { display: none; } }
+.as-meter > .m-plate { flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 0.5rem; min-width: 0; white-space: nowrap; }
+.as-meter .m-label { flex: 0 0 auto; white-space: nowrap; font: 600 1.05rem/1 var(--font-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.as-meter .m-value { flex: 0 0 auto; white-space: nowrap; font: 600 1.15rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
+.as-meter > .m-well { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
+/* `stack` — the plate ABOVE the track, for a meter in a narrow column (under a
+   combatant, in a list). THE NAME WRAPS RATHER THAN TRUNCATING, and the receipt
+   grows downward to hold it. Measured on the arcane receipt at ?shot=combat,
+   whose name is fifteen characters: "Arcane Exposure" wants 131 px and its
+   column is 92 px at 1200x730 and 68 px at 390x844, so with the label on one
+   nowrap line it read "ARCANE …" at the desk and "A…" on the phone — a label
+   that has stopped being a word. The 8em rung above drops a name that does not
+   fit a WIDE meter; in a stacked one there is a whole line to give it, and a
+   two-line name costs the sprite nothing. The value never wraps and never
+   truncates: it is the fact. */
+.as-meter.stack { flex-direction: column; align-items: stretch; gap: 0.15rem; }
+.as-meter.stack > .m-plate { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
+.as-meter.stack .m-label { flex: 0 1 auto; min-width: 0; overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: normal; line-height: 1.2; }
+/* The rung above is also what stops this wrap from becoming a letter-per-line
+   column: at 390x844 the plate leaves the name about 20 px, and `anywhere`
+   spelled ARCANE EXPOSURE downwards. `overflow-wrap: normal` keeps the break at
+   the space, and under 9rem there is no name to break — the glyph says which
+   school it is. */
+.as-meter.stack .m-value { flex: 0 0 auto; }
+.as-meter .m-track { position: relative; flex: 0 0 auto; box-sizing: border-box; width: 100%; max-width: 100%; height: var(--meter-h); min-width: 0; padding: 0; border: 0; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); border-radius: var(--r-pill); overflow: hidden; }
+.as-meter .m-fill { position: absolute; inset: 0 auto 0 0; background: var(--meter-tone); border-radius: inherit; }
+.as-meter[data-tone="hp"] { --meter-tone: var(--res-hp, var(--blood)); }
+.as-meter[data-tone="mp"], .as-meter[data-tone="mana"] { --meter-tone: #4f82d8; }
+.as-meter[data-tone="sp"], .as-meter[data-tone="stamina"] { --meter-tone: #5f925d; }
+.as-meter[data-tone="poise"] { --meter-tone: var(--gold); }
+.as-meter[data-tone="arcane"] { --meter-tone: #8a6fd6; }
+.as-meter[data-tone="danger"] { --meter-tone: var(--danger); }
+.as-meter.inset { --meter-h: 13px; }
+.as-meter.inset .m-label { display: none; }
+.as-meter.inset > .m-plate { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 1; }
+.as-meter.inset .m-value { font-size: 0.95rem; letter-spacing: 0.04em; text-shadow: 0 1px 2px #000; }
+.as-meter.skinny { --meter-h: 4px; }
+.as-meter.skinny > .m-plate { display: none; }
+.as-meter.pulse .m-fill { animation: pulse-gold 600ms infinite alternate; }
+.reduced-motion .as-meter.pulse .m-fill { animation: none; }
+/* A dashed rim says "this length is the floor, not the data". */
+.as-meter .m-track[data-floored="1"] { box-shadow: none; border: 1px dashed var(--line-soft); }
+/* A meter that is locked reads dimmed; a striped fill says a resistance holds. */
+.as-meter.locked { opacity: 0.6; }
+.as-meter.resisted .m-fill { background: repeating-linear-gradient(45deg, var(--meter-tone) 0 4px, transparent 4px 8px); }
+/* A stack of meters, one under the other, tight. */
+.as-meters { display: flex; flex-direction: column; gap: 0.3rem; width: 100%; min-width: 0; }
+.as-meters.tight { gap: 2px; }
+
+/* ═══ SLOT — a square control that holds one thing: art, a count, a key ═══ */
+/* Flasks, relics, quick items. The box is the IconButton's (a control) or `sm`
+   (a chip that is only read). The count is a round StatePill on the corner,
+   the key a Keycap in the other. */
+.as-slot { position: relative; display: inline-grid; place-items: center; flex: 0 0 auto; box-sizing: border-box; width: var(--iconbtn-size); height: var(--iconbtn-size); min-width: var(--iconbtn-size); min-height: var(--iconbtn-size); padding: 0; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2); color: var(--parchment); cursor: pointer; overflow: visible; }
+.as-slot:hover, .as-slot:focus-visible { border-color: var(--gold); background: var(--panel); outline: none; }
+.as-slot:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
+.as-slot.is-selected { border-color: var(--parchment); box-shadow: 0 0 0 1px var(--parchment); }
+.as-slot[aria-disabled="true"] > .sl-art { opacity: 0.5; filter: grayscale(0.6); }
+.as-slot.sm { width: 3rem; height: 3rem; min-width: 3rem; min-height: 3rem; }
+.as-slot.static { cursor: default; }
+.as-slot.static:hover { border-color: var(--line-soft); }
+.as-slot > .sl-art { display: grid; place-items: center; width: 72%; height: 72%; font-size: 1.8rem; line-height: 1; }
+.as-slot.sm > .sl-art { font-size: 1.4rem; }
+.as-slot > .sl-art img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* Whatever art is handed to the well fills it, wrappers and all. */
+.as-slot > .sl-art > *, .as-slot > .sl-art > * > * { display: grid; place-items: center; width: 100%; height: 100%; max-width: 100%; max-height: 100%; min-width: 0; margin: 0; }
+.as-slot > .as-pill.round { position: absolute; top: 1px; right: 1px; padding: 0 0.4rem; background: var(--bg); border-color: var(--gold); color: var(--parchment); font-size: 1rem; line-height: 1.5; letter-spacing: 0; }
+.as-slot > .as-keycap { position: absolute; right: 1px; bottom: 1px; min-width: 1.5rem; padding: 0 0.3rem; font-size: 0.9rem; line-height: 1.4; }
+.as-slot[aria-disabled="true"] > .as-pill.round { border-color: var(--line-soft); color: var(--muted); }
+/* A gamepad's glyph is round; the keycap follows the device. */
+body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
+/* While a thumb is driving there is no key to press: every keycap on a
+   control leaves — a Slot's, a Button's, the one floating on a card. */
+@media (pointer: coarse) { .as-slot > .as-keycap, .as-btn > .as-keycap, .as-keycap.float { display: none; } }
+
+/* ═══ BAND — a page-level chrome strip (the HUD, an action row, a zoom bar) ═ */
+/* `.topbar` is the hook co-op's bar still writes; the kit name is the recipe. */
+.as-band, .topbar { display: flex; align-items: center; gap: 1.2rem; flex: 0 0 auto; min-width: 0; padding: 0.6rem 1.6rem; background: var(--bg-raise); border-bottom: 1px solid var(--line); }
+.as-band.foot { border-bottom: 0; border-top: 1px solid var(--line); }
+.as-band.stack { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+.as-band.quiet { background: transparent; border: 0; }
+.as-band-row { display: flex; align-items: center; gap: 1.2rem; min-width: 0; width: 100%; }
+.as-band-row > .grow { flex: 1 1 auto; min-width: 0; }
+.as-band-row.split { justify-content: space-between; }
+.as-band-row.end { justify-content: flex-end; }
+.as-band-row.center { justify-content: center; }
+/* Three tracks: identity, a centred receipt, the trail — the run header's shape. */
+.as-band-row.thirds { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
+.as-band-row.thirds > :last-child { justify-self: end; }
+/* On a phone the three tracks stay three — the centred receipt is centred at
+   every width, which is the whole point of the middle track — and what yields
+   is DETAIL: a trail keeps the first part of each compound fact and drops the
+   rest (a build keeps its number, drops its source). */
+@media (max-width: 640px) {
+  .as-band-row.thirds { gap: 0.5rem; }
+  /* TWO SELECTORS, NOT ONE, and the phone photograph is why. A trail carries two
+     shapes of compound fact: the build stamp (number · source) and a progress
+     Chip (key, then value / total). `> * > :nth-child(n+2)` hit both — right for
+     the stamp, wrong for the chip, where the second child IS the value: at
+     390x844 the header read "ACT" and "FLOOR" with no numbers at all, which is a
+     label announcing nothing. So the head of each fact stays and only its tail
+     goes: the stamp keeps BUILD and drops src, the chip keeps "1" and drops
+     "/ 12". */
+  .as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }
+  /* `> *` and not `:nth-child(n+2)`: the value itself is a TEXT NODE inside
+     `.cv` and the "/ total" is the only ELEMENT in there, so counting elements
+     from the second would keep the tail it is here to drop. */
+  .as-statstrip.trail > .as-chip > .cv > * { display: none; }
+}
+/* A cluster is a group of IconButtons or Slots that share one gap. */
+.as-cluster { display: flex; align-items: center; gap: 0.6rem; flex: 0 0 auto; min-width: 0; }
+.as-cluster.wrap { flex-wrap: wrap; }
+.as-cluster.stack { flex-direction: column; align-items: stretch; }
+.as-cluster.end { margin-left: auto; }
+/* A band's grip hangs off its bottom edge, centred: the control that folds it. */
+.as-band { position: relative; }
+.as-band > .as-grip { position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 50%); z-index: 90; width: var(--iconbtn-size); height: 2.2rem; min-height: 2.2rem; padding: 0; border-radius: var(--r-pill); font-size: 1.2rem; line-height: 1; color: var(--muted); }
+.as-band > .as-grip:hover, .as-band > .as-grip:focus-visible { color: var(--gold); }
+/* A band that folds: `data-fold="compact"` hides what is marked foldable. */
+.as-band[data-hud-mode="compact"] .fold, .as-band[data-fold="compact"] .fold { display: none; }
+
+/* ═══ CARD GRID — faces in a scrolling body, wrapped, one gap ══════════════ */
+.as-cardgrid { display: flex; flex-wrap: wrap; gap: 1.4rem; align-content: flex-start; }
+
+/* ═══ HOLD — the second beat on a control ══════════════════════════════════ */
+/* `.beat-hold` is written by the machinery (components/holdconfirm.js) on any
+   control the second-beat table arms; `--hold` is 0..1 per frame. The fill is a
+   BACKGROUND (paints under a bare text node), never eased (an abort must read
+   instantly), and it survives reduced-motion because it is state, not motion.
+   `.hold-hint` is the word beside the label; it leaves an icon-sized control
+   and leaves the control a focus cursor is on (a pad confirms in one press). */
+.beat-hold, .beat-hold:hover, .beat-hold:focus, .beat-hold:active {
+  background-image: linear-gradient(to right, rgba(var(--accent-rgb), 0.30) 0 100%);
+  background-repeat: no-repeat;
+  background-size: calc(var(--hold, 0) * 100%) 100%;
+  transition-property: border-color, color, transform;
+}
+.beat-hold[data-hold-feedback="delegated"], .beat-hold[data-hold-feedback="delegated"]:hover,
+.beat-hold[data-hold-feedback="delegated"]:focus, .beat-hold[data-hold-feedback="delegated"]:active { background-image: none; }
+.beat-hold[data-hold="holding"] { border-color: var(--gold); }
+.hold-hint { margin-left: 0.6em; font-size: 0.75em; letter-spacing: 0.14em; color: var(--gold); opacity: 0.75; }
+/* IN A ROW THE WORD FOLLOWS THE LABEL, NOT THE TRAIL. The trail takes the row's
+   free space with `margin-left: auto`, so a hint appended after it (which is
+   where the machinery appends it — it dresses the control, not the row) landed
+   past the keycap and was clipped by the panel's padding box. Ordering it ahead
+   of the trail puts it where it reads, beside the verb it qualifies. */
+.as-row > .hold-hint { order: 0; flex: 0 0 auto; }
+.as-row > .as-status, .as-row > .r-trail { order: 1; }
+.gp-focus > .hold-hint, .as-slot .hold-hint, .flask-slot .hold-hint { display: none; }
+/* The armed control stays identified while its question stands. */
+.beat-armed { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* The confirm form (the Smith, the brazier) is a DetailCard with a ButtonRow. */
+.beat-confirm { flex-basis: 100%; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; margin: 6px 0 2px; padding: 1.05rem 1.35rem; max-width: 34rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-2); }
+.beat-confirm .beat-q { margin: 0; color: var(--parchment); font-size: 1.32rem; text-align: center; }
+.beat-confirm .beat-detail { color: var(--muted); font-size: 1.2rem; text-align: center; }
+.beat-confirm .beat-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.beat-confirm .beat-actions button { min-height: var(--tap-floor); min-width: var(--tap-floor); }
+
+/* ═══ SPOTLIGHT — a coaching bubble over a live board ══════════════════════ */
+/* The veil takes no input: the board beneath keeps answering. Only the bubble
+   (a Popover with a Title·S, prose and a ButtonRow) is pressable. */
+.as-spot-veil { position: fixed; inset: 0; z-index: 800; pointer-events: none; }
+.as-spot { position: absolute; border: 2px solid var(--gold); border-radius: var(--r-3); box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.25), 0 0 0 9999px rgba(0, 0, 0, 0.55); pointer-events: none; transition: left 200ms, top 200ms, width 200ms, height 200ms; }
+.as-spot-veil > .as-pop { position: absolute; pointer-events: auto; padding: 1.35rem 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.as-spot-veil > .as-pop > .as-btnrow { margin-top: 0.6rem; margin-left: auto; }
+.reduced-motion .as-spot { transition: none; }
+
+/* ═══ PILL TONES · STATPAIR SIZES · KEYCAP FLOAT · BUTTONROW WIDE ══════════ */
+/* An intent, a block count, a stance: a StatePill in the fact's own tint. */
+.as-pill[data-tone="danger"] { border-color: var(--danger); color: var(--danger); }
+.as-pill[data-tone="frost"] { border-color: var(--frost); color: var(--frost); }
+.as-pill[data-tone="gold"] { border-color: var(--gold); color: var(--gold); }
+.as-pill[data-tone="green"] { border-color: var(--green); color: var(--green); }
+.as-pill[data-tone="violet"] { border-color: #a07ad6; color: #a07ad6; }
+.as-pill[data-tone="ember"] { border-color: var(--ember); color: var(--ember); }
+.as-pill.lg { padding: 0.35rem 0.9rem; font: 700 1.35rem/1.3 var(--font-body); letter-spacing: 0.06em; background: var(--bg-raise); }
+.as-pill.lg .as-glyph { display: inline; flex: none; font-size: 1.2rem; color: inherit; margin-right: 0.4rem; }
+.as-pill.dashed { border-style: dashed; }
+.as-pill.solid { background: var(--frost); color: #0d0b08; border-color: var(--frost); font-weight: 800; }
+/* A StatPair that stands alone reads large; `.stack` puts the value over the key. */
+.as-statpair.lg .sp-v { font-size: 2rem; }
+.as-statpair.stack { flex-direction: column; align-items: center; gap: 0.15rem; }
+.as-statpair.stack .sp-k { font-size: 0.85rem; letter-spacing: 0.1em; }
+.as-statpair.stack .sp-v { font-size: 1.5rem; line-height: 1.1; }
+/* A keycap that floats on its subject's top edge (a card's positional key). */
+.as-keycap.float { position: absolute; top: -1rem; left: 50%; transform: translateX(-50%); z-index: 3; min-width: 2rem; font-weight: 700; font-size: 1.05rem; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55); pointer-events: none; }
+body.pad-mode .as-keycap.float { display: none; }
+/* A pill pinned to its subject's foot (a card's unavailability reason). */
+.as-pill.foot { position: absolute; left: 0.3rem; right: 0.3rem; bottom: 0.3rem; z-index: 3; text-align: center; white-space: normal; background: var(--bg); text-transform: none; letter-spacing: 0; font-size: 0.85rem; line-height: 1.2; }
+/* A keycap inside a button sits before its verb with one gap. */
+.as-btn > .as-keycap:first-child { margin-right: 0.5rem; }
+/* A ButtonRow member that deserves twice the width (the primary). */
+.as-btnrow > .wide, .modal-btnrow > .wide { grid-column: span 2; }
+.as-btnrow > button.tall, .modal-btnrow > button.tall { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; white-space: normal; line-height: 1.1; }
+.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; }
+/* `.cell` — a StatPair that STANDS IN A ROW OF CONTROLS and therefore has to
+   read as one: the panel ground, the line, the row's radius, the tap floor's
+   height. It is still read and not pressed (no hover, no pointer). Measured:
+   on bare ground a receipt in the combat action row painted 3% of its box, and
+   an instrument that asks whether a control is drawn could not see it. */
+.as-statpair.cell {
+  box-sizing: border-box; justify-content: center; gap: 0.2rem;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0.4rem 0.6rem;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-3);
+  cursor: default;
+}
+/* A StatPair standing in a ButtonRow fills its track like a button would, so
+   the row's edges are the row's and it is as tall as the button beside it. */
+.as-btnrow > .as-statpair { justify-self: stretch; align-self: stretch; }
+.as-btnrow > button > .as-statpair { pointer-events: none; }
+/* THE COMBATANT'S OWN ATOMS — the nameplate is a LabelStack, the intent, the
+   block count and the stance are StatePills, the effects are Pips and every
+   bar is a Meter. Only what the SPRITE surface asks of them is here: a
+   nameplate reads centred under the figure, and a pill under a sprite is
+   tighter than one in a list. */
+.combatant .as-labelstack { align-items: center; text-align: center; }
+.combatant .as-labelstack .ls-label { font-size: 1.2rem; }
+.combatant .as-pill.lg { font-size: 1.2rem; padding: 0.2rem 0.7rem; }
+.combatant .as-meter { --meter-h: 12px; }
+.combatant .as-meter.skinny { --meter-h: 6px; }
+.combatant .as-meter.procbar { --meter-h: 8px; }
+.combatant .as-meter.procbar > .m-plate { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); z-index: 1; pointer-events: none; }
+.combatant .as-meter.procbar .m-value { font-size: 0.8rem; }
+.combatant .block-badge { position: absolute; left: -1.4rem; bottom: 3.4rem; z-index: 2; }
+/* THE INSPECTOR'S CONTENT is Panes' parts inside a Folding Tray: an Eyebrow
+   over a hairline, then Rows. The tray owns its box (combat.css places the
+   host at the field's edge); these say only how tight the reading is. */
+.combatant-inspector-summary { display: grid; gap: 0.55rem; }
+.combatant-inspector-resources { gap: 0.45rem; }
+.combatant-inspector-section { margin-top: 0.7rem; }
+.combatant-inspector-section > .as-hairline { margin: 0.35rem 0 0.2rem; }
+.combatant-inspector-row { padding-inline: 0; white-space: normal; align-items: flex-start; }
+.combatant-inspector-row > .r-label { flex: 0 1 auto; }
+.combatant-inspector-row > .as-status { text-align: right; }
+/* A pip: a round badge with a glyph and a count, for statuses in a row. */
+.as-pips { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; min-width: 0; }
+.as-pip { position: relative; display: inline-grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--panel); border: 1.5px solid var(--pip-tone, var(--muted)); font-size: 1.1rem; line-height: 1; color: var(--parchment); cursor: default; }
+.as-pip > .as-pill.round { position: absolute; right: -0.5rem; bottom: -0.5rem; padding: 0 0.3rem; background: var(--bg); color: var(--parchment); border-color: var(--line); font-size: 0.85rem; letter-spacing: 0; line-height: 1.4; }
+.as-pip.ring { color: #fff; text-shadow: 0 0 2px #000; }
+/* Legend rows and other read-only Rows: no hover, no cursor. */
+.as-row.static, .as-row.static:hover { cursor: default; background: transparent; }
+
+/* ═══ MAP — the act's chrome around the board ══════════════════════════════ */
+/* The board's own geometry (nodes, edges, fog, the camera) stays in
+   styles/map.css: it is drawn in the SVG's user space and is not chrome. What
+   is here is the chrome around it, and all of it is kit pieces.
+
+   THE ROUTE STRIP is a quiet Band: the act's name as a Title·S over a
+   StatStrip whose two ends are Eyebrows with a rail between them. It is a
+   receipt — no pointer, nothing to tap — and it leaves the HUD's right gutter
+   free so the utility rail never lands on it. */
+/* THE STRIP CLEARS THE BAND'S GRIP, which hangs half its own height below the
+   HUD's bottom edge (§ BAND: `translate(-50%, 50%)` of a 2.2rem pill = 11 px of
+   overhang). The map is the one screen with READ TEXT directly under the band,
+   and measured at 1200x730 ?shot=map the grip's box ran 183->188 straight over
+   the top of "ACT I — THE FALLOW MARCHES" (title top 183, grip bottom 188).
+   12 px of top padding is that overhang plus a hairline, and it is padding
+   rather than margin so the strip's own ground still meets the band's. */
+.mapscreen > .act-route-strip {
+  box-sizing: border-box; flex-direction: column; align-items: center; gap: 3px;
+  width: 80%; margin-inline: auto; padding: 12px 12px 6px;
+  border-bottom: 1px solid var(--line); background: var(--bg-raise);
+  pointer-events: none; user-select: none; cursor: default;
+}
+.mapscreen > .act-route-strip > .as-title-s { font-size: 1.1rem; letter-spacing: 0.2em; }
+.mapscreen > .act-route-strip .map-orientation-progress {
+  display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
+  align-items: center; gap: 8px; margin: 0; width: 100%;
+}
+.mapscreen > .act-route-strip .map-orientation-progress .as-eyebrow { font-size: 0.9rem; letter-spacing: 0.12em; }
+.mapscreen > .act-route-strip [data-role="boss"] { color: var(--ember); }
+.mapscreen > .act-route-strip .map-orientation-rail { position: relative; height: 1px; background: var(--map-structure); }
+.mapscreen > .act-route-strip .map-orientation-rail::after {
+  content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
+  border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
+  transform: translateY(-50%) rotate(45deg);
+}
+@media (max-width: 700px) {
+  /* Percentage, never a viewport unit: the body is zoomed, so 80% of the Map
+     surface stays 80% on glass. The right margin is the HUD's utility gutter. */
+  .mapscreen > .act-route-strip {
+    width: min(80%, calc(100% - var(--tap-floor) - calc(1.75rem / var(--ui-zoom, 1))));
+    margin-left: auto; margin-right: calc(var(--tap-floor) + calc(14px / var(--ui-zoom, 1)));
+  }
+}
+/* THE ZOOM BAR is a Band on the foot of the map with four IconButtons in it,
+   BESIDE the board and never over it (styles/map.css says why). The bar has no
+   reserved height: it is a flex item, so the band is its buttons' own height
+   and the scrollport gets exactly the rest. */
+.mapscreen > .map-zoom { gap: 0.6rem; padding: 0.6rem 1.4rem; background: var(--panel); }
+/* The map's notes are StatusText, centred, and cost no height when silent. */
+.mapscreen .map-tapnote, .mapscreen .map-clipnote {
+  margin: 0; padding: 0.2rem 1rem; text-align: center; color: var(--gold); font-size: 1.1rem; line-height: 1.4;
+}
+.mapscreen .map-tapnote[hidden], .mapscreen .map-clipnote[hidden] { display: none; }
+/* The legend hangs off the ? in the zoom bar: the kit Popover, placed by the
+   surface that owns the corner it opens into. */
+.map-legend-pop { position: absolute; right: 1.2rem; bottom: calc(100% + 0.4rem); z-index: 20; width: 24rem; }
+.map-legend-pop .as-glyph { color: var(--gold); }
+/* THE CONTEXT STRIP is a ButtonRow of kit Buttons with Keycaps (hints.js). Two
+   rules that are not its shape and are kept because they are DECISIONS:
+   · it is centred at the bottom of its own screen, in the flow, so the band it
+     takes is its own height and nothing has to reserve one (map.css says why);
+   · it does not appear on a narrow layout — a strip naming five keys to a
+     device with no keys costs a row of a screen that has none to spare
+     (EldenSpire#29 slice 0). `body.hide-hints` stays the player's own switch. */
+.hint-bar { margin: 0 auto 0.6rem; max-width: 96%; justify-content: center; }
+.hint-bar .as-keycap { color: var(--gold); }
+body.hide-hints .hint-bar, :root[data-layout='narrow'] .hint-bar { display: none; }
+/* The map header is the same Band combat wears; only the act's own tones and
+   the player's two display switches are the map's. */
+.map-header .hud-act .cv, .map-header .hud-floor .cv { color: var(--parchment); }
+body.map-compact .map-header .hud-identity .as-eyebrow { display: none; }
+body.hide-header-relics .map-header .hud-relics { display: none; }
+
+/* ═══ THE RUN'S OTHER DOORS AND GATES — what the atoms need from them ══════ */
+/* THE PILE VIEWER is body A with no rail: the shell's head names the pile and
+   carries the count, the body is a CardGrid of the same faces the fan draws.
+   Only the door's own insets are here. */
+.pile-body { padding: var(--modal-inset); }
+.pile-body .as-cardgrid { justify-content: center; }
+.pile-empty { padding: 2rem; }
+
+/* THE BOSS SPLASH is Eyebrow + Title·L + Ornament on a near-black veil. The
+   veil and the beats are FX (the animation lives in styles/combat.css); what is
+   here is the type's own scale, which is bigger than any other Title·L in the
+   game because this one is a name being announced. */
+.boss-intro { position: fixed; inset: 0; z-index: 650; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.boss-intro .bi-stack { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; text-align: center; max-width: 80%; }
+.boss-intro .bi-tag { letter-spacing: 0.5em; }
+.boss-intro .bi-name { font-size: 5.4rem; letter-spacing: 0.12em; line-height: 1.15; color: var(--gold); text-shadow: 0 0 34px rgba(var(--accent-rgb), 0.55), 0 2px 10px #000; }
+.boss-intro .bi-rule { width: 34rem; max-width: 60%; }
+/* A NAME THAT WRAPS ON A PHONE IS STILL A NAME, but at 5.4rem "The Fell Warden"
+   took two lines across a 390 px screen and its second line landed on the boss's
+   own nameplate underneath (photographed at 390x844, ?shot=boss). The splash is
+   an announcement, so the type yields before the box does. */
+@media (max-width: 640px) {
+  .boss-intro .bi-name { font-size: 3.6rem; }
+  .boss-intro .bi-stack { max-width: 88%; }
+}
+
+/* THE SHORT-SCREEN GATE is the Decision body with no controls in it. TYPE
+   DIVIDED BY --ui-zoom is the one carve-out and it is deliberate: this is the
+   message ABOUT the app having zoomed itself to its floor, so scaling it by
+   that zoom shrinks the sentence exactly when it matters most (the same idiom
+   as --tap-floor in base.css). Law 4 is intact — the unit is still rem, so
+   Text size still scales these glyphs; what is cancelled is UI size. */
+.upright-veil { z-index: 900; background: rgba(8, 6, 4, 0.985); padding: 24px; overflow: hidden; }
+.upright-card { max-width: 46rem; gap: 0.6rem; }
+.upright-card > .as-title-l { font-size: calc(2.4rem / var(--ui-zoom, 1)); text-align: center; }
+.upright-card > .upright-say { font-size: calc(1.6rem / var(--ui-zoom, 1)); }
+.upright-card > .upright-safe { color: var(--muted); font-size: calc(1.4rem / var(--ui-zoom, 1)); }
+.upright-card > .upright-hint { margin-top: 1.4rem; font-size: calc(1.25rem / var(--ui-zoom, 1)); opacity: 0.78; }
+.upright-glyph { display: grid; place-items: center; height: 76px; margin-bottom: 18px; }
+.upright-phone { display: block; width: 34px; height: 56px; border: 2px solid var(--gold); border-radius: var(--r-2); transform-origin: 50% 50%; animation: upright-turn 2.6s ease-in-out infinite; }
+.upright-veil[data-advice='resize'] .upright-phone { width: 56px; height: 40px; animation: none; }
+/* Below the compact composition's floor the glyph goes entirely: it is
+   aria-hidden decoration whose message the heading already carries in words,
+   and at the one height where it competes with a sentence, the sentence wins. */
+:root[data-short='true'] .upright-veil { padding: 12px 24px; }
+:root[data-short='true'] .upright-glyph { display: none; }
+:root[data-short='true'] .upright-card { gap: 0.4rem; }
+@keyframes upright-turn { 0%, 18% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0deg); } }
+.reduced-motion .upright-phone { animation: none; }
+@media (prefers-reduced-motion: reduce) { .upright-phone { animation: none; } }
+
+/* THE FIRST-RUN CALLOUT is the Spotlight: the lit box and a Popover beside it.
+   Both are placed in the veil's own local space by components/tutorial.js. */
+.tut-bubble { width: 30rem; max-width: calc(100% - 2.4rem); }
+.tut-bubble .tut-title { color: var(--gold); }
+.tut-bubble .tut-text { font-size: 1.25rem; }
+
+/* ═══ FLASK — one identity, one menu, one door ═════════════════════════════ */
+/* THE IDENTITY is the data's, not a screen's: the art (a rendered bottle or its
+   glyph fallback) and, where a surface asks for it, the name. Every surface
+   that draws a flask — the HUD's Slots, the shop's OptionCards, the Armoury's
+   rows, the inspect door's ArtWell — mounts this same fragment
+   (components/flask.js flaskIdentityHtml), so it has one home here. */
+.flask-identity { display: inline-flex; align-items: center; gap: 0.35em; min-width: 0; color: var(--flask-tint); }
+.flask-art { flex: 0 0 auto; display: inline-grid; place-items: center; width: 1.8em; height: 1.8em; }
+.flask-art-image { display: block; width: 100%; height: 100%; object-fit: contain; }
+.flask-art-glyph {
+  display: inline-grid; place-items: center; width: 1.35em; height: 1.35em;
+  border: 1px solid currentColor; border-radius: 45% 45% 55% 55%;
+  background: color-mix(in srgb, var(--flask-tint) 22%, #111);
+}
+.flask-name { color: var(--parchment); }
+/* THE ACTION MENU is the kit Popover, hung under the slot the player tapped
+   (flask.js places it; `--place-gap` is the hairline under the control, per
+   placed element by construction). Narrower than the quick menu because it
+   holds three verbs, and it scrolls inside itself because its opening sentence
+   is content a designer may make long. */
+.as-pop.flask-action-menu {
+  --place-gap: 6px;
+  position: fixed; z-index: 450;
+  width: auto; min-width: 20rem; max-width: 28rem;
+  overflow: hidden auto;
+}
+.flask-action-menu .as-pop-cap { display: flex; flex-direction: column; gap: 0.3rem; }
+.flask-action-menu .flask-action-detail { font-size: 1.15rem; }
+/* An unavailable row has to LOOK unavailable, and these rows are
+   `aria-disabled` rather than `disabled` — they stay focusable so a pad can
+   land on them and read the reason, which is why `.as-row:disabled` alone was
+   never enough. */
+.flask-action[aria-disabled="true"] { color: var(--muted); cursor: default; }
+.flask-action[aria-disabled="true"]:hover { background: transparent; }
+.flask-action[aria-disabled="true"] .as-keycap { opacity: 0.5; }
+.flask-action.gp-focus { background: var(--panel); color: var(--gold); }
+/* THE WORD DOES NOT FIT AFTER A KEYCAP. A menu row already ends in the binding
+   it answers to, and three letters of HOLD past that keycap is noise in a 20rem
+   column — the same call the flask SLOT makes. The fill still runs (it is the
+   background rule above) and the row's tooltip still says "Hold to drink", so
+   nothing about the gesture is hidden, only the label for it. */
+.flask-action .hold-hint { display: none; }
+/* THE INSPECT DOOR is body B: the art's ArtWell sets the height, so a one-line
+   flask and a two-line one are the same door (measured on the Crimson Flask /
+   Round Shield pair, where they were not). */
+.flask-inspect-art { width: 12rem; height: 12rem; font-size: 5.3rem; }
+.flask-inspect-art .flask-identity, .flask-inspect-art .flask-art { width: 100%; height: 100%; }
+.flask-inspect-lines .as-prose + .as-prose { color: var(--muted); font-size: 1.2rem; }
+@media (max-width: 640px) {
+  .flask-inspect-body { flex-direction: column; align-items: center; text-align: center; }
+  .flask-inspect-lines { align-items: center; }
+}
+
+/* ═══ A SEGMENTED CONTROL MAY WRAP RATHER THAN LOSE ITS TAIL ═══════════════ */
+/* Measured at 390x844 in the run's Settings pane (☰ → Settings → Game): the Map
+   zoom row's seven options are 342 px of content inside a 311 px pane, so the
+   last option — 200 — fell outside the pane, and `.as-seg`'s own
+   `overflow: hidden` cut it in half. A choice the player cannot see is a choice
+   they do not have, and the pane's `overflow-x: auto` is not the answer either:
+   nothing on the row says there is more of it to the right.
+   So on a narrow shape the group wraps. It grows downward, where the pane
+   already scrolls on purpose, and every option keeps its own tap box. The
+   separator between two buttons is dropped when it wraps because a border-left
+   on the first button of a new line is a hairline hanging off nothing; the
+   group's own border still says where the control begins and ends. */
+@media (max-width: 700px) {
+  /* The trail has to be ALLOWED to be narrower than its contents first: it is
+     `flex: 0 0 auto` on a nowrap row, so the group was handed its max-content
+     295 px inside a 311 px pane and never wrapped at all (measured; wrapping
+     `.as-seg` alone changed nothing). */
+  .as-row > .r-trail, .as-option > .r-trail { flex: 0 1 auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .as-seg { flex-wrap: wrap; }
+  .as-seg button + button { border-left: 0; }
+  .as-seg button { border: 1px solid var(--line-soft); margin: -1px 0 0 -1px; }
+}

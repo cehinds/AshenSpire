@@ -484,7 +484,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         ${meP && ((meP.flasks && meP.flasks.length) || meP.flaskCharges) ? '<div class="coop-flasks-host"></div>' : ''}
         ${arming ? '<div class="coop-arm-host"></div>' : ''}
         <div class="hand-area">
-          <div class="energy-orb">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</div>
+          <!-- The kit's StatPair and Button (styles/kit.css): the co-op board's
+               two hand-rolled controls wear the same atoms the solo action row
+               does, so neither surface carries a shape of its own. -->
+          <span class="as-statpair energy-orb cell stack lg" role="status" aria-label="Actions remaining"><span class="sp-k">Actions</span><span class="sp-v">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</span></span>
           <!-- The strip is components/hand.js — THE one hand renderer, the same
                one solo combat mounts, so this hand honors data-hand-layout
                (overlap overlaps, paging pages), carries the inspect hold, and
@@ -495,7 +498,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
                supplies only the viewer half below: snapshot-fed entries with
                spelled-out reasons, and network intents as the play wiring. -->
           <div class="hand"></div>
-          <button class="end-turn" id="coop-endturn">END TURN</button>
+          <button type="button" class="as-btn primary end-turn tall" id="coop-endturn">End Turn</button>
         </div>
         <div class="fx-layer"></div>
       </div>`;
@@ -799,7 +802,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const state = p.id === me ? 'me' : !p.connected ? 'away' : !p.alive ? 'dead' : '';
       bar.appendChild(el('span', { class: `as-member coop-pc${state ? ` ${state}` : ''}`, dataset: { pc: p.id, ...(state ? { state } : {}) } }, [
         kitGlyph(classGlyph(p.classId), { class: 'coop-pc-glyph', style: { color: tintCss(p.tint) } }),
-        meter({ inline: true, tone: 'hp', value: p.hp, max: p.maxHp, label: p.name, attrs: { class: 'coop-pc-hp' } }),
+        // The kit's one Meter (a plate beside a well). A party member reads as
+        // name + hp over a short track, so the plate rides INSIDE the track
+        // (`inset`) and the surface derives the fill the atom draws.
+        meter({
+          inset: true, tone: 'hp', label: p.name, value: `${Math.max(0, p.hp)}/${p.maxHp}`,
+          cur: Math.max(0, p.hp), max: p.maxHp,
+          pct: p.maxHp > 0 ? (Math.max(0, p.hp) / p.maxHp) * 100 : 0,
+          attrs: { class: 'coop-pc-hp' },
+        }),
       ]));
     }
     bar.querySelectorAll('.coop-pc').forEach((member) => {

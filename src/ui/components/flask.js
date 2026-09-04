@@ -3,6 +3,7 @@ import { assetUrl } from '../assetmap.js';
 import { openModal } from './modalShell.js';
 import { placeAnchored, viewportLocalBox } from '../fx.js';
 import { focusElement, matchAction, actionLabel } from '../input.js';
+import { el, popover, row as kitRow, keycap, titleS, subtitle, artWell, prose, button } from '../kit/index.js';
 
 let activeFlaskActionMenu = null;
 
@@ -93,21 +94,21 @@ export function openFlaskInspectModal({ def, charges = null, opener = document.a
   if (!def) throw new Error('openFlaskInspectModal requires a flask definition');
   const lines = flaskDetailLines(def, { charges });
 
-  const done = document.createElement('button');
-  done.type = 'button';
-  done.className = 'flask-inspect-done';
-  done.dataset.focusable = 'true';
-  done.textContent = 'Close';
+  const done = button({ label: 'Close', weight: 'primary', className: 'flask-inspect-done', attrs: { 'data-focusable': 'true' } });
 
   const shell = openModal({
     size: 'md',
     className: 'flask-inspect-modal',
     eyebrow: 'Flask',
     title: def.name,
-    bodyClassName: 'flask-inspect-body',
+    bodyClassName: 'as-detailbody flask-inspect-body',
+    // BODY B (the kit's detail body): the art in an ArtWell beside the lines,
+    // so the door's height is the art's and two flasks are the same door.
     body: (host) => {
-      host.innerHTML = flaskIdentityHtml(def, { showName: false, className: 'flask-inspect-art' })
-        + `<div class="flask-inspect-lines">${lines.map((line) => `<p>${esc(line)}</p>`).join('')}</div>`;
+      host.replaceChildren(
+        artWell({ attrs: { class: 'flask-inspect-art', html: flaskIdentityHtml(def, { showName: false }) } }),
+        el('div', { class: 'lines flask-inspect-lines' }, lines.map((line) => prose(line))),
+      );
     },
     primary: done,
     footSize: 'short',
@@ -150,10 +151,13 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, useAct
   // One menu at a time, and close through its lifecycle so its window-level
   // controller Cancel listener cannot survive after the DOM has gone.
   closeFlaskActionMenu({ cancelled: true, restoreFocus: false });
-  const root = document.createElement('div');
-  root.className = 'flask-action-menu';
-  root.setAttribute('role', 'menu');
-  root.setAttribute('aria-label', `${def.name} actions`);
+  // THE MENU IS THE KIT'S POPOVER: a caption naming the flask, the sentence it
+  // opens with, and one Row per action. `.flask-action-menu` stays the hook the
+  // instruments and the placer read; kit.css draws the panel.
+  const root = popover({
+    className: 'flask-action-menu',
+    attrs: { role: 'menu', 'aria-label': `${def.name} actions` },
+  });
   // THE DESCRIPTION IS THE DEFAULT, NOT A REWARD FOR FINDING A ROW. This block
   // was `hidden` until the player clicked Inspect, so the menu's whole job on
   // first paint was to name a flask the player had just pointed at and could
@@ -161,8 +165,13 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, useAct
   // sentence the menu opens with now, charge count included where the surface
   // knows it, and Inspect opens a real modal instead (openFlaskInspectModal).
   const detail = flaskDetailLines(def, { charges });
-  root.innerHTML = `<strong>${esc(def.name)}</strong>`
-    + (detail.length ? `<div class="flask-action-detail">${detail.map(esc).join('<br>')}</div>` : '');
+  const cap = el('div', { class: 'as-pop-cap' }, [
+    titleS(def.name, { tag: 'strong' }),
+    detail.length ? subtitle(detail.join(' '), { class: 'flask-action-detail' }) : null,
+  ]);
+  root.prepend(cap);
+  const group = el('div', { class: 'as-group' });
+  root.appendChild(group);
   const buttons = [];
   let closed = false;
   let disconnectObserver = null;
@@ -215,28 +224,27 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, useAct
     ev.preventDefault();
     close({ cancelled: true, restoreFocus: true });
   };
-  for (const row of plan.actions) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'flask-action';
-    button.dataset.flaskAction = row.id;
-    button.dataset.focusable = 'true';
-    button.setAttribute('role', 'menuitem');
-    button.setAttribute('aria-disabled', String(!row.enabled));
-    button.textContent = row.label;
-    // THE KEYCAP IS DERIVED, NEVER TYPED. `actionLabel` reads the live binding
-    // and the connected device, so a rebind moves the glyph with the key and a
-    // pad shows its own button — the same rule the HUD's flask shortcuts obey.
-    // Only rows that HAVE a binding get one: `inspect` is one key for every
-    // inspectable thing, and `use` is per-slot, so its id is handed in by the
-    // surface that knows which slot this flask sits in.
-    const boundAction = row.id === 'inspect' ? 'inspect' : (row.id === 'use' ? useActionId : null);
-    if (boundAction) {
-      const cap = document.createElement('span');
-      cap.className = 'flask-action-key';
-      cap.textContent = actionLabel(boundAction);
-      button.appendChild(cap);
-    }
+  for (const action of plan.actions) {
+    const row = action;
+    // A kit Row: the label, and the binding as a Keycap in the trail.
+    const boundKey = row.id === 'inspect' ? 'inspect' : (row.id === 'use' ? useActionId : null);
+    const cap = boundKey ? keycap(actionLabel(boundKey), { class: 'flask-action-key' }) : null;
+    const button = kitRow({
+      label: row.label,
+      trail: cap ? [cap] : [],
+      disabled: false,
+      className: 'flask-action',
+      attrs: {
+        role: 'menuitem', 'aria-disabled': String(!row.enabled),
+        dataset: { flaskAction: row.id, focusable: 'true' },
+      },
+    });
+    // THE KEYCAP IS DERIVED, NEVER TYPED (above). `actionLabel` reads the live
+    // binding and the connected device, so a rebind moves the glyph with the
+    // key and a pad shows its own button — the same rule the HUD's flask
+    // shortcuts obey. Only rows that HAVE a binding get one: `inspect` is one
+    // key for every inspectable thing, and `use` is per-slot, so its id is
+    // handed in by the surface that knows which slot this flask sits in.
     if (!row.enabled) {
       button.dataset.unavailableReason = row.reason;
       button.title = row.reason;
@@ -259,7 +267,7 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, useAct
     };
     const wired = wireAction ? wireAction(row, button, invoke) : false;
     if (!wired) button.addEventListener('click', invoke);
-    root.appendChild(button);
+    group.appendChild(button);
     buttons.push(button);
   }
   const move = (delta) => {

@@ -94,10 +94,19 @@ import { launchBrowser } from './browser.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-const sourceContract = ({ map, input, css, tool }) => {
+// WHAT MOVED, 2026-09: every flask control on every surface is now the kit's
+// Slot (styles/kit.css § SLOT, src/ui/kit/index.js slot()), so THE BOX THIS TOOL
+// WAS WRITTEN ABOUT HAS ONE HOME instead of three. F1 and F4 below are the same
+// two questions asked of that home: F1 that the map's Slot still carries the
+// `flask-slot` hook the unified cursor's chrome exception reads, and F4 that the
+// kit owns the box — `.as-slot` sizes itself from `--iconbtn-size` and NO screen
+// stylesheet re-declares a width or height for `.mh-flask`. The old F4 asserted
+// a shared `.topbar .relic.flask-slot, .topbar .mh-flask` rule in ui.css; that
+// rule is gone because the sharing is no longer a selector list, it is the atom.
+const sourceContract = ({ map, input, css, combatCss, kit, tool }) => {
   const bad = [];
   const surfaceBlock = /const SURFACES = \[[\s\S]*?\n\];/.exec(tool)?.[0] || '';
-  if (!map.includes("el.className = 'mh-flask flask-slot';")) {
+  if (!map.includes("className: 'mh-flask flask-slot'")) {
     bad.push('F1 map utility flask is not a unified-cursor flask-slot');
   }
   if (!input.includes("el.matches('.flask-slot')")) {
@@ -106,7 +115,9 @@ const sourceContract = ({ map, input, css, tool }) => {
   if (!map.includes('canDrop: true') || !map.includes('mountFlaskActionMenu(el, {')) {
     bad.push('F3 map utility flask lost its inspect/drop action menu');
   }
-  if (!css.includes('.topbar .relic.flask-slot,\n.topbar .mh-flask {')) {
+  const kitSlotBox = /\.as-slot \{[^}]*width: var\(--iconbtn-size\)[^}]*min-height: var\(--iconbtn-size\)/.test(kit);
+  const boxedByAScreen = [css, combatCss].some((sheet) => /(?:^|[,\s])\.mh-flask\b[^{}]*\{[^}]*\b(?:min-)?(?:width|height)\s*:/m.test(sheet));
+  if (!kitSlotBox || boxedByAScreen) {
     bad.push('F4 map utility flask no longer shares the topbar control box');
   }
   if (!surfaceBlock.includes("{ group: 'utility', name: 'map utility', sel: '.topbar .hud-potions .mh-flask', door: 'map-after-shop' }")) {
@@ -120,13 +131,15 @@ if (process.argv.includes('--source-selftest')) {
     map: readFileSync(join(ROOT, 'src/ui/screens/map.js'), 'utf8'),
     input: readFileSync(join(ROOT, 'src/ui/input.js'), 'utf8'),
     css: readFileSync(join(ROOT, 'styles/ui.css'), 'utf8'),
+    combatCss: readFileSync(join(ROOT, 'styles/combat.css'), 'utf8'),
+    kit: readFileSync(join(ROOT, 'styles/kit.css'), 'utf8'),
     tool: readFileSync(fileURLToPath(import.meta.url), 'utf8'),
   };
   const plants = [
     {
       name: 'map utility flask loses its topbar focus exception',
       expected: 'F1 ',
-      mutate: (s) => ({ ...s, map: s.map.replace("el.className = 'mh-flask flask-slot';", "el.className = 'mh-flask';") }),
+      mutate: (s) => ({ ...s, map: s.map.replace("className: 'mh-flask flask-slot'", "className: 'mh-flask'") }),
     },
     {
       name: 'map utility flask loses inspect/drop',
@@ -166,9 +179,13 @@ if (process.argv.includes('--selftest')) {
         // chip's fixed box. B1 is the check that names it.
         name: 'the combat slot loses the floor and takes the relic chip s 2.6rem back',
         edits: [{
-          file: 'styles/ui.css',
-          find: '  min-height: var(--tap-floor);\n  min-width: var(--tap-floor);\n  width: auto;\n  height: auto;',
-          replace: '  width: 2.6rem;\n  height: 2.6rem;',
+          // The floor now comes from the kit atom every flask control is built
+          // from, so the plant that takes it away is one edit there instead of
+          // one per screen — which is the same defect with one less place to
+          // hide it.
+          file: 'styles/kit.css',
+          find: 'width: var(--iconbtn-size); height: var(--iconbtn-size); min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);',
+          replace: 'width: 2.6rem; height: 2.6rem; min-width: 2.6rem; min-height: 2.6rem;',
         }],
         expectRed: /BAD\s+B1 .*under the floor/,
       },
@@ -177,9 +194,11 @@ if (process.argv.includes('--selftest')) {
         // the badge hangs off the bottom, the side, or the top.
         name: 'the quick-use keycap is drawn outside its own slot again',
         edits: [{
-          file: 'styles/combat.css',
-          find: '  position: absolute; bottom: 2px; right: 2px;',
-          replace: '  position: absolute; bottom: -0.7rem; left: 50%; transform: translateX(-50%);',
+          // The Keycap on a Slot is the kit's corner, so this plant pushes the
+          // kit's corner out from under the box it belongs to.
+          file: 'styles/kit.css',
+          find: '.as-slot > .as-keycap { position: absolute; right: 1px; bottom: 1px;',
+          replace: '.as-slot > .as-keycap { position: absolute; left: 50%; bottom: -1.2rem; transform: translateX(-50%);',
         }],
         expectRed: /BAD\s+B2 .*drawn outside their own flask control/,
       },
@@ -187,11 +206,16 @@ if (process.argv.includes('--selftest')) {
         // THE MAP FLASK GOES BACK TO THE GENERIC BUTTON. It still CLEARS the
         // floor at 81 x 49, so B1 is green on it — this plant exists because
         // that is exactly the hole B3 was written for.
-        name: 'the map flask leaves the shared box and takes base.css button padding back',
+        name: 'the map flask leaves the shared box and is sized on its own again',
         edits: [{
-          file: 'styles/ui.css',
-          find: '.topbar .relic.flask-slot,\n.topbar .mh-flask {',
-          replace: '.topbar .relic.flask-slot {',
+          // There is no shared selector list left to break — the sharing IS the
+          // atom — so the plant re-opens the hole from the other side: one
+          // screen-level rule that sizes the map's flask by itself. 5.6rem is
+          // deliberately ABOVE the 44 px floor, because the whole point of B3 is
+          // that it catches a box B1 is happy with (the shipped defect measured
+          // 81 x 49 and cleared the floor too).
+          file: 'styles/kit.css',
+          append: '\n.mh-flask { width: 5.6rem; height: 5.6rem; min-width: 5.6rem; min-height: 5.6rem; }\n',
         }],
         expectRed: /BAD\s+B3 .*different heights/,
       },
@@ -243,8 +267,8 @@ if (process.argv.includes('--selftest')) {
         name: 'a declared surface stops being reachable and B3 must NOT green on the survivors',
         edits: [{
           file: 'src/ui/screens/map.js',
-          find: "    el.className = 'mh-flask flask-slot';",
-          replace: "    el.className = 'mh-flask-planted-away flask-slot';",
+          find: "className: 'mh-flask flask-slot'",
+          replace: "className: 'mh-flask-planted-away flask-slot'",
         }],
         expectRed: /BAD\s+B3 .*declared utility surfaces were reached/,
       },
