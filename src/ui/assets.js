@@ -91,6 +91,15 @@ export function enemySprite(enemyDef) {
   el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};position:relative;`
     + 'display:flex;align-items:flex-end;justify-content:center;';
   const facing = document.createElement('div');
+  // Same element name as the player figure's layer (classSprite(), and the
+  // facing block in styles/ui.css) because it is the same mechanism. WHERE the
+  // decision lives differs, and has to: an enemy's facing is a per-asset fact
+  // and is set inline from `artFaces`, while the player's is one blanket
+  // socket correction for a whole producer's output and stays a CSS rule with
+  // its own removal condition. `data-facing` records the per-asset answer;
+  // the player layer carries no such marker precisely because it has no
+  // per-asset answer to record.
+  facing.className = 'facing';
   facing.dataset.facing = spriteMirror(enemyDef.artFaces) ? 'mirrored' : 'as-drawn';
   facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;'
     + 'justify-content:center;'
@@ -140,6 +149,15 @@ function sigilMedallion(cx, cy, t, sigil, plainR) {
     // The circle is symmetric and does not care; the GLYPH is text, and mirrored
     // text reads as a rendering fault rather than as a character facing you.
     // Reflected about its own centre, so it lands exactly where it already was.
+    //
+    // THIS COUNTER-MIRROR STILL ASSUMES ITS ANCESTOR IS MIRRORED, which the
+    // rendered path's overlay no longer has to (it sits outside the facing
+    // layer). It cannot follow: this glyph is drawn INSIDE the figure's own
+    // SVG, so it inherits whatever the facing layer does. In the
+    // character-creation figure well, which cancels the facing, that makes this
+    // glyph backwards — carded, not fixed here, because moving it out means
+    // giving four hand-authored viewBoxes a chest anchor apiece. Only the
+    // `classic` sprite style and the file:// fallback reach this path.
     `<g transform="translate(${cx * 2},0) scale(-1,1)">` +
     `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>` +
     `</g>`
@@ -244,9 +262,34 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   el.className = 'class-sprite';
   el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
 
+  // THE FACING LAYER, for the same reason enemySprite() has one: the mirror
+  // (`styles/ui.css`, "the figure faces the viewer") must sit on an element
+  // that carries NOTHING ELSE. It used to ride `.class-sprite` itself, which
+  // is both an animation target and the overlay's positioning parent, and it
+  // broke in both directions — measured on the board, not reasoned about:
+  //
+  //   · `.player .sprite.hitflash > :first-child` and `.wobble > :first-child`
+  //     animate `transform` on `.class-sprite`, and an animation outranks a
+  //     normal declaration, so the PLAYER FLIPPED TO FACE AWAY from the enemies
+  //     for the length of every hit and every stagger:
+  //         hitflash  matrix(-1,…) -> matrix(1,0,0,1,-12.82,0) -> matrix(1,…)
+  //         wobble    matrix(1,0,0,1,0,0) … the whole 550ms unmirrored
+  //   · `styles/kit.css` cancels the mirror in the character-creation figure
+  //     well (`.as-artwell.figure .class-sprite { transform: none }`), and the
+  //     sigil overlay below was counter-mirroring to undo a parent mirror that
+  //     was no longer there — so the builder drew the chosen sigil BACKWARDS
+  //     (measured: the medallion computed `matrix(-1,0,0,1,-11,-11)`).
+  //
+  // Now the art hangs off this layer and the sigil hangs off the frame, so the
+  // facing applies to exactly the thing that has a facing.
+  const facing = document.createElement('div');
+  facing.className = 'facing';
+  facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;';
+  el.appendChild(facing);
+
   const fallbackToSvg = () => {
-    el.innerHTML = build(tint, sigil);
-    const svg = el.querySelector('svg');
+    facing.innerHTML = build(tint, sigil);
+    const svg = facing.querySelector('svg');
     if (svg) {
       // The class SVGs hardcode a 110×140 viewBox; fill the fixed-geometry
       // container (viewBox keeps ratio) so Text size cannot resize the figure.
@@ -265,7 +308,7 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   img.alt = classId;
   img.style.cssText = 'width:100%;height:100%;object-fit:contain;image-rendering:auto;';
   img.addEventListener('error', fallbackToSvg); // dist / file:// → SVG
-  el.appendChild(img);
+  facing.appendChild(img);
   // The chosen sigil rides the rendered art as a chest medallion overlay.
   //
   // WHERE IT SITS IS PER CLASS AND MEASURED (src/content/classArtAnchors.js).
@@ -280,12 +323,16 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   if (sigil && medTop != null) {
     const med = document.createElement('span');
     med.textContent = sigil;
-    // `scaleX(-1)` UNDOES the figure mirror this element inherits (styles/ui.css,
-    // "the figure faces the viewer"). That mirror is right for the ART and wrong
-    // for a GLYPH: a sigil is text, and mirrored text reads as a rendering fault.
-    // The medallion is centred on the chest, so flipping it back moves nothing.
+    // NO COUNTER-MIRROR, and its absence is the fix rather than an omission.
+    // This used to carry `scaleX(-1)` to undo the mirror it inherited from
+    // `.class-sprite` — right for the ART, wrong for a GLYPH, since mirrored
+    // text reads as a rendering fault. But it hardcoded "my parent is
+    // mirrored", and the character-creation figure well cancels that mirror,
+    // so there the counter-mirror WAS the fault it was written to prevent.
+    // The medallion now sits outside the facing layer: it inherits no mirror,
+    // so it needs no undoing, on any surface.
     med.style.cssText =
-      `position:absolute;left:50%;top:${medTop}%;transform:translate(-50%,-50%) scaleX(-1);` +
+      `position:absolute;left:50%;top:${medTop}%;transform:translate(-50%,-50%);` +
       `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
       'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
     el.appendChild(med);

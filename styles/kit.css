@@ -1105,7 +1105,12 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 
 /* ═══ FIGURE WELL — an ArtWell tall enough for a standing sprite ═══════════ */
 .as-artwell.figure { width: 16rem; height: 20rem; font-size: 6.4rem; border-width: 2px; transition: border-color 200ms, box-shadow 300ms; }
-.as-artwell.figure .class-sprite { transform: none; }
+/* The figure well shows the painting as painted — see the facing block in
+   styles/ui.css. It cancels the FACING LAYER, not `.class-sprite`: the mirror
+   moved onto that layer so it would stop colliding with the reaction
+   animations and with the sigil overlay, and a cancel aimed at the old element
+   would silently stop cancelling anything. */
+.as-artwell.figure .class-sprite > .facing { transform: none; }
 
 /* ═══ STEPPER — a Segmented of − / value / + ════════════════════════════════ */
 .as-seg.stepper button { min-width: var(--tap-floor); min-height: calc(var(--tap-floor) - 2px); padding-inline: 0.9rem; font-size: 1.6rem; }
