@@ -40,3 +40,10 @@ dist/AshenSpire-*.html
 
 # assembled GitHub Pages site (tools/pages-site.mjs); published by the pages-builds workflow, never committed
 _site/
+
+# Reference crops and the sampled palette for the class figures
+# (tools/component-refs.mjs). Cut from the concept paintings on demand and
+# passed to tools/lowpoly-blender.py; `node tools/launch.mjs --build-only`
+# does not touch them, so a committed copy would go stale unnoticed.
+# Regenerate with: node tools/component-refs.mjs
+build/components/
