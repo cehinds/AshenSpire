@@ -2,7 +2,7 @@
   "schema": "ashenspire/class-silhouette-rejected-inputs/v1",
   "ticket": "AS-HD-040",
   "purpose": "Pins every input the recorded evidence rules out as a source for the class silhouette successor. The successor contract's fails_if names these; this file gives them exact identities so a later seat cannot reuse one by accident, and so the verifier can prove none was substituted into the frozen packet.",
-  "reuse_policy": "None of these may be repaired, masked, background-removed, palette-sampled, used as a reference or input, or derived from. They are direction and diagnostic evidence only. They no longer exist at a working-tree path \u2014 the Hub rebuild removed them \u2014 but the objects are preserved and are read here by blob OID.",
+  "reuse_policy": "HISTORICAL — read reuse_policy_superseded_2026_09_03 first. reaver-alpha-retry-rejected STILL carries this policy in full: it may not be repaired, masked, background-removed, palette-sampled, used as a reference or input, or derived from. The four *-concept-v1 entries no longer do. Original text: None of these may be repaired, masked, background-removed, palette-sampled, used as a reference or input, or derived from. They are direction and diagnostic evidence only. They no longer exist at a working-tree path - the Hub rebuild removed them - but the objects are preserved and are read here by blob OID.",
   "rejected": [
     {
       "id": "reaver-concept-v1",
@@ -15,7 +15,8 @@
       "png_color_type": 2,
       "class": "reaver",
       "disposition": "WITHHOLD / direction evidence only",
-      "reason": "1254x1254 RGB, no alpha channel, checkerboard baked into pixels. Cannot meet the 512-square RGBA contract."
+      "reason": "1254x1254 RGB, no alpha channel, checkerboard baked into pixels. Cannot meet the 512-square RGBA contract.",
+      "status_2026_09_03": "ADOPTED AS SOURCE — no longer a rejected input; see reuse_policy_superseded_2026_09_03"
     },
     {
       "id": "starseer-concept-v1",
@@ -28,7 +29,8 @@
       "png_color_type": 2,
       "class": "starseer",
       "disposition": "WITHHOLD / direction evidence only",
-      "reason": "1254x1254 RGB, no alpha channel, checkerboard baked into pixels."
+      "reason": "1254x1254 RGB, no alpha channel, checkerboard baked into pixels.",
+      "status_2026_09_03": "ADOPTED AS SOURCE — no longer a rejected input; see reuse_policy_superseded_2026_09_03"
     },
     {
       "id": "rogue-concept-v1",
@@ -41,7 +43,8 @@
       "png_color_type": 2,
       "class": "rogue",
       "disposition": "WITHHOLD / direction evidence only",
-      "reason": "1254x1254 RGB, no alpha channel, checkerboard baked into pixels."
+      "reason": "1254x1254 RGB, no alpha channel, checkerboard baked into pixels.",
+      "status_2026_09_03": "ADOPTED AS SOURCE — no longer a rejected input; see reuse_policy_superseded_2026_09_03"
     },
     {
       "id": "herald-concept-v1",
@@ -54,7 +57,8 @@
       "png_color_type": 2,
       "class": "herald",
       "disposition": "WITHHOLD / direction evidence only",
-      "reason": "1254x1254 RGB, no alpha channel, checkerboard baked into pixels."
+      "reason": "1254x1254 RGB, no alpha channel, checkerboard baked into pixels.",
+      "status_2026_09_03": "ADOPTED AS SOURCE — no longer a rejected input; see reuse_policy_superseded_2026_09_03"
     },
     {
       "id": "reaver-alpha-retry-rejected",
@@ -67,7 +71,8 @@
       "png_color_type": 2,
       "class": "reaver",
       "disposition": "REJECTED / diagnostic evidence only",
-      "reason": "Transparency retry that produced RGB with a baked checkerboard and no alpha. The review hub records the same SHA-256 prefix 7652AC27...DF21 and the same 1,520,873 bytes; both were re-derived here from the committed file."
+      "reason": "Transparency retry that produced RGB with a baked checkerboard and no alpha. The review hub records the same SHA-256 prefix 7652AC27...DF21 and the same 1,520,873 bytes; both were re-derived here from the committed file.",
+      "status_2026_09_03": "STILL REJECTED — reuse policy unchanged"
     }
   ],
   "superseded_full_body_sources": {
@@ -82,7 +87,8 @@
   },
   "evidence_pin": {
     "commit": "62f6867a",
-    "why": "The Hub rebuild 3e98769e removed review-approval-hub/evidence/** from the tree; origin/dev holds 0 files there. The packet bytes survive as git objects reachable from this commit. Every read below binds to a git object, never to a working-tree path, so this contract verifies the same bytes in any clone that has the objects \u2014 including one where the paths no longer exist.",
+    "why": "The Hub rebuild 3e98769e removed review-approval-hub/evidence/** from the tree; origin/dev holds 0 files there. The packet bytes survive as git objects reachable from this commit. Every read below binds to a git object, never to a working-tree path, so this contract verifies the same bytes in any clone that has the objects — including one where the paths no longer exist.",
     "read_order": "git_blob OID first (content-addressed, path-independent); 62f6867a:<path> as fallback when no OID is recorded."
-  }
+  },
+  "reuse_policy_superseded_2026_09_03": "SUPERSEDED for the four *-concept-v1 entries by owner decision, 2026-09-03. Those four are now the SOURCE of the shipped class sprites: background-removed and derived from by tools/concept-cutout.mjs, inventoried in assets/sprites/class-sprites.manifest.json. The prohibition below stood while the packet crops were the successor of record; the owner directed the concept art itself be cut out and shipped, which reverses it for these four and only these four."
 }

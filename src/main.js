@@ -1346,6 +1346,14 @@ function showCustomize(slot = 1, catalog = false) {
     // A ?shot= boot gets a fixed seed so the field photographs identically on
     // every capture; a real boot still gets a random one.
     defaultSeedString: shotState === 'customize' || shotState === 'components' ? 'SHOWCASE' : randomSeedString(),
+    // ?shotClass= / ?shotTint= pose the class figure for a capture. Without
+    // them this screen only ever photographs the FIRST class in the first tint,
+    // so evidence for a change touching every class × tint showed one of twenty.
+    // Unknown values are ignored rather than throwing: a capture list is not a
+    // place to fail a boot, and the shot then simply shows the default.
+    shotPose: shotState === 'customize'
+      ? { classId: shotParams.get('shotClass'), tint: shotParams.get('shotTint') }
+      : null,
     onBack: showTitle,
     onStart: (config) => newRun({ ...config, slot }),
     catalog,

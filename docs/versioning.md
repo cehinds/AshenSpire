@@ -81,7 +81,7 @@ The answer is semver's own pre-release segment, not a bent ladder:
   by it alone, and every tool that orders builds (`about-changelog`,
   `buildversion` row H) read the ordinal column.
 - **The `-rc` suffix is dropped by the owner's release cut** (`dev → release`,
-  owner-exclusive per `governance/delivery.json`), which is the MINOR bump
+  owner-exclusive), which is the MINOR bump
   the ladder already names. Nothing else removes it.
 - The triple in the pre-release (`0.5.0` here) is the ladder's answer for the
   milestone in flight; it moves only when that answer changes.
