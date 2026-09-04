@@ -6106,6 +6106,14 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 .boss-intro .bi-tag { letter-spacing: 0.5em; }
 .boss-intro .bi-name { font-size: 5.4rem; letter-spacing: 0.12em; line-height: 1.15; color: var(--gold); text-shadow: 0 0 34px rgba(var(--accent-rgb), 0.55), 0 2px 10px #000; }
 .boss-intro .bi-rule { width: 34rem; max-width: 60%; }
+/* A NAME THAT WRAPS ON A PHONE IS STILL A NAME, but at 5.4rem "The Fell Warden"
+   took two lines across a 390 px screen and its second line landed on the boss's
+   own nameplate underneath (photographed at 390x844, ?shot=boss). The splash is
+   an announcement, so the type yields before the box does. */
+@media (max-width: 640px) {
+  .boss-intro .bi-name { font-size: 3.6rem; }
+  .boss-intro .bi-stack { max-width: 88%; }
+}
 
 /* THE SHORT-SCREEN GATE is the Decision body with no controls in it. TYPE
    DIVIDED BY --ui-zoom is the one carve-out and it is deliberate: this is the
@@ -52588,7 +52596,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '3d7c0fa40e';
+const SOURCE = 'fcd0c7d8b7';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52622,7 +52630,7 @@ const SOURCE = '3d7c0fa40e';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '52';
+const ORDINAL = '53';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
