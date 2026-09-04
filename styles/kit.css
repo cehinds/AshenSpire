@@ -880,17 +880,39 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* THE LADDER, MEASURED, NOT GUESSED (§02): a meter too narrow for its name
    drops the NAME and keeps the glyph and the value, because the value is the
    fact and the glyph is the identity. Only then does anything truncate. */
-@container (max-width: 8em) { .as-meter > .m-plate > .m-label { display: none; } }
+/* 9rem, AND rem RATHER THAN em, both measured. This rung was written `8em` and
+   never fired once: font-relative units in a container query resolve against the
+   container's OWN font-size, and these meters inherit 0.92rem = 9.2px, so 8em
+   was 73.6 px — under every column the game actually draws (the arcane receipt's
+   container is 130 px at 1200x730 and 80 px at 390x844, in the LOCAL px a
+   container query compares, which the battlefield's scale then renders as 88 and
+   68). The name stayed and clipped instead: "ARCANE …" at the desk, "A…" on the
+   phone. 9rem = 90 px falls between those two columns, which is the cut this
+   ladder is about — wide enough for HP/MP/SP wherever they are drawn (120 px at
+   320 px of viewport), too narrow for a word. */
+@container (max-width: 9rem) { .as-meter > .m-plate > .m-label { display: none; } }
 .as-meter > .m-plate { flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 0.5rem; min-width: 0; white-space: nowrap; }
 .as-meter .m-label { flex: 0 0 auto; white-space: nowrap; font: 600 1.05rem/1 var(--font-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 .as-meter .m-value { flex: 0 0 auto; white-space: nowrap; font: 600 1.15rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
 .as-meter > .m-well { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
 /* `stack` — the plate ABOVE the track, for a meter in a narrow column (under a
-   combatant, in a list). The name yields first and truncates; the value never
-   does, because the value is the fact. */
+   combatant, in a list). THE NAME WRAPS RATHER THAN TRUNCATING, and the receipt
+   grows downward to hold it. Measured on the arcane receipt at ?shot=combat,
+   whose name is fifteen characters: "Arcane Exposure" wants 131 px and its
+   column is 92 px at 1200x730 and 68 px at 390x844, so with the label on one
+   nowrap line it read "ARCANE …" at the desk and "A…" on the phone — a label
+   that has stopped being a word. The 8em rung above drops a name that does not
+   fit a WIDE meter; in a stacked one there is a whole line to give it, and a
+   two-line name costs the sprite nothing. The value never wraps and never
+   truncates: it is the fact. */
 .as-meter.stack { flex-direction: column; align-items: stretch; gap: 0.15rem; }
 .as-meter.stack > .m-plate { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
-.as-meter.stack .m-label { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.as-meter.stack .m-label { flex: 0 1 auto; min-width: 0; overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: normal; line-height: 1.2; }
+/* The rung above is also what stops this wrap from becoming a letter-per-line
+   column: at 390x844 the plate leaves the name about 20 px, and `anywhere`
+   spelled ARCANE EXPOSURE downwards. `overflow-wrap: normal` keeps the break at
+   the space, and under 9rem there is no name to break — the glyph says which
+   school it is. */
 .as-meter.stack .m-value { flex: 0 0 auto; }
 .as-meter .m-track { position: relative; flex: 0 0 auto; box-sizing: border-box; width: 100%; max-width: 100%; height: var(--meter-h); min-width: 0; padding: 0; border: 0; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); border-radius: var(--r-pill); overflow: hidden; }
 .as-meter .m-fill { position: absolute; inset: 0 auto 0 0; background: var(--meter-tone); border-radius: inherit; }

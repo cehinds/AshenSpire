@@ -1020,7 +1020,8 @@ const MUTANTS = Object.freeze({
   // label lands in a plate that never reserved room for it.
   // WHERE THE STAGE LIVES NOW: the plate is the kit's Meter (styles/kit.css
   // § METER) and its degradation rung is a container query that drops the label
-  // under 8em, not three `.l-*` variants in combat.css. A4's claim is unchanged
+  // under 9rem of the meter's own inline size, not three `.l-*` variants in
+  // combat.css. A4's claim is unchanged
   // — the VISIBLE label must fit the box that holds it — so the plant is a plate
   // whose box is too small for the label it is still showing.
   // TWO AIMS THAT DID NOT FIRE, recorded so the next person does not spend the
