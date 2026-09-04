@@ -28,9 +28,17 @@ is, so a renderer lines up every pose of a class to the same feet and floor
 without a fixed frame that would shrink the idle to fit a lunge.
 
 **Why `art/` and not `assets/`.** The bundler inlines every file under
-`assets/` into the single-file game. These 160 sprites are 3.3 MB (4.4 MB
+`assets/` into the single-file game. These 160 sprites are 3.6 MB (4.8 MB
 as base64) and nothing draws them yet; they move under `assets/` when the fight
 draws them, and that move is the cost line in that change.
+
+**Second pass.** The first bodies were tubes: uniform limbs, no shoulders, no
+hips, blob hands. The skeleton now carries shaping joints (deltoid, biceps,
+forearm, thigh, calf) with anatomical radii, every figure has boots and fists,
+and the dressing is layered — two-tier mantles with gold studs, three-plate
+pauldrons and tassets with gold edges, wrapped bracers, a split tunic flap, a
+drooping hat brim. Ambient occlusion and a stronger key light give the facets
+their read.
 
 **Limits, stated.** Stand-ins for painted poses, not the paintings: faces are
 the concept's dark hood-void, cloth is flat colour. Joint weights are by

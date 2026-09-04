@@ -49,10 +49,11 @@ def light(name, kind, loc, energy, color=(1, 1, 1), rot=None, size=None):
     if rot: o.rotation_euler = rot
     return o
 # key from upper front-left, cool fill from the right, warm rim from behind
-light("key", "SUN", (0, 0, 5), 3.2, (1.0, 0.96, 0.9), rot=(math.radians(55), math.radians(-25), math.radians(-20)))
-light("fill", "SUN", (0, 0, 5), 1.0, (0.8, 0.88, 1.0), rot=(math.radians(70), math.radians(35), math.radians(30)))
+light("key", "SUN", (0, 0, 5), 3.8, (1.0, 0.95, 0.88), rot=(math.radians(52), math.radians(-28), math.radians(-22)))
+light("fill", "SUN", (0, 0, 5), 0.7, (0.75, 0.85, 1.0), rot=(math.radians(70), math.radians(35), math.radians(30)))
 light("rim", "SUN", (0, 0, 5), 2.0, (1.0, 0.85, 0.6), rot=(math.radians(-60), 0, math.radians(180)))
 scene.eevee.use_soft_shadows = True
+scene.eevee.use_gtao = True; scene.eevee.gtao_distance = 0.35; scene.eevee.gtao_factor = 1.0
 
 # ---- materials -----------------------------------------------------------------------
 def srgb(r, g, b):
@@ -162,39 +163,49 @@ def evaluated_copy(ob, name):
 # ---- the body: a skin mesh over a stick skeleton -------------------------------------
 # Each joint: name, position, (radius_x, radius_y), material region.
 def skeleton(p):
-    """p: per-class proportion overrides. Returns joints dict and edge list."""
-    d = dict(shoulder_w=0.24, hip_w=0.11, chest_r=(0.19, 0.12), belly_r=(0.16, 0.12), pelvis_r=(0.17, 0.12),
-             head_r=0.12, arm_r=0.07, fore_r=0.06, hand_r=0.05, thigh_r=0.10, knee_r=0.075, shin_r=0.07, ankle_r=0.065,
-             height=1.9)
+    """Stick skeleton the body is grown over. Intermediate joints only shape the
+    skin (biceps, forearm, thigh, calf); the armature's bones span the real
+    joints. p: per-class overrides. Returns joints dict and skin edges."""
+    d = dict(shoulder_w=0.25, hip_w=0.11, head_r=0.115, trap_r=(0.19, 0.12), chest_r=(0.20, 0.13), lchest_r=(0.17, 0.12),
+             belly_r=(0.15, 0.12), pelvis_r=(0.17, 0.13), delt_r=0.085, bicep_r=0.065, elbow_r=0.055, fore_r=0.058, wrist_r=0.045,
+             hand_r=0.05, hip_r=0.10, thigh_r=0.095, knee_r=0.07, calf_r=0.075, ankle_r=0.055, height=1.9)
     d.update(p)
     h = d["height"] / 1.9
     J = {}
     def j(name, x, y, z, r, region):
         J[name] = dict(p=Vector((x, y, z * h)), r=(r if isinstance(r, tuple) else (r, r)), region=region)
     sw, hw = d["shoulder_w"], d["hip_w"]
-    j("pelvis", 0, 0, 1.00, d["pelvis_r"], "tunic")
-    j("belly", 0, 0, 1.20, d["belly_r"], "tunic")
-    j("chest", 0, 0, 1.42, d["chest_r"], "tunic")
-    j("neck", 0, 0, 1.56, (0.06, 0.06), "cloth")
-    j("head", 0, 0.0, 1.70, (d["head_r"], d["head_r"]), "head")
-    j("crown", 0, 0.0, 1.82, (d["head_r"] * 0.7, d["head_r"] * 0.7), "head")
-    for s, sx in (("L", -1), ("R", 1)):
-        j(f"shoulder.{s}", sx * sw, 0, 1.50, d["arm_r"], "sleeve")
-        j(f"elbow.{s}", sx * (sw + 0.06), 0.02, 1.24, d["fore_r"], "bracer")
-        j(f"wrist.{s}", sx * (sw + 0.07), -0.10, 1.00, d["hand_r"], "bracer")
-        j(f"hand.{s}", sx * (sw + 0.07), -0.16, 0.92, d["hand_r"], "skin")
-        j(f"hip.{s}", sx * hw, 0, 0.98, d["thigh_r"], "legs")
-        j(f"knee.{s}", sx * (hw + 0.02), -0.01, 0.52, d["knee_r"], "legs")
-        j(f"ankle.{s}", sx * (hw + 0.03), 0.0, 0.08, d["ankle_r"], "boot")
-        j(f"toe.{s}", sx * (hw + 0.03), -0.13, 0.02, (0.05, 0.06), "boot")
-    E = [("pelvis", "belly"), ("belly", "chest"), ("chest", "neck"), ("neck", "head"), ("head", "crown")]
-    for s in ("L", "R"):
-        E += [("chest", f"shoulder.{s}"), (f"shoulder.{s}", f"elbow.{s}"), (f"elbow.{s}", f"wrist.{s}"), (f"wrist.{s}", f"hand.{s}"),
-              ("pelvis", f"hip.{s}"), (f"hip.{s}", f"knee.{s}"), (f"knee.{s}", f"ankle.{s}"), (f"ankle.{s}", f"toe.{s}")]
+    j("pelvis", 0, 0, 0.98, d["pelvis_r"], "tunic")
+    j("belly", 0, 0, 1.12, d["belly_r"], "tunic")
+    j("lchest", 0, 0, 1.26, d["lchest_r"], "tunic")
+    j("chest", 0, 0, 1.40, d["chest_r"], "tunic")
+    j("trap", 0, 0.01, 1.50, d["trap_r"], "tunic")
+    j("neck", 0, 0.01, 1.58, (0.055, 0.055), "cloth")
+    j("head", 0, 0.01, 1.70, (d["head_r"], d["head_r"] * 1.05), "head")
+    j("crown", 0, 0.0, 1.83, (d["head_r"] * 0.72, d["head_r"] * 0.72), "head")
+    for s_, sx in (("L", -1), ("R", 1)):
+        j(f"shoulder.{s_}", sx * sw, 0, 1.49, d["delt_r"], "sleeve")
+        j(f"bicep.{s_}", sx * (sw + 0.04), 0.01, 1.36, d["bicep_r"], "sleeve")
+        j(f"elbow.{s_}", sx * (sw + 0.06), 0.02, 1.24, d["elbow_r"], "sleeve")
+        j(f"forearm.{s_}", sx * (sw + 0.065), -0.03, 1.12, d["fore_r"], "bracer")
+        j(f"wrist.{s_}", sx * (sw + 0.07), -0.09, 1.00, d["wrist_r"], "bracer")
+        j(f"hand.{s_}", sx * (sw + 0.07), -0.15, 0.92, d["hand_r"], "skin")
+        j(f"hip.{s_}", sx * hw, 0, 0.96, d["hip_r"], "legs")
+        j(f"thigh.{s_}", sx * (hw + 0.01), -0.01, 0.75, d["thigh_r"], "legs")
+        j(f"knee.{s_}", sx * (hw + 0.015), -0.01, 0.52, d["knee_r"], "legs")
+        j(f"calf.{s_}", sx * (hw + 0.02), 0.01, 0.35, d["calf_r"], "legs")
+        j(f"ankle.{s_}", sx * (hw + 0.02), 0.0, 0.10, d["ankle_r"], "boot")
+        j(f"toe.{s_}", sx * (hw + 0.02), -0.14, 0.03, (0.05, 0.06), "boot")
+    E = [("pelvis", "belly"), ("belly", "lchest"), ("lchest", "chest"), ("chest", "trap"), ("trap", "neck"), ("neck", "head"), ("head", "crown")]
+    for s_ in ("L", "R"):
+        E += [("trap", f"shoulder.{s_}"), (f"shoulder.{s_}", f"bicep.{s_}"), (f"bicep.{s_}", f"elbow.{s_}"), (f"elbow.{s_}", f"forearm.{s_}"),
+              (f"forearm.{s_}", f"wrist.{s_}"), (f"wrist.{s_}", f"hand.{s_}"),
+              ("pelvis", f"hip.{s_}"), (f"hip.{s_}", f"thigh.{s_}"), (f"thigh.{s_}", f"knee.{s_}"), (f"knee.{s_}", f"calf.{s_}"),
+              (f"calf.{s_}", f"ankle.{s_}"), (f"ankle.{s_}", f"toe.{s_}")]
     return J, E
 
 # armature bones: name -> (head joint, tail joint, parent)
-BONES = [("pelvis", "pelvis", "belly", None), ("spine", "belly", "chest", "pelvis"), ("neck", "chest", "neck", "spine"),
+BONES = [("pelvis", "pelvis", "belly", None), ("spine", "belly", "trap", "pelvis"), ("neck", "trap", "neck", "spine"),
          ("head", "neck", "crown", "neck")]
 for s in ("L", "R"):
     BONES += [(f"upper_arm.{s}", f"shoulder.{s}", f"elbow.{s}", "spine"), (f"forearm.{s}", f"elbow.{s}", f"wrist.{s}", f"upper_arm.{s}"),
@@ -225,7 +236,7 @@ def build_body(cls, props, regions):
         c = f.center
         best = min(seg, key=lambda s: seg_dist(c, s[0], s[1])[0])
         reg = best[2]
-        if reg == "legs" and c.z < 0.42: reg = "boot"
+        if reg == "legs" and c.z < 0.40: reg = "boot"
         m = regions[reg]
         if m.name not in [x.name for x in body.data.materials]: body.data.materials.append(m)
         f.material_index = [x.name for x in body.data.materials].index(m.name)
@@ -280,53 +291,84 @@ def parent_to_bone(ob, arm, bone):
     ob.parent = arm; ob.matrix_parent_inverse = Matrix.Identity(4)
 
 # ---- dressing ------------------------------------------------------------------------
-def dress_common(cls, J, arm, M):
-    pass
+def boots(prefix, J, m_boot, m_cuff=None, cuff_h=0.0, shaft_top=0.40, r=0.078):
+    """A boot per leg: shaft over the shin, foot forward over the toe. Soft-weighted so it bends at the ankle."""
+    out = []
+    for s_ in ("L", "R"):
+        a, t = J[f"ankle.{s_}"]["p"], J[f"toe.{s_}"]["p"]
+        c = J[f"calf.{s_}"]["p"]
+        shaft = loft(f"{prefix}_boot.{s_}", [((c.x, c.y, shaft_top), r * 1.05, r * 1.0), ((a.x, a.y + 0.01, 0.22), r * 0.95, r * 0.9), ((a.x, a.y + 0.01, 0.09), r * 0.9, r * 0.9),
+                                            ((a.x, a.y - 0.02, 0.03), r * 0.95, r * 1.0), ((t.x, t.y - 0.02, 0.025), 0.055, 0.045), ((t.x, t.y - 0.07, 0.02), 0.02, 0.02), ((t.x, t.y - 0.08, 0.02), 0, 0)],
+                     m_boot, n=8, cap_bottom=True)
+        out.append((shaft, "soft"))
+        if m_cuff and cuff_h:
+            cuff = loft(f"{prefix}_bootcuff.{s_}", [((c.x, c.y, shaft_top + cuff_h), r * 1.15, r * 1.1), ((c.x, c.y, shaft_top - 0.01), r * 1.12, r * 1.07)], m_cuff, n=8)
+            out.append((cuff, "soft"))
+    return out
+
+def fists(prefix, J, m, r=0.055):
+    out = []
+    for s_ in ("L", "R"):
+        hnd = J[f"hand.{s_}"]["p"]
+        f = loft(f"{prefix}_fist.{s_}", [((hnd.x, hnd.y, hnd.z + r * 0.9), r * 0.5, r * 0.5), ((hnd.x, hnd.y - 0.01, hnd.z + r * 0.3), r, r * 0.9),
+                                        ((hnd.x, hnd.y - 0.01, hnd.z - r * 0.5), r * 0.95, r * 0.85), ((hnd.x, hnd.y, hnd.z - r), 0, 0)], m, n=7, cap_bottom=True)
+        out.append((f, f"hand.{s_}"))
+    return out
+
+def tiers(prefix, base_z, tiers_spec, m, n=10, phase=0.0):
+    """Layered shoulder cloth/plate: each tier is (drop, rx, ry, hem_rx, hem_ry); tiers stack outward and lower."""
+    out = []
+    for i, (top_z, rx, ry, hx, hy, hem_z) in enumerate(tiers_spec):
+        t = loft(f"{prefix}_tier{i}", [((0, 0, top_z), rx, ry), ((0, 0, hem_z + 0.03), hx * 0.97, hy * 0.97), ((0, 0, hem_z), hx, hy)], m, n=n, phase=phase)
+        out.append((t, "spine"))
+    return out
+
+def studs(prefix, m, points, r=0.018):
+    return [(sphere(f"{prefix}_stud{i}", p_, r, m, n=4, k=2), bone) for i, (p_, bone) in enumerate(points)]
 
 def build_rogue(J, arm, M):
     parts = []
-    hp = J["head"]["p"]
-    # hood: a loft from the cowl at the shoulders up over the head to a peak, open at the front (face void is the dark material)
-    hood = loft("rogue_hood", [
-        ((0, 0.02, 1.46), 0.26, 0.20), ((0, 0.02, 1.56), 0.21, 0.17), ((0, 0.03, 1.66), 0.17, 0.15),
-        ((0, 0.02, 1.78), 0.155, 0.145), ((0, 0.0, 1.88), 0.12, 0.11), ((0, -0.02, 1.95), 0.05, 0.05), ((0, -0.03, 1.98), 0, 0)],
-        M["hood"], cap_bottom=False, n=10)
+    # hood: deep cowl folds at the neck, peaked crown, drapes back
+    hood = loft("rogue_hood", [((0, 0.04, 1.44), 0.27, 0.21), ((0, 0.03, 1.52), 0.23, 0.185), ((0, 0.03, 1.60), 0.19, 0.165), ((0, 0.03, 1.68), 0.165, 0.15),
+                               ((0, 0.02, 1.80), 0.155, 0.145), ((0, 0.0, 1.90), 0.12, 0.11), ((0, -0.03, 1.97), 0.05, 0.05), ((0, -0.05, 2.0), 0, 0)],
+                M["hood"], n=10)
     parts.append((hood, "head"))
-    # face void: dark disc inside the hood opening
-    face = loft("rogue_face", [((0, -0.10, 1.62), 0.095, 0.02), ((0, -0.10, 1.76), 0.09, 0.02)], M["void"], cap_bottom=True, cap_top=True, n=8)
+    face = loft("rogue_face", [((0, -0.105, 1.60), 0.10, 0.02), ((0, -0.105, 1.76), 0.095, 0.02)], M["void"], cap_bottom=True, cap_top=True, n=8)
     parts.append((face, "head"))
-    # cowl / mantle: layered shoulder cape with pointed hem
-    mantle = loft("rogue_mantle", [((0, 0.0, 1.55), 0.16, 0.13), ((0, 0.0, 1.47), 0.30, 0.20), ((0, 0.0, 1.38), 0.36, 0.22), ((0, 0.0, 1.30), 0.34, 0.21)],
-                  M["hood"], n=10, phase=math.pi / 10)
-    parts.append((mantle, "spine"))
-    # skirt of the tunic
-    skirt = loft("rogue_skirt", [((0, 0, 1.02), 0.19, 0.14), ((0, 0, 0.86), 0.22, 0.16), ((0, 0, 0.66), 0.25, 0.18)], M["tunic"], n=10)
+    mask = loft("rogue_mask", [((0, -0.115, 1.60), 0.085, 0.03), ((0, -0.115, 1.66), 0.085, 0.03)], M["hood"], cap_bottom=True, cap_top=True, n=8)
+    parts.append((mask, "head"))
+    # mantle in two pointed tiers, gold studs at the points
+    parts += tiers("rogue_mantle", 1.50, [(1.53, 0.16, 0.13, 0.36, 0.23, 1.30), (1.50, 0.15, 0.12, 0.29, 0.19, 1.38)], M["hood"], n=8, phase=math.pi / 8)
+    parts += studs("rogue_mantle", M["gold"], [((0.31, -0.13, 1.33), "spine"), ((-0.31, -0.13, 1.33), "spine"), ((0.0, -0.215, 1.33), "spine")], r=0.02)
+    # tunic skirt with a split front flap, belt with buckle and pouch, crossed straps
+    skirt = loft("rogue_skirt", [((0, 0, 1.02), 0.185, 0.135), ((0, 0, 0.88), 0.215, 0.155), ((0, 0.01, 0.70), 0.245, 0.175), ((0, 0.02, 0.60), 0.25, 0.18)], M["tunic"], n=10)
     parts.append((skirt, "soft"))
-    belt = loft("rogue_belt", [((0, 0, 1.06), 0.185, 0.135), ((0, 0, 1.0), 0.19, 0.14)], M["leather"], n=10)
-    parts.append((belt, "pelvis"))
-    buckle = box("rogue_buckle", (0.0, -0.145, 1.03), 0.035, 0.012, 0.035, M["gold"])
-    parts.append((buckle, "pelvis"))
-    # chest strap, diagonal
-    strap = box("rogue_strap", (0.0, 0.0, 0.0), 0.03, 0.01, 0.17, M["leather"])
-    R = Matrix.Rotation(math.radians(35), 4, "Y"); T = Matrix.Translation((0.0, -0.14, 1.30))
-    strap.data.transform(T @ R)
-    parts.append((strap, "spine"))
-    for s in ("L", "R"):
-        e, w, hnd = J[f"elbow.{s}"]["p"], J[f"wrist.{s}"]["p"], J[f"hand.{s}"]["p"]
-        # bracer: a thicker sleeve around the forearm
+    flap = loft("rogue_flap", [((0, -0.17, 1.02), 0.09, 0.012), ((0, -0.20, 0.72), 0.10, 0.012), ((0, -0.22, 0.48), 0.06, 0.012), ((0, -0.23, 0.42), 0, 0)], M["tunic"], n=6, cap_bottom=True)
+    parts.append((flap, "soft"))
+    belt = loft("rogue_belt", [((0, 0, 1.07), 0.19, 0.14), ((0, 0, 1.00), 0.195, 0.145)], M["leather"], n=10); parts.append((belt, "pelvis"))
+    belt2 = loft("rogue_belt2", [((0, 0, 0.99), 0.20, 0.15), ((0, 0, 0.95), 0.205, 0.155)], M["leather"], n=10); parts.append((belt2, "pelvis"))
+    buckle = box("rogue_buckle", (0.0, -0.15, 1.035), 0.04, 0.012, 0.04, M["gold"]); parts.append((buckle, "pelvis"))
+    pouch = box("rogue_pouch", (0.17, -0.10, 0.93), 0.045, 0.035, 0.05, M["leather"]); parts.append((pouch, "pelvis"))
+    for sign in (1, -1):
+        strap = box(f"rogue_strap{sign}", (0, 0, 0), 0.028, 0.012, 0.19, M["leather"])
+        strap.data.transform(Matrix.Translation((0.0, -0.145, 1.30)) @ Matrix.Rotation(math.radians(38 * sign), 4, "Y")); parts.append((strap, "spine"))
+    parts += studs("rogue_strap", M["gold"], [((0.0, -0.16, 1.30), "spine")], r=0.022)
+    for s_ in ("L", "R"):
+        e, w, hnd = J[f"elbow.{s_}"]["p"], J[f"wrist.{s_}"]["p"], J[f"hand.{s_}"]["p"]
         d = (w - e); L = d.length
-        br = loft(f"rogue_bracer.{s}", [((0, 0, 0.12 * L), 0.07, 0.07), ((0, 0, 0.92 * L), 0.062, 0.062)], M["leather"], n=8)
-        br.matrix_world = Matrix.Translation(e) @ d.to_track_quat("Z", "Y").to_matrix().to_4x4()
-        parts.append((br, f"forearm.{s}"))
-        # spike on the bracer, gold
-        # dagger: blade continues the forearm line past the fist
-        fd = (hnd - w).normalized()
-        blade = loft(f"rogue_blade.{s}", [((0, 0, 0.03), 0.02, 0.02), ((0, 0, 0.09), 0.03, 0.012), ((0, 0, 0.30), 0.016, 0.006), ((0, 0, 0.36), 0, 0)], M["steel"], n=4, cap_bottom=True)
-        blade.matrix_world = Matrix.Translation(hnd) @ fd.to_track_quat("Z", "Y").to_matrix().to_4x4()
-        guard = loft(f"rogue_guard.{s}", [((0, 0, 0.02), 0.045, 0.012), ((0, 0, 0.035), 0.045, 0.012)], M["gold"], n=6, cap_bottom=True, cap_top=True)
-        guard.matrix_world = blade.matrix_world.copy()
-        parts += [(blade, f"hand.{s}"), (guard, f"hand.{s}")]
-        # pauldron spike hint: small gold stud on the mantle
+        br = loft(f"rogue_bracer.{s_}", [((0, 0, 0.10 * L), 0.072, 0.072), ((0, 0, 0.45 * L), 0.07, 0.07), ((0, 0, 0.95 * L), 0.062, 0.062)], M["leather"], n=8)
+        br.matrix_world = Matrix.Translation(e) @ d.to_track_quat("Z", "Y").to_matrix().to_4x4(); parts.append((br, f"forearm.{s_}"))
+        for k in (0.3, 0.6):   # wrap lines
+            wrap = loft(f"rogue_wrap{k}.{s_}", [((0, 0, k * L), 0.076, 0.076), ((0, 0, (k + 0.06) * L), 0.076, 0.076)], M["leather_dark"], n=8)
+            wrap.matrix_world = br.matrix_world.copy(); parts.append((wrap, f"forearm.{s_}"))
+        spike = loft(f"rogue_spike.{s_}", [((0, 0, 0.15 * L), 0.03, 0.03), ((0, -0.06, 0.05 * L), 0, 0)], M["gold"], n=4, cap_bottom=True)
+        spike.matrix_world = br.matrix_world.copy(); parts.append((spike, f"forearm.{s_}"))
+        blade = weapon_along(f"rogue_blade.{s_}", J, s_, [((0, 0, 0.03), 0.018, 0.018), ((0, 0, 0.10), 0.032, 0.010), ((0, 0, 0.30), 0.017, 0.006), ((0, 0, 0.37), 0, 0)], M["steel"])
+        guard = weapon_along(f"rogue_guard.{s_}", J, s_, [((0, 0, 0.075), 0.05, 0.012), ((0, 0, 0.095), 0.05, 0.012)], M["gold"])
+        pommel = weapon_along(f"rogue_pommel.{s_}", J, s_, [((0, 0, -0.06), 0.02, 0.02), ((0, 0, -0.02), 0.02, 0.02)], M["gold"])
+        parts += [(blade, f"hand.{s_}"), (guard, f"hand.{s_}"), (pommel, f"hand.{s_}")]
+    parts += fists("rogue", J, M["skin"])
+    parts += boots("rogue", J, M["boot"], M["leather"], cuff_h=0.05)
     for ob, bone in parts:
         if bone == "soft": attach_soft(ob, arm, J)
         else: parent_to_bone(ob, arm, bone)
@@ -342,42 +384,46 @@ def weapon_along(name_prefix, J, s, rings, m, cap=True):
 
 def build_reaver(J, arm, M):
     parts = []
-    # great helm: rounded crown, flat cheek plates, dark visor slit
-    helm = loft("reaver_helm", [((0, 0, 1.52), 0.16, 0.15), ((0, 0, 1.62), 0.17, 0.155), ((0, 0, 1.76), 0.165, 0.15), ((0, 0, 1.86), 0.13, 0.12), ((0, 0, 1.94), 0.07, 0.07), ((0, 0, 1.97), 0, 0)],
+    helm = loft("reaver_helm", [((0, 0, 1.50), 0.165, 0.155), ((0, 0, 1.60), 0.175, 0.16), ((0, 0, 1.74), 0.17, 0.155), ((0, 0, 1.85), 0.14, 0.13), ((0, 0, 1.94), 0.08, 0.08), ((0, 0, 1.99), 0, 0)],
                 M["plate"], n=10, phase=math.pi / 10)
     parts.append((helm, "head"))
-    visor = box("reaver_visor", (0, -0.155, 1.70), 0.075, 0.012, 0.02, M["void"]); parts.append((visor, "head"))
-    crest = box("reaver_crest", (0, -0.16, 1.80), 0.02, 0.015, 0.05, M["gold"]); parts.append((crest, "head"))
-    # gorget + breastplate
-    gorget = loft("reaver_gorget", [((0, 0, 1.58), 0.10, 0.09), ((0, 0, 1.50), 0.19, 0.14)], M["plate"], n=10)
-    parts.append((gorget, "neck"))
-    plate = loft("reaver_plate", [((0, 0, 1.50), 0.21, 0.145), ((0, 0, 1.40), 0.225, 0.155), ((0, 0, 1.25), 0.21, 0.145), ((0, 0, 1.12), 0.20, 0.14)], M["plate"], n=10)
-    parts.append((plate, "spine"))
-    gem = box("reaver_gem", (0, -0.16, 1.36), 0.035, 0.012, 0.045, M["gold"]); parts.append((gem, "spine"))
-    for s, sx in (("L", -1), ("R", 1)):
-        sh = J[f"shoulder.{s}"]["p"]
-        pauldron = loft(f"reaver_pauldron.{s}", [((sh.x + sx * 0.02, sh.y, sh.z + 0.09), 0.0, 0.0), ((sh.x + sx * 0.03, sh.y, sh.z + 0.06), 0.12, 0.11),
-                                                  ((sh.x + sx * 0.05, sh.y, sh.z - 0.02), 0.15, 0.13), ((sh.x + sx * 0.06, sh.y, sh.z - 0.10), 0.13, 0.12)], M["plate"], n=8)
-        parts.append((pauldron, f"upper_arm.{s}"))
-        disc = sphere(f"reaver_disc.{s}", (sh.x + sx * 0.02, sh.y - 0.13, sh.z - 0.02), 0.035, M["gold"], n=6, k=3); parts.append((disc, f"upper_arm.{s}"))
-        e, w = J[f"elbow.{s}"]["p"], J[f"wrist.{s}"]["p"]; d = (w - e); L = d.length
-        gaunt = loft(f"reaver_gauntlet.{s}", [((0, 0, 0.05 * L), 0.075, 0.075), ((0, 0, 0.55 * L), 0.075, 0.075), ((0, 0, 1.0 * L), 0.085, 0.085), ((0, 0, 1.25 * L), 0.075, 0.075)], M["plate"], n=8)
-        gaunt.matrix_world = Matrix.Translation(e) @ d.to_track_quat("Z", "Y").to_matrix().to_4x4()
-        parts.append((gaunt, f"forearm.{s}"))
-        cuff = loft(f"reaver_cuff.{s}", [((0, 0, 0.98 * L), 0.09, 0.09), ((0, 0, 1.06 * L), 0.09, 0.09)], M["gold"], n=8)
-        cuff.matrix_world = gaunt.matrix_world.copy(); parts.append((cuff, f"forearm.{s}"))
-    # cape: hangs from the shoulders down the back
-    cape = sheet("reaver_cape", [(0, 0.16, 1.52), (0, 0.19, 1.30), (0, 0.21, 1.00), (0, 0.22, 0.70), (0, 0.23, 0.45)], 0.36, 0.30, M["cape"])
+    visor = box("reaver_visor", (0, -0.16, 1.70), 0.085, 0.012, 0.02, M["void"]); parts.append((visor, "head"))
+    for x in (-0.05, 0.0, 0.05):
+        slit = box(f"reaver_slit{x}", (x, -0.165, 1.62), 0.008, 0.01, 0.045, M["void"]); parts.append((slit, "head"))
+    crest = loft("reaver_crest", [((0, -0.17, 1.76), 0.02, 0.01), ((0, -0.10, 1.96), 0.02, 0.01), ((0, 0.05, 1.99), 0.018, 0.01), ((0, 0.15, 1.90), 0.012, 0.01), ((0, 0.16, 1.86), 0, 0)], M["gold"], n=4, cap_bottom=True)
+    parts.append((crest, "head"))
+    gorget = loft("reaver_gorget", [((0, 0, 1.60), 0.10, 0.09), ((0, 0, 1.52), 0.20, 0.15), ((0, 0, 1.46), 0.22, 0.16)], M["plate"], n=10); parts.append((gorget, "neck"))
+    trim0 = loft("reaver_trim0", [((0, 0, 1.465), 0.225, 0.165), ((0, 0, 1.45), 0.225, 0.165)], M["gold"], n=10); parts.append((trim0, "neck"))
+    plate = loft("reaver_plate", [((0, 0, 1.50), 0.215, 0.15), ((0, 0, 1.40), 0.235, 0.16), ((0, 0, 1.26), 0.22, 0.15), ((0, 0, 1.12), 0.205, 0.145)], M["plate"], n=10); parts.append((plate, "spine"))
+    trim1 = loft("reaver_trim1", [((0, 0, 1.13), 0.21, 0.15), ((0, 0, 1.11), 0.21, 0.15)], M["gold"], n=10); parts.append((trim1, "spine"))
+    gem = loft("reaver_gem", [((0, -0.17, 1.30), 0.045, 0.012), ((0, -0.19, 1.34), 0, 0)], M["gold"], n=4, cap_bottom=True); parts.append((gem, "spine"))
+    gem2 = loft("reaver_gem2", [((0, -0.17, 1.30), 0.045, 0.012), ((0, -0.19, 1.26), 0, 0)], M["gold"], n=4, cap_bottom=True); parts.append((gem2, "spine"))
+    for s_, sx in (("L", -1), ("R", 1)):
+        sh = J[f"shoulder.{s_}"]["p"]
+        for i, (dz, r0, r1, drop) in enumerate([(0.10, 0.0, 0.16, 0.10), (0.0, 0.12, 0.17, 0.10), (-0.10, 0.13, 0.15, 0.09)]):
+            p_ = loft(f"reaver_pauldron{i}.{s_}", [((sh.x + sx * 0.03, sh.y, sh.z + dz + 0.02), r0, r0 * 0.9), ((sh.x + sx * 0.05, sh.y, sh.z + dz - 0.03), r1, r1 * 0.9), ((sh.x + sx * 0.06, sh.y, sh.z + dz - drop), r1 * 0.95, r1 * 0.85)],
+                      M["plate"], n=8, phase=math.pi / 8)
+            parts.append((p_, f"upper_arm.{s_}"))
+            edge = loft(f"reaver_pedge{i}.{s_}", [((sh.x + sx * 0.06, sh.y, sh.z + dz - drop + 0.012), r1 * 0.96, r1 * 0.86), ((sh.x + sx * 0.06, sh.y, sh.z + dz - drop - 0.002), r1 * 0.96, r1 * 0.86)], M["gold"], n=8, phase=math.pi / 8)
+            parts.append((edge, f"upper_arm.{s_}"))
+        disc = sphere(f"reaver_disc.{s_}", (sh.x + sx * 0.0, sh.y - 0.15, sh.z - 0.0), 0.04, M["gold"], n=6, k=3); parts.append((disc, "spine"))
+        e, w = J[f"elbow.{s_}"]["p"], J[f"wrist.{s_}"]["p"]; d = (w - e); L = d.length
+        gaunt = loft(f"reaver_gauntlet.{s_}", [((0, 0, 0.05 * L), 0.075, 0.075), ((0, 0, 0.55 * L), 0.08, 0.08), ((0, 0, 0.98 * L), 0.09, 0.09)], M["plate"], n=8)
+        gaunt.matrix_world = Matrix.Translation(e) @ d.to_track_quat("Z", "Y").to_matrix().to_4x4(); parts.append((gaunt, f"forearm.{s_}"))
+        cuff = loft(f"reaver_cuff.{s_}", [((0, 0, 0.95 * L), 0.095, 0.095), ((0, 0, 1.02 * L), 0.095, 0.095)], M["gold"], n=8)
+        cuff.matrix_world = gaunt.matrix_world.copy(); parts.append((cuff, f"forearm.{s_}"))
+    parts += fists("reaver", J, M["plate"], r=0.062)
+    cape = sheet("reaver_cape", [(0, 0.17, 1.52), (0, 0.20, 1.30), (0, 0.22, 1.00), (0, 0.23, 0.70), (0, 0.24, 0.42)], 0.40, 0.34, M["cape"])
     parts.append((cape, "soft"))
-    # tassets / skirt of plates
-    tasset = loft("reaver_tasset", [((0, 0, 1.06), 0.20, 0.14), ((0, 0, 0.90), 0.24, 0.17), ((0, 0, 0.78), 0.25, 0.18)], M["plate"], n=10)
-    parts.append((tasset, "soft"))
-    belt = loft("reaver_belt", [((0, 0, 1.10), 0.205, 0.145), ((0, 0, 1.04), 0.205, 0.145)], M["leather"], n=10); parts.append((belt, "pelvis"))
-    # greatsword in the right hand: long blade continuing the forearm
-    sword = weapon_along("reaver_sword", J, "R", [((0, 0, 0.0), 0.02, 0.02), ((0, 0, 0.16), 0.02, 0.02), ((0, 0, 0.17), 0.09, 0.02), ((0, 0, 0.20), 0.09, 0.02),
-                                                  ((0, 0, 0.21), 0.045, 0.012), ((0, 0, 0.95), 0.035, 0.008), ((0, 0, 1.08), 0, 0)], M["steel"])
+    belt = loft("reaver_belt", [((0, 0, 1.11), 0.21, 0.15), ((0, 0, 1.05), 0.21, 0.15)], M["leather"], n=10); parts.append((belt, "pelvis"))
+    for i, (z0, z1, r) in enumerate([(1.06, 0.92, 0.22), (0.94, 0.80, 0.235), (0.82, 0.70, 0.245)]):
+        tas = loft(f"reaver_tasset{i}", [((0, 0, z0), r - 0.02, (r - 0.02) * 0.72), ((0, 0, z1), r, r * 0.72)], M["plate"], n=10, phase=math.pi / 10); parts.append((tas, "soft"))
+        tedge = loft(f"reaver_tedge{i}", [((0, 0, z1 + 0.012), r * 1.005, r * 0.725), ((0, 0, z1 - 0.002), r * 1.005, r * 0.725)], M["gold"], n=10, phase=math.pi / 10); parts.append((tedge, "soft"))
+    sword = weapon_along("reaver_sword", J, "R", [((0, 0, 0.0), 0.02, 0.02), ((0, 0, 0.17), 0.02, 0.02), ((0, 0, 0.18), 0.10, 0.02), ((0, 0, 0.21), 0.10, 0.02),
+                                                  ((0, 0, 0.22), 0.05, 0.012), ((0, 0, 0.95), 0.04, 0.008), ((0, 0, 1.10), 0, 0)], M["steel"])
     parts.append((sword, "hand.R"))
-    pommel = weapon_along("reaver_pommel", J, "R", [((0, 0, -0.06), 0.035, 0.035), ((0, 0, 0.0), 0.035, 0.035)], M["gold"]); parts.append((pommel, "hand.R"))
+    pommel = weapon_along("reaver_pommel", J, "R", [((0, 0, -0.07), 0.035, 0.035), ((0, 0, 0.0), 0.035, 0.035)], M["gold"]); parts.append((pommel, "hand.R"))
+    parts += boots("reaver", J, M["boot"], M["plate"], cuff_h=0.06, r=0.085)
     for ob, bone in parts:
         if bone == "soft": attach_soft(ob, arm, J)
         else: parent_to_bone(ob, arm, bone)
@@ -386,7 +432,7 @@ def build_reaver(J, arm, M):
 def build_starseer(J, arm, M):
     parts = []
     # hat: wide brim, tall crown bending back at the tip
-    brim = loft("star_brim", [((0, 0, 1.78), 0.10, 0.10), ((0, 0.02, 1.77), 0.42, 0.34), ((0, 0.02, 1.79), 0.42, 0.34), ((0, 0, 1.80), 0.10, 0.10)], M["hat"], n=12, cap_bottom=False)
+    brim = loft("star_brim", [((0, 0, 1.79), 0.12, 0.12), ((0, 0.02, 1.775), 0.30, 0.25), ((0, 0.03, 1.755), 0.44, 0.35), ((0, 0.03, 1.775), 0.44, 0.35), ((0, 0.02, 1.795), 0.30, 0.25), ((0, 0, 1.81), 0.12, 0.12)], M["hat"], n=14, cap_bottom=False)
     parts.append((brim, "head"))
     crown = loft("star_crown", [((0, 0, 1.78), 0.17, 0.16), ((0, 0.0, 1.92), 0.15, 0.14), ((0, 0.02, 2.08), 0.11, 0.10), ((0, 0.06, 2.22), 0.07, 0.065), ((0, 0.14, 2.32), 0.035, 0.03), ((0, 0.24, 2.36), 0, 0)],
                  M["hat"], n=10, cap_bottom=True)
@@ -398,8 +444,12 @@ def build_starseer(J, arm, M):
     parts.append((cowl, "head"))
     face = loft("star_face", [((0, -0.10, 1.60), 0.09, 0.02), ((0, -0.10, 1.74), 0.085, 0.02)], M["void"], cap_bottom=True, cap_top=True, n=8); parts.append((face, "head"))
     # shoulder cape with gold edge, and the long cloak
-    mantle = loft("star_mantle", [((0, 0, 1.54), 0.17, 0.13), ((0, 0, 1.44), 0.31, 0.21), ((0, 0, 1.30), 0.36, 0.23)], M["cloak"], n=10, phase=math.pi / 10); parts.append((mantle, "spine"))
-    trim = loft("star_trim", [((0, 0, 1.31), 0.365, 0.235), ((0, 0, 1.27), 0.35, 0.225)], M["gold"], n=10, phase=math.pi / 10); parts.append((trim, "spine"))
+    parts += tiers("star_mantle", 1.5, [(1.54, 0.17, 0.13, 0.37, 0.24, 1.26), (1.52, 0.16, 0.12, 0.30, 0.20, 1.36)], M["cloak"], n=10, phase=math.pi / 10)
+    for hz, hx, hy in ((1.26, 0.37, 0.24), (1.36, 0.30, 0.20)):
+        trim = loft(f"star_trim{hz}", [((0, 0, hz + 0.015), hx * 1.01, hy * 1.01), ((0, 0, hz - 0.005), hx * 1.01, hy * 1.01)], M["gold"], n=10, phase=math.pi / 10); parts.append((trim, "spine"))
+    parts += studs("star_mantle", M["gold"], [((0.33, -0.12, 1.29), "spine"), ((-0.33, -0.12, 1.29), "spine")], r=0.02)
+    parts += fists("star", J, M["skin"])
+    parts += boots("star", J, M["boot"])
     robe = loft("star_robe", [((0, 0, 1.08), 0.20, 0.145), ((0, 0, 0.80), 0.24, 0.17), ((0, 0, 0.45), 0.28, 0.20), ((0, 0, 0.10), 0.31, 0.22)], M["robe"], n=10, cap_bottom=True)
     parts.append((robe, "soft"))
     sash = loft("star_sash", [((0, 0, 1.10), 0.205, 0.15), ((0, 0, 1.03), 0.205, 0.15)], M["band"], n=10); parts.append((sash, "pelvis"))
@@ -430,14 +480,18 @@ def build_herald(J, arm, M):
     for i in range(4):
         a = math.pi / 2 * i
         spike = star(f"herald_spike{i}", (0.30 * math.cos(a), 0.10, 1.86 + 0.30 * math.sin(a)), 0.06, 0.02, 0.012, M["gold"], points=4); parts.append((spike, "head"))
-    mantle = loft("herald_mantle", [((0, 0, 1.54), 0.17, 0.13), ((0, 0, 1.42), 0.32, 0.22), ((0, 0, 1.28), 0.37, 0.24)], M["robe_dark"], n=10, phase=math.pi / 10); parts.append((mantle, "spine"))
-    trim = loft("herald_trim", [((0, 0, 1.29), 0.375, 0.245), ((0, 0, 1.25), 0.36, 0.235)], M["gold"], n=10, phase=math.pi / 10); parts.append((trim, "spine"))
+    parts += tiers("herald_mantle", 1.5, [(1.54, 0.17, 0.13, 0.38, 0.25, 1.24), (1.52, 0.16, 0.12, 0.31, 0.21, 1.35)], M["robe_dark"], n=10, phase=math.pi / 10)
+    for hz, hx, hy in ((1.24, 0.38, 0.25), (1.35, 0.31, 0.21)):
+        trim = loft(f"herald_trim{hz}", [((0, 0, hz + 0.015), hx * 1.01, hy * 1.01), ((0, 0, hz - 0.005), hx * 1.01, hy * 1.01)], M["gold"], n=10, phase=math.pi / 10); parts.append((trim, "spine"))
+    parts += studs("herald_mantle", M["gold"], [((0.34, -0.12, 1.27), "spine"), ((-0.34, -0.12, 1.27), "spine")], r=0.022)
+    parts += fists("herald", J, M["skin"])
+    parts += boots("herald", J, M["boot"])
     gem = star("herald_gem", (0, -0.20, 1.40), 0.05, 0.02, 0.012, M["gold"], points=3); parts.append((gem, "spine"))
     robe = loft("herald_robe", [((0, 0, 1.10), 0.21, 0.15), ((0, 0, 0.80), 0.25, 0.18), ((0, 0, 0.45), 0.29, 0.21), ((0, 0, 0.08), 0.33, 0.24)], M["robe"], n=10, cap_bottom=True)
     parts.append((robe, "soft"))
     # bead chain: small dark spheres in a V down the chest
     for i, (x, z) in enumerate([(-0.10, 1.40), (-0.11, 1.32), (-0.10, 1.24), (-0.08, 1.16), (-0.05, 1.08), (0.0, 1.02), (0.05, 1.08), (0.08, 1.16), (0.10, 1.24), (0.11, 1.32), (0.10, 1.40)]):
-        bead = sphere(f"herald_bead{i}", (x, -0.16, z), 0.022, M["bead"], n=6, k=3); parts.append((bead, "spine"))
+        bead = sphere(f"herald_bead{i}", (x * 1.3, -0.19, z), 0.028, M["bead"], n=6, k=3); parts.append((bead, "spine"))
     for s in ("L", "R"):
         e, w = J[f"elbow.{s}"]["p"], J[f"wrist.{s}"]["p"]; d = (w - e); L = d.length
         sleeve = loft(f"herald_sleeve.{s}", [((0, 0, 0.0), 0.08, 0.08), ((0, 0, 0.85 * L), 0.13, 0.13), ((0, 0, 1.0 * L), 0.13, 0.13)], M["robe"], n=8)
@@ -450,12 +504,12 @@ def build_herald(J, arm, M):
     return [ob for ob, _ in parts]
 
 BUILDERS = {"rogue": build_rogue, "reaver": build_reaver, "starseer": build_starseer, "herald": build_herald}
-PROPS = {"rogue": dict(shoulder_w=0.23, chest_r=(0.18, 0.12)),
-         "reaver": dict(shoulder_w=0.27, chest_r=(0.22, 0.15), belly_r=(0.19, 0.14), pelvis_r=(0.19, 0.14), arm_r=0.08, fore_r=0.07, thigh_r=0.11, shin_r=0.08),
+PROPS = {"rogue": dict(shoulder_w=0.24, chest_r=(0.19, 0.125)),
+         "reaver": dict(shoulder_w=0.28, trap_r=(0.22, 0.14), chest_r=(0.23, 0.155), lchest_r=(0.20, 0.14), belly_r=(0.19, 0.14), pelvis_r=(0.19, 0.14), delt_r=0.10, bicep_r=0.08, elbow_r=0.07, fore_r=0.072, thigh_r=0.11, calf_r=0.085),
          "starseer": dict(shoulder_w=0.22, chest_r=(0.17, 0.12)),
-         "herald": dict(shoulder_w=0.24, chest_r=(0.19, 0.13), belly_r=(0.18, 0.13))}
+         "herald": dict(shoulder_w=0.245, chest_r=(0.20, 0.13), belly_r=(0.18, 0.13))}
 def rogue_materials():
-    return dict(hood=mat("rogue_hood", (38, 36, 34)), tunic=mat("rogue_tunic", (46, 56, 38)), leather=mat("rogue_leather", (58, 40, 28)),
+    return dict(hood=mat("rogue_hood", (34, 32, 31)), tunic=mat("rogue_tunic", (40, 50, 34)), leather=mat("rogue_leather", (56, 38, 26)), leather_dark=mat("rogue_leather_dark", (40, 27, 19)),
                 gold=mat("gold", (205, 160, 55), rough=0.35, metal=0.8), steel=mat("steel", (140, 142, 150), rough=0.35, metal=0.9),
                 skin=mat("skin", (168, 118, 86)), void=mat("void", (6, 5, 5), rough=1.0), boot=mat("rogue_boot", (34, 28, 24)),
                 cloth=mat("rogue_cloth", (40, 42, 40)))
@@ -542,7 +596,7 @@ CLASS_AIMS = {
         "idle": {"upper_arm.R": (0.35, -0.35, -0.85), "forearm.R": (0.0, -0.6, -0.8), "hand.R": (0, -0.5, -0.85), "upper_arm.L": (-0.3, -0.2, -0.95), "forearm.L": (0.3, -0.7, -0.6)},
         "guard": {"upper_arm.R": (0.5, -0.5, -0.7), "forearm.R": (-0.2, -0.7, -0.6), "hand.R": (-0.1, -0.6, -0.8), "upper_arm.L": (-0.4, -0.6, -0.65), "forearm.L": (0.4, -0.8, -0.3)},
         "attack1": {"upper_arm.R": (0.8, -0.5, -0.3), "forearm.R": (0.9, -0.4, 0.2), "hand.R": (0.9, -0.3, 0.3), "upper_arm.L": (-0.6, 0.1, -0.8), "forearm.L": (-0.2, -0.6, -0.75)},
-        "attack2": {"upper_arm.R": (0.5, -0.5, 0.7), "forearm.R": (0.9, -0.3, 0.3), "hand.R": (0.9, -0.3, 0.2), "upper_arm.L": (-0.5, -0.4, -0.75), "forearm.L": (0.3, -0.8, -0.4)},
+        "attack2": {"upper_arm.R": (0.7, -0.6, 0.1), "forearm.R": (0.95, -0.35, -0.1), "hand.R": (0.95, -0.3, -0.1), "upper_arm.L": (-0.5, -0.4, -0.75), "forearm.L": (0.3, -0.8, -0.4)},
         "attack3": {"upper_arm.R": (1, -0.35, 0.1), "forearm.R": (1, -0.25, 0.3), "hand.R": (1, -0.2, 0.35), "upper_arm.L": (0.3, -0.7, -0.6), "forearm.L": (0.9, -0.5, 0.0)},
     },
     "herald": {  # hands clasped; attacks open the arms and raise them
