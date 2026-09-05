@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-652",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "A missing receipt is now a red build, not a thing someone has to notice",
+    "detail": "Nothing a player sees changes. Eleven pull requests had landed on dev with no entry in this file, and because the changelog inside the game is built from this one, each was missing for a player too. None of them broke anything, which is exactly why it kept happening: an unreceipted merge is green, ships, and reads as finished. Three separate passes — #633, #641 and #653 — existed only to go back for them. A gate now refuses a promotion whose merges are not all named here, and it runs on every push to dev. It checks coverage, not prose: whether an entry exists for each merge, never whether what it says is true. It also guards itself — if this file's receipt syntax ever moves out from under it, it reports that it could not run rather than declaring every merge unreceipted. The cheap pull-request lane also gains the import check that walks every module in the tree.",
+    "build": "0.5.5.30",
+    "pullRequest": 652,
+    "url": "https://github.com/cehinds/AshenSpire/pull/652"
+  },
+  {
     "id": "pr-653",
     "date": "2026-09-05",
     "group": "2026-09-05",
