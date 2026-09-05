@@ -1675,6 +1675,10 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 /* A stack of meters, one under the other, tight. */
 .as-meters { display: flex; flex-direction: column; gap: 0.3rem; width: 100%; min-width: 0; }
 .as-meters.tight { gap: 2px; }
+/* Main Vitals use the shared screen-pixel token. Dividing by the page zoom
+   makes the authored 3px separation land as 3px on glass at every UI scale;
+   model strips retain the kit's tighter local stack. */
+.resbars[data-surface="main"] { gap: calc(var(--hud-resource-row-gap-px) / var(--ui-zoom, 1)); }
 
 /* ═══ SLOT — a square control that holds one thing: art, a count, a key ═══ */
 /* Flasks, relics, quick items. The box is the IconButton's (a control) or `sm`

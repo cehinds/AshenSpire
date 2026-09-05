@@ -69,6 +69,11 @@ function findings(r) {
   if (!r.expectPair) {
     if (r.stack) bad.push('the run HUD mounts the fullscreen/music pair again — it belongs to the title screen and Settings');
     if (r.buttons.length) bad.push(`${r.buttons.length} quick control(s) drawn in the run HUD`);
+    if (r.vitalGaps.length !== 2) {
+      bad.push(`Vitals exposes ${r.vitalGaps.length} measurable row gap(s), expected HP→MP and MP→SP`);
+    } else if (r.vitalGaps.some((gap) => Math.abs(gap - r.vitalGapExpected) > 0.5)) {
+      bad.push(`Vitals row gaps are ${r.vitalGaps.map((gap) => gap.toFixed(2)).join('/')}px, expected the authored ${r.vitalGapExpected.toFixed(2)}px`);
+    }
     if (r.playerFacing && r.playerFacing !== 'none' && r.playerFacing !== 'matrix(1, 0, 0, 1, 0, 0)') {
       bad.push(`the painted player character is mirrored away from the battlefield (${r.playerFacing})`);
     }
@@ -297,8 +302,9 @@ try {
           const quickTargets=[...document.querySelectorAll('.hud-control-grid :is(.topbar-btn, .flask-slot)')];
           const orientation=document.querySelector('.map-entrance-orientation');
           const info=document.querySelector('.hud-info-row');
-           const combatantInk=[...document.querySelectorAll('.combatant .intent, .combatant .sprite, .combatant .nm, .combatant .meters, .combatant .statuses')];
-           const playerFacing=document.querySelector('.combatant.player .class-sprite > .facing');
+          const vitalRows=[...document.querySelectorAll('.resbars[data-surface="main"] > .resline')].map(box);
+          const combatantInk=[...document.querySelectorAll('.combatant .intent, .combatant .sprite, .combatant .nm, .combatant .meters, .combatant .statuses')];
+          const playerFacing=document.querySelector('.combatant.player .class-sprite > .facing');
           const sr=box(stack);
           const header=box(document.querySelector('.shared-hud'));
           const route=box(document.querySelector('.act-route-strip'));
@@ -312,6 +318,8 @@ try {
             rightGap:sr?innerWidth-sr.right:0,
             buttonGap:painted.length===2?(horizontal?painted[1].left-painted[0].right:painted[1].top-painted[0].bottom):null,
             quickPanel:box(quickPanel), quickTargets:quickTargets.map(box), header,
+            vitalGaps:vitalRows.slice(1).map((row,index)=>row.top-vitalRows[index].bottom),
+            vitalGapExpected:Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hud-resource-row-gap-px')),
             // The rail hangs off the band's PADDING box (top: 100%), while
             // header.bottom is its BORDER box — the band draws a 1px bottom
             // rule. Visual px, like every box above, so the two subtract.
