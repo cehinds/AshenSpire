@@ -52868,7 +52868,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '5be2cb9287';
+const SOURCE = '2848642ae1';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52902,7 +52902,7 @@ const SOURCE = '5be2cb9287';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '24';
+const ORDINAL = '25';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -55140,6 +55140,26 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-644",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "Two receipts, and the changelog inside the game catches up to them",
+    "detail": "Nothing a player sees changes. The Assign Points contract (#640) had landed on dev with no receipt here, so the changelog you can read inside the game did not carry it either; it is written up below, and the projection was regenerated from this file so both now say the same thing. This receipt names its own pull request, which is only possible because the pull request was opened before the receipt was written.",
+    "build": "0.5.5.25",
+    "pullRequest": 644,
+    "url": "https://github.com/cehinds/AshenSpire/pull/644"
+  },
+  {
+    "id": "pr-640",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The rule for reopening Assign Points is written down before it is built",
+    "detail": "Nothing a player sees changes yet. SPEC.md now states that opening or reopening Assign Points is a refund boundary: every authored attribute returns to the mode baseline and the whole bonus pool is available again, instead of resuming the allocation you left behind. The game currently does the opposite — customize.js refills the attributes only when there are none — so this is the contract the runtime fix in #636 has to meet, landed first on purpose so that fix has something to be measured against rather than a description written after the fact. The same change records that shared setting rows keep one equal positive inset on all four sides, which a surface does not get to remove one side of.",
+    "build": "0.5.5.24",
+    "pullRequest": 640,
+    "url": "https://github.com/cehinds/AshenSpire/pull/640"
+  },
   {
     "id": "pr-641",
     "date": "2026-09-05",
