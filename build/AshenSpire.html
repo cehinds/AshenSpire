@@ -727,6 +727,15 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
 
 /* ---------- main menu ambience ---------- */
 .title-screen { position: relative; overflow: hidden; }
+/* THE TITLE SCREEN HAS NO BAND ABOVE THE RAIL. The utility rail's own rule in
+   styles/kit.css hangs it off the bottom of the run HUD's band (`top: 100%`),
+   which is what keeps it clear of the header on every surface that has one.
+   The title screen has no header, and the rail is a direct child of the screen
+   — so `top: 100%` would drop it a full screen height below the fold. It keeps
+   its own top-right anchor, which is where it sat before the rail existed. */
+.title-screen > .hud-quick-settings {
+  top: calc(env(safe-area-inset-top, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+}
 .title-glow { animation: titleGlow 3.2s ease-in-out infinite alternate; }
 @keyframes titleGlow {
   from { text-shadow: 0 0 26px rgba(201, 162, 39, 0.25); }
@@ -1164,8 +1173,17 @@ button.ev-choice {
    REMOVAL CONDITION (SOP 1's corollary): delete this block the day the armament
    and body art is re-rendered from corrected producers. Leaving both in place
    double-flips and restores the bug wearing a fix's clothes.
+
+   WHICH ELEMENT CARRIES IT. `.class-sprite > .facing` and not `.class-sprite`
+   itself, because that frame is an animation target and the sigil overlay's
+   positioning parent, and a mirror on it broke both: the reaction animations in
+   `styles/combat.css` outrank an inherited transform and flipped the player to
+   face away for the length of every hit, and the figure well's cancel in
+   `styles/kit.css` left the overlay counter-mirroring nothing. The facing layer
+   is built in `src/ui/assets.js` classSprite() and carries only this fact —
+   the same shape enemySprite() uses for the same reason.
    --------------------------------------------------------------------------- */
-.class-sprite,
+.class-sprite > .facing,
 .equipped-figure { transform: scaleX(-1); }
 .class-sprite .equipped-figure { transform: none; }
 
@@ -3008,40 +3026,54 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* The full read, in a door: the same sections the edge tray renders. */
 .combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
 
-/* ═══ QUICK SETTINGS — one corner, every surface ═══════════════════════════ */
+/* ═══ QUICK SETTINGS — the utility rail, under the band on the right ══════ */
 /* Fullscreen and music are the two controls that belong to the PAGE, not to
-   whatever is on it (Constantine, 2026-09-04: "move full screen and music, for
-   all current windows that use them, to anchored to top right corner and not
-   block any text"). They lived in the HUD's flow, so on the map they landed
-   beside the route title and in combat under the icon row. One anchored home
-   now: the top-right corner, clear of the notch, above the content layer, and
-   out of the flow entirely so no surface has to make room in its own layout.
-   `--hud-quick-edge-gap` is authored (balance.ui.hudQuickSettings.edgeGapPx,
-   planted on <html> by main.js) and divided by the zoom, so the gap is the
-   same on glass at every UI size. */
-/* THE CORNER'S FOOTPRINT, as one token every surface reserves. Two IconButtons
-   and their gap, plus the edge gap on both sides — so a top row can keep its
-   own text clear of the pair without any surface measuring it again. */
-:root { --quick-corner: calc((2 * var(--iconbtn-size)) + 0.6rem + (2 * var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))); }
+   whatever is on it. They ride a rail of their own: a vertical stack pinned to
+   the right edge, immediately BELOW the band, over the surface's content.
+   WHY NOT THE TOP-RIGHT CORNER, which is where they were for a day. Owner,
+   2026-09-04: "move full screen and music … to anchored to top right corner
+   and not block any text"; owner, 2026-09-05, with a screenshot of build
+   0.4.0.1454: "I miss the old Hudson and music and full screen placement".
+   The corner is inside the band, so keeping text out from under the pair meant
+   every surface reserving a horizontal slice of its own top row — and the
+   measurement is what settles it: at 360x800 the map's header reserved
+   243 of 434 CSS px, 56% of the band, for a pair 106px wide, and the identity
+   ellipsed to "FORSAKEN ·…" while the meters collapsed to 50px. Below the band
+   the pair overlays content that was already yielding to it: `.field` in
+   styles/combat.css pads its right edge for exactly this rail, and the map's
+   route strip calls its own right margin "the HUD's utility gutter". Those two
+   gutters were written for this placement and were never removed, so for a day
+   the game reserved space in three places for two buttons.
+   The band is the containing block (`.as-band { position: relative }`), so
+   `top: 100%` follows the band's own height on every surface and at every text
+   size without a number to keep in step. `--hud-quick-edge-gap` is authored
+   (balance.ui.hudQuickSettings.edgeGapPx, planted on <html> by main.js) and
+   divided by the zoom, so the gap is the same on glass at every UI size. */
+/* THE RAIL'S FOOTPRINT, as one token the surfaces under it reserve. It is ONE
+   IconButton wide, not two, because the rail is a COLUMN — the same value this
+   token replaced when it was inlined in styles/combat.css. */
+:root { --quick-corner: calc(var(--iconbtn-size) + (2 * var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))); }
 .hud-quick-settings {
-  position: fixed; z-index: 80;
-  top: calc(env(safe-area-inset-top, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  position: absolute; z-index: 80;
+  top: calc(100% + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
   right: calc(env(safe-area-inset-right, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
-  display: flex; align-items: flex-start; gap: 0.6rem;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 0.6rem;
   margin: 0; padding: 0;
 }
-/* The notice speaks under the pair rather than pushing it out of the corner. */
+/* The notice speaks to the LEFT of the rail rather than pushing it off the
+   edge: the rail is a column now, so there is no room under it. */
 .hud-quick-settings > .hud-quick-notice {
-  position: absolute; top: calc(var(--iconbtn-size) + 0.4rem); right: 0;
+  position: absolute; top: 0; right: calc(var(--iconbtn-size) + 0.4rem);
   max-width: 22rem; text-align: right; white-space: normal;
 }
 .hud-quick-settings > .hud-quick-notice[hidden] { display: none; }
-/* Every surface that shows the pair keeps its own top row out of that corner:
-   the run HUD's rows, and the co-op board's dock and scene header. */
-.topbar.combat-hud > .hud-top,
-.coop-scene > .as-banner,
-.coop-board > .coop-top,
-.topbar.map-header { padding-inline-end: var(--quick-corner); }
+/* NOTHING RESERVES A SLICE OF ITS OWN TOP ROW ANY MORE. The rail sits under the
+   band, so the run header, the co-op banner and the co-op board top each get
+   their full width back — that is the point of moving it, and re-adding a
+   `padding-inline-end: var(--quick-corner)` to any of them would give the dead
+   space back. What DOES reserve for the rail is what sits beneath it:
+   `.field` (styles/combat.css) and the map's route strip, both already written
+   for this placement. */
 /* A narrow map header cannot hold its whole line AND the corner, and `nowrap`
    made its actions overflow INTO the corner rather than yield. It wraps: the
    way out drops to its own line under the pair (kit law — a narrow shape is a
@@ -3354,7 +3386,12 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 
 /* ═══ FIGURE WELL — an ArtWell tall enough for a standing sprite ═══════════ */
 .as-artwell.figure { width: 16rem; height: 20rem; font-size: 6.4rem; border-width: 2px; transition: border-color 200ms, box-shadow 300ms; }
-.as-artwell.figure .class-sprite { transform: none; }
+/* The figure well shows the painting as painted — see the facing block in
+   styles/ui.css. It cancels the FACING LAYER, not `.class-sprite`: the mirror
+   moved onto that layer so it would stop colliding with the reaction
+   animations and with the sigil overlay, and a cancel aimed at the old element
+   would silently stop cancelling anything. */
+.as-artwell.figure .class-sprite > .facing { transform: none; }
 
 /* ═══ STEPPER — a Segmented of − / value / + ════════════════════════════════ */
 .as-seg.stepper button { min-width: var(--tap-floor); min-height: calc(var(--tap-floor) - 2px); padding-inline: 0.9rem; font-size: 1.6rem; }
@@ -3937,11 +3974,25 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 
 /* ═══ BAND — a page-level chrome strip (the HUD, an action row, a zoom bar) ═ */
 /* `.topbar` is the hook co-op's bar still writes; the kit name is the recipe. */
-.as-band, .topbar { display: flex; align-items: center; gap: 1.2rem; flex: 0 0 auto; min-width: 0; padding: 0.6rem 1.6rem; background: var(--bg-raise); border-bottom: 1px solid var(--line); }
+/* `position: relative` ON BOTH, because the utility rail hangs off the bottom
+   of whichever one carries it (`top: 100%`, § QUICK SETTINGS). `.as-band`
+   already had it for its grip; `.topbar` did not, and the co-op board's two
+   headers (`screens/coop.js`) are bare `.topbar` with no `as-band` — so the
+   rail would have escaped to the nearest positioned ancestor and hung a full
+   screen height below the fold. hud-quick-compact's 18 surfaces are solo
+   map/combat/title, so no gate would have said so. */
+.as-band, .topbar { position: relative; display: flex; align-items: center; gap: 1.2rem; flex: 0 0 auto; min-width: 0; padding: 0.6rem 1.6rem; background: var(--bg-raise); border-bottom: 1px solid var(--line); }
 .as-band.foot { border-bottom: 0; border-top: 1px solid var(--line); }
 .as-band.stack { flex-direction: column; align-items: stretch; gap: 0.5rem; }
 .as-band.quiet { background: transparent; border: 0; }
 .as-band-row { display: flex; align-items: center; gap: 1.2rem; min-width: 0; width: 100%; }
+/* THE METERS START LEVEL WITH THE CONTROLS BESIDE THEM. The resource row's
+   height is set by its right-hand cluster — two rows of IconButtons, 112 CSS px
+   at 360x800 — while the three meters are 41, so `align-items: center` left
+   them straddling the gap between the ⚒ ☰ row and the flasks below, aligned to
+   neither. Cross-axis only: the row's height is the cluster's either way, so
+   this moves no other row and the map and combat HUDs stay the same height. */
+.hud-resource-row > .hud-vitals-panel { align-self: flex-start; }
 .as-band-row > .grow { flex: 1 1 auto; min-width: 0; }
 .as-band-row.split { justify-content: space-between; }
 .as-band-row.end { justify-content: flex-end; }
@@ -3980,6 +4031,14 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
      and no text meets the corner. */
   .as-band-row.thirds { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.3rem; }
   .as-band-row.thirds > :last-child { grid-column: 1 / -1; justify-self: start; }
+  /* THE RECEIPT READS ON THE FIRST LINE, not between the identity's two. The
+     identity is a two-line LabelStack here (name · class, then the context) and
+     the grid centres its items, so the Cinders chip landed at the row's middle
+     — level with the gap between those two lines, which reads as a collision
+     with the title rather than as a third fact. Aligned to the top it sits on
+     the eyebrow's line, where the eye already is. Three tracks on one line at
+     wider widths keep the centring: this is the narrow shape's own rule. */
+  .as-band-row.thirds > .hud-center { align-self: start; }
   /* ONE LINE FOR THE IDENTITY'S EYEBROW, so the run HUD is the SAME HEIGHT on
      every screen that draws it. The context line beneath it is already nowrap;
      the eyebrow was not, so it wrapped wherever its track was tightest — and
@@ -6002,17 +6061,10 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     }
     subject.statuses.crimsonBlight = { stacks: 3, duration: 3 };
   }
-  const label =
-    enc.pool === 'boss'
-      ? registries.enemies.get(enc.enemies[0]).name.toUpperCase()
-      : enc.pool === 'elite'
-        ? `ELITE · FLOOR ${run.floor}`
-        : `ACT ${run.actNumber} · FLOOR ${run.floor}`;
   mountCombat(app, {
     registries,
     run,
     combat,
-    label,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
     meta: activeMeta,
@@ -52513,7 +52565,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '37d6c7ccb9';
+const SOURCE = 'c7bc6a0a4f';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52547,7 +52599,7 @@ const SOURCE = '37d6c7ccb9';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '71';
+const ORDINAL = '74';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -52574,7 +52626,7 @@ const ORDINAL = '71';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-09-04';
+const BUILT = '2026-09-05';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -58836,37 +58888,55 @@ function enemySprite(enemyDef) {
   const el = document.createElement('div');
   const placeholder = () => {
     el.innerHTML = '';
-    // This REPLACES cssText, so the facing has to be restated or a missing
-    // render would quietly un-mirror the fighter. The glyph is text, though,
-    // and mirrored text reads as a rendering fault — so the placeholder keeps
-    // the wrapper unmirrored on purpose and says so here rather than looking
-    // like an omission.
+    // This drops the facing layer with the rest of the children, and that is
+    // right rather than an omission: what replaces the art is a GLYPH, and
+    // mirrored text reads as a rendering fault. A placeholder therefore always
+    // draws as-drawn.
     el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};border-radius:10px;` +
       `background:var(--panel);border:2px solid ${tint};display:flex;align-items:center;` +
       `justify-content:center;font-size:${px(tier.font)};position:relative;` +
       `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
     el.textContent = enemyDef.art || '☠';
   };
-  // THE MIRROR RIDES THIS WRAPPER, and both halves of that are deliberate.
+  // THE MIRROR GETS ITS OWN LAYER, because every other element here is
+  // something's animation target and a CSS animation on `transform` sits in a
+  // HIGHER CASCADE ORIGIN than a normal declaration — inline styles included.
+  // An animated transform REPLACES the inline one rather than composing, so
+  // wherever the mirror sits, an animation reaching that element un-mirrors the
+  // fighter for as long as it runs.
   //
-  // Not the combatant frame outside it, because that frame carries the block
-  // badge and the resource meters, and mirroring those would flip a number.
+  // The three elements that are NOT available, each ruled out by measurement:
+  //   · the combatant frame outside this one — it carries the block badge and
+  //     the resource meters, and mirroring those would flip a number.
+  //   · this wrapper — `styles/combat.css` aims `hitflash`/`hit-enemy`,
+  //     `wobble` and `crumble` at `.sprite > :first-child`, and this wrapper IS
+  //     that first child. Driven on the board: hitflash took the wrapper to
+  //     `matrix(1,0,0,1,12.8,0)`, wobble held `matrix(1,…)` for its whole
+  //     550ms, and crumble interpolated -1 → -0.43, flipping THROUGH the
+  //     mirror and ending the death animation facing the wrong way.
+  //   · the `img` — `sprite-idle` (infinite) and `enemy-lunge` are aimed at
+  //     `.combatant .sprite > img`. Those selectors are dead today, because
+  //     the img is a grandchild of `.sprite` rather than a child, so the mirror
+  //     would survive there by accident; the day that selector is repaired it
+  //     would break, and it is already carded to be repaired.
   //
-  // Not the `img` inside it either, which is where this started: a CSS
-  // animation on `transform` sits in a HIGHER CASCADE ORIGIN than a normal
-  // declaration, inline styles included, so an animated transform REPLACES an
-  // inline one rather than composing with it. `styles/combat.css` aims
-  // `sprite-idle` (infinite) and `styles/ui.css` aims `enemy-lunge` at
-  // `.combatant .sprite > img`, and the day either selector starts matching,
-  // an img-borne mirror would silently stop facing the fighter the right way.
-  // (Today neither matches — this function returns a wrapper, so the img is a
-  // GRANDCHILD of `.sprite` and both animations are dead selectors on dev as
-  // well as here. Measured: 8 samples across the idle period with
-  // `reduced-motion` false, the mirror holds and no animation is running on
-  // the img. That is luck, not design, and this wrapper is what makes it
-  // design: nothing animates the wrapper, so facing and motion cannot fight.)
+  // So: a layer between them that nothing selects. It carries the facing and
+  // only the facing.
   el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};position:relative;`
-    + 'display:flex;align-items:flex-end;justify-content:center;'
+    + 'display:flex;align-items:flex-end;justify-content:center;';
+  const facing = document.createElement('div');
+  // Same element name as the player figure's layer (classSprite(), and the
+  // facing block in styles/ui.css) because it is the same mechanism. WHERE the
+  // decision lives differs, and has to: an enemy's facing is a per-asset fact
+  // and is set inline from `artFaces`, while the player's is one blanket
+  // socket correction for a whole producer's output and stays a CSS rule with
+  // its own removal condition. `data-facing` records the per-asset answer;
+  // the player layer carries no such marker precisely because it has no
+  // per-asset answer to record.
+  facing.className = 'facing';
+  facing.dataset.facing = spriteMirror(enemyDef.artFaces) ? 'mirrored' : 'as-drawn';
+  facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;'
+    + 'justify-content:center;'
     + (spriteMirror(enemyDef.artFaces) ? 'transform:scaleX(-1);' : '');
   const img = document.createElement('img');
   img.src = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
@@ -58874,7 +58944,8 @@ function enemySprite(enemyDef) {
   img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
     `filter:drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
   img.addEventListener('error', placeholder);
-  el.appendChild(img);
+  facing.appendChild(img);
+  el.appendChild(facing);
   return el;
 }
 
@@ -58912,6 +58983,15 @@ function sigilMedallion(cx, cy, t, sigil, plainR) {
     // The circle is symmetric and does not care; the GLYPH is text, and mirrored
     // text reads as a rendering fault rather than as a character facing you.
     // Reflected about its own centre, so it lands exactly where it already was.
+    //
+    // THIS COUNTER-MIRROR STILL ASSUMES ITS ANCESTOR IS MIRRORED, which the
+    // rendered path's overlay no longer has to (it sits outside the facing
+    // layer). It cannot follow: this glyph is drawn INSIDE the figure's own
+    // SVG, so it inherits whatever the facing layer does. In the
+    // character-creation figure well, which cancels the facing, that makes this
+    // glyph backwards — carded, not fixed here, because moving it out means
+    // giving four hand-authored viewBoxes a chest anchor apiece. Only the
+    // `classic` sprite style and the file:// fallback reach this path.
     `<g transform="translate(${cx * 2},0) scale(-1,1)">` +
     `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>` +
     `</g>`
@@ -59017,9 +59097,34 @@ function classSprite(classId, tint, sigil, tintId, style) {
   el.className = 'class-sprite';
   el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
 
+  // THE FACING LAYER, for the same reason enemySprite() has one: the mirror
+  // (`styles/ui.css`, "the figure faces the viewer") must sit on an element
+  // that carries NOTHING ELSE. It used to ride `.class-sprite` itself, which
+  // is both an animation target and the overlay's positioning parent, and it
+  // broke in both directions — measured on the board, not reasoned about:
+  //
+  //   · `.player .sprite.hitflash > :first-child` and `.wobble > :first-child`
+  //     animate `transform` on `.class-sprite`, and an animation outranks a
+  //     normal declaration, so the PLAYER FLIPPED TO FACE AWAY from the enemies
+  //     for the length of every hit and every stagger:
+  //         hitflash  matrix(-1,…) -> matrix(1,0,0,1,-12.82,0) -> matrix(1,…)
+  //         wobble    matrix(1,0,0,1,0,0) … the whole 550ms unmirrored
+  //   · `styles/kit.css` cancels the mirror in the character-creation figure
+  //     well (`.as-artwell.figure .class-sprite { transform: none }`), and the
+  //     sigil overlay below was counter-mirroring to undo a parent mirror that
+  //     was no longer there — so the builder drew the chosen sigil BACKWARDS
+  //     (measured: the medallion computed `matrix(-1,0,0,1,-11,-11)`).
+  //
+  // Now the art hangs off this layer and the sigil hangs off the frame, so the
+  // facing applies to exactly the thing that has a facing.
+  const facing = document.createElement('div');
+  facing.className = 'facing';
+  facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;';
+  el.appendChild(facing);
+
   const fallbackToSvg = () => {
-    el.innerHTML = build(tint, sigil);
-    const svg = el.querySelector('svg');
+    facing.innerHTML = build(tint, sigil);
+    const svg = facing.querySelector('svg');
     if (svg) {
       // The class SVGs hardcode a 110×140 viewBox; fill the fixed-geometry
       // container (viewBox keeps ratio) so Text size cannot resize the figure.
@@ -59038,7 +59143,17 @@ function classSprite(classId, tint, sigil, tintId, style) {
     const stage = createPoseStage(classId, tintId);
     if (stage) {
       el.classList.add('animated');
-      el.appendChild(stage.el);
+      // Inside the facing layer, like the painting: an animated figure has a
+      // facing for exactly the same reason a still one does, and hanging the
+      // stage off `.class-sprite` instead would leave it as the one style that
+      // ignores the mirror. It also keeps the stage clear of the mirror in the
+      // other direction — `.pose-layer` carries its own inline
+      // `translateX(…)` to seat the pose's rotation anchor, and that is a
+      // second transform on a second element rather than two facts fighting
+      // over one. `stageFor()` searches DOWN from the combatant's `.sprite`,
+      // so the extra layer does not hide the stage from it; the key still
+      // rides `.class-sprite.animated`, which is what that search matches.
+      facing.appendChild(stage.el);
       registerStage(el, stage);
       return el;
     }
@@ -59053,7 +59168,7 @@ function classSprite(classId, tint, sigil, tintId, style) {
   img.alt = classId;
   img.style.cssText = 'width:100%;height:100%;object-fit:contain;image-rendering:auto;';
   img.addEventListener('error', fallbackToSvg); // dist / file:// → SVG
-  el.appendChild(img);
+  facing.appendChild(img);
   // The chosen sigil rides the rendered art as a chest medallion overlay.
   //
   // WHERE IT SITS IS PER CLASS AND MEASURED (src/content/classArtAnchors.js).
@@ -59068,12 +59183,16 @@ function classSprite(classId, tint, sigil, tintId, style) {
   if (sigil && medTop != null) {
     const med = document.createElement('span');
     med.textContent = sigil;
-    // `scaleX(-1)` UNDOES the figure mirror this element inherits (styles/ui.css,
-    // "the figure faces the viewer"). That mirror is right for the ART and wrong
-    // for a GLYPH: a sigil is text, and mirrored text reads as a rendering fault.
-    // The medallion is centred on the chest, so flipping it back moves nothing.
+    // NO COUNTER-MIRROR, and its absence is the fix rather than an omission.
+    // This used to carry `scaleX(-1)` to undo the mirror it inherited from
+    // `.class-sprite` — right for the ART, wrong for a GLYPH, since mirrored
+    // text reads as a rendering fault. But it hardcoded "my parent is
+    // mirrored", and the character-creation figure well cancels that mirror,
+    // so there the counter-mirror WAS the fault it was written to prevent.
+    // The medallion now sits outside the facing layer: it inherits no mirror,
+    // so it needs no undoing, on any surface.
     med.style.cssText =
-      `position:absolute;left:50%;top:${medTop}%;transform:translate(-50%,-50%) scaleX(-1);` +
+      `position:absolute;left:50%;top:${medTop}%;transform:translate(-50%,-50%);` +
       `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
       'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
     el.appendChild(med);
@@ -65451,7 +65570,6 @@ const { relicText } = require("src/ui/components/card.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
 const { matchAction, actionDestinationForEvent, isEngaged, focusFirst, actionHint } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
-const { classGlyph, tintCss } = require("src/ui/assets.js");
 const { nodeBlurb, actTitle, legendEntries, MENU } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { mountMapBoard } = require("src/ui/components/mapboard.js");
@@ -65514,7 +65632,6 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, 
 
   const cz = run.customization || {};
   const className = registries.classes.get(run.class).name;
-  const heroName = (cz.name || className).toUpperCase();
   const atEntrance = !run.mapNodeId;
   // THE LEGEND IS THE KIT'S POPOVER: one Row per node kind, its icon the Row's
   // Glyph in the kind's own tint. It hangs off the ? in the zoom bar and is
@@ -65544,22 +65661,14 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, 
         floor: run.floor,
         floorTotal: map.floors,
         seed: run.seedString,
-        identity: {
-          name: heroName,
-          classLabel: className.toUpperCase(),
-          glyph: cz.glyph || classGlyph(run.class),
-          tint: tintCss(cz.tint),
-          context: actTitle(run.actNumber),
-        },
         controls: {
           armouryId: 'open-armoury',
           menuId: 'open-menu',
           menuHint: actionHint('menu'),
         },
-        quickSettings: {
-          presentation: registries.balance.ui.hudQuickSettings,
-          settings: meta.settings || {},
-        },
+        // The settings bag, for `runHudMode` — the band's compact/expanded
+        // state. `presentation` went with the fullscreen/music pair.
+        quickSettings: { settings: meta.settings || {} },
         overlayHtml: '',
       }))}
       ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
@@ -67856,23 +67965,27 @@ Object.assign(module.exports, { flaskActionPlan });
 // Reusable Map/Combat HUD Views. Structure is rendered from immutable
 // Presentation Models; this module owns DOM, not domain projection or commands.
 //
-// THE HUD IS A KIT BAND (styles/kit.css `.as-band`), three rows deep:
-//   1. the run header — identity as a LabelStack (Eyebrow "name · class",
-//      Title·S = the context: the act on the map, the fight in combat), the
-//      Cinders receipt as a StatChip, and the Act · Floor · Build trail as a
-//      StatStrip;
+// THE HUD IS A KIT BAND (styles/kit.css `.as-band`), three rows deep, and the
+// owner's list of 2026-09-05 is the whole of it — "vitals, relics, cinders,
+// armory, menu and hp and mp potions":
+//   1. the run header — the Cinders receipt as a StatChip, centred, with the
+//      build stamp trailing right;
 //   2. the resource row — the meters (components/resbars.js, the kit Meter)
-//      and, on the right, a cluster of IconButtons (⚒ ☰ ⛶ ♫) over the flask
+//      and, on the right, the Armoury and Menu IconButtons over the flask
 //      Slots the screen mounts;
 //   3. the belt — relic Slots and carried-potion Slots.
+// WHAT LEFT THE BAND, so nothing drifts back in: the character name, the class,
+// the chosen sigil, the screen's context line, the Act chip and the Floor chip
+// (all on that list, or absent from it), and the fullscreen and music pair —
+// which lives on the title screen and in Settings, and needed no third home.
+// Each function below says why its own is gone.
 // The classes that are not `as-*` are HOOKS the instruments read; kit.css
 // draws nothing for them and no stylesheet may any more.
 const { esc } = require("src/ui/components/tooltip.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { UI_COMPONENTS: UI, uiComponentAttrs } = require("src/ui/components/uiComponents.js");
 const { childModel } = require("src/ui/models/ComponentModel.js");
-const { hudQuickSettingsHtml } = require("src/ui/components/hudQuickSettings.js");
-const { el, html, eyebrow, titleS, iconButton } = require("src/ui/kit/index.js");
+const { el, html, iconButton } = require("src/ui/kit/index.js");
 
 function attrsOf(componentAttrs) {
   // uiComponentAttrs() returns attribute TEXT for string templates; the kit's
@@ -67882,23 +67995,24 @@ function attrsOf(componentAttrs) {
   return out;
 }
 
-function progressChip(className, componentAttrs, { label, value, total }) {
-  return el('span', { ...attrsOf(componentAttrs), class: `as-chip ${className}` }, [
-    el('span', { class: 'ck', text: label }),
-    el('span', { class: 'cv' }, [
-      String(value),
-      total == null ? null : el('span', { class: 'hud-progress-total', text: ` / ${total}` }),
-    ]),
-  ]);
-}
-
+// THE BAND CARRIES NO IDENTITY AT ALL (owner, 2026-09-05: "it should just be
+// vitals, relics, cinders, armory, menu and hp and mp potions in the Hud").
+// The name, the class, the chosen sigil and the screen's context line were all
+// here; none of them is state that changes in a fight, which is the only thing
+// this band is for. Each is still reachable where it belongs: the name labels
+// the save slot, the sigil and class are the character-creation facts the
+// player just chose, and the act is named by the map's own route strip.
+//
+// The cluster stays as an EMPTY LabelStack rather than being deleted, and that
+// is deliberate: `.hud-info-row` is a three-track grid (identity | receipt |
+// trail) whose middle track is what centres the Cinders receipt. Dropping the
+// first track would slide the receipt off centre and take `hudparity`'s
+// centring rule with it. An empty track holds the shape.
 function identityClusterHtml(model) {
-  const title = childModel(model, UI.characterTitle).properties;
-  const context = model.properties.context || '';
-  return html(el('div', { ...attrsOf(uiComponentAttrs(model.component, model.variant)), class: 'hud-identity as-labelstack' }, [
-    eyebrow(`${title.name} · ${title.classLabel}`, { ...attrsOf(uiComponentAttrs(UI.characterTitle)), class: 'nm' }),
-    context ? titleS(context, { tag: 'span', class: 'ls-label hud-context fold' }) : null,
-  ]));
+  return html(el('div', {
+    ...attrsOf(uiComponentAttrs(model.component, model.variant)),
+    class: 'hud-identity as-labelstack', 'aria-hidden': 'true',
+  }, []));
 }
 
 function cindersCounterHtml(model) {
@@ -67911,12 +68025,21 @@ function cindersCounterHtml(model) {
   ])));
 }
 
+// THE TRAIL IS THE BUILD STAMP AND NOTHING ELSE. The Floor chip went first,
+// then the Act chip with the rest of the run chrome (owner's list above names
+// neither). The `metadataField` models stay in RunHeaderModel — act, floor,
+// seed and source are all still projected, and the map's own progress derives
+// from them; only the chips are gone.
+//
+// THE STAMP STAYS, AND IT IS NOT AN OVERSIGHT AGAINST THAT LIST. It is not
+// chrome a player reads, it is the receipt that identifies a screenshot:
+// `tools/buildstamp-shot.mjs` photographs exactly one stamp on the title, the
+// map and a fight, and on 2026-09-05 the owner's own screenshot of build
+// 0.4.0.1454 is what identified where the utility rail used to live. A HUD with
+// no version on it cannot answer "which build is this". Removing it is one line
+// here plus that tool's three placements, if the owner wants it gone too.
 function buildMetadataTrailHtml(model) {
-  const act = childModel(model, UI.metadataField, 'act').properties;
-  const floor = childModel(model, UI.metadataField, 'floor').properties;
   return `<div class="hud-run-meta as-statstrip trail" ${uiComponentAttrs(model.component, model.variant)}>
-    ${html(progressChip('hud-act', uiComponentAttrs(UI.metadataField, 'act'), act))}
-    ${html(progressChip('hud-floor', uiComponentAttrs(UI.metadataField, 'floor'), floor))}
     ${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}
   </div>`;
 }
@@ -67936,7 +68059,17 @@ function vitalsPanelHtml(model) {
   </section>`;
 }
 
-function quickAccessPanelHtml(model, { quickSettingsHtml = '' } = {}) {
+// TWO CONTROLS, NOT FOUR. Fullscreen and music are gone from the band (owner,
+// 2026-09-05: "the full screen and music buttons don't need to be there since
+// we have it in the quick and main menu settings"). Verified before removing
+// rather than after: `screens/settings.js` carries Fullscreen under Display and
+// Music with its volume under Audio, so neither affordance is stranded by this.
+// They still sit on the TITLE screen, which is the main menu the owner names.
+//
+// `quickSettingsHtml` is gone from the signature too, not just unused — an
+// options bag that silently accepts a pair nobody draws is how the pair comes
+// back by accident.
+function quickAccessPanelHtml(model) {
   const armoury = childModel(model, UI.armouryControl);
   const menu = childModel(model, UI.quickMenuControl);
   const button = (control, extra = {}) => html(iconButton({
@@ -67948,16 +68081,15 @@ function quickAccessPanelHtml(model, { quickSettingsHtml = '' } = {}) {
     <div class="hud-actions as-cluster">
       ${button(armoury)}
       ${button(menu, { 'data-action-hint': 'menu' })}
-      ${quickSettingsHtml}
     </div>
     <div class="flasks hud-charge-flasks as-cluster" aria-label="Healing and mana flasks"></div>
   </section>`;
 }
 
-function primaryHudRowHtml(model, options = {}) {
+function primaryHudRowHtml(model) {
   return `<div class="hud-resource-row as-band-row" ${uiComponentAttrs(model.component, model.variant)}>
     ${vitalsPanelHtml(childModel(model, UI.vitalsPanel))}
-    ${quickAccessPanelHtml(childModel(model, UI.quickAccessPanel), options)}
+    ${quickAccessPanelHtml(childModel(model, UI.quickAccessPanel))}
   </div>`;
 }
 
@@ -67973,7 +68105,6 @@ function inventoryBeltHtml(model) {
 function sharedRunHudHtml(model) {
   const { place, headerClass, overlayHtml, hudMode } = model.properties;
   const grip = childModel(model, UI.hudModeGrip);
-  const quickSettingsHtml = hudQuickSettingsHtml(childModel(model, UI.hudQuickSettings));
   const gripButton = iconButton({
     glyph: hudMode === 'compact' ? '⌄' : '⌃', label: grip.accessibility.label, className: 'hud-mode-grip as-grip',
     attrs: { ...attrsOf(uiComponentAttrs(grip.component, grip.variant)), 'data-next-mode': grip.properties.next, title: grip.accessibility.hint },
@@ -67981,7 +68112,7 @@ function sharedRunHudHtml(model) {
   return `<header class="topbar combat-hud shared-hud as-band stack${headerClass ? ` ${esc(headerClass)}` : ''}" data-hud-mode="${esc(hudMode)}" data-has-utility-potions="false" ${uiComponentAttrs(model.component, place)}>
     <div class="hud-top as-cluster stack">
       ${runHeaderStripHtml(childModel(model, UI.runHeaderStrip))}
-      ${primaryHudRowHtml(childModel(model, UI.primaryHudRow), { quickSettingsHtml })}
+      ${primaryHudRowHtml(childModel(model, UI.primaryHudRow))}
       ${inventoryBeltHtml(childModel(model, UI.inventoryBelt))}
     </div>
     ${html(gripButton)}
@@ -68043,7 +68174,6 @@ const { runHeaderModel } = require("src/ui/models/RunHeaderModel.js");
 const { vitalsPanelModel } = require("src/ui/models/VitalsPanelModel.js");
 const { quickAccessPanelModel } = require("src/ui/models/QuickAccessPanelModel.js");
 const { inventoryBeltModel } = require("src/ui/models/InventoryBeltModel.js");
-const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
 const { hudModeGripModel, normalizeHudMode } = require("src/ui/models/HudModeModel.js");
 
 // Presentation projection only: callers provide a domain snapshot and command
@@ -68072,7 +68202,16 @@ function runHudViewModel({
         children: [vitalsPanelModel(), quickAccessPanelModel(controls)],
       }),
       inventoryBeltModel(place),
-      hudQuickSettingsModel({ place, ...quickSettings }),
+      // NO QUICK-SETTINGS CHILD. The fullscreen/music pair left the run HUD on
+      // 2026-09-05 ("the full screen and music buttons don't need to be there
+      // since we have it in the quick and main menu settings"), so the band has
+      // no such component to model. `hudQuickSettingsModel` is still the title
+      // screen's, which is the main menu that keeps the pair.
+      //
+      // `quickSettings` SURVIVES AS A PARAMETER and that is not residue: the bag
+      // carries `settings`, and `runHudMode` inside it is what decides whether
+      // this band draws compact or expanded (see `hudMode` above). It is the
+      // settings bag, not the pair's model.
       hudModeGripModel({ mode: hudMode }),
     ],
   });
@@ -68087,14 +68226,24 @@ const { componentModel } = require("src/ui/models/ComponentModel.js");
 const { metadataFieldModel } = require("src/ui/models/HudPrimitiveModels.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 
-function identityClusterModel(identity) {
-  return componentModel(UI.identityCluster, {
-    properties: { name: identity.name, classLabel: identity.classLabel, context: identity.context || '' },
-    children: [
-      componentModel(UI.portraitBadge, { properties: { glyph: identity.glyph, tint: identity.tint } }),
-      componentModel(UI.characterTitle, { properties: { name: identity.name, classLabel: identity.classLabel } }),
-    ],
-  });
+// THE CLUSTER PROJECTS NOTHING (owner, 2026-09-05: "it should just be vitals,
+// relics, cinders, armory, menu and hp and mp potions in the Hud", and before
+// that "remove across floor and character name sigil and class from combat
+// hud"). It carried the name, the class, the chosen sigil and the screen's
+// context, and the band draws none of them now.
+//
+// The properties and the two child models go with the view rather than being
+// left projected: a presentation model that still computes a name nobody
+// renders is how the name comes back — some later reader finds the field and
+// assumes the band is meant to show it. `UI.portraitBadge` and
+// `UI.characterTitle` stay declared in UiComponentId, because the ids are the
+// registry's vocabulary and a surface that wants a portrait badge should use
+// the same word; nothing instantiates them today.
+//
+// The cluster itself stays: `.hud-info-row` is a three-track grid whose middle
+// track is what centres the Cinders receipt, and this is the first track.
+function identityClusterModel() {
+  return componentModel(UI.identityCluster, {});
 }
 
 function cindersCounterModel(cinders) {
@@ -68120,7 +68269,7 @@ function buildMetadataTrailModel({ place, act, actTotal, floor, floorTotal, seed
 function runHeaderModel(input) {
   return componentModel(UI.runHeaderStrip, {
     children: [
-      identityClusterModel(input.identity),
+      identityClusterModel(),
       cindersCounterModel(input.cinders),
       buildMetadataTrailModel(input),
     ],
@@ -68426,7 +68575,7 @@ const { openPileModal } = require("src/ui/components/piles.js");
 const { attachTooltip, ensureTooltip, hideTooltip, showTooltipForRect, esc } = require("src/ui/components/tooltip.js");
 const { combatantDetailBody } = require("src/ui/components/combatantInspector.js");
 const { relicText } = require("src/ui/components/card.js");
-const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
+const { enemySprite, playerSprite } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
 const { intentBadge, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
@@ -68469,7 +68618,7 @@ function pileButton(kind, label) {
   return node;
 }
 
-function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
+function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -68491,22 +68640,14 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         floor: run.floor,
         floorTotal: run.mapGraph?.floors ?? null,
         seed: run.seedString,
-        identity: {
-          name: ((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase(),
-          classLabel: registries.classes.get(run.class).name.toUpperCase(),
-          glyph: (run.customization && run.customization.glyph) || classGlyph(run.class),
-          tint: tintCss(run.customization && run.customization.tint),
-          context: label,
-        },
         controls: {
           armouryId: 'combat-armoury',
           menuId: 'combat-menu',
           menuHint: actionHint('menu'),
         },
-        quickSettings: {
-          presentation: registries.balance.ui.hudQuickSettings,
-          settings: meta.settings || {},
-        },
+        // The settings bag, for `runHudMode` — the band's compact/expanded
+        // state. `presentation` went with the fullscreen/music pair.
+        quickSettings: { settings: meta.settings || {} },
       }))}
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>

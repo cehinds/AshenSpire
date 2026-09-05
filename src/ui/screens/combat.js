@@ -10,7 +10,7 @@ import { openPileModal } from '../components/piles.js';
 import { attachTooltip, ensureTooltip, hideTooltip, showTooltipForRect, esc } from '../components/tooltip.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { relicText } from '../components/card.js';
-import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
+import { enemySprite, playerSprite } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { intentBadge, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
@@ -53,7 +53,7 @@ function pileButton(kind, label) {
   return node;
 }
 
-export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
+export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -75,22 +75,14 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         floor: run.floor,
         floorTotal: run.mapGraph?.floors ?? null,
         seed: run.seedString,
-        identity: {
-          name: ((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase(),
-          classLabel: registries.classes.get(run.class).name.toUpperCase(),
-          glyph: (run.customization && run.customization.glyph) || classGlyph(run.class),
-          tint: tintCss(run.customization && run.customization.tint),
-          context: label,
-        },
         controls: {
           armouryId: 'combat-armoury',
           menuId: 'combat-menu',
           menuHint: actionHint('menu'),
         },
-        quickSettings: {
-          presentation: registries.balance.ui.hudQuickSettings,
-          settings: meta.settings || {},
-        },
+        // The settings bag, for `runHudMode` — the band's compact/expanded
+        // state. `presentation` went with the fullscreen/music pair.
+        quickSettings: { settings: meta.settings || {} },
       }))}
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>

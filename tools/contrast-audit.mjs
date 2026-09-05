@@ -111,7 +111,6 @@ const TARGETS = [
   { screen: '', sel: '.slot-new', label: '  ↳ its gold ring', prop: 'border-color', box: true },
   { screen: '', sel: '#settings', label: '  ↳ its ring', prop: 'border-color', box: true },
   { screen: 'map', sel: '.map-header .hud-act', label: 'Act' },
-  { screen: 'map', sel: '.map-header .hud-floor', label: 'Floor' },
   { screen: 'map', sel: '.map-header .mh-seed', label: 'SEED' },
   { screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' },
   { screen: 'map', sel: '.hint-bar .hint:first-child', label: 'keyboard hint' },
@@ -579,12 +578,12 @@ const selectorContract = (source) => {
   const targetBlock = /const TARGETS = \[[\s\S]*?\n\];/.exec(source)?.[0] || '';
   const wanted = [
     ["{ screen: 'map', sel: '.map-header .hud-act', label: 'Act' }", 'S1 current Act metadata selector missing'],
-    ["{ screen: 'map', sel: '.map-header .hud-floor', label: 'Floor' }", 'S2 current Floor metadata selector missing'],
     ["{ screen: 'map', sel: '.map-header .mh-seed', label: 'SEED' }", 'S3 current Seed metadata selector missing'],
     ["{ screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' }", 'S4 current map legend selector missing'],
     ["{ screen: 'combat', sel: '.topbar .hud-cinders', label: 'Cinders (combat)' }", 'S7 current combat Cinders selector missing'],
   ];
   for (const [needle, finding] of wanted) if (!targetBlock.includes(needle)) bad.push(finding);
+  if (targetBlock.includes("sel: '.map-header .hud-floor'")) bad.push('S2 removed Floor metadata selector returned');
   if (targetBlock.includes("sel: '.map-header .mh-prog'")) bad.push('S5 removed combined progress selector returned');
   if (targetBlock.includes("sel: '.map-header #map-legend'")) bad.push('S6 removed map-header legend selector returned');
   return bad;
@@ -598,8 +597,16 @@ if (args.includes('--source-selftest')) {
       source: clean.replace("{ screen: 'map', sel: '.map-header .hud-act', label: 'Act' }", "{ screen: 'map', sel: '.map-header .mh-prog', label: 'Act' }"),
     },
     {
-      name: 'Floor metadata target disappears', expected: 'S2 ',
-      source: clean.replace("{ screen: 'map', sel: '.map-header .hud-floor', label: 'Floor' }", ''),
+      // The Floor chip was removed from the run header on 2026-09-05 (owner:
+      // "remove the floor and character and class name"), so the old plant —
+      // delete the selector, expect S2 — had nothing left to delete and would
+      // have passed vacuously. Inverted: the finding now fires if the selector
+      // comes BACK without a chip to point at.
+      name: 'Floor metadata target returns with no chip behind it', expected: 'S2 ',
+      source: clean.replace(
+        "{ screen: 'map', sel: '.map-header .hud-act', label: 'Act' },",
+        "{ screen: 'map', sel: '.map-header .hud-act', label: 'Act' },\n  { screen: 'map', sel: '.map-header .hud-floor', label: 'Floor' },",
+      ),
     },
     {
       name: 'legend points back at removed map-header parent', expected: 'S4 ',

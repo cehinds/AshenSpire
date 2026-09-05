@@ -148,9 +148,19 @@ export function findings(r) {
     bad.push('C5 reusable component modules crossed the simulation-state boundary');
   }
   // THE KIT SWEEP (2026-09-04): the trail is a kit StatStrip (`.as-statstrip
-  // trail`) — one wrapping row of StatChips, Act then Floor then the build
-  // stamp — and no HUD stylesheet lays it out any more.
-  if (!/hud-act[\s\S]*hud-floor[\s\S]*buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
+  // trail`) and no HUD stylesheet lays it out any more.
+  // IT IS THE BUILD STAMP ALONE SINCE 2026-09-05. The Floor chip went with
+  // "remove across floor and character name sigil and class from combat hud",
+  // the Act chip with "it should just be vitals, relics, cinders, armory, menu
+  // and hp and mp potions in the Hud". The MODEL still carries act, floor, seed
+  // and source, which is why the second regex still names them — and that split
+  // is the thing this check pins: the facts stay projected, the chips are gone,
+  // and neither half can drift without a finding.
+  if (!/buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
+      // QUOTED, because `hud-act` is a substring of `hud-actions` — the class on
+      // the Armoury/Menu cluster, which is very much still there. A bare token
+      // search here reported the chips present when they were gone.
+      || /'hud-(?:act|floor)'/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
       || !/class="hud-run-meta as-statstrip trail"/.test(r.hud)
       || !/\.as-statstrip, \.as-kitline \{ display: flex; flex-wrap: wrap;/.test(r.kit)
@@ -273,7 +283,15 @@ export function findings(r) {
       || !/Object\.freeze\(\{[\s\S]*component,[\s\S]*properties:[\s\S]*tokens:[\s\S]*accessibility:[\s\S]*behaviors:[\s\S]*children:/.test(r.componentModel)
       || !/export function behaviorModel/.test(r.behaviorModel)
       || !/export function runHudViewModel/.test(r.hudViewModel)
-      || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)[\s\S]*hudQuickSettingsModel\(\{ place, \.\.\.quickSettings \}\)/.test(r.hudViewModel)
+      // The composition is four children since 2026-09-05, not five: the
+      // fullscreen/music pair left the band ("the full screen and music buttons
+      // don't need to be there since we have it in the quick and main menu
+      // settings"), so there is no `hudQuickSettingsModel` child to compose.
+      // The ORDER of what remains is still pinned, which is what this line is
+      // for, and the second clause pins the removal itself so the child cannot
+      // reappear without a finding.
+      || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)[\s\S]*hudModeGripModel\(\{ mode: hudMode \}\)/.test(r.hudViewModel)
+      || /hudQuickSettingsModel\(\{ place/.test(r.hudViewModel)
       || !/UI\.componentBackground/.test(r.hudModels)
       || !/\.NET-inspired application and Component Model contract/.test(r.spec)) {
     bad.push('C13 shared HUD no longer follows the immutable MVVM Component Model composition');
