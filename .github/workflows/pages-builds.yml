@@ -64,8 +64,32 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Fetch the four published branches so their history is readable
-        run: git fetch --no-tags origin dev test release main
+      # ONE MISSING BRANCH USED TO TAKE DOWN EVERY RUN. `git fetch origin dev
+      # test release main` is atomic: `fatal: couldn't find remote ref test`
+      # aborts the whole command with exit 128, so when `test` was deleted on
+      # 2026-09-04 (GitHub auto-deletes a merged PR's head branch, and the
+      # test → release promotion uses `test` AS the head) this job went red on
+      # dev, on release and on main — none of which had lost anything.
+      #
+      # Fetched one at a time, a branch that is gone costs its own line and
+      # nothing else. It is NOT swallowed: the missing ones are named here and
+      # named again in the assembled summary, because a publish that quietly
+      # drops a branch is the failure this whole job exists to prevent.
+      - name: Fetch the published branches so their history is readable
+        run: |
+          set -uo pipefail
+          missing=""
+          for b in dev test release main; do
+            if git fetch --no-tags origin "$b" 2>/dev/null; then
+              echo "  fetched $b"
+            else
+              echo "  MISSING $b — no such branch on origin"
+              missing="$missing $b"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::warning title=A published branch is missing::not on origin:$missing — the site will be assembled without it"
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: '20'

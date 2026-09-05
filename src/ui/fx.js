@@ -7,6 +7,7 @@
 import { sfx } from './sfx.js';
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
+import { playPoseOn } from './services/PoseAnimator.js';
 
 const STEP_MS = 80;
 
@@ -615,8 +616,17 @@ export function playTimeline(events, ctx, done) {
     }
 
     // 1) actor animation (lunge for attacks, glow-step otherwise)
+    //
+    // A figure drawn in the animated style also changes pose for the beat. Asking
+    // for 'attack' lets the figure pick its own next swing, so a multi-hit turn
+    // does not replay one frame and an actor with no frames cannot advance
+    // anyone else's rotation. Anything else takes the guard frame, and
+    // playPoseOn is a no-op for a figure with no frames at all.
     const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
-    if (actorEl) safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
+    if (actorEl) {
+      safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
+      safe(() => playPoseOn(actorEl, beat.kind === 'attack' ? 'attack' : 'guard', speed.lungeMs));
+    }
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
     const visuals = beat.events.map((e) => visualFor(e, beat.kind)).filter(Boolean);
@@ -675,6 +685,9 @@ function visualFor(e, beatKind) {
         // recoil further (hit-heavy) and kick the screen.
         if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
         flash(anchor, 'hitflash', heavy ? 380 : 220);
+        // An animated figure recoils in its own art as well as in CSS, and holds
+        // it as long as the flash it belongs to.
+        playPoseOn(anchor, 'hit', heavy ? 380 : 220);
         if (heavy) {
           flash(anchor, 'hit-heavy', 380);
           shake(ctx.combatEl);

@@ -10,8 +10,13 @@
 // WHAT IS MEASURED, AND WHY IT IS THE FIGURE'S BOX AND NOT THE SPRITE'S.
 // `.armoury-figure` is the container the layout sizes; `.equipped-figure`
 // inside it is the art, and #305's compositing mirror
-// (`.class-sprite, .equipped-figure { transform: scaleX(-1) }`, guarded by
-// `.class-sprite .equipped-figure { transform: none }`) lives on THAT element.
+// (`.class-sprite > .facing, .equipped-figure { transform: scaleX(-1) }`,
+// guarded by `.class-sprite .equipped-figure { transform: none }`) lives on
+// THAT element. The class figure's half of that rule moved off `.class-sprite`
+// onto a facing layer inside it — an element that carries the facing and
+// nothing else, because `.class-sprite` is also an animation target — which
+// changes nothing here: `.equipped-figure` is what this tool reads, and it
+// still carries its own mirror.
 // A transform changes a client rect. So both are read, and the mirror is read
 // as a COMPUTED transform on each of them — this tool goes red if a change
 // creates a second mirror or cancels theirs, which is the hazard of making the

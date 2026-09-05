@@ -42,6 +42,10 @@ export const act1Enemies = [
     poiseMax: 6,
     levelProfile: { min: 1, max: 3 },
     art: '🐕',
+    // Drawn in profile looking LEFT, which is where an enemy looks: the player's
+    // zone is to its left (assets.js SIDE_FACES), so this one is NOT mirrored
+    // and ships as painted. Read off the sprite, not assumed.
+    artFaces: 'left',
     moves: {
       bite: { intent: 'attack', damage: 6, weight: 60 },
       lunge: { intent: 'attack', damage: 3, hits: 2, weight: 40 },

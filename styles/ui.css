@@ -310,6 +310,15 @@
 
 /* ---------- main menu ambience ---------- */
 .title-screen { position: relative; overflow: hidden; }
+/* THE TITLE SCREEN HAS NO BAND ABOVE THE RAIL. The utility rail's own rule in
+   styles/kit.css hangs it off the bottom of the run HUD's band (`top: 100%`),
+   which is what keeps it clear of the header on every surface that has one.
+   The title screen has no header, and the rail is a direct child of the screen
+   — so `top: 100%` would drop it a full screen height below the fold. It keeps
+   its own top-right anchor, which is where it sat before the rail existed. */
+.title-screen > .hud-quick-settings {
+  top: calc(env(safe-area-inset-top, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+}
 .title-glow { animation: titleGlow 3.2s ease-in-out infinite alternate; }
 @keyframes titleGlow {
   from { text-shadow: 0 0 26px rgba(201, 162, 39, 0.25); }
@@ -441,12 +450,23 @@ button.ev-choice {
 :root[data-layout='narrow'] .combat.coop .field {
   flex-direction: column; min-height: 0; overflow-y: auto;
 }
+/* BOTH ZONES YIELD BEFORE THE FIELD SCROLLS. `flex: N 0 auto` on either row
+   meant neither could give a pixel, so at 390x844 the two together wanted
+   449px of a 407px field and the enemy row ran 42px past the bottom — its
+   nameplates were clipped at the field's edge with the flask row sitting
+   under them, so "Blight Hound" and "Grave Wisp" read as half a line of
+   letters. They shrink now, in the order the text law sets: the row gives
+   height, the combatant is already capped to its row (COMBAT narrow), and the
+   sprite inside it yields with `object-fit: contain` — so the ART loses the
+   pixels and the name, meters and intent keep theirs. The field's own
+   `overflow-y: auto` above stays the last resort, for a phone genuinely too
+   short to hold both groups even at their smallest. */
 :root[data-layout='narrow'] .combat.coop .player-zone {
-  width: 100%; min-width: 0; flex: 0 0 auto; flex-wrap: nowrap;
+  width: 100%; min-width: 0; flex: 0 1 auto; min-height: 0; flex-wrap: nowrap;
   align-items: flex-end; justify-content: space-evenly; padding-bottom: 0.6rem;
 }
 :root[data-layout='narrow'] .combat.coop .enemy-row {
-  width: 100%; min-width: 0; flex: 1 0 auto; padding-bottom: 0.6rem;
+  width: 100%; min-width: 0; flex: 1 1 auto; min-height: 0; padding-bottom: 0.6rem;
 }
 :root[data-layout='narrow'] .combat.coop .hand { padding-inline: 1rem; }
 .combat.coop .combatant.player { position: relative; }
@@ -736,8 +756,17 @@ button.ev-choice {
    REMOVAL CONDITION (SOP 1's corollary): delete this block the day the armament
    and body art is re-rendered from corrected producers. Leaving both in place
    double-flips and restores the bug wearing a fix's clothes.
+
+   WHICH ELEMENT CARRIES IT. `.class-sprite > .facing` and not `.class-sprite`
+   itself, because that frame is an animation target and the sigil overlay's
+   positioning parent, and a mirror on it broke both: the reaction animations in
+   `styles/combat.css` outrank an inherited transform and flipped the player to
+   face away for the length of every hit, and the figure well's cancel in
+   `styles/kit.css` left the overlay counter-mirroring nothing. The facing layer
+   is built in `src/ui/assets.js` classSprite() and carries only this fact —
+   the same shape enemySprite() uses for the same reason.
    --------------------------------------------------------------------------- */
-.class-sprite,
+.class-sprite > .facing,
 .equipped-figure { transform: scaleX(-1); }
 .class-sprite .equipped-figure { transform: none; }
 
