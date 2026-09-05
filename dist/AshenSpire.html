@@ -6061,17 +6061,10 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     }
     subject.statuses.crimsonBlight = { stacks: 3, duration: 3 };
   }
-  const label =
-    enc.pool === 'boss'
-      ? registries.enemies.get(enc.enemies[0]).name.toUpperCase()
-      : enc.pool === 'elite'
-        ? `ELITE · FLOOR ${run.floor}`
-        : `ACT ${run.actNumber} · FLOOR ${run.floor}`;
   mountCombat(app, {
     registries,
     run,
     combat,
-    label,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
     meta: activeMeta,
@@ -52572,7 +52565,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '8829ba9786';
+const SOURCE = 'e07701cabf';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52606,7 +52599,7 @@ const SOURCE = '8829ba9786';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '72';
+const ORDINAL = '73';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -65577,7 +65570,6 @@ const { relicText } = require("src/ui/components/card.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
 const { matchAction, actionDestinationForEvent, isEngaged, focusFirst, actionHint } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
-const { classGlyph, tintCss } = require("src/ui/assets.js");
 const { nodeBlurb, actTitle, legendEntries, MENU } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { mountMapBoard } = require("src/ui/components/mapboard.js");
@@ -65640,7 +65632,6 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, 
 
   const cz = run.customization || {};
   const className = registries.classes.get(run.class).name;
-  const heroName = (cz.name || className).toUpperCase();
   const atEntrance = !run.mapNodeId;
   // THE LEGEND IS THE KIT'S POPOVER: one Row per node kind, its icon the Row's
   // Glyph in the kind's own tint. It hangs off the ? in the zoom bar and is
@@ -65670,22 +65661,14 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, 
         floor: run.floor,
         floorTotal: map.floors,
         seed: run.seedString,
-        identity: {
-          name: heroName,
-          classLabel: className.toUpperCase(),
-          glyph: cz.glyph || classGlyph(run.class),
-          tint: tintCss(cz.tint),
-          context: actTitle(run.actNumber),
-        },
         controls: {
           armouryId: 'open-armoury',
           menuId: 'open-menu',
           menuHint: actionHint('menu'),
         },
-        quickSettings: {
-          presentation: registries.balance.ui.hudQuickSettings,
-          settings: meta.settings || {},
-        },
+        // The settings bag, for `runHudMode` — the band's compact/expanded
+        // state. `presentation` went with the fullscreen/music pair.
+        quickSettings: { settings: meta.settings || {} },
         overlayHtml: '',
       }))}
       ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
@@ -67982,26 +67965,27 @@ Object.assign(module.exports, { flaskActionPlan });
 // Reusable Map/Combat HUD Views. Structure is rendered from immutable
 // Presentation Models; this module owns DOM, not domain projection or commands.
 //
-// THE HUD IS A KIT BAND (styles/kit.css `.as-band`), three rows deep:
-//   1. the run header — the context as a LabelStack Title·S (the act on the
-//      map, the fight in combat), the Cinders receipt as a StatChip, and the
-//      Act · Build trail as a StatStrip;
+// THE HUD IS A KIT BAND (styles/kit.css `.as-band`), three rows deep, and the
+// owner's list of 2026-09-05 is the whole of it — "vitals, relics, cinders,
+// armory, menu and hp and mp potions":
+//   1. the run header — the Cinders receipt as a StatChip, centred, with the
+//      build stamp trailing right;
 //   2. the resource row — the meters (components/resbars.js, the kit Meter)
-//      and, on the right, a cluster of IconButtons (⚒ ☰) over the flask Slots
-//      the screen mounts;
+//      and, on the right, the Armoury and Menu IconButtons over the flask
+//      Slots the screen mounts;
 //   3. the belt — relic Slots and carried-potion Slots.
-// Fullscreen and music are NOT in this band: they ride the utility rail that
-// hangs off its bottom edge on the right (styles/kit.css § QUICK SETTINGS).
-// The name, the class and the floor number were in row 1 until 2026-09-05 and
-// each function below says why its own is gone.
+// WHAT LEFT THE BAND, so nothing drifts back in: the character name, the class,
+// the chosen sigil, the screen's context line, the Act chip and the Floor chip
+// (all on that list, or absent from it), and the fullscreen and music pair —
+// which lives on the title screen and in Settings, and needed no third home.
+// Each function below says why its own is gone.
 // The classes that are not `as-*` are HOOKS the instruments read; kit.css
 // draws nothing for them and no stylesheet may any more.
 const { esc } = require("src/ui/components/tooltip.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { UI_COMPONENTS: UI, uiComponentAttrs } = require("src/ui/components/uiComponents.js");
 const { childModel } = require("src/ui/models/ComponentModel.js");
-const { hudQuickSettingsHtml } = require("src/ui/components/hudQuickSettings.js");
-const { el, html, titleS, iconButton } = require("src/ui/kit/index.js");
+const { el, html, iconButton } = require("src/ui/kit/index.js");
 
 function attrsOf(componentAttrs) {
   // uiComponentAttrs() returns attribute TEXT for string templates; the kit's
@@ -68011,29 +67995,24 @@ function attrsOf(componentAttrs) {
   return out;
 }
 
-function progressChip(className, componentAttrs, { label, value, total }) {
-  return el('span', { ...attrsOf(componentAttrs), class: `as-chip ${className}` }, [
-    el('span', { class: 'ck', text: label }),
-    el('span', { class: 'cv' }, [
-      String(value),
-      total == null ? null : el('span', { class: 'hud-progress-total', text: ` / ${total}` }),
-    ]),
-  ]);
-}
-
-// NO NAME AND NO CLASS ON THE BAND (owner, 2026-09-05: "remove the floor and
-// character and class name"). The LabelStack keeps its Eyebrow slot empty and
-// draws the context alone — the identity is a character-creation fact, and the
-// player has just chosen it; the band's job in a run is the state that changes.
-// The name is still the save slot's own label, so it is not gone from the game,
-// only from the band. `UI.characterTitle` stays a registered component with a
-// model behind it (RunHeaderModel) because the portrait badge and the profile
-// screens read the same fact; nothing renders it here.
+// THE BAND CARRIES NO IDENTITY AT ALL (owner, 2026-09-05: "it should just be
+// vitals, relics, cinders, armory, menu and hp and mp potions in the Hud").
+// The name, the class, the chosen sigil and the screen's context line were all
+// here; none of them is state that changes in a fight, which is the only thing
+// this band is for. Each is still reachable where it belongs: the name labels
+// the save slot, the sigil and class are the character-creation facts the
+// player just chose, and the act is named by the map's own route strip.
+//
+// The cluster stays as an EMPTY LabelStack rather than being deleted, and that
+// is deliberate: `.hud-info-row` is a three-track grid (identity | receipt |
+// trail) whose middle track is what centres the Cinders receipt. Dropping the
+// first track would slide the receipt off centre and take `hudparity`'s
+// centring rule with it. An empty track holds the shape.
 function identityClusterHtml(model) {
-  const context = model.properties.context || '';
-  return html(el('div', { ...attrsOf(uiComponentAttrs(model.component, model.variant)), class: 'hud-identity as-labelstack' }, [
-    context ? titleS(context, { tag: 'span', class: 'ls-label hud-context fold' }) : null,
-  ]));
+  return html(el('div', {
+    ...attrsOf(uiComponentAttrs(model.component, model.variant)),
+    class: 'hud-identity as-labelstack', 'aria-hidden': 'true',
+  }, []));
 }
 
 function cindersCounterHtml(model) {
@@ -68046,19 +68025,21 @@ function cindersCounterHtml(model) {
   ])));
 }
 
-// NO FLOOR CHIP (same ask). Act and the build stamp stay: the act names where
-// you are and the stamp is the receipt a bug report needs. The floor number is
-// the one the map already draws as a shape — the route strip's ENTRANCE -> BOSS
-// rail — and a number beside a picture of the same fact is the duplication this
-// trail was trimmed to avoid. It IS gone from combat, where no other surface
-// prints it; that is the cost, stated rather than buried.
-// `metadataFieldModel('floor', …)` stays in RunHeaderModel: the floor is still
-// projected, still in the presentation model, and still what the map's own
-// progress is derived from. Only the chip is gone.
+// THE TRAIL IS THE BUILD STAMP AND NOTHING ELSE. The Floor chip went first,
+// then the Act chip with the rest of the run chrome (owner's list above names
+// neither). The `metadataField` models stay in RunHeaderModel — act, floor,
+// seed and source are all still projected, and the map's own progress derives
+// from them; only the chips are gone.
+//
+// THE STAMP STAYS, AND IT IS NOT AN OVERSIGHT AGAINST THAT LIST. It is not
+// chrome a player reads, it is the receipt that identifies a screenshot:
+// `tools/buildstamp-shot.mjs` photographs exactly one stamp on the title, the
+// map and a fight, and on 2026-09-05 the owner's own screenshot of build
+// 0.4.0.1454 is what identified where the utility rail used to live. A HUD with
+// no version on it cannot answer "which build is this". Removing it is one line
+// here plus that tool's three placements, if the owner wants it gone too.
 function buildMetadataTrailHtml(model) {
-  const act = childModel(model, UI.metadataField, 'act').properties;
   return `<div class="hud-run-meta as-statstrip trail" ${uiComponentAttrs(model.component, model.variant)}>
-    ${html(progressChip('hud-act', uiComponentAttrs(UI.metadataField, 'act'), act))}
     ${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}
   </div>`;
 }
@@ -68078,7 +68059,17 @@ function vitalsPanelHtml(model) {
   </section>`;
 }
 
-function quickAccessPanelHtml(model, { quickSettingsHtml = '' } = {}) {
+// TWO CONTROLS, NOT FOUR. Fullscreen and music are gone from the band (owner,
+// 2026-09-05: "the full screen and music buttons don't need to be there since
+// we have it in the quick and main menu settings"). Verified before removing
+// rather than after: `screens/settings.js` carries Fullscreen under Display and
+// Music with its volume under Audio, so neither affordance is stranded by this.
+// They still sit on the TITLE screen, which is the main menu the owner names.
+//
+// `quickSettingsHtml` is gone from the signature too, not just unused — an
+// options bag that silently accepts a pair nobody draws is how the pair comes
+// back by accident.
+function quickAccessPanelHtml(model) {
   const armoury = childModel(model, UI.armouryControl);
   const menu = childModel(model, UI.quickMenuControl);
   const button = (control, extra = {}) => html(iconButton({
@@ -68090,16 +68081,15 @@ function quickAccessPanelHtml(model, { quickSettingsHtml = '' } = {}) {
     <div class="hud-actions as-cluster">
       ${button(armoury)}
       ${button(menu, { 'data-action-hint': 'menu' })}
-      ${quickSettingsHtml}
     </div>
     <div class="flasks hud-charge-flasks as-cluster" aria-label="Healing and mana flasks"></div>
   </section>`;
 }
 
-function primaryHudRowHtml(model, options = {}) {
+function primaryHudRowHtml(model) {
   return `<div class="hud-resource-row as-band-row" ${uiComponentAttrs(model.component, model.variant)}>
     ${vitalsPanelHtml(childModel(model, UI.vitalsPanel))}
-    ${quickAccessPanelHtml(childModel(model, UI.quickAccessPanel), options)}
+    ${quickAccessPanelHtml(childModel(model, UI.quickAccessPanel))}
   </div>`;
 }
 
@@ -68115,7 +68105,6 @@ function inventoryBeltHtml(model) {
 function sharedRunHudHtml(model) {
   const { place, headerClass, overlayHtml, hudMode } = model.properties;
   const grip = childModel(model, UI.hudModeGrip);
-  const quickSettingsHtml = hudQuickSettingsHtml(childModel(model, UI.hudQuickSettings));
   const gripButton = iconButton({
     glyph: hudMode === 'compact' ? '⌄' : '⌃', label: grip.accessibility.label, className: 'hud-mode-grip as-grip',
     attrs: { ...attrsOf(uiComponentAttrs(grip.component, grip.variant)), 'data-next-mode': grip.properties.next, title: grip.accessibility.hint },
@@ -68123,7 +68112,7 @@ function sharedRunHudHtml(model) {
   return `<header class="topbar combat-hud shared-hud as-band stack${headerClass ? ` ${esc(headerClass)}` : ''}" data-hud-mode="${esc(hudMode)}" data-has-utility-potions="false" ${uiComponentAttrs(model.component, place)}>
     <div class="hud-top as-cluster stack">
       ${runHeaderStripHtml(childModel(model, UI.runHeaderStrip))}
-      ${primaryHudRowHtml(childModel(model, UI.primaryHudRow), { quickSettingsHtml })}
+      ${primaryHudRowHtml(childModel(model, UI.primaryHudRow))}
       ${inventoryBeltHtml(childModel(model, UI.inventoryBelt))}
     </div>
     ${html(gripButton)}
@@ -68185,7 +68174,6 @@ const { runHeaderModel } = require("src/ui/models/RunHeaderModel.js");
 const { vitalsPanelModel } = require("src/ui/models/VitalsPanelModel.js");
 const { quickAccessPanelModel } = require("src/ui/models/QuickAccessPanelModel.js");
 const { inventoryBeltModel } = require("src/ui/models/InventoryBeltModel.js");
-const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
 const { hudModeGripModel, normalizeHudMode } = require("src/ui/models/HudModeModel.js");
 
 // Presentation projection only: callers provide a domain snapshot and command
@@ -68214,7 +68202,16 @@ function runHudViewModel({
         children: [vitalsPanelModel(), quickAccessPanelModel(controls)],
       }),
       inventoryBeltModel(place),
-      hudQuickSettingsModel({ place, ...quickSettings }),
+      // NO QUICK-SETTINGS CHILD. The fullscreen/music pair left the run HUD on
+      // 2026-09-05 ("the full screen and music buttons don't need to be there
+      // since we have it in the quick and main menu settings"), so the band has
+      // no such component to model. `hudQuickSettingsModel` is still the title
+      // screen's, which is the main menu that keeps the pair.
+      //
+      // `quickSettings` SURVIVES AS A PARAMETER and that is not residue: the bag
+      // carries `settings`, and `runHudMode` inside it is what decides whether
+      // this band draws compact or expanded (see `hudMode` above). It is the
+      // settings bag, not the pair's model.
       hudModeGripModel({ mode: hudMode }),
     ],
   });
@@ -68229,14 +68226,24 @@ const { componentModel } = require("src/ui/models/ComponentModel.js");
 const { metadataFieldModel } = require("src/ui/models/HudPrimitiveModels.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 
-function identityClusterModel(identity) {
-  return componentModel(UI.identityCluster, {
-    properties: { name: identity.name, classLabel: identity.classLabel, context: identity.context || '' },
-    children: [
-      componentModel(UI.portraitBadge, { properties: { glyph: identity.glyph, tint: identity.tint } }),
-      componentModel(UI.characterTitle, { properties: { name: identity.name, classLabel: identity.classLabel } }),
-    ],
-  });
+// THE CLUSTER PROJECTS NOTHING (owner, 2026-09-05: "it should just be vitals,
+// relics, cinders, armory, menu and hp and mp potions in the Hud", and before
+// that "remove across floor and character name sigil and class from combat
+// hud"). It carried the name, the class, the chosen sigil and the screen's
+// context, and the band draws none of them now.
+//
+// The properties and the two child models go with the view rather than being
+// left projected: a presentation model that still computes a name nobody
+// renders is how the name comes back — some later reader finds the field and
+// assumes the band is meant to show it. `UI.portraitBadge` and
+// `UI.characterTitle` stay declared in UiComponentId, because the ids are the
+// registry's vocabulary and a surface that wants a portrait badge should use
+// the same word; nothing instantiates them today.
+//
+// The cluster itself stays: `.hud-info-row` is a three-track grid whose middle
+// track is what centres the Cinders receipt, and this is the first track.
+function identityClusterModel() {
+  return componentModel(UI.identityCluster, {});
 }
 
 function cindersCounterModel(cinders) {
@@ -68262,7 +68269,7 @@ function buildMetadataTrailModel({ place, act, actTotal, floor, floorTotal, seed
 function runHeaderModel(input) {
   return componentModel(UI.runHeaderStrip, {
     children: [
-      identityClusterModel(input.identity),
+      identityClusterModel(),
       cindersCounterModel(input.cinders),
       buildMetadataTrailModel(input),
     ],
@@ -68568,7 +68575,7 @@ const { openPileModal } = require("src/ui/components/piles.js");
 const { attachTooltip, ensureTooltip, hideTooltip, showTooltipForRect, esc } = require("src/ui/components/tooltip.js");
 const { combatantDetailBody } = require("src/ui/components/combatantInspector.js");
 const { relicText } = require("src/ui/components/card.js");
-const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
+const { enemySprite, playerSprite } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
 const { intentBadge, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
@@ -68611,7 +68618,7 @@ function pileButton(kind, label) {
   return node;
 }
 
-function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
+function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -68633,22 +68640,14 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         floor: run.floor,
         floorTotal: run.mapGraph?.floors ?? null,
         seed: run.seedString,
-        identity: {
-          name: ((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase(),
-          classLabel: registries.classes.get(run.class).name.toUpperCase(),
-          glyph: (run.customization && run.customization.glyph) || classGlyph(run.class),
-          tint: tintCss(run.customization && run.customization.tint),
-          context: label,
-        },
         controls: {
           armouryId: 'combat-armoury',
           menuId: 'combat-menu',
           menuHint: actionHint('menu'),
         },
-        quickSettings: {
-          presentation: registries.balance.ui.hudQuickSettings,
-          settings: meta.settings || {},
-        },
+        // The settings bag, for `runHudMode` — the band's compact/expanded
+        // state. `presentation` went with the fullscreen/music pair.
+        quickSettings: { settings: meta.settings || {} },
       }))}
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
