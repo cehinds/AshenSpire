@@ -23,6 +23,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/624"
   },
   {
+    "id": "pr-623",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "A reference page for the painted fighters and their kit",
+    "detail": "Nothing a player sees changes. The builds site gains a page, Low-Poly Fighters — Painted Poses, that shows each class's painted pose sheet beside two orthographic sheets of what it wears and carries — the garments on one, the kit on the other, five views each. The pose sheets are shown from where they already live, so there is one copy of each; the eight equipment sheets sit beside the page. Reference only: the game keeps loading its sprites from where it did.",
+    "build": "0.5.4.76",
+    "pullRequest": 623,
+    "url": "https://github.com/cehinds/AshenSpire/pull/623"
+  },
+  {
+    "id": "pr-622",
+    "date": "2026-09-04",
+    "group": "2026-09-04",
+    "summary": "Status effects explain themselves, and your own fighter answers too",
+    "detail": "Hover a status effect on either fighter, land the focus cursor on it, or tap it, and it tells you what it does — with its build-up or the turns it has left. The build-up bars under an enemy answer the same way. Before this a status effect was a glyph with a count and nothing behind it, and a tap on one opened the enemy's own summary over the top of the question you had asked; a tap on an effect still plays your card when one is armed. Your own fighter now has the same glance the enemies have had — HP, Poise, effects, and I for the full read — on hover, on the focus cursor, and on a tap; it used to answer nothing at all. The enemy's intent and its HP and Poise bars stay silent on purpose, since the glance already says what they would. And on a phone the Cinders count sits centred in the run band rather than pushed to the right.",
+    "build": "0.5.4.76",
+    "pullRequest": 622,
+    "url": "https://github.com/cehinds/AshenSpire/pull/622"
+  },
+  {
     "id": "pr-620",
     "date": "2026-09-04",
     "group": "2026-09-04",
