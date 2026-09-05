@@ -2,7 +2,7 @@
 //
 //   node tools/painted-poses.mjs --sheet SHEET.png --class rogue \
 //     --poses idle,guard,attack1,attack2,attack3,hit,kneel,down [--out DIR]
-//     [--append] [--canvas 720x900] [--grid 3x3] [--mirror attack1,hit]
+//     [--append] [--canvas 720x900] [--grid 3x3] [--mirror attack1,hit] [--grounded]
 //
 // A pose sheet is one image holding several paintings of the same character, laid
 // out in rows. This finds each figure (background is transparency, or whatever
@@ -39,6 +39,13 @@ const speckArea = Number(arg('--speck', '0.00004'));  // below this is noise, no
 // the frame is written, which keeps the recorded root and floor honest because
 // both are measured from what was actually drawn.
 const mirrored = new Set((arg('--mirror', '') || '').split(',').filter(Boolean));
+// Every figure on this sheet stands on the ground. Lift is inferred from where a
+// figure sits relative to its peers or its cell, and on a sheet whose figures are
+// placed by eye — centred in a cell, or drawn with more headroom in one row than
+// the next — that inference reads the placement as a deliberate hover and the
+// whole cast floats at different heights. Say so and every figure gets its own
+// feet on the floor line.
+const grounded = has('--grounded');
 if (!sheetPath || !cls || !outDir) {
   console.error('painted-poses: --sheet FILE --class NAME --out DIR are required');
   process.exit(2);
@@ -211,7 +218,7 @@ if (gridArg) {
   };
   for (const g of groups) { const k = cell(g); g.cellR = k.r; g.cellC = k.c; g.gap = k.bottom - g.bodyY1; }
   const margin = Math.min(...groups.map((g) => g.gap));
-  for (const g of groups) g.lift = Math.round(g.gap - margin);
+  for (const g of groups) g.lift = grounded ? 0 : Math.round(g.gap - margin);
   figures = [...groups].sort((a, b) => (a.cellR - b.cellR) || (a.cellC - b.cellC));
   layout = `${gr}x${gc} grid`;
 } else {
@@ -227,7 +234,7 @@ if (gridArg) {
   }
   for (const r of rows) {
     const floor = Math.max(...r.items.map(i => i.bodyY1));
-    for (const g of r.items) g.lift = floor - g.bodyY1;
+    for (const g of r.items) g.lift = grounded ? 0 : floor - g.bodyY1;
   }
   figures = rows.flatMap(r => r.items.sort((a, b) => a.bodyX0 - b.bodyX0));
   layout = `${rows.length} row(s)`;

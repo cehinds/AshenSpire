@@ -109,6 +109,57 @@ scale. The greatsword also lost 25cm, the follow-through steps less far, and the
 Reaver's pauldrons hang off the spine rather than the arm bone — they are shaped
 for the camera, and an arm swinging through a strike carried them out of place.
 
+**These are the painted poses.** As of 2026-09-04 the sprites here are cut from
+the owner's painted pose sheets, one sheet per class, nine figures on a 3x3 grid.
+The modelled Blender figures they replaced are still buildable from
+`tools/lowpoly-blender.py`; what is gone with them is `kneel` and `down`, which
+the sheets do not carry and nothing draws.
+
+Nine poses per class, named per class at cut time because the classes do not
+idle the same way — a fighter stands ready, a caster stands. Reading the 3x3 in
+order, the Rogue and Reaver are cut `stand, guard, attack1, attack2, attack3,
+cast, hit, idle, idle2`, so their combat `idle` is figure 8, the braced stance;
+the Starseer and Herald are cut `idle, guard, attack1, attack2, attack3, cast,
+hit, brace, idle2`, so theirs is figure 1, standing. Combat ships six of the
+names — `idle`, `guard`, the three attacks and `hit`.
+
+Combat has the player facing right, and two Reaver figures were painted facing
+left — the ones cut as `attack2` and `idle` — so those two are cut with
+`--mirror`. Every other
+figure in all four sheets is used as painted. Facing is read from the hood
+opening, not from which way a weapon points: a wind-up pose draws the arm back
+the other way and still faces forward.
+
+Run from the repository root. `--grounded` is the important one: every figure on
+these sheets stands, and without it the cutter reads how the painter placed each
+figure in its cell as a deliberate hover — the Reaver's idle came out recorded
+93px above the floor, so the figure floated and every pose change jumped.
+`art/poses` is cleared only after all four classes cut, because its manifest
+describes the whole folder and a partial publish would replace the shipped set
+with whatever the run managed to produce.
+
+```sh
+set -euo pipefail   # a cutter that fails must not reach the publish below
+
+SHEETS=docs/art-evidence/2026-09-04/pose-sheets
+OUT=build/painted
+# --poses names the 3x3 in reading order, and the two groups differ (above)
+FIGHT=stand,guard,attack1,attack2,attack3,cast,hit,idle,idle2
+MAGE=idle,guard,attack1,attack2,attack3,cast,hit,brace,idle2
+
+rm -rf "$OUT"
+node tools/painted-poses.mjs --sheet "$SHEETS/rogue.png"    --class rogue    --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$FIGHT"
+node tools/painted-poses.mjs --sheet "$SHEETS/reaver.png"   --class reaver   --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$FIGHT" --mirror attack2,idle
+node tools/painted-poses.mjs --sheet "$SHEETS/starseer.png" --class starseer --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$MAGE"
+node tools/painted-poses.mjs --sheet "$SHEETS/herald.png"   --class herald   --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$MAGE"
+
+# only once all four cut: the manifest describes the whole folder, so a partial
+# publish would replace the shipped set with whatever this run managed to make
+rm -f art/poses/*.webp art/poses/pose-sprites.manifest.json
+node tools/pose-sprites.mjs --in "$OUT" --out art/poses
+node tools/pose-ship.mjs
+```
+
 **Painted poses.** `tools/painted-poses.mjs` cuts a painted pose sheet — a
 single image holding one figure per pose — into single-pose frames and writes
 the same renders manifest the Blender script writes, so `tools/pose-sprites.mjs`
