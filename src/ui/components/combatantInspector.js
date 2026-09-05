@@ -13,28 +13,58 @@
 import { childModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { renderTray } from './trayComponents.js';
-import { el, eyebrow, titleS, hairline, labelStack, meter, meters, row, statusText } from '../kit/index.js';
+import { attachTooltip, ensureTooltip, esc } from './tooltip.js';
+import { el, eyebrow, hairline, labelStack, meter, meters, row } from '../kit/index.js';
+
+function tipHtml(label, detail = '') {
+  return `<div class="tt-title">${esc(label)}</div>`
+    + (detail ? `<div class="ti-detail">${esc(detail)}</div>` : '');
+}
+
+/**
+ * Every fact in the full read is a tooltip target. The target remains a
+ * reading, not a fake button: pointer hover, keyboard focus, the gamepad
+ * cursor, and touch focus all open the same shared tooltip.
+ */
+function readableTarget(node, label, detail = '') {
+  const fullLabel = String(label || 'Detail');
+  const fullDetail = String(detail || '');
+  node.classList.add('combatant-inspector-tip-target');
+  node.tabIndex = 0;
+  node.dataset.focusable = 'true';
+  node.setAttribute('aria-describedby', 'tooltip');
+  node.setAttribute('aria-label', fullDetail ? `${fullLabel}: ${fullDetail}` : fullLabel);
+  attachTooltip(node, () => tipHtml(fullLabel, fullDetail), { intent: 'above', align: 'center' });
+  node.addEventListener('focus', () => node.dispatchEvent(new CustomEvent('gpfocus')));
+  node.addEventListener('blur', () => node.dispatchEvent(new CustomEvent('gpblur')));
+  node.addEventListener('click', () => node.focus({ preventScroll: true }));
+  return node;
+}
 
 function resourceMeters(resources) {
-  return meters((resources || []).map((r) => meter({
-    id: String(r.label).toLowerCase(),
-    tone: String(r.label).toLowerCase(),
-    label: r.label,
-    value: r.max == null ? String(r.value) : `${r.value} / ${r.max}`,
-    cur: r.value, max: r.max == null ? r.value : r.max,
-    pct: r.max ? Math.max(0, Math.min(100, (r.value / r.max) * 100)) : (r.value > 0 ? 100 : 0),
-    stack: true,
-    attrs: { class: 'combatant-inspector-resource' },
-  })), { class: 'combatant-inspector-resources' });
+  return meters((resources || []).map((r) => {
+    const value = r.max == null ? String(r.value) : `${r.value} / ${r.max}`;
+    return readableTarget(meter({
+      id: String(r.label).toLowerCase(),
+      tone: String(r.label).toLowerCase(),
+      label: r.label,
+      value,
+      cur: r.value, max: r.max == null ? r.value : r.max,
+      pct: r.max ? Math.max(0, Math.min(100, (r.value / r.max) * 100)) : (r.value > 0 ? 100 : 0),
+      stack: true,
+      attrs: { class: 'combatant-inspector-resource' },
+    }), r.label, value);
+  }), { class: 'combatant-inspector-resources' });
 }
 
 function section(title, rows, empty) {
   const list = (rows || []).length
-    ? rows.map((r) => row({
+    ? rows.map((r) => readableTarget(row({
       label: r.name, status: r.detail || '', tag: 'div',
-      tone: r.active ? 'current' : '', className: 'combatant-inspector-row',
-    }))
-    : [row({ label: empty, tag: 'div', disabled: true, className: 'combatant-inspector-row' })];
+      tone: r.active ? 'current' : '',
+      className: `combatant-inspector-row${r.detail ? ' has-detail' : ''}`,
+    }), r.name, r.detail || ''))
+    : [readableTarget(row({ label: empty, tag: 'div', disabled: true, className: 'combatant-inspector-row' }), empty)];
   return el('section', { class: 'combatant-inspector-section' }, [
     eyebrow(title), hairline(), ...list,
   ]);
@@ -49,11 +79,15 @@ function section(title, rows, empty) {
  */
 export function combatantDetailBody(subject, { heading = true } = {}) {
   if (!subject?.name) throw new Error('combatantDetailBody requires a named subject');
+  ensureTooltip();
   // `heading: false` for a door whose HEAD already names the subject — the
   // tray has no head, so it keeps the LabelStack.
+  const identity = heading
+    ? readableTarget(labelStack({ label: subject.name, hint: subject.subtitle || '' }), subject.name, subject.subtitle || '')
+    : null;
   return [
     el('div', { class: 'combatant-inspector-summary' }, [
-      heading ? labelStack({ label: subject.name, hint: subject.subtitle || '' }) : null,
+      identity,
       resourceMeters(subject.resources),
     ]),
     ...(subject.intent ? [section('Current intent', [subject.intent], 'No current intent.')] : []),

@@ -4229,9 +4229,22 @@ body.pad-mode .as-keycap.float { display: none; }
 .combatant-inspector-resources { gap: 0.45rem; }
 .combatant-inspector-section { margin-top: 0.7rem; }
 .combatant-inspector-section > .as-hairline { margin: 0.35rem 0 0.2rem; }
-.combatant-inspector-row { padding-inline: 0; white-space: normal; align-items: flex-start; }
+.combatant-inspector-row { padding-inline: 0; white-space: normal; align-items: center; }
+/* A detail may explain a name, but it may never take more of the row than the
+   name. Equal minmax columns stop long prose from squeezing the label; both
+   faces stay to one line and the shared tooltip owns the complete reading. */
+.combatant-inspector-row.has-detail {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.05rem;
+}
+.combatant-inspector-row.has-detail > :is(.r-label, .as-status) {
+  width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .combatant-inspector-row > .r-label { flex: 0 1 auto; }
-.combatant-inspector-row > .as-status { text-align: right; }
+.combatant-inspector-row > .as-status { margin-left: 0; text-align: right; }
+.combatant-inspector-tip-target { cursor: help; }
+.combatant-inspector-tip-target:focus-visible {
+  outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1);
+}
 /* A pip: a round badge with a glyph and a count, for statuses in a row. */
 .as-pips { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; min-width: 0; }
 .as-pip { position: relative; display: inline-grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--panel); border: 1.5px solid var(--pip-tone, var(--muted)); font-size: 1.1rem; line-height: 1; color: var(--parchment); cursor: default; }
@@ -52868,7 +52881,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '2848642ae1';
+const SOURCE = 'a7644fa6bd';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52902,7 +52915,7 @@ const SOURCE = '2848642ae1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '25';
+const ORDINAL = '26';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -71539,28 +71552,58 @@ Object.assign(module.exports, { openPileModal });
 const { childModel } = require("src/ui/models/ComponentModel.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 const { renderTray } = require("src/ui/components/trayComponents.js");
-const { el, eyebrow, titleS, hairline, labelStack, meter, meters, row, statusText } = require("src/ui/kit/index.js");
+const { attachTooltip, ensureTooltip, esc } = require("src/ui/components/tooltip.js");
+const { el, eyebrow, hairline, labelStack, meter, meters, row } = require("src/ui/kit/index.js");
+
+function tipHtml(label, detail = '') {
+  return `<div class="tt-title">${esc(label)}</div>`
+    + (detail ? `<div class="ti-detail">${esc(detail)}</div>` : '');
+}
+
+/**
+ * Every fact in the full read is a tooltip target. The target remains a
+ * reading, not a fake button: pointer hover, keyboard focus, the gamepad
+ * cursor, and touch focus all open the same shared tooltip.
+ */
+function readableTarget(node, label, detail = '') {
+  const fullLabel = String(label || 'Detail');
+  const fullDetail = String(detail || '');
+  node.classList.add('combatant-inspector-tip-target');
+  node.tabIndex = 0;
+  node.dataset.focusable = 'true';
+  node.setAttribute('aria-describedby', 'tooltip');
+  node.setAttribute('aria-label', fullDetail ? `${fullLabel}: ${fullDetail}` : fullLabel);
+  attachTooltip(node, () => tipHtml(fullLabel, fullDetail), { intent: 'above', align: 'center' });
+  node.addEventListener('focus', () => node.dispatchEvent(new CustomEvent('gpfocus')));
+  node.addEventListener('blur', () => node.dispatchEvent(new CustomEvent('gpblur')));
+  node.addEventListener('click', () => node.focus({ preventScroll: true }));
+  return node;
+}
 
 function resourceMeters(resources) {
-  return meters((resources || []).map((r) => meter({
-    id: String(r.label).toLowerCase(),
-    tone: String(r.label).toLowerCase(),
-    label: r.label,
-    value: r.max == null ? String(r.value) : `${r.value} / ${r.max}`,
-    cur: r.value, max: r.max == null ? r.value : r.max,
-    pct: r.max ? Math.max(0, Math.min(100, (r.value / r.max) * 100)) : (r.value > 0 ? 100 : 0),
-    stack: true,
-    attrs: { class: 'combatant-inspector-resource' },
-  })), { class: 'combatant-inspector-resources' });
+  return meters((resources || []).map((r) => {
+    const value = r.max == null ? String(r.value) : `${r.value} / ${r.max}`;
+    return readableTarget(meter({
+      id: String(r.label).toLowerCase(),
+      tone: String(r.label).toLowerCase(),
+      label: r.label,
+      value,
+      cur: r.value, max: r.max == null ? r.value : r.max,
+      pct: r.max ? Math.max(0, Math.min(100, (r.value / r.max) * 100)) : (r.value > 0 ? 100 : 0),
+      stack: true,
+      attrs: { class: 'combatant-inspector-resource' },
+    }), r.label, value);
+  }), { class: 'combatant-inspector-resources' });
 }
 
 function section(title, rows, empty) {
   const list = (rows || []).length
-    ? rows.map((r) => row({
+    ? rows.map((r) => readableTarget(row({
       label: r.name, status: r.detail || '', tag: 'div',
-      tone: r.active ? 'current' : '', className: 'combatant-inspector-row',
-    }))
-    : [row({ label: empty, tag: 'div', disabled: true, className: 'combatant-inspector-row' })];
+      tone: r.active ? 'current' : '',
+      className: `combatant-inspector-row${r.detail ? ' has-detail' : ''}`,
+    }), r.name, r.detail || ''))
+    : [readableTarget(row({ label: empty, tag: 'div', disabled: true, className: 'combatant-inspector-row' }), empty)];
   return el('section', { class: 'combatant-inspector-section' }, [
     eyebrow(title), hairline(), ...list,
   ]);
@@ -71575,11 +71618,15 @@ function section(title, rows, empty) {
  */
 function combatantDetailBody(subject, { heading = true } = {}) {
   if (!subject?.name) throw new Error('combatantDetailBody requires a named subject');
+  ensureTooltip();
   // `heading: false` for a door whose HEAD already names the subject — the
   // tray has no head, so it keeps the LabelStack.
+  const identity = heading
+    ? readableTarget(labelStack({ label: subject.name, hint: subject.subtitle || '' }), subject.name, subject.subtitle || '')
+    : null;
   return [
     el('div', { class: 'combatant-inspector-summary' }, [
-      heading ? labelStack({ label: subject.name, hint: subject.subtitle || '' }) : null,
+      identity,
       resourceMeters(subject.resources),
     ]),
     ...(subject.intent ? [section('Current intent', [subject.intent], 'No current intent.')] : []),

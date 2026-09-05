@@ -1986,9 +1986,22 @@ body.pad-mode .as-keycap.float { display: none; }
 .combatant-inspector-resources { gap: 0.45rem; }
 .combatant-inspector-section { margin-top: 0.7rem; }
 .combatant-inspector-section > .as-hairline { margin: 0.35rem 0 0.2rem; }
-.combatant-inspector-row { padding-inline: 0; white-space: normal; align-items: flex-start; }
+.combatant-inspector-row { padding-inline: 0; white-space: normal; align-items: center; }
+/* A detail may explain a name, but it may never take more of the row than the
+   name. Equal minmax columns stop long prose from squeezing the label; both
+   faces stay to one line and the shared tooltip owns the complete reading. */
+.combatant-inspector-row.has-detail {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.05rem;
+}
+.combatant-inspector-row.has-detail > :is(.r-label, .as-status) {
+  width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .combatant-inspector-row > .r-label { flex: 0 1 auto; }
-.combatant-inspector-row > .as-status { text-align: right; }
+.combatant-inspector-row > .as-status { margin-left: 0; text-align: right; }
+.combatant-inspector-tip-target { cursor: help; }
+.combatant-inspector-tip-target:focus-visible {
+  outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1);
+}
 /* A pip: a round badge with a glyph and a count, for statuses in a row. */
 .as-pips { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; min-width: 0; }
 .as-pip { position: relative; display: inline-grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--panel); border: 1.5px solid var(--pip-tone, var(--muted)); font-size: 1.1rem; line-height: 1; color: var(--parchment); cursor: default; }
