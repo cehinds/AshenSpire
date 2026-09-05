@@ -364,6 +364,10 @@ as Weight. The item card and the total are one rule, so they cannot disagree.
   determines compatibility, not an assumed left/right preference.
 - A successful Equip/Move/Unequip returns the Inventory presentation to its
   normal collapsed, unfiltered state.
+- During the player's combat turn, carried gear may be equipped, moved, or
+  unequipped. The Armoury dispatches `changeEquipment`; the engine charges the
+  same authored action price as a prepared-set swap and atomically updates live
+  cards, resource maxima, Poise, receipts, and the persisted combat loadout.
 
 ### 11.3 Procedural Armaments
 
