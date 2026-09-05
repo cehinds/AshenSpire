@@ -37,7 +37,7 @@ import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import {
-  primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton,
+  primaryStatCard, primaryStatCards, resourceStrip, modeChoiceButton, spriteChoiceButton,
   tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle,
   booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, relicChoiceButton,
   selectionSectionFace,
@@ -322,10 +322,10 @@ export function mountCustomize(app, {
 
     const run = previewRun();
     const projection = statProjection(registries, run);
-    $('#cz-primary-stats').replaceChildren(...attributeCardModels(registries, run.attributes, {
+    $('#cz-primary-stats').replaceChildren(...primaryStatCards(attributeCardModels(registries, run.attributes, {
       projection,
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
-    }).map(primaryStatCard));
+    })));
     const poise = playerPoiseThresholdReceipt(registries, run);
     $('#cz-derived').replaceChildren(resourceStrip(projection.derived, poise));
     renderClassPreview();
@@ -701,7 +701,7 @@ export function mountCustomize(app, {
     ]);
     markUiComponent(disclosureHost, UI.characterDisclosure);
     disclosureSpecimen.open('sample-primary');
-    const statHost = el('div', { class: 'as-stack tight cc-primary-stats cc-catalog-specimen' }, specimenAttributes.map(primaryStatCard));
+    const statHost = el('div', { class: 'as-stack tight cc-primary-stats cc-catalog-specimen' }, primaryStatCards(specimenAttributes));
     const classChoiceHost = options([], { class: 'cc-catalog-specimen', dataset: { view: 'list' } });
     let specimenClassId = state.classId;
     const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => classChoiceCard(cls, {

@@ -3193,7 +3193,14 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .armoury-character-stats { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; min-height: 0; overflow: auto; }
 /* An attribute face and a power face are label + value, one per line. */
 .armoury-character-stats .disc-faces > .disc-face .on { font: 500 1.41rem/1.3 var(--font-body); letter-spacing: 0; color: var(--parchment); }
-.armoury-character-stats .disc-faces > .disc-face .od { font-size: 1.2rem; }
+.armoury-character-stats .disc-faces > .disc-face .od {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 1.2rem;
+}
+.armoury-character-stats .disc-faces > .disc-face > .r-trail,
+.armoury-character-stats .disc-faces > .disc-face > .r-trail > .as-status {
+  flex: 0 0 auto; min-width: 2ch; white-space: nowrap;
+}
 /* THE POSITIONS: one OptionCard per position; the occupied one opens its
    DetailCard under itself. */
 .equip-slots.as-options { gap: 0.75rem; }
@@ -52868,7 +52875,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '5be2cb9287';
+const SOURCE = 'd2c57e40be';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52902,7 +52909,7 @@ const SOURCE = '5be2cb9287';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '24';
+const ORDINAL = '25';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58853,7 +58860,7 @@ const { renderStatAllocationCard } = require("src/ui/components/statAllocationCa
 const { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } = require("src/ui/components/equipmentReceipts.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 const { equipmentSurfaceReceipt } = require("src/model/equipmentPresentation.js");
-const { primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton, tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle, booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, relicChoiceButton, selectionSectionFace } = require("src/ui/components/creationCards.js");
+const { primaryStatCard, primaryStatCards, resourceStrip, modeChoiceButton, spriteChoiceButton, tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle, booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, relicChoiceButton, selectionSectionFace } = require("src/ui/components/creationCards.js");
 
 
 
@@ -59139,10 +59146,10 @@ function mountCustomize(app, {
 
     const run = previewRun();
     const projection = statProjection(registries, run);
-    $('#cz-primary-stats').replaceChildren(...attributeCardModels(registries, run.attributes, {
+    $('#cz-primary-stats').replaceChildren(...primaryStatCards(attributeCardModels(registries, run.attributes, {
       projection,
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
-    }).map(primaryStatCard));
+    })));
     const poise = playerPoiseThresholdReceipt(registries, run);
     $('#cz-derived').replaceChildren(resourceStrip(projection.derived, poise));
     renderClassPreview();
@@ -59518,7 +59525,7 @@ function mountCustomize(app, {
     ]);
     markUiComponent(disclosureHost, UI.characterDisclosure);
     disclosureSpecimen.open('sample-primary');
-    const statHost = el('div', { class: 'as-stack tight cc-primary-stats cc-catalog-specimen' }, specimenAttributes.map(primaryStatCard));
+    const statHost = el('div', { class: 'as-stack tight cc-primary-stats cc-catalog-specimen' }, primaryStatCards(specimenAttributes));
     const classChoiceHost = options([], { class: 'cc-catalog-specimen', dataset: { view: 'list' } });
     let specimenClassId = state.classId;
     const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => classChoiceCard(cls, {
@@ -62748,6 +62755,8 @@ function mountEquipment(host, {
     const projection = statProjection(registries, run);
     const surface = equipmentSurfaceReceipt(registries, run);
     const expanded = viewMode().character === 'expanded';
+    const informationCards = [];
+    const initiallyOpen = expanded ? 'attributesCard' : null;
 
     // AN INFORMATION CARD is a fold-open DetailCard: its head a Row (caret
     // Glyph, the label as Title·S, the one-line summary as StatusText), its
@@ -62760,7 +62769,17 @@ function mountEquipment(host, {
       }));
       head.querySelector('.as-glyph').classList.add('caret');
       const card = detailCard({ tag: 'details', attrs: { class: `character-info-card ${id}`, dataset: { component: `armoury.${id}` } }, children: [head, body] });
-      card.open = expanded;
+      card.open = id === initiallyOpen;
+      head.setAttribute('aria-expanded', card.open ? 'true' : 'false');
+      informationCards.push(card);
+      card.addEventListener('toggle', () => {
+        if (card.open) {
+          for (const peer of informationCards) {
+            if (peer !== card) peer.open = false;
+          }
+        }
+        head.setAttribute('aria-expanded', card.open ? 'true' : 'false');
+      });
       attachTooltip(head, () => `<div class="tt-title">${esc(label)}</div><p>${esc(card.open ? `Fold ${label}.` : `Expand ${label} for its full calculation and details.`)}</p>`);
       return card;
     }
@@ -65557,7 +65576,7 @@ Object.assign(module.exports, { createTraySizeService, traySizeService });
 // `.se-step`, `.se-value`, `.se-controls`, `[data-stat-action]`,
 // `[data-stat-done]`, `[data-stat-cancel]`, `#cc-stat-title`, `.cc-stat-modal`,
 // `.cc-stat-overlay`) ride on the kit elements.
-const { primaryStatCard } = require("src/ui/components/creationCards.js");
+const { primaryStatCards } = require("src/ui/components/creationCards.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 const { el, eyebrow, titleS, flavour, hairline, statPair, row, button, buttonRow, openModal } = require("src/ui/kit/index.js");
 
@@ -65582,11 +65601,12 @@ function stepperFor(rowModel, { onDecrease, onIncrease }) {
 }
 
 function drawRows(rowsHost, rows, handlers) {
-  rowsHost.replaceChildren(...rows.map((rowModel) => {
-    const attribute = primaryStatCard({
+  const attributes = primaryStatCards(rows.map((rowModel) => ({
       ...rowModel.card,
       face: { ...rowModel.card.face, value: '' },
-    });
+  })));
+  rowsHost.replaceChildren(...rows.map((rowModel, index) => {
+    const attribute = attributes[index];
     attribute.classList.add('se-attribute-card');
     const line = row({
       tag: 'div', setting: true, className: 'se-row',
@@ -65714,24 +65734,53 @@ function segmentButton({ label, ariaLabel, selected, className, dataset, onChoos
 }
 
 /**
- * The attribute face: a Row (LabelStack label + summary, StatusText value)
- * inside the D26 fold face, so the reveal (sense, derived lines) opens under
- * it by the one fold renderer. `.disc-summary` rides on the hint for the
- * instruments that read the folded summary.
+ * The attribute face: a compact Row (short label + summary + current value)
+ * inside the D26 fold face, so the reveal (long name, sense, derived lines)
+ * opens under it by the one fold renderer. The short label is deliberate: it
+ * keeps Character Creation and allocation rows the same shape as the Armoury's
+ * Attributes card instead of growing a second, wider primary-stat treatment.
+ * `.disc-summary` rides on the hint for the instruments that read the folded
+ * summary.
  */
-function primaryStatCard(input) {
+function renderPrimaryStatCard(input, peers = null) {
   const host = el('div', { class: 'cc-attribute-card as-row-fold' });
   host.dataset.stat = input.id;
   const face = row({
-    tag: 'span',
-    labelNode: labelStack({ label: input.reveal?.title || input.face.label, hint: input.face.summary || '' }),
+    tag: 'span', className: 'face-lite',
+    labelNode: labelStack({ label: input.face.label, hint: input.face.summary || '' }),
     status: input.face.value === '' || input.face.value == null ? '' : String(input.face.value),
   });
   face.querySelector('.ls-hint')?.classList.add('disc-summary');
   const model = { ...input, face: { ...input.face, node: face } };
-  mountDisclosure(host, [model]);
-  host.querySelector('.disc-face')?.classList.add('cc-primary-stat');
+  const fold = mountDisclosure(host, [model]);
+  const control = host.querySelector('.disc-face');
+  control?.classList.add('cc-primary-stat');
+  if (peers && control) {
+    const member = { control, fold };
+    peers.push(member);
+    // mountDisclosure's click listener runs first. Once this face is open,
+    // close every peer renderer in the primary-stat family. Allocation rows
+    // remain separate DOM rows so their steppers never become buttons nested
+    // inside buttons, while the family still has one visible reveal.
+    control.addEventListener('click', () => {
+      if (control.getAttribute('aria-expanded') !== 'true') return;
+      for (const peer of peers) {
+        if (peer !== member) peer.fold.close();
+      }
+    });
+  }
   return markUiComponent(host, UI.primaryStatCard);
+}
+
+/** A primary-stat family: uniform cards with one reveal open at a time. */
+function primaryStatCards(inputs) {
+  const peers = [];
+  return [...(inputs || [])].map((input) => renderPrimaryStatCard(input, peers));
+}
+
+/** A standalone specimen remains useful in the component catalogue. */
+function primaryStatCard(input) {
+  return renderPrimaryStatCard(input);
 }
 
 /** The derived resources: a StatStrip of Chips, each with its formula as its tooltip. */
@@ -65893,7 +65942,7 @@ function relicChoiceButton(relic, description, selected, onChoose) {
 }
 
 
-Object.assign(module.exports, { primaryStatCard, resourceStrip, viewModeToggle, booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, selectionSectionFace, modeChoiceButton, spriteChoiceButton, tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, relicChoiceButton });
+Object.assign(module.exports, { primaryStatCards, primaryStatCard, resourceStrip, viewModeToggle, booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, selectionSectionFace, modeChoiceButton, spriteChoiceButton, tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, relicChoiceButton });
 
 },
 "src/ui/screens/customRun.js": function (module, exports, require) {
