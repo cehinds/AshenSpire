@@ -3047,10 +3047,36 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .hud-quick-settings > .hud-quick-notice[hidden] { display: none; }
 /* Every surface that shows the pair keeps its own top row out of that corner:
    the run HUD's rows, and the co-op board's dock and scene header. */
+/* THE WHOLE STACK AND NOT JUST ITS FIRST ROW. At 360x800 the pair is one
+   IconButton tall (53 CSS px) against a 190px three-row HUD, so charging rows 2
+   and 3 for an obstruction that clears them looks like pure waste — I moved the
+   reservation to `.hud-info-row` alone and it cost 121.663px of dead space back.
+   It is not waste: at 320x568 the rows are shorter and the pair is not, so the
+   meters row rises INTO the corner and the flasks sit under the buttons.
+   `tools/hud-quick-compact.mjs` measured the overlap the moment I tried it —
+   3234px² on map-compact-iphone-se and combat-compact-iphone-se, 3582px² with
+   music off. The stack is the safe superset at every height, which is why it is
+   the element named here. */
 .topbar.combat-hud > .hud-top,
 .coop-scene > .as-banner,
 .coop-board > .coop-top,
-.topbar.map-header { padding-inline-end: var(--quick-corner); }
+/* `:not(.combat-hud)` BECAUSE THE MAP'S HEADER IS BOTH. `screens/map.js` draws
+   the shared run HUD with `headerClass: 'map-header'`, so that one element
+   matches this rule AND the `.topbar.combat-hud > .hud-top` rule above it, and
+   the corner was reserved TWICE on the same axis — once on the band, once again
+   on its only in-flow child.
+   Measured at 360x800 (--ui-zoom 0.83, so 434 CSS px of band): padding
+   `6px 121.663px 6px 16px` on the header left 296px for `.hud-top`, which then
+   spent another 121.663px and left its rows 174px. 243 of 434 px — 56% of the
+   width — reserved for a pair of buttons 106px wide. The HUD drew in the left
+   two-fifths: the identity's eyebrow ellipsed to "FORSAKEN ·…", the context to
+   "ACT I — T...", and the three meters collapsed to 50px, which is narrower
+   than a Meter's own plate, so HP/MP/SP printed as bare numbers beside a 3px
+   tick of colour. Owner, 2026-09-05: "ui looks broken foe the top hud".
+   Reserved once, on the element that holds the text. The co-op map header
+   (`screens/coop.js`) is a plain `.topbar.map-header` with no run HUD inside
+   it, so it still needs this and still gets it. */
+.topbar.map-header:not(.combat-hud) { padding-inline-end: var(--quick-corner); }
 /* A narrow map header cannot hold its whole line AND the corner, and `nowrap`
    made its actions overflow INTO the corner rather than yield. It wraps: the
    way out drops to its own line under the pair (kit law — a narrow shape is a
@@ -52527,7 +52553,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '4c6a74e3ad';
+const SOURCE = '530b9a05b9';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52561,7 +52587,7 @@ const SOURCE = '4c6a74e3ad';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '69';
+const ORDINAL = '70';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -52588,7 +52614,7 @@ const ORDINAL = '69';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-09-04';
+const BUILT = '2026-09-05';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
