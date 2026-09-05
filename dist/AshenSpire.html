@@ -12615,8 +12615,9 @@ const act1Enemies = [
     poiseMax: 6,
     levelProfile: { min: 1, max: 3 },
     art: '🐕',
-    // Drawn in profile looking LEFT; the board looks right (assets.js FACES),
-    // so this one is mirrored. Read off the sprite, not assumed.
+    // Drawn in profile looking LEFT, which is where an enemy looks: the player's
+    // zone is to its left (assets.js SIDE_FACES), so this one is NOT mirrored
+    // and ships as painted. Read off the sprite, not assumed.
     artFaces: 'left',
     moves: {
       bite: { intent: 'attack', damage: 6, weight: 60 },
@@ -12798,8 +12799,9 @@ const act2Enemies = [
     poiseMax: 8,
     levelProfile: { min: 6, max: 8 },
     art: '🐩',
-    // Drawn in profile looking LEFT; the board looks right (assets.js FACES),
-    // so this one is mirrored. Read off the sprite, not assumed.
+    // Drawn in profile looking LEFT, which is where an enemy looks: the player's
+    // zone is to its left (assets.js SIDE_FACES), so this one is NOT mirrored
+    // and ships as painted. Read off the sprite, not assumed.
     artFaces: 'left',
     moves: {
       maul: { intent: 'attack', damage: 4, hits: 2, weight: 60 },
@@ -52565,7 +52567,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'c7bc6a0a4f';
+const SOURCE = '80c14a0715';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52599,7 +52601,7 @@ const SOURCE = 'c7bc6a0a4f';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '74';
+const ORDINAL = '75';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58854,25 +58856,49 @@ const px = (value) => `${value}px`;
 
 // ── WHICH WAY A FIGHTER LOOKS ────────────────────────────────────────────────
 //
-// Owner, 2026-09-04: "adjust so that all characters are facing the same
-// direction (to the right)". One convention, in one place, so no surface
-// decides it and no second copy can disagree.
+// A FIGHTER FACES ITS OPPONENT. That is the rule, and it is a per-SIDE fact
+// because the two sides stand on opposite sides of the board: the player's zone
+// is on the left, the enemy row on the right, so the player looks right and the
+// enemies look left. Everything on a side looks the same way, and no surface
+// decides it.
+//
+// THIS REVERSES A LITERAL READING OF AN EARLIER ASK, and the reversal is the
+// point. Owner, 2026-09-04: "adjust so that all characters are facing the same
+// direction (to the right)" — implemented here as one global `FACES = 'right'`.
+// Applied to a board where the enemies stand to the RIGHT of the player, that
+// turned every enemy to face away from the fight: the Blight Hound was drawn
+// looking left, which is already correct for an enemy, and the global rule
+// flipped it. Owner, 2026-09-05, looking at the result: "notices characters
+// facing wrong way too". "The same direction" was a description of the symptom
+// he wanted gone (figures pointing every which way), not a specification that
+// survives contact with two opposing sides.
 //
 // The other half of the fact is per ASSET and lives with the rest of that
 // asset's art facts (`artFaces` on the enemy def, beside `art`, `size` and
 // `tint`): which way the painting or the render was drawn. Only the mismatch
-// between the two is a flip, which is what the poses README already asks for —
-// "Mirrored facings are a code flip, never a generated frame."
+// between what a side wants and how the asset was drawn is a flip, which is
+// what the poses README already asks for — "Mirrored facings are a code flip,
+// never a generated frame."
 //
 // `front` is not a third direction and never flips. A figure looking at the
 // viewer has no left or right to turn: mirroring one only swaps which hand
 // holds the sword. Most of the roster is front-facing, so most of it declares
 // nothing and this rule leaves it exactly as drawn — the honest outcome, and
 // the reason this is a per-asset fact rather than a blanket transform.
-const FACES = 'right';
-function spriteMirror(artFaces) {
+const SIDE_FACES = Object.freeze({ player: 'right', enemy: 'left' });
+
+/**
+ * spriteMirror(artFaces, side) — does this asset need flipping on this side?
+ *
+ * `side` defaults to 'enemy' because every caller today is an enemy sprite; the
+ * player's figure is front-facing art whose mirror is one blanket CSS rule with
+ * its own removal condition (styles/ui.css, "the figure faces the viewer").
+ * Naming the side rather than assuming it is what keeps that rule honest the
+ * day a player figure is drawn in profile.
+ */
+function spriteMirror(artFaces, side = 'enemy') {
   if (artFaces === 'front' || artFaces == null) return false;
-  return artFaces !== FACES;
+  return artFaces !== SIDE_FACES[side];
 }
 
 /**
@@ -67982,7 +68008,6 @@ Object.assign(module.exports, { flaskActionPlan });
 // The classes that are not `as-*` are HOOKS the instruments read; kit.css
 // draws nothing for them and no stylesheet may any more.
 const { esc } = require("src/ui/components/tooltip.js");
-const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { UI_COMPONENTS: UI, uiComponentAttrs } = require("src/ui/components/uiComponents.js");
 const { childModel } = require("src/ui/models/ComponentModel.js");
 const { el, html, iconButton } = require("src/ui/kit/index.js");
@@ -68025,30 +68050,26 @@ function cindersCounterHtml(model) {
   ])));
 }
 
-// THE TRAIL IS THE BUILD STAMP AND NOTHING ELSE. The Floor chip went first,
-// then the Act chip with the rest of the run chrome (owner's list above names
-// neither). The `metadataField` models stay in RunHeaderModel — act, floor,
-// seed and source are all still projected, and the map's own progress derives
-// from them; only the chips are gone.
+// ONE ROW, ONE RECEIPT (owner, 2026-09-05: "remove build and shift everything
+// up for a clean neat ui"). The build stamp was the last thing in the trail, so
+// the trail went with it and the header's first row is the Cinders receipt
+// alone. The version is still on the title screen, the startup gate and About —
+// three places a screenshot can carry it — so removing it here loses nothing
+// that a bug report needs.
 //
-// THE STAMP STAYS, AND IT IS NOT AN OVERSIGHT AGAINST THAT LIST. It is not
-// chrome a player reads, it is the receipt that identifies a screenshot:
-// `tools/buildstamp-shot.mjs` photographs exactly one stamp on the title, the
-// map and a fight, and on 2026-09-05 the owner's own screenshot of build
-// 0.4.0.1454 is what identified where the utility rail used to live. A HUD with
-// no version on it cannot answer "which build is this". Removing it is one line
-// here plus that tool's three placements, if the owner wants it gone too.
-function buildMetadataTrailHtml(model) {
-  return `<div class="hud-run-meta as-statstrip trail" ${uiComponentAttrs(model.component, model.variant)}>
-    ${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}
-  </div>`;
-}
-
+// STILL THREE TRACKS, and both empty ones are load-bearing. `.as-band-row.thirds`
+// centres its MIDDLE track, which is the only reason the receipt sits at the
+// viewport's centre rather than drifting with whatever else is on the row
+// (`hudparity` P8 asserts that centring to the pixel). The flanking divs are
+// what make the middle one the middle: with either of them gone the receipt is
+// no longer centred, and in the narrow two-track shape the `> :last-child` rule
+// would take the receipt itself and pin it left. They cost one empty div each
+// and hold the composition.
 function runHeaderStripHtml(model) {
   return `<div class="hud-info-row as-band-row thirds" ${uiComponentAttrs(model.component, model.variant)}>
     ${identityClusterHtml(childModel(model, UI.identityCluster))}
     ${cindersCounterHtml(childModel(model, UI.cindersCounter))}
-    ${buildMetadataTrailHtml(childModel(model, UI.buildMetadataTrail))}
+    <div class="hud-run-meta as-statstrip trail" ${uiComponentAttrs(UI.buildMetadataTrail, model.variant)} aria-hidden="true"></div>
   </div>`;
 }
 
@@ -68125,7 +68146,7 @@ function sharedRunHudHtml(model) {
 const hudShellHtml = sharedRunHudHtml;
 
 
-Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, buildMetadataTrailHtml, runHeaderStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, hudShellHtml });
+Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, runHeaderStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, hudShellHtml });
 
 },
 "src/ui/components/actRouteStrip.js": function (module, exports, require) {
