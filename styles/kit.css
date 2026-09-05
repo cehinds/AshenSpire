@@ -597,9 +597,9 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* Variants a surface may still pin (widths in the surface's own terms). */
 #tooltip[data-tooltip-variant='combatant-folded'] { --tip-w: 28.5rem; padding: 0.9rem 1.2rem; }
 #tooltip[data-tooltip-variant='combatant-expanded'] { --tip-w: 36rem; }
-#tooltip[data-tooltip-variant='enemy-context'] { --place-gap: 6px; --tip-w: 31.5rem; padding: 0.5rem 0.9rem; font-size: 1.5rem; line-height: 1.15; overflow-wrap: anywhere; }
-#tooltip[data-tooltip-variant='enemy-context'] .tt-title { margin-bottom: 0.15rem; font-size: 1.5rem; line-height: 1.1; }
-#tooltip[data-tooltip-variant='enemy-context'] .tt-combatant-line b { color: var(--gold); }
+#tooltip[data-tooltip-variant='combatant-context'] { --place-gap: 6px; --tip-w: 31.5rem; padding: 0.5rem 0.9rem; font-size: 1.5rem; line-height: 1.15; overflow-wrap: anywhere; }
+#tooltip[data-tooltip-variant='combatant-context'] .tt-title { margin-bottom: 0.15rem; font-size: 1.5rem; line-height: 1.1; }
+#tooltip[data-tooltip-variant='combatant-context'] .tt-combatant-line b { color: var(--gold); }
 #tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
 #tooltip .tt-combatant-focus { display: grid; gap: 0.25rem; margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid var(--line-soft); }
 #tooltip .tt-combatant-focus b { color: var(--gold); }
@@ -1752,26 +1752,16 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
      `.cv` and the "/ total" is the only ELEMENT in there, so counting elements
      from the second would keep the tail it is here to drop. */
   .as-statstrip.trail > .as-chip > .cv > * { display: none; }
-  /* THE CORNER TOOK THE TRACK. Reserving `--quick-corner` on the run header
-     left the trail's track narrower than the widest fact still standing after
-     the two rules above, and `justify-self: end` spills an over-wide grid item
-     LEFTWARDS — so the trail printed on top of the centred receipt. Caught at
-     390x844 on the map, whose place name ("ACT I — THE FALLOW MARCHES") is the
-     longest identity in the game and leaves the least track behind.
-     A narrow shape is a different composition: the trail drops to its own row
-     beneath the other two and reads left-to-right there. The centred receipt
-     stays centred over the identity, which is the middle track's whole point,
-     and no text meets the corner. */
-  .as-band-row.thirds { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.3rem; }
-  .as-band-row.thirds > :last-child { grid-column: 1 / -1; justify-self: start; }
-  /* THE RECEIPT READS ON THE FIRST LINE, not between the identity's two. The
-     identity is a two-line LabelStack here (name · class, then the context) and
-     the grid centres its items, so the Cinders chip landed at the row's middle
-     — level with the gap between those two lines, which reads as a collision
-     with the title rather than as a third fact. Aligned to the top it sits on
-     the eyebrow's line, where the eye already is. Three tracks on one line at
-     wider widths keep the centring: this is the narrow shape's own rule. */
-  .as-band-row.thirds > .hud-center { align-self: start; }
+  /* THREE TRACKS AT EVERY WIDTH, again. From 2026-08 to 2026-09-05 the phone
+     shape was two tracks with the trail dropped to its own row, because the
+     corner had taken the trail's track and the over-wide trail spilled onto
+     the centred receipt. Both of the things that made that necessary are gone:
+     the trail is empty (the build stamp left the band) and so is the identity
+     cluster (name, class and floor left it the same day). With nothing in the
+     outer tracks, a two-track grid only did harm — its `auto` middle track sat
+     at the right edge, so the Cinders receipt read right-aligned at 390 and
+     320 wide (hudparity `cinders-centre`, twelve findings; Constantine:
+     "cinder should be centered"). The wide rule above now holds here too. */
   /* ONE LINE FOR THE IDENTITY'S EYEBROW, so the run HUD is the SAME HEIGHT on
      every screen that draws it. The context line beneath it is already nowrap;
      the eyebrow was not, so it wrapped wherever its track was tightest — and
