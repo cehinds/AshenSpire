@@ -18,7 +18,6 @@
 // The classes that are not `as-*` are HOOKS the instruments read; kit.css
 // draws nothing for them and no stylesheet may any more.
 import { esc } from './tooltip.js';
-import { buildStampHtml } from './buildstamp.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs } from './uiComponents.js';
 import { childModel } from '../models/ComponentModel.js';
 import { el, html, iconButton } from '../kit/index.js';
@@ -61,30 +60,26 @@ export function cindersCounterHtml(model) {
   ])));
 }
 
-// THE TRAIL IS THE BUILD STAMP AND NOTHING ELSE. The Floor chip went first,
-// then the Act chip with the rest of the run chrome (owner's list above names
-// neither). The `metadataField` models stay in RunHeaderModel — act, floor,
-// seed and source are all still projected, and the map's own progress derives
-// from them; only the chips are gone.
+// ONE ROW, ONE RECEIPT (owner, 2026-09-05: "remove build and shift everything
+// up for a clean neat ui"). The build stamp was the last thing in the trail, so
+// the trail went with it and the header's first row is the Cinders receipt
+// alone. The version is still on the title screen, the startup gate and About —
+// three places a screenshot can carry it — so removing it here loses nothing
+// that a bug report needs.
 //
-// THE STAMP STAYS, AND IT IS NOT AN OVERSIGHT AGAINST THAT LIST. It is not
-// chrome a player reads, it is the receipt that identifies a screenshot:
-// `tools/buildstamp-shot.mjs` photographs exactly one stamp on the title, the
-// map and a fight, and on 2026-09-05 the owner's own screenshot of build
-// 0.4.0.1454 is what identified where the utility rail used to live. A HUD with
-// no version on it cannot answer "which build is this". Removing it is one line
-// here plus that tool's three placements, if the owner wants it gone too.
-export function buildMetadataTrailHtml(model) {
-  return `<div class="hud-run-meta as-statstrip trail" ${uiComponentAttrs(model.component, model.variant)}>
-    ${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}
-  </div>`;
-}
-
+// STILL THREE TRACKS, and both empty ones are load-bearing. `.as-band-row.thirds`
+// centres its MIDDLE track, which is the only reason the receipt sits at the
+// viewport's centre rather than drifting with whatever else is on the row
+// (`hudparity` P8 asserts that centring to the pixel). The flanking divs are
+// what make the middle one the middle: with either of them gone the receipt is
+// no longer centred, and in the narrow two-track shape the `> :last-child` rule
+// would take the receipt itself and pin it left. They cost one empty div each
+// and hold the composition.
 export function runHeaderStripHtml(model) {
   return `<div class="hud-info-row as-band-row thirds" ${uiComponentAttrs(model.component, model.variant)}>
     ${identityClusterHtml(childModel(model, UI.identityCluster))}
     ${cindersCounterHtml(childModel(model, UI.cindersCounter))}
-    ${buildMetadataTrailHtml(childModel(model, UI.buildMetadataTrail))}
+    <div class="hud-run-meta as-statstrip trail" ${uiComponentAttrs(UI.buildMetadataTrail, model.variant)} aria-hidden="true"></div>
   </div>`;
 }
 
