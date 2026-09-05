@@ -439,7 +439,14 @@ function judgeCell(cell, mapR, comR, refTable) {
       ok(`P8/top-row ${cell} ${screen} — one centred Cinders (miss ${centreMiss.toFixed(2)} px), no Floor receipt`);
     }
     const fields = read.runMetaFields || {};
-    const priority = ['act', 'floor', 'build', 'source'];
+    // FLOOR LEFT THE LADDER WITH THE CHIP (2026-09-05, owner: "remove the floor
+    // and character and class name"). It ranked second here, and a rung for a
+    // chip that is never drawn reads as "floor hidden before build" on every
+    // cell — a finding about the rule's own staleness, not about the HUD. The
+    // ladder is Act, then Build, then Source; Act is the one that must never
+    // yield. `runMetaFields` still COLLECTS floor, so a chip that comes back
+    // still shows up in this finding's payload, and P8/top-row above counts it.
+    const priority = ['act', 'build', 'source'];
     const priorityFindings = [];
     for (let i = 0; i < priority.length; i++) {
       const name = priority[i];
@@ -447,10 +454,10 @@ function judgeCell(cell, mapR, comR, refTable) {
         priorityFindings.push(`${name}-hidden-before-${priority.slice(i + 1).find((lower) => fields[lower]?.visible)}`);
       }
     }
-    if (!fields.act?.visible || !fields.floor?.visible || priorityFindings.length) {
-      fail(`FINDING P8/metadata-priority ${cell} ${screen} fields=${JSON.stringify(fields)} priority=${JSON.stringify(priorityFindings)} — Act and Floor stay visible first; Build, Seed, then Source yield in that order.`);
+    if (!fields.act?.visible || priorityFindings.length) {
+      fail(`FINDING P8/metadata-priority ${cell} ${screen} fields=${JSON.stringify(fields)} priority=${JSON.stringify(priorityFindings)} — Act stays visible first; Build, Seed, then Source yield in that order.`);
     } else {
-      ok(`P8/metadata-priority ${cell} ${screen} — Act and Floor visible; optional metadata yields Build, Seed, Source in priority order`);
+      ok(`P8/metadata-priority ${cell} ${screen} — Act visible; optional metadata yields Build, Seed, Source in priority order`);
     }
     const frameOverlaps = read.centerMeta ? read.bars.filter((bar) => bar.frame && bar.frame.painted
       && bar.frame.right > read.centerMeta.left + PX_TOL && bar.frame.left < read.centerMeta.right - PX_TOL
