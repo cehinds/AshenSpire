@@ -4,7 +4,7 @@
 //
 //   https://cehinds.github.io/AshenSpire/                 the build index (all branches)
 //   https://cehinds.github.io/AshenSpire/dev/             that branch's build list, newest first
-//   https://cehinds.github.io/AshenSpire/dev/1908/        the dev build with ordinal 1908, playable
+//   https://cehinds.github.io/AshenSpire/main/1688/       the main build with ordinal 1688, playable
 //   https://cehinds.github.io/AshenSpire/dev/latest/      alias for the newest dev build
 //   … and the same for test/, release/, main/.
 //

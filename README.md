@@ -30,8 +30,16 @@ here. It is the last segment of the stamp the game paints on its title screen,
 on `main`), so the number on the badge, the number on the builds index and the number on
 the title screen are the same fact read from the same file.
 
+**Read each badge down its own column, not across.** The ordinal counts builds *within the
+current candidate* and restarts when the candidate advances, so the four numbers above are
+not a ranking: a freshly cut candidate on `dev` starts near zero while `main` still carries
+the count it was promoted with. `main` also predates the restart — it is on the `0.4.0` line
+and still counting globally, which is why its badge reads in the thousands. To compare two
+branches, compare the whole stamp (`BUILD <version>.<ordinal>`), which the builds index and
+the title screen both show; the badge is a per-branch progress counter only.
+
 **Address scheme.** `https://cehinds.github.io/AshenSpire/<branch>/<ordinal>/` is that exact
-build — `…/dev/1908/` is dev build 1908, byte-identical to the `AshenSpire.html` of the
+build — `…/main/1688/` is `main` build 1688, byte-identical to the `AshenSpire.html` of the
 commit that produced it — and `…/<branch>/latest/` is the branch's newest. Each entry on the
 index links the `CHANGELOG.md` **at that build's commit**, not at a moving branch head. The
 site is assembled from git history by `node tools/pages-site.mjs` in the `pages-builds`
