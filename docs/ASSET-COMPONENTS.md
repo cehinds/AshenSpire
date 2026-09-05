@@ -57,7 +57,7 @@ single place that constructs it.
 | `armoury.itemCard` | Folded inventory/picker item; disclosure face and whole-card action host | `.inventory-face, .equip-chip.as-face` | `src/ui/screens/equipment.js` |
 | `armoury.inventoryItemClass` | Inventory item class with one folded/expanded action surface, delegated whole-card hold progress, and whole-card drag | `[data-card-class="inventoryItem"]` | `content/source/armouryUi.json` + `src/ui/components/holdconfirm.js` |
 | `armoury.itemReveal` | Model, description, tags, and available action | `.inventory-detail, .disc-reveal` | `src/ui/screens/equipment.js` + `src/ui/components/disclosure.js` |
-| `armoury.comparisonTooltipAnchor` | Focusable expanded-item anchor for delayed hover/focus comparison | `.inventory-detail[data-component="armoury.comparisonTooltipAnchor"]` | `src/ui/screens/equipment.js` + `src/ui/components/tooltip.js` |
+| `armoury.comparisonTooltipAnchor` | Focusable expanded-item anchor for sustained-hold comparison; hover/focus alone do not open it | `.inventory-detail[data-component="armoury.comparisonTooltipAnchor"]` | `src/ui/screens/equipment.js` + `src/ui/components/holdconfirm.js` + `src/ui/components/tooltip.js` |
 | `armoury.equipmentComparison` | Full before/after receipt with exact weapon-package counts and slot-bound upgrade changes | `[data-ui-component="equipment-comparison"]` | `content/source/armouryUi.json` + `src/ui/components/equipmentReceipts.js` + `src/ui/screens/equipment.js` |
 | `armoury.playerLoadReceipt` | Equip load readout: load / capacity, percent, and the Weight Class word (Light / Medium / Heavy) decided by the framework Weight Class service; armour weighs its Poise threshold, armaments their authored weight | `.player-load-receipt` | `src/model/statProjection.js` + `src/ui/components/equipmentReceipts.js` + `src/ui/screens/equipment.js` |
 | `armoury.inventoryTrayResizeHandle` | Independent Inventory height handle when Inventory is mounted as a resizable supporting tray | `[data-component="armoury.inventoryTrayResizeHandle"]` | `src/ui/screens/equipment.js` + `styles/ui.css` |
@@ -110,13 +110,14 @@ Proportions and order are authored in
   folded card is also the native and pointer drag source; crossing the shared
   hold slop cancels the hold and changes the gesture into a drag;
 - equipment comparison presentation is authored under `layout.comparison`.
-  `presentation` accepts `tooltip` or `inline`; `hoverDelayMs` controls only
-  the pointer-hover delay, while `tooltipWidthRem` and
+  `presentation` accepts `tooltip` or `inline`; `holdPreviewDelayMs` controls
+  the sustained-press threshold, while `tooltipWidthRem` and
   `tooltipMaxHeightRatio` keep the full receipt readable without escaping the
-  viewport. Tooltip presentation appears after the authored pointer delay or
-  on focus. The shipped Inventory class reserves press-hold for
-  Equip/Move/Unequip, so comparison never competes for that gesture and
-  `inline` is the always-visible presentation;
+  viewport. Hover/focus alone never opens tooltip presentation. A timed
+  Equip/Move/Unequip card previews comparison through the same hold lifecycle;
+  when hold-confirm is off, its explicit action button commits while the card
+  keeps a read-only hold-to-compare gesture. `inline` remains the always-visible
+  presentation;
 - cards: list by default, grid columns authored as `4`, with the presentation
   toggle in the Cards tray header; only cards with an equipment source appear;
   phone grid columns are separately authored as `2`;

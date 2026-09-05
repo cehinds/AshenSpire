@@ -436,13 +436,21 @@ async function main() {
         .map((piece) => piece.id)
         .filter((id) => !equipped.has(id))
         .slice(0, cap);
-      document.body.innerHTML = '<main id="pr315-fixture"></main>';
+      // Keep the shared tooltip singletons mounted. Replacing body.innerHTML
+      // disconnects the service's cached panel references and turns a real
+      // open into an invisible detached node.
+      for (const child of [...document.body.children]) {
+        if (!child.matches('#tooltip, #tooltip-2')) child.remove();
+      }
+      const fixtureHost = document.createElement('main');
+      fixtureHost.id = 'pr315-fixture';
+      document.body.appendChild(fixtureHost);
       const fixture = { run, commits: 0 };
       window.__pr315Fixture = fixture;
       mountEquipment(document.querySelector('#pr315-fixture'), {
         registries,
         run,
-        meta: {},
+        meta: { settings: { holdConfirm: 'off' } },
         inCombat: false,
         onChange: () => { fixture.commits += 1; },
         onClose: () => {},
@@ -462,6 +470,32 @@ async function main() {
         event('pointerdown'); event('pointerup'); event('click', MouseEvent);
       }
     })()`);
+    const holdOffComparison = SHIPPED ? null : await evaluate(`(async () => {
+      const source = document.querySelector('.ep-list .inventory-detail');
+      const action = source?.querySelector('button[data-act]');
+      const rect = source?.getBoundingClientRect();
+      if (!source || !rect) return null;
+      const pointer = (type) => source.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerId: 322, pointerType: 'touch', button: 0,
+        clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
+      }));
+      pointer('pointerdown');
+      await new Promise((done) => setTimeout(done, 210));
+      const tip = document.querySelector('#tooltip[data-tooltip-variant="equipment-comparison"]');
+      const result = {
+        actionButton: action?.tagName || '',
+        holdMs: source.dataset.holdMs || '',
+        preview: source.dataset.comparisonPreview || '',
+        visible: !!tip && getComputedStyle(tip).display !== 'none',
+      };
+      pointer('pointerup');
+      return result;
+    })()`);
+    if (holdOffComparison) {
+      check(holdOffComparison.actionButton === 'BUTTON' && holdOffComparison.holdMs === '160'
+        && holdOffComparison.preview === 'open' && holdOffComparison.visible,
+      `hold-confirm off keeps an explicit action button and a deliberate comparison hold (${JSON.stringify(holdOffComparison)})`);
+    }
     const refusal = SHIPPED ? null : await evaluate(`(() => {
       const fixture = window.__pr315Fixture;
       const before = JSON.stringify(fixture.run.loadout);

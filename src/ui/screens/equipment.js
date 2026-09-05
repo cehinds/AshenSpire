@@ -519,7 +519,11 @@ function inventoryReveal(registries, row, {
     action,
   });
   el.dataset.inventoryItem = row.key;
-  const cardOwnsAction = classModel?.holdAction === true && Boolean(onClassAction);
+  // When the global hold-confirm dial is off, the explicit action button owns
+  // the immediate equipment change and the card keeps a short, read-only hold
+  // for comparison. A zero-duration action must never erase the only comparison
+  // path or turn a compare gesture into an equip.
+  const cardOwnsAction = classModel?.holdAction === true && holdDuration > 0 && Boolean(onClassAction);
   let comparisonPreviewTimer = null;
   let comparisonPreviewOpen = false;
   let startComparisonPreview = null;
@@ -542,20 +546,25 @@ function inventoryReveal(registries, row, {
       widthRem: comparisonConfig?.tooltipWidthRem,
       maxHeightRatio: comparisonConfig?.tooltipMaxHeightRatio,
     };
+    if (comparisonPresentation === 'tooltip') {
+      el.dataset.comparisonTrigger = 'hold';
+      el.dataset.comparisonPreview = 'idle';
+      el.dataset.focusable = 'true';
+      if (!cardOwnsAction) el.setAttribute('role', 'group');
+    }
     if (comparisonPresentation === 'tooltip' && !cardOwnsAction) {
       const disarm = armHold(el, {
-        ms: holdDuration,
+        ms: comparisonConfig?.holdPreviewDelayMs ?? 160,
         id: 'compareEquipment',
         onConfirm: () => {
           showTooltipFor(el, comparisonHtml, { intent: 'above', clear, appearance });
           stickTooltip(el);
+          el.dataset.comparisonPreview = 'open';
         },
       });
       if (registerHold) registerHold(disarm);
     }
     if (comparisonPresentation === 'tooltip' && cardOwnsAction) {
-      el.dataset.comparisonTrigger = 'hold';
-      el.dataset.comparisonPreview = 'idle';
       startComparisonPreview = () => {
         clearTimeout(comparisonPreviewTimer);
         comparisonPreviewOpen = false;

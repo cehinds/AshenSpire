@@ -160,8 +160,11 @@ model IDs remain in [`docs/COMPONENT-CATALOG.md`](docs/COMPONENT-CATALOG.md).
   action remains available. Do not add a second nested action button to the
   hold-enabled presentation.
 - `layout.comparison.presentation` chooses `tooltip` or `inline`.
-  `hoverDelayMs`, `tooltipWidthRem`, and `tooltipMaxHeightRatio` configure the
-  shared tooltip. Comparison reading never steals the Equip/Move/Unequip hold.
+  `holdPreviewDelayMs`, `tooltipWidthRem`, and `tooltipMaxHeightRatio` configure
+  the shared tooltip. Hover/focus alone never opens comparison. A timed whole-card
+  Equip/Move/Unequip hold also previews comparison through the same lifecycle;
+  with hold-confirm off, the explicit action button commits and the card keeps a
+  separate read-only hold-to-compare gesture.
 - Armaments, Inventory, Cards, and Stats compose `trayModel` and `renderTray`.
   Folding collapses to the standard header without erasing the remembered
   expanded size. Sort controls and resize handles exist only while expanded
