@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AshenSpire · Low-Poly Fighters — Painted Poses</title>
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/ui.css">
+  <style>
+    :root { --parchment:#e8dcc4; --gold:#c9a24a; --muted:#a3947c; --panel:#1b1612; --line-soft:#3a2f24; --font-display:Georgia,"Times New Roman",serif; }
+    body { min-height:100vh; margin:0; background:radial-gradient(circle at 50% -10%,#33261a 0,#100e0c 52rem); color:var(--parchment); overflow:auto; }
+    .sheets { width:min(1380px,calc(100% - 32px)); margin:0 auto; padding:28px 0 56px; }
+    .sheets-head { padding-bottom:18px; border-bottom:1px solid var(--line-soft); }
+    .sheets-head h1 { margin:0; font:700 clamp(2.2rem,4vw,4rem)/1.1 var(--font-display); color:var(--parchment); }
+    .sheets-head h1 span { color:var(--gold); }
+    .sheets-head p { max-width:72rem; margin:.7rem 0 0; color:var(--muted); }
+    .sheets-head p a { color:var(--gold); }
+    .views { margin:.8rem 0 0; color:var(--muted); font:1rem ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; }
+    .class { margin-top:40px; }
+    .class h2 { margin:0 0 6px; font:700 clamp(1.5rem,2.6vw,2.2rem)/1.15 var(--font-display); color:var(--gold); }
+    .class > p { margin:0 0 16px; color:var(--muted); }
+    .sheet-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,600px),1fr)); gap:20px; }
+    .sheet { min-width:0; border:1px solid var(--line-soft); border-radius:1rem; background:color-mix(in srgb,var(--panel) 86%,transparent); overflow:hidden; }
+    .sheet-label { display:flex; justify-content:space-between; gap:1rem; padding:.8rem 1rem; color:var(--muted); font:1rem ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; border-bottom:1px solid var(--line-soft); }
+    .sheet img { display:block; width:100%; height:auto; background:#e6e2da; }
+    .sheet-pieces { margin:0; padding:.8rem 1rem; color:var(--parchment); font-size:.95rem; line-height:1.5; }
+    .sheet-pieces small { color:var(--muted); }
+    .foot { margin-top:48px; padding-top:18px; border-top:1px solid var(--line-soft); color:var(--muted); font-size:.9rem; }
+    @media (max-width:760px) { .sheet-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<main class="sheets">
+  <header class="sheets-head">
+    <h1>Low-Poly Fighters <span>— Painted Poses</span></h1>
+    <p>Painted orthographic reference sheets for the four AshenSpire classes: every equipment piece shown in five views,
+      dark steel and leather with gold trim over a low-poly faceted surface. Two sheets per class — the garments and the
+      kit (hands, feet, weapon). The in-game per-piece sprites live in <a href="../../assets/equipment/">assets/equipment/</a>.</p>
+    <p class="views">Views per row: Top · Right · Bottom · Left · Back</p>
+  </header>
+
+  <section class="class" id="reaver">
+    <h2>Reaver</h2>
+    <p>Full plate. Dark faceted steel, gold-edged plates, oxblood cloak.</p>
+    <div class="sheet-grid">
+      <figure class="sheet">
+        <figcaption class="sheet-label"><span>Reaver · armour</span><span>5 views</span></figcaption>
+        <img src="reaver-armour.png" alt="Reaver armour turnaround: helmet, chest, leg armor, belt and cloak in top, right, bottom, left and back views" loading="lazy">
+        <p class="sheet-pieces">Helmet · Chest · Leg armor · Belt · Cloak</p>
+      </figure>
+      <figure class="sheet">
+        <figcaption class="sheet-label"><span>Reaver · kit</span><span>5 views</span></figcaption>
+        <img src="reaver-kit.png" alt="Reaver kit turnaround: gauntlets, arm armor, boots and longsword in five views" loading="lazy">
+        <p class="sheet-pieces">Gauntlets · Arm armor · Boots · Longsword</p>
+      </figure>
+    </div>
+  </section>
+
+  <section class="class" id="herald">
+    <h2>Herald</h2>
+    <p>Pilgrim's vestments. Burnished bronze-brown cloth, gilt hems, a halo and a star mace.</p>
+    <div class="sheet-grid">
+      <figure class="sheet">
+        <figcaption class="sheet-label"><span>Herald · robes</span><span>5 views</span></figcaption>
+        <img src="herald-robes.png" alt="Herald robes turnaround: faceted hood, halo headpiece, chest mantle, under-trousers, cord belt and layered robe body in five views" loading="lazy">
+        <p class="sheet-pieces">Faceted hood · Halo headpiece · Chest mantle · Under-trousers · Cord belt · Layered robe body</p>
+      </figure>
+      <figure class="sheet">
+        <figcaption class="sheet-label"><span>Herald · kit</span><span>5 views</span></figcaption>
+        <img src="herald-kit.png" alt="Herald kit turnaround: bell sleeves, dark gloves, ankle boots, prayer-bead rosary and star mace in five views" loading="lazy">
+        <p class="sheet-pieces">Bell sleeves · Dark gloves · Ankle boots · Prayer-bead rosary · Star mace</p>
+      </figure>
+    </div>
+  </section>
+
+  <section class="class" id="rogue">
+    <h2>Rogue</h2>
+    <p>Layered leathers. Near-black hide, strapped and buckled, matched daggers.</p>
+    <div class="sheet-grid">
+      <figure class="sheet">
+        <figcaption class="sheet-label"><span>Rogue · garb</span><span>5 views</span></figcaption>
+        <img src="rogue-garb.png" alt="Rogue garb turnaround: hood, cowl and shoulder cloak, chest jerkin, trousers and utility belt with tassets in five views" loading="lazy">
+        <p class="sheet-pieces">Hood · Cowl / shoulder cloak · Chest jerkin · Trousers · Utility belt / tassets</p>
+      </figure>
+      <figure class="sheet">
+        <figcaption class="sheet-label"><span>Rogue · kit</span><span>5 views</span></figcaption>
+        <img src="rogue-kit.png" alt="Rogue kit turnaround: fingerless gloves, forearm bracers, calf boots and matched daggers in five views" loading="lazy">
+        <p class="sheet-pieces">Fingerless gloves · Forearm bracers · Calf boots · Matched daggers</p>
+      </figure>
+    </div>
+  </section>
+
+  <section class="class" id="starseer">
+    <h2>Starseer</h2>
+    <p>Astral vestments. Violet-black cloth, crooked hat, star-tipped staff.</p>
+    <div class="sheet-grid">
+      <figure class="sheet">
+        <figcaption class="sheet-label"><span>Starseer · vestments</span><span>5 views</span></figcaption>
+        <img src="starseer-vestments.png" alt="Starseer vestments turnaround: crooked hat, cowl mantle, tunic, trousers and belt tabard in five views" loading="lazy">
+        <p class="sheet-pieces">Crooked hat · Cowl mantle · Tunic · Trousers · Belt tabard</p>
+      </figure>
+      <figure class="sheet">
+        <figcaption class="sheet-label"><span>Starseer · kit</span><span>5 views</span></figcaption>
+        <img src="starseer-kit.png" alt="Starseer kit turnaround: cloak, gloves, sleeve bracers, boots and star staff in five views" loading="lazy">
+        <p class="sheet-pieces">Cloak · Gloves · Sleeve bracers · Boots · Star staff</p>
+      </figure>
+    </div>
+  </section>
+
+  <footer class="foot">Reference only — these sheets are not loaded by the game. Source images are the painted turnaround renders; each row reads Top, Right, Bottom, Left, Back.</footer>
+</main>
+</body>
+</html>
