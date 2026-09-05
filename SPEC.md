@@ -1025,7 +1025,9 @@ keeps the same state and focus contract without meaningful animation.
   `mode-choice`, `sprite-choice`, `tint-choice`, `sigil-choice`, `keepsake-choice`,
   `equipment-choice-card`, and `relic-choice-card`. `class-preview-pane` composes
   `class-resource-grid`; `character-disclosure` composes the stat, appearance, and keepsake
-  choices. `primary-stat-card` is one shared attribute model and disclosure renderer across
+  choices. A new character defaults to the Animated sprite style while preserving any explicit
+  style stored on an existing character or LAN player. `primary-stat-card` is one shared
+  attribute model and disclosure renderer across
   Character Creation, Shrine point assignment, and the Armoury: its folded face carries the
   short label, one-line summary, and current value; its reveal and focus/hover tooltip carry the
   authored description plus benefits derived from stat rules and equipment gates. Art and copy

@@ -30,6 +30,7 @@ import { buildActMap } from '../src/engine/actmap.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
+import { DEFAULT_SPRITE_STYLE } from '../src/model/spriteStyle.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward, shrineHealAmount, applyGraceRefill,
@@ -174,7 +175,7 @@ export function createSession({ registries, seedString, endless = false, restore
         initializeRunFlaskCharges(md.run, registries);
         delete md.run.migratedFromRunSchemaVersion;
         members.set(md.id, {
-          id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || 'rendered',
+          id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || DEFAULT_SPRITE_STYLE,
           connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
           discoveredArmaments,
           catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
@@ -235,7 +236,7 @@ export function createSession({ registries, seedString, endless = false, restore
       classId,
       connected: true,
       tint: tint || 'gold', // chosen accent — colors this hero's sprite for everyone
-      spriteStyle: spriteStyle || 'rendered', // rendered PNG / classic SVG / sigil glyph
+      spriteStyle: spriteStyle || DEFAULT_SPRITE_STYLE, // animated poses / rendered PNG / classic SVG / sigil glyph
       run, // per-member build: deck/relics/flasks/hp/maxHp/cinders
       discoveredArmaments: entitlement,
       rng: memberRng(seed, index),

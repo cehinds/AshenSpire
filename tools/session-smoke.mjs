@@ -86,6 +86,7 @@ try {
   S.start();
   ok(S.scene.kind === 'map', 'start → shared map scene');
   ok(S.snapshot().party.length === 2, 'snapshot shows a 2-member party');
+  ok(S.snapshot().party.every((p) => p.spriteStyle === 'animated'), 'members without an explicit sprite style default to Animated');
   ok(S.snapshot().party.every((p) => p.attributeMode && p.attributes), 'party snapshot transports creation mode + inert attributes');
 
   // --- fork voting: one vote holds the party; a tie breaks toward the host ---

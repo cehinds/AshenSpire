@@ -203,7 +203,7 @@ custom art does not require a second card implementation.
 | `stat-allocation-row` | one attribute allocation row | `statAllocationCard.renderStatAllocationCard` | Character Creation + Shrine allocation + catalog |
 | `resource-strip` | derived rows + Poise receipt | `creationCards.resourceStrip` | Character stats + catalog |
 | `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
-| `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog |
+| `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog; Animated is the default when no explicit style is stored. |
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
 | `sigil-choice` | glyph + selected state | `creationCards.sigilChoiceButton` | Appearance + catalog |
 | `keepsake-choice` | keepsake row + selected state | `creationCards.keepsakeChoiceButton` | Keepsake + catalog |
