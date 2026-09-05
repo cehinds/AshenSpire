@@ -1724,6 +1724,13 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .as-band.stack { flex-direction: column; align-items: stretch; gap: 0.5rem; }
 .as-band.quiet { background: transparent; border: 0; }
 .as-band-row { display: flex; align-items: center; gap: 1.2rem; min-width: 0; width: 100%; }
+/* THE METERS START LEVEL WITH THE CONTROLS BESIDE THEM. The resource row's
+   height is set by its right-hand cluster — two rows of IconButtons, 112 CSS px
+   at 360x800 — while the three meters are 41, so `align-items: center` left
+   them straddling the gap between the ⚒ ☰ row and the flasks below, aligned to
+   neither. Cross-axis only: the row's height is the cluster's either way, so
+   this moves no other row and the map and combat HUDs stay the same height. */
+.hud-resource-row > .hud-vitals-panel { align-self: flex-start; }
 .as-band-row > .grow { flex: 1 1 auto; min-width: 0; }
 .as-band-row.split { justify-content: space-between; }
 .as-band-row.end { justify-content: flex-end; }
@@ -1762,6 +1769,14 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
      and no text meets the corner. */
   .as-band-row.thirds { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.3rem; }
   .as-band-row.thirds > :last-child { grid-column: 1 / -1; justify-self: start; }
+  /* THE RECEIPT READS ON THE FIRST LINE, not between the identity's two. The
+     identity is a two-line LabelStack here (name · class, then the context) and
+     the grid centres its items, so the Cinders chip landed at the row's middle
+     — level with the gap between those two lines, which reads as a collision
+     with the title rather than as a third fact. Aligned to the top it sits on
+     the eyebrow's line, where the eye already is. Three tracks on one line at
+     wider widths keep the centring: this is the narrow shape's own rule. */
+  .as-band-row.thirds > .hud-center { align-self: start; }
   /* ONE LINE FOR THE IDENTITY'S EYEBROW, so the run HUD is the SAME HEIGHT on
      every screen that draws it. The context line beneath it is already nowrap;
      the eyebrow was not, so it wrapped wherever its track was tightest — and
