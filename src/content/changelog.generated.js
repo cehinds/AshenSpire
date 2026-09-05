@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-631",
+    "id": "pr-632",
     "date": "2026-09-05",
     "group": "2026-09-05",
     "summary": "The builds site keeps itself current, except for the stable link",
     "detail": "Nothing in the game changes. A push to dev, test or release now publishes the builds site as well as assembling it, so the per-branch play links follow the branches instead of waiting for someone to publish them by hand — they had sat three days behind the game, across fifty-two runs that each assembled the site successfully and then published nothing. The stable Play link is deliberately not automated: a push to main publishes nothing, and that link moves only on the owner's own dispatch. The trade is stated rather than hidden — publishing on a push is a standing permission for every future push to those three branches, and because the site is one site assembled on top of main, a main change does reach it on the next publication from one of them.",
-    "build": "0.5.5.16",
-    "pullRequest": 631,
-    "url": "https://github.com/cehinds/AshenSpire/pull/631"
+    "build": "0.5.5.17",
+    "pullRequest": 632,
+    "url": "https://github.com/cehinds/AshenSpire/pull/632"
   },
   {
     "id": "pr-626",
