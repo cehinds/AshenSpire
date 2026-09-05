@@ -52,7 +52,7 @@ import {
   endlessActInfo, activeMods, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP,
 } from '../src/content/customMods.js';
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
-import { statProjection } from '../src/model/statProjection.js';
+import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statProjection.js';
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
 import { attributeAllocationProblems, classAttributePreset, allocationTotal, defaultCreationModeId } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
@@ -3592,8 +3592,38 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the combat receipt names the item that was equipped');
 
     combat.player.energy = combat.player.energyMax;
-    dispatch(combat, { type: 'changeEquipment', slotId: 'armor', setIndex: 0, pieceId: 'default' });
+    const poiseBeforeArmour = combat.player.poiseMeter.max;
+    const armourChanged = dispatch(combat, {
+      type: 'changeEquipment', slotId: 'armor', setIndex: 0, pieceId: 'default',
+    });
     eq(combat.loadout.sets.armor[0], 'default', 'armour can also be changed during the player turn');
+    eq(combat.player.poiseMeter.max, playerPoiseThresholdReceipt(REG, {
+      loadout: combat.loadout, relics: combat.player.relicIds, class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels,
+    }).value, 'changing armour immediately stamps the exact live Poise threshold');
+    assert(combat.player.poiseMeter.max !== poiseBeforeArmour,
+      'changing from Oathsworn armour to Wayfarer Plate visibly changes the Poise vessel');
+    assert(armourChanged.events.some((event) => event.type === 'equipmentChanged'),
+      'the armour mutation emits the canonical equipment-change receipt');
+
+    combat.player.energy = combat.player.energyMax;
+    const unequipped = dispatch(combat, {
+      type: 'changeEquipment', slotId: 'rightHand', setIndex: 1, pieceId: null,
+    });
+    eq(combat.player.energy, combat.player.energyMax - bal.swapCost,
+      'unequipping an active combat item pays the same configured action price');
+    eq(combat.loadout.sets.rightHand[1], null, 'the requested combat position is empty after unequip');
+    assert(combat.loadout.storage.includes('dagger'), 'the unequipped dagger returns to carried storage');
+    const bareStrike = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
+    eq(dmgOf(resolveCard(REG, bareStrike)), 4,
+      'live Strikes are re-stamped to the run\'s tuned unarmed profile after unequip');
+    assert(unequipped.events.some((event) => event.type === 'equipmentChanged'
+      && event.changedPositions.some((position) => position.slotId === 'rightHand'
+        && position.setIndex === 1 && position.beforeItemId === 'dagger' && position.afterItemId === null)),
+    'the canonical receipt identifies the paid active-position unequip');
+    assert(unequipped.events.some((event) => event.type === 'equipmentRearmed'
+      && event.slotId === 'rightHand' && event.setIndex === 1 && event.pieceId === null),
+    'the combat receipt preserves null as the explicit unequip target');
 
     combat.player.energy = 0;
     const beforeUnpaid = JSON.stringify(combat.loadout);
@@ -3661,8 +3691,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const saves = createSaveManager(storage);
     saves.saveRun(run, rng);
     const loaded = saves.loadRun(REG);
-    eq(loaded.loadout.sets.rightHand[1], 'dagger', 'the combat equipment change round-trips');
-    eq(dmgOf(resolveCard(REG, loaded.deck.find((c) => c.cardId === 'strike'))), 7, 're-armed cards round-trip');
+    eq(loaded.loadout.sets.rightHand[1], null, 'the combat unequip round-trips');
+    assert(loaded.loadout.storage.includes('dagger'), 'the unequipped item round-trips in carried storage');
+    eq(dmgOf(resolveCard(REG, loaded.deck.find((c) => c.cardId === 'strike'))), 4,
+      'the saved deck round-trips with the live unarmed profile');
 
     // And a run saved before equipment existed is healed, not refused.
     const legacy = JSON.parse(JSON.stringify(run));
@@ -3758,6 +3790,35 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     combat.player.energy = REG.balance.equipment.swapCost;
     dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
     eq(combat.player.mana, 0, 'swapping back cannot refill spent Mana');
+
+    const deficitBeforeUnequip = {
+      hp: combat.player.maxHp - combat.player.hp,
+      mana: combat.player.maxMana - combat.player.mana,
+      stamina: combat.player.maxStamina - combat.player.stamina,
+    };
+    combat.player.energy = REG.balance.equipment.swapCost;
+    const poolUnequipped = dispatch(combat, {
+      type: 'changeEquipment', slotId: 'rightHand', setIndex: 1, pieceId: null,
+    });
+    eq(combat.player.energy, 0, 'the direct pool-item unequip charges its exact combat price');
+    eq(combat.loadout.sets.rightHand[1], null, 'the pool probe leaves its active position');
+    assert(combat.loadout.storage.includes(probe.id), 'the unequipped pool probe remains carried in storage');
+    eq(combat.player.maxHp, base.hp, 'direct combat unequip removes the maximum HP bonus');
+    eq(combat.player.maxHp - combat.player.hp, deficitBeforeUnequip.hp,
+      'direct combat unequip preserves the absolute HP deficit');
+    eq(combat.player.maxMana, base.mana, 'direct combat unequip removes the maximum Mana bonus');
+    eq(combat.player.mana, Math.max(0, base.mana - deficitBeforeUnequip.mana),
+      'direct combat unequip preserves spent Mana beyond the smaller vessel');
+    eq(combat.player.maxStamina, base.stamina, 'direct combat unequip removes the maximum Stamina bonus');
+    eq(combat.player.stamina, Math.max(0, base.stamina - deficitBeforeUnequip.stamina),
+      'direct combat unequip preserves the absolute Stamina deficit');
+    eq(JSON.stringify(combat.equipmentPoolDeficits), JSON.stringify(deficitBeforeUnequip),
+      'the carried equipment deficits remain the single source for later re-equips');
+    assert(poolUnequipped.events.some((event) => event.type === 'equipmentChanged'),
+      'the pool unequip emits the canonical mutation receipt');
+    assert(poolUnequipped.events.some((event) => event.type === 'equipmentRearmed'
+      && event.pieceId === null && event.cost === REG.balance.equipment.swapCost),
+    'the pool unequip emits a priced null-target combat receipt');
 
     const OLD_REG = {
       ...REG,
