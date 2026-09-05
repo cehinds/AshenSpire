@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-633",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The README stops contradicting itself about what dev publishes",
+    "detail": "Nothing a player sees changes. #629 was the one merged pull request this file had no receipt for, because it was the pass that wrote the others and a receipt cannot name a number that does not exist until the pull request is opened; it has one now. #632 then made a push to dev, test or release publish the builds site — but a paragraph further down the README still said dev is not published and that a change merged to it is not yet visible at the preview URL. The two statements sat six lines apart. The later one now says what actually happens, and keeps the distinction that matters: a push to dev moves its own address, and the stable Play link still moves only on the owner's own dispatch.",
+    "build": "0.5.5.19",
+    "pullRequest": 633,
+    "url": "https://github.com/cehinds/AshenSpire/pull/633"
+  },
+  {
     "id": "pr-632",
     "date": "2026-09-05",
     "group": "2026-09-05",
@@ -11,6 +21,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.5.5.17",
     "pullRequest": 632,
     "url": "https://github.com/cehinds/AshenSpire/pull/632"
+  },
+  {
+    "id": "pr-629",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The receipts catch up, and the README says you can re-arm mid-fight",
+    "detail": "Nothing a player sees changes. Three merged pull requests had landed without a receipt in this file — the equipment turnaround sheets (#626), the build-address and badge corrections (#628), and the in-game changelog catch-up (#627) — and all three are written up above. The README had also never mentioned that #625 let you change equipment during a fight, which is a thing a player does rather than an internal change; the feature list says so now, with the Energy it costs and the fact that a change you cannot afford is refused without spending anything. The changelog inside the game was regenerated from this file so it carries the same receipts. This receipt is the one that pass could not write for itself: a receipt names its own pull request, and the number does not exist until the pull request is opened.",
+    "build": "0.5.5.14",
+    "pullRequest": 629,
+    "url": "https://github.com/cehinds/AshenSpire/pull/629"
   },
   {
     "id": "pr-626",

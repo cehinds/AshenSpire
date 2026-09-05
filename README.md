@@ -88,9 +88,11 @@ beside it. This is a **development preview**, not a release, tag, or
 production approval. Release status remains governed separately and is currently
 **RED**.
 
-Work reaches `main` only when the owner merges it; `dev` is the integration
-branch and is not published. A change merged to `dev` is therefore not yet
-visible at the preview URL.
+Work reaches `main` only when the owner merges it. `dev` is the integration
+branch, and since #632 a push to it publishes the builds site, so a change
+merged to `dev` appears at its own `dev/` address once that run finishes. What
+it does not do is move the stable Play link above, which follows `main` and is
+published only on the owner's own dispatch.
 
 For offline play, download [`AshenSpire.html`](AshenSpire.html) from the
 repository root and double-click it. It is a self-contained file and requires
