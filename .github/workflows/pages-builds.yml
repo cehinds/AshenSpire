@@ -50,7 +50,26 @@ on:
 
 concurrency:
   group: pages-builds
-  cancel-in-progress: true
+  # A RUN THAT WILL NOT PUBLISH MUST NEVER CANCEL ONE THAT WILL.
+  #
+  # One group keeps publications serialised, which is right — two deploys to the
+  # same Pages environment must not race. But `cancel-in-progress: true` applied
+  # to every run, and once #632 let dev/test/release publish on push, that became
+  # a way to lose a publication silently: a push to main assembles and stops by
+  # design, and while it did so it cancelled any in-flight dev/test/release run —
+  # including one already inside `actions/deploy-pages`. The replacement main run
+  # then skips deploy, so the development build stayed unpublished until somebody
+  # happened to push to a development branch again. Nothing reported it, because
+  # a cancelled run is not a failed one.
+  #
+  # So the flag is now the same question the deploy job asks: will THIS run
+  # publish? A publishing run may still cancel its predecessor — newest wins, and
+  # the newer publication supersedes the older one anyway. A non-publishing run
+  # waits its turn instead. It must stay in step with the deploy guard below;
+  # the two are the same condition written once each.
+  cancel-in-progress: >-
+    ${{ (github.event_name == 'push' && contains(fromJSON('["dev","test","release"]'), github.ref_name))
+    || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
 
 # The workflow as a whole holds nothing but read: the Pages and OIDC grants are the
 # deploy job's alone (below), never the push-triggered assemble job's.
