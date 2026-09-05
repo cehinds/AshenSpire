@@ -82,6 +82,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         floor: run.floor,
         floorTotal: run.mapGraph?.floors ?? null,
         seed: run.seedString,
+        identity: { className: registries.classes.get(run.class).name },
         controls: {
           armouryId: 'combat-armoury',
           menuId: 'combat-menu',

@@ -4079,6 +4079,65 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .as-cluster.wrap { flex-wrap: wrap; }
 .as-cluster.stack { flex-direction: column; align-items: stretch; }
 .as-cluster.end { margin-left: auto; }
+/* QUICK ACCESS stays a 2 × 2 square, but its tiles are smaller than the global
+   IconButton. The transparent ::after keeps the authored tap floor around each
+   visible 36px square; the 8px gaps keep those hit regions from overlapping. */
+.shared-hud { --hud-quick-tile-size: 3.6rem; --hud-belt-tile-face-size: 3rem; }
+.shared-hud .hud-control-grid,
+.shared-hud .hud-control-grid > .as-cluster { gap: 0.8rem; }
+.shared-hud .hud-control-grid :is(.as-iconbtn, .as-slot) {
+  position: relative;
+  width: var(--hud-quick-tile-size); height: var(--hud-quick-tile-size);
+  min-width: var(--hud-quick-tile-size); min-height: var(--hud-quick-tile-size);
+}
+.shared-hud .hud-control-grid :is(.as-iconbtn, .as-slot)::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: var(--tap-floor); height: var(--tap-floor);
+  transform: translate(-50%, -50%);
+}
+
+/* Relics and utility potions share a 30px visible well in the lower belt. The
+   real Slot stays at the tap floor, so interactive potions remain easy to hit. */
+.shared-hud .hud-bottom .as-slot {
+  position: relative;
+  isolation: isolate;
+  width: var(--iconbtn-size); height: var(--iconbtn-size);
+  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+.shared-hud .hud-bottom .as-slot::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 50%; top: 50%;
+  width: var(--hud-belt-tile-face-size); height: var(--hud-belt-tile-face-size);
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-2);
+}
+.shared-hud .hud-bottom .as-slot:hover,
+.shared-hud .hud-bottom .as-slot:focus-visible {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+.shared-hud .hud-bottom .as-slot:hover::before,
+.shared-hud .hud-bottom .as-slot:focus-visible::before {
+  border-color: var(--gold);
+}
+.shared-hud .hud-bottom .as-slot:focus-visible::before {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent);
+}
+.shared-hud .hud-bottom .as-slot.is-selected::before {
+  border-color: var(--parchment);
+  box-shadow: 0 0 0 1px var(--parchment);
+}
 /* A band's grip hangs off its bottom edge, centred: the control that folds it. */
 .as-band { position: relative; }
 .as-band > .as-grip { position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 50%); z-index: 90; width: var(--iconbtn-size); height: 2.2rem; min-height: 2.2rem; padding: 0; border-radius: var(--r-pill); font-size: 1.2rem; line-height: 1; color: var(--muted); }
@@ -52685,7 +52744,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'df6d1329d4';
+const SOURCE = '5aa3c59060';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52719,7 +52778,7 @@ const SOURCE = 'df6d1329d4';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '3';
+const ORDINAL = '4';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -66195,6 +66254,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, 
         floor: run.floor,
         floorTotal: map.floors,
         seed: run.seedString,
+        identity: { className },
         controls: {
           armouryId: 'open-armoury',
           menuId: 'open-menu',
@@ -68500,18 +68560,13 @@ Object.assign(module.exports, { flaskActionPlan });
 // Presentation Models; this module owns DOM, not domain projection or commands.
 //
 // THE HUD IS A KIT BAND (styles/kit.css `.as-band`), three rows deep, and the
-// owner's list of 2026-09-05 is the whole of it — "vitals, relics, cinders,
-// armory, menu and hp and mp potions":
-//   1. the run header — the Cinders receipt as a StatChip, centred, with the
-//      build stamp trailing right;
-//   2. the resource row — the meters (components/resbars.js, the kit Meter)
-//      and, on the right, the Armoury and Menu IconButtons over the flask
-//      Slots the screen mounts;
+// current three-row composition is:
+//   1. class left, Cinders centred, Act/Floor right;
+//   2. the meters (components/resbars.js, the kit Meter) and, on the right,
+//      a compact 2 × 2 square of Armoury, Menu, HP and MP controls;
 //   3. the belt — relic Slots and carried-potion Slots.
-// WHAT LEFT THE BAND, so nothing drifts back in: the character name, the class,
-// the chosen sigil, the screen's context line, the Act chip and the Floor chip
-// (all on that list, or absent from it), and the fullscreen and music pair —
-// which lives on the title screen and in Settings, and needed no third home.
+// The character name, portrait, sigil, screen-context line, build/seed/source,
+// fullscreen and music remain off this compact band.
 // Each function below says why its own is gone.
 // The classes that are not `as-*` are HOOKS the instruments read; kit.css
 // draws nothing for them and no stylesheet may any more.
@@ -68528,24 +68583,16 @@ function attrsOf(componentAttrs) {
   return out;
 }
 
-// THE BAND CARRIES NO IDENTITY AT ALL (owner, 2026-09-05: "it should just be
-// vitals, relics, cinders, armory, menu and hp and mp potions in the Hud").
-// The name, the class, the chosen sigil and the screen's context line were all
-// here; none of them is state that changes in a fight, which is the only thing
-// this band is for. Each is still reachable where it belongs: the name labels
-// the save slot, the sigil and class are the character-creation facts the
-// player just chose, and the act is named by the map's own route strip.
-//
-// The cluster stays as an EMPTY LabelStack rather than being deleted, and that
-// is deliberate: `.hud-info-row` is a three-track grid (identity | receipt |
-// trail) whose middle track is what centres the Cinders receipt. Dropping the
-// first track would slide the receipt off centre and take `hudparity`'s
-// centring rule with it. An empty track holds the shape.
+// The left track is deliberately terse: class only. It identifies the active
+// kit without restoring the older portrait/name/context stack.
 function identityClusterHtml(model) {
   return html(el('div', {
     ...attrsOf(uiComponentAttrs(model.component, model.variant)),
-    class: 'hud-identity as-labelstack', 'aria-hidden': 'true',
-  }, []));
+    class: 'hud-identity as-statstrip', 'aria-label': `Class: ${model.properties.className}`,
+  }, el('span', { class: 'as-chip hud-class' }, [
+    el('span', { class: 'ck', text: 'Class' }),
+    el('span', { class: 'cv', text: model.properties.className }),
+  ])));
 }
 
 function cindersCounterHtml(model) {
@@ -68558,26 +68605,32 @@ function cindersCounterHtml(model) {
   ])));
 }
 
-// ONE ROW, ONE RECEIPT (owner, 2026-09-05: "remove build and shift everything
-// up for a clean neat ui"). The build stamp was the last thing in the trail, so
-// the trail went with it and the header's first row is the Cinders receipt
-// alone. The version is still on the title screen, the startup gate and About —
-// three places a screenshot can carry it — so removing it here loses nothing
-// that a bug report needs.
-//
-// STILL THREE TRACKS, and both empty ones are load-bearing. `.as-band-row.thirds`
-// centres its MIDDLE track, which is the only reason the receipt sits at the
-// viewport's centre rather than drifting with whatever else is on the row
-// (`hudparity` P8 asserts that centring to the pixel). The flanking divs are
-// what make the middle one the middle: with either of them gone the receipt is
-// no longer centred, and in the narrow two-track shape the `> :last-child` rule
-// would take the receipt itself and pin it left. They cost one empty div each
-// and hold the composition.
+function metadataFieldHtml(model) {
+  return el('span', {
+    ...attrsOf(uiComponentAttrs(model.component, model.variant)),
+    class: `as-chip hud-${model.variant}`,
+  }, [
+    el('span', { class: 'ck', text: model.properties.label }),
+    el('span', { class: 'cv', text: String(model.properties.value) }),
+  ]);
+}
+
+function buildMetadataTrailHtml(model) {
+  return html(el('div', {
+    ...attrsOf(uiComponentAttrs(model.component, model.variant)),
+    class: 'hud-run-meta as-statstrip trail', 'aria-label': 'Run position',
+  }, [
+    metadataFieldHtml(childModel(model, UI.metadataField, 'act')),
+    metadataFieldHtml(childModel(model, UI.metadataField, 'floor')),
+  ]));
+}
+
+// One baseline with three negotiating tracks: class, Cinders, Act/Floor.
 function runHeaderStripHtml(model) {
   return `<div class="hud-info-row as-band-row thirds" ${uiComponentAttrs(model.component, model.variant)}>
     ${identityClusterHtml(childModel(model, UI.identityCluster))}
     ${cindersCounterHtml(childModel(model, UI.cindersCounter))}
-    <div class="hud-run-meta as-statstrip trail" ${uiComponentAttrs(UI.buildMetadataTrail, model.variant)} aria-hidden="true"></div>
+    ${buildMetadataTrailHtml(childModel(model, UI.buildMetadataTrail))}
   </div>`;
 }
 
@@ -68654,7 +68707,7 @@ function sharedRunHudHtml(model) {
 const hudShellHtml = sharedRunHudHtml;
 
 
-Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, runHeaderStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, hudShellHtml });
+Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, buildMetadataTrailHtml, runHeaderStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, hudShellHtml });
 
 },
 "src/ui/components/actRouteStrip.js": function (module, exports, require) {
@@ -68755,24 +68808,12 @@ const { componentModel } = require("src/ui/models/ComponentModel.js");
 const { metadataFieldModel } = require("src/ui/models/HudPrimitiveModels.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 
-// THE CLUSTER PROJECTS NOTHING (owner, 2026-09-05: "it should just be vitals,
-// relics, cinders, armory, menu and hp and mp potions in the Hud", and before
-// that "remove across floor and character name sigil and class from combat
-// hud"). It carried the name, the class, the chosen sigil and the screen's
-// context, and the band draws none of them now.
-//
-// The properties and the two child models go with the view rather than being
-// left projected: a presentation model that still computes a name nobody
-// renders is how the name comes back — some later reader finds the field and
-// assumes the band is meant to show it. `UI.portraitBadge` and
-// `UI.characterTitle` stay declared in UiComponentId, because the ids are the
-// registry's vocabulary and a surface that wants a portrait badge should use
-// the same word; nothing instantiates them today.
-//
-// The cluster itself stays: `.hud-info-row` is a three-track grid whose middle
-// track is what centres the Cinders receipt, and this is the first track.
-function identityClusterModel() {
-  return componentModel(UI.identityCluster, {});
+// The compact header exposes only the class identity. Character name, portrait,
+// sigil and screen-context copy remain on their dedicated surfaces.
+function identityClusterModel(identity = {}) {
+  return componentModel(UI.identityCluster, {
+    properties: { className: identity.className || '' },
+  });
 }
 
 function cindersCounterModel(cinders) {
@@ -68798,7 +68839,7 @@ function buildMetadataTrailModel({ place, act, actTotal, floor, floorTotal, seed
 function runHeaderModel(input) {
   return componentModel(UI.runHeaderStrip, {
     children: [
-      identityClusterModel(),
+      identityClusterModel(input.identity),
       cindersCounterModel(input.cinders),
       buildMetadataTrailModel(input),
     ],
@@ -69176,6 +69217,7 @@ function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, 
         floor: run.floor,
         floorTotal: run.mapGraph?.floors ?? null,
         seed: run.seedString,
+        identity: { className: registries.classes.get(run.class).name },
         controls: {
           armouryId: 'combat-armoury',
           menuId: 'combat-menu',

@@ -32,18 +32,13 @@ check(/class="hud-bottom as-band-row fold"/.test(files.hud),
   'D2 the belt of relics and potions is not what compact folds away');
 check(/data-has-utility-potions="false"/.test(files.hud),
   'D3 the shared HUD does not default to an empty collapsed potion row');
-// D4 WAS "the context line is part of the fold" UNTIL 2026-09-05, when the band
-// stopped carrying any identity at all (owner: "it should just be vitals,
-// relics, cinders, armory, menu and hp and mp potions in the Hud"). A check
-// whose subject is gone cannot be left asserting it, and deleting it outright
-// would drop the element from cover — so it is inverted onto the new invariant:
-// the cluster is still THERE (it is the grid's first track, and the middle
-// track is what centres the Cinders receipt) and it is EMPTY. Re-adding a name,
-// a class, a sigil or a context line to the band fires this.
-check(/class: 'hud-identity as-labelstack'/.test(files.hud)
+// D4 keeps the identity track terse: the class is useful combat context, while
+// the character name, portrait, sigil and screen-context sentence stay out.
+check(/class: 'hud-identity as-statstrip'/.test(files.hud)
+  && /class: 'as-chip hud-class'/.test(files.hud)
   && !/hud-context/.test(files.hud)
   && !/eyebrow\(/.test(files.hud),
-  'D4 the band carries identity content again — it is meant to be an empty track');
+  'D4 the band identity is not the class-only compact receipt');
 // D5 reads the rung in the two halves it became: the build stamp drops its
 // source, and a progress Chip drops its "/ total" — never the value, which one
 // blanket `:nth-child(n+2)` did (photographed at 390x844: "ACT" and "FLOOR"

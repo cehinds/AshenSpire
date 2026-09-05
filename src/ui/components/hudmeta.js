@@ -2,18 +2,13 @@
 // Presentation Models; this module owns DOM, not domain projection or commands.
 //
 // THE HUD IS A KIT BAND (styles/kit.css `.as-band`), three rows deep, and the
-// owner's list of 2026-09-05 is the whole of it — "vitals, relics, cinders,
-// armory, menu and hp and mp potions":
-//   1. the run header — the Cinders receipt as a StatChip, centred, with the
-//      build stamp trailing right;
-//   2. the resource row — the meters (components/resbars.js, the kit Meter)
-//      and, on the right, the Armoury and Menu IconButtons over the flask
-//      Slots the screen mounts;
+// current three-row composition is:
+//   1. class left, Cinders centred, Act/Floor right;
+//   2. the meters (components/resbars.js, the kit Meter) and, on the right,
+//      a compact 2 × 2 square of Armoury, Menu, HP and MP controls;
 //   3. the belt — relic Slots and carried-potion Slots.
-// WHAT LEFT THE BAND, so nothing drifts back in: the character name, the class,
-// the chosen sigil, the screen's context line, the Act chip and the Floor chip
-// (all on that list, or absent from it), and the fullscreen and music pair —
-// which lives on the title screen and in Settings, and needed no third home.
+// The character name, portrait, sigil, screen-context line, build/seed/source,
+// fullscreen and music remain off this compact band.
 // Each function below says why its own is gone.
 // The classes that are not `as-*` are HOOKS the instruments read; kit.css
 // draws nothing for them and no stylesheet may any more.
@@ -30,24 +25,16 @@ function attrsOf(componentAttrs) {
   return out;
 }
 
-// THE BAND CARRIES NO IDENTITY AT ALL (owner, 2026-09-05: "it should just be
-// vitals, relics, cinders, armory, menu and hp and mp potions in the Hud").
-// The name, the class, the chosen sigil and the screen's context line were all
-// here; none of them is state that changes in a fight, which is the only thing
-// this band is for. Each is still reachable where it belongs: the name labels
-// the save slot, the sigil and class are the character-creation facts the
-// player just chose, and the act is named by the map's own route strip.
-//
-// The cluster stays as an EMPTY LabelStack rather than being deleted, and that
-// is deliberate: `.hud-info-row` is a three-track grid (identity | receipt |
-// trail) whose middle track is what centres the Cinders receipt. Dropping the
-// first track would slide the receipt off centre and take `hudparity`'s
-// centring rule with it. An empty track holds the shape.
+// The left track is deliberately terse: class only. It identifies the active
+// kit without restoring the older portrait/name/context stack.
 export function identityClusterHtml(model) {
   return html(el('div', {
     ...attrsOf(uiComponentAttrs(model.component, model.variant)),
-    class: 'hud-identity as-labelstack', 'aria-hidden': 'true',
-  }, []));
+    class: 'hud-identity as-statstrip', 'aria-label': `Class: ${model.properties.className}`,
+  }, el('span', { class: 'as-chip hud-class' }, [
+    el('span', { class: 'ck', text: 'Class' }),
+    el('span', { class: 'cv', text: model.properties.className }),
+  ])));
 }
 
 export function cindersCounterHtml(model) {
@@ -60,26 +47,32 @@ export function cindersCounterHtml(model) {
   ])));
 }
 
-// ONE ROW, ONE RECEIPT (owner, 2026-09-05: "remove build and shift everything
-// up for a clean neat ui"). The build stamp was the last thing in the trail, so
-// the trail went with it and the header's first row is the Cinders receipt
-// alone. The version is still on the title screen, the startup gate and About —
-// three places a screenshot can carry it — so removing it here loses nothing
-// that a bug report needs.
-//
-// STILL THREE TRACKS, and both empty ones are load-bearing. `.as-band-row.thirds`
-// centres its MIDDLE track, which is the only reason the receipt sits at the
-// viewport's centre rather than drifting with whatever else is on the row
-// (`hudparity` P8 asserts that centring to the pixel). The flanking divs are
-// what make the middle one the middle: with either of them gone the receipt is
-// no longer centred, and in the narrow two-track shape the `> :last-child` rule
-// would take the receipt itself and pin it left. They cost one empty div each
-// and hold the composition.
+function metadataFieldHtml(model) {
+  return el('span', {
+    ...attrsOf(uiComponentAttrs(model.component, model.variant)),
+    class: `as-chip hud-${model.variant}`,
+  }, [
+    el('span', { class: 'ck', text: model.properties.label }),
+    el('span', { class: 'cv', text: String(model.properties.value) }),
+  ]);
+}
+
+export function buildMetadataTrailHtml(model) {
+  return html(el('div', {
+    ...attrsOf(uiComponentAttrs(model.component, model.variant)),
+    class: 'hud-run-meta as-statstrip trail', 'aria-label': 'Run position',
+  }, [
+    metadataFieldHtml(childModel(model, UI.metadataField, 'act')),
+    metadataFieldHtml(childModel(model, UI.metadataField, 'floor')),
+  ]));
+}
+
+// One baseline with three negotiating tracks: class, Cinders, Act/Floor.
 export function runHeaderStripHtml(model) {
   return `<div class="hud-info-row as-band-row thirds" ${uiComponentAttrs(model.component, model.variant)}>
     ${identityClusterHtml(childModel(model, UI.identityCluster))}
     ${cindersCounterHtml(childModel(model, UI.cindersCounter))}
-    <div class="hud-run-meta as-statstrip trail" ${uiComponentAttrs(UI.buildMetadataTrail, model.variant)} aria-hidden="true"></div>
+    ${buildMetadataTrailHtml(childModel(model, UI.buildMetadataTrail))}
   </div>`;
 }
 

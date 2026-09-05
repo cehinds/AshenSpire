@@ -1786,6 +1786,65 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .as-cluster.wrap { flex-wrap: wrap; }
 .as-cluster.stack { flex-direction: column; align-items: stretch; }
 .as-cluster.end { margin-left: auto; }
+/* QUICK ACCESS stays a 2 × 2 square, but its tiles are smaller than the global
+   IconButton. The transparent ::after keeps the authored tap floor around each
+   visible 36px square; the 8px gaps keep those hit regions from overlapping. */
+.shared-hud { --hud-quick-tile-size: 3.6rem; --hud-belt-tile-face-size: 3rem; }
+.shared-hud .hud-control-grid,
+.shared-hud .hud-control-grid > .as-cluster { gap: 0.8rem; }
+.shared-hud .hud-control-grid :is(.as-iconbtn, .as-slot) {
+  position: relative;
+  width: var(--hud-quick-tile-size); height: var(--hud-quick-tile-size);
+  min-width: var(--hud-quick-tile-size); min-height: var(--hud-quick-tile-size);
+}
+.shared-hud .hud-control-grid :is(.as-iconbtn, .as-slot)::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: var(--tap-floor); height: var(--tap-floor);
+  transform: translate(-50%, -50%);
+}
+
+/* Relics and utility potions share a 30px visible well in the lower belt. The
+   real Slot stays at the tap floor, so interactive potions remain easy to hit. */
+.shared-hud .hud-bottom .as-slot {
+  position: relative;
+  isolation: isolate;
+  width: var(--iconbtn-size); height: var(--iconbtn-size);
+  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+.shared-hud .hud-bottom .as-slot::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 50%; top: 50%;
+  width: var(--hud-belt-tile-face-size); height: var(--hud-belt-tile-face-size);
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-2);
+}
+.shared-hud .hud-bottom .as-slot:hover,
+.shared-hud .hud-bottom .as-slot:focus-visible {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+.shared-hud .hud-bottom .as-slot:hover::before,
+.shared-hud .hud-bottom .as-slot:focus-visible::before {
+  border-color: var(--gold);
+}
+.shared-hud .hud-bottom .as-slot:focus-visible::before {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent);
+}
+.shared-hud .hud-bottom .as-slot.is-selected::before {
+  border-color: var(--parchment);
+  box-shadow: 0 0 0 1px var(--parchment);
+}
 /* A band's grip hangs off its bottom edge, centred: the control that folds it. */
 .as-band { position: relative; }
 .as-band > .as-grip { position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 50%); z-index: 90; width: var(--iconbtn-size); height: 2.2rem; min-height: 2.2rem; padding: 0; border-radius: var(--r-pill); font-size: 1.2rem; line-height: 1; color: var(--muted); }
