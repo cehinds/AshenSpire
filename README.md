@@ -4,9 +4,9 @@ A roguelike deckbuilder for the browser — single-player, with optional LAN co-
 
 > **Status: feature-complete core loop.** Four classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
-> **README content updated:** 2026-09-05T12:25:17-08:00 (Alaska)
-> **Updated by:** Claude Code, on the owner's instruction — publication is now split by branch, so the paragraph saying it is owner-exclusive and manual for all four branches was no longer true
-> **Source change:** the `pages-builds` change that publishes `dev`, `test` and `release` on push while leaving `main` to the owner's own dispatch
+> **README content updated:** 2026-09-05T15:10:06-08:00 (Alaska)
+> **Updated by:** Claude Code, on the owner's instruction — the feature list described only the four painted class figures, and equipping armour now changes the animated figure you fight as
+> **Source change:** #648, which gave each of the twelve alternative armour sets its own painted figure in combat and in the Armoury, with the class figure as the fallback, and added a fourth attack frame
 > **Scope:** README content-currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
 
 ## Play a build
