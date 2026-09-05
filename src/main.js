@@ -1650,17 +1650,10 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     }
     subject.statuses.crimsonBlight = { stacks: 3, duration: 3 };
   }
-  const label =
-    enc.pool === 'boss'
-      ? registries.enemies.get(enc.enemies[0]).name.toUpperCase()
-      : enc.pool === 'elite'
-        ? `ELITE · FLOOR ${run.floor}`
-        : `ACT ${run.actNumber} · FLOOR ${run.floor}`;
   mountCombat(app, {
     registries,
     run,
     combat,
-    label,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
     meta: activeMeta,

@@ -310,6 +310,15 @@
 
 /* ---------- main menu ambience ---------- */
 .title-screen { position: relative; overflow: hidden; }
+/* THE TITLE SCREEN HAS NO BAND ABOVE THE RAIL. The utility rail's own rule in
+   styles/kit.css hangs it off the bottom of the run HUD's band (`top: 100%`),
+   which is what keeps it clear of the header on every surface that has one.
+   The title screen has no header, and the rail is a direct child of the screen
+   — so `top: 100%` would drop it a full screen height below the fold. It keeps
+   its own top-right anchor, which is where it sat before the rail existed. */
+.title-screen > .hud-quick-settings {
+  top: calc(env(safe-area-inset-top, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+}
 .title-glow { animation: titleGlow 3.2s ease-in-out infinite alternate; }
 @keyframes titleGlow {
   from { text-shadow: 0 0 26px rgba(201, 162, 39, 0.25); }
@@ -747,8 +756,17 @@ button.ev-choice {
    REMOVAL CONDITION (SOP 1's corollary): delete this block the day the armament
    and body art is re-rendered from corrected producers. Leaving both in place
    double-flips and restores the bug wearing a fix's clothes.
+
+   WHICH ELEMENT CARRIES IT. `.class-sprite > .facing` and not `.class-sprite`
+   itself, because that frame is an animation target and the sigil overlay's
+   positioning parent, and a mirror on it broke both: the reaction animations in
+   `styles/combat.css` outrank an inherited transform and flipped the player to
+   face away for the length of every hit, and the figure well's cancel in
+   `styles/kit.css` left the overlay counter-mirroring nothing. The facing layer
+   is built in `src/ui/assets.js` classSprite() and carries only this fact —
+   the same shape enemySprite() uses for the same reason.
    --------------------------------------------------------------------------- */
-.class-sprite,
+.class-sprite > .facing,
 .equipped-figure { transform: scaleX(-1); }
 .class-sprite .equipped-figure { transform: none; }
 
