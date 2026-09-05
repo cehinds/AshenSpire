@@ -227,26 +227,35 @@ const PLANTS = [
     row: 'G ORDINAL BELONGS TO THIS TREE',
     plant: (root) => edit(root, 'tools/bundle.mjs', (t) => `${t}\n// planted bundler semantic change\n`),
   },
+  // These three replace a corpus that had gone stale against its own row. It
+  // read `C THREE CONSUMERS` and planted the HUD, map and combat as stamp
+  // consumers. #620 took the build stamp out of the run band — it lives on the
+  // title screen, where you go to read it — so the row became `C TWO CONSUMERS`
+  // and asserts the HUD carries NO stamp. The old plants then asserted a row the
+  // check no longer produces, and the selftest said so: NO SUCH ROW, the corpus
+  // is stale. One of them was worse than dead — removing buildStampHtml from
+  // hudmeta.js is now what the row WANTS, so that plant made the tree more
+  // correct and could never go red.
+  // The row has exactly three ways to break, and each is planted below.
   {
-    name: 'the shared HUD owner stops deriving the build stamp',
-    row: 'C THREE CONSUMERS',
+    name: 'title stops deriving the stamp directly',
+    row: 'C TWO CONSUMERS',
+    plant: (root) => edit(root, 'src/ui/screens/title.js',
+      (t) => t.replace("        ${buildStampHtml('title')}", '        ${""}')),
+  },
+  {
+    name: 'the startup gate stops deriving the stamp directly',
+    row: 'C TWO CONSUMERS',
+    plant: (root) => edit(root, 'src/ui/components/startupGate.js',
+      (t) => t.replace("      ${buildStampHtml('startup')}", '      ${""}')),
+  },
+  {
+    // The #620 regression guard: the row asserts an ABSENCE, so the plant that
+    // defeats it is putting the stamp back into the run HUD.
+    name: 'the run HUD stamps the build again',
+    row: 'C TWO CONSUMERS',
     plant: (root) => edit(root, 'src/ui/components/hudmeta.js',
-      (t) => t.replace(
-        '${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}',
-        '${""}',
-      )),
-  },
-  {
-    name: 'map stops mounting the shared stamp owner',
-    row: 'C THREE CONSUMERS',
-    plant: (root) => edit(root, 'src/ui/screens/map.js',
-      (t) => t.replace('${hudShellHtml(runHudViewModel({', '${(() => "")(runHudViewModel({')),
-  },
-  {
-    name: 'combat stops mounting the shared stamp owner',
-    row: 'C THREE CONSUMERS',
-    plant: (root) => edit(root, 'src/ui/screens/combat.js',
-      (t) => t.replace('${hudShellHtml(runHudViewModel({', '${(() => "")(runHudViewModel({')),
+      (t) => `${t}\n// planted: buildStampHtml back in the run HUD\n`),
   },
   {
     name: 'the build grows an input outside the digest\'s roots',
