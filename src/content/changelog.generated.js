@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-626",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "Turnaround sheets for what each class wears and carries",
+    "detail": "Nothing a player sees changes, and nothing in the game draws these yet. Thirty-nine equipment, clothing and weapon pieces across the four classes each gain a strip of five 256×256 views — top, right, bottom, left and back — as reference for inventory and modelling work later. They were reconstructed with AI assistance from the owner's own class paintings and from nothing else; CREDITS says so, and the manifest records how confident each piece is, from high down to the Herald's under-trousers, which the paintings barely show. The single-file download grows, because the strips are inlined into it like every other asset.",
+    "build": "0.5.5.13",
+    "pullRequest": 626,
+    "url": "https://github.com/cehinds/AshenSpire/pull/626"
+  },
+  {
+    "id": "pr-628",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The README's build addresses are correct, and the badges explain themselves",
+    "detail": "Nothing a player sees changes. The example build address in the README pointed at a build that no longer exists, and the four build badges invited a comparison they do not support: the ordinal counts builds within the current candidate and restarts when the candidate advances, so main's four-digit number is not \"ahead\" of dev's two-digit one. The README now says to read each badge down its own column and compare whole stamps instead.",
+    "build": "0.5.5.12",
+    "pullRequest": 628,
+    "url": "https://github.com/cehinds/AshenSpire/pull/628"
+  },
+  {
+    "id": "pr-627",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The in-game changelog catches up",
+    "detail": "The changelog you can read inside the game gains the receipts for the battlefield tooltips (#622) and the painted-fighters reference page (#623), which the file had but the projection had not yet been rebuilt to carry. The README also now says that every status effect and both fighters on the battlefield answer on hover, on the focus cursor and on a tap.",
+    "build": "0.5.5.12",
+    "pullRequest": 627,
+    "url": "https://github.com/cehinds/AshenSpire/pull/627"
+  },
+  {
     "id": "pr-625",
     "date": "2026-09-05",
     "group": "2026-09-05",
