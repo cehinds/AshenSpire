@@ -102,14 +102,31 @@ export const ACTIONS = [
   { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
   { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
   { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
-  { id: 'deck', label: 'Open Armoury (Deck)', short: 'Armoury', kind: 'key', defKey: 'd', defBtn: 3, destination: 'cards' },
-  { id: 'relics', label: 'Open Armoury', short: 'Armoury', kind: 'key', defKey: 'r', defBtn: 4, destination: 'equipment' },
-  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Armoury', kind: 'key', defKey: 't', defBtn: 5, destination: 'character' },
+  // THREE DOORS, THREE NAMES. All three carried `short: 'Armoury'`, so the map's
+  // hint row read "D Armoury · R Armoury · T Armoury" — three keys that look
+  // like three ways to the same place when each one lands somewhere different.
+  // The short form names the DESTINATION each row declares below it, which is
+  // exactly what `actionShort`'s own note asks for ("the bar wants the short
+  // form"), and the middle row's full label stops being the only one that
+  // does not say where it goes.
+  { id: 'deck', label: 'Open Armoury (Deck)', short: 'Deck', kind: 'key', defKey: 'd', defBtn: 3, destination: 'cards' },
+  { id: 'relics', label: 'Open Armoury (Equipment)', short: 'Equipment', kind: 'key', defKey: 'r', defBtn: 4, destination: 'equipment' },
+  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Stats', kind: 'key', defKey: 't', defBtn: 5, destination: 'character' },
   // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
   // we give both a rebindable key per slot).
   { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
   { id: 'flask2', label: 'Use Flask 2', short: 'Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
   { id: 'flask3', label: 'Use Flask 3', short: 'Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
+  // INSPECT IS ONE BINDING FOR EVERY INSPECTABLE THING. Constantine,
+  // 2026-09-03: "add a hot key for inspect as well that is uniform for all
+  // things selected (i'm thinking i)". It goes in the registry rather than
+  // into the surfaces because that is what makes it uniform: a row here gets
+  // rebinding, a line in the Controls screen, a pad button, and a keycap that
+  // `actionLabel()` derives from the LIVE binding — so no surface types the
+  // letter `I` and none of them can drift from the others.
+  // `i` was free (taken: Enter, Esc, e, m, d, r, t, f, g, h); pad 11 is the
+  // right stick click, free, and the usual seat for inspect.
+  { id: 'inspect', label: 'Inspect Selected', short: 'Inspect', kind: 'key', defKey: 'i', defBtn: 11 },
 ];
 
 const ACTION_DESTINATIONS = new Set(['cards', 'equipment', 'character']);

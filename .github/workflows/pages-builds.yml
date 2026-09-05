@@ -5,9 +5,9 @@
 #   /<branch>/<ordinal>/   that exact build, playable (byte-identical to the commit's AshenSpire.html)
 #   /<branch>/latest/      alias for the branch's newest build
 #
-# Everything the site served before (/AshenSpire.html, /hud/, /review-approval-hub/,
-# /docs/…) is still served: the whole `main` tree is the base of the artifact and the
-# only replaced file is the root index.html (main's own is kept at /index-game.html).
+# Everything the site served before (/AshenSpire.html, /docs/…) is still served:
+# the whole `main` tree is the base of the artifact and the only replaced file is
+# the root index.html (main's own is kept at /index-game.html).
 #
 # PUBLICATION IS ITS OWN AUTHORITY (AGENTS.md: push and publication/Pages/deploy are
 # separate protected transitions; local readiness — or push authority — never implies
@@ -64,8 +64,32 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Fetch the four published branches so their history is readable
-        run: git fetch --no-tags origin dev test release main
+      # ONE MISSING BRANCH USED TO TAKE DOWN EVERY RUN. `git fetch origin dev
+      # test release main` is atomic: `fatal: couldn't find remote ref test`
+      # aborts the whole command with exit 128, so when `test` was deleted on
+      # 2026-09-04 (GitHub auto-deletes a merged PR's head branch, and the
+      # test → release promotion uses `test` AS the head) this job went red on
+      # dev, on release and on main — none of which had lost anything.
+      #
+      # Fetched one at a time, a branch that is gone costs its own line and
+      # nothing else. It is NOT swallowed: the missing ones are named here and
+      # named again in the assembled summary, because a publish that quietly
+      # drops a branch is the failure this whole job exists to prevent.
+      - name: Fetch the published branches so their history is readable
+        run: |
+          set -uo pipefail
+          missing=""
+          for b in dev test release main; do
+            if git fetch --no-tags origin "$b" 2>/dev/null; then
+              echo "  fetched $b"
+            else
+              echo "  MISSING $b — no such branch on origin"
+              missing="$missing $b"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::warning title=A published branch is missing::not on origin:$missing — the site will be assembled without it"
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -84,14 +108,10 @@ jobs:
       # /test /release served stale builds for hours with every run green.
       #
       # A first attempt at this fixed it by publishing automatically behind a
-      # repository-variable switch. Codex refused that twice and the contract is
-      # why: `.agentops/governance/promotion-gates.json` marks Pages deployment a
-      # Gate F `separate_action` with `authority_is_per_action: true`, and its
-      # rules say no gate grants Pages authority "except Gate F, and there only
-      # per individual action", and that Gate F "cannot be delegated, waived or
-      # satisfied by a deputy". A standing switch IS a delegation to every future
-      # push. So this step reports; it does not publish, and nothing here should
-      # ever grow the ability to.
+      # repository-variable switch. That was rejected: publishing the site is an
+      # owner action, taken deliberately each time, and a standing switch is a
+      # delegation to every future push. So this step reports; it does not
+      # publish, and nothing here should ever grow the ability to.
       # SAY WHAT THIS RUN DID, BECAUSE NOBODY WAS BEING TOLD.
       #
       # #553: after #543 correctly took the deploy credential off the push path,
@@ -99,13 +119,10 @@ jobs:
       # /test /release served stale builds for hours with every run green.
       #
       # A first attempt fixed that by publishing automatically behind a repository
-      # variable. Codex refused it twice and the contract is why:
-      # `.agentops/governance/promotion-gates.json` makes "Pages source or
-      # deployment" a Gate F `separate_action` with `authority_is_per_action: true`,
-      # its rules grant Pages authority "only per individual action", and Gate F
-      # "cannot be delegated, waived or satisfied by a deputy". A standing switch IS
-      # a delegation to every future push. So this step reports; it does not
-      # publish, and nothing here should ever grow the ability to.
+      # variable. That was rejected: publishing the site is an owner action, taken
+      # deliberately each time, and a standing switch is a delegation to every
+      # future push. So this step reports; it does not publish, and nothing here
+      # should ever grow the ability to.
       - name: Report what this run did with the site
         env:
           GH_TOKEN: ${{ github.token }}

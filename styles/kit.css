@@ -1,0 +1,2124 @@
+/* styles/kit.css — THE COMPONENT KIT, in the game.
+   ───────────────────────────────────────────────────────────────────────────
+   Every player-facing surface is composed from the pieces in this file and
+   nothing else. The vocabulary is the kit artifact's (§03 sub-components,
+   §04 assemblies, §05 bodies, §07 menus, §08 tooltips, §10 cards), under the
+   same names, so a rule read on the kit page is the rule that runs here.
+
+   THE SHELL'S OWN CLASSES ARE KIT ASSEMBLIES UNDER THE REPO'S NAMES. The kit
+   page called them `.as-head`, `.as-foot`, `.as-iconbtn`, `.as-btnrow`; the
+   game had already named the same assemblies `.modal-head`, `.modal-foot`,
+   `.modal-iconbtn`/`.modal-close`, `.modal-btnrow`, and thirty tools read
+   those names off the rendered page. So this file styles BOTH spellings with
+   one rule each — the repo name is the hook, the kit name is the recipe — and
+   nothing in styles/ui.css may draw shell chrome any more.
+
+   SCALE. The kit page was authored at a 15px root; this game's root is 10px
+   (html { font-size: 62.5% }). Every kit rem is ×1.5 here, once, at the
+   declaration — never at a call site. Radii are px in both, unchanged.
+
+   LAWS KEPT: no vw/vh (the body is zoomed by --ui-zoom); the tap floor is
+   --tap-floor and the icon box is --iconbtn-size (base.css); rem for type
+   and the boxes that hold it, px for geometry that must not scale with type;
+   one home per fact.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* the kit's own two page tokens the game lacked */
+  --ink-dim: #b9ac91;
+  --rule: #2a2419;
+  --r-pill: 999px;
+}
+
+/* ═══ TEXT ATOMS ════════════════════════════════════════════════════════════ */
+.as-eyebrow { display: block; font-size: 1rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.as-title-l { --track: 0.05em; margin: 0; font: 700 2.55rem/1.1 var(--font-display); letter-spacing: var(--track); text-indent: var(--track); color: var(--parchment); }
+.as-title-m { margin: 0; font: 600 2.25rem/1.1 var(--font-display); letter-spacing: 0.03em; color: var(--parchment); }
+.as-title-s { margin: 0; font: 600 1.8rem/1.15 var(--font-display); letter-spacing: 0.045em; color: var(--gold); }
+.as-subtitle { margin: 0; color: var(--muted); font-size: 1.32rem; line-height: 1.4; }
+.as-hairline { border: 0; border-top: 1px solid var(--line); margin: 0; }
+.as-status { color: var(--muted); font-size: 1.2rem; text-align: right; }
+.as-flavor { color: var(--muted); font-style: italic; font-size: 1.28rem; }
+.as-prose { margin: 0; color: var(--parchment); font-size: 1.4rem; line-height: 1.5; }
+.as-prose + .as-prose { color: var(--muted); font-size: 1.3rem; }
+/* Ornament — the only decorative atom, spent on the title screen and on a
+   decision. It marks "you are being asked something". */
+.as-ornament { display: flex; align-items: center; gap: 1.05rem; color: var(--gold); }
+.as-ornament::before, .as-ornament::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--line-soft)); }
+.as-ornament::after { background: linear-gradient(270deg, transparent, var(--line-soft)); }
+.as-ornament span { font-size: 0.9rem; line-height: 1; }
+
+/* ═══ CONTAINMENT — a label can never leave its control ═════════════════════ */
+/* THE RECIPE, on the shell's own text-bearing controls, as one rule: the
+   defect was found five times on five controls and is fixed once. */
+.modal-btnrow > button, .modal-tab, .modal-head-status, .modal-foot-note > span, .modal-head-id h2 {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.as-btn, .as-tab, .modal-tab, .as-railitem, .as-seg button, .as-iconbtn,
+.as-pill, .as-tag, .as-chip .cv, .as-chip .ck,
+.as-row > .r-label, .as-option .on, .cb-name, .cd-name, .as-status,
+.as-statrow .sr-name, .as-detailcard .dc-name, .modal-head-status,
+.as-labelstack .ls-label, .as-labelstack .ls-hint,
+.as-meter .m-label, .as-meter .m-value, .as-statpair .sp-k, .as-statpair .sp-v {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis;
+}
+.as-btnrow, .as-head, .as-head-id, .as-head-actions, .as-row, .as-option,
+.as-statrow, .as-statstrip, .as-kitline, .as-tabs, .as-pane-head, .as-labelstack,
+.as-meter, .as-meter > .m-plate, .as-meters, .as-cluster, .as-band-row,
+.as-detailbody, .as-detailbody .lines { min-width: 0; }
+.as-btnrow > *, .as-row > *, .as-option > *, .as-statrow > *, .as-pane-head > * { min-width: 0; }
+
+/* ═══ CONTROL ATOMS ═════════════════════════════════════════════════════════ */
+/* Button — three weights, no fourth. The base `button` element IS the kit's
+   secondary button, so a screen that writes <button> gets the kit for free
+   and nothing can draw a fourth weight by omitting a class. */
+button, .as-btn {
+  min-height: var(--tap-floor);
+  padding: 0.75rem 1.65rem;
+  text-align: center; white-space: nowrap;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  color: var(--parchment);
+  font: 500 1.38rem/1 var(--font-body);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+button:hover, .as-btn:hover, button:focus-visible, .as-btn:focus-visible { background: var(--panel); border-color: var(--gold); outline: none; }
+button:focus-visible, .as-btn:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
+button:disabled, .as-btn:disabled, .as-btn[aria-disabled="true"] { border-color: var(--line); color: var(--muted); background: var(--panel); cursor: default; }
+button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 1.38rem; padding: 0.75rem 1.65rem; }
+button.primary, .as-btn.primary { background: color-mix(in srgb, var(--gold) 20%, var(--panel)); border-color: var(--gold); color: var(--parchment); font-weight: 600; }
+button.primary:hover, .as-btn.primary:hover { background: color-mix(in srgb, var(--gold) 30%, var(--panel)); }
+button.primary:disabled, .as-btn.primary:disabled { background: var(--panel); border-color: var(--line); color: var(--muted); }
+button.danger, .as-btn.danger, button.subtle.danger { border-color: var(--danger); color: var(--danger); background: var(--panel); }
+button.danger:hover, .as-btn.danger:hover { background: rgba(212, 98, 46, 0.08); }
+/* A loss is the way forward on a danger door: primary weight, danger colour. */
+button.primary.danger, .as-btn.primary.danger { background: rgba(212, 98, 46, 0.14); border-color: var(--danger); color: var(--parchment); }
+button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212, 98, 46, 0.24); }
+
+/* IconButton — ONE box for every header action, close included. A LENGTH, not
+   a floor: --iconbtn-size (base.css), the same on every component. */
+.as-iconbtn, .modal-iconbtn, .modal-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
+  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);
+  padding: 0;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-2);
+  color: var(--parchment);
+  font: 400 1.6rem/1 var(--font-body);
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.as-iconbtn:hover, .modal-iconbtn:hover, .modal-close:hover,
+.as-iconbtn:focus-visible, .modal-iconbtn:focus-visible, .modal-close:focus-visible { border-color: var(--gold); color: var(--gold); outline: none; background: var(--panel); }
+
+/* ButtonRow — a grid of EQUAL tracks; the row is min(box, n × step). */
+.as-btnrow, .modal-btnrow {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch; gap: 8px; min-width: 0;
+  --n: 1; --step: 15rem;
+  width: min(100%, calc(var(--n) * var(--step) + (var(--n) - 1) * 8px));
+}
+.as-btnrow:has(> :nth-child(2):last-child), .modal-btnrow:has(> :nth-child(2):last-child) { --n: 2; }
+.as-btnrow:has(> :nth-child(3):last-child), .modal-btnrow:has(> :nth-child(3):last-child) { --n: 3; }
+.as-btnrow:has(> :nth-child(4):last-child), .modal-btnrow:has(> :nth-child(4):last-child) { --n: 4; }
+.as-btnrow:has(> :nth-child(5):last-child), .modal-btnrow:has(> :nth-child(5):last-child) { --n: 5; }
+.as-btnrow[data-size="short"],  .modal-btnrow[data-size='short']  { --step: 10rem; }
+.as-btnrow[data-size="medium"], .modal-btnrow[data-size='medium'] { --step: 15rem; }
+.as-btnrow[data-size="long"],   .modal-btnrow[data-size='long']   { --step: 21rem; }
+.as-btnrow[data-size="fill"],   .modal-btnrow[data-size='fill']   { width: 100%; }
+.as-btnrow > button, .modal-btnrow > button {
+  container-type: inline-size;
+  padding-inline: clamp(0.5rem, 8%, 1.4rem);
+  font-size: clamp(1.1rem, 9cqi, 1.38rem);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.as-btnrow > button[data-size="square"], .modal-btnrow > button[data-size='square'] {
+  aspect-ratio: 1; width: auto; height: auto; justify-self: start;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0;
+}
+.as-btnrow.end, .modal-btnrow.end { justify-content: end; margin-left: auto; }
+.as-btnrow.center, .modal-btnrow.center { margin-inline: auto; }
+/* A button that carries an identity (a flask's art + name) keeps the art
+   inside its own box: the line grows to the art, never the reverse. */
+.as-btnrow > button:has(.flask-identity), .modal-btnrow > button:has(.flask-identity) { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; line-height: 1.3; }
+
+/* Tab — switches SUBJECT. Underline, no box. */
+.as-tabs, .modal-tabs { display: flex; gap: 0.2rem; min-width: 0; }
+.as-tab, .modal-tab {
+  min-height: var(--tap-floor);
+  padding: 0.6rem 1rem;
+  background: transparent;
+  border: 0; border-bottom: 2px solid transparent;
+  border-radius: var(--r-2) var(--r-2) 0 0;
+  color: var(--ink-dim);
+  font: 500 1.38rem/1 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.as-tab[aria-selected="true"], .modal-tab[aria-selected="true"], .modal-tab.on, .as-tab.on { color: var(--gold); border-bottom-color: var(--gold); background: transparent; }
+.as-tab:hover, .modal-tab:hover, .as-tab:focus-visible, .modal-tab:focus-visible { color: var(--parchment); outline: none; background: transparent; border-color: transparent; border-bottom-color: var(--line-soft); box-shadow: none; }
+.as-tab[aria-selected="true"]:hover, .modal-tab[aria-selected="true"]:hover, .modal-tab.on:hover { border-bottom-color: var(--gold); }
+
+/* RailItem — switches SECTION. Bordered, full width of its rail, gold when
+   current. Always in a vertical column. */
+.as-railitem {
+  display: block; width: 100%;
+  min-height: var(--tap-floor);
+  padding: 0.75rem 0.9rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  color: var(--ink-dim);
+  font: 500 1.35rem/1.2 var(--font-body);
+  text-align: left; white-space: nowrap;
+  cursor: pointer;
+}
+.as-railitem:hover { border-color: var(--line-soft); color: var(--parchment); }
+.as-railitem[aria-current="true"], .as-railitem[aria-selected="true"], .as-railitem.on { border-color: var(--gold); color: var(--gold); background: rgba(var(--accent-rgb), 0.08); }
+
+/* Segmented — 2–3 mutually exclusive values, one visible at a glance. */
+.as-seg { display: inline-flex; border: 1px solid var(--line-soft); border-radius: var(--r-2); overflow: hidden; }
+.as-seg button { min-height: calc(var(--tap-floor) - 2px); padding: 0.6rem 1.2rem; background: transparent; border: 0; border-radius: 0; color: var(--ink-dim); font: 500 1.23rem/1 var(--font-body); cursor: pointer; }
+.as-seg button + button { border-left: 1px solid var(--line-soft); }
+.as-seg button:hover, .as-seg button:focus-visible { background: rgba(var(--accent-rgb), 0.06); color: var(--parchment); border-color: var(--line-soft); box-shadow: none; }
+.as-seg button[aria-pressed="true"], .as-seg button.on { background: rgba(var(--accent-rgb), 0.14); color: var(--gold); }
+.as-seg button:disabled { color: var(--muted); background: transparent; }
+
+/* Toggle — a binary setting. The knob is the state; the pill is the track. */
+.as-toggle {
+  position: relative; display: inline-block; flex: 0 0 auto;
+  width: 5.2rem; height: 2.8rem; min-height: 0; padding: 0;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.as-toggle .knob { position: absolute; top: 0.3rem; left: 0.3rem; width: 2rem; height: 2rem; border-radius: 50%; background: var(--muted); transition: left 140ms, background 140ms; }
+.as-toggle.on, .as-toggle[aria-checked="true"] { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.14); }
+.as-toggle.on .knob, .as-toggle[aria-checked="true"] .knob { left: calc(100% - 2.3rem); background: var(--gold); }
+.as-toggle:disabled { opacity: 0.55; cursor: default; }
+
+/* StatePill — binary state, scannable down a column. */
+.as-pill {
+  display: inline-block; padding: 0.15rem 0.6rem;
+  border: 1px solid var(--line-soft); border-radius: var(--r-1);
+  font: 500 1.02rem/1.5 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap;
+}
+.as-pill[data-on="true"] { border-color: var(--gold); color: var(--gold); }
+.as-pill.round { border-radius: var(--r-pill); font-size: 0.93rem; letter-spacing: 0.1em; }
+
+/* Tag — micro-label in its parent's tint. */
+.as-tag { display: inline-block; padding: 0.08rem 0.5rem; border: 1px solid currentColor; border-radius: var(--r-1); font: 500 0.96rem/1.5 var(--font-body); color: var(--muted); white-space: nowrap; }
+.as-tag.more { border-style: dashed; color: var(--muted); }
+
+/* Keycap */
+.as-keycap {
+  display: inline-grid; place-items: center;
+  min-width: 2rem; padding: 0.08rem 0.4rem;
+  background: var(--bg); border: 1px solid var(--line-soft); border-radius: var(--r-1);
+  font: 500 1.05rem/1.5 var(--font-body); color: var(--ink-dim);
+}
+
+/* Glyph — an icon column wide enough that labels align with or without one.
+   `min-width` and not a fixed basis: a keyboard or a die is a WIDE emoji (⌨ is
+   20 px against a 17.5 px column, measured) and a fixed basis clipped it, which
+   is the one thing §02 says a mark may never do. Narrow glyphs still align. */
+.as-glyph { flex: 0 0 auto; min-width: 1.75rem; color: var(--muted); font-size: 1.42rem; line-height: 1; text-align: center; }
+
+/* LabelStack — what a control does, and one line on how. */
+.as-labelstack { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.as-labelstack .ls-label { font-size: 1.41rem; color: var(--parchment); white-space: nowrap; }
+.as-labelstack .ls-hint { color: var(--muted); font-size: 1.2rem; white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* ArtWell — a square that holds a thing's art at a size worth looking at. */
+.as-artwell {
+  flex: 0 0 auto; display: grid; place-items: center;
+  width: 8.4rem; height: 8.4rem;
+  background: radial-gradient(circle at 50% 40%, #3a1a18, #17110d);
+  border: 1px solid var(--line-soft); border-radius: var(--r-3);
+  font-size: 3.6rem; line-height: 1;
+}
+.as-artwell.sm { width: 5.1rem; height: 5.1rem; font-size: 2.25rem; }
+.as-artwell.cool { background: radial-gradient(circle at 50% 40%, #2b3a44, #12100c); }
+.as-artwell img { width: 100%; height: 100%; object-fit: contain; }
+
+/* DetailCard — an inset, gold-edged card that shows exactly what is at stake. */
+.as-detailcard { display: flex; flex-direction: column; gap: 0.2rem; padding: 1.28rem 1.5rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-3); text-align: left; }
+.as-detailcard .dc-eyebrow { font-size: 1.02rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.as-detailcard .dc-name { margin: 0.1rem 0 0.2rem; font: 600 1.72rem/1.1 var(--font-display); color: var(--gold); }
+.as-detailcard .dc-line { font-size: 1.32rem; font-weight: 600; color: var(--parchment); }
+.as-detailcard .dc-meta { font-size: 1.05rem; letter-spacing: 0.08em; color: var(--muted); }
+.as-detailcard.muted { border-color: var(--line); }
+.as-detailcard.muted .dc-name { color: var(--muted); }
+
+/* ═══ THE TWO LIST ATOMS ════════════════════════════════════════════════════ */
+/* Row — Glyph + label + StatusText + trail. Menus, popovers, action menus. */
+.as-row {
+  display: flex; align-items: center; gap: 1.05rem;
+  width: 100%; min-height: var(--tap-floor);
+  padding: 0.7rem 1.35rem;
+  background: transparent; border: 0; border-radius: 0;
+  color: var(--parchment);
+  font: 500 1.47rem/1.3 var(--font-body);
+  text-align: left; white-space: nowrap;
+  cursor: pointer;
+}
+.as-row:hover, .as-row:focus-visible { background: var(--panel); border-color: transparent; outline: none; box-shadow: none; }
+.as-row:focus-visible { box-shadow: inset 0 0 0 1px var(--gold); }
+.as-row > .r-label { flex: 0 0 auto; }
+.as-row > .as-status, .as-row > .r-trail { margin-left: auto; }
+.as-row > .as-status + .r-trail { margin-left: 0; }
+.as-row > .as-status { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.as-row .r-trail { flex: 0 0 auto; display: flex; align-items: center; gap: 0.75rem; }
+.as-row[data-tone="current"], .as-row[data-tone="current"] .as-glyph, .as-row.on, .as-row.on .as-glyph { color: var(--gold); }
+.as-row[data-tone="loss"], .as-row[data-tone="loss"] .as-glyph, .as-row.danger, .as-row.danger .as-glyph { color: var(--danger); }
+.as-row[aria-disabled="true"], .as-row:disabled { color: var(--muted); cursor: default; background: transparent; }
+.as-row[aria-disabled="true"]:hover, .as-row:disabled:hover { background: transparent; }
+/* The settings variant: same grammar, hairline between, no hover fill — a
+   settings row is read, not chosen. It may wrap its control under the label
+   when the pane is narrow, and it never clips a hint. */
+.as-row.setting { padding-inline: 0; border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
+.as-row.setting:hover { background: transparent; }
+.as-row.setting:last-child { border-bottom: 0; }
+.as-row.setting > .as-labelstack { flex: 1 1 18rem; }
+.as-row.setting > .r-trail { margin-left: auto; }
+.as-row.setting > .r-trail input[type="text"] { width: 100%; }
+
+/* OptionCard — choosing between things, not settings. */
+.as-options { display: flex; flex-direction: column; gap: 1.05rem; width: 100%; }
+.as-option {
+  position: relative;
+  display: flex; gap: 1.5rem; align-items: center;
+  width: 100%;
+  padding: 1.28rem 3.3rem 1.28rem 1.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  color: inherit; text-align: left; white-space: normal;
+  font: inherit;
+  cursor: pointer;
+}
+.as-option:hover { border-color: var(--line-soft); background: var(--panel); }
+.as-option::after { content: '›'; position: absolute; top: 50%; right: 1.28rem; transform: translateY(-50%); color: var(--muted); font-size: 1.72rem; line-height: 1; }
+.as-option:hover::after, .as-option[aria-checked="true"]::after, .as-option[aria-pressed="true"]::after { color: var(--gold); }
+/* Selection changes colour, never footprint: 1px border in both states, halo by shadow. */
+.as-option[aria-checked="true"], .as-option[aria-pressed="true"], .as-option.is-selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18);
+}
+.as-option .og { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+.as-option .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
+.as-option .on { display: flex; align-items: center; gap: 0.75rem; font: 600 1.65rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); white-space: nowrap; }
+.as-option .od { margin: 0; color: var(--ink-dim); font-size: 1.35rem; line-height: 1.4; }
+.as-option .om { margin: 0; color: var(--muted); font-size: 1.05rem; letter-spacing: 0.08em; }
+.as-option > .r-trail { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 0.75rem; }
+.as-option.noarrow > .r-trail { margin-right: 0; }
+.as-option[aria-disabled="true"], .as-option:disabled { opacity: 0.55; cursor: default; }
+.as-option[aria-disabled="true"] .on, .as-option:disabled .on { color: var(--muted); }
+.as-option.noarrow { padding-right: 1.5rem; }
+.as-option.noarrow::after { content: none; }
+/* A row of an option and a trailing IconButton (delete) share one height. */
+.as-optionrow { display: flex; align-items: stretch; gap: 0.75rem; }
+.as-optionrow > .as-option { flex: 1 1 auto; }
+.as-optionrow > .as-iconbtn { align-self: center; }
+
+/* ═══ NUMBER ATOMS ══════════════════════════════════════════════════════════ */
+.as-statrow { display: flex; align-items: flex-start; gap: 1.5rem; padding: 1.05rem 1.35rem; border: 1px solid var(--rule); border-radius: var(--r-2); background: var(--bg-raise); }
+.as-statrow + .as-statrow { margin-top: 0.6rem; }
+.as-statrow .sr-id { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.as-statrow .sr-name { font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); white-space: nowrap; }
+.as-statrow .sr-vals { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.2rem 1.2rem; text-align: right; }
+.as-statrow.drill { cursor: pointer; }
+.as-statrow.drill:hover { border-color: var(--line-soft); }
+.as-statrow.drill::after { content: '›'; align-self: center; color: var(--muted); font-size: 1.65rem; line-height: 1; }
+.as-statpair { display: inline-flex; align-items: baseline; gap: 0.45rem; white-space: nowrap; }
+.as-statpair .sp-k { font-size: 0.93rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.as-statpair .sp-v { font: 600 1.5rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
+.as-delta { display: inline-flex; align-items: baseline; gap: 0.45rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.as-delta .d-from { color: var(--muted); font-weight: 600; }
+.as-delta .d-arrow { color: var(--muted); }
+.as-delta .d-to { font-weight: 700; }
+.as-delta[data-dir="up"] .d-to { color: var(--green); }
+.as-delta[data-dir="down"] .d-to { color: var(--danger); }
+.as-delta[data-dir="flat"] .d-to { color: var(--parchment); }
+.as-blocker { padding: 1.05rem 1.35rem; border: 1px solid var(--danger); border-radius: var(--r-2); background: rgba(212, 98, 46, 0.08); color: var(--danger); font: 600 1.42rem/1.3 var(--font-body); }
+.as-blocker.pinned { margin-top: auto; }
+.as-blocker.in-foot { flex: 0 1 auto; min-width: 0; padding: 0.6rem 1.05rem; font-size: 1.32rem; }
+.as-blocker.in-foot::before { content: '⚠ '; }
+
+/* StatChip / KitLine — an option card's FACTS, on one baseline, one gap. */
+.as-statstrip, .as-kitline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem 1.35rem; margin: 0.6rem 0 0; }
+.as-kitline { font-size: 1.28rem; color: var(--ink-dim); }
+.as-chip { display: inline-flex; align-items: baseline; gap: 0.45rem; white-space: nowrap; cursor: help; }
+.as-chip .ck { border-bottom: 1px dotted var(--line-soft); font-size: 0.93rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.as-chip .cv { font: 600 1.42rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
+.as-chip:hover .ck { border-bottom-color: var(--gold); color: var(--ink-dim); }
+.as-kitline .ki { display: inline-flex; align-items: baseline; gap: 0.5rem; cursor: help; }
+.as-kitline .ki .kg { flex: 0 0 auto; color: var(--gold); }
+.as-kitline .ki .kn { border-bottom: 1px dotted var(--line-soft); }
+.as-kitline .ki:hover .kn { border-bottom-color: var(--gold); }
+
+/* ═══ ASSEMBLIES — the shell ════════════════════════════════════════════════ */
+.modal-veil, .as-veil {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2.4rem;
+  background: rgba(0, 0, 0, 0.62);
+}
+/* THE INSET IS THE DOOR'S: one number, all four sides, every bar. */
+.as-modal, .modal {
+  --modal-inset: 1.4rem;
+  container-type: inline-size;
+  display: flex; flex-direction: column;
+  width: 100%; max-height: 90%;
+  padding: 0;
+  background: var(--bg-raise);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-4);
+  overflow: hidden;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+}
+/* FOUR WIDTHS, a body picks the smallest that holds it. */
+.modal[data-size='sm'], .as-modal[data-size="sm"] { width: 43rem; max-width: 100%; }
+.modal[data-size='md'], .as-modal[data-size="md"] { width: 57rem; max-width: 100%; }
+.modal[data-size='lg'], .as-modal[data-size="lg"] { width: 76rem; max-width: 100%; height: 86%; }
+.modal[data-size='xl'], .as-modal[data-size="xl"] { width: 96rem; max-width: 100%; height: 88%; }
+/* A FIXED BOX AT THE RAILED RUNGS (Constantine, 2026-09-03: "modals should be
+   fixed size"): the height is the veil's share, so switching from a four-row
+   pane to a nine-row pane changes what scrolls, never the door. sm and md
+   follow their body — a question and a detail card have floors, not a share. */
+
+/* ModalHead = (Eyebrow + Title·S | Tab×n) + IconButton×n. Identity left,
+   actions right, hairline under; the actions row sits at the TOP. */
+.modal-head, .as-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  flex: 0 0 auto;
+  padding: var(--modal-inset);
+  border-bottom: 1px solid var(--line);
+}
+.modal-head-id, .as-head-id { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { margin: 0; font: 600 1.8rem/1.15 var(--font-display); letter-spacing: 0.045em; color: var(--gold); white-space: nowrap; }
+.modal-eyebrow { font-size: 1rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.modal-head-actions, .as-head-actions { display: flex; align-items: flex-start; align-self: flex-start; gap: 0.75rem; flex: 0 0 auto; }
+.modal-head-status { color: var(--muted); font-size: 1.2rem; white-space: nowrap; align-self: center; }
+
+/* ModalFoot = FootNote + ButtonRow. */
+.modal-foot, .as-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  flex: 0 0 auto;
+  padding: var(--modal-inset);
+  border-top: 1px solid var(--line);
+}
+.as-foot-note, .modal-foot-note { flex: 1 12 27rem; min-width: 0; container-type: inline-size; color: var(--muted); font-size: 1.23rem; }
+.as-foot-note > span, .modal-foot-note > span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 9rem) { .modal-foot-note > span { visibility: hidden; } .as-foot-note > span { visibility: hidden; } }
+.modal-foot-actions, .as-foot-actions { margin-left: auto; flex: 0 1 auto; justify-content: end; }
+.modal-foot-actions button { min-height: var(--tap-floor); }
+
+/* Body — the surface's own, and what flexes. */
+.modal-body, .as-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+
+/* NavRail + Pane — body A. Vertical at every width the modal can be. */
+.as-railed { display: grid; grid-template-columns: 17.25rem minmax(0, 1fr); min-height: 22.5rem; height: 100%; }
+.as-rail { display: flex; flex-direction: column; gap: 0.6rem; padding: var(--modal-inset); border-right: 1px solid var(--line); overflow: auto; }
+.as-pane { display: flex; flex-direction: column; padding: var(--modal-inset); min-width: 0; overflow: auto; }
+.as-pane > .as-hairline { margin: 1.4rem 0; }
+.as-pane > .as-subtitle { margin-top: 0.5rem; }
+.as-pane > .as-title-m { margin-top: 0.3rem; }
+.as-pane-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem; }
+@container (max-width: 52rem) {
+  .as-railed { grid-template-columns: 11.25rem minmax(0, 1fr); }
+  .as-rail { padding: 0.9rem; gap: 0.45rem; }
+  .as-railitem { padding: 0.75rem 0.8rem; font-size: 1.2rem; }
+}
+
+/* Decision — body C. The one place the game centres text. */
+.as-decide { padding: 2.4rem 2.1rem 1.8rem; text-align: center; display: flex; flex-direction: column; gap: 0; }
+.as-decide > .as-ornament { margin: 1.28rem 0 1.65rem; }
+.as-decide > .as-title-l { text-align: center; }
+.as-decide > .prompt { margin: 1.5rem 0 0; color: var(--muted); font-size: 1.32rem; }
+.as-decide > .as-options { margin-top: 0.3rem; text-align: left; }
+.as-decide > .as-detailcard { text-align: left; }
+.as-decide > .as-prose { text-align: center; }
+
+/* Detail — body B. The height is the art's, not the prose's. */
+.as-detailbody { display: flex; gap: 1.95rem; padding: 2.1rem; align-items: flex-start; min-height: calc(8.4rem + 4.2rem); }
+.as-detailbody .lines { flex: 1 1 27rem; min-width: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+
+/* Workspace — body D. Two panes and a separator. */
+.as-splitbody { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 22.5rem; }
+.as-splitbody > * + * { border-left: 1px solid var(--line); }
+@container (max-width: 51rem) { .as-splitbody { grid-template-columns: 1fr; } .as-splitbody > * + * { border-left: 0; border-top: 1px solid var(--line); } }
+
+/* ═══ MENUS — three widths, one Row atom ════════════════════════════════════ */
+.as-pop { --place-gap: 6px; width: 31.5rem; max-width: 100%; background: var(--bg-raise); border: 1px solid var(--line-soft); border-radius: var(--r-3); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6); overflow: hidden auto; }
+.as-pop-cap { padding: 0.9rem 1.35rem; border-bottom: 1px solid var(--line); }
+.as-group { padding: 0.45rem 0; border-bottom: 1px solid var(--line); }
+.as-group:last-child { border-bottom: 0; }
+.as-actions { width: 23.25rem; }
+.as-actions .am-name { padding: 0.9rem 1.35rem 0.5rem; font: 600 1.65rem/1 var(--font-display); letter-spacing: 0.04em; color: var(--gold); }
+.as-actions .am-detail { padding: 0 1.35rem 0.9rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 1.28rem; line-height: 1.45; }
+
+/* TitleMenu — the one menu with no panel around it. */
+.as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
+.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1 var(--font-display); font-size: clamp(3.2rem, 13.5cqi, 5.4rem); letter-spacing: var(--track); text-indent: var(--track); color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+.as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
+.as-titlemenu li + li { border-top: 1px solid var(--rule); }
+.as-titlemenu .tm-entry {
+  display: block; width: 100%; min-height: var(--tap-floor);
+  padding: 1.05rem 0;
+  background: transparent; border: 0; border-radius: 0;
+  color: var(--parchment);
+  font: 600 1.88rem/1 var(--font-display);
+  --track: 0.1em;
+  letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase;
+  cursor: pointer;
+}
+.as-titlemenu .tm-entry:hover, .as-titlemenu .tm-entry:focus-visible { color: var(--gold); outline: none; background: transparent; box-shadow: none; }
+.as-titlemenu .tm-entry:disabled { color: var(--muted); background: transparent; }
+.as-titlemenu > .as-ornament { margin-top: 1.35rem; }
+.as-titlemenu .tm-foot { margin-top: 1.5rem; color: var(--muted); font-size: 1.05rem; letter-spacing: 0.2em; text-transform: uppercase; }
+
+/* ═══ TOOLTIP — Title + meta + effect + hairline + glossary + flavour ══════ */
+.as-tip { width: 36rem; max-width: 100%; padding: 1.1rem 1.35rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-2); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55); font-size: 1.35rem; line-height: 1.45; color: var(--parchment); }
+.as-tip .ti-title { margin-bottom: 0.45rem; font: 600 1.58rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); }
+.as-tip .ti-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem 0.9rem; margin-bottom: 0.75rem; }
+.as-tip .ti-meta .as-tag { letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.9rem; }
+.as-tip .ti-cost { font-size: 1.2rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.as-tip .ti-cost b { color: var(--parchment); font-weight: 600; }
+.as-tip .ti-detail { margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 1.28rem; }
+.as-tip .ti-detail b { color: var(--parchment); }
+.as-tip .ti-list { margin: 0.75rem 0 0; padding-left: 1.65rem; color: var(--muted); font-size: 1.28rem; }
+.as-tip .as-flavor { display: block; margin-top: 0.75rem; }
+
+/* ═══ PAGE-LEVEL ═══════════════════════════════════════════════════════════ */
+/* A phone: the inset stays one number, the note goes, every row fills. */
+@media (max-width: 640px) {
+  .as-modal, .modal { --modal-inset: 1rem; }
+  .modal-veil, .as-veil { padding: 1rem; }
+  .modal-foot, .as-foot { align-items: stretch; }
+  .modal-foot-note, .as-foot-note { display: none; }
+  .modal-foot-actions, .as-foot-actions { width: 100%; }
+  .modal-btnrow[data-size], .as-btnrow[data-size] { width: 100%; }
+  .modal-btnrow > button, .as-btnrow > button { padding-inline: clamp(0.4rem, 6%, 8px); }
+  .as-railed { grid-template-columns: 10rem minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .as-toggle .knob { transition: none; } }
+
+/* ═══ INPUTS INSIDE A ROW — the kit's field, one look ══════════════════════ */
+.as-row.setting input[type="text"], .as-row.setting input[type="number"] {
+  min-height: var(--tap-floor); padding: 0.6rem 1rem;
+  background: var(--bg); border: 1px solid var(--line-soft); border-radius: var(--r-2);
+  color: var(--parchment); font: 500 1.38rem/1 var(--font-body); font-variant-numeric: tabular-nums;
+}
+.as-row.setting input[type="number"] { width: 9rem; text-align: right; }
+.as-row.setting input[type="text"] { width: min(100%, 30rem); }
+.as-row.setting input:focus-visible { border-color: var(--gold); outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
+.as-row.setting input[type="range"] { width: 18rem; accent-color: var(--gold); cursor: pointer; }
+.as-row.setting > .as-status.range-val { flex: 0 0 auto; margin-left: auto; min-width: 3.6rem; color: var(--gold); font-variant-numeric: tabular-nums; }
+.as-row.setting > .as-status.range-val + .r-trail { margin-left: 0; }
+.as-row.setting .set-applied-slot:empty { display: none; }
+.as-row.setting .set-applied-slot { color: var(--ink-dim); font-size: 1.2rem; margin-top: 0.2rem; }
+.as-row.setting .ls-hint code { color: var(--ink-dim); }
+.set-section-head { display: flex; flex-direction: column; gap: 0.3rem; }
+.set-section-head + .as-hairline { margin: 1.4rem 0; }
+.as-pane > .as-pane-head { margin-bottom: 1.2rem; }
+
+/* ═══ HOUSEKEEPING ═════════════════════════════════════════════════════════ */
+/* `hidden` wins over any display a kit class sets — a detail card the caller
+   hid must not draw its border. */
+.as-detailcard[hidden], .as-option[hidden], .as-row[hidden], .modal-foot-note[hidden], .as-pane [hidden], .modal-head [hidden], .as-iconbtn[hidden], .modal-close[hidden], .as-btnrow[hidden], .as-band[hidden], .as-pop[hidden], .as-slot[hidden] { display: none !important; }
+/* A hold-armed IconButton keeps its glyph; the hold hint is the tooltip's job. */
+.as-iconbtn .hold-hint, .modal-iconbtn .hold-hint, .modal-close .hold-hint { display: none; }
+/* THE SCROLL OWNERS INSIDE A DOOR wear the house scrollbar, not Chromium's. */
+.modal-body, .as-body, .as-pane, .as-rail, .as-pop, .modal .set-panel {
+  scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent;
+}
+.modal-body::-webkit-scrollbar, .as-pane::-webkit-scrollbar, .as-rail::-webkit-scrollbar, .as-pop::-webkit-scrollbar { width: 8px; height: 8px; }
+.modal-body::-webkit-scrollbar-thumb, .as-pane::-webkit-scrollbar-thumb, .as-rail::-webkit-scrollbar-thumb, .as-pop::-webkit-scrollbar-thumb { background: var(--line-soft); border-radius: 4px; }
+.modal-body::-webkit-scrollbar-track, .as-pane::-webkit-scrollbar-track, .as-rail::-webkit-scrollbar-track, .as-pop::-webkit-scrollbar-track { background: transparent; }
+
+/* ═══ THE LIVE TOOLTIP — one panel per level, four rungs by height ═════════ */
+/* `--place-gap` stays the ONE home fx.js placeGap() reads (tools/placement.mjs
+   P2); px because a hairline gap is chrome, not read text. */
+#tooltip, #tooltip-2 {
+  --place-gap: 14px;
+  position: fixed; z-index: 1000; left: 0; top: 0;
+  width: var(--tip-w, 30rem); max-width: calc(100% - 16px);
+  max-height: var(--tip-h, 19.5rem); overflow: hidden;
+  padding: 1.1rem 1.35rem;
+  background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-2);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+  font-size: 1.35rem; line-height: 1.45; color: var(--parchment);
+  display: none; opacity: 0; visibility: hidden;
+  transition: opacity 140ms ease-out;
+  pointer-events: none;
+}
+#tooltip-2 { z-index: 1001; }
+/* THE RUNGS DIFFER BY HEIGHT: small a value and a line; medium prose and a
+   short list; large an effect and a glossary; expanded is large extended
+   down. A tooltip never scrolls and never clips: it steps up, and past
+   `expanded` the answer is a modal. */
+#tooltip[data-size="small"],    #tooltip-2[data-size="small"]    { --tip-w: 25.5rem; --tip-h: 12rem; }
+#tooltip[data-size="medium"],   #tooltip-2[data-size="medium"]   { --tip-w: 31.5rem; --tip-h: 19.5rem; }
+#tooltip[data-size="large"],    #tooltip-2[data-size="large"]    { --tip-w: 37.5rem; --tip-h: 27rem; }
+#tooltip[data-size="expanded"], #tooltip-2[data-size="expanded"] { --tip-w: 37.5rem; --tip-h: 42rem; }
+#tooltip[data-overflow="true"], #tooltip-2[data-overflow="true"] { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
+#tooltip[data-open="true"], #tooltip-2[data-open="true"] { opacity: 1; visibility: visible; pointer-events: auto; }
+#tooltip[data-stuck="true"] { pointer-events: none; }
+#tooltip.is-fading { opacity: 0; transition: opacity 160ms ease-out; }
+.reduced-motion #tooltip, .reduced-motion #tooltip-2 { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { #tooltip, #tooltip-2 { transition: none !important; } }
+/* The content grammar: title, meta (type + cost), effect, tags, then under
+   the one divider the glossary and the flavour. `.tt-*` are the same parts
+   under the names the surfaces already write. */
+#tooltip .ti-title, #tooltip-2 .ti-title, #tooltip .tt-title, #tooltip-2 .tt-title { margin-bottom: 0.45rem; font: 600 1.58rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); }
+#tooltip .ti-meta, #tooltip-2 .ti-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem 0.9rem; margin-bottom: 0.75rem; }
+#tooltip .ti-meta .as-tag { letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.9rem; }
+#tooltip .ti-cost, #tooltip-2 .ti-cost { font-size: 1.2rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+#tooltip .ti-cost b { color: var(--parchment); font-weight: 600; }
+#tooltip .ti-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
+#tooltip .ti-detail, #tooltip-2 .ti-detail, #tooltip .tt-kw, #tooltip-2 .tt-kw { margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 1.28rem; }
+#tooltip .ti-detail b, #tooltip .tt-kw b, #tooltip-2 .tt-kw b { color: var(--parchment); }
+#tooltip .ti-list { margin: 0.75rem 0 0; padding-left: 1.65rem; color: var(--muted); font-size: 1.28rem; }
+#tooltip .ti-flavor, #tooltip .as-flavor { display: block; margin-top: 0.75rem; color: var(--muted); font-style: italic; font-size: 1.28rem; }
+#tooltip .mk-val, #tooltip .val { color: var(--parchment); font-weight: 600; }
+/* A term inside a tooltip that has its own entry says so with the dotted mark. */
+#tooltip [data-tip], #tooltip [title] { border-bottom: 1px dotted var(--line-soft); cursor: help; }
+#tooltip [data-tip]:hover, #tooltip [title]:hover { border-bottom-color: var(--gold); }
+/* A target being read says so, quietly. */
+[data-tip-open="true"] { outline: 1px solid rgba(var(--accent-rgb), 0.45); outline-offset: 2px; }
+/* Variants a surface may still pin (widths in the surface's own terms). */
+#tooltip[data-tooltip-variant='combatant-folded'] { --tip-w: 28.5rem; padding: 0.9rem 1.2rem; }
+#tooltip[data-tooltip-variant='combatant-expanded'] { --tip-w: 36rem; }
+#tooltip[data-tooltip-variant='combatant-context'] { --place-gap: 6px; --tip-w: 31.5rem; padding: 0.5rem 0.9rem; font-size: 1.5rem; line-height: 1.15; overflow-wrap: anywhere; }
+#tooltip[data-tooltip-variant='combatant-context'] .tt-title { margin-bottom: 0.15rem; font-size: 1.5rem; line-height: 1.1; }
+#tooltip[data-tooltip-variant='combatant-context'] .tt-combatant-line b { color: var(--gold); }
+#tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
+#tooltip .tt-combatant-focus { display: grid; gap: 0.25rem; margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid var(--line-soft); }
+#tooltip .tt-combatant-focus b { color: var(--gold); }
+#tooltip .tt-combatant-focus span, #tooltip .tt-combatant-hint { color: var(--muted); }
+#tooltip .tt-combatant-hint { margin-top: 0.65rem; font-size: 0.82em; }
+#tooltip[data-tooltip-variant='equipment-comparison'] { --tip-w: 42rem; overflow: auto; }
+#tooltip .equip-candidate-comparison { margin-left: 0; }
+
+/* ═══ CONTROLS — bindings are Keycaps, rebinds are short buttons ═══════════ */
+.rebind-ctl { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end; }
+.rebind-ctl .as-keycap { min-width: 4.4rem; min-height: var(--tap-floor); padding-inline: 0.8rem; font-size: 1.2rem; color: var(--gold); }
+.rebind-ctl .rebind-btn { padding-inline: 1.2rem; }
+.rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.9s ease-in-out infinite alternate; }
+.pad-live { color: var(--green); }
+.pad-off { color: var(--muted); }
+.controls-pane { padding: 0; }
+.overlay-body > .controls-pane { padding: var(--modal-inset); }
+
+/* ═══ THE QUICK MENU HANGS OFF ITS BUTTON ══════════════════════════════════ */
+/* The popover is PLACED (quicknav.js → fx.placeAnchored: under the ☰,
+   right-aligned) — so its veil is a plain scrim, not a centring flex box,
+   and the panel is fixed-position so left/top mean what the placer wrote. */
+.modal-veil.qn-veil { display: block; padding: 0; background: rgba(0, 0, 0, 0.35); }
+.qn-panel { position: fixed; left: 0; top: 0; }
+
+/* ═══ THE CARD — one fixed box, fixed landmarks, one shared row budget ═════ */
+/* `.card` is the hook every screen and tool reads; `.as-card` is the recipe.
+   THE BOX IS FIXED — `height`, not a floor — and its total is spelled out from
+   its landmarks so a landmark that changes moves the box with it. Below the
+   band there is ONE budget of rows that tags and text share: one tag row
+   leaves three lines of text, two leave two. Both full is the only case that
+   truncates, and a truncated face carries the chevron (hover: the full text;
+   click: the detail door). */
+.card, .as-card {
+  --card-w: 14rem;
+  --card-name-h: 2.6rem;      /* FIXED. two lines' worth of room, one line of type */
+  --card-art-h: 6rem;         /* FIXED. */
+  --card-band-h: 1.7rem;      /* FIXED. */
+  --card-row: 1.5rem;         /* one row of the shared budget */
+  --card-body-rows: 4;
+  --card-pad: 0.8rem;
+  --card-gap: 0.4rem;
+  position: relative;
+  box-sizing: border-box;
+  width: var(--card-w);
+  height: calc(var(--card-name-h) + var(--card-art-h) + var(--card-band-h) + var(--card-body-rows) * var(--card-row) + 3 * var(--card-gap) + 2 * var(--card-pad) + 1.2rem);
+  padding: calc(var(--card-pad) + 1.2rem) var(--card-pad) var(--card-pad);
+  display: flex; flex-direction: column; align-items: stretch; gap: var(--card-gap);
+  background: var(--bg-raise);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  color: var(--parchment);
+  cursor: pointer; flex-shrink: 0;
+  transition: transform 140ms, box-shadow 140ms, border-color 140ms;
+}
+.card.rarity-uncommon { border-color: var(--frost); }
+.card.rarity-rare { border-color: var(--gold); }
+.card.rarity-special { border-color: #6a3a7a; }
+/* SELECTION CHANGES COLOUR, NEVER FOOTPRINT — the same signal as an OptionCard. */
+.card.selected, .card[data-selected="true"], .as-card[data-selected="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.4), 0 0 20px rgba(var(--accent-rgb), 0.2); }
+.card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
+.card[data-small="true"] { transform: scale(0.92); }
+/* CostMedallion — top-left, outside the frame, the only element allowed to break the edge. */
+.card .cost, .as-cost {
+  position: absolute; top: -1rem; left: -1rem;
+  display: grid; place-items: center;
+  width: 3rem; height: 3rem;
+  background: var(--bg); border: 2px solid var(--gold); border-radius: 50%;
+  font: 600 1.4rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment);
+}
+.card .mana-cost, .card .stamina-cost {
+  position: absolute; right: -0.7rem; min-width: 3.2rem; height: 2.4rem; padding: 0 0.6rem;
+  display: flex; align-items: center; justify-content: center; gap: 0.25rem;
+  border-radius: var(--r-pill); font: 600 1rem/1 var(--font-body); font-variant-numeric: tabular-nums; z-index: 3;
+}
+.card .mana-cost { top: -0.7rem; background: #111b35; border: 2px solid #4f82d8; color: #cfe1ff; }
+.card .stamina-cost { top: 1.9rem; background: #142016; border: 2px solid #5f925d; color: var(--parchment); }
+/* THE NAME IS ONE LINE IN A FIXED BOX. A long name steps its type down. */
+.card .cname, .as-card .cd-name {
+  --track: 0.02em;
+  flex: 0 0 var(--card-name-h); height: var(--card-name-h);
+  display: grid; place-items: center;
+  font: 600 1.2rem/1.15 var(--font-display); letter-spacing: var(--track); text-indent: var(--track);
+  text-align: center; white-space: nowrap; overflow: hidden; min-width: 0;
+}
+.card[data-name="long"] .cname { font-size: 1.05rem; }
+.card[data-name="verylong"] .cname { font-size: 0.92rem; }
+.card.upgraded .cname { color: var(--green); }
+/* ArtWell at a fixed landmark. */
+.card .art {
+  flex: 0 0 var(--card-art-h); height: var(--card-art-h); width: 100%;
+  display: grid; place-items: center;
+  background: #0f0c09; border: 1px solid var(--line); border-radius: var(--r-2);
+  font-size: 2.9rem; line-height: 1; color: var(--parchment);
+}
+/* TypeBand — the type's own tint, full card width, fixed landmark. */
+.card .ctype, .as-typeband {
+  --track: 0.22em;
+  flex: 0 0 var(--card-band-h); height: var(--card-band-h);
+  display: grid; place-items: center;
+  border-radius: var(--r-1);
+  font: 500 0.95rem/1 var(--font-body); letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase;
+  color: var(--card-type-color, var(--gold));
+  background: color-mix(in srgb, var(--card-type-color, var(--gold)) 15%, #2a241c);
+  white-space: nowrap; overflow: hidden; min-width: 0;
+}
+/* THE SHARED BUDGET. */
+.card .cd-body {
+  flex: 0 0 calc(var(--card-body-rows) * var(--card-row));
+  height: calc(var(--card-body-rows) * var(--card-row));
+  display: flex; flex-direction: column; gap: 0.3rem; overflow: hidden; min-width: 0;
+}
+.card .ctags { flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center; align-content: flex-start; line-height: 1; max-height: calc(2 * (1.5rem + 0.3rem)); overflow: hidden; }
+.card .ctag {
+  font-size: 0.85rem; letter-spacing: 0.04em; white-space: nowrap; line-height: 1.3;
+  color: var(--tag-color, var(--muted));
+  border: 1px solid color-mix(in srgb, var(--tag-color, var(--muted)) 45%, transparent);
+  background: color-mix(in srgb, var(--tag-color, var(--muted)) 12%, transparent);
+  border-radius: var(--r-1); padding: 0.1rem 0.4rem;
+}
+.card .ctag[hidden] { display: none; }
+.card .ctext {
+  flex: 1 1 auto; min-height: 0;
+  display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
+  line-height: var(--card-row); font-size: 1.1rem; text-align: center; color: var(--ink-dim);
+}
+.ctext b { color: var(--parchment); }
+.card[data-tag-rows="0"] .ctext { -webkit-line-clamp: 4; }
+.card[data-tag-rows="1"] .ctext { -webkit-line-clamp: 3; }
+.card[data-tag-rows="2"] .ctext { -webkit-line-clamp: 2; }
+/* Truncated is never a dead end: the chevron says there is more. */
+.card[data-truncated="true"]::after { content: '›'; position: absolute; bottom: 0.3rem; right: 0.5rem; color: var(--muted); font-size: 1.3rem; line-height: 1; }
+
+/* ═══ COMBATANT — one shape, three statures ════════════════════════════════ */
+/* Stature is DERIVED from the encounter pool (normal → normal, elite → large,
+   boss → huge). Only the sprite well scales; nameplate, bars and meters stay
+   where a player learned them. The player is always normal. */
+.combatant { --stature: 1; }
+.combatant[data-stature="large"] { --stature: 1.15; }
+.combatant[data-stature="huge"] { --stature: 1.3; }
+.combatant .sprite > img { transform-origin: bottom center; scale: var(--stature); }
+.combatant .meters { width: calc(13rem * var(--stature)); }
+/* The marks inside card text — the same in the fan and in the tooltip. */
+.ctext .kw { color: var(--gold); }
+.ctext .st-bleed { color: var(--bleed); font-weight: 600; }
+.ctext .val { font-weight: 700; }
+.ctext .val.up { color: var(--green); }
+.ctext .val.down { color: var(--ember); }
+
+/* The nameplate is the way into a combatant's full read on touch (there is no
+   `I` on a phone). It reads as a control without becoming a button-shaped box
+   over the battlefield: the hit area is the tap floor, the affordance is the
+   cursor and the focus ring. */
+.combatant .nm-inspect { cursor: help; min-height: var(--tap-floor); display: flex; flex-direction: column; justify-content: center; }
+.combatant .nm-inspect:hover .ls-label, .combatant .nm-inspect:focus-visible .ls-label { color: var(--gold); }
+.combatant .nm-inspect:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1); }
+/* The full read, in a door: the same sections the edge tray renders. */
+.combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
+
+/* ═══ QUICK SETTINGS — the utility rail, under the band on the right ══════ */
+/* Fullscreen and music are the two controls that belong to the PAGE, not to
+   whatever is on it. They ride a rail of their own: a vertical stack pinned to
+   the right edge, immediately BELOW the band, over the surface's content.
+   WHY NOT THE TOP-RIGHT CORNER, which is where they were for a day. Owner,
+   2026-09-04: "move full screen and music … to anchored to top right corner
+   and not block any text"; owner, 2026-09-05, with a screenshot of build
+   0.4.0.1454: "I miss the old Hudson and music and full screen placement".
+   The corner is inside the band, so keeping text out from under the pair meant
+   every surface reserving a horizontal slice of its own top row — and the
+   measurement is what settles it: at 360x800 the map's header reserved
+   243 of 434 CSS px, 56% of the band, for a pair 106px wide, and the identity
+   ellipsed to "FORSAKEN ·…" while the meters collapsed to 50px. Below the band
+   the pair overlays content that was already yielding to it: `.field` in
+   styles/combat.css pads its right edge for exactly this rail, and the map's
+   route strip calls its own right margin "the HUD's utility gutter". Those two
+   gutters were written for this placement and were never removed, so for a day
+   the game reserved space in three places for two buttons.
+   The band is the containing block (`.as-band { position: relative }`), so
+   `top: 100%` follows the band's own height on every surface and at every text
+   size without a number to keep in step. `--hud-quick-edge-gap` is authored
+   (balance.ui.hudQuickSettings.edgeGapPx, planted on <html> by main.js) and
+   divided by the zoom, so the gap is the same on glass at every UI size. */
+/* THE RAIL'S FOOTPRINT, as one token the surfaces under it reserve. It is ONE
+   IconButton wide, not two, because the rail is a COLUMN — the same value this
+   token replaced when it was inlined in styles/combat.css. */
+:root { --quick-corner: calc(var(--iconbtn-size) + (2 * var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))); }
+.hud-quick-settings {
+  position: absolute; z-index: 80;
+  top: calc(100% + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  right: calc(env(safe-area-inset-right, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  display: flex; flex-direction: column; align-items: flex-end; gap: 0.6rem;
+  margin: 0; padding: 0;
+}
+/* The notice speaks to the LEFT of the rail rather than pushing it off the
+   edge: the rail is a column now, so there is no room under it. */
+.hud-quick-settings > .hud-quick-notice {
+  position: absolute; top: 0; right: calc(var(--iconbtn-size) + 0.4rem);
+  max-width: 22rem; text-align: right; white-space: normal;
+}
+.hud-quick-settings > .hud-quick-notice[hidden] { display: none; }
+/* NOTHING RESERVES A SLICE OF ITS OWN TOP ROW ANY MORE. The rail sits under the
+   band, so the run header, the co-op banner and the co-op board top each get
+   their full width back — that is the point of moving it, and re-adding a
+   `padding-inline-end: var(--quick-corner)` to any of them would give the dead
+   space back. What DOES reserve for the rail is what sits beneath it:
+   `.field` (styles/combat.css) and the map's route strip, both already written
+   for this placement. */
+/* A narrow map header cannot hold its whole line AND the corner, and `nowrap`
+   made its actions overflow INTO the corner rather than yield. It wraps: the
+   way out drops to its own line under the pair (kit law — a narrow shape is a
+   different composition), which is what keeps the corner clear of text. */
+.topbar.map-header { flex-wrap: wrap; row-gap: 0.4rem; }
+
+/* ═══ SCREENS — a page wears the same atoms a door does ═══════════════════ */
+/* A screen's banner is Title·L over an Eyebrow-weight subtitle; the same
+   two atoms the kit's TitleMenu and Pane use, centred because a screen's
+   banner is the one centred text a page has. */
+.screen > h2, .screen > .as-title-l { --track: 0.06em; margin: 0; font: 700 2.55rem/1.1 var(--font-display); letter-spacing: var(--track); text-indent: var(--track); color: var(--gold); text-align: center; }
+.screen > .subtitle, .screen > .as-eyebrow { margin: 0; color: var(--muted); font-size: 1.1rem; letter-spacing: 0.22em; text-transform: uppercase; text-align: center; }
+/* OptionCard under the names the screens already write: `.class-pick` is the
+   card, `.glyph` its Glyph, `.cp-body` its body, `h3` its Title·S, `p` its
+   prose, `.chip` a StatePill, `.locked` disabled. A row of them is `.class-row`. */
+.class-row { display: flex; flex-wrap: wrap; gap: 1.05rem; justify-content: center; width: 100%; max-width: 80rem; }
+.class-pick {
+  position: relative; display: flex; gap: 1.5rem; align-items: center;
+  flex: 1 1 26rem; max-width: 40rem; min-width: 0;
+  padding: 1.28rem 1.5rem;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-3);
+  color: inherit; text-align: left; cursor: pointer;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.class-pick:hover { border-color: var(--line-soft); }
+.class-pick.selected, .class-pick[aria-checked="true"], .class-pick[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18); }
+.class-pick.locked { opacity: 0.55; cursor: default; }
+.class-pick.locked:hover { border-color: var(--line); }
+.class-pick > .glyph { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+.class-pick > .cp-body, .class-pick > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
+.class-pick h3 { margin: 0; display: flex; align-items: center; gap: 0.75rem; font: 600 1.65rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.class-pick p { margin: 0; color: var(--ink-dim); font-size: 1.35rem; line-height: 1.4; }
+.class-pick .chip { display: inline-block; align-self: flex-start; margin-top: 0.3rem; padding: 0.15rem 0.6rem; border: 1px solid var(--line-soft); border-radius: var(--r-1); font: 500 1.02rem/1.5 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.class-pick .chip.reward-new { color: var(--gold); border-color: var(--gold); }
+.class-pick > button.reward-skip { flex: 0 0 auto; align-self: center; }
+/* The reward menu is a column of OptionCards, full pane width. */
+.reward-menu { flex-direction: column; align-items: stretch; max-width: 60rem; }
+.reward-menu > .class-pick, .shrine-option-list > .class-pick { max-width: none; flex: 0 0 auto; }
+.reward-row { display: flex; flex-wrap: wrap; gap: 2.2rem; justify-content: center; }
+.reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
+.reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
+
+/* ═══ EVENT — body C on the page ═══════════════════════════════════════════ */
+/* The event is a decision: the door's head names it, the body is ArtWell +
+   prose + OptionCards, the foot carries the way on. It stands on the page
+   rather than over one, so it wears the door's box without the veil. */
+.event-door { width: 57rem; max-width: 100%; }
+.event-door .as-decide > .as-artwell { margin: 0 auto 1.2rem; }
+.event-door .as-decide > .as-prose { margin-bottom: 1.5rem; }
+.event-door .as-options { text-align: left; }
+.event-door .as-option.ev-choice { min-height: var(--tap-floor); }
+.event-door .as-option.ev-choice[disabled] { opacity: 0.55; cursor: default; }
+.event-door .as-option .on { white-space: normal; }
+
+/* ═══ ARMOURY — an xl door on the shell ════════════════════════════════════ */
+/* The head is the kit's (tab strip = the views, IconButton close in the same
+   corner as every door). Under the hairline the body is the surface's own
+   two-pane machine, edge to edge; every pane is kit pieces — OptionCards for
+   the positions and the inventory, DetailCards for the character's numbers,
+   Folding Trays along the bottom — and the layout facts (pane ratios, the
+   tray caps) arrive as custom properties from armouryUi.json. `.armoury-*`
+   and `.equip-*` stay on the parts because the tools read them. */
+.armoury > .modal-body.armoury-shell-body { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+.armoury-content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.armoury-trays { display: contents; }
+.armoury-trays > [data-tray-edge="bottom"]:first-child { margin-top: auto; }
+/* A context tray arrives at its content's height, capped so the subject keeps
+   the room (Constantine, 2026-08-23: the tray must not claim half the door). */
+.armoury .as-tray { --tray-compact: 35%; }
+.equip-resource-change > .as-flavor { display: block; }
+.as-blocker.armoury-notice { flex: 0 0 auto; border-radius: 0; border-width: 0 0 1px; padding-inline: var(--modal-inset); }
+/* THE SUBJECT GROWS FROM NOTHING (basis 0), so an open tray keeps its own
+   content height and the subject takes what is left — never the other way
+   round — and it always keeps a floor of the door. */
+.armoury-subject { flex: 1 1 0; display: flex; min-width: 0; min-height: 34%; overflow: hidden; }
+.armoury .as-tray[data-collapsed="0"] { flex: 0 1 auto; }
+/* The Armaments tray stands INSIDE a pane and fills it. */
+.armoury-body .as-tray.armoury-equipment { --tray-compact: none; flex: 1 1 auto; min-height: 0; border-top: 0; max-height: none; }
+.armoury-body .as-tray.armoury-equipment[data-collapsed="1"] { flex: 0 0 auto; }
+.armoury-body .as-tray.armoury-equipment > .as-pane { flex: 1 1 auto; }
+.armoury-body .as-tray.armoury-equipment > .tray-header > .as-row { padding-inline: 0.6rem; }
+.armoury-body .as-tray.armoury-equipment > .tray-header { padding-right: 0; }
+/* THE BODY IS A GRID OF PANES; the ratios are the authored ones. */
+.armoury-body {
+  flex: 1 1 auto; min-height: 0; min-width: 0; overflow: hidden;
+  display: grid; gap: var(--armoury-gap, 1.6rem); padding: var(--modal-inset);
+  grid-template-columns: minmax(0, var(--armoury-character-ratio, 0.4fr)) minmax(0, var(--armoury-equipment-ratio, 0.6fr));
+}
+.armoury[data-pane="both"] .armoury-body { grid-template-columns: minmax(0, var(--armoury-character-ratio, 0.4fr)) 0.7rem minmax(0, var(--armoury-equipment-ratio, 0.6fr)); gap: 0; }
+.armoury[data-pane="both"] .armoury-left { grid-column: 1; padding-right: 0.7rem; }
+.armoury[data-pane="both"] .armoury-right { grid-column: 3; padding-left: 0.7rem; }
+.armoury[data-pane="both"] .armoury-hybrid-splitter { display: block; grid-column: 2; grid-row: 1; }
+.armoury[data-pane="character"] .armoury-body, .armoury[data-pane="inventory"] .armoury-body { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-pane="character"] .armoury-right, .armoury[data-pane="inventory"] .armoury-right { display: none; }
+.armoury-left, .armoury-right { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; min-height: 0; overflow: hidden auto; }
+/* Inventory view: armaments beside the inventory, a splitter between. */
+.armoury[data-pane="inventory"] .armoury-content { display: grid; grid-template-columns: minmax(0, var(--armoury-armaments-pane-width, 0.6fr)) 0.7rem minmax(0, var(--armoury-inventory-pane-width, 0.4fr)); gap: 0; }
+.armoury[data-pane="inventory"] .armoury-body { grid-column: 1; grid-row: 1; }
+.armoury[data-pane="inventory"] .armoury-inventory { grid-column: 3; grid-row: 1; min-height: 0; overflow-y: auto; border-top: 0; }
+.armoury[data-pane="inventory"] .armoury-pane-splitter { display: block; grid-column: 2; grid-row: 1; }
+.armoury[data-pane="inventory"] .armoury-inventory.as-tray[data-collapsed="0"] { align-self: stretch; height: auto; max-height: none; }
+.armoury[data-pane="inventory"] .armoury-inventory.as-tray[data-collapsed="0"] > .as-pane { flex: 1 1 auto; }
+/* A PHONE STACKS the two panes and turns the splitter on its side. */
+.armoury[data-responsive="phone"] .armoury-body { gap: 0.7rem; padding: 0.7rem; }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-content { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, var(--armoury-armaments-pane-width, 0.6fr)) 0.55rem minmax(0, var(--armoury-inventory-pane-width, 0.4fr)); }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-body { grid-column: 1; grid-row: 1; }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-pane-splitter { grid-column: 1; grid-row: 2; }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-inventory { grid-column: 1; grid-row: 3; border-top: 1px solid var(--line); }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-content:has(> .armoury-inventory[data-collapsed="1"]) { grid-template-rows: minmax(0, 1fr) auto; }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-content:has(> .armoury-inventory[data-collapsed="1"]) > .armoury-pane-splitter { display: none; }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-content:has(> .armoury-inventory[data-collapsed="1"]) > .armoury-inventory { grid-row: 2; }
+/* THE CHARACTER PANE: LabelStack summary, the figure in an ArtWell, the
+   numbers in fold-open DetailCards. In the Character view the numbers stand
+   beside the figure; elsewhere they stack under it. */
+.armoury-character { display: grid; grid-template-rows: auto minmax(8rem, var(--armoury-sprite-ratio, 0.38fr)) minmax(0, var(--armoury-stats-ratio, 0.62fr)); gap: 0.9rem; min-width: 0; min-height: 100%; }
+.armoury-character > .character-summary { align-self: start; }
+.armoury[data-pane="character"] .armoury-character { grid-template-columns: minmax(0, var(--armoury-summary-pane-ratio, 0.4fr)) minmax(0, var(--armoury-stats-pane-ratio, 0.6fr)); grid-template-rows: auto minmax(0, 1fr); gap: 1rem 1.4rem; }
+.armoury[data-pane="character"] .character-summary { grid-column: 1; grid-row: 1; }
+.armoury[data-pane="character"] .armoury-sprite-pane { grid-column: 1; grid-row: 2; }
+.armoury[data-pane="character"] .armoury-character-stats { grid-column: 2; grid-row: 1 / span 2; align-self: stretch; }
+.character-summary { padding-bottom: 0.6rem; border-bottom: 1px solid var(--line); }
+.character-summary > .as-title-s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.character-summary > .as-subtitle { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.armoury[data-responsive="phone"] .character-summary > .as-subtitle { display: none; }
+.armoury-sprite-pane.as-artwell { width: 100%; height: 100%; min-height: 0; max-height: 100%; }
+.armoury-sprite-pane .armoury-figure { position: relative; width: auto; height: min(82%, 22rem); aspect-ratio: 150 / 190; max-width: 78%; max-height: 82%; }
+.armoury-figure img, .armoury-figure > * { width: 100%; height: 100%; object-fit: contain; }
+.armoury[data-responsive="phone"] .armoury-sprite-pane .armoury-figure { height: min(74%, 14rem); max-width: 68%; max-height: 74%; }
+.armoury-character-stats { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; min-height: 0; overflow: auto; }
+/* An attribute face and a power face are label + value, one per line. */
+.armoury-character-stats .disc-faces > .disc-face .on { font: 500 1.41rem/1.3 var(--font-body); letter-spacing: 0; color: var(--parchment); }
+.armoury-character-stats .disc-faces > .disc-face .od { font-size: 1.2rem; }
+/* THE POSITIONS: one OptionCard per position; the occupied one opens its
+   DetailCard under itself. */
+.equip-slots.as-options { gap: 0.75rem; }
+.armoury-equipment-slot-component, .armoury-equipment-slot-component > .es-sets { display: contents; }
+.armoury-position-card { min-width: 0; width: 100%; }
+details.armoury-position-card > summary { list-style: none; }
+details.armoury-position-card > summary::-webkit-details-marker { display: none; }
+details.armoury-position-card[open] > summary { border-radius: var(--r-3) var(--r-3) 0 0; }
+details.armoury-position-card > .as-detailcard { border-radius: 0 0 var(--r-3) var(--r-3); border-top: 0; }
+.armoury-position-card .r-trail { flex-direction: column; align-items: flex-end; gap: 0.5rem; }
+.armoury-position-card .r-trail > .as-btn.armoury-position-action { padding-inline: 1rem; font-size: 1.2rem; }
+.armoury-position-grid-groups { display: grid; gap: 1.2rem; }
+.armoury-position-grid-group { display: grid; gap: 0.6rem; min-width: 0; }
+.armoury-position-grid-tiles > .as-options.grid { --opt-min: 9rem; gap: 0.6rem; }
+.armoury-position-grid-card { flex-direction: column; text-align: center; padding: 0.9rem 0.6rem; gap: 0.5rem; }
+.armoury-position-grid-card > .ob { align-items: center; }
+.armoury-position-grid-card .on { font-size: 1.3rem; }
+.armoury-position-grid-detail { margin-top: 0.4rem; }
+/* THE INVENTORY: one shared list of OptionCard faces; the open one reveals
+   art beside its facts. */
+.armoury-inventory .ep-list > .disc-faces { gap: var(--armoury-tray-content-gap, 0.35rem); }
+.ep-list { min-width: 0; }
+.inventory-face .inventory-equipped { color: var(--equip-equipped-tag-color, var(--gold)); border-color: var(--equip-equipped-tag-color, var(--gold)); }
+.inventory-face[draggable="true"] { cursor: grab; }
+.inventory-face.dragging { cursor: grabbing; opacity: 0.55; }
+.inventory-face > .hold-hint { margin: 0; white-space: nowrap; }
+.inventory-detail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.5rem; align-items: start; min-width: 0; }
+.inventory-detail.beat-hold { position: relative; }
+.inventory-detail.beat-hold > .hold-hint { position: absolute; top: 0.35rem; right: 0.45rem; margin: 0; white-space: nowrap; }
+.inventory-information { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
+.inventory-information > .as-kitline, .inventory-information > .as-statstrip { margin: 0; }
+.inventory-information > .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.inventory-card-action-label { pointer-events: none; align-self: flex-start; }
+.ep-equip { align-self: flex-start; }
+.ep-equip.locked { opacity: 0.55; cursor: not-allowed; }
+.armoury[data-responsive="phone"] .inventory-detail { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-responsive="phone"] .inventory-detail > .inventory-model { justify-self: center; }
+/* THE COMPARISON — a fold of StatRows and deltas inside the reveal. */
+.equip-candidate-comparison { min-width: 0; overflow-wrap: anywhere; }
+.equip-candidate-comparison > summary { display: flex; align-items: center; gap: 0.75rem; min-height: var(--tap-floor); cursor: pointer; list-style: none; }
+.equip-candidate-comparison > summary::-webkit-details-marker { display: none; }
+.equip-candidate-comparison > summary > .as-eyebrow { color: var(--gold); }
+.equip-card-changes, .equip-receipt-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.equip-card-changes > li, .equip-receipt-list > li { min-width: 0; }
+.equip-added-effect.none, .equip-resource-change.none { color: var(--muted); }
+.equip-resource-change > .as-kitline, .equip-receipt-list .as-kitline { margin: 0; }
+.equipment-requirements, .player-poise-receipt, .player-load-receipt, .equip-role-receipts { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; overflow-wrap: anywhere; }
+/* A receipt's key is a formula, not a word: it wraps, and the row stacks its values under the name when narrow. */
+.armoury-equipment-receipts .as-statpair, .equip-candidate-comparison .as-statpair { white-space: normal; }
+.armoury-equipment-receipts .as-statrow, .equip-candidate-comparison .as-statrow { flex-wrap: wrap; }
+.armoury-equipment-receipts .as-statrow .sr-vals, .equip-candidate-comparison .as-statrow .sr-vals { flex: 1 1 12rem; }
+.equipment-requirements .met, .equip-card-changes .met { color: var(--green); }
+.equipment-requirements .unmet, .equip-card-changes .unmet { color: var(--danger); }
+/* THE CARDS TRAY: one OptionCard row per equipment card, fold-open. */
+.armoury-card-list.as-options { gap: 0.45rem; }
+.armoury-card-list[data-card-view="grid"] { display: grid; grid-template-columns: repeat(var(--armoury-card-grid-columns, 4), minmax(0, 1fr)); }
+.armoury-card-row { min-width: 0; }
+details.armoury-card-row > summary { list-style: none; }
+details.armoury-card-row > summary::-webkit-details-marker { display: none; }
+details.armoury-card-row[open] > summary { border-radius: var(--r-3) var(--r-3) 0 0; }
+details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--r-3); border-top: 0; }
+.armoury-card-row-detail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.armoury[data-responsive="phone"] .armoury-card-row-detail { grid-template-columns: minmax(0, 1fr); }
+.armoury-card-row .r-trail { flex-wrap: wrap; justify-content: flex-end; }
+/* THE STATS TRAY (Inventory view): DetailCards of StatPairs in a grid. */
+.armoury-stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.6rem; }
+.armoury-stats-summary > .armoury-equipment-receipts { grid-column: 1 / -1; }
+.armoury-equipment-receipts { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
+/* The kit picker chip (creation's kit picker, pieceChip) is an OptionCard;
+   the rarity rides the border. */
+.as-option.rarity-uncommon { border-left: 3px solid var(--frost); }
+.as-option.rarity-rare { border-left: 3px solid var(--gold); }
+.equip-chip.as-option { min-height: var(--tap-floor); }
+.equip-chip .ec-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
+.equip-chip .ec-equipped { color: var(--equip-equipped-tag-color, var(--gold)); border-color: var(--equip-equipped-tag-color, var(--gold)); }
+
+/* ═══ SHRINE — four OptionCards in one column, two of them fold open ═══════ */
+/* Every card is the same fixed box (`--shrine-card-h`): rest and smith clamp
+   their copy to two lines; the folds are that box closed and grow downward
+   open, never sideways. */
+.shrine-option-list { --shrine-card-h: 8.4rem; width: min(100%, 44rem); margin-inline: auto; flex-direction: column; align-items: stretch; gap: 1.05rem; }
+.shrine-option-list > .class-pick { width: 100%; box-sizing: border-box; }
+.shrine-option-list > #rest-opt, .shrine-option-list > #smith-opt { height: var(--shrine-card-h); }
+.shrine-option-list > #rest-opt p, .shrine-option-list > #smith-opt p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.shrine-option-grid { align-items: stretch; }
+.shrine-fold { display: block; padding: 0; overflow: hidden; text-align: left; }
+.shrine-fold > summary { display: flex; gap: 1.5rem; align-items: center; height: calc(var(--shrine-card-h) - 2px); box-sizing: border-box; padding: 1.28rem 1.5rem; cursor: pointer; list-style: none; }
+.shrine-fold > summary::-webkit-details-marker { display: none; }
+.shrine-fold > summary > .glyph { flex: 0 0 3rem; margin: 0; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+.shrine-fold > summary > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
+.shrine-fold .on { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 1.65rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); }
+.shrine-fold .om { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 1.05rem; letter-spacing: 0.08em; }
+.shrine-fold-caret { flex: 0 0 auto; color: var(--muted); font-size: 1.72rem; line-height: 1; transition: transform 150ms; }
+.shrine-fold:hover .shrine-fold-caret, .shrine-fold[open] .shrine-fold-caret { color: var(--gold); }
+.shrine-fold[open] .shrine-fold-caret { transform: rotate(90deg); }
+.shrine-fold[open] > summary { border-bottom: 1px solid var(--line-soft); }
+.shrine-fold-content { display: grid; gap: 1.05rem; padding: 1.28rem 1.5rem 1.5rem; }
+.shrine-fold-detail { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.2rem; align-items: center; }
+
+/* ═══ REWARDS — a decision door over the battlefield ═══════════════════════ */
+/* Victory is a modal, not a screen: the md door stands on the veil over the
+   field it was won on (or the map, or a bare backdrop after a reload). Rows
+   are OptionCards; the foot carries the hold copy and Continue on the ladder. */
+.reward-backdrop { min-height: 100%; }
+.reward-door > .modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: var(--modal-inset); }
+.reward-door .reward-menu { max-width: none; width: 100%; }
+.reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
+.reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
+
+/* ═══ PAGE DOOR — a door that stands on the page, edge to edge ═══════════ */
+/* A PAGE DOOR wears the door's box without the veil (as the event does), in
+   two rungs. The DEFAULT hugs its content and stands on the page ground — a
+   result, a question, a notice. `full` takes the whole screen for a place you
+   work in (creation, the Custom Climb): the phone gets every pixel, a wide
+   screen a capped column with the ground either side. The rules for the
+   default rung are in the PAGE DOORS section below; `full` overrides them. */
+.screen.as-page { justify-content: flex-start; gap: 0; padding: 0; overflow: hidden; }
+.as-page > .modal.as-pagedoor.full, .screen > .modal.as-pagedoor.full {
+  width: 100%; max-width: 124rem; height: 100%; max-height: 100%; flex: 1 1 auto;
+  border-radius: 0; border-width: 0 1px;
+}
+.as-pagedoor.full > .modal-body {
+  display: flex; flex-direction: column; align-items: stretch; gap: 1.6rem;
+  padding: var(--modal-inset);
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+.as-pagedoor.full > .modal-foot { background: var(--panel); }
+/* A pane that sits inside another inset (a fold's panel) carries none of its own. */
+.as-pane.flush { padding: 0; overflow: visible; }
+/* A pane's items never shrink into each other: the pane scrolls instead. */
+.as-pane > * { flex-shrink: 0; }
+.as-pane.flush > .as-hairline { margin: 1rem 0; }
+
+/* ═══ SPLIT — two panes and a draggable handle ══════════════════════════════ */
+/* Body D's two panes with a handle between them: `--split-share` is the left
+   pane's share, the handle is a real button on the tap floor (keys move it
+   too), and under a narrow box the split stacks and the handle goes. */
+.as-split {
+  --split-share: 30%;
+  display: grid; grid-template-columns: minmax(18rem, var(--split-share)) auto minmax(0, 1fr);
+  gap: 1.05rem; align-items: stretch; width: 100%; min-width: 0;
+}
+.as-split > .as-split-pane { min-width: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r-3); background: var(--panel); }
+/* A pane inside a Split on the page is not a scroll owner — the page body is. */
+.as-split > .as-split-pane > .as-pane { flex: 1 1 auto; overflow: visible; }
+.as-split-handle {
+  position: relative; justify-self: center; align-self: stretch;
+  width: var(--tap-floor); min-width: var(--tap-floor); min-height: 0; padding: 0;
+  border: 0; border-radius: 0; background: transparent; cursor: col-resize;
+}
+.as-split-handle::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--line-soft); }
+.as-split-handle::after {
+  content: '‹ ›'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  padding: 0.4rem 0.3rem; color: var(--muted); background: var(--panel);
+  font: 500 1.2rem/1 var(--font-body); letter-spacing: 0.1em; white-space: nowrap;
+}
+.as-split-handle:hover, .as-split-handle:focus-visible { background: transparent; border: 0; box-shadow: none; }
+.as-split-handle:hover::after, .as-split-handle:focus-visible::after { color: var(--gold); }
+@container (max-width: 64rem) {
+  .as-split { grid-template-columns: minmax(0, 1fr); }
+  .as-split-handle { display: none; }
+}
+
+/* ═══ OPTIONS — list or grid, one atom ══════════════════════════════════════ */
+/* The same OptionCards, in a column (the default) or a grid: a `data-view` a
+   Segmented control writes. A card in either never keeps the class-pick
+   alias's row width — the container decides the footprint. */
+.as-options > .as-option.class-pick { max-width: none; flex: 0 0 auto; }
+.as-options[data-view="grid"] { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem; }
+.as-options[data-view="grid"] > * { min-width: 0; width: 100%; }
+.as-options[data-view="grid"] > .as-option { flex-direction: column; align-items: stretch; text-align: center; padding-right: 1.5rem; }
+.as-options[data-view="grid"] > .as-option::after { content: none; }
+.as-options[data-view="grid"] > .as-option .on { justify-content: center; }
+.as-options > .as-option .on > .as-pill { margin-left: 0.3rem; }
+
+/* SWATCH lives once, below — B's square-pick block was folded into it at the
+   merge (one home per fact). `.tint` is a no-op class kept as a hook. */
+
+/* ═══ FIGURE WELL — an ArtWell tall enough for a standing sprite ═══════════ */
+.as-artwell.figure { width: 16rem; height: 20rem; font-size: 6.4rem; border-width: 2px; transition: border-color 200ms, box-shadow 300ms; }
+/* The figure well shows the painting as painted — see the facing block in
+   styles/ui.css. It cancels the FACING LAYER, not `.class-sprite`: the mirror
+   moved onto that layer so it would stop colliding with the reaction
+   animations and with the sigil overlay, and a cancel aimed at the old element
+   would silently stop cancelling anything. */
+.as-artwell.figure .class-sprite > .facing { transform: none; }
+
+/* ═══ STEPPER — a Segmented of − / value / + ════════════════════════════════ */
+.as-seg.stepper button { min-width: var(--tap-floor); min-height: calc(var(--tap-floor) - 2px); padding-inline: 0.9rem; font-size: 1.6rem; }
+.as-seg.stepper .seg-value {
+  display: inline-grid; place-items: center; min-width: 3.6rem; padding-inline: 0.6rem;
+  border-left: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft);
+  font: 600 1.5rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment);
+}
+.as-seg button[aria-disabled="true"] { color: var(--muted); cursor: default; background: transparent; }
+.as-seg button[aria-disabled="true"]:hover { background: transparent; color: var(--muted); }
+
+/* ═══ A FOLD INSIDE A ROW ═══════════════════════════════════════════════════ */
+/* A disclosure host in a settings row dissolves: its face and its reveal
+   become the row's own wrap items, so the reveal drops under the whole row
+   (trail included) with the row's own gap — the D26 mechanism, unchanged. */
+.as-row.setting > .as-row-fold, .as-row.setting > .as-row-fold > .disc-faces { display: contents; }
+.as-row.setting > .as-row-fold .disc-face { flex: 1 1 16rem; min-width: 0; }
+.as-row-fold > .disc-faces > .disc-face { flex: 1 1 100%; }
+/* An open reveal drops UNDER the whole row: the face and the trail keep their line. */
+.as-row.setting > .as-row-fold .disc-reveal { order: 2; }
+.as-row.setting:has(> .as-row-fold) { align-items: flex-start; }
+.disc-face > .as-row { padding: 0; min-height: 0; width: 100%; gap: 0.75rem; }
+.disc-face > .as-row > .as-labelstack { flex: 1 1 auto; }
+.disc-face > .as-row .ls-label { color: var(--gold); font: 600 1.5rem/1.2 var(--font-display); letter-spacing: 0.03em; }
+.disc-face > .as-row .ls-hint { font-family: var(--font-body); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.disc-face > .as-row > .as-status { font: 600 1.6rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); flex: 0 0 auto; }
+.disc-face > .as-row.face-lite .ls-label { color: var(--parchment); font: 500 1.3rem/1.2 var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; }
+.disc-face > .as-row.face-lite > .as-status { color: var(--muted); font: 500 1.28rem/1 var(--font-body); }
+
+/* ═══ FIELD NOTE — the sentence under a field that refuses ═════════════════ */
+.as-fieldnote { flex: 1 1 100%; margin: 0; padding-left: 0.8rem; border-left: 2px solid var(--danger); color: var(--parchment); font-size: 1.2rem; line-height: 1.4; }
+.as-row.setting input[aria-invalid="true"] { border-color: var(--danger); }
+
+/* ═══ STACK — a column of kit pieces with one gap ══════════════════════════ */
+.as-stack { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; width: 100%; }
+.as-stack.tight { gap: 0.6rem; }
+.as-pane > .as-statstrip { margin-top: 0.9rem; }
+.as-pane > .as-btnrow.end { margin-top: 1.2rem; }
+.as-pane-head { flex-wrap: wrap; row-gap: 0.6rem; }
+.as-pane-head > .set-section-head { min-width: 0; }
+.as-pane-head > .r-trail > .as-row.setting { width: auto; border-bottom: 0; padding-block: 0; min-height: 0; }
+.as-pane > .as-artwell, .as-stack > .as-artwell { align-self: center; }
+.as-pane-head > .r-trail { flex: 0 0 auto; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: flex-end; }
+/* ═══ OPTION GRID / OPTION FLOW — OptionCards in columns, or wrapping ══════ */
+/* `.as-options` is the column. `grid` is as many columns as fit (`--opt-min`
+   the floor); `flow` is a wrapping row of self-sized cards where `wide` takes
+   its line; `tight` closes the gap for a dense list. */
+.as-options.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--opt-min, 16rem), 1fr)); gap: 1.05rem; }
+.as-options.grid > .as-option { width: auto; }
+.as-options.flow { flex-direction: row; flex-wrap: wrap; align-items: stretch; gap: 0.6rem; }
+.as-options.flow > .as-option { width: auto; flex: 1 1 auto; }
+.as-options.flow > .as-option.wide { flex: 1 1 100%; }
+.as-options.tight { gap: 0.45rem; }
+/* An option may carry an ArtWell where its glyph would be, or a compact inset. */
+.as-option > .as-artwell { flex: 0 0 auto; }
+.as-option.compact { padding: 0.75rem 1.2rem; gap: 1rem; }
+.as-option.compact > .as-artwell.sm { width: 4rem; height: 4rem; font-size: 1.8rem; }
+.as-option.compact .on { font-size: 1.45rem; }
+.as-option.more { border-style: dashed; }
+.as-option.more .on { color: var(--muted); }
+.as-option.drop-ready { border-color: var(--green); box-shadow: inset 0 0 0 2px var(--green); }
+.as-option .on > .as-pill, .as-option .on > .as-tag { flex: 0 0 auto; }
+/* The name is a flex item inside `.on`, so the ellipsis lives on it. */
+.as-option .on > span:not(.as-pill):not(.as-tag), .as-option .on > strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.as-option .r-trail > .as-status { text-align: right; }
+.as-option .r-trail > .as-btn { min-height: var(--tap-floor); }
+.as-option .ob > .as-kitline, .as-option .ob > .as-statstrip { margin-top: 0.3rem; }
+/* Prose in a card breaks a word before it breaks the card. */
+.as-option .od, .as-option .om, .as-face .od, .as-face .om { overflow-wrap: anywhere; }
+.as-option .ob > .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
+/* ═══ FACE HOST — an option whose whole content is one face element ════════ */
+/* The host stays bare so the face owns the padding and can paint the whole
+   card (a hold fill, a drag ghost); the face is the OptionCard's grammar. */
+.as-option.hosts-face { padding: 0; }
+.as-face { display: flex; align-items: center; gap: 1.5rem; width: 100%; min-width: 0; min-height: var(--tap-floor); padding: 1.28rem 1.5rem; border-radius: inherit; text-align: left; }
+.as-option.compact.hosts-face > .as-face { padding: 0.75rem 1.2rem; gap: 1rem; }
+.as-face > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
+.as-face > .ob { flex: 1 1 8rem; }
+.as-face > .r-trail { flex: 0 1 auto; margin-left: auto; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0.5rem; max-width: 50%; }
+.as-face > .r-trail > .as-status { flex: 0 0 auto; }
+/* ═══ STAT ROW — body E's row, with its builder's parts ════════════════════ */
+.as-statrow .sr-hint { color: var(--muted); font-size: 1.02rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.as-statrow .sr-vals > .as-statpair, .as-statrow .sr-vals > .as-delta { white-space: nowrap; }
+.as-statrow .sr-vals .as-delta { font-size: 1.32rem; }
+.as-statrow.flat { border: 0; border-radius: 0; background: transparent; padding: 0.6rem 0; border-top: 1px solid var(--rule); }
+.as-statrow.flat + .as-statrow.flat { margin-top: 0; }
+.as-statrow.flat:first-child { border-top: 0; }
+.as-statrow .sr-name > .as-pill, .as-statrow .sr-name > .as-tag { margin-left: 0.5rem; vertical-align: middle; }
+.as-statrow.muted { opacity: 0.55; }
+/* ═══ DETAIL CARD — what may stand inside one ═════════════════════════════ */
+.as-detailcard > .as-prose { margin-top: 0.3rem; }
+.as-detailcard > .as-kitline, .as-detailcard > .as-statstrip { margin-top: 0.4rem; }
+.as-detailcard > .as-flavor { margin-top: 0.4rem; }
+.as-detailcard > .as-hairline { margin: 0.6rem 0; }
+.as-detailcard > .as-eyebrow { margin-top: 0.6rem; }
+.as-detailcard > .as-statrow.flat:first-of-type { border-top: 0; }
+.as-detailcard .dc-lines { margin: 0.3rem 0 0; padding-left: 1.65rem; color: var(--muted); font-size: 1.28rem; line-height: 1.45; }
+.as-detailcard .dc-lines b { color: var(--parchment); }
+.as-detailcard > .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
+.as-detailcard.wide { width: 100%; }
+/* A FOLD: a DetailCard whose head is a Row that opens it. */
+details.as-detailcard { padding: 0; gap: 0; }
+details.as-detailcard > summary { list-style: none; cursor: pointer; border-radius: inherit; }
+details.as-detailcard > summary::-webkit-details-marker { display: none; }
+details.as-detailcard > summary > .as-row { padding-inline: 1.5rem; }
+details.as-detailcard > summary > .as-row > .as-title-s { font-size: 1.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 0 auto; max-width: 100%; }
+details.as-detailcard > summary > .as-row > .as-status { flex: 1 1 0; min-width: 2rem; }
+details.as-detailcard > :not(summary) { padding: 0 1.5rem 1.28rem; }
+details.as-detailcard[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 0.9rem; }
+.as-glyph.caret { display: inline-block; transition: transform 140ms; }
+details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .as-glyph.caret { transition: none; } }
+/* ═══ STEPPER — a −/count/+ unit of two tap-floor buttons ═════════════════ */
+.as-stepper { display: inline-flex; align-items: center; gap: 0.75rem; flex: 0 0 auto; }
+.as-stepper > .as-btn { width: var(--tap-floor); min-width: var(--tap-floor); padding: 0; font-size: 1.8rem; line-height: 1; }
+.as-stepper > .as-btn[aria-disabled="true"] { color: var(--muted); border-color: var(--line); cursor: default; }
+.as-stepper > .as-btn[aria-disabled="true"]:hover { border-color: var(--line); }
+.as-stepper > .st-value { min-width: 2ch; text-align: center; font: 600 1.6rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
+/* ═══ SPLITTER — a draggable separator between two panes ══════════════════ */
+.as-splitter { display: none; position: relative; min-width: 0.7rem; min-height: 0.7rem; cursor: col-resize; touch-action: none; }
+.as-splitter[aria-orientation="horizontal"] { cursor: row-resize; }
+.as-splitter::before { content: ''; position: absolute; inset: 0 0.28rem; background: var(--line-soft); border-radius: var(--r-pill); }
+.as-splitter[aria-orientation="horizontal"]::before { inset: 0.22rem 0; }
+.as-splitter:hover::before, .as-splitter:focus-visible::before, .as-splitter.dragging::before { background: var(--gold); box-shadow: 0 0 0.5rem rgba(var(--accent-rgb), 0.55); }
+.as-splitter:focus-visible { outline: none; }
+/* ═══ FOLDING TRAY — a docked region that folds to its header ═════════════ */
+/* The header is a Row (caret Glyph + Title·S + StatusText count) beside an
+   IconButton; the body is a Pane. Folded, only the header stands; unfolded,
+   the tray HUGS ITS CONTENT up to a compact cap (`--tray-compact`) until a
+   hand resizes it, after which its height is the remembered share of its
+   host — a percentage of the panel, never of the glass (no vh below body).
+   `.folding-tray` / `.tray-*` / `.region-fold` / `.rf-*` / `[data-fold]` /
+   `[data-collapsed]` / `[data-sized]` / `[data-tray-edge]` / `[data-role]`
+   are the hooks the tools read; they draw nothing of their own. */
+.as-tray { --tray-compact: none; position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; border-top: 1px solid var(--line); background: var(--bg-raise); }
+.as-tray > .tray-header { display: flex; align-items: center; gap: 0.75rem; min-width: 0; flex: 0 0 auto; padding-right: var(--modal-inset, 1.4rem); }
+.as-tray > .tray-header > .as-row { flex: 1 1 auto; min-width: 0; padding-inline: var(--modal-inset, 1.4rem); }
+.as-tray > .tray-header > .as-row > .as-glyph { color: var(--gold); }
+.as-tray > .tray-header > .as-row > .as-title-s { flex: 0 0 auto; max-width: 60%; font-size: 1.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-tray > .tray-header > .as-row > .as-status { flex: 1 1 auto; }
+.as-tray > .tray-header > .as-iconbtn { flex: 0 0 auto; }
+.as-tray > .as-pane { flex: 0 1 auto; min-height: 0; overflow: auto; padding-top: 0.9rem; }
+.as-tray > .as-pane[hidden] { display: none !important; }
+.as-tray[data-collapsed="1"] { flex: 0 0 auto; }
+.as-tray[data-collapsed="1"] > :not(.tray-header) { display: none; }
+.as-tray[data-collapsed="0"] > .tray-header { border-bottom: 1px solid var(--line); }
+.as-tray[data-tray-edge="top"][data-collapsed="0"][data-sized="0"], .as-tray[data-tray-edge="bottom"][data-collapsed="0"][data-sized="0"] { max-height: var(--tray-compact); }
+.as-tray[data-tray-edge="top"][data-collapsed="0"], .as-tray[data-tray-edge="bottom"][data-collapsed="0"] { min-height: var(--tap-floor); }
+.as-tray[data-sized="1"] > .as-pane { flex: 1 1 auto; }
+/* Side trays: a folded rail the height of its host, the title turned. */
+.as-tray[data-tray-edge="left"], .as-tray[data-tray-edge="right"] { border-top: 0; }
+.as-tray[data-tray-edge="left"][data-collapsed="1"], .as-tray[data-tray-edge="right"][data-collapsed="1"] { align-self: stretch; flex: 0 0 var(--tap-floor); width: var(--tap-floor); }
+.as-tray[data-tray-edge="left"][data-collapsed="1"] > .tray-header, .as-tray[data-tray-edge="right"][data-collapsed="1"] > .tray-header { flex-direction: column; height: 100%; padding: 0; }
+.as-tray[data-tray-edge="left"][data-collapsed="1"] > .tray-header > .as-row, .as-tray[data-tray-edge="right"][data-collapsed="1"] > .tray-header > .as-row { flex-direction: column; justify-content: flex-start; width: var(--tap-floor); height: 100%; padding: 0.6rem 0; }
+.as-tray[data-tray-edge="left"][data-collapsed="1"] .tray-title, .as-tray[data-tray-edge="right"][data-collapsed="1"] .tray-title,
+.as-tray[data-tray-edge="left"][data-collapsed="1"] .tray-count, .as-tray[data-tray-edge="right"][data-collapsed="1"] .tray-count { writing-mode: vertical-rl; text-orientation: mixed; margin: 0; text-align: left; flex: 0 0 auto; }
+.as-tray[data-tray-edge="left"] { margin-block: 0.6rem; margin-left: 0.6rem; }
+.as-tray[data-tray-edge="right"] { margin-block: 0.6rem; margin-right: 0.6rem; }
+.as-tray[data-tray-edge="left"][data-collapsed="0"], .as-tray[data-tray-edge="right"][data-collapsed="0"] { align-self: stretch; width: calc(100% - 0.6rem); height: auto; }
+/* The resize grip: a tap-floor surface astride the tray's free edge. */
+.as-tray > .tray-resize-handle { position: absolute; z-index: 2; touch-action: none; user-select: none; outline: 0; }
+.as-tray > .tray-resize-handle::after { content: ''; position: absolute; border-radius: var(--r-pill); background: color-mix(in srgb, var(--gold) 58%, transparent); transition: background-color 120ms ease, transform 120ms ease; }
+.as-tray > .tray-resize-handle[data-ui-variant="top"], .as-tray > .tray-resize-handle[data-ui-variant="bottom"] { left: 50%; width: 9.6rem; height: var(--tap-floor); transform: translateX(-50%); cursor: ns-resize; }
+.as-tray > .tray-resize-handle[data-ui-variant="top"] { bottom: 0; transform: translate(-50%, 50%); }
+.as-tray > .tray-resize-handle[data-ui-variant="bottom"] { top: 0; transform: translate(-50%, -50%); }
+.as-tray > .tray-resize-handle[data-ui-variant="top"]::after, .as-tray > .tray-resize-handle[data-ui-variant="bottom"]::after { width: 4.8rem; height: 2px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.as-tray > .tray-resize-handle[data-ui-variant="left"], .as-tray > .tray-resize-handle[data-ui-variant="right"] { top: 50%; width: var(--tap-floor); height: 9.6rem; transform: translateY(-50%); cursor: ew-resize; }
+.as-tray > .tray-resize-handle[data-ui-variant="left"] { right: 0; }
+.as-tray > .tray-resize-handle[data-ui-variant="right"] { left: 0; }
+.as-tray > .tray-resize-handle[data-ui-variant="left"]::after, .as-tray > .tray-resize-handle[data-ui-variant="right"]::after { width: 2px; height: 4.8rem; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.as-tray > .tray-resize-handle:is(:hover, :focus-visible)::after, .as-tray > .tray-resize-handle[data-dragging="1"]::after { background: var(--gold); }
+/* ═══ DISCLOSURE — faces are OptionCards, the reveal is a DetailCard ═══════ */
+/* components/disclosure.js draws every fold in the tree: a row of faces
+   (`.as-options.flow`, or a column) and ONE reveal, a full-width DetailCard
+   moved under the tapped face's line. The `.disc-*` names are the hooks the
+   tools read; the shapes are the kit's. */
+.disc-faces > .disc-reveal { flex: 1 1 100%; width: 100%; grid-column: 1 / -1; }
+.disc-faces > .disc-face .disc-value { white-space: nowrap; }
+.disc-faces > .disc-face .disc-summary { white-space: normal; }
+.disc-faces > .disc-face[data-reveal="open"] { border-color: var(--gold); }
+.disc-face.disc-pick, .disc-face.disc-armament, .disc-face.disc-relic, .disc-face.disc-item, .disc-face.disc-power, .disc-face.disc-stat, .disc-face.disc-attribute, .disc-face.disc-section { flex: 1 1 100%; }
+.disc-reveal > .dc-name { font-size: 1.5rem; }
+.disc-reveal .disc-receipt { display: block; margin-top: 0.4rem; }
+/* ═══ SMITH — body E inside the shell ══════════════════════════════════════ */
+/* The chooser (left) is OptionCards in a grid, each an ArtWell with the
+   item's count as a StatePill and its kind and tags as Tags; the inspector
+   (right) is a DetailCard of StatRows and deltas. `.smith-*` are the hooks
+   tools/armament-smithing-ui.mjs reads. */
+.smith-modal-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(22rem, 1fr); }
+.smith-candidate-region, .smith-preview-region { min-width: 0; min-height: 0; }
+.smith-candidate-region { display: flex; flex-direction: column; border-right: 1px solid var(--line); }
+.smith-region-head { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: baseline; gap: 1.2rem; padding: var(--modal-inset); border-bottom: 1px solid var(--line); }
+.smith-region-head > .as-labelstack { flex: 1 1 auto; min-width: 0; }
+.smith-region-head > .as-status { flex: 0 0 auto; max-width: 45%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.smith-card-list { flex: 1 1 auto; min-height: 0; overflow: auto; padding: var(--modal-inset); align-content: start; --opt-min: 15rem; }
+.smith-candidate-card { flex-direction: column; align-items: stretch; text-align: center; padding: 1.2rem 1rem 1rem; gap: 0.75rem; }
+.smith-candidate-card > .as-artwell { width: 100%; height: auto; aspect-ratio: 1; max-height: 12rem; align-self: center; overflow: hidden; }
+.smith-candidate-card > .as-artwell > img { max-width: 100%; max-height: 100%; }
+.smith-candidate-card > .ob { align-items: center; }
+.smith-candidate-card .on { white-space: normal; text-align: center; justify-content: center; font-size: 1.45rem; }
+.smith-candidate-card .smith-item-type-row, .smith-candidate-card .smith-weapon-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3rem; }
+.smith-candidate-card .smith-item-type-row > .as-tag { color: var(--gold); }
+.smith-candidate-card > .smith-weapon-count { position: absolute; top: 0.6rem; left: 0.6rem; }
+.smith-preview-region { display: flex; flex-direction: column; overflow: auto; padding: var(--modal-inset); background: var(--panel); }
+.smith-preview-card { width: 100%; gap: 0; }
+/* The summary: the selected item's name and tier, then the stone cost as a
+   StatPair under it — one column, the rows flush so the stats row follows. */
+.smith-summary-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; padding-bottom: 0.6rem; }
+.smith-summary-cell { min-width: 0; }
+.smith-selected-head { display: flex; flex-direction: column; gap: 0.2rem; }
+.smith-selected-head > .sr-name { font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
+.smith-preview-economy { display: flex; align-items: baseline; }
+.smith-economy-values { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.45rem; font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
+.smith-economy-values > b { white-space: nowrap; font-weight: 600; }
+.smith-cost-pair > .sp-k { font-size: 1rem; letter-spacing: 0.18em; }
+.smith-cost-pair > .sp-k > i, .smith-cost-pair > .sp-v > i { font-style: normal; color: var(--muted); padding-inline: 0.1em; }
+.smith-preview-economy.affordable .smith-cost-available, .confirmation-cost.affordable .smith-cost-available { color: var(--green); }
+.smith-preview-economy.unaffordable .smith-cost-available, .confirmation-cost.unaffordable .smith-cost-available { color: var(--danger, var(--ember)); }
+.smith-preview-card .smith-fold-values { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.3rem 1rem; }
+.smith-preview-card .smith-data-heading { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.smith-preview-card .sr-vals { flex-direction: column; align-items: flex-end; gap: 0.3rem; }
+/* A fact row that runs out of room stacks its values under its name. */
+.smith-preview-card > .as-statrow.flat { flex-wrap: wrap; }
+.smith-preview-card > .as-statrow.flat > .sr-id { flex: 1 1 12rem; }
+.smith-preview-card > .as-statrow.flat > .sr-vals { flex: 1 1 14rem; }
+.smith-stat-costs > i { font-style: normal; }
+.smith-requirement small { display: block; color: var(--muted); font-size: 1.05rem; text-align: right; }
+.smith-preview-card > .as-blocker.pinned { margin-top: 1.2rem; }
+.confirmation-change-list { display: flex; flex-direction: column; }
+.smith-upgrade-folds { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.6rem; }
+.smith-upgrade-fold { border: 1px solid var(--line); border-radius: var(--r-2); background: var(--bg-raise); }
+.smith-upgrade-fold > summary { list-style: none; cursor: pointer; }
+.smith-upgrade-fold > summary::-webkit-details-marker { display: none; }
+.smith-upgrade-fold > summary > .as-statrow { display: flex; border: 0; background: transparent; padding: 0.9rem 1.2rem; min-height: var(--tap-floor); }
+.smith-upgrade-fold > summary > .as-statrow > .sr-vals { flex-direction: row; align-items: center; }
+.smith-fold-detail { padding: 0.9rem 1.2rem; border-top: 1px solid var(--line); }
+.smith-upgrade-fold.is-unused { opacity: 0.46; }
+.smith-fold-detail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.2rem; }
+.smith-fold-detail.no-card { grid-template-columns: minmax(0, 1fr); }
+/* The CostMedallion is the one element allowed to break a card's edge (kit
+   §03), so the sprite box leaves it room instead of clipping it off. */
+.smith-card-sprite { min-width: 0; padding: 1rem 0 0 1rem; }
+.smith-card-sprite .card { transform: none !important; }
+.smith-card-facts { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.smith-preview-empty { margin: auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; color: var(--muted); }
+.smith-confirm[data-smith-action-state="blocked"] { cursor: help; }
+.smith-modal-footer .as-blocker.in-foot { margin-right: auto; }
+@container (max-width: 72rem) {
+  /* Stacked: the chooser takes a fixed share of the body so its list has a
+     definite height to scroll in; the inspector takes the rest. */
+  .smith-modal-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 42%) minmax(0, 1fr); }
+  .smith-candidate-region { border-right: 0; border-bottom: 1px solid var(--line); min-height: 0; }
+  .smith-card-list { --opt-min: 12rem; }
+  .smith-candidate-card > .as-artwell { max-height: 8rem; }
+}
+/* ═══ SHRINE FOLDS — the flask stepper and the level preview ═══════════════ */
+.shrine-fold-content > .as-subtitle { margin: 0; }
+.flask-increment { display: flex; flex-direction: column; gap: 0; }
+.flask-increment > .as-row.setting { padding-block: 0.6rem; }
+.flask-increment > .as-row.setting > .as-labelstack { flex: 1 1 12rem; }
+.flask-increment-id .flask-identity { display: inline-flex; align-items: center; gap: 0.6rem; }
+.flask-increment > .as-status.flask-increment-total { display: block; margin-top: 0.6rem; text-align: center; }
+.level-cinder-preview { margin: 0; }
+.level-cinder-preview > .level-cinder-cost { color: var(--ember); font-weight: 600; }
+.level-cinder-result[hidden] { display: none; }
+/* A flask button carries a name AND a charge count. The COUNT holds — it is
+   the number a player spends — and the NAME yields to an ellipsis inside the
+   ladder's step. Measured on the co-op board at 1200x730, where "Crimson
+   Flask" ran 16px over its own count. */
+.coop-flask { min-width: 0; }
+.coop-flask > .flask-identity { min-width: 0; overflow: hidden; }
+.coop-flask .flask-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coop-flask > b { flex: 0 0 auto; }
+
+/* ═══ FOLDED TITLE — the gate is the TitleMenu before its entries ══════════ */
+/* A separate surface from the title menu: the menu is not mounted behind it,
+   so hidden controls cannot leak into Tab order or the accessibility tree.
+   Copy and particle positions arrive through StartupGateModels.js; this block
+   owns layout only — the lockup is the kit's TitleMenu, the stamp sits in the
+   grid's last row, and the ash is the gate's ambience (the title's embers). */
+.startup-gate {
+  position: relative; isolation: isolate;
+  display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center;
+  gap: 1.2rem; padding: 2.4rem; min-height: 100%; overflow: hidden; cursor: pointer;
+  background:
+    linear-gradient(180deg, rgba(11, 9, 6, 0.34), rgba(9, 7, 5, 0.96)),
+    url('../assets/bg/bg_act1.webp') center / cover;
+  transition: opacity 180ms ease-out;
+}
+.startup-gate::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 20%, transparent 0, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.66) 100%); }
+.startup-gate:focus { outline: none; }
+.startup-gate:focus-visible .startup-prompt { color: var(--gold); text-shadow: 0 0 1rem rgba(var(--accent-rgb), 0.48); }
+.startup-gate.is-revealing { opacity: 0; pointer-events: none; }
+.reduced-motion .startup-gate { transition-duration: 140ms; transition-timing-function: linear; }
+.startup-gate > .as-titlemenu { position: relative; z-index: 1; align-self: center; animation: startupMarkIn 520ms ease-out both; }
+.startup-gate > .as-titlemenu .tm-name { text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38); }
+.startup-gate > .as-titlemenu .tm-sub { margin-top: 0.75rem; }
+.startup-gate > .as-titlemenu > .as-ornament { margin-top: 1.5rem; }
+.startup-gate > .as-titlemenu .tm-foot { margin-top: 3rem; color: var(--parchment); opacity: 0.82; white-space: normal; animation: startupPromptPulse 1.8s ease-in-out infinite alternate; }
+.startup-gate > .build-stamp { position: relative; z-index: 1; align-self: end; margin-bottom: max(0.4rem, env(safe-area-inset-bottom)); color: var(--parchment); text-align: center; }
+@keyframes startupMarkIn { from { opacity: 0; transform: translateY(0.65rem); } to { opacity: 1; transform: none; } }
+@keyframes startupPromptPulse { from { opacity: 0.5; } to { opacity: 0.95; } }
+.reduced-motion .startup-gate > .as-titlemenu, .reduced-motion .startup-gate .tm-foot { animation: none; }
+.startup-ash-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.startup-ash {
+  position: absolute; left: var(--ash-left); bottom: -1rem;
+  width: var(--ash-size); height: var(--ash-size); border-radius: var(--r-round);
+  background: var(--ember); box-shadow: 0 0 0.55rem rgba(201, 80, 46, 0.55); opacity: 0;
+  animation: startupAshRise var(--ash-duration) linear var(--ash-delay) infinite;
+}
+@keyframes startupAshRise {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  14% { opacity: 0.62; }
+  72% { opacity: 0.28; }
+  100% { transform: translate3d(1.4rem, -78rem, 0); opacity: 0; }
+}
+@media (max-width: 640px) {
+  .startup-gate { padding: 1.2rem 0.8rem; }
+  .startup-gate > .as-titlemenu .tm-foot { margin-top: 2.4rem; }
+}
+
+/* METER lives once — see the HUD's METER section: a plate beside a well.
+   C's overlay-text meter was folded into it at the merge (one home per fact);
+   the co-op party strip reads as `inset`, which puts the plate in the track. */
+/* ═══ PARTY STRIP — who is here, and how they are ══════════════════════════ */
+/* One Member per seat: Glyph + inline Meter. State rides on `data-state`
+   (me · away · dead); the kit says it with the border and the ink. */
+.as-party { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 0.9rem; min-width: 0; }
+.as-member { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.25rem 0.6rem; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2); }
+.as-member > .as-glyph { flex-basis: auto; font-size: 1.5rem; }
+/* A member's Meter has a FLOOR: its inset value ("61/72") must read whole, so
+   the track never squeezes below it and the strip wraps to a second line
+   instead. Measured on the co-op map header at 1200x730, where two members'
+   values overlapped by 16px. */
+.as-member > .as-meter { flex: 0 0 auto; width: 8.4rem; min-width: 8.4rem; }
+.as-member[data-state="me"] { border-color: var(--gold); }
+.as-member[data-state="away"] { opacity: 0.55; }
+.as-member[data-state="dead"] { opacity: 0.4; filter: grayscale(1); }
+/* A StatStrip centred under a figure (a seat's line on the board). */
+.as-statstrip.centered { justify-content: center; align-items: center; gap: 0.5rem 0.75rem; width: 13rem; max-width: 100%; margin-inline: auto; text-align: center; }
+.as-statstrip.centered > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.15rem; }
+/* A DetailCard that stands in a flow at its own width (an arming prompt). */
+.as-detailcard.floating { width: fit-content; max-width: 100%; margin: 0.4rem auto; }
+.as-detailcard.floating > .modal-btnrow { margin-top: 0.6rem; }
+/* A scene door over the board: the shared card row and choices inside a decide body. */
+.coop-scene > .as-party { flex: 0 0 auto; justify-content: center; }
+.as-pagedoor .as-decide > .reward-row { justify-content: center; flex-wrap: wrap; margin: 1.2rem 0; max-width: 100%; }
+.as-pagedoor .as-decide > .as-subtitle { margin-top: 0.6rem; }
+.as-pagedoor .as-decide > .as-options { margin-top: 1.2rem; }
+.as-pagedoor .as-decide > .as-flavor { display: block; margin-top: 0.6rem; }
+.as-pagedoor .as-decide > .as-blocker { margin: 0.6rem 0; }
+/* The dock's pending pip. */
+.as-dock .as-tab > .as-glyph { flex-basis: auto; }
+.as-dock .as-tab > .as-pill.round { padding-inline: 0.35rem; }
+
+/* ═══ SWATCH — a colour you can pick ═══════════════════════════════════════ */
+/* A round button whose face IS the value (`--swatch`); the chosen one wears
+   a parchment ring. A row of them is `.as-swatches`. Tap floor on both axes. */
+.as-swatches { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.as-swatch {
+  position: relative; display: inline-grid; place-items: center; flex: 0 0 auto;
+  width: var(--tap-floor); height: var(--tap-floor); min-height: 0; padding: 0;
+  background: transparent; border: 1px solid transparent; border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.as-swatch::before { content: ''; width: 2.8rem; height: 2.8rem; border-radius: 50%; background: var(--swatch, var(--gold)); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35); }
+.as-swatch:hover, .as-swatch:focus-visible { border-color: var(--line-soft); background: transparent; }
+.as-swatch[aria-pressed="true"], .as-swatch.on { border-color: var(--parchment); box-shadow: 0 0 10px rgba(255, 255, 255, 0.25); }
+
+/* ═══ BANNER — a transient display-face announcement ═══════════════════════ */
+/* ENEMY TURN / TURN 3: it stands over the board for a second and goes. Not a
+   modal (nothing to answer), not a status line (it is the moment itself). */
+.as-banner {
+  position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%);
+  z-index: 640; pointer-events: none;
+  margin: 0; color: var(--gold);
+  font: 700 4rem/1 var(--font-display); letter-spacing: 0.3em; text-indent: 0.3em; text-transform: uppercase; white-space: nowrap;
+  text-shadow: 0 0 24px rgba(var(--accent-rgb), 0.5), 0 2px 8px #000;
+  animation: as-banner 1100ms ease-out forwards;
+}
+.as-banner.small { font-size: 2.2rem; top: 30%; animation-duration: 900ms; }
+@keyframes as-banner {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.reduced-motion .as-banner { animation-duration: 500ms; }
+
+/* ═══ DOCK — a floating strip of Tabs ══════════════════════════════════════ */
+/* Seats on a couch: one Tab per subject, a Keycap for the switch, a StatePill
+   for "has something to do". It hangs off the bottom edge over the board. */
+.as-dock {
+  position: fixed; left: 50%; bottom: 4.6rem; transform: translateX(-50%);
+  z-index: 620; max-width: calc(100% - 2rem);
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  background: var(--bg-raise); border: 1px solid var(--line-soft); border-radius: var(--r-3);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+}
+.as-dock > .as-tabs { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
+.as-dock .as-tab { display: inline-flex; align-items: center; gap: 0.5rem; }
+
+/* ═══ FOLD — a Row that opens ══════════════════════════════════════════════ */
+/* A <details> whose summary is the kit's Row: label left, StatusText right,
+   caret in the Glyph column. What it opens is prose under a hairline. */
+.as-fold { border-bottom: 1px solid var(--rule); }
+.as-fold:last-child { border-bottom: 0; }
+.as-fold > summary { list-style: none; }
+.as-fold > summary::-webkit-details-marker { display: none; }
+.as-fold > summary > .as-glyph { transition: transform 150ms; }
+.as-fold[open] > summary > .as-glyph { transform: rotate(90deg); color: var(--gold); }
+.as-fold > .fold-body { display: flex; flex-direction: column; gap: 0.6rem; padding: 0 1.35rem 1rem calc(1.35rem + 1.75rem + 1.05rem); }
+.as-fold > .fold-body code { font-family: monospace; font-size: 1.2rem; color: var(--ink-dim); word-break: break-word; }
+@media (prefers-reduced-motion: reduce) { .as-fold > summary > .as-glyph { transition: none; } }
+
+/* ═══ LOG — a monospace scroll box ═════════════════════════════════════════ */
+.as-log {
+  margin: 0; flex: 1 1 auto; min-height: 18rem; max-height: 100%; overflow: auto;
+  padding: 1rem 1.2rem; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-2);
+  color: var(--ink-dim); font: 400 1.15rem/1.45 monospace; white-space: pre-wrap; word-break: break-word;
+  scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent;
+}
+
+/* ═══ PAGE DOORS — a door standing on the page, and a pane on the page ═════ */
+/* A screen that asks one thing (the run's end, the crisis notice) wears the
+   door's box without the veil, like the event. A screen that lists things
+   (history, the compendium) is a Pane bounded to a reading width. */
+.screen > .modal.as-pagedoor { flex: 0 1 auto; max-height: 100%; }
+.screen > .modal.as-pagedoor[data-size="lg"], .screen > .modal.as-pagedoor[data-size="xl"] { height: auto; max-height: 100%; }
+.screen > .modal.as-pagedoor > .modal-body { min-height: 0; }
+.as-pagedoor .as-decide > .as-detailcard + .as-detailcard { margin-top: 0.9rem; }
+.as-pagedoor .as-decide > .as-btnrow, .as-pagedoor .as-decide > .modal-btnrow { margin: 1.5rem auto 0; }
+.as-pagedoor .as-decide > .modal-btnrow + .modal-btnrow { margin-top: 0.8rem; }
+.as-pagedoor .as-decide > .as-kitline, .as-pagedoor .as-decide > .as-statstrip { justify-content: center; margin-top: 1.2rem; }
+.as-pagedoor .as-decide > .as-status { display: block; text-align: center; margin-top: 0.9rem; }
+.as-pagedoor .as-decide > .as-status:empty { display: none; }
+.as-pagedoor .as-decide > .as-fold { text-align: left; margin-top: 1.2rem; border-top: 1px solid var(--rule); border-bottom: 0; }
+.as-pagedoor .as-decide > .set-section-head { align-items: center; margin-top: 1.8rem; }
+.as-pagedoor .as-decide > .as-prose + .as-detailcard, .as-pagedoor .as-decide > .as-prose + .as-prose { margin-top: 1rem; }
+.as-title-l[data-tone="loss"] { color: var(--danger); }
+/* A DetailCard that carries its own actions and its own support fold. */
+.as-detailcard > .modal-btnrow, .as-detailcard > .as-btnrow { margin-top: 0.8rem; }
+.as-detailcard > .as-fold { border: 0; margin-top: 0.2rem; }
+.as-detailcard > .as-fold > summary { padding-inline: 0; }
+.as-detailcard > .as-fold > .fold-body { padding-inline: 0; }
+.as-detailcard > .as-prose { font-size: 1.32rem; }
+/* A RailItem with a count beside its label. */
+.as-railitem.with-status { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+/* The count is the half a narrow rail must not eat: it holds its size and the
+   NAME yields — first by wrapping onto its own line, then by ellipsis. Measured
+   at 390x844, where "WEAPONS 0/9" clipped its count against the rail's end. */
+.as-railitem.with-status { flex-wrap: wrap; row-gap: 0.15rem; white-space: normal; }
+.as-railitem.with-status > .as-status { flex: 0 0 auto; font-size: 1.05rem; }
+.as-railitem.with-status > :not(.as-status) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A railed screen scrolls its grid, never its pane. */
+.screen > .as-railed > .as-pane { overflow: hidden; }
+.as-pane > .as-options.grid { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 2px; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
+.screen > .as-pane { --modal-inset: 1.4rem; width: min(100%, 76rem); flex: 0 1 auto; max-height: 100%; }
+.screen > .as-railed { --modal-inset: 1.4rem; container-type: inline-size; width: min(100%, 96rem); flex: 1 1 auto; min-height: 0; max-height: 100%; background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-4); overflow: hidden; }
+@media (max-width: 640px) { .screen > .as-railed, .screen > .as-pane { --modal-inset: 1rem; } }
+/* A KitLine that lists rather than explains: no help underline, no help cursor. */
+.as-kitline.plain .ki { cursor: default; }
+.as-kitline.plain .ki .kn { border-bottom: 0; }
+.screen > .as-railed > .as-pane { height: 100%; }
+/* Rows that read a fact rather than choose one: the table's replacement. */
+.as-pane .as-row.setting > .r-label { flex: 0 1 auto; color: var(--muted); }
+.as-pane .as-row.setting > .as-status { color: var(--parchment); text-align: right; }
+/* A pane's foot: the ButtonRow under a hairline. */
+.as-pane > .as-btnrow, .as-pane > .modal-btnrow { margin-top: 1.4rem; flex: 0 0 auto; }
+.as-pane > .as-options { flex: 0 0 auto; }
+/* An OptionCard whose Glyph is an ArtWell (a piece's own icon). */
+.as-option > .as-artwell { flex: 0 0 auto; }
+.as-option.is-ghost > .as-artwell img { filter: brightness(0) invert(1); opacity: 0.72; }
+.as-option.is-ghost { border-style: dashed; background: transparent; }
+.as-option.is-ghost .on { color: var(--muted); font-style: italic; }
+.as-option[data-rarity="rare"]:not(.is-selected) { border-left: 3px solid var(--gold); }
+.as-option[data-rarity="uncommon"]:not(.is-selected) { border-left: 3px solid var(--frost); }
+/* A grid of OptionCards: the compendium's constant grid. */
+.as-options.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); align-content: start; }
+.as-options.grid > .as-option { width: auto; }
+/* The kit's danger tint (the kit page's rgba(212, 98, 46)); nothing in
+   base.css named it, so every `.danger` weight read an unset variable. */
+:root { --danger: #d4622e; }
+
+/* ═══ METER — a resource read at a glance ══════════════════════════════════ */
+/* Label · value · track. The TRACK's length is data (the surface writes its
+   width inline: max ÷ reference, so a bigger pool is a longer bar), the fill is
+   cur ÷ max. `.skinny` is the poise weight: no label, no value, a hairline
+   track. `.inset` puts the value inside the track for the under-model strip,
+   where there is no room beside it. Tones name the resource, never a screen. */
+.as-meter { --meter-h: 10px; --meter-tone: var(--gold); position: relative; display: flex; align-items: center; gap: 0.6rem; min-width: 0; width: 100%; container-type: inline-size; }
+/* THE LADDER, MEASURED, NOT GUESSED (§02): a meter too narrow for its name
+   drops the NAME and keeps the glyph and the value, because the value is the
+   fact and the glyph is the identity. Only then does anything truncate. */
+/* 9rem, AND rem RATHER THAN em, both measured. This rung was written `8em` and
+   never fired once: font-relative units in a container query resolve against the
+   container's OWN font-size, and these meters inherit 0.92rem = 9.2px, so 8em
+   was 73.6 px — under every column the game actually draws (the arcane receipt's
+   container is 130 px at 1200x730 and 80 px at 390x844, in the LOCAL px a
+   container query compares, which the battlefield's scale then renders as 88 and
+   68). The name stayed and clipped instead: "ARCANE …" at the desk, "A…" on the
+   phone. 9rem = 90 px falls between those two columns, which is the cut this
+   ladder is about — wide enough for HP/MP/SP wherever they are drawn (120 px at
+   320 px of viewport), too narrow for a word. */
+@container (max-width: 9rem) { .as-meter > .m-plate > .m-label { display: none; } }
+.as-meter > .m-plate { flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 0.5rem; min-width: 0; white-space: nowrap; }
+.as-meter .m-label { flex: 0 0 auto; white-space: nowrap; font: 600 1.05rem/1 var(--font-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.as-meter .m-value { flex: 0 0 auto; white-space: nowrap; font: 600 1.15rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
+.as-meter > .m-well { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
+/* `stack` — the plate ABOVE the track, for a meter in a narrow column (under a
+   combatant, in a list). THE NAME WRAPS RATHER THAN TRUNCATING, and the receipt
+   grows downward to hold it. Measured on the arcane receipt at ?shot=combat,
+   whose name is fifteen characters: "Arcane Exposure" wants 131 px and its
+   column is 92 px at 1200x730 and 68 px at 390x844, so with the label on one
+   nowrap line it read "ARCANE …" at the desk and "A…" on the phone — a label
+   that has stopped being a word. The 8em rung above drops a name that does not
+   fit a WIDE meter; in a stacked one there is a whole line to give it, and a
+   two-line name costs the sprite nothing. The value never wraps and never
+   truncates: it is the fact. */
+.as-meter.stack { flex-direction: column; align-items: stretch; gap: 0.15rem; }
+.as-meter.stack > .m-plate { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
+.as-meter.stack .m-label { flex: 0 1 auto; min-width: 0; overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: normal; line-height: 1.2; }
+/* The rung above is also what stops this wrap from becoming a letter-per-line
+   column: at 390x844 the plate leaves the name about 20 px, and `anywhere`
+   spelled ARCANE EXPOSURE downwards. `overflow-wrap: normal` keeps the break at
+   the space, and under 9rem there is no name to break — the glyph says which
+   school it is. */
+.as-meter.stack .m-value { flex: 0 0 auto; }
+.as-meter .m-track { position: relative; flex: 0 0 auto; box-sizing: border-box; width: 100%; max-width: 100%; height: var(--meter-h); min-width: 0; padding: 0; border: 0; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); border-radius: var(--r-pill); overflow: hidden; }
+.as-meter .m-fill { position: absolute; inset: 0 auto 0 0; background: var(--meter-tone); border-radius: inherit; }
+.as-meter[data-tone="hp"] { --meter-tone: var(--res-hp, var(--blood)); }
+.as-meter[data-tone="mp"], .as-meter[data-tone="mana"] { --meter-tone: #4f82d8; }
+.as-meter[data-tone="sp"], .as-meter[data-tone="stamina"] { --meter-tone: #5f925d; }
+.as-meter[data-tone="poise"] { --meter-tone: var(--gold); }
+.as-meter[data-tone="arcane"] { --meter-tone: #8a6fd6; }
+.as-meter[data-tone="danger"] { --meter-tone: var(--danger); }
+.as-meter.inset { --meter-h: 13px; }
+.as-meter.inset .m-label { display: none; }
+.as-meter.inset > .m-plate { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 1; }
+.as-meter.inset .m-value { font-size: 0.95rem; letter-spacing: 0.04em; text-shadow: 0 1px 2px #000; }
+.as-meter.skinny { --meter-h: 4px; }
+.as-meter.skinny > .m-plate { display: none; }
+.as-meter.pulse .m-fill { animation: pulse-gold 600ms infinite alternate; }
+.reduced-motion .as-meter.pulse .m-fill { animation: none; }
+/* A dashed rim says "this length is the floor, not the data". */
+.as-meter .m-track[data-floored="1"] { box-shadow: none; border: 1px dashed var(--line-soft); }
+/* A meter that is locked reads dimmed; a striped fill says a resistance holds. */
+.as-meter.locked { opacity: 0.6; }
+.as-meter.resisted .m-fill { background: repeating-linear-gradient(45deg, var(--meter-tone) 0 4px, transparent 4px 8px); }
+/* A stack of meters, one under the other, tight. */
+.as-meters { display: flex; flex-direction: column; gap: 0.3rem; width: 100%; min-width: 0; }
+.as-meters.tight { gap: 2px; }
+
+/* ═══ SLOT — a square control that holds one thing: art, a count, a key ═══ */
+/* Flasks, relics, quick items. The box is the IconButton's (a control) or `sm`
+   (a chip that is only read). The count is a round StatePill on the corner,
+   the key a Keycap in the other. */
+.as-slot { position: relative; display: inline-grid; place-items: center; flex: 0 0 auto; box-sizing: border-box; width: var(--iconbtn-size); height: var(--iconbtn-size); min-width: var(--iconbtn-size); min-height: var(--iconbtn-size); padding: 0; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2); color: var(--parchment); cursor: pointer; overflow: visible; }
+.as-slot:hover, .as-slot:focus-visible { border-color: var(--gold); background: var(--panel); outline: none; }
+.as-slot:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
+.as-slot.is-selected { border-color: var(--parchment); box-shadow: 0 0 0 1px var(--parchment); }
+.as-slot[aria-disabled="true"] > .sl-art { opacity: 0.5; filter: grayscale(0.6); }
+.as-slot.sm { width: 3rem; height: 3rem; min-width: 3rem; min-height: 3rem; }
+.as-slot.static { cursor: default; }
+.as-slot.static:hover { border-color: var(--line-soft); }
+.as-slot > .sl-art { display: grid; place-items: center; width: 72%; height: 72%; font-size: 1.8rem; line-height: 1; }
+.as-slot.sm > .sl-art { font-size: 1.4rem; }
+.as-slot > .sl-art img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* Whatever art is handed to the well fills it, wrappers and all. */
+.as-slot > .sl-art > *, .as-slot > .sl-art > * > * { display: grid; place-items: center; width: 100%; height: 100%; max-width: 100%; max-height: 100%; min-width: 0; margin: 0; }
+.as-slot > .as-pill.round { position: absolute; top: 1px; right: 1px; padding: 0 0.4rem; background: var(--bg); border-color: var(--gold); color: var(--parchment); font-size: 1rem; line-height: 1.5; letter-spacing: 0; }
+.as-slot > .as-keycap { position: absolute; right: 1px; bottom: 1px; min-width: 1.5rem; padding: 0 0.3rem; font-size: 0.9rem; line-height: 1.4; }
+.as-slot[aria-disabled="true"] > .as-pill.round { border-color: var(--line-soft); color: var(--muted); }
+/* A gamepad's glyph is round; the keycap follows the device. */
+body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
+/* While a thumb is driving there is no key to press: every keycap on a
+   control leaves — a Slot's, a Button's, the one floating on a card. */
+@media (pointer: coarse) { .as-slot > .as-keycap, .as-btn > .as-keycap, .as-keycap.float { display: none; } }
+
+/* ═══ BAND — a page-level chrome strip (the HUD, an action row, a zoom bar) ═ */
+/* `.topbar` is the hook co-op's bar still writes; the kit name is the recipe. */
+/* `position: relative` ON BOTH, because the utility rail hangs off the bottom
+   of whichever one carries it (`top: 100%`, § QUICK SETTINGS). `.as-band`
+   already had it for its grip; `.topbar` did not, and the co-op board's two
+   headers (`screens/coop.js`) are bare `.topbar` with no `as-band` — so the
+   rail would have escaped to the nearest positioned ancestor and hung a full
+   screen height below the fold. hud-quick-compact's 18 surfaces are solo
+   map/combat/title, so no gate would have said so. */
+.as-band, .topbar { position: relative; display: flex; align-items: center; gap: 1.2rem; flex: 0 0 auto; min-width: 0; padding: 0.6rem 1.6rem; background: var(--bg-raise); border-bottom: 1px solid var(--line); }
+.as-band.foot { border-bottom: 0; border-top: 1px solid var(--line); }
+.as-band.stack { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+.as-band.quiet { background: transparent; border: 0; }
+.as-band-row { display: flex; align-items: center; gap: 1.2rem; min-width: 0; width: 100%; }
+/* THE METERS START LEVEL WITH THE CONTROLS BESIDE THEM. The resource row's
+   height is set by its right-hand cluster — two rows of IconButtons, 112 CSS px
+   at 360x800 — while the three meters are 41, so `align-items: center` left
+   them straddling the gap between the ⚒ ☰ row and the flasks below, aligned to
+   neither. Cross-axis only: the row's height is the cluster's either way, so
+   this moves no other row and the map and combat HUDs stay the same height. */
+.hud-resource-row > .hud-vitals-panel { align-self: flex-start; }
+.as-band-row > .grow { flex: 1 1 auto; min-width: 0; }
+.as-band-row.split { justify-content: space-between; }
+.as-band-row.end { justify-content: flex-end; }
+.as-band-row.center { justify-content: center; }
+/* Three tracks: identity, a centred receipt, the trail — the run header's shape. */
+.as-band-row.thirds { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
+.as-band-row.thirds > :last-child { justify-self: end; }
+/* On a phone the three tracks stay three — the centred receipt is centred at
+   every width, which is the whole point of the middle track — and what yields
+   is DETAIL: a trail keeps the first part of each compound fact and drops the
+   rest (a build keeps its number, drops its source). */
+@media (max-width: 640px) {
+  .as-band-row.thirds { gap: 0.5rem; }
+  /* TWO SELECTORS, NOT ONE, and the phone photograph is why. A trail carries two
+     shapes of compound fact: the build stamp (number · source) and a progress
+     Chip (key, then value / total). `> * > :nth-child(n+2)` hit both — right for
+     the stamp, wrong for the chip, where the second child IS the value: at
+     390x844 the header read "ACT" and "FLOOR" with no numbers at all, which is a
+     label announcing nothing. So the head of each fact stays and only its tail
+     goes: the stamp keeps BUILD and drops src, the chip keeps "1" and drops
+     "/ 12". */
+  .as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }
+  /* `> *` and not `:nth-child(n+2)`: the value itself is a TEXT NODE inside
+     `.cv` and the "/ total" is the only ELEMENT in there, so counting elements
+     from the second would keep the tail it is here to drop. */
+  .as-statstrip.trail > .as-chip > .cv > * { display: none; }
+  /* THREE TRACKS AT EVERY WIDTH, again. From 2026-08 to 2026-09-05 the phone
+     shape was two tracks with the trail dropped to its own row, because the
+     corner had taken the trail's track and the over-wide trail spilled onto
+     the centred receipt. Both of the things that made that necessary are gone:
+     the trail is empty (the build stamp left the band) and so is the identity
+     cluster (name, class and floor left it the same day). With nothing in the
+     outer tracks, a two-track grid only did harm — its `auto` middle track sat
+     at the right edge, so the Cinders receipt read right-aligned at 390 and
+     320 wide (hudparity `cinders-centre`, twelve findings; Constantine:
+     "cinder should be centered"). The wide rule above now holds here too. */
+  /* ONE LINE FOR THE IDENTITY'S EYEBROW, so the run HUD is the SAME HEIGHT on
+     every screen that draws it. The context line beneath it is already nowrap;
+     the eyebrow was not, so it wrapped wherever its track was tightest — and
+     the map's track is tighter than combat's, which made the map's HUD 19px
+     taller than the same HUD one screen earlier (hud-quick-compact:
+     "Map and Combat draw different HUDs"). A HUD that changes height as you
+     walk through a door moves every control under it. It truncates instead,
+     which is the step the text law names after the box has stopped yielding. */
+  .hud-identity > .as-eyebrow { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* PADDING YIELDS BEFORE THE ROW WRAPS, which is the first step of the text
+     law and the second half of the same equal-height problem. `.hud-top` is
+     content-sized, so the trail's track is as wide as the widest row beside it
+     — 159px on the map, which carries no flask belt, against 247px in combat.
+     At the kit's 1.35rem column gap the map's three facts wanted 168px, so the
+     build stamp dropped to a second line and the map's HUD grew a row. The
+     gap gives up 8.5px instead; all three facts keep their whole text and both
+     screens draw the same HUD. */
+  .as-statstrip.trail { gap: 0.75rem 0.5rem; }
+}
+/* A cluster is a group of IconButtons or Slots that share one gap. */
+.as-cluster { display: flex; align-items: center; gap: 0.6rem; flex: 0 0 auto; min-width: 0; }
+.as-cluster.wrap { flex-wrap: wrap; }
+.as-cluster.stack { flex-direction: column; align-items: stretch; }
+.as-cluster.end { margin-left: auto; }
+/* A band's grip hangs off its bottom edge, centred: the control that folds it. */
+.as-band { position: relative; }
+.as-band > .as-grip { position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 50%); z-index: 90; width: var(--iconbtn-size); height: 2.2rem; min-height: 2.2rem; padding: 0; border-radius: var(--r-pill); font-size: 1.2rem; line-height: 1; color: var(--muted); }
+.as-band > .as-grip:hover, .as-band > .as-grip:focus-visible { color: var(--gold); }
+/* A band that folds: `data-fold="compact"` hides what is marked foldable. */
+.as-band[data-hud-mode="compact"] .fold, .as-band[data-fold="compact"] .fold { display: none; }
+
+/* ═══ CARD GRID — faces in a scrolling body, wrapped, one gap ══════════════ */
+.as-cardgrid { display: flex; flex-wrap: wrap; gap: 1.4rem; align-content: flex-start; }
+
+/* ═══ HOLD — the second beat on a control ══════════════════════════════════ */
+/* `.beat-hold` is written by the machinery (components/holdconfirm.js) on any
+   control the second-beat table arms; `--hold` is 0..1 per frame. The fill is a
+   BACKGROUND (paints under a bare text node), never eased (an abort must read
+   instantly), and it survives reduced-motion because it is state, not motion.
+   `.hold-hint` is the word beside the label; it leaves an icon-sized control
+   and leaves the control a focus cursor is on (a pad confirms in one press). */
+.beat-hold, .beat-hold:hover, .beat-hold:focus, .beat-hold:active {
+  background-image: linear-gradient(to right, rgba(var(--accent-rgb), 0.30) 0 100%);
+  background-repeat: no-repeat;
+  background-size: calc(var(--hold, 0) * 100%) 100%;
+  transition-property: border-color, color, transform;
+}
+.beat-hold[data-hold-feedback="delegated"], .beat-hold[data-hold-feedback="delegated"]:hover,
+.beat-hold[data-hold-feedback="delegated"]:focus, .beat-hold[data-hold-feedback="delegated"]:active { background-image: none; }
+.beat-hold[data-hold="holding"] { border-color: var(--gold); }
+.hold-hint { margin-left: 0.6em; font-size: 0.75em; letter-spacing: 0.14em; color: var(--gold); opacity: 0.75; }
+/* IN A ROW THE WORD FOLLOWS THE LABEL, NOT THE TRAIL. The trail takes the row's
+   free space with `margin-left: auto`, so a hint appended after it (which is
+   where the machinery appends it — it dresses the control, not the row) landed
+   past the keycap and was clipped by the panel's padding box. Ordering it ahead
+   of the trail puts it where it reads, beside the verb it qualifies. */
+.as-row > .hold-hint { order: 0; flex: 0 0 auto; }
+.as-row > .as-status, .as-row > .r-trail { order: 1; }
+.gp-focus > .hold-hint, .as-slot .hold-hint, .flask-slot .hold-hint { display: none; }
+/* The armed control stays identified while its question stands. */
+.beat-armed { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* The confirm form (the Smith, the brazier) is a DetailCard with a ButtonRow. */
+.beat-confirm { flex-basis: 100%; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; margin: 6px 0 2px; padding: 1.05rem 1.35rem; max-width: 34rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-2); }
+.beat-confirm .beat-q { margin: 0; color: var(--parchment); font-size: 1.32rem; text-align: center; }
+.beat-confirm .beat-detail { color: var(--muted); font-size: 1.2rem; text-align: center; }
+.beat-confirm .beat-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.beat-confirm .beat-actions button { min-height: var(--tap-floor); min-width: var(--tap-floor); }
+
+/* ═══ SPOTLIGHT — a coaching bubble over a live board ══════════════════════ */
+/* The veil takes no input: the board beneath keeps answering. Only the bubble
+   (a Popover with a Title·S, prose and a ButtonRow) is pressable. */
+.as-spot-veil { position: fixed; inset: 0; z-index: 800; pointer-events: none; }
+.as-spot { position: absolute; border: 2px solid var(--gold); border-radius: var(--r-3); box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.25), 0 0 0 9999px rgba(0, 0, 0, 0.55); pointer-events: none; transition: left 200ms, top 200ms, width 200ms, height 200ms; }
+.as-spot-veil > .as-pop { position: absolute; pointer-events: auto; padding: 1.35rem 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.as-spot-veil > .as-pop > .as-btnrow { margin-top: 0.6rem; margin-left: auto; }
+.reduced-motion .as-spot { transition: none; }
+
+/* ═══ PILL TONES · STATPAIR SIZES · KEYCAP FLOAT · BUTTONROW WIDE ══════════ */
+/* An intent, a block count, a stance: a StatePill in the fact's own tint. */
+.as-pill[data-tone="danger"] { border-color: var(--danger); color: var(--danger); }
+.as-pill[data-tone="frost"] { border-color: var(--frost); color: var(--frost); }
+.as-pill[data-tone="gold"] { border-color: var(--gold); color: var(--gold); }
+.as-pill[data-tone="green"] { border-color: var(--green); color: var(--green); }
+.as-pill[data-tone="violet"] { border-color: #a07ad6; color: #a07ad6; }
+.as-pill[data-tone="ember"] { border-color: var(--ember); color: var(--ember); }
+.as-pill.lg { padding: 0.35rem 0.9rem; font: 700 1.35rem/1.3 var(--font-body); letter-spacing: 0.06em; background: var(--bg-raise); }
+.as-pill.lg .as-glyph { display: inline; flex: none; font-size: 1.2rem; color: inherit; margin-right: 0.4rem; }
+.as-pill.dashed { border-style: dashed; }
+.as-pill.solid { background: var(--frost); color: #0d0b08; border-color: var(--frost); font-weight: 800; }
+/* A StatPair that stands alone reads large; `.stack` puts the value over the key. */
+.as-statpair.lg .sp-v { font-size: 2rem; }
+.as-statpair.stack { flex-direction: column; align-items: center; gap: 0.15rem; }
+.as-statpair.stack .sp-k { font-size: 0.85rem; letter-spacing: 0.1em; }
+.as-statpair.stack .sp-v { font-size: 1.5rem; line-height: 1.1; }
+/* A keycap that floats on its subject's top edge (a card's positional key). */
+.as-keycap.float { position: absolute; top: -1rem; left: 50%; transform: translateX(-50%); z-index: 3; min-width: 2rem; font-weight: 700; font-size: 1.05rem; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55); pointer-events: none; }
+body.pad-mode .as-keycap.float { display: none; }
+/* A pill pinned to its subject's foot (a card's unavailability reason). */
+.as-pill.foot { position: absolute; left: 0.3rem; right: 0.3rem; bottom: 0.3rem; z-index: 3; text-align: center; white-space: normal; background: var(--bg); text-transform: none; letter-spacing: 0; font-size: 0.85rem; line-height: 1.2; }
+/* A keycap inside a button sits before its verb with one gap. */
+.as-btn > .as-keycap:first-child { margin-right: 0.5rem; }
+/* A ButtonRow member that deserves twice the width (the primary). */
+.as-btnrow > .wide, .modal-btnrow > .wide { grid-column: span 2; }
+.as-btnrow > button.tall, .modal-btnrow > button.tall { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; white-space: normal; line-height: 1.1; }
+.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; }
+/* `.cell` — a StatPair that STANDS IN A ROW OF CONTROLS and therefore has to
+   read as one: the panel ground, the line, the row's radius, the tap floor's
+   height. It is still read and not pressed (no hover, no pointer). Measured:
+   on bare ground a receipt in the combat action row painted 3% of its box, and
+   an instrument that asks whether a control is drawn could not see it. */
+.as-statpair.cell {
+  box-sizing: border-box; justify-content: center; gap: 0.2rem;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0.4rem 0.6rem;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-3);
+  cursor: default;
+}
+/* A StatPair standing in a ButtonRow fills its track like a button would, so
+   the row's edges are the row's and it is as tall as the button beside it. */
+.as-btnrow > .as-statpair { justify-self: stretch; align-self: stretch; }
+.as-btnrow > button > .as-statpair { pointer-events: none; }
+/* THE COMBATANT'S OWN ATOMS — the nameplate is a LabelStack, the intent, the
+   block count and the stance are StatePills, the effects are Pips and every
+   bar is a Meter. Only what the SPRITE surface asks of them is here: a
+   nameplate reads centred under the figure, and a pill under a sprite is
+   tighter than one in a list. */
+.combatant .as-labelstack { align-items: center; text-align: center; }
+.combatant .as-labelstack .ls-label { font-size: 1.2rem; }
+.combatant .as-pill.lg { font-size: 1.2rem; padding: 0.2rem 0.7rem; }
+.combatant .as-meter { --meter-h: 12px; }
+.combatant .as-meter.skinny { --meter-h: 6px; }
+.combatant .as-meter.procbar { --meter-h: 8px; }
+.combatant .as-meter.procbar > .m-plate { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); z-index: 1; pointer-events: none; }
+.combatant .as-meter.procbar .m-value { font-size: 0.8rem; }
+.combatant .block-badge { position: absolute; left: -1.4rem; bottom: 3.4rem; z-index: 2; }
+/* THE INSPECTOR'S CONTENT is Panes' parts inside a Folding Tray: an Eyebrow
+   over a hairline, then Rows. The tray owns its box (combat.css places the
+   host at the field's edge); these say only how tight the reading is. */
+.combatant-inspector-summary { display: grid; gap: 0.55rem; }
+.combatant-inspector-resources { gap: 0.45rem; }
+.combatant-inspector-section { margin-top: 0.7rem; }
+.combatant-inspector-section > .as-hairline { margin: 0.35rem 0 0.2rem; }
+.combatant-inspector-row { padding-inline: 0; white-space: normal; align-items: flex-start; }
+.combatant-inspector-row > .r-label { flex: 0 1 auto; }
+.combatant-inspector-row > .as-status { text-align: right; }
+/* A pip: a round badge with a glyph and a count, for statuses in a row. */
+.as-pips { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; min-width: 0; }
+.as-pip { position: relative; display: inline-grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--panel); border: 1.5px solid var(--pip-tone, var(--muted)); font-size: 1.1rem; line-height: 1; color: var(--parchment); cursor: default; }
+.as-pip > .as-pill.round { position: absolute; right: -0.5rem; bottom: -0.5rem; padding: 0 0.3rem; background: var(--bg); color: var(--parchment); border-color: var(--line); font-size: 0.85rem; letter-spacing: 0; line-height: 1.4; }
+.as-pip.ring { color: #fff; text-shadow: 0 0 2px #000; }
+/* Legend rows and other read-only Rows: no hover, no cursor. */
+.as-row.static, .as-row.static:hover { cursor: default; background: transparent; }
+
+/* ═══ MAP — the act's chrome around the board ══════════════════════════════ */
+/* The board's own geometry (nodes, edges, fog, the camera) stays in
+   styles/map.css: it is drawn in the SVG's user space and is not chrome. What
+   is here is the chrome around it, and all of it is kit pieces.
+
+   THE ROUTE STRIP is a quiet Band: the act's name as a Title·S over a
+   StatStrip whose two ends are Eyebrows with a rail between them. It is a
+   receipt — no pointer, nothing to tap — and it leaves the HUD's right gutter
+   free so the utility rail never lands on it. */
+/* THE STRIP CLEARS THE BAND'S GRIP, which hangs half its own height below the
+   HUD's bottom edge (§ BAND: `translate(-50%, 50%)` of a 2.2rem pill = 11 px of
+   overhang). The map is the one screen with READ TEXT directly under the band,
+   and measured at 1200x730 ?shot=map the grip's box ran 183->188 straight over
+   the top of "ACT I — THE FALLOW MARCHES" (title top 183, grip bottom 188).
+   12 px of top padding is that overhang plus a hairline, and it is padding
+   rather than margin so the strip's own ground still meets the band's. */
+.mapscreen > .act-route-strip {
+  box-sizing: border-box; flex-direction: column; align-items: center; gap: 3px;
+  width: 80%; margin-inline: auto; padding: 12px 12px 6px;
+  border-bottom: 1px solid var(--line); background: var(--bg-raise);
+  pointer-events: none; user-select: none; cursor: default;
+}
+.mapscreen > .act-route-strip > .as-title-s { font-size: 1.1rem; letter-spacing: 0.2em; }
+.mapscreen > .act-route-strip .map-orientation-progress {
+  display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
+  align-items: center; gap: 8px; margin: 0; width: 100%;
+}
+.mapscreen > .act-route-strip .map-orientation-progress .as-eyebrow { font-size: 0.9rem; letter-spacing: 0.12em; }
+.mapscreen > .act-route-strip [data-role="boss"] { color: var(--ember); }
+.mapscreen > .act-route-strip .map-orientation-rail { position: relative; height: 1px; background: var(--map-structure); }
+.mapscreen > .act-route-strip .map-orientation-rail::after {
+  content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
+  border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
+  transform: translateY(-50%) rotate(45deg);
+}
+@media (max-width: 700px) {
+  /* Percentage, never a viewport unit: the body is zoomed, so 80% of the Map
+     surface stays 80% on glass. The right margin is the HUD's utility gutter. */
+  .mapscreen > .act-route-strip {
+    width: min(80%, calc(100% - var(--tap-floor) - calc(1.75rem / var(--ui-zoom, 1))));
+    margin-left: auto; margin-right: calc(var(--tap-floor) + calc(14px / var(--ui-zoom, 1)));
+  }
+}
+/* THE ZOOM BAR is a Band on the foot of the map with four IconButtons in it,
+   BESIDE the board and never over it (styles/map.css says why). The bar has no
+   reserved height: it is a flex item, so the band is its buttons' own height
+   and the scrollport gets exactly the rest. */
+.mapscreen > .map-zoom { gap: 0.6rem; padding: 0.6rem 1.4rem; background: var(--panel); }
+/* The map's notes are StatusText, centred, and cost no height when silent. */
+.mapscreen .map-tapnote, .mapscreen .map-clipnote {
+  margin: 0; padding: 0.2rem 1rem; text-align: center; color: var(--gold); font-size: 1.1rem; line-height: 1.4;
+}
+.mapscreen .map-tapnote[hidden], .mapscreen .map-clipnote[hidden] { display: none; }
+/* The legend hangs off the ? in the zoom bar: the kit Popover, placed by the
+   surface that owns the corner it opens into. */
+.map-legend-pop { position: absolute; right: 1.2rem; bottom: calc(100% + 0.4rem); z-index: 20; width: 24rem; }
+.map-legend-pop .as-glyph { color: var(--gold); }
+/* THE CONTEXT STRIP is a ButtonRow of kit Buttons with Keycaps (hints.js). Two
+   rules that are not its shape and are kept because they are DECISIONS:
+   · it is centred at the bottom of its own screen, in the flow, so the band it
+     takes is its own height and nothing has to reserve one (map.css says why);
+   · it does not appear on a narrow layout — a strip naming five keys to a
+     device with no keys costs a row of a screen that has none to spare
+     (EldenSpire#29 slice 0). `body.hide-hints` stays the player's own switch. */
+.hint-bar { margin: 0 auto 0.6rem; max-width: 96%; justify-content: center; }
+.hint-bar .as-keycap { color: var(--gold); }
+body.hide-hints .hint-bar, :root[data-layout='narrow'] .hint-bar { display: none; }
+/* The map header is the same Band combat wears; only the act's own tones and
+   the player's two display switches are the map's. */
+.map-header .hud-act .cv, .map-header .hud-floor .cv { color: var(--parchment); }
+body.map-compact .map-header .hud-identity .as-eyebrow { display: none; }
+body.hide-header-relics .map-header .hud-relics { display: none; }
+
+/* ═══ THE RUN'S OTHER DOORS AND GATES — what the atoms need from them ══════ */
+/* THE PILE VIEWER is body A with no rail: the shell's head names the pile and
+   carries the count, the body is a CardGrid of the same faces the fan draws.
+   Only the door's own insets are here. */
+.pile-body { padding: var(--modal-inset); }
+/* Body B inside the flask's inspect door takes the SAME inset as every other
+   bar of every door — one token, four sides (tools/modal-shell-contract). */
+.flask-inspect-body { padding: var(--modal-inset); }
+.pile-body .as-cardgrid { justify-content: center; }
+.pile-empty { padding: 2rem; }
+
+/* THE BOSS SPLASH is Eyebrow + Title·L + Ornament on a near-black veil. The
+   veil and the beats are FX (the animation lives in styles/combat.css); what is
+   here is the type's own scale, which is bigger than any other Title·L in the
+   game because this one is a name being announced. */
+.boss-intro { position: fixed; inset: 0; z-index: 650; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.boss-intro .bi-stack { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; text-align: center; max-width: 80%; }
+.boss-intro .bi-tag { letter-spacing: 0.5em; }
+.boss-intro .bi-name { font-size: 5.4rem; letter-spacing: 0.12em; line-height: 1.15; color: var(--gold); text-shadow: 0 0 34px rgba(var(--accent-rgb), 0.55), 0 2px 10px #000; }
+.boss-intro .bi-rule { width: 34rem; max-width: 60%; }
+/* A NAME THAT WRAPS ON A PHONE IS STILL A NAME, but at 5.4rem "The Fell Warden"
+   took two lines across a 390 px screen and its second line landed on the boss's
+   own nameplate underneath (photographed at 390x844, ?shot=boss). The splash is
+   an announcement, so the type yields before the box does. */
+@media (max-width: 640px) {
+  .boss-intro .bi-name { font-size: 3.6rem; }
+  .boss-intro .bi-stack { max-width: 88%; }
+}
+
+/* THE SHORT-SCREEN GATE is the Decision body with no controls in it. TYPE
+   DIVIDED BY --ui-zoom is the one carve-out and it is deliberate: this is the
+   message ABOUT the app having zoomed itself to its floor, so scaling it by
+   that zoom shrinks the sentence exactly when it matters most (the same idiom
+   as --tap-floor in base.css). Law 4 is intact — the unit is still rem, so
+   Text size still scales these glyphs; what is cancelled is UI size. */
+.upright-veil { z-index: 900; background: rgba(8, 6, 4, 0.985); padding: 24px; overflow: hidden; }
+.upright-card { max-width: 46rem; gap: 0.6rem; }
+.upright-card > .as-title-l { font-size: calc(2.4rem / var(--ui-zoom, 1)); text-align: center; }
+.upright-card > .upright-say { font-size: calc(1.6rem / var(--ui-zoom, 1)); }
+.upright-card > .upright-safe { color: var(--muted); font-size: calc(1.4rem / var(--ui-zoom, 1)); }
+.upright-card > .upright-hint { margin-top: 1.4rem; font-size: calc(1.25rem / var(--ui-zoom, 1)); opacity: 0.78; }
+.upright-glyph { display: grid; place-items: center; height: 76px; margin-bottom: 18px; }
+.upright-phone { display: block; width: 34px; height: 56px; border: 2px solid var(--gold); border-radius: var(--r-2); transform-origin: 50% 50%; animation: upright-turn 2.6s ease-in-out infinite; }
+.upright-veil[data-advice='resize'] .upright-phone { width: 56px; height: 40px; animation: none; }
+/* Below the compact composition's floor the glyph goes entirely: it is
+   aria-hidden decoration whose message the heading already carries in words,
+   and at the one height where it competes with a sentence, the sentence wins. */
+:root[data-short='true'] .upright-veil { padding: 12px 24px; }
+:root[data-short='true'] .upright-glyph { display: none; }
+:root[data-short='true'] .upright-card { gap: 0.4rem; }
+@keyframes upright-turn { 0%, 18% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0deg); } }
+.reduced-motion .upright-phone { animation: none; }
+@media (prefers-reduced-motion: reduce) { .upright-phone { animation: none; } }
+
+/* THE FIRST-RUN CALLOUT is the Spotlight: the lit box and a Popover beside it.
+   Both are placed in the veil's own local space by components/tutorial.js. */
+.tut-bubble { width: 30rem; max-width: calc(100% - 2.4rem); }
+.tut-bubble .tut-title { color: var(--gold); }
+.tut-bubble .tut-text { font-size: 1.25rem; }
+
+/* ═══ FLASK — one identity, one menu, one door ═════════════════════════════ */
+/* THE IDENTITY is the data's, not a screen's: the art (a rendered bottle or its
+   glyph fallback) and, where a surface asks for it, the name. Every surface
+   that draws a flask — the HUD's Slots, the shop's OptionCards, the Armoury's
+   rows, the inspect door's ArtWell — mounts this same fragment
+   (components/flask.js flaskIdentityHtml), so it has one home here. */
+.flask-identity { display: inline-flex; align-items: center; gap: 0.35em; min-width: 0; color: var(--flask-tint); }
+.flask-art { flex: 0 0 auto; display: inline-grid; place-items: center; width: 1.8em; height: 1.8em; }
+.flask-art-image { display: block; width: 100%; height: 100%; object-fit: contain; }
+.flask-art-glyph {
+  display: inline-grid; place-items: center; width: 1.35em; height: 1.35em;
+  border: 1px solid currentColor; border-radius: 45% 45% 55% 55%;
+  background: color-mix(in srgb, var(--flask-tint) 22%, #111);
+}
+.flask-name { color: var(--parchment); }
+/* THE ACTION MENU is the kit Popover, hung under the slot the player tapped
+   (flask.js places it; `--place-gap` is the hairline under the control, per
+   placed element by construction). Narrower than the quick menu because it
+   holds three verbs, and it scrolls inside itself because its opening sentence
+   is content a designer may make long. */
+.as-pop.flask-action-menu {
+  --place-gap: 6px;
+  position: fixed; z-index: 450;
+  width: auto; min-width: 20rem; max-width: 28rem;
+  overflow: hidden auto;
+}
+.flask-action-menu .as-pop-cap { display: flex; flex-direction: column; gap: 0.3rem; }
+.flask-action-menu .flask-action-detail { font-size: 1.15rem; }
+/* An unavailable row has to LOOK unavailable, and these rows are
+   `aria-disabled` rather than `disabled` — they stay focusable so a pad can
+   land on them and read the reason, which is why `.as-row:disabled` alone was
+   never enough. */
+.flask-action[aria-disabled="true"] { color: var(--muted); cursor: default; }
+.flask-action[aria-disabled="true"]:hover { background: transparent; }
+.flask-action[aria-disabled="true"] .as-keycap { opacity: 0.5; }
+.flask-action.gp-focus { background: var(--panel); color: var(--gold); }
+/* THE WORD DOES NOT FIT AFTER A KEYCAP. A menu row already ends in the binding
+   it answers to, and three letters of HOLD past that keycap is noise in a 20rem
+   column — the same call the flask SLOT makes. The fill still runs (it is the
+   background rule above) and the row's tooltip still says "Hold to drink", so
+   nothing about the gesture is hidden, only the label for it. */
+.flask-action .hold-hint { display: none; }
+/* THE INSPECT DOOR is body B: the art's ArtWell sets the height, so a one-line
+   flask and a two-line one are the same door (measured on the Crimson Flask /
+   Round Shield pair, where they were not). */
+.flask-inspect-art { width: 12rem; height: 12rem; font-size: 5.3rem; }
+.flask-inspect-art .flask-identity, .flask-inspect-art .flask-art { width: 100%; height: 100%; }
+.flask-inspect-lines .as-prose + .as-prose { color: var(--muted); font-size: 1.2rem; }
+@media (max-width: 640px) {
+  .flask-inspect-body { flex-direction: column; align-items: center; text-align: center; }
+  .flask-inspect-lines { align-items: center; }
+}
+
+/* ═══ A SEGMENTED CONTROL MAY WRAP RATHER THAN LOSE ITS TAIL ═══════════════ */
+/* Measured at 390x844 in the run's Settings pane (☰ → Settings → Game): the Map
+   zoom row's seven options are 342 px of content inside a 311 px pane, so the
+   last option — 200 — fell outside the pane, and `.as-seg`'s own
+   `overflow: hidden` cut it in half. A choice the player cannot see is a choice
+   they do not have, and the pane's `overflow-x: auto` is not the answer either:
+   nothing on the row says there is more of it to the right.
+   So on a narrow shape the group wraps. It grows downward, where the pane
+   already scrolls on purpose, and every option keeps its own tap box. The
+   separator between two buttons is dropped when it wraps because a border-left
+   on the first button of a new line is a hairline hanging off nothing; the
+   group's own border still says where the control begins and ends. */
+@media (max-width: 700px) {
+  /* The trail has to be ALLOWED to be narrower than its contents first: it is
+     `flex: 0 0 auto` on a nowrap row, so the group was handed its max-content
+     295 px inside a 311 px pane and never wrapped at all (measured; wrapping
+     `.as-seg` alone changed nothing). */
+  .as-row > .r-trail, .as-option > .r-trail { flex: 0 1 auto; min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .as-seg { flex-wrap: wrap; }
+  .as-seg button + button { border-left: 0; }
+  .as-seg button { border: 1px solid var(--line-soft); margin: -1px 0 0 -1px; }
+}

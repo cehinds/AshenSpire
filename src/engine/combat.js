@@ -80,9 +80,21 @@ export function createCombat({
   const combat = {
     registries,
     equipmentProfileRuleSnapshot,
+    // Carried from the run so a mid-combat swap can restamp against the quota
+    // the run was BORN with. Absent for a headless fixture with no run behind
+    // it, which is the one case a replan is the right answer.
+    equipmentAttackSlotCount: Number.isFinite(player.equipmentAttackSlotCount)
+      ? player.equipmentAttackSlotCount
+      : undefined,
     // Namespaced item tiers are the sole current authority. The legacy armament
     // map is accepted only at the load/migration door, never written here.
     itemUpgradeLevels: structuredClone(player.itemUpgradeLevels || {}),
+    // What a smith did to the run's item mounts (cardMounts.js), carried for
+    // the same reason the quota above is: the swap door below builds a
+    // synthetic run with `deck: []`, and without this an extracted art would
+    // be re-minted from the item's authoring mid-fight. Read only in combat —
+    // no smith works during a fight — so a plain copy is the whole contract.
+    itemMounts: structuredClone(player.itemMounts || {}),
     equipmentPoolDeficits: player.equipmentPoolDeficits
       ? { ...player.equipmentPoolDeficits }
       : { hp: Math.max(0, player.maxHp - player.hp), mana: Math.max(0, maxMana - (player.mana ?? maxMana)), stamina: Math.max(0, (player.maxStamina || 0) - (player.stamina ?? player.maxStamina ?? 0)) },
@@ -636,6 +648,12 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     attributes: combat.attributes,
     itemUpgradeLevels: combat.itemUpgradeLevels,
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
+    // The birth quota travels with the snapshot. Without it this synthetic run
+    // has `deck: []` and stampDeck has nothing to read the quota from, so each
+    // pile stamp replans from the CURRENT loadout — and the pile holding the
+    // slot the replan dropped throws mid-swap.
+    equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
+    itemMounts: combat.itemMounts,
   };
   // Pile stamps are subset calls, so granted/weaponArt instances reconcile
   // here explicitly, BEFORE the stamps: the swapped-out armament's leave every
@@ -899,7 +917,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     const primary = firstResolvedTarget(combat, action, eff);
     switch (eff.op) {
       case 'damage': {
-        const attackTags = A.attackTagsFor(action, eff);
+        const attackTags = A.attackTagsFor(action, eff, combat.registries);
         const base = evalPreview(combat, action, eff.amount, primary);
         entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags, action.card);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);

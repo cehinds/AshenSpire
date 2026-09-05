@@ -8,6 +8,14 @@ import { contentBundle } from '../src/content/index.js';
 import { MAP_SHAPE_LIMITS } from '../src/content/mapconfig.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { tagService } from '../src/model/tagService.js';
+import { importLegacyContent } from '../src/framework/importer.js';
+import { attackTagsFor } from '../src/engine/actions.js';
+import { tagContentProblems, itemTypeLabelFrom, tagIdsAllowedFor, tagIdsInDomain } from '../src/model/tags.js';
+import { boundGrantCardIds, boundGrantProblems, isItemOwned, pieceItemRef, reconcileGrantedCardsInCombat, itemMountInstances } from '../src/model/loadout.js';
+import { extractionPlan, commitExtraction, installPlan, commitInstall, smithServicesAt, mountRows } from '../src/model/cardExtraction.js';
+import { ownerItemRef, mountKey as mountKeyOf } from '../src/model/cardMounts.js';
+import { itemTypeLabel } from '../src/content/equipment.js';
 import {
   validateContent,
   extractTemplateTokens,
@@ -50,16 +58,15 @@ import { attributeAllocationProblems, classAttributePreset, allocationTotal, def
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
-import { TAGS, tagsFor, tagIdsFor, cardsWithTag } from '../src/content/tags.js';
+import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING, tagsFor, tagIdsFor, cardsWithTag, tagIdsOf, objectTagIds, tagsInDomain, domainsFor } from '../src/content/tags.js';
 import { SFX_RECIPES, resolveRecipe } from '../src/content/sfx.js';
-import { cardTagging } from '../src/content/generated/cardTagging.js';
 import { weapons } from '../src/content/generated/weapons.js';
 import { KEEPSAKES } from '../src/content/keepsakes.js';
 import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
   figureSpec, fitsSlot, slotHand, pieceHand,
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
-  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip,
+  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings, isEquipmentComposedInstance, startingDeckPlan, WeaponCardPackageModel,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
   previewCompatibleHands, startingHandsRequirementFailure,
 } from '../src/model/loadout.js';
@@ -144,7 +151,7 @@ const TEST_CARDS = [
 const TEST_ENEMIES = [
   { id: 'tDummy', name: 'T Dummy', hp: [30, 30], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   // #61: tagged twin of tDummy — the resistance gate's positive arm.
-  { id: 'tBeast', name: 'T Beast', hp: [30, 30], poiseMax: 99, tags: ['beast'], moves: { wait: { intent: 'unknown', weight: 1 } } },
+  { id: 'tBeast', name: 'T Beast', hp: [30, 30], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tGiant', name: 'T Giant', hp: [400, 400], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tHitter', name: 'T Hitter', hp: [50, 50], poiseMax: 99, moves: { hit: { intent: 'attack', damage: 10, weight: 1 } } },
   { id: 'tRegen', name: 'T Regen', hp: [50, 50], poiseMax: 99, moves: { regen: { intent: 'buff', weight: 1, effects: [{ op: 'heal', target: 'self', amount: 4 }] } } },
@@ -155,9 +162,16 @@ const TEST_ENEMIES = [
   },
 ];
 
+// Test fixtures are tagged the way shipped content is: junction rows, never a
+// field on the def. model/tags.js refuses a def that carries its own `tags`.
+const TEST_TAGGING = [
+  { family: 'enemy', scope: '', objectId: 'tBeast', tagId: 'beast' },
+];
+
 function testBundle() {
   return {
     ...contentBundle,
+    tagging: [...contentBundle.tagging, ...TEST_TAGGING],
     cards: [...contentBundle.cards, ...TEST_CARDS],
     statuses: [...contentBundle.statuses, ...TEST_STATUSES],
     enemies: [...contentBundle.enemies, ...TEST_ENEMIES],
@@ -201,7 +215,7 @@ const TEST_ARMAMENT_INTRINSICS = Object.freeze({
 // test-only content that is never shipped.
 const TEST_CHARM = {
   id: 'testCharm', name: 'Charm', kind: 'talisman', hand: '',
-  rarity: 'common', tags: [], itemTypeTags: [], mods: [], unlock: '', ...TEST_ARMAMENT_INTRINSICS,
+  rarity: 'common', mods: [], unlock: '', ...TEST_ARMAMENT_INTRINSICS,
 };
 const REG_CHARM = {
   ...REG,
@@ -521,10 +535,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // These two falsifiers use SHIPPED cards whose tags exist only in the
-  // generated cardTagging.csv index. Neither damage effect carries a copied
+  // generated tagging.csv index. Neither damage effect carries a copied
   // `tags` field, so green here proves the real card door derives the hit's
   // identity rather than preserving the old test-only tagged-effect fixture.
-  test('7e2. Frost-Exposed changes a real Starstone hit through cardTagging.csv', () => {
+  test('7e2. Frost-Exposed changes a real Starstone hit through tagging.csv', () => {
     const c = makeCombat({ deck: ['starstonePebble'], enemies: ['tGiant'] });
     const e1 = getEntity(c, 'e1');
     const def = REG.cards.get('starstonePebble');
@@ -537,7 +551,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same starstone hit');
   });
 
-  test('7e3. Unraveled changes a real Blight hit through cardTagging.csv', () => {
+  test('7e3. Unraveled changes a real Blight hit through tagging.csv', () => {
     const c = makeCombat({ deck: ['blightTouch'], enemies: ['tGiant'] });
     const e1 = getEntity(c, 'e1');
     const def = REG.cards.get('blightTouch');
@@ -1861,37 +1875,1538 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(unlockIds.length, new Set(unlockIds).size, 'unlock ids are unique');
   });
 
-  // ---- 26. card subtype tags (CSV-authored) --------------------------------
-  test('26. card tags resolve, stay distinct from engine keywords, and index', () => {
+  // ---- 26. the tag system (CSV-authored, one registry, 3NF) ---------------
+  test('26. tags resolve, stay distinct from engine keywords, and index', () => {
     // Subtypes live under the frozen attack/skill/power type. Tagging is a CSV
     // row, so these checks are what stops a spreadsheet typo from silently
     // dropping a chip or pointing at a card that does not exist.
     const tagIds = TAGS.map((t) => t.id);
+    const domainIds = TAG_DOMAINS.map((d) => d.id);
     eq(tagIds.length, new Set(tagIds).size, 'tag ids are unique');
+    eq(domainIds.length, new Set(domainIds).size, 'domain ids are unique');
     for (const t of TAGS) {
       assert(/^[0-9A-Fa-f]{6}$/.test(t.color), `tag '${t.id}' colour is a 6-digit hex`);
       assert(String(t.label).length > 0 && String(t.glyph).length > 0, `tag '${t.id}' has a label + glyph`);
+      assert(domainIds.includes(t.domain), `tag '${t.id}' names a registered domain ('${t.domain}')`);
       // Tags are CONTENT; keywords are a frozen engine set. Overlapping names
       // would make 'exhaust' ambiguous between flavour and mechanics.
       assert(!ENGINE_KEYWORDS.includes(t.id), `tag '${t.id}' does not collide with an engine keyword`);
     }
-    const seen = new Set();
-    for (const row of cardTagging) {
-      assert(REG.cards.has(row.cardId), `tagged card '${row.cardId}' exists`);
-      assert(!seen.has(row.cardId), `card '${row.cardId}' is tagged only once`);
-      seen.add(row.cardId);
-      const ids = tagIdsFor(row.cardId);
-      assert(ids.length > 0, `card '${row.cardId}' resolves to at least one tag`);
-      for (const id of ids) assert(tagIds.includes(id), `card '${row.cardId}' uses a registered tag ('${id}')`);
-      // A single-value CSV cell must still come back as an array, not a string.
-      assert(Array.isArray(ids), `tags for '${row.cardId}' normalise to an array`);
+    const cardRows = TAGGING.filter((row) => row.family === 'card');
+    for (const row of cardRows) {
+      assert(REG.cards.has(row.objectId), `tagged card '${row.objectId}' exists`);
+      assert(tagIds.includes(row.tagId), `card '${row.objectId}' uses a registered tag ('${row.tagId}')`);
+      assert(row.scope === '', `card rows carry no scope ('${row.objectId}')`);
     }
     // The lookups the UI and any future synergy predicate depend on.
     eq(tagsFor('gorefireSlash').length, 3, 'gorefireSlash carries three tags');
     eq(tagsFor('strike')[0].label, 'Blade', 'strike resolves to the Blade tag');
     eq(tagsFor('nonexistentCard').length, 0, 'an untagged card resolves to no tags');
+    assert(Array.isArray(tagIdsFor('strike')), 'tag ids always come back as an array');
     assert(cardsWithTag('blade').includes('strike'), 'reverse lookup finds Blade cards');
     assert(cardsWithTag('nope').length === 0, 'reverse lookup on an unknown tag is empty');
+  });
+
+  // ---- 26b. ONE vocabulary, many carriers, third normal form --------------
+  test('26b. the tag schema is normalised and every family carries from it', () => {
+    // The point of the tag system is that a card school, a creature kind and a
+    // weapon's identity are all rows in ONE vocabulary, kept apart by domain
+    // rather than by a second hard-coded array — and that there is exactly one
+    // place any of it is authored. These checks are what stop either from
+    // quietly coming undone.
+    const byId = new Map(TAGS.map((t) => [t.id, t]));
+    const domainIds = new Set(TAG_DOMAINS.map((d) => d.id));
+    const families = new Map(TAG_FAMILIES.map((f) => [f.family, f]));
+    eq(families.size, TAG_FAMILIES.length, 'each family is declared once');
+
+    // 1NF: no cell anywhere in the tag schema holds a list.
+    for (const row of TAGGING) {
+      for (const cell of [row.family, row.scope, row.objectId, row.tagId]) {
+        assert(!Array.isArray(cell), `tagging cells are atomic (${row.family}/${row.objectId})`);
+      }
+    }
+    for (const row of TAG_FAMILY_DOMAINS) {
+      assert(!Array.isArray(row.domain), `family/domain pairs are atomic ('${row.family}')`);
+      assert(families.has(row.family), `pair names a declared family ('${row.family}')`);
+      assert(domainIds.has(row.domain), `pair names a registered domain ('${row.domain}')`);
+    }
+    for (const f of TAG_FAMILIES) {
+      assert(!Array.isArray(f.source), `family '${f.family}' names one source`);
+      assert(domainsFor(f.family).length > 0, `family '${f.family}' may carry at least one domain`);
+    }
+    // Every domain is carried by someone, and every tag names a live domain.
+    const carried = new Set(TAG_FAMILY_DOMAINS.map((r) => r.domain));
+    for (const id of domainIds) assert(carried.has(id), `some family carries domain '${id}'`);
+
+    // No duplicate junction rows: the composite key is the whole key.
+    const seen = new Set();
+    for (const row of TAGGING) {
+      const k = [row.family, row.scope, row.objectId, row.tagId].join('|');
+      assert(!seen.has(k), `no duplicate tagging row (${k})`);
+      seen.add(k);
+      const tag = byId.get(row.tagId);
+      assert(tag, `tagging row uses a registered tag ('${row.tagId}')`);
+      assert(domainsFor(row.family).includes(tag.domain),
+        `'${row.family}' may carry ${row.tagId} (a ${tag.domain} tag)`);
+    }
+
+    // Creature kinds are the registry's creature domain now, not a frozen
+    // array in schemas.js, and not a field on the enemy either.
+    const creature = tagsInDomain('creature').map((t) => t.id);
+    assert(creature.length >= 5, 'the creature domain holds the shipped kinds');
+    for (const enemy of REG.enemies.all()) {
+      assert(Array.isArray(enemy.tags), `enemy '${enemy.id}' carries a tags array`);
+      for (const id of enemy.tags) assert(creature.includes(id), `enemy '${enemy.id}' uses a creature tag ('${id}')`);
+    }
+
+    // Registries resolve the join onto the object, so a mechanic reads
+    // obj.tags whatever table the row was authored in.
+    eq(REG.classes.get('reaver').tags.join('|'), 'blade|guard|blood', 'the Reaver carries its class tags');
+    eq(REG.cards.get('strike').tags.join('|'), 'blade', 'a card carries its tags on the def');
+    eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged', 'the table resolves by family and id');
+    eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade', 'tagIdsOf resolves an unscoped family');
+    eq(tagIdsOf('armament', REG.equipment.armaments.find((a) => a.id === 'straightSword')).join('|'),
+      'item:blade|blade|basic', 'tagIdsOf resolves an armament, item type included');
+    eq(tagIdsOf('class', { id: 'nobody' }).length, 0, 'an untagged object resolves to no tags');
+
+    // SCOPE: outfit ids repeat per class, so the parent key is (classId, id).
+    // Four rows share the id 'default' and must not share tags.
+    const defaults = REG.equipment.armour.filter((o) => o.id === 'default');
+    eq(defaults.length, 4, 'four classes ship an outfit called default');
+    eq(defaults.map((o) => o.tags.join('+')).join(' '), 'guard starstone ritual flourish',
+      'each default outfit keeps its own gameplay tags, keyed by class');
+    eq(defaults.map((o) => o.itemTypeTags.join('+')).join(' '), 'item:armor item:armor item:armor item:armor',
+      'and its item type, which registries splits out of the same rows');
+    eq(objectTagIds('armour', 'default', 'reaver').join('|'), 'item:armor|guard',
+      'the scope half of the key selects one');
+    eq(objectTagIds('armour', 'default').length, 0, 'a scoped family does not resolve on the id alone');
+
+    // Every carrier the families table names hands back an array.
+    for (const kit of REG.equipment.startingKits) assert(Array.isArray(kit.tags), `kit '${kit.id}' carries a tags array`);
+    for (const slot of REG.equipment.slots) assert(Array.isArray(slot.tags), `slot '${slot.id}' carries a tags array`);
+    for (const unlock of REG.unlocks || []) assert(Array.isArray(unlock.tags), `unlock '${unlock.id}' carries a tags array`);
+    for (const relic of REG.relics.all()) assert(Array.isArray(relic.tags), `relic '${relic.id}' carries a tags array`);
+  });
+
+  // ---- 26c. the query door -----------------------------------------------
+  test('26c. tagService answers every tag question from the junction', () => {
+    // One door for asking. `obj.tags` stays the resolved join a hot path reads;
+    // this is what answers the questions that field cannot — what a family is
+    // ALLOWED to carry, which objects wear a tag, and whether code just named
+    // one that does not exist.
+    const svc = tagService(REG);
+    eq(svc, tagService(REG), 'the service is memoised per registries');
+
+    eq(svc.idsOf('card', { id: 'strike' }).join('|'), 'blade', 'ids by family and id');
+    eq(svc.tagsOf('card', { id: 'strike' })[0].label, 'Blade', 'resolved to registry rows');
+    assert(svc.has('card', { id: 'strike' }, 'blade'), 'has() is true for a carried tag');
+    assert(!svc.has('card', { id: 'strike' }, 'venom'), 'has() is false for one it does not carry');
+    eq(svc.idsOf('card', null).length, 0, 'a missing object resolves to no tags');
+
+    // Scoped families need the whole parent key, and the service supplies it.
+    const armour = REG.equipment.armour.find((o) => o.id === 'default' && o.classId === 'starseer');
+    eq(svc.idsOf('armour', armour).join('|'), 'item:armor|starstone', 'a scoped object resolves by (classId, id)');
+
+    // The junction is the authority: a doctored copy cannot answer for content.
+    eq(svc.idsOf('card', { id: 'strike', tags: ['venom'] }).join('|'), 'blade',
+      'a hand-edited tags field does not override the rows');
+
+    // Reverse lookup hands back objects, not ids.
+    eq(svc.inDomain('itemType').map((t) => t.id).join('|'), 'item:blade|item:shield|item:magic-focus|item:armor',
+      'the itemType domain holds the four authored types');
+    // The registry label must equal what content/equipment.js derives from the
+    // id prefix, or the Armoury and the chip strip would disagree by one word.
+    for (const tag of svc.inDomain('itemType')) {
+      eq(tag.label, itemTypeLabel(tag.id), `item type '${tag.id}' label matches itemTypeLabel()`);
+    }
+    const heavy = svc.withTag('armament', 'heavy');
+    assert(heavy.length >= 4, 'withTag finds the heavy armaments');
+    assert(heavy.every((row) => row && row.id), 'withTag returns objects');
+    assert(heavy.some((row) => row.id === 'greatsword'), 'the greatsword is among them');
+    eq(svc.withTag('armament', 'nosuchtag').length, 0, 'withTag on an unknown tag is empty');
+    eq(svc.withTag('nosuchfamily', 'blade').length, 0, 'withTag on an unknown family is empty');
+
+    // Vocabulary questions.
+    eq(svc.inDomain('creature').map((t) => t.id).join('|'), 'beast|humanoid|undead|construct|spirit',
+      'inDomain lists one domain');
+    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType', 'a family may carry several domains');
+    assert(svc.allowedFor('enemy').every((t) => t.domain === 'creature'), 'allowedFor is domain-filtered');
+    assert(svc.allowedFor('enemy').length > 0, 'allowedFor is non-empty for a live family');
+    eq(svc.tag('blade').label, 'Blade', 'tag() resolves one row');
+    eq(svc.tag('nope'), null, 'tag() on an unknown id is null');
+    eq(svc.resolve(['blade', 'nope', 'guard']).map((t) => t.id).join('|'), 'blade|guard',
+      'resolve drops unregistered ids');
+
+    // assertLegal is the code-time twin of the boot door: it names the offence
+    // and prints the legal set rather than failing quietly.
+    const throws = (fn, needle, why) => {
+      let said = '';
+      try { fn(); } catch (e) { said = e.message; }
+      assert(said.includes(needle), `${why} — said ${JSON.stringify(said)}`);
+    };
+    eq(svc.assertLegal('card', 'blade').id, 'blade', 'a legal tag passes through');
+    throws(() => svc.assertLegal('card', 'nosuchtag'), "unknown tag 'nosuchtag'", 'an unregistered tag throws by name');
+    throws(() => svc.assertLegal('card', 'beast'), 'is a creature tag', 'a wrong-domain tag throws by name');
+    throws(() => svc.assertLegal('card', 'beast'), 'legal:', 'the throw prints the legal set');
+  });
+
+  // ---- 26d. the review's three findings, each with its own red ------------
+  test('26d. composed quota survives restamping, item types keep their prefix, grants key by identity', () => {
+    // P1. strikeBias is the composed deck's headline knob and every value but
+    // the default died: state.js composed N attacks, then stampDeck rebuilt the
+    // attack plan from the LEGACY roleCopies.attack and refused the mismatch.
+    // The quota now defaults to the composed plan wherever it is live.
+    for (const [bias, wantAttack, wantGuard] of [[0.5, 4, 4], [0.75, 6, 2], [0.25, 2, 6], [1, 8, 0], [0, 0, 8]]) {
+      const balance = JSON.parse(JSON.stringify(contentBundle.balance));
+      balance.equipment.startingDeck.classes.reaver.strikeBias = bias;
+      const reg = createRegistries({ ...testBundle(), balance });
+      const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
+      eq(run.deck.length, 10, `bias ${bias} still starts a 10-card deck`);
+      eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, wantAttack, `bias ${bias} deals ${wantAttack} attacks`);
+      eq(run.deck.filter((c) => c.equipmentRole === 'guard').length, wantGuard, `bias ${bias} deals ${wantGuard} guards`);
+    }
+
+    // P2a. Two classifiers rule on item types — this pass by domain, the
+    // runtime by the `item:` prefix. An itemType id without the prefix would
+    // pass here and be stamped as an ordinary tag, silently stripping every
+    // piece's type, so the prefix is a checked rule.
+    const renamed = JSON.parse(JSON.stringify(contentBundle));
+    for (const t of renamed.tags) if (t.id === 'item:armor') t.id = 'armor';
+    for (const r of renamed.tagging) if (r.tagId === 'item:armor') r.tagId = 'armor';
+    const said = tagContentProblems(renamed, contentBundle.keywords.map((k) => k.id))
+      .map((row) => `${row.path}: ${row.message}`).join(' | ');
+    assert(/must be 'item:' followed by at least one word/.test(said), `a prefix-less itemType id is refused by name — said ${JSON.stringify(said.slice(0, 120))}`);
+
+    // P2b. Outfit ids repeat per class, so a grant keyed on the bare id names
+    // four different outfits at once. The key is (family, scope, sourceId).
+    const armour = REG.equipment.armour.map((o) => (o.id === 'default' ? { ...o, tags: [...o.tags, 'bound'] } : o));
+    const scoped = {
+      ...REG,
+      equipment: {
+        ...REG.equipment,
+        armour,
+        equipmentGrants: [
+          { family: 'armour', scope: 'reaver', sourceId: 'default', cards: ['strike'] },
+          { family: 'armour', scope: 'starseer', sourceId: 'default', cards: ['defend'] },
+        ],
+      },
+    };
+    const outfit = (classId) => armour.find((o) => o.id === 'default' && o.classId === classId);
+    eq(boundGrantCardIds(scoped, outfit('reaver'), 'armour').join('|'), 'strike', "the reaver's default outfit grants its own card");
+    eq(boundGrantCardIds(scoped, outfit('starseer'), 'armour').join('|'), 'defend', "the starseer's default outfit grants a different one");
+    eq(boundGrantCardIds(scoped, outfit('herald'), 'armour').length, 0, 'an untagged-for outfit of the same id grants nothing');
+    // Two rows sharing an id are no longer a duplicate; two sharing the whole key are.
+    const dupe = { ...scoped, equipment: { ...scoped.equipment, equipmentGrants: [
+      { family: 'armour', scope: 'reaver', sourceId: 'default', cards: ['strike'] },
+      { family: 'armour', scope: 'reaver', sourceId: 'default', cards: ['defend'] },
+    ] } };
+    assert(boundGrantProblems(dupe).some((row) => /duplicate row for armour\/reaver\/default/.test(row)),
+      'a second row for the same (family, scope, id) is refused by name');
+  });
+
+  // ---- 26e. the second review round's four findings -----------------------
+  test('26e. bias default, per-kit budget, one source per family, and item types that name something', () => {
+    const kw = contentBundle.keywords.map((k) => k.id);
+    const tagSaid = (bundle) => tagContentProblems(bundle, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
+
+    // The default bias is what a class with no override falls back to, so it is
+    // held to the same rule. Malformed, it reached the plan as NaN and killed
+    // run creation with nothing said at the door.
+    const balance = JSON.parse(JSON.stringify(contentBundle.balance));
+    balance.equipment.startingDeck.defaultStrikeBias = 'oops';
+    delete balance.equipment.startingDeck.classes.reaver;
+    const said = validateEquipment(createRegistries({ ...contentBundle, balance })).join(' | ');
+    assert(/defaultStrikeBias must be between 0 and 1/.test(said), `a malformed default bias is refused by name — said ${JSON.stringify(said.slice(0, 120))}`);
+
+    // The budget is checked against every kit a player can pick, not only the
+    // baseline: an alternate carries its own grants and is equally selectable.
+    const kits = REG.equipment.startingKits.filter((k) => k.classId === 'reaver');
+    assert(kits.length > 1 && kits.some((k) => k.baseline !== true), 'the reaver ships a selectable alternate to check');
+    // REPOINTED, NOT DROPPED. This proved the enumeration reaches every kit, by
+    // asserting a budget refusal — and the cap rule (owner, 2026-09-03) removed
+    // refusals entirely: bound cards are never capped, the cap only decides how
+    // many base cards are minted. The enumeration survives serving the warning
+    // that a kit deals no base cards at all, so the coverage this round bought
+    // is asserted through what replaced it.
+    const greedy = JSON.parse(JSON.stringify(contentBundle));
+    greedy.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
+    greedy.equipment = {
+      ...greedy.equipment,
+      equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'straightSword', cards: Array(10).fill('defend') }],
+    };
+    const greedyReg = createRegistries(greedy);
+    eq(validateEquipment(greedyReg).length, 0, 'gear that fills the cap is not an error');
+    const budget = startingDeckWarnings(greedyReg).join(' | ');
+    assert(/kit '/.test(budget), `the zero-filler warning names the kit it was planned for — said ${JSON.stringify(budget.slice(0, 160))}`);
+    assert(/no base strikes or defends/.test(budget), 'and says what the player actually gets');
+
+    // Materialisation keys on the source, so a second family naming one
+    // collection replaces the first rather than merging — every object in it
+    // silently losing the tags the first family gave it.
+    const dupeSource = JSON.parse(JSON.stringify(contentBundle));
+    dupeSource.tagFamilies.push({ family: 'card2', source: 'cards', scopeField: '', label: 'C2', blurb: '' });
+    dupeSource.tagFamilyDomains.push({ family: 'card2', domain: 'card' });
+    assert(/already claimed by family 'card'/.test(tagSaid(dupeSource)), 'two families claiming one source is refused by name');
+
+    // The prefix alone is not enough: an id that derives an EMPTY label is
+    // stamped as an ordinary tag, so the piece loses its type just the same.
+    for (const id of ['item:', 'item:-']) {
+      const c = JSON.parse(JSON.stringify(contentBundle));
+      for (const t of c.tags) if (t.id === 'item:armor') t.id = id;
+      for (const r of c.tagging) if (r.tagId === 'item:armor') r.tagId = id;
+      assert(/at least one word/.test(tagSaid(c)), `an itemType id of '${id}' yields no label and is refused`);
+      eq(itemTypeLabel(id), '', `and the runtime agrees '${id}' names nothing`);
+    }
+  });
+
+  // ---- 26f. the third review round's two findings -------------------------
+  test('26f. the budget spans kit x armour, and the fit index follows the bundle', () => {
+    // Character creation picks a kit AND an armour, independently. Checking one
+    // axis leaves the other free to blow the budget: an unlockable outfit that
+    // grants cards passed validation while eating the promised minFiller.
+    const greedy = JSON.parse(JSON.stringify(contentBundle));
+    greedy.tagging.push({ family: 'armour', scope: 'reaver', objectId: 'vigil', tagId: 'bound' });
+    greedy.equipment = {
+      ...greedy.equipment,
+      equipmentGrants: [{ family: 'armour', scope: 'reaver', sourceId: 'vigil', cards: Array(10).fill('defend') }],
+    };
+    // Repointed at the warning for the same reason as 26e: what this round
+    // proved is that the enumeration crosses kit WITH armour, and it still does.
+    const said = startingDeckWarnings(createRegistries(greedy)).join(' | ');
+    assert(/armour 'vigil'/.test(said), `the armour axis is still enumerated — said ${JSON.stringify(said.slice(0, 160))}`);
+    assert(/kit 'reaverBaseline'/.test(said), 'and the kit it was paired with');
+    // The armour is behind an unlock, so it is only reachable later — which is
+    // exactly why enumerating just the free one was not enough.
+    const vigil = REG.equipment.armour.find((o) => o.classId === 'reaver' && o.id === 'vigil');
+    assert(vigil && vigil.unlock, 'vigil is an unlockable outfit, not the free one');
+
+    // equipment.cardTagging is what the fit check reads. Folded from the
+    // module-global rows it would answer a different question than card.tags
+    // does the moment a caller hands createRegistries an extended bundle.
+    const extended = JSON.parse(JSON.stringify(contentBundle));
+    extended.tagging.push({ family: 'card', scope: '', objectId: 'starstonePebble', tagId: 'blade' });
+    const reg = createRegistries(extended);
+    const stamped = reg.cards.get('starstonePebble').tags;
+    const indexed = (reg.equipment.cardTagging || []).find((row) => row.cardId === 'starstonePebble');
+    assert(indexed, 'the supplied row reaches the fit index at all');
+    eq(indexed.tags.join('|'), stamped.join('|'), 'the fit index and the stamped card agree, row for row');
+    assert(stamped.includes('blade'), 'and both carry the tag the bundle supplied');
+  });
+
+  // ---- 26g. the fourth review round: three root causes --------------------
+  test('26g. the quota is the run\'s, the legacy sum is dormant, and creation decides what is selectable', () => {
+    // A composed deck's attack count is decided ONCE, at birth, from the grants
+    // the run started with. Recomputing it from the current loadout meant
+    // swapping between pieces with different grant counts threw mid-run.
+    const granting = JSON.parse(JSON.stringify(contentBundle));
+    granting.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
+    granting.equipment = {
+      ...granting.equipment,
+      equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'straightSword', cards: ['strike', 'defend'] }],
+    };
+    const reg = createRegistries({ ...granting, cards: contentBundle.cards, statuses: contentBundle.statuses });
+    const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
+    const born = run.deck.filter((c) => c.equipmentRole === 'attack').length;
+    eq(born, 3, 'two granted cards shift the composed attack quota to three');
+    run.loadout.sets.rightHand[0] = 'dagger';
+    stampDeck(reg, run);
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, born, 'a swap re-skins the attacks, it does not re-count them');
+    // REPOINTED. This said "and the deck stays the size it was born" — ten —
+    // and it was true only because bound-table cards were minted as run-owned
+    // refs nothing ever swept. The owner ruled (2026-09-03): if the item is not
+    // equipped, its cards are gone. The sword took its two with it; 26v owns
+    // the full statement of that rule.
+    eq(run.deck.length, 8, 'and the unequipped sword took its two bound cards with it — the deck floats, by ruling');
+
+    // roleCopies is the legacy distribution. Its hand-kept sum is exactly the
+    // coupling the composed deck removes, so it is a rule only while it is the
+    // one being read — otherwise a valid twelve-card plan is rejected for
+    // summing to ten.
+    const bigger = JSON.parse(JSON.stringify(contentBundle));
+    bigger.balance.startingDeckSize = 12;
+    eq(validateEquipment(createRegistries(bigger)).length, 0, 'raising startingDeckSize alone is now a legal edit');
+    const legacy = JSON.parse(JSON.stringify(contentBundle));
+    legacy.balance.equipment.startingDeck.enabled = false;
+    legacy.balance.startingDeckSize = 12;
+    assert(validateEquipment(createRegistries(legacy)).some((p) => /roleCopies sum/.test(p)),
+      'and with the composed path off the legacy sum is still enforced');
+
+    // Character creation decides what is selectable — not the kit table. Two
+    // grant-bearing pieces that share no authored kit can still be picked
+    // together, which three rounds of axis-by-axis enumeration kept missing.
+    const pair = JSON.parse(JSON.stringify(contentBundle));
+    for (const id of ['greatsword', 'buckler']) pair.tagging.push({ family: 'armament', scope: '', objectId: id, tagId: 'bound' });
+    pair.equipment = {
+      ...pair.equipment,
+      equipmentGrants: ['greatsword', 'buckler'].map((id) => ({ family: 'armament', scope: '', sourceId: id, cards: Array(5).fill('defend') })),
+    };
+    // Five each: either hand alone leaves room, the PAIR does not. Repointed at
+    // the warning, so what this round proved — creation decides selectability,
+    // not the kit table — is still what fails if the enumeration narrows.
+    const said = startingDeckWarnings(createRegistries(pair)).join(' | ');
+    assert(/hands greatsword\/buckler/.test(said), `the hand pair is still enumerated — said ${JSON.stringify(said.slice(0, 160))}`);
+    const kits = REG.equipment.startingKits.filter((k) => k.classId === 'reaver');
+    assert(!kits.some((k) => k.rightHand === 'greatsword' && k.leftHand === 'buckler'),
+      'and that pair is in no authored kit, which is why the kit table could not have found it');
+  });
+
+  // ---- 26h. the fifth round: both threads closed, not narrowed -------------
+  test('26h. every restamp path reads one quota, and the engine reads the active registries', () => {
+    // Round four fixed the FULL restamp by reading the count off the deck, and
+    // left the subset path recomputing. Combat calls stampDeck once per pile,
+    // so the pile holding attack:3 threw mid-swap. The whole deck is on the run
+    // in BOTH cases, so both read the same number from the same place.
+    const granting = JSON.parse(JSON.stringify(contentBundle));
+    granting.tagging.push({ family: 'armament', scope: '', objectId: 'dagger', tagId: 'bound' });
+    granting.equipment = {
+      ...granting.equipment,
+      equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'dagger', cards: ['strike', 'defend'] }],
+    };
+    const reg = createRegistries(granting);
+    const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
+    const born = run.deck.filter((c) => c.equipmentRole === 'attack').length;
+    eq(born, 4, 'the straight sword grants nothing, so the run is born with four attacks');
+    run.loadout.sets.rightHand[0] = 'dagger'; // bound: two grants, so a replan would say three
+    stampDeck(reg, run, run.deck.filter((c) => c.equipmentRole === 'attack'));
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, born, 'a per-pile restamp keeps the birth quota');
+    stampDeck(reg, run);
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, born, 'and so does the whole-deck one');
+
+    // Round three routed the equipment fit index through the supplied bundle
+    // and left a second consumer of the module-global fold: the action engine's
+    // own tag read, which feeds tag-scoped vulnerabilities.
+    const extended = JSON.parse(JSON.stringify(contentBundle));
+    extended.tagging.push({ family: 'card', scope: '', objectId: 'strike', tagId: 'venom' });
+    const extReg = createRegistries(extended);
+    const action = { card: { cardId: 'strike' } };
+    eq(attackTagsFor(action, {}, extReg).join('|'), extReg.cards.get('strike').tags.join('|'),
+      'the engine answers from the registries it was given');
+    assert(attackTagsFor(action, {}, extReg).includes('venom'), 'including a tag only the supplied bundle carries');
+    // NO LONGER the shipped fold: round seven removed the module-global fallback
+    // from this path entirely (see 26j). A caller with no registries and no
+    // effect tags handed us nothing, and gets nothing back.
+    eq(attackTagsFor(action, {}).length, 0, 'and with no registries and no effect tags there is no answer to give');
+    eq(attackTagsFor(action, { tags: ['blade'] }).join('|'), 'blade', 'while an effect still speaks for itself');
+    // An instance carrying its own tags still wins — equipment-generated cards.
+    eq(attackTagsFor({ card: { cardId: 'strike', tags: ['guard'] } }, {}, extReg).join('|'), 'guard',
+      'a stamped instance still answers for itself');
+  });
+
+  // ---- 26i. the sixth round: an empty answer is an answer -----------------
+  test('26i. emptiness is content, and an item type is named once', () => {
+    // Round five stopped the module-global fold answering over a supplied
+    // bundle — but only when the bundle's answer was non-empty, which is the
+    // one case where the global's answer is guaranteed to be the stale one. An
+    // override that STRIPS a card read as "nothing here, ask the next source",
+    // and the next source handed back the shipped tags just removed.
+    const stripped = JSON.parse(JSON.stringify(contentBundle));
+    stripped.tagging = stripped.tagging.filter((r) => !(r.family === 'card' && r.objectId === 'strike'));
+    const strippedReg = createRegistries(stripped);
+    eq(strippedReg.cards.get('strike').tags.length, 0, 'the bundle removed every tag from Strike');
+    eq(attackTagsFor({ card: { cardId: 'strike' } }, {}, strippedReg).length, 0,
+      'and the engine honours that instead of restoring the shipped fold');
+    // The effect is not the global: it came out of the same bundle, so it still
+    // speaks for a card the active content gives no rows of its own. That is
+    // what keeps isolated fixtures (7e) working through the same door.
+    eq(attackTagsFor({ card: { cardId: 'strike' } }, { tags: ['venom'] }, strippedReg).join('|'), 'venom',
+      'an effect in the same bundle may still answer for an untagged card');
+    // Same rule one branch up: an equipment profile granting no tags is a
+    // profile that says so, not a profile to look past.
+    eq(attackTagsFor({ card: { cardId: 'strike', tags: [] } }, {}, REG).length, 0,
+      'an instance stamped with no tags answers for itself');
+    // The miss that keeps that branch honest: an ordinary card carries no
+    // `cardTags` at all, and absent is the only thing that falls through.
+    eq(attackTagsFor({ card: { cardId: 'strike' } }, {}, REG).join('|'), REG.cards.get('strike').tags.join('|'),
+      'a card with no instance tags still reads the registry');
+
+    // An itemType tag is the only tag NAMED TWICE: by the author in tags.csv,
+    // and by registries.js, which derives the label from the id when it stamps
+    // a piece. The suite pinned the shipped rows; nothing stopped an edit — or
+    // a mod bundle — from disagreeing, and the same tag then read two ways.
+    const kw = contentBundle.keywords.map((k) => k.id);
+    const renamed = JSON.parse(JSON.stringify(contentBundle));
+    for (const t of renamed.tags) if (t.id === 'item:armor') t.label = 'Plate';
+    const said = tagContentProblems(renamed, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
+    assert(/disagrees with the label the runtime derives/.test(said),
+      `a relabelled item type is refused by name — said ${JSON.stringify(said.slice(0, 160))}`);
+    const piece = (createRegistries(renamed).equipment.armour || [])
+      .find((p) => (p.itemTypes || []).some((t) => t.tag === 'item:armor'));
+    eq(piece.itemTypes.find((t) => t.tag === 'item:armor').label, 'Armor',
+      'and the stamp is what it was refused for disagreeing with');
+    // Two derivations of one label, held to each other directly rather than
+    // through the rows that happen to be shipped.
+    for (const id of ['item:blade', 'item:magic-focus', 'item:armor', 'item:', 'not-an-item']) {
+      eq(itemTypeLabelFrom(id), itemTypeLabel(id) || '', `both derivations agree on '${id}'`);
+    }
+
+    // A GUARANTEE THAT NEARLY LAPSED IN THE MOVE. `tags` was a required COLUMN
+    // on basicCardProfiles, so the schema alone guaranteed a profile had an
+    // identity — and a profile's tags are what the equipment card carries as
+    // `cardTags`, what its damage effect inherits, and what the fit check
+    // reads. Taking the column into tagging.csv took the guarantee with it and
+    // put nothing back; a profile stripped of its rows validated clean and
+    // shipped a card the engine could not recognise. Found because the tool
+    // that watched the old rule (tools/class-loadouts.mjs) crashed on the
+    // missing column rather than failing, quietly dropping 28 of its checks.
+    const untagged = JSON.parse(JSON.stringify(contentBundle));
+    untagged.tagging = untagged.tagging
+      .filter((r) => !(r.family === 'basicCardProfile' && r.objectId === 'staffMagicAttack'));
+    const profileSaid = tagContentProblems(untagged, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
+    assert(/basicCardProfiles\.staffMagicAttack: carries no tag/.test(profileSaid),
+      `a profile with no tag rows is refused by name — said ${JSON.stringify(profileSaid.slice(0, 160))}`);
+    eq(tagContentProblems(contentBundle, kw).length, 0, 'and every shipped profile satisfies it');
+  });
+
+  // ---- 26j. the seventh round: one source, one question -------------------
+  test('26j. the global fold is gone from the runtime, and eligibility is asked not re-listed', () => {
+    const kw = contentBundle.keywords.map((k) => k.id);
+
+    // THE DESIGN CHANGE. Five rounds found one defect at five addresses: a
+    // reader preferring the active content but falling back to the shipped fold
+    // whenever the active answer looked uninteresting — absent, then empty, then
+    // falsy. Each fix narrowed the condition; the condition was never the bug.
+    // Two runtime readers held the global, and neither does now, so the class of
+    // defect is unwritable rather than newly guarded.
+    const swapped = JSON.parse(JSON.stringify(contentBundle));
+    swapped.tagging = swapped.tagging.map((r) => (r.family === 'card' && r.objectId === 'strike'
+      ? { ...r, tagId: 'venom' } : r));
+    const swapReg = createRegistries(swapped);
+    // The engine's reader: answers from the supplied bundle, with nothing behind it.
+    eq(attackTagsFor({ card: { cardId: 'strike' } }, {}, swapReg).join('|'), 'venom',
+      'the engine reads the bundle it was given');
+    assert(tagIdsFor('strike').includes('blade'), 'while the shipped fold still says blade — two different answers');
+    // The card component's reader, exercised through the same door it now uses,
+    // so the chip strip cannot disagree with what combat just did.
+    eq(tagService(swapReg).tagsOf('card', swapReg.cards.get('strike')).map((t) => t.id).join('|'), 'venom',
+      'and the chip strip resolves through the active registries too');
+
+    // ZERO IS A COUNT. A deck born with no attacks said "recompute from the
+    // current loadout", and the next swap replanned a positive quota against a
+    // deck that had none. What separates "nothing to say" from "zero" is whether
+    // there is a deck at all, not whether the number is truthy.
+    const zeroed = JSON.parse(JSON.stringify(contentBundle));
+    zeroed.balance.equipment.startingDeck.minFiller = 0;
+    zeroed.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
+    zeroed.equipment = {
+      ...zeroed.equipment,
+      equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'straightSword', cards: Array(9).fill('defend') }],
+    };
+    const zReg = createRegistries(zeroed);
+    const zRun = createRunState({ seed: 5, classId: 'reaver', registries: zReg });
+    eq(zRun.deck.filter((c) => c.equipmentRole === 'attack').length, 0,
+      'the bound piece supplies the whole budget, so the run is born with no attacks at all');
+    zRun.loadout.sets.rightHand[0] = 'dagger'; // unbound: a replan would say four
+    stampDeck(zReg, zRun);
+    eq(zRun.deck.filter((c) => c.equipmentRole === 'attack').length, 0,
+      'and the swap keeps that quota — zero is the number it was born with, not the absence of one');
+
+    // ELIGIBILITY IS ASKED, NOT RE-LISTED. `armourIds` is one of three ways an
+    // outfit becomes startable; free and earned-by-unlock are the others, and
+    // three rounds each caught one axis later. The budget check now asks the
+    // same predicate run creation asks, so a set reachable only by unlock is in
+    // the enumeration without anyone having remembered it.
+    const unlockOnly = JSON.parse(JSON.stringify(contentBundle));
+    const oathsworn = unlockOnly.equipment.armour.find((a) => a.classId === 'reaver' && a.id === 'oathsworn');
+    assert(oathsworn && oathsworn.unlock, 'oathsworn is reached by unlock, not by the creation list');
+    const listed = unlockOnly.characterCreation.classes.reaver;
+    assert(!((listed && listed.armourIds) || []).includes('oathsworn'),
+      'and it is NOT in armourIds — which is exactly why re-listing that axis missed it');
+    unlockOnly.tagging.push({ family: 'armour', scope: 'reaver', objectId: 'oathsworn', tagId: 'bound' });
+    unlockOnly.equipment = {
+      ...unlockOnly.equipment,
+      equipmentGrants: [{ family: 'armour', scope: 'reaver', sourceId: 'oathsworn', cards: Array(10).fill('defend') }],
+    };
+    // Repointed at the warning like 26e/f/g: the budget refusal is gone, the
+    // enumeration that finds an unlock-only outfit is not, and that is what
+    // this round was about.
+    const said = startingDeckWarnings(createRegistries(unlockOnly)).join(' | ');
+    assert(/oathsworn/.test(said), `an unlock-only outfit is still enumerated — said ${JSON.stringify(said.slice(0, 200))}`);
+
+    // AN EMPTY VOCABULARY IS NOT A REASON TO STOP ASKING. Guarding the per-piece
+    // rule on `itemTypeIds.size` made deleting every itemType row the one edit
+    // that turned the rule OFF rather than failing it.
+    const noVocab = JSON.parse(JSON.stringify(contentBundle));
+    noVocab.tags = noVocab.tags.filter((t) => t.domain !== 'itemType');
+    noVocab.tagging = noVocab.tagging.filter((r) => !String(r.tagId).startsWith('item:'));
+    const vocabSaid = tagContentProblems(noVocab, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
+    assert(/no itemType tag is registered at all/.test(vocabSaid),
+      `an empty item-type vocabulary is refused, not skipped — said ${JSON.stringify(vocabSaid.slice(0, 200))}`);
+  });
+
+  // ---- 26k. the eighth round: the quota is written down, not derived ------
+  test('26k. a real in-combat swap keeps the birth quota, and the item prefix is reserved', () => {
+    // THE PATH FOUR ROUNDS OF QUOTA FIXES NEVER TOUCHED. Rounds four to seven
+    // each derived the birth quota somewhere new — from the plan, the loadout,
+    // `list`, then `run.deck` — and every one of them was INERT here, because
+    // combat's swap builds a synthetic run with `deck: []` and calls stampDeck
+    // once per pile. There was never a deck to count. 26h passed because it
+    // handed stampDeck a real run; production does not. So the number is
+    // written down at birth and carried, and this drives the actual dispatch.
+    const granting = JSON.parse(JSON.stringify(contentBundle));
+    granting.tagging.push({ family: 'armament', scope: '', objectId: 'dagger', tagId: 'bound' });
+    granting.equipment = {
+      ...granting.equipment,
+      equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'dagger', cards: ['strike', 'defend'] }],
+    };
+    const reg = createRegistries(granting);
+    const run = createRunState({ seed: 7, classId: 'reaver', registries: reg });
+    const born = run.deck.filter((c) => c.equipmentRole === 'attack').length;
+    eq(run.equipmentAttackSlotCount, born, 'the run records the quota it was born with');
+    eq(born, 4, 'the unbound straight sword grants nothing, so four attacks');
+    run.loadout.sets.rightHand[1] = 'dagger'; // bound: a replan would say three
+
+    const combat = createCombat({
+      registries: reg,
+      rng: createRng(7),
+      enemyIds: [contentBundle.enemies[0].id],
+      player: {
+        classId: run.class, attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
+        maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
+        energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, damageBySchoolAdd: run.damageBySchoolAdd,
+        equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+        equipmentAttackSlotCount: run.equipmentAttackSlotCount,
+        equipmentPoolDeficits: run.equipmentPoolDeficits, itemUpgradeLevels: run.itemUpgradeLevels,
+        deck: run.deck, relicIds: run.relics, flasks: run.flasks, flaskCharges: run.flaskCharges,
+        loadout: run.loadout,
+      },
+    });
+    eq(combat.equipmentAttackSlotCount, born, 'and combat carries it, like the profile snapshot beside it');
+    // Without the carried quota this throws "unknown equipmentAttackSlotId
+    // 'attack:3'" — the pile holding the slot the replan dropped.
+    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+    const attacksAfter = [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust]
+      .flat().filter((c) => c && c.equipmentRole === 'attack').length;
+    eq(attacksAfter, born, 'the swap re-skins the attacks across every pile, it does not re-count them');
+
+    // THE PREFIX, CHECKED FROM BOTH SIDES. stampTags classifies by prefix while
+    // the validator classifies by domain, so a NON-itemType id wearing `item:`
+    // is filed as a type and dropped from the piece's gameplay tags — the fit
+    // check then says noMatch for a pairing the author wrote on purpose.
+    const kw = contentBundle.keywords.map((k) => k.id);
+    const reserved = JSON.parse(JSON.stringify(contentBundle));
+    reserved.tags.push({ id: 'item:venomous', domain: 'card', label: 'Venomous', color: '#888', glyph: '*', blurb: '' });
+    const reservedSaid = tagContentProblems(reserved, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
+    assert(/reserved for the itemType domain/.test(reservedSaid),
+      `a card-domain '${'item:'}' id is refused by name — said ${JSON.stringify(reservedSaid.slice(0, 180))}`);
+  });
+
+  // ---- 26m. the ninth round: the budget counts every card that lands ------
+  test('26m. deck size is an integer, and the package layer is in the budget', () => {
+    // A HOLE I OPENED. The legacy roleCopies sum used to IMPLY that
+    // startingDeckSize was an integer — a fraction can never equal a sum of
+    // integer copies — and round four gated that check on the composed path
+    // being off. Nothing replaced the implication, so 10.5 validated clean and
+    // planned guardCount 4.5, which the copy loop turned into five guards.
+    const fractional = JSON.parse(JSON.stringify(contentBundle));
+    fractional.balance.startingDeckSize = 10.5;
+    const fracReg = createRegistries(fractional);
+    const fracSaid = validateEquipment(fracReg).join(' | ');
+    assert(/startingDeckSize must be a non-negative integer/.test(fracSaid),
+      `a fractional deck size is refused by name — said ${JSON.stringify(fracSaid.slice(0, 160))}`);
+    eq(createRunState({ seed: 1, classId: 'reaver', registries: fracReg }).deck.length, 11,
+      'and 11 is what it silently produced, which is why the door had to say so');
+
+    // THE PACKAGE LAYER ADDS REAL CARDS. `grantedCards` is a live-but-dormant
+    // seam: nothing ships one, the mechanism validates and composes, and
+    // reconcileGrantedCards installs the instances at run creation. The budget
+    // counted only bound-table grants, so a package granting three Defends
+    // reported a size-10 plan and then built a 13-card deck. It is counted from
+    // the SAME function that mints them, not a second list beside it.
+    const packaged = (count) => {
+      const b = JSON.parse(JSON.stringify(contentBundle));
+      const sword = b.equipment.armaments.find((p) => p.id === 'straightSword');
+      sword.weaponCardPackage = {
+        compatibility: 'attack-v1',
+        fillerAttackProfileId: sword.attackProfile,
+        grantedCards: [{ cardId: 'defend', count }],
+      };
+      return createRegistries(b);
+    };
+    // SETTLED BY THE OWNER, AND THE HISTORY IS THE POINT. This round made package
+    // grants count against the budget; round sixteen showed that counting them
+    // is what made the deck SHRINK when the weapon left; I gated the
+    // combination rather than pick a side. The ruling picked one: the cap
+    // governs how many BASE cards are minted, nothing is refused, and the deck
+    // floats with gear after creation. So this round's arithmetic was right —
+    // package grants count at creation — and the shrink is simply what happens.
+    const fits = packaged(3);
+    eq(validateEquipment(fits).length, 0, 'package grants are legal under the cap rule');
+    eq(createRunState({ seed: 1, classId: 'reaver', registries: fits }).deck.length,
+      contentBundle.balance.startingDeckSize,
+      'and creation lands on the cap, because the base cards made room for them');
+
+    // Past the cap there is no error either — just no base cards left to mint.
+    const bustReg = packaged(12);
+    eq(validateEquipment(bustReg).length, 0, 'gear past the cap is a balance question, not a refusal');
+    assert(/no base strikes or defends/.test(startingDeckWarnings(bustReg).join(' | ')),
+      'and the shape is stated so an author can see it without starting a run');
+
+    // AND THE DISCREPANCY THIS ROUND ONLY WARNED ABOUT IS GONE. Starseer and
+    // herald shipped at 11 against an authored 10 — red in class-loadouts since
+    // before this work, and something I refused to decide. The ruling decides
+    // it: a weapon art is a card the weapon brings, so it counts against the cap
+    // like any other, and the base cards make room. Both begin at the cap now.
+    eq(validateEquipment(REG).length, 0, 'the shipped bundle still boots');
+    eq(startingDeckWarnings(REG).length, 0, 'with nothing left to warn about');
+    for (const classId of ['starseer', 'herald']) {
+      eq(createRunState({ seed: 3, classId, registries: REG }).deck.length, contentBundle.balance.startingDeckSize,
+        `${classId} begins at the cap, its weapon art counted like any other bound card`);
+    }
+  });
+
+  // ---- 26n. the tenth round: what stored state obliges ---------------------
+  test('26n. a generated slot is not removable, and the quota survives save and load', () => {
+    // THE COST OF STORING A FACT is that everything which could contradict it
+    // now has to be reconciled with it. Both findings here are consequences of
+    // round eight persisting the birth quota, and both are fair.
+
+    // The merchant's burn and the removeCardFromDeck opcode already refused
+    // package outputs, in both cases for the SAME stated reason: "the next
+    // authoritative reconcile would recreate the same deterministic id, so a
+    // removal here could never persist". A generated attack slot has exactly
+    // that property and was never excluded — burning one re-minted it, so the
+    // merchant charged cinders for nothing. Persisting the quota turned that
+    // silent no-op into a throw, which is how it was noticed at all.
+    const run = createRunState({ seed: 1, classId: 'reaver', registries: REG });
+    const composed = run.deck.filter(isEquipmentComposedInstance);
+    assert(composed.length === 4 && composed.every((c) => c.equipmentAttackSlotId),
+      'the four attack slots are equipment-composed, and the predicate says so');
+    eq(run.equipmentAttackSlotCount, 4, 'and the run recorded that as its quota');
+
+    const before = run.deck.length;
+    executeRunEffects({ run, registries: REG, rng: { float: () => 0 } },
+      [{ op: 'removeCardFromDeck', card: 'strike' }]);
+    eq(run.deck.length, before, 'the opcode does not remove a card the next restamp would re-mint');
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 4, 'the slots are intact');
+    stampDeck(REG, run); // threw "attack instance count 3 does not match authored 4" before
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 4, 'and the restamp agrees with the quota');
+
+    // A random removal still has real candidates — this closes a door on cards
+    // equipment owns, it does not close the mechanic.
+    const candidates = run.deck.filter((c) => !isEquipmentComposedInstance(c));
+    assert(candidates.length >= 5, `ordinary cards remain removable (${candidates.length} of ${run.deck.length})`);
+
+    // AND THE NUMBER SURVIVES THE ROUND TRIP. A stored fact that does not
+    // persist is worse than a derived one: the run loads, disagrees with
+    // itself, and is archived for a mismatch it did not have when saved.
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    const rng = createRng(0xfeed);
+    const saved = createRunState({ seed: 0xfeed, classId: 'reaver', registries: REG });
+    saves.saveRun(saved, rng);
+    const loaded = saves.loadRun(REG);
+    assert(loaded != null, 'the run loads');
+    eq(loaded.equipmentAttackSlotCount, saved.equipmentAttackSlotCount,
+      'and carries the quota it was born with across save and load');
+    stampDeck(REG, loaded);
+    eq(loaded.deck.filter((c) => c.equipmentRole === 'attack').length, saved.equipmentAttackSlotCount,
+      'so a restamp after loading still plans the born quota');
+  });
+
+  // ---- 26p. the eleventh round: the junction has other readers ------------
+  test('26p. the importer resolves the junction, the join is the authority, and a Power is not grantable', () => {
+    // THE THIRD CONSUMER OF THE OLD INLINE COLUMN. The framework importer reads
+    // the RAW bundle — the one registries never touched — so `piece.tags` was
+    // silently undefined and a cutover would have carried entities with no tag
+    // identity at all. It resolves the junction from THAT bundle, never from
+    // the module-global fold: an importer answering for the shipped rows while
+    // importing a supplied bundle is the defect of five earlier rounds again.
+    const imported = importLegacyContent(contentBundle);
+    const sword = imported.entities.find((e) => e.legacyId === 'straightSword' || String(e.id).includes('straightSword'));
+    assert(sword, 'the straight sword imports');
+    eq((sword.explicitOverrides.tags || []).join('|'), REG.equipment.armaments.find((p) => p.id === 'straightSword').tags.join('|'),
+      'and its imported tags equal the live stamped gameplay set, item types split off exactly as registries splits them');
+    assert(!(sword.explicitOverrides.tags || []).some((t) => String(t).startsWith('item:')),
+      'the item type is not smuggled into the gameplay set');
+
+    // THE JOIN IS THE AUTHORITY, OR THE TABLE IS DECORATION. tagFamilyDomains
+    // declares which domains the `effect` family may carry; the validator had
+    // the answer hard-coded, so editing that row changed the table and nothing
+    // else. Today the row says `card` and the derived answer is identical —
+    // which is the point: same behaviour, actually derived.
+    const kw = contentBundle.keywords.map((k) => k.id);
+    eq(tagIdsAllowedFor(contentBundle, 'effect').join('|'), tagIdsInDomain(contentBundle, 'card').join('|'),
+      'the derived effect vocabulary matches the card domain the row names');
+    const repaired = JSON.parse(JSON.stringify(contentBundle));
+    repaired.tagFamilyDomains = repaired.tagFamilyDomains
+      .map((r) => (r.family === 'effect' ? { ...r, domain: 'item' } : r));
+    const effectSaid = validateContent(repaired).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+    assert(/unknown effect tag 'blight'/.test(effectSaid),
+      `re-pairing the effect family now actually re-scopes effect tags — said ${JSON.stringify(effectSaid.slice(0, 200))}`);
+    eq(tagContentProblems(repaired, kw).length, 0, 'and the re-paired row is itself legal — this is a scope change, not a broken bundle');
+
+    // A CARD THE RECONCILE CANNOT FIND AGAIN IS NOT GRANTABLE. Reconciliation
+    // is a SCAN of the four piles, so an instance in none of them reads as a
+    // missing grant and is re-pushed under the same deterministic id. A Power
+    // is REMOVED FROM PLAY when played — it sits in no pile — so the next swap
+    // would hand it back, replayable, stacking its effect every time.
+    const power = contentBundle.cards.find((c) => c.type === 'power');
+    assert(power && REG.framework.afterPlayDestination(REG.cards.get(power.id)) === 'REMOVED_FROM_PLAY',
+      'a shipped Power leaves play rather than landing in a pile');
+    const granting = JSON.parse(JSON.stringify(contentBundle));
+    const piece = granting.equipment.armaments.find((p) => p.id === 'straightSword');
+    piece.weaponCardPackage = {
+      compatibility: 'attack-v1',
+      fillerAttackProfileId: piece.attackProfile,
+      grantedCards: [{ cardId: power.id, count: 1 }],
+    };
+    const powerSaid = validateEquipment(createRegistries(granting)).join(' | ');
+    assert(/removed from play when played/.test(powerSaid),
+      `granting a Power is refused by name — said ${JSON.stringify(powerSaid.slice(0, 200))}`);
+    // A skill grant is refused for a DIFFERENT reason (26u: the composed deck
+    // cannot yet carry package grants at all), so the lifecycle rule is checked
+    // where it is the only rule in play — at the model door, which knows nothing
+    // about the composed deck.
+    const ordinary = JSON.parse(JSON.stringify(contentBundle));
+    const ordinaryPiece = ordinary.equipment.armaments.find((p) => p.id === 'straightSword');
+    ordinaryPiece.weaponCardPackage = {
+      compatibility: 'attack-v1',
+      fillerAttackProfileId: ordinaryPiece.attackProfile,
+      grantedCards: [{ cardId: 'defend', count: 1 }],
+    };
+    const ordinaryReg = createRegistries(ordinary);
+    const ordinarySaid = validateEquipment(ordinaryReg).join(' | ');
+    assert(!/removed from play when played/.test(ordinarySaid),
+      'an ordinary skill grant is not refused for its lifecycle');
+    assert(WeaponCardPackageModel.fromPiece(ordinaryReg, ordinaryReg.equipment.armaments
+      .find((p) => p.id === 'straightSword')).grantedCards.length === 1,
+      'and the package model accepts it — the lifecycle rule closes one card type, not the seam');
+  });
+
+  // ---- 26q. the twelfth round: depth, and the panel telling the truth ----
+  test('26q. a deep source materialises where it was declared, and the Armoury reports the deck it has', () => {
+    // `source` IS A PATH, and stampTags resolves it to any depth — but writing
+    // the result back assumed depth two, so a family at
+    // `equipment.extras.charms` had its rows dropped onto `equipment.extras`,
+    // REPLACING the object that held `charms`. The bundle validated, the rows
+    // stamped, and every reader that walked the declared path found nothing.
+    const deep = JSON.parse(JSON.stringify(contentBundle));
+    deep.equipment.extras = { charms: [{ id: 'luckCharm', name: 'Luck Charm' }], note: 'a sibling' };
+    deep.tagFamilies.push({ family: 'charm', source: 'equipment.extras.charms', scopeField: '', label: 'Charm', blurb: '' });
+    deep.tagFamilyDomains.push({ family: 'charm', domain: 'item' });
+    deep.tagging.push({ family: 'charm', scope: '', objectId: 'luckCharm', tagId: 'bound' });
+    const deepReg = createRegistries(deep);
+    eq(deepReg.equipment.extras.note, 'a sibling', 'the sibling key survives — the parent is not replaced');
+    eq((deepReg.equipment.extras.charms || []).length, 1, 'and the rows land at the leaf the family declared');
+    eq(deepReg.equipment.extras.charms[0].tags.join('|'), 'bound', 'stamped, as any other family');
+    eq(tagService(deepReg).withTag('charm', 'bound').map((r) => r.id).join('|'), 'luckCharm',
+      'so a reader that walks the declared path finds them');
+
+    // THE PANEL RENDERS `x{copies}`, AND THEY WERE THE LEGACY NUMBERS. Under a
+    // composed deck the authored roleCopies table is no longer what the deck
+    // holds: bias 0.75 builds six attacks and two guards while that table still
+    // reads 4/4, so the Armoury told the player something the deck contradicted.
+    const biased = JSON.parse(JSON.stringify(contentBundle));
+    biased.balance.equipment.startingDeck.classes.reaver = { strikeBias: 0.75 };
+    const biasedReg = createRegistries(biased);
+    const run = createRunState({ seed: 2, classId: 'reaver', registries: biasedReg });
+    const actual = { attack: 0, guard: 0 };
+    for (const card of run.deck) if (actual[card.equipmentRole] !== undefined) actual[card.equipmentRole] += 1;
+    eq(actual.attack, 6, 'the deck really is six attacks at this bias');
+    eq(actual.guard, 2, 'and two guards');
+    const roles = equipmentSurfaceReceipt(biasedReg, run).roles;
+    const shown = Object.fromEntries(roles.map((r) => [r.role, r.copies]));
+    eq(shown.attack, actual.attack, 'the panel reports the attacks the run has');
+    eq(shown.guard, actual.guard, 'and the guards');
+    // Legacy path untouched: with the composed deck off, the authored table is
+    // still the answer, because then it is the one the deck was built from.
+    const legacy = JSON.parse(JSON.stringify(contentBundle));
+    legacy.balance.equipment.startingDeck.enabled = false;
+    const legacyReg = createRegistries(legacy);
+    const legacyRun = createRunState({ seed: 2, classId: 'reaver', registries: legacyReg });
+    const legacyShown = Object.fromEntries(equipmentSurfaceReceipt(legacyReg, legacyRun).roles.map((r) => [r.role, r.copies]));
+    eq(legacyShown.attack, legacy.balance.equipment.roleCopies.attack, 'the legacy path still reads the authored table');
+    eq(legacyShown.guard, legacy.balance.equipment.roleCopies.guard, 'for both roles');
+  });
+
+  // ---- 26r. the thirteenth round: count the deck, and never throw at a door
+  test('26r. the panel counts every role off the deck, and a malformed sourceOrder is named', () => {
+    // THE SAME MISTAKE ONE FIELD OVER, found the round after I made it. Round
+    // twelve anchored ATTACK to the run and left guard on a fresh plan — but a
+    // restamp PRESERVES the instances the run was born with and only re-skins
+    // them, so after a grant-bearing swap the plan and the deck disagree for
+    // guard exactly as they did for attack. Counting roles off the deck has no
+    // per-role list to be incomplete: a role added later is counted the day it
+    // exists, without anyone remembering to add it here.
+    const granting = JSON.parse(JSON.stringify(contentBundle));
+    granting.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
+    granting.equipment = {
+      ...granting.equipment,
+      equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'straightSword', cards: ['strike', 'defend'] }],
+    };
+    const reg = createRegistries(granting);
+    const run = createRunState({ seed: 4, classId: 'reaver', registries: reg });
+    const roleCount = (deck) => {
+      const out = {};
+      for (const card of deck) if (card && card.equipmentRole) out[card.equipmentRole] = (out[card.equipmentRole] || 0) + 1;
+      return out;
+    };
+    const born = roleCount(run.deck);
+    eq(born.guard, 3, 'two grants shift the composed guard count to three');
+    assert(born.guard !== contentBundle.balance.equipment.roleCopies.guard,
+      'and that differs from the authored table, which is what makes this checkable');
+
+    run.loadout.sets.rightHand[0] = 'dagger'; // unbound: a fresh plan would say four
+    stampDeck(reg, run);
+    const after = roleCount(run.deck);
+    eq(after.guard, born.guard, 'the swap re-skins the guards, it does not re-count them');
+    const shown = Object.fromEntries(equipmentSurfaceReceipt(reg, run).roles.map((r) => [r.role, r.copies]));
+    eq(shown.guard, after.guard, 'and the panel reports the guards the run has, not the ones a replan would give');
+    eq(shown.attack, after.attack, 'attack too, from the same count rather than a separate anchor');
+
+    // A VALIDATION DOOR MAY NOT THROW. `sourceOrder` (named `dropOrder` when
+    // this round found it, before the cap ruling left nothing to drop) is a
+    // list, and a plausible typo — the bare string instead of a one-item list —
+    // reached `.join` and crashed validateEquipment instead of being answered.
+    const typo = JSON.parse(JSON.stringify(contentBundle));
+    typo.balance.equipment.startingDeck.sourceOrder = 'from:global';
+    const said = validateEquipment(createRegistries(typo)).join(' | ');
+    assert(/sourceOrder must be an array of grant-source tags/.test(said),
+      `a non-array sourceOrder is a named problem, not a crash — said ${JSON.stringify(said.slice(0, 160))}`);
+    // The vocabulary is closed AND it is the tag registry, not a list in code:
+    // a misspelling is caught because no such row exists, and adding a sixth
+    // source is a row in tags.csv rather than an edit to loadout.js.
+    const unknown = JSON.parse(JSON.stringify(contentBundle));
+    unknown.balance.equipment.startingDeck.sourceOrder = ['from:global', 'from:armour'];
+    assert(/unknown grant source 'from:armour'/.test(validateEquipment(createRegistries(unknown)).join(' | ')),
+      "the 'armor'/'armour' spelling trap is named rather than silently ignored");
+    const registered = contentBundle.tags.filter((t) => t.domain === 'grantSource').map((t) => t.id);
+    assert(registered.length === 5 && registered.every((id) => id.startsWith('from:')),
+      `the grant sources are tag rows, not a constant (${registered.join(', ')})`);
+    assert(contentBundle.balance.equipment.startingDeck.sourceOrder.every((id) => registered.includes(id)),
+      'and the shipped order names only registered ones');
+
+    // ROUND TWENTY: the vocabulary was data, but the ids the ENGINE stamped
+    // were still typed at the minting seams. So a rename — the tag row and its
+    // sourceOrder entry moved together, exactly the edit the paragraph above
+    // promises is safe — validated clean and then dealt that source's cards
+    // LAST, because sortBySourceOrder no longer recognised what the seam
+    // stamped. Starseer opened with its class card ahead of its weapon cards.
+    // Two claims, because the fix has two halves: the rename works when the
+    // binding moves with it, and it is REFUSED when it does not.
+    const renamed = (moveBinding) => {
+      const b = JSON.parse(JSON.stringify(contentBundle));
+      for (const t of b.tags) if (t.id === 'from:weapon') t.id = 'from:armament';
+      const deck = b.balance.equipment.startingDeck;
+      deck.sourceOrder = deck.sourceOrder.map((id) => (id === 'from:weapon' ? 'from:armament' : id));
+      if (moveBinding) deck.sources.weapon = 'from:armament';
+      return createRegistries(b);
+    };
+    const halfDone = validateEquipment(renamed(false)).join(' | ');
+    assert(/sources\.weapon names unknown grant source 'from:weapon'/.test(halfDone),
+      `a rename that leaves the binding behind is named, not silently mis-ordered — said ${JSON.stringify(halfDone.slice(0, 200))}`);
+    const whole = renamed(true);
+    eq(validateEquipment(whole).length, 0, 'and a rename that moves the binding with it is clean');
+    const stamped = createRunState({ seed: 3, classId: 'starseer', registries: whole })
+      .deck.map((c) => c.grantSource || null).filter((id) => id !== null);
+    assert(stamped.every((id) => id !== 'from:weapon'),
+      `no seam stamps the old id after the rename — ${JSON.stringify(stamped)}`);
+    const stampedRanks = stamped.map((id) => whole.balance.equipment.startingDeck.sourceOrder.indexOf(id));
+    assert(stampedRanks.every((r, i) => r >= 0 && (i === 0 || r >= stampedRanks[i - 1])),
+      `and the renamed source is still ranked where it was — ${JSON.stringify(stamped)}`);
+
+    // The seam set is closed in both directions: a seam left unbound would
+    // stamp nothing, and a binding for a seam the engine does not have would
+    // never be read. Both are authoring mistakes with no visible symptom.
+    const unbound = JSON.parse(JSON.stringify(contentBundle));
+    delete unbound.balance.equipment.startingDeck.sources.class;
+    assert(/sources\.class must name a grant-source tag/.test(validateEquipment(createRegistries(unbound)).join(' | ')),
+      'an unbound minting seam is named');
+    const invented = JSON.parse(JSON.stringify(contentBundle));
+    invented.balance.equipment.startingDeck.sources.relic = 'from:relic';
+    assert(/unknown seam 'relic'/.test(validateEquipment(createRegistries(invented)).join(' | ')),
+      "a binding for a seam that mints nothing is named — it would never be stamped");
+  });
+
+  // ---- 26s. the fourteenth round: a door that cannot throw ----------------
+  test('26s. malformed content is answered, never thrown at — named first, floored always', () => {
+    const clone = () => JSON.parse(JSON.stringify(contentBundle));
+
+    // FOUR ROUNDS FOUND ONE SHAPE at four addresses: a pass whose whole job is
+    // to ANSWER questions about content, crashing on content instead. Each got
+    // a named rule; the fifth address is how you learn that was not the fix.
+    // Malformed content is infinite and this pass reads hundreds of fields, so
+    // the guarantee cannot rest on having guarded each one. Named rules first —
+    // they say the useful thing — and a floor underneath so the door is
+    // STRUCTURALLY unable to throw.
+
+    // The three this round named, each formerly a crash:
+    const badSource = clone();
+    badSource.tagFamilies.push({ family: 'oops', source: 7, scopeField: '', label: 'X', blurb: '' });
+    badSource.tagFamilyDomains.push({ family: 'oops', domain: 'card' });
+    const sourceSaid = validateContent(badSource).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+    assert(/tagFamilies\.oops\.source: source must be a dotted path string/.test(sourceSaid),
+      `a non-string source is named — said ${JSON.stringify(sourceSaid.slice(0, 160))}`);
+    createRegistries(badSource); // and boot no longer throws before the validator can speak
+
+    const badKeywords = clone();
+    badKeywords.keywords = { a: 1 };
+    const kwResult = validateContent(badKeywords);
+    assert(!kwResult.ok, 'a non-array keywords registry fails');
+    assert(kwResult.errors.some((e) => e.path === 'keywords' && /must be an array/.test(e.msg)),
+      'and is named by path rather than reported as a crash');
+
+    const badGrants = clone();
+    badGrants.balance.equipment.startingDeck.global = { grants: {} };
+    const badGrantsReg = createRegistries(badGrants);
+    assert(validateEquipment(badGrantsReg).some((p) => /global\.grants must be an array/.test(p)),
+      'a non-array global.grants is named');
+    // And the PLANNER reads the shape it needs rather than trusting the door:
+    // tools and fixtures build configs by hand and never pass through it.
+    startingDeckPlan(badGrantsReg, createLoadout(badGrantsReg, 'reaver'), 'reaver');
+
+    // THE FLOOR ITSELF, and the point is that it does not depend on my having
+    // thought of the field. `enemies` as a bare number reaches an unguarded
+    // `for…of` no rule covers — I found it by REMOVING the floor and looking for
+    // something that still threw, which is the only honest way to test a
+    // backstop. With the floor it is a reported problem; without it, a stack.
+    const unforeseen = clone();
+    unforeseen.enemies = 3;
+    const floored = validateContent(unforeseen); // must not throw
+    assert(!floored.ok && floored.errors.length, 'an unforeseen malformation is a problem, not an exception');
+    assert(floored.errors.some((e) => e.path === '<bundle>' || e.path === 'enemies'),
+      'and it is attributed — to the field if a rule names it, to the floor if none does');
+
+    // AND THE FLOOR ADDS RATHER THAN REPLACES. The first version created its
+    // result array in the catch, so a throw partway through DISCARDED every
+    // field-addressed problem found before it: content that correctly reported
+    // `grantedCards[0] must name cardId` came back saying only "cannot read
+    // properties of null". A backstop that erases the answers it stands behind
+    // is worse than none, so the accumulator is created outside the try and the
+    // floor message is appended to it.
+    const partial = clone();
+    const pkgPiece = partial.equipment.armaments.find((p) => p.id === 'straightSword');
+    pkgPiece.weaponCardPackage = {
+      compatibility: 'attack-v1',
+      fillerAttackProfileId: pkgPiece.attackProfile,
+      grantedCards: [null],
+    };
+    const partialSaid = validateEquipment(createRegistries(partial));
+    assert(partialSaid.some((p) => /grantedCards\[0\] must name cardId/.test(p)),
+      `the field-addressed problem survives — said ${JSON.stringify(partialSaid.slice(0, 2))}`);
+    assert(!partialSaid.some((p) => /could not finish reading/.test(p)),
+      'and this particular one no longer reaches the floor at all, because the diagnostic that threw was made safe');
+
+    // The additive property itself, on a bundle that DOES still reach the floor:
+    // a named rule fires early, an unguarded read throws late, and the result
+    // must carry both. This is the assertion that would have caught the erasing
+    // floor; the case above only proves one diagnostic stopped throwing.
+    const bothKinds = clone();
+    bothKinds.tagFamilies.push({ family: 'oops', source: 7, scopeField: '', label: 'X', blurb: '' });
+    bothKinds.tagFamilyDomains.push({ family: 'oops', domain: 'card' });
+    bothKinds.enemies = 3; // throws late, in a sweep no rule covers
+    const both = validateContent(bothKinds);
+    assert(both.errors.some((e) => e.path === 'tagFamilies.oops.source'),
+      'the named rule that fired before the throw is kept');
+    assert(both.errors.some((e) => e.path === '<bundle>'),
+      'and the floor is appended rather than substituted');
+    assert(both.errors.length > 2, `both kinds survive together (${both.errors.length} problems)`);
+
+    // The floor never fires on sound content — it is underneath the rules, not
+    // in front of them.
+    assert(validateContent(contentBundle).ok, 'the shipped bundle still validates clean');
+    assert(!validateContent(contentBundle).errors.some((e) => e.path === '<bundle>'),
+      'and never reports the floor');
+    eq(validateEquipment(REG).length, 0, 'equipment likewise');
+  });
+
+  // ---- 26t. the fifteenth round: absent is not zero, a fourth time --------
+  test('26t. a legacy save recovers its birth quota, and an absent role counts zero', () => {
+    // I MADE THIS MISTAKE INSIDE THE FIX THAT CLOSED IT. Rounds six and seven
+    // were both "a legitimate empty/zero read as absence, so the next source
+    // answered over the author". Round thirteen replaced the Armoury's role
+    // counts with a count of the deck — and merged that count over the legacy
+    // table, so a role the deck does NOT contain fell through to the authored
+    // number. Bias 1 builds eight attacks and no guards; the panel said four.
+    const biased = JSON.parse(JSON.stringify(contentBundle));
+    biased.balance.equipment.startingDeck.classes.reaver = { strikeBias: 1 };
+    const biasedReg = createRegistries(biased);
+    const run = createRunState({ seed: 9, classId: 'reaver', registries: biasedReg });
+    eq(run.deck.filter((c) => c.equipmentRole === 'guard').length, 0, 'this deck really has no guards');
+    const shown = Object.fromEntries(equipmentSurfaceReceipt(biasedReg, run).roles.map((r) => [r.role, r.copies]));
+    eq(shown.guard, 0, 'and the panel says zero rather than the authored four');
+    eq(shown.attack, 8, 'while the attacks it does have are counted');
+    // The deck is the COMPLETE answer when there is one — no merge to fall
+    // through, which is what makes the mistake unwritable here rather than
+    // guarded against.
+
+    // THE LEGACY SAVE. Every reader that falls back to counting a deck did so
+    // into a LOCAL, so a run saved before the field existed stayed `undefined`
+    // on the run itself — and createCombat then carried undefined onto the
+    // synthetic run, where the first mid-fight swap replans. The run's own deck
+    // is the record; the load door repairs it ONCE rather than every reader
+    // re-deriving it, which is the mistake four earlier rounds were about.
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    const fresh = createRunState({ seed: 21, classId: 'reaver', registries: REG });
+    const bornWith = fresh.equipmentAttackSlotCount;
+    assert(Number.isFinite(bornWith) && bornWith > 0, 'a new run records its quota');
+    delete fresh.equipmentAttackSlotCount; // exactly what a pre-field save holds
+    saves.saveRun(fresh, createRng(21));
+    const loaded = saves.loadRun(REG);
+    assert(loaded != null, 'the legacy-shaped save still loads');
+    eq(loaded.equipmentAttackSlotCount, bornWith, 'and its quota is recovered from its own deck');
+    eq(loaded.equipmentAttackSlotCount, loaded.deck.filter((c) => c.equipmentRole === 'attack').length,
+      'which is exactly what the deck holds');
+    // AND THE SNAPSHOT, NOT ONLY THE RUN. A pre-field save with a fight in
+    // progress healed its run and resumed a combat still holding `undefined`:
+    // restoreCombatSnapshot reads `saved.equipmentAttackSlotCount`, and the
+    // migration used the recovered number for its restamp and then dropped it.
+    // Healing the door and leaving the consumer is the half-fix this work keeps
+    // making, so the resolved value is written where the resume looks.
+    const midFight = createRunState({ seed: 31, classId: 'reaver', registries: REG });
+    const midBorn = midFight.equipmentAttackSlotCount;
+    const fight = createCombat({
+      registries: REG,
+      rng: createRng(31),
+      enemyIds: [contentBundle.enemies[0].id],
+      player: {
+        classId: midFight.class, attributes: midFight.attributes, maxHp: midFight.maxHp, hp: midFight.hp,
+        maxMana: midFight.maxMana, mana: midFight.mana, maxStamina: midFight.maxStamina, stamina: midFight.stamina,
+        energyMax: midFight.energyMax, drawPerTurn: midFight.drawPerTurn,
+        damageBySchoolAdd: midFight.damageBySchoolAdd,
+        equipmentProfileRuleSnapshot: midFight.equipmentProfileRuleSnapshot,
+        equipmentAttackSlotCount: midFight.equipmentAttackSlotCount,
+        equipmentPoolDeficits: midFight.equipmentPoolDeficits, itemUpgradeLevels: midFight.itemUpgradeLevels,
+        deck: midFight.deck, relicIds: midFight.relics, flasks: midFight.flasks,
+        flaskCharges: midFight.flaskCharges, loadout: midFight.loadout,
+      },
+    });
+    commitCombatSnapshot({ run: midFight, combat: fight, nodeId: 'n1', encounterId: contentBundle.encounters[0].id });
+    delete midFight.combatEntered.snapshot.equipmentAttackSlotCount; // pre-field shape
+    delete midFight.equipmentAttackSlotCount;
+    const fightSaves = createSaveManager(createMemoryStorage());
+    fightSaves.saveRun(midFight, createRng(31));
+    const resumed = fightSaves.loadRun(REG);
+    assert(resumed != null, 'the mid-fight legacy save loads');
+    eq(resumed.equipmentAttackSlotCount, midBorn, 'the run is healed');
+    // The RESUME is what matters, and it reads the run's number when the
+    // snapshot has none. Healing the snapshot itself would make migration
+    // rewrite a snapshot it already understands — tools/weapon-card-packages
+    // asserts against exactly that, and caught the first version of this fix.
+    eq(resumed.combatEntered.snapshot.equipmentAttackSlotCount, undefined,
+      'the stored snapshot is left byte-identical, not rewritten by the load');
+    const restored = restoreCombatSnapshot({
+      registries: REG,
+      rng: createRng(31),
+      snapshot: resumed.combatEntered.snapshot,
+      fallbackAttackSlotCount: resumed.equipmentAttackSlotCount,
+    });
+    eq(restored.equipmentAttackSlotCount, midBorn,
+      'and the resumed combat still gets the birth quota, from the run that is its authority');
+
+    // Repaired at the door means every downstream reader gets it for free —
+    // combat, the snapshot, and the panel — with no second derivation.
+    stampDeck(REG, loaded);
+    eq(loaded.deck.filter((c) => c.equipmentRole === 'attack').length, bornWith,
+      'so a restamp after loading plans the recovered quota');
+  });
+
+  // ---- 26u. the ruling: the cap is a creation rule, and only that ---------
+  test('26u. the cap governs base cards at creation, and the deck floats with gear after', () => {
+    // THE QUESTION I REFUSED, ANSWERED BY ITS OWNER (2026-09-03). Round nine
+    // said package grants must count against startingDeckSize or birth overruns
+    // it. Round sixteen said counting them is what makes the deck shrink when
+    // the weapon leaves. Both were right about the code; what was missing was a
+    // decision, and the decision is: the cap applies at CHARACTER CREATION and
+    // nowhere else. It governs how many BASE strikes and defends are minted.
+    // Bound cards are dealt first and are never capped, dropped or refused.
+    const packaged = JSON.parse(JSON.stringify(contentBundle));
+    const piece = packaged.equipment.armaments.find((p) => p.id === 'straightSword');
+    piece.weaponCardPackage = {
+      compatibility: 'attack-v1',
+      fillerAttackProfileId: piece.attackProfile,
+      grantedCards: [{ cardId: 'defend', count: 3 }],
+    };
+    const reg = createRegistries(packaged);
+    eq(validateEquipment(reg).length, 0, 'the combination is legal — there is nothing left to gate');
+
+    const cap = contentBundle.balance.startingDeckSize;
+    const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
+    eq(run.deck.length, cap, 'creation lands on the cap');
+    const bound = run.deck.filter((c) => c.equipmentRole === 'granted' || c.equipmentRole === 'weaponArt').length;
+    const base = run.deck.filter((c) => c.equipmentRole === 'attack' || c.equipmentRole === 'guard').length;
+    assert(bound > 0 && base > 0, `the deck is bound cards plus base cards (${bound} + ${base})`);
+
+    // AND THE FLOAT IS THE RULE, NOT A DEFECT. Swapping to gear that lends
+    // fewer cards leaves a smaller deck. This is the exact behaviour round
+    // sixteen reported as a bug and I gated the seam over; it is now what the
+    // game is specified to do, so it is asserted rather than prevented.
+    run.loadout.sets.rightHand[0] = 'dagger';
+    stampDeck(reg, run);
+    assert(run.deck.length < cap,
+      `swapping to gear that lends nothing leaves ${run.deck.length}, below the ${cap}-card creation cap — by design`);
+    eq(run.deck.filter((c) => c.equipmentRole === 'granted').length, 0, 'the sword took its cards with it');
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, run.equipmentAttackSlotCount,
+      'while the attack count the run was born with is untouched — the other half of the SPEC sentence still holds');
+
+    // BOUND CARDS ARE DEALT FIRST, IN THE AUTHORED ORDER. SPEC says so; the code
+    // did the opposite until this was written — startingDeckRefs emits base
+    // cards before it consumes the grants, and reconcileGrantedCards appends
+    // package grants and arts after that again, so starseer opened with four
+    // strikes and three defends and its equipment cards trailed behind. The
+    // spec I wrote and the code I wrote disagreed, and the spec is the ruling.
+    const ordered = createRunState({ seed: 3, classId: 'starseer', registries: REG });
+    const provenance = ordered.deck.map((c) => c.grantSource || null);
+    const firstBase = provenance.indexOf(null);
+    assert(firstBase > 0, 'the deck opens with bound cards, not base cards');
+    assert(provenance.slice(firstBase).every((p) => p === null),
+      `and every base card follows them — ${JSON.stringify(provenance)}`);
+    const boundOrder = provenance.slice(0, firstBase);
+    const authored = contentBundle.balance.equipment.startingDeck.sourceOrder;
+    const ranks = boundOrder.map((p) => authored.indexOf(p));
+    assert(ranks.every((r, i) => i === 0 || r >= ranks[i - 1]),
+      `bound cards follow sourceOrder — ${JSON.stringify(boundOrder)} against ${JSON.stringify(authored)}`);
+    assert(boundOrder.includes('from:weapon') && boundOrder.includes('from:class'),
+      'with more than one source present, so the ordering is actually exercised');
+    // Base cards keep their RELATIVE order: the legacy attack-slot migration
+    // binds attack:0..N-1 by deck position, so reshuffling them would rebind.
+    const baseRoles = ordered.deck.slice(firstBase).map((c) => c.equipmentRole);
+    eq(baseRoles.join(' '), [...baseRoles].sort((a, b) => (a === 'attack' ? -1 : 1) - (b === 'attack' ? -1 : 1)).join(' '),
+      'attacks still precede guards among the base cards');
+
+    // The odd-split winner is authored, not a rounding accident.
+    const guardWins = JSON.parse(JSON.stringify(contentBundle));
+    guardWins.balance.equipment.startingDeck.oddFillerGoesTo = 'guard';
+    guardWins.balance.equipment.startingDeck.classes.starseer = { strikeBias: 0.5 };
+    const starseerDefault = startingDeckPlan(REG, createLoadout(REG, 'starseer'), 'starseer');
+    const guardReg = createRegistries(guardWins);
+    const starseerGuard = startingDeckPlan(guardReg, createLoadout(guardReg, 'starseer'), 'starseer');
+    eq(starseerDefault.filler % 2, 1, 'starseer has an odd number of base cards to split');
+    eq(starseerDefault.attackCount, starseerGuard.attackCount + 1,
+      'the remainder goes to attack by default and to guard when the field says so');
+    assert(!['attack', 'guard'].includes('either'), 'the field is a closed pair');
+    const badOdd = JSON.parse(JSON.stringify(contentBundle));
+    badOdd.balance.equipment.startingDeck.oddFillerGoesTo = 'either';
+    assert(/oddFillerGoesTo must be 'attack' or 'guard'/.test(validateEquipment(createRegistries(badOdd)).join(' | ')),
+      'and anything else is refused by name');
+  });
+
+  // ---- 26v. the owner's second ruling: bound cards ride with their item ----
+  test('26v. an item-owned card arrives with its item, leaves with it, and returns identical — armour included, in combat too', () => {
+    // ONE OWNER MODEL. A weapon package's grants and arts already rode with the
+    // weapon; the `bound` table's cards did not — they were minted as plain
+    // run-owned refs at creation and never looked at again, so they outlived
+    // the piece that promised them and a bound piece picked up mid-run brought
+    // nothing (round nineteen's finding). The owner ruled: if the item is not
+    // equipped, its cards are gone. So all three sources now mint item-owned
+    // instances through one door and one reconcile sweeps them.
+    const b = JSON.parse(JSON.stringify(contentBundle));
+    b.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
+    b.tagging.push({ family: 'armament', scope: '', objectId: 'dagger', tagId: 'bound' });
+    b.tagging.push({ family: 'armour', scope: 'reaver', objectId: 'vigil', tagId: 'bound' });
+    b.equipment = {
+      ...b.equipment,
+      equipmentGrants: [
+        { family: 'armament', scope: '', sourceId: 'straightSword', cards: ['strike', 'strike'] },
+        { family: 'armament', scope: '', sourceId: 'dagger', cards: ['defend'] },
+        { family: 'armour', scope: 'reaver', sourceId: 'vigil', cards: ['defend', 'strike'] },
+      ],
+    };
+    const reg = createRegistries(b);
+    const run = createRunState({ seed: 11, classId: 'reaver', registries: reg });
+    const owned = () => run.deck.filter(isItemOwned).map((c) => c.instanceId).sort();
+    const sword = pieceItemRef(reg.equipment.armaments.find((a) => a.id === 'straightSword'));
+    eq(sword, 'armament/straightSword', 'an owner is written as the namespaced item ref the rest of the model keys on');
+
+    // BORN WITH THEM, numbered, owned, and counted against the cap.
+    const bornOwned = owned();
+    eq(bornOwned.filter((id) => id.startsWith(`bound:${sword}:`)).join('|'),
+      `bound:${sword}:strike:0|bound:${sword}:strike:1`,
+      'two copies of one card are two numbered instances, so the ids are deterministic');
+    assert(run.deck.filter((c) => c.grantedBy === sword).every((c) => c.equipmentRole === 'granted' && c.grantSource === 'from:weapon'),
+      'a bound-table card is a granted instance with its provenance stamped');
+    eq(run.deck.length, contentBundle.balance.startingDeckSize, 'and it counts against the cap like any other bound card');
+
+    // UNEQUIP: gone. Not "still there with a stale sourceId" — gone.
+    run.loadout.sets.rightHand[0] = null;
+    stampDeck(reg, run);
+    eq(owned().filter((id) => id.startsWith(`bound:${sword}:`)).length, 0, "the sword's cards leave with the sword");
+    assert(!run.deck.some((c) => c.cardId === 'strike' && c.grantedBy === sword), 'nothing of it lingers under another role');
+
+    // A BOUND PIECE PICKED UP MID-RUN brings its cards — which never happened
+    // before, because only creation read the table.
+    run.loadout.sets.rightHand[0] = 'dagger';
+    stampDeck(reg, run);
+    eq(owned().filter((id) => id.startsWith('bound:armament/dagger:')).join('|'), 'bound:armament/dagger:defend:0',
+      'equipping a bound piece mid-run deals its cards');
+
+    // RE-EQUIP: back, identical ids, and the sweep is idempotent.
+    run.loadout.sets.rightHand[0] = 'straightSword';
+    stampDeck(reg, run);
+    eq(owned().join('|'), bornOwned.join('|'), 're-equipping restores exactly the instances the run was born with');
+    const again = owned().join('|');
+    stampDeck(reg, run);
+    eq(owned().join('|'), again, 'and a second restamp changes nothing');
+
+    // ARMOUR TOO. The tag is the gate and it does not care what wears it; the
+    // owner ref carries the class, because outfit ids repeat per class.
+    const vigil = reg.equipment.armour.find((o) => o.id === 'vigil' && o.classId === 'reaver');
+    run.loadout.sets.armor[0] = 'vigil';
+    stampDeck(reg, run);
+    eq(owned().filter((id) => id.startsWith(`bound:${pieceItemRef(vigil)}:`)).join('|'),
+      'bound:armor/reaver/vigil:defend:0|bound:armor/reaver/vigil:strike:0',
+      'an outfit lends its cards under a class-scoped owner');
+    assert(run.deck.filter((c) => c.grantedBy === pieceItemRef(vigil)).every((c) => c.grantSource === 'from:armor'),
+      'stamped from the armour seam');
+    run.loadout.sets.armor[0] = 'default';
+    stampDeck(reg, run);
+    eq(owned().filter((id) => id.startsWith('bound:armor/')).length, 0, 'and taking it off takes them back');
+
+    // IN COMBAT the deck is the piles, and the same sweep runs on them: a
+    // stale bound card in HAND leaves, a wanted one already in DRAW stays put,
+    // the missing one lands in the discard pile like any mid-fight addition.
+    const piles = {
+      hand: [{ instanceId: 'bound:armament/dagger:defend:0', cardId: 'defend', equipmentRole: 'granted', grantedBy: 'armament/dagger' }],
+      draw: [{ instanceId: 'x', cardId: 'strike' }, { instanceId: `bound:${sword}:strike:0`, cardId: 'strike', equipmentRole: 'granted', grantedBy: sword }],
+      discard: [], exhaust: [],
+    };
+    reconcileGrantedCardsInCombat(reg, run, piles);
+    eq(piles.hand.length, 0, 'the unequipped dagger takes its card out of the hand');
+    eq(piles.draw.map((c) => c.instanceId).join('|'), `x|bound:${sword}:strike:0`, 'a present wanted card stays where it is');
+    assert(piles.discard.some((c) => c.instanceId === `bound:${sword}:strike:1`), 'the missing copy lands in the discard pile');
+
+    // THE PLAN COUNTS THEM THROUGH THE SAME DOOR, so they are neither dealt
+    // twice nor counted twice: `grants` is the deal-out list, `packageCards`
+    // is what the reconcile mints.
+    const plan = startingDeckPlan(reg, createLoadout(reg, 'reaver'), 'reaver');
+    assert(!plan.grants.some((g) => g.grantSource === undefined && g.sourceId), 'no bound-table ref rides in the deal-out list');
+    assert(plan.packageCards >= 2, `the sword's two cards are counted where the package cards are (${plan.packageCards})`);
+  });
+
+  // ---- 26w. the owner's third ruling: a smith moves cards between an item and the run ----
+  test('26w. extract lifts a card out of a mount and the mount shows its fallback; install seats one back — priced, saved, and never a strike', () => {
+    // A MOUNT is where an item's card sits. What a smith did to it is
+    // `run.itemMounts`; the composer reads that through one door, so an
+    // extracted art is gone from the sword on every restamp and the mount
+    // shows the Dodge Roll (the owner's fallback) until something is seated.
+    const fixture = (tweak = () => {}) => {
+      const b = JSON.parse(JSON.stringify(contentBundle));
+      b.equipment.armaments = b.equipment.armaments.map((piece) => (piece.id === 'straightSword'
+        ? { ...piece, weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack', grantedCards: [{ cardId: 'quickstep', count: 1 }], weaponArtDefaults: ['crimsonCleave'] } }
+        : piece));
+      b.tagging.push({ family: 'card', scope: '', objectId: 'crimsonCleave', tagId: 'extractable' });
+      b.tagging.push({ family: 'card', scope: '', objectId: 'quickstep', tagId: 'extractable' });
+      b.scripts = contentBundle.scripts; // functions do not survive JSON, and the door checks script references
+      tweak(b);
+      return b;
+    };
+    const reg = createRegistries(fixture());
+    const run = createRunState({ seed: 21, classId: 'reaver', registries: reg });
+    const sword = 'armament/straightSword';
+    const artKey = mountKeyOf.weaponArt('straightSword', 'crimsonCleave');
+    const grantKey = mountKeyOf.granted('straightSword', 'quickstep', 0);
+    const byId = (id) => run.deck.find((c) => c.instanceId === id) || null;
+    const dodge = reg.equipment.basicCardProfiles.find((p) => p.id === contentBundle.balance.equipment.unarmedProfiles.technique).baseCardId;
+
+    // THE PLAN NAMES EXACTLY THE EXTRACTABLE MOUNTS. Two on the sword — its art
+    // and its granted Quickstep, both tagged — and none of the run's strikes,
+    // which carry no such tag today. That tag is the whole rule.
+    const plan = extractionPlan(reg, run);
+    eq(plan.candidates.map((c) => c.itemRef).join('|'), sword, 'only the sword lends anything extractable');
+    eq(plan.candidates[0].mounts.map((m) => m.mountKey).sort().join('|'), [artKey, grantKey].sort().join('|'),
+      'both of its tagged mounts, and nothing else');
+    eq(plan.cost, 0, 'free, by the owner\'s word — and configurable, see below');
+    assert(!run.deck.some((c) => c.equipmentRole === 'attack' && reg.cards.get(c.cardId).tags.includes('extractable')),
+      'no strike carries the tag, so no strike is on offer');
+
+    // EXTRACT THE ART. The item-owned instance leaves; a run-owned copy
+    // arrives; the mount keeps its KEY and shows the Dodge Roll.
+    const receipt = commitExtraction(reg, run, sword, artKey);
+    eq(receipt.service, 'extract');
+    eq(receipt.cardId, 'crimsonCleave');
+    eq(receipt.fallbackCardId, dodge, 'the receipt says what the emptied mount now shows');
+    const extracted = byId(receipt.instanceId);
+    assert(extracted && !isItemOwned(extracted) && extracted.cardId === 'crimsonCleave', 'the run owns a Crimson Cleave now');
+    eq(ownerItemRef(extracted), null, 'and no item owns it');
+    const mountNow = byId(artKey);
+    assert(mountNow && mountNow.cardId === dodge && isItemOwned(mountNow), `the art mount shows the fallback under the same key (${mountNow && mountNow.cardId})`);
+    eq(run.deck.filter((c) => c.cardId === dodge).length, 1, 'one Dodge Roll, not one per hand');
+    eq(run.itemMounts[sword][artKey].card, null, 'the run records the mount as emptied');
+    eq(run.itemMounts[sword][artKey].extractions, 1, 'and counts the extraction');
+
+    // UNEQUIP: the fallback leaves with the sword; the extracted card stays.
+    run.loadout.sets.rightHand[0] = null;
+    stampDeck(reg, run);
+    eq(byId(artKey), null, 'the emptied mount leaves with its item');
+    assert(byId(receipt.instanceId), 'what was extracted is the run\'s and stays');
+    // The carried sword is still on the plan — a smith works on what you
+    // carry, not only what you wear (the Smith upgrade grid learned this in #528).
+    run.loadout.storage = [...(run.loadout.storage || []), 'straightSword'];
+    const carried = extractionPlan(reg, run).candidates.find((c) => c.itemRef === sword);
+    assert(carried && carried.equipped === false && carried.mounts.some((m) => m.mountKey === grantKey),
+      'a carried, unequipped sword still offers its granted Quickstep');
+    run.loadout.storage = run.loadout.storage.filter((id) => id !== 'straightSword');
+    run.loadout.sets.rightHand[0] = 'straightSword';
+    stampDeck(reg, run);
+    assert(byId(artKey) && byId(artKey).cardId === dodge, 're-equipping brings the fallback back');
+
+    // INSTALL IT BACK. The run-owned instance leaves the deck; the mount
+    // holds Crimson Cleave again under the same key.
+    const open = installPlan(reg, run);
+    const target = open.candidates.find((c) => c.itemRef === sword);
+    assert(target && target.mounts.some((m) => m.mountKey === artKey && m.state === 'fallback'), 'the emptied mount is open for install');
+    assert(target.mounts.find((m) => m.mountKey === artKey).cards.some((c) => c.instanceId === receipt.instanceId),
+      'and the extracted Crimson Cleave is a card it would take');
+    const seated = commitInstall(reg, run, sword, artKey, receipt.instanceId);
+    eq(seated.service, 'install');
+    eq(seated.replacedFallbackCardId, dodge, 'the receipt names the fallback it displaced');
+    eq(byId(receipt.instanceId), null, 'the run-owned copy is gone');
+    assert(byId(artKey) && byId(artKey).cardId === 'crimsonCleave' && isItemOwned(byId(artKey)), 'the sword owns its art again');
+    eq(run.itemMounts[sword][artKey].card, 'crimsonCleave');
+
+    // A DIFFERENT CARD IN THE SAME MOUNT: extract the art, extract the
+    // Quickstep, seat the Quickstep where the art was.
+    commitExtraction(reg, run, sword, artKey);
+    const quick = commitExtraction(reg, run, sword, grantKey);
+    commitInstall(reg, run, sword, artKey, quick.instanceId);
+    assert(byId(artKey) && byId(artKey).cardId === 'quickstep', 'the art mount now holds a Quickstep');
+    eq(byId(grantKey), null, 'the granted mount is empty and shows nothing — its kind has no fallback');
+    eq(mountRows(reg, run, { itemRef: sword, piece: reg.equipment.armaments.find((a) => a.id === 'straightSword') })
+      .find((m) => m.mountKey === grantKey).state, 'empty');
+
+    // SAVED AND LOADED, whole. The mounts, the counter, the receipt.
+    const loaded = deserializeRun(serializeRun(run));
+    eq(validateRunShape(loaded).length, 0, 'the run shape validates with mounts recorded');
+    eq(JSON.stringify(loaded.itemMounts), JSON.stringify(run.itemMounts), 'mounts survive a save');
+    eq(loaded.mountTransactions, run.mountTransactions);
+    stampDeck(reg, loaded);
+    eq(loaded.deck.map((c) => `${c.instanceId}=${c.cardId}`).sort().join('|'), run.deck.map((c) => `${c.instanceId}=${c.cardId}`).sort().join('|'),
+      'and a restamp after load composes the same deck');
+
+    // PRICED, when balance says so. Three Stones, purse empty: refused by
+    // name; `free` (an event granting the service) goes through.
+    const pricedReg = createRegistries(fixture((b) => { b.balance.smithing.services.extract.cost = 3; }));
+    const poor = createRunState({ seed: 21, classId: 'reaver', registries: pricedReg });
+    const pricedPlan = extractionPlan(pricedReg, poor);
+    eq(pricedPlan.cost, 3);
+    assert(pricedPlan.candidates[0].affordable === false && pricedPlan.candidates[0].shortfall === 3, 'the plan says what is short');
+    let said = '';
+    try { commitExtraction(pricedReg, poor, sword, artKey); } catch (e) { said = e.message; }
+    assert(/Insufficient Smithing Stones \(shortfall 3\)/.test(said), `refused by name — ${said}`);
+    poor.smithingStones = 3;
+    const paid = commitExtraction(pricedReg, poor, sword, artKey);
+    eq(paid.spent, 3);
+    eq(poor.smithingStones, 0, 'the purse paid');
+
+    // EXTRA MOUNTS behind the flag (the rune seam). Off: no open mount. On:
+    // one open mount per item, seated and emptied under a `mount:` key.
+    assert(!installPlan(reg, run).candidates.some((c) => c.mounts.some((m) => m.state === 'open')), 'the flag is off, so nothing is open');
+    const runeReg = createRegistries(fixture((b) => { b.balance.equipment.cardMounts.extraMounts = { enabled: true, perItem: 1, kind: 'granted' }; }));
+    const runeRun = createRunState({ seed: 21, classId: 'reaver', registries: runeReg });
+    const lifted = commitExtraction(runeReg, runeRun, sword, grantKey);
+    const extraKey = mountKeyOf.extra(sword, 0);
+    const openMount = installPlan(runeReg, runeRun).candidates.find((c) => c.itemRef === sword).mounts.find((m) => m.mountKey === extraKey);
+    assert(openMount && openMount.state === 'open' && openMount.extra, 'the flag opens one extra mount on the sword');
+    commitInstall(runeReg, runeRun, sword, extraKey, lifted.instanceId);
+    const extraInst = runeRun.deck.find((c) => c.instanceId === extraKey);
+    assert(extraInst && extraInst.cardId === 'quickstep' && extraInst.equipmentRole === 'granted' && ownerItemRef(extraInst) === sword,
+      'the extra mount is an item-owned granted instance');
+    assert(!installPlan(runeReg, runeRun).candidates.some((c) => c.itemRef === sword && c.mounts.some((m) => m.mountKey === extraKey)),
+      'and with perItem 1 there is no second one');
+    commitExtraction(runeReg, runeRun, sword, extraKey);
+    assert(!(runeRun.itemMounts[sword] || {})[extraKey], 'emptying an extra mount deletes it, which is what makes it open again');
+
+    // WHO OFFERS WHAT is a table. The Shrine promises (no roll consumed); the
+    // merchant rolls on the smith's own stream; an unnamed kind offers nothing.
+    const draws = [];
+    const rng = { chance: (stream, pct) => { draws.push(`${stream}:${pct}`); return true; } };
+    eq(smithServicesAt(reg, 'shrine', rng).services.join('|'), 'upgrade|extract|install');
+    eq(draws.length, 0, 'a promise consumes no roll');
+    const merchant = smithServicesAt(reg, 'merchant', rng);
+    eq(draws.join('|'), 'smith:25', 'the merchant rolls once, on the smith stream, at the authored chance');
+    assert(merchant.offered && merchant.rolled, 'and this visit keeps a smith');
+    eq(smithServicesAt(reg, 'monster', rng).offered, false);
+
+    // THE DOOR REFUSES BY NAME: an extractable tag nobody registered, a
+    // fallback profile balance does not author, a chance over 100, a service
+    // the smith does not do.
+    const refused = (tweak) => { const v = validateContent(fixture(tweak)); return v.ok ? '' : v.errors.map((e) => `${e.path}: ${e.msg}`).join(' | '); };
+    assert(/cardMounts\.extractableTag: names unknown tag 'liftable'/.test(refused((b) => { b.balance.equipment.cardMounts.extractableTag = 'liftable'; })), 'unknown extractable tag');
+    assert(/kinds\.weaponArt\.fallback: names unarmed profile role 'stance'/.test(refused((b) => { b.balance.equipment.cardMounts.kinds.weaponArt.fallback = { unarmedProfile: 'stance' }; })), 'unauthored fallback profile');
+    assert(/offeredAt\.merchant\.chance must be 0\.\.100/.test(refused((b) => { b.balance.smithing.services.offeredAt.merchant.chance = 150; })), 'chance over 100');
+    assert(/names unknown service 'reforge'/.test(refused((b) => { b.balance.smithing.services.offeredAt.shrine.services.push('reforge'); })), 'unknown service');
+    eq(refused(), '', 'and the fixture itself is clean');
+  });
+
+  // ---- 26x. the mounts travel: through the swap door and the save door ----
+  test('26x. an extracted art stays extracted through a mid-fight swap and a saved fight', () => {
+    // Both doors build a synthetic run with no deck; both used to build it
+    // with no mounts. Driven end to end here — the real dispatch, the real
+    // save manager — rather than by calling the reconcile with a hand-made
+    // run, because that is exactly the kind of proof that let the birth
+    // quota go undelivered for four rounds.
+    const b = JSON.parse(JSON.stringify(contentBundle));
+    b.equipment.armaments = b.equipment.armaments.map((piece) => (piece.id === 'straightSword'
+      ? { ...piece, weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: 'bladeAttack', weaponArtDefaults: ['crimsonCleave'] } }
+      : piece));
+    b.tagging.push({ family: 'card', scope: '', objectId: 'crimsonCleave', tagId: 'extractable' });
+    b.scripts = contentBundle.scripts;
+    const reg = createRegistries(b);
+    const run = createRunState({ seed: 23, classId: 'reaver', registries: reg });
+    const sword = 'armament/straightSword';
+    const artKey = mountKeyOf.weaponArt('straightSword', 'crimsonCleave');
+    const dodge = reg.equipment.basicCardProfiles.find((p) => p.id === contentBundle.balance.equipment.unarmedProfiles.technique).baseCardId;
+    run.loadout.sets.rightHand[1] = 'dagger'; // a second set to swap to, mid-fight
+    stampDeck(reg, run);
+    const lifted = commitExtraction(reg, run, sword, artKey);
+    const cleaves = (cards) => cards.filter((c) => c && c.cardId === 'crimsonCleave');
+    const allPiles = (combat) => [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust].flat();
+
+    const player = () => ({
+      classId: run.class, attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
+      maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
+      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, damageBySchoolAdd: run.damageBySchoolAdd,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+      equipmentAttackSlotCount: run.equipmentAttackSlotCount,
+      equipmentPoolDeficits: run.equipmentPoolDeficits, itemUpgradeLevels: run.itemUpgradeLevels,
+      itemMounts: run.itemMounts,
+      deck: run.deck, relicIds: run.relics, flasks: run.flasks, flaskCharges: run.flaskCharges,
+      loadout: run.loadout,
+    });
+    const combat = createCombat({ registries: reg, rng: createRng(23), enemyIds: [contentBundle.enemies[0].id], player: player() });
+    eq(JSON.stringify(combat.itemMounts), JSON.stringify(run.itemMounts), 'combat carries the mounts, like the quota beside them');
+    eq(cleaves(allPiles(combat)).length, 1, 'the fight opens with one Crimson Cleave — the run\'s own');
+
+    // SWAP TO THE DAGGER AND BACK. The sword's art mount comes back as the
+    // Dodge Roll, not as a second Crimson Cleave.
+    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+    eq(cleaves(allPiles(combat)).length, 1, 'swapping the sword out leaves the extracted card where it is');
+    assert(!allPiles(combat).some((c) => c.instanceId === artKey), 'and the sword\'s mount left with the sword');
+    combat.player.energy = combat.player.energyMax; // the swap is priced; pay for the second one
+    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 0 });
+    const mountBack = allPiles(combat).find((c) => c.instanceId === artKey);
+    assert(mountBack && mountBack.cardId === dodge, `swapping the sword back seats the fallback in its mount, not the extracted art (${mountBack && mountBack.cardId})`);
+    eq(cleaves(allPiles(combat)).length, 1, 'still exactly one Crimson Cleave, and it is the run\'s');
+    eq(cleaves(allPiles(combat))[0].instanceId, lifted.instanceId);
+
+    // SAVE THE FIGHT, LOAD IT. The migration door rebuilds its own synthetic
+    // run; with the mounts on the snapshot the loaded piles say the same.
+    run.combatEntered = { nodeId: 'n1', encounterId: 'e1', snapshot: serializeCombatSnapshot(combat) };
+    assert(run.combatEntered.snapshot.itemMounts && run.combatEntered.snapshot.itemMounts[sword], 'the snapshot carries the mounts');
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    storage.setItem(RUN_KEY, serializeRun(run));
+    const loaded = saves.loadRun(reg);
+    assert(loaded, `the save loads — ${saves.runStatus().reason || ''}`);
+    const loadedPiles = ['hand', 'draw', 'discard', 'exhaust'].flatMap((p) => loaded.combatEntered.snapshot.piles[p]);
+    eq(cleaves(loadedPiles).length, 1, 'one Crimson Cleave after the load');
+    const loadedMount = loadedPiles.find((c) => c.instanceId === artKey);
+    assert(loadedMount && loadedMount.cardId === dodge, 'the mount still shows the Dodge Roll in the resumed fight');
+    eq(JSON.stringify(loaded.itemMounts), JSON.stringify(run.itemMounts), 'and the run\'s record of the mounts came through whole');
+
+    // A FIGHT SAVED BEFORE MOUNTS EXISTED reads the run's record at the door,
+    // and the door does not write it back into the stored snapshot.
+    const legacy = JSON.parse(serializeRun(run));
+    delete legacy.combatEntered.snapshot.itemMounts;
+    const storage2 = createMemoryStorage();
+    const saves2 = createSaveManager(storage2);
+    storage2.setItem(RUN_KEY, JSON.stringify(legacy));
+    const loaded2 = saves2.loadRun(reg);
+    assert(loaded2, `the legacy fight loads — ${saves2.runStatus().reason || ''}`);
+    const legacyPiles = ['hand', 'draw', 'discard', 'exhaust'].flatMap((p) => loaded2.combatEntered.snapshot.piles[p]);
+    assert(legacyPiles.find((c) => c.instanceId === artKey)?.cardId === dodge, 'the run\'s mounts stand in for the snapshot\'s');
+    eq(loaded2.combatEntered.snapshot.itemMounts, undefined, 'and the snapshot is not rewritten to carry them');
   });
 
   // ---- 27. armaments + armour sets (CSV-authored) --------------------------
@@ -1939,7 +3454,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(/^[0-9A-Fa-f]{6}$/.test(w.metal), `${w.id}: metal is a 6-digit hex`);
       assert(/^[0-9A-Fa-f]{6}$/.test(w.accent), `${w.id}: accent is a 6-digit hex`);
       assert(String(w.geom).length > 0, `${w.id}: names a geometry archetype`);
-      checkItemTypes(w.tags, w.id);
+      checkItemTypes(tagIdsOf('armament', w), w.id);
       checkMods(w.mods, w.id);
       eq(w.hand, 'either', `${w.id}: every armament is side-neutral; its slot records the equipped hand`);
     }
@@ -1951,7 +3466,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       eq(mine.filter((o) => o.unlock === '').length, 1, `class '${id}' has exactly one starting set`);
     }
     for (const o of outfits) {
-      checkItemTypes(o.tags, o.id);
+      checkItemTypes(tagIdsOf('armour', o), `${o.classId}/${o.id}`);
       checkMods(o.mods, o.id);
     }
   });
@@ -2139,7 +3654,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     };
     const probe = {
       id: 'poolProbe', name: 'Pool Probe', kind: 'weapon', hand: 'right', rarity: 'rare',
-      tags: [], itemTypeTags: [], mods: ['self.maxHp=+10', 'self.maxMana=+1', 'self.maxStamina=+1'], unlock: '', dropWeight: 1,
+      mods: ['self.maxHp=+10', 'self.maxMana=+1', 'self.maxStamina=+1'], unlock: '', dropWeight: 1,
       ...TEST_ARMAMENT_INTRINSICS,
     };
     const POOL_REG = {
@@ -2322,7 +3837,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         ...REG.equipment,
         armaments: [...REG.equipment.armaments,
           { id: 'testCharm', name: 'Heavy Charm', kind: 'weapon', hand: 'right', rarity: 'common',
-            tags: [], itemTypeTags: [], mods: ['self.swapCost=+2'], unlock: '', ...TEST_ARMAMENT_INTRINSICS }],
+            mods: ['self.swapCost=+2'], unlock: '', ...TEST_ARMAMENT_INTRINSICS }],
       },
     };
     const charmRun = createRunState({ seed: 5, classId: 'reaver', registries: REG });
@@ -2491,7 +4006,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
           ...REG.equipment,
           modFields: { ...REG.equipment.modFields, probe: { field: 'probe', scope: 'run', apply, status: 'strength' } },
           armaments: [...REG.equipment.armaments,
-            { id: 'probePiece', name: 'Probe', kind: 'weapon', hand: 'right', rarity: 'common', tags: [], itemTypeTags: [], mods: ['self.probe=+3'], unlock: '', ...TEST_ARMAMENT_INTRINSICS }],
+            { id: 'probePiece', name: 'Probe', kind: 'weapon', hand: 'right', rarity: 'common', mods: ['self.probe=+3'], unlock: '', ...TEST_ARMAMENT_INTRINSICS }],
         },
       };
       const lo = createLoadout(reg, 'reaver');
@@ -5434,15 +6949,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const html = hudQuickSettingsHtml(model);
     assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
     assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
-    assert(/data-card-background="true"/.test(html), 'the compact card presentation reaches the shared renderer');
-    assert(/--hud-quick-card-size:40px/.test(html)
-      && /--hud-quick-glyph-size:28px/.test(html) && /--hud-quick-state-dot:6px/.test(html)
-      && /--hud-quick-active-tint:14%/.test(html),
-      'the data-owned compact visual sizes reach CSS without a second renderer');
-    assert(/hud-fullscreen-enter/.test(html) && /hud-fullscreen-exit/.test(html),
-      'Fullscreen renders the conventional enter and exit action icons');
-    assert(/♫/.test(html) && /&#x0338;/.test(html),
-      'Music renders the authored on and slashed-off symbols');
+    // THE KIT SWEEP (2026-09-04): the two controls are kit IconButtons, the
+    // same box as Armoury, the menu and every door's close — one class, one
+    // size, one inset — so the compact-card tokens the old renderer inlined
+    // (`--hud-quick-card-size` and friends) no longer reach the DOM.
+    assert((html.match(/class="as-iconbtn modal-iconbtn hud-quick-setting/g) || []).length === 2,
+      'Fullscreen and Music are two kit IconButtons');
+    assert(/data-hud-quick-action="fullscreen"[^>]*>⛶</.test(html),
+      'Fullscreen renders the kit fullscreen glyph');
+    assert(/data-hud-quick-action="music"[^>]*>♫</.test(html),
+      'Music renders the kit music glyph');
 
     const audibleMusic = musicQuickSettingsPlan({});
     eq(audibleMusic.active, true, 'Music is enabled by default');
@@ -5763,8 +7279,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const sword = rows.find((row) => row.id === 'straightSword');
     const shield = rows.find((row) => row.id === 'roundShield');
     const armour = rows.find((row) => row.category === 'Armour');
-    assert(sword.equippedLabels.includes('Right Hand'), 'the sword reports its equipped hand');
-    assert(shield.equippedLabels.includes('Left Hand'), 'the shield reports its equipped hand');
+    // THE LABEL IS CONTENT, and this row asserts the value content currently
+    // holds: equipSlots.csv renamed Right/Left Hand to Main/Off Hand, so these
+    // strings moved with it. What did NOT move is what the assertion is really
+    // about — that the slot, not the armament, records which hand holds it
+    // (test 1944: every armament is side-neutral).
+    assert(sword.equippedLabels.includes('Main Hand'), 'the sword reports its equipped hand');
+    assert(shield.equippedLabels.includes('Off Hand'), 'the shield reports its equipped hand');
     assert(armour.equippedLabels.includes('Armour'), 'the worn set reports its equipped slot');
     assert(rows.find((row) => row.category === 'Relic').equippedLabels.includes('Equipped'), 'held relics are active equipment');
 
@@ -5999,8 +7520,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(cards.map((card) => card.key).join(','), REG.attributes.ids().map((id) => `attribute:${id}`).join(','),
       'stable attribute ids drive every card key');
     const constitution = cards.find((card) => card.id === 'constitution');
-    eq(constitution.face.summary, 'What your body takes before the climb ends.',
-      'the folded summary is derived from the authored description');
+    // THE FACE SAYS WHAT A POINT BUYS (Constantine, 2026-09-04: "stats show
+    // flavor text instead of useful information"). Still derived, never copied
+    // prose — from `derivedStatRules`, the run's own derivation — and each
+    // fact carries its own cadence because they differ. The authored sentence
+    // is still there, as the fold's flavour.
+    eq(constitution.face.summary, '+2 HP per pt · +1 Stamina per 5 pts',
+      'the face summary is derived from the rules that read the attribute');
+    eq(constitution.reveal.flavour, 'What your body takes before the climb ends.',
+      'the authored description is still derived, as the fold\'s flavour');
     assert(constitution.reveal.lines.some((line) => /^HP \+2 every 1 point$/.test(line))
       && constitution.reveal.lines.some((line) => /^Stamina \+1 every 5 points$/.test(line)),
     'multiple mechanical benefits are projected as separate bullets');

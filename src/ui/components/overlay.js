@@ -5,6 +5,7 @@
 // in combat; combat is turn-based, so it needs no real "pause". Esc / the ✕ /
 // clicking the veil closes it.
 
+import { blocker } from '../kit/index.js';
 import { renderSettings } from '../screens/settings.js';
 import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
@@ -164,7 +165,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
       console.error(`[ui] menu tab ${JSON.stringify(id)} is declared in MENU_TABS`
         + ' and has no panel in PANELS (src/ui/components/overlay.js) \u2014 the tab is'
         + ' the declaration, the panel is the handler, and one of them is missing.');
-      body.innerHTML = `<div class="ov-dead">The <b>${esc(id)}</b> tab is declared and has no panel.</div>`;
+      body.replaceChildren(blocker(`The ${id} tab is declared and has no panel.`, { attrs: { class: 'ov-dead' } }));
       return;
     }
     panel(body, ctx);

@@ -26,7 +26,8 @@ import { startingKits } from './generated/startingKits.js';
 import { equipmentRequirements } from './generated/equipmentRequirements.js';
 import { itemUpgradeChanges } from './generated/itemUpgradeChanges.js';
 import { cardEquipmentExceptions } from './generated/cardEquipmentExceptions.js';
-import { cardTagging } from './generated/cardTagging.js';
+import { equipmentGrants } from './generated/equipmentGrants.js';
+import { TAGGING } from './tags.js';
 import { armouryUi } from './generated/armouryUi.js';
 
 /** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
@@ -51,19 +52,15 @@ function normPiece(row) {
   const attributes = Object.fromEntries(equipmentRequirements
     .filter((requirement) => requirement.itemId === row.id)
     .map((requirement) => [requirement.attributeId, requirement.minimum]));
-  const entityTags = list(row.tags);
-  const itemTypeTags = entityTags.filter((tag) => itemTypeLabel(tag));
-  if (!itemTypeTags.length) throw new Error(`Equipment '${row.id}' must declare at least one item:* type tag`);
+  // TAGS ARE NOT HERE. They are rows in content/source/tagging.csv, and
+  // model/registries.js stamps `entityTags`, `itemTypeTags`, `itemTypes` and
+  // the gameplay `tags` set onto the piece at boot — the same four fields this
+  // function used to build, from the same authored words, one table later. The
+  // split is unchanged: `tags` stays the familiar gameplay/presentation set and
+  // an item card still never infers its type from `kind` or a UI call site.
   return {
     ...row,
     artKey: row.artKey || row.id,
-    // Gameplay/presentation characteristics remain the familiar `tags` set;
-    // the complete authored entity vocabulary is retained separately so item
-    // cards never infer type from `kind` or a UI call site.
-    entityTags,
-    itemTypeTags,
-    itemTypes: itemTypeTags.map((tag) => ({ tag, label: itemTypeLabel(tag) })),
-    tags: entityTags.filter((tag) => !itemTypeLabel(tag)),
     mods: list(row.mods),
     ...(Object.keys(attributes).length ? { requirements: { attributes } } : {}),
   };
@@ -134,7 +131,6 @@ export const CARD_TARGETS = [...new Set(equipTargets.map((t) => t.target))];
 /** Equipment-bound core card profiles, authored once and selected by role. */
 export const BASIC_CARD_PROFILES = basicCardProfiles.map((row) => ({
   ...row,
-  tags: list(row.tags),
   mods: list(row.mods),
 }));
 
@@ -153,8 +149,24 @@ export const ITEM_UPGRADE_CHANGES = itemUpgradeChanges.map((row) => ({ ...row })
 /** Registered exceptional card→weapon bonds; ordinary fit is class/tag based. */
 export const CARD_EQUIPMENT_EXCEPTIONS = cardEquipmentExceptions.map((row) => ({ ...row }));
 
-/** Raw authored card tag ids, carried into registries for compatibility checks. */
-export const CARD_EQUIPMENT_TAGGING = cardTagging.map((row) => ({ ...row, tags: list(row.tags) }));
+/**
+ * Raw authored card tag ids, carried into registries for compatibility checks.
+ * The card slice of the one association table (content/source/tagging.csv),
+ * folded back to one row per card because that is the shape equipment fit reads.
+ */
+export const CARD_EQUIPMENT_TAGGING = (() => {
+  const byCard = new Map();
+  for (const row of TAGGING) {
+    if (row.family !== 'card') continue;
+    const tags = byCard.get(row.objectId);
+    if (tags) tags.push(row.tagId);
+    else byCard.set(row.objectId, [row.tagId]);
+  }
+  return [...byCard].map(([cardId, tags]) => ({ cardId, tags }));
+})();
+
+/** The payload half of the `bound` tag: cards a piece carries with it. */
+export const EQUIPMENT_GRANTS = equipmentGrants.map((row) => ({ ...row, scope: row.scope || '', cards: list(row.cards) }));
 
 /** Armoury-only presentation choices authored in JSON. */
 export const ARMOURY_UI = { ...armouryUi };

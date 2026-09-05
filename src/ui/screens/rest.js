@@ -18,7 +18,7 @@
 // characteristics; this screen names its actions.
 
 import { shrineHealAmount } from '../../engine/encounters.js';
-import { levelUpPlan, applyLevelUp } from '../../model/levelup.js';
+import { levelUpPlan, applyLevelUp, levelUpBudget } from '../../model/levelup.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { passiveFlag } from '../../model/registries.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
@@ -31,7 +31,14 @@ import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
+import { mountServiceOffer, openMountService, mountReceiptLine } from './smithServices.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
+// THE FOLDS' INSIDES ARE THE KIT'S (2026-09-04, the sweep): a flask row is a
+// kit Row — the flask's identity as its LabelStack, a −/count/+ Stepper of
+// tap-floor buttons trailing — the total is StatusText, the cinder preview
+// a KitLine with a StatPair and a delta. The `.flask-*` / `.level-cinder-*`
+// names stay on the kit elements because tools/flaskbox.mjs reads them.
+import { el, html, row, stepper, statusText, subtitle, statPair } from '../kit/index.js';
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
   const parsed = Number(value);
@@ -80,11 +87,11 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, services, ...extra,
   });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
@@ -94,7 +101,13 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // player does not carry.
   const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
   const smith = smithingPlan(registries, run);
-  const canInspectSmithing = smith.candidates.length > 0;
+  // WHICH SERVICES THIS SMITH OFFERS is the table in balance.smithing.services,
+  // resolved at the door (main.js) and handed in; a screen mounted without it
+  // — a fixture, an older caller — keeps the Shrine it always had.
+  const offered = services && Array.isArray(services.services) ? services.services : ['upgrade'];
+  const canInspectSmithing = offered.includes('upgrade') && smith.candidates.length > 0;
+  const extract = offered.includes('extract') ? mountServiceOffer(registries, run, 'extract') : null;
+  const install = offered.includes('install') ? mountServiceOffer(registries, run, 'install') : null;
   const arm = beatArmer(meta, registries);
   // `hpCharge` / `manaCharge` are GONE, and their absence is the point: this
   // screen no longer names a charge kind at all. It used to reach for exactly
@@ -112,6 +125,9 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // pricing, caps, persistence, and pool reconciliation; the screen only fixes
   // the size of this one interaction.
   const level = levelUpPlan(registries, run, { pointsPerLevel: 1 });
+  // How many levels IN A ROW the purse covers — the card offers them all at
+  // once and commits them one ladder step at a time (model/levelup.js).
+  const budget = levelUpBudget(registries, run);
   const shrinePresentation = registries.balance?.ui?.shrinePresentation || {};
   const authoredShrineLayout = shrinePresentation.optionLayout;
   const shrineLayout = authoredShrineLayout === 'grid' ? 'grid' : 'list';
@@ -120,10 +136,39 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   const foldedCardHeightViewportPct = boundedNumber(shrinePresentation.foldedCardHeightViewportPct, 10, 6, 18);
   const foldedCardMaxHeightRem = boundedNumber(shrinePresentation.foldedCardMaxHeightRem, 7, 4, 12);
 
+  // THE FLASK ROWS. One kit Row per charge kind: identity left, the stepper
+  // trailing. THE STEPPER IS ONE UNIT AND WRAPS AS ONE — on a narrow shape the
+  // whole group drops under the name (the Row's `setting` variant wraps)
+  // instead of the `+` walking off the right edge (measured 390x844 before:
+  // 2 controls outside the viewport). Every button is `aria-disabled`, never
+  // `disabled`: a disabled button fires no pointer events, so its tooltip
+  // could never say why it will not move.
+  const flaskRowsHtml = html(charge.rows.map((flaskRow) => {
+    const name = (flaskRow.def && flaskRow.def.name) || flaskRow.kind;
+    return row({
+      tag: 'div', setting: true, className: 'flask-increment-row', attrs: { dataset: { kind: flaskRow.kind } },
+      labelNode: el('span', { class: 'as-labelstack flask-increment-id', html: flaskIdentityHtml(flaskRow.def) }),
+      trail: stepper({
+        value: flaskRow.count, className: 'flask-increment-steps', valueClass: 'flask-increment-count', valueAttrs: { dataset: { kind: flaskRow.kind } },
+        dec: { label: `One fewer ${name}`, disabled: !flaskRow.canSub, className: 'flask-step', attrs: { dataset: { step: '-1', kind: flaskRow.kind, focusable: 'true' } } },
+        inc: { label: `One more ${name}`, disabled: !flaskRow.canAdd, className: 'flask-step', attrs: { dataset: { step: '1', kind: flaskRow.kind, focusable: 'true' } } },
+      }),
+    });
+  }));
+  // THE CINDER LINE: what you hold, what a level costs, and — once a point is
+  // pending — what remains, as the kit's delta.
+  const cinderLineHtml = level.capped ? '' : html(el('p', { class: 'as-kitline level-cinder-preview', dataset: { levelCinderPreview: '' } }, [
+    statPair({ key: 'You hold', value: String(level.cinders) }),
+    el('strong', { class: 'level-cinder-cost', text: `− ${level.cost} cinders` }),
+    el('span', { class: 'as-delta level-cinder-result', dataset: { levelCinderResult: '', dir: 'down' }, hidden: true }, [
+      el('span', { class: 'd-arrow', text: '→' }), el('span', { class: 'd-to', text: `${level.cinders - level.cost} remaining` }),
+    ]),
+  ]));
+
   app.innerHTML = `
     <div class="screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem">
-      <h2 style="color:var(--gold);font-size:26px">SHRINE OF EMBER</h2>
-      <p class="subtitle">THE GOLD LIGHT HOLDS, FOR NOW</p>
+      <h2>Shrine of Ember</h2>
+      <p class="subtitle">The gold light holds, for now</p>
       ${refillLineHtml(registries, refill)}
       <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
         <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
@@ -144,16 +189,32 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
               : 'No owned armament has an effective tier remaining.'}</p>
           </div>
         </div>
+        ${extract ? `<div class="class-pick${extract.available ? '' : ' locked'}" id="extract-opt"
+             role="button" tabindex="${extract.available ? '0' : '-1'}"
+             aria-disabled="${extract.available ? 'false' : 'true'}">
+          <div class="glyph">⚙</div>
+          <div class="cp-body">
+            <h3>Extract a Card</h3>
+            <p>${esc(extract.summary)}</p>
+          </div>
+        </div>` : ''}
+        ${install ? `<div class="class-pick${install.available ? '' : ' locked'}" id="install-opt"
+             role="button" tabindex="${install.available ? '0' : '-1'}"
+             aria-disabled="${install.available ? 'false' : 'true'}">
+          <div class="glyph">⚒</div>
+          <div class="cp-body">
+            <h3>Seat a Card</h3>
+            <p>${esc(install.summary)}</p>
+          </div>
+        </div>` : ''}
         <details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
           <summary>
-            <span class="shrine-fold-glyph">⚗</span>
-            <span class="shrine-fold-summary"><b>Reallocate Flask Charges</b><small>${charge.assigned}/${charge.capacity} assigned</small></span>
-            <span class="shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
+            <span class="glyph shrine-fold-glyph">⚗</span>
+            <span class="ob shrine-fold-summary"><b class="on">Reallocate Flask Charges</b><small class="om">${charge.assigned}/${charge.capacity} assigned</small></span>
+            <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </summary>
           <div class="shrine-fold-content">
-          <h3>Reallocate Flask Charges</h3>
           <div class="shrine-fold-detail">
-          <div class="glyph">⚗</div>
           <div class="cp-body">
           <!-- THE PER-FLASK COUNTS LEFT THIS LINE WHEN THE ROWS GAINED THEM.
                It used to read "Fixed capacity 3: <art> 2 · <art> 1" — the same
@@ -164,29 +225,10 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
                went red on "relevant controls remain inside the viewport" and
                that is how I found it, not by looking. The capacity stays,
                because it is the one number the rows do NOT say. -->
-          <p>Fixed capacity ${charge.capacity}</p>
+          ${html(subtitle(`Fixed capacity ${charge.capacity}`))}
           <div class="flask-increment">
-            ${charge.rows.map((row) => `
-              <div class="flask-increment-row" data-kind="${esc(row.kind)}">
-                <span class="flask-increment-id">${flaskIdentityHtml(row.def)}</span>
-                <!-- THE STEPPER IS ONE UNIT AND WRAPS AS ONE. Read order is the
-                     reading order — "Crimson Flask: − 2 +" — and on a narrow
-                     shape the whole group drops to its own line under the name
-                     instead of the `+` walking off the right edge, which is
-                     what it did when the buttons were loose children of the row
-                     (measured 390x844: 2 controls outside the viewport). Law 5
-                     clause 3: a narrow shape is a different composition. -->
-                <span class="flask-increment-steps">
-                  <button type="button" class="flask-step" data-step="-1" data-kind="${esc(row.kind)}"
-                          data-focusable="true" aria-disabled="${String(!row.canSub)}"
-                          aria-label="One fewer ${esc((row.def && row.def.name) || row.kind)}">−</button>
-                  <b class="flask-increment-count" data-kind="${esc(row.kind)}">${row.count}</b>
-                  <button type="button" class="flask-step" data-step="1" data-kind="${esc(row.kind)}"
-                          data-focusable="true" aria-disabled="${String(!row.canAdd)}"
-                          aria-label="One more ${esc((row.def && row.def.name) || row.kind)}">+</button>
-                </span>
-              </div>`).join('')}
-            <p class="flask-increment-total">${charge.assigned} of ${charge.capacity} assigned</p>
+            ${flaskRowsHtml}
+            ${html(statusText(`${charge.assigned} of ${charge.capacity} assigned`, { class: 'flask-increment-total' }))}
           </div>
           </div>
           </div>
@@ -218,22 +260,16 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
              data-cost="${level.cost}"
              data-short="${level.short}">
           <summary>
-            <span class="shrine-fold-glyph">✦</span>
-            <span class="shrine-fold-summary"><b>Level up</b><small>${level.capped ? 'Level cap reached' : `${level.cost} cinders · +1 point`}</small></span>
-            <span class="shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
+            <span class="glyph shrine-fold-glyph">✦</span>
+            <span class="ob shrine-fold-summary"><b class="on">Level up</b><small class="om">${level.capped ? 'Level cap reached' : level.offerable ? `${budget.levels} level${budget.levels === 1 ? '' : 's'} affordable · from ${level.cost} cinders` : `${level.cost} cinders · +1 point`}</small></span>
+            <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </summary>
           <div class="shrine-fold-content">
-          <h3>Level up</h3>
           <div class="shrine-fold-detail">
-            <div class="glyph">✦</div>
             <div class="cp-body">
             ${level.capped
-            ? `<p>You have taken every level this climb allows (${level.levelsTaken}).</p>`
-            : `<p class="level-cinder-preview" data-level-cinder-preview>
-                <span aria-hidden="true">✦</span>
-                <span>You hold <b>${level.cinders}</b> − <strong class="level-cinder-cost">${level.cost} cinders</strong> to level up.</span>
-                <span class="level-cinder-result" data-level-cinder-result hidden>→ <b>${level.cinders - level.cost} remaining</b></span>
-              </p>`}
+            ? html(subtitle(`You have taken every level this climb allows (${level.levelsTaken}).`))
+            : cinderLineHtml}
             </div>
           </div>
           <div class="shrine-stat-mount"></div>
@@ -245,8 +281,12 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
+    ['#extract-opt', 'extract'], ['#install-opt', 'install'],
     ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
-  ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
+  ]) {
+    const element = app.querySelector(selector);
+    if (element) markUiComponent(element, UI.shrineOptionCard, variant);
+  }
   const leave = app.querySelector('#shrine-leave');
   if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
@@ -309,39 +349,54 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // policy: existing values are immutable, one and only one plus may be chosen,
   // and the run is not mutated until Done commits it through applyLevelUp.
   if (level.offerable) {
-    let pendingAttribute = null;
+    // Pending points per attribute. Up to `budget.levels` in total; each one
+    // is a level, so Done walks the ladder once per point, in order.
+    const pending = Object.fromEntries(level.attributes.map((attr) => [attr.id, 0]));
+    const pendingTotal = () => Object.values(pending).reduce((sum, n) => sum + n, 0);
     const mount = app.querySelector('#level-opt .shrine-stat-mount');
     const drawLevelCard = () => {
+      const count = pendingTotal();
+      const spend = budget.costs.slice(0, count).reduce((sum, cost) => sum + cost, 0);
       const result = app.querySelector('#level-opt [data-level-cinder-result]');
-      if (result) result.hidden = !pendingAttribute;
+      if (result) {
+        result.hidden = !count;
+        result.replaceChildren(el('span', { class: 'd-arrow', text: '→' }), el('span', { class: 'd-to', text: `${level.cinders - spend} remaining` }));
+      }
+      const costLabel = app.querySelector('#level-opt .level-cinder-cost');
+      if (costLabel) costLabel.textContent = `− ${count ? spend : level.cost} cinders`;
       const values = Object.fromEntries(level.attributes.map((attr) => [
         attr.id,
-        run.attributes[attr.id] + (pendingAttribute === attr.id ? 1 : 0),
+        run.attributes[attr.id] + pending[attr.id],
       ]));
       const cards = new Map(attributeCardModels(registries, values, {
         equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
       }).map((card) => [card.id, card]));
       renderStatAllocationCard(mount, {
-        title: 'ASSIGN 1 POINT',
-        remaining: pendingAttribute ? 0 : 1,
-        note: 'Choose one attribute. Existing points cannot be reduced.',
+        title: budget.levels === 1 ? 'ASSIGN 1 POINT' : `ASSIGN UP TO ${budget.levels} POINTS`,
+        remaining: budget.levels - count,
+        note: budget.levels === 1
+          ? 'Choose one attribute. Existing points cannot be reduced.'
+          : 'Each point is a level and pays the next price on the ladder. Existing points cannot be reduced.',
         cancelLabel: 'Clear',
-        doneLabel: 'Level up',
-        doneDisabled: !pendingAttribute,
+        doneLabel: count > 1 ? `Level up ×${count}` : 'Level up',
+        doneDisabled: !count,
         rows: level.attributes.map((attr) => ({
           id: attr.id,
           label: attr.label,
           shortLabel: attr.shortLabel,
           value: values[attr.id],
           card: cards.get(attr.id),
-          canDecrease: false,
-          canIncrease: !pendingAttribute,
+          canDecrease: pending[attr.id] > 0,
+          canIncrease: count < budget.levels,
         })),
-        onIncrease: (id) => { pendingAttribute = id; drawLevelCard(); },
-        onCancel: () => { pendingAttribute = null; drawLevelCard(); },
+        onIncrease: (id) => { pending[id] += 1; drawLevelCard(); },
+        onDecrease: (id) => { if (pending[id] > 0) pending[id] -= 1; drawLevelCard(); },
+        onCancel: () => { for (const id of Object.keys(pending)) pending[id] = 0; drawLevelCard(); },
         onDone: () => {
-          if (!pendingAttribute) return;
-          applyLevelUp(registries, run, pendingAttribute, { pointsPerLevel: 1 });
+          if (!pendingTotal()) return;
+          for (const attr of level.attributes) {
+            for (let i = 0; i < pending[attr.id]; i++) applyLevelUp(registries, run, attr.id, { pointsPerLevel: 1 });
+          }
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
           remount({ openPanel: 'level' });
@@ -381,6 +436,34 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       openSmith();
+    });
+  }
+  // THE CARD SERVICES, the same reversible modal transaction as the upgrade:
+  // open and select are presentation state; Back and Escape return with the
+  // run untouched; Confirm is the one commit, and — like an upgrade — the one
+  // path that leaves the Shrine unless multi-use holds it open.
+  for (const [selector, offer] of [['#extract-opt', extract], ['#install-opt', install]]) {
+    const option = app.querySelector(selector);
+    if (!option || !offer || !offer.available) continue;
+    const open = () => openMountService(app, {
+      service: offer.service,
+      registries,
+      run,
+      meta,
+      returnFocusElement: option,
+      multiUse,
+      place: 'shrine',
+      onCommitted: (receipt) => {
+        sfx.play('shrine');
+        if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
+        onDone(mountReceiptLine(receipt));
+      },
+    });
+    option.addEventListener('click', open);
+    option.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      open();
     });
   }
 }

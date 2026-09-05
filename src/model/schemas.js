@@ -255,17 +255,13 @@ export const STATUS_DURATION_TOKENS = Object.freeze(['turns']);
 //   additive       — (mult−1) sums across additive sources, applied once.
 export const VULN_STACKING = Object.freeze(['additive', 'multiplicative']);
 
-// Creature tags — the closed vocabulary proc resistance may gate on. An
-// enemy's `tags` and a proc row's `resistance.tags` must both draw from this
-// set. Distinct from card/effect tags (content/tags.js): creature identity vs
-// attack school — two concepts, deliberately two vocabularies.
-export const CREATURE_TAGS = Object.freeze([
-  'beast',
-  'humanoid',
-  'undead',
-  'construct',
-  'spirit',
-]);
+// Creature tags used to be a frozen array here, and then a field on the enemy
+// def. They are now rows in the one tag registry (content/source/tags.csv)
+// carrying domain 'creature', authored in content/source/tagging.csv like every
+// other tag and stamped onto the enemy at boot. Nothing about them is a schema
+// field any more, which is why neither the enemy nor the profile declares one.
+// model/tags.js gates them: an enemy and a proc row's `resistance.tags` may
+// draw from that domain and no other.
 
 export const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 'status']);
 export const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
@@ -536,7 +532,6 @@ export const SCHEMAS = Object.freeze({
     rounding: en('floor', 'ceil', 'round'),
     gainPerTier: num,
     cap: union(num, str),
-    tags: arr(str),
     flavor: str,
     mods: arr(str),
     compatibility: en('attack-v1', 'guard-v1', 'technique-v1'),
@@ -670,7 +665,7 @@ export const SCHEMAS = Object.freeze({
         resistance: opt(
           obj({
             status: ref('statuses'), // the resist row applied post-proc
-            tags: arr(str), // creature-tag gate, ⊆ CREATURE_TAGS (validated)
+            tags: arr(str), // creature-tag gate; domain 'creature' of the tag registry
           })
         ),
       })
@@ -739,13 +734,18 @@ export const SCHEMAS = Object.freeze({
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
     poiseMax: int,
     levelProfile: levelBandSchema,
-    tags: opt(arr(str)), // creature tags ⊆ CREATURE_TAGS — gates proc resistance
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),
     art: opt(str),
     size: opt(en('small', 'medium', 'large')), // sprite size tier (display)
     tint: opt(str), // border/accent CSS color (display)
+    // WHICH WAY THIS ASSET WAS DRAWN (display). The board's own direction is
+    // one constant in ui/assets.js; only a mismatch between the two mirrors the
+    // sprite. `front` is not a third direction and never mirrors — a figure
+    // looking at the viewer has no left or right to turn — so a front-facing
+    // render declares nothing and is left exactly as drawn.
+    artFaces: opt(en('left', 'right', 'front')),
     // Strict absent | immune | configured Arcane Exposure policy. Absence is
     // represented by no field; it is not silently defaulted by the engine.
     arcaneExposure: opt(union(

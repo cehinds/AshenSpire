@@ -52,6 +52,7 @@ import { renderCard } from './card.js';
 import { armInspect } from '../../framework/optionDecision.js';
 import { stickTooltip } from './tooltip.js';
 import { applyHandExemption } from '../handAxis.js';
+import { keycap, pill } from '../kit/index.js';
 
 // The custom property this component publishes so the stylesheets can reserve
 // room for the fan's upward lift without knowing how it is computed. Named here
@@ -184,20 +185,12 @@ export function mountHand(handEl, { registries, wireCard = null }) {
         el.dataset.unavailableReason = entry.reason;
         el.setAttribute('aria-disabled', 'true');
         el.setAttribute('aria-label', `${entry.name || ''} unavailable: ${entry.reason}`);
-        const badge = document.createElement('div');
-        badge.className = 'card-unavailable-reason';
-        badge.textContent = entry.reason;
-        el.appendChild(badge);
+        el.appendChild(pill({ label: entry.reason, attrs: { class: 'foot card-unavailable-reason', 'data-tone': 'danger' } }));
       }
       // Positional quick-play key badge: 1-9 then Q, tied to the slot not the
       // card — BOTH surfaces map those keys to the same slots. Hidden while a
       // gamepad drives (body.pad-mode via refreshHintBars).
-      if (i < 10) {
-        const hint = document.createElement('span');
-        hint.className = 'key-hint';
-        hint.textContent = i < 9 ? i + 1 : 'Q';
-        el.appendChild(hint);
-      }
+      if (i < 10) el.appendChild(keycap(i < 9 ? String(i + 1) : 'Q', { class: 'float key-hint' }));
       // The reading hold — EVERY card, before the play wiring on purpose:
       // affordability gates playing, never reading (the card you cannot pay
       // for is the one you most need to read), and same-element listeners run

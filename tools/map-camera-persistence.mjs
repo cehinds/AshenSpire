@@ -641,35 +641,41 @@ if (SELFTEST) {
 } else {
   const results = await runProbe(ROOT);
   let failures = 0;
+  // THE DENOMINATOR COUNTS ITSELF. `judged` rises where a judgement is MADE,
+  // so the total is what ran. It was `results.length + 4 + ...`, and that 4 was
+  // a second copy of the four single checks below: add a fifth and the
+  // denominator stays 4, so the line reports a fraction nobody computed.
+  let judged = 0;
+  const judge = (ok) => { judged += 1; if (!ok) failures += 1; };
   for (const row of results) {
     console.log(`${row.pass ? 'PASS' : 'FAIL'} ${row.viewport}: `
       + `zoom ${row.before.zoom} -> ${row.after.zoom}; `
       + `pan [${row.before.scrollLeft.toFixed(1)},${row.before.scrollTop.toFixed(1)}] -> `
       + `[${row.after.scrollLeft.toFixed(1)},${row.after.scrollTop.toFixed(1)}]`);
-    if (!row.pass) failures++;
+    judge(row.pass);
   }
   const fit = results.fitViewport;
   console.log(`${fit && fit.pass ? 'PASS' : 'FAIL'} fit viewport ownership: `
     + `${fit ? fit.before.viewportWidth : '?'} -> ${fit ? fit.after.viewportWidth : '?'}; `
     + `restore=${fit ? fit.after.cameraRestore : '?'}`);
-  if (!fit || !fit.pass) failures++;
+  judge(fit && fit.pass);
   const race = results.debounceRace;
   console.log(`${race && race.pass ? 'PASS' : 'FAIL'} debounced node ownership: `
     + `${race ? race.race?.from : '?'} -> ${race ? race.race?.to : '?'}; `
     + `committed view=${race ? race.committedViewNode : '?'}`);
-  if (!race || !race.pass) failures++;
+  judge(race && race.pass);
   const settle = results.zeroHeightSettle;
   console.log(`${settle && settle.pass ? 'PASS' : 'FAIL'} zero-height settlement: `
     + `${settle ? settle.before.viewportHeight : '?'} -> ${settle ? settle.after.viewportHeight : '?'}; `
     + `framing=${settle ? settle.after.framing : '?'}, miss=${settle ? settle.after.framingMiss : '?'}`);
-  if (!settle || !settle.pass) failures++;
+  judge(settle && settle.pass);
   const exit = results.mapExitDuringDebounce;
   console.log(`${exit && exit.pass ? 'PASS' : 'FAIL'} map exit during debounce: `
     + (exit && exit.shapes ? exit.shapes.map((row) => `${row.shape}: reached=${!!row.exit?.reached}, `
       + `trusted=${row.exit?.trusted}, before=${row.exit?.before}, panDelta=${row.exit?.panDelta}, max=${row.maxScrollTop}, onTitle=${!!row.exit?.onTitle}, `
       + `uncaught=${row.uncaught.length}`).join(' · ') : '?')
     + `${exit && exit.uncaught.length ? ` [${exit.uncaught[0]}]` : ''}`);
-  if (!exit || !exit.pass) failures++;
+  judge(exit && exit.pass);
   for (const row of results.exitCameraFlush || []) {
     console.log(`${row.pass ? 'PASS' : 'FAIL'} exit camera flush ${row.shape}: `
       + `zoom ${row.zoom?.[0]} -> ${row.zoom?.[1]}; `
@@ -678,9 +684,9 @@ if (SELFTEST) {
       + `trusted=${row.trusted}, panDelta=${row.panDelta?.toFixed?.(1)}, `
       + `writes control=${row.controlWrites?.join('/')}, exit=${row.exitWrites?.join('/')}, `
       + `restore=${row.cameraRestore}, uncaught=${row.uncaught?.length}`);
-    if (!row.pass) failures++;
+    judge(row.pass);
   }
-  const total = results.length + 4 + (results.exitCameraFlush?.length || 0);
+  const total = judged;
   console.log(`map-camera persistence: ${failures ? 'RED' : 'GREEN'} (${total - failures}/${total})`);
   process.exitCode = failures ? 1 : 0;
 }

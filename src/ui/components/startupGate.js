@@ -1,5 +1,16 @@
+// src/ui/components/startupGate.js — the folded title (#229).
+//
+// THE GATE IS THE KIT'S TitleMenu BEFORE ITS ENTRIES: the same lockup the
+// title screen unfurls — name, subtitle, ornament — with the prompt in the
+// foot's place and the build stamp under it. Nothing here draws a shape; the
+// stable component ids (`startup-mark`, `startup-wordmark`, `startup-subtitle`,
+// `startup-divider`, `startup-prompt`) and the `.startup-*` hooks the
+// instruments read ride on the kit's parts, and the ash field is the gate's
+// own ambience, the way the embers are the title's.
+
 import { buildStampHtml } from './buildstamp.js';
 import { esc } from './tooltip.js';
+import { el, html, eyebrow, ornament } from '../kit/index.js';
 
 function isActivation(input) {
   if (input.family === 'keyboard') return input.key === 'Enter' || input.key === ' ';
@@ -11,6 +22,21 @@ function isActivation(input) {
 }
 function familyForPointer(event) {
   return event.pointerType === 'touch' ? 'touch' : 'pointer';
+}
+
+/** The lockup, as markup: the TitleMenu's name · subtitle · ornament · foot. */
+function lockupHtml(properties, accessibility) {
+  const rule = ornament({ class: 'startup-rule', dataset: { component: 'startup-divider' } });
+  return html(el('div', { class: 'as-titlemenu startup-mark', dataset: { component: 'startup-mark' } }, [
+    properties.overline ? eyebrow(properties.overline, { class: 'startup-overline' }) : null,
+    el('h1', { class: 'tm-name startup-wordmark', dataset: { component: 'startup-wordmark' }, text: properties.wordmark }),
+    properties.subtitle ? el('p', { class: 'tm-sub startup-subtitle', dataset: { component: 'startup-subtitle' }, text: properties.subtitle }) : null,
+    rule,
+    el('p', {
+      class: 'tm-foot startup-prompt', dataset: { component: 'startup-prompt' },
+      'aria-live': accessibility.promptLive, text: properties.prompts[properties.inputFamily],
+    }),
+  ]));
 }
 
 export function mountStartupGate(app, {
@@ -34,16 +60,8 @@ export function mountStartupGate(app, {
     <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
       role="${esc(accessibility.role)}" aria-label="${esc(accessibility.label)}">
       <div class="startup-ash-field" data-component="startup-ash-field" aria-hidden="true">${particleHtml}</div>
-      <div class="startup-anchor">
-        <div class="startup-mark" data-component="startup-mark">
-          ${properties.overline ? `<p class="startup-overline">${esc(properties.overline)}</p>` : ''}
-          <h1 class="startup-wordmark" data-component="startup-wordmark">${esc(properties.wordmark)}</h1>
-          ${properties.subtitle ? `<p class="startup-subtitle" data-component="startup-subtitle">${esc(properties.subtitle)}</p>` : ''}
-          <div class="startup-rule" data-component="startup-divider" aria-hidden="true"><span></span></div>
-          <p class="startup-prompt" data-component="startup-prompt" aria-live="${esc(accessibility.promptLive)}">${esc(properties.prompts[properties.inputFamily])}</p>
-        </div>
-        ${buildStampHtml('startup')}
-      </div>
+      ${lockupHtml(properties, accessibility)}
+      ${buildStampHtml('startup')}
     </section>`;
 
   const root = app.querySelector('.startup-gate');

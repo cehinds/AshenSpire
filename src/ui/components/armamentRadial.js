@@ -1,4 +1,5 @@
 import { focusElement } from '../input.js';
+import { popover, row } from '../kit/index.js';
 
 let activeRadial = null;
 
@@ -18,11 +19,14 @@ export function mountArmamentRadial(anchor, {
   if (!anchor) throw new Error('mountArmamentRadial requires an anchor');
   closeArmamentRadial();
 
-  const root = document.createElement('div');
-  root.className = 'armament-radial';
+  // NOTHING MOUNTS THIS TODAY — combat.js dropped its Armaments rail control
+  // (tools/combat-action-row.mjs asserts the absence), so this component is
+  // reachable only from a caller that does not exist yet. It is composed from
+  // the kit's Popover and Buttons rather than from a bespoke shape, so the day
+  // a caller returns it looks like the rest of the game and needs no CSS of its
+  // own; styles/combat.css's old `.armament-radial*` block went with the rail.
+  const root = popover({ className: 'armament-radial', attrs: { role: 'menu', 'aria-label': 'Armaments shortcuts' } });
   root.hidden = true;
-  root.setAttribute('role', 'menu');
-  root.setAttribute('aria-label', 'Armaments shortcuts');
   anchor.closest('.combat')?.appendChild(root);
 
   let currentMode = mode;
@@ -74,23 +78,19 @@ export function mountArmamentRadial(anchor, {
   const draw = () => {
     root.innerHTML = '';
     for (const item of items) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'armament-radial-target';
-      button.dataset.radialTarget = item.target;
-      if (item.hotkeySlot != null) button.dataset.flaskHotkeySlot = String(item.hotkeySlot);
-      button.dataset.focusable = 'true';
-      button.disabled = item.disabled === true;
-      button.setAttribute('role', 'menuitem');
-      button.setAttribute('aria-label', item.ariaLabel || item.label);
-      const label = document.createElement('span');
-      label.textContent = item.label;
-      button.appendChild(label);
-      if (item.detail) {
-        const detail = document.createElement('small');
-        detail.textContent = item.detail;
-        button.appendChild(detail);
-      }
+      // A kit Row per destination: the label, and what it costs as its status.
+      const button = row({
+        label: item.label, status: item.detail || '',
+        disabled: item.disabled === true,
+        className: 'armament-radial-target',
+        attrs: {
+          role: 'menuitem', 'aria-label': item.ariaLabel || item.label,
+          dataset: {
+            radialTarget: item.target, focusable: 'true',
+            ...(item.hotkeySlot != null ? { flaskHotkeySlot: String(item.hotkeySlot) } : {}),
+          },
+        },
+      });
       button.addEventListener('click', (event) => {
         event.stopPropagation();
         if (item.target === 'full') {

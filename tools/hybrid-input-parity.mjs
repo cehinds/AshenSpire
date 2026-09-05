@@ -87,9 +87,14 @@ if (args.includes('--selftest')) {
   const wantedPlant = argOf('--plant');
   const sourcePlants = [{
       name: 'contextual flask rows regress to a local 44px floor under body zoom',
-      file: 'styles/ui.css',
-      find: '  width: 100%; min-height: var(--tap-floor); height: auto;',
-      replace: '  width: 100%; min-height: 44px; height: auto; /* planted: local rather than device-pixel floor */',
+      // A flask menu row is the kit's Row now, so the floor it inherits is
+      // `.as-row`'s one declaration (styles/kit.css § LISTS) rather than a
+      // `.flask-action` rule in ui.css. The plant is the same substitution it
+      // always was — the token that scales with the UI dial swapped for a raw
+      // 44 px, which reads as a floor and is not one under body zoom.
+      file: 'styles/kit.css',
+      find: '  width: 100%; min-height: var(--tap-floor);',
+      replace: '  width: 100%; min-height: 44px; /* planted: local rather than device-pixel floor */',
       expectRed: /FAIL keyboard Crimson menu rows retain the 44 device-pixel floor/,
     }, {
       name: 'same-flask activation closes and immediately reopens its menu',
@@ -779,49 +784,78 @@ async function main() {
       };
       const card = async (pattern) => ev(`(() => { const rx=new RegExp(${JSON.stringify(pattern)},'i'); const nodes=[...document.querySelectorAll('.hand .card')]; const node=nodes.find((item)=>rx.test(item.textContent)); return node ? {index:nodes.indexOf(node),id:node.dataset.instanceId,text:(node.textContent||'').replace(/\\s+/g,' ').trim()} : null; })()`);
       const cardKey = (index) => index < 9 ? String(index + 1) : 'q';
-      const focusCard = async (instanceId, mode) => {
-        for (let i = 0; i < 28; i++) {
+      // THE WALK REMEMBERS WHERE IT HAS BEEN, and until 2026-09 it did not.
+      // The steering below is greedy: it takes the larger of dx/dy to the target
+      // and presses that arrow. The cursor it is steering (src/ui/input.js
+      // moveFocus) scores a candidate as `primary + 2 * cross`, so two chrome
+      // controls one rung apart can be each other's nearest neighbour on
+      // OPPOSITE axes — the HUD's charge flasks and its utility potions are
+      // exactly that pair, on this branch and on dev — and a greedy walk that
+      // enters the pair oscillates between them until the step budget is spent.
+      // That is not evidence the hand is unreachable: pressing the OTHER axis
+      // leaves the pair in one step, and Down from the potions reaches the
+      // enemy row (measured, both trees).
+      // WHY THIS IS A TOOL FIX AND NOT A PRODUCT ONE, with the number that
+      // settles it: on the same fixture at 1200x730 the walk reached the card in
+      // 6 presses when its first direction was Left and looped for all 28 when
+      // it was Down, and the choice between those two came down to 442 px of dy
+      // against 438 px of dx * 0.7 — four pixels of top-bar height. A green that
+      // thin measures the HUD's height, not the cursor's reach.
+      // So the walk now records the signature of every stop with the axes it has
+      // already spent there, and a repeat stop tries the perpendicular axis
+      // before it spends another step. The budget is unchanged, the assertion is
+      // unchanged, and a cursor that genuinely cannot reach the hand still
+      // exhausts both axes at every stop and reports the same finding.
+      const cursorSignature = () => ev(`(() => {
+        const c = document.querySelector('.gp-focus');
+        if (!c) return 'none';
+        const r = c.getBoundingClientRect();
+        return (c.dataset.instanceId || String(c.className)) + '@' + Math.round(r.left) + ',' + Math.round(r.top);
+      })()`);
+      const walkCursor = async ({ targetExpr, mode, ratio, steps, reached }) => {
+        const spentByStop = new Map();
+        for (let i = 0; i < steps; i++) {
           const current = await state();
-          if (current.focus && current.focus.instanceId === instanceId) return true;
-          const direction = await ev(`(() => {
-            const target=document.querySelector('.hand .card[data-instance-id="${instanceId}"]');
+          if (reached(current)) return true;
+          const axes = await ev(`(() => {
+            const target=${targetExpr};
             const cursor=document.querySelector('.gp-focus');
             if(!target)return null;
-            if(!cursor)return {button:15,key:'ArrowRight'};
+            if(!cursor)return {vertical:null,horizontal:{button:15,key:'ArrowRight'},first:'horizontal'};
             const tr=target.getBoundingClientRect(), cr=cursor.getBoundingClientRect();
             const dx=(tr.left+tr.width/2)-(cr.left+cr.width/2);
             const dy=(tr.top+tr.height/2)-(cr.top+cr.height/2);
-            if(Math.abs(dy)>Math.abs(dx)*0.7)return dy<0?{button:12,key:'ArrowUp'}:{button:13,key:'ArrowDown'};
-            return dx<0?{button:14,key:'ArrowLeft'}:{button:15,key:'ArrowRight'};
+            return {
+              vertical: dy<0?{button:12,key:'ArrowUp'}:{button:13,key:'ArrowDown'},
+              horizontal: dx<0?{button:14,key:'ArrowLeft'}:{button:15,key:'ArrowRight'},
+              first: Math.abs(dy)>Math.abs(dx)*${ratio} ? 'vertical' : 'horizontal',
+            };
           })()`);
-          if (!direction) return false;
-          if (mode === 'keyboard') await key(direction.key);
-          else await pad(direction.button);
+          if (!axes) return false;
+          const stop = await cursorSignature();
+          const spent = spentByStop.get(stop) || new Set();
+          const order = axes.first === 'vertical' ? ['vertical', 'horizontal'] : ['horizontal', 'vertical'];
+          const axis = order.find((name) => axes[name] && !spent.has(name)) || order.find((name) => axes[name]);
+          if (!axis) return false;
+          spent.add(axis);
+          spentByStop.set(stop, spent);
+          const press = axes[axis];
+          if (mode === 'keyboard') await key(press.key); else await pad(press.button);
         }
         return false;
       };
+      const focusCard = (instanceId, mode) => walkCursor({
+        targetExpr: `document.querySelector('.hand .card[data-instance-id="${instanceId}"]')`,
+        mode, ratio: 0.7, steps: 28,
+        reached: (current) => !!current.focus && current.focus.instanceId === instanceId,
+      });
       const focusCardWithPad = (instanceId) => focusCard(instanceId, 'controller');
       const focusCardWithKeys = (instanceId) => focusCard(instanceId, 'keyboard');
-      const focusClass = async (className, mode) => {
-        for (let i = 0; i < 32; i++) {
-          const current = await state();
-          if (current.focus && current.focus.classes.includes(className)) return true;
-          const direction = await ev(`(() => {
-            const target=document.querySelector('.${className}');
-            const cursor=document.querySelector('.gp-focus');
-            if(!target)return null;
-            if(!cursor)return {button:15,key:'ArrowRight'};
-            const tr=target.getBoundingClientRect(), cr=cursor.getBoundingClientRect();
-            const dx=(tr.left+tr.width/2)-(cr.left+cr.width/2);
-            const dy=(tr.top+tr.height/2)-(cr.top+cr.height/2);
-            if(Math.abs(dy)>Math.abs(dx)*0.55)return dy<0?{button:12,key:'ArrowUp'}:{button:13,key:'ArrowDown'};
-            return dx<0?{button:14,key:'ArrowLeft'}:{button:15,key:'ArrowRight'};
-          })()`);
-          if (!direction) return false;
-          if (mode === 'keyboard') await key(direction.key); else await pad(direction.button);
-        }
-        return false;
-      };
+      const focusClass = (className, mode) => walkCursor({
+        targetExpr: `document.querySelector('.${className}')`,
+        mode, ratio: 0.55, steps: 32,
+        reached: (current) => !!current.focus && current.focus.classes.includes(className),
+      });
       const focusClassWithKeys = (className) => focusClass(className, 'keyboard');
       const focusClassWithPad = (className) => focusClass(className, 'controller');
       const focusTextWithKeys = async (pattern, keyName = 'ArrowRight') => {
@@ -1057,8 +1091,14 @@ async function main() {
       check(sourceLayout.onGlass && !sourceLayout.overlap, 'primary controls stay on glass without paging overlap', JSON.stringify(sourceLayout));
       const axTree = await cdp.send('Accessibility.getFullAXTree', {}, sessionId);
       const axButtons = axTree.nodes.filter((node) => node.role?.value === 'button').map((node) => node.name?.value || '');
+      // THE NAME IS SENTENCE CASE, THE SHOUT IS CSS'S. The action row is a kit
+      // ButtonRow now, and the kit sets `text-transform` on the control rather
+      // than shouting inside the string, so the accessible name a screen reader
+      // speaks is "End Turn" (plus its key and HOLD trail) even where the pixels
+      // read END TURN. This assertion is about the name existing, not its case,
+      // so it matches case-insensitively and anchors on the label only.
       check(['Previous card', 'Next card'].every((name) => !axButtons.includes(name))
-        && axButtons.some((name) => /^END TURN/.test(name)),
+        && axButtons.some((name) => /^end turn\b/i.test(name.trim())),
       'five-card AX tree omits Previous/Next and retains End Turn', JSON.stringify(axButtons));
       await screenshot('ready');
       let chosen = await card('Slashing Strike');

@@ -25,6 +25,8 @@ import { serve } from './serve.mjs';
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const OUT = resolve(ROOT, 'docs/preview');
 const BROWSERS = [
+  process.env.CHROME,
+  '/opt/pw-browsers/chromium',
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
@@ -128,11 +130,11 @@ async function main() {
   await until(hostTab, `!!document.querySelector('#lb-name')`, 'host lobby');
   await evalIn(hostTab, `(() => { const n = document.querySelector('#lb-name'); n.value = 'Wren'; n.dispatchEvent(new Event('input')); return true; })()`);
   await evalIn(hostTab, click('#lb-host'));
-  await until(hostTab, `document.querySelector('h2')?.textContent === 'AT THE FIRE'`, 'host at the fire');
+  await until(hostTab, `/at the fire/i.test(document.querySelector('.lobby-room .as-title-m')?.textContent || '')`, 'host at the fire');
   ok(true, 'host lit a fire');
   // Couch party: the host adds a LOCAL seat on its screen.
   await evalIn(hostTab, click('#lb-addlocal'));
-  await until(hostTab, `[...document.querySelectorAll('.slot-meta')].some((s) => /local seat/.test(s.textContent))`, 'local seat in roster');
+  await until(hostTab, `[...document.querySelectorAll('#lb-roster .as-pill')].some((s) => /local seat/i.test(s.textContent))`, 'local seat in roster');
   ok(true, 'host added a local (couch) player');
 
   // Guest: opens the HOST's advertised URL directly, sees the local fire, joins.
@@ -147,7 +149,9 @@ async function main() {
   await evalIn(guestTab, `(() => { const v = [...document.querySelectorAll('.cr-class')].find((p) => /reaver/i.test(p.textContent)); if (v) v.click(); return true; })()`);
   await wait(200);
   // Fenn picks the Hoarfrost accent — the shots must show gold vs blue.
-  await evalIn(guestTab, `(() => { const d = [...document.querySelectorAll('.tint-dot')].find((x) => /frost/i.test(x.title)); if (d) d.click(); return !!d; })()`);
+  // The accent swatch names its colour by aria-label (the kit's Swatch; a
+  // `title=` attribute is the one tooltip form the house forbids).
+  await evalIn(guestTab, `(() => { const d = [...document.querySelectorAll('.tint-dot')].find((x) => /frost/i.test(x.getAttribute('aria-label') || '')); if (d) d.click(); return !!d; })()`);
   await until(hostTab, `[...document.querySelectorAll('#lb-roster .slot span[style*="color"]')].length > 0`, 'host sees tinted roster');
   await wait(200);
   await evalIn(guestTab, click('#lb-ready'));
@@ -173,7 +177,7 @@ async function main() {
 
   // Fork vote: host votes first — guest sees the held vote, then completes it.
   await evalIn(hostTab, click('.map-node.reachable'));
-  await until(guestTab, `/VOTES 1\\/3/.test(document.querySelector('.coop-voteline')?.textContent || '')`, 'guest sees VOTES 1/3');
+  await until(guestTab, `/VOTES 1\\/3/i.test(document.querySelector('.coop-voteline')?.textContent || '')`, 'guest sees VOTES 1/3');
   ok(true, "host's vote is visible on the guest's map");
   // Scroll the map to the reachable start row so the vote pip is in frame.
   await evalIn(guestTab, `(() => { const s = document.querySelector('.map-scroll'); if (s) s.scrollTop = s.scrollHeight; return true; })()`);
@@ -182,7 +186,7 @@ async function main() {
   await evalIn(hostTab, `(() => { const b = document.querySelectorAll('.coop-seat-tabs .seat-tab')[1]; if (b) b.dispatchEvent(new MouseEvent('click', { bubbles: true })); return !!b; })()`);
   await wait(250);
   await evalIn(hostTab, click('.map-node.reachable'));
-  await until(guestTab, `/VOTES 2\\/3/.test(document.querySelector('.coop-voteline')?.textContent || '')`, 'guest sees VOTES 2/3');
+  await until(guestTab, `/VOTES 2\\/3/i.test(document.querySelector('.coop-voteline')?.textContent || '')`, 'guest sees VOTES 2/3');
   ok(true, "the couch seat's vote (cast via seat tabs) reached everyone");
   await evalIn(guestTab, click('.map-node.reachable'));
   await until(hostTab, `!!document.querySelector('.combat.coop')`, 'host in shared combat');

@@ -203,7 +203,8 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await click('#cz-primary-stats [data-face="attribute:strength"]');
   const strengthReveal = await evaluate(`(() => {
     const reveal = document.querySelector('#cz-primary-stats [data-reveal-for="attribute:strength"]');
-    return { shown: !!reveal && !reveal.hidden, title: reveal?.querySelector('h4')?.textContent || '', bullets: reveal?.querySelectorAll('li').length || 0 };
+    // The reveal is the kit's DetailCard since the 2026-09-04 sweep: its title is .dc-name (it was an h4).
+    return { shown: !!reveal && !reveal.hidden, title: reveal?.querySelector('.dc-name, h4')?.textContent || '', bullets: reveal?.querySelectorAll('li').length || 0 };
   })()`);
   assert(strengthReveal.shown && strengthReveal.title === 'Strength' && strengthReveal.bullets > 0,
     `${width}x${height}: Strength unfolds beneath its card with model-derived benefits (${JSON.stringify(strengthReveal)})`);

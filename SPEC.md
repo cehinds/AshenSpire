@@ -61,18 +61,24 @@ the module**, and the load-bearing runtime claim (*no AI runs while you play*) i
 named string** that both the player and the falsifier are given — it previously existed twice,
 in different words, so no comparison could ever have caught them diverging.
 
-**`approved: true` since 2026-08-07 — and this spec says so because it is true.** The wording
-was Constantine's call at release and he made it; the flag records whose words these are and
-**nothing reads it to decide whether to render** — the acknowledgement always shows. Approval
-is a release gate (§9), not a display condition. **The flag is about THIS wording:** any edit
-to the text returns it to `false` in the same act, or it stops recording anything.
+**The approval flag lives in `src/content/aiDisclosure.js` and this spec no longer restates
+its value.** Read it there, or run `node tools/ai-disclosure.mjs`, which prints the current
+state. The flag records whose words the wording is and **nothing reads it to decide whether to
+render** — the acknowledgement always shows. Approval is a release gate (§9), not a display
+condition. **The flag is about THIS wording:** any edit to the text returns it to `false` in
+the same act, or it stops recording anything.
 
-> **This sentence is a SECOND COPY of a boolean and it went stale the day the boolean moved**
-> *(Saga, 2026-08-07)*. `docs/SPEC-RECONCILE.md` carries a third. Nothing syncs the three —
-> Law 1 clause 2, in the file that states the arrangement. **The honest fix is for the spec to
-> cite the module rather than restate its value**; I am correcting the value rather than
-> restructuring another seat's file, and naming the defect here so the next reader does not
-> have to rediscover it.
+> **This paragraph used to be a SECOND COPY of that boolean, and it went stale exactly as
+> predicted** *(Saga, 2026-08-07: "this sentence is a second copy of a boolean and it went
+> stale the day the boolean moved")*. It said `approved: true` while the module said `false`,
+> giving the release gate two authoritative answers.
+>
+> **Saga named the honest fix and it is now done: the spec cites the module rather than
+> restating its value.** The 2026-08-07 note declined it only to avoid restructuring another
+> seat's file. `docs/SPEC-RECONCILE.md` still carries a third prose copy; it is a historical
+> row recording what change #73 did, and it is annotated rather than rewritten — but it is
+> the remaining copy, and it will go stale the next time the flag moves.
+> *(AS-HD-040, 2026-09-03.)*
 
 *Falsify:* `node tools/ai-disclosure.mjs --check` after the last bundle rebuild — a stale
 bundle ships an acknowledgement that disagrees with the store page. The runtime claim carries
@@ -308,9 +314,84 @@ rule is one row of `swapCostRules` with no code (proven by test 28q).
 in `model/loadout.js`, beside the functions that branch on them. A row naming anything else is a
 validation failure; before A8 it validated clean and silently did nothing.
 
-**Equipped weapon card packages.** The authored attack-slot count is fixed by
-`balance.equipment.roleCopies.attack`; changing equipment never changes that count or the total
-deck size. `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
+**The starting deck.** `balance.startingDeckSize` is a **cap on the BASE cards** — the
+strikes and defends the game mints for you — and it applies at **character creation and
+nowhere else**. The order is fixed:
+
+1. **Bound cards are dealt first.** Anything equipment brings: cards from a piece carrying
+   the `bound` tag (`equipmentGrants.csv`), a weapon package's `grantedCards`, its
+   `weaponArtDefaults`, the class signature, and `startingDeck.global.grants`. These are
+   never capped, never dropped and never refused. They belong to the equipment, not the run.
+2. **Base cards fill what the cap leaves.** `filler = max(0, cap − bound)`, split between
+   attack and guard by the class's `strikeBias`. An odd remainder goes to whichever role
+   `startingDeck.oddFillerGoesTo` names — `attack` by default.
+3. **What those base cards ARE comes from the equipped profile** — a sword-wielder's base
+   attacks are Slashing Strikes, and a bare hand's are the `unarmedProfiles` set. That is
+   the whole of "unarmed fills in": it supplies the identity of base cards, it does not top
+   up a floor.
+
+If equipment alone meets or exceeds the cap, no base cards are minted and the run begins
+with only its equipment cards. That is a **balance question for whoever authors the gear**,
+not a validation failure — `validateEquipment` says so as a warning, naming the class and
+the loadout, and refuses nothing.
+
+**After creation the cap does not apply.** Swapping to gear that lends fewer cards leaves a
+smaller deck; more, a larger one. There is no re-minting of base cards mid-run and no
+attempt to hold a total. What DOES hold mid-run is the attack count: a swap re-skins the
+attack slots the run was born with (`equipmentAttackSlotCount`, recorded at creation and
+read, never re-derived), so equipment never changes how many attacks you hold.
+
+**Every card has an owner: the run, or one item.** Run-owned cards are the run's for good —
+the base strikes and defends (gear only re-skins them), the class signature, global grants,
+rewards. Item-owned cards ride with the item: equip it and they arrive, unequip it and they
+leave, equip it again and they return identical. **If the item is not equipped, its cards are
+gone** (owner ruling, 2026-09-03). This is one rule with three authoring sources feeding it —
+a weapon package's `grantedCards`, its `weaponArtDefaults`, and the `bound` table
+(`equipmentGrants.csv`, gated by the `bound` tag on any piece, armour included) — and one
+reconcile that applies it on every equip transition, in or out of combat. Item-owned
+instances carry deterministic ids and the owner's namespaced ref, so the reconcile is
+idempotent and a save is stable across it.
+
+Everything above is data. The cap, the per-class bias and its default, the odd-split
+winner, and the grant-source vocabulary are all authored — the sources are rows in the
+`grantSource` tag domain, so adding one is a spreadsheet line rather than a code change.
+The engine mints bound cards at four seams (global, armor, weapon, class) and reads the
+tag each one stamps from `startingDeck.sources`, so RENAMING a source is a data edit too:
+the map, the tag row and `sourceOrder` move together, and a binding that names no
+registered source — or a seam left unbound — is refused by name rather than silently
+dealing that source's cards last.
+
+**Card mounts: the smith's other two services.** Every card an item lends sits in a **mount**
+on that item, keyed by the instance id the composer mints for it, so "the sword's art" is the
+same mount on every restamp, save and fight. A smith — the Shrine's, or one a merchant rolls —
+does three things: **upgrade** an item (the tier promotion), **extract** a card out of one of
+its mounts, and **seat** a run-owned card in an emptied or open mount.
+
+- **Extract.** The card becomes the run's own — a run-owned instance joins the deck and stays
+  whatever the item does — and the mount it left is never dead: it shows its kind's **fallback**
+  until something is seated. A weapon-art mount falls back to the unarmed technique (the Dodge
+  Roll), read from `unarmedProfiles`; a granted mount falls back to nothing; any item may
+  override its fallback under `cardMounts.fallbackByItem`. A fallback is the mount's, not the
+  item's, and is never itself extractable.
+- **What is extractable is a tag on the card** (`cardMounts.extractableTag`, `extractable`
+  today). Strikes and defends do not carry it; the day the game changes its mind, that is a
+  spreadsheet edit. A mount accepts a card carrying any tag in its kind's `accepts` list.
+- **Seat.** The reverse: the deck instance leaves, the card rides with the item from then on,
+  and is extractable again. Extra mounts beyond the authored ones (`cardMounts.extraMounts`,
+  per item, a kind) sit behind a flag that is off — the seam a later rune feature opens.
+- **Priced in Smithing Stones** (`smithing.services.extract.cost`, `.install.cost`), free by
+  the owner's word. **Who offers what** is `smithing.services.offeredAt`: a node kind, a chance
+  and a service list. A chance of 100 is a promise and consumes no roll; a merchant's 25 rolls
+  once per visit on the smith's own RNG stream and rides with the stock, so a reload does not
+  roll again and the roll shifts no later reward in an existing seed.
+
+What a smith did is `run.itemMounts` — per item, per mount: emptied, or the card seated —
+read by the composer on every restamp and carried into combat and into a saved fight the way
+the birth quota is, so a mid-fight swap or a load cannot re-mint an extracted card from the
+item's authoring. Nothing here touches an item's authoring, and absent means untouched, so no
+migration invents the field.
+
+**Equipped weapon card packages.** `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
 priority list plus that profile as filler. `WeaponDeckCompositionService` builds an
 `EquippedWeaponCardPlan`, then rebinds the stable generated attack instances in place. No eligible
 weapon produces Unarmed in every attack slot; one eligible weapon in either hand owns every slot;

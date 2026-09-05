@@ -2,9 +2,23 @@
 // tools/buildstamp-shot.mjs — IS THE BUILD VERSION ACTUALLY ON THE SCREEN?
 //
 // Constantine asked for the build version "on the main menu, and somewhere in
-// the map and combat". tools/buildversion.mjs proves the string is derived and
-// singly-homed; that is a fact about SOURCE. This is the other half, and it is
-// the half he asked for: three screens, photographed, at both shapes.
+// the map and combat" (2026-08-15). tools/buildversion.mjs proves the string is
+// derived and singly-homed; that is a fact about SOURCE. This is the other
+// half: the screens he named, photographed, at both shapes.
+//
+// THE MAP AND COMBAT HALF WAS REVOKED BY THE SAME PERSON on 2026-09-05: "remove
+// build and shift everything up for a clean neat ui", after "it should just be
+// vitals, relics, cinders, armory, menu and hp and mp potions in the Hud". The
+// run HUD carries no stamp now, so photographing it there would be asserting an
+// instruction that was withdrawn — this is a REVERSAL of a named ask, recorded
+// as one rather than trimmed quietly, because the old ask is still in the line
+// above and someone will otherwise read this file as contradicting it.
+//
+// WHAT STILL HAS TO BE INK, and why one screen is not a weakening: the main
+// menu, which is the half he asked for first and never withdrew. The version is
+// also on the startup gate (`components/startupGate.js`) and in About, so a
+// screenshot of either still answers "which build is this" — but the main menu
+// is the one he named, so the main menu is the one this photographs.
 //
 // ── WHY THE PREDICATE IS INK AND NOT PRESENCE ────────────────────────────────
 //
@@ -67,9 +81,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..');
 
 const SHOTS = [
-  { place: 'title', query: '?shot=title', what: 'the main menu — his first word' },
-  { place: 'map', query: '?shot=map', what: 'the act map' },
-  { place: 'combat', query: '?shot=combat', what: 'a fight' },
+  { place: 'title', query: '?shot=title', what: 'the main menu — his first word, and the one still standing' },
 ];
 // The two shapes this repo already looks at (tools/release-shots.mjs). The
 // narrow one is the point: it is where a phone photograph of a bug comes from,
@@ -278,7 +290,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const root = resolve(at('--root', REPO_ROOT));
   const out = resolve(at('--out', resolve(REPO_ROOT, 'tools/results')));
 
-  console.log('buildstamp-shot: three screens, two shapes, and the question is INK.');
+  console.log(`buildstamp-shot: ${SHOTS.length} screen(s), ${SHAPES.length} shapes, and the question is INK.`);
   console.log('');
   const { misses, rows, expected } = await run({ root, out });
   console.log('');
