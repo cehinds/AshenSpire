@@ -3,6 +3,76 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-653",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "Six receipts, written before the promotion rather than after it",
+    "detail": "Nothing a player sees changes. Six merges had landed on dev with no receipt in this file — the music-parity gate (#645), the animated outfit figures (#648), the Quick Access alignment (#649), the build-version corpus (#650), the hand-side instrument and the defect it found (#651), and the uniform stat foldouts (#647) — so the changelog you can read inside the game carried none of them either. All six are written up below, each at the build standing at its own merge, and the projection was regenerated from this file so both now say the same thing. Two of those receipts state something a green summary would have hidden: #647's own new gate reports 33 of 34, not the 34 its description claimed, and #651's repair exposed a rendering defect that is still on dev. The README's feature list also now says that the armour you equip changes the animated figure you fight as, which #648 made true and no player-facing page had mentioned. This receipt names its own pull request, which is only possible because the pull request was opened before the receipt was written.",
+    "build": "0.5.5.29",
+    "pullRequest": 653,
+    "url": "https://github.com/cehinds/AshenSpire/pull/653"
+  },
+  {
+    "id": "pr-647",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "Every stat row is the same row, and only one of them is open",
+    "detail": "Character creation, the shrine's Assign Points fold and the Armoury's Attributes card now draw the five primary stats — STR, DEX, CON, WIS, INT — as one compact family instead of three treatments that had drifted apart. Opening one stat's reveal closes whichever was open, across rows the game renders separately, so the column no longer grows a stack of open explanations you have to close by hand. The Armoury's Character information cards behave the same way and arrive with Attributes already open. A narrow Armoury attribute row keeps its rows level and still shows the whole number rather than clipping it. Stated rather than buried: the gate this change adds does not fully pass. tools/uniform-stat-foldouts.mjs reports 33 of 34, and the one that fails is the mobile Assign Points row — INT sits 1.44px taller than the other four, because it carries the longest summary and that surface is the narrowest of the three. It reproduces on the head before this branch merged dev, so it is not merge damage, and the tool is not wired into CI, so nothing goes red for it. Whether that is a layout defect or an assertion that wants a tolerance is the owner's call, and widening the tolerance to make the number read 34 would have hidden the question.",
+    "build": "0.5.5.28",
+    "pullRequest": 647,
+    "url": "https://github.com/cehinds/AshenSpire/pull/647"
+  },
+  {
+    "id": "pr-651",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The hand-side instrument reads the right column, and immediately finds a real defect",
+    "detail": "Nothing a player sees changes here, but something a player can see is now known to be wrong. The gate that checks which side of the figure a weapon is drawn on read content/source/weapons.csv by position, and the third-normal-form pass moved artKey from column 17 to 16; the tool read a number where the art key should be, found no art for any weapon at all, and died before measuring anything. CI had been reporting that death for as long as the drift had stood. The column is corrected, and the contract is now asserted against the file's own header row rather than assumed, so the next move announces itself. The working instrument then reported that the Armoury's figure and combat's figure disagree by 184px on the same weapon — every individual placement is right, the pairing is not — and bisecting with only the column fix applied puts the cause in #618, which is precisely the change about which way a sprite faces. The rendering defect is deliberately not fixed here, because it needs its own diagnosis in a real browser and folding it into an instrument repair would bury both. The job stays red, now for a true reason rather than a broken one.",
+    "build": "0.5.5.27",
+    "pullRequest": 651,
+    "url": "https://github.com/cehinds/AshenSpire/pull/651"
+  },
+  {
+    "id": "pr-650",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The build-version self-test stops naming a row that was deleted",
+    "detail": "Nothing a player sees changes. With the music-parity gate fixed, CI's tests job reached the next failure it had been skipping past: three of the build-version checker's thirty-five known-bads pointed at a row that #620 removed when it took the build stamp out of the run band, so each one walked straight through the check it was supposed to trip. One was worse than merely dead — it asserted the presence of something the current rule wants gone, so satisfying it made the tree more correct and it could never go red. The three are replaced with one plant per way the row that actually exists can break, including a guard against the #620 regression itself. Thirty-five of thirty-five known-bads now come back red.",
+    "build": "0.5.5.27",
+    "pullRequest": 650,
+    "url": "https://github.com/cehinds/AshenSpire/pull/650"
+  },
+  {
+    "id": "pr-649",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "Quick Access squares up with the stamina bar",
+    "detail": "The compact Quick Access cluster in the run HUD is a tighter two-by-two square whose bottom edge now finishes level with the bottom of the SP row, instead of hanging below it. Nothing else in the HUD moves — the vitals keep their geometry, and the detached relic and potion trays are untouched. The visible tile faces are smaller; the invisible tap target is not, so it is the same size to hit. A rendered check now holds the two edges within three quarters of a pixel across desktop, phone and iPhone SE, so the alignment cannot quietly drift again.",
+    "build": "0.5.5.27",
+    "pullRequest": 649,
+    "url": "https://github.com/cehinds/AshenSpire/pull/649"
+  },
+  {
+    "id": "pr-648",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The armour you wear is the figure you fight as",
+    "detail": "Equipping one of the twelve alternative armour sets now changes the animated figure in combat and in the Armoury to that outfit's own painted figure, rather than always showing the class default — and a set with no sheet of its own still falls back to the class figure, so nothing can end up with no figure at all. The attack gains a fourth frame: the forward thrust now lands before the downward slash instead of the swing starting mid-air. Twelve new painted pose sheets back this, cut into 720 frames and shipped as 560; the single-file download grows accordingly. The sheets were generated with ChatGPT Codex under the owner's direction — CREDITS says so, the source sheets and the approved outfit boards are kept in docs/art-evidence/2026-09-05/, and the game's AI disclosure covers them like every other painted figure.",
+    "build": "0.5.5.26",
+    "pullRequest": 648,
+    "url": "https://github.com/cehinds/AshenSpire/pull/648"
+  },
+  {
+    "id": "pr-645",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The music-only switch is checked again, after a year of a gate proving nothing",
+    "detail": "Nothing a player sees changes. Dispatching CI against test before the promotion turned up a failure on all three runners: the check that the music-only switch reflects its own state was matching the exact source text of the old imperative call, and the component-kit rewrite (#605) had moved that row onto the kit's declarative form. The behaviour never broke; the sentence the gate was reading did. Worse, the plant that proves the gate can fail searched for the same vanished string, so the gate was red and proving nothing — the two failure modes that are supposed to be distinguishable, at once. Both halves now assert what the value derives from rather than how it is spelled, and the freed drift slot is recorded in the plantsites baseline so the counts still match. Pre-existing rather than introduced: it reproduces on release and on the earlier test.",
+    "build": "0.5.5.26",
+    "pullRequest": 645,
+    "url": "https://github.com/cehinds/AshenSpire/pull/645"
+  },
+  {
     "id": "pr-644",
     "date": "2026-09-05",
     "group": "2026-09-05",
