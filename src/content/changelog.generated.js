@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-641",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "Three receipts, written before the promotion rather than after it",
+    "detail": "Nothing a player sees changes. The pose-animation fixes (#637), the publication-cancelling fix (#635) and the provenance row for the painted equipment sheets (#631) had all landed on dev without a receipt here, so the in-game changelog did not carry them either. All three are written up above, each citing the build it actually landed in. This receipt names its own pull request, which is only possible because the pull request was opened first — the trap that left #629 unrecorded until #633 came back for it.",
+    "build": "0.5.5.24",
+    "pullRequest": 641,
+    "url": "https://github.com/cehinds/AshenSpire/pull/641"
+  },
+  {
     "id": "pr-637",
     "date": "2026-09-05",
     "group": "2026-09-05",

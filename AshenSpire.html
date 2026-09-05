@@ -52868,7 +52868,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '77083294f9';
+const SOURCE = '5be2cb9287';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52902,7 +52902,7 @@ const SOURCE = '77083294f9';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '23';
+const ORDINAL = '24';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -55140,6 +55140,16 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-641",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "Three receipts, written before the promotion rather than after it",
+    "detail": "Nothing a player sees changes. The pose-animation fixes (#637), the publication-cancelling fix (#635) and the provenance row for the painted equipment sheets (#631) had all landed on dev without a receipt here, so the in-game changelog did not carry them either. All three are written up above, each citing the build it actually landed in. This receipt names its own pull request, which is only possible because the pull request was opened first — the trap that left #629 unrecorded until #633 came back for it.",
+    "build": "0.5.5.24",
+    "pullRequest": 641,
+    "url": "https://github.com/cehinds/AshenSpire/pull/641"
+  },
   {
     "id": "pr-637",
     "date": "2026-09-05",
