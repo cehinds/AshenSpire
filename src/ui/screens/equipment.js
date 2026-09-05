@@ -612,12 +612,12 @@ function inventoryReveal(registries, row, {
 /**
  * mountEquipment(host, opts) → { close() }
  *
- *   inCombat  seals storage and honours each slot's swap rule
- *   onSwap    called with (slotId, setIndex) instead of mutating, so combat can
- *             route the change through the engine intent that charges for it
+ *   inCombat  applies the authored combat-change rule and each slot's swap rule
+ *   onSwap    routes active-set changes through the priced combat intent
+ *   onEquip   routes item replacement/move/unequip through the priced combat intent
  */
 export function mountEquipment(host, {
-  registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquipmentChanged,
+  registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
 }) {
   const destinationPlan = destination ? armouryDestinationPlan(destination) : null;
   if (destination && !destinationPlan) {
@@ -635,13 +635,12 @@ export function mountEquipment(host, {
   // behaviour to change here — only the silence to close.
   //
   // IT FAILS LOUD AND CLOSED, in that order. A mount that cannot say whether a
-  // fight is on is sealed: a visibly inert picker with a named cause on the
-  // console beats a picker that quietly lets you re-arm. Law 1 clause 5 —
+  // fight is on gets a visibly inert picker with a named cause. Law 1 clause 5 —
   // bad input fails by name, and the name here is the caller.
   if (typeof inCombatArg !== 'boolean') {
     console.error(
       `mountEquipment(): no boolean \`inCombat\` — got ${JSON.stringify(inCombatArg)}.`
-      + ' Sealing the picker. This line is the defect, not the seal.'
+      + ' Disabling its actions. This line is the defect, not the refusal.'
     );
   }
   // ONE NAME IN THE BODY. The argument is validated once, here, and everything
@@ -872,6 +871,23 @@ export function mountEquipment(host, {
   /** One mutation path for the shared Inventory buttons, holds, and drag/drop. */
   function applyEquipmentChange(slotId, setIndex, pieceId, actionLabel) {
     const hadSelection = !!picking;
+    if (inCombat) {
+      if (typeof onEquip !== 'function') {
+        notice = 'Combat equipment changes are unavailable on this screen.';
+        draw();
+        return false;
+      }
+      const refused = onEquip(slotId, setIndex, pieceId);
+      if (refused) {
+        notice = refused;
+        draw();
+        return false;
+      }
+      if (hadSelection) clearInventorySelection();
+      sfx.play('cardPlay');
+      commit(hadSelection ? foldSettings() : null);
+      return true;
+    }
     const changed = equipPiece(
       registries, run.loadout, slotId, setIndex, pieceId, owned(),
       { inCombat, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels, classId: run.class, onEquipmentChanged: captureEquipmentChanged }
@@ -1108,9 +1124,10 @@ export function mountEquipment(host, {
     const inventoryItemClass = layout.cardClasses.inventoryItem;
     const faceActions = new Map();
     const draggableRows = new Map();
-    // In combat the inventory stays readable, but every equipment action is
-    // sealed. Keep that refusal on the action itself so opening an equipped
-    // item explains why it cannot move instead of trying to bind a live act.
+    // An action can still be unavailable because its destination is locked,
+    // its requirements fail, or a combat mount omitted the engine callback.
+    // Keep that refusal on the action itself so the card explains why it cannot
+    // move instead of binding a dead act.
     const sealChip = (element, reason) => {
       element.classList.add('locked');
       refuses(element, () => reason);

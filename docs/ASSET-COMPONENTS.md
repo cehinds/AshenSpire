@@ -43,7 +43,7 @@ single place that constructs it.
 | `armoury.positionSpritePane` | Item or position-state art | `.armoury-position-sprite-pane` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.summaryDivider` | Left boundary of the Item Summary Pane | `.armoury-position-sprite-pane` right border | `styles/ui.css` |
 | `armoury.positionSummaryPane` | Category, name, combat, tags, weight, and state | `.armoury-position-summary-pane` | `src/ui/screens/equipment.js` + `styles/ui.css` |
-| `armoury.positionAction` | Equip or green Equipped state | `.armoury-position-action` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.positionAction` | Equip or green Equipped state; combat changes route through the priced player-turn engine intent | `.armoury-position-action` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.armamentItemCard` | Expanded lore/effect/calculation details | `.armoury-position-detail` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.armamentDetailPane` | Details beneath the compact position summary | `.armoury-armament-details` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.armamentGridGroup` | One procedural equipment group in Grid mode | `.armoury-position-grid-group` | `src/ui/screens/equipment.js` + `styles/ui.css` |
@@ -55,7 +55,7 @@ single place that constructs it.
 | `armoury.inventoryCard` | One authoritative carried-item Inventory panel | `.armoury-inventory` | `src/ui/screens/equipment.js` |
 | `armoury.paneSplitter` | Draggable/keyboard pane resizer with snapping | `.armoury-pane-splitter` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.itemCard` | Folded inventory/picker item; disclosure face and whole-card action host | `.inventory-face, .equip-chip.as-face` | `src/ui/screens/equipment.js` |
-| `armoury.inventoryItemClass` | Inventory item class with one folded/expanded action surface, delegated whole-card hold progress, and whole-card drag | `[data-card-class="inventoryItem"]` | `content/source/armouryUi.json` + `src/ui/components/holdconfirm.js` |
+| `armoury.inventoryItemClass` | Inventory item class with one folded/expanded action surface, delegated whole-card hold progress, whole-card drag, and priced combat Equip/Move/Unequip | `[data-card-class="inventoryItem"]` | `content/source/armouryUi.json` + `src/ui/components/holdconfirm.js` + `src/engine/combat.js` |
 | `armoury.itemReveal` | Model, description, tags, and available action | `.inventory-detail, .disc-reveal` | `src/ui/screens/equipment.js` + `src/ui/components/disclosure.js` |
 | `armoury.comparisonTooltipAnchor` | Focusable expanded-item anchor for sustained-hold comparison; hover/focus alone do not open it | `.inventory-detail[data-component="armoury.comparisonTooltipAnchor"]` | `src/ui/screens/equipment.js` + `src/ui/components/holdconfirm.js` + `src/ui/components/tooltip.js` |
 | `armoury.equipmentComparison` | Full before/after receipt with exact weapon-package counts and slot-bound upgrade changes | `[data-ui-component="equipment-comparison"]` | `content/source/armouryUi.json` + `src/ui/components/equipmentReceipts.js` + `src/ui/screens/equipment.js` |

@@ -447,7 +447,7 @@ async function main() {
       document.body.appendChild(fixtureHost);
       const fixture = { run, commits: 0 };
       window.__pr315Fixture = fixture;
-      mountEquipment(document.querySelector('#pr315-fixture'), {
+      fixture.panel = mountEquipment(document.querySelector('#pr315-fixture'), {
         registries,
         run,
         meta: { settings: { holdConfirm: 'off' } },
@@ -512,6 +512,95 @@ async function main() {
       check(refusal.unchanged, 'a full Inventory keeps a refused Unequip atomic');
       check(refusal.commits === 0 && /inventory is full/i.test(refusal.refusal),
         `a refused Unequip skips success commit and explains the full Inventory (${JSON.stringify(refusal.refusal)})`);
+    }
+    const combatChange = SHIPPED ? null : await evaluate(`(async () => {
+      window.__pr315Fixture?.panel?.close?.();
+      const [{ contentBundle }, { createRegistries }, { createRunState }, { mountEquipment }, { createCombat, dispatch }, { createRng }] = await Promise.all([
+        import('/src/content/index.js'),
+        import('/src/model/registries.js'),
+        import('/src/model/state.js'),
+        import('/src/ui/screens/equipment.js'),
+        import('/src/engine/combat.js'),
+        import('/src/engine/rng.js'),
+      ]);
+      const registries = createRegistries(contentBundle);
+      const run = createRunState({ seed: 0x316, classId: 'reaver', registries });
+      run.loadout.storage = ['dagger'];
+      const combat = createCombat({
+        registries,
+        rng: createRng(0x316),
+        enemyIds: ['blightHound'],
+        player: {
+          classId: run.class, attributes: run.attributes,
+          maxHp: run.maxHp, hp: run.hp, maxMana: run.maxMana, mana: run.mana,
+          maxStamina: run.maxStamina, stamina: run.stamina,
+          energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck,
+          relicIds: run.relics, flasks: run.flasks, loadout: run.loadout,
+          itemUpgradeLevels: run.itemUpgradeLevels,
+          equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+          equipmentAttackSlotCount: run.equipmentAttackSlotCount,
+          itemMounts: run.itemMounts,
+        },
+      });
+      combat.player.energy = combat.player.energyMax;
+      const before = JSON.stringify(combat.loadout);
+      const energyBefore = combat.player.energy;
+      const events = [];
+      let error = '';
+      const host = document.querySelector('#pr315-fixture');
+      host.replaceChildren();
+      mountEquipment(host, {
+        registries, run,
+        destination: 'equipment',
+        meta: { settings: { holdConfirm: 'off', armouryArmamentView: 'list' } },
+        inCombat: true,
+        onClose: () => {},
+        onSwap: () => {},
+        onEquip: (slotId, setIndex, pieceId) => {
+          try {
+            const result = dispatch(combat, { type: 'changeEquipment', slotId, setIndex, pieceId });
+            events.push(...result.events.map((event) => event.type));
+            return '';
+          } catch (caught) {
+            error = caught.message;
+            return error;
+          }
+        },
+      });
+      const armamentsFold = document.querySelector('[data-fold="armaments"]');
+      if (armamentsFold?.getAttribute('aria-expanded') === 'false') armamentsFold.click();
+      await new Promise((done) => setTimeout(done, 0));
+      const positionAction = document.querySelector('[data-slot-position="rightHand:0"] .armoury-position-action');
+      positionAction?.click();
+      const daggerItem = document.querySelector('.ep-list [data-item-id="dagger"]');
+      const daggerFace = daggerItem?.closest('.disc-face') || daggerItem?.querySelector('.disc-face') || daggerItem;
+      daggerFace?.click();
+      await new Promise((done) => setTimeout(done, 0));
+      const action = document.querySelector('.ep-list .disc-reveal:not([hidden]) button[data-act]');
+      const actionLabel = action?.textContent?.trim() || '';
+      action?.click();
+      return {
+        foundFace: !!daggerFace,
+        foundAction: !!action,
+        foundPositionAction: !!positionAction,
+        itemIds: [...document.querySelectorAll('.ep-list [data-item-id]')].map((face) => face.dataset.itemId),
+        actionLabel,
+        changed: JSON.stringify(combat.loadout) !== before,
+        equipped: combat.loadout.sets.rightHand[0],
+        storedOld: combat.loadout.storage.includes('straightSword'),
+        energySpent: energyBefore - combat.player.energy,
+        configuredCost: registries.balance.equipment.swapCost,
+        events,
+        error,
+      };
+    })()`);
+    if (combatChange) {
+      check(combatChange.foundFace && (combatChange.foundAction || combatChange.changed),
+        `combat Armoury exposes a real Dagger action (${combatChange.foundAction ? JSON.stringify(combatChange.actionLabel) : 'selected-position card action'})`);
+      check(combatChange.changed && combatChange.equipped === 'dagger' && combatChange.storedOld,
+        `combat Armoury moves Dagger into RH1 and returns Straight Sword to storage (${JSON.stringify(combatChange)})`);
+      check(combatChange.energySpent === combatChange.configuredCost && combatChange.events.includes('equipmentRearmed') && !combatChange.error,
+        `combat Armoury pays the authored cost and emits the engine receipt (${JSON.stringify(combatChange)})`);
     }
   } finally {
     cdp.close();

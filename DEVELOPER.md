@@ -165,6 +165,11 @@ model IDs remain in [`docs/COMPONENT-CATALOG.md`](docs/COMPONENT-CATALOG.md).
   Equip/Move/Unequip hold also previews comparison through the same lifecycle;
   with hold-confirm off, the explicit action button commits and the card keeps a
   separate read-only hold-to-compare gesture.
+- In combat, never mutate `run.loadout` from the Armoury. Prepared-set changes
+  dispatch `swapArmament`; item replace/move/unequip actions dispatch
+  `changeEquipment`. Both are player-turn-only, pay the authored equipment
+  action price, and let the engine reconcile cards, resource vessels, Poise,
+  events, and the persisted combat snapshot atomically.
 - Armaments, Inventory, Cards, and Stats compose `trayModel` and `renderTray`.
   Folding collapses to the standard header without erasing the remembered
   expanded size. Sort controls and resize handles exist only while expanded

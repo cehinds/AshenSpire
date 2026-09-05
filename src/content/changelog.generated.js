@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-625",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "You can change equipment during a fight",
+    "detail": "The combat Armoury now lets you equip, move, or remove carried weapons and armour on your turn instead of limiting you to the sets prepared before the fight. Re-arming a position costs the same Energy as switching a prepared weapon set. The change takes effect immediately: equipment cards, HP/MP/SP limits, Poise, and the item shown in each position all update inside the current fight, and the new loadout stays with you when the fight ends. A change you cannot afford is refused without spending Energy or moving anything.",
+    "build": "0.5.5.11",
+    "pullRequest": 625,
+    "url": "https://github.com/cehinds/AshenSpire/pull/625"
+  },
+  {
     "id": "pr-624",
     "date": "2026-09-05",
     "group": "2026-09-05",

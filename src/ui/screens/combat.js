@@ -1888,9 +1888,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         : 'Everywhere you can go from here.')}`);
   }
 
-  // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
-  // storage seal themselves, and picking another hand set routes through the
-  // engine intent that charges for it instead of mutating the loadout here.
+  // The Armoury mid-fight is the SAME panel, told it is in combat. Both active
+  // set switches and item replacement route through engine intents so Energy,
+  // live card piles, resources, Poise, and the combat snapshot stay atomic.
   function openCombatArmoury(request = '') {
     if (!registries.balance.equipment.enabled) return;
     const equipView = typeof request === 'string' ? request : '';
@@ -1913,6 +1913,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         panel.redraw();
         render();
         afterDispatch(out.events);
+      },
+      onEquip: (slotId, setIndex, pieceId) => {
+        let out;
+        try {
+          out = dispatch(combat, { type: 'changeEquipment', slotId, setIndex, pieceId });
+        } catch (e) {
+          dlog('equip', e.message);
+          return e.message;
+        }
+        render();
+        afterDispatch(out.events);
+        return '';
       },
     });
   }
