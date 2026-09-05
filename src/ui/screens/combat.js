@@ -7,7 +7,7 @@
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { resolveCard } from '../../model/registries.js';
 import { openPileModal } from '../components/piles.js';
-import { attachTooltip, ensureTooltip, hideTooltip, showTooltipForRect, esc } from '../components/tooltip.js';
+import { attachTooltip, ensureTooltip, hideTooltip, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite } from '../assets.js';
@@ -151,7 +151,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
   let selectedEnemyId = null; // contextual reading selection; never combat targeting
-  let enemyTooltipDelayTimer = null;
+  let combatantTooltipDelayTimer = null;
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
@@ -164,7 +164,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // is a separately owned Folding Tray and remains until its label is folded.
   combatEl.addEventListener('click', (event) => {
     if (event.target.closest('.combatant, .combatant-inspector-host')) return;
-    clearTimeout(enemyTooltipDelayTimer);
+    clearTimeout(combatantTooltipDelayTimer);
     selectedEnemyId = null;
     combatEl.querySelectorAll('.combatant.enemy.context-selected').forEach((enemy) => enemy.classList.remove('context-selected'));
     combatEl.querySelectorAll('.combatant.enemy[aria-pressed="true"]').forEach((enemy) => enemy.setAttribute('aria-pressed', 'false'));
@@ -385,7 +385,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
   }
 
-  function enemyContextTooltip(subject) {
+  function combatantContextTooltip(subject) {
     const hp = subject.resources.find((row) => row.label === 'HP');
     const poise = subject.resources.find((row) => row.label === 'Poise');
     const effects = subject.statuses.map((row) => row.name).join(', ') || 'None';
@@ -432,20 +432,33 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return { left, top, right, bottom, width: right - left, height: bottom - top };
   }
 
-  function showEnemyContext(box, enemy) {
-    clearTimeout(enemyTooltipDelayTimer);
-    if (!box.isConnected || !enemy.alive) return false;
+  /**
+   * showCombatantContext(box, role, entity) — THE GLANCE, for either side of
+   * the field. #045/#046 made this the single battlefield tooltip surface;
+   * until 2026-09-05 it answered for enemies only, so the player's own frame
+   * answered nothing at all (Constantine: "no tool tip for ... player
+   * combatants"). One surface, both roles: `combatantContextTooltip` already
+   * wrote the player's footer sentence, and `combatantSubject` already read
+   * the player's pools, stance and effects — nothing new is being invented
+   * here, the door was simply never opened on his side.
+   */
+  function showCombatantContext(box, role, entity) {
+    clearTimeout(combatantTooltipDelayTimer);
+    if (!box.isConnected) return false;
+    if (role === 'enemy' && !entity.alive) return false;
     const card = renderedContentRect(box.querySelector('.combatant-card'));
     if (!card) return false;
-    showTooltipForRect(card, enemyContextTooltip(combatantSubject('enemy', enemy)), {
+    showTooltipForRect(card, combatantContextTooltip(combatantSubject(role, entity)), {
       intent: 'above',
       align: 'center',
       clear: [box.querySelector('.intent'), app.querySelector('.topbar.combat-hud')],
-      appearance: { variant: 'enemy-context', maxWidthRem: 21 },
+      appearance: { variant: 'combatant-context', maxWidthRem: 21 },
       autoHideMs: tooltipPlacement.tokens.autoFadeMs,
     });
     return true;
   }
+
+  const showEnemyContext = (box, enemy) => showCombatantContext(box, 'enemy', enemy);
 
   function restoreSelectedEnemyContext(exceptId = null) {
     if (!selectedEnemyId || selectedEnemyId === exceptId) {
@@ -457,6 +470,24 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!selectedBox || !showEnemyContext(selectedBox, selectedEntity)) hideTooltip();
   }
 
+  /**
+   * childAnswers(box, event) — does a surface INSIDE the frame own this
+   * pointer or focus cursor? A status pip answers for itself (#045/#046's
+   * one-surface rule, reversed for the status surfaces on 2026-09-05), and the
+   * frame must not talk over it with its own glance. The two input paths need
+   * two readings: the focus cursor arrives as a bubbling `gpfocus`, so the
+   * frame sees the pip's own event with `target` still the pip; hover does not
+   * bubble, so the pointer's real subject is whatever sits under it. Without
+   * this the frame's timer, scheduled second on the bubbling path, replaced
+   * the pip's reading a moment after it opened.
+   */
+  function childAnswers(box, event) {
+    if (event.target && event.target !== box && event.target.closest) return !!event.target.closest('[data-tip-attached]');
+    if (event.clientX == null) return false;
+    const under = document.elementFromPoint(event.clientX, event.clientY);
+    return !!under && box.contains(under) && !!under.closest('[data-tip-attached]');
+  }
+
   function wireEnemyContext(box, enemy) {
     ensureTooltip();
     box.classList.add('inspectable');
@@ -466,22 +497,25 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     box.setAttribute('aria-pressed', selectedEnemyId === enemy.id ? 'true' : 'false');
     box.setAttribute('aria-describedby', 'tooltip');
     box.setAttribute('aria-label', `Select ${combatantSubject('enemy', enemy).name} for combat details`);
-    box.addEventListener('pointerenter', () => {
-      clearTimeout(enemyTooltipDelayTimer);
-      enemyTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
+    box.addEventListener('pointerenter', (event) => {
+      if (childAnswers(box, event)) return;
+      clearTimeout(combatantTooltipDelayTimer);
+      combatantTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
     });
     box.addEventListener('pointerleave', () => {
       if (selectedEnemyId === enemy.id) return;
-      clearTimeout(enemyTooltipDelayTimer);
+      clearTimeout(combatantTooltipDelayTimer);
       restoreSelectedEnemyContext(enemy.id);
     });
-    box.addEventListener('gpfocus', () => {
-      clearTimeout(enemyTooltipDelayTimer);
-      enemyTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
+    box.addEventListener('gpfocus', (event) => {
+      if (childAnswers(box, event)) return;
+      clearTimeout(combatantTooltipDelayTimer);
+      combatantTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
     });
-    box.addEventListener('gpblur', () => {
+    box.addEventListener('gpblur', (event) => {
+      if (childAnswers(box, event)) return;
       if (selectedEnemyId === enemy.id) return;
-      clearTimeout(enemyTooltipDelayTimer);
+      clearTimeout(combatantTooltipDelayTimer);
       restoreSelectedEnemyContext(enemy.id);
     });
     box.addEventListener('keydown', (event) => {
@@ -490,6 +524,36 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       box.click();
     });
   }
+  // The player's half of the same door. Deliberately NOT a copy of
+  // wireEnemyContext: the player is never a context selection (nothing to
+  // restore on leave) and never a target (no role, no tabIndex, no
+  // data-focusable — the armed-card branch in renderPlayer owns those, and
+  // publishing a second, permanent focus stop would reorder the controller
+  // cursor). What is left is the glance itself: hover, the focus cursor, and
+  // on touch a tap, on the same clock the enemies use.
+  function wirePlayerContext(box, player) {
+    ensureTooltip();
+    box.classList.add('inspectable');
+    box.setAttribute('aria-describedby', 'tooltip');
+    const open = (event) => {
+      if (childAnswers(box, event)) return;
+      clearTimeout(combatantTooltipDelayTimer);
+      combatantTooltipDelayTimer = setTimeout(
+        () => showCombatantContext(box, 'player', player),
+        tooltipPlacement.tokens.hoverDelayMs,
+      );
+    };
+    const close = (event) => {
+      if (childAnswers(box, event)) return;
+      clearTimeout(combatantTooltipDelayTimer);
+      restoreSelectedEnemyContext();
+    };
+    box.addEventListener('pointerenter', open);
+    box.addEventListener('pointerleave', close);
+    box.addEventListener('gpfocus', open);
+    box.addEventListener('gpblur', close);
+  }
+
   // The snapshot is the PACED state the whole HUD renders from. It must carry
   // every value the board draws, or that layer silently renders post-state
   // while the rest plays back (Sunna's PX gate: meters were missing, so the
@@ -627,7 +691,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // ---------- rendering ----------
   function renderCombatantStage() {
-    clearTimeout(enemyTooltipDelayTimer);
+    clearTimeout(combatantTooltipDelayTimer);
     hideTooltip();
     if (selected || selectedFlask != null) selectedEnemyId = null;
     if (selectedEnemyId && !combat.enemies.some((enemy) => enemy.id === selectedEnemyId && enemy.alive)) selectedEnemyId = null;
@@ -637,7 +701,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const selectedEntity = combat.enemies.find((enemy) => enemy.id === selectedEnemyId && enemy.alive);
       const selectedBox = selectedEntity && app.querySelector(`.combatant.enemy[data-eid="${CSS.escape(selectedEnemyId)}"]`);
       if (selectedBox) {
-        enemyTooltipDelayTimer = setTimeout(
+        combatantTooltipDelayTimer = setTimeout(
           () => showEnemyContext(selectedBox, selectedEntity),
           tooltipPlacement.tokens.hoverDelayMs,
         );
@@ -760,9 +824,34 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
   }
 
-  function statusRow(entity, { tooltips = true } = {}) {
+  /**
+   * answerOnTap(el, contentFn) — a tap IS the question on a phone, where
+   * `attachTooltip`'s hover clock never runs and its touch route wants a
+   * double tap. Without this a tap on a status pip travels to the frame,
+   * which answers with a DIFFERENT reading (its own glance) over the top of
+   * the one the player asked for. It yields entirely while a card or flask is
+   * armed: then a tap on the frame is a play, and swallowing it would make
+   * the pips dead patches on a target.
+   */
+  function answerOnTap(el, contentFn) {
+    el.addEventListener('click', (event) => {
+      if (selected || selectedFlask != null || selfArm) return;
+      event.stopPropagation();
+      showTooltipFor(el, contentFn(), { intent: 'above', align: 'center' });
+    });
+  }
+
+  function statusRow(entity) {
     // The status row is the kit's Pips: one round badge per effect, its count a
     // round StatePill on the corner.
+    // EVERY PIP ANSWERS FOR ITSELF — the one exception to #045/#046's single
+    // battlefield tooltip surface, and Constantine's own reversal of it
+    // (2026-09-05: "no tool tip for Status effects"). The frame's context
+    // reading repeats HP, Poise and the intent, so a second tooltip on those
+    // is redundant and stays suppressed; it only NAMES the effects ("Effects
+    // Crimson Blight"), so a pip with no tooltip is a glyph the player cannot
+    // read. Naming without explaining is the gap this closes. The same holds
+    // for the threshold proc bars below — they are status rows too.
     const row = pips([], { class: 'statuses' });
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
@@ -789,14 +878,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         el.classList.add('proc-pip');
         el.style.background = `conic-gradient(${def.tint || 'var(--muted)'} ${fillPct}%, transparent ${fillPct}%)`;
       }
-      if (tooltips) {
-        attachTooltip(el, () => {
-          let extra = '';
-          if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
-          if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
-          return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
-        });
-      }
+      const statusTip = () => {
+        let extra = '';
+        if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
+        if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
+        return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
+      };
+      attachTooltip(el, statusTip);
+      answerOnTap(el, statusTip);
       row.appendChild(el);
     }
     return row;
@@ -878,7 +967,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         });
         meterEl.dataset.status = sid;
         markUiComponent(meterEl, UI.procStatusBar, sid);
-        if (tooltips) attachTooltip(meterEl, () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`);
+        // A proc bar is a status row: it answers for itself like the pips.
+        const procTip = () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`;
+        attachTooltip(meterEl, procTip);
+        answerOnTap(meterEl, procTip);
         wrap.appendChild(meterEl);
       }
     }
@@ -912,7 +1004,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (st.icon) chip.prepend(glyph(st.icon, { class: 'ic' }));
       trailing.push(chip);
     }
-    trailing.push(statusRow(p, { tooltips: false }));
+    trailing.push(statusRow(p));
     const box = combatantFrame({
       role: 'player',
       entityId: 'player',
@@ -922,6 +1014,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       meters: meterBars(p, { tooltips: false }),
       trailing,
     });
+    wirePlayerContext(box, p);
     // When a self/buff card is armed, the player is a confirmable target.
     // Publish that temporary target through the same unified focus door as an
     // enemy target. Without this, armSelf() asks focusFirst() for the player,
@@ -940,7 +1033,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
-      else hideTooltip();
+      else showCombatantContext(box, 'player', p);
     });
     zone.appendChild(box);
   }
@@ -1003,7 +1096,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         blockBadge: blockBadge(enemy, { tooltips: false }),
         name: nm,
         meters: meterBars(enemy, { tooltips: false }),
-        trailing: [statusRow(enemy, { tooltips: false })],
+        trailing: [statusRow(enemy)],
       });
       box.dataset.stature = statureFor(registries, def.id);
       if (enemy.alive) {
@@ -1019,11 +1112,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
               candidate.classList.toggle('context-selected', current);
               candidate.setAttribute('aria-pressed', current ? 'true' : 'false');
             });
-            clearTimeout(enemyTooltipDelayTimer);
+            clearTimeout(combatantTooltipDelayTimer);
             // Selection state answers immediately through aria-pressed and the
             // selected treatment; its contextual reading uses the same configured,
             // cancellable delay as pointer and focus preview.
-            enemyTooltipDelayTimer = setTimeout(
+            combatantTooltipDelayTimer = setTimeout(
               () => showEnemyContext(box, enemy),
               tooltipPlacement.tokens.hoverDelayMs,
             );
@@ -1440,7 +1533,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         else focusHandDefault();
       }
       if (selectedEnemyId) {
-        clearTimeout(enemyTooltipDelayTimer);
+        clearTimeout(combatantTooltipDelayTimer);
         selectedEnemyId = null;
         hideTooltip();
         app.querySelectorAll('.combatant.enemy.context-selected').forEach((enemy) => enemy.classList.remove('context-selected'));
