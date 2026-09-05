@@ -4,9 +4,9 @@ A roguelike deckbuilder for the browser — single-player, with optional LAN co-
 
 > **Status: feature-complete core loop.** Four classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
-> **README content updated:** 2026-09-05T12:00:34-08:00 (Alaska)
-> **Updated by:** Claude Code, on the owner's instruction — the feature list now describes re-arming during a fight, which shipped in #625 and was not yet written down here
-> **Source change:** the documentation pass before the `dev` → `test` promotion, which also wrote the CHANGELOG receipts for #626 (equipment turnaround sheets), #627 (the in-game changelog catching up) and #628 (the corrected build addresses)
+> **README content updated:** 2026-09-05T12:25:17-08:00 (Alaska)
+> **Updated by:** Claude Code, on the owner's instruction — publication is now split by branch, so the paragraph saying it is owner-exclusive and manual for all four branches was no longer true
+> **Source change:** the `pages-builds` change that publishes `dev`, `test` and `release` on push while leaving `main` to the owner's own dispatch
 > **Scope:** README content-currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
 
 ## Play a build
@@ -43,13 +43,16 @@ build — `…/main/1688/` is `main` build 1688, byte-identical to the `AshenSpi
 commit that produced it — and `…/<branch>/latest/` is the branch's newest. Each entry on the
 index links the `CHANGELOG.md` **at that build's commit**, not at a moving branch head. The
 site is assembled from git history by `node tools/pages-site.mjs` in the `pages-builds`
-workflow on every push to one of the four branches; nothing on it is hand-edited. Publication
-itself is owner-exclusive and separate from pushing: a push only assembles and proves the site,
-and it is deployed only by the repository owner's own manual dispatch of that workflow, with
-its `publish` input spelling PUBLISH (a push-triggered run holds no Pages credential), once the
-repository's Pages source is set to **GitHub Actions** (Settings → Pages).
-Until then the legacy `main:/` source keeps serving the stable link above and the per-branch
-addresses are not yet live.
+workflow on every push to one of the four branches; nothing on it is hand-edited.
+
+**Publication is split by branch.** A push to `dev`, `test` or `release` assembles the site,
+proves it, and publishes it — those three keep themselves current without anyone asking.
+A push to **`main` publishes nothing**: the stable Play link changes only on the repository
+owner's own dispatch of that workflow with its `publish` input spelling PUBLISH, which
+publishes whichever branch it is run from. Because Pages serves one site and this one is
+assembled on top of `main`'s tree, a `main` change does reach the site on the next
+`dev`/`test`/`release` publication after it lands; what a push to `main` never does is
+publish itself. Merging to `main` is owner-only in the first place.
 
 **[AshenSpire Project #4](https://github.com/users/cehinds/projects/4)** owns
 workflow status. **[Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)**
@@ -85,9 +88,11 @@ beside it. This is a **development preview**, not a release, tag, or
 production approval. Release status remains governed separately and is currently
 **RED**.
 
-Work reaches `main` only when the owner merges it; `dev` is the integration
-branch and is not published. A change merged to `dev` is therefore not yet
-visible at the preview URL.
+Work reaches `main` only when the owner merges it. `dev` is the integration
+branch, and since #632 a push to it publishes the builds site, so a change
+merged to `dev` appears at its own `dev/` address once that run finishes. What
+it does not do is move the stable Play link above, which follows `main` and is
+published only on the owner's own dispatch.
 
 For offline play, download [`AshenSpire.html`](AshenSpire.html) from the
 repository root and double-click it. It is a self-contained file and requires
