@@ -63,6 +63,10 @@ gaps. All three are player-visible. A receipt here names the pull request that
 landed a change, and inventing one to fit these would be the reconstruction
 this file refuses at its own start date. They live in `git log`.*
 
+## 2026-09-05
+
+- **The fifth 0.5.0 candidate** ([#624](https://github.com/cehinds/AshenSpire/pull/624), `0.5.5.1`). The in-game stamp reads `0.5.5.<build>` from this build on: the candidate QA receives after `0.5.4`, which was promoted to `test` and on to `release` on 2026-09-04. Nothing else a player sees changes with the stamp itself. What the candidate carries over `0.5.4` is in the entries below, and the three a player will feel are the component kit every screen is now drawn from (#605), the smith who lifts a card out of an item or seats one back (#602), and the painted class figure you both build and fight as (#590, #619). Riders in this receipt itself: the README names those three, thirty receipts covering `0.5.4.2` through `0.5.4.75` are written up from the merge log, and the component catalog gains the sixteen kit pieces it had not yet described.
+
 ## 2026-09-04
 
 - **The band drops the build stamp, and a fighter faces its opponent** ([#620](https://github.com/cehinds/AshenSpire/pull/620), `0.5.4.75`). The build stamp leaves the run band at the top of the screen — it lives on the title screen, where you go to read it — and a combat figure now turns to face whoever it is fighting instead of always facing the same way.

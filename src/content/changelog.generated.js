@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-624",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The fifth 0.5.0 candidate",
+    "detail": "The in-game stamp reads 0.5.5.<build> from this build on: the candidate QA receives after 0.5.4, which was promoted to test and on to release on 2026-09-04. Nothing else a player sees changes with the stamp itself. What the candidate carries over 0.5.4 is in the entries below, and the three a player will feel are the component kit every screen is now drawn from (#605), the smith who lifts a card out of an item or seats one back (#602), and the painted class figure you both build and fight as (#590, #619). Riders in this receipt itself: the README names those three, thirty receipts covering 0.5.4.2 through 0.5.4.75 are written up from the merge log, and the component catalog gains the sixteen kit pieces it had not yet described.",
+    "build": "0.5.5.1",
+    "pullRequest": 624,
+    "url": "https://github.com/cehinds/AshenSpire/pull/624"
+  },
+  {
     "id": "pr-620",
     "date": "2026-09-04",
     "group": "2026-09-04",
