@@ -277,7 +277,7 @@ function renderedSpriteUrl(classId, tintId) {
 // "Blender PNG" until 2026-09-03, which stopped being true when the class art
 // was replaced — the same stale description as the lobby tooltip one file over.
 /** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
-export function classSprite(classId, tint, sigil, tintId, style) {
+export function classSprite(classId, tint, sigil, tintId, style, figureId) {
   const build = CLASS_SVG[classId];
   if (!build) return null;
   const el = document.createElement('div');
@@ -325,7 +325,10 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   // swaps art styles mid-swing. A class with no shipped frames falls through
   // to the painting, so the default is never a blank figure.
   if (style === 'animated' && hasPoses(classId, tintId)) {
-    const stage = createPoseStage(classId, tintId);
+    // figureId separates figures that would otherwise be the same rotation: two
+    // co-op allies of the same class and tint shared one swing counter, so each
+    // of them showed every other frame. Solo has one figure and needs no id.
+    const stage = createPoseStage(classId, tintId, figureId || undefined);
     if (stage) {
       el.classList.add('animated');
       // Inside the facing layer, like the painting: an animated figure has a
@@ -450,7 +453,7 @@ export function playerSprite(customization = {}, classId) {
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
-    return classSprite(classId, tint, customization.glyph, customization.tint, style);
+    return classSprite(classId, tint, customization.glyph, customization.tint, style, customization.figureId);
   }
   const el = document.createElement('div');
   el.style.cssText =

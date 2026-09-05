@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-641",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "Three receipts, written before the promotion rather than after it",
+    "detail": "Nothing a player sees changes. The pose-animation fixes (#637), the publication-cancelling fix (#635) and the provenance row for the painted equipment sheets (#631) had all landed on dev without a receipt here, so the in-game changelog did not carry them either. All three are written up above, each citing the build it actually landed in. This receipt names its own pull request, which is only possible because the pull request was opened first — the trap that left #629 unrecorded until #633 came back for it.",
+    "build": "0.5.5.24",
+    "pullRequest": 641,
+    "url": "https://github.com/cehinds/AshenSpire/pull/641"
+  },
+  {
+    "id": "pr-637",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "Seven fixes in the pose animation path",
+    "detail": "No new art, and no shipped frame moves. Asking for a pose this build does not ship used to freeze the figure in whatever it was showing — a lunge, mid-swing — for the rest of the fight; the frame is checked before the hold already running is cancelled. Reduced motion now honours the setting made in your operating system and not only the one inside the game, which in co-op was the only gate a pose swap passed through. Two co-op seats of the same class and tint now rotate through their attack frames independently instead of stealing each other's place. The remaining four are in the art tools: the gap check is per class and pose rather than pooled across all of them, a failed encode no longer leaves the shipped set half-deleted, --grounded anchors a figure by its feet rather than by its lowest ink, and a crop with nothing above the floor line names the frame instead of throwing a bare RangeError.",
+    "build": "0.5.5.22",
+    "pullRequest": 637,
+    "url": "https://github.com/cehinds/AshenSpire/pull/637"
+  },
+  {
     "id": "pr-633",
     "date": "2026-09-05",
     "group": "2026-09-05",
@@ -21,6 +41,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.5.5.17",
     "pullRequest": 632,
     "url": "https://github.com/cehinds/AshenSpire/pull/632"
+  },
+  {
+    "id": "pr-635",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "A run that will not publish cannot cancel one that will",
+    "detail": "Nothing a player sees changes. Once #632 let dev, test and release publish on a push, the workflow's single cancel-in-progress group became a way to lose a publication in silence: a push to main — which deliberately publishes nothing — could cancel a development publication mid-deploy, and a cancelled run is not a failed one, so nothing would have said so. A run may now cancel its predecessor only if it is itself going to publish. The one group is kept on purpose, because two deploys to the same Pages environment must not race.",
+    "build": "0.5.5.17",
+    "pullRequest": 635,
+    "url": "https://github.com/cehinds/AshenSpire/pull/635"
+  },
+  {
+    "id": "pr-631",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The painted equipment sheets get their provenance row",
+    "detail": "Nothing a player sees changes. The eight painted equipment sheets #623 added to the builds site shipped without the CREDITS row this repository requires of any asset a change adds. The row states what the owner states — that they are AI-generated, CC0 — in the same form already used for the class sprites and the pose sheets, and records that they are reference only: nothing loads them at runtime.",
+    "build": "0.5.5.17",
+    "pullRequest": 631,
+    "url": "https://github.com/cehinds/AshenSpire/pull/631"
   },
   {
     "id": "pr-629",

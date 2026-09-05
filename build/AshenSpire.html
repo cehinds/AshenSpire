@@ -48940,6 +48940,7 @@ const { sfx } = require("src/ui/sfx.js");
 const { dlog } = require("src/ui/debuglog.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 const { playPoseOn } = require("src/ui/services/PoseAnimator.js");
+const { reducedMotionRequested } = require("src/ui/motion.js");
 
 const STEP_MS = 80;
 
@@ -49476,14 +49477,6 @@ function groupBeats(events) {
 // Debug lifecycle counters (window.__fx) — cheap, used to diagnose stuck-busy
 // reports: every timeline must end in exactly one finish (done/watchdog/flush).
 const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
-
-function reducedMotionRequested() {
-  const appSetting = typeof document !== 'undefined'
-    && document.body.classList.contains('reduced-motion');
-  const operatingSystem = typeof matchMedia === 'function'
-    && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  return appSetting || operatingSystem;
-}
 
 function playTimeline(events, ctx, done) {
   const speed = ANIM_SPEEDS[animSpeed];
@@ -50220,6 +50213,7 @@ Object.assign(module.exports, { UI_COMPONENTS, isUiComponentId });
 // actor animation, so it rides the same lunge window rather than adding time).
 const { POSE_CANVAS, POSE_DIR, POSE_FRAMES, POSE_STRIP } = require("src/content/poseSprites.js");
 const { assetUrl } = require("src/ui/assetmap.js");
+const { reducedMotionRequested } = require("src/ui/motion.js");
 
 const key = (classId, pose, tint) => `${classId}_${pose}_${tint}`;
 
@@ -50337,9 +50331,15 @@ function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
     setPose,
     /** Hold `pose` for ms, then return to idle. Reduced motion holds nothing. */
     play(pose, ms = 260) {
-      if (document.body.classList.contains('reduced-motion')) return false;
+      if (reducedMotionRequested()) return false;
+      // Decide what would be shown BEFORE cancelling the hold already running. A
+      // pose this build does not carry used to clear the settle timer and then
+      // bail, which left whatever was on screen — a lunge, mid-swing — frozen
+      // there for the rest of the fight.
+      const target = resolve(pose);
+      if (!poseFrame(classId, target, tint)) return false;
       if (timer) { clearTimeout(timer); timer = null; }
-      if (!setPose(resolve(pose))) return false;
+      setPose(target);
       timer = setTimeout(settle, Math.max(60, ms));
       return true;
     },
@@ -50856,6 +50856,32 @@ function assetsAreInlined() {
 
 
 Object.assign(module.exports, { ASSET_MAP, assetUrl, assetsAreInlined });
+
+},
+"src/ui/motion.js": function (module, exports, require) {
+// src/ui/motion.js — one home for "has the player asked for less movement?".
+//
+// There are two ways to ask and both count: the in-game Reduced motion setting
+// (a class on <body>) and the operating system's own preference. fx.js owned
+// this test and the pose animator grew a second copy that only read the class,
+// so a player who set it in their OS still got pose swaps — and in co-op, where
+// the pose call is the only animation gate, that was the whole feature ignoring
+// the setting.
+//
+// It lives here rather than in fx.js because the animator cannot import fx.js:
+// fx.js imports the animator, and the cycle would be worse than the move.
+
+/** True when the app setting or the operating system asks for reduced motion. */
+function reducedMotionRequested() {
+  const appSetting = typeof document !== 'undefined'
+    && document.body.classList.contains('reduced-motion');
+  const operatingSystem = typeof matchMedia === 'function'
+    && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return appSetting || operatingSystem;
+}
+
+
+Object.assign(module.exports, { reducedMotionRequested });
 
 },
 "src/ui/components/confirmationModal.js": function (module, exports, require) {
@@ -52842,7 +52868,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b7e6e6fcac';
+const SOURCE = '5be2cb9287';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52876,7 +52902,7 @@ const SOURCE = 'b7e6e6fcac';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '21';
+const ORDINAL = '24';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -55115,6 +55141,26 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 
 const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-641",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "Three receipts, written before the promotion rather than after it",
+    "detail": "Nothing a player sees changes. The pose-animation fixes (#637), the publication-cancelling fix (#635) and the provenance row for the painted equipment sheets (#631) had all landed on dev without a receipt here, so the in-game changelog did not carry them either. All three are written up above, each citing the build it actually landed in. This receipt names its own pull request, which is only possible because the pull request was opened first — the trap that left #629 unrecorded until #633 came back for it.",
+    "build": "0.5.5.24",
+    "pullRequest": 641,
+    "url": "https://github.com/cehinds/AshenSpire/pull/641"
+  },
+  {
+    "id": "pr-637",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "Seven fixes in the pose animation path",
+    "detail": "No new art, and no shipped frame moves. Asking for a pose this build does not ship used to freeze the figure in whatever it was showing — a lunge, mid-swing — for the rest of the fight; the frame is checked before the hold already running is cancelled. Reduced motion now honours the setting made in your operating system and not only the one inside the game, which in co-op was the only gate a pose swap passed through. Two co-op seats of the same class and tint now rotate through their attack frames independently instead of stealing each other's place. The remaining four are in the art tools: the gap check is per class and pose rather than pooled across all of them, a failed encode no longer leaves the shipped set half-deleted, --grounded anchors a figure by its feet rather than by its lowest ink, and a crop with nothing above the floor line names the frame instead of throwing a bare RangeError.",
+    "build": "0.5.5.22",
+    "pullRequest": 637,
+    "url": "https://github.com/cehinds/AshenSpire/pull/637"
+  },
+  {
     "id": "pr-633",
     "date": "2026-09-05",
     "group": "2026-09-05",
@@ -55133,6 +55179,26 @@ const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.5.5.17",
     "pullRequest": 632,
     "url": "https://github.com/cehinds/AshenSpire/pull/632"
+  },
+  {
+    "id": "pr-635",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "A run that will not publish cannot cancel one that will",
+    "detail": "Nothing a player sees changes. Once #632 let dev, test and release publish on a push, the workflow's single cancel-in-progress group became a way to lose a publication in silence: a push to main — which deliberately publishes nothing — could cancel a development publication mid-deploy, and a cancelled run is not a failed one, so nothing would have said so. A run may now cancel its predecessor only if it is itself going to publish. The one group is kept on purpose, because two deploys to the same Pages environment must not race.",
+    "build": "0.5.5.17",
+    "pullRequest": 635,
+    "url": "https://github.com/cehinds/AshenSpire/pull/635"
+  },
+  {
+    "id": "pr-631",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The painted equipment sheets get their provenance row",
+    "detail": "Nothing a player sees changes. The eight painted equipment sheets #623 added to the builds site shipped without the CREDITS row this repository requires of any asset a change adds. The row states what the owner states — that they are AI-generated, CC0 — in the same form already used for the class sprites and the pose sheets, and records that they are reference only: nothing loads them at runtime.",
+    "build": "0.5.5.17",
+    "pullRequest": 631,
+    "url": "https://github.com/cehinds/AshenSpire/pull/631"
   },
   {
     "id": "pr-629",
@@ -59877,7 +59943,7 @@ function renderedSpriteUrl(classId, tintId) {
 // "Blender PNG" until 2026-09-03, which stopped being true when the class art
 // was replaced — the same stale description as the lobby tooltip one file over.
 /** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
-function classSprite(classId, tint, sigil, tintId, style) {
+function classSprite(classId, tint, sigil, tintId, style, figureId) {
   const build = CLASS_SVG[classId];
   if (!build) return null;
   const el = document.createElement('div');
@@ -59925,7 +59991,10 @@ function classSprite(classId, tint, sigil, tintId, style) {
   // swaps art styles mid-swing. A class with no shipped frames falls through
   // to the painting, so the default is never a blank figure.
   if (style === 'animated' && hasPoses(classId, tintId)) {
-    const stage = createPoseStage(classId, tintId);
+    // figureId separates figures that would otherwise be the same rotation: two
+    // co-op allies of the same class and tint shared one swing counter, so each
+    // of them showed every other frame. Solo has one figure and needs no id.
+    const stage = createPoseStage(classId, tintId, figureId || undefined);
     if (stage) {
       el.classList.add('animated');
       // Inside the facing layer, like the painting: an animated figure has a
@@ -60050,7 +60119,7 @@ function playerSprite(customization = {}, classId) {
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
-    return classSprite(classId, tint, customization.glyph, customization.tint, style);
+    return classSprite(classId, tint, customization.glyph, customization.tint, style, customization.figureId);
   }
   const el = document.createElement('div');
   el.style.cssText =
@@ -78066,7 +78135,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
       box.dataset.seat = p.id;
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle }, m.classId));
+      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId));
       const bb = blockBadge(p.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       // THE SEAT LINE: the tinted name (the identity span hudbars reads,

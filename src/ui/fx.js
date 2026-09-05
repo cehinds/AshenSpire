@@ -8,6 +8,7 @@ import { sfx } from './sfx.js';
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn } from './services/PoseAnimator.js';
+import { reducedMotionRequested } from './motion.js';
 
 const STEP_MS = 80;
 
@@ -544,14 +545,6 @@ function groupBeats(events) {
 // Debug lifecycle counters (window.__fx) — cheap, used to diagnose stuck-busy
 // reports: every timeline must end in exactly one finish (done/watchdog/flush).
 const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
-
-function reducedMotionRequested() {
-  const appSetting = typeof document !== 'undefined'
-    && document.body.classList.contains('reduced-motion');
-  const operatingSystem = typeof matchMedia === 'function'
-    && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  return appSetting || operatingSystem;
-}
 
 export function playTimeline(events, ctx, done) {
   const speed = ANIM_SPEEDS[animSpeed];
