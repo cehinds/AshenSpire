@@ -950,7 +950,14 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .armoury-character-stats { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; min-height: 0; overflow: auto; }
 /* An attribute face and a power face are label + value, one per line. */
 .armoury-character-stats .disc-faces > .disc-face .on { font: 500 1.41rem/1.3 var(--font-body); letter-spacing: 0; color: var(--parchment); }
-.armoury-character-stats .disc-faces > .disc-face .od { font-size: 1.2rem; }
+.armoury-character-stats .disc-faces > .disc-face .od {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 1.2rem;
+}
+.armoury-character-stats .disc-faces > .disc-face > .r-trail,
+.armoury-character-stats .disc-faces > .disc-face > .r-trail > .as-status {
+  flex: 0 0 auto; min-width: 2ch; white-space: nowrap;
+}
 /* THE POSITIONS: one OptionCard per position; the occupied one opens its
    DetailCard under itself. */
 .equip-slots.as-options { gap: 0.75rem; }

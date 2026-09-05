@@ -1499,6 +1499,8 @@ export function mountEquipment(host, {
     const projection = statProjection(registries, run);
     const surface = equipmentSurfaceReceipt(registries, run);
     const expanded = viewMode().character === 'expanded';
+    const informationCards = [];
+    const initiallyOpen = expanded ? 'attributesCard' : null;
 
     // AN INFORMATION CARD is a fold-open DetailCard: its head a Row (caret
     // Glyph, the label as Title·S, the one-line summary as StatusText), its
@@ -1511,7 +1513,17 @@ export function mountEquipment(host, {
       }));
       head.querySelector('.as-glyph').classList.add('caret');
       const card = detailCard({ tag: 'details', attrs: { class: `character-info-card ${id}`, dataset: { component: `armoury.${id}` } }, children: [head, body] });
-      card.open = expanded;
+      card.open = id === initiallyOpen;
+      head.setAttribute('aria-expanded', card.open ? 'true' : 'false');
+      informationCards.push(card);
+      card.addEventListener('toggle', () => {
+        if (card.open) {
+          for (const peer of informationCards) {
+            if (peer !== card) peer.open = false;
+          }
+        }
+        head.setAttribute('aria-expanded', card.open ? 'true' : 'false');
+      });
       attachTooltip(head, () => `<div class="tt-title">${esc(label)}</div><p>${esc(card.open ? `Fold ${label}.` : `Expand ${label} for its full calculation and details.`)}</p>`);
       return card;
     }
