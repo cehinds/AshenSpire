@@ -170,10 +170,10 @@ check('the menu button follows the tab strip rather than defaulting either way',
   'a door with tabs is a place and wants the quick menu; a door that asks a question does not');
 check('both header actions wear the square box',
   (shellSource.match(/dataset\.size = 'square'/g) || []).length >= 2);
-// ONE BOX, EVERY COMPONENT. Close and ☰ used to take their size from a floor
-// plus whatever their row stretched them to, so a tall row made a bigger
-// close. Both read one fixed length on both axes now, and the row-height
-// square rule no longer names them.
+// ONE HIT BOX, EVERY COMPONENT. Close and ☰ used to take their size from a
+// floor plus whatever their row stretched them to, so a tall row made a bigger
+// close. Both reserve one fixed tap-safe length on both axes now; the close
+// paints its smaller face inside that target.
 for (const sel of ['.modal-close', '.modal-iconbtn']) {
   const block = chromeBlock(sel);
   check(`${sel} is a fixed box on both axes`,
@@ -184,6 +184,12 @@ check('the row-height square rule does not reach close or ☰',
   !/\.modal-(?:close|iconbtn)\[data-size='square'\]/.test(css),
   'a width: auto there would let a stretched row resize the one control that must never change shape');
 check('the icon-button box has one home', /--iconbtn-size:\s*var\(--tap-floor\)/.test(read('styles/base.css')) && /--ui-tray-control-size:\s*var\(--iconbtn-size\)/.test(css));
+const closeFace = chromeBlock('.modal-close > .modal-close-face');
+check('every modal close paints a 25% smaller square inside its tap-safe target',
+  /width:\s*75%/.test(closeFace) && /height:\s*75%/.test(closeFace)
+    && /className = 'modal-close-face'/.test(shellSource)
+    && /class="modal-close-face"/.test(shellSource),
+  'the visual face may shrink, but the outer button must keep the authored tap floor');
 // THE FOOT IS ON THE LADDER. It carried a data-size the ladder never read
 // (the steps are written for .modal-btnrow), so primary and secondary hugged
 // their own labels. Now the actions row wears both classes and stretches.

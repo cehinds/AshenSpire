@@ -9,18 +9,24 @@
 # the whole `main` tree is the base of the artifact and the only replaced file is
 # the root index.html (main's own is kept at /index-game.html).
 #
-# PUBLICATION IS ITS OWN AUTHORITY (AGENTS.md: push and publication/Pages/deploy are
-# separate protected transitions; local readiness — or push authority — never implies
-# it). So a push to any of the four branches only ASSEMBLES and proves the site and
-# uploads it as the run's Pages artifact; nothing is deployed, and the push-triggered
-# job holds no Pages WRITE or OIDC credential (contents: read and pages: read only —
-# configure-pages needs to read the site's configuration; the write and the token live
-# on the deploy job alone, so branch-controlled code cannot call the Pages API around
-# the guard). The `deploy` job runs only from a manual dispatch BY THE
-# REPOSITORY OWNER (github.actor AND github.triggering_actor are checked against
-# github.repository_owner, so neither a write collaborator's dispatch nor their re-run
-# of the owner's dispatch deploys) whose `publish` input spells PUBLISH, on the
-# `github-pages` environment, which can additionally carry required reviewers.
+# PUBLICATION IS SPLIT BY BRANCH (owner's ruling, 2026-09-05). A push to dev, test
+# or release ASSEMBLES, proves and then PUBLISHES the site. A push to main assembles
+# and proves it and stops: main is published only by the owner's own dispatch whose
+# `publish` input spells PUBLISH (github.actor AND github.triggering_actor are both
+# checked against github.repository_owner, so neither a write collaborator's dispatch
+# nor their re-run of the owner's dispatch deploys). That dispatch publishes any
+# branch; the automatic path is the three development branches only.
+#
+# The assemble job still holds no Pages WRITE or OIDC credential (contents: read and
+# pages: read only — configure-pages needs to read the site's configuration); the
+# write and the token live on the `deploy` job alone, on the `github-pages`
+# environment, which can additionally carry required reviewers. What changed is which
+# events may REACH that job, not which job holds the credential.
+#
+# The cost is named rather than discovered: publishing on a push to those three
+# branches is a standing delegation to every future push on them. It was accepted
+# because the alternative was measured — the site sat three days and 52 green
+# assemble runs behind the game while every one skipped the deploy job.
 # ONE-TIME OWNER ACTION before the first deploy: Settings → Pages → Build and
 # deployment → Source: "GitHub Actions"; until then the deploy step fails with GitHub's
 # own message and the legacy `main:/` source keeps serving.
@@ -44,7 +50,26 @@ on:
 
 concurrency:
   group: pages-builds
-  cancel-in-progress: true
+  # A RUN THAT WILL NOT PUBLISH MUST NEVER CANCEL ONE THAT WILL.
+  #
+  # One group keeps publications serialised, which is right — two deploys to the
+  # same Pages environment must not race. But `cancel-in-progress: true` applied
+  # to every run, and once #632 let dev/test/release publish on push, that became
+  # a way to lose a publication silently: a push to main assembles and stops by
+  # design, and while it did so it cancelled any in-flight dev/test/release run —
+  # including one already inside `actions/deploy-pages`. The replacement main run
+  # then skips deploy, so the development build stayed unpublished until somebody
+  # happened to push to a development branch again. Nothing reported it, because
+  # a cancelled run is not a failed one.
+  #
+  # So the flag is now the same question the deploy job asks: will THIS run
+  # publish? A publishing run may still cancel its predecessor — newest wins, and
+  # the newer publication supersedes the older one anyway. A non-publishing run
+  # waits its turn instead. It must stay in step with the deploy guard below;
+  # the two are the same condition written once each.
+  cancel-in-progress: >-
+    ${{ (github.event_name == 'push' && contains(fromJSON('["dev","test","release"]'), github.ref_name))
+    || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
 
 # The workflow as a whole holds nothing but read: the Pages and OIDC grants are the
 # deploy job's alone (below), never the push-triggered assemble job's.
@@ -130,7 +155,11 @@ jobs:
           # it is the only run that must NOT be summarised as unpublished — that
           # summary would still be sitting there, contradicting it, after the
           # publication succeeded.
-          PUBLISH_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH' }}
+          # MUST MIRROR THE deploy JOB'S `if`. This flag is the only thing that
+          # decides whether the summary says "published" or "not published", so a
+          # flag narrower than the guard prints "not published" on a run that
+          # publishes — the exact silence (#553) this step was added to end.
+          PUBLISH_REQUESTED: ${{ (github.event_name == 'push' && contains(fromJSON('["dev","test","release"]'), github.ref_name)) || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
         run: |
           set -u
           {
@@ -198,15 +227,44 @@ jobs:
 
   deploy:
     needs: assemble
-    # Only the owner's own explicit dispatch deploys: never a push, and never a
-    # write collaborator's dispatch (anyone with write may run a workflow, so the
-    # typed PUBLISH alone is not authority; the actor is). A RE-RUN of the owner's
-    # dispatch by a collaborator keeps the owner as github.actor, so the actor who
-    # triggered THIS attempt (github.triggering_actor) must be the owner as well.
+    # TWO WAYS TO PUBLISH, AND `main` HAS ONLY THE SECOND.
+    #
+    # Owner's ruling, 2026-09-05: dev, test and release republish on their own;
+    # main needs the owner's say-so. This reverses the earlier refusal to
+    # automate publication at all — that refusal was paid for on 2026-09-02..05,
+    # when the site sat three days and 52 green assemble runs behind the game
+    # while every one of them skipped this job. Automatic publication for the
+    # three development branches is the deliberate cost of that.
+    #
+    # 1. A PUSH to dev, test or release publishes. This IS a standing delegation
+    #    to every future push on those three branches: whoever can push them can
+    #    reach this job's Pages credential. That is accepted for the branches
+    #    that only ever serve development builds, and refused for main.
+    #
+    # 2. THE OWNER'S OWN DISPATCH publishes any branch, main included. Never a
+    #    write collaborator's dispatch (anyone with write may run a workflow, so
+    #    the typed PUBLISH alone is not authority; the actor is), and a RE-RUN of
+    #    the owner's dispatch by a collaborator keeps the owner as github.actor,
+    #    so the actor who triggered THIS attempt must be the owner as well.
+    #
+    # WHAT THIS DOES NOT PROMISE. Pages serves one site per repository and this
+    # one is assembled with main's tree as its base, so any publication carries
+    # whatever main holds at that moment. A push to main never publishes itself —
+    # that is the guarantee — but main's content does reach the site on the next
+    # dev/test/release publication after it lands. Closing that would mean
+    # pinning the site's main section to the last approved publication, which is
+    # a change to how the site is assembled rather than to who may publish it.
+    # Merging to main is already owner-only, so what reaches main is the owner's
+    # decision before this job ever runs.
     if: >-
-      github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH'
-      && github.actor == github.repository_owner
-      && github.triggering_actor == github.repository_owner
+      (
+        github.event_name == 'push'
+        && contains(fromJSON('["dev","test","release"]'), github.ref_name)
+      ) || (
+        github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH'
+        && github.actor == github.repository_owner
+        && github.triggering_actor == github.repository_owner
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read

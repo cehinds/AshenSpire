@@ -1016,14 +1016,18 @@ keeps the same state and focus contract without meaningful animation.
   from the same immutable slot records and Behavior Models: selected styling, `aria-pressed`,
   the selected-focus restoration target, primary-action availability, and the load/create
   command payload all resolve to one slot. Save data and callbacks remain screen inputs rather
-  than being owned by these presentation components.
+  than being owned by these presentation components. Every modal close control paints a square
+  at 75% of its shared icon-button box while retaining the full authored tap target for pointer,
+  touch, keyboard, and controller input.
 - **Character Creation components.** The reusable creation family is `character-disclosure`,
   `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
   `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`,
   `mode-choice`, `sprite-choice`, `tint-choice`, `sigil-choice`, `keepsake-choice`,
   `equipment-choice-card`, and `relic-choice-card`. `class-preview-pane` composes
   `class-resource-grid`; `character-disclosure` composes the stat, appearance, and keepsake
-  choices. `primary-stat-card` is one shared attribute model and disclosure renderer across
+  choices. A new character defaults to the Animated sprite style while preserving any explicit
+  style stored on an existing character or LAN player. `primary-stat-card` is one shared
+  attribute model and disclosure renderer across
   Character Creation, Shrine point assignment, and the Armoury: its folded face carries the
   short label, one-line summary, and current value; its reveal and focus/hover tooltip carry the
   authored description plus benefits derived from stat rules and equipment gates. Art and copy
@@ -1112,7 +1116,9 @@ keeps the same state and focus contract without meaningful animation.
   storage behavior, and order; `content/source/unlocks.csv` supplies any additional position rungs;
   and `armouryUi.layout.equipment.slotOrder` supplies preferred group order without defining the
   set of slots. The Armoury iterates every authored position in vertical list or configured grid
-  form and renders its locked, empty, or occupied state. Adding an authored position or slot group
+  form and renders its locked, empty, or occupied state. Empty positions follow the occupied and
+  locked positions automatically; in Grid form each empty position spans the full group width so
+  the available drop target reads as a bottom row rather than a missing item tile. Adding an authored position or slot group
   must not require a branch in the screen. Item kind determines eligibility only: the selected
   hand equipment position owns the character-sprite socket, so placing a shield in a right-hand
   position renders it in the right hand and placing a sword in a left-hand position renders it in
