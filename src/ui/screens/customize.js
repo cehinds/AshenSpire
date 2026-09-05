@@ -14,7 +14,7 @@
 // elements and draw nothing of their own.
 
 import { LOCKED_CLASSES } from '../../content/index.js';
-import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
+import { DEFAULT_SPRITE_STYLE, PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { focusElement } from '../input.js';
 import { mountDisclosure } from '../components/disclosure.js';
@@ -71,7 +71,7 @@ export function mountCustomize(app, {
     name: 'Forsaken',
     glyph: PORTRAIT_GLYPHS[0],
     tint: PORTRAIT_TINTS[0].id,
-    spriteStyle: 'rendered',
+    spriteStyle: DEFAULT_SPRITE_STYLE,
     keepsakeId: registries.characterCreation.keepsakes[0].id,
     startingKitId: null,
     startingHands: { leftHand: null, rightHand: null },

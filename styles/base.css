@@ -84,9 +84,9 @@
      A quietly-correct-looking 44 is the failure Law 0 clause 5 names; a
      missing floor is not quiet. */
   --tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));
-  /* THE ICON-BUTTON BOX. Close and ☰ are the same size on every component —
-     Constantine, 2026-09-03: "keep the close and menu buttons the same
-     dimensions for all components". So their box is a LENGTH, not a floor:
+  /* THE ICON-BUTTON HIT BOX. Close and ☰ reserve the same tap-safe square on
+     every component. The close control paints a smaller face inside that box,
+     but its pointer, touch, and focus target remains this shared length:
      a floor lets a tall row or a big title stretch the control, and then the
      shape a player learned on one door is a different shape on the next.
      Width AND height read this; nothing else sizes them. It is the tap floor

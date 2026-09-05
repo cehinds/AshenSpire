@@ -187,7 +187,7 @@
         <tr><td><code>portraitScale</code></td><td>0.7</td><td><code>--hud-portrait-scale</code></td><td>Portrait-badge scale</td></tr>
         <tr><td><code>primaryRowGapPx</code></td><td>8</td><td><code>--hud-primary-row-gap-px</code></td><td>Vitals/Quick Access gap</td></tr>
         <tr><td><code>controlGapPx</code></td><td>2</td><td><code>--hud-control-gap-px</code></td><td>Quick Access grid gap</td></tr>
-        <tr><td><code>resourceRowGapPx</code></td><td>2</td><td><code>--hud-resource-row-gap-px</code></td><td>HP/MP/SP vertical gap</td></tr>
+        <tr><td><code>resourceRowGapPx</code></td><td>3</td><td><code>--hud-resource-row-gap-px</code></td><td>HP/MP/SP vertical gap</td></tr>
         <tr><td><code>panelPadPx / mobilePanelPadPx</code></td><td>4 / 0</td><td><code>--hud-panel-pad-px / --hud-mobile-panel-pad-px</code></td><td>Quick Access host padding without resizing controls</td></tr>
         <tr><td><code>mobileControlGapPx</code></td><td>1</td><td><code>--hud-mobile-control-gap-px</code></td><td>Narrow Quick Access cell gap</td></tr>
         <tr><td><code>mobileOuterPadPx / mobileRowGapPx</code></td><td>4 / 3</td><td><code>--hud-mobile-outer-pad-px / --hud-mobile-row-gap-px</code></td><td>Narrow shared-HUD vertical density</td></tr>
@@ -306,7 +306,7 @@ const V = {
   healthDamage:'<div class="mini mini-stack"><div class="damage-pair"><span class="damage-direct">−12</span></div><div class="mini-label">damage reaching health</div></div>',
   playerHand:'<div class="mini mini-stack"><div class="mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div><div class="mini-label">fanned player hand tray</div></div>',
   actionRail:'<div class="mini mini-rail rail-wide"><div class="mini-btn">3/3</div><div class="mini-btn">DRAW</div><div class="mini-btn">END</div><div class="mini-btn">DISCARD</div><div class="mini-btn">EXHAUSTED</div></div>',
-  characterDisclosure:'<div class="mini mini-stack"><div class="menu-demo" style="width:230px"><div class="row"><span>PRIMARY STATS</span><b>Standard</b></div><div class="row"><span>SPRITE</span><b>Rendered</b></div><div class="row"><span>KEEPSAKE</span><b>Old Cinder</b></div></div></div>',
+  characterDisclosure:'<div class="mini mini-stack"><div class="menu-demo" style="width:230px"><div class="row"><span>PRIMARY STATS</span><b>Standard</b></div><div class="row"><span>SPRITE</span><b>Animated</b></div><div class="row"><span>KEEPSAKE</span><b>Old Cinder</b></div></div></div>',
   classPreviewPane:'<div class="mini mini-stack"><div class="mini-title">REAVER</div><div class="sprite-demo">CLASS ART</div><div class="mini-label">resources + relic</div></div>',
   classResourceGrid:'<div class="mini"><div class="mini-header" style="grid-template-columns:repeat(5,1fr)"><b>HP<br>90</b><b>MP<br>2</b><b>SP<br>2</b><b>ACT<br>3</b><b>DRAW<br>5</b></div></div>',
   classChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>REAVER</b><br><span class="mini-label">Class art, name, and summary</span></div></div>',
@@ -374,7 +374,7 @@ const SEMANTIC_COMPONENTS = [
  ['title-menu-gem','semantic child','title.mountTitle','primitive','Title Menu Item','Decorative diamond separator under a menu label.','titleMenuGem'],
  ['title-tagline','title content record','title.mountTitle','primitive','Title screen','Replaceable centered closing line beneath the main menu.','titleTagline'],
  ['title-menu-modal','saveSlotSelectionModel + save-slot records','title.mountTitle','menu','Title screen','Reusable Load/New dialog whose selected card, accessibility state, and primary action target share one immutable projection; load-review confirms a twice-activated save.','titleMenuModal'],
- ['title-modal-close-control','modal action record + authored tap floor','title.mountTitle','menu','Title Menu Modal','Tap-floor-sized close control that restores title-menu focus.','titleModalClose'],
+ ['title-modal-close-control','modal action record + authored tap floor','title.mountTitle','menu','Title Menu Modal','Close control with a 75%-sized visible square inside its full tap-safe target; restores title-menu focus.','titleModalClose'],
  ['title-modal-heading','modal-kind projection','title.mountTitle','primitive','Title Menu Modal','LOAD GAME or NEW GAME accessible dialog heading.','titleModalHeading'],
  ['title-modal-divider','semantic child','title.mountTitle','primitive','Title Menu Modal','Gold rule and diamond beneath the dialog heading.','titleModalDivider'],
  ['title-save-slot-list','saveSlotSelectionModel','title.mountTitle','menu','Title Menu Modal','Immutable Load/New selection aggregate whose children identify the selected slot and semantic select command.','titleSaveSlotList'],
@@ -465,7 +465,7 @@ const SEMANTIC_COMPONENTS = [
  ['smith-upgrade-preview','SmithSelectionModel.properties.selected','card.upgradePreviewHtml inside smithUpgradeModal','shrine','Smith upgrade modal','Current-versus-upgraded comparison; empty prompt before selection.','smithUpgradePreview'],
  ['resource-strip','derived rows + Poise receipt','creationCards.resourceStrip','creation','Character stats + catalog','HP, Mana, Stamina, Actions, Draw, and Poise.','resourceStrip'],
  ['mode-choice','creation mode + selected state','creationCards.modeChoiceButton','creation','Character stats + catalog','Standard or Assign Points choice.','modeChoice'],
- ['sprite-choice','sprite style + selected state','creationCards.spriteChoiceButton','creation','Appearance + catalog','Asset-backed sprite style choice.','spriteChoice'],
+ ['sprite-choice','sprite style + selected state','creationCards.spriteChoiceButton','creation','Appearance + catalog','Asset-backed sprite style choice; Animated is the default when no explicit style is stored.','spriteChoice'],
  ['tint-choice','tint row + selected state','creationCards.tintChoiceButton','creation','Appearance + catalog','Asset tint selection.','tintChoice'],
  ['sigil-choice','glyph + selected state','creationCards.sigilChoiceButton','creation','Appearance + catalog','Sigil overlay selection.','sigilChoice'],
  ['keepsake-choice','keepsake row + selected state','creationCards.keepsakeChoiceButton','creation','Keepsake + catalog','Starting keepsake card.','keepsakeChoice'],
@@ -496,7 +496,7 @@ const SEMANTIC_COMPONENTS = [
  ['kit.statRow','statRow(spec)','kit/index.js statRow','primitive','Character, Armoury, inspectors','One named quantity and its values, with an optional hint and a drill affordance. The flat variant drops the frame for rows already inside one.','kitStatRow'],
  ['kit.band','band(spec)','kit/index.js band','primitive','Run HUD, co-op board, screen feet','A horizontal strip of related facts. foot puts it at the bottom of a surface, stack lets it wrap, quiet lowers its weight.','kitBand'],
  ['kit.buttonRow','buttonRow(spec)','kit/index.js buttonRow','primitive','Every modal foot and control row','A row of buttons on one ladder step, so siblings share a width and rows across the game land on one of four. Delegates to the modal shell, which owns the ladder.','kitButtonRow'],
- ['kit.iconButton','iconButton(spec)','kit/index.js iconButton','primitive','Chrome corners, trays, headers','A glyph in a square box with a real accessible name. The one shape for ✕, ☰ and the quick-settings pair.','kitIconButton'],
+ ['kit.iconButton','iconButton(spec)','kit/index.js iconButton','primitive','Chrome corners, trays, headers','A glyph in a tap-safe square with a real accessible name. Modal close paints a 75%-sized face inside it; ☰ and quick settings retain the full face.','kitIconButton'],
  ['kit.segmented','segmented(spec)','kit/index.js segmented','primitive','Settings, Armoury views, Custom Climb','One choice out of a small named set, drawn as joined segments rather than separate buttons.','kitSegmented'],
  ['kit.stepper','stepper(spec)','kit/index.js stepper','primitive','Stat points, flask counts, Custom Climb','A value between a decrement and an increment control, each addressable on its own.','kitStepper'],
  ['kit.labelStack','labelStack(spec)','kit/index.js labelStack','primitive','Settings rows, forms, summaries','A label with its hint beneath it, so the pair never separates and a control is never left unexplained.','kitLabelStack'],
@@ -535,7 +535,7 @@ const RENDERED_ARMOURY_COMPONENTS = [
  ["armoury.hybridPaneSplitter",".armoury-hybrid-splitter","Inventory and Hybrid Armaments","Hybrid Character/Armaments drag and keyboard divider","trayResizeHandle"],
  ["armoury.equipmentPositionCard",".armoury-position-card","Inventory and Hybrid Armaments","one complete data-driven card for each visible equipment position","equipmentSlot"],
  ["armoury.occupiedPositionCard",".armoury-position-card.is-occupied","Inventory and Hybrid Armaments","occupied position with item summary and expandable details","equipmentSlot"],
- ["armoury.emptyPositionCard",".armoury-position-card.is-empty","Inventory and Hybrid Armaments","unlocked empty position and drop target","equipmentSlot"],
+ ["armoury.emptyPositionCard",".armoury-position-card.is-empty","Inventory and Hybrid Armaments","unlocked empty position and drop target, automatically ordered last","equipmentSlot"],
  ["armoury.lockedPositionCard",".armoury-position-card.is-locked","Inventory and Hybrid Armaments","next locked equipment position and authored unlock refusal","equipmentSlot"],
  ["armoury.positionLabelPane",".armoury-position-label-pane","Inventory and Hybrid Armaments","authored position label and short position code","equipmentSlot"],
  ["armoury.positionSpritePane",".armoury-position-sprite-pane","Inventory and Hybrid Armaments","item, empty, or locked position art","equipmentSlot"],
@@ -547,7 +547,7 @@ const RENDERED_ARMOURY_COMPONENTS = [
  ["armoury.armamentGridGroup",".armoury-position-grid-group","Inventory and Hybrid Armaments","one authored equipment group in Armaments grid mode","equipmentSlot"],
  ["armoury.positionGridCard",".armoury-position-grid-card","Inventory and Hybrid Armaments","compact position code, sprite, and item name tile","equipmentSlot"],
  ["armoury.occupiedPositionGridCard",".armoury-position-grid-card.is-occupied","Inventory and Hybrid Armaments","occupied Armaments grid tile","equipmentSlot"],
- ["armoury.emptyPositionGridCard",".armoury-position-grid-card.is-empty","Inventory and Hybrid Armaments","empty Armaments grid tile and drop target","equipmentSlot"],
+ ["armoury.emptyPositionGridCard",".armoury-position-grid-card.is-empty","Inventory and Hybrid Armaments","full-width empty bottom row and drop target","equipmentSlot"],
  ["armoury.lockedPositionGridCard",".armoury-position-grid-card.is-locked","Inventory and Hybrid Armaments","locked Armaments grid tile","equipmentSlot"],
  ["armoury.armamentGridDetails",".armoury-position-grid-detail","Inventory and Hybrid Armaments","shared selected-position Details area below Armaments grid groups","inventoryDetailCard"],
  ["armoury.inventoryCard",".armoury-inventory","Inventory item workflow","Inventory member of the four shared Folding Tray families; owns the single carried-item list","inventoryItemCard"],

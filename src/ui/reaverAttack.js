@@ -2,6 +2,7 @@
 // byte-distinct images; the repeat table avoids inlining forty-four duplicate
 // WebPs into the standalone build.
 import { assetUrl } from './assetmap.js';
+import { DEFAULT_SPRITE_STYLE } from '../model/spriteStyle.js';
 
 const FRAME_ROOT = 'assets/animations/reaver/default-greatsword/right';
 const NORMAL_LUNGE_MS = 260;
@@ -60,7 +61,7 @@ export function preloadReaverAttackFrames() {
 }
 
 export function isReaverAttackEligible({ classId, figure, customization, spritesEnabled }) {
-  const style = (customization && customization.spriteStyle) || 'rendered';
+  const style = (customization && customization.spriteStyle) || DEFAULT_SPRITE_STYLE;
   return spritesEnabled === true
     && classId === 'reaver'
     && style === 'rendered'

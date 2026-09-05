@@ -99,8 +99,8 @@ button.danger:hover, .as-btn.danger:hover { background: rgba(212, 98, 46, 0.08);
 button.primary.danger, .as-btn.primary.danger { background: rgba(212, 98, 46, 0.14); border-color: var(--danger); color: var(--parchment); }
 button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212, 98, 46, 0.24); }
 
-/* IconButton — ONE box for every header action, close included. A LENGTH, not
-   a floor: --iconbtn-size (base.css), the same on every component. */
+/* IconButton — ONE tap-safe box for every header action, close included. A
+   LENGTH, not a floor: --iconbtn-size (base.css), the same on every component. */
 .as-iconbtn, .modal-iconbtn, .modal-close {
   display: inline-flex; align-items: center; justify-content: center;
   width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
@@ -116,6 +116,18 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 }
 .as-iconbtn:hover, .modal-iconbtn:hover, .modal-close:hover,
 .as-iconbtn:focus-visible, .modal-iconbtn:focus-visible, .modal-close:focus-visible { border-color: var(--gold); color: var(--gold); outline: none; background: var(--panel); }
+
+/* Close keeps the full accessible hit target above, while its visible square
+   is 75% of that target. Every modal inherits the same smaller corner mark. */
+.modal-close { position: relative; background: transparent; border-color: transparent; }
+.modal-close > .modal-close-face {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 75%; height: 75%; pointer-events: none;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2);
+}
+.modal-close:hover, .modal-close:focus-visible { background: transparent; border-color: transparent; }
+.modal-close:hover > .modal-close-face, .modal-close:focus-visible > .modal-close-face { border-color: var(--gold); }
+.modal-close:focus-visible > .modal-close-face { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
 
 /* ButtonRow — a grid of EQUAL tracks; the row is min(box, n × step). */
 .as-btnrow, .modal-btnrow {
@@ -954,6 +966,7 @@ details.armoury-position-card > .as-detailcard { border-radius: 0 0 var(--r-3) v
 .armoury-position-grid-group { display: grid; gap: 0.6rem; min-width: 0; }
 .armoury-position-grid-tiles > .as-options.grid { --opt-min: 9rem; gap: 0.6rem; }
 .armoury-position-grid-card { flex-direction: column; text-align: center; padding: 0.9rem 0.6rem; gap: 0.5rem; }
+.armoury-position-grid-card.is-empty { grid-column: 1 / -1; width: 100%; }
 .armoury-position-grid-card > .ob { align-items: center; }
 .armoury-position-grid-card .on { font-size: 1.3rem; }
 .armoury-position-grid-detail { margin-top: 0.4rem; }
@@ -1675,6 +1688,10 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 /* A stack of meters, one under the other, tight. */
 .as-meters { display: flex; flex-direction: column; gap: 0.3rem; width: 100%; min-width: 0; }
 .as-meters.tight { gap: 2px; }
+/* Main Vitals use the shared screen-pixel token. Dividing by the page zoom
+   makes the authored 3px separation land as 3px on glass at every UI scale;
+   model strips retain the kit's tighter local stack. */
+.resbars[data-surface="main"] { gap: calc(var(--hud-resource-row-gap-px) / var(--ui-zoom, 1)); }
 
 /* ═══ SLOT — a square control that holds one thing: art, a count, a key ═══ */
 /* Flasks, relics, quick items. The box is the IconButton's (a control) or `sm`

@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-633",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The README stops contradicting itself about what dev publishes",
+    "detail": "Nothing a player sees changes. #629 was the one merged pull request this file had no receipt for, because it was the pass that wrote the others and a receipt cannot name a number that does not exist until the pull request is opened; it has one now. #632 then made a push to dev, test or release publish the builds site — but a paragraph further down the README still said dev is not published and that a change merged to it is not yet visible at the preview URL. The two statements sat six lines apart. The later one now says what actually happens, and keeps the distinction that matters: a push to dev moves its own address, and the stable Play link still moves only on the owner's own dispatch.",
+    "build": "0.5.5.19",
+    "pullRequest": 633,
+    "url": "https://github.com/cehinds/AshenSpire/pull/633"
+  },
+  {
+    "id": "pr-632",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The builds site keeps itself current, except for the stable link",
+    "detail": "Nothing in the game changes. A push to dev, test or release now publishes the builds site as well as assembling it, so the per-branch play links follow the branches instead of waiting for someone to publish them by hand — they had sat three days behind the game, across fifty-two runs that each assembled the site successfully and then published nothing. The stable Play link is deliberately not automated: a push to main publishes nothing, and that link moves only on the owner's own dispatch. The trade is stated rather than hidden — publishing on a push is a standing permission for every future push to those three branches, and because the site is one site assembled on top of main, a main change does reach it on the next publication from one of them.",
+    "build": "0.5.5.17",
+    "pullRequest": 632,
+    "url": "https://github.com/cehinds/AshenSpire/pull/632"
+  },
+  {
+    "id": "pr-629",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The receipts catch up, and the README says you can re-arm mid-fight",
+    "detail": "Nothing a player sees changes. Three merged pull requests had landed without a receipt in this file — the equipment turnaround sheets (#626), the build-address and badge corrections (#628), and the in-game changelog catch-up (#627) — and all three are written up above. The README had also never mentioned that #625 let you change equipment during a fight, which is a thing a player does rather than an internal change; the feature list says so now, with the Energy it costs and the fact that a change you cannot afford is refused without spending anything. The changelog inside the game was regenerated from this file so it carries the same receipts. This receipt is the one that pass could not write for itself: a receipt names its own pull request, and the number does not exist until the pull request is opened.",
+    "build": "0.5.5.14",
+    "pullRequest": 629,
+    "url": "https://github.com/cehinds/AshenSpire/pull/629"
+  },
+  {
     "id": "pr-626",
     "date": "2026-09-05",
     "group": "2026-09-05",
@@ -31,6 +61,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.5.5.12",
     "pullRequest": 627,
     "url": "https://github.com/cehinds/AshenSpire/pull/627"
+  },
+  {
+    "id": "pr-634",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The fighter you build is the animated one, and the Armoury sorts its empty slots",
+    "detail": "Four finishing passes over the work #625 landed. Animated is now the sprite style you get by default — at character creation, in a LAN lobby, for a local seat, and for a restored member that never recorded a choice; a save that did record Rendered, Classic or Sigil keeps it, because only a missing value defaults. In the Armoury, empty positions you can still fill sort below the occupied and locked ones and draw full width, so the row you can act on is not buried between two you cannot. The HP, MP and SP rows gain half again as much vertical separation, without the bars themselves changing. And a modal's close control paints at three-quarters of its box while keeping the full 44×44 target for pointer, touch, keyboard and controller — a smaller mark, not a smaller thing to hit.",
+    "build": "0.5.5.21",
+    "pullRequest": 634,
+    "url": "https://github.com/cehinds/AshenSpire/pull/634"
   },
   {
     "id": "pr-625",
