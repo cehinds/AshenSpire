@@ -48911,6 +48911,7 @@ const { sfx } = require("src/ui/sfx.js");
 const { dlog } = require("src/ui/debuglog.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 const { playPoseOn } = require("src/ui/services/PoseAnimator.js");
+const { reducedMotionRequested } = require("src/ui/motion.js");
 
 const STEP_MS = 80;
 
@@ -49447,14 +49448,6 @@ function groupBeats(events) {
 // Debug lifecycle counters (window.__fx) — cheap, used to diagnose stuck-busy
 // reports: every timeline must end in exactly one finish (done/watchdog/flush).
 const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
-
-function reducedMotionRequested() {
-  const appSetting = typeof document !== 'undefined'
-    && document.body.classList.contains('reduced-motion');
-  const operatingSystem = typeof matchMedia === 'function'
-    && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  return appSetting || operatingSystem;
-}
 
 function playTimeline(events, ctx, done) {
   const speed = ANIM_SPEEDS[animSpeed];
@@ -50191,6 +50184,7 @@ Object.assign(module.exports, { UI_COMPONENTS, isUiComponentId });
 // actor animation, so it rides the same lunge window rather than adding time).
 const { POSE_CANVAS, POSE_DIR, POSE_FRAMES, POSE_STRIP } = require("src/content/poseSprites.js");
 const { assetUrl } = require("src/ui/assetmap.js");
+const { reducedMotionRequested } = require("src/ui/motion.js");
 
 const key = (classId, pose, tint) => `${classId}_${pose}_${tint}`;
 
@@ -50308,9 +50302,15 @@ function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
     setPose,
     /** Hold `pose` for ms, then return to idle. Reduced motion holds nothing. */
     play(pose, ms = 260) {
-      if (document.body.classList.contains('reduced-motion')) return false;
+      if (reducedMotionRequested()) return false;
+      // Decide what would be shown BEFORE cancelling the hold already running. A
+      // pose this build does not carry used to clear the settle timer and then
+      // bail, which left whatever was on screen — a lunge, mid-swing — frozen
+      // there for the rest of the fight.
+      const target = resolve(pose);
+      if (!poseFrame(classId, target, tint)) return false;
       if (timer) { clearTimeout(timer); timer = null; }
-      if (!setPose(resolve(pose))) return false;
+      setPose(target);
       timer = setTimeout(settle, Math.max(60, ms));
       return true;
     },
@@ -50827,6 +50827,32 @@ function assetsAreInlined() {
 
 
 Object.assign(module.exports, { ASSET_MAP, assetUrl, assetsAreInlined });
+
+},
+"src/ui/motion.js": function (module, exports, require) {
+// src/ui/motion.js — one home for "has the player asked for less movement?".
+//
+// There are two ways to ask and both count: the in-game Reduced motion setting
+// (a class on <body>) and the operating system's own preference. fx.js owned
+// this test and the pose animator grew a second copy that only read the class,
+// so a player who set it in their OS still got pose swaps — and in co-op, where
+// the pose call is the only animation gate, that was the whole feature ignoring
+// the setting.
+//
+// It lives here rather than in fx.js because the animator cannot import fx.js:
+// fx.js imports the animator, and the cycle would be worse than the move.
+
+/** True when the app setting or the operating system asks for reduced motion. */
+function reducedMotionRequested() {
+  const appSetting = typeof document !== 'undefined'
+    && document.body.classList.contains('reduced-motion');
+  const operatingSystem = typeof matchMedia === 'function'
+    && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return appSetting || operatingSystem;
+}
+
+
+Object.assign(module.exports, { reducedMotionRequested });
 
 },
 "src/ui/components/confirmationModal.js": function (module, exports, require) {
@@ -52809,7 +52835,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'd3598e79b9';
+const SOURCE = '3d6dfbf906';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52843,7 +52869,7 @@ const SOURCE = 'd3598e79b9';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '14';
+const ORDINAL = '15';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -59807,7 +59833,7 @@ const SPRITE_STYLES = [
 ];
 
 /** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
-function classSprite(classId, tint, sigil, tintId, style) {
+function classSprite(classId, tint, sigil, tintId, style, figureId) {
   const build = CLASS_SVG[classId];
   if (!build) return null;
   const el = document.createElement('div');
@@ -59857,7 +59883,10 @@ function classSprite(classId, tint, sigil, tintId, style) {
   // shipped frames falls through to the painting, so the choice is never a
   // blank figure.
   if (style === 'animated' && hasPoses(classId, tintId)) {
-    const stage = createPoseStage(classId, tintId);
+    // figureId separates figures that would otherwise be the same rotation: two
+    // co-op allies of the same class and tint shared one swing counter, so each
+    // of them showed every other frame. Solo has one figure and needs no id.
+    const stage = createPoseStage(classId, tintId, figureId || undefined);
     if (stage) {
       el.classList.add('animated');
       // Inside the facing layer, like the painting: an animated figure has a
@@ -59982,7 +60011,7 @@ function playerSprite(customization = {}, classId) {
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || 'rendered';
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
-    return classSprite(classId, tint, customization.glyph, customization.tint, style);
+    return classSprite(classId, tint, customization.glyph, customization.tint, style, customization.figureId);
   }
   const el = document.createElement('div');
   el.style.cssText =
@@ -77979,7 +78008,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange,
       box.dataset.seat = p.id;
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle }, m.classId));
+      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId));
       const bb = blockBadge(p.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       // THE SEAT LINE: the tinted name (the identity span hudbars reads,

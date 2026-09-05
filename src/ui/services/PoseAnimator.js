@@ -21,6 +21,7 @@
 // actor animation, so it rides the same lunge window rather than adding time).
 import { POSE_CANVAS, POSE_DIR, POSE_FRAMES, POSE_STRIP } from '../../content/poseSprites.js';
 import { assetUrl } from '../assetmap.js';
+import { reducedMotionRequested } from '../motion.js';
 
 const key = (classId, pose, tint) => `${classId}_${pose}_${tint}`;
 
@@ -138,9 +139,15 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
     setPose,
     /** Hold `pose` for ms, then return to idle. Reduced motion holds nothing. */
     play(pose, ms = 260) {
-      if (document.body.classList.contains('reduced-motion')) return false;
+      if (reducedMotionRequested()) return false;
+      // Decide what would be shown BEFORE cancelling the hold already running. A
+      // pose this build does not carry used to clear the settle timer and then
+      // bail, which left whatever was on screen — a lunge, mid-swing — frozen
+      // there for the rest of the fight.
+      const target = resolve(pose);
+      if (!poseFrame(classId, target, tint)) return false;
       if (timer) { clearTimeout(timer); timer = null; }
-      if (!setPose(resolve(pose))) return false;
+      setPose(target);
       timer = setTimeout(settle, Math.max(60, ms));
       return true;
     },
