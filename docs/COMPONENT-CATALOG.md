@@ -42,7 +42,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `title-menu-gem` | semantic child | `title.mountTitle` | Title Menu Item | Decorative diamond separator shown beneath a menu label. |
 | `title-tagline` | title content record | `title.mountTitle` | Title screen | Replaceable centered closing line beneath the main menu. |
 | `title-menu-modal` | `saveSlotSelectionModel` + save-slot records | `title.mountTitle` | Title screen | Reusable LOAD GAME / NEW GAME modal; selected card, accessibility state, and primary action target share one immutable projection, while `load-review` confirms a twice-activated save before loading. |
-| `title-modal-close-control` | modal action record + authored tap floor | `title.mountTitle` | Title Menu Modal | Tap-floor-sized close control that restores focus to the title menu. |
+| `title-modal-close-control` | modal action record + authored tap floor | `title.mountTitle` | Title Menu Modal | Close control with a 75%-sized visible square inside its full tap-safe target; restores focus to the title menu. |
 | `title-modal-heading` | modal-kind projection | `title.mountTitle` | Title Menu Modal | LOAD GAME or NEW GAME accessible dialog heading. |
 | `title-modal-divider` | semantic child | `title.mountTitle` | Title Menu Modal | Gold rule and diamond beneath the dialog heading. |
 | `title-save-slot-list` | `saveSlotSelectionModel` | `title.mountTitle` | Title Menu Modal | Immutable Load/New selection aggregate whose child records identify the selected slot and semantic select command. |
@@ -203,7 +203,7 @@ custom art does not require a second card implementation.
 | `stat-allocation-row` | one attribute allocation row | `statAllocationCard.renderStatAllocationCard` | Character Creation + Shrine allocation + catalog |
 | `resource-strip` | derived rows + Poise receipt | `creationCards.resourceStrip` | Character stats + catalog |
 | `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
-| `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog |
+| `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog; Animated is the default when no explicit style is stored. |
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
 | `sigil-choice` | glyph + selected state | `creationCards.sigilChoiceButton` | Appearance + catalog |
 | `keepsake-choice` | keepsake row + selected state | `creationCards.keepsakeChoiceButton` | Keepsake + catalog |
@@ -422,6 +422,10 @@ is [`assets/components/armoury.json`](../assets/components/armoury.json).
 | Inventory and comparison | `armoury.inventoryCard`, `armoury.paneSplitter`, `armoury.itemCard`, `armoury.inventoryItemClass`, `armoury.itemReveal`, `armoury.comparisonTooltipAnchor`, `armoury.equipmentComparison`, `armoury.inventoryTrayResizeHandle` |
 | Cards, Stats, and disclosure | `armoury.cardsCard`, `armoury.cardList`, `armoury.cardRow`, `armoury.cardDetail`, `armoury.cardViewToggle`, `armoury.cardsTrayResizeHandle`, `armoury.statsTray`, `armoury.statsSummary`, `armoury.statsTrayResizeHandle`, `armoury.disclosure` |
 
+Within each procedural equipment group, empty positions are ordered after the
+occupied and locked positions. Their Grid presentation spans every column,
+making the empty drop target a full-width bottom row.
+
 ### Combatant card detail
 
 ```text
@@ -471,7 +475,7 @@ gap. These are data-owned in `balance.ui.hudPresentation`, projected once by
 | `portraitScale` | `0.7` | `--hud-portrait-scale` | Portrait-badge size without changing identity semantics. |
 | `primaryRowGapPx` | `8` | `--hud-primary-row-gap-px` | Gap between Vitals and Quick Access. |
 | `controlGapPx` | `2` | `--hud-control-gap-px` | Gap inside the Quick Access 2×2 control grid. |
-| `resourceRowGapPx` | `2` | `--hud-resource-row-gap-px` | Vertical spacing between HP, MP, and SP. |
+| `resourceRowGapPx` | `3` | `--hud-resource-row-gap-px` | Vertical spacing between HP, MP, and SP. |
 | `cindersMaxWidthPct` | `30` | `--hud-cinders-max-width` | Maximum centered Cinders track width in viewport units. |
 | `metadataMaxWidthPct` | `30` | `--hud-metadata-max-width` | Maximum right metadata-trail width in viewport units. |
 | `metadataShowTotals` | `false` | `data-hud-metadata-show-totals` | Whether Act/Floor include their `/ total` values. |

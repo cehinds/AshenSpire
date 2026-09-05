@@ -91,9 +91,9 @@
      A quietly-correct-looking 44 is the failure Law 0 clause 5 names; a
      missing floor is not quiet. */
   --tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));
-  /* THE ICON-BUTTON BOX. Close and ☰ are the same size on every component —
-     Constantine, 2026-09-03: "keep the close and menu buttons the same
-     dimensions for all components". So their box is a LENGTH, not a floor:
+  /* THE ICON-BUTTON HIT BOX. Close and ☰ reserve the same tap-safe square on
+     every component. The close control paints a smaller face inside that box,
+     but its pointer, touch, and focus target remains this shared length:
      a floor lets a tall row or a big title stretch the control, and then the
      shape a player learned on one door is a different shape on the next.
      Width AND height read this; nothing else sizes them. It is the tap floor
@@ -2342,8 +2342,8 @@ button.danger:hover, .as-btn.danger:hover { background: rgba(212, 98, 46, 0.08);
 button.primary.danger, .as-btn.primary.danger { background: rgba(212, 98, 46, 0.14); border-color: var(--danger); color: var(--parchment); }
 button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212, 98, 46, 0.24); }
 
-/* IconButton — ONE box for every header action, close included. A LENGTH, not
-   a floor: --iconbtn-size (base.css), the same on every component. */
+/* IconButton — ONE tap-safe box for every header action, close included. A
+   LENGTH, not a floor: --iconbtn-size (base.css), the same on every component. */
 .as-iconbtn, .modal-iconbtn, .modal-close {
   display: inline-flex; align-items: center; justify-content: center;
   width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
@@ -2359,6 +2359,18 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 }
 .as-iconbtn:hover, .modal-iconbtn:hover, .modal-close:hover,
 .as-iconbtn:focus-visible, .modal-iconbtn:focus-visible, .modal-close:focus-visible { border-color: var(--gold); color: var(--gold); outline: none; background: var(--panel); }
+
+/* Close keeps the full accessible hit target above, while its visible square
+   is 75% of that target. Every modal inherits the same smaller corner mark. */
+.modal-close { position: relative; background: transparent; border-color: transparent; }
+.modal-close > .modal-close-face {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 75%; height: 75%; pointer-events: none;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2);
+}
+.modal-close:hover, .modal-close:focus-visible { background: transparent; border-color: transparent; }
+.modal-close:hover > .modal-close-face, .modal-close:focus-visible > .modal-close-face { border-color: var(--gold); }
+.modal-close:focus-visible > .modal-close-face { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
 
 /* ButtonRow — a grid of EQUAL tracks; the row is min(box, n × step). */
 .as-btnrow, .modal-btnrow {
@@ -3197,6 +3209,7 @@ details.armoury-position-card > .as-detailcard { border-radius: 0 0 var(--r-3) v
 .armoury-position-grid-group { display: grid; gap: 0.6rem; min-width: 0; }
 .armoury-position-grid-tiles > .as-options.grid { --opt-min: 9rem; gap: 0.6rem; }
 .armoury-position-grid-card { flex-direction: column; text-align: center; padding: 0.9rem 0.6rem; gap: 0.5rem; }
+.armoury-position-grid-card.is-empty { grid-column: 1 / -1; width: 100%; }
 .armoury-position-grid-card > .ob { align-items: center; }
 .armoury-position-grid-card .on { font-size: 1.3rem; }
 .armoury-position-grid-detail { margin-top: 0.4rem; }
@@ -3918,6 +3931,10 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 /* A stack of meters, one under the other, tight. */
 .as-meters { display: flex; flex-direction: column; gap: 0.3rem; width: 100%; min-width: 0; }
 .as-meters.tight { gap: 2px; }
+/* Main Vitals use the shared screen-pixel token. Dividing by the page zoom
+   makes the authored 3px separation land as 3px on glass at every UI scale;
+   model strips retain the kit's tighter local stack. */
+.resbars[data-surface="main"] { gap: calc(var(--hud-resource-row-gap-px) / var(--ui-zoom, 1)); }
 
 /* ═══ SLOT — a square control that holds one thing: art, a count, a key ═══ */
 /* Flasks, relics, quick items. The box is the IconButton's (a control) or `sm`
@@ -7594,7 +7611,7 @@ const balance = {
       portraitScale: 0.58,
       primaryRowGapPx: 4,
       controlGapPx: 0,
-      resourceRowGapPx: 2,
+      resourceRowGapPx: 3,
       panelPadPx: 0,
       mobilePanelPadPx: 0,
       mobileControlGapPx: 1,
@@ -29413,6 +29430,18 @@ function orderArmourySlots(slots, layout) {
   });
 }
 
+/**
+ * Keep authored position order within each state while moving every available
+ * empty position behind occupied and locked positions. The ordering is derived
+ * from live state, so equipping or unequipping redraws the empty row in its
+ * correct place without storing a second order.
+ */
+function orderArmouryPositions(positions) {
+  return [...(positions || [])].sort((a, b) => (
+    Number(a?.state === 'empty') - Number(b?.state === 'empty')
+  ));
+}
+
 const positionText = (template, fallback, index) => String(template || fallback)
   .replaceAll('{n}', String(index + 1));
 
@@ -29439,7 +29468,7 @@ function equipmentPositionCardState({ slot, index, modelState, item, activeIndex
 }
 
 
-Object.assign(module.exports, { normalizeArmouryLayout, trayPresentationState, inventorySelectionAction, orderArmourySlots, equipmentPositionCardState });
+Object.assign(module.exports, { normalizeArmouryLayout, trayPresentationState, inventorySelectionAction, orderArmourySlots, orderArmouryPositions, equipmentPositionCardState });
 
 },
 "src/model/quests.js": function (module, exports, require) {
@@ -51597,7 +51626,11 @@ function modalCloseButton({ label = 'Close', onClick = null, className = '', id 
   button.className = `subtle modal-close${className ? ` ${className}` : ''}`;
   button.title = `${label} (Esc)`;
   button.setAttribute('aria-label', label);
-  button.textContent = MODAL_CLOSE_GLYPH;
+  const face = document.createElement('span');
+  face.className = 'modal-close-face';
+  face.setAttribute('aria-hidden', 'true');
+  face.textContent = MODAL_CLOSE_GLYPH;
+  button.appendChild(face);
   if (onClick) button.addEventListener('click', onClick);
   return button;
 }
@@ -51610,7 +51643,7 @@ function modalCloseButton({ label = 'Close', onClick = null, className = '', id 
  */
 function modalCloseButtonHtml({ label = 'Close', className = '', id = '' } = {}) {
   return `<button type="button"${id ? ` id="${esc(id)}"` : ''} class="subtle modal-close${className ? ` ${esc(className)}` : ''}"`
-    + ` title="${esc(label)} (Esc)" aria-label="${esc(label)}">${MODAL_CLOSE_GLYPH}</button>`;
+    + ` title="${esc(label)} (Esc)" aria-label="${esc(label)}"><span class="modal-close-face" aria-hidden="true">${MODAL_CLOSE_GLYPH}</span></button>`;
 }
 
 /**
@@ -52809,7 +52842,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b56817a3d1';
+const SOURCE = 'b7e6e6fcac';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52843,7 +52876,7 @@ const SOURCE = 'b56817a3d1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '19';
+const ORDINAL = '21';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -55140,6 +55173,16 @@ const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.5.5.12",
     "pullRequest": 627,
     "url": "https://github.com/cehinds/AshenSpire/pull/627"
+  },
+  {
+    "id": "pr-634",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The fighter you build is the animated one, and the Armoury sorts its empty slots",
+    "detail": "Four finishing passes over the work #625 landed. Animated is now the sprite style you get by default — at character creation, in a LAN lobby, for a local seat, and for a restored member that never recorded a choice; a save that did record Rendered, Classic or Sigil keeps it, because only a missing value defaults. In the Armoury, empty positions you can still fill sort below the occupied and locked ones and draw full width, so the row you can act on is not buried between two you cannot. The HP, MP and SP rows gain half again as much vertical separation, without the bars themselves changing. And a modal's close control paints at three-quarters of its box while keeping the full 44×44 target for pointer, touch, keyboard and controller — a smaller mark, not a smaller thing to hit.",
+    "build": "0.5.5.21",
+    "pullRequest": 634,
+    "url": "https://github.com/cehinds/AshenSpire/pull/634"
   },
   {
     "id": "pr-625",
@@ -58722,7 +58765,7 @@ Object.assign(module.exports, { renderProfileSection, openProfileArchive });
 // elements and draw nothing of their own.
 
 const { LOCKED_CLASSES } = require("src/content/index.js");
-const { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } = require("src/ui/assets.js");
+const { DEFAULT_SPRITE_STYLE, PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } = require("src/ui/assets.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { focusElement } = require("src/ui/input.js");
 const { mountDisclosure } = require("src/ui/components/disclosure.js");
@@ -58779,7 +58822,7 @@ function mountCustomize(app, {
     name: 'Forsaken',
     glyph: PORTRAIT_GLYPHS[0],
     tint: PORTRAIT_TINTS[0].id,
-    spriteStyle: 'rendered',
+    spriteStyle: DEFAULT_SPRITE_STYLE,
     keepsakeId: registries.characterCreation.keepsakes[0].id,
     startingKitId: null,
     startingHands: { leftHand: null, rightHand: null },
@@ -59564,8 +59607,11 @@ Object.assign(module.exports, { mountCustomize });
 
 const { balance } = require("src/content/balance.js");
 const { medallionPct } = require("src/content/classArtAnchors.js");
+const { DEFAULT_SPRITE_STYLE, SPRITE_STYLES } = require("src/model/spriteStyle.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 const { createPoseStage, hasPoses, registerStage } = require("src/ui/services/PoseAnimator.js");
+
+
 
 // Sprite size tiers (the display dimensions each enemy def's `size` selects) are
 // data — content/balance.js → ui.spriteTiers. Sizes are generous on purpose: the
@@ -59825,17 +59871,11 @@ function renderedSpriteUrl(classId, tintId) {
   return assetUrl(`assets/sprites/${classId}_${t}.webp`);
 }
 
-// Player sprite styles: 'rendered' (the painted class figure, WebP), 'classic'
-// (inline SVG silhouette), 'glyph' (sigil-in-a-panel). Chosen per character.
+// Player sprite styles: 'animated' (the default pose-stage figure), 'rendered'
+// (the painted class figure, WebP), 'classic' (inline SVG silhouette), and
+// 'glyph' (sigil-in-a-panel). Chosen per character.
 // "Blender PNG" until 2026-09-03, which stopped being true when the class art
 // was replaced — the same stale description as the lobby tooltip one file over.
-const SPRITE_STYLES = [
-  { id: 'rendered', name: 'Rendered' },
-  { id: 'animated', name: 'Animated' },
-  { id: 'classic', name: 'Classic' },
-  { id: 'glyph', name: 'Sigil' },
-];
-
 /** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
 function classSprite(classId, tint, sigil, tintId, style) {
   const build = CLASS_SVG[classId];
@@ -59880,12 +59920,10 @@ function classSprite(classId, tint, sigil, tintId, style) {
     }
   };
 
-  // 'animated': the figure that changes pose when it swings, from the shipped
-  // pose frames. It is a separate style rather than the default because the
-  // 'rendered' figure is a painting and these frames are modelled — mixing the
-  // two inside one animation would swap art styles mid-swing. A class with no
-  // shipped frames falls through to the painting, so the choice is never a
-  // blank figure.
+  // 'animated': the default figure, changing pose from the shipped frames.
+  // 'rendered' remains a separate painted still so an explicit choice never
+  // swaps art styles mid-swing. A class with no shipped frames falls through
+  // to the painting, so the default is never a blank figure.
   if (style === 'animated' && hasPoses(classId, tintId)) {
     const stage = createPoseStage(classId, tintId);
     if (stage) {
@@ -60010,7 +60048,7 @@ function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = fals
 // composite is not dead — it is just no longer the combat figure.
 function playerSprite(customization = {}, classId) {
   const tint = tintCss(customization.tint);
-  const style = customization.spriteStyle || 'rendered';
+  const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
     return classSprite(classId, tint, customization.glyph, customization.tint, style);
   }
@@ -60041,7 +60079,7 @@ function classGlyph(classId) {
 }
 
 
-Object.assign(module.exports, { spriteMirror, enemySprite, PORTRAIT_GLYPHS, PORTRAIT_TINTS, setSpritesEnabled, spritesAreEnabled, SPRITE_STYLES, classSprite, equippedFigure, playerSprite, tintCss, setClassGlyphs, classGlyph });
+Object.assign(module.exports, { DEFAULT_SPRITE_STYLE, SPRITE_STYLES, spriteMirror, enemySprite, PORTRAIT_GLYPHS, PORTRAIT_TINTS, setSpritesEnabled, spritesAreEnabled, classSprite, equippedFigure, playerSprite, tintCss, setClassGlyphs, classGlyph });
 
 },
 "src/content/classArtAnchors.js": function (module, exports, require) {
@@ -60161,6 +60199,22 @@ function medallionDeclared(classId) {
 
 
 Object.assign(module.exports, { CLASS_MEDALLION_PCT, medallionPct, medallionDeclared });
+
+},
+"src/model/spriteStyle.js": function (module, exports, require) {
+// One default for every place a player figure can be created or restored.
+// Explicit saved choices remain authoritative; only an absent choice uses this.
+const DEFAULT_SPRITE_STYLE = 'animated';
+
+const SPRITE_STYLES = Object.freeze([
+  Object.freeze({ id: 'animated', name: 'Animated' }),
+  Object.freeze({ id: 'rendered', name: 'Rendered' }),
+  Object.freeze({ id: 'classic', name: 'Classic' }),
+  Object.freeze({ id: 'glyph', name: 'Sigil' }),
+]);
+
+
+Object.assign(module.exports, { DEFAULT_SPRITE_STYLE, SPRITE_STYLES });
 
 },
 "src/ui/components/disclosure.js": function (module, exports, require) {
@@ -61163,7 +61217,7 @@ const { attributeCardModels } = require("src/model/creationBrief.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
 const { mountDisclosure } = require("src/ui/components/disclosure.js");
-const { equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout, orderArmourySlots } = require("src/model/armouryLayout.js");
+const { equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout, orderArmouryPositions, orderArmourySlots } = require("src/model/armouryLayout.js");
 
 
 
@@ -61468,7 +61522,9 @@ function buildArmoury(L, ui) {
   const ordered = orderArmourySlots(ui.blocks.map((block) => block.slot), ui.layout);
   const positionsBySlot = ordered.map((slot) => ({
     slot,
-    positions: ui.positions(slot).filter((position) => position.modelState !== 'hidden'),
+    positions: orderArmouryPositions(
+      ui.positions(slot).filter((position) => position.modelState !== 'hidden'),
+    ),
   }));
   const itemCount = positionsBySlot.reduce((sum, row) => (
     sum + row.positions.filter((position) => position.state === 'occupied').length
@@ -71476,6 +71532,7 @@ Object.assign(module.exports, { combatantDetailBody, mountCombatantInspector });
 // byte-distinct images; the repeat table avoids inlining forty-four duplicate
 // WebPs into the standalone build.
 const { assetUrl } = require("src/ui/assetmap.js");
+const { DEFAULT_SPRITE_STYLE } = require("src/model/spriteStyle.js");
 
 const FRAME_ROOT = 'assets/animations/reaver/default-greatsword/right';
 const NORMAL_LUNGE_MS = 260;
@@ -71534,7 +71591,7 @@ function preloadReaverAttackFrames() {
 }
 
 function isReaverAttackEligible({ classId, figure, customization, spritesEnabled }) {
-  const style = (customization && customization.spriteStyle) || 'rendered';
+  const style = (customization && customization.spriteStyle) || DEFAULT_SPRITE_STYLE;
   return spritesEnabled === true
     && classId === 'reaver'
     && style === 'rendered'
@@ -76986,7 +77043,7 @@ Object.assign(module.exports, { startupGateModel });
 // span[style*="color"]`, `.tint-dot`, `.seed-line`) ride on the kit's parts.
 
 const { lanInfo, lanHost, lanUnhost, lanConnect } = require("src/net/lan.js");
-const { classGlyph, PORTRAIT_TINTS, SPRITE_STYLES, tintCss } = require("src/ui/assets.js");
+const { classGlyph, DEFAULT_SPRITE_STYLE, PORTRAIT_TINTS, SPRITE_STYLES, tintCss } = require("src/ui/assets.js");
 const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { refusesWhen } = require("src/ui/components/refusal.js");
 const { attachSeedField } = require("src/ui/components/seedfield.js");
@@ -77014,7 +77071,7 @@ function mountLobby(app, { registries, meta = {}, defaultSeedString, onBack, onS
     startingKitId: null,
     discoveredArmaments: [...new Set(meta.discoveredArmaments || [])],
     tint: localStorage.getItem(TINT_KEY) || 'gold',
-    spriteStyle: localStorage.getItem('sote_lan_style') || 'rendered',
+    spriteStyle: localStorage.getItem('sote_lan_style') || DEFAULT_SPRITE_STYLE,
     ready: false,
     seedString: defaultSeedString,
     players: [],
@@ -77335,7 +77392,7 @@ function mountLobby(app, { registries, meta = {}, defaultSeedString, onBack, onS
       if (state.players.length >= 4 || state.locals.length >= 3) return;
       const n = state.locals.length + 2;
       const classId = classList[(n - 1) % classList.length].id;
-      state.locals.push({ name: `Player ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: 'rendered' });
+      state.locals.push({ name: `Player ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: DEFAULT_SPRITE_STYLE });
       renderLocals(); sendLocals();
     });
     leaveBtn.addEventListener('click', () => back());

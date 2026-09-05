@@ -49,7 +49,11 @@ export function modalCloseButton({ label = 'Close', onClick = null, className = 
   button.className = `subtle modal-close${className ? ` ${className}` : ''}`;
   button.title = `${label} (Esc)`;
   button.setAttribute('aria-label', label);
-  button.textContent = MODAL_CLOSE_GLYPH;
+  const face = document.createElement('span');
+  face.className = 'modal-close-face';
+  face.setAttribute('aria-hidden', 'true');
+  face.textContent = MODAL_CLOSE_GLYPH;
+  button.appendChild(face);
   if (onClick) button.addEventListener('click', onClick);
   return button;
 }
@@ -62,7 +66,7 @@ export function modalCloseButton({ label = 'Close', onClick = null, className = 
  */
 export function modalCloseButtonHtml({ label = 'Close', className = '', id = '' } = {}) {
   return `<button type="button"${id ? ` id="${esc(id)}"` : ''} class="subtle modal-close${className ? ` ${esc(className)}` : ''}"`
-    + ` title="${esc(label)} (Esc)" aria-label="${esc(label)}">${MODAL_CLOSE_GLYPH}</button>`;
+    + ` title="${esc(label)} (Esc)" aria-label="${esc(label)}"><span class="modal-close-face" aria-hidden="true">${MODAL_CLOSE_GLYPH}</span></button>`;
 }
 
 /**

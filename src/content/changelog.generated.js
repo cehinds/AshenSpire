@@ -63,6 +63,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/627"
   },
   {
+    "id": "pr-634",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The fighter you build is the animated one, and the Armoury sorts its empty slots",
+    "detail": "Four finishing passes over the work #625 landed. Animated is now the sprite style you get by default — at character creation, in a LAN lobby, for a local seat, and for a restored member that never recorded a choice; a save that did record Rendered, Classic or Sigil keeps it, because only a missing value defaults. In the Armoury, empty positions you can still fill sort below the occupied and locked ones and draw full width, so the row you can act on is not buried between two you cannot. The HP, MP and SP rows gain half again as much vertical separation, without the bars themselves changing. And a modal's close control paints at three-quarters of its box while keeping the full 44×44 target for pointer, touch, keyboard and controller — a smaller mark, not a smaller thing to hit.",
+    "build": "0.5.5.21",
+    "pullRequest": 634,
+    "url": "https://github.com/cehinds/AshenSpire/pull/634"
+  },
+  {
     "id": "pr-625",
     "date": "2026-09-05",
     "group": "2026-09-05",

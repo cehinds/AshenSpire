@@ -329,7 +329,7 @@ export const balance = {
       portraitScale: 0.58,
       primaryRowGapPx: 4,
       controlGapPx: 0,
-      resourceRowGapPx: 2,
+      resourceRowGapPx: 3,
       panelPadPx: 0,
       mobilePanelPadPx: 0,
       mobileControlGapPx: 1,
