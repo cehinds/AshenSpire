@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-633",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The README stops contradicting itself about what dev publishes",
+    "detail": "Nothing a player sees changes. #629 was the one merged pull request this file had no receipt for, because it was the pass that wrote the others and a receipt cannot name a number that does not exist until the pull request is opened; it has one now. #632 then made a push to dev, test or release publish the builds site — but a paragraph further down the README still said dev is not published and that a change merged to it is not yet visible at the preview URL. The two statements sat six lines apart. The later one now says what actually happens, and keeps the distinction that matters: a push to dev moves its own address, and the stable Play link still moves only on the owner's own dispatch.",
+    "build": "0.5.5.19",
+    "pullRequest": 633,
+    "url": "https://github.com/cehinds/AshenSpire/pull/633"
+  },
+  {
     "id": "pr-632",
     "date": "2026-09-05",
     "group": "2026-09-05",
