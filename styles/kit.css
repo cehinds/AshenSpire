@@ -1316,6 +1316,31 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 .disc-faces > .disc-face .disc-summary { white-space: normal; }
 .disc-faces > .disc-face[data-reveal="open"] { border-color: var(--gold); }
 .disc-face.disc-pick, .disc-face.disc-armament, .disc-face.disc-relic, .disc-face.disc-item, .disc-face.disc-power, .disc-face.disc-stat, .disc-face.disc-attribute, .disc-face.disc-section { flex: 1 1 100%; }
+
+/* Character creation's equipment selectors share one row, so their footprint
+   must come from that row rather than from the length of each item name. */
+#cz-equipment-fold > .disc-faces { gap: 0.8rem; }
+#cz-equipment-fold > .disc-faces > .disc-face {
+  flex: 1 1 0; width: 0; min-width: 0; overflow: hidden;
+}
+#cz-equipment-fold .cc-selection-face { min-width: 0; padding-inline: 1rem; }
+#cz-equipment-fold .cc-selection-face > .as-labelstack,
+#cz-equipment-fold .cc-selection-face > .disc-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#cz-equipment-fold .cc-selection-face > .disc-value { flex: 0 1 auto; text-align: right; }
+#cz-equipment-receipts { margin-top: 1.2rem; padding-inline: 1rem; }
+#cz-equipment-panel > .cc-move-note { margin: 0.8rem 1rem 0; }
+#cz-equipment-panel > .modal-btnrow { margin-right: 1rem; }
+
+@media (max-width: 50rem) {
+  #cz-equipment-fold .cc-selection-face { flex-direction: column; align-items: stretch; gap: 0.25rem; }
+  #cz-equipment-fold .cc-selection-face > .disc-value { width: 100%; text-align: left; }
+}
+
+@media (max-width: 40rem) {
+  #cz-equipment-fold > .disc-faces > .disc-face {
+    flex: 0 0 calc(50% - 0.4rem); width: auto;
+  }
+}
 .disc-reveal > .dc-name { font-size: 1.5rem; }
 .disc-reveal .disc-receipt { display: block; margin-top: 0.4rem; }
 /* ═══ SMITH — body E inside the shell ══════════════════════════════════════ */
