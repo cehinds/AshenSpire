@@ -126,6 +126,11 @@ value; `Potency` remains the modifier that adds to Magic damage.
   and the explicit in-card action remains the commit control.
 - The folded card is also the drag source. Crossing the shared movement slop
   cancels a pending hold and transfers the gesture to drag/drop.
+- During the player's combat turn, Equip, Move, and Unequip remain available.
+  They dispatch the priced `changeEquipment` combat intent instead of mutating
+  the panel's loadout directly. The engine charges the same authored action cost
+  as a prepared-set swap and immediately updates cards, resource maxima, Poise,
+  events, and the persisted combat loadout.
 
 ## Tray and pane resizing
 

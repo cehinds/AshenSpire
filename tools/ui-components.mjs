@@ -122,14 +122,8 @@ export function findings(r) {
   if (missing.length || new Set(ids).size !== ids.length) {
     bad.push(`C1 registry ids missing/duplicated: ${missing.join(', ') || 'duplicate value'}`);
   }
-  // `buildMetadataTrailHtml` LEFT THIS LIST ON 2026-09-05 with the build stamp
-  // it existed to place (owner: "remove build and shift everything up for a
-  // clean neat ui"). The trail element survives as an empty flanking track that
-  // keeps the Cinders receipt centred, and it is inlined in `runHeaderStripHtml`
-  // — a builder function for one empty div would be ceremony, and this list is
-  // for the composition's real parts.
   const hudExports = [
-    'identityClusterHtml', 'cindersCounterHtml',
+    'identityClusterHtml', 'cindersCounterHtml', 'buildMetadataTrailHtml',
     'runHeaderStripHtml', 'vitalsPanelHtml', 'quickAccessPanelHtml',
     'primaryHudRowHtml', 'inventoryBeltHtml', 'sharedRunHudHtml',
   ];
@@ -153,31 +147,17 @@ export function findings(r) {
       || /\b(run|combat)\s*=/.test(r.hud + r.quickSettings + r.frame + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels)) {
     bad.push('C5 reusable component modules crossed the simulation-state boundary');
   }
-  // THE KIT SWEEP (2026-09-04): the trail is a kit StatStrip (`.as-statstrip
-  // trail`) and no HUD stylesheet lays it out any more.
-  // THE TRAIL IS EMPTY SINCE 2026-09-05, and holding it empty is the check. The
-  // Floor chip went with "remove across floor and character name sigil and
-  // class from combat hud", the Act chip with "it should just be vitals,
-  // relics, cinders, armory, menu and hp and mp potions in the Hud", and the
-  // build stamp with "remove build and shift everything up for a clean neat
-  // ui". What is left is a flanking div that keeps the Cinders receipt in the
-  // middle track, so this pins three things:
-  //   · the element is still there and still an empty StatStrip — delete it and
-  //     the receipt stops being centred, which `hudparity` P8 measures;
-  //   · NONE of the three chips has come back — the negative clauses;
-  //   · the MODEL still projects act, floor, build, seed and source, which is
-  //     the split this check has pinned since the first chip left: the facts
-  //     stay in the presentation model, the chips stay out of the view.
+  // The one-line header is class | Cinders | Act/Floor. Build/seed/source stay
+  // off this compact surface, but their presentation-model fields remain for
+  // consumers that need them.
   if (/buildStampHtml/.test(r.hud)
-      // QUOTED, because `hud-act` is a substring of `hud-actions` — the class on
-      // the Armoury/Menu cluster, which is very much still there. A bare token
-      // search here reported the chips present when they were gone.
-      || /'hud-(?:act|floor)'/.test(r.hud)
+      || !/class: 'as-chip hud-class'/.test(r.hud)
+      || !/class: 'hud-run-meta as-statstrip trail'/.test(r.hud)
+      || !/childModel\(model, UI\.metadataField, 'act'\)[\s\S]*childModel\(model, UI\.metadataField, 'floor'\)/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
-      || !/class="hud-run-meta as-statstrip trail"[^>]*><\/div>/.test(r.hud)
       || !/\.as-statstrip, \.as-kitline \{ display: flex; flex-wrap: wrap;/.test(r.kit)
       || /\.hud-run-meta[^{]*\{/.test(r.css + r.uiCss)) {
-    bad.push('C6 the run header trail is not an empty flanking track with every chip gone');
+    bad.push('C6 the run header is not the one-line Class, Cinders, Act/Floor composition');
   }
   // On a phone a trail keeps the HEAD of each compound fact and drops its TAIL,
   // and there are two shapes of fact in it: the build stamp keeps its number and
@@ -274,13 +254,20 @@ export function findings(r) {
       || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'panelPadPx', 'mobilePanelPadPx', 'mobileControlGapPx', 'mobileOuterPadPx', 'mobileRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'cardSizePx', 'glyphSizePx', 'stateDotPx', 'activeTintPct', 'showCardBackground', 'showLabels'].every((name) => r.validate.includes(name))) {
     bad.push('C11 HUD presentation defaults are no longer data-owned, projected, and validated');
   }
-  // THE RENDERED HUD IS KIT ATOMS: a Band of rows, identity as a LabelStack,
-  // receipts as StatChips, controls as IconButtons at --iconbtn-size, flasks as
-  // Slots at the same size, resources as Meters — and the map alone carries the
-  // act route strip.
+  // THE RENDERED HUD IS KIT ATOMS: a Band of rows, identity as a StatStrip,
+  // receipts as StatChips, a smaller 2 × 2 Quick Access square with protected
+  // tap regions, equal Slot faces in the detached under-HUD rail, resources as
+  // Meters — and the map alone carries the act route strip.
   if (!/class="topbar combat-hud shared-hud as-band stack/.test(r.hud)
-      || !/class: 'hud-identity as-labelstack'/.test(r.hud)
+      || !/class: 'hud-identity as-statstrip'/.test(r.hud)
       || !/class: 'as-chip hud-cinders'/.test(r.hud)
+      || !/class="hud-control-grid as-cluster stack"/.test(r.hud)
+      || !/class="hud-resource-row as-band-row"/.test(r.hud)
+      || !/\.shared-hud \{ --hud-quick-tile-size: 3\.2rem; --hud-belt-tile-face-size: 2\.8rem; \}/.test(r.kit)
+      || !/\.shared-hud \.hud-control-grid :is\(\.as-iconbtn, \.as-slot\) \{[\s\S]*?width: var\(--hud-quick-tile-size\); height: var\(--hud-quick-tile-size\);/.test(r.kit)
+      || !/\.shared-hud \.hud-bottom \{[\s\S]*?position: absolute;[\s\S]*?top: calc\(100% \+ 0\.4rem\);[\s\S]*?left: 1\.6rem; right: 1\.6rem;/.test(r.kit)
+      || !/\.shared-hud \.hud-bottom \.as-slot \{[\s\S]*?width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
+      || !/\.shared-hud \.hud-bottom \.as-slot::before \{[\s\S]*?width: var\(--hud-belt-tile-face-size\); height: var\(--hud-belt-tile-face-size\);/.test(r.kit)
       || !/iconButton\(\{/.test(r.hud)
       || !/class="as-iconbtn modal-iconbtn hud-quick-setting/.test(r.quickSettings)
       || !/\.as-iconbtn, \.modal-iconbtn, \.modal-close \{[\s\S]*?width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
@@ -494,7 +481,9 @@ function selftest() {
     ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${hudShellHtml(runHudViewModel({', '${(() => "")({') })],
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
-    ['restore a second header row', 'C6 ', (r) => ({ ...r, css: `${r.css}\n.hud-run-meta { grid-row: 2; }\n` })],
+    ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("childModel(model, UI.metadataField, 'floor')", "childModel(model, UI.metadataField, 'seed')") })],
+    ['restore oversized Quick Access tiles', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('--hud-quick-tile-size: 3.2rem', '--hud-quick-tile-size: var(--iconbtn-size)') })],
+    ['put Relics and potions back inside the HUD flow', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: absolute;\n  z-index: 85;', 'position: static;\n  z-index: auto;') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
     // The other half of the same rung: a phone that drops the chip's VALUE
     // instead of its total is the defect the photograph caught.

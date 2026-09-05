@@ -1034,6 +1034,10 @@ export const balance = {
     swapCost: 2,
     swapAllowancePerTurn: 1, // only consulted when swapCostKind === 'allowance'
     swapEndsTurn: false,
+    // The Armoury remains actionable during the player's combat turn. Replacing,
+    // moving, or unequipping a carried item uses the same priced combat action
+    // as switching a prepared weapon set; the engine, never the panel, commits it.
+    allowChangesInCombat: true,
 
     // ---- WHAT A SWAP COSTS: three prices he can try, one chain ------------
     // Constantine, 2026-08-08: *"switching sets should cost actions. perhaps

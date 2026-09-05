@@ -144,11 +144,16 @@ export function beatCue(phase, id, form) {
 }
 
 /**
- * armHold(btn, { ms, onConfirm, onTap?, id }) -> disarm() (with .refresh())
+ * armHold(btn, { ms, onConfirm, onTap?, id, onHoldStart?, onHoldEnd? })
+ *   -> disarm() (with .refresh())
  *
  * `ms` may be a NUMBER or a FUNCTION returning one, read at the moment the
  * finger lands. The function form remains available to rows whose state can
  * change while a screen is mounted; End Turn itself is deliberately constant.
+ *
+ * `onHoldStart` and `onHoldEnd` expose this one gesture's lifecycle to temporary
+ * presentation such as a sustained-hold preview. The end hook runs on every
+ * exit — early release, movement, cancellation, completion, Escape or disarm.
  *
  * `ms <= 0` is the "off" position of the dial: one completed press commits.
  * It is not a hold with a zero timer, and it does not depend on a trailing
@@ -157,6 +162,7 @@ export function beatCue(phase, id, form) {
 export function armHold(btn, {
   ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
   feedbackHosts = null, pointerOnly = false, tapOnEarlyRelease = false,
+  onHoldStart = null, onHoldEnd = null,
 }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
 
@@ -177,6 +183,7 @@ export function armHold(btn, {
   // under a thumb that was trying to scroll) and never a commit. Both press
   // forms set it; onClick consumes it; a press resets it.
   let movedThisPress = false;
+  let holdLifecycleActive = false;
 
   const paint = (p) => {
     for (const target of [btn, ...activeFeedback]) {
@@ -262,6 +269,10 @@ export function armHold(btn, {
     if (btn.dataset.hold) btn.dataset.hold = state;
     paint(0);
     clearFeedback();
+    if (holdLifecycleActive) {
+      holdLifecycleActive = false;
+      if (onHoldEnd) onHoldEnd(state);
+    }
   }
 
   function begin(origin, track) {
@@ -330,6 +341,8 @@ export function armHold(btn, {
     heldThisPress = origin.source === 'pointer';
     armed = true;
     btn.dataset.hold = 'holding';
+    holdLifecycleActive = true;
+    if (onHoldStart) onHoldStart({ duration: ms0, origin });
     const t0 = performance.now();
     const x0 = origin.x;
     const y0 = origin.y;
