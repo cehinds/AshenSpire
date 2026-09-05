@@ -136,7 +136,11 @@ function hybridUnit(bar, tooltipExtra, tooltips) {
   //
   // THE CEILING IS `labelMax`, NOT `domain`, AND THE DIFFERENCE IS THE WHOLE
   // POINT (E9 / #254, 2026-08-22). `domain` is now the REFERENCE his ruling
+<<<<<<< ours
   // set — 200 HP, 20 MP, 20 SP — an upper mark far above anything the content can
+=======
+  // set — 500 HP, 50 pools — an upper mark far above anything the content can
+>>>>>>> theirs
   // reach. The plate must reserve the widest LABEL it can ever draw, which is
   // set by the largest max the CONTENT can produce (96, 4, 4). Reserving from
   // the reference put three digits where two will ever print and crushed the

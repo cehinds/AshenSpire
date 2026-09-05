@@ -37,6 +37,7 @@ import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
+<<<<<<< ours
 import { hudShellHtml } from '../components/hudmeta.js';
 import { actRouteStripHtml } from '../components/actRouteStrip.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
@@ -46,6 +47,11 @@ import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
+=======
+import { buildStampHtml } from '../components/buildstamp.js';
+import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
+import { resourceBars, markFlooredBars } from '../components/resbars.js';
+>>>>>>> theirs
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -100,6 +106,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
 
   app.innerHTML = `
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
+<<<<<<< ours
       <!-- ONE HUD SHELL: this is the same component combat mounts. -->
       ${hudShellHtml(runHudViewModel({
         place: 'map',
@@ -129,6 +136,43 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         overlayHtml: legendHtml,
       }))}
       ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
+=======
+      <header class="topbar map-header">
+        <div class="hud-top">
+          <!-- E9 / #254 - ONE HUD. This used to be a hand-written
+               div.bar.hpbar with its own percentage fill and its own 15rem
+               CSS track: a SECOND renderer for the one grammar combat draws
+               through ui/components/resbars.js. Two renderers meant the same
+               character's health read at two different proportions depending
+               on which screen you were looking at, and no instrument could
+               see it because each was internally consistent. The host is
+               empty here and filled below by the same call combat.js and
+               coop.js make. (No backticks in this block: it lives inside a
+               template literal, and one closed it early - the game's own
+               validation banner caught that, not a test.) -->
+          <div class="resbars-host"></div>
+          <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
+          <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
+          <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+        </div>
+        <div class="hud-bottom">
+          <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
+          <span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span>
+          <span class="mh-stat cinders">⛁ ${run.cinders}</span>
+          <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
+          <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
+          ${buildStampHtml('map')}
+        </div>
+        <div class="map-legend-pop" hidden>
+          ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
+        </div>
+      </header>
+      <div class="map-substrip${hasFlasks ? '' : ' no-flasks'}"${hasRelics || hasFlasks ? '' : ' hidden'}>
+        <div class="mh-flasks"></div>
+        ${hasFlasks && hasRelics ? '<span class="mh-div"></span>' : ''}
+        <div class="relics mh-relics"></div>
+      </div>
+>>>>>>> theirs
     </div>`;
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
   wireHudModeGrip(app, { settings: meta.settings || {}, onSettingsChange });
@@ -157,6 +201,37 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   if (resHost) {
     const mapPlan = resourceBarPlan(registries, 'main', run, run, resourceDomains(registries));
     resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));
+  }
+
+  // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
+  //
+  // E9 / #254, his words: "I'd like the hud to look the same both combat and
+  // map". ONE renderer for both — ui/components/resbars.js — fed by the one
+  // plan builder, model/resources.js `resourceBarPlan(…, 'main', …)`, which is
+  // the identical call combat.js:435 and coop.js:460 make. So:
+  //
+  //   · WHICH rows appear is content/resources.js's business, not this
+  //     screen's. HP, then the Mana/Stamina band, then poise — the map does
+  //     not get its own list and cannot drift from combat's.
+  //   · TROUGH LENGTH is `scale(max)/scale(reference)` against the SAME
+  //     reference table (HUD_REFERENCE_MAX, his 500/50), so a pool's length
+  //     means the same thing on both screens.
+  //   · The `run` IS the view and the entity here, exactly as it is in
+  //     tools/hybridstats.mjs — the readers take current/max off it and a row
+  //     whose reader returns null is ABSENT, never a lying 0/0 trough. That is
+  //     why POISE does not draw on the map: outside a fight there is no poise
+  //     meter, and the refusal path is the right answer rather than a bar with
+  //     nothing behind it. Measured and held by tools/hudparity.mjs P1,
+  //     which excuses exactly this one row and reds on any other difference.
+  //   · markFlooredBars() runs here for the same reason it runs in combat: the
+  //     minimum-width floor is a RENDERED fact, and a floored trough must wear
+  //     the dashed broken-axis mark on this screen too or the map would show a
+  //     bar that is no longer to scale and does not say so.
+  const resHost = app.querySelector('.map-header .resbars-host');
+  if (resHost) {
+    const mapPlan = resourceBarPlan(registries, 'main', run, run, resourceDomains(registries));
+    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));
+    markFlooredBars(resHost);
   }
 
   // ---- THE BOARD -------------------------------------------------------

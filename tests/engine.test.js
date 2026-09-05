@@ -26,7 +26,10 @@ import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_
 import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { attributeCardModels } from '../src/model/creationBrief.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
+<<<<<<< ours
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
+=======
+>>>>>>> theirs
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
@@ -1619,23 +1622,39 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(atZero.cur, 0, 'zero edge is a real empty mana plan');
     eq(atZero.pct, 0, 'zero edge has zero fill');
     // THE TROUGH IS MEASURED AGAINST HIS REFERENCE, NOT AGAINST THE POPULATION.
+<<<<<<< ours
     // E9 / #254: Constantine ruled 200 HP / 20 MP / 20 SP, and the row carries
+=======
+    // E9 / #254: Constantine ruled 500 HP / 50 MP / 50 SP, and the row carries
+>>>>>>> theirs
     // it as `domainMax` (Law 0 clause 3 — an override is data). Before that
     // ruling this pair asserted `lengthPct === 100` at the largest WIS-derived
     // maxMana, which was a claim about the DERIVED ceiling and is now false by
     // his word rather than by a defect. Both numbers below are DERIVED FROM THE
     // CONSTANT, never typed, so moving the reference moves the test with it.
+<<<<<<< ours
     eq(domains.main.mana, HUD_REFERENCE_MAX.mana, 'the mana ceiling is his reference, not the derived population');
     const star = { maxHp: 82, hp: 82, maxMana: 4, mana: 4 };
     const atMax = resourceBarPlan(REG, 'main', star, star, domains).find((b) => b.id === 'mana');
     eq(atMax.pct, 100, 'max edge fills the mana trough');
     eq(atMax.lengthPct, (4 / HUD_REFERENCE_MAX.mana) * 100,
+=======
+    eq(domains.main.mana, HUD_REFERENCE_MAX.pool, 'the mana ceiling is his reference, not the derived population');
+    const star = { maxHp: 82, hp: 82, maxMana: 4, mana: 4 };
+    const atMax = resourceBarPlan(REG, 'main', star, star, domains).find((b) => b.id === 'mana');
+    eq(atMax.pct, 100, 'max edge fills the mana trough');
+    eq(atMax.lengthPct, (4 / HUD_REFERENCE_MAX.pool) * 100,
+>>>>>>> theirs
       'the largest WIS-derived maxMana takes its share of the reference, not the whole track');
     // AND THE OTHER SIDE OF THE SAME LINE: a pool standing AT the reference
     // fills the track whole. Without this cell the assertion above is one
     // number with nothing on the far side of it and could not tell a wrong
     // reference from a right one.
+<<<<<<< ours
     const atRef = { maxHp: 82, hp: 82, maxMana: HUD_REFERENCE_MAX.mana, mana: HUD_REFERENCE_MAX.mana };
+=======
+    const atRef = { maxHp: 82, hp: 82, maxMana: HUD_REFERENCE_MAX.pool, mana: HUD_REFERENCE_MAX.pool };
+>>>>>>> theirs
     const full = resourceBarPlan(REG, 'main', atRef, atRef, domains).find((b) => b.id === 'mana');
     eq(full.lengthPct, 100, 'a pool AT the reference fills its track');
   });
@@ -4591,14 +4610,58 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(saves.loadRun(REG), null, 'a save carrying both vigour and constitution is refused, never guessed');
   });
 
+<<<<<<< ours
   test('50d. tuned HP is 30 + 2 × CON + flat bonuses at every legal edge', () => {
     for (const [classId, con, flat] of [['reaver', 11, 10], ['starseer', 8, 0], ['rogue', 10, 0], ['herald', 8, 0]]) {
+=======
+  test('50d. a CON tier is worth 1 for everyone, the class base still differs, and the tier flips one CON either side of 15 — E6', () => {
+    // E6, his words, 2026-08-16: "50 + (con/5) + other bonuses". The screen's
+    // own read model is the door here — the printed receipt and the run pool
+    // come through the same host-stamped rules rather than a UI-only formula.
+    //
+    // WHAT E6 MOVED IS THE CON TERM, NOT THE CLASS BASE. Marina's ruling of
+    // 2026-08-17 (`56c90d2`), against the first build of this row: "other
+    // bonuses" is the slot a class contribution lives in, so `classes.js`'s
+    // `maxHp` is LIVE and this loop goes red if it goes dead again. What E6
+    // did remove is the retired class coefficient on the tier.
+    for (const [classId, con] of [['reaver', 12], ['starseer', 10], ['herald', 12]]) {
+      const cls = REG.classes.get(classId);
+>>>>>>> theirs
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
+<<<<<<< ours
       eq(run.attributes.constitution, con, `${classId} uses the approved tuned CON preset`);
       eq(`${hp.base}/${hp.pointsPerTier}/${hp.gainPerTier}`, `${30 + flat}/1/2`, `${classId} receipt exposes the configured formula and flat bonus`);
       eq(run.maxHp, 30 + 2 * con + flat, `${classId} max HP is 30 + 2 × CON + flat bonuses`);
       assert(hp.formula.endsWith(`= ${run.maxHp}`), `${classId} printed receipt lands on the real pool`);
+=======
+      eq(hp.tier, Math.floor(con / 5), `${classId}: printed HP uses floor(CON/5)`);
+      assert(hp.base >= cls.maxHp,
+        `${classId}: the HP base is the class's own authored ${cls.maxHp} plus any tagged flat — got ${hp.base}`);
+      assert(!Object.hasOwn(cls, 'hpPerConTier'),
+        `${classId}: the retired, unread HP coefficient must not return to class content`);
+      assert(hp.formula.endsWith(`= ${run.maxHp}`),
+        `${classId}: the printed formula lands on the run's real pool — got '${hp.formula}'`);
+      eq(run.maxHp, hp.base + hp.tier * hp.gainPerTier + hp.equipmentBonus + hp.adjustment,
+        `${classId}: max HP derives from stamped base + CON tiers + gear + permanent adjustment`);
+    }
+    // THE CELL MARINA'S RULING EXISTS FOR — and it is a set, not a pair, so a
+    // single class drifting into agreement with another still shows. Retune a
+    // `maxHp` in classes.js to match another and this goes red; make the base a
+    // constant again and it goes red the loudest way there is.
+    const bases = ['reaver', 'starseer', 'herald'].map((id) => statProjection(
+      REG, createRunState({ seed: 0xf4, classId: id, registries: REG }),
+    ).derived.find((row) => row.id === 'hp').base);
+    eq(new Set(bases).size, 3, `the three classes carry three different HP bases — got ${bases.join(', ')}`);
+    // And the class field is what they carry: a change there is a change here,
+    // which is the whole meaning of "live knob".
+    for (const id of ['starseer', 'herald']) {
+      const cls = REG.classes.get(id);
+      const hp = statProjection(REG, createRunState({ seed: 0xf5, classId: id, registries: REG }))
+        .derived.find((row) => row.id === 'hp');
+      eq(hp.base, cls.maxHp, `${id} tags no flat HP, so its base IS its authored class number`);
+      eq(hp.gainPerTier, 1, `${id} tags no per-tier HP, so a CON tier is E6's bare 1`);
+>>>>>>> theirs
     }
     const at = (con) => {
       const strength = con === 8 ? 15 : 24 - con;
@@ -5015,7 +5078,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // door, and it is the only thing in the tree that can fail on the copy.
     const edited = { ...REG.derivedStatRules, defaults: { ...REG.derivedStatRules.defaults, pointsPerTier: 1 } };
     const byHand = resolveDerivedStatRules(edited, {
-      attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+      attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana'],
     });
     eq(byHand.rules.hp.pointsPerTier, 1, 'HP keeps its authored per-CON formula when only the fallback default changes');
     eq(byHand.rules.energy.pointsPerTier, 10, 'Actions keep their authored DEX/10 formula');
@@ -5178,7 +5241,28 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c.offerable, false, 'either block closes the offer');
   });
 
+<<<<<<< ours
   test('61. Fullscreen and Music share one canonical state across Settings, Quick Menu, and HUD', () => {
+=======
+  test('61. Fullscreen is the first Display row — his ordering, asserted at the one home', () => {
+    // E3 (#248), his words 2026-08-15: "the full screen option toggle should be
+    // the first option in the display". Order on the screen IS array order in
+    // ROWS — categoryHandler() filters without sorting, rowHtml renders in
+    // sequence — so this reads through the same door the renderer uses, not a
+    // copy of the table.
+    //
+    // ⚠ THAT SECOND SENTENCE IS A CLAIM THIS TEST DOES NOT CHECK, and it was
+    // written here as though it did. It is true at this ref, and three one-line
+    // edits make it false while every assertion below stays green: the RENDERER
+    // reordering what the table hands it (`categoryHtml`), CSS hiding the first
+    // row, and CSS reversing the visual order of a DOM that never moved. All
+    // three are planted and watched failing in
+    // `node tools/displayfirst.mjs --selftest`, which reads the RENDERED panel
+    // at both doors, at two shapes and two text sizes. This test holds the
+    // TABLE; that tool holds the SCREEN; neither substitutes for the other, and
+    // the tool is a hand-run — `unknown` between runs, not green.
+    // Amended 2026-08-22 by Vira. The assertions are unchanged.
+>>>>>>> theirs
     const display = categoryHandler('Display').rows;
     const audio = categoryHandler('Audio').rows;
     eq(display[0].key, 'fullscreen', 'Fullscreen remains the first Display row in the canonical table');

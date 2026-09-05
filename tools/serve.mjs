@@ -39,13 +39,21 @@ const MIME = {
 /** Open a URL in the default browser (best-effort; silent if headless). */
 export function openBrowser(url) {
   try {
+    let child;
     if (process.platform === 'win32') {
-      spawn('cmd', ['/c', 'start', '""', url], { stdio: 'ignore', detached: true }).unref();
+      child = spawn('cmd', ['/c', 'start', '""', url], { stdio: 'ignore', detached: true });
     } else if (process.platform === 'darwin') {
-      spawn('open', [url], { stdio: 'ignore', detached: true }).unref();
+      child = spawn('open', [url], { stdio: 'ignore', detached: true });
     } else {
-      spawn('xdg-open', [url], { stdio: 'ignore', detached: true }).unref();
+      child = spawn('xdg-open', [url], { stdio: 'ignore', detached: true });
     }
+    // `spawn()` reports a missing launcher asynchronously through `error`; the
+    // surrounding try/catch cannot see it. Without a listener, Node treats that
+    // event as uncaught and kills the static server immediately — the printed
+    // localhost URL then refuses connections. Opening is best-effort, serving is
+    // not, so consume only the launcher's error and leave the server alive.
+    child.on('error', () => {});
+    child.unref();
   } catch {
     /* no browser available — the URL is printed regardless */
   }

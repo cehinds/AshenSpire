@@ -1,6 +1,12 @@
 {
   "_": "DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+<<<<<<< ours
   "ordinal": 1760,
   "digest": "a78beff19f",
   "built": "2026-08-31"
+=======
+  "ordinal": 1030,
+  "digest": "077580f16a",
+  "built": "2026-08-23"
+>>>>>>> theirs
 }

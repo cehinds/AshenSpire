@@ -20,7 +20,11 @@
 //   · the RENDERER reorders (`categoryHtml`'s `h.rows.map(...)`), leaving
 //     `categoryHandler().rows` untouched;
 //   · CSS hides the first row — it is still first in the array, and the first
+<<<<<<< ours
 //     control a player can SEE is Combat pacing;
+=======
+//     control a player can SEE is Character sprites;
+>>>>>>> theirs
 //   · CSS reverses the visual order of a DOM that never moved (`column-reverse`
 //     / `order:`), which is the same shape as a box that "never moved" because
 //     what moved was its parent.
@@ -49,10 +53,17 @@
 //               `:419`. Both numbers are printed now — `controls=N rows=M` —
 //               because their divergence IS the defect.
 //   D3 INK      that row AND THE CONTROL INSIDE IT are on screen ON ARRIVAL —
+<<<<<<< ours
 //               non-zero box, `display` not none, `visibility` exactly visible, not
 //               transparent through ANY ancestor, and each box wholly inside the
 //               viewport ON ALL FOUR EDGES, with nothing scrolled in ANY real
 //               scrollable ancestor, nor on document Y or document X.
+=======
+//               non-zero box, not `display:none` / `visibility:hidden`, not
+//               transparent through ANY ancestor, and each box wholly inside the
+//               viewport ON ALL FOUR EDGES, with nothing scrolled ON ALL THREE
+//               AXES (panel, document Y, document X).
+>>>>>>> theirs
 //               TWO BOXES SINCE 2026-08-22, and the second one is the sweep D2's
 //               finding earned: this judged the `.set-row` and called it the
 //               control. A toggle displaced, shrunk or faded INSIDE a row that
@@ -95,9 +106,14 @@
 // BOTH EDGES, named because the gate requires it:
 //   · EMPTY — Display with zero rows (plant 5). D0 goes red; nothing else may
 //     report green over it.
+<<<<<<< ours
 //   · MAX — Text XL at the narrow shape where the panel is nearest to
 //     overflowing. Its computed root font metric must exceed Text M; row height
 //     is diagnostic only because a legitimate fixed/min-height can equalize it.
+=======
+//   · MAX — Text XL, the longest labels and notes and the tallest rows this
+//     screen has, at the narrow shape where the panel is nearest to overflowing.
+>>>>>>> theirs
 //
 // THE THRESHOLD'S OWN NEIGHBOURHOOD (Charter 2b). The threshold here is ordinal
 // position, and its unit is one row: plant 1 moves `fullscreen` exactly ONE
@@ -120,6 +136,7 @@
 //     tool would be green on a settings screen he hates. It says one thing:
 //     the first control under Display is the Fullscreen toggle, and you can see
 //     it without scrolling.
+<<<<<<< ours
 //   · THE REMAINING ROWS. Only position 1 has an ask attached to it, so only
 //     position 1 is held. The rest may be reordered freely.
 //   · Linux headless Chromium, two shapes, two text sizes, two doors. Windows
@@ -130,6 +147,23 @@
 //     and 30-second timeout defects. The workflow states that cost beside the
 //     steps. Until an
 //     exact-head dispatch finishes, this gate is `unknown`, not green.
+=======
+//   · THE OTHER NINETEEN ROWS. Only position 1 has an ask attached to it, so
+//     only position 1 is held. The rest may be reordered freely.
+//   · Linux headless Chromium, two shapes, two text sizes, two doors. Windows
+//     and macOS are `unknown` here as everywhere else in this repo.
+//   · IT IS NOT WIRED INTO ci.yml, AND MY STATED REASON HAS EXPIRED. It read
+//     "`ci.yml` is open under #294 and adding a step mid-flight changes the
+//     census under its author's feet." #294 has LANDED — `dev` is `8b5c030` —
+//     so that sentence is no longer true and I am not keeping a dead reason to
+//     hold a live position. The reason NOW is the defect above it: a gate that
+//     could print green having measured ZERO cells would make the census say
+//     `covered` about a check that can be empty. That refusal landed today, in
+//     this file. THE WIRING IS ITS OWN CARD and is not smuggled in behind a
+//     fix — Marina's ruling, 2026-08-22. Until it is wired this gate is a seat's
+//     hand-run, which under SOP 2's silence guard is `unknown` between runs,
+//     not green.
+>>>>>>> theirs
 //
 // REMOVAL CONDITION (SOP 1's corollary): deleted the day #248's ordering ask is
 // withdrawn or superseded by a different first row — in which case the ask moves
@@ -141,7 +175,10 @@
 
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+<<<<<<< ours
 import { readFileSync } from 'node:fs';
+=======
+>>>>>>> theirs
 import { launchBrowser, resolveBrowser } from './browser.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -265,7 +302,11 @@ function printBoundary() {
   console.log('  · THE LOOK-AND-FEEL HALF OF #248 IS NOT ASSERTED HERE and is still unowned. This tool');
   console.log('    would be green on a settings screen Constantine dislikes. It holds ONE sentence:');
   console.log('    the first control under Display is the Fullscreen toggle, and it is on screen.');
+<<<<<<< ours
   console.log('  · Only position 1 is held. The remaining Display rows may be reordered freely.');
+=======
+  console.log('  · Only position 1 is held. The other nineteen Display rows may be reordered freely.');
+>>>>>>> theirs
   console.log('  · D1 orders ROWS, and that is its subject on purpose: two controls inside ONE row have');
   console.log('    no order of their own here, and D1 would report whichever the DOM lists first. D2');
   console.log('    counts controls and D3 judges the control\'s own box, so a duplicate or a displaced');
@@ -277,8 +318,12 @@ function printBoundary() {
   console.log('    invisible to a player and green here. Closing those means deciding what "painted"');
   console.log('    means, which is a different instrument.');
   console.log('  · Linux headless Chromium only; windows-latest and macos-latest are `unknown`.');
+<<<<<<< ours
   console.log('  · WIRED INTO ci.yml\'s MANUAL Ubuntu browser job (see the header) — between');
   console.log('    exact-head dispatches this is `unknown`, not green.');
+=======
+  console.log('  · NOT WIRED INTO ci.yml (see the header) — between hand-runs this is `unknown`.');
+>>>>>>> theirs
   if (expected === null) {
     console.log('  · this run measured NO cells of its own — it is the corpus harness, and what it');
     console.log('    reports is whether the plants went red, never whether the screen is right.');
@@ -339,12 +384,16 @@ async function shutdown() {
   live.cdp = null; live.dropBrowser = null; live.server = null;
   try { cdp?.close(); } catch { /* the socket may already be gone — that is the case we are in */ }
   try { await dropBrowser?.(); } catch { /* browser.mjs prints its own removal failures by name */ }
+<<<<<<< ours
   try {
     // `serve()` returns a record; the Node HTTP server is its `server` member.
     // Wait for its close callback so the event loop can drain without the
     // three-second forced-exit backstop becoming the normal shutdown path.
     if (server?.server) await new Promise((resolveClose) => server.server.close(resolveClose));
   } catch { /* nothing left to serve */ }
+=======
+  try { await server?.close?.(); } catch { /* nothing left to serve */ }
+>>>>>>> theirs
 }
 
 /**
@@ -421,9 +470,13 @@ function finish(state, detail) {
 const READ = `(() => {
   const panel = document.querySelector('#set-panel');
   if (!panel) return { panel: false };
+<<<<<<< ours
   // EFFECTIVE OPACITY — the row's own value MULTIPLIED BY EVERY ANCESTOR'S,
   // including opacity() filters that make a subtree transparent without
   // changing its boxes or its computed opacity property.
+=======
+  // EFFECTIVE OPACITY — the row's own value MULTIPLIED BY EVERY ANCESTOR'S.
+>>>>>>> theirs
   //
   // Opacity is the one of the three hiding mechanisms that neither inherits nor
   // collapses the box. \`display:none\` on an ancestor gives the row a 0x0 rect,
@@ -436,6 +489,7 @@ const READ = `(() => {
   const effOpacity = (el) => {
     let o = 1;
     for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+<<<<<<< ours
       const cs = getComputedStyle(n);
       const v = parseFloat(cs.opacity);
       if (!Number.isNaN(v)) o *= v;
@@ -443,6 +497,10 @@ const READ = `(() => {
         const amount = Number(match[1]) / (match[2] ? 100 : 1);
         o *= Math.max(0, Math.min(1, amount));
       }
+=======
+      const v = parseFloat(getComputedStyle(n).opacity);
+      if (!Number.isNaN(v)) o *= v;
+>>>>>>> theirs
     }
     return +o.toFixed(4);
   };
@@ -460,6 +518,7 @@ const READ = `(() => {
       bottom: +b.bottom.toFixed(2), right: +b.right.toFixed(2),
       w: +b.width.toFixed(2), h: +b.height.toFixed(2),
       display: cs.display, visibility: cs.visibility, opacity: cs.opacity,
+<<<<<<< ours
       intersectsViewport: b.bottom > 0 && b.right > 0
         && b.top < window.innerHeight && b.left < window.innerWidth,
     };
@@ -470,6 +529,14 @@ const READ = `(() => {
   // screen must not outrank the first control that is actually visible.
   const visible = rows.filter((r) => r.display !== 'none' && r.visibility === 'visible'
     && r.w > 0 && r.h > 0 && r.opacity !== '0' && r.effOpacity > 0 && r.intersectsViewport);
+=======
+    };
+  });
+  // VISIBLE means a player could see it if they looked: it occupies space and
+  // is not hidden. Being off-screen is D3's question, not this one.
+  const visible = rows.filter((r) => r.display !== 'none' && r.visibility !== 'hidden'
+    && r.w > 0 && r.h > 0 && r.opacity !== '0' && r.effOpacity > 0);
+>>>>>>> theirs
   // GEOMETRIC ORDER, not DOM order. This is the whole reason the tool exists.
   visible.sort((a, b2) => (a.top - b2.top) || (a.left - b2.left));
   const fs = rows.filter((r) => r.key === ${JSON.stringify(WANT)});
@@ -492,6 +559,7 @@ const READ = `(() => {
       effOpacity: effOpacity(el),
     };
   };
+<<<<<<< ours
   const scrollName = (el) => {
     if (el.id) return '#' + el.id;
     const classes = [...el.classList].map((name) => '.' + name).join('');
@@ -506,6 +574,8 @@ const READ = `(() => {
       scrollAncestors.push({ name: scrollName(el), top: el.scrollTop, left: el.scrollLeft });
     }
   }
+=======
+>>>>>>> theirs
   return {
     panel: true,
     tab: (document.querySelector('.set-tab.on') || { dataset: {} }).dataset.member,
@@ -519,8 +589,12 @@ const READ = `(() => {
     // the thing inside it.
     fsCtrl: fsEls[0] ? boxOf(fsEls[0]) : null,
     panelEffOpacity: effOpacity(panel),
+<<<<<<< ours
     rootFontPx: +parseFloat(getComputedStyle(document.documentElement).fontSize).toFixed(2),
     scroll: { ancestors: scrollAncestors, docY: window.scrollY, docX: window.scrollX },
+=======
+    scroll: { panelTop: panel.scrollTop, docY: window.scrollY, docX: window.scrollX },
+>>>>>>> theirs
     vp: { w: window.innerWidth, h: window.innerHeight },
   };
 })()`;
@@ -627,12 +701,16 @@ const OPEN_INRUN = `(async () => {
   const m = [...document.querySelectorAll('button')].find((x) => /^\\s*(menu|☰)\\s*$/i.test(x.textContent) || x.id === 'menu' || /(^|\\s)menu(\\s|$)/i.test(x.className));
   if (!m) return { err: 'no menu button in combat' };
   m.click(); await new Promise((r) => setTimeout(r, 550));
+<<<<<<< ours
   // QuickNav includes the row's icon in its text, so use the public menu-act
   // attributes rather than a whole-button text match. With QuickNav disabled,
   // the menu opens the overlay directly and the overlay tab is the same
   // player-facing next step.
   const t = document.querySelector('.qn-row[data-act="tab"][data-tab="settings"]')
     || document.querySelector('.ov-tab[data-member="settings"]');
+=======
+  const t = [...document.querySelectorAll('button')].find((x) => /^settings$/i.test(x.textContent.trim()));
+>>>>>>> theirs
   if (!t) return { err: 'no Settings tab in the overlay' };
   t.click(); await new Promise((r) => setTimeout(r, 550));
   const d = [...document.querySelectorAll('.set-tab')].find((e) => e.dataset.member === 'Display');
@@ -695,7 +773,11 @@ function judge(r, cell) {
     // same way the row's own 0.01 always has. Refusing "faint" would need a
     // number nobody has ruled on; refusing "absent" needs none. The residue is
     // in the printed boundary block with ancestor clip and occlusion.
+<<<<<<< ours
     const shown = fs.display !== 'none' && fs.visibility === 'visible' && fs.w > 0 && fs.h > 0
+=======
+    const shown = fs.display !== 'none' && fs.visibility !== 'hidden' && fs.w > 0 && fs.h > 0
+>>>>>>> theirs
       && fs.opacity !== '0' && fs.effOpacity > 0;
     // eslint-disable-next-line no-unused-vars -- `shown` is the row's half; the
     // control's half is `ctrlState.shown` below, and both are printed.
@@ -748,7 +830,11 @@ function judge(r, cell) {
       };
       const off = Object.keys(edgeOk).filter((k) => !edgeOk[k]);
       return {
+<<<<<<< ours
         shown: b.display !== 'none' && b.visibility === 'visible' && b.w > 0 && b.h > 0
+=======
+        shown: b.display !== 'none' && b.visibility !== 'hidden' && b.w > 0 && b.h > 0
+>>>>>>> theirs
           && b.opacity !== '0' && b.effOpacity > 0,
         off,
         onscreen: off.length === 0,
@@ -759,8 +845,12 @@ function judge(r, cell) {
     const ctrlState = ctrl ? boxState(ctrl) : null;
     const offscreen = rowState.off;
     const onscreen = rowState.onscreen;
+<<<<<<< ours
     // NOTHING SCROLLED MEANS NOTHING: every real scroll ancestor plus document
     // X and Y, rather than one hard-coded panel and two page axes.
+=======
+    // NOTHING SCROLLED MEANS NOTHING, AND THAT IS THREE AXES, NOT TWO.
+>>>>>>> theirs
     //
     // `docX` was READ off the page and never used. With the document scrolled
     // 500 px horizontally the read came back
@@ -779,12 +869,17 @@ function judge(r, cell) {
     //
     // Watched, not asserted: corpus plant 11 scrolls the document 500 px right
     // through the real door and this predicate goes red naming `docX=500`.
+<<<<<<< ours
     const movedAncestors = r.scroll.ancestors.filter((entry) => entry.top !== 0 || entry.left !== 0);
     const unscrolled = movedAncestors.length === 0 && r.scroll.docY === 0 && r.scroll.docX === 0;
     const ancestorOffsets = r.scroll.ancestors
       .map((entry) => `${entry.name}:top=${entry.top},left=${entry.left}`)
       .join(';');
     const scrolls = `ancestors=[${ancestorOffsets}] docY=${r.scroll.docY} docX=${r.scroll.docX}`;
+=======
+    const unscrolled = r.scroll.panelTop === 0 && r.scroll.docY === 0 && r.scroll.docX === 0;
+    const scrolls = `panelTop=${r.scroll.panelTop} docY=${r.scroll.docY} docX=${r.scroll.docX}`;
+>>>>>>> theirs
     const box = `x ${fs.left}..${fs.right}, y ${fs.top}..${fs.bottom}`;
     const ctrlBox = ctrl ? `x ${ctrl.left}..${ctrl.right}, y ${ctrl.top}..${ctrl.bottom}` : 'absent';
     const ctrlOk = !!ctrlState && ctrlState.shown && ctrlState.onscreen;
@@ -810,6 +905,7 @@ function judge(r, cell) {
 }
 
 async function main() {
+<<<<<<< ours
   if (args.includes('--selftest')) {
     const plants = selftestPlants();
     const maxEdgePlants = maxEdgeSelftestPlants();
@@ -828,6 +924,9 @@ async function main() {
   // server or resolving/launching a browser; nothing on an unsupported runtime
   // is evidence about this Linux-only instrument.
   if (process.platform !== 'linux') return refuseUnsupportedPlatform();
+=======
+  if (args.includes('--selftest')) return selftest();
+>>>>>>> theirs
 
   // THE POPULATION IS SETTLED BEFORE ANYTHING BOOTS — no server, no browser, no
   // cells — because both refusals below are about there being nothing to measure.
@@ -875,13 +974,21 @@ async function main() {
   console.log(`      browser: ${browserPath}`);
 
   const { wsUrl, close: dropBrowser } = await launchBrowser({
+<<<<<<< ours
     prefix: 'displayfirst-', browser: browserPath,
     headless: '--headless=new', timeoutMs: 20000,
+=======
+    prefix: 'displayfirst-', browser: browserPath, timeoutMs: 15000,
+>>>>>>> theirs
   });
   live.dropBrowser = dropBrowser;
   const cdp = connectCdp(wsUrl); live.cdp = cdp; await cdp.ready;
 
+<<<<<<< ours
   const textMetrics = [];
+=======
+  const heights = [];
+>>>>>>> theirs
 
   for (const vp of SHAPES) {
     const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -916,6 +1023,7 @@ async function main() {
       const perDoor = {};
       for (const door of DOORS) {
         const cell = `${vp.tag} Text ${text} ${door}`;
+<<<<<<< ours
         const shot = door === 'title' ? 'startup' : 'combat';
         const settings = encodeURIComponent(JSON.stringify({ textSize: text }));
         const url = door === 'title'
@@ -940,6 +1048,13 @@ async function main() {
         }
         const ready = door === 'title'
           ? `!!document.querySelector('.title-screen button')`
+=======
+        const shot = door === 'title' ? 'title' : 'combat';
+        const url = `${base}?shot=${shot}&shotSettings=${encodeURIComponent(JSON.stringify({ textSize: text }))}`;
+        await cdp.send('Page.navigate', { url }, S);
+        const ready = door === 'title'
+          ? `!!document.querySelector('button')`
+>>>>>>> theirs
           : `!!document.querySelector('.combat')`;
         await until(ready, `${shot} ${cell}`);
         await wait(700);
@@ -957,6 +1072,7 @@ async function main() {
         if (r && r.panel && r.tab !== 'Display') {
           fail(`FINDING D0/population cell=${cell} tab=${r.tab} — the panel measured is not Display.`);
         }
+<<<<<<< ours
         // THE MAX EDGE HAS TO ARRIVE, NOT JUST BE NAMED. Record computed text
         // metrics per cell and assert them after the loop. Row height remains a
         // useful diagnostic, but a fixed/min-height can legitimately equalize it.
@@ -967,6 +1083,13 @@ async function main() {
           h: r.fs.h,
           rootFontPx: r.rootFontPx,
         });
+=======
+        // THE MAX EDGE HAS TO ARRIVE, NOT JUST BE NAMED. Recorded per cell and
+        // asserted after the loop: if XL does not render taller than M, the XL
+        // cell is a second copy of the M cell wearing a different name, and the
+        // "both edges" claim is decoration.
+        if (r && r.fs) heights.push({ shape: vp.tag, door, text, h: r.fs.h });
+>>>>>>> theirs
         // THE DIAGNOSTIC MUST NOT KILL THE RUN, and it did until 2026-08-22.
         // Marina's plant: rename `#set-panel`. `judge()` does its job — it
         // records `FINDING D0/population panel=absent` — and then this line read
@@ -995,6 +1118,7 @@ async function main() {
     await cdp.send('Target.closeTarget', { targetId });
   }
 
+<<<<<<< ours
   // D5 MAXEDGE — did Text XL actually arrive? A max edge whose computed root
   // text metric equals M was never measured, whatever its container height.
   if (TEXTS.includes('M') && TEXTS.includes('XL')) {
@@ -1016,6 +1140,24 @@ async function main() {
             note(`D5/maxedge ${vp.tag} ${door} — Text XL landed: root font ${m.rootFontPx} px at M, `
               + `${xl.rootFontPx} px at XL (row height ${m.h} -> ${xl.h} px)`);
           }
+=======
+  // D5 MAXEDGE — did Text XL actually arrive? A max edge that renders identically
+  // to the middle of the domain was never measured.
+  if (TEXTS.includes('M') && TEXTS.includes('XL')) {
+    for (const vp of SHAPES) {
+      for (const door of DOORS) {
+        const m = heights.find((x) => x.shape === vp.tag && x.door === door && x.text === 'M');
+        const xl = heights.find((x) => x.shape === vp.tag && x.door === door && x.text === 'XL');
+        if (!m || !xl) {
+          fail(`FINDING D5/maxedge shape=${vp.tag} door=${door} m=${m ? m.h : 'missing'} xl=${xl ? xl.h : 'missing'} `
+            + '— one half of the edge pair never rendered, so the max edge is not evidence.');
+        } else if (!(xl.h > m.h)) {
+          fail(`FINDING D5/maxedge shape=${vp.tag} door=${door} m=${m.h} xl=${xl.h} `
+            + '— Text XL did not render taller than Text M, so the text size did NOT land and the XL '
+            + 'cell is the M cell under a different name.');
+        } else {
+          note(`D5/maxedge ${vp.tag} ${door} — Text XL landed: row ${m.h} px at M, ${xl.h} px at XL`);
+>>>>>>> theirs
         }
       }
     }
@@ -1037,6 +1179,7 @@ async function main() {
   return finish(bad ? 'fail' : 'ok');
 }
 
+<<<<<<< ours
 function refuseUnsupportedPlatform() {
   expected = SHAPES.length * TEXTS.length * DOORS.length;
   const detail = `platform ${process.platform} is unsupported; displayfirst measures Linux headless Chromium only`;
@@ -1050,6 +1193,12 @@ function refuseUnsupportedPlatform() {
 //
 // TWENTY-FOUR FILE-BYTE PLANTS ACROSS TWO CORPORA, PLUS PLANT 15, WHICH IS A
 // CONDITION AND NOT A FILE.
+=======
+// ---------------------------------------------------------------------------
+// --selftest — the same-door known-bad corpus.
+//
+// SEVENTEEN FILE-BYTE PLANTS, PLUS PLANT 15, WHICH IS A CONDITION AND NOT A FILE.
+>>>>>>> theirs
 // THREE OF THEM ARE INVISIBLE TO test 61, and that is the argument for this file
 // existing at all: plants 2, 3 and 4 leave `ROWS` and
 // `categoryHandler('Display').rows` exactly as they are, so the engine suite
@@ -1092,6 +1241,7 @@ function refuseUnsupportedPlatform() {
 // interpolate them here instead of matching them there — a plant whose
 // find-string evaluates is a plant that never arms. doorplant turns an
 // unmatched find-string into a hard red, so this is watched, not hoped.
+<<<<<<< ours
 function selftestPlants() {
   const settingsEol = readFileSync(join(ROOT, 'src/ui/screens/settings.js'), 'utf8').includes('\r\n') ? '\r\n' : '\n';
   const fsButton = [
@@ -1108,6 +1258,17 @@ function selftestPlants() {
     'Viewport);',
   ].join('');
   return [
+=======
+const FS_BUTTON = [
+  '      <button class="toggle ${on ? \'on\' : \'\'}" data-key="${r.key}"${r.type === \'action\' ? \' data-action="1"\' : \'\'} role="switch" aria-checked="${on}">',
+  '        <span class="knob"></span>',
+  '      </button>',
+].join('\n');
+
+async function selftest() {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  const plants = [
+>>>>>>> theirs
     {
       // 1 — THE NEIGHBOURHOOD. `fullscreen` moves exactly ONE position. One step
       // of the threshold's own unit flips the verdict (Charter 2b). test 61
@@ -1115,6 +1276,7 @@ function selftestPlants() {
       // two agree.
       name: 'the row moves one position down the array',
       file: 'src/ui/screens/settings.js',
+<<<<<<< ours
       find: [
         "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
         "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
@@ -1138,6 +1300,17 @@ function selftestPlants() {
         "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
       ].join(settingsEol),
       expectRed: /FINDING D1\/order .*first=animSpeed want=fullscreen/,
+=======
+      find: `  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
+    note: 'Fill the screen (also toggles with F11 in most browsers).' },
+  { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
+    note: 'Show a drawn class figure in combat instead of your chosen sigil.' },`,
+      replace: `  { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
+    note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
+  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
+    note: 'Fill the screen (also toggles with F11 in most browsers).' },`,
+      expectRed: /FINDING D1\/order .*first=useSprites want=fullscreen/,
+>>>>>>> theirs
     },
     {
       // 2 — THE RENDERER REORDERS AND THE TABLE DOES NOT. test 61 reads
@@ -1145,17 +1318,30 @@ function selftestPlants() {
       // here.
       name: 'the renderer reverses what the table hands it (test 61 stays green)',
       file: 'src/ui/screens/settings.js',
+<<<<<<< ours
       find: '  return `${heading}<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join(\'\')}</div>`;',
       replace: '  return `${heading}<div class="set-card-list">${[...h.rows].reverse().map((r) => settingsRowHtml(settings, r)).join(\'\')}</div>`;',
+=======
+      find: '  return h.rows.map((r) => rowHtml(settings, r)).join(\'\');',
+      replace: '  return [...h.rows].reverse().map((r) => rowHtml(settings, r)).join(\'\');',
+>>>>>>> theirs
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {
       // 3 — CSS HIDES THE FIRST ROW. Array untouched, test 61 green, and the
+<<<<<<< ours
       // first control a player can see is Combat pacing.
       name: 'CSS hides the first row (test 61 stays green)',
       file: 'styles/ui.css',
       append: '.set-panel .set-row:first-child { display: none !important; }',
       expectRed: /FINDING D1\/order .*first=animSpeed want=fullscreen/,
+=======
+      // first control a player can see is Character sprites.
+      name: 'CSS hides the first row (test 61 stays green)',
+      file: 'styles/ui.css',
+      append: '.set-panel .set-row:first-child { display: none !important; }',
+      expectRed: /FINDING D1\/order .*first=useSprites want=fullscreen/,
+>>>>>>> theirs
     },
     {
       // 4 — THE DOM NEVER MOVES AND THE SCREEN REVERSES. This is the exact
@@ -1206,7 +1392,11 @@ function selftestPlants() {
       name: 'EDGE TOP — the Fullscreen row sits 4000px off the top of the viewport',
       file: 'styles/ui.css',
       append: '.set-panel .set-row:first-child { position: relative !important; top: -4000px !important; }',
+<<<<<<< ours
       expectRed: /FINDING D1\/order .*first=animSpeed want=fullscreen[\s\S]*FINDING D3\/ink .*offscreen-edges=\[[^\]]*top/,
+=======
+      expectRed: /FINDING D3\/ink .*offscreen-edges=\[[^\]]*top/,
+>>>>>>> theirs
     },
     {
       name: 'EDGE BOTTOM — the Fullscreen row sits 4000px off the bottom of the viewport',
@@ -1265,7 +1455,11 @@ function selftestPlants() {
       // document wider than the viewport and holds it scrolled; `.modal-veil` is
       // fixed, so the row's own box stays legally on screen and D3's four-edge
       // half stays green. THAT IS THE POINT: only the scroll half can catch this,
+<<<<<<< ours
       // which is why the scroll half has to name every scroll owner and page axis.
+=======
+      // which is why the scroll half had to name all three axes.
+>>>>>>> theirs
       name: 'the document is scrolled 500px right while the fixed panel stays put (docX)',
       file: 'src/ui/screens/settings.js',
       append: 'document.documentElement.style.minWidth = "3000px";\n'
@@ -1306,6 +1500,7 @@ function selftestPlants() {
       expectRed: /FINDING D0\/population .*panelEffectiveOpacity=0/,
     },
     {
+<<<<<<< ours
       // 13b — FILTER OPACITY HAS THE SAME PAINT RESULT WITHOUT TOUCHING THE
       // computed opacity property. Every descendant keeps opacity 1 and its
       // full box, so only a walk that includes opacity() filters catches it.
@@ -1315,6 +1510,8 @@ function selftestPlants() {
       expectRed: /FINDING D0\/population .*panelEffectiveOpacity=0/,
     },
     {
+=======
+>>>>>>> theirs
       // 14 — THE RENDERER NEVER YIELDS: a CDP command that is SENT AND NEVER
       // ANSWERED, with a perfectly healthy socket. This is Sunna's shape, from
       // the night her screenshot harness hung forever on `Page.captureScreenshot`
@@ -1354,8 +1551,13 @@ function selftestPlants() {
       // could not see.
       name: 'the Fullscreen control is rendered twice INSIDE its existing row (row count still 1)',
       file: 'src/ui/screens/settings.js',
+<<<<<<< ours
       find: fsButton,
       replace: `${fsButton}${settingsEol}${fsButton}`,
+=======
+      find: FS_BUTTON,
+      replace: `${FS_BUTTON}\n${FS_BUTTON}`,
+>>>>>>> theirs
       expectRed: /FINDING D2\/once .*controls=2 rows=1/,
     },
     {
@@ -1387,6 +1589,7 @@ function selftestPlants() {
       // made to fix. With the latch: exit 1, and the refusal is printed by name.
       name: 'a fatal verdict is followed by a green in the same run (the exit code must not be overwritten)',
       file: 'tools/displayfirst.mjs',
+<<<<<<< ours
       find: verdictReturn,
       replace: "  finish('stopped', 'planted: a fatal arrived first');\n" + verdictReturn,
       expectRed: /displayfirst: SECOND VERDICT REFUSED — this run already ended on STOPPED \(exit 1\)/,
@@ -1558,6 +1761,15 @@ async function selftest(plants = selftestPlants(), maxEdgePlants = maxEdgeSelfte
   const { doorSelftest } = await import('./doorplant.mjs');
   // NARROWED ON PURPOSE AND SAID OUT LOUD: twenty-two whole-tool browser mutants
   // plus a clean run is twenty-three browser boots. The population is one shape and one
+=======
+      find: "  return finish(bad ? 'fail' : 'ok');",
+      replace: "  finish('stopped', 'planted: a fatal arrived first');\n  return finish(bad ? 'fail' : 'ok');",
+      expectRed: /displayfirst: SECOND VERDICT REFUSED — this run already ended on STOPPED \(exit 1\)/,
+    },
+  ];
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: seventeen whole-tool browser runs plus
+  // a clean run is eighteen browser boots. The population is one shape and one
+>>>>>>> theirs
   // text size, both doors — the DOOR is unnarrowed, which is the axis the corpus
   // is about. Plant 10 spends its own 25 s waiting for a page that never boots
   // and plant 14 its own 30 s waiting for a reply that never comes; those waits
@@ -1569,6 +1781,7 @@ async function selftest(plants = selftestPlants(), maxEdgePlants = maxEdgeSelfte
     plants,
     timeoutMs: 300000,
   });
+<<<<<<< ours
   // D5 needs both M and XL. Keep that cost out of the ordering corpus and run
   // only its two targeted mutants plus one clean edge-pair baseline.
   const maxEdgeCode = await doorSelftest({
@@ -1578,11 +1791,14 @@ async function selftest(plants = selftestPlants(), maxEdgePlants = maxEdgeSelfte
     timeoutMs: 300000,
   });
   const filePlantCount = plants.length + maxEdgePlants.length;
+=======
+>>>>>>> theirs
   // THE FIFTEENTH KNOWN-BAD IS NOT A FILE EDIT, so it cannot live in the array
   // above: doorplant runs the tool with `spawnSync`, which drains both pipes
   // continuously, and a reader that always drains is the one consumer this
   // defect cannot reach. See `pipedOutputPlant`.
   const flushCode = await pipedOutputPlant();
+<<<<<<< ours
   const flushUnknown = flushCode === null;
   const flushLabel = flushUnknown ? 'UNKNOWN' : (flushCode ? 'RED' : 'green');
   // SERVER TEARDOWN IS A THIRD EXIT-DOOR CLAIM. It is browser-free and compares
@@ -1622,6 +1838,24 @@ async function selftest(plants = selftestPlants(), maxEdgePlants = maxEdgeSelfte
   // other one. The aggregate counted verdict must be the final success line.
   printBoundary();
   if (!total) console.log(selftestOk(selftestCheckCount));
+=======
+  const total = code || flushCode;
+  // DOORPLANT'S OWN VERDICT LINE COVERS PLANTS 1-14 AND IS PRINTED BEFORE PLANT
+  // 15 RUNS. Left as it is — it is that harness's line about its own corpus —
+  // and closed here instead, because a run that printed `SELFTEST GREEN` and
+  // then failed plant 15 would be a tool contradicting itself in its own output,
+  // which is the whole complaint this file makes about everything else.
+  if (total) {
+    console.error(`displayfirst: SELFTEST RED — plants 1-14 (doorplant, above) ${code ? 'RED' : 'green'}, `
+      + `plant 15 the piped consumer ${flushCode ? 'RED' : 'green'}. The line above covers 1-14 only.`);
+  } else {
+    console.log('displayfirst: SELFTEST GREEN — 17 file-byte plants (doorplant, above) AND plant 15, '
+      + 'the piped consumer, which the line above does not cover.');
+  }
+  // The corpus run is an exit path too, so it prints the boundary like every
+  // other one. doorplant owns the verdict line here; this owns the limits.
+  printBoundary();
+>>>>>>> theirs
   process.exitCode = total;
   forceExitAfterDrain(total);
   return total;
@@ -1674,7 +1908,11 @@ async function pipedOutputPlant() {
   if (process.platform === 'win32') {
     unk('plant 15 — NOT RUN on win32: the door is a POSIX shell pipeline. Declared, not skipped '
       + 'quietly; on Windows the drain behaviour of this exit path is `unknown`.');
+<<<<<<< ours
     return null;
+=======
+    return 0;
+>>>>>>> theirs
   }
 
   const dir = mkdtempSync(join(tmpdir(), 'flushdoor-'));
@@ -1768,6 +2006,7 @@ async function pipedOutputPlant() {
   }
 }
 
+<<<<<<< ours
 // ---------------------------------------------------------------------------
 // SERVER-CLOSE REGRESSION — WHY THE BACKSTOP IS NOT THE TEST.
 //
@@ -1964,6 +2203,8 @@ async function unsupportedPlatformPlant() {
   }
 }
 
+=======
+>>>>>>> theirs
 // THE FAILURE PATH GOES THROUGH THE SAME DOOR AS THE SUCCESS PATH. This line
 // used to be `console.error(stack); process.exit(1)` — an exit above the
 // boundary print, which is the #320 shape. The stack is still printed, because

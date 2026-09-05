@@ -10,8 +10,12 @@ export const classes = [
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
+<<<<<<< ours
     hpPerConTier: 4,
     startingFlaskAllocation: { hp: 3, mana: 1 },
+=======
+    startingFlaskAllocation: { hp: 2, mana: 1 },
+>>>>>>> theirs
     startingRelic: 'forsakenMedallion',
     startingSignatureCard: 'gorefireSlash',
     eligibleStartingKitIds: ['reaverBaseline', 'reaverGreatsword'],
@@ -37,8 +41,12 @@ export const classes = [
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
+<<<<<<< ours
     hpPerConTier: 5,
     startingFlaskAllocation: { hp: 2, mana: 2 },
+=======
+    startingFlaskAllocation: { hp: 1, mana: 2 },
+>>>>>>> theirs
     startingRelic: 'starstoneShard',
     startingSignatureCard: 'starstonePebble',
     eligibleStartingKitIds: ['starseerBaseline', 'starseerStarstone'],
@@ -83,8 +91,12 @@ export const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
+<<<<<<< ours
     hpPerConTier: 6,
     startingFlaskAllocation: { hp: 3, mana: 1 },
+=======
+    startingFlaskAllocation: { hp: 2, mana: 1 },
+>>>>>>> theirs
     startingRelic: 'goldFigurine',
     startingSignatureCard: 'urgentHeal',
     eligibleStartingKitIds: ['heraldBaseline', 'heraldEmberlight'],

@@ -28,6 +28,7 @@
    keeps its smaller live-session bar and therefore does not wear `.shared-hud`. */
 .topbar.combat-hud {
   flex-direction: column; align-items: stretch; justify-content: center;
+<<<<<<< ours
   gap: calc(4px / var(--ui-zoom, 1)); padding: calc(4px / var(--ui-zoom, 1)) 1.6rem;
   position: relative;
   z-index: 20;
@@ -42,6 +43,11 @@
   gap: calc(1px / var(--ui-zoom, 1));
 }
 /* Kept for the map header's bottom row, which still draws a .who column. THE `.hpbar` PAIR
+=======
+  gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
+}
+/* Kept for the map header, which still draws a .who column. THE `.hpbar` PAIR
+>>>>>>> theirs
    THAT LIVED HERE IS GONE (E9 / #254): the map header drew the last `.hpbar`
    inside any `.topbar`, and this rule set its height and its fill colour while
    map.css overrode the width to 15rem — a typed constant standing where a
@@ -51,6 +57,7 @@
    waiting for its second copy, and `grep hpbar styles/` should land a reader
    on the under-model strip, which is the only place the class still lives. */
 .topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
+<<<<<<< ours
 /* Co-op's compact one-row header remains outside the shared shell. */
 .topbar.combat-hud:not(.shared-hud) .hud-top { display: flex; align-items: center; gap: 1rem; position: relative; }
 .topbar.combat-hud:not(.shared-hud) .resbars-host {
@@ -518,6 +525,16 @@
 :root:not([data-layout='narrow']) .topbar.combat-hud.shared-hud .flask-charge-count {
   font-size: calc(14px / var(--ui-zoom, 1));
 }
+=======
+/* THE TOP ROW, AND THE WHOLE OF HIS SCALING RULE IS THIS ONE LINE OF LAYOUT.
+   `.resbars-host` is `flex: 1; min-width: 0`; the two buttons are
+   `flex-shrink: 0`. So the bar track = row width − padding − buttons − gaps,
+   DERIVED by the browser. Nothing types a ceiling; a bar asking for 100 % gets
+   exactly the row he means by "filling up the full top row", at any width, any
+   zoom, and after a third button is ever added. */
+.topbar.combat-hud .hud-top { display: flex; align-items: center; gap: 1rem; }
+.topbar.combat-hud .resbars-host { flex: 1 1 auto; min-width: 0; }
+>>>>>>> theirs
 .combat.coop .topbar.combat-hud .hud-top {
   display: grid;
   grid-template-columns: minmax(10rem, 1fr) auto auto;

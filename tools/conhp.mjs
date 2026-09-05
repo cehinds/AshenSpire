@@ -56,6 +56,7 @@ const resourceModifierBonus = (registries, relicIds, resource, attributes) => re
     return sum;
   }, 0);
 const expectedHp = (registries, run) => {
+<<<<<<< ours
   const cls = registries.classes.get(run.class);
   const gear = runMods(registries, run.loadout, run.class).maxHp;
   const hp = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
@@ -63,6 +64,13 @@ const expectedHp = (registries, run) => {
     classDef: cls,
   });
   return Math.max(1, hp.value + gear + (run.maxHpAdjustment || 0));
+=======
+  const hpRule = run.derivedStatRuleSnapshot.rules.rules.hp;
+  const con = run.attributes.constitution;
+  const gear = runMods(registries, run.loadout, run.class).maxHp;
+  return Math.max(1, hpRule.base + hpRule.gainPerTier * Math.floor(con / hpRule.pointsPerTier)
+    + gear + (run.maxHpAdjustment || 0));
+>>>>>>> theirs
 };
 
 console.log('conhp — D22 Constitution HP formula (door: content boot + run load)\n');
@@ -86,6 +94,7 @@ check('HP and Stamina consume Constitution; HP follows the resolved per-point ru
   eq(hp.pointsPerTier ?? contentBundle.derivedStatRules.defaults.pointsPerTier, 1, 'HP points per tier');
   eq(hp.gainPerTier, 2, 'HP gain per tier');
   eq(stamina.sourceStat, 'constitution', 'Stamina source');
+<<<<<<< ours
 });
 
 check('every class authors one positive integer HP-per-CON-tier coefficient', () => {
@@ -93,6 +102,9 @@ check('every class authors one positive integer HP-per-CON-tier coefficient', ()
     assert(Number.isInteger(cls.hpPerConTier) && cls.hpPerConTier > 0,
       `${cls.id}.hpPerConTier must be a positive integer`);
   }
+=======
+  eq(hp.gainPerTier, 1, 'authored HP gain per tier');
+>>>>>>> theirs
 });
 
 check('starter relic bonuses use the one closed modifier-tag list, not relic-id branches', () => {
@@ -186,15 +198,16 @@ check('starter relic display numbers derive from modifier rows, never duplicated
   assert(!text.includes('Mana +1') && !text.includes('Magic damage +1'), `stale duplicated values survived: ${text}`);
 });
 
-check('the production content door rejects a missing class HP coefficient by name', () => {
+check('the production content door rejects the retired class HP coefficient', () => {
   const bad = cloneBundle();
-  delete bad.classes[0].hpPerConTier;
+  bad.classes[0].hpPerConTier = 4;
   const result = validateContent(bad);
-  assert(!result.ok, 'validateContent accepted a missing hpPerConTier');
+  assert(!result.ok, 'validateContent accepted the retired hpPerConTier field');
   assert(result.errors.some((row) => `${row.path} ${row.msg}`.includes('hpPerConTier')),
-    `missing coefficient was not named: ${JSON.stringify(result.errors)}`);
+    `retired coefficient was not named: ${JSON.stringify(result.errors)}`);
 });
 
+<<<<<<< ours
 check('the production content door rejects a fractional class HP coefficient by name', () => {
   const bad = cloneBundle();
   bad.classes[0].hpPerConTier = 1.5;
@@ -205,6 +218,9 @@ check('the production content door rejects a fractional class HP coefficient by 
 });
 
 check('fresh runs match the resolved HP receipt plus equipment', () => {
+=======
+check('fresh runs use class base + the shared HP tier × floor(CON/5) + equipment', () => {
+>>>>>>> theirs
   const registries = createRegistries(contentBundle);
   for (const cls of registries.classes.all()) {
     const run = createRunState({ seed: 0xd220 + cls.id.length, classId: cls.id, registries });
@@ -219,7 +235,11 @@ check('fresh runs declare a permanent max-HP adjustment ledger at zero', () => {
   eq(run.maxHpAdjustment, 0, 'fresh maxHpAdjustment');
 });
 
+<<<<<<< ours
 check('each adjacent CON point adds exactly the resolved HP gain', () => {
+=======
+check('CON tiers are floored: 10 and 14 match; 15 adds the shared gain plus tagged relic gain', () => {
+>>>>>>> theirs
   const atCon = (constitution) => {
     const source = cloneBundle();
     const row = clone(source.attributeRules.presets.tuned.reaver);
@@ -234,6 +254,7 @@ check('each adjacent CON point adds exactly the resolved HP gain', () => {
   };
   const at10 = atCon(10).run;
   const at14 = atCon(14).run;
+<<<<<<< ours
   const { run: at15, registries } = atCon(15);
   const hp = at15.derivedStatRuleSnapshot.rules.rules.hp;
   eq(at14.maxHp - at10.maxHp, 4 * hp.gainPerTier, 'four CON points add four resolved gains');
@@ -248,6 +269,13 @@ check('the legacy class coefficient is not a second live HP authority', () => {
   const registries = createRegistries(afterSource);
   const after = createRunState({ seed: 0x22, classId: 'reaver', registries });
   eq(after.maxHp, before.maxHp, 'legacy class coefficient is documented dead data');
+=======
+  const { run: at15 } = atCon(15);
+  eq(at14.maxHp, at10.maxHp, '10 and 14 occupy the same CON tier');
+  eq(at15.maxHp - at14.maxHp,
+    at15.derivedStatRuleSnapshot.rules.rules.hp.gainPerTier,
+    '15 enters one host-resolved HP tier');
+>>>>>>> theirs
 });
 
 check('WIS 15 gives three Mana and the Starseer starter relic adds one flat Mana, total four', () => {
@@ -296,7 +324,11 @@ check('a mixed Constitution/Vigour save is refused rather than silently choosing
   eq(loaded, null, 'mixed-vocabulary save result');
 });
 
+<<<<<<< ours
 check('new host snapshots carry the resolved data-owned HP rule', () => {
+=======
+check('new host snapshots carry the data-owned shared HP tier gain', () => {
+>>>>>>> theirs
   const registries = createRegistries(contentBundle);
   const run = createRunState({ seed: 0xc00, classId: 'herald', registries });
   const hp = run.derivedStatRuleSnapshot.rules.rules.hp;
@@ -403,11 +435,16 @@ check('a REAL Vigour-window save loads, and the round trip Constitution -> Vigou
   return `maxHp ${there.maxHp}, deficit ${there.maxHp - there.hp}, curse ledger ${there.maxHpAdjustment}`;
 });
 
+<<<<<<< ours
 check('a save written by the shipped Vigour bundle migrates to host HP without healing', () => {
+=======
+check('a save written by the Vigour bundle migrates through the current shared HP rule', () => {
+>>>>>>> theirs
   assert(windowFixture, 'fixture missing');
   const registries = createRegistries(contentBundle);
   const before = windowFixture.vigourEraNative;
   const after = loadThroughDoor(registries, before);
+<<<<<<< ours
   assert(after, 'a run started on the live build was archived at the load door');
   // A stale ruleset is re-derived under the current host rule. Preserve the
   // player's deficit rather than retaining a superseded maximum.
@@ -416,6 +453,14 @@ check('a save written by the shipped Vigour bundle migrates to host HP without h
   eq(after.maxStamina, before.maxStamina, 'in-flight stamina pool');
   eq(after.attributes.constitution, before.attributes.vigour, 'the points arrive under the live name');
   return `maxHp ${before.maxHp} -> ${after.maxHp}; deficit ${after.maxHp - after.hp} preserved`;
+=======
+  assert(after, 'a run started on the Vigour build was archived at the load door');
+  eq(after.maxHp, expectedHp(registries, after), 'migrated max HP');
+  eq(after.maxHp - after.hp, before.maxHp - before.hp, 'the in-flight HP deficit is preserved');
+  eq(after.maxStamina, before.maxStamina, 'in-flight stamina pool');
+  eq(after.attributes.constitution, before.attributes.vigour, 'the points arrive under the live name');
+  return `maxHp ${after.maxHp}; current shared gain ${after.derivedStatRuleSnapshot.rules.rules.hp.gainPerTier}`;
+>>>>>>> theirs
 });
 
 check('the both-names guard fires BY NAME, across persisted homes, and stays out of other refusals', () => {

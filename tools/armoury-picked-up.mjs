@@ -156,6 +156,7 @@ const CODES = new Set([
   'A7.cancelhold',    // a hold cancelled AFTER full did not commit on the grip
   'A7.cancelabort',   // a hold cancelled BEFORE full committed anyway
   'A7.cancelswallow', // the next activation after a CANCELLED hold was eaten
+<<<<<<< ours
   'A7.nomulti',       // no grip could be driven with two overlapping pointers
   'A7.multicommit',   // the original above-full pointer did not commit
   'A7.multitail',     // another pointer disarmed the original pointer's lift eater
@@ -164,6 +165,10 @@ const CODES = new Set([
   'A9.collide',      // two grips in one picker share an accessible name
   'A9.hold',         // an armed grip's accessible name does not say that it requires a hold
   'A9.sealedhold',   // a sealed grip claims a hold gesture it cannot arm
+=======
+  'A9.name',         // a grip does not name its piece in the accessibility tree
+  'A9.collide',      // two grips in one picker share an accessible name
+>>>>>>> theirs
   'A9.blind',        // no picker opened, so no grip name was read at all
 ]);
 // NO CODE FOR THE BOUNDARY PLANT, DELIBERATELY. A code in this set is a finding
@@ -204,10 +209,13 @@ if (process.argv.includes('--selftest')) {
   // reworded, all three break loudly together instead of quietly reporting
   // NOT CAUGHT, which is the whole reason GATE lives up here too.
   const WHOSE = '          if (e.pointerId !== pointerId) return;';
+<<<<<<< ours
   const DOWN = "        const down = (e) => { if (e.pointerId === pointerId) off(); };";
   const LABEL = "        `${verb} ${entry.face.label}${act && gripMs > 0 ? ' — hold' : ''}`);";
   const HOLD_EVENT = '    const ev = origin.ev;';
   const RELEASE_END = "      onEnd: () => { if (armed) stop('idle'); return true; },";
+=======
+>>>>>>> theirs
   // The cancel teardown, which is HYGIENE ON TOP OF `WHOSE` and not a second
   // guard for a second case: a cancelled pointer dispatches no click, so the
   // eater is torn down rather than left inert. A plant that wants the cancel
@@ -445,6 +453,7 @@ if (process.argv.includes('--selftest')) {
         expectRed: redRe('A7.cancelswallow'),
       },
       {
+<<<<<<< ours
         name: 'another pointerdown disarms this gesture\'s lift eater',
         edits: [{ file: 'src/ui/screens/equipment.js',
           find: DOWN,
@@ -469,6 +478,8 @@ if (process.argv.includes('--selftest')) {
         expectRed: redRe('A7.multiabort'),
       },
       {
+=======
+>>>>>>> theirs
         // CODEX, 2026-08-22 (P2b). The grip loses its accessible name and
         // nothing else changes: it still equips, still holds, still meets the
         // tap floor, still reads `Equip` on screen. Every other check in this
@@ -477,11 +488,16 @@ if (process.argv.includes('--selftest')) {
         // plant returns the tree to.
         name: 'the grip loses the piece name from its accessible name (Codex P2b)',
         edits: [{ file: 'src/ui/screens/equipment.js',
+<<<<<<< ours
           find: "      grip.setAttribute('aria-label',\n" + LABEL,
+=======
+          find: "      grip.setAttribute('aria-label',\n        `${entry.equipped ? 'Unequip' : 'Equip'} ${entry.face.label}`);",
+>>>>>>> theirs
           replace: '      /* planted: the grip is named `Equip` and nothing else */' }],
         expectRed: redRe('A9.name'),
       },
       {
+<<<<<<< ours
         name: 'an armed grip omits the hold instruction from its accessible name',
         edits: [{ file: 'src/ui/screens/equipment.js',
           find: LABEL,
@@ -496,6 +512,8 @@ if (process.argv.includes('--selftest')) {
         expectRed: redRe('A9.sealedhold'),
       },
       {
+=======
+>>>>>>> theirs
         // CODEX, 2026-08-22. `draw()` drains the grips; a CLOSE runs no draw.
         // Removing the drain from `close()` is the defect exactly as it stood.
         name: 'the grips are not disarmed when the Armoury closes',
@@ -621,10 +639,13 @@ function finish(code, why = null) {
     console.log('  must commit AND must leave the next activation alive). PEN IS NOT DRIVEN AND NOT');
     console.log('  MEASURED: the fix makes no device assumption at all now — the eater eats the click that');
     console.log('  carries its own gesture\'s pointerId — but no pen event has been dispatched at this ref.');
+<<<<<<< ours
     console.log('  THE MULTI-POINTER OVERLAP IS A MIXED INPUT PROBE: pointer A is real CDP touch, while');
     console.log('  pointer B is injected with window.dispatchEvent(new PointerEvent(...)). Two real CDP');
     console.log('  touches suppress A\'s click in this harness, so A7 does NOT prove a two-real-finger');
     console.log('  gesture; it proves the post-release final-state check for this A-real/B-synthetic edge.');
+=======
+>>>>>>> theirs
     console.log('  ON THE MOUSE ROAD THE EATER ARMS AND IS NEVER FED, so one window click-capture listener');
     console.log('  stands from the hold to the next pointerdown: INERT, not absent, and nothing here counts');
     console.log('  listeners of that kind (A8 counts keydown only).');
@@ -632,9 +653,14 @@ function finish(code, why = null) {
     console.log('  six open/close cycles on the map mount; it says nothing about any other listener kind.');
     console.log('  A9 READS THE ACCESSIBILITY TREE (Accessibility.getFullAXTree), which is a different tree');
     console.log('  from the DOM — it is the whole reason data-hold-for does not answer P2b. It covers the');
+<<<<<<< ours
     console.log('  GRIPS ONLY, at three edges: one armed candidate, eight armed candidates filled through');
     console.log('  addToStorage, and the sealed in-combat picker. It does NOT cover the in-card control:');
     console.log('  the fold is an accordion — all eight');
+=======
+    console.log('  GRIPS ONLY, at two edges (one candidate, and eight with ?shotStorage=full filled through');
+    console.log('  addToStorage). It does NOT cover the in-card control: the fold is an accordion — all eight');
+>>>>>>> theirs
     console.log('  faces clicked left aria-expanded true on exactly one — so at most one such control is in');
     console.log('  the tree at a time and it has no sibling to collide with. NO SCREEN READER WAS RUN: this');
     console.log('  is the name Chromium computes, not what NVDA or VoiceOver announces from it.');
@@ -1581,6 +1607,7 @@ async function main() {
                 + ' the pointer never lifted, so no click was ever coming, and the eater armed at full ate an unrelated one'));
           }
         }
+<<<<<<< ours
 
         // ---- A7 · A SECOND FINGER IS NOT THIS GESTURE -----------------
         //
@@ -1653,6 +1680,8 @@ async function main() {
               : red('A7.multiabort', `the below-full overlap committed by release (slot "${m0}" → "${m2}")`));
           }
         }
+=======
+>>>>>>> theirs
       }
     }
 
@@ -1735,7 +1764,11 @@ async function main() {
     // exactly ONE, and a folded card's `.ep-equip` is absent from the AX tree
     // altogether. At most one in-card control exists at a time, inside the card
     // whose face carries the name — no sibling, no collision, nothing to name.
+<<<<<<< ours
     console.log('\n  A9 · every grip names its piece  (ACCESSIBILITY TREE, armed + sealed edges)');
+=======
+    console.log('\n  A9 · every grip names its piece  (map mount, ACCESSIBILITY TREE, both edges)');
+>>>>>>> theirs
     {
       await cdp.send('DOM.enable', {}, S);
       await cdp.send('Accessibility.enable', {}, S);
@@ -1750,16 +1783,21 @@ async function main() {
         for (const nodeId of nodeIds) {
           const { node } = await cdp.send('DOM.describeNode', { nodeId }, S);
           const ax = byBackend.get(node.backendNodeId);
+<<<<<<< ours
           const attrs = {};
           for (let i = 0; i < (node.attributes || []).length; i += 2) attrs[node.attributes[i]] = node.attributes[i + 1];
           out.push({ name: ax && ax.name ? String(ax.name.value) : '',
             role: ax && ax.role ? ax.role.value : null,
             holdMs: Number(attrs['data-hold-ms'] || 0),
             disabled: attrs['aria-disabled'] === 'true' });
+=======
+          out.push({ name: ax && ax.name ? String(ax.name.value) : '', role: ax && ax.role ? ax.role.value : null });
+>>>>>>> theirs
         }
         return out;
       };
       // Every edge in one walk: the bag-full run gives the main hand EIGHT
+<<<<<<< ours
       // candidates and other slots ONE, so both armed ends enter by the same
       // door. Combat supplies the sealed edge: the same grips are visible but
       // canEquip refuses every act, so none may claim a hold it cannot arm.
@@ -1772,6 +1810,17 @@ async function main() {
         const cells = Number(await ev("document.querySelectorAll('.armoury-overlay .equip-slot .es-cell').length")) || 0;
         void cells;
         await ev(`document.querySelector(${JSON.stringify(edge.open)}).click()`);
+=======
+      // candidates and other slots ONE, so both ends enter by the same door.
+      for (const edge of [{ q: '?shot=map&shotStorage=full', say: 'bag FULL (max edge)' },
+        { q: '?shot=map', say: 'fresh run (empty edge)' }]) {
+        await cdp.send('Page.navigate', { url: `${base}${edge.q}` }, S);
+        await until("!!document.querySelector('#open-armoury')", 'map');
+        await wait(700);
+        const cells = Number(await ev("document.querySelectorAll('.armoury-overlay .equip-slot .es-cell').length")) || 0;
+        void cells;
+        await ev("document.querySelector('#open-armoury').click()");
+>>>>>>> theirs
         await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
         await wait(450);
         const slotCount = Number(await ev(`document.querySelectorAll('.armoury-overlay .equip-slot .es-cell:not(.locked)').length`));
@@ -1787,15 +1836,22 @@ async function main() {
             [...document.querySelectorAll('.equip-picker .ep-list .disc-face .df-label, .equip-picker .ep-list .disc-face')]
               .filter((n) => n.classList.contains('disc-face'))
               .map((f) => (f.querySelector('.ec-name') || f).textContent.trim()))`));
+<<<<<<< ours
           const grips = await axGrips();
           const names = grips.map((g) => g.name);
+=======
+          const names = (await axGrips()).map((g) => g.name);
+>>>>>>> theirs
           const dups = names.length - new Set(names).size;
           const unnamed = names.filter((n, k) => {
             const piece = (pieces[k] || '').trim();
             return !piece || !n.toLowerCase().includes(piece.toLowerCase());
           }).length;
+<<<<<<< ours
           const missingHold = grips.filter((g) => g.holdMs > 0 && !/\bhold\b/i.test(g.name)).length;
           const sealedHold = grips.filter((g) => g.disabled && /\bhold\b/i.test(g.name)).length;
+=======
+>>>>>>> theirs
           seen++;
           console.log(`      ${edge.say} · slot ${i}: ${names.length} grip(s) · pieces ${JSON.stringify(pieces)}`);
           console.log(`          AX names ${JSON.stringify(names)}`);
@@ -1807,6 +1863,7 @@ async function main() {
             ? `A9 ${edge.say} slot ${i}: no two grips share an accessible name (${names.length} candidate(s))`
             : red('A9.collide', `${edge.say} slot ${i}: ${dups} grip name collision(s) among ${names.length} candidates — ${JSON.stringify(names)};`
               + ' assistive tech and voice control meet several sibling buttons with one name'));
+<<<<<<< ours
           ok(missingHold === 0, missingHold === 0
             ? `A9 every armed grip exposes its hold requirement (${names.length} candidate(s))`
             : red('A9.hold', `${edge.say} slot ${i}: ${missingHold} armed grip(s) omit the hold requirement from their accessible name — ${JSON.stringify(names)}`));
@@ -1818,6 +1875,13 @@ async function main() {
           await until(`!!document.querySelector(${JSON.stringify(edge.open)})`, `${edge.say} entry`);
           await wait(650);
           await ev(`document.querySelector(${JSON.stringify(edge.open)}).click()`);
+=======
+          // Back to a clean panel: each slot's picker is read on its own draw.
+          await cdp.send('Page.navigate', { url: `${base}${edge.q}` }, S);
+          await until("!!document.querySelector('#open-armoury')", 'map');
+          await wait(650);
+          await ev("document.querySelector('#open-armoury').click()");
+>>>>>>> theirs
           await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
           await wait(400);
         }

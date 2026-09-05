@@ -3328,6 +3328,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ep-equip.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
 .ep-equip.locked { opacity: 0.45; cursor: not-allowed; }
 
+<<<<<<< ours
 .armoury-inventory,
 .armoury-strip,
 .armoury-stats-tray { border-top: 1px solid var(--line); background: var(--panel); padding: 0 1.6rem 0.7rem; }
@@ -3472,6 +3473,46 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .tray-resize-handle:is(:hover, :focus-visible)[data-ui-variant='right']::after,
 .tray-resize-handle[data-dragging='1'][data-ui-variant='left']::after,
 .tray-resize-handle[data-dragging='1'][data-ui-variant='right']::after { background: var(--gold); transform: translate(-50%, -50%) scaleY(1.15); }
+=======
+/* THE GRIP — the second element of Constantine's two-element ruling
+   (2026-08-21). It carries the hold and nothing else; the card above it keeps
+   its click and the `.ep-equip` inside the opened pane keeps its click.
+
+   IT IS THIN AND IT IS DASHED ON PURPOSE. This picker opens into a strip about
+   125 px tall on the shape this tree photographs (1200x730), so every row this
+   list gains is a row the player has to scroll for. The grip is the least ink
+   that can still be a target: one line, no card art, dashed so it reads as a
+   handle rather than as a second item.
+
+   THE FILL IS NOT DEFINED HERE. `armHold` adds `.beat-hold`, and that rule
+   (further up this file) already owns the progress paint, the `--hold` width
+   and the `.hold-hint` word. A second fill here would be the second copy. */
+.ep-hold {
+  /* A HOLD TARGET BELOW THE TAP FLOOR IS NOT A HOLD TARGET. The grip drew at
+     19 px tall on its own text — 43% of `--tap-floor` — and a press-and-hold is
+     the most thumb-shaped gesture in this game. This is the line that makes the
+     ink cost real (24 px per candidate becomes 49), and it is the right side of
+     that trade: a target a thumb misses is a control that does not exist. */
+  min-height: var(--tap-floor);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px dashed var(--line-soft);
+  background: none;
+  color: var(--muted);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.ep-hold:hover { border-color: var(--gold); color: var(--parchment); }
+.ep-hold.danger { border-color: var(--blood); color: var(--ember); }
+.ep-hold.locked { opacity: 0.45; cursor: not-allowed; }
+
+.armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
+>>>>>>> theirs
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
 .equip-card-with-count { position: relative; }
 .equip-card-with-count > .role-copy-count { position: absolute; right: 0.35rem; bottom: 0.35rem; }
@@ -5441,6 +5482,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    keeps its smaller live-session bar and therefore does not wear `.shared-hud`. */
 .topbar.combat-hud {
   flex-direction: column; align-items: stretch; justify-content: center;
+<<<<<<< ours
   gap: calc(4px / var(--ui-zoom, 1)); padding: calc(4px / var(--ui-zoom, 1)) 1.6rem;
   position: relative;
   z-index: 20;
@@ -5455,6 +5497,11 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   gap: calc(1px / var(--ui-zoom, 1));
 }
 /* Kept for the map header's bottom row, which still draws a .who column. THE `.hpbar` PAIR
+=======
+  gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
+}
+/* Kept for the map header, which still draws a .who column. THE `.hpbar` PAIR
+>>>>>>> theirs
    THAT LIVED HERE IS GONE (E9 / #254): the map header drew the last `.hpbar`
    inside any `.topbar`, and this rule set its height and its fill colour while
    map.css overrode the width to 15rem — a typed constant standing where a
@@ -5464,6 +5511,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    waiting for its second copy, and `grep hpbar styles/` should land a reader
    on the under-model strip, which is the only place the class still lives. */
 .topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
+<<<<<<< ours
 /* Co-op's compact one-row header remains outside the shared shell. */
 .topbar.combat-hud:not(.shared-hud) .hud-top { display: flex; align-items: center; gap: 1rem; position: relative; }
 .topbar.combat-hud:not(.shared-hud) .resbars-host {
@@ -5931,6 +5979,16 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 :root:not([data-layout='narrow']) .topbar.combat-hud.shared-hud .flask-charge-count {
   font-size: calc(14px / var(--ui-zoom, 1));
 }
+=======
+/* THE TOP ROW, AND THE WHOLE OF HIS SCALING RULE IS THIS ONE LINE OF LAYOUT.
+   `.resbars-host` is `flex: 1; min-width: 0`; the two buttons are
+   `flex-shrink: 0`. So the bar track = row width − padding − buttons − gaps,
+   DERIVED by the browser. Nothing types a ceiling; a bar asking for 100 % gets
+   exactly the row he means by "filling up the full top row", at any width, any
+   zoom, and after a third button is ever added. */
+.topbar.combat-hud .hud-top { display: flex; align-items: center; gap: 1rem; }
+.topbar.combat-hud .resbars-host { flex: 1 1 auto; min-width: 0; }
+>>>>>>> theirs
 .combat.coop .topbar.combat-hud .hud-top {
   display: grid;
   grid-template-columns: minmax(10rem, 1fr) auto auto;
@@ -7610,6 +7668,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    you are reading past — the fog map has far fewer of them, so they carry more. */
 .mapscreen.map-fog .map-edge { stroke-opacity: 0.9; }
 
+<<<<<<< ours
 /* ---------- map header — the shared three-row HUD shell --------------------- */
 /* `hudShellHtml` owns the same row structure on map and combat. This file only
    adds map-specific progress tone, legend placement and Display toggles. */
@@ -7619,6 +7678,70 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .map-header .hud-act,
 .map-header .hud-floor { color: var(--muted); letter-spacing: 0.04em; }
 .map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
+=======
+/* ---------- horizontal map header (matches the combat top bar) ---------- */
+/* Reuses .topbar/.portrait/.who/.relics from combat.css; these rules add
+   the map-specific stats, wrapping, and the legend popover. Items are flex so
+   they reflow as customization toggles hide/show them. */
+.map-header {
+  height: auto; min-height: 5.2rem; position: relative;
+  flex-direction: column; align-items: stretch; justify-content: center;
+  gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
+}
+/* THE BAR TRACK IS DERIVED, NOT TYPED (E9 / #254). What was here was
+   `.map-header .hpbar { width: 15rem }` — the map's own hand-written health bar
+   at a hand-typed length, beside a combat HUD whose track is `flex: 1` off the
+   row. Two renderers and two tracks for one grammar; the same character read at
+   two proportions depending on the screen, and nothing could see it because each
+   was internally consistent on its own.
+   Now the `.who` column GROWS and the host fills it, so the track is the header
+   width minus the portrait, the stats and the buttons — derived by the browser,
+   exactly as `.topbar.combat-hud .resbars-host` is. Nothing types a ceiling, so
+   a bar cannot lie about a maximum on this screen either.
+   `100%` is a flex BASIS on a header that ALREADY wraps (`flex-wrap: wrap`
+   above), so it costs no new structure: the bar column takes a line of its own
+   and the portrait, stats and buttons flow onto the next one — the same
+   two-band shape the combat HUD has. MEASURED, and this is why it is 100%
+   rather than a column share: at `1 1 16rem` the map's HP track came out
+   385.6 px against combat's 1090.8 at 1440x860, and 69.1 against 116.1 at
+   390x844 — where 18 % of 69.1 is 12.4 px, UNDER the 16 px minimum-width floor.
+   The floor then fired on the map and not in combat for the same character, so
+   one screen drew a dashed stub and the other a proportional bar. Same plan,
+   same renderer, different ink. A track this narrow is what re-introduces the
+   divergence the shared renderer just removed. */
+.map-header .hud-top { display: flex; align-items: center; gap: 1rem; }
+.map-header .resbars-host { flex: 1 1 auto; min-width: 0; }
+.map-header .hud-bottom {
+  display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap;
+  row-gap: calc(4px / var(--ui-zoom, 1));
+}
+.map-header .mh-stat { color: var(--parchment); font-size: 1.2rem; white-space: nowrap; }
+.map-header .cinders { color: var(--gold); }
+.map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
+.map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
+
+/* Relic + flask sub-strip: a slim full-width row under the main bar. Flasks,
+   a divider, then relic chips; wraps to more rows as they accumulate. */
+.map-substrip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; row-gap: 0.4rem;
+  padding: 0.4rem 1.4rem; background: var(--panel); border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.map-substrip[hidden] { display: none; }
+.map-substrip .mh-flasks { display: flex; gap: 0.5rem; font-size: 1.5rem; line-height: 1; }
+/* THE FLASK'S BOX IS NOT HERE — one home, `.relic.flask-slot, .map-substrip
+   .mh-flask` in ui.css beside `.flask-identity`, so the same flask is the same
+   control on the map as in the topbar. This line used to be the ONLY rule
+   `.mh-flask` had, and it declared `cursor: default` on a <button> that mounts
+   the flask action menu (map.js:170-193) — the one hint a mouse player gets,
+   saying the opposite of the truth. Deleted rather than moved. */
+.map-substrip .mh-div { width: 1px; align-self: stretch; min-height: 1.6rem; background: var(--line); margin: 0 0.4rem; }
+.map-substrip .mh-relics { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.map-substrip .relic {
+  width: 2.2rem; height: 2.2rem; border-radius: 5px; background: var(--bg-raise);
+  border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+}
+>>>>>>> theirs
 .map-legend-pop {
   position: absolute; top: calc(100% + 0.4rem); right: 1.2rem; z-index: 20;
   background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 8px;
@@ -7634,7 +7757,13 @@ body.map-compact .map-header .nm { display: none; }
 /* (compact drops the name; the bar track re-derives itself from the narrower
    row with no rule of its own — the 12rem `.hpbar` override that used to sit
    here was the second typed track and went with the first.) */
+<<<<<<< ours
 body.map-compact .map-header .hud-run-meta { font-size: 1.1rem; }
+=======
+body.map-compact .map-header .mh-stat { font-size: 1.1rem; }
+body.map-compact .map-substrip { padding: 0.2rem 1rem; }
+body.map-compact .map-substrip .relic { width: 1.9rem; height: 1.9rem; font-size: 1.1rem; }
+>>>>>>> theirs
 body.hide-header-seed .map-header .mh-seed { display: none; }
 body.hide-header-relics .map-header .hud-relics { display: none; }
 
@@ -12322,9 +12451,20 @@ Object.assign(module.exports, { stances });
 //   domainMax  OPTIONAL override of the derived ceiling (Law 0 clause 3).
 //              Omit it and the ceiling is derived from the content itself.
 //              HP, Mana and Stamina set it from HUD_REFERENCE_MAX below —
+<<<<<<< ours
 //              his 200/20/20, one home. Poise omits it and stays derived.
 //   band       OPTIONAL for other surfaces/content. The canonical main HUD does
 //              not use it: HP, MP and SP each own a vertical row, in that order.
+=======
+//              his 500/50, one home. Poise omits it and stays derived.
+//   band       OPTIONAL. Rows that share a band render SIDE BY SIDE on one
+//              line of the HUD; a row with no band gets a line of its own.
+//              The approved hybrid (2026-08-13) puts Mana and Stamina beside
+//              each other under Health — that layout is this one word, so a
+//              future pool joins their line by writing `band: 'pools'`, not
+//              by editing CSS. Grouping is per surface, after the surface
+//              filter, in `order` order.
+>>>>>>> theirs
 //
 // Mana and Stamina are persisted derived pools. Their formulas and ruleset
 // version remain authoritative in derivedStats; this table only describes how
@@ -12345,12 +12485,43 @@ Object.assign(module.exports, { stances });
 /**
  * THE REFERENCE SCALE — HIS RULING, 2026-08-22, AND IT LIVES HERE ALONE.
  *
+<<<<<<< ours
  * Constantine: **200 HP / 20 MP / 20 SP**. A bar's
+=======
+ * Constantine: **500 HP / 50 MP / 50 SP** (E9, #254 — Aurora's reading (b) of
+ * the three specs; the 200/20 of reading (c) is dead by the same word). A bar's
+>>>>>>> theirs
  * TROUGH is `scale(max) / scale(reference)` of its track, so these two numbers
  * are the whole of what a full bar looks like. Change them here and nowhere
  * else: the rows below point at them, `resourceDomains()` reads the row, and no
  * render path types a ceiling.
  *
+<<<<<<< ours
+=======
+ * WHAT IT COSTS, MEASURED BEFORE HE CHOSE IT AND RE-STATED HERE SO NOBODY HAS TO
+ * GO LOOKING (Sunna, 2026-08-22, on the game's own content and its own level-up
+ * door — not estimated):
+ *
+ *   the WHOLE reachable player population is 74..94 HP and 2..4 MP/SP.
+ *   Reaching 200 max HP costs 273 level-ups / 153,972 cinders against a
+ *   whole-run budget balance.js itself puts at 400-1200. 500 is further still.
+ *
+ *   So at 500/50 a FULL bar is:
+ *     level 1     74/500 = 14.8 % of its track   ~15 %
+ *     end-game    94/500 = 18.8 % of its track   ~19 %
+ *     a full MP/SP pool  4/50 =  8 % of a half-unit track — BELOW the 16 px
+ *     minimum-width floor at 390x844, so it renders AT the floor and DASHED
+ *     (the broken-axis mark, styles/combat.css `--resbar-min`): the trough
+ *     stops encoding the maximum and says so, and the plate beside it prints
+ *     `MP 4/4` regardless. That is the existing pattern for a bar too thin to
+ *     read; nothing here softens the scale to avoid it.
+ *
+ * He was shown these numbers and reaffirmed 500/50. THIS COMMENT IS THE PRICE
+ * TAG, NOT AN ARGUMENT — the ruling is made. It is written down because the
+ * numbers may move again and the next person to move them should not have to
+ * re-derive what they buy.
+ *
+>>>>>>> theirs
  * REMOVAL CONDITION (SOP 1's corollary): deleted the day the trough stops
  * encoding a maximum, or the day max-HP progression reaches this band and the
  * reference becomes the derived ceiling again (drop `domainMax` from the rows
@@ -12359,11 +12530,17 @@ Object.assign(module.exports, { stances });
  */
 const HUD_REFERENCE_MAX = Object.freeze({
   /** Health's upper reference. His number. */
+<<<<<<< ours
   hp: 200,
   /** Mana's upper reference. Its own data-driven ceiling. */
   mana: 20,
   /** Stamina's upper reference. Its own data-driven ceiling. */
   stamina: 20,
+=======
+  hp: 500,
+  /** Every pool's upper reference — Mana and Stamina share it. His number. */
+  pool: 50,
+>>>>>>> theirs
 });
 
 const resources = [
@@ -12376,7 +12553,12 @@ const resources = [
     order: 30,
     surfaces: ['main'],
     source: 'stamina',
+<<<<<<< ours
     domainMax: HUD_REFERENCE_MAX.stamina,
+=======
+    domainMax: HUD_REFERENCE_MAX.pool,
+    band: 'pools',
+>>>>>>> theirs
   },
   {
     id: 'mana',
@@ -12387,7 +12569,12 @@ const resources = [
     order: 20,
     surfaces: ['main'],
     source: 'mana',
+<<<<<<< ours
     domainMax: HUD_REFERENCE_MAX.mana,
+=======
+    domainMax: HUD_REFERENCE_MAX.pool,
+    band: 'pools',
+>>>>>>> theirs
   },
   {
     id: 'hp',
@@ -25707,12 +25894,20 @@ function populationsFor(registries) {
  * resourceLabelCeilings(registries) → { [surfaceId]: { [rowId]: number } }
  *
  * THE WIDEST NUMBER A PLATE CAN EVER PRINT, and it is NOT the trough's
+<<<<<<< ours
  * reference. These were one field until 2026-08-22 and his 200/20/20 ruling
  * (E9 / #254) pulled them apart:
  *
  *   · the TROUGH is measured against a REFERENCE — an upper mark he chose, far
  *     above anything the content can reach. `domainMax`, 200 for HP and 20
  *     for each current pool.
+=======
+ * reference. These were one field until 2026-08-22 and his 500/50 ruling
+ * (E9 / #254) pulled them apart:
+ *
+ *   · the TROUGH is measured against a REFERENCE — an upper mark he chose, far
+ *     above anything the content can reach. `domainMax`, 500 for HP.
+>>>>>>> theirs
  *   · the PLATE reserves the width of the widest LABEL it will ever draw, so
  *     the track cannot move when a digit is gained mid-run (resbars.js's
  *     `--plate-reserve-*`, and the reason it exists is measured there). The
@@ -25755,7 +25950,11 @@ function resourceLabelCeilings(registries) {
  *
  * ONE function, both HUDs. A bar is:
  *   { id, name, glyph, tint, weight, band, cur, max, pct, lengthPct, domain,
+<<<<<<< ours
  *     labelMax }
+=======
+ *     labelMax, floored }
+>>>>>>> theirs
  *
  *   pct        — the FILL inside the trough (cur/max). The old bars' only job.
  *   lengthPct  — the TROUGH's own length, as a fraction of the row track, and
@@ -42398,7 +42597,11 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
+<<<<<<< ours
 const SOURCE = 'a78beff19f';
+=======
+const SOURCE = '077580f16a';
+>>>>>>> theirs
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -42432,7 +42635,11 @@ const SOURCE = 'a78beff19f';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
+<<<<<<< ours
 const ORDINAL = '1760';
+=======
+const ORDINAL = '1030';
+>>>>>>> theirs
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -42459,7 +42666,11 @@ const ORDINAL = '1760';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
+<<<<<<< ours
 const BUILT = '2026-08-31';
+=======
+const BUILT = '2026-08-23';
+>>>>>>> theirs
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -45802,6 +46013,7 @@ Object.assign(module.exports, { AUDIO_DEFAULTS, resolveMusicEnabled, initAudio }
 // This file is the ONLY place that knows the difference between the two, and
 // the bundler's replacement is anchored on the exact line below.
 
+<<<<<<< ours
 /* ASSET_MAP_START */
 const ASSET_MAP = {
   "assets/bg/bg_act1.webp": "data:image/webp;base64,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",
@@ -45917,14 +46129,322 @@ const ASSET_MAP = {
   "assets/ui/flasks/flask-crimson.png": "data:image/png;base64,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"
 };
 /* ASSET_MAP_END */
+=======
+const { passiveFlag } = require("src/model/registries.js");
+const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { relicText } = require("src/ui/components/card.js");
+const { veilIsOpen } = require("src/ui/components/veil.js");
+const { matchAction, isEngaged, focusFirst, actionHint } = require("src/ui/input.js");
+const { hintBarHtml } = require("src/ui/components/hints.js");
+const { classGlyph, tintCss } = require("src/ui/assets.js");
+const { nodeBlurb, actTitle, legendEntries, MENU } = require("src/ui/uiContent.js");
+const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
+const { mountMapBoard } = require("src/ui/components/mapboard.js");
+const { flaskActionPlan } = require("src/model/flaskActions.js");
+const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
+const { resolveMapMode } = require("src/model/mapknowledge.js");
+const { buildStampHtml } = require("src/ui/components/buildstamp.js");
+const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
+const { resourceBars, markFlooredBars } = require("src/ui/components/resbars.js");
+>>>>>>> theirs
 
 /**
  * assetUrl('assets/sprites/reaver_gold.webp') → that path, or the inlined
  * data URI when the build carries one. Unknown paths pass straight through,
  * so a missing asset still 404s visibly rather than silently resolving.
  */
+<<<<<<< ours
 function assetUrl(path) {
   return ASSET_MAP[path] || path;
+=======
+let liveMapKeys = null;
+// AND THE BOARD IT DROVE. The board holds a ResizeObserver and a timeout that
+// re-centre a scrollport this mount is about to replace; leaving them running is
+// the same leak the handler above was written for, one object over.
+let liveMapBoard = null;
+
+function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury }) {
+  // Before anything is drawn: the previous mount's keyboard handler, if this is
+  // a re-mount. See `liveMapKeys` above.
+  if (liveMapKeys) {
+    removeEventListener('keydown', liveMapKeys);
+    liveMapKeys = null;
+  }
+  if (liveMapBoard) {
+    liveMapBoard.teardown();
+    liveMapBoard = null;
+  }
+  const map = run.mapGraph;
+  // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
+  // screen still computes. Geometry, drawing and the camera are the board's
+  // (ui/components/mapboard.js).
+  const reachable = new Set(run.mapNodeId ? map.nodes[run.mapNodeId].next : map.startIds);
+  const reveal = passiveFlag(registries, run.relics, 'revealUnknown');
+  const mode = resolveMapMode(meta);
+  const fog = mode === 'fog';
+
+  const cz = run.customization || {};
+  const className = registries.classes.get(run.class).name;
+  const heroName = (cz.name || className).toUpperCase();
+  const hasRelics = run.relics.length > 0;
+  const hasFlasks = run.flasks.length > 0;
+  const atEntrance = !run.mapNodeId;
+  const entranceStart = atEntrance && map.startIds.length ? map.nodes[map.startIds[0]] : null;
+  const entranceBoss = atEntrance ? Object.values(map.nodes).find((n) => n.type === 'boss') : null;
+  const entranceOrientation = entranceStart && entranceBoss
+    ? `<div class="map-entrance-orientation" data-composition="orientation-strip" role="note" aria-label="${esc(actTitle(run.actNumber))} orientation: entrance to boss">
+        <strong>${esc(actTitle(run.actNumber))}</strong>
+        <span class="map-orientation-progress" aria-hidden="true">
+          <small data-role="start">ENTRANCE</small><span class="map-orientation-rail"></span><small data-role="boss">BOSS</small>
+        </span>
+      </div>`
+    : '';
+
+  app.innerHTML = `
+    <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
+      <header class="topbar map-header">
+        <div class="hud-top">
+          <!-- E9 / #254 - ONE HUD. This used to be a hand-written
+               div.bar.hpbar with its own percentage fill and its own 15rem
+               CSS track: a SECOND renderer for the one grammar combat draws
+               through ui/components/resbars.js. Two renderers meant the same
+               character's health read at two different proportions depending
+               on which screen you were looking at, and no instrument could
+               see it because each was internally consistent. The host is
+               empty here and filled below by the same call combat.js and
+               coop.js make. (No backticks in this block: it lives inside a
+               template literal, and one closed it early - the game's own
+               validation banner caught that, not a test.) -->
+          <div class="resbars-host"></div>
+          <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
+          <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
+          <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+        </div>
+        <div class="hud-bottom">
+          <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
+          <span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span>
+          <span class="mh-stat cinders">⛁ ${run.cinders}</span>
+          <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
+          <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
+          ${buildStampHtml('map')}
+        </div>
+        <div class="map-legend-pop" hidden>
+          ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
+        </div>
+      </header>
+      <div class="map-substrip${hasFlasks ? '' : ' no-flasks'}"${hasRelics || hasFlasks ? '' : ' hidden'}>
+        <div class="mh-flasks"></div>
+        ${hasFlasks && hasRelics ? '<span class="mh-div"></span>' : ''}
+        <div class="relics mh-relics"></div>
+      </div>
+    </div>`;
+  app.querySelector('.mapscreen').insertAdjacentHTML('beforeend', entranceOrientation);
+
+  // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
+  //
+  // E9 / #254, his words: "I'd like the hud to look the same both combat and
+  // map". ONE renderer for both — ui/components/resbars.js — fed by the one
+  // plan builder, model/resources.js `resourceBarPlan(…, 'main', …)`, which is
+  // the identical call combat.js:435 and coop.js:460 make. So:
+  //
+  //   · WHICH rows appear is content/resources.js's business, not this
+  //     screen's. HP, then the Mana/Stamina band, then poise — the map does
+  //     not get its own list and cannot drift from combat's.
+  //   · TROUGH LENGTH is `scale(max)/scale(reference)` against the SAME
+  //     reference table (HUD_REFERENCE_MAX, his 500/50), so a pool's length
+  //     means the same thing on both screens.
+  //   · The `run` IS the view and the entity here, exactly as it is in
+  //     tools/hybridstats.mjs — the readers take current/max off it and a row
+  //     whose reader returns null is ABSENT, never a lying 0/0 trough. That is
+  //     why POISE does not draw on the map: outside a fight there is no poise
+  //     meter, and the refusal path is the right answer rather than a bar with
+  //     nothing behind it. Measured and held by tools/hudparity.mjs P1,
+  //     which excuses exactly this one row and reds on any other difference.
+  //   · markFlooredBars() runs here for the same reason it runs in combat: the
+  //     minimum-width floor is a RENDERED fact, and a floored trough must wear
+  //     the dashed broken-axis mark on this screen too or the map would show a
+  //     bar that is no longer to scale and does not say so.
+  const resHost = app.querySelector('.map-header .resbars-host');
+  if (resHost) {
+    const mapPlan = resourceBarPlan(registries, 'main', run, run, resourceDomains(registries));
+    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));
+    markFlooredBars(resHost);
+  }
+
+  // ---- THE BOARD -------------------------------------------------------
+  //
+  // ONE RENDERER, and this is the whole of the map on this screen. Everything
+  // it draws — the SVG, the edges, the fog ground, every node, the camera, the
+  // zoom bar and the delivered-tap-size note — is the same code the co-op
+  // client mounts. Read ui/components/mapboard.js's header for why.
+  //
+  // The hint bar goes in as `chromeHtml` so it lands BETWEEN the scrollport and
+  // the zoom bar, and the order is a fix rather than a preference: `.hint-bar`
+  // is fixed to the bottom of the VIEWPORT, so once the zoom buttons stopped
+  // floating and took the bottom of the map, the two claimed the same band and
+  // the hint pill sat on top of the − and the ⊙ (map.css, `.mapscreen
+  // .hint-bar`). It was never unpressable, so the reach sweep was right to stay
+  // green — this was only ever visible to an eye.
+  const board = mountMapBoard(app.querySelector('.mapscreen'), {
+    act: { nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId },
+    viewer: {
+      meta, reachable, mode, reveal,
+      current: run.mapNodeId || null,
+      path: run.path || [],
+      viewState: run.mapView,
+      onViewStateChange: (viewState, { commit } = {}) => {
+        run.mapView = viewState;
+        if (commit && onSave) onSave();
+      },
+      onPick,
+      tooltip: (n, { shownType, revealed }) => nodeTooltip(shownType, n, revealed),
+    },
+    chromeHtml: hintBarHtml('map'),
+  });
+
+  const strip = app.querySelector('.mh-relics');
+  for (const rid of run.relics) {
+    const def = registries.relics.get(rid);
+    const el = document.createElement('div');
+    el.className = 'relic';
+    el.textContent = def.icon || '◆';
+    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
+    strip.appendChild(el);
+  }
+
+  const flaskWrap = app.querySelector('.mh-flasks');
+  for (const f of run.flasks) {
+    const def = registries.flasks.get(f.flaskId);
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'mh-flask';
+    el.appendChild(flaskPresentation(def, { showName: false }));
+    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
+    el.addEventListener('click', () => {
+      const plan = flaskActionPlan({
+        context: 'run',
+        canUse: false,
+        useReason: 'Flasks can only be used in combat',
+        canDrop: true,
+      });
+      mountFlaskActionMenu(el, {
+        def,
+        plan,
+        onCancel: () => {},
+        onAction: (actionId) => {
+          if (actionId !== 'drop') return;
+          const at = run.flasks.indexOf(f);
+          if (at >= 0) run.flasks.splice(at, 1);
+          el.remove();
+        },
+      });
+    });
+    flaskWrap.appendChild(el);
+  }
+
+  const armouryBtn = app.querySelector('#open-armoury');
+  if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
+  else armouryBtn.remove();
+
+  // Legend "?" popover: opens on click; a one-shot outside-click listener closes
+  // it (added only while open, so it never leaks across screens). Lifted out of
+  // the listener so the quick-nav's "Map legend" row opens the SAME popover
+  // rather than growing a second copy of it.
+  const legendBtn = app.querySelector('#map-legend');
+  const legendPop = app.querySelector('.map-legend-pop');
+  function toggleLegend() {
+    const opening = legendPop.hidden;
+    legendPop.hidden = !opening;
+    if (opening) {
+      const off = (ev) => {
+        if (ev.target !== legendBtn && !legendPop.contains(ev.target)) {
+          legendPop.hidden = true;
+          document.removeEventListener('click', off, true);
+        }
+      };
+      document.addEventListener('click', off, true);
+    }
+  }
+  legendBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleLegend();
+  });
+
+  // ☰ — today it opens the overlay at Deck; under the quick-nav experiment it
+  // opens the list of everywhere this screen can go. Every row below calls a
+  // handler that already exists, so nothing here decides navigation state.
+  const menuBtn = app.querySelector('#open-menu');
+  if (onMenu) {
+    menuBtn.addEventListener('click', (e) => {
+      if (quickNavMode() === 'off') return onMenu('deck');
+      e.stopPropagation();
+      openQuickNav(menuBtn, 'map', {
+        counts: { deck: run.deck.length },
+        hasSave: !!(onSave || onQuit),
+        actions: {
+          tab: (id) => onMenu(id),
+          ...(onArmoury ? { armoury: () => onArmoury() } : {}),
+          legend: () => toggleLegend(),
+          ...(onSave ? { save: saveAction(onSave) } : {}),
+          ...(onQuit ? { quit: () => onQuit() } : {}),
+        },
+      });
+    });
+  }
+
+  // Law 3 clause 4 — a real tooltip, hover AND focus cursor, with its text from
+  // the same MENU table the rows read. `title=` alone (what these carried) is
+  // invisible to touch and to a pad.
+  for (const [sel, ctxAct] of [['#open-armoury', 'armoury'], ['#map-legend', 'legend']]) {
+    const el = app.querySelector(sel);
+    const row = (MENU.map || []).find((r) => r.act === ctxAct);
+    if (el && row) attachTooltip(el, () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
+  }
+  attachTooltip(menuBtn, () =>
+    `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
+      ? 'Deck, relics, stats, settings and saving.'
+      : 'Everywhere you can go from here.')}`);
+
+  // Keyboard: M opens the menu overlay; + / − / 0 zoom; a standing veil owns
+  // the keys while it is up. Removed when the screen is torn down (app.innerHTML
+  // replaced). This guard read `overlayIsOpen()` — one veil of six — so zoom and
+  // the menu keys stayed live under the settings modal and the quick-nav list.
+  // Not the hand-losing one, and the same defect: components/veil.js.
+  const mapKeys = (ev) => {
+    // Still a backstop for map → anywhere-else, where nothing calls mountMap
+    // again to do the tidying. The re-mount case is owned at the top of this
+    // function; this branch can no longer be reached by a second map.
+    if (!app.querySelector('.mapscreen')) {
+      removeEventListener('keydown', mapKeys);
+      if (liveMapKeys === mapKeys) liveMapKeys = null;
+      return;
+    }
+    if (veilIsOpen()) return;
+    const tag = (ev.target && ev.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (matchAction(ev, 'menu') || matchAction(ev, 'deck')) {
+      if (onMenu) onMenu('deck');
+    } else if (matchAction(ev, 'relics')) {
+      if (onMenu) onMenu('relics');
+    } else if (matchAction(ev, 'stats')) {
+      if (onMenu) onMenu('stats');
+    } else if (ev.key === '+' || ev.key === '=') {
+      board.stepZoom(1);
+    } else if (ev.key === '-' || ev.key === '_') {
+      board.stepZoom(-1);
+    } else if (ev.key === '0') {
+      board.resetFraming();
+    }
+  };
+  addEventListener('keydown', mapKeys);
+  liveMapKeys = mapKeys;
+
+  // The camera settles on the board's own ResizeObserver + backstop; the focus
+  // cursor lands once it has (only when the player is using keyboard/gamepad, so
+  // mouse players get no stray ring).
+  board.recenter(() => { if (isEngaged()) focusFirst('.map-node.reachable'); });
+  liveMapBoard = board;
+>>>>>>> theirs
 }
 
 /** True when this build carries its own art (the single-file dist). */
@@ -49078,8 +49598,226 @@ function mountDisclosure(host, entries, { moreLabel = 'more', armFace = null } =
 Object.assign(module.exports, { mountDisclosure });
 
 },
+<<<<<<< ours
 "src/ui/components/refusal.js": function (module, exports, require) {
 // src/ui/components/refusal.js — a control the player can SEE and cannot USE.
+=======
+"src/ui/components/resbars.js": function (module, exports, require) {
+// src/ui/components/resbars.js — the ONE renderer for every resource bar.
+//
+// It knows nothing about health, poise, stamina or mana. It is handed a plan
+// (model/resources.js resourceBarPlan) and draws it. That is the whole point:
+// the day a resource exists, its bar is a row in content/resources.js and this
+// file does not change.
+//
+// TWO GEOMETRIES, and only one of them is new:
+//   the FILL   — width = cur/max. Every bar this game has ever drawn did this.
+//   the TROUGH — width = scale(max)/scale(domain). HIS ASK. The trough's own
+//                length encodes the maximum, so a bar cannot lie about a stat.
+//
+// TWO STRUCTURES, keyed on the surface — the approved hybrid (2026-08-13,
+// claude-family falk-family: hybrid-confirmation/output/selection-record.json,
+// owner pixels owners/F1-resource-health.png, F2-resource-mana.png,
+// F2-resource-stamina.png):
+//
+//   'main'  — the HYBRID shape. Each bar is a bordered UNIT: a label plate
+//             ("HP 86/86") to the LEFT of a pill trough. Bars sharing a row's
+//             `band` sit side by side on one line (F2's Mana+Stamina row);
+//             a bar with no band takes a line alone (F1's Health row). The
+//             trough's track is its unit's remaining width, derived by flex —
+//             nothing types a ceiling, so a bar cannot overflow its cell
+//             (Law 2 by construction; tools/hudbars.mjs measures it anyway).
+//   'model' — unchanged: the under-model strip keeps its inside label, which
+//             is also what the approved combat mock draws under the fighters.
+//
+// NOTHING IS TYPED. The line splits into equal unit cells by flex; the trough
+// track is unit minus plate, derived; the trough is a percentage of that.
+
+const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+
+/**
+ * resourceBars(plan, { surface, tooltipExtra }) → HTMLElement (.resbars)
+ *
+ * `tooltipExtra(bar)` may return extra tooltip HTML for a bar (the poise bar
+ * wants Stagger's own text, which is content and not this file's to know).
+ */
+function resourceBars(plan, { surface, tooltipExtra } = {}) {
+  const wrap = document.createElement('div');
+  wrap.className = 'resbars';
+  wrap.dataset.surface = surface || 'main';
+  if ((surface || 'main') === 'main') {
+    // THE HYBRID LINES. Consecutive plan bars with the same truthy band share
+    // a line; everything else lines alone. Consecutive-only is deliberate:
+    // the plan is already in `order` order, and a band split across the stack
+    // would be a row author asking for two contradictory things at once —
+    // rendering it as two lines keeps the order authoritative.
+    for (const group of groupByBand(plan)) {
+      const line = document.createElement('div');
+      line.className = 'resline';
+      for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra));
+      wrap.appendChild(line);
+    }
+  } else {
+    for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra));
+  }
+  return wrap;
+}
+
+function groupByBand(plan) {
+  const groups = [];
+  for (const bar of plan) {
+    const prev = groups[groups.length - 1];
+    if (bar.band && prev && prev[0].band === bar.band) prev.push(bar);
+    else groups.push([bar]);
+  }
+  return groups;
+}
+
+/** The hybrid unit: [plate "HP 86/86"][track > pill trough]. */
+function hybridUnit(bar, tooltipExtra) {
+  const unit = document.createElement('div');
+  unit.className = 'resunit';
+  unit.dataset.res = bar.id;
+
+  // THE PLATE. The label lives BESIDE the trough now, not inside it — the
+  // owner pixels put "HP 86/86" on the unit's ground, left of the pill — so a
+  // short trough can no longer collide with its own words. The three variants
+  // still ride the DOM and degrade by measured fit, but the container is the
+  // UNIT (whose width flex sets), not the plate (whose width its own content
+  // sets — a container query there would be circular).
+  //
+  // THE PLATE IS RESERVED, AND THIS IS LOAD-BEARING, NOT POLISH. The trough's
+  // track is the unit minus the plate — so if the plate's width followed its
+  // own digits, crossing 99 -> 100 max HP would WIDEN the plate, NARROW the
+  // track, and the bar for the BIGGER pool would render SHORTER. Observed,
+  // not hypothesised: before this reserve, sweeping max 88 -> 120 through
+  // ?shotMaxHp shrank the health bar 92.91 -> 88.53 px (tools/hudbars.mjs A1,
+  // 2026-08-13). So the plate reserves the width of its own resource's DOMAIN
+  // ceiling — derived per bar from data, never typed — in `ch` with tabular
+  // numerals, so the reservation tracks the Text-size setting like the text
+  // it is. Each degradation variant reserves its own width (a full-name
+  // reservation applied while only the glyph shows would steal track for a
+  // label that is not there); the CSS applies each var in the same container
+  // window that shows its variant.
+  //
+  // THE CEILING IS `labelMax`, NOT `domain`, AND THE DIFFERENCE IS THE WHOLE
+  // POINT (E9 / #254, 2026-08-22). `domain` is now the REFERENCE his ruling
+  // set — 500 HP, 50 pools — an upper mark far above anything the content can
+  // reach. The plate must reserve the widest LABEL it can ever draw, which is
+  // set by the largest max the CONTENT can produce (96, 4, 4). Reserving from
+  // the reference put three digits where two will ever print and crushed the
+  // banded pool cells to 5.81 px at 320x640, clipping "◆ 2/2" — measured, and
+  // the derivation of `labelMax` is in model/resources.js resourceLabelCeilings.
+  // The fallback chain keeps a legacy plan (no labelMax) rendering as before.
+  const ceiling = Number.isFinite(bar.labelMax) ? bar.labelMax : (bar.domain || bar.max);
+  const digits = String(Math.trunc(Math.max(bar.max, ceiling, 1))).length;
+  const plate = document.createElement('div');
+  plate.className = 'resplate';
+  plate.style.setProperty('--plate-reserve-full', `${bar.name.length + 2 * digits + 2.5}ch`);
+  plate.style.setProperty('--plate-reserve-num', `${2 * digits + 4}ch`);
+  plate.innerHTML =
+    `<span class="l-full">${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-glyph">${esc(bar.glyph)}</span>`;
+  unit.appendChild(plate);
+
+  const track = document.createElement('div');
+  track.className = 'restrack';
+  track.appendChild(troughEl(bar));
+  unit.appendChild(track);
+
+  attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
+  return unit;
+}
+
+/** The under-model strip bar: trough with the label inside (unchanged shape). */
+function stripBar(bar, tooltipExtra) {
+  const el = troughEl(bar);
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.innerHTML =
+    `<span class="l-full">${esc(bar.glyph)} ${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-glyph">${esc(bar.glyph)}</span>`;
+  el.appendChild(label);
+  attachTooltip(el, () => tooltipHtml(bar, tooltipExtra));
+  return el;
+}
+
+/** The trough itself — the one element whose LENGTH is the data. */
+function troughEl(bar) {
+  const el = document.createElement('div');
+  el.className = `bar resbar resbar-${bar.weight}`;
+  el.dataset.res = bar.id;
+  // THE TROUGH LENGTH — the one line that is his whole instruction.
+  el.style.width = `${bar.lengthPct.toFixed(3)}%`;
+  el.style.setProperty('--res-tint', bar.tint);
+  // THE MACHINE-READABLE HOME, and it is not decoration. The label degrades
+  // to a glyph on a short unit, so `.textContent` is neither stable nor a fair
+  // reading of what the bar says. Instruments and assistive tech read these
+  // instead: tools/veil-owns-input.mjs and tools/hudbars.mjs both do.
+  el.dataset.cur = String(bar.cur);
+  el.dataset.max = String(bar.max);
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', `${bar.name} ${bar.cur} of ${bar.max}`);
+
+  // THE MINIMUM-WIDTH CLAUSE — `min-width: var(--resbar-min)` in CSS does the
+  // flooring; whether the floor FIRED is a rendered fact (it depends on the
+  // track, the zoom and the floor together), so it is stamped after layout by
+  // markFlooredBars() rather than guessed at here. A floored trough is drawn
+  // DASHED — the broken-axis mark — because two different maxima below the
+  // floor render the same length, and a bar that is no longer to scale must
+  // not look like one that is.
+  const fill = document.createElement('div');
+  fill.className = 'fill';
+  fill.style.width = `${bar.pct.toFixed(2)}%`;
+  el.appendChild(fill);
+  return el;
+}
+
+function tooltipHtml(bar, tooltipExtra) {
+  const extra = (tooltipExtra && tooltipExtra(bar)) || '';
+  // The tooltip is the floor of legibility for this bar: whatever the plate is
+  // too narrow to print, this always says. Including the maximum, which is the
+  // number a floored bar has stopped encoding.
+  return `<div class="tt-title">${esc(bar.name)}</div>${bar.cur} / ${bar.max}. ${extra}`;
+}
+
+/**
+ * markFlooredBars(root) — stamp `data-floored` on every bar the minimum-width
+ * clause caught, by MEASURING the rendered trough against the floor.
+ *
+ * Called after layout. A bar is floored when its rendered width is wider than
+ * the width its own lengthPct asked for — which is precisely what `min-width`
+ * winning looks like, and it needs no second copy of the floor's value.
+ *
+ * The track each percentage resolves against is the bar's own CONTAINING BLOCK
+ * (`.restrack` on the hybrid HUD, the strip on the model surface) — measured
+ * per bar rather than passed in, because since the hybrid two bars on one line
+ * no longer share a track and a single passed-in width would be wrong for one
+ * of them. The old second parameter is accepted and ignored.
+ */
+function markFlooredBars(root) {
+  const bars = root.querySelectorAll('.resbar');
+  for (const el of bars) {
+    const asked = parseFloat(el.style.width); // percent
+    const trackW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
+    if (!Number.isFinite(asked) || !trackW) continue;
+    const wanted = (asked / 100) * trackW;
+    const got = el.getBoundingClientRect().width;
+    if (got > wanted + 0.5) el.dataset.floored = '1';
+    else delete el.dataset.floored;
+  }
+}
+
+
+Object.assign(module.exports, { resourceBars, markFlooredBars });
+
+},
+"src/ui/screens/combat.js": function (module, exports, require) {
+// src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
+// docs/mockups/combat-screen.svg)
+>>>>>>> theirs
 //
 // Constantine, on his phone, 2026-08-07: "for armament, I can't select the empty
 // slot to equip available weapons." The slot opened. What opened was seventeen
@@ -52272,6 +53010,7 @@ function staticTokens(def) {
  * still renders as `{token}` here — braces and all — because a visible brace is
  * a bug report and a bare key is a sentence that looks fine and lies.
  */
+<<<<<<< ours
 function relicText(def, registries = null) {
   if (!def || !def.textTemplate) return '';
   const tokens = relicTokens(def);
@@ -52294,6 +53033,157 @@ function relicText(def, registries = null) {
   const grown = flaskGrowthClause(bal, defs, def.id);
   return grown ? `${base} ${grown}` : base;
 }
+=======
+function mountEquipment(host, {
+  registries, run, meta = {}, inCombat: inCombatArg, onClose, onChange, onSwap,
+}) {
+  closeFlaskActionMenu({ cancelled: true });
+  // THE DEFAULT THAT DECIDED WHAT THE MUTATION WAS TOLD (#98, Vira). This read
+  // `inCombat = false`. #95 moved the gate off the screen and onto the mutation
+  // — and left the screen holding the one value that gate is asked about, with a
+  // permissive default. A third mount that forgot the flag would have re-armed
+  // mid-fight while every model test stayed green, because the model would have
+  // been told the truth about a lie. Both existing mounts already pass it
+  // explicitly (main.js:716 `false`, combat.js:1068 `true`), so there is no
+  // behaviour to change here — only the silence to close.
+  //
+  // IT FAILS LOUD AND CLOSED, in that order. A mount that cannot say whether a
+  // fight is on is sealed: a visibly inert picker with a named cause on the
+  // console beats a picker that quietly lets you re-arm. Law 1 clause 5 —
+  // bad input fails by name, and the name here is the caller.
+  if (typeof inCombatArg !== 'boolean') {
+    console.error(
+      `mountEquipment(): no boolean \`inCombat\` — got ${JSON.stringify(inCombatArg)}.`
+      + ' Sealing the picker. This line is the defect, not the seal.'
+    );
+  }
+  // ONE NAME IN THE BODY. The argument is validated once, here, and everything
+  // below reads `inCombat` — a second name for the same fact is the defect this
+  // seat is for, and it would be a strange one to introduce while closing this.
+  const inCombat = typeof inCombatArg === 'boolean' ? inCombatArg : true;
+  // EVERY ARMED GRIP, SO EVERY ARMED GRIP CAN BE PUT DOWN. `armHold` adds a
+  // window-level keydown listener (its Escape abort) that only `disarm()`
+  // removes, and `draw()` below replaces the whole subtree — so without this
+  // list every equip would leave one live listener per candidate behind,
+  // forever, and nothing on the page would look wrong. A graceful leak.
+  //
+  // MEASURED, NOT ASSERTED, because a counterfactual in a comment is a claim.
+  // `getEventListeners(window).keydown` over seven picker opens on the map
+  // mount: 3 with no grip, 4 with one — and with this line removed, 3 -> 13.
+  // With it, back to 3. Flat.
+  const heldGrips = [];
+  const eq = registries.equipment;
+  const cz = (meta.settings && meta.settings.customization) || run.customization || {};
+  // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
+  // terms is the whole rule:
+  //   1. the player's own saved choice, always, on every shape;
+  //   2. otherwise the narrow default, if this is a narrow layout;
+  //   3. otherwise the desktop default.
+  // Sunna's ruling was "hybrid must not be what a phone OPENS" — opens, not
+  // shows. Someone who picked hybrid on a phone keeps it, and since #38 the
+  // stylesheet makes it fit, so honouring that choice is no longer a trap.
+  //
+  // `data-layout` is READ, never computed. autoLayout() writes it in the same
+  // call that chooses --ui-zoom, so mode and zoom cannot disagree; asking the
+  // width here would make a second decider, which is exactly the fight that
+  // became unadvanceable in #24. The value is validated against the content's
+  // own closed set rather than trusted, so a bad table entry degrades to the
+  // desktop default instead of rendering a view class that does not exist.
+  const CV = CFG();
+  const narrow = typeof document !== 'undefined'
+    && document.documentElement.getAttribute('data-layout') === 'narrow';
+  // LAW 1 CLAUSE 5 — bad data fails LOUD and names the entry. Vira's condition on
+  // #41: `narrowDefaultView: 'racks'` is a one-character typo that fell through
+  // to `hybrid` in silence, and tools/menufit.mjs stayed green because the other
+  // half of this PR had just made hybrid fit. THE TWO HALVES MASKED EACH OTHER —
+  // a silent fallback plus a check that asks "does it fit" rather than "is it the
+  // one the table names". A validated-then-discarded value is exactly the shape
+  // clause 5 exists to forbid.
+  const named = narrow ? CV.narrowDefaultView : CV.defaultView;
+  const IDS = viewIds();
+  if (named != null && !IDS.includes(named)) {
+    console.error(`[content] balance.equipment.${narrow ? 'narrowDefaultView' : 'defaultView'}`
+      + ` = ${JSON.stringify(named)} is not one of ${JSON.stringify(IDS)}`
+      + ' — falling back, and this line is the defect, not the fallback.');
+  }
+  const shapeDefault = (named != null && IDS.includes(named)) ? named : CV.defaultView;
+  // A STORED view the table no longer declares is not the defect this file
+  // guards — the player saved 'hybrid' and the set moved under their save. It
+  // degrades to the shape default and says so once. A DECLARED row that cannot
+  // be drawn is the defect, and assertSurfaces() fails the boot before any of
+  // this runs, so `viewLayout` below can only be null for the stored case.
+  const stored = meta.settings && meta.settings.equipView;
+  if (stored && !IDS.includes(stored)) {
+    console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
+      + ` — opening on ${JSON.stringify(shapeDefault)}.`);
+  }
+  let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
+  // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
+  // a preference, so it lives where preferences live — `meta.settings`, the same
+  // free bag `equipView` rides in, keyed by region id. NO SAVE-SCHEMA CHANGE:
+  // main.js already does `Object.assign(meta.settings, settingChange)`, so one
+  // more key costs nothing.
+  //
+  // THE LIMIT, STATED RATHER THAN HIDDEN: the IN-COMBAT mount (combat.js) passes
+  // a synthetic `meta` and no `onChange`, so there is nothing to read and nothing
+  // to write — collapse is per-mount there. That is not new and it is not mine:
+  // `equipView` is already per-mount at that call site for the same reason.
+  const storedFolds = (meta.settings && meta.settings.armouryCollapsed) || null;
+  const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds)]));
+  let picking = null; // { slotId, setIndex }
+  let notice = ''; // a refusal to show in place, cleared on the next draw
+
+  // A `.modal-veil`, and not for the dimming — the same sentence `.qn-veil`
+  // carries four files away, for the same reason. This panel mounts on <body>,
+  // a SIBLING of #app, so input.js's scopeRoot() — which scopes the focus
+  // cursor to the topmost `.modal-veil`, else #app — never saw it. Measured
+  // before this line at ?shot=combat: ten focusable chips inside the open
+  // panel, and forty-five arrow presses across four directions visited TWO
+  // controls, both of them combat cards BEHIND it. A pad player could open
+  // the Armoury and then drive the fight underneath it.
+  //
+  // It costs no pixels, and that is checkable rather than hopeful:
+  // `.armoury-overlay` (ui.css) restates every one of `.modal-veil`'s six
+  // declarations — position, inset, background, z-index, display, and the two
+  // centring lines — and sits LATER in the same file, so it wins all six.
+  // Measured both ways: veil and panel rects identical to the pixel.
+  //
+  // THE ONE THING THAT IS NOW LIVE AND WAS NOT: scopeRoot() picks the topmost
+  // veil by DOM ORDER, and this one paints at z-index 60 while every other
+  // veil is 500. No path today opens a 500 veil under an open Armoury — both
+  // mounts (main.js showArmoury, combat.js #combat-armoury) run with nothing
+  // else standing, and the quick-nav's armoury row closes itself after the
+  // mount — so paint order and DOM order agree everywhere I could reach. If a
+  // future screen opens one over the other, the focus cursor will drive the
+  // panel underneath. Named here because the class is what makes it possible.
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-veil armoury-overlay';
+  host.appendChild(wrap);
+
+  // ONE TEARDOWN HOME, AND THAT IS THE WHOLE FIX. Everything this mount arms
+  // OUTSIDE its own subtree is put down HERE, because `close()` is the only act
+  // every exit path runs — the ✕, the backdrop tap, Escape, and a caller's own
+  // `close()`. `draw()` drains the grips too, and must: it replaces the subtree
+  // they are bound to. But a close runs NO draw, so the last render's grips were
+  // dying with their elements and keeping their listeners.
+  //
+  // MEASURED, BOTH HALVES, `getEventListeners` over six open→picker→close-by-✕
+  // cycles, map mount, 1200x730, real Chromium over browser.mjs's CDP path:
+  //   window   keydown  3 → 4,5,6,7,8,9   ONE PER CYCLE — every grip `armHold`
+  //            armed and only `draw()` drained. MINE, and Codex found it.
+  //   document keydown  0 → 1,2,3,4,5,6   the Escape handler below, which
+  //            removed itself on the Escape path only. NOT MINE: the same probe
+  //            against dev 3926a68, where no grip exists, reads 0 → 1..6 too.
+  //            Repaired in the same act because it is the same disease and this
+  //            is now the one place that answers it.
+  // After this, both are flat at 3 and 0 — A8 below is that measurement as a check.
+  const close = () => {
+    while (heldGrips.length) heldGrips.pop()();
+    document.removeEventListener('keydown', onKey);
+    wrap.remove();
+    if (onClose) onClose();
+  };
+>>>>>>> theirs
 
 function fillTemplate(def, tokens, baseTokens) {
   let html = esc(def.textTemplate);
@@ -52377,10 +53267,415 @@ function renderCard(registries, ref, opts = {}) {
     el.style.setProperty('--boost-tint', boost.boostTint);
   }
 
+<<<<<<< ours
   // opts.tooltipFn overrides the default tooltip. A parent that already owns a
   // persistent detail region may suppress the transient tooltip entirely.
   if (opts.tooltip !== false) {
     attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
+=======
+  function pickerBlock() {
+    const box = document.createElement('div');
+    box.className = 'equip-picker';
+    if (!picking) {
+      // DERIVED FROM STATE, NOT AUTHORED (#90 follow-on, Freja). The picker with
+      // no selection holds one italic line and, once the context pane folds, up
+      // to 420 CSS px of nothing under it. `data-empty` is that condition said
+      // once, here, where it is already known — the stylesheet then gives the
+      // region a shape instead of a top edge. It cannot be set when a list is
+      // present, which is the whole reason it is not a class someone maintains.
+      box.dataset.empty = '1';
+      box.innerHTML = inCombat
+        ? '<p class="ep-hint">Pick a slot above to see what you are carrying.</p>'
+        : '<p class="ep-hint">Pick a slot above to change what is in it.</p>';
+      return box;
+    }
+    const slot = eq.slots.find((s) => s.id === picking.slotId);
+    // ONE SENTENCE, ONE HOME. The seal's words are the model's (canEquip), the
+    // same place the mutation reads them from, so the reason a chip gives when
+    // it is tapped and the reason printed over the list cannot come apart. This
+    // header line is the sentence said ONCE for the whole list — sixteen chips
+    // each repeating it is a wall, and the chips still answer a tap individually
+    // through refuses(), which is the property that actually failed on his phone.
+    const seal = canEquip(registries, picking.slotId, { inCombat });
+    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4>`
+      + (seal.ok ? '' : `<p class="ep-hint">${esc(seal.reason)}</p>`)
+      + '<div class="ep-list"></div>';
+    const list = box.querySelector('.ep-list');
+
+    // A CHIP IS DRAWN THE SAME WAY WHETHER OR NOT IT REFUSES, and the refusal is
+    // added here rather than passed in. #90 deleted pieceChip's `locked`/`hint`
+    // arguments because a dead argument is a second copy of a decision; putting
+    // them back would be that copy with a caller. So pieceChip still only knows
+    // how to draw a piece, and this function — which is where the seal is known —
+    // decorates. `.equip-chip.locked` in styles/ui.css has styled nothing since
+    // #90; it is the rule for "a chip you can see and cannot use", which is
+    // exactly this, so it is reused rather than joined by a second one.
+    const sealChip = (el) => {
+      el.classList.add('locked');
+      refuses(el, () => seal.reason);
+      return el;
+    };
+
+    // ---- THE CARD IS THE CONTROL (Constantine, 2026-08-21) -----------------
+    //
+    // His two sentences, and the second corrects the first, so both are kept:
+    //   "each item should be folded panes that can expand, the sub button
+    //    should exist. clicking on the armory item pane should auto expand it
+    //    with a button to equip (un equip in red if it's already equipped)"
+    //   "the sub button under the folded weapon army item pane should NOT
+    //    exist. it should be part of the card and is revealed pressing the card
+    //    instead"
+    //
+    // So: ONE gesture on ONE surface. The card is the face; pressing it reveals
+    // the comparison it always drew plus the single act you can take on it.
+    //
+    // MOUNTED, NOT BUILT. This is Sunna's disclosure renderer (D26,
+    // components/disclosure.js) — the same one the creation screen and the shop
+    // mount. tools/onefold.mjs counts the files that CONSTRUCT that affordance's
+    // markup and declares ONE; a fold hand-rolled here would have made it two,
+    // which is the debt that tool exists to hold at zero. What this act needed
+    // from her component was one additive capability — a face may be a NODE —
+    // because a card is art plus four spans and her faces were escaped text.
+    // FLAGGED FOR HER RULING on the PR: the grammar is untouched (one open at a
+    // time, the panel under the pressed row, the same aria contract), and the
+    // revert is deleting the two guarded branches in drawFace/setValue.
+    //
+    // "BARE" IS GONE, AND THAT IS A COLLAPSE, NOT A LOSS. It was a chip whose
+    // whole job was "put nothing here", which is exactly what Unequip does on
+    // the card that is already in the slot. Two controls for one act is the
+    // second copy this seat exists to refuse; with the slot empty there is no
+    // equipped card, and there was nothing for Bare to undo either.
+    //
+    // A SEALED PIECE STILL OPENS. `canEquip` refuses mid-fight, and refusing the
+    // READING as well would take away the compare he asked the card to carry
+    // ("the card should be the button for compare and stats"). The face opens;
+    // the ACT inside it refuses, with the model's own sentence.
+    const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
+    // The hold and the button must run the SAME closure — see `act` below.
+    const entryAct = new Map();
+    const entries = eligible(slot).map((piece) => {
+      const equipped = piece.id === current;
+      const body = document.createElement('div');
+      body.className = 'ep-body';
+      // `meta` is handed over because the swap-price rows are priced with the
+      // LIVE rule (Settings › Advanced › Weapon swap cost). Omitting it would
+      // price them with the shipping default and read as plausible — the row
+      // carries the rule it used (`ruleId`) so that stays readable either way.
+      const comparison = equipmentSurfaceReceipt(registries, run, {
+        candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: piece.id },
+        meta,
+      }).candidate;
+      body.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison));
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      // "un equip in red" — `.danger` is this stylesheet's own word for red
+      // (styles/ui.css `.subtle.danger`, `--blood`/`--ember`), so the colour is
+      // named where colour is decided rather than typed here. THE WORD AND THE
+      // COLOUR ARE TWO CHANNELS and the check reads both: a control that says
+      // Unequip in the ordinary colour satisfies half his sentence.
+      btn.className = equipped ? 'ep-equip danger' : 'ep-equip';
+      btn.dataset.act = equipped ? 'unequip' : 'equip';
+      btn.textContent = equipped ? 'Unequip' : 'Equip';
+      // ONE ACT, TWO ROADS — and the act is written once. Constantine asked for
+      // a hold on the card AND a button in the opened pane; two copies of
+      // `equipPiece(...)` is two chances for the roads to disagree about what
+      // "equip" means, which is the second copy this seat exists to refuse.
+      const act = () => {
+        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex,
+          equipped ? null : piece.id, owned(), { inCombat, attributes: run.attributes });
+        sfx.play('cardPlay');
+        commit();
+      };
+      if (seal.ok) btn.addEventListener('click', act);
+      else sealChip(btn);
+      body.appendChild(btn);
+      entryAct.set(piece.id, seal.ok ? act : null);
+
+      return {
+        key: piece.id,
+        kind: 'item',
+        disclosure: 'face',
+        equipped,
+        face: { label: piece.name, node: pieceFace(registries, piece, { selected: equipped }) },
+        reveal: { node: body, sense: equipped ? 'Equipped. Press to unequip.' : 'Press to compare and equip.' },
+      };
+    });
+
+    const fold = mountDisclosure(list, entries, { moreLabel: 'more' });
+
+    // ---- HIS FOUR RULES FOR THE CARD (2026-08-21) -------------------------
+    //
+    //   "press and hold on army card to equip, but aLso have an equip button
+    //    when card is expanded (unfolded). click unfolds the card and records
+    //    it when clicked again or clicked off the card"
+    //
+    // click        → unfold          (Sunna's renderer already does this)
+    // click again  → refold          (her toggle already does this)
+    // click off    → refold          (NEW, below — nothing did this)
+    // press+hold   → equip           (NEW, below — armHold, the tree's gesture)
+    //
+    // "records it" is read as RECLOSES it. Flagged on the PR: if he meant the
+    // click also commits, that is one line and the reading is stated rather
+    // than buried.
+    //
+    // ---- HIS RULING: TWO ELEMENTS (Constantine, 2026-08-21) --------------
+    //
+    // He was given three roads and took the one that costs a control. What was
+    // MEASURED at #304 and put in front of him stands and is not softened here:
+    //
+    //   `armHold` cannot serve both gestures on ONE element, by design —
+    //     "A pointer click never commits WHEN A HOLD WAS ARMED. See rule 1 —
+    //      the early release IS the abort, so the click it generates must die
+    //      here rather than become a second door."
+    //   Arming the FACE was tried and measured: the card stopped unfolding and
+    //     A5's refold checks went red behind it.
+    //   Arming the in-card EQUIP BUTTON was measured too: its click dies, so
+    //     the hold becomes the ONLY road to equipping, and anyone who cannot
+    //     perform a hold loses the act.
+    //
+    // BOTH OF THOSE ARE "TWO ELEMENTS" AND HIS OWN FOUR RULES EXCLUDE BOTH.
+    // He asked for click-unfolds-the-card AND for the in-card button to stay.
+    // So the second element is a THIRD control that carries neither existing
+    // click: a grip under each card. The card keeps its click, the button keeps
+    // its click, and the grip holds nothing but the hold. That is the only
+    // arrangement his four sentences leave standing, and it is stated here
+    // rather than derived silently, because the cost — one more control per
+    // candidate, in a picker that opens into a ~125 px strip — is his to carry
+    // and he was told the number.
+    //
+    // WHY `armHold` AND NOT `beatArmer`. The beat table (model/secondbeat.js)
+    // rules on COMMITS — what a mis-press writes that cannot be taken back —
+    // and equipping is reversible by equipping the other thing. `beatOf` would
+    // answer `none` and arm nothing. This hold is not a safety step; it is a
+    // SHORTCUT past the unfold, the same shape as `armInspect`, which is a
+    // neighbour of that table and deliberately not a row in it. Adding an
+    // `equipPiece` row to make this legal would be teaching the table to say
+    // "hold" about something it correctly considers free.
+    //
+    // ONE DIAL, NOT A NUMBER. `holdMs` is the player's own Hold-to-confirm
+    // setting; `off` (0) means the pre-hold behaviour byte for byte, so the
+    // grip becomes a plain one-tap Equip and NOTHING is lost at that setting.
+    const gripMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
+    for (const entry of entries) {
+      const face = list.querySelector(`[data-face="${CSS.escape(entry.key)}"]`);
+      if (!face) continue;
+      const grip = document.createElement('button');
+      grip.type = 'button';
+      // Same two channels as the in-card button: the word and `.danger`.
+      grip.className = entry.equipped ? 'ep-hold danger' : 'ep-hold';
+      grip.dataset.holdFor = entry.key;
+      grip.dataset.act = entry.equipped ? 'unequip' : 'equip';
+      grip.textContent = entry.equipped ? 'Unequip' : 'Equip';
+      // WHICH PIECE THIS GRIP IS FOR, IN THE ACCESSIBILITY TREE. Codex found
+      // it and it is a defect of HIS RULING, not a nicety: D97 puts a SECOND
+      // control on every candidate, and until this line every one of them was
+      // named `Equip`. MEASURED, at ?shot=map&shotStorage=full (the bag filled
+      // through addToStorage, the real writer), main-hand, 1200x730, off
+      // `Accessibility.getFullAXTree`:
+      //
+      //   8 grips · AX names ["Unequip HOLD","Equip HOLD" x7] · 6 collisions
+      //
+      // A screen reader reads "Equip HOLD, button" seven times and a voice
+      // user has nothing to say. `data-hold-for` carries the id and IS NOT IN
+      // THAT TREE — also measured, not assumed. Two elements per candidate is
+      // his call and it ships; two elements where the new one has no name is a
+      // WORSE reader experience than the one control it joined, which is not
+      // what he ruled on.
+      //
+      // ONLY THE GRIP, AND THAT IS A MEASUREMENT TOO. The in-card `.ep-equip`
+      // is absent from the AX tree while folded, and the fold is an ACCORDION —
+      // clicking all eight faces left `aria-expanded="true"` on exactly ONE. So
+      // at most one in-card control exists at a time, inside the card whose
+      // face carries the name, and it has no sibling to be confused with. A
+      // second aria-label there would be a name nothing can collide with.
+      //
+      // `aria-label` and not `aria-labelledby`: the grip is a SIBLING of the
+      // face by construction (see the note below — that is rule 1's safety),
+      // so pointing at the face would mean minting an id for it and keeping
+      // two nodes in step across every redraw. The word and the piece already
+      // sit in this scope; naming the control here is one home, not two.
+      // It also drops the `HOLD` hint span out of the name — `aria-label`
+      // overrides content, and "Equip HOLD" was the hint leaking into it.
+      grip.setAttribute('aria-label',
+        `${entry.equipped ? 'Unequip' : 'Equip'} ${entry.face.label}`);
+      // A SIBLING, NOT A CHILD, and that is the whole of rule 1's safety here.
+      // Nested inside the face the grip's aborted click would bubble into the
+      // unfold path and only `stopPropagation` would stand between them — which
+      // is keeping two gestures apart by a promise instead of by structure.
+      // Sibling means an aborted hold has no path to the fold at all.
+      face.insertAdjacentElement('afterend', grip);
+      const act = entryAct.get(entry.key);
+      if (!act) { sealChip(grip); continue; }
+      // THE LIFT AFTER A COMMIT, AND IT IS A MEASUREMENT, NOT A PRECAUTION.
+      // Driven with real CDP touch at 1200x730: the hold fires AT FULL (that is
+      // armHold's design — the player feels it land with the thumb still down),
+      // `commit()` redraws this whole subtree, and the finger then lifts over
+      // whatever now occupies that pixel. Chrome dispatches the click to THAT
+      // element. Measured target: `BUTTON.es-cell on` — the release silently
+      // re-opened a slot picker the player never asked for.
+      //
+      // Rule 1's own swallow cannot reach this: it lives on the grip, and the
+      // grip no longer exists by the time the click is dispatched. THAT IS AN
+      // `armHold` FINDING, NOT AN ARMOURY ONE — any caller whose `onConfirm`
+      // rebuilds its own element loses the swallow, and combat's End Turn has
+      // the same shape. Flagged to the holdconfirm seat on the PR; fixed HERE
+      // only because this is the caller that has it today.
+      //
+      // NO TIMER, so there is no stale swallow to eat a later real tap (Vira's
+      // F3, which this tree has already paid for once).
+      //
+      // THE EATER EATS ONE CLICK AND IT IS THE ONE ITS OWN POINTER MAKES —
+      // AND THAT ONE PREDICATE IS THE WHOLE FIX FOR THREE FINDINGS.
+      //
+      // It was armed on *a hold completed* and released by *the next
+      // pointerdown*, and neither half is about the click it exists to eat. So
+      // the same defect was found three times, one road at a time, by three
+      // different readers: a held Confirm KEY commits with no lift (A7.swallow)
+      // · a MOUSE release over the element `act()` just removed makes no click
+      // (A7.mouseswallow, Codex P2a) · a touch or pen that reaches full and is
+      // then CANCELLED never lifts at all (A7.cancelswallow). Every one of them
+      // left a window click-capture listener standing, and the next activation
+      // ANYWHERE — the Grid tab, one Enter — paid for it.
+      //
+      // TWO SPECIAL CASES WERE THE WRONG SHAPE OF ANSWER and both are gone:
+      // `ev.pointerType !== 'mouse'` is DELETED. The question was never *which
+      // device* — it is *whose lift is this click*, and the event answers it.
+      // Measured, Chromium 141, 1200x730, browser.mjs CDP path:
+      //     touch tap, element present   pointerdown id 2  -> click id 2
+      //     touch tap, element REMOVED   pointerdown id 3  -> click id 3 (DIV)
+      //     touch CANCELLED after 900 ms pointerdown id 4  -> NO CLICK AT ALL
+      //     mouse press/release          pointerdown id 1  -> click id 1
+      // A REAL click is a PointerEvent in this engine and carries the
+      // pointerId of the gesture that produced it. A trailing lift therefore
+      // identifies itself, and a cancelled finger cannot forge one because
+      // there is no click at all.
+      //
+      // AND THE SYNTHETIC ACTIVATIONS CANNOT FORGE ONE EITHER — measured for
+      // BOTH forms this tree actually uses, because they differ and I had the
+      // wrong one written here first:
+      //     input.js:509  new MouseEvent('click')  -> MouseEvent, NO pointerId
+      //                                                property at all
+      //     input.js:844  el.click()               -> PointerEvent, id -1
+      // `undefined !== 4` and `-1 !== 4`. input.js's keyboard and pad road is
+      // the FIRST of those, which is the one A7.swallow drives.
+      //
+      // AND DELETING THE DEVICE GATE REMOVES A BET ON THE BROWSER. That gate
+      // rested on "a mouse over a removed element makes no click" — true today
+      // (A7.premise watches it), and the day it stops being true the gate turns
+      // silently back into the defect it replaced. The identity check needs no
+      // such premise: if a mouse ever does dispatch that click, it carries id 1
+      // and is eaten, which is the behaviour we want either way.
+      //
+      // WHAT IS LEFT OF THE ROAD GATE IS SCOPE, NOT A CASE: `ev.type ===
+      // 'pointerdown'` at the call site is "this gesture had a pointer at all".
+      // A held key, a held pad button and the synthetic `detail === 0` click
+      // reach `onConfirm` with no pointer behind them and no lift owed.
+      //
+      // AND THE CANCEL TEARS THE EATER DOWN rather than merely starving it.
+      // Measured above: a cancelled pointer dispatches NO click, so the eater
+      // has nothing left to wait for and goes now instead of at some later
+      // pointerdown. The identity check already makes it harmless; this makes
+      // it absent, which is the difference between a quiet listener and none.
+      //
+      // BOUNDARY, STATED POSITIVELY. On the MOUSE road the eater still arms and
+      // is fed nothing, so one window click-capture listener lives from the
+      // hold to the next `pointerdown` — inert (id 1 matches no other click),
+      // not free. PEN IS STILL NOT DRIVEN: it now needs no device assumption at
+      // all, which is strictly better than the gate it replaces, but no pen
+      // event has been dispatched at this ref.
+      const eatTheLift = (pointerId) => {
+        const off = () => {
+          removeEventListener('click', eat, true);
+          removeEventListener('pointerdown', off, true);
+          removeEventListener('pointercancel', gone, true);
+        };
+        // WHOSE LIFT IS THIS. Anything else — a synthetic activation click, a
+        // later real tap, another finger — is not this gesture's and is none of
+        // this eater's business.
+        const eat = (e) => {
+          if (e.pointerId !== pointerId) return;
+          e.stopPropagation(); e.preventDefault(); off();
+        };
+        // THIS GESTURE ENDED WITHOUT LIFTING. No click is coming; go now.
+        const gone = (e) => { if (e.pointerId === pointerId) off(); };
+        addEventListener('click', eat, true);
+        addEventListener('pointerdown', off, true);
+        addEventListener('pointercancel', gone, true);
+      };
+      // THE THREE ROADS, WATCHED FAILING BEFORE THEY WERE CLOSED. Kept as a
+      // record of what was measured, not as a second copy of the reasoning —
+      // that is the block above, and it has one home.
+      //
+      //   KEY (A7.swallow). Real `Input.dispatchKeyEvent` through input.js's
+      //   own road, map mount, 1200x730: cursor walked onto the grip with real
+      //   ArrowDown, Enter held 900 ms of a 600 ms dial -> committed, slot
+      //   "Straight Sword" -> "＋". Then one ordinary Enter on the Grid view
+      //   tab -> `data-view` "hybrid" -> "hybrid". THE TAB DID NOTHING.
+      //   MOUSE (A7.mouseswallow, Codex P2a). Same shape with a 900 ms mouse
+      //   hold in front of it: window click-capture listeners NET +1 after the
+      //   lift, ZERO clicks dispatched, and the next Enter -> "hybrid" ->
+      //   "hybrid" again. A6 CANNOT SEE THIS: it reads [] after a mouse lift
+      //   whether an eater is armed or not.
+      //   CANCEL (A7.cancelswallow). Touch held 900 ms of a 600 ms dial, then
+      //   `Input.dispatchTouchEvent touchCancel`: slot "Straight Sword" -> "＋"
+      //   (fire-at-full, so the eater armed), no click ever dispatched, and the
+      //   next Enter -> "hybrid" -> "hybrid". BOTH EDGES of the cancel are
+      //   driven — cancelled BELOW full is the abort and must not commit, and
+      //   it was already green, because an abort never reaches `onConfirm`.
+      //
+      // A6.tail COULD NEVER HAVE CAUGHT THE MOUSE ONE and its comment said
+      // otherwise. It reads [] on the mouse road whether the eater is armed or
+      // not — the plant proves it, naming the TOUCH lift with the swallow
+      // removed entirely. One zero came from the eater and one from the
+      // browser; the comment credited both to the eater. Corrected in place.
+      // A7 owns the mouse and cancel roads.
+      //
+      // `ev.type === 'pointerdown'` is exactly and only the fire-at-full of a
+      // POINTER press: `armPress` hands `begin` the pointerdown itself as the
+      // origin event, and no other road can produce that type here. A source
+      // flag would be a second copy of a fact the event already carries.
+      //
+      // THE SAME CLOSURE THE BUTTON RUNS. Two roads, one act, written once —
+      // a second `equipPiece(...)` here is two chances to disagree about what
+      // "equip" means, which is the copy this seat exists to refuse.
+      heldGrips.push(armHold(grip, {
+        ms: gripMs,
+        onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(ev.pointerId); act(); },
+        id: 'equipPiece',
+      }));
+    }
+    //
+    // THE IN-CARD BUTTON STAYS AND IS NOT A FALLBACK. It is the road for
+    // anyone who cannot perform a hold at all. (#304's body said a hold has no
+    // keyboard or pad equivalent; THAT WAS WRONG and it is corrected here —
+    // `armPress` (ui/gesture.js, S7, 2026-08-17) runs the same timer for a held
+    // Confirm key and a held Confirm pad button. What has no equivalent is a
+    // hold for a hand that cannot hold, on any input.)
+    // CLICK OFF THE CARD REFOLDS IT. Bound to the picker, not the document: the
+    // Armoury already owns a veil that closes the whole panel on an outside
+    // click, and a second document-level listener would race it — press outside
+    // everything and you would get a refold AND a close, from two homes.
+    // `.ep-list` is the whole card region, so this fires for a press anywhere
+    // else in the picker and nowhere else.
+    box.addEventListener('click', (ev) => {
+      if (!ev.target.closest('.ep-list')) fold.close();
+    });
+    // WHICH CARD IS THE ONE YOU ARE WEARING, published on the face itself.
+    // Written after mount because the renderer owns the button; read by
+    // tools/armoury-picked-up.mjs, which must find the equipped card WITHOUT
+    // knowing the loadout — a probe that recomputed "which one is equipped"
+    // would agree with a bug as happily as with the truth.
+    for (const entry of entries) {
+      const face = list.querySelector(`[data-face="${CSS.escape(entry.key)}"]`);
+      if (face && entry.equipped) face.dataset.equipped = '1';
+    }
+    if (!entries.length) {
+      list.insertAdjacentHTML('beforeend',
+        '<p class="ep-hint">Nothing you are carrying fits this slot yet.</p>');
+    }
+    return box;
+>>>>>>> theirs
   }
   if (opts.small) {
     el.style.transform = 'scale(0.92)';
@@ -52443,6 +53738,33 @@ function cardTooltip(registries, def, tokens) {
   return html;
 }
 
+<<<<<<< ours
+=======
+  function draw() {
+    // The previous render's grips die BEFORE their elements do — see heldGrips.
+    while (heldGrips.length) heldGrips.pop()();
+    // The layout is READ off the row, never inferred from the id. `data-surface`
+    // / `data-member` are the house convention for a navigable set (#78): the
+    // host names the set, each control names its member, so an instrument can
+    // enumerate this from the rendered page without importing anything.
+    const L = viewLayout(view);
+    wrap.innerHTML = `
+      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}">
+        <header class="armoury-head">
+          <h2>ARMOURY</h2>
+          <div class="armoury-views" data-surface="armouryView">
+            ${viewIds().map((v) => `<button type="button" data-member="${esc(v)}" class="${v === view ? 'on' : ''}">${esc(v)}</button>`).join('')}
+          </div>
+          <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
+        </header>
+        ${notice ? `<p class="armoury-notice">${esc(notice)}</p>` : ''}
+        <div class="armoury-body">
+          <div class="armoury-left"></div>
+          <div class="armoury-right"></div>
+        </div>
+        <div class="armoury-strip"></div>
+      </div>`;
+>>>>>>> theirs
 
 Object.assign(module.exports, { staticTokens, relicText, renderCard, upgradePreviewHtml });
 
@@ -52457,6 +53779,7 @@ function renderEquipmentRequirements(receipts) {
     : '<p>No attribute requirements.</p>'}</section>`;
 }
 
+<<<<<<< ours
 function renderPlayerPoise(receipt) {
   const sources = receipt.sources.length
     ? `<ul>${receipt.sources.map((source) => `<li data-source-kind="${esc(source.kind)}">${esc(source.id)} <strong>${source.value}</strong></li>`).join('')}</ul>`
@@ -52466,6 +53789,14 @@ function renderPlayerPoise(receipt) {
     + `<span>Items ${receipt.equipment} + relics ${receipt.relic} = <strong>${receipt.value}</strong></span>`
     + `<small>${esc(receipt.note)}</small></section>`;
 }
+=======
+  // The removal moved INTO `close()` — see the block there. Leaving a copy here
+  // would be two homes for one teardown, disagreeing on every path but this one.
+  const onKey = (e) => {
+    if (e.key === 'Escape') close();
+  };
+  document.addEventListener('keydown', onKey);
+>>>>>>> theirs
 
 function renderRoleCopies(surface) {
   return surface.roles.map((row) => `<div data-role="${esc(row.role)}"><b>${esc(row.profile.displayName)} <em class="role-copy-count">x${row.copies}</em></b>`
@@ -52500,6 +53831,7 @@ function renderCandidateComparison(candidate, { expanded = false } = {}) {
 Object.assign(module.exports, { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies, renderCandidateComparison });
 
 },
+<<<<<<< ours
 "src/ui/components/flask.js": function (module, exports, require) {
 const { esc } = require("src/ui/components/tooltip.js");
 const { assetUrl } = require("src/ui/assetmap.js");
@@ -52871,6 +54203,11 @@ function inventoryDetailCardModel({ row, art, description, mods, instruction = '
   });
 }
 
+=======
+"src/ui/components/arcaneExposure.js": function (module, exports, require) {
+// Pure projection and renderer for host-owned per-enemy Arcane Exposure state.
+// It never derives carriers, applies damage, or mutates a meter.
+>>>>>>> theirs
 
 Object.assign(module.exports, { armouryInventoryModel, armouryStatsPanelModel, armouryCardStripModel, armouryPanelModel, armouryOverlayModel, equipmentSetCellModel, equipmentSlotModel, inventoryItemCardModel, inventoryDetailCardModel });
 

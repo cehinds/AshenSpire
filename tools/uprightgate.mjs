@@ -269,75 +269,23 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 
-// THE CORPUS RUNS IN FOUR GROUPS, BECAUSE A CORPUS IS A POPULATION TOO.
+// THE CORPUS IS THE SEVEN DISCRIMINATING BEHAVIOURS THIS INSTRUMENT CAN
+// CAUSALLY CATCH THROUGH THE RENDERED DOOR. Six exercise the gate itself; the
+// seventh checks that the authored compact-band table agrees with its constants.
 //
-// doorplant hands the SAME argv to every plant in a group, and these plants do
-// not live at the same cell. The gate's own defects show at Text M on the phone
-// shapes; THE CONSTANT'S defect shows in a three-pixel window and only at the
-// text size that can see the number. Running the whole corpus at one cell would
-// make plants report NOT CAUGHT for want of a shape rather than for want of a
-// check. So: group 1 is the gate, group 2 is the constant's guard IN THE MAIN
-// RUN, group 3 is the derivation, group 4 is the predicate against the premise.
-// One number, checked at the cell where it is decided rather than at the cell
-// that is convenient.
-//
-// THE CELLS MOVED WITH THE NUMBER, 2026-08-16. Under `whole` the constant was
-// the MINIMUM over the text sizes, so Text S set it and both constant groups
-// lived at S in the 430s. Under the premise it is the MAXIMUM (MR-142/MR-143),
-// so Text XL sets it at 465 and group 3 derives there; group 2 stays at Text S
-// because S is now where the constant's other edge shows — the heights just
-// above it that work for everyone. A corpus anchored to a moved number is the
-// same defect this branch was opened to fix.
-// ─────────────────────────────────────────────────────────────────────────────
-// THIS CORPUS EXITS 1, AND FIVE OF ITS PLANTS CANNOT BE CAUGHT HERE BY
-// CONSTRUCTION. Read this before "fixing" them. (Bjorn, 2026-08-21, #299.)
-//
-// `--selftest` exited 1 before this pass and exits 1 after it. What changed is
-// that its redness is now EXPLAINED instead of silent, which is the whole of
-// what this pass could honestly deliver.
-//
-//   · 4 plants were DRIFTED — their find-strings died when #27 gave the gate an
-//     `enabled` term. Re-aimed; all four now CAUGHT by their own named reds.
-//   · 1 plant is new (the band contract, below) and is CAUGHT.
-//   · 5 plants target the REFUSAL THRESHOLD and are UNCATCHABLE BY THIS TOOL.
-//
-// WHY, MEASURED — NOT ARGUED. `shortWideMinH` is not merely compared against
-// the board; it DECIDES the composition the board renders, so the wall moves
-// with it and every value is self-consistent. Same door, same width (800),
-// same text size (XL):
-//
-//     shortWideMinH: 340 (as shipped)  ->  wall h 330..339  ->  max(wall)+1 = 340  PASS
-//     shortWideMinH: 335 (planted)     ->  wall h 325..334  ->  max(wall)+1 = 335  PASS
-//
-// Lower it and the heights just under it stop being refused and start rendering
-// the compact composition, so the wall shrinks to meet the new number. Raise it
-// and those heights lose the compact composition, genuinely break, and the
-// refusal is justified by the very change under test. THE CONSTANT MANUFACTURES
-// ITS OWN PREMISE IN BOTH DIRECTIONS.
-//
-// This is NOT Charter 2b. 2b says a threshold with no cell adjacent to it cannot
-// tell you it is wrong, and answers with sample density. Here density is no help
-// whatever: there is no value of this constant that this derivation reports as
-// wrong, so `--ladder`'s agreement is not evidence about the number. A check
-// that cannot fail is decoration, and these five plants are what proves it.
-//
-// WHERE THE SOUND PREMISE LIVES. `balance.js` says this number is "the compact
-// wide composition's rendered lower edge … derived at one-pixel resolution by
-// tools/short-landscape-support.mjs before this value is consulted, so moving
-// the number without moving the rendered premise goes red." A derivation that
-// FORCES the compact composition and finds where its required controls stop
-// being whole would not be self-referential. Whether that tool actually does
-// this is UNMEASURED BY ME and outside my claimed path (#299) — routed as a
-// card, deliberately not chased inside this diff.
-//
-// DISPOSITION IS A REVIEWER'S CALL, NOT THE MAKER'S. By our own rule a plant
-// that provably cannot fail is decoration and should go; deleting five checks
-// on the strength of my own measurement is exactly the act a maker does not
-// clear for himself. They stay, labelled, until someone else rules.
+// Five former threshold plants were retired on 2026-08-31 under #299's current
+// acceptance disposition. They changed `shortWideMinH`, which also chooses the
+// composition being measured: lowering it makes the newly admitted compact
+// composition fit, while raising it makes the removed compact cells genuinely
+// wall. The threshold therefore manufactures its own premise in either direction.
+// Those plants could never discriminate a bad threshold, and retaining permanent
+// UNCAUGHT entries would describe known decoration as coverage. The rendered
+// premise belongs to `short-landscape-support.mjs`; this corpus retains only
+// defects for which `uprightgate.mjs` has an independent observable.
 // ─────────────────────────────────────────────────────────────────────────────
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  let rc = await doorSelftest({
+  const rc = await doorSelftest({
     tool: 'uprightgate.mjs',
     args: ['--only', '844x390,1200x730,400x400,800x500'],
     timeoutMs: 900000,
@@ -407,40 +355,6 @@ if (process.argv.includes('--selftest')) {
         expectRed: /scrolls sideways/,
       },
       {
-        // MY OWN MISTAKE, PLANTED. The first predicate on this branch refused
-        // 800x450, where END TURN is whole — a working window taken away. It was
-        // caught by widening the shape list, which is luck dressed as method, so
-        // the corpus now carries it. This is also the CONTENT door: the threshold
-        // is a data value (Law 1), and a bad data value must fail loud and by
-        // name (clause 5) rather than quietly refuse somebody's screen.
-        // RE-AIMED 2026-08-21 (Bjorn, AshenSpire#299) — AT THE CONSTANT THAT
-        // ACTUALLY REFUSES. This plant moved `gateBelowH` and expected a
-        // refusal; since #27 that constant is the compact band's upper edge, so
-        // raising it moves shapes from wide into COMPACT and refuses nobody.
-        // The plant still applied, still ran, and tested a causal path the code
-        // no longer has — a stale PREMISE, not a stale string, which is why it
-        // reported a silent green instead of announcing itself the way the four
-        // drifted plants did. `shortWideMinH` is the edge with a wall under it
-        // (measured: at 800 wide, Text XL, the wall runs h 330..339 and
-        // max(wall)+1 = 340 = the written constant, exactly).
-        //
-        // IT MOVES BOTH HOMES, ON PURPOSE. The band-contract check added in this
-        // same pass fires whenever the constants and the documented table
-        // disagree — so a plant that moved only the constant tripped THAT red
-        // instead of this one and came back RED-FOR-WRONG-REASON. That was a
-        // defect I introduced, caught within the hour by the label I had just
-        // added, which is the whole argument for the label. A developer creeping
-        // this threshold moves both copies; the known-bad worth planting is the
-        // number being WRONG in both homes, not merely inconsistent between them.
-        name: 'the threshold creeps up and refuses a working window (the branch\'s own first bug)',
-        edits: [
-          { file: 'src/content/balance.js', find: '      shortWideMinH: 340,', replace: '      shortWideMinH: 395,' },
-          { file: 'src/content/balance.js', find: '//   340 <= h < 465           compact wide composition (when width fits)', replace: '//   395 <= h < 465           compact wide composition (when width fits)' },
-          { file: 'src/content/balance.js', find: '//   h < 340                  truthful upright/resize refusal', replace: '//   h < 395                  truthful upright/resize refusal' },
-        ],
-        expectRed: /GATE STANDS WHERE NOTHING WALLS/,
-      },
-      {
         // THE ONE `gateBelowH` PLANT THAT SURVIVES, RE-PURPOSED TO WHAT THAT
         // CONSTANT ACTUALLY DECIDES. It picks between two WORKING compositions,
         // so no rendered premise can contradict it and no refusal appears —
@@ -454,148 +368,6 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-
-  // GROUP 2 — THE BRANCH'S OWN SECOND BUG, AT THE CELL THAT CAN SEE IT.
-  //
-  // The plant above moves the threshold 55 px and any ladder catches it. This one
-  // moves it THREE, which is the size the real defect was, and a three-pixel
-  // creep is invisible to every cell that is not standing on the boundary: while
-  // the constant was 432 and the ladder had a cell at 430 and a cell at 440 and
-  // nothing between, `gateBelowH: 435` printed PASS 14/14 through every run this
-  // branch made while it refused three working screens. The cell and the text
-  // size are BOTH part of the catch, and BOTH MOVED WITH THE NUMBER on 2026-08-16:
-  // 800x466 at Text S is the new boundary cell, three above the new constant 465.
-  //
-  // TEXT S IS STILL THE RIGHT TEXT SIZE AND THE REASON INVERTED. It used to be
-  // the size that SET the constant (the minimum whole-fit). It is now the size
-  // that can SEE ITS UPPER EDGE: at S the board is whole from h 432, so 466 is a
-  // screen that works for everybody and walls nobody, and a constant that creeps
-  // to 468 takes it away. At Text M/L/XL the same cell is not whole and clause K
-  // never trips, so the plant would report NOT CAUGHT for want of a shape.
-  rc = await doorSelftest({
-    tool: 'uprightgate.mjs',
-    // `--only` SELECTS FROM THE DECLARED SHAPE LIST; IT DOES NOT INVENT A CELL.
-    // My first re-anchor named `800x342`, which is not a rung in `LADDER_H`, so
-    // the run matched no shape and exited 2 — and the corpus reported it as a
-    // failure DISTINCT from a blind check, because `RED-FOR-WRONG-REASON` and
-    // `UNCAUGHT` are now different words. Under the old single label this would
-    // have read as "the tool is blind to a three-pixel creep" and I would have
-    // gone looking for the wrong defect. `844x340` IS declared — it is the
-    // compact composition's lower-edge cell, whole at Text XL by the rendered
-    // premise balance.js cites for that number.
-    args: ['--text', 'XL', '--only', '844x340'],
-    timeoutMs: 900000,
-    plants: [
-      {
-        // RE-ANCHORED 2026-08-21 (Bjorn, AshenSpire#299): same three-pixel
-        // creep, moved onto the constant that refuses and a cell that can see
-        // it. The cell and the text size are BOTH part of the catch and both
-        // moved with the number — measured, not assumed: at Text XL the wall
-        // runs to h 339 and 340 is the first whole cell, so 844x340 is a screen
-        // that works and a constant creeping to 343 takes it away. Both homes
-        // move, for the reason the group-1 plant above records.
-        name: 'the threshold creeps three pixels above the last wall (the branch\'s own SECOND bug, re-anchored at Text XL)',
-        edits: [
-          { file: 'src/content/balance.js', find: '      shortWideMinH: 340,', replace: '      shortWideMinH: 343,' },
-          { file: 'src/content/balance.js', find: '//   340 <= h < 465           compact wide composition (when width fits)', replace: '//   343 <= h < 465           compact wide composition (when width fits)' },
-          { file: 'src/content/balance.js', find: '//   h < 340                  truthful upright/resize refusal', replace: '//   h < 343                  truthful upright/resize refusal' },
-        ],
-        expectRed: /GATE STANDS WHERE NOTHING WALLS/,
-      },
-    ],
-  }) || rc;
-
-  // GROUP 3 — THE DERIVATION, BOTH DIRECTIONS.
-  //
-  // `--ladder` is what makes the number re-derivable instead of remembered, and
-  // an unfalsifiable derivation is a comment with a browser attached. Both edges
-  // of the equality it asserts get a plant: five too LOW (a wall left with no
-  // gate — WHICH IS WHAT 432 ACTUALLY WAS at Text XL, so this plant is the real
-  // defect put back) and ten too HIGH (a refusal that has outgrown its premise).
-  //
-  // AT TEXT XL, 455..480, BECAUSE THAT IS WHERE THE NUMBER IS DECIDED NOW. The
-  // constant is max(wall h)+1 over the four text sizes and XL is the maximum, so
-  // XL alone re-derives 465 and the clean run comes back green on a partial set.
-  // The window is deliberately narrow — 26 cells — and it contains the ONE-PIXEL
-  // WALL AT 464 that sets the whole number (Vira, 2026-08-15). A sweep that
-  // stepped over 464 would derive 451 and pass itself off as a measurement; this
-  // group is the guard on exactly that, and the tool prints the range it walked.
-  //
-  // A NARROW SWEEP IS SOUND FOR THIS DERIVATION AND WAS NOT FOR THE OLD ONE. The
-  // maximum needs only the TOP of the wall set: a cell below it cannot raise it,
-  // so the floor of the sweep is free. The ceiling is not free, and it is
-  // asserted — a sweep whose top cell is still a wall has not found the edge.
-  rc = await doorSelftest({
-    tool: 'uprightgate.mjs',
-    // SWEEP RE-AIMED 2026-08-21 (Bjorn, AshenSpire#299) with the constant it
-    // checks. The window is still deliberately narrow and still contains the
-    // one-pixel edge that sets the whole number — measured on this tree at
-    // 800 wide, Text XL: the wall runs h 330..339, 340 is the first whole
-    // cell, max(wall)+1 = 340 = `shortWideMinH` as written. The old window
-    // (455..480) is the compact band's upper edge, where nothing walls at all,
-    // which is why both plants below used to fail for the WRONG REASON rather
-    // than going green: the sweep found no wall to reason about.
-    args: ['--ladder', '--ladder-text', 'XL', '--ladder-from', '330', '--ladder-to', '352'],
-    timeoutMs: 900000,
-    plants: [
-      {
-        name: '--ladder: the constant sits below the last wall (what 432 was — a wall with no gate)',
-        file: 'src/content/balance.js',
-        find: '      shortWideMinH: 340,',
-        replace: '      shortWideMinH: 335,',
-        expectRed: /THE CONSTANT LEAVES A WALL UNGATED/,
-      },
-      {
-        name: '--ladder: the constant refuses above the last wall (a refusal that outgrew its premise)',
-        file: 'src/content/balance.js',
-        find: '      shortWideMinH: 340,',
-        replace: '      shortWideMinH: 348,',
-        expectRed: /THE CONSTANT REFUSES ABOVE ITS OWN PREMISE/,
-      },
-    ],
-  }) || rc;
-
-  // GROUP 4 — THE PREDICATE AGAINST THE PREMISE (`--predicates`, Vira).
-  //
-  // A FOURTH GROUP FOR THE SAME REASON THERE WERE THREE: a corpus is a
-  // population too, and this plant does not live where the others do. It is run
-  // at TEXT M over h 385..400, and both halves of that cell are load-bearing:
-  //   · at Text M the wall's top edge is h 394, so the clean run has TEN REAL
-  //     WALL CELLS to rule on and comes back GREEN because every one of them is
-  //     gated. A group whose clean run had no wall in it would report this plant
-  //     CAUGHT for want of a referent, which is the empty-query defect wearing a
-  //     corpus (SOP 2's ⚙ clause).
-  //   · it is NOT run at Text XL, and that is the whole reason the group exists
-  //     as its own cell. At XL the tree is ALREADY RED here — the wall runs to
-  //     h 450 against a constant of 432 — and doorplant requires the clean run to
-  //     come back green. Running this plant at XL would prove nothing about the
-  //     check and would fail the harness for a defect that is Marina's card.
-  //
-  // The plant drops the constant BELOW the wall's top edge, which is the exact
-  // shape of a refusal that stopped covering its own premise: the gate keeps
-  // standing, keeps looking like a gate, and the wall walks out from under it.
-  rc = await doorSelftest({
-    tool: 'uprightgate.mjs',
-    // WINDOW RE-AIMED 2026-08-21 (Bjorn, AshenSpire#299), and this group's own
-    // reasoning above is what demanded it: the plant needs REAL WALL CELLS in
-    // the clean run or it is reported caught for want of a referent. The old
-    // window (385..400 at Text M) sits entirely ABOVE the wall — measured on
-    // this tree, Text M walls h 315..339 and 340 is the first whole cell — so
-    // the clean run ruled on no wall at all. Both halves stay load-bearing, at
-    // heights the board actually has: 320..352 straddles the edge, with walled
-    // cells below it and whole cells above.
-    args: ['--predicates', '--predicate-text', 'M', '--predicate-from', '320', '--predicate-to', '352'],
-    timeoutMs: 900000,
-    plants: [
-      {
-        name: '--predicates: the constant drops below the wall\'s top edge — a wall the gate does not stand on',
-        file: 'src/content/balance.js',
-        find: '      shortWideMinH: 340,',
-        replace: '      shortWideMinH: 335,',
-        expectRed: /A WALL WITH NO GATE/,
-      },
-    ],
-  }) || rc;
 
   process.exit(rc);
 }
@@ -654,8 +426,9 @@ const BROWSERS = [
 // MAXIMUM, so Text XL sets it (S 368, M 395, L 424, XL 465 — `--ladder`), and
 // Text S is where its COST is visible instead: at S every one of these rungs is
 // a screen that works and is refused anyway. Both readings matter and they are
-// different runs. `--selftest` group 2 runs the band at S for the cost edge and
-// group 3 derives at XL for the number, rather than trusting anyone to remember.
+// different diagnostic runs. `--selftest` deliberately does not plant this
+// threshold: #299 proved the rendered composition moves with the number, making
+// such a plant self-justifying rather than discriminating.
 const LADDER_H = [410, 430, 450, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 480, 500];
 const SHAPES = [
   [390, 844], [360, 640], [834, 1194],   // portrait: must never gate

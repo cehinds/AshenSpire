@@ -4,8 +4,13 @@
 // The rendered check on E9 / #254.
 //
 // HIS WORDS, 2026-08-15 (#254): "I'd like the hud to look the same both combat
+<<<<<<< ours
 // and map". HIS RULING, 2026-08-23: the upper references are 200 HP / 20 MP /
 // 20 SP. Two halves of one ask, and they are INDEPENDENT — a repo can honour
+=======
+// and map". HIS RULING, 2026-08-22: the upper references are 500 HP / 50 MP /
+// 50 SP. Two halves of one ask, and they are INDEPENDENT — a repo can honour
+>>>>>>> theirs
 // either one alone and still show the player two different HUDs.
 //
 // WHY IT EXISTS, and it is not "the map had no bars" — it had one.
@@ -24,7 +29,11 @@
 //
 // So this file asserts the thing neither screen's own check can: that the two
 // screens AGREE. It is not a second copy of hudbars.mjs — that tool asks
+<<<<<<< ours
 // whether ONE HUD's lengths track their maxima (monotonic, linear,
+=======
+// whether ONE HUD's lengths track their maxima (monotonic, linear, floored,
+>>>>>>> theirs
 // capped). This asks whether TWO HUDs give the same answer about one character,
 // and the gap between those questions is exactly where this defect lived.
 //
@@ -33,8 +42,17 @@
 //                  declared cell count was reached. An empty HUD and a matching
 //                  HUD look identical to a check that only hunts for
 //                  mismatches, and they mean the opposite.
+<<<<<<< ours
 //   P1 ROWS        both top HUDs draw exactly HP, MP and SP. Combat poise stays
 //                  on the player character card and must not enter this set.
+=======
+//   P1 ROWS        the map draws the SAME ROW SET as combat, minus only the
+//                  rows whose reader legitimately refuses off the battlefield.
+//                  That set is exactly {poise}: outside a fight there is no
+//                  poise meter, and model/resources.js's refusal path makes the
+//                  bar ABSENT rather than a lying 0/0 trough. Any OTHER
+//                  difference is red, in either direction.
+>>>>>>> theirs
 //   P2 SAME ASK    for every shared row, the two screens ask for the SAME
 //                  trough percentage and the SAME fill percentage, and report
 //                  the same cur/max. EXACT equality, no tolerance: these are
@@ -46,16 +64,30 @@
 //                  that stops carrying `domainMax` (the wire from his ruling to
 //                  the render) goes red here even though both screens still
 //                  agree with each other.
+<<<<<<< ours
 //   P3R REFERENCE  the reference table IS 200 HP / 20 MP / 20 SP. This is THE
+=======
+//   P3R REFERENCE  the reference table IS 500 HP / 50 MP / 50 SP. This is THE
+>>>>>>> theirs
 //                  ONE PLACE his numbers are typed in this tool, deliberately:
 //                  P3 alone would stay green if the constant were edited,
 //                  because it reads the same constant the render reads. If he
 //                  moves the reference, this line moves with it, by hand, in
 //                  the same act — which is the point.
+<<<<<<< ours
 //   P4 PERCENTAGE  no absolute minimum width overrides the requested percentage
 //                  on either screen. The canonical combat component owns this;
 //                  the map inherits the same rule by mounting that component.
 //   P5 INK         on each screen, a trough renders within PX_TOL of
+=======
+//   P4 SAME FLOOR  the two screens agree, per row, on whether the minimum-width
+//                  floor fired; AND every floored trough carries the DASHED
+//                  border. A floored bar has stopped encoding its maximum, and
+//                  one that does not say so is a bar that looks to scale and is
+//                  not — which at 500/50 is not hypothetical: a full MP pool is
+//                  4 % of its track and floors on a phone.
+//   P5 INK         on each screen, an unfloored trough renders within PX_TOL of
+>>>>>>> theirs
 //                  `ask% x track`, and its fill within PX_TOL of
 //                  `fill% x trough content`. P2 says the two screens ask for
 //                  the same thing; this says the ask arrived as ink.
@@ -67,9 +99,16 @@
 // BOTH EDGES, named because the gate requires it, and they are edges of the
 // TROUGH's domain (0 .. reference), which is the quantity this change moves:
 //   · LOW  — `?shotMaxHp=10&shotMaxMana=1&shotMaxStamina=1`: the bottom of his
+<<<<<<< ours
 //            own stated band ("a min of 10"). These short troughs are the edge
 //            that proves an absolute pixel floor does not override percentage.
 //   · HIGH — `?shotMaxHp=200&shotMaxMana=50&shotMaxStamina=50`: AT the
+=======
+//            own stated band ("a min of 10"). Every pool is at or under the
+//            minimum-width floor, so this is the edge where the floor and its
+//            dashed mark are the whole of what the player sees.
+//   · HIGH — `?shotMaxHp=500&shotMaxMana=50&shotMaxStamina=50`: AT the
+>>>>>>> theirs
 //            reference. Trough 100 %, fill partial. Nothing above it exists —
 //            `lengthPct` clamps at 100 — so this is the ceiling, not a large
 //            sample.
@@ -77,16 +116,30 @@
 //            the only one a player can actually reach.
 //
 // THE THRESHOLD'S OWN NEIGHBOURHOOD (Charter 2b), and the honest version of it:
+<<<<<<< ours
 //   · P2, P3, P3R, P1, P4 and P6 compare EXACTLY. They have
 //     no threshold, so there is nothing to sample either side of.
 //   · P5's `PX_TOL` IS a threshold, and its unit is one CSS pixel. MEASURED,
 //     not asserted: plant 6 clamps a full-track trough and the run reports
 //     1.813 px off; a clean run reports at most 0.305 px over all 9 cells (both
+=======
+//   · P2, P3, P3R, P1, P4's agreement clause and P6 compare EXACTLY. They have
+//     no threshold, so there is nothing to sample either side of.
+//   · P5's `PX_TOL` IS a threshold, and its unit is one CSS pixel. MEASURED,
+//     not asserted: plant 6 clamps a full-track trough and the run reports
+//     1.813 px off; a clean run reports at most 0.305 px over all 6 cells (both
+>>>>>>> theirs
 //     figures are printed in the runs' own `P5/ink` lines). At PX_TOL = 1 the
 //     first is RED and the second GREEN; move the threshold ONE PIXEL up to 2
 //     and the plant goes green, ONE PIXEL down to 0 and the clean run goes red.
 //     A cell on each side, adjacent in the threshold's own unit, both entering
 //     by the same door as every other input.
+<<<<<<< ours
+=======
+//   · THE FLOOR ITSELF (16 px) IS NOT THIS TOOL'S THRESHOLD and is not sampled
+//     here: it is styles/combat.css's, and tools/hudbars.mjs A6/A6W owns it.
+//     This tool asks only whether the two screens AGREE about it.
+>>>>>>> theirs
 //
 // THE DOOR: the SOURCE TREE over http in headless Chromium (tools/serve.mjs).
 // Both screens are reached by their own `?shot=` state, the pools are posed
@@ -98,6 +151,7 @@
 // P3 is that it comes from the same file the render reads.
 // `--selftest` plants its known-bads as file bytes in a copied real tree
 // (tools/doorplant.mjs) and runs this tool WHOLE from the copy.
+<<<<<<< ours
 // `--p8-selftest` is the non-browser discriminator for the receipt predicate:
 // it feeds clean and planted page-read shapes through the same pure judge P8
 // uses after Chromium returns its boxes.
@@ -109,15 +163,35 @@
 //     wholly inside the viewport. Shared-shell available-width authority belongs
 //     to `node tools/hud-potion-followup.mjs --browser`, which proves the authored
 //     82 percent and its applied geometry rather than duplicating it here.
+=======
+//
+// WHAT IT DOES NOT COVER — the boundary, printed every run, not a to-do list:
+//   · THE TWO TRACKS ARE NOT THE SAME WIDTH, and this tool does not ask them
+//     to be. Measured at 8b5c030 + this change: the map's HP track is 1306.9 px
+//     against combat's 1097.8 at 1440x860, and 276.5 against 116.0 at 390x844,
+//     because the two headers carry different chrome (the map's bar row is a
+//     full line; combat's shares its line with two buttons). So the same
+//     character's bar is the same FRACTION on both screens and a different
+//     NUMBER OF PIXELS. Making the two tracks equal is a header-layout act on
+//     a screen with its own reachability gates (tools/mapreach.mjs), and it is
+//     NOT DONE and NOT OWNED.
+>>>>>>> theirs
 //   · THE UNDER-MODEL SURFACE IS UNTOUCHED. `src/ui/screens/coop.js`
 //     `meterBars()` still hand-writes `.bar.hpbar` for the co-op combatant
 //     strips — a THIRD renderer for this grammar, named in styles/combat.css's
 //     own comment since before this change. Out of E9's scope, still there,
 //     and this tool's P6 census is scoped to `.topbar` so it will not catch it.
+<<<<<<< ours
 //   · WHETHER 200/20/20 IS A GOOD SCALE. It is his ruling, made with the cost in
 //     front of him. This tool holds the number; it has no opinion about it.
 //   · Headless Chromium, four shapes, one text size, no accent theme, no
 //     colourblind palette. The runtime platform is printed in the boundary.
+=======
+//   · WHETHER 500/50 IS A GOOD SCALE. It is his ruling, made with the cost in
+//     front of him. This tool holds the number; it has no opinion about it.
+//   · Linux headless Chromium, two shapes, one text size, no accent theme, no
+//     colourblind palette. Windows and macOS are `unknown` here as everywhere.
+>>>>>>> theirs
 //   · NOT WIRED INTO ci.yml — see the PR. Between hand-runs, SOP 2's silence
 //     guard makes this `unknown`, not green.
 //
@@ -136,6 +210,7 @@ import { launchBrowser, resolveBrowser } from './browser.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
+<<<<<<< ours
 const valuesOf = (flag) => {
   const values = [];
   for (let i = 0; i < args.length; i++) {
@@ -145,17 +220,27 @@ const valuesOf = (flag) => {
   }
   return values;
 };
+=======
+>>>>>>> theirs
 
 // HIS RULING, TYPED ONCE, HERE, ON PURPOSE. See P3R in the header: everything
 // else in this file reads the reference out of the tree so it cannot drift from
 // the render, and that is precisely why one line has to say what the number is
 // supposed to BE.
+<<<<<<< ours
 const HIS_REFERENCE = Object.freeze({ hp: 200, mana: 20, stamina: 20 });
+=======
+const HIS_REFERENCE = Object.freeze({ hp: 500, pool: 50 });
+>>>>>>> theirs
 
 // ROWS WHOSE READER LEGITIMATELY REFUSES OFF THE BATTLEFIELD. Not a waiver
 // list — a statement about model/resources.js's refusal path, which returns
 // null when there is no meter and makes the bar ABSENT. A row added here
 // without that property would be this tool lying for the screen.
+<<<<<<< ours
+=======
+const OFF_BATTLEFIELD_ABSENT = new Set(['poise']);
+>>>>>>> theirs
 
 // ONE CSS PIXEL. P5's tolerance and the only threshold in this file; its
 // neighbourhood is plant 6 (a 2 px nudge) against a clean run at <= 0.05 px.
@@ -163,7 +248,10 @@ const PX_TOL = 1.0;
 
 const ALL_SHAPES = [
   { tag: '1440x860', w: 1440, h: 860, d: 1, mobile: false },
+<<<<<<< ours
   { tag: '844x340', w: 844, h: 340, d: 1, mobile: false },
+=======
+>>>>>>> theirs
   { tag: '390x844', w: 390, h: 844, d: 3, mobile: true },
   { tag: '320x640', w: 320, h: 640, d: 3, mobile: true },
 ];
@@ -171,7 +259,11 @@ const ALL_SHAPES = [
 const ALL_POSES = [
   { tag: 'shipped', q: '' },
   { tag: 'low', q: '&shotMaxHp=10&shotMaxMana=1&shotMaxStamina=1' },
+<<<<<<< ours
   { tag: 'high', q: '&shotMaxHp=200&shotMaxMana=50&shotMaxStamina=50' },
+=======
+  { tag: 'high', q: '&shotMaxHp=500&shotMaxMana=50&shotMaxStamina=50' },
+>>>>>>> theirs
 ];
 const SCREENS = [
   { tag: 'map', shot: 'map', ready: '.mapscreen' },
@@ -182,17 +274,22 @@ const SCREENS = [
 // in a sensible time. DECLARED, never implied: both flags print in the header
 // of every run that uses them, and P0 counts against the narrowed declaration
 // rather than pretending the full one was measured.
+<<<<<<< ours
 const selectorErrors = [];
 const shapeValues = valuesOf('--only-shape');
 const poseValues = valuesOf('--only-pose');
 if (shapeValues.length > 1) selectorErrors.push(`--only-shape was supplied ${shapeValues.length} times; supply it once`);
 if (poseValues.length > 1) selectorErrors.push(`--only-pose was supplied ${poseValues.length} times; supply it once`);
 const onlyShape = shapeValues[0] || null;
+=======
+const onlyShape = argOf('--only-shape');
+>>>>>>> theirs
 // A COMMA LIST, not a single tag: the corpus needs two poses at once (the
 // shipped one carries the floored cells, the `high` one carries the 100 %
 // troughs the PX_TOL plant bites), and a flag that can only name one would have
 // forced two corpora or a plant aimed at whatever the single pose happened to
 // reach. Still declared in the header of every run that uses it.
+<<<<<<< ours
 const onlyPose = poseValues[0] || null;
 const wantPoses = onlyPose ? onlyPose.split(',').map((x) => x.trim()).filter(Boolean) : null;
 const shapeTags = new Set(ALL_SHAPES.map((s) => s.tag));
@@ -208,6 +305,21 @@ if (wantPoses) {
   if (duplicates.length) selectorErrors.push(`duplicate --only-pose value(s) ${JSON.stringify(duplicates)}`);
   if (unknown.length) selectorErrors.push(`unknown --only-pose value(s) ${JSON.stringify(unknown)}; choose ${JSON.stringify([...poseTags])}`);
 }
+=======
+const onlyPose = argOf('--only-pose');
+const wantPoses = onlyPose ? onlyPose.split(',').map((x) => x.trim()).filter(Boolean) : null;
+function validateNarrowing() {
+  const shapeTags = new Set(ALL_SHAPES.map((x) => x.tag));
+  const poseTags = new Set(ALL_POSES.map((x) => x.tag));
+  const invalidShapes = onlyShape && !shapeTags.has(onlyShape) ? [onlyShape] : [];
+  const invalidPoses = wantPoses ? wantPoses.filter((x) => !poseTags.has(x)) : [];
+  const duplicatePoses = wantPoses ? wantPoses.filter((x, i) => wantPoses.indexOf(x) !== i) : [];
+  if (invalidShapes.length || invalidPoses.length || duplicatePoses.length) {
+    throw new Error(`invalid narrowing selector(s): shapes=${JSON.stringify(invalidShapes)}, poses=${JSON.stringify(invalidPoses)}, duplicate poses=${JSON.stringify([...new Set(duplicatePoses)])}`);
+  }
+}
+validateNarrowing();
+>>>>>>> theirs
 const SHAPES = onlyShape ? ALL_SHAPES.filter((s) => s.tag === onlyShape) : ALL_SHAPES;
 const POSES = wantPoses ? ALL_POSES.filter((p) => wantPoses.includes(p.tag)) : ALL_POSES;
 
@@ -233,6 +345,7 @@ const READ = `(() => {
     const fillEl = el.querySelector('.fill');
     const fb = fillEl ? fillEl.getBoundingClientRect() : null;
     const track = el.parentElement ? el.parentElement.getBoundingClientRect() : null;
+<<<<<<< ours
     const unitEl = el.closest('.resunit');
     const unitBox = unitEl ? unitEl.getBoundingClientRect() : null;
     const frameEl = unitEl ? unitEl.querySelector(':scope > .rescard-frame') : null;
@@ -246,6 +359,8 @@ const READ = `(() => {
     const frameTransparent = frameBackground === 'transparent' || frameBackground.endsWith(', 0)');
     const framePainted = !!frameStyle && frameBorder > 0
       || !!frameStyle && !frameTransparent;
+=======
+>>>>>>> theirs
     const bl = parseFloat(cs.borderLeftWidth) || 0;
     const br = parseFloat(cs.borderRightWidth) || 0;
     bars.push({
@@ -259,6 +374,7 @@ const READ = `(() => {
       trough: b.width, fill: fb ? fb.width : null,
       track: track ? track.width : null,
       inset: bl + br,
+<<<<<<< ours
       minWidth: cs.minWidth,
       unitWidth: unitBox ? unitBox.width : null,
       frame: frameBox ? {
@@ -266,11 +382,14 @@ const READ = `(() => {
         width: frameBox.width, height: frameBox.height, padAfterBar: frameBox.right - b.right,
         border: frameStyle ? frameStyle.border : '', background: frameBackground, painted: framePainted,
       } : null,
+=======
+>>>>>>> theirs
       floored: el.dataset.floored === '1',
       dashed: cs.borderTopStyle === 'dashed' && cs.borderRightStyle === 'dashed'
         && cs.borderBottomStyle === 'dashed' && cs.borderLeftStyle === 'dashed',
     });
   }
+<<<<<<< ours
   const receiptBox = (selector) => {
     const el = document.querySelector(selector);
     const b = el ? el.getBoundingClientRect() : null;
@@ -320,6 +439,10 @@ const READ = `(() => {
       cinders: document.querySelectorAll('.topbar .hud-top .hud-cinders').length,
       floor: document.querySelectorAll('.topbar .hud-top .hud-floor').length,
     },
+=======
+  return {
+    bars,
+>>>>>>> theirs
     // THE SECOND RENDERER'S CENSUS. Scoped to .topbar because that is where the
     // duplicate lived; the under-model strips are named in the boundary.
     legacyHpbars: document.querySelectorAll('.topbar .hpbar').length,
@@ -328,6 +451,7 @@ const READ = `(() => {
   };
 })()`;
 
+<<<<<<< ours
 function connectCdp(wsUrl, { sendTimeoutMs = 15000 } = {}) {
   const ws = new WebSocket(wsUrl); let nextId = 1; const pending = new Map();
   let closedError = null;
@@ -337,6 +461,12 @@ function connectCdp(wsUrl, { sendTimeoutMs = 15000 } = {}) {
       clearTimeout(timer);
       rej(closedError);
     }
+=======
+function connectCdp(wsUrl, sendTimeoutMs = 10000) {
+  const ws = new WebSocket(wsUrl); let nextId = 1; const pending = new Map();
+  const rejectPending = (reason) => {
+    for (const { rej, timer } of pending.values()) { clearTimeout(timer); rej(reason); }
+>>>>>>> theirs
     pending.clear();
   };
   ws.addEventListener('message', (e) => {
@@ -346,6 +476,7 @@ function connectCdp(wsUrl, { sendTimeoutMs = 15000 } = {}) {
       if (m.error) rej(new Error(m.error.message)); else res(m.result);
     }
   });
+<<<<<<< ours
   ws.addEventListener('close', () => rejectPending(new Error('CDP WebSocket closed before pending commands completed')));
   ws.addEventListener('error', () => rejectPending(new Error('CDP WebSocket error before pending commands completed')));
   return {
@@ -355,10 +486,18 @@ function connectCdp(wsUrl, { sendTimeoutMs = 15000 } = {}) {
       if (ws.readyState !== WebSocket.OPEN) {
         return Promise.reject(new Error(`CDP WebSocket is not open for ${method} (state ${ws.readyState})`));
       }
+=======
+  ws.addEventListener('close', () => rejectPending(new Error('CDP WebSocket closed')));
+  ws.addEventListener('error', () => rejectPending(new Error('CDP WebSocket error')));
+  return {
+    ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
+    send(method, params = {}, sessionId) {
+>>>>>>> theirs
       const id = nextId++;
       return new Promise((res, rej) => {
         const timer = setTimeout(() => {
           pending.delete(id);
+<<<<<<< ours
           rej(new Error(`CDP command ${method} exceeded ${sendTimeoutMs} ms`));
         }, sendTimeoutMs);
         pending.set(id, { res, rej, timer });
@@ -369,6 +508,12 @@ function connectCdp(wsUrl, { sendTimeoutMs = 15000 } = {}) {
           pending.delete(id);
           rej(error);
         }
+=======
+          rej(new Error(`CDP ${method} timed out after ${sendTimeoutMs} ms`));
+        }, sendTimeoutMs);
+        pending.set(id, { res, rej, timer });
+        ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+>>>>>>> theirs
       });
     },
     close: () => { try { ws.close(); } catch { /* already gone */ } },
@@ -379,6 +524,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 /** The reference this row is measured against, or null for a derived row. */
 function referenceFor(id, table) {
   if (id === 'hp') return table.hp;
+<<<<<<< ours
   if (id === 'mana') return table.mana;
   if (id === 'stamina') return table.stamina;
   return null;
@@ -405,6 +551,12 @@ function p8ReceiptFindings(read) {
   return findings;
 }
 
+=======
+  if (id === 'mana' || id === 'stamina') return table.pool;
+  return null;
+}
+
+>>>>>>> theirs
 /**
  * Judge one cell: the map read against the combat read.
  * Every branch either fails or counts a check; nothing falls through silently.
@@ -416,6 +568,7 @@ function judgeCell(cell, mapR, comR, refTable) {
       + '— one screen was never read, so nothing below it is evidence about agreement.');
     return;
   }
+<<<<<<< ours
 
   // P8 SHARED TOP-ROW COMPOSITION — Cinders alone owns the true centre; Floor
   // owns the right metadata, and visible resource cards must not overlap it.
@@ -454,6 +607,8 @@ function judgeCell(cell, mapR, comR, refTable) {
       ok(`P8/no-overlap ${cell} ${screen} — no visible resource card intersects centred Cinders`);
     }
   }
+=======
+>>>>>>> theirs
   // ---- P6 ONE RENDERER, AND IT RUNS BEFORE P0'S RETURN --------------------
   //
   // ORDER IS LOAD-BEARING HERE, and the corpus is what taught me: with this
@@ -481,6 +636,7 @@ function judgeCell(cell, mapR, comR, refTable) {
   }
   ok(`P0/population ${cell} — map ${mapR.bars.length} bar(s), combat ${comR.bars.length} bar(s)`);
 
+<<<<<<< ours
   if (mapR.hosts !== 1 || comR.hosts !== 1) {
     fail(`FINDING P6/one-renderer cell=${cell} host count map=${mapR.hosts} combat=${comR.hosts} — each top bar `
       + 'must mount exactly one resource-bar host. A second host is a second HUD even when both use the shared renderer.');
@@ -499,6 +655,8 @@ function judgeCell(cell, mapR, comR, refTable) {
     }
   }
 
+=======
+>>>>>>> theirs
   const unmarked = mapR.bars.filter((b) => !b.id || b.cur == null || b.max == null || b.role !== 'img' || !b.aria);
   if (unmarked.length) {
     fail(`FINDING P6/one-renderer cell=${cell} — ${unmarked.length} map bar(s) carry no machine-readable home `
@@ -511,6 +669,7 @@ function judgeCell(cell, mapR, comR, refTable) {
   // ---- P1 ROWS ------------------------------------------------------------
   const mapIds = mapR.bars.map((b) => b.id);
   const comIds = comR.bars.map((b) => b.id);
+<<<<<<< ours
   const duplicatesOf = (ids) => [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
   const duplicateMap = duplicatesOf(mapIds);
   const duplicateCombat = duplicatesOf(comIds);
@@ -539,6 +698,22 @@ function judgeCell(cell, mapR, comR, refTable) {
     } else {
       ok(`P1V/vertical ${cell} ${screen} — ${JSON.stringify(read.lines)}; one rendered resource row below the prior row`);
     }
+=======
+  const duplicates = (ids) => [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
+  const mapDuplicates = duplicates(mapIds);
+  const comDuplicates = duplicates(comIds);
+  const missing = comIds.filter((id) => !mapIds.includes(id) && !OFF_BATTLEFIELD_ABSENT.has(id));
+  const extra = mapIds.filter((id) => !comIds.includes(id));
+  const excused = comIds.filter((id) => !mapIds.includes(id) && OFF_BATTLEFIELD_ABSENT.has(id));
+  if (missing.length || extra.length || mapDuplicates.length || comDuplicates.length) {
+    fail(`FINDING P1/rows cell=${cell} map=${JSON.stringify(mapIds)} combat=${JSON.stringify(comIds)} `
+      + `missing-from-map=${JSON.stringify(missing)} extra-on-map=${JSON.stringify(extra)} `
+      + `duplicates-map=${JSON.stringify(mapDuplicates)} duplicates-combat=${JSON.stringify(comDuplicates)} — the two screens no longer `
+      + 'draw the same row set. Only rows whose reader refuses off the battlefield may differ, and that set is '
+      + `${JSON.stringify([...OFF_BATTLEFIELD_ABSENT])}.`);
+  } else {
+    ok(`P1/rows ${cell} — map ${JSON.stringify(mapIds)}; combat adds ${JSON.stringify(excused)} (reader refuses off the battlefield)`);
+>>>>>>> theirs
   }
 
   // ---- per shared row -----------------------------------------------------
@@ -586,6 +761,7 @@ function judgeCell(cell, mapR, comR, refTable) {
           + 'a length nothing can read back is not a claim anyone can check.');
       }
     }
+<<<<<<< ours
 
     // P7 INVISIBLE REFERENCE FRAME — the reference frame may remain in the DOM
     // for measurement, but the shared Vitals design does not paint a card around
@@ -601,6 +777,8 @@ function judgeCell(cell, mapR, comR, refTable) {
         ok(`P7/card ${tag} ${who} — reference frame retained for measurement but transparent and borderless`);
       }
     }
+=======
+>>>>>>> theirs
     if (readable) ok(`P2B/readable ${tag} — both asks are plain percentages`);
 
     // P2C THE FILL IS cur/max. P2 proves the two screens agree about the fill;
@@ -640,6 +818,7 @@ function judgeCell(cell, mapR, comR, refTable) {
       }
     }
 
+<<<<<<< ours
     // P4 PERCENTAGE AUTHORITY — no absolute width floor may override the ask.
     for (const [who, b] of [['map', m], ['combat', c]]) {
       const minWidth = parseFloat(b.minWidth);
@@ -648,11 +827,40 @@ function judgeCell(cell, mapR, comR, refTable) {
           + '— an absolute-width override is replacing the max/reference percentage. Different maxima must not collapse to one pixel floor.');
       } else {
         ok(`P4/percentage ${tag} ${who} — min-width 0, no floor stamp, solid percentage trough`);
+=======
+    // P4 SAME FLOOR STATE, AND THE MARK.
+    if (m.floored !== c.floored) {
+      fail(`FINDING P4/floor ${tag} floored map=${m.floored} combat=${c.floored} `
+        + `(trough map ${m.trough.toFixed(2)} px of track ${m.track.toFixed(2)}, combat ${c.trough.toFixed(2)} of ${c.track.toFixed(2)}) `
+        + '— the minimum-width floor fired on one screen and not the other, so one draws a dashed stub that has '
+        + 'stopped encoding the maximum and the other draws a bar that still does. Same character, two claims.');
+    } else {
+      ok(`P4/floor ${tag} — both screens floored=${m.floored}`);
+    }
+    for (const [who, b] of [['map', m], ['combat', c]]) {
+      if (!b.floored) continue;
+      if (!b.dashed) {
+        fail(`FINDING P4/floor ${tag} ${who} floored=true but border-style is not dashed — the broken-axis mark is `
+          + 'gone. A floored trough is no longer to scale; without the dash it looks exactly like one that is, and '
+          + 'two different maxima below the floor draw the same length.');
+      } else {
+        ok(`P4/floor ${tag} ${who} — floored and DASHED (the broken-axis mark)`);
+>>>>>>> theirs
       }
     }
 
     // P5 INK — the ask arrived as pixels.
     for (const [who, b] of [['map', m], ['combat', c]]) {
+<<<<<<< ours
+=======
+      if (b.floored) {
+        // A floored trough is deliberately WIDER than its ask. That is the
+        // floor doing its job, P4 has already judged it, and re-judging it
+        // here as a miss would be this tool marking its own subject wrong.
+        ok(`P5/ink ${tag} ${who} — floored, so the ask is deliberately not the ink (P4 owns this cell)`);
+        continue;
+      }
+>>>>>>> theirs
       const wantTrough = (parseFloat(b.askTrough) / 100) * b.track;
       const dT = Math.abs(b.trough - wantTrough);
       if (dT > PX_TOL) {
@@ -680,6 +888,7 @@ function boundary() {
   console.log('');
   console.log('BOUNDARY — printed every run, green or red, because a gate that prints only PASS is');
   console.log('  "green wasn\'t clearance" shipped as infrastructure:');
+<<<<<<< ours
   console.log('  · THE MAP AND COMBAT TRACKS SHARE THE SAME TOP-ROW GEOMETRY. Their secondary chrome still');
   console.log('    differs below that row. P4 holds bar percentages; the sweep includes the 320x640 narrow edge.');
   console.log('    Shared-shell 82% available-width authority and applied geometry belong to');
@@ -690,12 +899,25 @@ function boundary() {
   console.log('    renderer for this grammar. Out of scope here; P6 is scoped to .topbar and cannot see it.');
   console.log('  · WHETHER 200/20/20 IS A GOOD SCALE IS NOT ASSERTED. It is his ruling; this holds the number.');
   console.log(`  · Headless Chromium on ${process.platform}, one text size, default accent, no colourblind palette.`);
+=======
+  console.log('  · THE TWO TRACKS ARE NOT THE SAME WIDTH and this tool does not ask them to be. The same');
+  console.log('    character\'s bar is the same FRACTION on both screens and a different number of PIXELS,');
+  console.log('    because the two headers carry different chrome. Equalising them is a header-layout act,');
+  console.log('    NOT DONE and NOT OWNED.');
+  console.log('  · POISE IS ABSENT ON THE MAP BY DESIGN (no meter off the battlefield). If that ever becomes');
+  console.log('    wrong, P1 excuses it and will not say so.');
+  console.log('  · coop.js meterBars() still hand-writes .bar.hpbar for the under-model strips — a THIRD');
+  console.log('    renderer for this grammar. Out of scope here; P6 is scoped to .topbar and cannot see it.');
+  console.log('  · WHETHER 500/50 IS A GOOD SCALE IS NOT ASSERTED. It is his ruling; this holds the number.');
+  console.log('  · Linux headless Chromium, one text size, default accent, no colourblind palette.');
+>>>>>>> theirs
   console.log('  · NOT WIRED INTO ci.yml — between hand-runs SOP 2\'s silence guard makes this `unknown`.');
   if (unknown) console.log(`  · ${unknown} check(s) resolved UNKNOWN in this run and counted toward nothing.`);
   console.log('');
 }
 
 async function main() {
+<<<<<<< ours
   if (args.includes('--p8-selftest')) return p8Selftest();
   if (args.includes('--selftest')) return selftest();
 
@@ -707,6 +929,10 @@ async function main() {
     process.exit(1);
   }
 
+=======
+  if (args.includes('--selftest')) return selftest();
+
+>>>>>>> theirs
   // THE REFERENCE COMES OUT OF THE TREE, NOT OUT OF THIS FILE. See P3.
   const { HUD_REFERENCE_MAX } = await import(pathToFileURL(join(ROOT, 'src/content/resources.js')).href);
   const refTable = HUD_REFERENCE_MAX || {};
@@ -720,12 +946,17 @@ async function main() {
   console.log('      a curse and an armour mod write); every box read with getBoundingClientRect() off the');
   console.log('      live page. The reference table is imported from src/content/resources.js so it cannot');
   console.log('      drift from the render — P3R is the one line that says what it should BE.');
+<<<<<<< ours
   console.log(`      reference read from the tree: HP ${refTable.hp}, MP ${refTable.mana}, SP ${refTable.stamina}`);
+=======
+  console.log(`      reference read from the tree: HP ${refTable.hp}, pools ${refTable.pool}`);
+>>>>>>> theirs
   if (onlyShape || onlyPose) {
     console.log(`      NARROWED POPULATION (declared): shape=${onlyShape || 'all'} pose=${onlyPose || 'all'}`);
   }
 
   // ---- P3R — HIS RULING, CHECKED AGAINST THE ONE TYPED COPY ---------------
+<<<<<<< ours
   if (refTable.hp !== HIS_REFERENCE.hp || refTable.mana !== HIS_REFERENCE.mana || refTable.stamina !== HIS_REFERENCE.stamina) {
     fail(`FINDING P3R/reference src/content/resources.js HUD_REFERENCE_MAX = `
       + `{ hp: ${refTable.hp}, mana: ${refTable.mana}, stamina: ${refTable.stamina} }, his ruling of 2026-08-22 is `
@@ -733,6 +964,15 @@ async function main() {
       + 'with it. If he changed his mind, change this line in the same act; if he did not, the scale is wrong.');
   } else {
     ok(`P3R/reference — HP ${refTable.hp} / MP ${refTable.mana} / SP ${refTable.stamina}, his ruling`);
+=======
+  if (refTable.hp !== HIS_REFERENCE.hp || refTable.pool !== HIS_REFERENCE.pool) {
+    fail(`FINDING P3R/reference src/content/resources.js HUD_REFERENCE_MAX = `
+      + `{ hp: ${refTable.hp}, pool: ${refTable.pool} }, his ruling of 2026-08-22 is `
+      + `{ hp: ${HIS_REFERENCE.hp}, pool: ${HIS_REFERENCE.pool} } — the reference moved without this gate moving `
+      + 'with it. If he changed his mind, change this line in the same act; if he did not, the scale is wrong.');
+  } else {
+    ok(`P3R/reference — HP ${refTable.hp} / pools ${refTable.pool}, his ruling`);
+>>>>>>> theirs
   }
 
   const browserPath = resolveBrowser();
@@ -767,7 +1007,11 @@ async function main() {
 
       const ev = async (e) => {
         const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
+<<<<<<< ours
         if (r.exceptionDetails) throw new Error(`${r.exceptionDetails.exception?.description || 'threw'} at ${r.exceptionDetails.lineNumber}:${r.exceptionDetails.columnNumber}`);
+=======
+        if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw');
+>>>>>>> theirs
         return r.result.value;
       };
       // A HARD BOUND ON EVERY WAIT. A screen that never mounts is a finding, not
@@ -878,6 +1122,7 @@ function closeServer(s) {
 }
 
 // ---------------------------------------------------------------------------
+<<<<<<< ours
 // --p8-selftest — focused non-browser discriminator for the receipt contract.
 // The real reader still owns DOM selection and geometry; these plants prove the
 // pure acceptance predicate refuses each wrong population/placement by name.
@@ -923,6 +1168,11 @@ function p8Selftest() {
 // --selftest — the same-door known-bad corpus.
 //
 // Every plant/CLI edge is aimed at THIS TOOL'S SUBJECT rather than at a
+=======
+// --selftest — the same-door known-bad corpus.
+//
+// SEVEN PLANTS, and each one is aimed at THIS TOOL'S SUBJECT rather than at a
+>>>>>>> theirs
 // symptom near it. The question asked of every plant was: if the thing this
 // check guards were deleted, would this go red? The subject is "the two screens
 // draw the same character at the same proportions, at his reference".
@@ -931,6 +1181,7 @@ async function selftest() {
   const { doorSelftest } = await import('./doorplant.mjs');
   const plants = [
     {
+<<<<<<< ours
       // Width authority lives in hud-potion-followup. This browser plant keeps
       // hudparity's own centred-receipt geometry independently discriminating.
       name: 'the shared Cinders receipt shifts off the viewport centre',
@@ -1044,6 +1295,17 @@ async function selftest() {
       expectRed: /FINDING P6\/one-renderer .*screen=map top-row buttons=/,
     },
     {
+=======
+      // 1 — THE SECOND RENDERER COMES BACK. The literal `git revert` of this
+      // change's core edit: the map hand-writes its own health bar again.
+      name: 'the map hand-writes its own .hpbar again (the pre-E9 shape)',
+      file: 'src/ui/screens/map.js',
+      find: '          <div class="resbars-host"></div>',
+      replace: '          <div class="bar hpbar"><div class="fill" style="width:50%"></div><div class="label">HP</div></div>',
+      expectRed: /FINDING P6\/one-renderer .*\.topbar \.hpbar count/,
+    },
+    {
+>>>>>>> theirs
       // 2 — THE SHARED RENDERER, THE MAP'S OWN CEILING. The map keeps
       // resbars.js and stops passing the domain table, so resourceBarPlan falls
       // back to `domain = val.max` and every map trough draws 100 %. THIS IS
@@ -1069,6 +1331,7 @@ async function selftest() {
     {
       // 4 — HIS NUMBER MOVES. Both screens agree, the wire is intact, and the
       // scale is not the one he ruled. Only the typed copy can see this.
+<<<<<<< ours
       name: 'the reference is quietly changed from 200 to 321',
       file: 'src/content/resources.js',
       find: '  hp: 200,',
@@ -1083,6 +1346,24 @@ async function selftest() {
       find: '  min-width: 0;\n}\n.resbar > .fill',
       replace: '  min-width: 16px;\n}\n.resbar > .fill',
       expectRed: /FINDING P4\/percentage .*min-width=16px/,
+=======
+      name: 'the reference is quietly changed from 500 to 200',
+      file: 'src/content/resources.js',
+      find: '  hp: 500,',
+      replace: '  hp: 200,',
+      expectRed: /FINDING P3R\/reference/,
+    },
+    {
+      // 5 — THE FLOOR LOSES ITS MARK. At 500/50 a full MP pool is 4 % of its
+      // track and floors on a phone, so this is the shipped case, not an
+      // exotic one: without the dash the picture claims a scale it stopped
+      // keeping.
+      name: 'the broken-axis mark is deleted, so a floored trough looks to scale',
+      file: 'styles/combat.css',
+      find: '.resbar[data-floored] { border-style: dashed; }',
+      replace: '.resbar[data-floored] { border-style: solid; }',
+      expectRed: /FINDING P4\/floor .*border-style is not dashed/,
+>>>>>>> theirs
     },
     {
       // 6 — THE NEIGHBOURHOOD OF PX_TOL. A stray clamp takes exactly 2 px off
@@ -1120,6 +1401,7 @@ async function selftest() {
       replace: "const resHost = app.querySelector('.map-header .resbars-host-gone');",
       expectRed: /FINDING P0\/population .*rendered NO main-HUD bars|FINDING P0\/population .*mapBars=0/,
     },
+<<<<<<< ours
     {
       // A SOCKET DROPS BETWEEN TWO REAL CDP COMMANDS. The next send must reject
       // within its own bound, then the tool must print its boundary and exit
@@ -1138,10 +1420,21 @@ async function selftest() {
   // not defaulted: `shipped` is the only cell carrying unfloored HP beside
   // FLOORED MP and SP with their dash (P4), and `high` is the only cell where every trough asks
   // for its whole track, which is what the PX_TOL plant needs to bite. Either alone
+=======
+  ];
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: eight whole-tool browser runs (seven
+  // plants plus the clean re-run) is eight browser boots. The population is ONE
+  // shape and TWO poses — 390x844, shipped and high — and the pair is chosen,
+  // not defaulted: `shipped` is the only cell carrying unfloored HP beside
+  // FLOORED MP and SP with their dash (P4) and poise present in combat and
+  // absent on the map (P1), and `high` is the only cell where every trough asks
+  // for its whole track, which is what plant 6 needs to bite. Either alone
+>>>>>>> theirs
   // leaves a plant with nowhere to land. The DOOR is unnarrowed, which is the
   // axis the corpus is about.
   const code = await doorSelftest({
     tool: 'hudparity.mjs',
+<<<<<<< ours
     args: ['--only-shape', '844x340', '--only-pose', 'shipped,high', '--port', '8478'],
     plants,
     timeoutMs: 420000,
@@ -1169,13 +1462,24 @@ async function selftest() {
       console.error(`  UNCAUGHT  "${edge.name}" -> argv — exit ${run.status}; expected selector red and boundary`);
     }
   }
+=======
+    args: ['--only-shape', '390x844', '--only-pose', 'shipped,high', '--port', '8478'],
+    plants,
+    timeoutMs: 420000,
+  });
+>>>>>>> theirs
   // THE COUNTED VERDICT LINE, and the count is DERIVED from the corpus rather
   // than typed — `plants observed red` is one of tools/verdict.mjs's known
   // nouns, so this line survives readVerdict and a run that catches fewer
   // plants prints no verdict at all rather than a smaller confident one.
+<<<<<<< ours
   const total = plants.length + selectorCases.length;
   if (code === 0 && selectorFailed === 0) console.log(`hudparity --selftest: OK — ${total}/${total} plants observed red`);
   process.exit(code || selectorFailed ? 1 : 0);
+=======
+  if (code === 0) console.log(`hudparity --selftest: OK — ${plants.length}/${plants.length} plants observed red`);
+  process.exit(code);
+>>>>>>> theirs
 }
 
 main().catch((e) => {
