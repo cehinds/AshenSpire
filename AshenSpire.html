@@ -767,6 +767,25 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
 .disc-reveal .cz-opts { flex-wrap: wrap; row-gap: 0.8rem; }
 .disc-reveal .class-row { flex-wrap: wrap; row-gap: 1.2rem; }
 
+/* The creation summary is navigation, not a content-sized card row. Keep each
+   section on the same measure, and let only its chosen-value detail yield when
+   the available track is too narrow. */
+.cz-flow > .disc-faces { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cz-flow > .disc-faces > .disc-face { width: 100%; }
+.cz-flow > .disc-faces > .disc-face > .ob { flex: 0 0 auto; }
+.cz-flow > .disc-faces > .disc-face > .r-trail {
+  flex: 1 1 auto; min-width: 0; overflow: hidden; justify-content: flex-end;
+}
+.cz-flow > .disc-faces > .disc-face .disc-value {
+  display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+}
+@media (max-width: 640px) {
+  .cz-flow > .disc-faces { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .cz-flow > .disc-faces { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* EldenSpire#26 — the value the UI-size control actually applied. Muted like a
    note when the request was granted; accented when the fit had to hold it back,
    because "you asked for XL and this window gets 1.00x" is the sentence that
@@ -52809,7 +52828,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b56817a3d1';
+const SOURCE = '7044c21668';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52843,7 +52862,7 @@ const SOURCE = 'b56817a3d1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '19';
+const ORDINAL = '20';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

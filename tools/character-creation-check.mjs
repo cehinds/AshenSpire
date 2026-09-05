@@ -127,6 +127,8 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     await click('.slot-new');
     await until(`!!document.querySelector('.title-menu-modal [data-title-action="modal-continue"]:not([disabled])')`, 'new-run slot selection');
     await click('.title-menu-modal [data-title-action="modal-continue"]');
+    await until(`!!document.querySelector('[data-title-action="review-new"]')`, 'new-run confirmation');
+    await click('[data-title-action="review-new"]');
   }
   await until(`document.querySelectorAll('.cz-flow > .disc-faces > .disc-face').length===4`, 'four creation sections');
   await wait(250);
@@ -136,6 +138,15 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   }))()`);
   assert(JSON.stringify(arrival.labels) === JSON.stringify(['CLASS', 'CHARACTER', 'STARTING EQUIP', 'SEED']), `${width}x${height}: sections are in the requested order`);
   assert(JSON.stringify(arrival.open) === JSON.stringify(['class']), `${width}x${height}: exactly Class opens on arrival`);
+  const summaryLayout = await evaluate(`(() => {
+    const faces=[...document.querySelectorAll('.cz-flow > .disc-faces > .disc-face')];
+    return {
+      widths:faces.map((face)=>face.getBoundingClientRect().width),
+      details:faces.map((face)=>{const style=getComputedStyle(face.querySelector('.disc-value'));return {overflow:style.overflow,textOverflow:style.textOverflow};})
+    };
+  })()`);
+  assert(Math.max(...summaryLayout.widths) - Math.min(...summaryLayout.widths) <= 1, `${width}x${height}: creation summary sections have equal widths`);
+  assert(summaryLayout.details.every((detail) => detail.overflow === 'hidden' && detail.textOverflow === 'ellipsis'), `${width}x${height}: creation summary details ellipsize when constrained`);
   const classLayout = await evaluate(`(() => ({
     preview:!!document.querySelector('.cc-class-preview'), resources:document.querySelectorAll('.cc-class-resource').length,
     view:document.querySelector('#cz-classes').dataset.view,
