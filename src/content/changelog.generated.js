@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-629",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The receipts catch up, and the README says you can re-arm mid-fight",
+    "detail": "Nothing a player sees changes. Three merged pull requests had landed without a receipt in this file — the equipment turnaround sheets (#626), the build-address and badge corrections (#628), and the in-game changelog catch-up (#627) — and all three are written up above. The README had also never mentioned that #625 let you change equipment during a fight, which is a thing a player does rather than an internal change; the feature list says so now, with the Energy it costs and the fact that a change you cannot afford is refused without spending anything. The changelog inside the game was regenerated from this file so it carries the same receipts. This receipt is the one that pass could not write for itself: a receipt names its own pull request, and the number does not exist until the pull request is opened.",
+    "build": "0.5.5.14",
+    "pullRequest": 629,
+    "url": "https://github.com/cehinds/AshenSpire/pull/629"
+  },
+  {
     "id": "pr-626",
     "date": "2026-09-05",
     "group": "2026-09-05",
