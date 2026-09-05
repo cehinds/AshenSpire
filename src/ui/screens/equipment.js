@@ -39,7 +39,7 @@ import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import {
   equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
-  orderArmourySlots,
+  orderArmouryPositions, orderArmourySlots,
 } from '../../model/armouryLayout.js';
 import {
   armouryOverlayModel, armouryPanelModel, equipmentSetCellModel, equipmentSlotModel,
@@ -342,7 +342,9 @@ function buildArmoury(L, ui) {
   const ordered = orderArmourySlots(ui.blocks.map((block) => block.slot), ui.layout);
   const positionsBySlot = ordered.map((slot) => ({
     slot,
-    positions: ui.positions(slot).filter((position) => position.modelState !== 'hidden'),
+    positions: orderArmouryPositions(
+      ui.positions(slot).filter((position) => position.modelState !== 'hidden'),
+    ),
   }));
   const itemCount = positionsBySlot.reduce((sum, row) => (
     sum + row.positions.filter((position) => position.state === 'occupied').length

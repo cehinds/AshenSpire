@@ -422,6 +422,10 @@ is [`assets/components/armoury.json`](../assets/components/armoury.json).
 | Inventory and comparison | `armoury.inventoryCard`, `armoury.paneSplitter`, `armoury.itemCard`, `armoury.inventoryItemClass`, `armoury.itemReveal`, `armoury.comparisonTooltipAnchor`, `armoury.equipmentComparison`, `armoury.inventoryTrayResizeHandle` |
 | Cards, Stats, and disclosure | `armoury.cardsCard`, `armoury.cardList`, `armoury.cardRow`, `armoury.cardDetail`, `armoury.cardViewToggle`, `armoury.cardsTrayResizeHandle`, `armoury.statsTray`, `armoury.statsSummary`, `armoury.statsTrayResizeHandle`, `armoury.disclosure` |
 
+Within each procedural equipment group, empty positions are ordered after the
+occupied and locked positions. Their Grid presentation spans every column,
+making the empty drop target a full-width bottom row.
+
 ### Combatant card detail
 
 ```text

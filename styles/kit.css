@@ -954,6 +954,7 @@ details.armoury-position-card > .as-detailcard { border-radius: 0 0 var(--r-3) v
 .armoury-position-grid-group { display: grid; gap: 0.6rem; min-width: 0; }
 .armoury-position-grid-tiles > .as-options.grid { --opt-min: 9rem; gap: 0.6rem; }
 .armoury-position-grid-card { flex-direction: column; text-align: center; padding: 0.9rem 0.6rem; gap: 0.5rem; }
+.armoury-position-grid-card.is-empty { grid-column: 1 / -1; width: 100%; }
 .armoury-position-grid-card > .ob { align-items: center; }
 .armoury-position-grid-card .on { font-size: 1.3rem; }
 .armoury-position-grid-detail { margin-top: 0.4rem; }
