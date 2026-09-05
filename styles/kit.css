@@ -99,8 +99,8 @@ button.danger:hover, .as-btn.danger:hover { background: rgba(212, 98, 46, 0.08);
 button.primary.danger, .as-btn.primary.danger { background: rgba(212, 98, 46, 0.14); border-color: var(--danger); color: var(--parchment); }
 button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212, 98, 46, 0.24); }
 
-/* IconButton — ONE box for every header action, close included. A LENGTH, not
-   a floor: --iconbtn-size (base.css), the same on every component. */
+/* IconButton — ONE tap-safe box for every header action, close included. A
+   LENGTH, not a floor: --iconbtn-size (base.css), the same on every component. */
 .as-iconbtn, .modal-iconbtn, .modal-close {
   display: inline-flex; align-items: center; justify-content: center;
   width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
@@ -116,6 +116,18 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 }
 .as-iconbtn:hover, .modal-iconbtn:hover, .modal-close:hover,
 .as-iconbtn:focus-visible, .modal-iconbtn:focus-visible, .modal-close:focus-visible { border-color: var(--gold); color: var(--gold); outline: none; background: var(--panel); }
+
+/* Close keeps the full accessible hit target above, while its visible square
+   is 75% of that target. Every modal inherits the same smaller corner mark. */
+.modal-close { position: relative; background: transparent; border-color: transparent; }
+.modal-close > .modal-close-face {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 75%; height: 75%; pointer-events: none;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2);
+}
+.modal-close:hover, .modal-close:focus-visible { background: transparent; border-color: transparent; }
+.modal-close:hover > .modal-close-face, .modal-close:focus-visible > .modal-close-face { border-color: var(--gold); }
+.modal-close:focus-visible > .modal-close-face { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
 
 /* ButtonRow — a grid of EQUAL tracks; the row is min(box, n × step). */
 .as-btnrow, .modal-btnrow {

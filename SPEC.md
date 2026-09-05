@@ -1016,7 +1016,9 @@ keeps the same state and focus contract without meaningful animation.
   from the same immutable slot records and Behavior Models: selected styling, `aria-pressed`,
   the selected-focus restoration target, primary-action availability, and the load/create
   command payload all resolve to one slot. Save data and callbacks remain screen inputs rather
-  than being owned by these presentation components.
+  than being owned by these presentation components. Every modal close control paints a square
+  at 75% of its shared icon-button box while retaining the full authored tap target for pointer,
+  touch, keyboard, and controller input.
 - **Character Creation components.** The reusable creation family is `character-disclosure`,
   `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
   `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`,
