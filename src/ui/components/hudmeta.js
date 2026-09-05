@@ -2,14 +2,17 @@
 // Presentation Models; this module owns DOM, not domain projection or commands.
 //
 // THE HUD IS A KIT BAND (styles/kit.css `.as-band`), three rows deep:
-//   1. the run header — identity as a LabelStack (Eyebrow "name · class",
-//      Title·S = the context: the act on the map, the fight in combat), the
-//      Cinders receipt as a StatChip, and the Act · Floor · Build trail as a
-//      StatStrip;
+//   1. the run header — the context as a LabelStack Title·S (the act on the
+//      map, the fight in combat), the Cinders receipt as a StatChip, and the
+//      Act · Build trail as a StatStrip;
 //   2. the resource row — the meters (components/resbars.js, the kit Meter)
-//      and, on the right, a cluster of IconButtons (⚒ ☰ ⛶ ♫) over the flask
-//      Slots the screen mounts;
+//      and, on the right, a cluster of IconButtons (⚒ ☰) over the flask Slots
+//      the screen mounts;
 //   3. the belt — relic Slots and carried-potion Slots.
+// Fullscreen and music are NOT in this band: they ride the utility rail that
+// hangs off its bottom edge on the right (styles/kit.css § QUICK SETTINGS).
+// The name, the class and the floor number were in row 1 until 2026-09-05 and
+// each function below says why its own is gone.
 // The classes that are not `as-*` are HOOKS the instruments read; kit.css
 // draws nothing for them and no stylesheet may any more.
 import { esc } from './tooltip.js';
@@ -17,7 +20,7 @@ import { buildStampHtml } from './buildstamp.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs } from './uiComponents.js';
 import { childModel } from '../models/ComponentModel.js';
 import { hudQuickSettingsHtml } from './hudQuickSettings.js';
-import { el, html, eyebrow, titleS, iconButton } from '../kit/index.js';
+import { el, html, titleS, iconButton } from '../kit/index.js';
 
 function attrsOf(componentAttrs) {
   // uiComponentAttrs() returns attribute TEXT for string templates; the kit's
@@ -37,11 +40,17 @@ function progressChip(className, componentAttrs, { label, value, total }) {
   ]);
 }
 
+// NO NAME AND NO CLASS ON THE BAND (owner, 2026-09-05: "remove the floor and
+// character and class name"). The LabelStack keeps its Eyebrow slot empty and
+// draws the context alone — the identity is a character-creation fact, and the
+// player has just chosen it; the band's job in a run is the state that changes.
+// The name is still the save slot's own label, so it is not gone from the game,
+// only from the band. `UI.characterTitle` stays a registered component with a
+// model behind it (RunHeaderModel) because the portrait badge and the profile
+// screens read the same fact; nothing renders it here.
 export function identityClusterHtml(model) {
-  const title = childModel(model, UI.characterTitle).properties;
   const context = model.properties.context || '';
   return html(el('div', { ...attrsOf(uiComponentAttrs(model.component, model.variant)), class: 'hud-identity as-labelstack' }, [
-    eyebrow(`${title.name} · ${title.classLabel}`, { ...attrsOf(uiComponentAttrs(UI.characterTitle)), class: 'nm' }),
     context ? titleS(context, { tag: 'span', class: 'ls-label hud-context fold' }) : null,
   ]));
 }
@@ -56,12 +65,19 @@ export function cindersCounterHtml(model) {
   ])));
 }
 
+// NO FLOOR CHIP (same ask). Act and the build stamp stay: the act names where
+// you are and the stamp is the receipt a bug report needs. The floor number is
+// the one the map already draws as a shape — the route strip's ENTRANCE -> BOSS
+// rail — and a number beside a picture of the same fact is the duplication this
+// trail was trimmed to avoid. It IS gone from combat, where no other surface
+// prints it; that is the cost, stated rather than buried.
+// `metadataFieldModel('floor', …)` stays in RunHeaderModel: the floor is still
+// projected, still in the presentation model, and still what the map's own
+// progress is derived from. Only the chip is gone.
 export function buildMetadataTrailHtml(model) {
   const act = childModel(model, UI.metadataField, 'act').properties;
-  const floor = childModel(model, UI.metadataField, 'floor').properties;
   return `<div class="hud-run-meta as-statstrip trail" ${uiComponentAttrs(model.component, model.variant)}>
     ${html(progressChip('hud-act', uiComponentAttrs(UI.metadataField, 'act'), act))}
-    ${html(progressChip('hud-floor', uiComponentAttrs(UI.metadataField, 'floor'), floor))}
     ${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}
   </div>`;
 }

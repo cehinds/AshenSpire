@@ -404,10 +404,12 @@ function p8ReceiptFindings(read) {
   if (center && Math.abs(center.center - read.vp.w / 2) > 1) {
     findings.push(`cinders-centre=${center.center.toFixed(2)} viewport=${(read.vp.w / 2).toFixed(2)}`);
   }
-  if (totals.floor !== 1) findings.push(`floor-count=${totals.floor}`);
-  else if (!right || right.floor !== 1 || right.cinders !== 0 || !center || center.floor !== 0) {
-    findings.push(`floor-placement center=${center ? center.floor : 'MISSING'} right=${right ? `${right.floor}/${right.cinders}` : 'MISSING'}`);
-  }
+  // NO FLOOR RECEIPT AT ALL SINCE 2026-09-05 (owner: "remove the floor and
+  // character and class name"). This asserted exactly one, in right metadata;
+  // asserting zero is the same rule pointed the other way, and it still catches
+  // the thing the original was for — a floor receipt drawn twice, or drawn in
+  // the centred track where the Cinders receipt lives.
+  if (totals.floor !== 0) findings.push(`floor-count=${totals.floor}, expected none`);
   return findings;
 }
 
@@ -432,9 +434,9 @@ function judgeCell(cell, mapR, comR, refTable) {
     const receiptFindings = p8ReceiptFindings(read);
     const centreMiss = read.centerMeta ? Math.abs(read.centerMeta.center - read.vp.w / 2) : Infinity;
     if (receiptFindings.length) {
-      fail(`FINDING P8/top-row ${cell} ${screen} receipts=${JSON.stringify(receiptFindings)} center=${JSON.stringify(read.centerMeta)} right=${JSON.stringify(read.runMeta)} — exactly one Cinders receipt must be centred and exactly one Floor receipt must live in right metadata.`);
+      fail(`FINDING P8/top-row ${cell} ${screen} receipts=${JSON.stringify(receiptFindings)} center=${JSON.stringify(read.centerMeta)} right=${JSON.stringify(read.runMeta)} — exactly one Cinders receipt must be centred, and no Floor receipt may be drawn.`);
     } else {
-      ok(`P8/top-row ${cell} ${screen} — one centred Cinders (miss ${centreMiss.toFixed(2)} px), one right-metadata Floor`);
+      ok(`P8/top-row ${cell} ${screen} — one centred Cinders (miss ${centreMiss.toFixed(2)} px), no Floor receipt`);
     }
     const fields = read.runMetaFields || {};
     const priority = ['act', 'floor', 'build', 'source'];
@@ -985,24 +987,21 @@ async function selftest() {
       expectRed: /FINDING P8\/top-row .*cinders-placement/,
     },
     {
-      name: 'the shared HUD drops Floor',
+      // TWO PLANTS BECAME ONE, because the rule they test did. Until 2026-09-05
+      // the top row carried exactly one Floor receipt in right metadata, so it
+      // had two failure modes — the chip missing, and the chip in the centred
+      // track — and a plant apiece. The chip is gone now (owner: "remove the
+      // floor and character and class name"), so the rule is "no Floor receipt
+      // may be drawn" and has ONE mode. The old pair is replaced by its inverse
+      // rather than kept: "drop the Floor chip" had nothing left to drop and
+      // would have passed vacuously, which is the shape of green this repo
+      // refuses (#12). This plant puts a Floor receipt back in the centred
+      // track — the harder of the two old cases — and the count catches it.
+      name: 'a Floor receipt returns, in the centred Cinders track',
       file: 'src/ui/components/hudmeta.js',
-      find: "progressChip('hud-floor', uiComponentAttrs(UI.metadataField, 'floor'), floor)",
-      replace: "progressChip('floor-removed-by-plant', uiComponentAttrs(UI.metadataField, 'floor'), floor)",
-      expectRed: /FINDING P8\/top-row .*floor-count=0/,
-    },
-    {
-      name: 'Floor moves from right metadata into the centre',
-      edits: [{
-        file: 'src/ui/components/hudmeta.js',
-        find: "progressChip('hud-floor', uiComponentAttrs(UI.metadataField, 'floor'), floor)",
-        replace: "progressChip('floor-moved-by-plant', uiComponentAttrs(UI.metadataField, 'floor'), floor)",
-      }, {
-        file: 'src/ui/components/hudmeta.js',
-        find: "el('span', { class: 'ck', text: 'Cinders' })",
-        replace: "el('span', { class: 'ck hud-floor', text: 'Cinders' })",
-      }],
-      expectRed: /FINDING P8\/top-row .*floor-placement/,
+      find: "el('span', { class: 'ck', text: 'Cinders' })",
+      replace: "el('span', { class: 'ck hud-floor', text: 'Cinders' })",
+      expectRed: /FINDING P8\/top-row .*floor-count=1/,
     },
     {
       // The centre can remain mathematically exact while visible resource ink

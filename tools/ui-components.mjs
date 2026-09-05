@@ -148,9 +148,14 @@ export function findings(r) {
     bad.push('C5 reusable component modules crossed the simulation-state boundary');
   }
   // THE KIT SWEEP (2026-09-04): the trail is a kit StatStrip (`.as-statstrip
-  // trail`) — one wrapping row of StatChips, Act then Floor then the build
-  // stamp — and no HUD stylesheet lays it out any more.
-  if (!/hud-act[\s\S]*hud-floor[\s\S]*buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
+  // trail`) — one wrapping row of StatChips — and no HUD stylesheet lays it out
+  // any more. It is Act then the build stamp since 2026-09-05 (owner: "remove
+  // the floor and character and class name"); the MODEL still carries the floor
+  // field, which is why the second regex below still names it. That split is
+  // deliberate and is the thing this check now pins: the fact stays projected,
+  // the chip is gone.
+  if (!/hud-act[\s\S]*buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
+      || /hud-floor/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
       || !/class="hud-run-meta as-statstrip trail"/.test(r.hud)
       || !/\.as-statstrip, \.as-kitline \{ display: flex; flex-wrap: wrap;/.test(r.kit)
