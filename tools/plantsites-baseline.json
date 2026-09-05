@@ -87,11 +87,6 @@
       "id": "7b52b505469be5a0"
     },
     {
-      "tool": "tools/music-toggle-parity.mjs",
-      "target": "src/ui/components/menuComponents.js",
-      "id": "1bd723d53273b515"
-    },
-    {
       "tool": "tools/placement.mjs",
       "target": "styles/ui.css",
       "id": "d6870f4a9cfa5e42"
@@ -250,7 +245,7 @@
     },
     "tools/music-toggle-parity.mjs": {
       "count": 16,
-      "digest": "e9a3c3a74f96341f"
+      "digest": "c0d1ae6ea2a4ac5c"
     },
     "tools/onefold.mjs": {
       "count": 1,
