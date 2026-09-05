@@ -502,6 +502,19 @@
 /* ---- rendered sprites: idle bob + death fade (solo + co-op boards) -------- */
 @keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 .combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; }
+.player .sprite.reaver-attack-playing { overflow: visible; }
+.combatant .sprite > img.reaver-attack-sequence {
+  width: 17rem;
+  height: 17rem;
+  max-width: none;
+  flex: 0 0 auto;
+  object-fit: contain;
+  object-position: center bottom;
+  margin-bottom: -1.1rem;
+  pointer-events: none;
+  animation: none;
+  filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
+}
 .combatant.enemy .sprite > img { animation-duration: 2.6s; }
 .combatant.enemy.context-selected .combatant-card {
   filter: drop-shadow(0 0 5px rgba(201, 162, 39, 0.72));
@@ -564,6 +577,12 @@
 }
 :root[data-composition='short-wide'] .enemy .sprite > :first-child {
   width: 4rem !important; height: 5rem !important;
+}
+:root[data-composition='short-wide'] .combatant .sprite > img.reaver-attack-sequence {
+  width: 9rem;
+  height: 9rem;
+  max-width: none;
+  margin-bottom: -0.6rem;
 }
 :root[data-composition='short-wide'] .combatant .meters { width: 8rem; }
 
@@ -654,6 +673,13 @@
      about the zone it stands in; at 390x844 it ran 9px past the left edge of
      the screen. Capped by width, height auto so it does not squash. */
   :root[data-layout='narrow'] .player-zone .combatant .sprite > img { max-width: 11rem; height: auto; }
+  :root[data-layout='narrow'] .player-zone .combatant .sprite.reaver-attack-playing { overflow: visible; }
+  :root[data-layout='narrow'] .player-zone .combatant .sprite > img.reaver-attack-sequence {
+    width: 12rem;
+    height: 12rem;
+    max-width: none;
+    margin-bottom: -0.75rem;
+  }
   :root[data-layout='narrow'] .enemy-row { padding-block: 0.6rem; gap: 0.4rem; }
   /* The complete combatant frame compacts as one component on phones. Intent,
      art, name, meters and statuses therefore keep their order and stay inside

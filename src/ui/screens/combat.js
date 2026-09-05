@@ -10,8 +10,15 @@ import { openPileModal } from '../components/piles.js';
 import { attachTooltip, ensureTooltip, hideTooltip, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { relicText } from '../components/card.js';
-import { enemySprite, playerSprite } from '../assets.js';
+import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { figureSpec } from '../../model/loadout.js';
+import {
+  isReaverAttackEligible,
+  playReaverAttack,
+  preloadReaverAttackFrames,
+  reaverAttackTiming,
+} from '../reaverAttack.js';
 import { intentBadge, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
@@ -145,6 +152,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // this accessor — one home, the status def itself, with the WORDS
     // resolved through the framework term overlay.
     statusInfo: (sid) => registries.frameworkTerms.withStatusWords(registries.statuses.get(sid)),
+    maxActorAnimationMs: (speed) => reaverAttackTiming(speed).totalMs,
+    animateActor: (beat, actorEl, speed) => {
+      if (beat.actorId !== 'player' || beat.kind !== 'attack') return null;
+      const figure = figureSpec(registries, run.loadout, run.class);
+      const eligible = isReaverAttackEligible({
+        classId: run.class,
+        figure,
+        customization: run.customization,
+        spritesEnabled: spritesAreEnabled(),
+      });
+      return eligible ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : null;
+    },
   };
 
   let selected = null; // card instanceId in click-targeting mode
@@ -992,6 +1011,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const zone = $('.player-zone');
     zone.innerHTML = '';
     const p = combat.player;
+    const figure = figureSpec(registries, run.loadout, run.class);
+    if (isReaverAttackEligible({
+      classId: run.class,
+      figure,
+      customization: run.customization,
+      spritesEnabled: spritesAreEnabled(),
+    })) preloadReaverAttackFrames();
     const trailing = [];
     if (p.stanceId) {
       const st = registries.frameworkTerms.withStanceWords(registries.stances.get(p.stanceId));
