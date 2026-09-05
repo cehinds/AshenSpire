@@ -74,6 +74,9 @@ function findings(r) {
     } else if (r.vitalGaps.some((gap) => Math.abs(gap - r.vitalGapExpected) > 0.5)) {
       bad.push(`Vitals row gaps are ${r.vitalGaps.map((gap) => gap.toFixed(2)).join('/')}px, expected the authored ${r.vitalGapExpected.toFixed(2)}px`);
     }
+    if (r.quickPanel && r.vitalBottom != null && Math.abs(r.quickPanel.bottom - r.vitalBottom) > 0.75) {
+      bad.push(`Quick Access ends at ${r.quickPanel.bottom.toFixed(2)}px, SP ends at ${r.vitalBottom.toFixed(2)}px`);
+    }
     if (r.playerFacing && r.playerFacing !== 'none' && r.playerFacing !== 'matrix(1, 0, 0, 1, 0, 0)') {
       bad.push(`the painted player character is mirrored away from the battlefield (${r.playerFacing})`);
     }
@@ -319,6 +322,7 @@ try {
             buttonGap:painted.length===2?(horizontal?painted[1].left-painted[0].right:painted[1].top-painted[0].bottom):null,
             quickPanel:box(quickPanel), quickTargets:quickTargets.map(box), header,
             vitalGaps:vitalRows.slice(1).map((row,index)=>row.top-vitalRows[index].bottom),
+            vitalBottom:vitalRows.length?vitalRows[vitalRows.length-1].bottom:null,
             vitalGapExpected:Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hud-resource-row-gap-px')),
             // The rail hangs off the band's PADDING box (top: 100%), while
             // header.bottom is its BORDER box — the band draws a 1px bottom

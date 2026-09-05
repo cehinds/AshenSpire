@@ -1181,7 +1181,7 @@ keeps the same state and focus contract without meaningful animation.
   line beneath the character name. Neither screen hand-writes a second HUD.
 - **Primary and inventory geometry.** `vitals-panel` is one outer card containing the unchanged
   HP/MP/SP stack. `quick-access-panel` is one outer square containing a 2×2 grid: Armoury/Menu,
-  then HP/Mana flasks. Its visible tiles are 30–32 px inside at least 44 px accessible hit areas.
+  then HP/Mana flasks. Its visible tiles are 18 px inside at least 44 px accessible hit areas.
   The two panels have equal outer height and the flask row aligns with the bottom of SP within
   one CSS pixel. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
   Access on the same row. Utility potions form one right-anchored horizontal tray that grows or

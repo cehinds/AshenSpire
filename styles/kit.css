@@ -1800,12 +1800,16 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .as-cluster.wrap { flex-wrap: wrap; }
 .as-cluster.stack { flex-direction: column; align-items: stretch; }
 .as-cluster.end { margin-left: auto; }
-/* QUICK ACCESS stays a 2 × 2 square, but its tiles are smaller than the global
-   IconButton. The transparent ::after keeps the authored tap floor around each
-   visible 32px square; the 12px gaps keep those hit regions from overlapping. */
-.shared-hud { --hud-quick-tile-size: 3.2rem; --hud-belt-tile-face-size: 2.8rem; }
+/* QUICK ACCESS stays a compact 2 × 2 square whose lower edge meets the SP row.
+   The visible faces and their gap share one local scale; the transparent
+   ::after continues to carry the authored tap floor around each small face. */
+.shared-hud {
+  --hud-quick-tile-size: 1.8rem;
+  --hud-quick-tile-gap: 0.45rem;
+  --hud-belt-tile-face-size: 2.8rem;
+}
 .shared-hud .hud-control-grid,
-.shared-hud .hud-control-grid > .as-cluster { gap: 1.2rem; }
+.shared-hud .hud-control-grid > .as-cluster { gap: var(--hud-quick-tile-gap); }
 .shared-hud .hud-control-grid :is(.as-iconbtn, .as-slot) {
   position: relative;
   width: var(--hud-quick-tile-size); height: var(--hud-quick-tile-size);
