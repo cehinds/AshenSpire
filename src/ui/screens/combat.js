@@ -1036,7 +1036,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       role: 'player',
       entityId: 'player',
       classNames: selfArm ? ['armed'] : [],
-      sprite: playerSprite(run.customization || {}, run.class),
+      sprite: playerSprite(run.customization || {}, run.class, figure.armourId),
       blockBadge: blockBadge(p, { tooltips: false }),
       meters: meterBars(p, { tooltips: false }),
       trailing,
