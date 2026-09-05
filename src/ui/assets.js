@@ -21,25 +21,49 @@ const px = (value) => `${value}px`;
 
 // ── WHICH WAY A FIGHTER LOOKS ────────────────────────────────────────────────
 //
-// Owner, 2026-09-04: "adjust so that all characters are facing the same
-// direction (to the right)". One convention, in one place, so no surface
-// decides it and no second copy can disagree.
+// A FIGHTER FACES ITS OPPONENT. That is the rule, and it is a per-SIDE fact
+// because the two sides stand on opposite sides of the board: the player's zone
+// is on the left, the enemy row on the right, so the player looks right and the
+// enemies look left. Everything on a side looks the same way, and no surface
+// decides it.
+//
+// THIS REVERSES A LITERAL READING OF AN EARLIER ASK, and the reversal is the
+// point. Owner, 2026-09-04: "adjust so that all characters are facing the same
+// direction (to the right)" — implemented here as one global `FACES = 'right'`.
+// Applied to a board where the enemies stand to the RIGHT of the player, that
+// turned every enemy to face away from the fight: the Blight Hound was drawn
+// looking left, which is already correct for an enemy, and the global rule
+// flipped it. Owner, 2026-09-05, looking at the result: "notices characters
+// facing wrong way too". "The same direction" was a description of the symptom
+// he wanted gone (figures pointing every which way), not a specification that
+// survives contact with two opposing sides.
 //
 // The other half of the fact is per ASSET and lives with the rest of that
 // asset's art facts (`artFaces` on the enemy def, beside `art`, `size` and
 // `tint`): which way the painting or the render was drawn. Only the mismatch
-// between the two is a flip, which is what the poses README already asks for —
-// "Mirrored facings are a code flip, never a generated frame."
+// between what a side wants and how the asset was drawn is a flip, which is
+// what the poses README already asks for — "Mirrored facings are a code flip,
+// never a generated frame."
 //
 // `front` is not a third direction and never flips. A figure looking at the
 // viewer has no left or right to turn: mirroring one only swaps which hand
 // holds the sword. Most of the roster is front-facing, so most of it declares
 // nothing and this rule leaves it exactly as drawn — the honest outcome, and
 // the reason this is a per-asset fact rather than a blanket transform.
-const FACES = 'right';
-export function spriteMirror(artFaces) {
+const SIDE_FACES = Object.freeze({ player: 'right', enemy: 'left' });
+
+/**
+ * spriteMirror(artFaces, side) — does this asset need flipping on this side?
+ *
+ * `side` defaults to 'enemy' because every caller today is an enemy sprite; the
+ * player's figure is front-facing art whose mirror is one blanket CSS rule with
+ * its own removal condition (styles/ui.css, "the figure faces the viewer").
+ * Naming the side rather than assuming it is what keeps that rule honest the
+ * day a player figure is drawn in profile.
+ */
+export function spriteMirror(artFaces, side = 'enemy') {
   if (artFaces === 'front' || artFaces == null) return false;
-  return artFaces !== FACES;
+  return artFaces !== SIDE_FACES[side];
 }
 
 /**

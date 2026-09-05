@@ -122,8 +122,14 @@ export function findings(r) {
   if (missing.length || new Set(ids).size !== ids.length) {
     bad.push(`C1 registry ids missing/duplicated: ${missing.join(', ') || 'duplicate value'}`);
   }
+  // `buildMetadataTrailHtml` LEFT THIS LIST ON 2026-09-05 with the build stamp
+  // it existed to place (owner: "remove build and shift everything up for a
+  // clean neat ui"). The trail element survives as an empty flanking track that
+  // keeps the Cinders receipt centred, and it is inlined in `runHeaderStripHtml`
+  // — a builder function for one empty div would be ceremony, and this list is
+  // for the composition's real parts.
   const hudExports = [
-    'identityClusterHtml', 'cindersCounterHtml', 'buildMetadataTrailHtml',
+    'identityClusterHtml', 'cindersCounterHtml',
     'runHeaderStripHtml', 'vitalsPanelHtml', 'quickAccessPanelHtml',
     'primaryHudRowHtml', 'inventoryBeltHtml', 'sharedRunHudHtml',
   ];
@@ -149,23 +155,29 @@ export function findings(r) {
   }
   // THE KIT SWEEP (2026-09-04): the trail is a kit StatStrip (`.as-statstrip
   // trail`) and no HUD stylesheet lays it out any more.
-  // IT IS THE BUILD STAMP ALONE SINCE 2026-09-05. The Floor chip went with
-  // "remove across floor and character name sigil and class from combat hud",
-  // the Act chip with "it should just be vitals, relics, cinders, armory, menu
-  // and hp and mp potions in the Hud". The MODEL still carries act, floor, seed
-  // and source, which is why the second regex still names them — and that split
-  // is the thing this check pins: the facts stay projected, the chips are gone,
-  // and neither half can drift without a finding.
-  if (!/buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
+  // THE TRAIL IS EMPTY SINCE 2026-09-05, and holding it empty is the check. The
+  // Floor chip went with "remove across floor and character name sigil and
+  // class from combat hud", the Act chip with "it should just be vitals,
+  // relics, cinders, armory, menu and hp and mp potions in the Hud", and the
+  // build stamp with "remove build and shift everything up for a clean neat
+  // ui". What is left is a flanking div that keeps the Cinders receipt in the
+  // middle track, so this pins three things:
+  //   · the element is still there and still an empty StatStrip — delete it and
+  //     the receipt stops being centred, which `hudparity` P8 measures;
+  //   · NONE of the three chips has come back — the negative clauses;
+  //   · the MODEL still projects act, floor, build, seed and source, which is
+  //     the split this check has pinned since the first chip left: the facts
+  //     stay in the presentation model, the chips stay out of the view.
+  if (/buildStampHtml/.test(r.hud)
       // QUOTED, because `hud-act` is a substring of `hud-actions` — the class on
       // the Armoury/Menu cluster, which is very much still there. A bare token
       // search here reported the chips present when they were gone.
       || /'hud-(?:act|floor)'/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
-      || !/class="hud-run-meta as-statstrip trail"/.test(r.hud)
+      || !/class="hud-run-meta as-statstrip trail"[^>]*><\/div>/.test(r.hud)
       || !/\.as-statstrip, \.as-kitline \{ display: flex; flex-wrap: wrap;/.test(r.kit)
       || /\.hud-run-meta[^{]*\{/.test(r.css + r.uiCss)) {
-    bad.push('C6 Run Header is not the corrected one-row Act/Floor/Build/Seed/Source trail');
+    bad.push('C6 the run header trail is not an empty flanking track with every chip gone');
   }
   // On a phone a trail keeps the HEAD of each compound fact and drops its TAIL,
   // and there are two shapes of fact in it: the build stamp keeps its number and

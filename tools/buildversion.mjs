@@ -850,13 +850,23 @@ export function check(root = REPO_ROOT) {
       + ` ${commentHits} prose mention${commentHits === 1 ? '' : 's'} in comments, which assert nothing and are not copies.`);
   }
 
-  // C — EVERY CONSUMER DERIVES. Title owns its stamp directly. Map and combat
-  //     now mount one shared HUD shell, so requiring the leaf screens to name
-  //     buildStampHtml would reject the delegation that prevents them drifting.
-  //     The whole chain is guarded instead: the shared owner must import AND
-  //     invoke buildStampHtml, and each leaf must import AND invoke that owner.
-  //     Requiring both halves prevents an unused import or a coincidental word
-  //     in prose from buying green.
+  // C — EVERY CONSUMER DERIVES. Two consumers since 2026-09-05, not three:
+  //     the title screen and the startup gate. The run HUD carried the third
+  //     until the owner said "remove build and shift everything up for a clean
+  //     neat ui", which withdrew the map-and-combat half of the 2026-08-15 ask
+  //     this row was built on ("on the main menu, and somewhere in the map and
+  //     combat"). tools/buildstamp-shot.mjs records the same reversal.
+  //
+  //     THE STARTUP GATE REPLACES THE HUD IN THIS ROW rather than the row
+  //     shrinking to one consumer. It was always a consumer and was never
+  //     named here; naming it now keeps this a chain check with something to
+  //     check, and it is the surface a player sees before anything else.
+  //
+  //     Each consumer must import AND invoke, because requiring both halves
+  //     prevents an unused import or a coincidental word in prose from buying
+  //     green. That is why the removed HUD delegation (map and combat mounting
+  //     the shared owner) is gone from this row too: with no stamp in the HUD
+  //     there is nothing for those leaves to delegate.
   const importsAndInvokes = (file, symbol, modulePath) => {
     const text = src(file);
     const escaped = modulePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -865,17 +875,19 @@ export function check(root = REPO_ROOT) {
     return imported && invoked;
   };
   const directTitle = importsAndInvokes('src/ui/screens/title.js', 'buildStampHtml', '../components/buildstamp.js');
-  const sharedOwner = importsAndInvokes('src/ui/components/hudmeta.js', 'buildStampHtml', './buildstamp.js');
-  const missingMounts = ['src/ui/screens/map.js', 'src/ui/screens/combat.js']
-    .filter((f) => !importsAndInvokes(f, 'hudShellHtml', '../components/hudmeta.js'));
+  const directStartup = importsAndInvokes('src/ui/components/startupGate.js', 'buildStampHtml', './buildstamp.js');
+  // THE RUN HUD MUST NOT CARRY ONE, asserted rather than merely unlisted: an
+  // unlisted consumer is a consumer nobody checks, and this row's whole subject
+  // is which surfaces derive the version.
+  const hudStamped = /buildStampHtml/.test(src('src/ui/components/hudmeta.js'));
   const consumerFailures = [
     ...(!directTitle ? ['src/ui/screens/title.js does not derive directly'] : []),
-    ...(!sharedOwner ? ['src/ui/components/hudmeta.js does not own the shared stamp'] : []),
-    ...missingMounts.map((f) => `${f} does not mount the shared HUD owner`),
+    ...(!directStartup ? ['src/ui/components/startupGate.js does not derive directly'] : []),
+    ...(hudStamped ? ['src/ui/components/hudmeta.js stamps the run HUD again'] : []),
   ];
-  add(consumerFailures.length === 0, 'C THREE CONSUMERS',
+  add(consumerFailures.length === 0, 'C TWO CONSUMERS',
     consumerFailures.length === 0
-      ? `title derives directly; shared hudmeta owns the stamp; map and combat both mount that owner`
+      ? `title and the startup gate each derive directly; the run HUD carries no stamp`
       : `the named version-consumer chain is broken:\n      ${consumerFailures.join('\n      ')}`);
 
   // D — THE CONTAINMENT CLAIM. The digest's four roots must be a superset of
