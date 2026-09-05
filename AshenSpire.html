@@ -727,6 +727,15 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
 
 /* ---------- main menu ambience ---------- */
 .title-screen { position: relative; overflow: hidden; }
+/* THE TITLE SCREEN HAS NO BAND ABOVE THE RAIL. The utility rail's own rule in
+   styles/kit.css hangs it off the bottom of the run HUD's band (`top: 100%`),
+   which is what keeps it clear of the header on every surface that has one.
+   The title screen has no header, and the rail is a direct child of the screen
+   — so `top: 100%` would drop it a full screen height below the fold. It keeps
+   its own top-right anchor, which is where it sat before the rail existed. */
+.title-screen > .hud-quick-settings {
+  top: calc(env(safe-area-inset-top, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+}
 .title-glow { animation: titleGlow 3.2s ease-in-out infinite alternate; }
 @keyframes titleGlow {
   from { text-shadow: 0 0 26px rgba(201, 162, 39, 0.25); }
@@ -3017,66 +3026,54 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* The full read, in a door: the same sections the edge tray renders. */
 .combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
 
-/* ═══ QUICK SETTINGS — one corner, every surface ═══════════════════════════ */
+/* ═══ QUICK SETTINGS — the utility rail, under the band on the right ══════ */
 /* Fullscreen and music are the two controls that belong to the PAGE, not to
-   whatever is on it (Constantine, 2026-09-04: "move full screen and music, for
-   all current windows that use them, to anchored to top right corner and not
-   block any text"). They lived in the HUD's flow, so on the map they landed
-   beside the route title and in combat under the icon row. One anchored home
-   now: the top-right corner, clear of the notch, above the content layer, and
-   out of the flow entirely so no surface has to make room in its own layout.
-   `--hud-quick-edge-gap` is authored (balance.ui.hudQuickSettings.edgeGapPx,
-   planted on <html> by main.js) and divided by the zoom, so the gap is the
-   same on glass at every UI size. */
-/* THE CORNER'S FOOTPRINT, as one token every surface reserves. Two IconButtons
-   and their gap, plus the edge gap on both sides — so a top row can keep its
-   own text clear of the pair without any surface measuring it again. */
-:root { --quick-corner: calc((2 * var(--iconbtn-size)) + 0.6rem + (2 * var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))); }
+   whatever is on it. They ride a rail of their own: a vertical stack pinned to
+   the right edge, immediately BELOW the band, over the surface's content.
+   WHY NOT THE TOP-RIGHT CORNER, which is where they were for a day. Owner,
+   2026-09-04: "move full screen and music … to anchored to top right corner
+   and not block any text"; owner, 2026-09-05, with a screenshot of build
+   0.4.0.1454: "I miss the old Hudson and music and full screen placement".
+   The corner is inside the band, so keeping text out from under the pair meant
+   every surface reserving a horizontal slice of its own top row — and the
+   measurement is what settles it: at 360x800 the map's header reserved
+   243 of 434 CSS px, 56% of the band, for a pair 106px wide, and the identity
+   ellipsed to "FORSAKEN ·…" while the meters collapsed to 50px. Below the band
+   the pair overlays content that was already yielding to it: `.field` in
+   styles/combat.css pads its right edge for exactly this rail, and the map's
+   route strip calls its own right margin "the HUD's utility gutter". Those two
+   gutters were written for this placement and were never removed, so for a day
+   the game reserved space in three places for two buttons.
+   The band is the containing block (`.as-band { position: relative }`), so
+   `top: 100%` follows the band's own height on every surface and at every text
+   size without a number to keep in step. `--hud-quick-edge-gap` is authored
+   (balance.ui.hudQuickSettings.edgeGapPx, planted on <html> by main.js) and
+   divided by the zoom, so the gap is the same on glass at every UI size. */
+/* THE RAIL'S FOOTPRINT, as one token the surfaces under it reserve. It is ONE
+   IconButton wide, not two, because the rail is a COLUMN — the same value this
+   token replaced when it was inlined in styles/combat.css. */
+:root { --quick-corner: calc(var(--iconbtn-size) + (2 * var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))); }
 .hud-quick-settings {
-  position: fixed; z-index: 80;
-  top: calc(env(safe-area-inset-top, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  position: absolute; z-index: 80;
+  top: calc(100% + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
   right: calc(env(safe-area-inset-right, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
-  display: flex; align-items: flex-start; gap: 0.6rem;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 0.6rem;
   margin: 0; padding: 0;
 }
-/* The notice speaks under the pair rather than pushing it out of the corner. */
+/* The notice speaks to the LEFT of the rail rather than pushing it off the
+   edge: the rail is a column now, so there is no room under it. */
 .hud-quick-settings > .hud-quick-notice {
-  position: absolute; top: calc(var(--iconbtn-size) + 0.4rem); right: 0;
+  position: absolute; top: 0; right: calc(var(--iconbtn-size) + 0.4rem);
   max-width: 22rem; text-align: right; white-space: normal;
 }
 .hud-quick-settings > .hud-quick-notice[hidden] { display: none; }
-/* Every surface that shows the pair keeps its own top row out of that corner:
-   the run HUD's rows, and the co-op board's dock and scene header. */
-/* THE WHOLE STACK AND NOT JUST ITS FIRST ROW. At 360x800 the pair is one
-   IconButton tall (53 CSS px) against a 190px three-row HUD, so charging rows 2
-   and 3 for an obstruction that clears them looks like pure waste — I moved the
-   reservation to `.hud-info-row` alone and it cost 121.663px of dead space back.
-   It is not waste: at 320x568 the rows are shorter and the pair is not, so the
-   meters row rises INTO the corner and the flasks sit under the buttons.
-   `tools/hud-quick-compact.mjs` measured the overlap the moment I tried it —
-   3234px² on map-compact-iphone-se and combat-compact-iphone-se, 3582px² with
-   music off. The stack is the safe superset at every height, which is why it is
-   the element named here. */
-.topbar.combat-hud > .hud-top,
-.coop-scene > .as-banner,
-.coop-board > .coop-top,
-/* `:not(.combat-hud)` BECAUSE THE MAP'S HEADER IS BOTH. `screens/map.js` draws
-   the shared run HUD with `headerClass: 'map-header'`, so that one element
-   matches this rule AND the `.topbar.combat-hud > .hud-top` rule above it, and
-   the corner was reserved TWICE on the same axis — once on the band, once again
-   on its only in-flow child.
-   Measured at 360x800 (--ui-zoom 0.83, so 434 CSS px of band): padding
-   `6px 121.663px 6px 16px` on the header left 296px for `.hud-top`, which then
-   spent another 121.663px and left its rows 174px. 243 of 434 px — 56% of the
-   width — reserved for a pair of buttons 106px wide. The HUD drew in the left
-   two-fifths: the identity's eyebrow ellipsed to "FORSAKEN ·…", the context to
-   "ACT I — T...", and the three meters collapsed to 50px, which is narrower
-   than a Meter's own plate, so HP/MP/SP printed as bare numbers beside a 3px
-   tick of colour. Owner, 2026-09-05: "ui looks broken foe the top hud".
-   Reserved once, on the element that holds the text. The co-op map header
-   (`screens/coop.js`) is a plain `.topbar.map-header` with no run HUD inside
-   it, so it still needs this and still gets it. */
-.topbar.map-header:not(.combat-hud) { padding-inline-end: var(--quick-corner); }
+/* NOTHING RESERVES A SLICE OF ITS OWN TOP ROW ANY MORE. The rail sits under the
+   band, so the run header, the co-op banner and the co-op board top each get
+   their full width back — that is the point of moving it, and re-adding a
+   `padding-inline-end: var(--quick-corner)` to any of them would give the dead
+   space back. What DOES reserve for the rail is what sits beneath it:
+   `.field` (styles/combat.css) and the map's route strip, both already written
+   for this placement. */
 /* A narrow map header cannot hold its whole line AND the corner, and `nowrap`
    made its actions overflow INTO the corner rather than yield. It wraps: the
    way out drops to its own line under the pair (kit law — a narrow shape is a
@@ -3977,7 +3974,14 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 
 /* ═══ BAND — a page-level chrome strip (the HUD, an action row, a zoom bar) ═ */
 /* `.topbar` is the hook co-op's bar still writes; the kit name is the recipe. */
-.as-band, .topbar { display: flex; align-items: center; gap: 1.2rem; flex: 0 0 auto; min-width: 0; padding: 0.6rem 1.6rem; background: var(--bg-raise); border-bottom: 1px solid var(--line); }
+/* `position: relative` ON BOTH, because the utility rail hangs off the bottom
+   of whichever one carries it (`top: 100%`, § QUICK SETTINGS). `.as-band`
+   already had it for its grip; `.topbar` did not, and the co-op board's two
+   headers (`screens/coop.js`) are bare `.topbar` with no `as-band` — so the
+   rail would have escaped to the nearest positioned ancestor and hung a full
+   screen height below the fold. hud-quick-compact's 18 surfaces are solo
+   map/combat/title, so no gate would have said so. */
+.as-band, .topbar { position: relative; display: flex; align-items: center; gap: 1.2rem; flex: 0 0 auto; min-width: 0; padding: 0.6rem 1.6rem; background: var(--bg-raise); border-bottom: 1px solid var(--line); }
 .as-band.foot { border-bottom: 0; border-top: 1px solid var(--line); }
 .as-band.stack { flex-direction: column; align-items: stretch; gap: 0.5rem; }
 .as-band.quiet { background: transparent; border: 0; }
@@ -52568,7 +52572,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '8e20e96800';
+const SOURCE = '8829ba9786';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52602,7 +52606,7 @@ const SOURCE = '8e20e96800';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '71';
+const ORDINAL = '72';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -67979,14 +67983,17 @@ Object.assign(module.exports, { flaskActionPlan });
 // Presentation Models; this module owns DOM, not domain projection or commands.
 //
 // THE HUD IS A KIT BAND (styles/kit.css `.as-band`), three rows deep:
-//   1. the run header — identity as a LabelStack (Eyebrow "name · class",
-//      Title·S = the context: the act on the map, the fight in combat), the
-//      Cinders receipt as a StatChip, and the Act · Floor · Build trail as a
-//      StatStrip;
+//   1. the run header — the context as a LabelStack Title·S (the act on the
+//      map, the fight in combat), the Cinders receipt as a StatChip, and the
+//      Act · Build trail as a StatStrip;
 //   2. the resource row — the meters (components/resbars.js, the kit Meter)
-//      and, on the right, a cluster of IconButtons (⚒ ☰ ⛶ ♫) over the flask
-//      Slots the screen mounts;
+//      and, on the right, a cluster of IconButtons (⚒ ☰) over the flask Slots
+//      the screen mounts;
 //   3. the belt — relic Slots and carried-potion Slots.
+// Fullscreen and music are NOT in this band: they ride the utility rail that
+// hangs off its bottom edge on the right (styles/kit.css § QUICK SETTINGS).
+// The name, the class and the floor number were in row 1 until 2026-09-05 and
+// each function below says why its own is gone.
 // The classes that are not `as-*` are HOOKS the instruments read; kit.css
 // draws nothing for them and no stylesheet may any more.
 const { esc } = require("src/ui/components/tooltip.js");
@@ -67994,7 +68001,7 @@ const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { UI_COMPONENTS: UI, uiComponentAttrs } = require("src/ui/components/uiComponents.js");
 const { childModel } = require("src/ui/models/ComponentModel.js");
 const { hudQuickSettingsHtml } = require("src/ui/components/hudQuickSettings.js");
-const { el, html, eyebrow, titleS, iconButton } = require("src/ui/kit/index.js");
+const { el, html, titleS, iconButton } = require("src/ui/kit/index.js");
 
 function attrsOf(componentAttrs) {
   // uiComponentAttrs() returns attribute TEXT for string templates; the kit's
@@ -68014,11 +68021,17 @@ function progressChip(className, componentAttrs, { label, value, total }) {
   ]);
 }
 
+// NO NAME AND NO CLASS ON THE BAND (owner, 2026-09-05: "remove the floor and
+// character and class name"). The LabelStack keeps its Eyebrow slot empty and
+// draws the context alone — the identity is a character-creation fact, and the
+// player has just chosen it; the band's job in a run is the state that changes.
+// The name is still the save slot's own label, so it is not gone from the game,
+// only from the band. `UI.characterTitle` stays a registered component with a
+// model behind it (RunHeaderModel) because the portrait badge and the profile
+// screens read the same fact; nothing renders it here.
 function identityClusterHtml(model) {
-  const title = childModel(model, UI.characterTitle).properties;
   const context = model.properties.context || '';
   return html(el('div', { ...attrsOf(uiComponentAttrs(model.component, model.variant)), class: 'hud-identity as-labelstack' }, [
-    eyebrow(`${title.name} · ${title.classLabel}`, { ...attrsOf(uiComponentAttrs(UI.characterTitle)), class: 'nm' }),
     context ? titleS(context, { tag: 'span', class: 'ls-label hud-context fold' }) : null,
   ]));
 }
@@ -68033,12 +68046,19 @@ function cindersCounterHtml(model) {
   ])));
 }
 
+// NO FLOOR CHIP (same ask). Act and the build stamp stay: the act names where
+// you are and the stamp is the receipt a bug report needs. The floor number is
+// the one the map already draws as a shape — the route strip's ENTRANCE -> BOSS
+// rail — and a number beside a picture of the same fact is the duplication this
+// trail was trimmed to avoid. It IS gone from combat, where no other surface
+// prints it; that is the cost, stated rather than buried.
+// `metadataFieldModel('floor', …)` stays in RunHeaderModel: the floor is still
+// projected, still in the presentation model, and still what the map's own
+// progress is derived from. Only the chip is gone.
 function buildMetadataTrailHtml(model) {
   const act = childModel(model, UI.metadataField, 'act').properties;
-  const floor = childModel(model, UI.metadataField, 'floor').properties;
   return `<div class="hud-run-meta as-statstrip trail" ${uiComponentAttrs(model.component, model.variant)}>
     ${html(progressChip('hud-act', uiComponentAttrs(UI.metadataField, 'act'), act))}
-    ${html(progressChip('hud-floor', uiComponentAttrs(UI.metadataField, 'floor'), floor))}
     ${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}
   </div>`;
 }
