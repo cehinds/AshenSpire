@@ -1119,11 +1119,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 
 /* ═══ FIGURE WELL — an ArtWell tall enough for a standing sprite ═══════════ */
 .as-artwell.figure { width: 16rem; height: 20rem; font-size: 6.4rem; border-width: 2px; transition: border-color 200ms, box-shadow 300ms; }
-/* The figure well shows the painting as painted — see the facing block in
-   styles/ui.css. It cancels the FACING LAYER, not `.class-sprite`: the mirror
-   moved onto that layer so it would stop colliding with the reaction
-   animations and with the sigil overlay, and a cancel aimed at the old element
-   would silently stop cancelling anything. */
+/* The figure well explicitly keeps the painting as authored. This also guards
+   portrait-like figure surfaces if combat-facing rules are introduced later. */
 .as-artwell.figure .class-sprite > .facing { transform: none; }
 
 /* ═══ STEPPER — a Segmented of − / value / + ════════════════════════════════ */
@@ -1788,10 +1785,10 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .as-cluster.end { margin-left: auto; }
 /* QUICK ACCESS stays a 2 × 2 square, but its tiles are smaller than the global
    IconButton. The transparent ::after keeps the authored tap floor around each
-   visible 36px square; the 8px gaps keep those hit regions from overlapping. */
-.shared-hud { --hud-quick-tile-size: 3.6rem; --hud-belt-tile-face-size: 3rem; }
+   visible 32px square; the 12px gaps keep those hit regions from overlapping. */
+.shared-hud { --hud-quick-tile-size: 3.2rem; --hud-belt-tile-face-size: 2.8rem; }
 .shared-hud .hud-control-grid,
-.shared-hud .hud-control-grid > .as-cluster { gap: 0.8rem; }
+.shared-hud .hud-control-grid > .as-cluster { gap: 1.2rem; }
 .shared-hud .hud-control-grid :is(.as-iconbtn, .as-slot) {
   position: relative;
   width: var(--hud-quick-tile-size); height: var(--hud-quick-tile-size);
@@ -1805,8 +1802,18 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
   transform: translate(-50%, -50%);
 }
 
-/* Relics and utility potions share a 30px visible well in the lower belt. The
-   real Slot stays at the tap floor, so interactive potions remain easy to hit. */
+/* Relics and utility potions leave the HUD band and hang directly beneath its
+   left and right edges. Their 28px visible wells share the same size; the real
+   Slots remain at the tap floor so interactive potions stay easy to hit. */
+.shared-hud .hud-bottom {
+  position: absolute;
+  z-index: 85;
+  top: calc(100% + 0.4rem);
+  left: 1.6rem; right: 1.6rem;
+  width: auto;
+  pointer-events: none;
+}
+.shared-hud .hud-bottom > * { pointer-events: auto; }
 .shared-hud .hud-bottom .as-slot {
   position: relative;
   isolation: isolate;

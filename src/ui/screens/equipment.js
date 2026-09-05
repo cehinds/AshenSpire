@@ -25,7 +25,7 @@ import { renderCard, relicText } from '../components/card.js';
 import {
   renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies,
 } from '../components/equipmentReceipts.js';
-import { esc, attachTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
+import { esc, attachTooltip, hideTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
 import { armHold, holdMs, HOLD_POINTER_SLOP } from '../../framework/optionDecision.js';
 import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
@@ -520,6 +520,10 @@ function inventoryReveal(registries, row, {
   });
   el.dataset.inventoryItem = row.key;
   const cardOwnsAction = classModel?.holdAction === true && Boolean(onClassAction);
+  let comparisonPreviewTimer = null;
+  let comparisonPreviewOpen = false;
+  let startComparisonPreview = null;
+  let endComparisonPreview = null;
   if (comparison) {
     el.dataset.component = 'armoury.comparisonTooltipAnchor';
     el.tabIndex = 0;
@@ -531,19 +535,13 @@ function inventoryReveal(registries, row, {
       : '';
     el.setAttribute('aria-label', comparisonPresentation === 'inline'
       ? `Compare ${item.name}. Comparison shown in this card.${actionInstruction}`
-      : `Compare ${item.name}. Hover or focus this card to show comparison.${actionInstruction}`);
+      : `Compare ${item.name}. Press and hold this card to preview comparison.${actionInstruction}`);
     const clear = el.closest('.disc-faces') || el.parentElement;
     const appearance = {
       variant: 'equipment-comparison',
       widthRem: comparisonConfig?.tooltipWidthRem,
       maxHeightRatio: comparisonConfig?.tooltipMaxHeightRatio,
     };
-    if (comparisonPresentation === 'tooltip') attachTooltip(el, () => comparisonHtml, {
-      intent: 'above',
-      clear,
-      delayMs: comparisonConfig?.hoverDelayMs,
-      appearance,
-    });
     if (comparisonPresentation === 'tooltip' && !cardOwnsAction) {
       const disarm = armHold(el, {
         ms: holdDuration,
@@ -554,6 +552,27 @@ function inventoryReveal(registries, row, {
         },
       });
       if (registerHold) registerHold(disarm);
+    }
+    if (comparisonPresentation === 'tooltip' && cardOwnsAction) {
+      el.dataset.comparisonTrigger = 'hold';
+      el.dataset.comparisonPreview = 'idle';
+      startComparisonPreview = () => {
+        clearTimeout(comparisonPreviewTimer);
+        comparisonPreviewOpen = false;
+        el.dataset.comparisonPreview = 'pending';
+        comparisonPreviewTimer = setTimeout(() => {
+          comparisonPreviewTimer = null;
+          comparisonPreviewOpen = showTooltipFor(el, comparisonHtml, { intent: 'above', clear, appearance });
+          el.dataset.comparisonPreview = comparisonPreviewOpen ? 'open' : 'idle';
+        }, comparisonConfig?.holdPreviewDelayMs ?? 160);
+      };
+      endComparisonPreview = () => {
+        clearTimeout(comparisonPreviewTimer);
+        comparisonPreviewTimer = null;
+        if (comparisonPreviewOpen) hideTooltip();
+        comparisonPreviewOpen = false;
+        el.dataset.comparisonPreview = 'idle';
+      };
     }
   }
   if (cardOwnsAction) {
@@ -566,6 +585,8 @@ function inventoryReveal(registries, row, {
       ms: holdDuration,
       id: 'equipInventory',
       onConfirm: onClassAction,
+      onHoldStart: startComparisonPreview,
+      onHoldEnd: endComparisonPreview,
       feedbackHosts: () => {
         const reveal = el.closest('.disc-reveal');
         const faces = el.closest('.disc-faces');

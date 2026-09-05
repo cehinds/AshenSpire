@@ -1127,65 +1127,14 @@ button.ev-choice {
 
   .title-screen { padding: 1.2rem 0.8rem 1rem; }}
 
-/* ---------------------------------------------------------------------------
-   THE FIGURE FACES THE VIEWER, SO ITS RIGHT HAND IS ON YOUR LEFT (#48-adjacent).
-
-   Constantine, 2026-08-21: "the right hand and left hand weapons are on the
-   wrong side on the character model in all views armory, character creation and
-   combat. the sword shows on my right side of the screen, but on the left side
-   of the character since it's facing the player."
-
-   He is right, and it is measurable: tools/hand-side-probe.mjs reads the
-   alpha-weighted ink centroid of every handed armament against the body's own
-   ink centre and finds 23 of 24 drawn into the model's opposite hand. (The
-   denominator is every hand=left|right row in weapons.csv with its asset derived
-   as artKey || id, the runtime's own rule -- src/model/loadout.js:962.)
-
-   WHY THE CORRECTION IS HERE AND NOT IN THE ART. The side is not decided at
-   runtime by anything — `equippedFigure` stacks full-frame pre-rendered layers,
-   and THREE independent producers all place the main armament at world x=+0.62,
-   which the shared camera (at y=-8, looking toward +Y) puts on the VIEWER'S
-   RIGHT: tools/equipment-blender.py (`RX, LX = 0.62, -0.52`),
-   tools/sprites-blender.py (the same positions, by its own comment), and the
-   inline CLASS_SVG fallbacks (the Starseer staff at x=80 of a 110 viewBox).
-   One convention, backwards, in three places. Correcting it at the source means
-   re-rendering every armament and body in Blender, which is the RIGHT fix and
-   is carded; this rule is what makes the screen true until that runs.
-
-   WHY A MIRROR IS SAFE HERE, MEASURED RATHER THAN ASSUMED. A scaleX flip also
-   flips the art, so it is only honest if the art is symmetric. Measured on the
-   silhouette (alpha, mirrored against itself): body_reaver 0.3%, body_starseer
-   0.2%, body_herald 0.0% mismatched. The bodies are symmetric IN SHAPE. A first
-   pass measured 19-38% and nearly cost this fix — that number was COLOUR, and
-   the scene's three key lights are rotated off-axis (z -28/146/35 degrees), so
-   it was reading the lighting, not the geometry. What flipping actually changes
-   is which side the key light falls on, which no player can name. The one real
-   shape asymmetry is the armament itself (14.9-16.0% on the armed class
-   sprites) — and that is precisely the thing that must move.
-
-   ONE GLOBAL MIRROR PER FIGURE. `.equipped-figure` appears BARE in the Armoury
-   and NESTED inside `.class-sprite` from combat (playerSprite wraps it), so
-   mirroring both selectors would cancel to identity on the combat board — the
-   screen that started this. The second rule keeps the figure orientation at
-   one; an individual weapon layer may add its own socket correction when a
-   player swaps a type-default armament across hands.
-
-   REMOVAL CONDITION (SOP 1's corollary): delete this block the day the armament
-   and body art is re-rendered from corrected producers. Leaving both in place
-   double-flips and restores the bug wearing a fix's clothes.
-
-   WHICH ELEMENT CARRIES IT. `.class-sprite > .facing` and not `.class-sprite`
-   itself, because that frame is an animation target and the sigil overlay's
-   positioning parent, and a mirror on it broke both: the reaction animations in
-   `styles/combat.css` outrank an inherited transform and flipped the player to
-   face away for the length of every hit, and the figure well's cancel in
-   `styles/kit.css` left the overlay counter-mirroring nothing. The facing layer
-   is built in `src/ui/assets.js` classSprite() and carries only this fact —
-   the same shape enemySprite() uses for the same reason.
-   --------------------------------------------------------------------------- */
+/* The legacy viewer-facing figure and the Armoury's generated equipment figure
+   keep their handedness correction. Combat is different: its painted figures
+   and pose frames are already authored facing right, into the battlefield, so
+   the combat player cancels this mirror immediately below. */
 .class-sprite > .facing,
 .equipped-figure { transform: scaleX(-1); }
 .class-sprite .equipped-figure { transform: none; }
+.combatant.player .class-sprite > .facing { transform: none; }
 
 button.armoury-position-card { display: grid; grid-template-columns: var(--armoury-position-label-width) var(--armoury-position-sprite-width) minmax(0, 1fr); padding: 0; text-align: left; }
 
@@ -1246,6 +1195,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 
 .armoury-smithing-receipt b { color: var(--gold); }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -3412,11 +3362,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 
 /* ═══ FIGURE WELL — an ArtWell tall enough for a standing sprite ═══════════ */
 .as-artwell.figure { width: 16rem; height: 20rem; font-size: 6.4rem; border-width: 2px; transition: border-color 200ms, box-shadow 300ms; }
-/* The figure well shows the painting as painted — see the facing block in
-   styles/ui.css. It cancels the FACING LAYER, not `.class-sprite`: the mirror
-   moved onto that layer so it would stop colliding with the reaction
-   animations and with the sigil overlay, and a cancel aimed at the old element
-   would silently stop cancelling anything. */
+/* The figure well explicitly keeps the painting as authored. This also guards
+   portrait-like figure surfaces if combat-facing rules are introduced later. */
 .as-artwell.figure .class-sprite > .facing { transform: none; }
 
 /* ═══ STEPPER — a Segmented of − / value / + ════════════════════════════════ */
@@ -4081,10 +4028,10 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .as-cluster.end { margin-left: auto; }
 /* QUICK ACCESS stays a 2 × 2 square, but its tiles are smaller than the global
    IconButton. The transparent ::after keeps the authored tap floor around each
-   visible 36px square; the 8px gaps keep those hit regions from overlapping. */
-.shared-hud { --hud-quick-tile-size: 3.6rem; --hud-belt-tile-face-size: 3rem; }
+   visible 32px square; the 12px gaps keep those hit regions from overlapping. */
+.shared-hud { --hud-quick-tile-size: 3.2rem; --hud-belt-tile-face-size: 2.8rem; }
 .shared-hud .hud-control-grid,
-.shared-hud .hud-control-grid > .as-cluster { gap: 0.8rem; }
+.shared-hud .hud-control-grid > .as-cluster { gap: 1.2rem; }
 .shared-hud .hud-control-grid :is(.as-iconbtn, .as-slot) {
   position: relative;
   width: var(--hud-quick-tile-size); height: var(--hud-quick-tile-size);
@@ -4098,8 +4045,18 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
   transform: translate(-50%, -50%);
 }
 
-/* Relics and utility potions share a 30px visible well in the lower belt. The
-   real Slot stays at the tap floor, so interactive potions remain easy to hit. */
+/* Relics and utility potions leave the HUD band and hang directly beneath its
+   left and right edges. Their 28px visible wells share the same size; the real
+   Slots remain at the tap floor so interactive potions stay easy to hit. */
+.shared-hud .hud-bottom {
+  position: absolute;
+  z-index: 85;
+  top: calc(100% + 0.4rem);
+  left: 1.6rem; right: 1.6rem;
+  width: auto;
+  pointer-events: none;
+}
+.shared-hud .hud-bottom > * { pointer-events: auto; }
 .shared-hud .hud-bottom .as-slot {
   position: relative;
   isolation: isolate;
@@ -20198,7 +20155,7 @@ const armouryUi = {
     },
     "comparison": {
       "presentation": "tooltip",
-      "hoverDelayMs": 550,
+      "holdPreviewDelayMs": 160,
       "tooltipWidthRem": 52,
       "tooltipMaxHeightRatio": 0.8
     },
@@ -29188,7 +29145,7 @@ const DEFAULTS = Object.freeze({
   },
   cards: { defaultView: 'list', gridColumns: 4 },
   comparison: {
-    presentation: 'tooltip', hoverDelayMs: 550, tooltipWidthRem: 52, tooltipMaxHeightRatio: 0.8,
+    presentation: 'tooltip', holdPreviewDelayMs: 160, tooltipWidthRem: 52, tooltipMaxHeightRatio: 0.8,
   },
   cardClasses: { inventoryItem: { holdAction: false } },
   viewModes: {
@@ -29299,9 +29256,9 @@ function normalizeArmouryLayout(source = {}) {
   if (!['tooltip', 'inline'].includes(comparison.presentation)) {
     throw new Error('armouryUi.layout.comparison.presentation must be tooltip or inline');
   }
-  if (!Number.isInteger(Number(comparison.hoverDelayMs)) || Number(comparison.hoverDelayMs) < 0
-    || Number(comparison.hoverDelayMs) > 600000) {
-    throw new Error('armouryUi.layout.comparison.hoverDelayMs must be an integer from 0 to 600000');
+  if (!Number.isInteger(Number(comparison.holdPreviewDelayMs)) || Number(comparison.holdPreviewDelayMs) < 0
+    || Number(comparison.holdPreviewDelayMs) > 600000) {
+    throw new Error('armouryUi.layout.comparison.holdPreviewDelayMs must be an integer from 0 to 600000');
   }
   positive(Number(comparison.tooltipWidthRem), 'comparison.tooltipWidthRem');
   ratio(Number(comparison.tooltipMaxHeightRatio), 'comparison.tooltipMaxHeightRatio');
@@ -29368,7 +29325,7 @@ function normalizeArmouryLayout(source = {}) {
     cards: Object.freeze({ defaultView: String(cards.defaultView), gridColumns: Number(cards.gridColumns) }),
     comparison: Object.freeze({
       presentation: String(comparison.presentation),
-      hoverDelayMs: Number(comparison.hoverDelayMs),
+      holdPreviewDelayMs: Number(comparison.holdPreviewDelayMs),
       tooltipWidthRem: Number(comparison.tooltipWidthRem),
       tooltipMaxHeightRatio: Number(comparison.tooltipMaxHeightRatio),
     }),
@@ -46021,11 +45978,16 @@ function beatCue(phase, id, form) {
 }
 
 /**
- * armHold(btn, { ms, onConfirm, onTap?, id }) -> disarm() (with .refresh())
+ * armHold(btn, { ms, onConfirm, onTap?, id, onHoldStart?, onHoldEnd? })
+ *   -> disarm() (with .refresh())
  *
  * `ms` may be a NUMBER or a FUNCTION returning one, read at the moment the
  * finger lands. The function form remains available to rows whose state can
  * change while a screen is mounted; End Turn itself is deliberately constant.
+ *
+ * `onHoldStart` and `onHoldEnd` expose this one gesture's lifecycle to temporary
+ * presentation such as a sustained-hold preview. The end hook runs on every
+ * exit — early release, movement, cancellation, completion, Escape or disarm.
  *
  * `ms <= 0` is the "off" position of the dial: one completed press commits.
  * It is not a hold with a zero timer, and it does not depend on a trailing
@@ -46034,6 +45996,7 @@ function beatCue(phase, id, form) {
 function armHold(btn, {
   ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
   feedbackHosts = null, pointerOnly = false, tapOnEarlyRelease = false,
+  onHoldStart = null, onHoldEnd = null,
 }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
 
@@ -46054,6 +46017,7 @@ function armHold(btn, {
   // under a thumb that was trying to scroll) and never a commit. Both press
   // forms set it; onClick consumes it; a press resets it.
   let movedThisPress = false;
+  let holdLifecycleActive = false;
 
   const paint = (p) => {
     for (const target of [btn, ...activeFeedback]) {
@@ -46139,6 +46103,10 @@ function armHold(btn, {
     if (btn.dataset.hold) btn.dataset.hold = state;
     paint(0);
     clearFeedback();
+    if (holdLifecycleActive) {
+      holdLifecycleActive = false;
+      if (onHoldEnd) onHoldEnd(state);
+    }
   }
 
   function begin(origin, track) {
@@ -46207,6 +46175,8 @@ function armHold(btn, {
     heldThisPress = origin.source === 'pointer';
     armed = true;
     btn.dataset.hold = 'holding';
+    holdLifecycleActive = true;
+    if (onHoldStart) onHoldStart({ duration: ms0, origin });
     const t0 = performance.now();
     const x0 = origin.x;
     const y0 = origin.y;
@@ -52744,7 +52714,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '5aa3c59060';
+const SOURCE = 'fd743a122f';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52778,7 +52748,7 @@ const SOURCE = '5aa3c59060';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '4';
+const ORDINAL = '8';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -59457,11 +59427,10 @@ const SIDE_FACES = Object.freeze({ player: 'right', enemy: 'left' });
 /**
  * spriteMirror(artFaces, side) — does this asset need flipping on this side?
  *
- * `side` defaults to 'enemy' because every caller today is an enemy sprite; the
- * player's figure is front-facing art whose mirror is one blanket CSS rule with
- * its own removal condition (styles/ui.css, "the figure faces the viewer").
- * Naming the side rather than assuming it is what keeps that rule honest the
- * day a player figure is drawn in profile.
+ * `side` defaults to 'enemy' because every caller today is an enemy sprite.
+ * Player combat paintings and pose frames are already authored facing right and
+ * the combat surface keeps them as drawn. Naming the side keeps this helper
+ * ready for a future profile asset.
  */
 function spriteMirror(artFaces, side = 'enemy') {
   if (artFaces === 'front' || artFaces == null) return false;
@@ -59690,9 +59659,9 @@ function classSprite(classId, tint, sigil, tintId, style) {
   el.className = 'class-sprite';
   el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
 
-  // THE FACING LAYER, for the same reason enemySprite() has one: the mirror
-  // (`styles/ui.css`, "the figure faces the viewer") must sit on an element
-  // that carries NOTHING ELSE. It used to ride `.class-sprite` itself, which
+  // THE FACING LAYER, for the same reason enemySprite() has one: any orientation
+  // correction must sit on an element that carries NOTHING ELSE. It used to
+  // ride `.class-sprite` itself, which
   // is both an animation target and the overlay's positioning parent, and it
   // broke in both directions — measured on the board, not reasoned about:
   //
@@ -60997,7 +60966,7 @@ const { renderCard, relicText } = require("src/ui/components/card.js");
 const { renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies } = require("src/ui/components/equipmentReceipts.js");
 
 
-const { esc, attachTooltip, showTooltipFor, stickTooltip } = require("src/ui/components/tooltip.js");
+const { esc, attachTooltip, hideTooltip, showTooltipFor, stickTooltip } = require("src/ui/components/tooltip.js");
 const { armHold, holdMs, HOLD_POINTER_SLOP } = require("src/framework/optionDecision.js");
 const { refuses } = require("src/ui/components/refusal.js");
 const { playerSprite, equippedFigure } = require("src/ui/assets.js");
@@ -61492,6 +61461,10 @@ function inventoryReveal(registries, row, {
   });
   el.dataset.inventoryItem = row.key;
   const cardOwnsAction = classModel?.holdAction === true && Boolean(onClassAction);
+  let comparisonPreviewTimer = null;
+  let comparisonPreviewOpen = false;
+  let startComparisonPreview = null;
+  let endComparisonPreview = null;
   if (comparison) {
     el.dataset.component = 'armoury.comparisonTooltipAnchor';
     el.tabIndex = 0;
@@ -61503,19 +61476,13 @@ function inventoryReveal(registries, row, {
       : '';
     el.setAttribute('aria-label', comparisonPresentation === 'inline'
       ? `Compare ${item.name}. Comparison shown in this card.${actionInstruction}`
-      : `Compare ${item.name}. Hover or focus this card to show comparison.${actionInstruction}`);
+      : `Compare ${item.name}. Press and hold this card to preview comparison.${actionInstruction}`);
     const clear = el.closest('.disc-faces') || el.parentElement;
     const appearance = {
       variant: 'equipment-comparison',
       widthRem: comparisonConfig?.tooltipWidthRem,
       maxHeightRatio: comparisonConfig?.tooltipMaxHeightRatio,
     };
-    if (comparisonPresentation === 'tooltip') attachTooltip(el, () => comparisonHtml, {
-      intent: 'above',
-      clear,
-      delayMs: comparisonConfig?.hoverDelayMs,
-      appearance,
-    });
     if (comparisonPresentation === 'tooltip' && !cardOwnsAction) {
       const disarm = armHold(el, {
         ms: holdDuration,
@@ -61526,6 +61493,27 @@ function inventoryReveal(registries, row, {
         },
       });
       if (registerHold) registerHold(disarm);
+    }
+    if (comparisonPresentation === 'tooltip' && cardOwnsAction) {
+      el.dataset.comparisonTrigger = 'hold';
+      el.dataset.comparisonPreview = 'idle';
+      startComparisonPreview = () => {
+        clearTimeout(comparisonPreviewTimer);
+        comparisonPreviewOpen = false;
+        el.dataset.comparisonPreview = 'pending';
+        comparisonPreviewTimer = setTimeout(() => {
+          comparisonPreviewTimer = null;
+          comparisonPreviewOpen = showTooltipFor(el, comparisonHtml, { intent: 'above', clear, appearance });
+          el.dataset.comparisonPreview = comparisonPreviewOpen ? 'open' : 'idle';
+        }, comparisonConfig?.holdPreviewDelayMs ?? 160);
+      };
+      endComparisonPreview = () => {
+        clearTimeout(comparisonPreviewTimer);
+        comparisonPreviewTimer = null;
+        if (comparisonPreviewOpen) hideTooltip();
+        comparisonPreviewOpen = false;
+        el.dataset.comparisonPreview = 'idle';
+      };
     }
   }
   if (cardOwnsAction) {
@@ -61538,6 +61526,8 @@ function inventoryReveal(registries, row, {
       ms: holdDuration,
       id: 'equipInventory',
       onConfirm: onClassAction,
+      onHoldStart: startComparisonPreview,
+      onHoldEnd: endComparisonPreview,
       feedbackHosts: () => {
         const reveal = el.closest('.disc-reveal');
         const faces = el.closest('.disc-faces');
@@ -68559,12 +68549,12 @@ Object.assign(module.exports, { flaskActionPlan });
 // Reusable Map/Combat HUD Views. Structure is rendered from immutable
 // Presentation Models; this module owns DOM, not domain projection or commands.
 //
-// THE HUD IS A KIT BAND (styles/kit.css `.as-band`), three rows deep, and the
-// current three-row composition is:
+// THE HUD IS A KIT BAND (styles/kit.css `.as-band`), two rows deep, followed by
+// a visually detached item rail:
 //   1. class left, Cinders centred, Act/Floor right;
 //   2. the meters (components/resbars.js, the kit Meter) and, on the right,
 //      a compact 2 × 2 square of Armoury, Menu, HP and MP controls;
-//   3. the belt — relic Slots and carried-potion Slots.
+//   below the band: relic Slots left and carried-potion Slots right.
 // The character name, portrait, sigil, screen-context line, build/seed/source,
 // fullscreen and music remain off this compact band.
 // Each function below says why its own is gone.

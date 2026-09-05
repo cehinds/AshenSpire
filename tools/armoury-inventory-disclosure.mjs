@@ -255,8 +255,8 @@ async function main() {
     })()`);
     check(expandedCard.open === 'true' && expandedCard.actions === 1 && expandedCard.actionInsideReveal,
       `expanded item card reveals exactly one in-card action (${expandedCard.actions})`);
-    check(/hover or focus.+comparison/i.test(expandedCard.instruction)
-      && !/hold to show comparison/i.test(expandedCard.instruction)
+    check(/press and hold.+preview comparison/i.test(expandedCard.instruction)
+      && !/hover or focus/i.test(expandedCard.instruction)
       && /(press and hold|activate this card) to (equip|unequip)/i.test(expandedCard.instruction),
     `an action-owning card distinguishes comparison access from its equipment action (${JSON.stringify(expandedCard.instruction)})`);
     check(expandedCard.focusable === 'true' && expandedCard.role === 'button',
@@ -283,8 +283,14 @@ async function main() {
         revealFill: getComputedStyle(reveal).backgroundImage,
         actionTag: source.querySelector('[data-act]')?.tagName || '',
         actionButtons: source.querySelectorAll('button[data-act]').length,
+        comparisonPreview: source.dataset.comparisonPreview || '',
+        comparisonVisible: !!document.querySelector('#tooltip')
+          && getComputedStyle(document.querySelector('#tooltip')).display !== 'none',
       };
       pointer('pointerup');
+      await new Promise((done) => setTimeout(done, 0));
+      result.comparisonAfterRelease = !!document.querySelector('#tooltip')
+        && getComputedStyle(document.querySelector('#tooltip')).display !== 'none';
       return result;
     })()`);
     check(wholeCardFill?.delegated
@@ -294,6 +300,9 @@ async function main() {
     `an expanded hold fills its title and reveal as one card (${JSON.stringify(wholeCardFill)})`);
     check(wholeCardFill?.actionTag === 'SPAN' && wholeCardFill.actionButtons === 0,
       `the expanded whole-card hold has one action surface, not a second button (${JSON.stringify(wholeCardFill)})`);
+    check(wholeCardFill?.comparisonPreview === 'open' && wholeCardFill.comparisonVisible
+      && !wholeCardFill.comparisonAfterRelease,
+    `a sustained hold previews comparison and early release closes it (${JSON.stringify(wholeCardFill)})`);
     await evaluate(`document.querySelector('[data-region=inventory] .inventory-detail')
       ?.dispatchEvent(new PointerEvent('pointerenter'))`);
     await wait(650);
@@ -303,8 +312,8 @@ async function main() {
       const rect = tip?.getBoundingClientRect();
       return { visible: !!tip && getComputedStyle(tip).display !== 'none', comparison: !!comparison, width: rect?.width || 0 };
     })()`);
-    check(comparisonTip.visible && comparisonTip.comparison && comparisonTip.width >= 500,
-      `hover delay reveals the full wide comparison tooltip (${Math.round(comparisonTip.width)}px)`);
+    check(!comparisonTip.visible,
+      'hover does not reveal the equipment comparison tooltip');
     const actionReach = await evaluate(`(() => {
       const action = document.querySelector('[data-region=inventory] .ep-list [data-act]');
       action?.scrollIntoView({ block: 'center' });
@@ -444,16 +453,24 @@ async function main() {
       document.querySelector('[data-slot-position="rightHand:0"] .armoury-position-action')?.click();
       const face = [...document.querySelectorAll('.ep-list .disc-face')]
         .find((element) => element.querySelector('.ec-name')?.textContent === 'Straight Sword');
-      face?.click();
+      if (face) {
+        const rect = face.getBoundingClientRect();
+        const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
+          bubbles: true, cancelable: true, pointerId: 321, pointerType: 'mouse', button: 0, detail: 1,
+          clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
+        }));
+        event('pointerdown'); event('pointerup'); event('click', MouseEvent);
+      }
     })()`);
     const refusal = SHIPPED ? null : await evaluate(`(() => {
       const fixture = window.__pr315Fixture;
       const before = JSON.stringify(fixture.run.loadout);
       const action = document.querySelector('.ep-list [data-act=unequip]');
+      const commitsBefore = fixture.commits;
       action?.click();
       return {
         unchanged: JSON.stringify(fixture.run.loadout) === before,
-        commits: fixture.commits,
+        commits: fixture.commits - commitsBefore,
         refusal: action?.dataset.refusal || '',
       };
     })()`);

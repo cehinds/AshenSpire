@@ -7600,7 +7600,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(invalidHoldClass.includes('holdAction must be true or false'),
       'the card class hold capability rejects truthy strings instead of silently arming them');
     eq(layout.comparison.presentation, 'tooltip', 'equipment comparison presentation is authored as tooltip or inline data');
-    eq(layout.comparison.hoverDelayMs, 550, 'equipment comparison hover delay is authored in milliseconds');
+    eq(layout.comparison.holdPreviewDelayMs, 160, 'equipment comparison sustained-hold preview delay is authored in milliseconds');
     eq(layout.comparison.tooltipWidthRem, 52, 'equipment comparison tooltip width is authored rather than buried in CSS');
     eq(layout.comparison.tooltipMaxHeightRatio, 0.8, 'equipment comparison tooltip viewport cap is authored');
     let invalidComparison = '';
@@ -7608,9 +7608,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(invalidComparison.includes('comparison.presentation must be tooltip or inline'),
       'unknown equipment comparison presentations are refused by name');
     let invalidComparisonDelay = '';
-    try { normalizeArmouryLayout({ comparison: { hoverDelayMs: -1 } }); } catch (error) { invalidComparisonDelay = error.message; }
-    assert(invalidComparisonDelay.includes('comparison.hoverDelayMs'),
-      'negative equipment comparison hover delays are refused by name');
+    try { normalizeArmouryLayout({ comparison: { holdPreviewDelayMs: -1 } }); } catch (error) { invalidComparisonDelay = error.message; }
+    assert(invalidComparisonDelay.includes('comparison.holdPreviewDelayMs'),
+      'negative equipment comparison hold preview delays are refused by name');
     const sharedInventoryRow = {
       key: 'weapon:straightSword', id: 'straightSword', name: 'Straight Sword', category: 'Weapon',
       count: 1, equippedLabels: [], item: { name: 'Straight Sword', tags: [] },

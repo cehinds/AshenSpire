@@ -69,6 +69,9 @@ function findings(r) {
   if (!r.expectPair) {
     if (r.stack) bad.push('the run HUD mounts the fullscreen/music pair again — it belongs to the title screen and Settings');
     if (r.buttons.length) bad.push(`${r.buttons.length} quick control(s) drawn in the run HUD`);
+    if (r.playerFacing && r.playerFacing !== 'none' && r.playerFacing !== 'matrix(1, 0, 0, 1, 0, 0)') {
+      bad.push(`the painted player character is mirrored away from the battlefield (${r.playerFacing})`);
+    }
     return bad;
   }
   if (!r.stack) {
@@ -294,7 +297,8 @@ try {
           const quickTargets=[...document.querySelectorAll('.hud-control-grid :is(.topbar-btn, .flask-slot)')];
           const orientation=document.querySelector('.map-entrance-orientation');
           const info=document.querySelector('.hud-info-row');
-          const combatantInk=[...document.querySelectorAll('.combatant .intent, .combatant .sprite, .combatant .nm, .combatant .meters, .combatant .statuses')];
+           const combatantInk=[...document.querySelectorAll('.combatant .intent, .combatant .sprite, .combatant .nm, .combatant .meters, .combatant .statuses')];
+           const playerFacing=document.querySelector('.combatant.player .class-sprite > .facing');
           const sr=box(stack);
           const header=box(document.querySelector('.shared-hud'));
           const route=box(document.querySelector('.act-route-strip'));
@@ -316,6 +320,7 @@ try {
             orientationOverlap:(${intersection.toString()})(sr,box(orientation)),
             infoOverlap:(${intersection.toString()})(sr,box(info)),
             combatantOverlap:Math.max(0,...combatantInk.map((el)=>(${intersection.toString()})(sr,box(el)))),
+            playerFacing:playerFacing?getComputedStyle(playerFacing).transform:null,
             phone:${shape.mobile}, compact:${!!surface.compact}, expectPair:${!!surface.pair}
           };
         })()`,

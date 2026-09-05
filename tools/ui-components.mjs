@@ -256,15 +256,16 @@ export function findings(r) {
   }
   // THE RENDERED HUD IS KIT ATOMS: a Band of rows, identity as a StatStrip,
   // receipts as StatChips, a smaller 2 × 2 Quick Access square with protected
-  // tap regions, equal lower-belt Slot faces, resources as Meters — and the map
-  // alone carries the act route strip.
+  // tap regions, equal Slot faces in the detached under-HUD rail, resources as
+  // Meters — and the map alone carries the act route strip.
   if (!/class="topbar combat-hud shared-hud as-band stack/.test(r.hud)
       || !/class: 'hud-identity as-statstrip'/.test(r.hud)
       || !/class: 'as-chip hud-cinders'/.test(r.hud)
       || !/class="hud-control-grid as-cluster stack"/.test(r.hud)
       || !/class="hud-resource-row as-band-row"/.test(r.hud)
-      || !/\.shared-hud \{ --hud-quick-tile-size: 3\.6rem; --hud-belt-tile-face-size: 3rem; \}/.test(r.kit)
+      || !/\.shared-hud \{ --hud-quick-tile-size: 3\.2rem; --hud-belt-tile-face-size: 2\.8rem; \}/.test(r.kit)
       || !/\.shared-hud \.hud-control-grid :is\(\.as-iconbtn, \.as-slot\) \{[\s\S]*?width: var\(--hud-quick-tile-size\); height: var\(--hud-quick-tile-size\);/.test(r.kit)
+      || !/\.shared-hud \.hud-bottom \{[\s\S]*?position: absolute;[\s\S]*?top: calc\(100% \+ 0\.4rem\);[\s\S]*?left: 1\.6rem; right: 1\.6rem;/.test(r.kit)
       || !/\.shared-hud \.hud-bottom \.as-slot \{[\s\S]*?width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
       || !/\.shared-hud \.hud-bottom \.as-slot::before \{[\s\S]*?width: var\(--hud-belt-tile-face-size\); height: var\(--hud-belt-tile-face-size\);/.test(r.kit)
       || !/iconButton\(\{/.test(r.hud)
@@ -481,7 +482,8 @@ function selftest() {
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("childModel(model, UI.metadataField, 'floor')", "childModel(model, UI.metadataField, 'seed')") })],
-    ['restore oversized Quick Access tiles', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('--hud-quick-tile-size: 3.6rem', '--hud-quick-tile-size: var(--iconbtn-size)') })],
+    ['restore oversized Quick Access tiles', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('--hud-quick-tile-size: 3.2rem', '--hud-quick-tile-size: var(--iconbtn-size)') })],
+    ['put Relics and potions back inside the HUD flow', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: absolute;\n  z-index: 85;', 'position: static;\n  z-index: auto;') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
     // The other half of the same rung: a phone that drops the chip's VALUE
     // instead of its total is the defect the photograph caught.

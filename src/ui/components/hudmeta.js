@@ -1,12 +1,12 @@
 // Reusable Map/Combat HUD Views. Structure is rendered from immutable
 // Presentation Models; this module owns DOM, not domain projection or commands.
 //
-// THE HUD IS A KIT BAND (styles/kit.css `.as-band`), three rows deep, and the
-// current three-row composition is:
+// THE HUD IS A KIT BAND (styles/kit.css `.as-band`), two rows deep, followed by
+// a visually detached item rail:
 //   1. class left, Cinders centred, Act/Floor right;
 //   2. the meters (components/resbars.js, the kit Meter) and, on the right,
 //      a compact 2 × 2 square of Armoury, Menu, HP and MP controls;
-//   3. the belt — relic Slots and carried-potion Slots.
+//   below the band: relic Slots left and carried-potion Slots right.
 // The character name, portrait, sigil, screen-context line, build/seed/source,
 // fullscreen and music remain off this compact band.
 // Each function below says why its own is gone.
