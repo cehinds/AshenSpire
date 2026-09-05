@@ -19,7 +19,8 @@
     .class { margin-top:40px; }
     .class h2 { margin:0 0 6px; font:700 clamp(1.5rem,2.6vw,2.2rem)/1.15 var(--font-display); color:var(--gold); }
     .class > p { margin:0 0 16px; color:var(--muted); }
-    .sheet-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,600px),1fr)); gap:20px; align-items:start; }
+    .sheet-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr)); gap:20px; align-items:start; }
+    .sheet-poses img { background:#d9d6cf; }
     .sheet { min-width:0; border:1px solid var(--line-soft); border-radius:1rem; background:color-mix(in srgb,var(--panel) 86%,transparent); overflow:hidden; }
     .sheet-label { display:flex; justify-content:space-between; gap:1rem; padding:.8rem 1rem; color:var(--muted); font:1rem ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; border-bottom:1px solid var(--line-soft); }
     .sheet img { display:block; width:100%; height:auto; background:#e6e2da; }
@@ -33,16 +34,23 @@
 <main class="sheets">
   <header class="sheets-head">
     <h1>Low-Poly Fighters <span>— Painted Poses</span></h1>
-    <p>Painted orthographic reference sheets for the four AshenSpire classes: every equipment piece shown in five views,
-      dark steel and leather with gold trim over a low-poly faceted surface. Two sheets per class — the garments and the
-      kit (hands, feet, weapon). The in-game per-piece sprites live in <a href="../../assets/equipment/">assets/equipment/</a>.</p>
-    <p class="views">Views per row: Top · Right · Bottom · Left · Back</p>
+    <p>Painted reference sheets for the four AshenSpire classes. Per class: the <strong>painted poses</strong> — nine figures on a
+      3×3 grid, the sheet every combat sprite in <a href="../../art/poses/">art/poses/</a> is cut from — and two orthographic
+      equipment sheets, every piece in five views: the garments and the kit (hands, feet, weapon). Dark steel and leather
+      with gold trim over a low-poly faceted surface. The in-game per-piece sprites live in
+      <a href="../../assets/equipment/">assets/equipment/</a>.</p>
+    <p class="views">Poses: 3×3 grid, read left to right, top to bottom · Equipment views per row: Top · Right · Bottom · Left · Back</p>
   </header>
 
   <section class="class" id="reaver">
     <h2>Reaver</h2>
     <p>Full plate. Dark faceted steel, gold-edged plates, oxblood cloak.</p>
     <div class="sheet-grid">
+      <figure class="sheet sheet-poses">
+        <figcaption class="sheet-label"><span>Reaver · painted poses</span><span>9 figures · 3×3</span></figcaption>
+        <img src="../art-evidence/2026-09-04/pose-sheets/reaver.png" alt="Reaver painted pose sheet: nine figures on a three by three grid" loading="lazy">
+        <p class="sheet-pieces">stand · guard · attack1 · attack2 · attack3 · cast · hit · idle (braced, fig. 8) · idle2<br><small>A fighter stands ready: the braced stance, figure 8, is the combat idle. Figures 4 and 8 are painted facing left and are mirrored when cut.</small></p>
+      </figure>
       <figure class="sheet">
         <figcaption class="sheet-label"><span>Reaver · armour</span><span>5 views</span></figcaption>
         <img src="reaver-armour.png" alt="Reaver armour turnaround: helmet, chest, leg armor, belt and cloak in top, right, bottom, left and back views" loading="lazy">
@@ -60,6 +68,11 @@
     <h2>Herald</h2>
     <p>Pilgrim's vestments. Burnished bronze-brown cloth, gilt hems, a halo and a star mace.</p>
     <div class="sheet-grid">
+      <figure class="sheet sheet-poses">
+        <figcaption class="sheet-label"><span>Herald · painted poses</span><span>9 figures · 3×3</span></figcaption>
+        <img src="../art-evidence/2026-09-04/pose-sheets/herald.png" alt="Herald painted pose sheet: nine figures on a three by three grid" loading="lazy">
+        <p class="sheet-pieces">idle (fig. 1) · guard · attack1 · attack2 · attack3 · cast · hit · brace · idle2<br><small>A caster stands: figure 1 is the combat idle.</small></p>
+      </figure>
       <figure class="sheet">
         <figcaption class="sheet-label"><span>Herald · robes</span><span>5 views</span></figcaption>
         <img src="herald-robes.png" alt="Herald robes turnaround: faceted hood, halo headpiece, chest mantle, under-trousers, cord belt and layered robe body in five views" loading="lazy">
@@ -77,6 +90,11 @@
     <h2>Rogue</h2>
     <p>Layered leathers. Near-black hide, strapped and buckled, matched daggers.</p>
     <div class="sheet-grid">
+      <figure class="sheet sheet-poses">
+        <figcaption class="sheet-label"><span>Rogue · painted poses</span><span>9 figures · 3×3</span></figcaption>
+        <img src="../art-evidence/2026-09-04/pose-sheets/rogue.png" alt="Rogue painted pose sheet: nine figures on a three by three grid" loading="lazy">
+        <p class="sheet-pieces">stand · guard · attack1 · attack2 · attack3 · cast · hit · idle (braced, fig. 8) · idle2<br><small>A fighter stands ready: the braced stance, figure 8, is the combat idle.</small></p>
+      </figure>
       <figure class="sheet">
         <figcaption class="sheet-label"><span>Rogue · garb</span><span>5 views</span></figcaption>
         <img src="rogue-garb.png" alt="Rogue garb turnaround: hood, cowl and shoulder cloak, chest jerkin, trousers and utility belt with tassets in five views" loading="lazy">
@@ -94,6 +112,11 @@
     <h2>Starseer</h2>
     <p>Astral vestments. Violet-black cloth, crooked hat, star-tipped staff.</p>
     <div class="sheet-grid">
+      <figure class="sheet sheet-poses">
+        <figcaption class="sheet-label"><span>Starseer · painted poses</span><span>9 figures · 3×3</span></figcaption>
+        <img src="../art-evidence/2026-09-04/pose-sheets/starseer.png" alt="Starseer painted pose sheet: nine figures on a three by three grid" loading="lazy">
+        <p class="sheet-pieces">idle (fig. 1) · guard · attack1 · attack2 · attack3 · cast · hit · brace · idle2<br><small>A caster stands: figure 1 is the combat idle.</small></p>
+      </figure>
       <figure class="sheet">
         <figcaption class="sheet-label"><span>Starseer · vestments</span><span>5 views</span></figcaption>
         <img src="starseer-vestments.png" alt="Starseer vestments turnaround: crooked hat, cowl mantle, tunic, trousers and belt tabard in five views" loading="lazy">
@@ -107,7 +130,7 @@
     </div>
   </section>
 
-  <footer class="foot">Reference only — these sheets are not loaded by the game. Source images are the painted turnaround renders; each row reads Top, Right, Bottom, Left, Back.</footer>
+  <footer class="foot">Reference only — nothing here is loaded by the game. The pose sheets are the source the <code>art/poses</code> combat sprites are cut from (see <code>docs/art-evidence/2026-09-04/pose-sheets/README.md</code>); the equipment sheets are the painted turnaround renders, each row Top, Right, Bottom, Left, Back.</footer>
 </main>
 </body>
 </html>

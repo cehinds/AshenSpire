@@ -1,9 +1,16 @@
 # Low-Poly Fighters — Painted Poses
 
-Painted orthographic reference sheets (5 views: top · right · bottom · left · back)
-for the four classes. Served on GitHub Pages at `/docs/low-poly-fighters/`.
+Painted reference sheets for the four classes, served on GitHub Pages at
+`/docs/low-poly-fighters/`. Per class: the painted **pose** sheet (nine figures,
+3×3) and two orthographic **equipment** sheets (5 views: top · right · bottom ·
+left · back).
 
-`index.html` expects exactly these eight files beside it — drop the sheets in
+The pose sheets are not copied here. `index.html` references them at their
+source-of-record location, `../art-evidence/2026-09-04/pose-sheets/{class}.png`
+— the sheets every `art/poses` combat sprite is cut from (see that folder's
+README for the per-class pose names and the cut commands).
+
+`index.html` expects exactly these eight equipment files beside it — drop the sheets in
 under these names and nothing else needs to change:
 
 | File | Class | Pieces on the sheet |
