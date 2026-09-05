@@ -155,7 +155,14 @@ function csvFields(line) {
 
 // weapons.csv carries no machine-readable header row (line 1 is a comment), so
 // the column contract is positional. Named here rather than counted inline.
-const COL = { id: 0, kind: 2, hand: 3, artKey: 17 };
+// artKey WAS 17 and is 16. The third-normal-form normalisation (a437fc34)
+// removed a column ahead of it and this positional constant did not follow.
+// Nothing caught it: the tool read `poiseThreshold` — a number — as the art
+// key, built `assets/equipment/weapon_2.webp`, found no such file for ANY row,
+// and died at "every armament is missing its asset". The verdict door calls
+// that HARNESS COULD NOT RUN rather than a finding, which is right, and is why
+// the gate sat unknown instead of loud.
+const COL = { id: 0, kind: 2, hand: 3, artKey: 16 };
 
 // THE ASSET IS DERIVED THE WAY THE RUNTIME DERIVES IT — that is now this
 // function's whole job. `src/model/loadout.js:962` reads `piece.artKey ||
@@ -176,6 +183,24 @@ const COL = { id: 0, kind: 2, hand: 3, artKey: 17 };
 // omission. One whose asset is absent is named and fails the gate.
 function armaments() {
   const csv = readFileSync(resolve(ROOT, 'content/source/weapons.csv'), 'utf8');
+  // THE POSITIONAL CONTRACT IS ASSERTED, NOT ASSUMED. The comment above this
+  // function used to say the file "carries no machine-readable header row"; it
+  // does — the first non-comment line names every column — and not reading it
+  // is exactly how artKey drifted from 17 to 16 unnoticed. Checked here so a
+  // reorder throws by name instead of silently deriving a nonexistent asset for
+  // every row.
+  const header = csv.split('\n').find((l) => l.trim() && !l.startsWith('#'));
+  if (!header) throw new Error('content/source/weapons.csv has no header row — the column contract cannot be checked');
+  const names = csvFields(header);
+  for (const [key, index] of Object.entries(COL)) {
+    if (names[index] !== key) {
+      throw new Error(
+        `weapons.csv column contract broke: COL.${key} says index ${index}, but that column is `
+        + `'${names[index] ?? '(past the end)'}'. ${key} is at index ${names.indexOf(key)}. `
+        + 'Update COL rather than the file.',
+      );
+    }
+  }
   const rows = [];
   for (const line of csv.split('\n')) {
     if (!line.trim() || line.startsWith('#')) continue;
