@@ -1,9 +1,9 @@
 // tools/pose-ship.mjs — publish a subset of the pose sprites into assets/.
 //
 //   node tools/pose-ship.mjs [--in art/poses] [--out assets/poses]
-//     [--poses idle,guard,attack1,attack2,attack3,hit] [--scale 0.75] [--quality 78]
+//     [--poses idle,guard,attack1,attack2,attack3,attack4,hit] [--scale 0.75] [--quality 78]
 //
-// art/poses holds every pose at render resolution — 160 files, 3.5 MB — and the
+// art/poses holds every pose at render resolution — currently 720 files — and the
 // bundler inlines everything under assets/, so shipping that folder whole would
 // add most of it to the single file a player downloads. The combat figure is
 // drawn into a 150x190 CSS box, so a frame taller than about 400px is detail
@@ -25,12 +25,12 @@ const args = process.argv.slice(2);
 const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const inDir = arg('--in', 'art/poses');
 const outDir = arg('--out', 'assets/poses');
-const wanted = (arg('--poses', 'idle,guard,attack1,attack2,attack3,hit') || '').split(',').filter(Boolean);
+const wanted = (arg('--poses', 'idle,guard,attack1,attack2,attack3,attack4,hit') || '').split(',').filter(Boolean);
 // 0.75 is what the committed set was cut at — see the quality note below for why a
 // default that disagrees with the committed output is a defect rather than a taste.
 const scale = Number(arg('--scale', '0.75'));
 // 78 is what the committed set was cut at: a default that disagrees rewrites all
-// 120 files on a rerun that changed nothing.
+// shipped files on a rerun that changed nothing.
 const quality = Number(arg('--quality', '78'));
 if (!(scale > 0 && scale <= 1)) { console.error('pose-ship: --scale must be between 0 and 1'); process.exit(2); }
 if (!(quality >= 0 && quality <= 100)) { console.error('pose-ship: --quality must be between 0 and 100'); process.exit(2); }
