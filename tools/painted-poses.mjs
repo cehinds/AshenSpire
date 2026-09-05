@@ -300,7 +300,12 @@ for (let i = 0; i < poses.length; i++) {
   // rests on the floor and the body stands that much above it. Placing the feet on
   // the line instead would put the blade below it, and the sprite step clears
   // everything below the floor before it crops.
-  const oy = ground - f.lift - (f.y1 - f.y0), ox = Math.round((CW - fw) / 2);
+  // --grounded means the FIGURE stands on the floor, so the body's feet go on the
+  // line and anything drawn past them (a shadow, a dropped blade) falls below it,
+  // where the sprite step clears it. Without it the lowest ink is the anchor, so
+  // nothing is ever cut and a figure carrying a piece stands that much higher.
+  const anchor = grounded ? f.bodyY1 : f.y1;
+  const oy = ground - f.lift - (anchor - f.y0), ox = Math.round((CW - fw) / 2);
   // the lower quarter of the body, in rows of this crop
   const footLine = (f.bodyY0 - f.y0) + 0.75 * (f.bodyY1 - f.bodyY0);
   const flip = mirrored.has(pose);
@@ -323,10 +328,11 @@ for (let i = 0; i < poses.length; i++) {
   }
   const file = `${cls}_${pose}.png`;
   writeFileSync(join(outDir, file), encodePng(CW, CH, out));
-  // the body's feet sit `below` above the floor when something hangs past them, and
-  // the pelvis rides up with it
-  const below = f.y1 - f.bodyY1;
-  renders.push({ class: cls, pose, file, root: [Math.round(count ? sumX / count : CW / 2), ground - f.lift - below - Math.round((f.bodyY1 - f.bodyY0) * 0.45)], ground });
+  // Where the body's feet ended up, measured the same way the placement above chose
+  // the anchor: on the floor line when --grounded, else `below` above it because
+  // something hangs past them. The pelvis rides up from there.
+  const feet = ground - f.lift - (grounded ? 0 : f.y1 - f.bodyY1);
+  renders.push({ class: cls, pose, file, root: [Math.round(count ? sumX / count : CW / 2), feet - Math.round((f.bodyY1 - f.bodyY0) * 0.45)], ground });
   console.log(`  ${pose}: ${fw}x${fh}`);
 }
 

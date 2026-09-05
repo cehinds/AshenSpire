@@ -33,6 +33,7 @@ const scale = Number(arg('--scale', '0.75'));
 // 120 files on a rerun that changed nothing.
 const quality = Number(arg('--quality', '78'));
 if (!(scale > 0 && scale <= 1)) { console.error('pose-ship: --scale must be between 0 and 1'); process.exit(2); }
+if (!(quality >= 0 && quality <= 100)) { console.error('pose-ship: --quality must be between 0 and 100'); process.exit(2); }
 
 const srcManifest = join(inDir, 'pose-sprites.manifest.json');
 if (!existsSync(srcManifest)) {
@@ -46,9 +47,19 @@ if (!keep.length) {
   console.error(`  it holds: ${[...new Set(src.sprites.map((s) => s.pose))].join(', ')}`);
   process.exit(1);
 }
-const missing = wanted.filter((p) => !keep.some((s) => s.pose === p));
-if (missing.length) {
-  console.error(`pose-ship: ${srcManifest} has no ${missing.join(', ')}`);
+const classes = [...new Set(src.sprites.map((s) => s.class))];
+const tints = [...new Set(src.sprites.map((s) => s.tint))];
+const gaps = [];
+for (const c of classes) {
+  for (const t of tints) {
+    for (const p of wanted) if (!keep.some((s) => s.class === c && s.pose === p && s.tint === t)) gaps.push(`${c}/${p}/${t}`);
+  }
+}
+if (gaps.length) {
+  // Per class, pose AND tint. Pooling them across classes passed a set where one
+  // class was missing a pose entirely: the figure still chose the animated style
+  // (which only checks that idle exists) and that pose then did nothing at all.
+  console.error(`pose-ship: ${srcManifest} is missing ${gaps.length} frame(s) the shipped set needs: ${gaps.slice(0, 6).join(', ')}${gaps.length > 6 ? ', …' : ''}`);
   process.exit(1);
 }
 
@@ -56,10 +67,10 @@ try { execFileSync('cwebp', ['-version'], { encoding: 'utf8' }); execFileSync('d
 catch { console.error('pose-ship: cwebp and dwebp are required (libwebp)'); process.exit(2); }
 
 mkdirSync(outDir, { recursive: true });
-for (const f of readdirSync(outDir)) if (f.endsWith('.webp')) rmSync(join(outDir, f));
-
 const tmp = join(tmpdir(), `pose-ship-${process.pid}`);
 mkdirSync(tmp, { recursive: true });
+const staged = join(tmp, 'staged');
+mkdirSync(staged, { recursive: true });
 const round = (n) => Math.round(n * 10) / 10;
 
 let bytes = 0;
@@ -72,7 +83,10 @@ for (const s of keep) {
   const h = Math.max(1, Math.round(img.height * scale));
   // resample hands back an image object; the PNG writer takes its pixels
   writeFileSync(small, encodePng(w, h, resample(img, 0, 0, img.width, img.height, w, h).px));
-  const out = join(outDir, s.file);
+  // into the scratch directory: the committed frames are only replaced once every
+  // one of these has encoded, so a failure part-way leaves the shipped set intact
+  // rather than half-deleted with a stale table beside it
+  const out = join(staged, s.file);
   execFileSync('cwebp', ['-q', String(quality), '-alpha_q', '100', '-exact', small, '-o', out], { stdio: 'ignore' });
   bytes += readFileSync(out).length;
   sprites.push({
@@ -84,6 +98,9 @@ for (const s of keep) {
     ground: round(s.ground * scale),
   });
 }
+// every frame encoded: now swap them in
+for (const f of readdirSync(outDir)) if (f.endsWith('.webp')) rmSync(join(outDir, f));
+for (const f of readdirSync(staged)) writeFileSync(join(outDir, f), readFileSync(join(staged, f)));
 rmSync(tmp, { recursive: true, force: true });
 
 writeFileSync(join(outDir, 'pose-sprites.manifest.json'), `${JSON.stringify({
