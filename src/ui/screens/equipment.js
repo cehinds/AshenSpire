@@ -414,14 +414,14 @@ function figureFor(registries, run, cz) {
   const el = document.createElement('div');
   el.className = 'armoury-figure';
   const reacts = CFG().spriteReacts;
+  const spec = figureSpec(registries, run.loadout, run.class);
   if (reacts === 'none') {
-    el.appendChild(playerSprite(cz, run.class));
+    el.appendChild(playerSprite(cz, run.class, spec.armourId));
     return el;
   }
-  const spec = figureSpec(registries, run.loadout, run.class);
   if (reacts === 'hands') spec.armourId = 'default';
   const fig = equippedFigure({ classId: run.class, ...spec });
-  el.appendChild(fig || playerSprite(cz, run.class));
+  el.appendChild(fig || playerSprite(cz, run.class, spec.armourId));
   return el;
 }
 
