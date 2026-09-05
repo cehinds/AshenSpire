@@ -54,7 +54,10 @@ import {
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statProjection.js';
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
-import { attributeAllocationProblems, classAttributePreset, allocationTotal, defaultCreationModeId } from '../src/model/attributes.js';
+import {
+  attributeAllocationProblems, classAttributePreset, allocationTotal,
+  baselineAttributeAllocation, defaultCreationModeId,
+} from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
@@ -7261,6 +7264,21 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(std.bonusPool, 5, 'standard pool unchanged');
     eq(std.minimum, 10, 'standard floor unchanged');
     eq(allocationTotal(REG, 'pointbuy'), 60, 'pointbuy fixed total = 5x10 baseline + the 10-point pool');
+    const opening = baselineAttributeAllocation(REG, 'pointbuy');
+    eq(Object.values(opening).join(','), '10,10,10,10,10', 'Assign Points opens every authored stat at the configured baseline');
+    eq(allocationTotal(REG, 'pointbuy') - Object.values(opening).reduce((sum, value) => sum + value, 0), 10,
+      'the opening allocation leaves the whole configured pool unspent');
+    const configured = {
+      attributes: structuredClone(contentBundle.attributes),
+      creationModes: structuredClone(contentBundle.creationModes),
+    };
+    const configuredPointBuy = configured.creationModes.find((row) => row.id === 'pointbuy');
+    configuredPointBuy.baseline = 8;
+    configuredPointBuy.bonusPool = 20;
+    const configuredOpening = baselineAttributeAllocation(configured, 'pointbuy');
+    eq(Object.values(configuredOpening).join(','), '8,8,8,8,8', 'a configured baseline of 8 opens every authored stat at 8');
+    eq(allocationTotal(configured, 'pointbuy') - Object.values(configuredOpening).reduce((sum, value) => sum + value, 0), 20,
+      'a configured baseline of 8 and pool of 20 opens with 20 points to assign');
 
     // The allocation gate, both edges at every boundary his sentence names.
     const legal = { strength: 15, dexterity: 8, constitution: 15, wisdom: 12, intelligence: 10 };

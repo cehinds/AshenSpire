@@ -90,10 +90,11 @@ export const creationModes = [
 ];
 
 // Complete mode × class × attribute product. No Origins are enabled in Phase 1.
-// The pointbuy presets are the EDITOR'S OPENING POSITION and the load-door
-// refill value — a legal allocation (sum 60, cells 8..15), thematically the
-// standard preset with the five extra points laid along each class's grain.
-// The player reshapes them; nothing here is a recommendation.
+// The pointbuy presets are the load-door refill value when a run arrives
+// without an explicit allocation — a legal allocation (sum 60, cells 8..15),
+// thematically the standard preset with the five extra points laid along each
+// class's grain. The editor itself opens from the mode baseline with the whole
+// bonus pool unspent; nothing here is an opening recommendation.
 export const attributeRules = {
   defaultMode: 'tuned',
   presets: {

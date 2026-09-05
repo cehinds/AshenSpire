@@ -100,6 +100,11 @@ export function allocationTotal(source, modeId = defaultCreationModeId(source)) 
   return mode.baseline * orderedAttributes(source).length + mode.bonusPool;
 }
 
+export function baselineAttributeAllocation(source, modeId = defaultCreationModeId(source)) {
+  const baseline = creationMode(source, modeId).baseline;
+  return Object.fromEntries(orderedAttributes(source).map((def) => [def.id, baseline]));
+}
+
 function retiredNames(t) {
   const map = plainObject(t.attributeRules) ? t.attributeRules.retired : undefined;
   return plainObject(map) ? map : {};

@@ -24,7 +24,10 @@ import { createRunState } from '../../model/state.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
-import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal } from '../../model/attributes.js';
+import {
+  creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems,
+  allocationTotal, baselineAttributeAllocation,
+} from '../../model/attributes.js';
 import { previewCompatibleHands, startingHandsRequirementFailure } from '../../model/loadout.js';
 import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
@@ -260,8 +263,11 @@ export function mountCustomize(app, {
   }
 
   function resetAttributes() {
-    state.attributes = { ...classAttributePreset(registries, state.classId, POINTBUY) };
-    previewAttributes = { ...state.attributes };
+    state.attributes = baselineAttributeAllocation(registries, POINTBUY);
+    // A baseline draft deliberately leaves the pool unspent, so it is not a
+    // valid run allocation yet. Keep the live character preview on its last
+    // valid allocation until the player has spent the full pool.
+    previewAttributes = null;
   }
 
   function resetClassChoices() {
@@ -354,7 +360,7 @@ export function mountCustomize(app, {
       modes.appendChild(modeChoiceButton(mode, state.attributeMode === mode.id, () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
-          if (!state.attributes) resetAttributes();
+          resetAttributes();
           openPointBuy();
         } else {
           closePointBuy();

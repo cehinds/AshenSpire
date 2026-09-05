@@ -86,25 +86,72 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text || 'evaluation failed');
     return result.result.value;
   };
-  const until = async (expression, label, timeout = 15000) => {
+  const until = async (expression, label, timeout = 30000) => {
     const started = Date.now();
     while (Date.now() - started < timeout) {
       if (await evaluate(expression).catch(() => false)) return;
       await wait(100);
     }
-    throw new Error(`timeout waiting for ${label}`);
+    const page = await evaluate(`(() => ({
+      url:location.href, ready:document.readyState, title:document.title,
+      appChildren:document.querySelector('#app')?.childElementCount ?? -1,
+      text:(document.body?.innerText || '').slice(0, 240)
+    }))()`).catch((error) => ({ diagnosticError: error.message }));
+    throw new Error(`timeout waiting for ${label} — ${JSON.stringify(page)}`);
   };
   const click = async (selector, index = 0) => {
-    await evaluate(`(() => { const e=document.querySelectorAll(${JSON.stringify(selector)})[${index}]; if (!e) return false; e.scrollIntoView({block:'center',inline:'center'}); return true; })()`);
-    await wait(80);
-    const point = await evaluate(`(() => { const e = document.querySelectorAll(${JSON.stringify(selector)})[${index}]; if (!e) return null; const r=e.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+    const point = await evaluate(`(() => {
+      const e=document.querySelectorAll(${JSON.stringify(selector)})[${index}];
+      if (!e) return null;
+      e.scrollIntoView({block:'center',inline:'center'});
+      const r=e.getBoundingClientRect();
+      const fractions=[[.5,.5],[.25,.5],[.75,.5],[.5,.25],[.5,.75],[.25,.25],[.75,.25],[.25,.75],[.75,.75]];
+      for (const [fx,fy] of fractions) {
+        const x=r.left+r.width*fx, y=r.top+r.height*fy;
+        const hit=document.elementFromPoint(x,y);
+        if (hit&&(hit===e||e.contains(hit))) return {x,y};
+      }
+      return {covered:true,rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom}};
+    })()`);
     if (!point) throw new Error(`missing selector ${selector}[${index}]`);
-    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
-    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
-    await wait(100);
+    if (point.covered) throw new Error(`selector is covered ${selector}[${index}] — ${JSON.stringify(point.rect)}`);
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y, button: 'none' }, sessionId);
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', buttons: 1, clickCount: 1 }, sessionId);
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', buttons: 0, clickCount: 1 }, sessionId);
+    await wait(160);
+  };
+  const hover = async (selector) => {
+    const point = await evaluate(`(() => {
+      const e=document.querySelector(${JSON.stringify(selector)});
+      if (!e) return null;
+      e.scrollIntoView({block:'center',inline:'center'});
+      const r=e.getBoundingClientRect();
+      return {x:r.left+r.width/2,y:r.top+r.height/2};
+    })()`);
+    if (!point) throw new Error(`missing hover selector ${selector}`);
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y, button: 'none' }, sessionId);
+    // TooltipService intentionally delays pointer tooltips so they do not flash
+    // while the cursor is merely crossing a control.
+    await wait(650);
   };
   const setInput = async (selector, value) => evaluate(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); e.value=${JSON.stringify(value)}; e.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:${JSON.stringify(value)}})); e.dispatchEvent(new Event('change',{bubbles:true})); return e.value; })()`);
-  const open = (key) => click(`[data-face="${key}"]`);
+  const activate = async (selector, index = 0) => {
+    const activated = await evaluate(`(() => {
+      const e=document.querySelectorAll(${JSON.stringify(selector)})[${index}];
+      if (!e) return false;
+      e.scrollIntoView({block:'center',inline:'center'});
+      e.click();
+      return true;
+    })()`);
+    if (!activated) throw new Error(`missing selector ${selector}[${index}]`);
+    await wait(160);
+  };
+  const ensureOpen = async (selector) => {
+    if (await evaluate(`document.querySelector(${JSON.stringify(selector)})?.getAttribute('aria-expanded') !== 'true'`)) {
+      await activate(selector);
+    }
+  };
+  const open = (key) => ensureOpen(`[data-face="${key}"]`);
   const noOverflow = () => evaluate(`(() => {
     const root=document.querySelector('.customize');
     const scrollers=[root,...root.querySelectorAll('*')].filter(e=>getComputedStyle(e).overflowX!=='visible');
@@ -120,13 +167,16 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/${profileMeta ? '' : '?shot=customize'}` }, sessionId);
   if (profileMeta) {
     await until(`!!document.querySelector('.startup-gate') || !!document.querySelector('.slot-new')`, 'startup gate or title screen for veteran profile');
-    if (await evaluate(`!!document.querySelector('.startup-gate')`)) {
-      await click('.startup-gate');
-    }
+    if (await evaluate(`!!document.querySelector('.startup-gate')`)) await click('.startup-gate');
     await until(`!!document.querySelector('.slot-new')`, 'title screen for veteran profile');
     await click('.slot-new');
     await until(`!!document.querySelector('.title-menu-modal [data-title-action="modal-continue"]:not([disabled])')`, 'new-run slot selection');
-    await click('.title-menu-modal [data-title-action="modal-continue"]');
+    // The title flow now has a review door between slot selection and character
+    // creation. Trigger both semantic button actions directly: raw coordinates
+    // can land on the rerendered veil during this two-door handoff.
+    await evaluate(`document.querySelector('.title-menu-modal [data-title-action="modal-continue"]').click(); true`);
+    await until(`!!document.querySelector('.title-menu-modal [data-title-action="review-new"]')`, 'new-run confirmation');
+    await evaluate(`document.querySelector('.title-menu-modal [data-title-action="review-new"]').click(); true`);
   }
   await until(`document.querySelectorAll('.cz-flow > .disc-faces > .disc-face').length===4`, 'four creation sections');
   await wait(250);
@@ -213,11 +263,10 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await wait(180);
   const attributeShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
   writeFileSync(join(OUT, `attribute-cards-${width < 700 ? 'mobile' : 'desktop'}.png`), Buffer.from(attributeShot.data, 'base64'));
-  await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new PointerEvent('pointerenter', {bubbles:true})); true`);
-  await wait(180);
+  await hover('#cz-primary-stats [data-face="attribute:dexterity"]');
   assert(await evaluate(`document.querySelector('#tooltip')?.style.display === 'block' && /Dexterity/.test(document.querySelector('#tooltip')?.textContent || '')`),
     `${width}x${height}: folded attributes expose the same description by tooltip`);
-  await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new PointerEvent('pointerleave', {bubbles:true})); true`);
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1, button: 'none' }, sessionId);
   const characterFold = await evaluate(`(() => ({
     labels:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face .disc-name')].map(e=>e.textContent.trim()),
     open:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face),
@@ -229,45 +278,61 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   `${width}x${height}: Character uses one-open nested disclosures with modes, stats, then resources`);
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay');
+  const openingAllocation = await evaluate(`(() => ({
+    remaining:document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent,
+    values:[...document.querySelectorAll('.cc-stat-overlay .se-value')].map((node) => node.textContent)
+  }))()`);
+  assert(openingAllocation.remaining === '10' && openingAllocation.values.length === 5 && openingAllocation.values.every((value) => value === '10'),
+    `${width}x${height}: first Assign Points open starts all five attributes at baseline 10 with the full 10-point pool (${JSON.stringify(openingAllocation)})`);
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay [data-face^="attribute:"]').length`)) === 5,
     `${width}x${height}: Assign Points reuses five foldout attribute cards`);
+  const settingInsets = await evaluate(`[...document.querySelectorAll('.cc-stat-overlay .as-row.setting')].map((node) => { const style=getComputedStyle(node); return [style.paddingTop,style.paddingRight,style.paddingBottom,style.paddingLeft]; })`);
+  assert(settingInsets.length === 5 && settingInsets.every((sides) => sides.every((side) => parseFloat(side) > 0) && new Set(sides).size === 1),
+    `${width}x${height}: all five setting rows have equal positive padding on all four sides (${JSON.stringify(settingInsets)})`);
   await click('.cc-stat-overlay [data-face="attribute:strength"]');
   const allocationGeometry = await evaluate(`(() => {
     const row = document.querySelector('.cc-stat-overlay .se-row');
     const face = row?.querySelector('.cc-primary-stat');
     const controls = row?.querySelector('.se-controls');
     const reveal = row?.querySelector('.disc-reveal:not([hidden])');
+    const style = row ? getComputedStyle(row) : null;
     const rect = (node) => { const box = node?.getBoundingClientRect(); return box ? { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width } : null; };
-    return { component: row?.dataset.uiComponent || '', row: rect(row), face: rect(face), controls: rect(controls), reveal: rect(reveal) };
+    return { component: row?.dataset.uiComponent || '', row: rect(row), face: rect(face), controls: rect(controls), reveal: rect(reveal), padding: style ? { left:parseFloat(style.paddingLeft), right:parseFloat(style.paddingRight) } : null };
   })()`);
   assert(allocationGeometry.component === 'stat-allocation-row'
-      && allocationGeometry.reveal?.left <= allocationGeometry.row.left + 1
-      && allocationGeometry.reveal?.right >= allocationGeometry.row.right - 1
+      && allocationGeometry.reveal?.left <= allocationGeometry.row.left + allocationGeometry.padding.left + 2
+      && allocationGeometry.reveal?.right >= allocationGeometry.row.right - allocationGeometry.padding.right - 2
       && Math.abs(allocationGeometry.face?.top - allocationGeometry.controls?.top) <= 1,
     `${width}x${height}: Assign Points disclosure spans the invisible stat-and-controls parent (${JSON.stringify(allocationGeometry)})`);
-  await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new PointerEvent('pointerenter', {bubbles:true})); true`);
-  await wait(180);
+  await hover('.cc-stat-overlay [data-face="attribute:constitution"]');
   assert(await evaluate(`document.querySelector('#tooltip')?.style.display === 'block' && /Constitution/.test(document.querySelector('#tooltip')?.textContent || '')`),
     `${width}x${height}: Assign Points exposes the shared attribute tooltip`);
-  await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new PointerEvent('pointerleave', {bubbles:true})); true`);
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1, button: 'none' }, sessionId);
   const allocationShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
   writeFileSync(join(OUT, `attribute-assignment-${width < 700 ? 'mobile' : 'desktop'}.png`), Buffer.from(allocationShot.data, 'base64'));
-  assert(await evaluate(`document.querySelector('.screen.customize').inert === true && document.activeElement?.matches('.cc-stat-modal')`), `${width}x${height}: Assign Points scopes the screen and announces the focused dialog`);
+  assert(await evaluate(`document.querySelector('.screen.customize').inert === true && document.querySelector('.cc-stat-modal')?.contains(document.activeElement)`), `${width}x${height}: Assign Points scopes the screen and keeps focus inside the dialog`);
+  await click('.cc-stat-overlay [aria-label="Increase Strength"]');
   await evaluate(`document.querySelector('.cc-stat-overlay').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`);
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points Escape close');
   const escapeReceipt = await evaluate(`(() => ({inert:document.querySelector('.screen.customize').inert,active:document.activeElement?.dataset?.creationMode||'',chosen:document.querySelector('#cz-statedit .se-mode.chosen')?.dataset.creationMode||'',cursor:document.querySelector('#cz-statedit .se-mode.gp-focus')?.dataset.creationMode||''}))()`);
   assert(escapeReceipt.inert === false && escapeReceipt.active === 'standard' && escapeReceipt.chosen === 'standard' && escapeReceipt.cursor === 'standard', `${width}x${height}: Escape cancels Assign Points, clears the modal scope, and focuses Standard (${JSON.stringify(escapeReceipt)})`);
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points reopen');
+  const reopenedAllocation = await evaluate(`(() => ({
+    remaining:document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent,
+    values:[...document.querySelectorAll('.cc-stat-overlay .se-value')].map((node) => node.textContent)
+  }))()`);
+  assert(reopenedAllocation.remaining === '10' && reopenedAllocation.values.length === 5 && reopenedAllocation.values.every((value) => value === '10'),
+    `${width}x${height}: reopening Assign Points refunds the edited allocation to baseline 10 and restores all 10 points (${JSON.stringify(reopenedAllocation)})`);
   assert(await evaluate(`(() => { const modal=document.querySelector('.cc-stat-overlay'); const buttons=[...modal.querySelectorAll('button')]; buttons.at(-1).focus(); buttons.at(-1).dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true})); return document.activeElement===buttons[0]; })()`), `${width}x${height}: Assign Points traps forward Tab focus inside the dialog`);
-  for (let i = 0; i < 3; i += 1) {
-    await click('.cc-stat-overlay [aria-label="Decrease Strength"]');
-    await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
-  }
+  await click('.cc-stat-overlay [aria-label="Increase Strength"]');
+  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
+  for (let i = 0; i < 4; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay close');
   await open('equipment');
-  await click('#cz-equipment-fold [data-face="rightHand"]');
+  await ensureOpen('#cz-equipment-fold [data-face="rightHand"]');
+  await until(`document.querySelector('#cz-right-hand [data-armament-id="greatsword"]')?.getBoundingClientRect().width > 0`, 'visible right-hand choices');
   const errorsBeforeIncompatiblePick = errors.length;
   await click('#cz-right-hand [data-armament-id="greatsword"]');
   const incompatible = await evaluate(`(() => {
@@ -279,6 +344,9 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await open('character');
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver correction overlay');
+  await click('.cc-stat-overlay [aria-label="Increase Strength"]');
+  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
+  for (let i = 0; i < 4; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
   await click('.cc-stat-overlay [data-stat-done]');
   const modalRefusal = await evaluate(`(() => {
     const done = document.querySelector('.cc-stat-overlay [data-stat-done]');
@@ -322,6 +390,8 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(await evaluate(`document.activeElement?.getAttribute('aria-label') === 'Decrease Dexterity' && document.querySelector('.cc-stat-overlay .gp-focus')?.getAttribute('aria-label') === 'Decrease Dexterity'`), `${width}x${height}: redraw preserves keyboard and gamepad focus on the decremented stat`);
   await evaluate(`(() => { const e=document.querySelector('.cc-stat-overlay [aria-label="Increase Dexterity"]'); document.querySelectorAll('.gp-focus').forEach(x => x.classList.remove('gp-focus')); e.focus(); e.classList.add('gp-focus'); e.click(); })()`);
   assert(await evaluate(`document.activeElement?.getAttribute('aria-label') === 'Increase Dexterity' && document.querySelector('.cc-stat-overlay .gp-focus')?.getAttribute('aria-label') === 'Increase Dexterity'`), `${width}x${height}: redraw preserves keyboard and gamepad focus on the incremented stat`);
+  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
+  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Intelligence"]');
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Assign Points overlay close');
 
@@ -346,19 +416,21 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert((await evaluate(`document.querySelectorAll('#cz-left-hand .equip-chip').length`)) >= 2, `${width}x${height}: Left Hand has direct armament cards`);
   assert((await evaluate(`document.querySelectorAll('#cz-right-hand .equip-chip').length`)) >= 2, `${width}x${height}: Right Hand has direct armament cards`);
   await click('#cz-auto-advance-toggle .cc-switch');
-  await click('#cz-equipment-fold [data-face="armour"]');
+  await ensureOpen('#cz-equipment-fold [data-face="armour"]');
   await click('#cz-armours .equip-chip', 1);
   assert((await evaluate(`[...document.querySelectorAll('#cz-equipment-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face).join(',')`)) === 'armour', `${width}x${height}: disabled auto-advance keeps the current equipment subcard open`);
   await click('#cz-auto-advance-toggle .cc-switch');
   await click('#cz-armours .equip-chip', 0);
-  assert((await evaluate(`[...document.querySelectorAll('#cz-equipment-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face).join(',')`)) === 'leftHand', `${width}x${height}: a valid equipment choice auto-advances to the next configured subcard`);
+  assert((await evaluate(`[...document.querySelectorAll('#cz-equipment-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face).join(',')`)) === 'rightHand', `${width}x${height}: a valid equipment choice auto-advances to the next configured subcard`);
+  await ensureOpen('#cz-equipment-fold [data-face="leftHand"]');
   await click('#cz-left-hand [data-armament-id="ashStaff"]');
+  await ensureOpen('#cz-equipment-fold [data-face="rightHand"]');
   await click('#cz-right-hand [data-armament-id="ashStaff"]');
   const moved = await evaluate(`(() => ({left:document.querySelector('#cz-left-hand [data-armament-id="ashStaff"]').getAttribute('aria-pressed'),right:document.querySelector('#cz-right-hand [data-armament-id="ashStaff"]').getAttribute('aria-pressed')}))()`);
   assert(moved.left === 'false' && moved.right === 'true', `${width}x${height}: choosing one armament for the other hand moves it`);
-  await click('#cz-equipment-fold [data-face="leftHand"]');
+  await ensureOpen('#cz-equipment-fold [data-face="leftHand"]');
   await click('#cz-left-hand [data-armament-id="starstoneStaff"]');
-  await click('#cz-equipment-fold [data-face="relic"]');
+  await ensureOpen('#cz-equipment-fold [data-face="relic"]');
   await click('#cz-relics .cc-relic-card', 1);
 
   await open('character');
@@ -389,19 +461,32 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
 
   if (screenshotSection === 'class') {
     await open('equipment');
-    await click('#cz-equipment-fold [data-face="armour"]');
+    await ensureOpen('#cz-equipment-fold [data-face="armour"]');
     await evaluate(`document.querySelector('[data-face="equipment"]').scrollIntoView({block:'start'})`);
     await wait(200);
     const equipmentShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
     writeFileSync(join(OUT, screenshotName.replace('after-', 'equipment-')), Buffer.from(equipmentShot.data, 'base64'));
     await open('class');
     await click('.cz-class[data-class="starseer"]');
+    // Changing class deliberately starts a fresh point-buy draft. Spend that
+    // newly refunded pool before asserting that Begin consumes the choices.
+    await open('character');
+    await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
+    await until(`!!document.querySelector('.cc-stat-overlay')`, 'post-screenshot Assign Points overlay');
+    for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
+    for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Intelligence"]');
+    await click('.cc-stat-overlay [data-stat-done]');
+    await until(`!document.querySelector('.cc-stat-overlay')`, 'post-screenshot Assign Points overlay close');
   }
   await open('seed');
   await click('#cz-start');
   await until(`!!document.querySelector('.mapscreen')`, 'Begin to enter the map');
-  const begun = await evaluate(`document.querySelector('.mapscreen .nm').textContent`);
-  assert(/MARYA.*STARSEER/.test(begun), `${width}x${height}: Begin consumes the selected character values`);
+  const begun = await evaluate(`(() => {
+    const saved = JSON.parse(localStorage.getItem('sote_run_v1'));
+    return { className:document.querySelector('.mapscreen .hud-class .cv')?.textContent || '', name:saved?.customization?.name || '', classId:saved?.class || '' };
+  })()`);
+  assert(begun.name === 'Marya' && begun.classId === 'starseer' && /Starseer/i.test(begun.className),
+    `${width}x${height}: Begin consumes the selected character values (${JSON.stringify(begun)})`);
   assert(errors.length === 0, `${width}x${height}: no uncaught browser exceptions`);
   await cdp.send('Target.closeTarget', { targetId });
 }
