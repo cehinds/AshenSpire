@@ -107,6 +107,22 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
 | `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Player card hand. |
 | `combat-action-rail` | `componentModel` | `combat.js` | Combat | Edge-anchored Actions and Exhaust around a tight Draw / End Turn / Discard cluster. |
+| `kit.pageDoor` | `pageDoor(spec)` | `kit/index.js` pageDoor | Every screen that asks something | The one door-opener: head with eyebrow, title and a single close control, a body the surface owns, and a foot on the button ladder. Four named widths (sm, md, lg, xl) or full; Escape, veil click and focus return are bound here once. |
+| `kit.optionCard` | `optionCard(spec)` | `kit/index.js` optionCard | Every list of ways on | One choosable way on — glyph or art, name, description, optional badge, meta and trail — carrying its own selected and disabled states. |
+| `kit.detailCard` | `detailCard(spec)` | `kit/index.js` detailCard | Inspectors and summaries | One subject described: eyebrow, name, line, meta, and any body the caller adds. The muted variant is the same card standing back. |
+| `kit.statRow` | `statRow(spec)` | `kit/index.js` statRow | Character, Armoury, inspectors | One named quantity and its values, with an optional hint and a drill affordance; the flat variant drops the frame for rows already inside one. |
+| `kit.band` | `band(spec)` | `kit/index.js` band | Run HUD, co-op board, screen feet | A horizontal strip of related facts; foot places it at the bottom, stack lets it wrap, quiet lowers its weight. |
+| `kit.buttonRow` | `buttonRow(spec)` | `kit/index.js` buttonRow | Every modal foot and control row | A row of buttons on one ladder step, so siblings share a width and rows across the game land on one of four. |
+| `kit.iconButton` | `iconButton(spec)` | `kit/index.js` iconButton | Chrome corners, trays, headers | A glyph in a square box with a real accessible name — the one shape for ✕, ☰ and the quick-settings pair. |
+| `kit.segmented` | `segmented(spec)` | `kit/index.js` segmented | Settings, Armoury views, Custom Climb | One choice out of a small named set, drawn as joined segments rather than separate buttons. |
+| `kit.stepper` | `stepper(spec)` | `kit/index.js` stepper | Stat points, flask counts, Custom Climb | A value between a decrement and an increment control, each addressable on its own. |
+| `kit.labelStack` | `labelStack(spec)` | `kit/index.js` labelStack | Settings rows, forms, summaries | A label with its hint beneath it, so the pair never separates and a control is never left unexplained. |
+| `kit.delta` | `delta(spec)` | `kit/index.js` delta | Comparison receipts, upgrade previews | Before and after drawn as one thing: what a swap or an upgrade would change a number from and to. |
+| `kit.pip` | `pip(spec)` | `kit/index.js` pip | Belts, trays, status marks | A small glyph token with an optional count, tone and ring — the shape a slot, a charge or a mark takes. |
+| `kit.artWell` | `artWell(spec)` | `kit/index.js` artWell | Cards, inspectors, class figures | A framed well holding either an image or a glyph, so art and its placeholder occupy the same box; hidden from assistive technology when it holds a glyph. |
+| `kit.railItem` | `railItem(spec)` | `kit/index.js` railItem | Compendium, settings rails, owner pages | One entry in a navigation rail, which marks itself as current rather than being marked from outside. |
+| `kit.popover` | `popover(spec)` | `kit/index.js` popover | Quick menu, flask menu, armament radial | A caption above grouped rows, hung off the control that opened it. |
+| `kit.decide` | `decide(spec)` | `kit/index.js` decide | Every door that asks a question | The body of a decision — the question, what it costs, and the ways to answer — the shape a page door wraps when the surface is a question rather than a place. |
 
 ## Composition at a glance
 
@@ -345,9 +361,9 @@ low-contrast danger text.
 | `equipment-slot` | `equipmentSlotModel` | `armouryComponents.renderEquipmentSlot` | One named equipment socket. |
 | `equipment-set-cell` | `equipmentSetCellModel` | `armouryComponents.renderEquipmentSetCell` | One active, empty, or locked set cell. |
 | `armoury-inventory` | `armouryInventoryModel` | `equipment.js` inside `renderTray` | Inventory tray content and the single carried-item list. |
-| `inventory-item-card` | `inventoryItemCardModel` | `armouryComponents.renderInventoryItemCard` | Folded carried-item face. The current `inventoryItem` class explicitly enables `holdAction`; its folded and expanded states are one action/progress surface, and an early release aborts without changing equipment. |
+| `inventory-item-card` | `inventoryItemCardModel` | `armouryComponents.renderInventoryItemCard` | Folded carried-item face. The current `inventoryItem` class explicitly enables `holdAction`; its folded and expanded states are one action/progress surface, and an early release aborts without changing equipment. In combat its Equip/Move/Unequip action dispatches the priced player-turn `changeEquipment` intent. |
 | `inventory-detail-card` | `inventoryDetailCardModel` | `armouryComponents.renderInventoryDetailCard` | Expanded art, tags, mods, and action label inside the same whole-card hold surface; the label is not a second action button while hold confirmation owns the action. |
-| `equipment-comparison` | semantic child model + `armouryUi.layout.comparison` | `equipmentReceipts.js` in shared tooltip or item card | Full before/after receipt, including exact weapon-package card counts and slot-bound upgrade changes, separate from the action hold. Authored presentation chooses delayed hover/focus tooltip or inline content, with data-owned delay, width, and viewport cap. |
+| `equipment-comparison` | semantic child model + `armouryUi.layout.comparison` | `equipmentReceipts.js` in shared tooltip or item card | Full before/after receipt, including exact weapon-package card counts and slot-bound upgrade changes. Authored presentation chooses a sustained-hold tooltip or inline content, with data-owned hold threshold, width, and viewport cap. |
 | `armoury-stats-panel` | `armouryStatsPanelModel` | `equipment.js` inside `renderTray` | Stats tray content: attributes, combat values, resources, relic summary, and the equipment receipts (card packages, requirements, Poise threshold, Equip load with its Weight Class — `armoury.playerLoadReceipt`). |
 | `armoury-card-strip` | `armouryCardStripModel` | `equipment.js` + `card.js` inside `renderTray` | Cards tray content: exact equipment-associated card counts grouped by card/profile in list or grid presentation. |
 | `armoury-region-header` | compatibility semantic ID | replaced by `tray-header` | Historical Armoury-only fold header name. |
@@ -378,7 +394,7 @@ The four current Armoury tray families are Armaments, Inventory, Cards, and
 Stats. They share the same `folding-tray` shell while their content components
 remain independent. The current `inventoryItem` class enables whole-card hold
 confirmation in both disclosure states; comparison presentation remains a
-separate delayed hover/focus tooltip or inline receipt. See the
+sustained-hold tooltip or inline receipt. Hover/focus alone does not open it. See the
 [four-edge ASCII and interaction contract](./TRAY-COMPONENTS.md).
 
 Armaments uses the shared shell without a resize handle. Inventory has a height

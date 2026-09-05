@@ -25,7 +25,7 @@ import { renderCard, relicText } from '../components/card.js';
 import {
   renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies,
 } from '../components/equipmentReceipts.js';
-import { esc, attachTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
+import { esc, attachTooltip, hideTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
 import { armHold, holdMs, HOLD_POINTER_SLOP } from '../../framework/optionDecision.js';
 import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
@@ -519,7 +519,15 @@ function inventoryReveal(registries, row, {
     action,
   });
   el.dataset.inventoryItem = row.key;
-  const cardOwnsAction = classModel?.holdAction === true && Boolean(onClassAction);
+  // When the global hold-confirm dial is off, the explicit action button owns
+  // the immediate equipment change and the card keeps a short, read-only hold
+  // for comparison. A zero-duration action must never erase the only comparison
+  // path or turn a compare gesture into an equip.
+  const cardOwnsAction = classModel?.holdAction === true && holdDuration > 0 && Boolean(onClassAction);
+  let comparisonPreviewTimer = null;
+  let comparisonPreviewOpen = false;
+  let startComparisonPreview = null;
+  let endComparisonPreview = null;
   if (comparison) {
     el.dataset.component = 'armoury.comparisonTooltipAnchor';
     el.tabIndex = 0;
@@ -531,29 +539,49 @@ function inventoryReveal(registries, row, {
       : '';
     el.setAttribute('aria-label', comparisonPresentation === 'inline'
       ? `Compare ${item.name}. Comparison shown in this card.${actionInstruction}`
-      : `Compare ${item.name}. Hover or focus this card to show comparison.${actionInstruction}`);
+      : `Compare ${item.name}. Press and hold this card to preview comparison.${actionInstruction}`);
     const clear = el.closest('.disc-faces') || el.parentElement;
     const appearance = {
       variant: 'equipment-comparison',
       widthRem: comparisonConfig?.tooltipWidthRem,
       maxHeightRatio: comparisonConfig?.tooltipMaxHeightRatio,
     };
-    if (comparisonPresentation === 'tooltip') attachTooltip(el, () => comparisonHtml, {
-      intent: 'above',
-      clear,
-      delayMs: comparisonConfig?.hoverDelayMs,
-      appearance,
-    });
+    if (comparisonPresentation === 'tooltip') {
+      el.dataset.comparisonTrigger = 'hold';
+      el.dataset.comparisonPreview = 'idle';
+      el.dataset.focusable = 'true';
+      if (!cardOwnsAction) el.setAttribute('role', 'group');
+    }
     if (comparisonPresentation === 'tooltip' && !cardOwnsAction) {
       const disarm = armHold(el, {
-        ms: holdDuration,
+        ms: comparisonConfig?.holdPreviewDelayMs ?? 160,
         id: 'compareEquipment',
         onConfirm: () => {
           showTooltipFor(el, comparisonHtml, { intent: 'above', clear, appearance });
           stickTooltip(el);
+          el.dataset.comparisonPreview = 'open';
         },
       });
       if (registerHold) registerHold(disarm);
+    }
+    if (comparisonPresentation === 'tooltip' && cardOwnsAction) {
+      startComparisonPreview = () => {
+        clearTimeout(comparisonPreviewTimer);
+        comparisonPreviewOpen = false;
+        el.dataset.comparisonPreview = 'pending';
+        comparisonPreviewTimer = setTimeout(() => {
+          comparisonPreviewTimer = null;
+          comparisonPreviewOpen = showTooltipFor(el, comparisonHtml, { intent: 'above', clear, appearance });
+          el.dataset.comparisonPreview = comparisonPreviewOpen ? 'open' : 'idle';
+        }, comparisonConfig?.holdPreviewDelayMs ?? 160);
+      };
+      endComparisonPreview = () => {
+        clearTimeout(comparisonPreviewTimer);
+        comparisonPreviewTimer = null;
+        if (comparisonPreviewOpen) hideTooltip();
+        comparisonPreviewOpen = false;
+        el.dataset.comparisonPreview = 'idle';
+      };
     }
   }
   if (cardOwnsAction) {
@@ -566,6 +594,8 @@ function inventoryReveal(registries, row, {
       ms: holdDuration,
       id: 'equipInventory',
       onConfirm: onClassAction,
+      onHoldStart: startComparisonPreview,
+      onHoldEnd: endComparisonPreview,
       feedbackHosts: () => {
         const reveal = el.closest('.disc-reveal');
         const faces = el.closest('.disc-faces');
@@ -582,12 +612,12 @@ function inventoryReveal(registries, row, {
 /**
  * mountEquipment(host, opts) → { close() }
  *
- *   inCombat  seals storage and honours each slot's swap rule
- *   onSwap    called with (slotId, setIndex) instead of mutating, so combat can
- *             route the change through the engine intent that charges for it
+ *   inCombat  applies the authored combat-change rule and each slot's swap rule
+ *   onSwap    routes active-set changes through the priced combat intent
+ *   onEquip   routes item replacement/move/unequip through the priced combat intent
  */
 export function mountEquipment(host, {
-  registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquipmentChanged,
+  registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
 }) {
   const destinationPlan = destination ? armouryDestinationPlan(destination) : null;
   if (destination && !destinationPlan) {
@@ -605,13 +635,12 @@ export function mountEquipment(host, {
   // behaviour to change here — only the silence to close.
   //
   // IT FAILS LOUD AND CLOSED, in that order. A mount that cannot say whether a
-  // fight is on is sealed: a visibly inert picker with a named cause on the
-  // console beats a picker that quietly lets you re-arm. Law 1 clause 5 —
+  // fight is on gets a visibly inert picker with a named cause. Law 1 clause 5 —
   // bad input fails by name, and the name here is the caller.
   if (typeof inCombatArg !== 'boolean') {
     console.error(
       `mountEquipment(): no boolean \`inCombat\` — got ${JSON.stringify(inCombatArg)}.`
-      + ' Sealing the picker. This line is the defect, not the seal.'
+      + ' Disabling its actions. This line is the defect, not the refusal.'
     );
   }
   // ONE NAME IN THE BODY. The argument is validated once, here, and everything
@@ -842,6 +871,23 @@ export function mountEquipment(host, {
   /** One mutation path for the shared Inventory buttons, holds, and drag/drop. */
   function applyEquipmentChange(slotId, setIndex, pieceId, actionLabel) {
     const hadSelection = !!picking;
+    if (inCombat) {
+      if (typeof onEquip !== 'function') {
+        notice = 'Combat equipment changes are unavailable on this screen.';
+        draw();
+        return false;
+      }
+      const refused = onEquip(slotId, setIndex, pieceId);
+      if (refused) {
+        notice = refused;
+        draw();
+        return false;
+      }
+      if (hadSelection) clearInventorySelection();
+      sfx.play('cardPlay');
+      commit(hadSelection ? foldSettings() : null);
+      return true;
+    }
     const changed = equipPiece(
       registries, run.loadout, slotId, setIndex, pieceId, owned(),
       { inCombat, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels, classId: run.class, onEquipmentChanged: captureEquipmentChanged }
@@ -1078,9 +1124,10 @@ export function mountEquipment(host, {
     const inventoryItemClass = layout.cardClasses.inventoryItem;
     const faceActions = new Map();
     const draggableRows = new Map();
-    // In combat the inventory stays readable, but every equipment action is
-    // sealed. Keep that refusal on the action itself so opening an equipped
-    // item explains why it cannot move instead of trying to bind a live act.
+    // An action can still be unavailable because its destination is locked,
+    // its requirements fail, or a combat mount omitted the engine callback.
+    // Keep that refusal on the action itself so the card explains why it cannot
+    // move instead of binding a dead act.
     const sealChip = (element, reason) => {
       element.classList.add('locked');
       refuses(element, () => reason);

@@ -255,8 +255,8 @@ async function main() {
     })()`);
     check(expandedCard.open === 'true' && expandedCard.actions === 1 && expandedCard.actionInsideReveal,
       `expanded item card reveals exactly one in-card action (${expandedCard.actions})`);
-    check(/hover or focus.+comparison/i.test(expandedCard.instruction)
-      && !/hold to show comparison/i.test(expandedCard.instruction)
+    check(/press and hold.+preview comparison/i.test(expandedCard.instruction)
+      && !/hover or focus/i.test(expandedCard.instruction)
       && /(press and hold|activate this card) to (equip|unequip)/i.test(expandedCard.instruction),
     `an action-owning card distinguishes comparison access from its equipment action (${JSON.stringify(expandedCard.instruction)})`);
     check(expandedCard.focusable === 'true' && expandedCard.role === 'button',
@@ -283,8 +283,14 @@ async function main() {
         revealFill: getComputedStyle(reveal).backgroundImage,
         actionTag: source.querySelector('[data-act]')?.tagName || '',
         actionButtons: source.querySelectorAll('button[data-act]').length,
+        comparisonPreview: source.dataset.comparisonPreview || '',
+        comparisonVisible: !!document.querySelector('#tooltip')
+          && getComputedStyle(document.querySelector('#tooltip')).display !== 'none',
       };
       pointer('pointerup');
+      await new Promise((done) => setTimeout(done, 0));
+      result.comparisonAfterRelease = !!document.querySelector('#tooltip')
+        && getComputedStyle(document.querySelector('#tooltip')).display !== 'none';
       return result;
     })()`);
     check(wholeCardFill?.delegated
@@ -294,6 +300,9 @@ async function main() {
     `an expanded hold fills its title and reveal as one card (${JSON.stringify(wholeCardFill)})`);
     check(wholeCardFill?.actionTag === 'SPAN' && wholeCardFill.actionButtons === 0,
       `the expanded whole-card hold has one action surface, not a second button (${JSON.stringify(wholeCardFill)})`);
+    check(wholeCardFill?.comparisonPreview === 'open' && wholeCardFill.comparisonVisible
+      && !wholeCardFill.comparisonAfterRelease,
+    `a sustained hold previews comparison and early release closes it (${JSON.stringify(wholeCardFill)})`);
     await evaluate(`document.querySelector('[data-region=inventory] .inventory-detail')
       ?.dispatchEvent(new PointerEvent('pointerenter'))`);
     await wait(650);
@@ -303,8 +312,8 @@ async function main() {
       const rect = tip?.getBoundingClientRect();
       return { visible: !!tip && getComputedStyle(tip).display !== 'none', comparison: !!comparison, width: rect?.width || 0 };
     })()`);
-    check(comparisonTip.visible && comparisonTip.comparison && comparisonTip.width >= 500,
-      `hover delay reveals the full wide comparison tooltip (${Math.round(comparisonTip.width)}px)`);
+    check(!comparisonTip.visible,
+      'hover does not reveal the equipment comparison tooltip');
     const actionReach = await evaluate(`(() => {
       const action = document.querySelector('[data-region=inventory] .ep-list [data-act]');
       action?.scrollIntoView({ block: 'center' });
@@ -427,13 +436,21 @@ async function main() {
         .map((piece) => piece.id)
         .filter((id) => !equipped.has(id))
         .slice(0, cap);
-      document.body.innerHTML = '<main id="pr315-fixture"></main>';
+      // Keep the shared tooltip singletons mounted. Replacing body.innerHTML
+      // disconnects the service's cached panel references and turns a real
+      // open into an invisible detached node.
+      for (const child of [...document.body.children]) {
+        if (!child.matches('#tooltip, #tooltip-2')) child.remove();
+      }
+      const fixtureHost = document.createElement('main');
+      fixtureHost.id = 'pr315-fixture';
+      document.body.appendChild(fixtureHost);
       const fixture = { run, commits: 0 };
       window.__pr315Fixture = fixture;
-      mountEquipment(document.querySelector('#pr315-fixture'), {
+      fixture.panel = mountEquipment(document.querySelector('#pr315-fixture'), {
         registries,
         run,
-        meta: {},
+        meta: { settings: { holdConfirm: 'off' } },
         inCombat: false,
         onChange: () => { fixture.commits += 1; },
         onClose: () => {},
@@ -444,16 +461,50 @@ async function main() {
       document.querySelector('[data-slot-position="rightHand:0"] .armoury-position-action')?.click();
       const face = [...document.querySelectorAll('.ep-list .disc-face')]
         .find((element) => element.querySelector('.ec-name')?.textContent === 'Straight Sword');
-      face?.click();
+      if (face) {
+        const rect = face.getBoundingClientRect();
+        const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
+          bubbles: true, cancelable: true, pointerId: 321, pointerType: 'mouse', button: 0, detail: 1,
+          clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
+        }));
+        event('pointerdown'); event('pointerup'); event('click', MouseEvent);
+      }
     })()`);
+    const holdOffComparison = SHIPPED ? null : await evaluate(`(async () => {
+      const source = document.querySelector('.ep-list .inventory-detail');
+      const action = source?.querySelector('button[data-act]');
+      const rect = source?.getBoundingClientRect();
+      if (!source || !rect) return null;
+      const pointer = (type) => source.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerId: 322, pointerType: 'touch', button: 0,
+        clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
+      }));
+      pointer('pointerdown');
+      await new Promise((done) => setTimeout(done, 210));
+      const tip = document.querySelector('#tooltip[data-tooltip-variant="equipment-comparison"]');
+      const result = {
+        actionButton: action?.tagName || '',
+        holdMs: source.dataset.holdMs || '',
+        preview: source.dataset.comparisonPreview || '',
+        visible: !!tip && getComputedStyle(tip).display !== 'none',
+      };
+      pointer('pointerup');
+      return result;
+    })()`);
+    if (holdOffComparison) {
+      check(holdOffComparison.actionButton === 'BUTTON' && holdOffComparison.holdMs === '160'
+        && holdOffComparison.preview === 'open' && holdOffComparison.visible,
+      `hold-confirm off keeps an explicit action button and a deliberate comparison hold (${JSON.stringify(holdOffComparison)})`);
+    }
     const refusal = SHIPPED ? null : await evaluate(`(() => {
       const fixture = window.__pr315Fixture;
       const before = JSON.stringify(fixture.run.loadout);
       const action = document.querySelector('.ep-list [data-act=unequip]');
+      const commitsBefore = fixture.commits;
       action?.click();
       return {
         unchanged: JSON.stringify(fixture.run.loadout) === before,
-        commits: fixture.commits,
+        commits: fixture.commits - commitsBefore,
         refusal: action?.dataset.refusal || '',
       };
     })()`);
@@ -461,6 +512,95 @@ async function main() {
       check(refusal.unchanged, 'a full Inventory keeps a refused Unequip atomic');
       check(refusal.commits === 0 && /inventory is full/i.test(refusal.refusal),
         `a refused Unequip skips success commit and explains the full Inventory (${JSON.stringify(refusal.refusal)})`);
+    }
+    const combatChange = SHIPPED ? null : await evaluate(`(async () => {
+      window.__pr315Fixture?.panel?.close?.();
+      const [{ contentBundle }, { createRegistries }, { createRunState }, { mountEquipment }, { createCombat, dispatch }, { createRng }] = await Promise.all([
+        import('/src/content/index.js'),
+        import('/src/model/registries.js'),
+        import('/src/model/state.js'),
+        import('/src/ui/screens/equipment.js'),
+        import('/src/engine/combat.js'),
+        import('/src/engine/rng.js'),
+      ]);
+      const registries = createRegistries(contentBundle);
+      const run = createRunState({ seed: 0x316, classId: 'reaver', registries });
+      run.loadout.storage = ['dagger'];
+      const combat = createCombat({
+        registries,
+        rng: createRng(0x316),
+        enemyIds: ['blightHound'],
+        player: {
+          classId: run.class, attributes: run.attributes,
+          maxHp: run.maxHp, hp: run.hp, maxMana: run.maxMana, mana: run.mana,
+          maxStamina: run.maxStamina, stamina: run.stamina,
+          energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck,
+          relicIds: run.relics, flasks: run.flasks, loadout: run.loadout,
+          itemUpgradeLevels: run.itemUpgradeLevels,
+          equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+          equipmentAttackSlotCount: run.equipmentAttackSlotCount,
+          itemMounts: run.itemMounts,
+        },
+      });
+      combat.player.energy = combat.player.energyMax;
+      const before = JSON.stringify(combat.loadout);
+      const energyBefore = combat.player.energy;
+      const events = [];
+      let error = '';
+      const host = document.querySelector('#pr315-fixture');
+      host.replaceChildren();
+      mountEquipment(host, {
+        registries, run,
+        destination: 'equipment',
+        meta: { settings: { holdConfirm: 'off', armouryArmamentView: 'list' } },
+        inCombat: true,
+        onClose: () => {},
+        onSwap: () => {},
+        onEquip: (slotId, setIndex, pieceId) => {
+          try {
+            const result = dispatch(combat, { type: 'changeEquipment', slotId, setIndex, pieceId });
+            events.push(...result.events.map((event) => event.type));
+            return '';
+          } catch (caught) {
+            error = caught.message;
+            return error;
+          }
+        },
+      });
+      const armamentsFold = document.querySelector('[data-fold="armaments"]');
+      if (armamentsFold?.getAttribute('aria-expanded') === 'false') armamentsFold.click();
+      await new Promise((done) => setTimeout(done, 0));
+      const positionAction = document.querySelector('[data-slot-position="rightHand:0"] .armoury-position-action');
+      positionAction?.click();
+      const daggerItem = document.querySelector('.ep-list [data-item-id="dagger"]');
+      const daggerFace = daggerItem?.closest('.disc-face') || daggerItem?.querySelector('.disc-face') || daggerItem;
+      daggerFace?.click();
+      await new Promise((done) => setTimeout(done, 0));
+      const action = document.querySelector('.ep-list .disc-reveal:not([hidden]) button[data-act]');
+      const actionLabel = action?.textContent?.trim() || '';
+      action?.click();
+      return {
+        foundFace: !!daggerFace,
+        foundAction: !!action,
+        foundPositionAction: !!positionAction,
+        itemIds: [...document.querySelectorAll('.ep-list [data-item-id]')].map((face) => face.dataset.itemId),
+        actionLabel,
+        changed: JSON.stringify(combat.loadout) !== before,
+        equipped: combat.loadout.sets.rightHand[0],
+        storedOld: combat.loadout.storage.includes('straightSword'),
+        energySpent: energyBefore - combat.player.energy,
+        configuredCost: registries.balance.equipment.swapCost,
+        events,
+        error,
+      };
+    })()`);
+    if (combatChange) {
+      check(combatChange.foundFace && (combatChange.foundAction || combatChange.changed),
+        `combat Armoury exposes a real Dagger action (${combatChange.foundAction ? JSON.stringify(combatChange.actionLabel) : 'selected-position card action'})`);
+      check(combatChange.changed && combatChange.equipped === 'dagger' && combatChange.storedOld,
+        `combat Armoury moves Dagger into RH1 and returns Straight Sword to storage (${JSON.stringify(combatChange)})`);
+      check(combatChange.energySpent === combatChange.configuredCost && combatChange.events.includes('equipmentRearmed') && !combatChange.error,
+        `combat Armoury pays the authored cost and emits the engine receipt (${JSON.stringify(combatChange)})`);
     }
   } finally {
     cdp.close();

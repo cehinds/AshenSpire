@@ -121,6 +121,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         floor: run.floor,
         floorTotal: map.floors,
         seed: run.seedString,
+        identity: { className },
         controls: {
           armouryId: 'open-armoury',
           menuId: 'open-menu',

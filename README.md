@@ -4,9 +4,9 @@ A roguelike deckbuilder for the browser — single-player, with optional LAN co-
 
 > **Status: feature-complete core loop.** Four classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
-> **README content updated:** 2026-09-02T00:45:00-08:00 (Alaska)
-> **Updated by:** Claude Code, on the owner's instruction — the feature list now names equip load and Weight Class, Stamina with the class-priced Dodge Roll and the empty hand that brings it, the first quest chain, and Forsaken Together (the LAN co-op); the opening line no longer calls the game single-player only
-> **Source change:** Pull request #555, the README pass and its CHANGELOG receipt at `0.5.0-rc.2.1944`
+> **README content updated:** 2026-09-05T12:00:34-08:00 (Alaska)
+> **Updated by:** Claude Code, on the owner's instruction — the feature list now describes re-arming during a fight, which shipped in #625 and was not yet written down here
+> **Source change:** the documentation pass before the `dev` → `test` promotion, which also wrote the CHANGELOG receipts for #626 (equipment turnaround sheets), #627 (the in-game changelog catching up) and #628 (the corrected build addresses)
 > **Scope:** README content-currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
 
 ## Play a build
@@ -30,8 +30,16 @@ here. It is the last segment of the stamp the game paints on its title screen,
 on `main`), so the number on the badge, the number on the builds index and the number on
 the title screen are the same fact read from the same file.
 
+**Read each badge down its own column, not across.** The ordinal counts builds *within the
+current candidate* and restarts when the candidate advances, so the four numbers above are
+not a ranking: a freshly cut candidate on `dev` starts near zero while `main` still carries
+the count it was promoted with. `main` also predates the restart — it is on the `0.4.0` line
+and still counting globally, which is why its badge reads in the thousands. To compare two
+branches, compare the whole stamp (`BUILD <version>.<ordinal>`), which the builds index and
+the title screen both show; the badge is a per-branch progress counter only.
+
 **Address scheme.** `https://cehinds.github.io/AshenSpire/<branch>/<ordinal>/` is that exact
-build — `…/dev/1908/` is dev build 1908, byte-identical to the `AshenSpire.html` of the
+build — `…/main/1688/` is `main` build 1688, byte-identical to the `AshenSpire.html` of the
 commit that produced it — and `…/<branch>/latest/` is the branch's newest. Each entry on the
 index links the `CHANGELOG.md` **at that build's commit**, not at a moving branch head. The
 site is assembled from git history by `node tools/pages-site.mjs` in the `pages-builds`
@@ -181,8 +189,13 @@ No install, no framework, no build step for the source.
 
 - **A run:** pick a class → traverse a branching map across 3 acts → fight enemies with a deck of cards → collect relics, flasks, and cinders → beat the final boss or die trying (seeded, reproducible runs).
 - **Four distinct classes:** Reaver leads with strike damage, Rogue with defense and actions, Starseer with magic, and Herald with a balanced martial-support kit. Their starting attributes and equipment are data-owned and validated through the shared character-creation flow.
-- **One reusable run HUD:** Map and Combat compose the same model-driven header, vitals, Quick Access, relic, and potion components. Stable IDs and tuning tokens are documented in the component catalog so UI changes name the exact surface they affect.
+- **One component kit, and one run HUD built from it:** every screen is drawn from one kit of shared pieces — one meter, one swatch, one page door, one modal chrome with the same way out in the same corner — rather than each screen carrying its own. Map and Combat compose the same model-driven header, vitals, Quick Access, relic, and potion components from that kit. Stable IDs and tuning tokens are documented in the component catalog so UI changes name the exact surface they affect.
 - **One data-driven Armoury:** Character, Inventory, and Hybrid are presentations of the same equipment owner. Character places the contained figure beside expandable Combat Power, Attributes, and Relics; Inventory pairs procedural Armaments with the one shared carried-item list; Hybrid keeps the compact Character stack beside Armaments. Armaments, Inventory, Cards, and Stats use the shared Folding Tray grammar. Equipment cards drag as one surface and, when hold-confirm is enabled, fill across the whole folded or expanded card while equipping, moving, or unequipping. The fixed authored attack slots rebind in place to the active weapon package: a lone left- or right-hand weapon owns all of them, dual wield splits them right-first without deck growth, and the comparison receipt shows the exact before/after counts.
+- **You can re-arm during a fight:** the combat Armoury lets you equip, move, or remove carried weapons and armour on your turn, instead of limiting you to the sets prepared beforehand. Re-arming a position costs the same Energy as switching a prepared weapon set, and the change lands immediately — equipment cards, HP/MP/SP limits, Poise, and the item in each position all update inside the current fight, and the new loadout stays with you when the fight ends. A change you cannot afford is refused without spending Energy or moving anything.
+- **Every card has an owner, and a smith can change it:** a card your equipment lends you belongs to that item. Take the weapon or the armour off and its cards leave with it; put it back and they return — mid-fight and across a save, not only on the Armoury screen. At a Shrine, and at a merchant who rolled a smith, **Extract a Card** lifts a card out of the item that lends it and makes it yours for good, and **Seat a Card** puts one of your own into an open mount. An emptied mount is never dead: it shows a fallback — the Dodge Roll for a weapon-art mount — until something else is seated. Which cards can be lifted is a tag on the card, and the price and who offers the service are tables, so both change without code. No shipped weapon authors a card package yet, so until content does, the smith will tell you there is nothing to work on.
+- **The deck cap is a creation rule:** the starting deck size governs the basic strikes and defends dealt at character creation, and nothing else. The cards your equipment brings are dealt first and are never capped or dropped, and after creation the cap does not apply at all — your deck floats with your gear, by design.
+- **Painted class figures, in the builder and in the fight:** the figure you pick at character creation is the painted concept design for that class, and it is the same figure you fight as — cut from the owner's pose sheets, animated when you attack, and turned to face whoever it is fighting. Your tint colours the garment rather than just the outline, keeping the painting's own light and shadow. These figures were made with an AI image-generation model; the game's AI disclosure and CREDITS say so.
+- **The battlefield answers what you point at:** hover a status effect, land the focus cursor on it, or tap it, and it says what it does and how far its build-up or countdown has run; the build-up bars under an enemy answer the same way. Hover or tap either fighter — yours included — for the glance: HP, Poise and effects, with **I** for the full read. When a card is armed, a tap on a target is still a play.
 - **Faithful StS mechanics:** 3 energy / draw 5 turns, block that expires, telegraphed enemy intents, exhaust/ethereal/retain keywords, exact StS damage-order math.
 - **Elden Ring flavor with real mechanics:** Bleed as a build-up meter that bursts for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and a Poise/Stagger system that skips enemy turns and opens damage windows.
 - **Equip load and Weight Class:** what your hands and armour weigh counts against a capacity set by Constitution and Strength, and the percentage lands you in Light, Medium or Heavy. The Armoury shows the load, the capacity and the class, and comparing a piece shows the load and class the swap would leave you at.
