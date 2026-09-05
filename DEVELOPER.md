@@ -96,6 +96,40 @@ question for Constantine** (this tree has no dependencies, and `linkcheck.mjs`
 enforces that by refusing bare specifiers); the refusal is what makes the gap
 loud in the meantime.
 
+## Receipts: nothing is promoted without one (`tools/receipts.mjs`)
+
+Every merged pull request must be named by an entry in
+[CHANGELOG.md](CHANGELOG.md) before that work is promoted from `dev` to `test`.
+The changelog you can read inside the game is a projection of that file (#189),
+so a merge with no receipt is missing for a **player**, not only for the
+repository.
+
+```
+node tools/receipts.mjs --check              # origin/test..HEAD — the promotion
+node tools/receipts.mjs --check --since dev  # any other range
+node tools/receipts.mjs --selftest           # the known-bad corpus
+```
+
+`.github/workflows/receipts.yml` runs both on every push to `dev`. It is bounded
+at the promotion target on purpose: the question is never "does every merge in
+history have a receipt" — the changelog's own header records which stretch is
+deliberately unreconstructed — but "is *this* promotion complete", asked while
+the answer can still be acted on. It does not run on pull requests, where the
+answer would be about merges the author did not make.
+
+The tool checks **coverage**, not truth: whether an entry exists naming each
+merged pull request. Whether the prose is accurate is not machine-checkable, and
+whether the ordinal on it is the one committed at that merge belongs to
+`tools/about-changelog.mjs`, which owns the file's shape. If CHANGELOG.md ever
+yields no pull-request references at all, that is this tool's own syntax having
+moved out from under it, and it exits **2 (harness could not run)** rather than
+reporting every merge as unreceipted.
+
+Writing one is in the file's own header: a receipt for already-landed work names
+the ordinal **as committed at that merge**; a receipt shipping in its own pull
+request is written one ahead, then `node tools/about-changelog.mjs --write` and a
+rebuild converge the box to the receipt.
+
 ## The four layers (dependencies point down only)
 
 ```
