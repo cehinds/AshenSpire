@@ -66,32 +66,59 @@ function findings(r) {
     }
     if (!button.label) bad.push(`control ${index + 1} carries no accessible name`);
   }
-  // ONE ROW, THE CLUSTER'S OWN GAP. The gap is read off the cluster the two
+  // ONE COLUMN, THE CLUSTER'S OWN GAP. The gap is read off the cluster the two
   // share with Armoury and Menu, so a change to the kit's cluster moves both.
-  if (!r.horizontal) bad.push('the two quick controls are not one row');
+  if (r.horizontal) {
+    bad.push('the two quick controls are one row, expected a column — the rail is vertical');
+  }
   if (r.buttonGap != null && Math.abs(r.buttonGap - r.clusterGap) > 0.5) {
     bad.push(`control gap is ${r.buttonGap.toFixed(2)}px, expected the cluster's own ${r.clusterGap.toFixed(2)}px`);
   }
-  if (Math.abs(r.stack.height - icon) > 0.5) {
-    bad.push(`the quick controls are ${r.stack.height.toFixed(2)}px tall, expected the icon box ${icon.toFixed(2)}`);
+  if (Math.abs(r.stack.width - icon) > 0.5) {
+    bad.push(`the rail is ${r.stack.width.toFixed(2)}px wide, expected one icon box ${icon.toFixed(2)}`);
   }
-  // THE PAGE'S CORNER, NOT THE HUD'S ROW (Constantine, 2026-09-04: "move full
-  // screen and music, for all current windows that use them, to anchored to top
-  // right corner and not block any text"). They used to be measured against
-  // `.hud-actions` because they sat in the HUD's flow; they are fixed to the
-  // viewport's top-right corner now, at the authored edge gap, so THAT is what
-  // this asserts — on every surface, whatever its own top row is doing. The
-  // overlap checks below are the "not block any text" half and are unchanged.
-  const edge = r.edgeGapPx == null ? 4 : r.edgeGapPx;
+  // THE UTILITY RAIL, UNDER THE BAND ON THE RIGHT. This contract has been all
+  // three placements now, so the history is the point: the pair sat in
+  // `.hud-actions` in the HUD's flow; then, for a day, at the viewport's
+  // top-right corner (Constantine, 2026-09-04: "move full screen and music …
+  // to anchored to top right corner and not block any text"); and now on the
+  // rail it had in 0.4.0.1454, after the same owner sent a screenshot of that
+  // build (2026-09-05: "I miss the old Hudson and music and full screen
+  // placement"). The corner sat INSIDE the band, so "not block any text" cost
+  // every surface a horizontal slice of its own top row — 243 of 434 CSS px on
+  // the map at 360x800, for a pair 106px wide.
+  // Under the band it blocks no text by CONSTRUCTION rather than by reservation,
+  // which is what the first assertion below says: the rail's top is at or past
+  // the band's bottom. That is strictly stronger than the overlap checks it
+  // replaces, because it holds whatever the band's own rows are doing.
+  // ONE COORDINATE SPACE, AGAIN (Law 2, as the collector above says). Every box
+  // here is getBoundingClientRect — VISUAL px. The authored gap is divided by
+  // the zoom in CSS precisely so that it lands as itself ON GLASS, so the value
+  // to compare a visual box against is the RAW authored number, not the local
+  // one. `edgeGapPx` is the local form and is kept for reporting; comparing a
+  // visual box to it was off by a factor of the zoom and survived only on the
+  // 1.5px slack, which is the kind of pass that stops being one later.
+  const edge = r.edgeGapRawPx == null ? 4 : r.edgeGapRawPx;
   const slack = 1.5;
-  if (Math.abs(r.stack.top - edge) > slack) {
+  if (r.header) {
+    // The band's own bottom rule sits between its padding box and its border
+    // box, so it is subtracted rather than absorbed into the slack.
+    const bandFoot = r.header.bottom - (r.headerBorderBottom || 0);
+    if (r.stack.top < bandFoot - slack) {
+      bad.push(`the rail starts ${(bandFoot - r.stack.top).toFixed(2)}px INSIDE the band — it hangs below it`);
+    } else if (Math.abs(r.stack.top - (bandFoot + edge)) > slack) {
+      bad.push(`the rail sits ${(r.stack.top - bandFoot).toFixed(2)}px under the band, expected the authored edge gap ${edge.toFixed(2)}`);
+    }
+  } else if (Math.abs(r.stack.top - edge) > slack) {
+    // A surface with no band of its own (the title screen) keeps the rail at
+    // its own top edge, which is where it sat before the band existed.
     bad.push(`the quick controls sit ${r.stack.top.toFixed(2)}px from the top, expected the authored edge gap ${edge.toFixed(2)}`);
   }
   if (Math.abs((r.viewport.width - r.stack.right) - edge) > slack) {
     bad.push(`the quick controls sit ${(r.viewport.width - r.stack.right).toFixed(2)}px from the right, expected the authored edge gap ${edge.toFixed(2)}`);
   }
-  if (r.position !== 'fixed') {
-    bad.push(`the quick controls are ${r.position}, expected fixed — an anchored corner cannot ride a surface's flow`);
+  if (r.position !== 'absolute') {
+    bad.push(`the quick controls are ${r.position}, expected absolute — the rail hangs off the band it follows`);
   }
   if (r.quickTargets.some((target) => target.width < icon - 0.5 || target.height < icon - 0.5)) {
     bad.push(`a Quick Access target is under the icon box ${icon.toFixed(2)}px`);
@@ -241,10 +268,15 @@ try {
             viewport:{width:innerWidth,height:innerHeight}, stack:sr, buttons:painted,
             position: stack ? getComputedStyle(stack).position : '',
             edgeGapPx: (() => { const raw = getComputedStyle(document.documentElement).getPropertyValue('--hud-quick-edge-gap').trim(); const n = Number.parseFloat(raw); const zoom = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1; return Number.isFinite(n) ? n / zoom : null; })(),
+            edgeGapRawPx: (() => { const n = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hud-quick-edge-gap').trim()); return Number.isFinite(n) ? n : null; })(),
             iconSize, clusterGap, actionsRow, horizontal,
             rightGap:innerWidth-sr.right,
             buttonGap:painted.length===2?(horizontal?painted[1].left-painted[0].right:painted[1].top-painted[0].bottom):null,
             quickPanel:box(quickPanel), quickTargets:quickTargets.map(box), header,
+            // The rail hangs off the band's PADDING box (top: 100%), while
+            // header.bottom is its BORDER box — the band draws a 1px bottom
+            // rule. Visual px, like every box above, so the two subtract.
+            headerBorderBottom:(()=>{const h=document.querySelector('.shared-hud');return h?(parseFloat(getComputedStyle(h).borderBottomWidth)||0)*bodyZoom:0})(),
             hudTop:box(document.querySelector('.hud-top')), route,
             orientationOverlap:(${intersection.toString()})(sr,box(orientation)),
             infoOverlap:(${intersection.toString()})(sr,box(info)),
