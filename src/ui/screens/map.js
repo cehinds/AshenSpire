@@ -30,7 +30,6 @@ import { relicText } from '../components/card.js';
 import { veilIsOpen } from '../components/veil.js';
 import { matchAction, actionDestinationForEvent, isEngaged, focusFirst, actionHint } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
-import { classGlyph, tintCss } from '../assets.js';
 import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { mountMapBoard } from '../components/mapboard.js';
@@ -93,7 +92,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
 
   const cz = run.customization || {};
   const className = registries.classes.get(run.class).name;
-  const heroName = (cz.name || className).toUpperCase();
   const atEntrance = !run.mapNodeId;
   // THE LEGEND IS THE KIT'S POPOVER: one Row per node kind, its icon the Row's
   // Glyph in the kind's own tint. It hangs off the ? in the zoom bar and is
@@ -123,22 +121,14 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         floor: run.floor,
         floorTotal: map.floors,
         seed: run.seedString,
-        identity: {
-          name: heroName,
-          classLabel: className.toUpperCase(),
-          glyph: cz.glyph || classGlyph(run.class),
-          tint: tintCss(cz.tint),
-          context: actTitle(run.actNumber),
-        },
         controls: {
           armouryId: 'open-armoury',
           menuId: 'open-menu',
           menuHint: actionHint('menu'),
         },
-        quickSettings: {
-          presentation: registries.balance.ui.hudQuickSettings,
-          settings: meta.settings || {},
-        },
+        // The settings bag, for `runHudMode` — the band's compact/expanded
+        // state. `presentation` went with the fullscreen/music pair.
+        quickSettings: { settings: meta.settings || {} },
         overlayHtml: '',
       }))}
       ${actRouteStripHtml({ title: actTitle(run.actNumber) })}

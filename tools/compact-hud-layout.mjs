@@ -32,8 +32,18 @@ check(/class="hud-bottom as-band-row fold"/.test(files.hud),
   'D2 the belt of relics and potions is not what compact folds away');
 check(/data-has-utility-potions="false"/.test(files.hud),
   'D3 the shared HUD does not default to an empty collapsed potion row');
-check(/class: 'hud-identity as-labelstack'/.test(files.hud) && /hud-context fold/.test(files.hud),
-  'D4 the identity\'s context line is not part of the fold');
+// D4 WAS "the context line is part of the fold" UNTIL 2026-09-05, when the band
+// stopped carrying any identity at all (owner: "it should just be vitals,
+// relics, cinders, armory, menu and hp and mp potions in the Hud"). A check
+// whose subject is gone cannot be left asserting it, and deleting it outright
+// would drop the element from cover — so it is inverted onto the new invariant:
+// the cluster is still THERE (it is the grid's first track, and the middle
+// track is what centres the Cinders receipt) and it is EMPTY. Re-adding a name,
+// a class, a sigil or a context line to the band fires this.
+check(/class: 'hud-identity as-labelstack'/.test(files.hud)
+  && !/hud-context/.test(files.hud)
+  && !/eyebrow\(/.test(files.hud),
+  'D4 the band carries identity content again — it is meant to be an empty track');
 // D5 reads the rung in the two halves it became: the build stamp drops its
 // source, and a progress Chip drops its "/ total" — never the value, which one
 // blanket `:nth-child(n+2)` did (photographed at 390x844: "ACT" and "FLOOR"
@@ -47,11 +57,29 @@ check(/iconButton\(\{[\s\S]*?className: 'hud-mode-grip as-grip'/.test(files.hud)
 check(!/height:\s*calc\(132px/.test(files.css),
   'D7 compact HUD still has the rejected fixed 132px height');
 
-const actionsStart = files.hud.indexOf('<div class="hud-actions as-cluster">');
-const quickStart = files.hud.indexOf('${quickSettingsHtml}', actionsStart);
-const actionsEnd = files.hud.indexOf('</div>', quickStart);
-check(actionsStart >= 0 && quickStart > actionsStart && actionsEnd > quickStart,
-  'D8 Fullscreen/Music are not in the same cluster as Armoury and the Menu');
+// D8 WAS "Fullscreen/Music are in the same cluster as Armoury and the Menu".
+// They are not in the band at all now (owner, 2026-09-05: "the full screen and
+// music buttons don't need to be there since we have it in the quick and main
+// menu settings"), so this asserts the two things that make that safe, which is
+// more than the original did:
+//   · the run HUD mounts no quick-settings pair — no import, no interpolation,
+//     and `quickAccessPanelHtml` takes no options bag that could carry one back;
+//   · Settings still carries BOTH controls, so neither affordance is stranded.
+// The second half is the one worth having. Removing a control from a HUD is only
+// correct while another surface offers it, and this is what would catch someone
+// later removing the Settings rows and leaving no fullscreen anywhere.
+// A BARE TOKEN SEARCH WAS THE WRONG TEST, and this check caught it on itself:
+// the first draft looked for `quickSettingsHtml` anywhere in the file, and the
+// COMMENT explaining the removal contains that word. A contract a comment can
+// fail is a contract that punishes documentation. It reads CODE shapes now — the
+// import statement and the interpolation — so the prose can name what it likes.
+const settingsSrc = read('src/ui/screens/settings.js');
+check(!/^import .*hudQuickSettingsHtml/m.test(files.hud)
+  && !/\$\{quickSettingsHtml\}/.test(files.hud)
+  && !/quickSettingsHtml\s*=/.test(files.hud)
+  && /key: 'fullscreen'/.test(settingsSrc)
+  && /key: 'musicEnabled'/.test(settingsSrc),
+  'D8 the band mounts the quick pair again, or Settings no longer offers fullscreen and music');
 check(/class="as-iconbtn modal-iconbtn hud-quick-setting/.test(read('src/ui/components/hudQuickSettings.js')),
   'D9 Fullscreen/Music are not kit IconButtons');
 

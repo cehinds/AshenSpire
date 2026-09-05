@@ -34,13 +34,26 @@ const SHAPES = [
   { name: 'phone', width: 390, height: 844, mobile: true },
   { name: 'iphone-se', width: 375, height: 667, mobile: true },
 ];
+// `pair` SAYS WHICH SURFACES CARRY FULLSCREEN AND MUSIC, and since 2026-09-05
+// that is the title screen alone (owner: "the full screen and music buttons
+// don't need to be there since we have it in the quick and main menu
+// settings"). The run HUD's surfaces stay in this list rather than being
+// dropped with the pair, and that is the point: they now assert the pair is
+// ABSENT, and they still carry the HUD geometry and the map/combat parity
+// check, which is coverage that has nothing to do with the pair and has caught
+// three regressions of its own.
+//
+// `music-off` MOVED SCREENS. Its job is the music button drawn in its off
+// state, so it followed the button to the title rather than staying on a map
+// that no longer has one — a surface aimed at an element that left is a
+// vacuous green (#12).
 const SURFACES = [
-  { name: 'title', query: '' },
+  { name: 'title', query: '', pair: true },
+  { name: 'music-off', query: '?shotSettings=%7B%22musicEnabled%22%3Afalse%7D', pair: true },
   { name: 'map', query: '?shot=map' },
   { name: 'combat', query: '?shot=combat' },
   { name: 'map-compact', query: '?shot=map&shotSettings=%7B%22runHudMode%22%3A%22compact%22%7D', compact: true },
   { name: 'combat-compact', query: '?shot=combat&shotSettings=%7B%22runHudMode%22%3A%22compact%22%7D', compact: true },
-  { name: 'music-off', query: '?shot=map&shotSettings=%7B%22musicEnabled%22%3Afalse%7D' },
 ];
 
 const intersection = (a, b) => !a || !b ? 0
@@ -49,6 +62,19 @@ const intersection = (a, b) => !a || !b ? 0
 
 function findings(r) {
   const bad = [];
+  // THE RUN HUD MUST NOT CARRY THE PAIR. A positive assertion, not an absence
+  // of checks: this is what fires if fullscreen and music are mounted back into
+  // the band. Everything below it is about a pair that should be there, so a
+  // surface without one returns here.
+  if (!r.expectPair) {
+    if (r.stack) bad.push('the run HUD mounts the fullscreen/music pair again — it belongs to the title screen and Settings');
+    if (r.buttons.length) bad.push(`${r.buttons.length} quick control(s) drawn in the run HUD`);
+    return bad;
+  }
+  if (!r.stack) {
+    bad.push('the surface draws no fullscreen/music pair at all');
+    return bad;
+  }
   // THE SIZE IS THE PAGE'S OWN, MEASURED: a probe sized by var(--iconbtn-size)
   // is appended and read, so this tracks the Minimum-tap-size and UI-size dials
   // instead of a number typed here (tapsize.mjs's lesson).
@@ -138,22 +164,25 @@ function parityFindings(map, combat) {
   if (!near(map.hudTop.height, combat.hudTop.height)) {
     bad.push(`Map and Combat draw different HUDs: Map ${map.hudTop.height.toFixed(2)}px, Combat ${combat.hudTop.height.toFixed(2)}px`);
   }
-  for (const [name, left, right] of [
-    ['Fullscreen/Music right edge', map.stack.right, combat.stack.right],
-    ['Fullscreen/Music size', map.stack.height, combat.stack.height],
-  ]) {
-    if (!near(left, right)) bad.push(`${name} differs: Map ${left.toFixed(2)}px, Combat ${right.toFixed(2)}px`);
+  // THE PAIR IS ON NEITHER SCREEN NOW, so the two rows that compared its right
+  // edge and its size across them are gone rather than guarded — comparing two
+  // absences is a check that cannot fail. What replaces them is the assertion
+  // that it is absent from BOTH, which is the property this pair of surfaces
+  // can still speak to and the one that regresses if the band re-mounts it on
+  // one screen only.
+  if (map.stack || combat.stack) {
+    bad.push(`the fullscreen/music pair is back in the run HUD: Map ${map.stack ? 'has one' : 'clear'}, Combat ${combat.stack ? 'has one' : 'clear'}`);
   }
   if (!map.route || map.route.height < 0.5) bad.push('Map route strip is not visibly rendered');
   else if (Math.abs(map.route.width - (map.viewport.width * 0.8)) > 1.5) {
     bad.push(`Map route strip is ${map.route.width.toFixed(2)}px, expected about 80vw`);
   }
   if (combat.route && (combat.route.width > 0.5 || combat.route.height > 0.5)) bad.push('Combat still renders the Map-only route strip');
-  // The pair used to be flush with Quick Access because it lived in that
-  // panel; it is the PAGE's corner now (see the corner assertions above), so
-  // what carries across surfaces is that the corner is the SAME corner — the
-  // right edge already checked equal above — and that the panel it left still
-  // sits clear of it, which the overlap checks cover.
+  // The pair used to be flush with Quick Access because it lived in that panel,
+  // then rode the page's corner, then the band's own utility rail. It is off
+  // these two screens entirely as of 2026-09-05, so what these surfaces carry
+  // is the HUD parity above — one composition on both screens — and the route
+  // strip's own geometry, neither of which was ever about the pair.
   return bad;
 }
 
@@ -222,7 +251,9 @@ try {
     }, sessionId);
     for (const surface of SURFACES) {
       await client.send('Page.navigate', { url: `${served.url}/${BUILD ? 'build/AshenSpire.html' : ''}${surface.query}` }, sessionId);
-      await waitFor(client.send.bind(client), sessionId, "!!document.querySelector('[data-hud-quick-settings],.startup-gate')");
+      // A run HUD surface has no pair to wait for since 2026-09-05, so its band
+      // is what says the screen is up. Waiting on the pair alone timed out.
+      await waitFor(client.send.bind(client), sessionId, "!!document.querySelector('[data-hud-quick-settings],.startup-gate,.shared-hud')");
       const startup = await client.send('Runtime.evaluate', {
         returnByValue: true,
         expression: `(()=>{const el=document.querySelector('.startup-gate');if(!el)return null;const r=el.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2}})()`,
@@ -232,21 +263,25 @@ try {
         await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
         await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
       }
-      await waitFor(client.send.bind(client), sessionId, "!!document.querySelector('[data-hud-quick-settings]')");
+      // The second wait, after the startup gate is clicked through: the pair on
+      // a surface that has one, the band on a surface that does not.
+      await waitFor(client.send.bind(client), sessionId, surface.pair
+        ? "!!document.querySelector('[data-hud-quick-settings]')"
+        : "!!document.querySelector('.shared-hud')");
       await new Promise((done) => setTimeout(done, 250));
       const evaluated = await client.send('Runtime.evaluate', {
         returnByValue: true,
         expression: `(()=>{
           const box=(el)=>el?(()=>{const r=el.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}})():null;
           const stack=document.querySelector('[data-hud-quick-settings]');
-          const buttons=[...stack.querySelectorAll('.hud-quick-setting')];
+          const buttons=stack?[...stack.querySelectorAll('.hud-quick-setting')]:[];
           const painted=buttons.map((el)=>{const c=getComputedStyle(el),r=box(el);return {...r,border:c.borderTopWidth,background:c.backgroundColor,shadow:c.boxShadow,label:el.getAttribute('aria-label')||''}});
           const probe=document.createElement('div');
           probe.style.cssText='position:absolute;left:-9999px;top:0;padding:0;border:0;width:var(--iconbtn-size);height:var(--iconbtn-size)';
           document.body.appendChild(probe);
           const iconSize=probe.getBoundingClientRect().height;
           probe.remove();
-          const cluster=stack.closest('.as-cluster')||stack.parentElement;
+          const cluster=stack?(stack.closest('.as-cluster')||stack.parentElement):document.body;
           // ONE COORDINATE SPACE (Law 2): every box here is getBoundingClientRect,
           // which is VISUAL px, while a computed gap is LOCAL px — and this app
           // scales itself by a zoom on the body. Convert the gap
@@ -263,14 +298,14 @@ try {
           const sr=box(stack);
           const header=box(document.querySelector('.shared-hud'));
           const route=box(document.querySelector('.act-route-strip'));
-          const horizontal=getComputedStyle(stack).flexDirection==='row';
+          const horizontal=stack?getComputedStyle(stack).flexDirection==='row':false;
           return {
             viewport:{width:innerWidth,height:innerHeight}, stack:sr, buttons:painted,
             position: stack ? getComputedStyle(stack).position : '',
             edgeGapPx: (() => { const raw = getComputedStyle(document.documentElement).getPropertyValue('--hud-quick-edge-gap').trim(); const n = Number.parseFloat(raw); const zoom = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1; return Number.isFinite(n) ? n / zoom : null; })(),
             edgeGapRawPx: (() => { const n = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hud-quick-edge-gap').trim()); return Number.isFinite(n) ? n : null; })(),
             iconSize, clusterGap, actionsRow, horizontal,
-            rightGap:innerWidth-sr.right,
+            rightGap:sr?innerWidth-sr.right:0,
             buttonGap:painted.length===2?(horizontal?painted[1].left-painted[0].right:painted[1].top-painted[0].bottom):null,
             quickPanel:box(quickPanel), quickTargets:quickTargets.map(box), header,
             // The rail hangs off the band's PADDING box (top: 100%), while
@@ -281,10 +316,18 @@ try {
             orientationOverlap:(${intersection.toString()})(sr,box(orientation)),
             infoOverlap:(${intersection.toString()})(sr,box(info)),
             combatantOverlap:Math.max(0,...combatantInk.map((el)=>(${intersection.toString()})(sr,box(el)))),
-            phone:${shape.mobile}, compact:${!!surface.compact}
+            phone:${shape.mobile}, compact:${!!surface.compact}, expectPair:${!!surface.pair}
           };
         })()`,
       }, sessionId);
+      // A page-side throw used to surface as `Cannot read properties of
+      // undefined` inside findings(), three frames from the cause. Say what
+      // actually happened instead.
+      if (evaluated.exceptionDetails || !evaluated.result.value) {
+        console.error(`hud-quick-compact: the page-side read threw on ${surface.name}-${shape.name}`);
+        console.error(JSON.stringify(evaluated.exceptionDetails || evaluated.result, null, 1).slice(0, 900));
+        process.exit(2);
+      }
       const receipt = evaluated.result.value;
       const bad = findings(receipt);
       if (surface.name === 'map-compact') compactMapReceipts.set(shape.name, receipt);

@@ -978,18 +978,28 @@ async function selftest() {
       expectRed: /FINDING P8\/top-row .*cinders-count=2/,
     },
     {
-      // The centre and the right metadata are separate builders now, so this
-      // needs one edit in each: the centre loses the class, the act field
-      // gains it.
+      // The centre and the right metadata are separate builders, so this needs
+      // one edit in each: the centre loses the class, something in the trail
+      // gains it. Two edits and not one, because a single edit would leave
+      // `cinders-count=0` and fire the WRONG finding — the rule under test here
+      // is placement with the count intact.
+      //
+      // THE SECOND EDIT MOVED HOUSE ON 2026-09-05. It used to add the class to
+      // the Act chip; the trail is the build stamp alone now (owner: "it should
+      // just be vitals, relics, cinders, armory, menu and hp and mp potions in
+      // the Hud"), so the stamp is the only descendant of `.hud-run-meta` left
+      // to carry it — and a descendant is what `receiptBox` counts. Left
+      // pointing at the Act chip the plant patched nothing, which
+      // `tools/plantsites.mjs` reported as drift rather than letting it rot.
       name: 'Cinders moves from the centre into right metadata',
       edits: [{
         file: 'src/ui/components/hudmeta.js',
         find: "el('span', { class: 'as-chip hud-cinders' }",
         replace: "el('span', { class: 'as-chip' }",
       }, {
-        file: 'src/ui/components/hudmeta.js',
-        find: "progressChip('hud-act', uiComponentAttrs(UI.metadataField, 'act'), act)",
-        replace: "progressChip('hud-act hud-cinders', uiComponentAttrs(UI.metadataField, 'act'), act)",
+        file: 'src/ui/components/buildstamp.js',
+        find: '<span class="build-stamp"',
+        replace: '<span class="build-stamp hud-cinders"',
       }],
       expectRed: /FINDING P8\/top-row .*cinders-placement/,
     },
