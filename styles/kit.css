@@ -1315,7 +1315,19 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 .disc-faces > .disc-face .disc-value { white-space: nowrap; }
 .disc-faces > .disc-face .disc-summary { white-space: normal; }
 .disc-faces > .disc-face[data-reveal="open"] { border-color: var(--gold); }
-.disc-face.disc-pick, .disc-face.disc-armament, .disc-face.disc-relic, .disc-face.disc-item, .disc-face.disc-power, .disc-face.disc-stat, .disc-face.disc-attribute, .disc-face.disc-section { flex: 1 1 100%; }
+/* A FULL-WIDTH FACE IS A LINE OF ITS OWN, AND THE `.disc-faces >` IS LOAD-BEARING.
+   Without it this reads `.disc-face.disc-pick` — two classes — and loses on
+   specificity to `.as-options.flow > .as-option { flex: 1 1 auto }` three rules
+   up, which is three. Measured at d51b46a, headless Chromium 1200x730: all four
+   creation sections (CLASS / CHARACTER / STARTING EQUIP / SEED) computed
+   `flex: 1 1 auto` and shared ONE line at top=77, so the one reveal — a
+   `flex: 1 1 100%` row of the same wrap — could only ever land after the whole
+   row. That is Constantine's "instead it just shows up at hte bottom", and it
+   is the SAME defect MR-287 fixed in disclosure.js, re-opened by a stylesheet:
+   the placement code was right and had nothing to place between. Scoped to the
+   child combinator the count is three either way and the later rule — this one
+   — wins, on flow hosts and column hosts alike. */
+.disc-faces > .disc-face.disc-pick, .disc-faces > .disc-face.disc-armament, .disc-faces > .disc-face.disc-relic, .disc-faces > .disc-face.disc-item, .disc-faces > .disc-face.disc-power, .disc-faces > .disc-face.disc-stat, .disc-faces > .disc-face.disc-attribute, .disc-faces > .disc-face.disc-section { flex: 1 1 100%; }
 .disc-reveal > .dc-name { font-size: 1.5rem; }
 .disc-reveal .disc-receipt { display: block; margin-top: 0.4rem; }
 /* ═══ SMITH — body E inside the shell ══════════════════════════════════════ */
