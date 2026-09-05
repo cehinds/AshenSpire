@@ -1034,7 +1034,10 @@ keeps the same state and focus contract without meaningful animation.
   arrive through content/asset inputs, while screens own mutable selection state and callbacks.
   In Assign Points surfaces, `stat-allocation-row` is the invisible composition parent for the
   attribute face, current value, decrement/increment controls, and a reveal that spans the whole
-  row instead of inheriting the face column width.
+  row instead of inheriting the face column width. Opening or reopening Assign Points is a refund
+  boundary: every authored attribute returns to the mode baseline before the modal opens, making
+  the full bonus pool available instead of resuming an earlier allocation. Shared setting rows
+  keep one equal positive inset on all four sides; a surface does not remove individual sides.
 - **Shrine components.** `shrine-option-card` is the shared folded option footprint for Rest,
   Smith, Flask Allocation, and Level Up. Its viewport-relative width and height are data-owned by
   `balance.ui.shrinePresentation`; expanding a disclosure adds its content below the uniform face.
