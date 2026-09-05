@@ -302,7 +302,8 @@ Two closed vocabularies, both in `balance.equipment`, both derived rather than a
 
 | Question | Word | Chain |
 |---|---|---|
-| what does a mid-fight set-swap cost | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** `base: 'category'` prices by the DRAWN piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`; `base: 'default'` is `swapCost` for everything. `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods. The truth function is `swapCostFor()` in `model/loadout.js` and it returns the whole derivation; `engine/combat.js` charges it and the `armamentSwapped` event carries the number. |
+| what does a mid-fight equipment action cost | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** Both prepared-set swaps and item replace/move/unequip actions use this price. `base: 'category'` prices by the destination piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`; `base: 'default'` is `swapCost` for everything. `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods. The truth function is `swapCostFor()` in `model/loadout.js`; `engine/combat.js` charges it and emits `armamentSwapped` or `equipmentRearmed` with the number. |
+| may carried equipment change during combat | `allowChangesInCombat` | When true, the player-turn Armoury may replace, move, or unequip carried gear through the `changeEquipment` combat intent. The engine applies the price, updates resource maxima and Poise, reconciles equipment-granted cards, restamps every live pile, and persists the same loadout object. False closes both UI and mutation paths. |
 | which pieces need no finding | `basicTag` | A piece carrying that tag answers the **found** gate for free (`ownership()`). It has no opinion about the **earned** gate; a row carrying both is refused by name. `persistence` remains the only scope word — profile-wide (`both`, the shipped default) vs this-run-only (`perRun`). |
 
 **A weapon's category is its tags** — `heavy`, `flourish` — never a `swapCost` column, because a
@@ -1134,11 +1135,14 @@ keeps the same state and focus contract without meaningful animation.
 
   Equipment comparison is information, not confirmation. The data-owned
   `armouryUi.layout.comparison.presentation` is `tooltip` or `inline`. Tooltip mode presents the
-  full comparison after the configured `hoverDelayMs` on pointer hover, or after the shared focus
-  delay on keyboard/gamepad focus, above its card when space permits, using `tooltipWidthRem` and `tooltipMaxHeightRatio` to remain readable and
-  viewport-safe; inline mode embeds the same information in the expanded card. Comparison must
-  not borrow the action's hold gesture: an action-owning card holds to equip or unequip, while
-  hover/focus remains the comparison path. The primary combat-power term shown to players is
+  full comparison after the configured `holdPreviewDelayMs` on a sustained pointer, keyboard, or
+  gamepad press, above its card when space permits, using `tooltipWidthRem` and
+  `tooltipMaxHeightRatio` to remain readable and viewport-safe; pointer hover and focus alone do
+  not reveal it. Inline mode embeds the same information in the expanded card. When the card also
+  owns a timed Equip/Move/Unequip action, the comparison preview observes that same hold lifecycle
+  and closes on release, cancellation, or commit without adding a competing gesture. When global
+  hold-confirm is off, the explicit action button owns the immediate change and the card retains a
+  read-only hold-to-compare gesture. The primary combat-power term shown to players is
   **Magic**. The existing combat-card id `potency` and role `technique` remain compatibility keys;
   **Potency** means a modifier to Magic damage, never the primary Magic value or its visible label.
 
@@ -1214,9 +1218,10 @@ keeps the same state and focus contract without meaningful animation.
 - Ordinary interactive elements expose their concise tooltip within 150 ms of
   hover: cards (with nested keyword tooltips), statuses (name, current math),
   intents (exact damage after modifiers), relics, flasks, and map nodes.
-  Deliberate reading surfaces may author a longer validated delay; the Armoury
-  equipment-comparison tooltip currently uses `armouryUi.layout.comparison.hoverDelayMs`
-  (`550` ms) and remains immediately reachable through keyboard/gamepad focus.
+  Deliberate reading surfaces may require a validated sustained hold instead;
+  the Armoury equipment-comparison tooltip uses
+  `armouryUi.layout.comparison.holdPreviewDelayMs` (`160` ms) and does not open
+  from hover or focus alone.
 
 ### 7.4 Feedback & animation rules
 

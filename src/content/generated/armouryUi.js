@@ -90,7 +90,7 @@ export const armouryUi = {
     },
     "comparison": {
       "presentation": "tooltip",
-      "hoverDelayMs": 550,
+      "holdPreviewDelayMs": 160,
       "tooltipWidthRem": 52,
       "tooltipMaxHeightRatio": 0.8
     },

@@ -55,11 +55,10 @@ const SIDE_FACES = Object.freeze({ player: 'right', enemy: 'left' });
 /**
  * spriteMirror(artFaces, side) — does this asset need flipping on this side?
  *
- * `side` defaults to 'enemy' because every caller today is an enemy sprite; the
- * player's figure is front-facing art whose mirror is one blanket CSS rule with
- * its own removal condition (styles/ui.css, "the figure faces the viewer").
- * Naming the side rather than assuming it is what keeps that rule honest the
- * day a player figure is drawn in profile.
+ * `side` defaults to 'enemy' because every caller today is an enemy sprite.
+ * Player combat paintings and pose frames are already authored facing right and
+ * the combat surface keeps them as drawn. Naming the side keeps this helper
+ * ready for a future profile asset.
  */
 export function spriteMirror(artFaces, side = 'enemy') {
   if (artFaces === 'front' || artFaces == null) return false;
@@ -288,9 +287,9 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   el.className = 'class-sprite';
   el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
 
-  // THE FACING LAYER, for the same reason enemySprite() has one: the mirror
-  // (`styles/ui.css`, "the figure faces the viewer") must sit on an element
-  // that carries NOTHING ELSE. It used to ride `.class-sprite` itself, which
+  // THE FACING LAYER, for the same reason enemySprite() has one: any orientation
+  // correction must sit on an element that carries NOTHING ELSE. It used to
+  // ride `.class-sprite` itself, which
   // is both an animation target and the overlay's positioning parent, and it
   // broke in both directions — measured on the board, not reasoned about:
   //
