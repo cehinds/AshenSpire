@@ -63,7 +63,12 @@ export const contentBundle = {
   // would sort BELOW the `0.5.4` that led to it. A release under this scheme
   // must be numbered past its last candidate. Raised with him when the
   // directive was given; the scheme is his call and this is the note.
-  version: '0.5.4',
+  // 0.5.4 was promoted to `test` (#611) and on to `release` (#609) on
+  // 2026-09-04, carrying the component kit, the card-ownership rulings and the
+  // painted class figures. Cutting the fifth candidate here is the same step
+  // #556 and #563 took when their candidates reached `test` — the owner's call,
+  // given 2026-09-05. The build counter restarts, so the next build is 0.5.5.0.
+  version: '0.5.5',
   balance,
   cards,
   relics,

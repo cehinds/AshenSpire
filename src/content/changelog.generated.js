@@ -3,6 +3,146 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-624",
+    "date": "2026-09-05",
+    "group": "2026-09-05",
+    "summary": "The fifth 0.5.0 candidate",
+    "detail": "The in-game stamp reads 0.5.5.<build> from this build on: the candidate QA receives after 0.5.4, which was promoted to test and on to release on 2026-09-04. Nothing else a player sees changes with the stamp itself. What the candidate carries over 0.5.4 is in the entries below, and the three a player will feel are the component kit every screen is now drawn from (#605), the smith who lifts a card out of an item or seats one back (#602), and the painted class figure you both build and fight as (#590, #619). Riders in this receipt itself: the README names those three, thirty receipts covering 0.5.4.2 through 0.5.4.75 are written up from the merge log, and the component catalog gains the sixteen kit pieces it had not yet described.",
+    "build": "0.5.5.2",
+    "pullRequest": 624,
+    "url": "https://github.com/cehinds/AshenSpire/pull/624"
+  },
+  {
+    "id": "pr-620",
+    "date": "2026-09-04",
+    "group": "2026-09-04",
+    "summary": "The band drops the build stamp, and a fighter faces its opponent",
+    "detail": "The build stamp leaves the run band at the top of the screen — it lives on the title screen, where you go to read it — and a combat figure now turns to face whoever it is fighting instead of always facing the same way.",
+    "build": "0.5.4.75",
+    "pullRequest": 620,
+    "url": "https://github.com/cehinds/AshenSpire/pull/620"
+  },
+  {
+    "id": "pr-619",
+    "date": "2026-09-04",
+    "group": "2026-09-04",
+    "summary": "The combat figure is painted art, cut from the pose sheets",
+    "detail": "The figure you fight as is now cut from the owner's four painted pose sheets — 180 sprites — in place of the modelled set the Blender pipeline rendered. The source sheets are kept in the repository beside the cut, so the sprites can be re-cut from the painting rather than from an earlier cut of it.",
+    "build": "0.5.4.74",
+    "pullRequest": 619,
+    "url": "https://github.com/cehinds/AshenSpire/pull/619"
+  },
+  {
+    "id": "pr-618",
+    "date": "2026-09-04",
+    "group": "2026-09-04",
+    "summary": "Sprite facing gets its own layer, and the run HUD gets its width back",
+    "detail": "Which way a sprite faces is decided in one place instead of being baked into each image, the run HUD is back to its full width, and the utility rail returns.",
+    "build": "0.5.4.73",
+    "pullRequest": 618,
+    "url": "https://github.com/cehinds/AshenSpire/pull/618"
+  },
+  {
+    "id": "pr-617",
+    "date": "2026-09-04",
+    "group": "2026-09-04",
+    "summary": "The pose cutter counts poses, not just classes",
+    "detail": "Nothing a player sees changes. The guard that protects published pose art compared class names alone, so a run that carried every class but only some of their poses passed it — and the clear then took the poses it had not carried. It is keyed by class and pose now, so the same silent loss one level down cannot happen.",
+    "build": "0.5.4.68",
+    "pullRequest": 617,
+    "url": "https://github.com/cehinds/AshenSpire/pull/617"
+  },
+  {
+    "id": "pr-616",
+    "date": "2026-09-04",
+    "group": "2026-09-04",
+    "summary": "The combat figure animates its attacks",
+    "detail": "A service plays pose frames when you attack. It never blocks your input, Reduced Motion holds the idle frame instead of playing anything, and the animation-speed setting scales how long a frame is held rather than adding time on top.",
+    "build": "0.5.4.68",
+    "pullRequest": 616,
+    "url": "https://github.com/cehinds/AshenSpire/pull/616"
+  },
+  {
+    "id": "pr-615",
+    "date": "2026-09-04",
+    "group": "2026-09-04",
+    "summary": "One missing branch costs its own line, not every run",
+    "detail": "Nothing a player sees changes. The builds site fetched all four published branches in one command, which aborts entirely if any one of them is absent — so when test was deleted, publishing broke for dev, release and main too, none of which had lost anything. Each branch is fetched on its own now, and a branch that is genuinely gone is named in the output and skipped rather than crashing the run or vanishing from it silently. main staying fatal is deliberate: the site is assembled on top of it.",
+    "build": "0.5.4.67",
+    "pullRequest": 615,
+    "url": "https://github.com/cehinds/AshenSpire/pull/615"
+  },
+  {
+    "id": "pr-614",
+    "date": "2026-09-04",
+    "group": "2026-09-04",
+    "summary": "Four play-test bleeds, one HUD height, and the fighter becomes a whole person",
+    "detail": "Four places where text or art escaped its box are closed, the run HUD settles on one height, which way a figure faces follows one rule, and the combat figure is drawn as a whole person rather than a cropped one.",
+    "build": "0.5.4.67",
+    "pullRequest": 614,
+    "url": "https://github.com/cehinds/AshenSpire/pull/614"
+  },
+  {
+    "id": "pr-613",
+    "date": "2026-09-04",
+    "group": "2026-09-04",
+    "summary": "Class figures rebuilt at a higher resolution, and a cutter for painted sheets",
+    "detail": "Nothing a player sees changes yet: the 160 regenerated sprites are inert, because nothing in the game references them. The figures are measured against the paintings and built larger, and a tool arrives that cuts sprites out of a painted pose sheet — the pipeline #619 then used.",
+    "build": "0.5.4.62",
+    "pullRequest": 613,
+    "url": "https://github.com/cehinds/AshenSpire/pull/613"
+  },
+  {
+    "id": "pr-612",
+    "date": "2026-09-04",
+    "group": "2026-09-04",
+    "summary": "Co-op: a fallen seat is not offered a Continue that cannot work",
+    "detail": "When an event's result is showing, a player the event felled was drawn a Continue button that could never do anything: the host refuses that seat's continue, and the party never waits for it, so the button sat there answering nothing. A fallen seat now reads the result and a line saying the party goes on without it. The party was never blocked by this — it was offered something false, not trapped. Every other control in co-op already asked whether you were alive before offering itself; this one did not.",
+    "build": "0.5.4.62",
+    "pullRequest": 612,
+    "url": "https://github.com/cehinds/AshenSpire/pull/612"
+  },
+  {
+    "id": "pr-610",
+    "date": "2026-09-04",
+    "group": "2026-09-04",
+    "summary": "The Pages check reads its own verdict again",
+    "detail": "Nothing a player sees changes. The builds site's self-check passed all four of its own tests and was then refused by the door that decides whether a tool checked anything at all, because two earlier edits had each added a true fact to its summary line and pushed it out of the grammar that door reads. The facts moved to their own line; the verdict line carries the counts and stops. The publish job had been failing on every push for two days.",
+    "build": "0.5.4.61",
+    "pullRequest": 610,
+    "url": "https://github.com/cehinds/AshenSpire/pull/610"
+  },
+  {
+    "id": "pr-605",
+    "date": "2026-09-04",
+    "group": "2026-09-04",
+    "summary": "The component kit replaces the game's chrome, on every screen",
+    "detail": "Every screen is now drawn from one kit of shared pieces rather than each screen carrying its own: one meter, one swatch, one page door, one home for each control. The stylesheet that had grown to 5,354 lines is 801, combat's 1,867 is 767, and the kit that replaces them is 2,063 — one place to change how the game looks instead of many. It carries a batch of play-test fixes with it: combatant boxes are one uniform size (a tall enemy and a low one used to be drawn at different scales side by side), a fight's bottom row explains itself with tooltips on Actions, the piles and End Turn, the character screen shows what an attribute actually gives you instead of flavour text, the fullscreen and music controls sit anchored in the same corner on every screen, the co-op board no longer prints \"undefined\" over every enemy's intent, and the title lockup is centred.",
+    "build": "0.5.4.61",
+    "pullRequest": 605,
+    "url": "https://github.com/cehinds/AshenSpire/pull/605"
+  },
+  {
+    "id": "pr-607",
+    "date": "2026-09-03",
+    "group": "2026-09-03",
+    "summary": "Low-poly class figures for the combat poses",
+    "detail": "The combat pose set is built and posed in Blender, one figure per class.",
+    "build": "0.5.4.24",
+    "pullRequest": 607,
+    "url": "https://github.com/cehinds/AshenSpire/pull/607"
+  },
+  {
+    "id": "pr-602",
+    "date": "2026-09-03",
+    "group": "2026-09-03",
+    "summary": "A smith lifts a card out of an item, or seats one back",
+    "detail": "The owner's ruling, implemented. A blacksmith can now take a card out of the item that lends it, and the card is yours from then on; the mount it leaves is never dead, showing a fallback — the Dodge Roll for a weapon-art mount — until you seat another card in it. The Shrine gains Extract a Card and Seat a Card beside Upgrade, each the same reversible transaction the upgrade is: choose the item, then the mount, then (when seating) the card, with Back and Escape leaving the run untouched and Confirm the only thing that commits. A merchant rolls a 25% chance to have a smith with them, on its own die, so the roll does not disturb any other reward in a seed you have played. What is extractable is a tag on the card, the price and who offers the service are tables, and extra mounts sit behind a flag for a later rune feature. No shipped weapon authors a card package yet, so until content does, both options will tell you there is nothing to work on — the seam is live and the data is empty, as the bound table was before it.",
+    "build": "0.5.4.24",
+    "pullRequest": 602,
+    "url": "https://github.com/cehinds/AshenSpire/pull/602"
+  },
+  {
     "id": "pr-590",
     "date": "2026-09-03",
     "group": "2026-09-03",
@@ -11,6 +151,256 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.5.4.23",
     "pullRequest": 590,
     "url": "https://github.com/cehinds/AshenSpire/pull/590"
+  },
+  {
+    "id": "pr-595",
+    "date": "2026-09-03",
+    "group": "2026-09-03",
+    "summary": "One door-opener, two ladders, one inset — and a gate that measures bleed on a real page",
+    "detail": "Every modal now opens through one shared shell: the same head, the same ✕ in the same corner, the same footer order, and one implementation of Escape, the backdrop click and where focus returns. That closed a real trap — the pile viewer had no exit a keyboard or a pad could reach at all. Modal widths come off four named sizes rather than a number typed per door, buttons in a row take one width from a four-step ladder, and a new gate measures whether anything bleeds out of its box on a real rendered page.",
+    "build": "0.5.4.14",
+    "pullRequest": 595,
+    "url": "https://github.com/cehinds/AshenSpire/pull/595"
+  },
+  {
+    "id": "pr-597",
+    "date": "2026-09-03",
+    "group": "2026-09-03",
+    "summary": "The shipped artifact is checked on the post-merge tree, not only on branches",
+    "detail": "Nothing a player sees changes. dev shipped a game file that was not built from its own source three times in one day, each time from a pull request that was green on its own branch against a base that had since moved. The check now also runs on the tree the merge actually produces.",
+    "build": "0.5.4.14",
+    "pullRequest": 597,
+    "url": "https://github.com/cehinds/AshenSpire/pull/597"
+  },
+  {
+    "id": "pr-598",
+    "date": "2026-09-03",
+    "group": "2026-09-03",
+    "summary": "Every corpus counts itself",
+    "detail": "Nothing a player sees changes: four checks that had their totals spelled beside them now derive those totals from the thing being counted, so a corpus that grows cannot leave its own denominator behind.",
+    "build": "0.5.4.14",
+    "pullRequest": 598,
+    "url": "https://github.com/cehinds/AshenSpire/pull/598"
+  },
+  {
+    "id": "pr-600",
+    "date": "2026-09-03",
+    "group": "2026-09-03",
+    "summary": "The art lease is reissued and the owner's art decision recorded",
+    "detail": "Records only.",
+    "build": "0.5.4.14",
+    "pullRequest": 600,
+    "url": "https://github.com/cehinds/AshenSpire/pull/600"
+  },
+  {
+    "id": "pr-603",
+    "date": "2026-09-03",
+    "group": "2026-09-03",
+    "summary": "The governance layer is removed",
+    "detail": "Nothing a player sees changes. At the owner's direction, the multi-agent coordination layer — 645 files of dashboards, rule checkers and scheduled agent routines — is deleted and replaced by the one-page rules in AGENTS.md. The tree as it stood before the removal is preserved in history.",
+    "build": "0.5.4.14",
+    "pullRequest": 603,
+    "url": "https://github.com/cehinds/AshenSpire/pull/603"
+  },
+  {
+    "id": "pr-604",
+    "date": "2026-09-03",
+    "group": "2026-09-03",
+    "summary": "The owner owns the project's own records",
+    "detail": "Records only: a file may now say that the project's records belong to the owner.",
+    "build": "0.5.4.14",
+    "pullRequest": 604,
+    "url": "https://github.com/cehinds/AshenSpire/pull/604"
+  },
+  {
+    "id": "pr-579",
+    "date": "2026-09-03",
+    "group": "2026-09-03",
+    "summary": "Ordering two builds has one home",
+    "detail": "Nothing a player sees changes. The rule for \"which build is newer\" had two implementations that had drifted far enough to give opposite answers about the same pair of stamps; one of them would pass a candidate moving backwards, which is the one thing that check exists to refuse. There is one implementation now, and every caller reads it.",
+    "build": "0.5.4.13",
+    "pullRequest": 579,
+    "url": "https://github.com/cehinds/AshenSpire/pull/579"
+  },
+  {
+    "id": "pr-594",
+    "date": "2026-09-03",
+    "group": "2026-09-03",
+    "summary": "The starting-deck cap is a creation rule",
+    "detail": "The owner's ruling, implemented. The deck-size cap governs the basic strikes and defends you are dealt at character creation, and nothing else. The cards your equipment brings are dealt first and are never capped, dropped or refused, and after creation the cap does not apply at all — your deck floats with your gear, by design. The other half of the same ruling: a card an item lends leaves with that item. Take a weapon or a piece of armour off and its cards go; put it back and they return — mid-fight and across a save, not just on the Armoury screen.",
+    "build": "0.5.4.13",
+    "pullRequest": 594,
+    "url": "https://github.com/cehinds/AshenSpire/pull/594"
+  },
+  {
+    "id": "pr-596",
+    "date": "2026-09-03",
+    "group": "2026-09-03",
+    "summary": "Every owner page on the one shell",
+    "detail": "Nothing a player sees changes: the project's own status pages, the HUD included, are drawn from one shell.",
+    "build": "0.5.4.13",
+    "pullRequest": 596,
+    "url": "https://github.com/cehinds/AshenSpire/pull/596"
+  },
+  {
+    "id": "pr-593",
+    "date": "2026-09-03",
+    "group": "2026-09-03",
+    "summary": "Unused screenshots and QA output removed",
+    "detail": "Nothing a player sees changes: about 200 MB of generated screenshots and QA output that nothing referenced is deleted from the repository.",
+    "build": "0.5.4.7",
+    "pullRequest": 593,
+    "url": "https://github.com/cehinds/AshenSpire/pull/593"
+  },
+  {
+    "id": "pr-592",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "Three P0 screen defects, each measured before and after",
+    "detail": "Three screen faults rated most severe are fixed, each one measured on a real page before the change and after it rather than judged by eye.",
+    "build": "0.5.4.7",
+    "pullRequest": 592,
+    "url": "https://github.com/cehinds/AshenSpire/pull/592"
+  },
+  {
+    "id": "pr-591",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "A flask says what it is before you ask",
+    "detail": "A flask now tells you what it does without being opened, and card tooltips stop printing their own internal tokens at you.",
+    "build": "0.5.4.7",
+    "pullRequest": 591,
+    "url": "https://github.com/cehinds/AshenSpire/pull/591"
+  },
+  {
+    "id": "pr-589",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The starting deck is composed from tags, and the tag schema is normalised",
+    "detail": "What goes into your opening deck is now decided by tags on the content rather than by names written into the code, so a spreadsheet line changes it. Underneath, the tag tables are normalised to third normal form: five tables, a tag written in exactly one place, and no cell holding a list — which removes the second home a tag used to be able to live in, where only a rule kept the two copies agreeing.",
+    "build": "0.5.4.7",
+    "pullRequest": 589,
+    "url": "https://github.com/cehinds/AshenSpire/pull/589"
+  },
+  {
+    "id": "pr-588",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The Hub title stops being double-escaped",
+    "detail": "A regression fixed: the project Hub's title was escaped twice, so it printed its own escape codes.",
+    "build": "0.5.4.7",
+    "pullRequest": 588,
+    "url": "https://github.com/cehinds/AshenSpire/pull/588"
+  },
+  {
+    "id": "pr-586",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The Pages self-check had the generator for an oracle",
+    "detail": "Nothing a player sees changes: the builds-site self-check was verifying the generator's output against the generator, which cannot fail, and dev was red on two artifact-identity rows at the same time. Both closed.",
+    "build": "0.5.4.5",
+    "pullRequest": 586,
+    "url": "https://github.com/cehinds/AshenSpire/pull/586"
+  },
+  {
+    "id": "pr-585",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "One modal chrome, one corner scale, one disclosure mark",
+    "detail": "The groundwork for the shared modal shell: one chrome, one corner radius scale, and one mark for a disclosure, in place of each surface carrying its own.",
+    "build": "0.5.4.4",
+    "pullRequest": 585,
+    "url": "https://github.com/cehinds/AshenSpire/pull/585"
+  },
+  {
+    "id": "pr-583",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The post-removal HP check proves authority, not just absence",
+    "detail": "Nothing a player sees changes: a governance check that confirmed something was absent now also proves it was removed by someone entitled to remove it.",
+    "build": "0.5.4.4",
+    "pullRequest": 583,
+    "url": "https://github.com/cehinds/AshenSpire/pull/583"
+  },
+  {
+    "id": "pr-582",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The independent QA seat is spent so scheduler merges stop stalling",
+    "detail": "Process only.",
+    "build": "0.5.4.4",
+    "pullRequest": 582,
+    "url": "https://github.com/cehinds/AshenSpire/pull/582"
+  },
+  {
+    "id": "pr-581",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "A governance question is opened for the owner",
+    "detail": "Records only: may the builds site republish itself? Proposed, awaiting the owner's ruling.",
+    "build": "0.5.4.4",
+    "pullRequest": 581,
+    "url": "https://github.com/cehinds/AshenSpire/pull/581"
+  },
+  {
+    "id": "pr-580",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The Rogue gets a builder, and the other three are matched to its look",
+    "detail": "Art pipeline: the Rogue figure gains its own builder and the other three classes are brought to the same look.",
+    "build": "0.5.4.4",
+    "pullRequest": 580,
+    "url": "https://github.com/cehinds/AshenSpire/pull/580"
+  },
+  {
+    "id": "pr-578",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The shipped artifact is red on dev, and the evidence names its exact commit",
+    "detail": "Nothing a player sees changes: the game file dev was shipping did not match its source, the gate evidence now names the exact commit it was taken at, and only a built site counts as a published one.",
+    "build": "0.5.4.3",
+    "pullRequest": 578,
+    "url": "https://github.com/cehinds/AshenSpire/pull/578"
+  },
+  {
+    "id": "pr-577",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The project's time zone is pinned",
+    "detail": "Tooling only.",
+    "build": "0.5.4.2",
+    "pullRequest": 577,
+    "url": "https://github.com/cehinds/AshenSpire/pull/577"
+  },
+  {
+    "id": "pr-576",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The builds site says when it is behind",
+    "detail": "Nothing a player sees changes: the site reports when what it is serving is older than the branch it names.",
+    "build": "0.5.4.2",
+    "pullRequest": 576,
+    "url": "https://github.com/cehinds/AshenSpire/pull/576"
+  },
+  {
+    "id": "pr-575",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The owner's look ruling: only the Rogue is approved",
+    "detail": "Records the owner's decision on the class art, closes the crop, size and state receipt, and drafts what follows.",
+    "build": "0.5.4.2",
+    "pullRequest": 575,
+    "url": "https://github.com/cehinds/AshenSpire/pull/575"
+  },
+  {
+    "id": "pr-574",
+    "date": "2026-09-02",
+    "group": "2026-09-02",
+    "summary": "The candidate is the third component, and the tail counts builds within it",
+    "detail": "The version stamp on the title screen changes shape. It reads <major>.<minor>.<candidate>.<build>, where the fourth number counts builds within the current candidate and restarts at 0 each time the candidate advances — so 0.5.4.2 is the third build of the fourth 0.5 candidate. Before this, the last number was a single count that never reset, which is why a build number can appear to go down across this change while the version itself goes up. The receipts for the closed candidates below are restated in the new notation so the column compares like with like.",
+    "build": "0.5.4.2",
+    "pullRequest": 574,
+    "url": "https://github.com/cehinds/AshenSpire/pull/574"
   },
   {
     "id": "pr-567",
