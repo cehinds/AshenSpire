@@ -117,18 +117,18 @@ the sheets do not carry and nothing draws.
 
 Nine poses per class, named per class at cut time because the classes do not
 idle the same way — a fighter stands ready, a caster stands. Reading the 3x3 in
-order, the Rogue and Reaver are cut `stand, guard, attack1, attack2, attack3,
-cast, hit, idle, idle2`, so their combat `idle` is figure 8, the braced stance;
-the Starseer and Herald are cut `idle, guard, attack1, attack2, attack3, cast,
-hit, brace, idle2`, so theirs is figure 1, standing. Combat ships six of the
-names — `idle`, `guard`, the three attacks and `hit`.
+order, the Rogue and corrected Reaver outfit sheets are cut `stand, guard,
+attack1, attack2, attack3, attack4, hit, idle, idle2`, so their combat `idle` is
+figure 8, the braced stance. The Starseer and Herald are cut `idle, guard,
+attack1, attack2, attack3, attack4, hit, brace, idle2`, so theirs is figure 1,
+standing. Combat ships seven names — `idle`, `guard`, four attacks and `hit`.
 
-Combat has the player facing right, and two Reaver figures were painted facing
-left — the ones cut as `attack2` and `idle` — so those two are cut with
-`--mirror`. Every other
-figure in all four sheets is used as painted. Facing is read from the hood
-opening, not from which way a weapon points: a wind-up pose draws the arm back
-the other way and still faces forward.
+Combat has the player facing right. In the original 2026-09-04 Reaver sheet,
+the figures cut as `attack2` and `idle` face left, so those two are cut with
+`--mirror`. The corrected 2026-09-05 Reaver outfit sheets already paint the
+overhead wind-up facing right, so only `idle` is mirrored. Facing is read from
+the hood opening, not from which way a weapon points: a wind-up pose draws the
+arm back the other way and still faces forward.
 
 Run from the repository root. `--grounded` is the important one: every figure on
 these sheets stands, and without it the cutter reads how the painter placed each
@@ -144,12 +144,13 @@ set -euo pipefail   # a cutter that fails must not reach the publish below
 SHEETS=docs/art-evidence/2026-09-04/pose-sheets
 OUT=build/painted
 # --poses names the 3x3 in reading order, and the two groups differ (above)
-FIGHT=stand,guard,attack1,attack2,attack3,cast,hit,idle,idle2
-MAGE=idle,guard,attack1,attack2,attack3,cast,hit,brace,idle2
+FIGHT=stand,guard,attack1,attack2,attack3,attack4,hit,idle,idle2
+REAVER_BASE=stand,guard,attack1,attack2,attack4,attack3,hit,idle,idle2
+MAGE=idle,guard,attack1,attack2,attack3,attack4,hit,brace,idle2
 
 rm -rf "$OUT"
 node tools/painted-poses.mjs --sheet "$SHEETS/rogue.png"    --class rogue    --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$FIGHT"
-node tools/painted-poses.mjs --sheet "$SHEETS/reaver.png"   --class reaver   --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$FIGHT" --mirror attack2,idle
+node tools/painted-poses.mjs --sheet "$SHEETS/reaver.png"   --class reaver   --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$REAVER_BASE" --mirror attack2,idle
 node tools/painted-poses.mjs --sheet "$SHEETS/starseer.png" --class starseer --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$MAGE"
 node tools/painted-poses.mjs --sheet "$SHEETS/herald.png"   --class herald   --out "$OUT" --append --grid 3x3 --canvas 560x680 --grounded --poses "$MAGE"
 

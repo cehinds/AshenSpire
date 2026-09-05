@@ -3,7 +3,7 @@
 //   node tools/pose-sprites.mjs --in RENDER_DIR --out OUT_DIR [--manifest NAME]
 //
 // RENDER_DIR holds RGBA PNGs and a renders manifest (default
-// lowpoly-renders.manifest.json, as tools/lowpoly-blender.py writes) whose rows
+// lowpoly-renders.manifest.json, written by the Blender or painted-sheet cutter) whose rows
 // carry `file`, `root` [x,y] and `ground` y, all in render pixels. For every
 // render and every tint: dye the garment and light the rim with the SAME
 // functions the class sprites use (tools/concept-cutout.mjs exports them), cut
@@ -82,7 +82,7 @@ const manifest = {
   source_manifest: manifestName,
   strip: renders.strip,
   recipe: {
-    figures: 'tools/lowpoly-blender.py — skin-modifier body on an armature, flat-shaded low poly, dressed per class',
+    figures: 'source figures and pose mappings are identified by the input renders manifest; provenance is recorded in CREDITS.md',
     dye: 'tintOutfit() — hue toward the tint, saturation part-way, value untouched, greys held back; withRim() 3px accent',
     floor: 'rows below `ground` cleared before the crop',
     encoder: `cwebp ${cwebpVersion} -q 80 -alpha_q 90 -exact`,

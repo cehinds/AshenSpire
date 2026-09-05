@@ -277,7 +277,7 @@ function renderedSpriteUrl(classId, tintId) {
 // "Blender PNG" until 2026-09-03, which stopped being true when the class art
 // was replaced — the same stale description as the lobby tooltip one file over.
 /** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
-export function classSprite(classId, tint, sigil, tintId, style) {
+export function classSprite(classId, tint, sigil, tintId, style, armourId = 'default') {
   const build = CLASS_SVG[classId];
   if (!build) return null;
   const el = document.createElement('div');
@@ -324,8 +324,10 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   // 'rendered' remains a separate painted still so an explicit choice never
   // swaps art styles mid-swing. A class with no shipped frames falls through
   // to the painting, so the default is never a blank figure.
-  if (style === 'animated' && hasPoses(classId, tintId)) {
-    const stage = createPoseStage(classId, tintId);
+  const outfitPoseId = armourId && armourId !== 'default' ? `${classId}-${armourId}` : classId;
+  const poseId = hasPoses(outfitPoseId, tintId) ? outfitPoseId : classId;
+  if (style === 'animated' && hasPoses(poseId, tintId)) {
+    const stage = createPoseStage(poseId, tintId);
     if (stage) {
       el.classList.add('animated');
       // Inside the facing layer, like the painting: an animated figure has a
@@ -427,10 +429,10 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
 }
 
 /**
- * playerSprite(customization, classId, equip?) — the player's figure.
+ * playerSprite(customization, classId, armourId?) — the player's figure.
  *
- * With `equip` ({ armourId, rightId, leftId, rightMirror, leftMirror }) it composites the layered
- * equipment figure; without it, the single rendered class PNG as before.
+ * Animated style selects the equipped armour's authored pose set when one is
+ * shipped. Other styles keep using the single rendered class figure.
  */
 // THE FIGURE YOU FIGHT AS IS THE FIGURE YOU PICKED. Until 2026-09-03 this took
 // a third argument — the equipment spec — and, whenever the player had gear and
@@ -446,11 +448,11 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
 // held-weapon overlay no longer show on the fighter. equippedFigure() still
 // exists and the Armoury preview (screens/equipment.js) still calls it, so the
 // composite is not dead — it is just no longer the combat figure.
-export function playerSprite(customization = {}, classId) {
+export function playerSprite(customization = {}, classId, armourId = 'default') {
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
-    return classSprite(classId, tint, customization.glyph, customization.tint, style);
+    return classSprite(classId, tint, customization.glyph, customization.tint, style, armourId);
   }
   const el = document.createElement('div');
   el.style.cssText =

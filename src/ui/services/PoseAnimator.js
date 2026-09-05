@@ -28,7 +28,7 @@ const key = (classId, pose, tint) => `${classId}_${pose}_${tint}`;
 // the figure: a module-wide counter advanced on every attack in the fight — enemy
 // swings included, and those have no frames at all — so a player skipped frames
 // and the drift carried into later fights.
-const ATTACK_SEQUENCE = ['attack1', 'attack2', 'attack3'];
+const ATTACK_SEQUENCE = ['attack1', 'attack2', 'attack3', 'attack4'];
 
 // Where a figure is up to in its swings. NOT on the stage: combat rebuilds the
 // player zone before every timeline, so a stage-local counter was new — and back
