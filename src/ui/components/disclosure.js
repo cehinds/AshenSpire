@@ -53,6 +53,19 @@
 // the defect this house exists to catch. A flex row cannot disagree with its
 // own container's gap.
 //
+// AND IT ONLY WORKS IF THE FACES ARE ON MORE THAN ONE LINE — the placement is a
+// choice between siblings, so a row whose faces all share a line has exactly one
+// place to put the panel, and that place is the bottom. Constantine, 2026-09-05,
+// on the shipped build: "when class is selected, the class selection should be
+// under it. same with character, starting equipment too. isntead it just shows
+// up at hte bottom". The renderer had not moved; the stylesheet had. The kit
+// sweep of 2026-09-04 put `.as-options.flow > .as-option { flex: 1 1 auto }`
+// (three classes) above `.disc-face.disc-pick { flex: 1 1 100% }` (two), so
+// every face of the creation screen computed `1 1 auto` and all four sections
+// sat on ONE line at top=77 (measured, headless Chromium 1200x730). The fix is
+// in styles/kit.css, at the rule that says so; NOTHING IN THIS FILE COULD HAVE
+// FIXED IT, and that is worth knowing before reading the placement again.
+//
 // NOT DONE, and it was the instruction I was given: `place(anchor)` from
 // components/tooltip.js was NOT extracted and wired here. Three reasons, and
 // the first is the one that would have shipped a worse screen than the defect:
@@ -152,6 +165,24 @@ function tipHtml(entry) {
     + (lines.length ? `<ul class="ti-list">${lines.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>` : '')
     + (entry.reveal.receipt ? `<span class="as-flavor">${esc(entry.reveal.receipt)}</span>` : '');
 }
+
+// A FOLD INSIDE A FOLD IS MOUNTED AND OPENED WHILE ITS HOST IS OFF THE GLASS,
+// and that is the second half of the same defect (2026-09-05). The creation
+// screen's CHARACTER and STARTING EQUIPMENT panels are `display: none` — stashed
+// by the outer fold — at the moment the folds inside them mount and open, and
+// `renderEquipment()` re-mounts the equipment fold on every class change with
+// that panel still shut. Every rect placeUnderRow could read is then ZERO, no
+// sibling starts a later line, and the panel is appended after the last face:
+// the bottom. Measured at d51b46a, 1200x730: `#cz-character-fold` and
+// `#cz-equipment-fold` both reported every face at top=0, width=0.
+//
+// So the placement is RE-DERIVED the moment the host is back on the glass,
+// rather than remembered from a measurement that could not be taken. Each mount
+// registers its own re-placer here, and opening a panel re-places every fold
+// that panel just revealed. `reflow` is open()'s placement step called again on
+// a laid-out host — not a second copy of it, and not an arithmetic that predicts
+// what the browser has not yet decided.
+const MOUNTS = new WeakMap();
 
 /**
  * mountDisclosure(host, entries, { moreLabel, armFace? })
@@ -262,6 +293,29 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
     faceBox.insertBefore(panel, next || null);
   }
 
+  /** Every fold the open panel is showing, re-placed on the layout it now has. */
+  function reflowNested() {
+    if (panel.hidden) return;
+    for (const box of panel.querySelectorAll('.disc-faces')) MOUNTS.get(box.parentElement)?.reflow();
+  }
+
+  /**
+   * Re-run the placement for the currently open key, now that the host may have
+   * a layout it did not have when `open()` ran. A no-op while the host is still
+   * off the glass — a zero rect is not a measurement, and placing against one is
+   * exactly how the panel got to the bottom.
+   */
+  function reflow() {
+    const button = openKey ? buttons.get(openKey) : null;
+    if (button && host.getClientRects().length) {
+      // Shut for the measurement, for the reason placeUnderRow gives.
+      panel.hidden = true;
+      placeUnderRow(button);
+      panel.hidden = false;
+    }
+    reflowNested();
+  }
+
   function open(key) {
     const entry = rows.find((row) => row.key === key);
     if (!entry) return;
@@ -283,6 +337,9 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
       button.dataset.reveal = 'open';
       button.classList.add('is-selected');
     }
+    // What this panel just put on the glass may itself be a fold that was
+    // placed blind. See MOUNTS, above.
+    reflowNested();
   }
 
   /** The folded row keeps reporting the current choice after it changes. */
@@ -377,5 +434,7 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
     faceBox.appendChild(more);
   }
 
-  return { open, close, setValue, get openKey() { return openKey; } };
+  const handle = { open, close, setValue, reflow, get openKey() { return openKey; } };
+  MOUNTS.set(host, handle);
+  return handle;
 }
