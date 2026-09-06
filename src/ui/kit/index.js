@@ -353,6 +353,7 @@ export function slot({ art = '', count = null, key = '', label = '', small = fal
     ...attrs, type: tag === 'button' ? 'button' : null, id: id || null,
     class: cls('as-slot', small ? 'sm' : '', isStatic ? 'static' : '', selected ? 'is-selected' : '', className),
     'aria-label': label || attrs['aria-label'] || null,
+    disabled: tag === 'button' && disabled ? true : (attrs.disabled ?? null),
     'aria-disabled': disabled ? 'true' : (attrs['aria-disabled'] ?? null),
   }, [
     typeof art === 'string' ? el('span', { class: 'sl-art', 'aria-hidden': 'true', text: art }) : art,
