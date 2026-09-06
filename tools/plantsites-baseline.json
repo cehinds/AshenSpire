@@ -77,11 +77,6 @@
       "id": "9fb86f9153777bc0"
     },
     {
-      "tool": "tools/displayfirst.mjs",
-      "target": "src/ui/screens/settings.js",
-      "id": "8ca41891dcb1ae85"
-    },
-    {
       "tool": "tools/menufit.mjs",
       "target": "styles/ui.css",
       "id": "7b52b505469be5a0"
@@ -181,7 +176,7 @@
     },
     "tools/displayfirst.mjs": {
       "count": 4,
-      "digest": "772580a9e82225aa"
+      "digest": "6bbfdd0e052593bc"
     },
     "tools/equipment-surface-receipts.mjs": {
       "count": 3,
@@ -220,8 +215,8 @@
       "digest": "24624c63c8967959"
     },
     "tools/hand-side-probe.mjs": {
-      "count": 5,
-      "digest": "6e4b0b0ed61d0e1b"
+      "count": 4,
+      "digest": "202b7aeba2b2cf9e"
     },
     "tools/hintstrip.mjs": {
       "count": 16,
