@@ -317,7 +317,13 @@
    reserves nothing. */
 .title-slot-row { position: relative; display: block; }
 .title-slot-row > .title-slot-pick { width: 100%; }
-.title-slot-row.has-delete > .title-slot-pick { padding-right: calc(var(--iconbtn-size) + 2.2rem); }
+/* The card is what holds the row open now that the delete is out of flow, so it
+   carries the button's own floor. Without it a card shorter than --iconbtn-size
+   would let one row's destructive hold target reach into the next row's. */
+.title-slot-row.has-delete > .title-slot-pick {
+  padding-right: calc(var(--iconbtn-size) + 2.2rem);
+  min-height: var(--iconbtn-size);
+}
 /* Position only. The box stays --iconbtn-size, which is --tap-floor, which is
    the player's Minimum tap size: a hard-coded 3.4rem here shrank a DESTRUCTIVE
    hold target to 34px and made that setting mean nothing on this one control. */
