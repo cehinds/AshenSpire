@@ -1094,11 +1094,19 @@ function refuseUnsupportedPlatform() {
 // unmatched find-string into a hard red, so this is watched, not hoped.
 function selftestPlants() {
   const settingsEol = readFileSync(join(ROOT, 'src/ui/screens/settings.js'), 'utf8').includes('\r\n') ? '\r\n' : '\n';
+  // The kit rewrite (#605) renamed this control (`toggle` -> `as-toggle
+  // toggle`), gave it an explicit type, and collapsed it from three lines onto
+  // one — so the old three-line join matched nothing and this plant reported
+  // PLANT SITE DRIFTED. Still assembled from parts rather than written whole,
+  // for the same reason as before: a contiguous copy in this file would give
+  // the self-referential plant below a second match to find.
   const fsButton = [
-    '      <button class="toggle ${on ? \'on\' : \'\'}" data-key="${r.key}"${r.type === \'action\' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : \'\'} role="switch" aria-checked="${on}">',
-    '        <span class="knob"></span>',
-    '      </button>',
-  ].join(settingsEol);
+    '<button type="button" class="as-toggle togg',
+    'le ${on ? \'on\' : \'\'}" data-key="${r.key}"',
+    '${r.type === \'action\' ? ` data-action="1" aria-label="${esc(r.label)}"',
+    ' aria-describedby="set-${r.key}-status"` : \'\'}',
+    ' role="switch" aria-checked="${on}"><span class="knob"></span></button>',
+  ].join('');
   // Split the production line so the self-referential plant below does not
   // copy its own find bytes into this file. That leaves exactly one match: the
   // exit it is meant to mutate, which the cross-platform preflight can prove.
@@ -1283,8 +1291,13 @@ function selftestPlants() {
       // dropped on the way.
       name: 'the panel id is renamed — every read returns {panel:false} (must FAIL, not STOP)',
       file: 'src/ui/screens/settings.js',
-      find: '<div class="set-panel" id="set-panel" role="tabpanel"',
-      replace: '<div class="set-panel" id="set-panel-renamed" role="tabpanel"',
+      // The kit rewrite (#605) mounted this container on the kit's Pane, so the
+      // class list gained `as-pane ` ahead of `set-panel` and these find bytes
+      // stopped matching — PLANT SITE DRIFTED, and the corpus stopped proving
+      // anything about this row. The id, which is what the plant actually
+      // mutates, never moved.
+      find: '<div class="as-pane set-panel" id="set-panel" role="tabpanel"',
+      replace: '<div class="as-pane set-panel" id="set-panel-renamed" role="tabpanel"',
       expectRed: /displayfirst: FAIL — \d+ finding\(s\) across 2 cells/,
     },
     {
