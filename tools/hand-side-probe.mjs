@@ -592,16 +592,18 @@ async function main() {
       // FILE holds, so the count cannot quietly shrink to the size of whatever
       // this run happened to manage to measure.
       console.log(`\nhand-side-probe: OK — ${rows.length} of ${population.length} legal armament-slot placement checks ran.`);
-      console.log(`  Every measured placement reaches the player's correct side with exactly one global mirror.`);
+      console.log(`  Every measured placement reaches the player's correct side, as the Armoury draws it.`);
       console.log(`  Every hand=either row is measured in both slots; each asset is derived`);
       console.log(`  as artKey || id — the runtime's own rule (src/model/loadout.js:962).`);
     }
     console.log('\nBOUNDARY — what a green here does NOT mean:');
     console.log('  · nothing about a future slot-neutral ART protocol. The current assets keep');
     console.log('    type-default sockets; a re-render must delete the CSS correction in the same act.');
-    console.log('  · nothing about the three SCREENS individually. It renders the two CONTAINER');
-    console.log('    shapes every view uses, not the views; a screen that stopped using them is');
-    console.log('    invisible here.');
+    console.log('  · ONE SHAPE, NOT THREE SCREENS. It renders `.equipped-figure` as the ARMOURY');
+    console.log('    mounts it — the only place the app still builds one (screens/equipment.js);');
+    console.log('    #590 made the class figures paintings and combat stopped using it. So this');
+    console.log('    says NOTHING about the combat board, whose figure is a painted pose frame on');
+    console.log('    a different path entirely, and nothing about any screen individually.');
     console.log('  · nothing about whether the body faces the viewer — that is read from the');
     console.log('    producers\' own camera ("camera looks from -Y; front is -Y") and asserted, not measured.');
     console.log('  · a `centre` verdict is neither pass nor fail: it is a piece whose mass sits inside');
