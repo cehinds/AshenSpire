@@ -55,7 +55,7 @@ import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { openConfirmationModal } from './ui/components/confirmationModal.js';
-import { openSaveSlotSelector } from './ui/components/saveSlotSelector.js';
+import { openSaveSlotSelector, slotFacts } from './ui/components/saveSlotSelector.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
@@ -931,9 +931,17 @@ function saveSlotRecords() {
 }
 
 function confirmSlotLoad(slot, { returnFocusElement } = {}) {
+  // WHICH CLIMB, NOT JUST WHICH SLOT. This is the in-run door's only stop
+  // before the load, and it named a number and nothing else. The title's list
+  // hands the seed to a review door on the way through; this path has no
+  // review door, so the receipt belongs here.
+  const summary = saveSlotRecords().find((record) => record.slot === slot)?.summary || null;
+  const climb = summary
+    ? `${summary.className} — ${slotFacts(summary)}. Seed ${summary.seedString}. `
+    : '';
   openConfirmationModal({
     title: `Load slot ${slot}?`,
-    message: 'The saved run will replace changes made since your last save.',
+    message: `${climb}The saved run will replace changes made since your last save.`,
     confirmLabel: 'Load saved run',
     consequence: 'DISCARDS UNSAVED CHANGES',
     // Whether this reads as destructive is the ConfirmationRegistry's call.
