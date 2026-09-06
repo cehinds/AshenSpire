@@ -2,8 +2,8 @@
 // projected by SaveSlotSelectionModel; callers only decide what a confirmed
 // exact slot means. The component never reads or mutates save storage.
 //
-// THE DOOR IS THE KIT'S. A slot is an OptionCard (glyph + name + the climb's
-// facts + a state pill), the list is `options`, the delete is the one
+// THE DOOR IS THE KIT'S. A slot is an OptionCard (the slot number + the climb's
+// name + its facts), the list is `options`, the delete is the one
 // IconButton box, the chrome is modalHead + modalFooter, and the review is
 // body C (Title·L + Ornament + DetailCard + prompt). Title's NEW GAME door is
 // built from the same builders below (`slotDoor`), so the two doors cannot
@@ -15,45 +15,64 @@ import { focusElement } from '../input.js';
 import { armHold, beatArmer } from '../../framework/optionDecision.js';
 import { hideTooltip } from './tooltip.js';
 import {
-  el, html, modalHead, modalFooter, button, iconButton, optionCard, optionRow, options, decide, detailCard, ornament, pill,
+  el, html, modalHead, modalFooter, button, iconButton, optionCard, optionRow, options, decide, detailCard, ornament,
 } from '../kit/index.js';
 
 let activeSelector = null;
 
 /** slotFacts(summary) → the one line of facts a slot card and its review share. */
 export function slotFacts(summary) {
-  return summary ? `Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP` : 'No climb saved here';
+  return summary ? `Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP` : 'Start a new climb here';
 }
 
 /**
  * slotOption({ slot, summary, selected, selectable, deletable, hint }) → the
- * OptionCard row for one save slot, with the delete box (or its spacer) so
- * every row ends on the same edge.
+ * OptionCard row for one save slot, with its delete laid over the card's own
+ * right edge when there is a save to delete.
+ *
+ * THE ROW SAYS EACH THING ONCE (Constantine, 2026-09-06). It used to say
+ * "empty" four ways — a ▢ that read as an unticked checkbox, "Empty" as the
+ * card's name, a `Slot n` chip, and an EMPTY pill — while the slot number, the
+ * only thing telling three rows apart, was the smallest text on the row. Worse,
+ * a slot with a save in it did not fit: the trailing pill squeezed the facts
+ * onto two lines and truncated itself to "REA…". So the number is now the
+ * glyph, the name is the climb (or that there is none), and the state is the
+ * line under it — `title-save-slot-state` marks that line rather than a pill
+ * repeating what it says.
  */
 export function slotOption({ slot, summary, selected = false, selectable = true, deletable = false, hint = '' }) {
   const card = optionCard({
-    glyph: summary ? '▣' : '▢',
-    name: summary ? summary.className : 'Empty',
-    badge: pill({ label: `Slot ${slot}`, attrs: { class: 'title-slot-tag' } }),
+    glyph: String(slot),
+    name: summary ? summary.className : 'Empty slot',
     description: slotFacts(summary),
-    meta: summary ? `Seed ${summary.seedString}` : '',
-    trail: pill({ label: summary ? 'Ready' : 'Empty', on: !!summary, attrs: { class: 'title-slot-state', 'data-component': UI.titleSaveSlotState } }),
     selected,
     disabled: !selectable,
     arrow: false,
-    className: `title-slot-pick${summary ? ' is-filled' : ''}`,
+    className: `title-slot-pick${summary ? ' is-filled' : ' is-vacant'}`,
     attrs: {
       dataset: { slotPick: slot },
-      ...(hint ? { 'aria-label': hint.label } : {}),
+      // The number is drawn in an aria-hidden glyph, so the row's own label is
+      // the only place a screen reader hears which slot this is.
+      'aria-label': hint ? hint.label : `Slot ${slot}`,
     },
   });
-  card.querySelector('.ob').classList.add('title-slot-copy');
-  card.querySelector('.ob').dataset.component = UI.titleSaveSlotCopy;
+  const copy = card.querySelector('.ob');
+  copy.classList.add('title-slot-copy');
+  copy.dataset.component = UI.titleSaveSlotCopy;
+  card.querySelector('.og').classList.add('title-slot-num');
+  // The state projection is this line: the climb's facts when there is one,
+  // the invitation to start one when there is not.
+  const state = card.querySelector('.od');
+  state.classList.add('title-slot-state');
+  state.dataset.component = UI.titleSaveSlotState;
+  // No save, no delete — and no reserved column for one either. The button is
+  // positioned over the card, so an occupied row is exactly as wide as an
+  // empty one instead of losing 4rem of its text to a spacer.
   const trailing = deletable
     ? iconButton({ glyph: '✕', label: `Delete slot ${slot}`, className: 'title-slot-delete', attrs: { dataset: { slotDelete: slot, component: UI.titleSaveSlotDelete } } })
-    : iconButton({ glyph: '✕', label: 'No save to delete', className: 'title-slot-delete', attrs: { dataset: { slotSpacer: '' }, tabindex: '-1', disabled: true, 'aria-hidden': 'true', style: { visibility: 'hidden' } } });
+    : null;
   const rowEl = optionRow(card, trailing, {
-    class: `title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}`,
+    class: `title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}${deletable ? ' has-delete' : ''}`,
     'data-component': UI.titleSaveSlot,
   });
   return rowEl;
