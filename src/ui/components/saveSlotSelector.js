@@ -26,6 +26,16 @@ export function slotFacts(summary) {
 }
 
 /**
+ * The same facts as words. The printed line leans on `·` and `34/50`, which a
+ * screen reader either swallows or spells out; this is what it should hear.
+ */
+function slotFactsSpoken(summary) {
+  return summary
+    ? `Act ${summary.actNumber}, floor ${summary.floor}, ${summary.hp} of ${summary.maxHp} HP`
+    : slotFacts(null);
+}
+
+/**
  * slotOption({ slot, summary, selected, selectable, deletable, hint }) → the
  * OptionCard row for one save slot, with its delete laid over the card's own
  * right edge when there is a save to delete.
@@ -40,7 +50,7 @@ export function slotFacts(summary) {
  * line under it — `title-save-slot-state` marks that line rather than a pill
  * repeating what it says.
  */
-export function slotOption({ slot, summary, selected = false, selectable = true, deletable = false, hint = '' }) {
+export function slotOption({ slot, summary, selected = false, selectable = true, deletable = false, hint = null }) {
   const card = optionCard({
     glyph: String(slot),
     name: summary ? summary.className : 'Empty slot',
@@ -51,9 +61,17 @@ export function slotOption({ slot, summary, selected = false, selectable = true,
     className: `title-slot-pick${summary ? ' is-filled' : ' is-vacant'}`,
     attrs: {
       dataset: { slotPick: slot },
-      // The number is drawn in an aria-hidden glyph, so the row's own label is
-      // the only place a screen reader hears which slot this is.
-      'aria-label': hint ? hint.label : `Slot ${slot}`,
+      // The number is drawn in an aria-hidden glyph, so an unlabelled row never
+      // says which slot it is. A label that only said "Slot n" was worse: it
+      // REPLACES the visible text, so a listener lost the class, the act and
+      // the floor — everything a sighted player reads before choosing. The
+      // label is built from what the row shows, plus what the row does.
+      'aria-label': [
+        `Slot ${slot}`,
+        summary ? summary.className : 'Empty slot',
+        slotFactsSpoken(summary),
+        hint?.action,
+      ].filter(Boolean).join('. '),
     },
   });
   const copy = card.querySelector('.ob');
@@ -247,9 +265,11 @@ export function openSaveSlotSelector({
       const { slot, selectable, selected } = properties;
       const record = slots.find((candidate) => candidate.slot === slot);
       const summary = record?.summary || null;
-      const hint = summary
-        ? { label: `Slot ${slot}, ${summary.className}. Tap to review this save; hold to load it now.` }
-        : { label: `Slot ${slot}, empty. Tap to start a new game here.` };
+      // Only what the row DOES — slotOption says what it holds, so the two do
+      // not have to agree about wording that is already on screen.
+      // Only what the row DOES, and only when that is not already the line it
+      // shows: an empty slot's visible "Start a new climb here" IS the action.
+      const hint = summary ? { action: 'Tap to review this save; hold to load it now' } : null;
       return slotOption({ slot, summary, selected, selectable, deletable: !!(onDelete && summary), hint });
     });
 
