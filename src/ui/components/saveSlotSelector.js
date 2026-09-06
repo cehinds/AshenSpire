@@ -20,19 +20,28 @@ import {
 
 let activeSelector = null;
 
-/** slotFacts(summary) → the one line of facts a slot card and its review share. */
-export function slotFacts(summary) {
-  return summary ? `Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP` : 'Start a new climb here';
+/**
+ * slotFacts(summary, { canStart }) → the one line of facts a slot card and its
+ * review share.
+ *
+ * `canStart` is whether an empty row leads anywhere. The in-run Quick Menu opens
+ * this same list with no `onRequestNew`, and an empty slot there is a dead end —
+ * activation reaches `requestLoad`, which turns back on a slot with no save. So
+ * that door states the fact and the title's doors make the offer.
+ */
+export function slotFacts(summary, { canStart = true } = {}) {
+  if (summary) return `Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP`;
+  return canStart ? 'Start a new climb here' : 'No climb saved here';
 }
 
 /**
  * The same facts as words. The printed line leans on `·` and `34/50`, which a
  * screen reader either swallows or spells out; this is what it should hear.
  */
-function slotFactsSpoken(summary) {
+function slotFactsSpoken(summary, options) {
   return summary
     ? `Act ${summary.actNumber}, floor ${summary.floor}, ${summary.hp} of ${summary.maxHp} HP`
-    : slotFacts(null);
+    : slotFacts(null, options);
 }
 
 /**
@@ -50,11 +59,11 @@ function slotFactsSpoken(summary) {
  * line under it — `title-save-slot-state` marks that line rather than a pill
  * repeating what it says.
  */
-export function slotOption({ slot, summary, selected = false, selectable = true, deletable = false, hint = null }) {
+export function slotOption({ slot, summary, selected = false, selectable = true, deletable = false, canStart = true, hint = null }) {
   const card = optionCard({
     glyph: String(slot),
     name: summary ? summary.className : 'Empty slot',
-    description: slotFacts(summary),
+    description: slotFacts(summary, { canStart }),
     selected,
     disabled: !selectable,
     arrow: false,
@@ -69,7 +78,7 @@ export function slotOption({ slot, summary, selected = false, selectable = true,
       'aria-label': [
         `Slot ${slot}`,
         summary ? summary.className : 'Empty slot',
-        slotFactsSpoken(summary),
+        slotFactsSpoken(summary, { canStart }),
         hint?.action,
       ].filter(Boolean).join('. '),
     },
@@ -259,6 +268,11 @@ export function openSaveSlotSelector({
     focus('[data-title-action="review-load"], [data-title-action="review-new"]');
   };
 
+  // Whether an empty row leads anywhere here. The in-run Quick Menu opens this
+  // list with no way to start a climb, and a row must not offer what its door
+  // cannot do.
+  const canStart = typeof onRequestNew === 'function';
+
   const slotRows = (selection) => selection.children
     .filter((child) => child.component === UI.titleSaveSlot)
     .map(({ properties }) => {
@@ -270,7 +284,7 @@ export function openSaveSlotSelector({
       // Only what the row DOES, and only when that is not already the line it
       // shows: an empty slot's visible "Start a new climb here" IS the action.
       const hint = summary ? { action: 'Tap to review this save; hold to load it now' } : null;
-      return slotOption({ slot, summary, selected, selectable, deletable: !!(onDelete && summary), hint });
+      return slotOption({ slot, summary, selected, selectable, deletable: !!(onDelete && summary), canStart, hint });
     });
 
   const render = () => {

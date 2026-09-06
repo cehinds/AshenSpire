@@ -317,11 +317,11 @@
    reserves nothing. */
 .title-slot-row { position: relative; display: block; }
 .title-slot-row > .title-slot-pick { width: 100%; }
-.title-slot-row.has-delete > .title-slot-pick { padding-right: 5.2rem; }
-.title-slot-delete {
-  position: absolute; top: 50%; right: 1.1rem; transform: translateY(-50%);
-  width: 3.4rem; height: 3.4rem; min-height: 0; padding: 0;
-}
+.title-slot-row.has-delete > .title-slot-pick { padding-right: calc(var(--iconbtn-size) + 2.2rem); }
+/* Position only. The box stays --iconbtn-size, which is --tap-floor, which is
+   the player's Minimum tap size: a hard-coded 3.4rem here shrank a DESTRUCTIVE
+   hold target to 34px and made that setting mean nothing on this one control. */
+.title-slot-delete { position: absolute; top: 50%; right: 1.1rem; transform: translateY(-50%); }
 /* The slot number is the row's identity and the only thing telling three rows
    apart, so it takes the glyph column the ▢/▣ checkbox-lookalike used to hold. */
 .title-slot-pick .title-slot-num { flex: 0 0 2.6rem; font: 600 2.1rem/1 var(--font-display); }
