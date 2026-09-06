@@ -58,6 +58,14 @@ function slotFactsSpoken(summary, options) {
  * glyph, the name is the climb (or that there is none), and the state is the
  * line under it — `title-save-slot-state` marks that line rather than a pill
  * repeating what it says.
+ *
+ * WHERE THE SEED WENT. Not onto the row: it made an occupied row taller than
+ * the empty ones for a string nobody chooses a slot by — the class and the
+ * act/floor/HP do that. It is on both doors that confirm a load (the title's
+ * review door, the Quick Menu's confirmation), and on the run's own header and
+ * run-info overlay once loaded. A hold-to-load passes none of those, which is
+ * what "hold to load it now" means: the shortcut is the feature, and the seed
+ * is a page-turn away on the other side of it.
  */
 export function slotOption({ slot, summary, selected = false, selectable = true, deletable = false, canStart = true, hint = null }) {
   const card = optionCard({
