@@ -398,11 +398,12 @@ if (process.argv.includes('--selftest')) {
   // `assets` is NOT in doorplant's COPY_SET and this probe reads nothing else:
   // without it every plant would fail to load an image and go red for a reason
   // that has nothing to do with handedness — a catch that proves nothing.
-  const selftestCode = await doorSelftest({
-    tool: 'hand-side-probe.mjs',
-    extraCopy: ['assets'],
-    env: process.env.CHROME ? { CHROME: process.env.CHROME } : {},
-    plants: [
+  // THE COUNT IS DERIVED, never typed. It used to be the literal `5/5` in the
+  // line below, and deleting P2 left that literal claiming a fifth mutation had
+  // gone red when only four ran — coverage asserted for a plant that no longer
+  // exists, which is the same vacuous green this corpus is here to refuse.
+  // Reading `plants.length` means the next deletion cannot reintroduce it.
+  const plants = [
       {
         // DIRECTION 1 — the correction is gone. This is the shipped defect.
         name: 'P1 the mirror is removed — the reported bug, restored',
@@ -438,10 +439,15 @@ if (process.argv.includes('--selftest')) {
         replace: "    const hands = [authoredHand];",
         expectRed: /POPULATION WRONG.*hand=either.*both left and right/,
       },
-    ],
+  ];
+  const selftestCode = await doorSelftest({
+    tool: 'hand-side-probe.mjs',
+    extraCopy: ['assets'],
+    env: process.env.CHROME ? { CHROME: process.env.CHROME } : {},
+    plants,
   });
   if (selftestCode === 0) {
-    console.log('hand-side-probe --selftest: OK — 5/5 known-bads observed red');
+    console.log(`hand-side-probe --selftest: OK — ${plants.length}/${plants.length} known-bads observed red`);
   }
   process.exit(selftestCode);
 }
