@@ -6,9 +6,9 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-720",
     "date": "2026-09-07",
     "group": "2026-09-07",
-    "summary": "Readable combat cards above five clear controls",
-    "detail": "Combat cards stand upright at a readable size, with no overlapping faces and a natural gap above the bottom HUD. Scroll the hand when it cannot fit. The HUD is Actions, Draw, a centered larger End Turn, Discard with Exhaust on its own line, and Potions. Borderless inspect icons sit directly on sprites; hover panels remain open when entered and include Inspect, with keyboard focus restored on dismissal.",
-    "build": "0.5.5.70",
+    "summary": "A readable combat fan and compact inspection",
+    "detail": "Five to seven cards fan above the five-slot HUD with exposed costs along their left edges and a clear vertical gap. Hover or select a card to read its face. Inspect lives only in the hover panel as a compact action; sprite icons and the full-height character outline are removed. Panels stay open while entered, and closing inspection restores focus.",
+    "build": "0.5.5.72",
     "pullRequest": 720,
     "url": "https://github.com/cehinds/AshenSpire/pull/720"
   },

@@ -768,19 +768,10 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .combatant .nm-inspect { cursor: help; min-height: var(--tap-floor); display: flex; flex-direction: column; justify-content: center; }
 .combatant .nm-inspect:hover .ls-label, .combatant .nm-inspect:focus-visible .ls-label { color: var(--gold); }
 .combatant .nm-inspect:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1); }
-/* The keyboard's Inspect action has a literal touch counterpart. This sits in
-   the frame rather than its name so the full read is discoverable without a
-   hover hint, and remains a 44px-class tap target through the kit IconButton. */
-.combatant .sprite > button.combatant-inspect-control,
-.combatant .sprite > button.combatant-inspect-control:hover {
-  position: absolute; top: 35%; left: 50%; right: auto; z-index: 4;
-  transform: translateX(-50%);
-  border: 0; background: transparent; box-shadow: none;
-  color: var(--gold); font-size: 24px; text-shadow: 0 1px 3px #000, 0 0 5px #000;
+.as-tip[data-tooltip-variant="combatant-context"] > .as-btn {
+  display: inline-flex; width: auto; min-height: 0; padding: 3px 8px;
+  margin-top: 6px; font-size: 0.85em; line-height: 1.3;
 }
-.combatant .sprite > button.combatant-inspect-control:active { transform: translateX(-50%) scale(0.94); }
-.as-tip[data-tooltip-variant="combatant-context"] > .as-btn { margin-top: 8px; width: 100%; }
-.combatant .sprite > button.combatant-inspect-control:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 /* The full read, in a door: the same sections the edge tray renders. */
 .combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
 

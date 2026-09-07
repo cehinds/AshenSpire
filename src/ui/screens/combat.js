@@ -266,6 +266,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // (stale playback snapshot on a combat-ending play) render inert.
   const handStrip = mountHand($('.hand'), {
     animateArrival: true,
+    fitFan: true,
     registries,
     wireCard: (el, entry) => { if (entry.preview) wireCardInput(el, entry.inst, entry.preview, entry.affordable); },
   });
@@ -544,28 +545,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
   }
 
-  // A physical keyboard has I; a touch screen needs a visible, single-tap
-  // equivalent. Keep this control separate from the combatant frame's click:
-  // that click may target a card or flask, while inspection must never spend
-  // a turn. The same door and subject feed both paths so their detail cannot
-  // drift.
-  function combatantInspectControl(role, entity) {
-    const subject = combatantSubject(role, entity);
-    const control = iconButton({
-      glyph: 'ⓘ',
-      label: `Inspect ${subject.name}`,
-      className: 'combatant-inspect-control',
-      attrs: { 'aria-haspopup': 'dialog' },
-    });
-    // The sprite's interactive context owns this hint; avoid a second title tooltip.
-    control.removeAttribute('title');
-    control.addEventListener('click', (event) => {
-      event.stopPropagation();
-      openCombatantDoor(combatantSubject(role, entity));
-    });
-    return control;
-  }
-
   function renderedContentRect(el) {
     const rects = [...(el?.children || [])]
       .map((child) => child.getBoundingClientRect())
@@ -597,10 +576,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const inspect = button({ label: 'Inspect', attrs: { 'aria-label': `Inspect ${combatantSubject(role, entity).name}`, 'aria-haspopup': 'dialog' } });
     inspect.addEventListener('click', (event) => {
       event.stopPropagation();
-      openCombatantDoor(combatantSubject(role, entity), box.querySelector('.combatant-inspect-control'));
+      openCombatantDoor(combatantSubject(role, entity), box);
     });
     inspect.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') box.querySelector('.combatant-inspect-control')?.focus({ preventScroll: true });
+      if (event.key === 'Escape') box?.focus({ preventScroll: true });
     });
     showTooltipForRect(card, combatantContextTooltip(combatantSubject(role, entity)), {
       intent: 'above',
@@ -646,6 +625,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function wireEnemyContext(box, enemy) {
     ensureTooltip();
     box.classList.add('inspectable');
+    box.tabIndex = -1;
     box.dataset.focusable = '';
     box.tabIndex = -1;
     box.setAttribute('role', 'button');
@@ -688,6 +668,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // cursor). What is left is the glance itself: hover, the focus cursor, and
   // on touch a tap, on the same clock the enemies use.
   function wirePlayerContext(box, player) {
+    box.tabIndex = -1;
     ensureTooltip();
     box.classList.add('inspectable');
     box.setAttribute('aria-describedby', 'tooltip');
@@ -1149,7 +1130,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       meters: meterBars(p, { tooltips: false }),
       trailing,
     });
-    box.querySelector('.sprite').appendChild(combatantInspectControl('player', p));
     wirePlayerContext(box, p);
     // When a self/buff card is armed, the player is a confirmable target.
     // Publish that temporary target through the same unified focus door as an
@@ -1234,7 +1214,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         meters: meterBars(enemy, { tooltips: false }),
         trailing: [statusRow(enemy)],
       });
-      box.querySelector('.sprite').appendChild(combatantInspectControl('enemy', enemy));
       box.dataset.stature = statureFor(registries, def.id);
       if (enemy.alive) {
         wireEnemyContext(box, enemy);

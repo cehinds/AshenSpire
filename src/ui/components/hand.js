@@ -62,7 +62,7 @@ import { keycap, pill } from '../kit/index.js';
 // asserting a property nobody writes.
 export const FAN_LIFT_PROP = '--fan-lift';
 
-export function mountHand(handEl, { registries, wireCard = null, animateArrival = false }) {
+export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
   // value here would silently turn the gesture off.
@@ -80,6 +80,21 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
 
   function applyHandLayout() {
+    if (fitFan) {
+      const cards = handEls.filter(el => el.parentNode === handEl);
+      if (!cards.length || !handEl.isConnected) return;
+      const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+      const cs = getComputedStyle(handEl);
+      const available = handEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const width = cards[0].offsetWidth;
+      const shown = Math.min(cards.length, 7);
+      const step = shown > 1 ? Math.max(28 / zoom, Math.min(width + 12, (available - width) / (shown - 1))) : width;
+      cards.forEach((el, i) => {
+        el.style.marginLeft = i ? (step - width) + 'px' : '0px';
+        el.style.transform = handFan[i];
+      });
+      return;
+    }
     if (handLayoutWord() !== 'overlap') return;
     if (!handEl.isConnected) return;
     const els = handEls.filter((el) => el.parentNode === handEl);
@@ -123,7 +138,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   // replaced (co-op re-mounts per snapshot; solo replaces the screen wholesale).
   let ro = null;
   let mo = null;
-  if (typeof ResizeObserver !== 'undefined' && handLayoutWord() === 'overlap') {
+  if (typeof ResizeObserver !== 'undefined' && (fitFan || handLayoutWord() === 'overlap')) {
     const alive = () => document.body.contains(handEl);
     ro = new ResizeObserver(() => { if (alive()) applyHandLayout(); else ro.disconnect(); });
     mo = new MutationObserver(() => { if (alive()) applyHandLayout(); else mo.disconnect(); });
@@ -219,7 +234,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // in 'paging' the loop above was the whole render, unchanged.
     handEls = [...handEl.children];
     handFan = handEls.map((el) => el.style.transform);
-    if (ro && handLayoutWord() === 'overlap') {
+    if (ro && (fitFan || handLayoutWord() === 'overlap')) {
       ro.disconnect();
       ro.observe(handEl);
       handEls.forEach((el) => ro.observe(el));
