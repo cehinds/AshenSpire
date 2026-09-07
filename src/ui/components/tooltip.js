@@ -207,7 +207,7 @@ function watchScene() {
   sceneWatch.observe(document.documentElement, { childList: true, subtree: true });
 }
 
-function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0, align = 'start', level = 0, target = null, action = null) {
+function showWith(html, anchor, clear = null, intent = 'above', appearance = null, placementModel = null, autoHideMs = 0, align = 'start', level = 0, target = null, action = null) {
   if (!html) return false;
   // `anchor` is a rect; `target` is the element it was measured from (null
   // for a caller-owned rect — then there is no surface to watch).
@@ -283,7 +283,7 @@ function adoptTitle(el) {
  * on a non-button) open the same content in the `full` tier.
  */
 export function attachTooltip(el, contentFn, {
-  intent = 'beside', align = 'start', clear = null, delayMs = TOOLTIP_TIMING.open, focusDelayMs = TOOLTIP_TIMING.focus,
+  intent = 'above', align = 'start', clear = null, delayMs = TOOLTIP_TIMING.open, focusDelayMs = TOOLTIP_TIMING.focus,
   appearance = null, placementModel = null, autoHideMs = 0, expand = false, expandTitle = null,
 } = {}) {
   adoptTitle(el);
@@ -339,12 +339,12 @@ export function attachTooltip(el, contentFn, {
 }
 
 /** Show the shared tooltip for a non-hover gesture, using the same placement. */
-export function showTooltipFor(el, html, { intent = 'beside', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
+export function showTooltipFor(el, html, { intent = 'above', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
   if (!el) return false;
   return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs, align, 0, el);
 }
 /** Show the shared tooltip against a caller-owned measured subject rectangle. */
-export function showTooltipForRect(anchor, html, { intent = 'beside', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0, target = null, action = null } = {}) {
+export function showTooltipForRect(anchor, html, { intent = 'above', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0, target = null, action = null } = {}) {
   if (!anchor) return false;
   return showWith(html, anchor, clear, intent, appearance, placementModel, autoHideMs, align, 0, target, action);
 }
@@ -414,7 +414,7 @@ function wireTitles() {
     if (state[1].open) hide(1);
     else if (state[0].open && !stuck) hideTooltip();
   }, true);
-  const replace = () => { for (const [i, st] of state.entries()) if (st.open && st.target?.getBoundingClientRect && panels[i]) placeAnchored(panels[i], st.target.getBoundingClientRect(), { intent: panels[i].dataset.tooltipPlacement || 'beside' }); };
+  const replace = () => { for (const [i, st] of state.entries()) if (st.open && st.target?.getBoundingClientRect && panels[i]) placeAnchored(panels[i], st.target.getBoundingClientRect(), { intent: panels[i].dataset.tooltipPlacement || 'above' }); };
   addEventListener('resize', replace);
 }
 wireTitles();
