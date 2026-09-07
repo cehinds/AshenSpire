@@ -18,7 +18,9 @@ import { combatantDetailBody } from '../components/combatantInspector.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { figureSpec } from '../../model/loadout.js';
+import { figureSpec, equippedPieces } from '../../model/loadout.js';
+import { resourceAura } from '../combatAura.js';
+import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
 import {
   isReaverAttackEligible,
   playReaverAttack,
@@ -148,6 +150,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Once per mount: it is a fact about the content, not about the frame.
   const resDomains = resourceDomains(registries);
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
+  let playerRest = 'idle';
+  let visualPlans = new Map();
+  let appliedVisualEvents = new Set();
+  function applyVisualEvents(events) {
+    for (const event of events) {
+      if (appliedVisualEvents.has(event)) continue;
+      appliedVisualEvents.add(event);
+      playerRest = combatRestAfterEvent(playerRest, event, 'player', visualPlans.get(event.cardInstanceId));
+    }
+  }
   const tooltipPlacement = tooltipPlacementModel(registries.balance.ui.tooltipPlacement);
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
   const fxCtx = {
@@ -176,12 +188,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         ? (definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition))
         : definition?.tags || [];
       const stage = stageFor(actorEl);
-      const plan = resolveActionAnimation({
+      let plan = resolveActionAnimation({
         actorId: played ? run.class : moved.enemyId,
         actionId: played ? played.cardId : moved.moveId,
         tags, type: played?.cardType, intent: moved?.kind,
         availablePoses: stage?.poses || [],
       });
+      if (played && definition) {
+        const grouped = visualPlans.get(played.cardInstanceId) || resolveCombatAnimation({ ...definition, cardTags: tags }, equippedPieces(registries, run.loadout, run.class));
+        const pose = stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
+        plan = { ...plan, ...grouped, pose };
+        if (grouped.rest) stage?.setRestPose?.(grouped.rest);
+        actorEl.dataset.actionGroup = grouped.group;
+      }
       actorEl.dataset.actionFamily = plan.family;
       actorEl.dataset.actionMotion = plan.motion;
       // The painted Reaver sequence remains the specialized attack renderer.
@@ -225,7 +244,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // A damaging spell still needs its enemy attack drawing; its motion
       // family remains a cast rather than being changed into a melee lunge.
       if (enemyAttack) actorEl.classList.add('enemy-attack-pose');
-      if (plan.pose) stage?.play(plan.pose, totalMs);
+      if (plan.pose) stage?.play(plan.pose, totalMs, plan.aura);
     }
     return { totalMs, impactMs: Math.round(totalMs * 0.55), cancel: () => {
       actorEl.classList.remove(actionClass);
@@ -1073,6 +1092,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderPlayer() {
     const zone = $('.player-zone');
+    stageFor(zone)?.dispose?.();
     zone.innerHTML = '';
     const p = combat.player;
     const figure = figureSpec(registries, run.loadout, run.class);
@@ -1142,6 +1162,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       else showCombatantContext(box, 'player', p);
     });
     zone.appendChild(box);
+    stageFor(box)?.setRestPose?.(playerRest);
   }
 
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
@@ -1734,6 +1755,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function afterDispatch(events) {
+    // Capture definitions while disp still holds consumed Powers and equipment
+    // profile instances. Reduce the SAME events on paced and skipped paths.
+    appliedVisualEvents = new Set();
+    visualPlans = new Map(events.filter(e => e.type === 'cardPlayed').map(event => {
+      const instance = disp?.hand.find(card => card.instanceId === event.cardInstanceId) || findInst(event.cardInstanceId) || { cardId: event.cardId };
+      const definition = resolveCard(registries, instance);
+      const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
+      const hpSpent = events.filter(e => e.type === 'hpLost' && e.targetId === combat.player.id && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
+      return [event.cardInstanceId, { aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, sourceArmamentId: instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class)) }];
+    }));
     // Nothing between here and playTimeline may prevent the timeline from
     // starting: busy is already true, and only the timeline's finish releases
     // it (and fires onEnd on victory/defeat). A render throw here once froze
@@ -1758,6 +1789,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       {
         ...fxCtx,
         onBeatApplied: (beat) => {
+          applyVisualEvents(beat.events);
           applyBeatToDisp(beat);
           renderTopbar();
           renderCombatantStage();
@@ -1766,6 +1798,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           showPileFeedback(beat.events);
         },
         onFlush: () => {
+          applyVisualEvents(events);
           disp = null;
           render();
           clearCardFeedback();
@@ -1773,6 +1806,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         },
       },
       () => {
+        applyVisualEvents(events);
         disp = null;
         render();
         busy = false;

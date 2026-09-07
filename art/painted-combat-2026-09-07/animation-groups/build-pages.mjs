@@ -1,0 +1,30 @@
+import { writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const here = dirname(fileURLToPath(import.meta.url));
+for (const id of ['reaver', 'starseer', 'rogue', 'herald']) {
+  const name = id[0].toUpperCase() + id.slice(1);
+  writeFileSync(join(here, `${id}.html`), `<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${name} · Combat animation review</title><link rel="stylesheet" href="preview.css">
+<body data-class="${id}"><main>
+<nav>${['reaver','starseer','rogue','herald'].map(cls=>`<a href="${cls}.html" ${id===cls?'aria-current="page"':''}>${cls[0].toUpperCase()+cls.slice(1)}</a>`).join('')}<a href="../index.html">Outfit gallery</a></nav>
+<p class="eyebrow">ASHENSPIRE / COMBAT ANIMATIONS</p><h1>${name}</h1>
+<p class="intro">Attack. Cast. Defend. Play the poses, then test how the character rests between cards.</p>
+<label>Resource aura <select id="resource"><option value="stamina">Stamina · green</option><option value="mana" selected>Mana · blue</option><option value="hp">HP · red</option><option value="stamina+mana">Stamina + mana</option><option value="none">No resource payment</option></select></label>
+<label>Armor outfit <select id="outfit"></select></label>
+<div class="review"><section class="theatre" aria-label="Animation stage"><div class="ground"></div><img id="actor" alt="${name} combat pose"><div class="stage-label">PAINTED OUTFIT · FACING RIGHT</div></section>
+<section class="controls"><h2>Play a card</h2><p>Each button plays once. Guard and Power stances remain until this character’s next turn.</p>
+<div class="cards"><button data-action="shieldBash"><b>Shield bash</b><span>Shield attack · windup, impact, recovery</span></button><button data-action="attack"><b>Attack</b><span>Attack-type card</span></button><button data-action="skill"><b>Cast skill</b><span>Untagged skill · uses idle pose</span></button><button data-action="power"><b>Power</b><span>Gather · flare · settle glow</span></button><button data-action="guard"><b>Guard</b><span>Guard-tagged skill</span></button><button data-action="shieldGuard"><b>Shield guard</b><span>Shield Defend + ${id === 'reaver' ? 'Kite' : 'Round'} Shield</span></button><button data-action="parry"><b>Parry</b><span>Shield Defend + Parrying Dagger</span></button></div>
+<div class="status" role="status" aria-live="polite"><strong id="rest">Resting: default idle</strong><span id="action">Ready</span></div>
+<div class="utility"><button id="hit">Take a hit</button><button id="other-turn">Other actor’s turn</button><button id="next-turn">${name}’s next turn</button><button id="skip">Skip to rest</button></div>
+<label class="speed">Playback speed <select id="speed"><option value="900">Slow review · 900 ms</option><option value="260">Combat · 260 ms</option><option value="1600">Frame study · 1600 ms</option></select></label>
+<label><input id="reduced" type="checkbox"> Reduced motion (show resulting stance)</label>
+<button id="scenario">Play guard → attack → hit → next turn</button><p id="scenario-status"></p>
+</section></div>
+<section class="frames-section"><div class="section-heading"><h2>Frame examples</h2><label>Sequence <select id="sequence"><option value="power">Power glow · new</option><option value="attack">Attack</option><option value="shieldBash">Shield bash · new</option><option value="shieldGuard">Shield guard · new</option><option value="parry">Parry · new</option><option value="guard">Guard</option><option value="cast">Cast / idle</option></select></label></div><div id="frames"></div></section>
+<section class="notes"><h2>What to review</h2><p>${id === 'reaver' ? 'The approved upright idle keeps both hands on the pommel and the sword grounded. Attack follows low advance, overhead windup, downward cleave and recovery.' : 'The existing attack uses four painted action frames. Cast skills and Powers deliberately use the existing combat idle stance.'} New shield and dagger poses retain the selected outfit’s painted motif. Menu and portrait poses are separate.</p>
+<p>Shield and parry are three-frame keyframe studies. Powers use three glow phases over the existing combat idle art. Resource auras follow the sprite silhouette on every frame; held guard uses faded blue. The game restores the held guard after an attack or hit; a Power replaces it with cast stance.</p>
+<details><summary>Routing and stance timing</summary><p>Attack types attack. With a physical shield, Shield Bash and shield-profile attacks use shield bash. Powers gather, flare and settle using a silhouette glow. Skills with guard/block defend; other skills cast using idle. Shield Defend uses shield guard or the Parrying Dagger technique when that item is equipped.</p><p>Guard and Power stances survive attacks and hits, then reset at the beginning of the owner turn. These pages use the same routing table as the game. All four classes and all sixteen outfits have matching shield-guard, parry and shield-bash sequences.</p></details></section>
+</main><script type="module" src="preview.mjs"></script></body></html>`);
+}

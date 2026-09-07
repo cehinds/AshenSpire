@@ -1297,16 +1297,21 @@ details.as-detailcard[open] > summary { border-bottom: 1px solid var(--line); ma
 .as-glyph.caret { display: inline-block; transition: transform 140ms; }
 details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { .as-glyph.caret { transition: none; } }
-/* Armoury information folds share one non-shrinking, single-line header. */
+/* Armoury information folds grow with their labels and summaries. */
 .armoury-character-stats > details.character-info-card { flex: 0 0 auto; width: 100%; min-width: 0; }
 details.character-info-card > summary > .character-info-head {
-  height: var(--tap-floor); min-height: var(--tap-floor); flex-wrap: nowrap;
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  height: auto; min-height: var(--tap-floor); gap: 0.3rem 0.75rem;
+  padding-block: 0.7rem; white-space: normal;
 }
 details.character-info-card > summary > .character-info-head > .character-info-label {
-  flex: 0 1 auto; min-width: 0; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  grid-column: 2; min-width: 0; max-width: 100%; font-size: max(1.35rem, calc(15px / var(--ui-zoom, 1)));
+  white-space: normal; overflow-wrap: anywhere; overflow: visible;
 }
 details.character-info-card > summary > .character-info-head > .as-status {
-  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  grid-column: 2; min-width: 0; margin-left: 0; text-align: left;
+  font-size: max(1.2rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.45;
+  white-space: normal; overflow-wrap: anywhere; overflow: visible;
 }
 details.character-info-card > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* ═══ STEPPER — a −/count/+ unit of two tap-floor buttons ═════════════════ */
@@ -2476,17 +2481,17 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .modal:has(.pile-body) .modal-tab { font-size: calc(15px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); }
 
 /* Read-only detail rows: let names claim 10–30%, then wrap the explanation. */
-:is(.modal, .as-tip) div.as-row:has(> .r-label):has(> .as-status),
+:is(.modal, .as-tip) div.as-row:not(.character-info-head):has(> .r-label):has(> .as-status),
 .combatant-inspector-row {
   align-items: flex-start; white-space: normal; gap: 0.75rem;
   font-size: max(1.47rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.45;
 }
-:is(.modal, .as-tip) div.as-row:has(> .as-status) > .r-label,
+:is(.modal, .as-tip) div.as-row:not(.character-info-head):has(> .as-status) > .r-label,
 .combatant-inspector-row:has(> .as-status) > .r-label {
   flex: 0 0 auto; width: max-content; min-width: 10%; max-width: 30%;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-:is(.modal, .as-tip) div.as-row:has(> .r-label) > .as-status,
+:is(.modal, .as-tip) div.as-row:not(.character-info-head):has(> .r-label) > .as-status,
 .combatant-inspector-row > .as-status {
   flex: 1 1 0; min-width: 0; margin-left: 0; font-size: inherit; line-height: inherit;
   white-space: normal; overflow-wrap: anywhere; overflow: visible; text-overflow: clip; text-align: left;
@@ -2553,3 +2558,71 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .inventory-face.as-face > .r-trail { grid-column: 2; grid-row: 2; justify-content: flex-start; width: auto; margin-left: 0; }
 .inventory-face .inventory-name { white-space: normal; overflow-wrap: anywhere; }
 .inventory-face .on { white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* Armoury: one scrolling page, with natural-height equipment and disclosures. */
+.armoury > .modal-body.armoury-shell-body { overflow-y: auto; overflow-x: hidden; padding: max(1.2rem, calc(12px / var(--ui-zoom, 1))); gap: 1.4rem; }
+.armoury .armoury-content, .armoury .armoury-body, .armoury .armoury-left, .armoury .armoury-right, .armoury .armoury-trays { min-height: 0; height: auto; max-height: none; overflow: visible; }
+.armoury .armoury-content { display: flex; flex: 0 0 auto; flex-direction: column; gap: 1.4rem; }
+.armoury .armoury-body { padding: 0; flex: none; gap: 1.6rem; }
+.armoury[data-pane='both'] .armoury-body { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 1.6rem; }
+.armoury[data-pane='both'] .armoury-left, .armoury[data-pane='both'] .armoury-right { grid-column: auto; padding: 0; }
+.armoury[data-pane='inventory'] .armoury-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 1.6rem; }
+.armoury[data-pane='inventory'] .armoury-inventory { grid-column: 2; grid-row: 1; overflow: visible; }
+.armoury .armoury-trays { display: grid; gap: 1.4rem; flex: none; }
+.armoury .armoury-section { min-width: 0; margin: 0; border: 1px solid var(--line); border-radius: var(--r-2); background: var(--panel); overflow: hidden; }
+.armoury .armoury-section-head { display: flex; align-items: center; gap: 0.8rem; padding: 1rem; min-height: calc(44px / var(--ui-zoom, 1)); box-sizing: border-box; color: var(--gold); }
+.armoury .armoury-section-head > :first-child { margin: 0; flex: 1; font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); }
+.armoury summary.armoury-section-head { cursor: pointer; list-style: none; }
+.armoury summary.armoury-section-head::-webkit-details-marker { display: none; }
+.armoury summary.armoury-section-head::after { content: '›'; font-size: 1.8rem; }
+.armoury details[open] > summary.armoury-section-head::after { transform: rotate(90deg); }
+.armoury details[open] > summary.armoury-section-head { border-bottom: 1px solid var(--line-soft); }
+.armoury .armoury-section-content, .armoury .equip-slots { padding: 1rem; }
+.armoury .armoury-help { padding: 0 1rem; margin: 0 0 1rem; color: var(--muted); }
+.armoury .armoury-section :is(.as-btn, .as-status, .as-prose), .armoury .inventory-information { font-size: max(1.2rem, calc(14px / var(--ui-zoom, 1))); }
+.armoury .armoury-position-card.is-locked { padding: 0.8rem; opacity: 0.65; }
+.armoury .armoury-character { display: flex; flex-direction: column; height: auto; gap: 1rem; }
+.armoury .armoury-sprite-pane.as-artwell { flex: none; height: calc(190px / var(--ui-zoom, 1)); min-height: 0; }
+.armoury .armoury-character :is(.armoury-fold, details) > summary { min-height: calc(48px / var(--ui-zoom, 1)); height: auto; }
+.armoury .armoury-character summary :is(.as-status, .fold-summary) { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.armoury .armoury-character summary { overflow: hidden; }
+.armoury .armoury-head .modal-tab { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); }
+.armoury .armoury-position-summary .on { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); }
+.armoury .armoury-position-summary :is(.od, .om) { font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
+.armoury[data-responsive='phone'] .armoury-content, .armoury[data-responsive='phone'] .armoury-body { display: flex; flex-direction: column; gap: 1.2rem; }
+.armoury[data-responsive='phone'] .armoury-left, .armoury[data-responsive='phone'] .armoury-right { width: 100%; flex: none; }
+.armoury[data-responsive='phone'][data-pane='character'] .armoury-right, .armoury[data-responsive='phone'][data-pane='inventory'] .armoury-right { display: none; }
+.armoury[data-responsive='phone'] .armoury-section-head .as-btn { padding-inline: 0.6rem; }
+.armoury details.character-info-card > summary > .character-info-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.3rem 0.8rem; height: auto; min-height: calc(48px / var(--ui-zoom, 1)); padding: 0.7rem; }
+.armoury details.character-info-card > summary > .character-info-head > .character-info-label { width: auto; max-width: none; font-size: max(1.4rem, calc(15px / var(--ui-zoom, 1))); white-space: normal; }
+.armoury details.character-info-card > summary > .character-info-head > .as-status { grid-column: 2; width: 100%; max-width: none; margin: 0; white-space: normal; overflow: visible; overflow-wrap: anywhere; text-align: left; font-size: max(1.2rem, calc(15px / var(--ui-zoom, 1))); }
+.armoury details.character-info-card > summary { height: auto; padding: 0; }
+.armoury .armoury-position-card.is-locked { display: flex; flex-direction: row; align-items: center; gap: 1rem; }
+.armoury .armoury-position-card.is-locked > .glyph { flex: 0 0 2rem; margin: 0; font-size: 1.6rem; }
+.armoury .armoury-position-card.is-locked .on { font-size: max(1.2rem, calc(13px / var(--ui-zoom, 1))); }
+.armoury .armoury-selection-context { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; padding: 1rem; border-bottom: 1px solid var(--line); }
+.armoury .armoury-section, .armoury .armoury-left, .armoury .armoury-right, .armoury .armoury-character-stats, .armoury .character-info-card { box-sizing: border-box; }
+.armoury[data-pane='character'][data-responsive='desktop'] .armoury-character { display: grid; grid-template-columns: minmax(0, .65fr) minmax(0, 1.35fr); align-items: start; }
+.armoury[data-pane='character'][data-responsive='desktop'] .character-summary { grid-column: 1 / -1; }
+.armoury[data-pane='character'][data-responsive='desktop'] .armoury-sprite-pane.as-artwell { height: calc(300px / var(--ui-zoom, 1)); }
+.armoury .armoury-character-stats { overflow: visible; }
+.armoury[data-responsive='phone'] .armoury-body { width: 100%; max-width: 100%; padding: 0; }
+.armoury[data-pane='character'][data-responsive='desktop'] .armoury-character-stats { grid-column: 2; grid-row: 2; }
+.armoury .armoury-position-values strong { white-space: normal; overflow: visible; text-overflow: clip; }
+.armoury summary.armoury-section-head::after { content: '▸'; }
+.armoury details[open] > summary.armoury-section-head::after { content: '▾'; transform: none; }
+.armoury .armoury-sprite-pane.as-artwell { display: flex; align-items: center; justify-content: center; }
+
+/* Dedicated Armoury pages keep deck faces and inventory out of folding trays. */
+.armoury[data-pane='inventory'] .armoury-content { display: flex; }
+.armoury .armoury-inventory, .armoury .armoury-strip { width: 100%; min-width: 0; padding: 0; border: 0; overflow: visible; }
+.armoury .armoury-shell-body > *, .armoury .armoury-trays { flex: 0 0 auto; }
+.armoury-card-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(190px / var(--ui-zoom, 1))), calc(230px / var(--ui-zoom, 1)))); justify-content: center; align-items: start; gap: calc(20px / var(--ui-zoom, 1)); padding: calc(14px / var(--ui-zoom, 1)) 0; }
+.armoury-card-gallery > .card { --card-w: 100%; width: 100%; height: auto; aspect-ratio: 5 / 7; min-height: 0; max-height: none; transform: none; margin: 0; box-sizing: border-box; --card-art-h: 5rem; --card-name-h: 3.5rem; }
+.armoury-card-gallery .cname { font-size: max(1.6rem, calc(16px / var(--ui-zoom, 1))); line-height: 1.2; white-space: normal; }
+.armoury-card-gallery .ctext { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.35; }
+.armoury-card-gallery .cost { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); }
+.armoury-card-gallery .ctype, .armoury-card-gallery .ctag { font-size: max(.9rem, calc(10px / var(--ui-zoom, 1))); }
+.armoury-card-gallery .art { min-height: calc(55px / var(--ui-zoom, 1)); overflow: hidden; }
+.armoury[data-responsive='phone'] .armoury-head [role='tablist'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; }
+.armoury[data-responsive='phone'] .armoury-head .modal-tab { min-width: 0; padding-inline: .5rem; }

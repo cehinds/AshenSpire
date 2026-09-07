@@ -227,6 +227,10 @@ try {
   await until(`!!document.querySelector('.qn-row[data-act="saveQuit"], #ov-quit')`, 'Save and Quit control');
   const saveQuitSelector = await ev(`document.querySelector('.qn-row[data-act="saveQuit"]') ? '.qn-row[data-act="saveQuit"]' : '#ov-quit'`);
   await click(saveQuitSelector);
+  await until(`!!document.querySelector('.startup-gate')`, 'folded title after Save and Quit');
+  check(await ev(`!!document.querySelector('.startup-gate')`),
+    'NEW-SLOT-SAVE-QUIT', 'Save and Quit returns to the folded title threshold');
+  await key('Enter');
   await until(`!!document.querySelector('[data-title-action="load"]')`, 'title after saving slot 3');
   await click('[data-title-action="load"]');
   await until(`!!document.querySelector('.title-menu-modal')`, 'Load Game verification');

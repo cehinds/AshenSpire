@@ -7658,11 +7658,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(layout.combatPower.cards[1].label, 'Magic', 'the primary technique-facing combat value is presented as Magic');
     eq(layout.combatPower.cards[1].fullLabel, 'Magic Power', 'the expanded primary value is presented as Magic Power, not Potency');
     eq(layout.viewModes.grid.label, 'Character', 'the character view has a player-facing authored label');
-    eq(layout.viewModes.rack.label, 'Inventory', 'the inventory view has a player-facing authored label');
+    eq(layout.viewModes.rack.label, 'Equipment', 'equipped gear has its own authored tab');
+    eq(layout.viewModes.hybrid.label, 'Inventory', 'carried items have their own authored tab');
+    eq(layout.viewModes.cards.label, 'Cards', 'the full deck has its own authored tab');
     eq(layout.viewModes.grid.pane, 'character', 'Character promotes the character pane to the full surface');
     eq(layout.viewModes.rack.pane, 'inventory', 'Inventory pairs the armaments and inventory panes');
     eq(layout.viewModes.rack.armaments, 'expanded', 'Inventory exposes the authored Armaments position list');
-    eq(layout.viewModes.hybrid.pane, 'both', 'Hybrid keeps the two panes split');
+    eq(layout.viewModes.hybrid.pane, 'inventory', 'Inventory uses the full surface');
     eq(layout.viewModes.hybrid.armaments, 'expanded', 'Hybrid preserves its currently approved visible Armaments pane');
     eq(layout.inventorySplit.snapRatios.join(','), '0.4,0.5,0.6,0.7', 'Inventory pane widths snap to authored ratios');
     eq(layout.inventorySplit.foldSubcardsBelowPx, 420, 'narrow armament subcards fold at an authored pane width');
