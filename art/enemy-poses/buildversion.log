@@ -2,10 +2,10 @@
   PASS  [B NO SECOND COPY] no second home for the release under index.html, styles, src, assets: no file re-types '0.5.5' outside src/content/index.js (arm 1), and no other site declares a version at all (arm 2, which never compares the value to the release, so it does not go quiet when the value drifts). 0 prose mentions in comments, which assert nothing and are not copies.
   PASS  [C TWO CONSUMERS] title and the startup gate each derive directly; the run HUD carries no stamp
   PASS  [D CONTAINMENT] every stylesheet, css asset and bundled module resolves inside index.html, styles, src, assets
-  PASS  [E SHIPPED STAMP] build/AshenSpire.html carries SOURCE '97d389ed2a', which is this tree's digest, and names its run path 'standalone file'
-  PASS  [F ORDINAL ON THE BOX] build/AshenSpire.html carries ORDINAL '79' and BUILT '2026-09-07', which are buildordinal.json's, counted under release '0.5.5'
-  PASS  [G ORDINAL BELONGS TO THIS TREE] buildordinal.json records digest '97d389ed2a', which is this tree's — the ordinal was computed for this source
-  PASS  [H ORDINAL INCREASES] build/AshenSpire.html is unchanged between fbf0325 and HEAD — no build shipped, so no ordinal was owed (n/a, stated)
+  PASS  [E SHIPPED STAMP] build/AshenSpire.html carries SOURCE '4f749e1f6c', which is this tree's digest, and names its run path 'standalone file'
+  PASS  [F ORDINAL ON THE BOX] build/AshenSpire.html carries ORDINAL '95' and BUILT '2026-09-07', which are buildordinal.json's, counted under release '0.5.5'
+  PASS  [G ORDINAL BELONGS TO THIS TREE] buildordinal.json records digest '4f749e1f6c', which is this tree's — the ordinal was computed for this source
+  PASS  [H ORDINAL INCREASES] build/AshenSpire.html changed between c6f7ace and HEAD within release '0.5.5', and the version rose 0.5.5.94 → 0.5.5.95
 
 buildversion: OK — 8 checks passed
 

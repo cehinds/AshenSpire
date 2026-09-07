@@ -1,16 +1,22 @@
-  artifact       : dist\AshenSpire.html sha256 ae0383a4ecec (41337589 bytes)
-  provenance     : UNCOMMITTED at HEAD d0981a75 — these bytes are in no commit; nothing below is reproducible from a ref.
-  artifact       : AshenSpire.html sha256 ae0383a4ecec (41337589 bytes)
-  provenance     : UNCOMMITTED at HEAD d0981a75 — these bytes are in no commit; nothing below is reproducible from a ref.
+  artifact       : dist\AshenSpire.html sha256 acace4d08c3e (47865645 bytes)
+  provenance     : measured dist\AshenSpire.html@f4bc7fd4 2026-09-07, invoked at HEAD f4bc7fd4 — same commit.
+                   Same commit is not same SOURCE: a bundle built elsewhere and
+                   committed beside its source prints this exact line. Compare the
+                   sha256 above across tools — that is the half this cannot see.
+  artifact       : AshenSpire.html sha256 acace4d08c3e (47865645 bytes)
+  provenance     : measured AshenSpire.html@f4bc7fd4 2026-09-07, invoked at HEAD f4bc7fd4 — same commit.
+                   Same commit is not same SOURCE: a bundle built elsewhere and
+                   committed beside its source prints this exact line. Compare the
+                   sha256 above across tools — that is the half this cannot see.
 verify-shipped: checking the file a player is handed.
 
-  PASS  [NO_ART] build/AshenSpire.html: ASSET_MAP present, 819 entries (floor 64), 825 inlined images
-  PASS  [NO_ART] dist/AshenSpire.html: ASSET_MAP present, 819 entries (floor 64), 825 inlined images
-  PASS  [DRIFT] dist/AshenSpire.html is byte-identical to build/AshenSpire.html (41337589 bytes)
-  PASS  [NO_ART] AshenSpire.html: ASSET_MAP present, 819 entries (floor 64), 825 inlined images
-  PASS  [DRIFT] AshenSpire.html is byte-identical to build/AshenSpire.html (41337589 bytes)
+  PASS  [NO_ART] build/AshenSpire.html: ASSET_MAP present, 979 entries (floor 64), 985 inlined images
+  PASS  [NO_ART] dist/AshenSpire.html: ASSET_MAP present, 979 entries (floor 64), 985 inlined images
+  PASS  [DRIFT] dist/AshenSpire.html is byte-identical to build/AshenSpire.html (47865645 bytes)
+  PASS  [NO_ART] AshenSpire.html: ASSET_MAP present, 979 entries (floor 64), 985 inlined images
+  PASS  [DRIFT] AshenSpire.html is byte-identical to build/AshenSpire.html (47865645 bytes)
   PASS  [STAMPED_TWIN] dist/ tracks only the allowlist [AshenSpire.html, README.md] — no twin, stamped or otherwise
-  note        untracked in dist/ (expected, launcher output): AshenSpire-0.5.5.79.html
+  note        untracked in dist/ (expected, launcher output): AshenSpire-0.5.5.79.html, AshenSpire-0.5.5.95.html
 
 BOUNDARY — what a green from this tool does NOT mean:
   · nothing rendered it. ASSET_MAP present and 101 data: URIs is not "the art appears"
