@@ -15,7 +15,7 @@ import { paintedPresentation } from '../paintedOutfits.js';
 // elements and draw nothing of their own.
 
 import { LOCKED_CLASSES } from '../../content/index.js';
-import { DEFAULT_SPRITE_STYLE, PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
+import { DEFAULT_SPRITE_STYLE, PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, paintedFigure, spritesAreEnabled } from '../assets.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { focusElement } from '../input.js';
 import { mountDisclosure } from '../components/disclosure.js';
@@ -363,7 +363,12 @@ export function mountCustomize(app, {
     portrait.style.borderColor = tintCss(state.tint);
     portrait.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
     const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
-      ? (state.spriteStyle === 'classic' ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'classic') : paintedPresentation(state.classId, state.startingArmourId, 'detail'))
+      ? (state.spriteStyle === 'classic'
+        ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'classic')
+        // Framed, not bare: the chosen sigil rides the figure here as it does
+        // everywhere else a figure is drawn. `classic` draws its own sigil
+        // inside the silhouette, so it keeps going through classSprite().
+        : paintedFigure(state.classId, tintCss(state.tint), state.glyph, state.startingArmourId, 'detail'))
       : null;
     portrait.replaceChildren(sprite || state.glyph);
 

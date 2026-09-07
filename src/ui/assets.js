@@ -295,6 +295,95 @@ function renderedSpriteUrl(classId, tintId) {
   return assetUrl(`assets/sprites/${classId}_${t}.webp`);
 }
 
+// THE CHEST MEDALLION, APPLIED WHATEVER THE STYLE DRAWS.
+//
+// It is a module-level helper rather than a closure inside classSprite()
+// BECAUSE A CLOSURE IS ONLY REACHABLE FROM ONE FUNCTION, and that is exactly
+// how it went missing twice. It was inline after the painted `img` (reachable
+// from one style), then a closure over `el` (reachable from one function) —
+// and then #740/#743 gave the painted outfits their own early return, and
+// character creation began drawing `paintedPresentation()` directly. Both new
+// figure paths returned before the closure could run, so the chosen sigil was
+// invisible on the default figure AND at the surface where it is chosen. The
+// caller hands in the frame; anything that draws a figure can ask for one.
+//
+// It used to be written inline after the painted `img`, which made it the
+// ONE style that carried the player's chosen sigil: `animated` returns as
+// soon as it has a pose stage, and since #700 `animated` is the default
+// everywhere a character is made. So the sigil a player picked was invisible
+// on the default figure — not because its anchor was missing but because the
+// code path that draws it was never reached. A sigil is a fact about the
+// CHARACTER, not about which art style renders them, so it hangs off the
+// frame here and every style that shows a figure gets it.
+//
+// WHERE IT SITS IS PER CLASS AND MEASURED (src/content/classArtAnchors.js).
+// It was one shared `top:53%` for all four, which is a claim that every
+// figure keeps its chest at the same height — true of the Blender builders,
+// one rig in four palettes, and false of four separately painted figures. At
+// 53% the disc landed on the Starseer's face under the hat brim and inside
+// the Herald's hood opening. No anchor means NO OVERLAY: a default would be
+// the same shared assumption, and it would cover an unmeasured figure's face
+// in silence rather than showing up as a missing medallion.
+//
+// NOT ON THE SVG FALLBACK PATH, deliberately: `build(tint, sigil)` draws the
+// sigil inside the silhouette itself, so adding this would be two sigils.
+export function medallionOverlay(classId, tint, sigil) {
+  const anchor = medallionAnchor(classId);
+  if (!sigil || !anchor) return null;
+  const med = document.createElement('span');
+  // NO COUNTER-MIRROR, and its absence is the fix rather than an omission.
+  // This used to carry `scaleX(-1)` to undo the mirror it inherited from
+  // `.class-sprite` — right for the ART, wrong for a GLYPH, since mirrored
+  // text reads as a rendering fault. But it hardcoded "my parent is
+  // mirrored", and the character-creation figure well cancels that mirror,
+  // so there the counter-mirror WAS the fault it was written to prevent.
+  // The medallion sits outside the facing layer: it inherits no mirror, so
+  // it needs no undoing, on any surface.
+  //
+  // A SHARE OF THE FRAME, NOT A PIXEL COUNT. 22px in a 190px frame was 11.6%
+  // of it whatever the art did, which covered a full-body chest from collar
+  // to forearm and is why three of the four anchors were once recorded as
+  // unplaceable. 7% of the frame's height is a chest-sized jewel on these
+  // figures and stays one in any frame this is drawn in. The glyph rides the
+  // disc's own size (`cqh` against the disc as a container) so it cannot
+  // drift out of proportion with it.
+  med.style.cssText =
+    `position:absolute;left:${anchor.x}%;top:${anchor.y}%;transform:translate(-50%,-50%);`
+    + 'height:7%;aspect-ratio:1;border-radius:50%;background:#14100c;'
+    + `border:1.5px solid ${tint};box-sizing:border-box;container-type:size;`
+    + 'display:flex;align-items:center;justify-content:center;color:#e8dcc0;';
+  // The glyph is its own element so the disc can be a size container: a
+  // container's own font-size cannot be expressed in its own `cq` units.
+  const mark = document.createElement('span');
+  mark.textContent = sigil;
+  mark.style.cssText = 'font-size:62cqh;line-height:1;';
+  med.appendChild(mark);
+  return med;
+}
+
+/** A painted figure in a frame that wears the character's sigil, or null.
+ *
+ * Character creation drew `paintedPresentation()` straight into the figure
+ * well after #740/#743, and that returns a bare `<img>` — nothing an overlay
+ * can hang off, so the surface where the player PICKS a sigil was the one
+ * surface that never showed it. The frame and the medallion travel together
+ * here rather than being re-assembled per caller.
+ */
+export function paintedFigure(classId, tint, sigil, armourId = 'default', pose = 'detail') {
+  const art = paintedPresentation(classId, armourId, pose);
+  if (!art) return null;
+  const frame = document.createElement('div');
+  frame.className = 'class-sprite painted-outfit';
+  // Fills the well it is put in rather than classSprite()'s fixed 150x190:
+  // the creation well is 16rem x 20rem and scales with Text size, and the
+  // medallion is a share of whatever frame it lands in.
+  frame.style.cssText = 'width:100%;height:100%;position:relative;';
+  frame.appendChild(art);
+  const med = medallionOverlay(classId, tint, sigil);
+  if (med) frame.appendChild(med);
+  return frame;
+}
+
 // Player sprite styles: 'animated' (the default pose-stage figure), 'rendered'
 // (the painted class figure, WebP), 'classic' (inline SVG silhouette), and
 // 'glyph' (sigil-in-a-panel). Chosen per character.
@@ -304,6 +393,12 @@ function renderedSpriteUrl(classId, tintId) {
 export function classSprite(classId, tint, sigil, tintId, style, figureId, armourId = 'default') {
   const build = CLASS_SVG[classId];
   if (!build) return null;
+  // Hands the frame in: the painted branch below has its own frame, and every
+  // later path draws into `el`. Whichever frame is returned wears the sigil.
+  const applyMedallion = (frame) => {
+    const med = medallionOverlay(classId, tint, sigil);
+    if (med) frame.appendChild(med);
+  };
   if (style === 'animated' || style === 'rendered') {
     const stage = style === 'animated' ? createPaintedStage(classId, armourId) : null;
     const art = stage?.el || paintedPresentation(classId, armourId);
@@ -313,6 +408,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
       host.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';
       host.appendChild(art);
       if (stage) registerStage(host, stage);
+      applyMedallion(host);
       return host;
     }
   }
@@ -344,62 +440,6 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   facing.className = 'facing';
   facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;';
   el.appendChild(facing);
-
-  // THE CHEST MEDALLION, APPLIED WHATEVER THE STYLE DRAWS.
-  //
-  // It used to be written inline after the painted `img`, which made it the
-  // ONE style that carried the player's chosen sigil: `animated` returns as
-  // soon as it has a pose stage, and since #700 `animated` is the default
-  // everywhere a character is made. So the sigil a player picked was invisible
-  // on the default figure — not because its anchor was missing but because the
-  // code path that draws it was never reached. A sigil is a fact about the
-  // CHARACTER, not about which art style renders them, so it hangs off the
-  // frame here and every style that shows a figure gets it.
-  //
-  // WHERE IT SITS IS PER CLASS AND MEASURED (src/content/classArtAnchors.js).
-  // It was one shared `top:53%` for all four, which is a claim that every
-  // figure keeps its chest at the same height — true of the Blender builders,
-  // one rig in four palettes, and false of four separately painted figures. At
-  // 53% the disc landed on the Starseer's face under the hat brim and inside
-  // the Herald's hood opening. No anchor means NO OVERLAY: a default would be
-  // the same shared assumption, and it would cover an unmeasured figure's face
-  // in silence rather than showing up as a missing medallion.
-  //
-  // NOT ON THE SVG FALLBACK PATH, deliberately: `build(tint, sigil)` draws the
-  // sigil inside the silhouette itself, so adding this would be two sigils.
-  const applyMedallion = () => {
-    const anchor = medallionAnchor(classId);
-    if (!sigil || !anchor) return;
-    const med = document.createElement('span');
-    // NO COUNTER-MIRROR, and its absence is the fix rather than an omission.
-    // This used to carry `scaleX(-1)` to undo the mirror it inherited from
-    // `.class-sprite` — right for the ART, wrong for a GLYPH, since mirrored
-    // text reads as a rendering fault. But it hardcoded "my parent is
-    // mirrored", and the character-creation figure well cancels that mirror,
-    // so there the counter-mirror WAS the fault it was written to prevent.
-    // The medallion sits outside the facing layer: it inherits no mirror, so
-    // it needs no undoing, on any surface.
-    //
-    // A SHARE OF THE FRAME, NOT A PIXEL COUNT. 22px in a 190px frame was 11.6%
-    // of it whatever the art did, which covered a full-body chest from collar
-    // to forearm and is why three of the four anchors were once recorded as
-    // unplaceable. 7% of the frame's height is a chest-sized jewel on these
-    // figures and stays one in any frame this is drawn in. The glyph rides the
-    // disc's own size (`cqh` against the disc as a container) so it cannot
-    // drift out of proportion with it.
-    med.style.cssText =
-      `position:absolute;left:${anchor.x}%;top:${anchor.y}%;transform:translate(-50%,-50%);`
-      + 'height:7%;aspect-ratio:1;border-radius:50%;background:#14100c;'
-      + `border:1.5px solid ${tint};box-sizing:border-box;container-type:size;`
-      + 'display:flex;align-items:center;justify-content:center;color:#e8dcc0;';
-    // The glyph is its own element so the disc can be a size container: a
-    // container's own font-size cannot be expressed in its own `cq` units.
-    const mark = document.createElement('span');
-    mark.textContent = sigil;
-    mark.style.cssText = 'font-size:62cqh;line-height:1;';
-    med.appendChild(mark);
-    el.appendChild(med);
-  };
 
   const fallbackToSvg = () => {
     facing.innerHTML = build(tint, sigil);
@@ -437,7 +477,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
       // rides `.class-sprite.animated`, which is what that search matches.
       facing.appendChild(stage.el);
       registerStage(el, stage);
-      applyMedallion();
+      applyMedallion(el);
       return el;
     }
   }
@@ -452,7 +492,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   img.style.cssText = 'width:100%;height:100%;object-fit:contain;image-rendering:auto;';
   img.addEventListener('error', fallbackToSvg); // dist / file:// → SVG
   facing.appendChild(img);
-  applyMedallion();
+  applyMedallion(el);
   return el;
 }
 
