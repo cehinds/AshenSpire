@@ -144,15 +144,16 @@ build changes; the visible build stamp ties each image to the tree that drew it.
 |---|---|---|
 | [![Current development title screen](docs/preview/title.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development act map](docs/preview/map.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development combat](docs/preview/combat.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) |
 
-The Armoury opens on Equipment, with Character and Overview alongside it. Select a
-gear card to inspect it or choose Change to browse compatible items. Show all items
-clears the slot filter. Each view scrolls naturally; secondary information unfolds
-in place without resizing panes.
+The Armoury has dedicated Character, Equipment, Inventory and Cards tabs. Stats
+live in Character alongside the figure. Cards displays the complete deck as large,
+separate card faces. Choose Change on equipped gear to browse compatible inventory
+items; Show all items clears the filter. Each tab uses one natural page scroll.
 
 Armoury previews: [Equipment](docs/preview/armoury-simple-equipment-1440.png),
 [Character](docs/preview/armoury-simple-character-1440.png),
-[Overview](docs/preview/armoury-simple-overview-1440.png), and
-[phone](docs/preview/armoury-simple-equipment-390.png).
+[Inventory](docs/preview/armoury-simple-inventory-1440.png),
+[Cards](docs/preview/armoury-simple-cards-1440.png), and
+[phone cards](docs/preview/armoury-simple-cards-390.png).
 The [menu control audit](docs/preview/menu-control-audit.md) records tested routes
 and remaining coverage limits.
 

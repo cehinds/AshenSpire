@@ -42,7 +42,7 @@ inputRuntime.setKeyBindings({ deck: 'x', relics: 'x', stats: 'z' });
 const duplicateBindingRefused = inputRuntime.actionDestinationForEvent({ key: 'x' }) === null;
 const cardsPlan = equipmentRuntime.armouryDestinationPlan('cards');
 cardsPlan.view = 'rack';
-const planCopyIsolated = equipmentRuntime.armouryDestinationPlan('cards')?.view === 'grid';
+const planCopyIsolated = equipmentRuntime.armouryDestinationPlan('cards')?.view === 'cards';
 const runtimeProjectionOk = JSON.stringify(runtimeReceipts) === JSON.stringify([
   { actionId: 'deck', direct: 'cards', rebound: { actionId: 'deck', destination: 'cards' } },
   { actionId: 'relics', direct: 'equipment', rebound: { actionId: 'relics', destination: 'equipment' } },
@@ -220,7 +220,7 @@ function contract(s, { paths = changedPaths() } = {}) {
     {
       code: 'EQUIPMENT-ADAPTER',
       ok: /export function armouryDestinationPlan\(destination\)/.test(s.equipment)
-        && /cards: Object\.freeze\(\{ view: 'grid', region: 'cards' \}\)/.test(s.equipment)
+        && /cards: Object\.freeze\(\{ view: 'cards', region: null \}\)/.test(s.equipment)
         && /equipment: Object\.freeze\(\{ view: 'rack', region: null \}\)/.test(s.equipment)
         && /character: Object\.freeze\(\{ view: 'grid', region: null \}\)/.test(s.equipment)
         && /const destinationPlan = destination \? armouryDestinationPlan\(destination\) : null;/.test(mountPrefix)
@@ -297,7 +297,7 @@ if (process.argv.includes('--selftest')) {
     })],
     ['missing destination subject', 'EQUIPMENT-ADAPTER', (s) => ({
       ...s,
-      equipment: s.equipment.replace("view: 'grid', region: 'cards'", "view: 'grid', region: 'missing'"),
+      equipment: s.equipment.replace("view: 'cards', region: null", "view: 'grid', region: 'missing'"),
     })],
     ['opening mutates the run deck', 'MUTATION-FREE-OPEN', (s) => ({
       ...s,

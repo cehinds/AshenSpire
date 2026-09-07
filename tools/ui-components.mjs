@@ -143,7 +143,8 @@ export function findings(r) {
       || /document\.createElement\('div'\);\s*\n\s*box\.className = `combatant/.test(r.combat)) {
     bad.push('C4 player and enemy no longer consume one Combatant Frame component');
   }
-  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.quickSettings + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels + r.menuComponents + r.armouryComponents)
+  // The catalogue-only armour image resolver reads no run or combat state.
+  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.quickSettings + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels.replace("import { armourMenuAsset } from '../../model/paintedOutfitArt.js';", '') + r.menuComponents + r.armouryComponents)
       || /\b(run|combat)\s*=/.test(r.hud + r.quickSettings + r.frame + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels)) {
     bad.push('C5 reusable component modules crossed the simulation-state boundary');
   }
@@ -333,8 +334,8 @@ export function findings(r) {
       || /\btrayModel\s*\(/.test(r.armouryModels)
       || !/const regionModels = regions\.map\([\s\S]*return item;/.test(r.armouryModels)
       || !/renderArmouryPanel\([\s\S]*markUiComponent\(wrap\.querySelector\('\.armoury-inventory'\)/.test(r.armouryComponents)
-      || !/el\('details', \{ class: 'armoury-section armoury-disclosure'/.test(r.equipment)
-      || !/section\.addEventListener\('toggle'/.test(r.equipment)
+      || !/view === 'cards'/.test(r.equipment)
+      || !/gallery\.appendChild\(card\)/.test(r.equipment)
       // THE EDGE TABLE MOVED, AND THE ASSERTION FOLLOWED IT RATHER THAN BEING
       // DROPPED. What C15 has always guarded is that a tray's mark is EDGE-AWARE
       // and frozen — four edges, each with a closed and an open answer — not
@@ -509,7 +510,7 @@ function selftest() {
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
-    ['remove native Armoury disclosure', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace("el('details', { class: 'armoury-section armoury-disclosure'", "el('div', { class: 'armoury-section armoury-disclosure'") })],
+    ['remove Armoury card gallery', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('gallery.appendChild(card)', 'gallery.remove()') })],
     ['remove class resource renderer', 'C16 ', (r) => ({ ...r, creationCards: r.creationCards.replace('export function classResourceGrid', 'function classResourceGrid') })],
     ['remove co-op quick settings', 'C17 ', (r) => ({ ...r, coop: r.coop.replace('wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });', '') })],
     ['detach startup from its component model', 'C18 ', (r) => ({ ...r, startupGateModel: r.startupGateModel.replace('export function startupGateModel', 'function startupGateModel') })],
