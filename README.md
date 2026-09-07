@@ -95,7 +95,7 @@ player-facing changes. The current Smith modal write-up is
 **[CHANGELOG.md](CHANGELOG.md)** — what changed, newest first, each entry
 naming the pull request that landed it and the build number it shipped in.
 
-**[Working rules](AGENTS.md)** — how contributors and AI agents work here:
+**[Working rules](CONTRIBUTING.md)** — how contributors and AI agents work here:
 one task per branch, draft pull requests into `dev`, and only the owner merges
 to `main`.
 
