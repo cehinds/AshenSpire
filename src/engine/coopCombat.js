@@ -408,6 +408,7 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
 
   for (const eff of def.effects || []) C.enqueue({ effect: eff, source: p, owner: p, target, card: cardRef, meta });
   C.emit('cardPlayed', {
+    playerId: C.playerKey, profileId: inst.profileId, upgraded: inst.upgraded, sourceArmamentId: inst.sourceArmamentId,
     cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: def.type,
     targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,

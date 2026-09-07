@@ -36,7 +36,11 @@
 // this screen supplies is the VIEWER — who `me` is, and what `me` voted for.
 
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
-import { playPoseOn } from '../services/PoseAnimator.js';
+import { playPoseOn, stageFor } from '../services/PoseAnimator.js';
+import { resourceAura } from '../combatAura.js';
+import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
+import { equippedPieces, figureSpec } from '../../model/loadout.js';
+import { tagService } from '../../model/tagService.js';
 import { renderCard } from '../components/card.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
@@ -83,6 +87,31 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
   let armedFriendlyCard = null; // friendly-targeted card instanceId awaiting a legal seat
   let prevCombat = null; // last combat scene, for snapshot-diff FX
+  const combatRests = new Map();
+  let animationReceiptSeq = 0;
+  let pendingAnimations = new Map();
+  function prepareCombatAnimations(scene) {
+    pendingAnimations = new Map();
+    const seq = Number(scene.receiptSeq) || 0;
+    if (seq <= animationReceiptSeq) return;
+    animationReceiptSeq = seq;
+    for (const event of scene.events || []) {
+      const ownerId = event.playerId;
+      if (!ownerId) continue;
+      const member = snap.party.find(member => member.id === ownerId);
+      let plan;
+      if (event.type === 'cardPlayed' && member) {
+        const definition = resolveCard(registries, { cardId: event.cardId, profileId: event.profileId, upgraded: event.upgraded });
+        const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
+        plan = resolveCombatAnimation({ ...definition, cardTags: tags, sourceArmamentId: event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId));
+        const hpSpent = (scene.events || []).filter(e => e.type === 'hpLost' && e.targetId === ownerId && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
+        plan.aura = resourceAura(definition, { ...event, hpSpent });
+        pendingAnimations.set(ownerId, plan);
+      }
+      combatRests.set(ownerId, combatRestAfterEvent(combatRests.get(ownerId) || 'idle', event, ownerId, plan));
+      if (event.type === 'playerTurnStart') pendingAnimations.delete(ownerId);
+    }
+  }
   let pacing = false; // an enemy-turn replay is holding the render
   let pendingSnaps = []; // every unrendered authoritative frame, causal order
   let latestWireSnap = null; // newest wire state, even while the old board paces
@@ -118,22 +147,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   // Every game intent carries the ACTIVE seat (`as`); the server validates
   // ownership and falls back to the connection's main seat.
-  // The Animated style is offered in the lobby, so a co-op figure has to swing
-  // here too. Nothing on the wire names an attacker — the digest carries no
-  // cardPlayed, and receipts name only the target — but the seat playing the card
-  // is known right here, so the swing rides the local play as it is sent.
+  // Animation follows authoritative cardPlayed receipts below, never an
+  // optimistic local intent. Remote seats and repeated resyncs use the same path.
   const send = (obj) => {
-    if (obj.t === 'playCard') swingSeat(obj.cardInstanceId);
     return conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
-  };
-  const swingSeat = (cardInstanceId) => {
-    const seat = app.querySelector(`[data-seat="${CSS.escape(String(me))}"] .sprite`);
-    if (!seat) return;
-    const sc = latestWireSnap?.scene;
-    const mine = sc?.kind === 'combat' ? (sc.players || []).find((pl) => pl.id === me) : null;
-    const card = (mine?.hand || []).find((c) => c.instanceId === cardInstanceId);
-    const def = card ? cardDef(card) : null;
-    playPoseOn(seat, def && def.type === 'attack' ? 'attack' : 'guard', 420);
   };
 
   const sendFlaskUse = ({ slot = null, targetId = undefined, chargeKind = null } = {}) => send({
@@ -327,6 +344,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
+    app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     releaseFlaskKeyClaim();
     removeEventListener('keydown', flaskKeyHandler, true);
     removeEventListener('keydown', keyHandler);
@@ -375,6 +393,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function render() {
     if (!snap) return;
+    app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
+    if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
+    else { combatRests.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); }
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
@@ -545,7 +566,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.dataset.seat = p.id;
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId));
+      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId));
+      stageFor(sprite)?.setRestPose?.(combatRests.get(p.id) || 'idle');
       const bb = blockBadge(p.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       // THE SEAT LINE: the tinted name (the identity span hudbars reads,
@@ -715,6 +737,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         ? app.querySelector(`.coop-seat[data-friendly-target][data-seat="${CSS.escape(focusedFriendlySeat)}"]`)
         : null;
       if (!preservedTarget || !focusElement(preservedTarget)) focusFirst('.coop-seat[data-friendly-target]');
+    }
+    for (const [ownerId, plan] of pendingAnimations) {
+      const stage = stageFor(app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`));
+      stage?.play(stage.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle', 420, plan.aura);
     }
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
