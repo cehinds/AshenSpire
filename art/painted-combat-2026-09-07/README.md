@@ -56,3 +56,5 @@ New paintings were generated with built-in `image_gen`, using the owner's attach
 This package contains inspected artwork and standalone preview pages. It does not install the images in the game or change gameplay or shared UI files. Game integration remains separate work and needs to account for the latest Armoury UI changes. Standalone preview validation is recorded under `inspection/`; branch promotion and repository checks are recorded on its GitHub pull requests. In-game validation has not been performed for this package.
 
 Reaver full-body menu and detail images use the same approved upright, hands-on-hilt sword-rest stance across all four outfits. Close-up portraits remain unchanged; earlier poses remain in the source library.
+
+Reaver close-up portraits follow the selected Warden bust pose: upright helmet angled slightly right, both shoulders visible, chest-up crop. Three replacement portrait sources are retained in portrait-sources; Warden retains the approved original.

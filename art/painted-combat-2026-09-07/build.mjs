@@ -2,7 +2,7 @@ import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
-import {decodePng,encodePng,contentBox,resample} from '../../tools/concept-cutout.mjs';
+import {decodePng,encodePng,contentBox,resample,cutout} from '../../tools/concept-cutout.mjs';
 const here=dirname(fileURLToPath(import.meta.url)), repo=join(here,'../..');
 const jobs=JSON.parse(readFileSync(join(here,'requirements.json'),'utf8')).outfits;
 const poses=['stand','guard','attack1','attack2','attack3','attack4','hit','detail','portrait'];
@@ -88,6 +88,10 @@ for(const job of jobs){
   writeFileSync(join(here,file),encodePng(640,640,px));
   const box=contentBox({width:640,height:640,bpp:4,px});
   frames.push({pose:r.pose,sourcePose:r.from,sourceSheet:r.sourceSheet,file,box,anchor:[320,600]});
+ }
+ if(choices[job.id]?.portraitSource){
+  const sourceSheet=choices[job.id].portraitSource;
+  raw.portrait={sourceSheet,img:{...cutout(decodePng(readFileSync(join(here,sourceSheet)))),bpp:4}};
  }
  const menu=join(here,'menu',job.id);mkdirSync(menu,{recursive:true});
  for(const p of ['stand','detail','portrait']){

@@ -31,7 +31,8 @@
     "menuMapping": {
       "stand": "stand",
       "detail": "stand"
-    }
+    },
+    "portraitSource": "portrait-sources/reaver.png"
   },
   "reaver-vigil": {
     "mapping": {
@@ -41,7 +42,8 @@
     "menuMapping": {
       "stand": "stand",
       "detail": "stand"
-    }
+    },
+    "portraitSource": "portrait-sources/reaver-vigil.png"
   },
   "reaver-oathsworn": {
     "mapping": {
@@ -51,7 +53,8 @@
     "menuMapping": {
       "stand": "swordRest",
       "detail": "swordRest"
-    }
+    },
+    "portraitSource": "portrait-sources/reaver-oathsworn.png"
   },
   "reaver-warden": {
     "mapping": {

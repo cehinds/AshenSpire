@@ -22,3 +22,5 @@ The accepted combat set depicts rightward attacks, guards and right-facing recoi
 The exported canvases keep a fixed scale per outfit and shared ground anchor. These are a few key drawings per action; timing is provisional and has not been tested in the game engine. Some extracted edges retain a thin pale fringe visible when enlarged. Frame-level consistency is inspected, but final in-game size, background contrast and animation timing still need integration review.
 
 Reaver menu revision: inspected all four full-body stand exports against the selected sword-rest reference. Stand and detail now share that stance in each outfit; close-up portraits and combat files are unchanged. Asset validation passed (112 combat files and 208 state decodes).
+
+Reaver portrait revision: visually inspected new Base, Vigil and Oathsworn 512px transparent busts alongside the approved Warden portrait. All use an upright helmet, slight right turn, visible shoulders and chest crop. Existing source sheets preserve the earlier portraits. Exported using the repository concept-cutout pipeline; menu full-body and combat art unchanged.
