@@ -645,7 +645,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
    leaves three lines of text, two leave two. Both full is the only case that
    truncates, and a truncated face carries the chevron (hover: the full text;
    click: the detail door). */
-.card, .as-card {
+:root {
   --card-w: 14rem;
   --card-name-h: 2.6rem;      /* FIXED. two lines' worth of room, one line of type */
   --card-art-h: 6rem;         /* FIXED. */
@@ -654,6 +654,8 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
   --card-body-rows: 4;
   --card-pad: 0.8rem;
   --card-gap: 0.4rem;
+}
+.card, .as-card {
   position: relative;
   box-sizing: border-box;
   width: var(--card-w);
@@ -1039,14 +1041,15 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .equip-chip .ec-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
 .equip-chip .ec-equipped { color: var(--equip-equipped-tag-color, var(--gold)); border-color: var(--equip-equipped-tag-color, var(--gold)); }
 
-/* ═══ SHRINE — four OptionCards in one column, two of them fold open ═══════ */
-/* Every card is the same fixed box (`--shrine-card-h`): rest and smith clamp
-   their copy to two lines; the folds are that box closed and grow downward
-   open, never sideways. */
-.shrine-option-list { --shrine-card-h: 8.4rem; width: min(100%, 44rem); margin-inline: auto; flex-direction: column; align-items: stretch; gap: 1.05rem; }
-.shrine-option-list > .class-pick { width: 100%; box-sizing: border-box; }
-.shrine-option-list > #rest-opt, .shrine-option-list > #smith-opt { height: var(--shrine-card-h); }
-.shrine-option-list > #rest-opt p, .shrine-option-list > #smith-opt p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* ═══ SHRINE — equal-height option headers, with expanding fold content ═══ */
+.shrine-option-list, .shrine-option-grid {
+  --shrine-card-h: max(6rem, min(var(--shrine-folded-card-height, 10vh), var(--shrine-folded-card-max-height, 8.4rem)));
+}
+.shrine-option-list { width: min(100%, 44rem); margin-inline: auto; flex-direction: column; align-items: stretch; gap: 1.05rem; }
+.shrine-option-list > .class-pick { width: 100%; }
+:is(.shrine-option-list, .shrine-option-grid) > .class-pick { box-sizing: border-box; height: var(--shrine-card-h); }
+:is(.shrine-option-list, .shrine-option-grid) > .shrine-fold[open] { height: auto; }
+:is(.shrine-option-list, .shrine-option-grid) > .class-pick p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .shrine-option-grid { align-items: stretch; }
 .shrine-fold { display: block; padding: 0; overflow: hidden; text-align: left; }
 .shrine-fold > summary { display: flex; gap: 1.5rem; align-items: center; height: calc(var(--shrine-card-h) - 2px); box-sizing: border-box; padding: 1.28rem 1.5rem; cursor: pointer; list-style: none; }
@@ -1463,7 +1466,59 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-candidate-card .on { white-space: normal; text-align: center; justify-content: center; font-size: 1.45rem; }
 .smith-candidate-card .smith-item-type-row, .smith-candidate-card .smith-weapon-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3rem; }
 .smith-candidate-card .smith-item-type-row > .as-tag { color: var(--gold); }
-.smith-candidate-card > .smith-weapon-count { position: absolute; top: 0.6rem; left: 0.6rem; }
+.smith-candidate-card > .smith-weapon-count { position: absolute; top: 0.6rem; left: 0.6rem; z-index: 1; }
+/* Item choices share the standard card box. Full outfit poses use the tall
+   art space without cropping; names and type information keep a fixed footer. */
+.smith-card-list.as-options.grid,
+.as-options:has(> .equipment-armor-card) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--card-w));
+  justify-content: center;
+}
+.smith-card-list.as-options.grid > .smith-candidate-card,
+.as-options > .equipment-armor-card.as-card {
+  width: var(--card-w);
+  min-width: var(--card-w);
+  flex: 0 0 var(--card-w);
+  padding: var(--card-pad);
+  gap: var(--card-gap);
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+}
+.smith-candidate-card.as-card > .as-artwell,
+.equipment-armor-card.as-card > .as-artwell {
+  position: relative;
+  flex: 1 1 0;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: auto;
+}
+.smith-candidate-card.as-card > .as-artwell > img,
+.equipment-armor-card.as-card > .as-artwell > img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: contain; object-position: center bottom;
+}
+.smith-candidate-card.as-card > .ob,
+.equipment-armor-card.as-card > .ob {
+  flex: 0 0 6rem;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  align-items: center;
+  text-align: center;
+}
+.smith-candidate-card.as-card .on,
+.equipment-armor-card.as-card .on {
+  font-size: 1.3rem; line-height: 1.25; min-height: 1.65rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.equipment-armor-card.as-card .od { font-size: 1.1rem; line-height: 1.3; }
+.equipment-armor-card.as-card > .ob { flex-basis: 7.2rem; }
+.equipment-armor-card.as-card .on { display: block; max-width: 100%; }
+.equipment-armor-card.as-card .ec-tags { justify-content: center; }
 .smith-preview-region { display: flex; flex-direction: column; overflow: auto; padding: var(--modal-inset); background: var(--panel); }
 .smith-preview-card { width: 100%; gap: 0; }
 /* The summary: the selected item's name and tier, then the stone cost as a
