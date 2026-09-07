@@ -765,9 +765,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     // Flask selection is inert. Every slot opens one shared action plan; only
     // its explicit Use row may spend a charge or enter targeting mode.
-    const chargeFlasks = $('.topbar .hud-charge-flasks');
     const potions = $('.topbar .hud-potions');
-    chargeFlasks.innerHTML = '';
     potions.innerHTML = '';
     // THE KEYCAP IS DERIVED, NEVER TYPED: the live binding and the connected
     // device, so a rebind moves the cap with the key and a pad shows its glyph.
@@ -796,7 +794,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       appendFlaskHotkey(el, hotkeySlot);
       attachTooltip(el, () => flaskTooltipHtml(def, { charges: current }));
       el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current, charges: current, useActionId: hotkeySlot < 3 ? `flask${hotkeySlot + 1}` : null }));
-      chargeFlasks.appendChild(el);
+      potions.appendChild(el);
     }
     p.flasks.forEach((f, slotIndex) => {
       const def = registries.flasks.get(f.flaskId);
@@ -817,7 +815,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot: slotIndex, useActionId: (CHARGE_FLASK_KINDS.length + slotIndex) < 3 ? `flask${CHARGE_FLASK_KINDS.length + slotIndex + 1}` : null }));
       potions.appendChild(el);
     });
-    potions.closest('.shared-hud').dataset.hasUtilityPotions = potions.children.length ? 'true' : 'false';
+    potions.closest('.shared-hud').dataset.hasUtilityPotions = p.flasks.length ? 'true' : 'false';
   }
 
   // #61 M4 — ONE meter grammar for every threshold-proc row, data-driven so a

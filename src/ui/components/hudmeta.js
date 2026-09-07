@@ -5,8 +5,9 @@
 // a visually detached item rail:
 //   1. class left, Cinders centred, Act/Floor right;
 //   2. the meters (components/resbars.js, the kit Meter) and, on the right,
-//      a compact 2 × 2 square of Armoury, Menu, HP and MP controls;
-//   below the band: relic Slots left and carried-potion Slots right.
+//      full-height Armoury and Menu controls;
+//   below the band: relic Slots left and every potion control right. Crimson
+//      and Azure live there too, without becoming utility inventory entries.
 // The character name, portrait, sigil, screen-context line, build/seed/source,
 // fullscreen and music remain off this compact band.
 // Each function below says why its own is gone.
@@ -106,7 +107,6 @@ export function quickAccessPanelHtml(model) {
       ${button(armoury)}
       ${button(menu, { 'data-action-hint': 'menu' })}
     </div>
-    <div class="flasks hud-charge-flasks as-cluster" aria-label="Healing and mana flasks"></div>
   </section>`;
 }
 
