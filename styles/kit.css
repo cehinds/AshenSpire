@@ -2566,3 +2566,4 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .armoury-position-values strong { white-space: normal; overflow: visible; text-overflow: clip; }
 .armoury summary.armoury-section-head::after { content: '▸'; }
 .armoury details[open] > summary.armoury-section-head::after { content: '▾'; transform: none; }
+.armoury .armoury-sprite-pane.as-artwell { display: flex; align-items: center; justify-content: center; }
