@@ -162,7 +162,7 @@ if (process.argv.includes('--selftest')) {
         name: 'the row rises into the hand-area and the cards lie on it',
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat { --action-row-drop: 6.4rem; }',
+          find: '.combat { --action-row-drop: 7.6rem; }',
           replace: '.combat { --action-row-drop: -5rem; }',
         }],
         expectRed: /BAD\s+H1 /,
@@ -416,8 +416,13 @@ if (process.argv.includes('--selftest')) {
         name: 'a stylesheet makes the root element opacity:0 and every control keeps its box',
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat { --action-row-drop: 6.4rem; }',
-          replace: '.combat { --action-row-drop: 6.4rem; }\nhtml { opacity: 0; }',
+          // Anchored on the section heading, not on the `--action-row-drop`
+          // declaration it used to patch: this plant needs any injection site in
+          // combat.css, and pinning it to a MEASURED constant meant every
+          // re-measure of the reservation drifted a plant that has nothing to do
+          // with the reservation (it did, at 6.4rem -> 7.6rem).
+          find: '/* ---------- hand + controls ---------- */',
+          replace: '/* ---------- hand + controls ---------- */\nhtml { opacity: 0; }',
         }],
         expectRed: /BAD\s+H3 /,
       },

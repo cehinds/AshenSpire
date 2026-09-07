@@ -1,0 +1,34 @@
+[
+  {
+    "class": "reaver",
+    "outfits": 4,
+    "portraits": 4,
+    "combatPoses": 28,
+    "sources": 13,
+    "overflow": false
+  },
+  {
+    "class": "rogue",
+    "outfits": 4,
+    "portraits": 4,
+    "combatPoses": 28,
+    "sources": 14,
+    "overflow": false
+  },
+  {
+    "class": "starseer",
+    "outfits": 4,
+    "portraits": 4,
+    "combatPoses": 28,
+    "sources": 8,
+    "overflow": false
+  },
+  {
+    "class": "herald",
+    "outfits": 4,
+    "portraits": 4,
+    "combatPoses": 28,
+    "sources": 8,
+    "overflow": false
+  }
+]

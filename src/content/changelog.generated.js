@@ -8,9 +8,79 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-07",
     "summary": "A readable combat fan and compact inspection",
     "detail": "Narrower, shorter cards retain their text size. Five to seven cards fan above the five-slot HUD with exposed costs along their left edges and a clear vertical gap. Hover or select a card to read its face. Inspect lives only in the hover panel as a compact, full-width action; sprite icons and the full-height character outline are removed. Panels stay open while entered, and closing inspection restores focus. Flask inspection effect text and charge counts retain readable minimum sizes when the game scales down. Potion rows include their artwork and unfold inline using the Armoury detail-card style; Use moves into the expanded card, and selecting a potion never consumes it. Selected enemy details return after transient character previews close.",
-    "build": "0.5.5.77",
+    "build": "0.5.5.79",
     "pullRequest": 720,
     "url": "https://github.com/cehinds/AshenSpire/pull/720"
+  },
+  {
+    "id": "pr-728",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Every class gets one page showing all of its painted outfits",
+    "detail": "The painted character artwork for all sixteen outfits is preserved, and each class now has a single review page carrying its four outfits, the menu and detail poses, the matching close-up portraits, the compact combat poses and the earlier source sheets kept alongside them. The Reaver and the Duelist were facing the wrong way when inspected; both are corrected, and the frontal presentation art is kept separate from the combat art rather than standing in for it. This is an artwork and preview package: it does not replace the runtime assets, and it does not put the new portraits into character creation or the Armoury.",
+    "build": "0.5.5.73",
+    "pullRequest": 728,
+    "url": "https://github.com/cehinds/AshenSpire/pull/728"
+  },
+  {
+    "id": "pr-726",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The branch histories are rejoined",
+    "detail": "Nothing a player sees changes. The test branch had stopped being only a promotion target — seven pull requests landed on it directly — so it had diverged from dev and a promotion could not merge at all. This rejoins them, keeping both of the receipts numbered 711 and 712 for what is the same change on two branches rather than folding one into the other. It also pays two debts the action-row fix left behind: its own receipt, and a standalone build left stale because the launch script does not write build/ — the bundler does, and only the bundler.",
+    "build": "0.5.5.73",
+    "pullRequest": 726,
+    "url": "https://github.com/cehinds/AshenSpire/pull/726"
+  },
+  {
+    "id": "pr-730",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "A receipts pass that names itself",
+    "detail": "Nothing a player sees changes. The entry above was owed by a pull request that, being one itself, owed one in turn; this is that one, and it names its own number so the debt does not pass to a third. That regress has been walked three times already, at 714, 717 and 718: each wrote the receipts that were owed and then owed one itself. The escape is the same every time — open the pull request first, because a receipt cannot name a number that does not yet exist, then write the receipt.",
+    "build": "0.5.5.73",
+    "pullRequest": 730,
+    "url": "https://github.com/cehinds/AshenSpire/pull/730"
+  },
+  {
+    "id": "pr-721",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Hand cards no longer come to rest on Draw and End Turn",
+    "detail": "On a desktop-shaped window the lowest cards in your hand overlapped the buttons beneath them at every text size — the defect #713's repaired gate found and recorded rather than fixed. The cause was one number: the band the combat column reserves under the hand is measured for the row's tallest cell, and #679 grew that row from four controls to six and gave every one of them a 44px minimum tap height without re-measuring it. The reservation is re-measured to match the row it now has to clear, with room to spare rather than the few pixels that merely avoid a touch. Two of the gate's own plants were pinned to the old number and stopped proving anything the moment it changed; one is re-pointed and the other re-anchored so a future re-measure cannot disarm it again.",
+    "build": "0.5.5.71",
+    "pullRequest": 721,
+    "url": "https://github.com/cehinds/AshenSpire/pull/721"
+  },
+  {
+    "id": "pr-722",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Three checks that had stopped checking anything check again",
+    "detail": "Nothing a player sees changes. Two component contracts and the changelog projector had all gone red on the development branch, and none of them for a real fault: each was pinned to the exact wording of a line that a later, deliberate change had moved — a tile size retuned so the Armoury and Menu controls fill the meter stack, a call that gained an argument, a renderer that gained a plural. They now check what the lines have to mean rather than how they are spelled, which is the same repair #645 made in August. The changelog inside the game also refused one receipt that had a link buried in its prose; flattening it revealed that the link had been the only thing standing in for a missing receipt, so that one is written up properly too.",
+    "build": "0.5.5.70",
+    "pullRequest": 722,
+    "url": "https://github.com/cehinds/AshenSpire/pull/722"
+  },
+  {
+    "id": "pr-717",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The receipt #714 was owed",
+    "detail": "Nothing a player sees changes. #714 wrote up the eight merges that had no entry here and, being a pull request itself, owed one in turn; this is that one. It is written up separately because until now it was only ever named inside another receipt's prose, which reads as a citation but is not an entry of its own.",
+    "build": "0.5.5.66",
+    "pullRequest": 717,
+    "url": "https://github.com/cehinds/AshenSpire/pull/717"
+  },
+  {
+    "id": "pr-718",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The receipt chain closes on itself",
+    "detail": "Nothing a player sees changes. Splitting the receipts backfill across two pull requests bought a regress: #714 wrote the eight that were owed and then owed one itself, #717 wrote #714's and then owed one itself. This receipt names its own pull request and records #717 in the same line, which is the only way the loop ends — a receipt cannot name a number that does not exist until the pull request is opened, so the pull request goes first and the receipt follows. That pass landed at 0.5.5.66 and carried no player-visible change; nor does this. The lesson is written down rather than repeated: a receipts pass names itself in the same commit that writes the others.",
+    "build": "0.5.5.67",
+    "pullRequest": 718,
+    "url": "https://github.com/cehinds/AshenSpire/pull/718"
   },
   {
     "id": "pr-714",
@@ -111,6 +181,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.5.5.60",
     "pullRequest": 711,
     "url": "https://github.com/cehinds/AshenSpire/pull/711"
+  },
+  {
+    "id": "pr-712",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Saved boss destinations follow current content safely",
+    "detail": "Loading validates the original boss behind legacy maps and refuses missing or invalid encounters before play. Named destinations refresh when enemies are renamed or encounter composition changes, preserving paths, selected encounters and RNG state in solo and LAN saves. This applies the development fix from PR #711.",
+    "build": "0.5.5.57",
+    "pullRequest": 712,
+    "url": "https://github.com/cehinds/AshenSpire/pull/712"
   },
   {
     "id": "pr-704",
