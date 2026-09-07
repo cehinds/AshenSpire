@@ -12,10 +12,10 @@ All four classes have their base outfit and three alternatives: 16 outfits total
 - `menu/<outfit>/portrait.png`: 16 matching close-ups, 512 x 512.
 - `combat/<outfit>/`: seven 640 x 640 RGBA state files per outfit, 112 files total: idle, guard, attack1, attack2, attack3, attack4, hit.
 - `manifest.json`: image paths, source sheet and pose, content bounds, and the common combat anchor [320, 600].
-- `library.json`: 43 retained source sheets, including older poses outside the compact combat set and the facing corrections. No source art is replaced by its corrected derivative.
+- `library.json`: 47 retained source sheets, including older poses outside the compact combat set and the facing corrections. No source art is replaced by its corrected derivative.
 - `inspection/`: browser contact sheets, phone screenshot, automated results and visual review notes.
 
-Rogue, Reaver and Starseer share their guard drawing with combat idle: six distinct combat drawings mapped to seven states. Herald has a separate idle drawing. Menu artwork never substitutes for a frontal combat pose. The four attack frames show anticipation, extension, contact and recovery; they are a compact keyframe sequence, not a promise of a fully in-betweened animation.
+Rogue and Starseer share their guard drawing with combat idle: six distinct combat drawings mapped to seven states. Herald has a separate idle drawing. The owner specifically selected the existing upright, sword-point-down pose as Reaver combat idle, retaining its presentation angle. Base, Vigil and Warden reuse their menu stand; Oathsworn uses the hands-on-sword pose in the first cell of its preserved expanded sheet. All four Reaver outfits now use attack 1 low advance, attack 2 overhead windup and attack 3 downward cleave, with the three attacks facing right. Guard, recovery, hit and portraits retain their prior selections. These are compact keyframe sequences, not fully in-betweened animations. `reaver-selected-attacks.json` records the pose request and generation provenance.
 
 ## Review and rebuild
 

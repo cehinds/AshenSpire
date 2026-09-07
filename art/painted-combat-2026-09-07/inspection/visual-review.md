@@ -1,5 +1,11 @@
 # Visual inspection, 2026-09-07
 
+## Owner-selected Reaver revision
+
+All four Reaver outfits now use the requested low advancing attack 1, overhead windup attack 2 and downward cleave attack 3. Inspected the four generated strips and the extracted combat contact sheet. The attacks face right and keep their order. Idle now uses the upright hands-on-sword rest requested by the owner, retaining the reference's presentation angle. Oathsworn's menu stand held the sword to one side, so its idle uses the hands-on-sword drawing from the first cell of the retained expanded sheet. Guard, recovery, hit, menu and portrait files are unchanged. Asset and browser frame-decoding checks pass after the revision.
+
+The earlier findings below describe the preceding review; their Reaver idle selection is superseded by this explicit owner selection.
+
 Reviewed the combat contact sheets for all four classes and all 16 outfits, full-size suspect frames, all menu contact sheets, and the phone menu screenshot. Browser frame stepping decoded every pose used by the four preview actions for every outfit.
 
 Corrections made after inspecting the pictures:

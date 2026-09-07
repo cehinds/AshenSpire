@@ -213,5 +213,25 @@
     "title": "Duelist right-facing combat corrections",
     "file": "combat-sheets/rogue-duelist-facing-corrections.png",
     "classId": "rogue"
+  },
+  {
+    "title": "reaver · selected three-attack sequence",
+    "classId": "reaver",
+    "file": "combat-sheets/reaver-selected-attacks.png"
+  },
+  {
+    "title": "reaver-vigil · selected three-attack sequence",
+    "classId": "reaver",
+    "file": "combat-sheets/reaver-vigil-selected-attacks.png"
+  },
+  {
+    "title": "reaver-oathsworn · selected three-attack sequence",
+    "classId": "reaver",
+    "file": "combat-sheets/reaver-oathsworn-selected-attacks.png"
+  },
+  {
+    "title": "reaver-warden · selected three-attack sequence",
+    "classId": "reaver",
+    "file": "combat-sheets/reaver-warden-selected-attacks.png"
   }
 ]

@@ -31,6 +31,26 @@ for(const job of jobs){
  const mf=JSON.parse(readFileSync(join(cut,'lowpoly-renders.manifest.json'),'utf8'));
  const raw=Object.fromEntries(mf.renders.map(r=>[r.pose,{...r,sourceSheet:'menu-sheets/'+job.id+'.png',img:decodePng(readFileSync(join(cut,r.file)))}]));
  if(reavers.includes(job.id)){
+  const attackDir=join(here,'cut-selected-attacks',job.id);
+  mkdirSync(attackDir,{recursive:true});
+  const attackSheet='combat-sheets/'+job.id+'-selected-attacks.png';
+  execFileSync(process.execPath,['tools/painted-poses.mjs','--sheet',join(here,attackSheet),'--class',job.id,'--out',attackDir,'--poses','attack1,attack2,attack3','--grid','1x3','--canvas','1000x1000','--grounded'],{cwd:repo,stdio:'pipe'});
+  const attacks=JSON.parse(readFileSync(join(attackDir,'lowpoly-renders.manifest.json'),'utf8')).renders;
+  const overhead=attacks.find(r=>r.pose==='attack2');
+  const overheadBox=contentBox(decodePng(readFileSync(join(attackDir,overhead.file))));
+  const oldOverheadBox=contentBox(raw.attack1.img);
+  const attackScale=(oldOverheadBox.y1-oldOverheadBox.y0+1)/(overheadBox.y1-overheadBox.y0+1);
+  for(const r of attacks)raw[r.pose]={...r,sourceScale:attackScale,sourceSheet:attackSheet,img:decodePng(readFileSync(join(attackDir,r.file)))};
+  if(job.id==='reaver-oathsworn'){
+   const restDir=join(here,'cut-selected-attacks','oathsworn-rest');
+   mkdirSync(restDir,{recursive:true});
+   const restSheet='sheets/reaver-oathsworn.png';
+   const restPoses=['swordRest',...Array.from({length:11},(_,i)=>'study'+i)].join(',');
+   execFileSync(process.execPath,['tools/painted-poses.mjs','--sheet',join(here,restSheet),'--class',job.id,'--out',restDir,'--poses',restPoses,'--grid','3x4','--canvas','1000x1000','--grounded'],{cwd:repo,stdio:'pipe'});
+   const r=JSON.parse(readFileSync(join(restDir,'lowpoly-renders.manifest.json'),'utf8')).renders.find(r=>r.pose==='swordRest');
+   const img=decodePng(readFileSync(join(restDir,r.file))),b=contentBox(img),old=contentBox(raw.stand.img);
+   raw.swordRest={...r,img,sourceSheet:restSheet,sourceScale:(old.y1-old.y0+1)/(b.y1-b.y0+1)};
+  }
   const target=contentBox(raw.stand.img),guard=correctionFrames.find(r=>r.pose===job.id+'-guard');
   const guardImg=decodePng(readFileSync(join(corrections,guard.file))),reference=contentBox(guardImg);
   const sourceScale=(target.y1-target.y0+1)/(reference.y1-reference.y0+1);
