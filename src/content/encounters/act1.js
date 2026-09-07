@@ -8,6 +8,11 @@ export const act1Encounters = [
   { id: 'bruiser', enemies: ['huskBrute', 'graveWisp'], weight: 15, pool: 'normal', act: 1, floorBand: { min: 1, max: 4 }, targetBand: { min: 1, max: 4 } },
   { id: 'eliteWyrm', enemies: ['wyrmAspirant'], weight: 1, pool: 'elite', act: 1, floorBand: { min: 5, max: 5 }, targetBand: { min: 4, max: 6 } },
   { id: 'bossOmen', enemies: ['fellWarden'], weight: 1, pool: 'boss', act: 1, floorBand: { min: 6, max: 6 }, targetBand: { min: 5, max: 7 } },
+  {"id":"lanternFlight","enemies":["lanternMoth","lanternMoth"],"weight":15,"pool":"normal","act":1,"floorBand":{"min":1,"max":3},"targetBand":{"min":2,"max":5}},
+  {"id":"briarRefuge","enemies":["briarHermit"],"weight":15,"pool":"normal","act":1,"floorBand":{"min":2,"max":4},"targetBand":{"min":2,"max":5}},
+  {"id":"chainAmbush","enemies":["chainScavenger"],"weight":15,"pool":"normal","act":1,"floorBand":{"min":2,"max":4},"targetBand":{"min":2,"max":5}},
+  {"id":"bossBellKeeper","enemies":["bellKeeper"],"weight":1,"pool":"boss","act":1,"floorBand":{"min":6,"max":6},"targetBand":{"min":5,"max":7}},
+  {"id":"bossThornMatriarch","enemies":["thornMatriarch"],"weight":1,"pool":"boss","act":1,"floorBand":{"min":6,"max":6},"targetBand":{"min":5,"max":7}},
 ];
 
 // (`M1_GAUNTLET = ['patrol','packHunt','eliteWyrm','bossOmen']` — the M1

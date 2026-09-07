@@ -21,10 +21,11 @@
 //
 // Headless: pure function of (registries, rng, act) — no DOM, no storage.
 
-import { generateActMap } from './mapgen.js';
+import { generateActMap, assignBossDestinations } from './mapgen.js';
 import { resolveUnknownNode } from './encounters.js';
 import { applyRunShape } from '../model/floorplan.js';
-import { MAP_SHAPE_LIMITS } from '../content/mapconfig.js';
+import { MAP_SHAPE_LIMITS, LEGACY_ACT_BOSSES } from '../content/mapconfig.js';
+import { BOSS_LOCATIONS } from '../content/bossDestinations.js';
 
 /**
  * buildActMap(registries, rng, act, mapShape, { history }) → mapGraph
@@ -67,5 +68,24 @@ export function buildActMap(registries, rng, act, mapShape = null, { history = [
       if (node.resolved.kind === 'event') assigned.push(node.resolved.eventId);
     }
   }
-  return map;
+  const pool = registries.encounters.all().filter((encounter) => encounter.pool === 'boss' && (encounter.act || 1) === act);
+  if (!pool.length) throw new Error(`buildActMap: act ${act} has no boss encounters`);
+  // Every available slot has a different destination. When a narrow custom
+  // map cannot fit the pool, choose a seeded subset without replacement.
+  const selected = pool.length > map.columns ? rng.shuffle('map', pool).slice(0, map.columns) : pool;
+  return assignBossDestinations(map, selected.map((encounter) => ({
+    encounterId: encounter.id,
+    label: [BOSS_LOCATIONS[encounter.id], encounter.enemies.map((id) => registries.enemies.get(id).name).join(' & ')].filter(Boolean).join(' · '),
+  })));
+}
+
+/** Authoritative encounter identity for solo, LAN, and simulations. Read-only:
+ * loading/entering a legacy terminal never rerolls or regenerates its graph. */
+export function bossEncounterForNode(registries, graph, nodeId, act) {
+  const node = graph?.nodes?.[nodeId];
+  if (!node || node.type !== 'boss') throw new Error(`Boss destination '${nodeId}' is not a boss node`);
+  const encounterId = node.encounterId || (!graph.bossIds && graph.bossId === nodeId ? LEGACY_ACT_BOSSES[act] : null);
+  const encounter = encounterId && registries.encounters.get(encounterId);
+  if (!encounter || encounter.pool !== 'boss' || (encounter.act || 1) !== act) throw new Error(`Boss destination '${nodeId}' has no valid encounter for act ${act}`);
+  return encounterId;
 }

@@ -768,7 +768,10 @@ async function main() {
       return { bg: cs.backgroundImage, beforeContent: bef.content, beforePos: bef.position };
     })()`);
     ok(`the fill is a background, not an overlay`,
-      !paint.error && /gradient/.test(paint.bg) && (paint.beforeContent === 'none' || paint.beforeContent === 'normal'),
+      !paint.error && /repeating-linear-gradient/.test(paint.bg)
+        && /rgba\(255, 255, 255, 0\.52\)/.test(paint.bg)
+        && /rgba\(0, 0, 0, 0\.58\)/.test(paint.bg)
+        && (paint.beforeContent === 'none' || paint.beforeContent === 'normal'),
       `background-image=${paint.bg ? 'gradient' : 'none'}, ::before content=${paint.beforeContent}`);
 
     // ---- 6b. THE FILL IS STILL THERE WITH A POINTER ON IT, AND IT IS THE
@@ -1022,11 +1025,11 @@ async function main() {
       // report them absent, which is the same word as "not wired" and means the
       // opposite — so the reveal is part of opening the surface.
       // THE FLASK MOVED BEHIND A MENU (Codex, #142-era flask-action work): the
-      // slot itself is now inert selection — tapping it opens the shared
-      // action menu, and the second beat rides the menu's Use row
+      // Potions opens the inventory menu; selecting its first (healing) entry
+      // opens the action menu, and the second beat rides that menu's Use row
       // (combat.js openCombatFlaskMenu -> arm(button, 'useFlask', ...)).
       // That is the door a player's thumb actually walks, so the census walks
-      // it too: slot LAST, after the other openers, so an outside press does
+      // it too: both potion steps follow the shrine openers, so a press does
       // not close the menu before the scan reads it. Observed red without
       // this press at dev = 86564e6 ('7 claimed, 1 absent: useFlask') — the
       // census reading a closed menu as 'not wired', which means the opposite.
@@ -1041,7 +1044,7 @@ async function main() {
       // behind LOAD. Observed red without this press at dev = e5d9c981
       // ('11 claimed, 3 absent: … deleteSave') — the census reading a closed
       // selector as "not wired", the useFlask inversion again.
-      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '#remove-opt', '.flask-slot', '[data-face="bar:sell"]', '[data-title-action="load"]']) {
+      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .as-option:first-child', '[data-face="bar:sell"]', '[data-title-action="load"]']) {
         // SCROLLED INTO VIEW FIRST: the shop's bars stack below an open CARDS
         // shelf, so bar:remove sits at y=976 on a 844 phone — measured — and a
         // press at an off-viewport point lands on nothing while reporting
@@ -1294,7 +1297,12 @@ async function main() {
         read: () => ev(`document.querySelectorAll('#rest-opt').length`), moved: (a, b) => b < a },
       { id: 'useFlask', of: 'drink the flask', sel: '[data-beat-action="useFlask"]', key: 'Enter', btn: 0,
         open: async (d) => { await openShot('combat', { shotSettings: JSON.stringify({ holdConfirm: d }) });
-          await press(await pointOf('.flask-slot'), 60); await wait(400); },
+          await press(await pointOf('.combat-potions'), 60); await wait(400);
+          await press(await pointOf('.combat-potion-menu .as-option:first-child'), 60); await wait(400);
+          if (!await ev(`!!document.querySelector('[data-flask-action="use"][data-beat-action="useFlask"]')`)) {
+            throw new Error('Potions menu did not expose the armed healing-flask Use action');
+          }
+        },
         read: () => ev(`(((window.__combat || {}).player || {}).flaskCharges || {}).hpCurrent`),
         moved: (a, b) => a != null && b != null && b < a },
     ];
