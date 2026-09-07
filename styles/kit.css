@@ -2331,3 +2331,13 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 /* Move-set articles describe intent; they do not open or select an action. */
 article.enemy-move-card.as-option { cursor: default; }
 article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--line); }
+
+/* Potion disclosures use the same joined OptionCard/DetailCard as Armoury. */
+.combat-potion-menu .potion-fold { margin-bottom: 6px; }
+.combat-potion-menu .potion-fold > summary { cursor: pointer; }
+.combat-potion-menu .potion-fold .flask-identity { flex: 0 0 44px; }
+.combat-potion-menu .potion-fold .flask-art { width: 40px; height: 40px; }
+.combat-potion-menu .potion-fold .potion-use { flex-shrink: 0; min-height: 36px; }
+.combat-potion-menu .potion-fold[open] > summary { border-color: var(--gold); }
+.combat-potion-menu .potion-fold[open] > summary::after { transform: rotate(90deg); }
+.combat-potion-menu .potion-fold > .as-detailcard .potion-use { margin-top: 8px; align-self: flex-end; }

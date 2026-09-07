@@ -42,7 +42,7 @@ import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
-import { flaskTooltipHtml, flaskDetailLines, mountFlaskActionMenu } from '../components/flask.js';
+import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
@@ -55,7 +55,7 @@ import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
-import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, optionCard, flavour } from '../kit/index.js';
+import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -285,64 +285,52 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function openPotions(shortcut = null) {
     const opener = $('.combat-potions');
     const entries = potionEntries();
-    if (shortcut != null) {
-      const entry = entries[shortcut];
-      if (entry) openCombatFlaskMenu(opener, entry.def, entry.options);
-      return;
-    }
     let shell;
     shell = openModal({ title: 'Potions', size: 'md', className: 'combat-potion-menu', opener, bodyClassName: 'as-pane', body: host => {
-      for (const entry of entries) {
-        const item = optionCard({ name: entry.def.name, description: flaskDetailLines(entry.def, { charges: entry.options.charges }).join(' '),
-          meta: entry.options.charges == null ? '1 carried potion' : entry.options.charges + ' charges', arrow: true });
-        if (entry.options.chargeKind) {
-          item.dataset.chargeKind = entry.options.chargeKind;
-          item.dataset.charges = String(entry.options.charges);
-        } else item.dataset.potionSlot = String(entry.options.slot);
-        item.addEventListener('click', () => { shell.close(); openCombatFlaskMenu(opener, entry.def, entry.options); });
-        host.appendChild(item);
-      }
+      entries.forEach((entry, index) => {
+        const { def, options } = entry;
+        const { slot = null, chargeKind = null, remaining, charges } = options;
+        const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
+        const reason = remaining <= 0 ? 'No charges remaining' : !canUse ? 'Wait for your turn' : '';
+        const action = flaskActionPlan({ context: 'combat', canUse, useReason: reason }).actions.find(row => row.id === 'use');
+        const use = button({ label: 'Use', disabled: !action.enabled, className: 'potion-use', attrs: { 'aria-label': 'Use ' + def.name } });
+        const fold = el('details', { class: 'armoury-card-row potion-fold' });
+        if (chargeKind) { fold.dataset.chargeKind = chargeKind; fold.dataset.charges = String(charges); }
+        else fold.dataset.potionSlot = String(slot);
+        const summary = optionCard({ tag: 'summary', name: def.name,
+          art: flaskPresentation(def, { showName: false }),
+          description: flaskDetailLines(def, { charges }).join(' '),
+          meta: charges == null ? '1 carried potion' : charges + ' charges', trail: [use], arrow: true });
+        const detail = detailCard({ eyebrow: 'Potion', name: def.name + ' details',
+          line: def.textTemplate || '', meta: def.targeted ? 'Choose an enemy after Use.' : 'Applies to your character.',
+          children: [flavour(charges == null ? '1 carried potion' : charges + ' charges remaining'), reason ? flavour(reason) : null] });
+        fold.append(summary, detail);
+        const moveUse = () => {
+          if (fold.open) {
+            for (const sibling of host.querySelectorAll('.potion-fold')) if (sibling !== fold) sibling.open = false;
+            detail.appendChild(use);
+          } else summary.querySelector('.r-trail').appendChild(use);
+        };
+        fold.addEventListener('toggle', moveUse);
+        use.addEventListener('click', event => { event.stopPropagation(); event.preventDefault(); });
+        if (action.enabled) arm(use, 'useFlask', {
+          ctx: { targeted: !!def.targeted },
+          question: 'Use ' + def.name + '? ' + remaining + ' remaining.', confirmLabel: 'USE',
+          onConfirm: () => {
+            // Recheck the live combat before committing a menu snapshot.
+            if (busy || combat.result || combat.phase !== 'player') return;
+            shell.close();
+            if (def.targeted) {
+              selectedFlask = slot; selected = null; selfArm = null;
+              render(); focusTargeting();
+            } else useFlask(slot, null, chargeKind);
+          },
+        });
+        host.appendChild(fold);
+        if (index === shortcut) { fold.open = true; moveUse(); }
+      });
       if (!entries.length) host.appendChild(flavour('No potions carried.'));
     } });
-  }
-
-  function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1, charges = null, useActionId = null } = {}) {
-    const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
-    const useReason = remaining <= 0 ? 'No charges remaining'
-      : busy ? 'Wait for the current action to finish'
-        : combat.result ? 'Combat is already over' : combat.phase !== 'player' ? 'Wait for your turn' : '';
-    const plan = flaskActionPlan({ context: 'combat', canUse, useReason });
-    mountFlaskActionMenu(anchor, {
-      def,
-      plan,
-      charges,
-      useActionId,
-      onCancel: () => {},
-      onAction: (actionId) => {
-        if (actionId !== 'use') return;
-        if (def.targeted) {
-          selectedFlask = selectedFlask === slot ? null : slot;
-          selected = null;
-          selfArm = null;
-          render();
-          if (selectedFlask != null) focusTargeting();
-        } else {
-          useFlask(slot, null, chargeKind);
-        }
-      },
-      // The menu is the selection boundary; the explicit Use row still reads
-      // the shared second-beat rule rather than inventing a screen-local rule.
-      wireAction: (row, button, invoke) => {
-        if (row.id !== 'use' || !row.enabled) return false;
-        arm(button, 'useFlask', {
-          ctx: { targeted: !!def.targeted },
-          question: `Use ${def.name}? ${remaining} charge${remaining === 1 ? '' : 's'} remaining.`,
-          confirmLabel: 'USE',
-          onConfirm: invoke,
-        });
-        return true;
-      },
-    });
   }
 
   // Entering targeting mode: move the focus cursor onto an enemy so keyboard /
@@ -640,7 +628,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     box.addEventListener('pointerleave', () => {
       if (selectedEnemyId === enemy.id) return;
       clearTimeout(combatantTooltipDelayTimer);
-      scheduleTooltipClose(box);
+      scheduleTooltipClose(box, restoreSelectedEnemyContext);
     });
     box.addEventListener('gpfocus', (event) => {
       if (childAnswers(box, event)) return;
@@ -651,7 +639,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (childAnswers(box, event)) return;
       if (selectedEnemyId === enemy.id) return;
       clearTimeout(combatantTooltipDelayTimer);
-      scheduleTooltipClose(box);
+      scheduleTooltipClose(box, restoreSelectedEnemyContext);
     });
     box.addEventListener('keydown', (event) => {
       if (event.target !== box) return;
@@ -683,7 +671,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const close = (event) => {
       if (childAnswers(box, event)) return;
       clearTimeout(combatantTooltipDelayTimer);
-      scheduleTooltipClose(box);
+      scheduleTooltipClose(box, restoreSelectedEnemyContext);
     };
     box.addEventListener('pointerenter', open);
     box.addEventListener('pointerleave', close);

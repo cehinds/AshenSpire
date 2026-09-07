@@ -85,6 +85,7 @@ function panel(level) {
 let tipEl = null; // level 0, kept under its old name for the stick logic below
 
 function conceal(level = 0) {
+  if (level === 0) hoverCloseCallback = null;
   const el = panels[level];
   if (!el) return;
   el.style.display = 'none';
@@ -101,14 +102,20 @@ function clearTimers() {
   clearTimeout(closeTimer); clearTimeout(dwellTimer); clearTimeout(fadeTimer);
   closeTimer = null; dwellTimer = null; fadeTimer = null;
 }
+let hoverCloseCallback = null;
+function closeAfterHover() {
+  if (panels.some(p => p?.contains(document.activeElement))) return;
+  const callback = hoverCloseCallback;
+  hoverCloseCallback = null;
+  hideTooltip();
+  callback?.();
+}
 function scheduleClose() {
   if (stuck) return;
   clearTimeout(closeTimer);
-  closeTimer = setTimeout(() => {
-    if (!panels.some((p) => p?.contains(document.activeElement))) hideTooltip();
-  }, TOOLTIP_TIMING.close);
+  closeTimer = setTimeout(closeAfterHover, TOOLTIP_TIMING.close);
   clearTimeout(dwellTimer);
-  dwellTimer = setTimeout(() => { if (!panels.some((p) => p?.contains(document.activeElement))) hideTooltip(); }, TOOLTIP_TIMING.dwell);
+  dwellTimer = setTimeout(closeAfterHover, TOOLTIP_TIMING.dwell);
 }
 function scheduleAutoHide(autoHideMs) {
   if (!(autoHideMs > 0)) return;
@@ -242,6 +249,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
   t.dataset.tooltipPlacement = resolvedIntent;
   placeAnchored(t, anchor, { intent: resolvedIntent, clear, align });
   state[level].target?.removeAttribute?.('data-tip-open');
+  hoverCloseCallback = null;
   state[level].target = target;
   state[level].open = true;
   if (target?.setAttribute) target.setAttribute('data-tip-open', 'true');
@@ -341,8 +349,8 @@ export function showTooltipForRect(anchor, html, { intent = 'beside', align = 's
   return showWith(html, anchor, clear, intent, appearance, placementModel, autoHideMs, align, 0, target, action);
 }
 /** Give a measured subject the same pointer-to-panel grace as attached hints. */
-export function scheduleTooltipClose(target) {
-  if (state[0].target === target) scheduleClose();
+export function scheduleTooltipClose(target, onClose = null) {
+  if (state[0].target === target) { hoverCloseCallback = onClose; scheduleClose(); }
 }
 /**
  * stickTooltip(el) → boolean — keep the tooltip that is on screen NOW until

@@ -21,9 +21,11 @@ Traders now offer armaments and mountable weapon arts alongside their usual stoc
 Inspect an item before buying, or sell an unequipped armament from storage.
 Equipped items explain why they cannot be sold. Weapon arts are bought at traders
 and installed through the Armoury's existing card-mounting controls.
-The combat action row keeps Potions at the far right. Piles opens separate
-Discard and Exhaust tabs with their own counts. Arts shows equipped weapon arts
-and techniques, with selection available when the card is in your hand.
+The combat row is Actions, Draw, centered End Turn, Discard (with Exhaust),
+and Potions at the far right. Discard opens separate Discard and Exhaust tabs.
+Potion rows show their artwork and counts; expand one to inspect it inline.
+Use moves into the unfolded card and retains the shared confirmation/hold action.
+Selecting or expanding a potion never consumes it. Weapon arts play from the hand.
 
 **[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)** — the stable
 build from `main`. **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** — the builds

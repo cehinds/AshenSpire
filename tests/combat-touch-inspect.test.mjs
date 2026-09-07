@@ -5,5 +5,5 @@ assert.doesNotMatch(combat, /function combatantInspectControl/);
 assert.match(combat, /label: 'Inspect', attrs: \{ 'aria-label': `Inspect/);
 assert.match(combat, /openCombatantDoor\(combatantSubject\(role, entity\), box\)/);
 assert.match(combat, /action: inspect/);
-assert.match(combat, /scheduleTooltipClose\(box\)/);
+assert.match(combat, /scheduleTooltipClose\(box, restoreSelectedEnemyContext\)/);
 console.log('PASS 5/5; combat inspection belongs to the interactive tooltip, with no sprite icon');

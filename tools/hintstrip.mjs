@@ -225,7 +225,7 @@ if (process.argv.includes('--selftest')) {
         // THE SAME CONTROL GOES QUIET WITHOUT display:none. visibility:hidden
         // keeps the pile's box and class; only "rendered" as the player sees it
         // can tell. Red by name on H3, like the display:none plant.
-        name: 'a stylesheet makes the shared SPENT pile visibility:hidden and the row still measures six boxes',
+        name: 'a stylesheet makes the shared SPENT pile visibility:hidden and the row still measures five boxes',
         edits: [{
           file: 'styles/combat.css',
           append: '.combat-action-row > .pile.spent { visibility: hidden; }',
@@ -236,7 +236,7 @@ if (process.argv.includes('--selftest')) {
         // THE THIRD WAY A CONTROL GOES QUIET: opacity:0 keeps display,
         // visibility and geometry. Only the ancestor-walking opacity read in
         // rendered() can tell. Red by name on H3.
-        name: 'a stylesheet makes the shared SPENT pile opacity:0 and the row still measures six boxes',
+        name: 'a stylesheet makes the shared SPENT pile opacity:0 and the row still measures five boxes',
         edits: [{
           file: 'styles/combat.css',
           append: '.combat-action-row > .pile.spent { opacity: 0; }',
@@ -493,7 +493,7 @@ const WIDE_KEY = { action: 'endTurn', code: 'Backspace', label: 'Backspace' };
 
 // THE ROW'S CONTROLS ARE DECLARED HERE, BY IDENTITY, not read off the template
 // under test: the five persistent combat action destinations — the energy
-// orb, DRAW, END TURN, DISCARD, EXHAUSTED. A list derived from combat.js's
+// orb, DRAW, END TURN, DISCARD with EXHAUST, and POTIONS. A list derived from combat.js's
 // own template shrank with it: delete DISCARD from the row and the expected
 // set lost DISCARD too, every H3 cell stayed green, and the workflow still
 // claimed the piles were covered (Codex, #532). So the identities are typed
@@ -501,15 +501,11 @@ const WIDE_KEY = { action: 'endTurn', code: 'Backspace', label: 'Backspace' };
 // row no longer names, or one it names that this list does not, throws by
 // name before a single cell is measured — the change and this list move in
 // the same commit, or the gate refuses to run.
-// THE SIX CELLS THE ROW ACTUALLY RENDERS, and the row's own comment says six.
-// It read `pile discard`, `pile exhaust` until the two spent piles were merged
-// into ONE shared entry (`.pile.spent`, labelled "Piles", showing D: and E:
-// counts) — a deliberate design change, not a loss, so the contract follows the
-// row rather than the row being reverted to satisfy the contract.
-// Arts and Potions were never declared at all: the extractor below could not
-// see them, so their absence never registered as a disagreement.
+// Five cells are intentional: End Turn is centered, the spent entry retains
+// both Discard and Exhaust, and Potions occupies the rightmost slot. Weapon
+// Arts remains in the hand/Armoury rather than a sixth HUD control.
 const DECLARED_CONTROLS = Object.freeze([
-  'energy-orb', 'pile draw', 'end-turn', 'pile spent', 'combat-arts', 'combat-potions',
+  'energy-orb', 'pile draw', 'end-turn', 'pile spent', 'combat-potions',
 ]);
 
 // A control's IDENTITY is its class tokens minus the kit's layout modifiers.
