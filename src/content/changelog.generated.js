@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-749",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Three receipts, and the pass names itself this time",
+    "detail": "Nothing a player sees changes. The Shrine level-up modal (#746) and the point-pool bound (#732) had landed on dev with no receipt in this file, so the changelog inside the game did not carry them and the gate that checks this before a promotion was red. Both are written up below at the build standing at their own merge. This receipt names its own pull request in the same commit that writes the other two — which is the lesson from the last backfill, where splitting the work across #714, #717 and #718 meant each pass closed the gate and then owed a receipt itself. One pull request, three receipts, no chain.",
+    "build": "0.5.5.101",
+    "pullRequest": 749,
+    "url": "https://github.com/cehinds/AshenSpire/pull/749"
+  },
+  {
+    "id": "pr-746",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Levelling at a Shrine uses the same points panel as everywhere else",
+    "detail": "Choosing Level up at a Shrine now opens the shared stat-allocation panel instead of unfolding the stats in place, so spending a level reads the same as spending points at character creation. A pending purchase shows what it costs in cinders and what you would have left before you commit; Cancel and Escape discard it and Confirm applies the levels and returns you to the Shrine. Keyboard and pad focus survive each adjustment rather than being dropped back to the top of the list.",
+    "build": "0.5.5.94",
+    "pullRequest": 746,
+    "url": "https://github.com/cehinds/AshenSpire/pull/746"
+  },
+  {
+    "id": "pr-732",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The point pool cannot be pushed below zero, and its gate runs again",
+    "detail": "Assign Points refused to complete when a stat had been raised past the points you actually had — Done said \"1 stat point over the pool\" and left you to work out which stat to put back. The bound is now enforced where the change happens rather than only on the button that was drawn, so a stat cannot move past the mode's floor or ceiling and cannot spend a point the pool does not hold. The check that guards character creation had been dying at its first step since #692 moved the sprite and sigil group beside the preview, so none of its assertions had run in weeks; its selectors follow the move, and the sprite row is asserted where it now lives rather than deleted. Two findings it surfaced are recorded rather than quietly fixed: once the pool has been at zero and a point is freed by decrementing, the + controls report themselves enabled and spend nothing, so the allocation cannot be completed from that state; and two card-structure failures from the #690 era were unreachable while the gate was dead. Neither is fixed here.",
+    "build": "0.5.5.93",
+    "pullRequest": 732,
+    "url": "https://github.com/cehinds/AshenSpire/pull/732"
+  },
+  {
     "id": "pr-743",
     "date": "2026-09-07",
     "group": "2026-09-07",
