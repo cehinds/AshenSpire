@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-733",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Cracked Tear makes your flasks stronger on the map too",
+    "detail": "The relic promises every flask is half again as strong, and in a fight it was — but a flask drunk on the map quietly restored its plain amount, so the Azure gave one Mana where it owed two and the Crimson healed fifteen where it owed twenty-three. The map now scales the same way combat already did, rounded up, and a run carrying no such relic restores exactly what it did before. Found by an automated review of the promotion rather than by playing, which is worth saying: the amounts were plausible on their own and only wrong next to the promise.",
+    "build": "0.5.5.76",
+    "pullRequest": 733,
+    "url": "https://github.com/cehinds/AshenSpire/pull/733"
+  },
+  {
     "id": "pr-728",
     "date": "2026-09-07",
     "group": "2026-09-07",
