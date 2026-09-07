@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-07",
     "summary": "The receipts catch up on three merges",
     "detail": "Nothing a player sees changes. The painted armaments (#778), the Star Seer's standing idle (#780) and the Armoury heading fix (#768) had all landed without an entry here, so the changelog inside the game did not carry them either. Each is written up at the build ordinal standing at its own merge, and the projection was regenerated from this file so both now say the same thing. The gate added in #652 is what named the three, rather than someone reading the merge log.",
-    "build": "0.5.5.119",
+    "build": "0.5.5.121",
     "pullRequest": 792,
     "url": "https://github.com/cehinds/AshenSpire/pull/792"
   },

@@ -540,10 +540,13 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => ['enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
+      .filter((e) => ['cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
+        manaSpent: e.manaSpent, staminaSpent: e.staminaSpent,
+        cardId: e.cardId, cardType: e.cardType, cardInstanceId: e.cardInstanceId, profileId: e.profileId,
+        upgraded: e.upgraded, sourceArmamentId: e.sourceArmamentId,
         kind: e.kind, targetId: e.targetId, playerId: e.playerId,
         reason: e.reason, school: e.school, amount: e.amount, value: e.value,
         blocked: e.blocked, isAttack: e.isAttack, cause: e.cause,
@@ -1186,6 +1189,7 @@ export function createSession({ registries, seedString, endless = false, restore
   // ---- snapshot (authoritative state to broadcast) -------------------------
   function memberView(m) {
     return {
+      loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
       startingKitId: m.run.startingKitId,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
