@@ -329,7 +329,7 @@ export function mountCustomize(app, {
     portrait.style.borderColor = tintCss(state.tint);
     portrait.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
     const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
-      ? (state.spriteStyle === 'classic' ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'classic') : paintedPresentation(state.classId, state.startingArmourId, 'stand'))
+      ? (state.spriteStyle === 'classic' ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'classic') : paintedPresentation(state.classId, state.startingArmourId, 'detail'))
       : null;
     portrait.replaceChildren(sprite || state.glyph);
 
