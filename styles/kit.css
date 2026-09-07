@@ -1190,6 +1190,22 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* An open reveal drops UNDER the whole row: the face and the trail keep their line. */
 .as-row.setting > .as-row-fold .disc-reveal { order: 2; }
 .as-row.setting:has(> .as-row-fold) { align-items: flex-start; }
+
+/* Attribute allocation is a two-column setting line: the complete stat face
+   owns the flexible column and the stepper owns the fixed column. The reveal
+   alone may take a second line. Its equal inset is intentional — a setting
+   surface must not shave the horizontal padding off the shared Row. */
+.as-row.setting.se-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  padding: 0.7rem;
+}
+.as-row.setting.se-row > .r-trail { grid-column: 2; margin-left: 0; }
+.as-row.setting.se-row > .disc-reveal { grid-column: 1 / -1; }
+.as-row.setting.se-row .disc-face { width: 100%; }
+.as-row.setting.se-row .disc-face > .as-row { flex-wrap: nowrap; }
 .disc-face > .as-row { padding: 0; min-height: 0; width: 100%; gap: 0.75rem; }
 .disc-face > .as-row > .as-labelstack { flex: 1 1 auto; }
 .disc-face > .as-row .ls-label { color: var(--gold); font: 600 1.5rem/1.2 var(--font-display); letter-spacing: 0.03em; }
