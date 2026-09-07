@@ -43,24 +43,53 @@ function segmentButton({ label, ariaLabel, selected, className, dataset, onChoos
 }
 
 /**
- * The attribute face: a Row (LabelStack label + summary, StatusText value)
- * inside the D26 fold face, so the reveal (sense, derived lines) opens under
- * it by the one fold renderer. `.disc-summary` rides on the hint for the
- * instruments that read the folded summary.
+ * The attribute face: a compact Row (short label + summary + current value)
+ * inside the D26 fold face, so the reveal (long name, sense, derived lines)
+ * opens under it by the one fold renderer. The short label is deliberate: it
+ * keeps Character Creation and allocation rows the same shape as the Armoury's
+ * Attributes card instead of growing a second, wider primary-stat treatment.
+ * `.disc-summary` rides on the hint for the instruments that read the folded
+ * summary.
  */
-export function primaryStatCard(input) {
+function renderPrimaryStatCard(input, peers = null) {
   const host = el('div', { class: 'cc-attribute-card as-row-fold' });
   host.dataset.stat = input.id;
   const face = row({
-    tag: 'span',
-    labelNode: labelStack({ label: input.reveal?.title || input.face.label, hint: input.face.summary || '' }),
+    tag: 'span', className: 'face-lite',
+    labelNode: labelStack({ label: input.face.label, hint: input.face.summary || '' }),
     status: input.face.value === '' || input.face.value == null ? '' : String(input.face.value),
   });
   face.querySelector('.ls-hint')?.classList.add('disc-summary');
   const model = { ...input, face: { ...input.face, node: face } };
-  mountDisclosure(host, [model]);
-  host.querySelector('.disc-face')?.classList.add('cc-primary-stat');
+  const fold = mountDisclosure(host, [model]);
+  const control = host.querySelector('.disc-face');
+  control?.classList.add('cc-primary-stat');
+  if (peers && control) {
+    const member = { control, fold };
+    peers.push(member);
+    // mountDisclosure's click listener runs first. Once this face is open,
+    // close every peer renderer in the primary-stat family. Allocation rows
+    // remain separate DOM rows so their steppers never become buttons nested
+    // inside buttons, while the family still has one visible reveal.
+    control.addEventListener('click', () => {
+      if (control.getAttribute('aria-expanded') !== 'true') return;
+      for (const peer of peers) {
+        if (peer !== member) peer.fold.close();
+      }
+    });
+  }
   return markUiComponent(host, UI.primaryStatCard);
+}
+
+/** A primary-stat family: uniform cards with one reveal open at a time. */
+export function primaryStatCards(inputs) {
+  const peers = [];
+  return [...(inputs || [])].map((input) => renderPrimaryStatCard(input, peers));
+}
+
+/** A standalone specimen remains useful in the component catalogue. */
+export function primaryStatCard(input) {
+  return renderPrimaryStatCard(input);
 }
 
 /** The derived resources: a StatStrip of Chips, each with its formula as its tooltip. */

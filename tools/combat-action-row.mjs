@@ -79,7 +79,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     {
       name: 'Exhaust is hidden until it has content',
       file: 'styles/combat.css',
-      append: '.combat-action-row > .pile.exhaust { display: none; }',
+      append: '.combat-action-row > .pile.spent { display: none; }',
       expectRed: /combat-action-row: RED/,
     },
     {
@@ -206,14 +206,14 @@ function connectCdp(wsUrl) {
 }
 
 const STATES = ['rest', 'armed', 'exhaust'];
-const CONTROL_SELECTORS = ['.energy-orb', '.pile.draw', '.end-turn', '.pile.discard', '.pile.exhaust'];
+const CONTROL_SELECTORS = ['.energy-orb', '.pile.draw', '.end-turn', '.pile.spent', '.combat-arts', '.combat-potions'];
 
 async function main() {
   const served = standalone ? null : await serve({ root: ROOT, port: 8321, open: false });
   const base = standalone
     ? pathToFileURL(resolve(ROOT, 'AshenSpire.html')).href
     : `http://localhost:${served.port}/index.html`;
-  const browser = await launchBrowser({ prefix: 'action-row-', browser: browserPath, timeoutMs: 15000 });
+  const browser = await launchBrowser({ prefix: 'action-row-', browser: browserPath, args: ['--disable-background-networking', '--disable-component-update'], timeoutMs: 15000 });
   const cdp = connectCdp(browser.wsUrl);
   await cdp.ready;
   if (shots) mkdirSync(resolve(ROOT, shots), { recursive: true });
@@ -234,9 +234,8 @@ async function main() {
     check(!combatCss.includes("data-armaments-presentation='radial'] .combat .hud-charge-flasks")
       && !combatCss.includes("data-armaments-presentation='radial'] .combat .hud-potions"),
     'Quick Access flasks are not hidden by the Armaments presentation setting');
-    check(combatSource.includes("const showDiscard = () => openPileModal(registries, 'Discard pile'")
-      && combatSource.includes("const showExhaust = () => openPileModal(registries, 'Exhausted pile'"),
-    'Discard and Exhausted own separate direct pile surfaces');
+    check(combatSource.includes('openSpentPileModal(registries, combat.piles') && combatSource.includes("className: 'combat-potions tall'"),
+    'Combined pile surface and bottom potion control are mounted');
   }
 
   try {
@@ -311,10 +310,10 @@ async function main() {
       const grid=owner?getComputedStyle(owner):null;
       const bySelector=Object.fromEntries(controls.filter((control)=>control.visible).map((control)=>[control.selector,control]));
       const energy=bySelector['.energy-orb'], draw=bySelector['.pile.draw'], end=bySelector['.end-turn'];
-      const discard=bySelector['.pile.discard'], exhaust=bySelector['.pile.exhaust'];
+      const discard=bySelector['.pile.spent'], arts=bySelector['.combat-arts'], exhaust=bySelector['.combat-potions'];
       const leftGap=draw&&end?end.left-draw.right:null;
       const rightGap=end&&discard?discard.left-end.right:null;
-      const quickAccess=[document.querySelector('#combat-armoury'),document.querySelector('#combat-menu'),...document.querySelectorAll('.hud-charge-flasks .flask-slot')];
+      const quickAccess=[document.querySelector('#combat-armoury'),document.querySelector('#combat-menu')];
       return {
         layout:document.documentElement.dataset.layout||null,
         composition:document.documentElement.dataset.composition||null,
@@ -326,17 +325,17 @@ async function main() {
         minTap:shown.length?Math.min(...shown.map((r)=>Math.min(r.width,r.height))):0,
         arrangement:{
           persistent:selectors.every((selector)=>bySelector[selector]),
-          ordered:!!(energy&&draw&&end&&discard&&exhaust&&energy.left<draw.left&&draw.left<end.left&&end.left<discard.left&&discard.left<exhaust.left),
+          ordered:!!(energy&&draw&&end&&discard&&arts&&exhaust&&energy.left<draw.left&&draw.left<end.left&&end.left<discard.left&&discard.left<arts.left&&arts.left<exhaust.left),
           edgeAnchored:!!(owner&&energy&&exhaust&&Math.abs(energy.left-rect(owner).left)<=0.5&&Math.abs(exhaust.right-rect(owner).right)<=0.5),
           centreDelta:end?Math.abs(((end.left+end.right)/2)-(innerWidth/2)):null,
           leftGap,rightGap,
           symmetric:leftGap!=null&&rightGap!=null&&Math.abs(leftGap-rightGap)<=0.5,
           tight:leftGap!=null&&rightGap!=null&&leftGap>=-0.25&&rightGap>=-0.25&&leftGap<=8&&rightGap<=8,
-          endDominant:!!(draw&&end&&discard&&end.width>draw.width&&end.width>discard.width),
+          endDominant:!!(draw&&end&&discard&&Math.abs(end.width-draw.width)<=0.5&&Math.abs(end.width-discard.width)<=0.5),
         },
         quickAccess:{
           count:quickAccess.filter(visible).length,
-          allVisible:quickAccess.length===4&&quickAccess.every(visible),
+          allVisible:quickAccess.length===2&&quickAccess.every(visible),
           armamentsAbsent:!document.querySelector('.armaments-command, .armament-radial'),
         },
       };
@@ -425,7 +424,7 @@ async function main() {
             const tag = `${shape.width}x${shape.height} Text ${text}, hand ${hand}, ${state}, ${standalone ? 'root' : 'source'}`;
             console.log(`\n  ${tag}`);
             check(now.owner.exists && now.owner.display === 'grid' && now.owned,
-              'one semantic grid owns Actions, Draw, End Turn, Discard, and Exhaust', JSON.stringify(now.owner));
+              'one semantic grid owns Actions, Draw, End Turn, Piles, Arts, and Potions', JSON.stringify(now.owner));
             // THE KIT SWEEP (2026-09-04): the row is a kit ButtonRow — six equal
             // tracks, End Turn spanning two — not the old seven-column grid.
             check((now.owner.columns?.match(/px/g)||[]).length===6,
@@ -439,13 +438,13 @@ async function main() {
             check(now.controls.filter((control)=>control.visible).every((control)=>control.position!=='absolute'),
               'grid children do not escape through absolute positioning', JSON.stringify(now.controls.map((c)=>[c.selector,c.position])));
             check(now.arrangement.persistent && now.arrangement.ordered,
-              'Actions, Draw, End Turn, Discard, and Exhaust remain persistently ordered', JSON.stringify(now.arrangement));
-            check(now.arrangement.edgeAnchored && now.arrangement.centreDelta<=1,
-              'Actions and Exhaust own opposite edges while End Turn stays centred', JSON.stringify(now.arrangement));
+              'Actions, Draw, End Turn, Piles, Arts, and Potions remain persistently ordered', JSON.stringify(now.arrangement));
+            check(now.arrangement.edgeAnchored,
+              'Actions and Potions own opposite edges', JSON.stringify(now.arrangement));
             check(now.arrangement.symmetric && now.arrangement.tight && now.arrangement.endDominant,
-              'Draw and Discard keep equal close gaps around the larger End Turn control', JSON.stringify(now.arrangement));
+              'Draw and Piles keep equal close gaps around the equal-width End Turn control', JSON.stringify(now.arrangement));
             check(now.quickAccess.allVisible && now.quickAccess.armamentsAbsent,
-              'the original four-button Quick Access panel remains visible with no Armaments rail control', JSON.stringify(now.quickAccess));
+              'Armoury and Menu remain visible above the bottom inventory controls', JSON.stringify(now.quickAccess));
 
             if (state === 'exhaust') {
               const baselineControls = Object.fromEntries(exhaustBaseline.controls.filter((c)=>c.visible).map((c)=>[c.selector,c]));
@@ -457,29 +456,30 @@ async function main() {
                 )>0.5;
               }).map((c)=>c.selector);
               check(moved.length===0, 'changing the Exhausted count preserves every standing action cell', JSON.stringify(moved));
-              const exhaustControl=now.controls.find((control)=>control.selector==='.pile.exhaust');
+              const exhaustControl=now.controls.find((control)=>control.selector==='.pile.spent');
               check(exhaustControl?.visible, 'Exhausted remains visible when the pile is empty or populated', JSON.stringify(exhaustControl));
-              const opened=await click('.pile.exhaust');
+              const opened=await click('.pile.spent');
+              await click('[data-modal-tab=exhaust]');
               const exhaustModal=await evaluate(`(() => ({
-                title:document.querySelector('.modal-veil .modal h2')?.textContent||'',
+                title:document.querySelector('.spent-pile-modal [data-modal-tab=exhaust][aria-selected=true]')?.textContent||'',
                 modalCount:document.querySelectorAll('.modal-veil .modal').length,
               }))()`);
-              check(opened && exhaustModal.modalCount===1 && /^Exhausted pile \(1\)$/.test(exhaustModal.title),
-                'Exhausted opens its own pile surface directly', JSON.stringify(exhaustModal));
+              check(opened && exhaustModal.modalCount===1 && /^Exhaust \(1\)$/.test(exhaustModal.title),
+                'Exhaust tab displays the separate pile', JSON.stringify(exhaustModal));
               await evaluate(`document.querySelector('.modal-veil')?.click(); true`);
               await new Promise((pass) => setTimeout(pass, 80));
               const exhaustClosed = await evaluate(`!document.querySelector('.modal-veil')`);
               check(exhaustClosed, 'the Exhausted pile surface closes from its scrim');
 
-              const discardOpened = await click('.pile.discard');
+              const discardOpened = await click('.pile.spent');
               const discardModal = await evaluate(`(() => ({
-                title:document.querySelector('.modal-veil .modal h2')?.textContent||'',
+                title:document.querySelector('.spent-pile-modal [data-modal-tab=discard][aria-selected=true]')?.textContent||'',
                 modalCount:document.querySelectorAll('.modal-veil .modal').length,
                 chooserAbsent:!document.querySelector('.pile-surface-picker'),
               }))()`);
               check(discardOpened && discardModal.modalCount===1 && discardModal.chooserAbsent
-                && /^Discard pile \(\d+\)$/.test(discardModal.title),
-              'Discard opens its own pile surface directly', JSON.stringify(discardModal));
+                && /^Discard \(\d+\)$/.test(discardModal.title),
+              'Discard opens its separate tab', JSON.stringify(discardModal));
               await evaluate(`document.querySelector('.modal-veil')?.click(); true`);
               await new Promise((pass) => setTimeout(pass, 80));
               const discardClosed = await evaluate(`!document.querySelector('.modal-veil')`);
@@ -572,7 +572,7 @@ async function main() {
       }
     }
   } finally {
-    cdp.close();
+    await Promise.race([cdp.send('Browser.close').catch(() => {}), new Promise(done => setTimeout(done, 1200))]); cdp.close();
     await browser.close();
     if (served) await new Promise((pass) => served.server.close(pass));
   }

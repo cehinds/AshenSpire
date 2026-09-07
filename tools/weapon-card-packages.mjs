@@ -270,7 +270,9 @@ const invalidTwoHanded = structuredClone(twoHanded.loadout);
 invalidTwoHanded.sets.leftHand[0] = 'dagger';
 check(throwsNamed(() => buildEquippedWeaponCardPlan(twoHandedRegistries, invalidTwoHanded, 'reaver'), /two-handed weapon conflicts/), 'restored two-handed plus offhand state fails closed');
 const greatsword = baseRegistries.equipment.armaments.find((piece) => piece.id === 'greatsword');
-check(greatsword.handsRequired === undefined && WeaponDeckCompositionService.buildEquippedWeaponCardPlan(baseRegistries, makeRun(baseRegistries, 'greatsword', null).loadout, 'reaver').slots.length === 4, 'Greatsword stays one-handed/either unless handsRequired is explicit');
+check((greatsword.handsRequired ?? 1) === 1 && attacks(makeRun(baseRegistries, 'greatsword', null)).length === 4, 'Greatsword retains one-handed behavior with an authored weapon-art package');
+const greatswordPaired = makeRun(baseRegistries, 'greatsword', 'dagger');
+check(profiles(greatswordPaired).length === 4 && hands(greatswordPaired).filter((hand) => hand === 'left').length === 2 && hands(greatswordPaired).filter((hand) => hand === 'right').length === 2, 'Greatsword still pairs with a dagger and shares authored attack slots equally');
 
 const duplicate = structuredClone(swordRight.loadout);
 duplicate.sets.leftHand[0] = 'straightSword';

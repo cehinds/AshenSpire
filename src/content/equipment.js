@@ -16,6 +16,7 @@
 // the mods actually do.
 
 import { weapons } from './generated/weapons.js';
+import { weaponCardPackages } from './generated/weaponCardPackages.js';
 import { outfits } from './generated/outfits.js';
 import { equipSlots } from './generated/equipSlots.js';
 import { equipMods } from './generated/equipMods.js';
@@ -67,7 +68,18 @@ function normPiece(row) {
 }
 
 /** Every armament: weapons, shields and staves, in authoring order. */
-export const ARMAMENTS = weapons.map(normPiece);
+const packageByWeapon = new Map();
+if (!Array.isArray(weaponCardPackages)) throw new Error('weaponCardPackages must be an array');
+for (const row of weaponCardPackages) {
+  if (!row || !weapons.some((piece) => piece.id === row.weaponId)) throw new Error(`weaponCardPackages: unknown weapon '${row?.weaponId}'`);
+  if (packageByWeapon.has(row.weaponId)) throw new Error(`weaponCardPackages: duplicate weapon '${row.weaponId}'`);
+  if (!row.package || typeof row.package !== 'object' || Array.isArray(row.package)) throw new Error(`weaponCardPackages: '${row.weaponId}' needs a package object`);
+  packageByWeapon.set(row.weaponId, row.package);
+}
+export const ARMAMENTS = weapons.map((row) => ({
+  ...normPiece(row),
+  ...(packageByWeapon.has(row.id) ? { weaponCardPackage: packageByWeapon.get(row.id) } : {}),
+}));
 
 /** Every armour set. `id` is unique per class, not globally — key by both. */
 export const ARMOUR = outfits.map((row) => ({ ...normPiece(row), kind: 'armor' }));

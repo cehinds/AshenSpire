@@ -80,7 +80,7 @@ import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
 import {
   equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
-  orderArmourySlots, trayPresentationState,
+  orderArmouryPositions, orderArmourySlots, trayPresentationState,
 } from '../src/model/armouryLayout.js';
 import { inventoryItemCardModel, inventoryDetailCardModel } from '../src/ui/models/ArmouryModels.js';
 import { hudQuickSettingsModel, musicQuickSettingsPlan } from '../src/ui/models/HudQuickSettingsModel.js';
@@ -7759,6 +7759,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(orderArmourySlots([
       { id: 'leftFoot', order: 50 }, { id: 'back', order: 40 }, { id: 'rightHand', order: 20 }, { id: 'armor', order: 10 },
     ], layout).map((slot) => slot.id).join(','), 'armor,rightHand,back,leftFoot', 'arbitrary equipment groups iterate by authored order without named-slot branches');
+    eq(orderArmouryPositions([
+      { index: 0, state: 'empty' }, { index: 1, state: 'occupied' },
+      { index: 2, state: 'locked' }, { index: 3, state: 'empty' },
+    ]).map((position) => `${position.index}:${position.state}`).join(','),
+    '1:occupied,2:locked,0:empty,3:empty',
+    'empty equipment positions move to the bottom while every state keeps its authored order');
     const occupiedPosition = equipmentPositionCardState({
       slot: { id: 'backHand', label: 'Back Hand', positionLabel: 'Back Hand Slot {n}', positionCode: 'BH{n}', sets: 3 },
       index: 1,

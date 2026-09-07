@@ -801,3 +801,20 @@
 .pose-stage { position: relative; width: 100%; height: 100%; }
 .pose-layer { position: absolute; left: 50%; }
 .pose-frame { position: absolute; image-rendering: auto; pointer-events: none; }
+
+/* Six stable bottom controls; the final column always opens Potions. */
+.combat > .hand-area > .combat-action-row {
+  grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-flow: row;
+  bottom: calc(-1 * var(--action-row-drop) + max(1rem, var(--safe-bottom-local, 0px)));
+}
+.combat .combat-action-row > .wide { grid-column: auto; }
+.combat-action-row > button { min-height: max(44px, calc(44px / var(--ui-zoom, 1))); }
+.combat-action-row .spent small { font-size: 0.9em; white-space: nowrap; }
+.combat-art-choice { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.combat-art-choice > .card { align-self: center; }
+.combat-art-choice > button { min-height: max(44px, calc(44px / var(--ui-zoom, 1))); white-space: normal; }
+.combat-potion-menu .as-option { width: 100%; min-height: max(44px, calc(44px / var(--ui-zoom, 1))); }
+@media (max-width: 480px) {
+  .combat > .hand-area > .combat-action-row { inset-inline: 8px; gap: 4px; }
+  .combat-action-row > button { padding-inline: 2px; font-size: 1.1rem; }
+}

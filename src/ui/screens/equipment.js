@@ -31,6 +31,7 @@ import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
+import { reducedMotionRequested } from '../motion.js';
 import { statProjection, pieceWeight } from '../../model/statProjection.js';
 import { resolveUpgradedEquipment } from '../../model/itemUpgrades.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
@@ -39,7 +40,7 @@ import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import {
   equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
-  orderArmourySlots,
+  orderArmouryPositions, orderArmourySlots,
 } from '../../model/armouryLayout.js';
 import {
   armouryOverlayModel, armouryPanelModel, equipmentSetCellModel, equipmentSlotModel,
@@ -342,7 +343,9 @@ function buildArmoury(L, ui) {
   const ordered = orderArmourySlots(ui.blocks.map((block) => block.slot), ui.layout);
   const positionsBySlot = ordered.map((slot) => ({
     slot,
-    positions: ui.positions(slot).filter((position) => position.modelState !== 'hidden'),
+    positions: orderArmouryPositions(
+      ui.positions(slot).filter((position) => position.modelState !== 'hidden'),
+    ),
   }));
   const itemCount = positionsBySlot.reduce((sum, row) => (
     sum + row.positions.filter((position) => position.state === 'occupied').length
@@ -412,14 +415,14 @@ function figureFor(registries, run, cz) {
   const el = document.createElement('div');
   el.className = 'armoury-figure';
   const reacts = CFG().spriteReacts;
+  const spec = figureSpec(registries, run.loadout, run.class);
   if (reacts === 'none') {
-    el.appendChild(playerSprite(cz, run.class));
+    el.appendChild(playerSprite(cz, run.class, spec.armourId));
     return el;
   }
-  const spec = figureSpec(registries, run.loadout, run.class);
   if (reacts === 'hands') spec.armourId = 'default';
   const fig = equippedFigure({ classId: run.class, ...spec });
-  el.appendChild(fig || playerSprite(cz, run.class));
+  el.appendChild(fig || playerSprite(cz, run.class, spec.armourId));
   return el;
 }
 
@@ -1497,6 +1500,38 @@ export function mountEquipment(host, {
     const projection = statProjection(registries, run);
     const surface = equipmentSurfaceReceipt(registries, run);
     const expanded = viewMode().character === 'expanded';
+    const informationCards = [];
+    const initiallyOpen = expanded ? 'attributesCard' : null;
+    let revealFrame = 0;
+
+    function revealInformationCard(card, head) {
+      cancelAnimationFrame(revealFrame);
+      revealFrame = requestAnimationFrame(() => {
+        if (!card.isConnected || !card.open) return;
+        // Focus must not scroll before closing the old card has settled layout.
+        if (document.activeElement !== head) head.focus({ preventScroll: true });
+        let top = 0;
+        let bottom = window.innerHeight;
+        for (let parent = card.parentElement; parent; parent = parent.parentElement) {
+          if (!/(auto|scroll|hidden|clip)/.test(getComputedStyle(parent).overflowY)) continue;
+          const rect = parent.getBoundingClientRect();
+          top = Math.max(top, rect.top);
+          bottom = Math.min(bottom, rect.bottom);
+        }
+        const rect = card.getBoundingClientRect();
+        if (bottom <= top || (rect.top >= top && rect.bottom <= bottom)) return;
+        // A tall card cannot fit: keep its header reachable, not its bottom.
+        const tall = rect.height > bottom - top;
+        if (tall && Math.abs(rect.top - top) <= 2) return;
+        const target = tall ? head : card;
+        const behavior = reducedMotionRequested() ? 'instant' : 'smooth';
+        try {
+          target.scrollIntoView({ block: tall ? 'start' : 'nearest', inline: 'nearest', behavior });
+        } catch {
+          target.scrollIntoView(tall);
+        }
+      });
+    }
 
     // AN INFORMATION CARD is a fold-open DetailCard: its head a Row (caret
     // Glyph, the label as Title·S, the one-line summary as StatusText), its
@@ -1509,7 +1544,32 @@ export function mountEquipment(host, {
       }));
       head.querySelector('.as-glyph').classList.add('caret');
       const card = detailCard({ tag: 'details', attrs: { class: `character-info-card ${id}`, dataset: { component: `armoury.${id}` } }, children: [head, body] });
-      card.open = expanded;
+      card.open = id === initiallyOpen;
+      head.setAttribute('aria-expanded', card.open ? 'true' : 'false');
+      const entry = { card, setOpen(open) {
+        card.open = open;
+        head.setAttribute('aria-expanded', String(open));
+      } };
+      informationCards.push(entry);
+      function activate(open) {
+        cancelAnimationFrame(revealFrame);
+        for (const peer of informationCards) {
+          if (peer === entry) peer.setOpen(open);
+          else if (open && peer.card.open) peer.setOpen(false);
+        }
+        if (open) revealInformationCard(card, head);
+      }
+      // Keyboard activation of a native summary also produces click. Update
+      // siblings and ARIA together, before the asynchronous toggle events.
+      head.addEventListener('click', (event) => {
+        event.preventDefault();
+        activate(!card.open);
+      });
+      card.addEventListener('toggle', (event) => {
+        if (event.target !== card) return;
+        // Ignore initial/handled/coalesced events; support external .open writes.
+        if (head.getAttribute('aria-expanded') !== String(card.open)) activate(card.open);
+      });
       attachTooltip(head, () => `<div class="tt-title">${esc(label)}</div><p>${esc(card.open ? `Fold ${label}.` : `Expand ${label} for its full calculation and details.`)}</p>`);
       return card;
     }
