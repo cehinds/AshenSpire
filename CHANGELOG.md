@@ -64,6 +64,16 @@ landed a change, and inventing one to fit these would be the reconstruction
 this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-07
+- **Sigils stay beside class information** ([#764](https://github.com/cehinds/AshenSpire/pull/764), `0.5.5.109`). Painted character figures no longer carry the sigil overlay added in the earlier build. The sigil remains in the class picker.
+- **Enemy attacks face the target and have more impact** ([#758](https://github.com/cehinds/AshenSpire/pull/758), `0.5.5.110`). The Stitched King now looks toward the player during his attack. Enemy attack frames are five percent larger than idle frames while keeping their shared foot line fixed.
+
+- **Damaging spells show the enemy attack frame** ([#755](https://github.com/cehinds/AshenSpire/pull/755), `0.5.5.108`). Enemy spells retain their casting motion while showing their attack artwork, then return to the idle frame when the animation finishes or is cancelled.
+
+- **Chosen sigils appear on painted figures** ([#752](https://github.com/cehinds/AshenSpire/pull/752), `0.5.5.107`). The chosen sigil is visible during character creation and combat. Character-creation checks follow the current folded sections, incomplete point allocations use a valid preview, and the sprite-cutting guard refuses incompatible metadata before overwriting art.
+
+- **Upgrade and armor choices use standard card sizes** ([#761](https://github.com/cehinds/AshenSpire/pull/761), `0.5.5.106`). Armor artwork fits inside the cards without cropping. Shrine actions share a consistent height, with flask allocation expanding below its header.
+
+- **Assign Points stays responsive on the final point** ([#751](https://github.com/cehinds/AshenSpire/pull/751), `0.5.5.105`). The character preview reads the current allocation instead of a stale cached draft, so spending or refunding points continues to update the controls even when a weapon requirement is unmet.
 
 - **Your figure holds the weapon and shield you gave it again** ([#757](https://github.com/cehinds/AshenSpire/pull/757), `0.5.5.103`). In the Armoury the figure had stopped showing the armament in its hands: the function that stacks the held pieces over the body returned a single standing frame before it built any of them, so nothing was held. It was found by the release promotion's own browser gate rather than by playing, and the shape of the finding is worth recording — all twenty-five armaments, in both hands, measured at the identical position. Fifty readings that agree to the pixel are not a weapon on the wrong side; they are no weapon at all. The short-circuit was also unreachable in the case it was written for and wrong in the case it did reach: the Armoury already chooses the painted standing pose itself, and only calls this when sprites are off or you have asked for the classic or glyph style, so the one thing it did was overrule the style you chose. The painted preview is untouched.
 

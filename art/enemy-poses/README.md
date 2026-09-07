@@ -4,6 +4,8 @@
 
 Open `index.html` through a local HTTP server to compare every pair, view its original art, and play an idle → attack → idle transition. `sheets/` retains all 33 full-resolution generated sources. `generation.json` records the reference and prompt for each enemy. Art was generated using built-in image_gen.
 
+Source-background exception: the corrected Stitched King master is opaque RGB with a baked checkerboard, even though the prompt requested transparency. The full-resolution source link preserves that raw output. Like Wandering Soldier, it must pass through `tools/painted-poses.mjs` background extraction before use; `build.mjs` already does this. Use `assets/enemy-poses/stitchedKing_attack.png` for the transparent game sprite, not the raw sheet.
+
 `node art/enemy-poses/build.mjs` extracts poses using the repository's `tools/painted-poses.mjs` and exports RGBA PNGs to `assets/enemy-poses/`. Exported frames use the existing 384 × 384 convention, face toward the player's side, and use ground line 364. The two poses in each replacement sheet share one scale. Existing idle images remain byte-identical to their references. Intermediate extraction files are ignored; final assets and source sheets are retained.
 
 The combat renderer preloads the attack frame and displays it during the existing `act-attack` state. It returns to idle when that state ends. Failed attack loads leave the idle visible. These are discrete attack keyframes, not complete multi-frame animations or rigged 3D models. Long weapons and effects fit within the square frame; a wide attack can therefore appear smaller than its standing idle.

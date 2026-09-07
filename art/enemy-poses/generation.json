@@ -217,7 +217,9 @@
       ],
       "ref": "assets/enemies-unity/painted_stitchedKing.png",
       "old": false,
-      "prompt": "One new full-body ATTACK sprite of exact Stitched King reference. Preserve huge pale stitched flesh body, small gold crown, long dark hair, bloodstained regal red cape and white cloth, heavy cleaver, chains and iron bracers. Heavy leftward cleaver chop: arm swinging cleaver across body, hunched torso, spread feet, free hand grasping forward. Same painted dark fantasy style. Entire figure and cleaver visible with ample transparent padding. Genuinely transparent alpha, no checkerboard, no floor or text. Square."
+      "prompt": "One new full-body ATTACK sprite of exact Stitched King reference. Preserve huge pale stitched flesh body, small gold crown, long dark hair, bloodstained regal red cape and white cloth, heavy cleaver, chains and iron bracers. Heavy leftward cleaver chop: arm swinging cleaver across body, hunched torso, spread feet, free hand grasping forward. Same painted dark fantasy style. Entire figure and cleaver visible with ample transparent padding. Genuinely transparent alpha, no checkerboard, no floor or text. Square.",
+      "facingCorrection": "Turn head, gaze and torso left toward the attacking cleaver; preserve character design and weapon direction. Generated with built-in image_gen on 2026-09-07.",
+      "sourceBackground": "The corrected source is opaque RGB with a baked checkerboard, despite the requested alpha in the original prompt. tools/painted-poses.mjs removes the border-connected background during build.mjs extraction; the exported attack is transparent RGBA. The full-resolution source link intentionally retains the raw generator output."
     },
     {
       "id": "mirrorScribe",
