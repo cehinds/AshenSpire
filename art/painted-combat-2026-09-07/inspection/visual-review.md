@@ -20,3 +20,5 @@ Corrections made after inspecting the pictures:
 The accepted combat set depicts rightward attacks, guards and right-facing recoil. Anticipation can hold a weapon behind the body; that does not indicate a leftward attack. Menu/detail images and portraits intentionally retain their presentation angles.
 
 The exported canvases keep a fixed scale per outfit and shared ground anchor. These are a few key drawings per action; timing is provisional and has not been tested in the game engine. Some extracted edges retain a thin pale fringe visible when enlarged. Frame-level consistency is inspected, but final in-game size, background contrast and animation timing still need integration review.
+
+Reaver menu revision: inspected all four full-body stand exports against the selected sword-rest reference. Stand and detail now share that stance in each outfit; close-up portraits and combat files are unchanged. Asset validation passed (112 combat files and 208 state decodes).

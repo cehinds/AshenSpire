@@ -27,24 +27,40 @@
     "mapping": {
       "idle": "stand"
     },
-    "note": "Owner-selected upright sword-rest idle. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave from selected strip."
+    "note": "Owner-selected upright sword-rest idle. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave from selected strip.",
+    "menuMapping": {
+      "stand": "stand",
+      "detail": "stand"
+    }
   },
   "reaver-vigil": {
     "mapping": {
       "idle": "stand"
     },
-    "note": "Owner-selected upright sword-rest idle. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave from selected strip."
+    "note": "Owner-selected upright sword-rest idle. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave from selected strip.",
+    "menuMapping": {
+      "stand": "stand",
+      "detail": "stand"
+    }
   },
   "reaver-oathsworn": {
     "mapping": {
       "idle": "swordRest"
     },
-    "note": "Use the hands-on-sword rest from the first cell of the retained expanded sheet for idle; the menu stand holds its sword to the side. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave."
+    "note": "Use the hands-on-sword rest from the first cell of the retained expanded sheet for idle; the menu stand holds its sword to the side. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave.",
+    "menuMapping": {
+      "stand": "swordRest",
+      "detail": "swordRest"
+    }
   },
   "reaver-warden": {
     "mapping": {
       "idle": "stand"
     },
-    "note": "Owner-selected upright sword-rest idle. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave from selected strip."
+    "note": "Owner-selected upright sword-rest idle. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave from selected strip.",
+    "menuMapping": {
+      "stand": "stand",
+      "detail": "stand"
+    }
   }
 }

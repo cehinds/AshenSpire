@@ -91,7 +91,8 @@ for(const job of jobs){
  }
  const menu=join(here,'menu',job.id);mkdirSync(menu,{recursive:true});
  for(const p of ['stand','detail','portrait']){
-  const img=raw[p].img,b=contentBox(img),bw=b.x1-b.x0+1,bh=b.y1-b.y0+1;
+  const from=choices[job.id]?.menuMapping?.[p]||p;
+  const img=raw[from].img,b=contentBox(img),bw=b.x1-b.x0+1,bh=b.y1-b.y0+1;
   const cw=p==='portrait'?512:640,ch=p==='portrait'?512:800,pad=16;
   const s=Math.min((cw-pad*2)/bw,(ch-pad*2)/bh),w=Math.round(bw*s),h=Math.round(bh*s);
   const small=resample(img,b.x0,b.y0,bw,bh,w,h),px=Buffer.alloc(cw*ch*4);
