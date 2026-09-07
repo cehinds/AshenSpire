@@ -209,6 +209,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const actionClass = ['slash', 'thrust', 'strike', 'projectile'].includes(plan.family) ? 'act-attack' : 'act-move';
     const overrides = {
       'animation-duration': totalMs + 'ms',
+      '--enemy-attack-duration': totalMs + 'ms',
       '--action-travel': `${direction * 26 * reach}px`,
       '--action-recoil': `${-direction * 12 * reach}px`,
       '--action-tilt': `${direction * 12 * reach}deg`,
