@@ -85,3 +85,4 @@ for(const job of jobs){
 const path=join(here,'manifest.json');
 const prev=existsSync(path)?JSON.parse(readFileSync(path,'utf8')).outfits:[];
 writeFileSync(path,JSON.stringify({schema:1,generator:'Built-in image_gen; extracted with tools/painted-poses.mjs',status:'Art preview; not installed in game',outfits:jobs.map(j=>results.find(r=>r.id===j.id)||prev.find(r=>r.id===j.id)).filter(Boolean)},null,2)+'\n');
+await import('./build-pages.mjs');

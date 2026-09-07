@@ -25,7 +25,14 @@ From this worktree root:
 node art/painted-combat-2026-09-07/serve.mjs
 ```
 
-Open <http://127.0.0.1:4276/>. The preview provides Menu & details, Combat frames, Animation preview and All source poses. Playback supports pause, frame stepping and slower speeds.
+Each class now has one complete page containing all four outfits, their menu/detail poses, portraits, combat poses and every retained source sheet:
+
+- Reaver: <http://127.0.0.1:4276/reaver.html>
+- Rogue: <http://127.0.0.1:4276/rogue.html>
+- Starseer: <http://127.0.0.1:4276/starseer.html>
+- Herald: <http://127.0.0.1:4276/herald.html>
+
+The comparison tools and animation player remain at <http://127.0.0.1:4276/>. Playback supports pause, frame stepping and slower speeds. Rebuild just the class pages with `node art/painted-combat-2026-09-07/build-pages.mjs`; the full asset build also regenerates them.
 
 ```powershell
 node art/painted-combat-2026-09-07/build.mjs
