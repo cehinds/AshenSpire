@@ -927,7 +927,7 @@ export function mountEquipment(host, {
     if (picking) {
       const target = wrap.querySelector('.armoury-selection-context button');
       target?.focus({ preventScroll: true });
-      target?.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+      target?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     }
   }
 
@@ -1808,6 +1808,7 @@ export function mountEquipment(host, {
     }
     section.append(head, content);
     section.addEventListener('toggle', () => {
+      if (!section.isConnected) return;
       folded.set(r.id, !section.open);
       armouryTraySession.folded.set(r.id, !section.open);
     });
@@ -1986,6 +1987,7 @@ export function mountEquipment(host, {
         }
         if (onChange) onChange(run.loadout, { equipView: view });
         draw();
+        wrap.querySelector('[data-surface="armouryView"] [aria-selected="true"]')?.focus({ preventScroll: true });
       });
     }
   }

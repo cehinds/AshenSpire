@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-779",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Armoury navigation is simpler and menu cancellation is reliable",
+    "detail": "Equipment, Character and Overview use one scrolling page with readable gear cards and ordinary foldouts. Change shows compatible inventory choices with a clear way to show all items again. Resizing no longer closes the item being read. In-run Load explains unavailable empty slots; Smith cancellation closes only the topmost dialog and supports clicking its backdrop.",
+    "build": "0.5.5.115",
+    "pullRequest": 779,
+    "url": "https://github.com/cehinds/AshenSpire/pull/779"
+  },
+  {
     "id": "pr-771",
     "date": "2026-09-07",
     "group": "2026-09-07",

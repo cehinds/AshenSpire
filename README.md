@@ -144,12 +144,17 @@ build changes; the visible build stamp ties each image to the tree that drew it.
 |---|---|---|
 | [![Current development title screen](docs/preview/title.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development act map](docs/preview/map.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development combat](docs/preview/combat.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) |
 
-Armoury reference captures: [Character](docs/preview/armoury-1191-character-desktop.png),
-[Inventory](docs/preview/armoury-1191-inventory-desktop.png),
-[Hybrid](docs/preview/armoury-1191-hybrid-desktop.png),
-[whole-card hold progress](docs/preview/armoury-1191-hold-progress-desktop.png),
-[comparison tooltip](docs/preview/armoury-1191-comparison-tooltip-desktop.png), and
-[390×844 phone](docs/preview/armoury-1191-phone.png).
+The Armoury opens on Equipment, with Character and Overview alongside it. Select a
+gear card to inspect it or choose Change to browse compatible items. Show all items
+clears the slot filter. Each view scrolls naturally; secondary information unfolds
+in place without resizing panes.
+
+Armoury previews: [Equipment](docs/preview/armoury-simple-equipment-1440.png),
+[Character](docs/preview/armoury-simple-character-1440.png),
+[Overview](docs/preview/armoury-simple-overview-1440.png), and
+[phone](docs/preview/armoury-simple-equipment-390.png).
+The [menu control audit](docs/preview/menu-control-audit.md) records tested routes
+and remaining coverage limits.
 
 The in-game changelog is checked through the real title → Settings → Changelog route
 by `node tools/about-changelog.mjs`.
