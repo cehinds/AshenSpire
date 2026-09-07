@@ -2553,3 +2553,41 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .inventory-face.as-face > .r-trail { grid-column: 2; grid-row: 2; justify-content: flex-start; width: auto; margin-left: 0; }
 .inventory-face .inventory-name { white-space: normal; overflow-wrap: anywhere; }
 .inventory-face .on { white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* Approved 350 × 490 poker canvas. Every measurement scales together. */
+.equipment-poker-card { display:block; position:relative; width:100%; max-width:490px; aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
+.equipment-poker-card .epc-frame { box-sizing:border-box; display:grid; grid-template-rows:25px minmax(0,1fr) 25px 39px 19px 82px 36px 13px; position:absolute; inset:0 auto auto 0; width:350px; height:490px; padding:18px; gap:5px; border:1px solid var(--accent); border-radius:13px; transform-origin:top left; transform:scale(var(--card-scale,1)); box-shadow:0 9px 26px #0006,inset 0 0 0 4px #17120e,inset 0 0 0 5px #695334; background:linear-gradient(125deg,#302319,#19150f 45%,#251d15); font:13px/1.35 Arial,sans-serif; }
+.epc-frame > * { min-width:0; min-height:0; box-sizing:border-box; }
+.epc-name { display:flex; justify-content:space-between; gap:8px; align-items:center; font:600 20px/1.12 Georgia,serif; color:#f0dfaf; }
+.epc-name > span { font-size:13px; color:var(--accent); }
+.epc-art { display:grid; place-items:center; border:1px solid #665238; border-radius:5px; background:radial-gradient(ellipse at 50% 40%,#403322,#18140f 75%); }
+.epc-art img { box-sizing:border-box; height:100%; width:100%; min-height:0; object-fit:contain; padding:6px; filter:drop-shadow(0 3px 5px #0006); }
+.epc-type { font:600 11px/1.2 Arial,sans-serif; text-align:center; text-transform:uppercase; letter-spacing:.12em; padding:5px 2px; color:var(--accent); background:color-mix(in srgb,var(--accent) 13%,#1c1813); border-block:1px solid #665238; }
+.epc-facts { display:flex; justify-content:space-around; gap:5px; padding:5px 0; border-bottom:1px solid #5e4c32; }
+.epc-fact { font:10px/1.1 Arial,sans-serif; text-transform:uppercase; text-align:center; color:#b1a38c; }
+.epc-fact strong { font:600 16px Georgia,serif; display:block; color:#eee3ca; margin-bottom:2px; }
+.epc-tags { display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
+.epc-tag { font:10px/1.1 Arial,sans-serif; text-transform:uppercase; letter-spacing:.05em; color:#d1ba82; border:1px solid #615033; border-radius:3px; padding:3px 5px; }
+.epc-effects { padding:3px 0; font:13px/1.35 Arial,sans-serif; color:#e5dccb; }
+.epc-heading { display:block; font:10px Arial,sans-serif; text-transform:uppercase; letter-spacing:.12em; color:#bca779; margin:0 0 5px; }
+.epc-bonus { display:block; }
+.epc-bonus + .epc-bonus { margin-top:3px; }
+.epc-flavor { font:italic 12px/1.3 Georgia,serif; color:#baa98c; padding-top:6px; border-top:1px solid #5e4c32; }
+.epc-footer { display:flex; justify-content:space-between; gap:8px; font:10px/1.1 Arial,sans-serif; color:#ac9c7f; text-transform:uppercase; letter-spacing:.04em; }
+.epc-footer > :last-child { color:var(--accent); }
+.equipment-poker-card [tabindex]:focus-visible { outline:2px solid #f2d87e; outline-offset:2px; }
+.equipment-poker-inspection { min-width:0; width:100%; }
+.equipment-poker-explanations { margin-top:12px; font:14px/1.5 Arial,sans-serif; color:#eee3ca; text-align:left; overflow-wrap:anywhere; }
+.equipment-poker-explanations summary { cursor:pointer; padding:12px; border:1px solid #74603c; border-radius:5px; background:#221b14; }
+.equipment-poker-explanations dt { font-weight:bold; color:#e4ca80; margin-top:12px; }
+.equipment-poker-explanations dd { margin:4px 0 12px; }
+.inventory-face.as-face.poker-inventory-face { display:flex; flex-direction:column; align-items:stretch; width:100%; min-width:0; }
+.inventory-face.poker-inventory-face > .r-trail { justify-content:flex-start; margin-top:10px; }
+.inventory-detail.poker-inventory-detail { display:flex; flex-direction:column; align-items:stretch; min-width:0; }
+.equip-chip.poker-equipment-choice { display:block; width:100%; padding:6px; }
+.equip-chip.poker-equipment-choice > .equipment-poker-card { max-width:350px; }
+/* Cards share the existing disclosure navigation and reveal placement. */
+.armoury .disc-faces:has(.poker-inventory-face) { display:flex; flex-flow:row wrap; align-items:flex-start; }
+.armoury .disc-faces > .disc-face.disc-item:has(.poker-inventory-face) { flex:1 1 260px; max-width:370px; min-width:0; }
+.poker-inventory-face > .equipment-poker-card { max-width:350px; }
+.armoury .disc-reveal:has(.poker-inventory-detail) { flex-basis:100%; min-width:0; }

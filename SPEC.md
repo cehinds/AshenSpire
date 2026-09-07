@@ -1431,3 +1431,13 @@ Use shared components for armament/card faces, enemy frames, related modals, tab
 Drive attack animation selection from data using this precedence: an explicit actor-and-action override (player character plus card ID, or enemy identity plus move ID), then the first matching action tag in one documented ordered tag table for that actor, then the card-type family for player cards or the authored intent family for enemy moves, then a neutral fallback. Multi-tag cards and enemy moves select one primary action animation deterministically; additional effect cues may accompany it without replaying the action. Families include slash, thrust, strike, projectile, spell, guard, and dodge, with character-specific sprites where authored. Missing assets fall back safely rather than blocking resolution.
 
 Animate draw, selection, targeting, play, resolution, discard, exhaust, idle, attack, hit, and defeat as appropriate. Engine outcomes remain authoritative; skipping, interrupting, or disabling animations cannot alter state or strand input. Reduced-motion mode replaces travel/shake/repeated motion with brief static or opacity feedback while retaining outcome information. Provide readable non-color cues, focus-visible controls, viewport-contained tooltips, and desktop/phone mouse, keyboard, and touch behavior. Validate timing, event-handler cleanup, and multi-enemy performance in actual browser playtests.
+
+### Approved poker equipment cards (#784)
+Equipment selection and inspection use the approved `item-cards-preview.html` design:
+a single 350 by 490 canvas scales uniformly at 5:7. Painted armament art is keyed by
+item id; armor uses its painted menu pose. `equipmentCardModel` reads canonical base
+facts, tags, requirements and modifier vocabulary. Live comparison, upgrades and
+Equip/Move/Unequip remain separate existing receipts/actions. Inspection provides
+hover and keyboard explanations plus a normal full-text disclosure for touch and
+long content. Overfull regions explicitly direct the reader to details instead of
+clipping text. Player Poise is described as display-only, without changing mechanics.
