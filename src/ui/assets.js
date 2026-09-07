@@ -346,8 +346,9 @@ function renderedSpriteUrl(classId, tintId) {
 // the same shared assumption, and it would cover an unmeasured figure's face
 // in silence rather than showing up as a missing medallion.
 //
-// NOT ON THE SVG FALLBACK PATH, deliberately: `build(tint, sigil)` draws the
-// sigil inside the silhouette itself, so adding this would be two sigils.
+// NOT ON THE SVG FALLBACK PATH: that path no longer carries a sigil at all.
+// `build()` is handed `null` where the chosen sigil used to go, so
+// `sigilMedallion()` falls to its plain accent circle.
 export function medallionOverlay(classId, tint, sigil) {
   const anchor = medallionAnchor(classId);
   if (!sigil || !anchor) return null;
@@ -466,7 +467,14 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   el.appendChild(facing);
 
   const fallbackToSvg = () => {
-    facing.innerHTML = build(tint, sigil);
+    // `null`, NOT `sigil`, and this is the other half of taking the sigil off
+    // the character. Every SVG builder draws the value passed here through
+    // sigilMedallion(), which paints it as a glyph ON THE FIGURE'S CHEST — so
+    // the Classic sprite style, and any rendered figure that falls back to the
+    // inline SVG, kept wearing the sigil after the overlay was removed.
+    // sigilMedallion() already answers a plain accent circle for a falsy
+    // sigil, which is exactly the pre-sigil silhouette.
+    facing.innerHTML = build(tint, null);
     const svg = facing.querySelector('svg');
     if (svg) {
       // The class SVGs hardcode a 110×140 viewBox; fill the fixed-geometry
