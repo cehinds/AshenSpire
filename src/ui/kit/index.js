@@ -353,6 +353,10 @@ export function slot({ art = '', count = null, key = '', label = '', small = fal
     ...attrs, type: tag === 'button' ? 'button' : null, id: id || null,
     class: cls('as-slot', small ? 'sm' : '', isStatic ? 'static' : '', selected ? 'is-selected' : '', className),
     'aria-label': label || attrs['aria-label'] || null,
+    // A disabled Slot is unavailable, not merely described as unavailable.
+    // Native disabling keeps the unified cursor, keyboard activation, and
+    // programmatic click paths from selecting an empty potion control.
+    disabled: tag === 'button' && disabled ? true : null,
     'aria-disabled': disabled ? 'true' : (attrs['aria-disabled'] ?? null),
   }, [
     typeof art === 'string' ? el('span', { class: 'sl-art', 'aria-hidden': 'true', text: art }) : art,

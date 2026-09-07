@@ -51404,6 +51404,10 @@ function slot({ art = '', count = null, key = '', label = '', small = false, sta
     ...attrs, type: tag === 'button' ? 'button' : null, id: id || null,
     class: cls('as-slot', small ? 'sm' : '', isStatic ? 'static' : '', selected ? 'is-selected' : '', className),
     'aria-label': label || attrs['aria-label'] || null,
+    // A disabled Slot is unavailable, not merely described as unavailable.
+    // Native disabling keeps the unified cursor, keyboard activation, and
+    // programmatic click paths from selecting an empty potion control.
+    disabled: tag === 'button' && disabled ? true : null,
     'aria-disabled': disabled ? 'true' : (attrs['aria-disabled'] ?? null),
   }, [
     typeof art === 'string' ? el('span', { class: 'sl-art', 'aria-hidden': 'true', text: art }) : art,
@@ -52809,7 +52813,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '03e96c7195';
+const SOURCE = '46762ed4d6';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52843,7 +52847,7 @@ const SOURCE = '03e96c7195';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '13';
+const ORDINAL = '14';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
