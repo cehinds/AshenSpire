@@ -482,7 +482,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       + `<div class="tt-combatant-line"><b>HP</b> ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</div>`
       + `<div class="tt-combatant-line"><b>Poise</b> ${esc(poise?.value ?? '—')}/${esc(poise?.max ?? '—')}</div>`
       + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`
-      + `<div class="ti-detail">Press <b>I</b>${subject.role === 'enemy' ? ', or tap the name,' : ''} for the full read.</div>`;
+      + '<div class="ti-detail">Tap <b>ⓘ</b> or press <b>I</b> for the full read.</div>';
   }
 
   /**
@@ -507,6 +507,26 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       primary: button({ label: 'Close', weight: 'primary', attrs: { 'data-focusable': 'true' } }),
       footSize: 'short',
     });
+  }
+
+  // A physical keyboard has I; a touch screen needs a visible, single-tap
+  // equivalent. Keep this control separate from the combatant frame's click:
+  // that click may target a card or flask, while inspection must never spend
+  // a turn. The same door and subject feed both paths so their detail cannot
+  // drift.
+  function combatantInspectControl(role, entity) {
+    const subject = combatantSubject(role, entity);
+    const control = iconButton({
+      glyph: 'ⓘ',
+      label: `Inspect ${subject.name}`,
+      className: 'combatant-inspect-control',
+      attrs: { 'aria-haspopup': 'dialog' },
+    });
+    control.addEventListener('click', (event) => {
+      event.stopPropagation();
+      openCombatantDoor(combatantSubject(role, entity));
+    });
+    return control;
   }
 
   function renderedContentRect(el) {
@@ -1076,7 +1096,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       sprite: playerSprite(run.customization || {}, run.class, figure.armourId),
       blockBadge: blockBadge(p, { tooltips: false }),
       meters: meterBars(p, { tooltips: false }),
-      trailing,
+      trailing: [combatantInspectControl('player', p), ...trailing],
     });
     wirePlayerContext(box, p);
     // When a self/buff card is armed, the player is a confirmable target.
@@ -1160,7 +1180,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         blockBadge: blockBadge(enemy, { tooltips: false }),
         name: nm,
         meters: meterBars(enemy, { tooltips: false }),
-        trailing: [statusRow(enemy)],
+        trailing: [combatantInspectControl('enemy', enemy), statusRow(enemy)],
       });
       box.dataset.stature = statureFor(registries, def.id);
       if (enemy.alive) {
