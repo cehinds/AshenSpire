@@ -2419,3 +2419,28 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .pile-body .card .ctag { font-size: calc(10px / var(--ui-zoom, 1)); }
 .pile-body .card .cost { font-size: calc(14px / var(--ui-zoom, 1)); width: calc(24px / var(--ui-zoom, 1)); height: calc(24px / var(--ui-zoom, 1)); }
 .modal:has(.pile-body) .modal-tab { font-size: calc(15px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); }
+
+/* Read-only detail rows: let names claim 10–30%, then wrap the explanation. */
+:is(.modal, .as-tip) div.as-row:has(> .r-label):has(> .as-status),
+.combatant-inspector-row {
+  align-items: flex-start; white-space: normal; gap: 0.75rem;
+  font-size: max(1.47rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.45;
+}
+:is(.modal, .as-tip) div.as-row:has(> .as-status) > .r-label,
+.combatant-inspector-row:has(> .as-status) > .r-label {
+  flex: 0 0 auto; width: max-content; min-width: 10%; max-width: 30%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+:is(.modal, .as-tip) div.as-row:has(> .r-label) > .as-status,
+.combatant-inspector-row > .as-status {
+  flex: 1 1 0; min-width: 0; margin-left: 0; font-size: inherit; line-height: inherit;
+  white-space: normal; overflow-wrap: anywhere; overflow: visible; text-overflow: clip; text-align: left;
+}
+:is(.modal, .as-tip) .as-statrow { align-items: flex-start; font-size: max(1.4rem, calc(15px / var(--ui-zoom, 1))); }
+:is(.modal, .as-tip) .as-statrow > .sr-id { flex: 0 0 auto; width: max-content; min-width: 10%; max-width: 30%; }
+:is(.modal, .as-tip) .as-statrow .sr-name { font-size: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:is(.modal, .as-tip) .as-statrow > .sr-vals { flex: 1 1 0; min-width: 0; margin-left: 0; justify-content: flex-start; text-align: left; }
+:is(.modal, .as-tip) .as-statrow .sr-vals :is(.as-statpair, .sp-k, .sp-v) { white-space: normal; overflow-wrap: anywhere; font-size: inherit; }
+.combatant-inspector-body .as-eyebrow { font-size: max(1rem, calc(12px / var(--ui-zoom, 1))); }
+
+:is(.modal, .as-tip) .as-statrow .sr-hint { font-size: inherit; line-height: 1.45; overflow-wrap: anywhere; }
