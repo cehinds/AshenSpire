@@ -497,3 +497,9 @@ The three columns negotiate inside one grid. `cinders-counter` stays centered;
 `build-metadata-trail` is capped and progressively hides Source, Seed, then
 Build. `metadataShowTotals` is false by default, so only current Act/Floor are
 shown.
+
+Equipment cards (#784): Inventory, starting equipment choices and equipped-item
+inspection reuse `equipmentCardModel` and `equipmentCard.js`. The approved 5:7
+painted card scales one 350 by 490 canvas. Each meaningful field has an authored
+explanation; inspection includes keyboard tooltips and a touch-readable full-text
+disclosure. Existing equip, drag, compare and navigation behavior remains.
