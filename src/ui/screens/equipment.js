@@ -53,8 +53,6 @@ import {
   renderArmouryOverlay, renderArmouryPanel, renderEquipmentSlot,
   renderInventoryItemCard, renderInventoryDetailCard,
 } from '../components/armouryComponents.js';
-import { trayModel } from '../models/TrayModels.js';
-import { renderTray } from '../components/trayComponents.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { traySizeService } from '../services/TraySizeService.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
@@ -138,7 +136,7 @@ const LAYOUTS = {
 };
 
 const ARMOURY_DESTINATIONS = Object.freeze({
-  cards: Object.freeze({ view: 'grid', region: 'cards' }),
+  cards: Object.freeze({ view: 'cards', region: null }),
   equipment: Object.freeze({ view: 'rack', region: null }),
   character: Object.freeze({ view: 'grid', region: null }),
 });
@@ -357,11 +355,11 @@ function buildArmoury(L, ui) {
   // of tiles per slot (the slot's label an Eyebrow) with one shared Details
   // card in the grid view.
   const slots = options([], { class: 'equip-slots armoury-position-list' });
-  if (!ui.armamentsFolded && ui.armamentView === 'list') {
+  if (ui.armamentView === 'list') {
     for (const { slot, positions } of positionsBySlot) {
       slots.appendChild(ui.positionGroup(slot, positions, 'list'));
     }
-  } else if (!ui.armamentsFolded) {
+  } else {
     slots.classList.add('armoury-position-grid-groups');
     for (const { slot, positions } of positionsBySlot) {
       const tiles = el('div', { class: 'armoury-position-grid-tiles' }, optionGrid([ui.positionGroup(slot, positions, 'grid')]));
@@ -369,41 +367,12 @@ function buildArmoury(L, ui) {
     }
     slots.appendChild(ui.armamentGridDetail(ordered));
   }
-  const rendered = renderTray(trayModel({
-    id: 'armaments',
-    name: ui.layout.equipment.groupLabel,
-    count: itemCount,
-    itemType: 'item',
-    edge: 'bottom',
-    expanded: !ui.armamentsFolded,
-    sortable: true,
-    sortLabel: `Show Armaments as ${ui.armamentView === 'list' ? 'grid' : 'list'}`,
-    resizable: false,
-    items: [],
-  }), {
-    onToggle: ui.toggleArmaments,
-    onSort: ui.toggleArmamentView,
-    renderContent: (content) => content.appendChild(slots),
-  });
-  const equipment = rendered.element;
-  equipment.classList.add('armoury-equipment');
-  equipment.dataset.component = 'armoury.armamentsCard';
-  equipment.dataset.armamentView = ui.armamentView;
-  equipment.dataset.collapsed = ui.armamentsFolded ? '1' : '0';
-  if (!ui.layout.equipment.outerBorder) equipment.dataset.outerBorder = 'off';
-  rendered.header.classList.add('armoury-equipment-head');
-  rendered.header.dataset.component = 'armoury.armamentsHeader';
-  attachTooltip(rendered.fold, () => `<div class="tt-title">${ui.armamentsFolded ? 'Show' : 'Hide'} ${esc(ui.layout.equipment.groupLabel)}</div>`
-    + `<p>${itemCount} equipped item${itemCount === 1 ? '' : 's'} across the authored equipment positions.</p>`);
-  if (rendered.sort) {
-    const next = ui.armamentView === 'list' ? 'grid' : 'list';
-    rendered.sort.classList.add('armoury-card-view-toggle', 'armoury-armament-view-toggle');
-    rendered.sort.dataset.component = 'armoury.armamentViewToggle';
-    // The IconButton's glyph names the view it switches TO; the tooltip says it in words.
-    rendered.sort.textContent = VIEW_TOGGLE_GLYPH[next];
-    rendered.sort.setAttribute('aria-label', `Show Armaments as ${next}`);
-    attachTooltip(rendered.sort, () => `<div class="tt-title">${esc(next === 'grid' ? 'Grid view' : 'List view')}</div><p>${esc(next === 'grid' ? 'Show compact position tiles and one shared Details pane.' : 'Show every equipment position as a full detail row.')}</p>`);
-  }
+  const equipment = el('section', { class: 'armoury-equipment armoury-section', dataset: { component: 'armoury.armamentsCard', armamentView: ui.armamentView } });
+  const toggle = button({ label: ui.armamentView === 'list' ? 'Grid view' : 'List view', className: 'armoury-armament-view-toggle' });
+  toggle.setAttribute('aria-label', `Show Armaments as ${ui.armamentView === 'list' ? 'grid' : 'list'}`);
+  toggle.addEventListener('click', ui.toggleArmamentView);
+  equipment.append(el('div', { class: 'armoury-section-head' }, [titleS('Equipped gear'), pill({ label: String(itemCount) }), toggle]),
+    prose('Select an item to inspect it. Choose Change to see compatible gear.', { class: 'armoury-help' }), slots);
   if (ui.viewMode.pane === 'inventory') ui.left.appendChild(equipment);
   if (ui.viewMode.pane === 'both') ui.right.appendChild(equipment);
 }
@@ -702,7 +671,7 @@ export function mountEquipment(host, {
     console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
-  let view = destinationPlan?.view || ((stored && IDS.includes(stored)) ? stored : shapeDefault);
+  let view = destinationPlan?.view || ((stored && IDS.includes(stored)) ? stored : (Object.keys(layout.viewModes).find((id) => IDS.includes(id) && layout.viewModes[id].pane === 'inventory') || shapeDefault));
   const viewMode = () => layout.viewModes[view] || { label: view, pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same
@@ -718,16 +687,8 @@ export function mountEquipment(host, {
     ? Object.fromEntries(armouryTraySession.folded) : null;
   const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds, viewMode())]));
   folded.set('armaments', opensCollapsed('armaments', storedFolds, viewMode()));
+  if (!storedFolds) folded.set('inventory', false);
   if (destinationPlan?.region) folded.set(destinationPlan.region, false);
-  const clampTrayHeight = (value) => Math.min(
-    layout.trays.maximumHeightRatio,
-    Math.max(layout.trays.minimumHeightRatio, Number(value)),
-  );
-  const trayHeights = new Map(contextRegions().map((region) => [
-    region.id,
-    clampTrayHeight(Number.isFinite(Number(armouryTraySession.heights.get(region.id)))
-      ? Number(armouryTraySession.heights.get(region.id)) : layout.trays.defaultHeightRatio),
-  ]));
   let cardView = layout.cards.defaultView;
   const storedArmamentView = meta.settings && meta.settings.armouryArmamentView;
   let armamentView = ['list', 'grid'].includes(storedArmamentView)
@@ -735,16 +696,10 @@ export function mountEquipment(host, {
   let armamentGridSelection = null;
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
-  const clampPaneRatio = (value) => Math.min(
-    layout.inventorySplit.maximumArmamentsRatio,
-    Math.max(layout.inventorySplit.minimumArmamentsRatio, Number(value)),
-  );
-  const savedPaneRatio = meta.settings && Number(meta.settings.armouryPaneRatio);
-  let paneRatio = clampPaneRatio(Number.isFinite(savedPaneRatio)
-    ? savedPaneRatio : layout.inventorySplit.defaultArmamentsRatio);
-  const savedHybridRatio = meta.settings && Number(meta.settings.armouryHybridRatio);
-  let hybridRatio = clampPaneRatio(Number.isFinite(savedHybridRatio)
-    ? savedHybridRatio : layout.shell.characterRatio);
+  // ONE HOME for the breakpoint question. `draw()` stamps it onto
+  // `panel.dataset.responsive` and the pane observer below asks it again to tell
+  // a real breakpoint crossing from a height-only resize; a second copy of the
+  // comparison is how those two answers would drift.
   const responsiveMode = () => typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint ? 'phone' : 'desktop';
   let paneObserver = null;
   let paneFrame = 0;
@@ -867,10 +822,12 @@ export function mountEquipment(host, {
   };
   const openInventoryForSelection = (slotId, setIndex) => {
     picking = { slotId, setIndex };
+    view = 'hybrid';
     folded.set('inventory', false);
   };
   const clearInventorySelection = () => {
     picking = null;
+    view = 'rack';
     // A replacement flow always gives the equipment pane back after commit,
     // even in the Inventory view whose arrival preset normally opens this
     // tray. Leaving it expanded redraws a fresh actionable row underneath the
@@ -976,6 +933,11 @@ export function mountEquipment(host, {
     else openInventoryForSelection(slot.id, position.index);
     if (onChange) onChange(run.loadout, foldSettings());
     draw();
+    if (picking) {
+      const target = wrap.querySelector('.armoury-selection-context button');
+      target?.focus({ preventScroll: true });
+      target?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+    }
   }
 
   function attachPositionDropTarget(target, slot, position) {
@@ -1038,7 +1000,7 @@ export function mountEquipment(host, {
       dataset: { component: 'armoury.equipmentPositionCard', slotPosition: `${slot.id}:${position.index}`, positionState: position.action },
     });
     const action = button({
-      label: position.action === 'equipped' ? 'Equipped' : 'Equip',
+      label: position.action === 'equipped' ? 'Change' : 'Equip',
       weight: position.action === 'equipped' ? 'secondary' : 'primary',
       className: `armoury-position-action ${position.action}`,
     });
@@ -1242,6 +1204,7 @@ export function mountEquipment(host, {
     if (selectedSlot) {
       box.dataset.filteredFor = `${selectedSlot.id}:${picking.setIndex}`;
       box.setAttribute('aria-label', `Inventory items compatible with ${selectedSlot.label}`);
+
     }
     const entries = rows.map((row) => {
       const target = inventoryTarget(row);
@@ -1358,76 +1321,25 @@ export function mountEquipment(host, {
         return true;
       },
     });
+    if (selectedSlot) {
+      const clear = button({ label: 'Show all items' });
+      clear.addEventListener('click', () => { picking = null; draw(); });
+      box.prepend(el('div', { class: 'armoury-selection-context', role: 'status' }, [prose(`Choose an item for ${selectedSlot.label}.`), clear]));
+    }
     box.dataset.inventoryCount = String(inventoryItemCount(rows));
     if (!entries.length) box.appendChild(flavour(selectedSlot ? `Nothing in Inventory fits ${selectedSlot.label}.` : 'Inventory is empty.', { class: 'ep-hint' }));
     return box;
   }
 
-  /** The equipment-derived cards this loadout produces right now. */
+  /** The complete deck, using the same card faces as combat and piles. */
   function cardStrip() {
-    const box = options([], { class: 'equip-cards armoury-card-list', dataset: { component: 'armoury.cardList', cardView } });
-    const gridColumns = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
-      ? layout.responsive.phone.cardsGridColumns
-      : layout.cards.gridColumns;
-    box.style.setProperty('--armoury-card-grid-columns', String(gridColumns));
-    const groups = new Map();
+    const gallery = el('div', { class: 'armoury-card-gallery', 'aria-label': 'Your deck' });
     for (const inst of run.deck || []) {
-      // This tray is the equipment-card surface. Class/signature cards do not
-      // belong here; they have no armament source to inspect or compare.
-      if (!inst.equipmentRole) continue;
-      const key = inst.equipmentRole === 'attack'
-        ? `${inst.equipmentRole}|${inst.cardId}|${inst.profileId}`
-        : inst.equipmentRole;
-      const group = groups.get(key) || { inst, count: 0 };
-      group.count += 1;
-      groups.set(key, group);
+      const card = renderCard(registries, inst, {});
+      gallery.appendChild(card);
     }
-    for (const { inst, count: copyCount } of groups.values()) {
-      const rendered = renderCard(registries, inst, {});
-      const def = resolveCard(registries, inst);
-      const art = rendered.querySelector('.art')?.textContent || '❖';
-      const type = rendered.querySelector('.ctype')?.textContent || def.type;
-      const cost = rendered.querySelector('.cost')?.textContent || String(def.cost);
-      const mana = rendered.querySelector('.mana-cost');
-      const tags = rendered.querySelector('.ctags');
-      const text = rendered.querySelector('.ctext');
-      const fullText = text ? text.textContent.trim() : '';
-      const combatText = fullText.match(/^.*?[.!?](?:\s|$)/)?.[0].trim() || fullText;
-
-      // A CARD ROW is an OptionCard (glyph, name, type · cost, tags, the copy
-      // count as a StatePill) that opens a DetailCard: the art in an ArtWell
-      // beside the combat line, the full text and the flavour.
-      const tagList = tags ? [...tags.querySelectorAll('.ctag')].map((tag) => tag.textContent.trim()) : [];
-      const costLine = `${type} · ◆ ${cost}${mana ? ` · ${mana.textContent.trim()}` : ''}`;
-      const row = el('details', { class: 'armoury-card-row', dataset: { cardRow: '1', component: 'armoury.cardRow' } });
-      const summary = optionCard({
-        tag: 'summary', glyph: art, name: def.name, meta: costLine,
-        body: tagList.length ? el('span', { class: 'tags' }, tagList.map((tag) => tagChip({ label: tag }))) : null,
-        trail: pill({ label: `x${copyCount}`, attrs: { class: 'armoury-card-row-count role-copy-count' } }),
-        arrow: false, className: 'armoury-card-row-summary compact',
-      });
-      summary.querySelector('.on').replaceChildren(el('strong', { class: 'armoury-card-row-name', text: def.name }));
-      attachTooltip(summary, () => `<div class="tt-title">${esc(def.name)}</div><p>Tap to expand the card details.</p>`);
-
-      const detailsPane = el('div', { class: 'armoury-card-details-pane' }, [
-        eyebrow('Combat data'),
-        prose(combatText || 'No combat data authored.', { class: 'armoury-card-combat' }),
-      ]);
-      if (text) {
-        const textClone = text.cloneNode(true);
-        textClone.className = 'as-prose armoury-card-detail-text';
-        detailsPane.appendChild(textClone);
-      }
-      if (def.flavor) detailsPane.appendChild(flavour(def.flavor));
-      const detail = detailCard({
-        eyebrow: costLine, name: def.name,
-        children: el('div', { class: 'armoury-card-row-detail' }, [artWell({ glyph: art }), detailsPane]),
-      });
-      row.append(summary, detail);
-      box.appendChild(row);
-    }
-    if (!groups.size) box.appendChild(flavour('No equipment cards are active.', { class: 'ep-hint' }));
-    return box;
+    if (!gallery.children.length) gallery.appendChild(prose('Your deck is empty.'));
+    return gallery;
   }
 
   function equipmentReceiptPanel(surface) {
@@ -1831,107 +1743,6 @@ export function mountEquipment(host, {
     draw();
   }
 
-  function regionTray(r) {
-    const source = wrap.querySelector(r.sel);
-    if (!source) return null;
-    const shut = folded.get(r.id) === true;
-    const fillsInventoryPane = r.id === 'inventory' && viewMode().pane === 'inventory';
-    const count = r.count(source);
-    // The folded Stats header says the level and the combat and resource chips, read off the cards themselves.
-    const summary = r.id === 'stats' ? (() => {
-      const identity = source.querySelector('.armoury-stats-identity .dc-meta')?.textContent?.replace(/^Level\s+/i, 'Lv. ') || '';
-      const groups = [...source.querySelectorAll('.armoury-stats-group')];
-      const chipsOf = (group) => [...group.querySelectorAll('.as-chip')].map((c) => `${c.querySelector('.ck')?.textContent} ${c.querySelector('.cv')?.textContent}`);
-      return [identity, ...groups.slice(0, 1).flatMap(chipsOf), ...groups.slice(2, 3).flatMap(chipsOf)].filter(Boolean).join(' · ');
-    })() : '';
-    // THE HOST IS THE DOOR'S BODY, NEVER THE GLASS: a tray's share is a share of
-    // the panel it sits in (no vh below body — the body is zoomed). A remembered
-    // height is that share; an arrival without one HUGS ITS CONTENT under the
-    // kit's compact cap, so the subject keeps the room.
-    const hostHeight = () => Math.max(1, wrap.querySelector('.armoury-shell-body')?.clientHeight || 1);
-    const remembered = armouryTraySession.heights.has(r.id);
-    const savedRatio = trayHeights.get(r.id) || layout.trays.defaultHeightRatio;
-    const model = trayModel({
-      id: r.id,
-      name: r.label,
-      count: count == null ? 0 : count,
-      itemType: r.unit,
-      summary,
-      edge: 'bottom',
-      expanded: !shut,
-      sortable: r.id === 'cards',
-      sortLabel: `Toggle ${r.label} list or grid`,
-      resizable: !fillsInventoryPane,
-      minExpandedSize: Math.max(96, Math.round(layout.trays.minimumHeightRatio * hostHeight())),
-      items: [],
-    });
-    const snapRatio = (raw) => {
-      const bounded = clampTrayHeight(raw);
-      const nearest = layout.trays.snapRatios.reduce((best, value) => (
-        Math.abs(value - bounded) < Math.abs(best - bounded) ? value : best
-      ), layout.trays.snapRatios[0]);
-      return Math.abs(nearest - bounded) <= layout.trays.snapTolerance ? nearest : bounded;
-    };
-    const rendered = renderTray(model, {
-      sizeService: {
-        read: () => null,
-        write: (_id, _edge, size) => size,
-      },
-      onToggle: () => {
-        folded.set(r.id, !folded.get(r.id));
-        armouryTraySession.folded.set(r.id, folded.get(r.id));
-        draw();
-        wrap.querySelector(`[data-fold="${r.id}"]`)?.focus();
-      },
-      onSort: r.id === 'cards' ? () => {
-        cardView = cardView === 'list' ? 'grid' : 'list';
-        draw();
-        wrap.querySelector('[data-tray-id="cards"] .tray-sort')?.focus();
-      } : null,
-      onResize: (_id, size) => {
-        const next = snapRatio(size / hostHeight());
-        trayHeights.set(r.id, next);
-        armouryTraySession.heights.set(r.id, next);
-        rendered.element.dataset.sized = '1';
-        rendered.element.style.minHeight = `${layout.trays.multipleExpandedMinimumRatio * 100}%`;
-        rendered.element.style.maxHeight = `${layout.trays.maximumHeightRatio * 100}%`;
-        rendered.element.style.height = `${next * 100}%`;
-      },
-      renderContent: (content) => {
-        while (source.firstChild) content.appendChild(source.firstChild);
-      },
-    });
-    rendered.element.classList.add(...source.classList);
-    rendered.element.dataset.region = r.id;
-    rendered.element.dataset.role = 'context';
-    rendered.element.dataset.cardView = r.id === 'cards' ? cardView : '';
-    source.replaceWith(rendered.element);
-    if (!shut && !fillsInventoryPane && remembered) {
-      rendered.element.dataset.sized = '1';
-      rendered.element.style.minHeight = `${layout.trays.multipleExpandedMinimumRatio * 100}%`;
-      rendered.element.style.maxHeight = `${layout.trays.maximumHeightRatio * 100}%`;
-      rendered.element.style.height = `${savedRatio * 100}%`;
-    }
-    if (r.id === 'cards' && rendered.sort) {
-      const next = cardView === 'list' ? 'grid' : 'list';
-      rendered.sort.classList.add('armoury-card-view-toggle');
-      rendered.sort.textContent = VIEW_TOGGLE_GLYPH[next];
-      rendered.sort.setAttribute('aria-label', `Show ${r.label} as ${next}`);
-    }
-    attachTooltip(rendered.fold, () => `<div class="tt-title">${shut ? 'Show' : 'Hide'} ${esc(r.label)}</div><p>${shut
-      ? esc(summary || `${count || 0} ${r.unit}${count === 1 ? '' : 's'} in here.`)
-      : `Fold ${esc(r.label)} back to its compact header.`}</p>`);
-    if (rendered.resizeHandle) {
-      rendered.resizeHandle.dataset.component = `armoury.${r.id}TrayResizeHandle`;
-      attachTooltip(rendered.resizeHandle, () => `<div class="tt-title">Resize ${esc(r.label)}</div><p>Drag the shared tray edge. The expanded height snaps to the authored stops; folding remembers it.</p>`, { intent: 'above' });
-    }
-    return rendered.element;
-  }
-
-  function mountRegionTrays() {
-    for (const region of contextRegions()) regionTray(region);
-  }
-
   /**
    * Every region says what it is, and every CONTEXT region gets its control.
    *
@@ -1957,6 +1768,7 @@ export function mountEquipment(host, {
    * set, and the armoury is where that first bites.
    */
   function draw() {
+    const previousScroll = wrap.querySelector('.armoury-shell-body')?.scrollTop || 0;
     if (paneObserver) paneObserver.disconnect();
     cancelAnimationFrame(paneFrame);
     clearHoldDisarms();
@@ -1987,34 +1799,10 @@ export function mountEquipment(host, {
     const panel = rendered.panel;
     panel.dataset.viewMode = viewMode().label;
     panel.dataset.pane = viewMode().pane;
+    panel.dataset.page = view;
     panel.dataset.characterState = viewMode().character;
     panel.dataset.composition = 'character-equipment';
     panel.dataset.responsive = responsiveMode();
-    const applyHybridRatio = () => {
-      panel.style.setProperty('--armoury-character-ratio', `${hybridRatio}fr`);
-      panel.style.setProperty('--armoury-equipment-ratio', `${1 - hybridRatio}fr`);
-      panel.querySelector('.armoury-hybrid-splitter')?.setAttribute('aria-valuenow', String(Math.round(hybridRatio * 100)));
-    };
-    applyHybridRatio();
-    panel.style.setProperty('--armoury-gap', `${layout.shell.gapRem}rem`);
-    panel.style.setProperty('--armoury-sprite-ratio', `${layout.character.spriteRatio}fr`);
-    panel.style.setProperty('--armoury-stats-ratio', `${layout.character.statsRatio}fr`);
-    panel.style.setProperty('--armoury-stats-pane-ratio', `${layout.character.statsPaneRatio}fr`);
-    panel.style.setProperty('--armoury-summary-pane-ratio', `${1 - layout.character.statsPaneRatio}fr`);
-    panel.style.setProperty('--armoury-phone-character-ratio', `${layout.responsive.phone.characterRatio}fr`);
-    panel.style.setProperty('--armoury-phone-equipment-ratio', `${layout.responsive.phone.equipmentRatio}fr`);
-    panel.style.setProperty('--armoury-tray-content-gap', `${layout.trays.contentGapRem}rem`);
-    const applyPaneRatio = () => {
-      panel.style.setProperty('--armoury-armaments-pane-width', `${paneRatio}fr`);
-      panel.style.setProperty('--armoury-inventory-pane-width', `${1 - paneRatio}fr`);
-      const splitter = panel.querySelector('.armoury-pane-splitter');
-      if (splitter) {
-        splitter.setAttribute('aria-valuenow', String(Math.round(paneRatio * 100)));
-        splitter.setAttribute('aria-orientation', panel.dataset.responsive === 'phone' ? 'horizontal' : 'vertical');
-      }
-    };
-    applyPaneRatio();
-
     const left = wrap.querySelector('.armoury-left');
     const right = wrap.querySelector('.armoury-right');
     const blocks = eq.slots
@@ -2044,7 +1832,7 @@ export function mountEquipment(host, {
     // ONE of them — which is how a legal combination of the other reached a
     // branch that ignored it (Vira, gate of 5c49fed).
     const build = L && LAYOUTS[L.cell];
-    if (build) {
+    if (build && view !== 'hybrid' && view !== 'cards') {
       build(L, {
         left, right, blocks,
         layout,
@@ -2068,19 +1856,23 @@ export function mountEquipment(host, {
         figure: () => figureFor(registries, run, cz),
         character: () => characterPanel(),
       });
-    } else {
+    } else if (!build) {
       console.error(`[content] the armoury view ${JSON.stringify(view)} has no layout`
         + ` — its row must ask for a combination the screen has: ${viewCellsSay()}`
         + ' in src/content/balance.js. This line is the defect, not a fallback.');
       right.appendChild(blocker(`The "${view}" view is declared but has no layout. Pick another view above.`, { attrs: { class: 'armoury-notice' } }));
     }
     const inventory = wrap.querySelector('.armoury-inventory');
-    if (inventory) inventory.appendChild(inventoryBlock());
-    wrap.querySelector('.armoury-strip').appendChild(cardStrip());
-    const statsTray = wrap.querySelector('.armoury-stats-tray');
-    if (viewMode().pane === 'inventory') statsTray.appendChild(statsComparison());
-    else statsTray.remove();
-    mountRegionTrays();
+    const cards = wrap.querySelector('.armoury-strip');
+    wrap.querySelector('.armoury-stats-tray').remove();
+    if (view === 'hybrid') {
+      wrap.querySelector('.armoury-body').remove();
+      inventory.append(titleS('Your inventory'), prose('Select an item to see its details and available actions.'), inventoryBlock());
+    } else inventory.remove();
+    if (view === 'cards') {
+      wrap.querySelector('.armoury-content').remove();
+      cards.append(titleS(`Cards · ${(run.deck || []).length}`), prose('Your complete deck, including class and equipment cards.'), cardStrip());
+    } else cards.parentElement.remove();
 
     let lastPaneWidths = null;
     const applyPaneDensity = () => {
@@ -2092,124 +1884,12 @@ export function mountEquipment(host, {
       const widths = [equipmentWidth, inventoryWidth, panel.dataset.responsive];
       if (lastPaneWidths && Math.abs(widths[0] - lastPaneWidths[0]) < 1
         && Math.abs(widths[1] - lastPaneWidths[1]) < 1 && widths[2] === lastPaneWidths[2]) return;
-      const enteringPhone = widths[2] === 'phone' && lastPaneWidths?.[2] !== 'phone';
       lastPaneWidths = widths;
       panel.dataset.armamentDensity = equipmentWidth < layout.inventorySplit.foldGroupsBelowPx
         ? 'minimal' : equipmentWidth < layout.inventorySplit.compactItemsBelowPx ? 'compact' : 'comfortable';
       panel.dataset.inventoryDensity = viewMode().pane === 'inventory' && inventoryWidth < layout.inventorySplit.compactItemsBelowPx ? 'compact' : 'comfortable';
-      // At phone width both panes stack, so a reveal left open before the
-      // breakpoint would otherwise consume the inventory tray and push the
-      // folded rows out of reach. Folding is presentation only; the player may
-      // immediately reopen any item once the full-width tray has settled.
-      if (enteringPhone && inventoryDisclosure) inventoryDisclosure.close();
-      const cards = panel.querySelectorAll('details.armoury-position-card');
-      if (equipmentWidth < layout.inventorySplit.foldSubcardsBelowPx) {
-        for (const card of cards) {
-          if (card.open) card.dataset.autoFolded = '1';
-          card.open = false;
-        }
-      } else {
-        for (const card of cards) {
-          if (card.dataset.autoFolded === '1') card.open = true;
-          delete card.dataset.autoFolded;
-        }
-      }
     };
 
-    const splitter = panel.querySelector('.armoury-pane-splitter');
-    if (splitter) {
-      const snap = (raw) => {
-        const bounded = clampPaneRatio(raw);
-        const nearest = layout.inventorySplit.snapRatios.reduce((best, value) => (
-          Math.abs(value - bounded) < Math.abs(best - bounded) ? value : best
-        ), layout.inventorySplit.snapRatios[0]);
-        return Math.abs(nearest - bounded) <= layout.inventorySplit.snapTolerance ? nearest : bounded;
-      };
-      const setFromPointer = (event) => {
-        const content = panel.querySelector('.armoury-content');
-        const rect = content.getBoundingClientRect();
-        const phone = panel.dataset.responsive === 'phone';
-        paneRatio = snap(phone
-          ? (event.clientY - rect.top) / Math.max(1, rect.height)
-          : (event.clientX - rect.left) / Math.max(1, rect.width));
-        applyPaneRatio();
-        applyPaneDensity();
-      };
-      splitter.addEventListener('pointerdown', (event) => {
-        splitter.setPointerCapture(event.pointerId);
-        splitter.classList.add('dragging');
-        setFromPointer(event);
-      });
-      splitter.addEventListener('pointermove', (event) => {
-        if (!splitter.hasPointerCapture(event.pointerId)) return;
-        setFromPointer(event);
-      });
-      const finishResize = (event) => {
-        if (splitter.hasPointerCapture(event.pointerId)) splitter.releasePointerCapture(event.pointerId);
-        splitter.classList.remove('dragging');
-        if (onChange) onChange(run.loadout, { armouryPaneRatio: paneRatio });
-      };
-      splitter.addEventListener('pointerup', finishResize);
-      splitter.addEventListener('pointercancel', finishResize);
-      splitter.addEventListener('keydown', (event) => {
-        const phone = panel.dataset.responsive === 'phone';
-        const directional = phone ? ['ArrowUp', 'ArrowDown'] : ['ArrowLeft', 'ArrowRight'];
-        if (![...directional, 'Home', 'End'].includes(event.key)) return;
-        event.preventDefault();
-        if (event.key === 'Home') paneRatio = layout.inventorySplit.minimumArmamentsRatio;
-        else if (event.key === 'End') paneRatio = layout.inventorySplit.maximumArmamentsRatio;
-        else paneRatio = snap(paneRatio + (['ArrowRight', 'ArrowDown'].includes(event.key) ? 0.05 : -0.05));
-        applyPaneRatio();
-        applyPaneDensity();
-        if (onChange) onChange(run.loadout, { armouryPaneRatio: paneRatio });
-      });
-      attachTooltip(splitter, () => panel.dataset.responsive === 'phone'
-        ? '<div class="tt-title">Resize panes</div><p>Drag up or down. The divider snaps to the authored size stops.</p>'
-        : '<div class="tt-title">Resize panes</div><p>Drag left or right. The divider snaps to the authored width stops.</p>');
-    }
-    const hybridSplitter = panel.querySelector('.armoury-hybrid-splitter');
-    if (hybridSplitter && viewMode().pane === 'both') {
-      const snap = (raw) => {
-        const bounded = clampPaneRatio(raw);
-        const nearest = layout.inventorySplit.snapRatios.reduce((best, value) => (
-          Math.abs(value - bounded) < Math.abs(best - bounded) ? value : best
-        ), layout.inventorySplit.snapRatios[0]);
-        return Math.abs(nearest - bounded) <= layout.inventorySplit.snapTolerance ? nearest : bounded;
-      };
-      const setFromClientX = (clientX) => {
-        const rect = panel.querySelector('.armoury-body').getBoundingClientRect();
-        hybridRatio = snap((clientX - rect.left) / Math.max(1, rect.width));
-        applyHybridRatio();
-        applyPaneDensity();
-      };
-      hybridSplitter.addEventListener('pointerdown', (event) => {
-        hybridSplitter.setPointerCapture(event.pointerId);
-        hybridSplitter.classList.add('dragging');
-        setFromClientX(event.clientX);
-      });
-      hybridSplitter.addEventListener('pointermove', (event) => {
-        if (hybridSplitter.hasPointerCapture(event.pointerId)) setFromClientX(event.clientX);
-      });
-      const finishHybridResize = (event) => {
-        if (hybridSplitter.hasPointerCapture(event.pointerId)) hybridSplitter.releasePointerCapture(event.pointerId);
-        hybridSplitter.classList.remove('dragging');
-        if (onChange) onChange(run.loadout, { armouryHybridRatio: hybridRatio });
-      };
-      hybridSplitter.addEventListener('pointerup', finishHybridResize);
-      hybridSplitter.addEventListener('pointercancel', finishHybridResize);
-      hybridSplitter.addEventListener('keydown', (event) => {
-        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-        event.preventDefault();
-        if (event.key === 'Home') hybridRatio = layout.inventorySplit.minimumArmamentsRatio;
-        else if (event.key === 'End') hybridRatio = layout.inventorySplit.maximumArmamentsRatio;
-        else hybridRatio = snap(hybridRatio + (event.key === 'ArrowRight' ? 0.05 : -0.05));
-        applyHybridRatio();
-        applyPaneDensity();
-        if (onChange) onChange(run.loadout, { armouryHybridRatio: hybridRatio });
-      });
-      attachTooltip(hybridSplitter, () => '<div class="tt-title">Resize Hybrid panes</div><p>Drag left or right. The divider snaps to the authored width stops.</p>');
-    }
-    applyPaneDensity();
     if (typeof ResizeObserver !== 'undefined') {
       // Density writes can change observed geometry. Run them outside the
       // observer delivery, and ignore height-only changes when a fold opens.
@@ -2227,12 +1907,14 @@ export function mountEquipment(host, {
       if (equipment) paneObserver.observe(equipment);
     }
 
+    wrap.querySelector('.armoury-shell-body').scrollTop = previousScroll;
     notice = '';
     wrap.querySelector('.armoury-close').addEventListener('click', close);
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
         picking = null;
         view = b.dataset.member;
+        wrap.querySelector('.armoury-shell-body').scrollTop = 0;
         // A view is a presentation preset, not a second saved preference.
         // Explicit per-region choices still win; untouched regions adopt the
         // newly selected Character/Inventory/Hybrid defaults.
@@ -2246,6 +1928,7 @@ export function mountEquipment(host, {
         }
         if (onChange) onChange(run.loadout, { equipView: view });
         draw();
+        wrap.querySelector('[data-surface="armouryView"] [aria-selected="true"]')?.focus({ preventScroll: true });
       });
     }
   }
@@ -2253,7 +1936,7 @@ export function mountEquipment(host, {
   // The removal moved INTO `close()` — see the block there. Leaving a copy here
   // would be two homes for one teardown, disagreeing on every path but this one.
   const onKey = (e) => {
-    if (e.key === 'Escape') close();
+    if (e.key === 'Escape' && !e.defaultPrevented && [...document.querySelectorAll('.modal-veil')].at(-1) === wrap) close();
   };
   document.addEventListener('keydown', onKey);
 

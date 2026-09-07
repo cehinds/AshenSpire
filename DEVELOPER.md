@@ -4,8 +4,8 @@ How to run, test, and add content. The architecture contract lives in
 [SPEC.md §3](SPEC.md); exact engine signatures in
 [docs/ENGINE-API.md](docs/ENGINE-API.md). This file is the practical guide.
 
-For how work is branched, reviewed, and merged, see the
-[working rules](AGENTS.md).
+For how work is branched, reviewed, and merged, see
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Run & test
 

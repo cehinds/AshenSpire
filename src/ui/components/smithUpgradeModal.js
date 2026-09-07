@@ -332,6 +332,8 @@ export function mountSmithUpgradeModal(host, initialModel, {
   }
 
   function onKeydown(event) {
+    if (event.defaultPrevented || event.repeat) return;
+    if ([...document.querySelectorAll('[aria-modal="true"]')].at(-1) !== modal) return;
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
@@ -355,6 +357,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     }
   }
 
+  veil.addEventListener('click', (event) => { if (event.target === veil) backOut(); });
   back.addEventListener('click', backOut);
 
   // The shell's close box is the same way out as Back.
