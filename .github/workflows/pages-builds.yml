@@ -31,11 +31,13 @@
 # deployment → Source: "GitHub Actions"; until then the deploy step fails with GitHub's
 # own message and the legacy `main:/` source keeps serving.
 #
-# COST: one assemble run per push to any of the four branches. Runs QUEUE rather
-# than cancelling each other — see the concurrency block for why a guess about
-# who publishes cost a publication — so a burst of pushes waits its turn instead
-# of collapsing to the newest. The site is rebuilt from git history each time
-# (deterministic; nothing accumulates).
+# COST: one assemble run per push to any of the four branches. A run that has
+# STARTED is never cancelled — see the concurrency block for why a guess about
+# who publishes cost a publication — so a burst of pushes serialises rather than
+# killing whatever is mid-flight. A newer arrival does still supersede an older
+# QUEUED run, which costs nothing: the site is rebuilt from git history each
+# time (deterministic; nothing accumulates), so the newest assembly already
+# carries every build a superseded one would have published.
 name: pages-builds
 
 on:
@@ -79,12 +81,27 @@ concurrency:
   #
   # A workflow cannot read the environment's branch rule, so it cannot answer
   # that question correctly — and a guess costs a silent lost publication, which
-  # is the one failure this group exists to prevent. So nothing cancels: runs
-  # queue and each publishes in turn, newest last, which is the same end state
-  # cancellation was reaching for. The cost is named rather than discovered: a
-  # burst of pushes queues instead of collapsing, so the last one waits out the
-  # ones before it. Wall-clock, not correctness — and a cancelled run reports
-  # nothing, while a queued one always arrives.
+  # is the one failure this group exists to prevent. So nothing cancels.
+  #
+  # WHAT `false` ACTUALLY BUYS, measured on the first burst after it landed
+  # (23:21–23:23 UTC, 2026-09-07): a run that has STARTED is never killed. Run
+  # 215 was mid-flight while three later arrivals came in — 216 (#783's merge),
+  # 217 (a publish dispatch) and 218 (#788's merge) — and it kept running.
+  # Under the old flag any one of them would have ended it, possibly inside
+  # `actions/deploy-pages`.
+  #
+  # WHAT IT DOES NOT BUY, and the earlier wording here claimed otherwise: it is
+  # NOT "every run publishes in turn". A concurrency group holds ONE queued run,
+  # so a newer arrival still supersedes an older PENDING one — 216 and 217 were
+  # both cancelled while queued, and only 218 waited for 215. That costs nothing
+  # here, because the site is reassembled from git history on every run: the
+  # newest assembly already carries every build the superseded ones would have
+  # published. The guarantee is "the newest publication always lands and no
+  # in-flight one is lost", not "each one lands".
+  #
+  # The cost is named rather than discovered: a burst of pushes serialises
+  # instead of collapsing, so the last one waits out the one ahead of it.
+  # Wall-clock, not correctness.
   cancel-in-progress: false
 
 # The workflow as a whole holds nothing but read: the Pages and OIDC grants are the
