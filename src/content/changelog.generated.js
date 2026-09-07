@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-703",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The changelog keeps itself honest",
+    "detail": "Nothing a player sees changes. #700's receipt is written up below, and the changelog inside the game was regenerated so it carries the same entries this file does. This is the second merge running that the repository asked for its own receipt instead of waiting for someone to read the merge log and notice.",
+    "build": "0.5.5.50",
+    "pullRequest": 703,
+    "url": "https://github.com/cehinds/AshenSpire/pull/703"
+  },
+  {
+    "id": "pr-700",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Animated is the figure you get, everywhere a figure is made",
+    "detail": "The animated pose sheets are now the default sprite style at every place a character is created rather than only at character creation: a co-op seat you add locally, a LAN lobby with no remembered choice, and the fallback any surface reaches when a saved profile carries no style. A save that recorded Rendered, Classic or Sigil still keeps it, and a class with no shipped frames still falls through to its painting, so the choice is never a blank figure.",
+    "build": "0.5.5.48",
+    "pullRequest": 700,
+    "url": "https://github.com/cehinds/AshenSpire/pull/700"
+  },
+  {
+    "id": "pr-701",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The receipts catch up, and the gate that asks for them did the asking",
+    "detail": "Nothing a player sees changes. #695 landed without an entry here, and for the first time nobody had to notice: the check added in #652 went red on the development branch the moment it merged, naming the pull request it wanted. Both receipts are written up and the changelog inside the game was regenerated from this file so it carries them too.",
+    "build": "0.5.5.49",
+    "pullRequest": 701,
+    "url": "https://github.com/cehinds/AshenSpire/pull/701"
+  },
+  {
+    "id": "pr-695",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The five stat rows in Assign Points line up again",
+    "detail": "On a phone, the Intelligence row in Assign Points stood a hair taller than the other four: its hint — the longest of the five — ran onto a second line in an overlay narrower than the column that hint was written for. The five now read as one block again, the long hint trailing off with an ellipsis the way the same rows already do in the Armoury. Character Creation is untouched and still shows the sentence in full, because there is room for it there. This also clears a check that had been failing on the development branch since it was written, and which two later changes inherited without anyone finding out why.",
+    "build": "0.5.5.48",
+    "pullRequest": 695,
+    "url": "https://github.com/cehinds/AshenSpire/pull/695"
+  },
+  {
     "id": "pr-683",
     "date": "2026-09-07",
     "group": "2026-09-07",
