@@ -1386,6 +1386,36 @@ details.disc-fold-row > summary { list-style: none; }
 details.disc-fold-row > summary::-webkit-details-marker { display: none; }
 details.disc-fold-row[open] > summary { border-radius: var(--r-3) var(--r-3) 0 0; border-color: var(--gold); }
 details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3); border-top: 0; }
+
+/* Creation uses the same attached OptionCard / DetailCard fold as the Armoury.
+   Physical text floors preserve readability when the game canvas scales down. */
+.customize .cz-disc { display: flex; flex-direction: column; gap: 8px; }
+.customize .disc-fold-row > summary { min-height: calc(44px / var(--ui-zoom, 1)); }
+.customize .disc-fold-row > summary::after { content: '›'; position: static; flex: 0 0 auto; margin-left: 8px; }
+.customize .disc-fold-row[open] > summary::after { transform: rotate(90deg); }
+.customize :is(.disc-name, .on, .dc-name, .ls-label, .as-title-s, input, button) {
+  font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); line-height: 1.4;
+}
+.customize :is(.od, .ls-hint, .as-status, .disc-value, .as-flavor, .as-prose, .dc-meta, .dc-lines, .equip-role-receipts, .cc-equip-group) {
+  font-size: max(1.2rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5;
+}
+.customize .cc-equip-group :is(small, span, p, b, i) { font-size: inherit; }
+.customize .cc-equip-group .as-statrow { flex-wrap: wrap; }
+.customize .cc-equip-group :is(.sr-name, .as-statpair) { white-space: normal; }
+.customize .cc-equip-group .sr-vals { flex: 1 1 100%; text-align: left; justify-content: flex-start; }
+.customize .cc-equip-group .sp-k { letter-spacing: normal; text-transform: none; }
+.customize .as-pane-head { flex-wrap: wrap; }
+.customize .as-pane-head > .r-trail { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
+.customize .disc-face :is(.ob, .r-trail) { min-width: 0; }
+.customize .disc-face :is(.disc-name, .on, .ls-label) { white-space: normal; overflow: visible; text-overflow: clip; }
+.customize .disc-face .r-trail { flex-shrink: 1; overflow-wrap: anywhere; }
+.customize .cc-primary-stat .disc-summary { white-space: normal; }
+.customize .cc-preview-side > .cz-portrait { position: relative; overflow: hidden; width: 100%; height: auto; min-height: 24rem; border: 0; }
+@media (max-width: 900px) {
+  .customize .cc-character-grid { grid-template-columns: minmax(0, 1fr); }
+  .customize .cc-preview-side { min-height: 0; }
+  .customize .cc-preview-side > .cz-portrait { flex: none; height: 24rem; }
+}
 /* ASSIGN POINTS IS NARROWER THAN THE COLUMN THE RULE ABOVE WAS WRITTEN FOR.
    `white-space: normal` lets a summary read in full where there is room, which
    is right in Character Creation. Inside the Assign Points overlay there is not

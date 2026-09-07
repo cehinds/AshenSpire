@@ -27,6 +27,10 @@ Potion rows show their artwork and counts; expand one to inspect it inline.
 Use moves into the unfolded card and retains the shared confirmation/hold action.
 Selecting or expanding a potion never consumes it. Weapon arts play from the hand.
 
+Character creation uses attached foldout cards for its sections and choices.
+Stats, keepsakes, sprite options and equipment summaries start folded; opening
+a choice closes its siblings. Text retains readable minimum sizes on phones.
+
 **[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)** — the stable
 build from `main`. **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** — the builds
 index: the current `dev`, `test`, `release` and `main` builds, each playable at its own address.
