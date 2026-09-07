@@ -819,6 +819,12 @@ potions remain separate inventory entries sized by `balance.flaskSlots`; increas
 not silently increase the other. Utility potions are found from combats, shops and events,
 while Crimson/Azure charges refill at every grace (§5.5.1).
 
+Crimson and Azure are displayed in the same potion tray as utility potions, but remain permanent
+charge vessels: they are always present, do not consume utility-potion slots, and are never dropped.
+A persisted Gameplay setting may allow those restorative charges to be used between combats;
+it is off by default. An out-of-combat use applies the same authored healing or Mana effect and
+spends one charge, exactly as combat does.
+
 **Kind.** Every flask has a `kind` from the closed set `FLASK_KINDS` (`hp`, `mana`, `utility`, `model/schemas.js`). It is **derived, not authored** (`model/gracerefill.js` `flaskKindOf`): `heal` is `hp`, the real `restoreMana` opcode is `mana`, everything else is `utility`, and an explicit `kind:` overrides an ambiguous entry.
 
 #### 5.5.1 The grace refill

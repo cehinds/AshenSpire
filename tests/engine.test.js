@@ -36,7 +36,7 @@ import { attributeCardModels } from '../src/model/creationBrief.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
-import { executeRunEffects } from '../src/engine/actions.js';
+import { executeRunEffects, useRunChargeFlask } from '../src/engine/actions.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -1451,6 +1451,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     ]);
     assert(rn3.deck.some((x) => x.cardId === 'guilt'), 'curse added to deck');
     eq(rn3.combatEntered, 'loneSoldier', 'startCombat handed off');
+
+    rn3.mana = 0;
+    const manaBefore = rn3.flaskCharges.manaCurrent;
+    useRunChargeFlask({ run: rn3, registries: REG, rng: createRng(5), kind: 'mana' });
+    eq(rn3.mana, 1, 'run-level flask effects copy restored Mana back to the run');
+    eq(rn3.flaskCharges.manaCurrent, manaBefore - 1, 'out-of-combat use spends its charge without touching utility slots');
 
     const rn4 = createRunState({ seed: 4, classId: 'reaver', registries: REG });
     rn4.hp = 10;
@@ -5260,6 +5266,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // this only proves the one polarity it was written for.
     eq(settingOn({}, 'colorblindSafe'), false, 'a def:false row still defaults off');
     eq(settingOn({ colorblindSafe: true }, 'colorblindSafe'), true, 'and can be turned on');
+    eq(settingOn({}, 'useRestorativeFlasksOutsideCombat'), false, 'map flask use defaults off');
+    eq(settingOn({ useRestorativeFlasksOutsideCombat: true }, 'useRestorativeFlasksOutsideCombat'), true,
+      'the player can enable restorative flask use on the map');
 
     // An unknown key must throw, not answer false: a silent false is how a
     // renamed setting becomes a quietly-disabled feature.
