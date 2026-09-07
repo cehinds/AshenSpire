@@ -22,7 +22,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { buildActMap } from '../src/engine/actmap.js';
+import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { resolveStartingKit } from '../src/model/startingKits.js';
 import { levelUpPlan, applyLevelUp } from '../src/model/levelup.js';
@@ -354,7 +354,8 @@ function simulateRun(classId, seed, ds = null) {
 
       if (kind === 'monster' || kind === 'fight' || kind === 'elite' || kind === 'boss') {
         const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
-        const encId = rollEncounter(REG, rng, { pool, act: contentAct });
+        const encId = pool === 'boss' ? bossEncounterForNode(REG, map, pick.id, contentAct)
+          : rollEncounter(REG, rng, { pool, act: contentAct });
         if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `${pool}:${encId}`; recordDeath(ds, act, run.hp); return finish(); }
         afterVictory(run, rng, pool);
         if (pool === 'boss') {
@@ -398,7 +399,7 @@ function simulateRun(classId, seed, ds = null) {
       } // merchant: skip
 
       nextIds = map.nodes[currentId].next;
-      if (!nextIds || !nextIds.length) nextIds = [map.bossId];
+      if (!nextIds || !nextIds.length) nextIds = map.bossIds || [map.bossId];
     }
     run.hp = run.maxHp; // between acts, like main.js
   }
