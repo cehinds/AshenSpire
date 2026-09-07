@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-672",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Dodge explains its outcome",
+    "detail": "Dodge now resolves correctly in the standalone build after removing a circular engine import that interrupted the action after payment. A resolved Dodge now leaves a result button beside the player. Open it to inspect the roll, check, difficulty and base guard; Block modifiers still determine the applied amount. Failed rolls are visible, and the explanation survives skipped or reduced animations. Armoury card scrolling also respects the in-game Reduced motion setting.",
+    "build": "0.5.5.44",
+    "pullRequest": 672,
+    "url": "https://github.com/cehinds/AshenSpire/pull/672"
+  },
+  {
+    "id": "pr-676",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Traders buy and sell armaments and stock weapon arts",
+    "detail": "Inspect equipment before buying, sell unequipped items from storage, and buy Draw Cut or Sundering Hew for the existing mounting system. Equipped items explain their sale restriction. Cancelled or stale quotes spend nothing; upgrades, mount history and discoveries survive a sale and reacquisition.",
+    "build": "0.5.5.45",
+    "pullRequest": 676,
+    "url": "https://github.com/cehinds/AshenSpire/pull/676"
+  },
+  {
     "id": "pr-657",
     "date": "2026-09-05",
     "group": "2026-09-05",

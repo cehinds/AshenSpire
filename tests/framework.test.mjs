@@ -762,17 +762,21 @@ function grantFixtureRegistries(packagesById) {
   return createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, armaments } });
 }
 
-test('grantedCards + weaponArtDefaults: dormant on every shipped armament', () => {
+test('two non-starter armaments carry unique arts; the baseline starter deck remains unchanged', () => {
   const { WeaponCardPackageModel } = compositionDoor;
+  const expected = { katana: ['katanaDrawCut'], greatsword: ['greatswordSunderingHew'] };
+  const seen = [];
   for (const piece of contentBundle.equipment.armaments) {
     const pkg = WeaponCardPackageModel.fromPiece(LEGACY_REG, piece);
     if (pkg) {
       eq(pkg.grantedCards.length, 0, `${piece.id} grants nothing`);
-      eq(pkg.weaponArtDefaults.length, 0, `${piece.id} installs no arts`);
+      eq([...pkg.weaponArtDefaults], expected[piece.id] || [], `${piece.id} installs only its authored art`);
+      seen.push(...pkg.weaponArtDefaults);
     }
   }
-  // And no shipped run composes any: a fresh reaver deck has no granted or
-  // weapon-art instances.
+  eq(seen.length, 2, 'two live source arts');
+  eq(new Set(seen).size, 2, 'distinct identities');
+  // The baseline Reaver sword/shield kit still receives no additional art.
   const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
   eq(run.deck.filter((c) => c.equipmentRole === 'granted' || c.equipmentRole === 'weaponArt').length, 0, 'no shipped grants compose');
 });
@@ -1091,6 +1095,84 @@ test('grant and weapon-art authoring is validated by name', () => {
   assertThrows(bad({ weaponArtDefaults: ['notACard'] }), /weapon art 'notACard' is unknown/);
   assertThrows(bad({ weaponArtDefaults: ['crimsonCleave', 'crimsonCleave'] }), /duplicate weapon art/);
 });
+
+
+// Real card dispatch with an isolated RNG override controls only Dodge's die;
+// shuffles and enemy plans still use the ordinary seeded streams.
+function dodgeCombatFixture(weight, rolls = [20, 1]) {
+  const rng = createRng(0xd0d6e);
+  const originalInt = rng.int.bind(rng);
+  let draws = 0;
+  rng.int = (stream, min, max) => {
+    if (stream !== 'misc') return originalInt(stream, min, max);
+    eq([min, max], [1, 20], 'Dodge rolls its declared die');
+    const roll = rolls[draws++];
+    assert(roll != null, 'unexpected extra Dodge roll');
+    return roll;
+  };
+  const combat = createCombat({
+    registries: LEGACY_REG, rng,
+    player: {
+      classId: 'reaver', maxHp: 100, hp: 100, mana: 0, maxMana: 0,
+      maxStamina: 9, stamina: 9, energyMax: 9, drawPerTurn: 5,
+      deck: ['d1', 'd2'].map((instanceId) => ({ instanceId, cardId: 'dodgeRoll', upgraded: false })),
+      relicIds: [], flasks: [],
+    },
+    enemyIds: [contentBundle.enemies[0].id],
+  });
+  // A five-weight sword at capacities 30, 7 and 6 exercises the real load
+  // calculation without replacing the Weight Class or cost implementations.
+  combat.loadout = { sets: { rightHand: ['straightSword'], leftHand: [null], armor: [null] }, active: {}, storage: [] };
+  combat.attributes = { dexterity: 10, constitution: weight === 'light' ? 10 : 1, strength: weight === 'light' ? 10 : weight === 'medium' ? 5 : 4 };
+  eq(playerWeightClass(combat).weightClass.id, weight, 'fixture reaches requested Weight Class');
+  return { combat, draws: () => draws };
+}
+
+for (const [weight, energyCost, staminaCost, guard] of [
+  ['light', 0, 1, 6], ['medium', 1, 2, 4], ['heavy', 2, 3, 3],
+]) {
+  test(`Dodge ${weight}: repeated success/failure spends the live costs once and preserves ordinary Block`, () => {
+    const { combat, draws } = dodgeCombatFixture(weight);
+    const p = combat.player;
+    p.block = 2;
+    p.energy = energyCost * 2; // Light must remain playable at zero Energy.
+    p.stamina = staminaCost * 2;
+    const first = combat.piles.hand[0].instanceId;
+    const success = dispatch(combat, { type: 'playCard', cardInstanceId: first }).events.filter((e) => e.type === 'dodgeRolled');
+    eq(success.length, 1, 'one receipt per play');
+    eq([success[0].success, success[0].temporaryGuard, success[0].weightClass], [true, guard, weight], 'successful roll receipt');
+    eq([p.energy, p.stamina, p.block], [energyCost, staminaCost, 2 + guard], 'success pays once and adds to existing Block');
+    eq(combat.piles.discard.filter((c) => c.instanceId === first).length, 1, 'played card reaches discard once');
+    assertThrows(() => dispatch(combat, { type: 'playCard', cardInstanceId: first }), /not in hand/);
+    eq(draws(), 1, 'stale repeated activation does not reroll');
+    const second = combat.piles.hand[0].instanceId;
+    const failure = dispatch(combat, { type: 'playCard', cardInstanceId: second }).events.filter((e) => e.type === 'dodgeRolled');
+    eq(failure.length, 1, 'failed roll also emits exactly one receipt');
+    eq([failure[0].success, failure[0].temporaryGuard], [false, 0], 'failed roll reports no guard');
+    eq([p.energy, p.stamina, p.block, draws()], [0, 0, 2 + guard, 2], 'failure still pays once without removing prior Block');
+    const hp = p.hp;
+    const damage = actionsHome.applyAttackDamage(combat, combat.enemies[0], p, 20, []);
+    eq(p.block, 0, 'incoming attack consumes Dodge Block');
+    eq(p.hp, hp - Math.max(0, damage - (2 + guard)), 'damage beyond Block reaches HP; Dodge does not cancel the attack');
+  });
+
+  test(`Dodge ${weight}: resource refusals preserve cards, pools, guard and RNG`, () => {
+    for (const lacking of energyCost ? ['energy', 'stamina'] : ['stamina']) {
+      const { combat, draws } = dodgeCombatFixture(weight);
+      const p = combat.player;
+      p.energy = energyCost;
+      p.stamina = staminaCost;
+      p[lacking] -= 1;
+      p.block = 2;
+      const state = () => JSON.stringify({ energy: p.energy, stamina: p.stamina, hp: p.hp, block: p.block, piles: combat.piles });
+      const before = state();
+      const id = combat.piles.hand[0].instanceId;
+      assertThrows(() => dispatch(combat, { type: 'playCard', cardInstanceId: id }), new RegExp(`Not enough ${lacking}`));
+      eq(state(), before, 'refused play has no gameplay mutation');
+      eq(draws(), 0, 'refused play does not consume a roll');
+    }
+  });
+}
 
 console.log(`\nframework: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

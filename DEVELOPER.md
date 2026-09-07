@@ -9,6 +9,15 @@ For how work is branched, reviewed, and merged, see the
 
 ## Run & test
 
+Armament trading uses `src/model/armamentTrading.js` for inert quotes and atomic
+commits. Stored ownership, equipped sets, capacity, currency and stock revisions
+are rechecked at commit. Selling retains upgrades, mount history and permanent
+discovery; it removes only card instances granted by the sold item. Legacy shops
+without the new shelves retain empty shelves instead of rerolling their stock.
+Run `node --test tests/armamentTrading.test.mjs` for purchase, sale, stale quote,
+mounting and save round-trip coverage. Weapon-art packages are authored in
+`content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
+
 ```
 # play (no build step — any static server, or open index.html directly)
 npx serve .            # then http://localhost:3000
@@ -510,3 +519,9 @@ zero crashes, and the Herald completes full 3-act runs even naively.
 4. **Goreblood** freezes Poise thresholds as well as Bleed (the
    `meterMaxGrowthDisabled` flag is global by design — strictly a buff; the
    card text says so honestly).
+
+## Dodge outcome presentation
+
+The engine emits dodgeRolled once per resolved roll. The combat screen retains its last player receipt before animation playback, so skipping playback cannot discard the explanation. The shared dodgeReceipt formatter labels temporaryGuard as base guard; ordinary blockGained events remain responsible for the applied Block amount. The persistent result uses the standard modal shell and focus return; a live region announces new outcomes.
+
+Regression coverage: node tests/framework.test.mjs checks weight-class costs, deterministic outcomes, atomic resource refusal, stale activation and ordinary Block absorption. Browser evidence must additionally exercise the result modal, keyboard focus and normal/reduced-motion playback on desktop and phones.
