@@ -740,6 +740,12 @@ export const SCHEMAS = Object.freeze({
     art: opt(str),
     size: opt(en('small', 'medium', 'large')), // sprite size tier (display)
     tint: opt(str), // border/accent CSS color (display)
+    // WHICH WAY THIS ASSET WAS DRAWN (display). The board's own direction is
+    // one constant in ui/assets.js; only a mismatch between the two mirrors the
+    // sprite. `front` is not a third direction and never mirrors — a figure
+    // looking at the viewer has no left or right to turn — so a front-facing
+    // render declares nothing and is left exactly as drawn.
+    artFaces: opt(en('left', 'right', 'front')),
     // Strict absent | immune | configured Arcane Exposure policy. Absence is
     // represented by no field; it is not silently defaulted by the engine.
     arcaneExposure: opt(union(

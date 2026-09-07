@@ -30,7 +30,6 @@ import { relicText } from '../components/card.js';
 import { veilIsOpen } from '../components/veil.js';
 import { matchAction, actionDestinationForEvent, isEngaged, focusFirst, actionHint } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
-import { classGlyph, tintCss } from '../assets.js';
 import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { mountMapBoard } from '../components/mapboard.js';
@@ -45,6 +44,8 @@ import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
+import { useRunChargeFlask } from '../../engine/actions.js';
+import { settingOn } from './settings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { el as kitEl, slot, popover, row, html } from '../kit/index.js';
 
@@ -93,7 +94,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
 
   const cz = run.customization || {};
   const className = registries.classes.get(run.class).name;
-  const heroName = (cz.name || className).toUpperCase();
   const atEntrance = !run.mapNodeId;
   // THE LEGEND IS THE KIT'S POPOVER: one Row per node kind, its icon the Row's
   // Glyph in the kind's own tint. It hangs off the ? in the zoom bar and is
@@ -123,22 +123,15 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         floor: run.floor,
         floorTotal: map.floors,
         seed: run.seedString,
-        identity: {
-          name: heroName,
-          classLabel: className.toUpperCase(),
-          glyph: cz.glyph || classGlyph(run.class),
-          tint: tintCss(cz.tint),
-          context: actTitle(run.actNumber),
-        },
+        identity: { className },
         controls: {
           armouryId: 'open-armoury',
           menuId: 'open-menu',
           menuHint: actionHint('menu'),
         },
-        quickSettings: {
-          presentation: registries.balance.ui.hudQuickSettings,
-          settings: meta.settings || {},
-        },
+        // The settings bag, for `runHudMode` — the band's compact/expanded
+        // state. `presentation` went with the fullscreen/music pair.
+        quickSettings: { settings: meta.settings || {} },
         overlayHtml: '',
       }))}
       ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
@@ -189,7 +182,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // The legend belongs to the corner it opens from — the ? in the zoom bar — so
   // it is mounted with the board's chrome, not on the HUD.
   const board = mountMapBoard(app.querySelector('.mapscreen'), {
-    act: { nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId },
+    act: { nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds },
     showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,
@@ -221,7 +214,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
 
   const flaskArt = (def) => kitEl('span', { class: 'sl-art', 'aria-hidden': 'true', html: flaskIdentityHtml(def, { showName: false }) });
-  const chargeWrap = app.querySelector('.hud-charge-flasks');
+  const flaskWrap = app.querySelector('.hud-potions');
   for (const kind of CHARGE_FLASK_KINDS) {
     const def = chargeFlaskDefinition(registries, kind);
     if (!def) continue;
@@ -232,19 +225,27 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     el.querySelector('.sl-count').classList.add('flask-charge-count');
     attachTooltip(el, () => flaskTooltipHtml(def, { charges: current }));
     el.addEventListener('click', () => {
+      const canUse = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat') && current > 0;
       const plan = flaskActionPlan({
         context: 'run',
-        canUse: false,
-        useReason: 'Healing and mana flasks can only be used in combat',
+        canUse,
+        useReason: current <= 0 ? 'No charges remain' : 'Enable “Use flasks outside combat” in Settings',
         canDrop: false,
         dropReason: 'Charge flasks stay with the run',
       });
-      mountFlaskActionMenu(el, { def, plan, charges: current, onCancel: () => {}, onAction: () => {} });
+      mountFlaskActionMenu(el, {
+        def, plan, charges: current, onCancel: () => {},
+        onAction: (actionId) => {
+          if (actionId !== 'use' || !canUse) return;
+          useRunChargeFlask({ run, registries, rng: null, kind });
+          onSave?.();
+          mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls });
+        },
+      });
     });
-    chargeWrap.appendChild(el);
+    flaskWrap.appendChild(el);
   }
 
-  const flaskWrap = app.querySelector('.hud-potions');
   for (const f of run.flasks) {
     const def = registries.flasks.get(f.flaskId);
     // The shared HUD lives inside CHROME, so `.flask-slot` is the deliberate
@@ -269,13 +270,13 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           const at = run.flasks.indexOf(f);
           if (at >= 0) run.flasks.splice(at, 1);
           el.remove();
-          flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = flaskWrap.children.length ? 'true' : 'false';
+          flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = run.flasks.length ? 'true' : 'false';
         },
       });
     });
     flaskWrap.appendChild(el);
   }
-  flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = flaskWrap.children.length ? 'true' : 'false';
+  flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = run.flasks.length ? 'true' : 'false';
 
   const armouryBtn = app.querySelector('#open-armoury');
   if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
@@ -405,6 +406,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
 
 function nodeTooltip(type, node, revealed) {
   let t = `<div class="tt-title">Floor ${node.floor}</div>${nodeBlurb(type)}`;
+  if (type === 'boss' && node.destinationLabel) t += `<br><strong>${esc(node.destinationLabel)}</strong>`;
   if (revealed) t += '<br><i>Revealed by the Sealstone Key.</i>';
   return t;
 }

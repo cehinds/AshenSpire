@@ -25,12 +25,14 @@ function measureFrame(frame, intentGapPx, centerHeightRatio) {
   const leadingHeight = hasLeading ? leading.offsetHeight : 0;
   const gap = hasLeading ? intentGapPx / uiZoom : 0;
   const naturalCardHeight = card.offsetHeight;
-  const naturalCardWidth = Math.max(card.offsetWidth, card.scrollWidth);
+  // Animated pose sheets include transparent overflow outside the authored
+  // sprite box. Measuring that overflow makes idle poses change the fit.
+  const naturalCardWidth = card.offsetWidth;
   // Intent is critical combat information, so it keeps its authored size.
   // Only the card beneath it scales; the two still move as one centered unit.
   const centeredHeight = availableHeight * centerHeightRatio;
   const fits = Math.max(0.01, Math.min(
-    1,
+    frame.closest('.combat:not(.coop)') ? Math.max(1, 1 / uiZoom) : 1,
     Math.max(0, centeredHeight - leadingHeight - gap) / Math.max(1, naturalCardHeight),
     availableWidth / Math.max(1, naturalCardWidth),
   ));
@@ -76,7 +78,7 @@ export function wireBattlefieldStage(field, model) {
         .map((frame) => measureFrame(frame, model.tokens.intentGapPx, model.tokens.centerHeightRatio))
         .filter(Boolean);
       if (!measures.length) return;
-      const scale = measures.reduce((least, m) => Math.min(least, m.fits), 1);
+      const scale = measures.reduce((least, m) => Math.min(least, m.fits), Infinity);
       for (const measure of measures) applyFrame(measure, scale);
     });
   };

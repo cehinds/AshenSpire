@@ -33,33 +33,79 @@
 // Headless-safe: data only, no document, no storage, no timers.
 
 /**
- * Medallion centre as a percentage of the sprite frame's height, per class.
- * Measured on the 450x570 outputs of `node tools/concept-cutout.mjs`.
+ * Medallion centre per class, as `{ x, y }` percentages of the sprite frame.
+ * Measured on the 450x570 outputs of the cutters.
  */
+// RE-MEASURED 2026-09-07, AND THE ANCHOR GREW AN X.
+//
+// The 2026-09-04 pass recorded three of these as null — "measured as
+// unplaceable" — and named the two things that defeated every candidate. Both
+// were properties of the DISC, not of the art, and both are fixed now, so the
+// measurement is possible again and these are real numbers:
+//
+//   · SIZE. The disc was a fixed 22px in a 190px frame — 11.6% of the frame's
+//     height whatever the art did. A bust's chest was about a third of the
+//     frame; a full-body chest is about a tenth, so 22px covered the Reaver's
+//     chest from collar to forearm. The disc is now a share of the frame
+//     (7% of its height, in `classSprite()`), which is a chest-sized jewel on
+//     a full-body figure and scales with whatever frame it is drawn in.
+//   · POSITION. The anchor was a HEIGHT only, and the overlay was centred at
+//     `left: 50%` — a claim that the torso is horizontally centred. A cape
+//     sweeping to one side moves the content box's centre off the body's. The
+//     anchor now carries an x as well, so the disc goes where the chest is
+//     rather than where the frame's middle is.
+//
+// HOW THESE WERE TAKEN. The method the file has always used: candidate discs
+// drawn over the SHIPPED 450x570 sprites at the shipped 7% size and inspected,
+// four candidates per class, then the surviving pair re-inspected at the real
+// 150x190 combat host so the choice was judged at the size a player sees. The
+// accepted value puts the whole disc on chest, clear of the face opening above
+// and of the hands, belt or existing gold clasp below. Evidence: the candidate
+// and size sheets in the 2026-09-07 anchor pass.
+//
+// Per class, and why that spot: the Reaver's chest plate sits in the hollow
+// between his crossed forearms; the Starseer's is the V below the mantle
+// collar, above the belt tabard's own gold triangle; the Rogue's is the clean
+// field of the jerkin below the hood's shadow. The Herald keeps 61 — its
+// shipped sprite is STILL THE BUST, that number was measured for this art, and
+// it re-inspected well, so it is left alone rather than churned. It is wrong
+// the moment its full-body figure ships, exactly as before.
 export const CLASS_MEDALLION_PCT = Object.freeze({
-  // Chest plate below the gorget. The helm ends well above; this is the value
-  // the old shared 53% happened to be right about.
-  reaver: 53,
-  // Robe collar. The hat brim is wide and sits low, and the face beneath it
-  // reaches ~54%, so the anchor clears both rather than splitting them.
-  starseer: 62,
-  // Chest strap, below the hood opening. Also right at the old shared value.
-  rogue: 53,
-  // Chest, between the two strands of prayer beads and below the hood opening,
-  // which the halo makes read higher in the frame than the other three hoods.
-  herald: 61,
+  reaver: Object.freeze({ x: 50, y: 35 }),
+  starseer: Object.freeze({ x: 48, y: 37 }),
+  rogue: Object.freeze({ x: 49, y: 35 }),
+  herald: Object.freeze({ x: 50, y: 61 }),
 });
 
 /**
- * The medallion centre for a class, or null when that class has no measurement.
+ * The medallion centre for a class as `{ x, y }` percentages of the sprite
+ * frame, or null when that class has no measurement.
  *
- * Null rather than a fallback percentage ON PURPOSE: a default here would be
- * the shared-53% assumption smuggled back in, and it would put the overlay on
- * an unmeasured figure's face exactly as before, silently. Callers decide —
+ * Null rather than a fallback ON PURPOSE: a default here would be the shared
+ * assumption smuggled back in, and it would put the overlay on an unmeasured
+ * figure's face exactly as before, silently. Callers decide —
  * `classSprite()` omits the overlay, `concept-cutout.mjs` fails the run.
+ *
+ * BOTH AXES OR NEITHER. A y with no x would be the `left: 50%` claim again,
+ * so the anchor is one value carrying both and there is no accessor for half
+ * of it.
  */
-export function medallionPct(classId) {
+export function medallionAnchor(classId) {
   return Object.prototype.hasOwnProperty.call(CLASS_MEDALLION_PCT, classId)
     ? CLASS_MEDALLION_PCT[classId]
     : null;
+}
+
+/**
+ * Has this class's art been LOOKED AT for an anchor? — `true` for a measured
+ * percentage and `true` for a measured null.
+ *
+ * The runtime cannot tell those apart and should not care: both mean "draw no
+ * overlay". A build tool must, because its gate exists to stop art shipping
+ * before anyone checked where the sigil would land, and "we checked and it
+ * cannot go anywhere on this figure" is a check, not a gap. Without this the
+ * only way past that gate would be to invent a number.
+ */
+export function medallionDeclared(classId) {
+  return Object.prototype.hasOwnProperty.call(CLASS_MEDALLION_PCT, classId);
 }

@@ -2,14 +2,37 @@
 
 A roguelike deckbuilder for the browser — single-player, with optional LAN co-op. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**. Built with vanilla ES-module JavaScript, HTML, and CSS — no framework, no build step.
 
-> **Status: feature-complete core loop.** Four classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
+> **Core loop:** Four classes, three acts, 20 regular enemies, three elites and ten bosses, with seeded encounters and resumable runs. See [DEVELOPER.md](DEVELOPER.md) to run and extend it, and the [enemy roster](docs/ENEMY-ROSTER.md) for moves and destinations.
 
-> **README content updated:** 2026-09-02T00:45:00-08:00 (Alaska)
-> **Updated by:** Claude Code, on the owner's instruction — the feature list now names equip load and Weight Class, Stamina with the class-priced Dodge Roll and the empty hand that brings it, the first quest chain, and Forsaken Together (the LAN co-op); the opening line no longer calls the game single-player only
-> **Source change:** Pull request #555, the README pass and its CHANGELOG receipt at `0.5.0-rc.2.1944`
-> **Scope:** README content-currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
+Feature descriptions include the September 7 enemy and combat expansion. See
+[CHANGELOG.md](CHANGELOG.md) for the corresponding PRs and development builds.
 
 ## Play a build
+
+Act maps offer distinct named boss destinations beyond the guaranteed rest.
+Enemy inspectors show each move's damage, effects, windup and phase unlocks.
+Card arrivals and actions have feedback that respects Reduced motion; the Piles
+control retains the latest discard or exhaust outcome after animations are skipped.
+
+Twelve enemies now use the painted sprites from the Unity fork, including the
+Wandering Soldier, Blight Hound, Fell Warden, Stitched King and Wyrm Lord.
+
+Traders now offer armaments and mountable weapon arts alongside their usual stock.
+Inspect an item before buying, or sell an unequipped armament from storage.
+Equipped items explain why they cannot be sold. Weapon arts are bought at traders
+and installed through the Armoury's existing card-mounting controls.
+The combat row is Actions, Draw, centered End Turn, Discard (with Exhaust),
+and Potions at the far right. Discard opens separate Discard and Exhaust tabs.
+Potion rows show their artwork and counts; expand one to inspect it inline.
+Use moves into the unfolded card and retains the shared confirmation/hold action.
+Selecting or expanding a potion never consumes it. Weapon arts play from the hand.
+
+Character creation uses attached foldout cards for its sections and choices.
+Stats, keepsakes, sprite options and equipment summaries start folded; opening
+a choice closes its siblings. Text retains readable minimum sizes on phones.
+Combat cards and character previews keep consistent portrait proportions; Armoury
+figures scale uniformly to fit their available space. Pile viewers use larger,
+non-overlapping cards with readable text on phones and scroll when needed.
 
 **[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)** — the stable
 build from `main`. **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** — the builds
@@ -30,18 +53,29 @@ here. It is the last segment of the stamp the game paints on its title screen,
 on `main`), so the number on the badge, the number on the builds index and the number on
 the title screen are the same fact read from the same file.
 
+**Read each badge down its own column, not across.** The ordinal counts builds *within the
+current candidate* and restarts when the candidate advances, so the four numbers above are
+not a ranking: a freshly cut candidate on `dev` starts near zero while `main` still carries
+the count it was promoted with. `main` also predates the restart — it is on the `0.4.0` line
+and still counting globally, which is why its badge reads in the thousands. To compare two
+branches, compare the whole stamp (`BUILD <version>.<ordinal>`), which the builds index and
+the title screen both show; the badge is a per-branch progress counter only.
+
 **Address scheme.** `https://cehinds.github.io/AshenSpire/<branch>/<ordinal>/` is that exact
-build — `…/dev/1908/` is dev build 1908, byte-identical to the `AshenSpire.html` of the
+build — `…/main/1688/` is `main` build 1688, byte-identical to the `AshenSpire.html` of the
 commit that produced it — and `…/<branch>/latest/` is the branch's newest. Each entry on the
 index links the `CHANGELOG.md` **at that build's commit**, not at a moving branch head. The
 site is assembled from git history by `node tools/pages-site.mjs` in the `pages-builds`
-workflow on every push to one of the four branches; nothing on it is hand-edited. Publication
-itself is owner-exclusive and separate from pushing: a push only assembles and proves the site,
-and it is deployed only by the repository owner's own manual dispatch of that workflow, with
-its `publish` input spelling PUBLISH (a push-triggered run holds no Pages credential), once the
-repository's Pages source is set to **GitHub Actions** (Settings → Pages).
-Until then the legacy `main:/` source keeps serving the stable link above and the per-branch
-addresses are not yet live.
+workflow on every push to one of the four branches; nothing on it is hand-edited.
+
+**Publication is split by branch.** A push to `dev`, `test` or `release` assembles the site,
+proves it, and publishes it — those three keep themselves current without anyone asking.
+A push to **`main` publishes nothing**: the stable Play link changes only on the repository
+owner's own dispatch of that workflow with its `publish` input spelling PUBLISH, which
+publishes whichever branch it is run from. Because Pages serves one site and this one is
+assembled on top of `main`'s tree, a `main` change does reach the site on the next
+`dev`/`test`/`release` publication after it lands; what a push to `main` never does is
+publish itself. Merging to `main` is owner-only in the first place.
 
 **[AshenSpire Project #4](https://github.com/users/cehinds/projects/4)** owns
 workflow status. **[Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)**
@@ -77,9 +111,11 @@ beside it. This is a **development preview**, not a release, tag, or
 production approval. Release status remains governed separately and is currently
 **RED**.
 
-Work reaches `main` only when the owner merges it; `dev` is the integration
-branch and is not published. A change merged to `dev` is therefore not yet
-visible at the preview URL.
+Work reaches `main` only when the owner merges it. `dev` is the integration
+branch, and since #632 a push to it publishes the builds site, so a change
+merged to `dev` appears at its own `dev/` address once that run finishes. What
+it does not do is move the stable Play link above, which follows `main` and is
+published only on the owner's own dispatch.
 
 For offline play, download [`AshenSpire.html`](AshenSpire.html) from the
 repository root and double-click it. It is a self-contained file and requires
@@ -108,12 +144,18 @@ build changes; the visible build stamp ties each image to the tree that drew it.
 |---|---|---|
 | [![Current development title screen](docs/preview/title.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development act map](docs/preview/map.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development combat](docs/preview/combat.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) |
 
-Armoury reference captures: [Character](docs/preview/armoury-1191-character-desktop.png),
-[Inventory](docs/preview/armoury-1191-inventory-desktop.png),
-[Hybrid](docs/preview/armoury-1191-hybrid-desktop.png),
-[whole-card hold progress](docs/preview/armoury-1191-hold-progress-desktop.png),
-[comparison tooltip](docs/preview/armoury-1191-comparison-tooltip-desktop.png), and
-[390×844 phone](docs/preview/armoury-1191-phone.png).
+The Armoury has dedicated Character, Equipment, Inventory and Cards tabs. Stats
+live in Character alongside the figure. Cards displays the complete deck as large,
+separate card faces. Choose Change on equipped gear to browse compatible inventory
+items; Show all items clears the filter. Each tab uses one natural page scroll.
+
+Armoury previews: [Equipment](docs/preview/armoury-simple-equipment-1440.png),
+[Character](docs/preview/armoury-simple-character-1440.png),
+[Inventory](docs/preview/armoury-simple-inventory-1440.png),
+[Cards](docs/preview/armoury-simple-cards-1440.png), and
+[phone cards](docs/preview/armoury-simple-cards-390.png).
+The [menu control audit](docs/preview/menu-control-audit.md) records tested routes
+and remaining coverage limits.
 
 The in-game changelog is checked through the real title → Settings → Changelog route
 by `node tools/about-changelog.mjs`.
@@ -181,8 +223,13 @@ No install, no framework, no build step for the source.
 
 - **A run:** pick a class → traverse a branching map across 3 acts → fight enemies with a deck of cards → collect relics, flasks, and cinders → beat the final boss or die trying (seeded, reproducible runs).
 - **Four distinct classes:** Reaver leads with strike damage, Rogue with defense and actions, Starseer with magic, and Herald with a balanced martial-support kit. Their starting attributes and equipment are data-owned and validated through the shared character-creation flow.
-- **One reusable run HUD:** Map and Combat compose the same model-driven header, vitals, Quick Access, relic, and potion components. Stable IDs and tuning tokens are documented in the component catalog so UI changes name the exact surface they affect.
+- **One component kit, and one run HUD built from it:** every screen is drawn from one kit of shared pieces — one meter, one swatch, one page door, one modal chrome with the same way out in the same corner — rather than each screen carrying its own. Map and Combat compose the same model-driven header, vitals, Quick Access, relic, and potion components from that kit. Stable IDs and tuning tokens are documented in the component catalog so UI changes name the exact surface they affect.
 - **One data-driven Armoury:** Character, Inventory, and Hybrid are presentations of the same equipment owner. Character places the contained figure beside expandable Combat Power, Attributes, and Relics; Inventory pairs procedural Armaments with the one shared carried-item list; Hybrid keeps the compact Character stack beside Armaments. Armaments, Inventory, Cards, and Stats use the shared Folding Tray grammar. Equipment cards drag as one surface and, when hold-confirm is enabled, fill across the whole folded or expanded card while equipping, moving, or unequipping. The fixed authored attack slots rebind in place to the active weapon package: a lone left- or right-hand weapon owns all of them, dual wield splits them right-first without deck growth, and the comparison receipt shows the exact before/after counts.
+- **You can re-arm during a fight:** the combat Armoury lets you equip, move, or remove carried weapons and armour on your turn, instead of limiting you to the sets prepared beforehand. Re-arming a position costs the same Energy as switching a prepared weapon set, and the change lands immediately — equipment cards, HP/MP/SP limits, Poise, and the item in each position all update inside the current fight, and the new loadout stays with you when the fight ends. A change you cannot afford is refused without spending Energy or moving anything.
+- **Every card has an owner, and a smith can change it:** a card your equipment lends you belongs to that item. Take the weapon or the armour off and its cards leave with it; put it back and they return — mid-fight and across a save, not only on the Armoury screen. At a Shrine, and at a merchant who rolled a smith, **Extract a Card** lifts a card out of the item that lends it and makes it yours for good, and **Seat a Card** puts one of your own into an open mount. An emptied mount is never dead: it shows a fallback — the Dodge Roll for a weapon-art mount — until something else is seated. Which cards can be lifted is a tag on the card, and the price and who offers the service are tables, so both change without code. No shipped weapon authors a card package yet, so until content does, the smith will tell you there is nothing to work on.
+- **The deck cap is a creation rule:** the starting deck size governs the basic strikes and defends dealt at character creation, and nothing else. The cards your equipment brings are dealt first and are never capped or dropped, and after creation the cap does not apply at all — your deck floats with your gear, by design.
+- **Painted class figures, in the builder and in the fight:** the figure you pick at character creation is the painted concept design for that class, and it is the same figure you fight as — cut from the owner's pose sheets, animated when you attack, and turned to face whoever it is fighting. Your tint colours the garment rather than just the outline, keeping the painting's own light and shadow. **The armour you equip changes that figure:** each of the twelve alternative armour sets has its own painted figure in combat and in the Armoury, and a set without one falls back to the class figure rather than leaving you without a figure at all. The attack plays four frames, the forward thrust landing before the downward slash. These figures were made with AI image-generation models; the game's AI disclosure and CREDITS say so.
+- **The battlefield answers what you point at:** hover a status effect, land the focus cursor on it, or tap it, and it says what it does and how far its build-up or countdown has run; the build-up bars under an enemy answer the same way. Hover or tap either fighter — yours included — for the glance: HP, Poise and effects, with **I** for the full read. When a card is armed, a tap on a target is still a play.
 - **Faithful StS mechanics:** 3 energy / draw 5 turns, block that expires, telegraphed enemy intents, exhaust/ethereal/retain keywords, exact StS damage-order math.
 - **Elden Ring flavor with real mechanics:** Bleed as a build-up meter that bursts for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and a Poise/Stagger system that skips enemy turns and opens damage windows.
 - **Equip load and Weight Class:** what your hands and armour weigh counts against a capacity set by Constitution and Strength, and the percentage lands you in Light, Medium or Heavy. The Armoury shows the load, the capacity and the class, and comparing a piece shows the load and class the swap would leave you at.
@@ -243,3 +290,9 @@ Flow: `feature/* → dev → release → main`. See [CONTRIBUTING.md](CONTRIBUTI
 ## Legal
 
 Code is MIT ([LICENSE](LICENSE)). This is a fan-inspired original work: it contains **no** FromSoftware assets, music, or proper nouns, and is not affiliated with or endorsed by FromSoftware or Bandai Namco. All art assets are CC0/CC-BY/OFL and attributed in [CREDITS.md](CREDITS.md).
+
+## Dodge feedback and motion
+
+After a Dodge roll, select **Dodge succeeded** or **Dodge failed** beside your character to inspect the last result. The explanation shows the roll, check, difficulty and base guard. Dodge grants Block on success; it does not guarantee avoiding the next attack. Block modifiers and retention effects still apply.
+
+Armoury card scrolling honors both the in-game Reduced motion setting and your operating system preference.

@@ -7,6 +7,9 @@
 import { sfx } from './sfx.js';
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
+import { playPoseOn } from './services/PoseAnimator.js';
+import { reducedMotionRequested } from './motion.js';
+import { dodgeReceipt } from './components/dodgeReceipt.js';
 
 const STEP_MS = 80;
 
@@ -413,7 +416,7 @@ function banner(layer, text, cls = '') {
 function shake(combatEl) {
   if (!combatEl) return;
   // Honor the Screen shake setting (and reduced motion, which also drops it).
-  if (document.body.classList.contains('no-shake') || document.body.classList.contains('reduced-motion')) return;
+  if (document.body.classList.contains('no-shake') || reducedMotionRequested()) return;
   combatEl.classList.remove('shake');
   void combatEl.offsetWidth; // restart animation
   combatEl.classList.add('shake');
@@ -546,7 +549,7 @@ const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 
 
 export function playTimeline(events, ctx, done) {
   const speed = ANIM_SPEEDS[animSpeed];
-  const reduced = document.body.classList.contains('reduced-motion');
+  const reduced = reducedMotionRequested();
   if (!speed || reduced) {
     if (ctx.onFlush) ctx.onFlush();
     animateEvents(events, ctx, done);
@@ -557,13 +560,52 @@ export function playTimeline(events, ctx, done) {
   const beats = groupBeats(events);
   let flushed = false;
   let finished = false;
+  let pendingTimer = null;
+  let activeActorAnimation = null;
+  let nextBeat = () => {};
+  let skipRelease = null;
+  const cancelActorAnimation = () => {
+    if (!activeActorAnimation) return;
+    try {
+      activeActorAnimation.cancel();
+    } catch (e) {
+      /* cleanup must not break timeline completion */
+    }
+    activeActorAnimation = null;
+  };
+  const schedule = (fn, ms) => {
+    clearTimeout(pendingTimer);
+    pendingTimer = setTimeout(fn, Math.max(0, ms));
+  };
+  const clearSkipRelease = () => {
+    if (!skipRelease) return;
+    removeEventListener('pointerup', skipRelease, { capture: true });
+    removeEventListener('pointercancel', skipRelease, { capture: true });
+    skipRelease = null;
+  };
   const skip = () => {
+    if (finished) return;
     flushed = true;
+    cancelActorAnimation();
+    clearTimeout(pendingTimer);
+    // Finish after this pointer is released. Re-rendering under pointerdown
+    // can put a new live control beneath the same physical click and activate
+    // it on pointerup; keeping `busy` true through release prevents that ghost
+    // action while still making a click skip immediately.
+    skipRelease = () => {
+      clearSkipRelease();
+      schedule(nextBeat, 0);
+    };
+    addEventListener('pointerup', skipRelease, { once: true, capture: true });
+    addEventListener('pointercancel', skipRelease, { once: true, capture: true });
   };
   addEventListener('pointerdown', skip, { once: true, capture: true });
   const finish = () => {
     if (finished) return;
     finished = true;
+    clearTimeout(pendingTimer);
+    clearSkipRelease();
+    cancelActorAnimation();
     dbg.finished = (dbg.finished || 0) + 1;
     clearTimeout(watchdog);
     removeEventListener('pointerdown', skip, { capture: true });
@@ -572,11 +614,16 @@ export function playTimeline(events, ctx, done) {
   // Safety net: however playback ends (or a re-render throws mid-beat), never
   // leave the caller's `busy` flag stuck — force completion after a bounded
   // wall-clock budget. This is what prevents the "cards stop responding" hang.
-  const budget = 2000 + beats.length * (speed.beatMs + speed.lungeMs + 4 * speed.stepMs);
+  const customActorMs = typeof ctx.maxActorAnimationMs === 'function'
+    ? Number(ctx.maxActorAnimationMs(speed)) || 0
+    : Number(ctx.maxActorAnimationMs) || 0;
+  const actorBudgetMs = Math.max(speed.lungeMs, customActorMs);
+  const budget = 2000 + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
     dbg.watchdog = (dbg.watchdog || 0) + 1;
     console.warn('[fx] watchdog forced timeline completion');
     dlog('fx', 'watchdog forced timeline completion', { open: dbg.open, finished: dbg.finished });
+    cancelActorAnimation();
     try {
       if (ctx.onFlush) ctx.onFlush();
     } catch (e) {
@@ -594,7 +641,7 @@ export function playTimeline(events, ctx, done) {
   };
 
   let bi = 0;
-  const nextBeat = () => {
+  nextBeat = () => {
     if (finished) return;
     if (flushed) {
       safe(() => ctx.onFlush && ctx.onFlush());
@@ -610,13 +657,39 @@ export function playTimeline(events, ctx, done) {
     if (beat.banner) {
       safe(() => banner(ctx.layer, beat.banner, 'turn'));
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
-      setTimeout(nextBeat, Math.max(260, speed.beatMs));
+      schedule(nextBeat, Math.max(260, speed.beatMs));
       return;
     }
 
     // 1) actor animation (lunge for attacks, glow-step otherwise)
+    //
+    // A figure drawn in the animated style also changes pose for the beat. Asking
+    // for 'attack' lets the figure pick its own next swing, so a multi-hit turn
+    // does not replay one frame and an actor with no frames cannot advance
+    // anyone else's rotation. Anything else takes the guard frame, and
+    // playPoseOn is a no-op for a figure with no frames at all.
     const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
-    if (actorEl) safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
+    let actorAnimation = null;
+    if (actorEl && ctx.animateActor) {
+      try {
+        actorAnimation = ctx.animateActor(beat, actorEl, speed);
+      } catch (e) {
+        actorAnimation = null;
+      }
+    }
+    if (actorAnimation
+      && Number.isFinite(actorAnimation.impactMs)
+      && Number.isFinite(actorAnimation.totalMs)
+      && typeof actorAnimation.cancel === 'function') {
+      activeActorAnimation = actorAnimation;
+    } else {
+      actorAnimation = null;
+      if (actorEl) {
+        safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
+        safe(() => playPoseOn(actorEl, beat.kind === 'attack' ? 'attack' : 'guard', speed.lungeMs));
+      }
+    }
+    const actorStartedAt = Date.now();
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
     const visuals = beat.events.map((e) => visualFor(e, beat.kind)).filter(Boolean);
@@ -625,8 +698,10 @@ export function playTimeline(events, ctx, done) {
     if (actorEl && beat.kind !== 'attack' && beat.events.length) {
       safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', 450, '✦'));
     }
-    const windup = actorEl ? Math.round(speed.lungeMs * 0.55) : 0;
-    setTimeout(() => {
+    const windup = actorAnimation
+      ? actorAnimation.impactMs
+      : (actorEl ? Math.round(speed.lungeMs * 0.55) : 0);
+    schedule(() => {
       let vi = 0;
       const stepV = () => {
         if (finished) return;
@@ -637,12 +712,22 @@ export function playTimeline(events, ctx, done) {
         if (vi < visuals.length) {
           const v = visuals[vi++];
           safe(() => v(ctx));
-          setTimeout(stepV, speed.stepMs);
+          schedule(stepV, speed.stepMs);
           return;
         }
-        // 3) HUD updates for this beat, 4) inter-beat breath
-        safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
-        setTimeout(nextBeat, speed.beatMs);
+        const applyBeat = () => {
+          // 3) HUD updates for this beat, 4) inter-beat breath. Painted actor
+          // sequences retain their recovery frames before the render replaces
+          // the sprite host; ordinary CSS lunges update immediately as before.
+          cancelActorAnimation();
+          safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
+          schedule(nextBeat, speed.beatMs);
+        };
+        const recovery = actorAnimation
+          ? Math.max(0, actorAnimation.totalMs - (Date.now() - actorStartedAt))
+          : 0;
+        if (recovery > 0) schedule(applyBeat, recovery);
+        else applyBeat();
       };
       stepV();
     }, windup);
@@ -652,6 +737,9 @@ export function playTimeline(events, ctx, done) {
 
 function visualFor(e, beatKind) {
   switch (e.type) {
+    case 'dodgeRolled':
+      // The following blockGained event owns the numeric gain.
+      return (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.sourceId), dodgeReceipt(e).outcome, 'small');
     case 'damageDealt':
       // One event owns both visible channels: unsigned guard consumed, then
       // only the HP residual as damage. Paired results sit side-by-side without
@@ -675,6 +763,9 @@ function visualFor(e, beatKind) {
         // recoil further (hit-heavy) and kick the screen.
         if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
         flash(anchor, 'hitflash', heavy ? 380 : 220);
+        // An animated figure recoils in its own art as well as in CSS, and holds
+        // it as long as the flash it belongs to.
+        playPoseOn(anchor, 'hit', heavy ? 380 : 220);
         if (heavy) {
           flash(anchor, 'hit-heavy', 380);
           shake(ctx.combatEl);

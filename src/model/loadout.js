@@ -697,6 +697,9 @@ function validateEquipmentBalance(pieces, eqBal, problems) {
   if (!Number.isInteger(eqBal.swapCost) || eqBal.swapCost < 0) {
     problems.push(`balance.equipment.swapCost must be a whole number ≥ 0 — got ${JSON.stringify(eqBal.swapCost)}`);
   }
+  if (typeof eqBal.allowChangesInCombat !== 'boolean') {
+    problems.push(`balance.equipment.allowChangesInCombat must be true or false — got ${JSON.stringify(eqBal.allowChangesInCombat)}`);
+  }
   for (const r of eqBal.swapCostByCategory || []) {
     const at = `swapCostByCategory row '${(r && r.tag) || '(no tag)'}'`;
     if (!r || typeof r.tag !== 'string' || !r.tag) { problems.push(`${at}: every category row needs a tag`); continue; }
@@ -2906,74 +2909,21 @@ export function swapCostFor(registries, {
 /**
  * canEquip(registries, slotId, { inCombat }) → { ok, reason }.
  *
- * MAY WHAT IS IN THIS SET CHANGE RIGHT NOW — the sibling question to canSwap,
- * and the one nothing in the model answered. `canSwap` asks whether the ACTIVE
- * set may change; this asks whether a set's CONTENTS may. In a fight the answer
- * is no for every slot, and it is derived rather than authored (below).
+ * MAY WHAT IS IN THIS SET CHANGE RIGHT NOW — the sibling question to canSwap.
+ * `canSwap` asks whether the ACTIVE set may change; this asks whether a set's
+ * CONTENTS may. The combat answer is data-owned by allowChangesInCombat so the
+ * Armoury, mutation, and engine all read one rule.
  *
- * IT REPLACES `canUseStorage`, WHICH HAD ZERO CALLERS IN THE WHOLE TREE. That is
- * the second copy this seat exists to refuse, in its quietest form: the fact
- * "you cannot re-arm mid-fight" was written twice — once in the model, where
- * nothing read it, and once as `} else if (!inCombat) {` in the armoury's click
- * handler, where it was the only thing actually enforcing anything. The dead
- * copy is deleted and the live one moves onto the mutation (equipPiece below).
- * Same defect as #90's ownership hole, one function over, found by asking who
- * reads each of these two.
+ * This is intentionally one combat-wide balance switch rather than another
+ * per-slot column. Which prepared set may become active remains a property of
+ * the slot (`canSwap`); whether carried gear may replace, move, or leave a
+ * position is one fight rule for every position (`allowChangesInCombat`).
  *
- * WHY IT IS DERIVED AND NOT A COLUMN. The obvious form is an `equip` column in
- * equipSlots.csv beside `swap`. It is #78 again: a second two-valued field per
- * slot makes the vocabulary the PRODUCT of the two, and that product holds cells
- * nobody built — a slot you may re-arm but not cycle, an armour slot a row could
- * declare re-armable mid-fight while storage stays sealed under it. Changing
- * what a set HOLDS is strictly more than changing which set is ACTIVE, so the
- * answer follows from the fight, not from a row. An author writes nothing new
- * and nothing can fall out of the set (Law 0 clause 1).
- *
- * THE SENTENCE DOES NOT NAME THE SLOT, and that is the repair of my own defect
- * (#98, Bjorn). I composed it from the slot's label because canSwap does — but
- * canSwap's fact IS per slot (hands cycle, armour does not) and this one is not:
- * in a fight NO slot may be re-armed. Naming the slot made a screen-wide truth
- * wear a per-slot voice, so "Right Hand is sealed in combat" read as a claim
- * about the Right Hand, sitting under a Right Hand header with no badge on it
- * while ARMOUR had one. The label was doing the opposite of its job. It says
- * what is actually true instead, once, about the act rather than the slot — and
- * it borrows no word from canSwap, so the two refusals cannot be read as the
- * same rule. The picker's own `<h4>` says which slot you are looking at; this
- * line never needed to.
- *
- * NO CONTEXT MEANS SEALED, not "not in combat" (#98, Vira). The old signature
- * defaulted `inCombat` to false, so a caller that said nothing was told it may
- * re-arm — silence meaning permission, which is the whole defect this function
- * was extracted to remove. A truth function that cannot be told whether a fight
- * is on refuses, and names the caller that failed to say.
+ * The context is required and must contain a boolean. Silence never means
+ * permission: malformed callers fail closed even when the shipped rule is on.
  */
-/**
- * The one sentence, so the two refusing paths below cannot drift apart.
- *
- * REWORDED BY SUNNA (#98), AND THE OLD ONE HAD THE SAME DEFECT IT WAS REPAIRED
- * FOR, one clause further along. It read:
- *
- *     "You cannot re-arm mid-fight — cycle between the sets you brought."
- *
- * The front was fixed: it stopped naming the slot, because no slot may be
- * re-armed. **The back was not.** "Cycle between the sets you brought" is a
- * PER-SLOT promise — hands cycle, armour does not — and this sentence is printed
- * under armour too, where it is simply false. A screen-wide truth stopped
- * wearing a per-slot label and kept offering a per-slot consolation. Same defect,
- * quieter half, and the check could not see it because it only asserts the
- * sentence names no slot.
- *
- * So it says one thing that is true everywhere and offers nothing it cannot
- * keep. It is also 53 characters against 64, which matters: measured at 390x844
- * this line wraps to two lines from Text M upward, and a refusal a player reads
- * mid-fight should not be a paragraph.
- *
- * WHAT IT DELIBERATELY NO LONGER DOES: point at the way out. That is right for a
- * screen-wide string and wrong for the screen — a refusal that names no
- * alternative is a dead end, and the alternative here is per-slot, so it belongs
- * beside the slot that has one. Filed, not silently dropped.
- */
-export const SEALED_MID_FIGHT = 'Nothing goes in or out of a set once the fight starts.';
+/** One shared refusal sentence for model, engine, and Armoury. */
+export const COMBAT_EQUIPMENT_CHANGE_DISABLED = 'Equipment changes are disabled during combat.';
 
 export function canEquip(registries, slotId, ctx) {
   const slot = (((registries || {}).equipment || {}).slots || []).find((s) => s.id === slotId);
@@ -2983,9 +2933,12 @@ export function canEquip(registries, slotId, ctx) {
       `canEquip('${slotId}'): no boolean \`inCombat\` in the context — refusing.`
       + ` Got ${JSON.stringify(ctx)}. This line is the defect, not the refusal.`
     );
-    return { ok: false, reason: SEALED_MID_FIGHT };
+    return { ok: false, reason: COMBAT_EQUIPMENT_CHANGE_DISABLED };
   }
-  if (ctx.inCombat) return { ok: false, reason: SEALED_MID_FIGHT };
+  const cfg = (((registries || {}).balance || {}).equipment || {});
+  if (ctx.inCombat && cfg.allowChangesInCombat !== true) {
+    return { ok: false, reason: COMBAT_EQUIPMENT_CHANGE_DISABLED };
+  }
   return { ok: true, reason: '' };
 }
 
@@ -3041,11 +2994,9 @@ export function canEquip(registries, slotId, ctx) {
  * check is on the VALUE, not the key — `{ inCombat: undefined }` is what a caller
  * produces by forwarding a variable that was never set, and it refuses too.
  *
- * WHAT THIS DOES NOT CLOSE, said plainly because the next act needs it: the
- * PRICE. `balance.equipment.swapCost` is charged in `doSwapArmament`, outside
- * this function, so a caller reaching here directly still moves a `swap=combat`
- * slot mid-fight for 0 Energy instead of 2. The gate above stops the sealed slots
- * only. The cost is the next act and it hangs on this argument.
+ * WHAT THIS DOES NOT OWN: the PRICE. `balance.equipment.swapCost` is charged in
+ * the combat intent, outside this function. Direct model calls remain useful for
+ * previews and fixtures; player actions must route through the engine.
  *
  * `registries` moves to the front like everything else in this module, which is
  * also what makes a call site left on the old signature fail CLOSED: the old
@@ -3091,7 +3042,8 @@ export function cycleSet(registries, loadout, slotId, index, ctx) {
  * addToStorage(loadout, itemId, cap) → true when it went in.
  *
  * Where a found armament lands. Storage is what you are carrying but not
- * holding; hand slots are sealed against it once a fight starts (canEquip).
+ * holding. During combat, moving an item from storage into a position must route
+ * through the priced `changeEquipment` engine intent.
  * A duplicate is refused rather than stacking — you either have a Katana or
  * you don't.
  */
@@ -3235,11 +3187,9 @@ export function applyEquipTransition(registries, loadout, slotId, setIndex, item
  * Missing `owned` refuses and says so — the same fail-closed shape as the
  * `registries` argument above, for the same reason.
  *
- * Clearing a slot needs no ownership: putting a thing down is always allowed.
- * IT DOES NOT NEED THE COMBAT GATE ANY LESS, and the order of the two checks
- * below is where that is said. Putting a weapon down mid-fight is re-arming with
- * nothing; the ownership check has no opinion about it and the seal does. So the
- * seal is asked FIRST, above the `!itemId` return, and ownership second.
+ * Clearing a slot needs no ownership, but it still asks the combat-change rule.
+ * The permission is checked before the `!itemId` return so disabling combat
+ * equipment changes also disables combat unequip.
  *
  * `ctx` — `{ inCombat }` — is REQUIRED, for the reason the two arguments above
  * it are (#95). A context that defaults to "not in combat" fails OPEN: every
@@ -3274,8 +3224,8 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   // Passed through, NOT coerced. `!!ctx.inCombat` would turn a value this
   // function had just refused into a legal one, so if the check above is ever
   // loosened canEquip's own check is a real second gate rather than an echo.
-  const seal = canEquip(registries, slotId, { inCombat: ctx.inCombat });
-  if (!seal.ok) return false;
+  const permission = canEquip(registries, slotId, { inCombat: ctx.inCombat });
+  if (!permission.ok) return false;
   const eq = (registries || {}).equipment || {};
   const slot = (eq.slots || []).find((s) => s.id === slotId);
   if (!slot) return false;

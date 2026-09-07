@@ -63,6 +63,10 @@ export const act2Enemies = [
     poiseMax: 8,
     levelProfile: { min: 6, max: 8 },
     art: '🐩',
+    // Drawn in profile looking LEFT, which is where an enemy looks: the player's
+    // zone is to its left (assets.js SIDE_FACES), so this one is NOT mirrored
+    // and ships as painted. Read off the sprite, not assumed.
+    artFaces: 'left',
     moves: {
       maul: { intent: 'attack', damage: 4, hits: 2, weight: 60 },
       rend: {
@@ -169,5 +173,240 @@ export const act2Enemies = [
         unlockMoves: ['thousandHands'],
       },
     ],
+  },
+
+  // Expanded destinations: authored weighted moves use the existing phase and delay engine.
+  {
+    "id": "mirrorScribe",
+    "name": "Mirror Scribe",
+    "size": "medium",
+    "hp": [
+      28,
+      32
+    ],
+    "poiseMax": 8,
+    "levelProfile": {
+      "min": 7,
+      "max": 10
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "silverScript": {
+        "intent": "debuff",
+        "weight": 30,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "addCard",
+            "card": "dazed",
+            "pile": "discard"
+          }
+        ]
+      },
+      "shardVolley": {
+        "intent": "attack",
+        "damage": 3,
+        "weight": 50,
+        "hits": 3
+      },
+      "polishedWard": {
+        "intent": "block",
+        "block": 6,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    }
+  },
+  {
+    "id": "stitchCrab",
+    "name": "Stitch Crab",
+    "size": "small",
+    "hp": [
+      32,
+      36
+    ],
+    "poiseMax": 17,
+    "levelProfile": {
+      "min": 7,
+      "max": 10
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "shellFold": {
+        "intent": "block",
+        "block": 11,
+        "weight": 30,
+        "maxConsecutive": 1
+      },
+      "seamShears": {
+        "intent": "attack",
+        "damage": 4,
+        "weight": 45,
+        "hits": 2,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 1
+          }
+        ]
+      },
+      "scuttleRush": {
+        "intent": "attack",
+        "damage": 13,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "shellFold"
+  },
+  {
+    "id": "glassRegent",
+    "name": "The Glass Regent",
+    "size": "large",
+    "hp": [
+      180,
+      180
+    ],
+    "poiseMax": 26,
+    "levelProfile": {
+      "min": 11,
+      "max": 12
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "prismGuard": {
+        "intent": "block",
+        "block": 16,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "crystalRapier": {
+        "intent": "attack",
+        "damage": 15,
+        "weight": 45,
+        "maxConsecutive": 2
+      },
+      "splinterRain": {
+        "intent": "attack",
+        "damage": 6,
+        "weight": 30,
+        "hits": 3,
+        "maxConsecutive": 1
+      },
+      "shatteredCourt": {
+        "intent": "attack",
+        "damage": 7,
+        "weight": 35,
+        "maxConsecutive": 1,
+        "delay": {
+          "turns": 1,
+          "whileCharging": {
+            "block": 0
+          }
+        },
+        "hits": 5,
+        "locked": true
+      }
+    },
+    "firstMove": "prismGuard",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 50,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 4
+          }
+        ],
+        "unlockMoves": [
+          "shatteredCourt"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "marrowOrganist",
+    "name": "The Marrow Organist",
+    "size": "large",
+    "hp": [
+      190,
+      190
+    ],
+    "poiseMax": 30,
+    "levelProfile": {
+      "min": 11,
+      "max": 12
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "bonePrelude": {
+        "intent": "debuff",
+        "weight": 20,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      },
+      "ivoryKeys": {
+        "intent": "attack",
+        "damage": 8,
+        "weight": 40,
+        "hits": 3,
+        "maxConsecutive": 2
+      },
+      "funeralChord": {
+        "intent": "attack",
+        "damage": 28,
+        "weight": 25,
+        "maxConsecutive": 1,
+        "delay": {
+          "turns": 1,
+          "whileCharging": {
+            "block": 5
+          }
+        }
+      },
+      "quietRefrain": {
+        "intent": "buff",
+        "weight": 15,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 7
+          }
+        ]
+      }
+    },
+    "firstMove": "bonePrelude",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 35,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 6
+          }
+        ]
+      }
+    ]
   },
 ];

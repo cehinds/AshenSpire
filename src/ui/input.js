@@ -43,6 +43,7 @@ import { topVeil } from './components/veil.js';
 import { PRESS_EVENT, RELEASE_EVENT } from './gesture.js';
 
 const FOCUS_SELECTOR = [
+  'summary',
   'button:not([disabled])',
   '.card',
   '.map-node.reachable',
@@ -102,9 +103,16 @@ export const ACTIONS = [
   { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
   { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
   { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
-  { id: 'deck', label: 'Open Armoury (Deck)', short: 'Armoury', kind: 'key', defKey: 'd', defBtn: 3, destination: 'cards' },
-  { id: 'relics', label: 'Open Armoury', short: 'Armoury', kind: 'key', defKey: 'r', defBtn: 4, destination: 'equipment' },
-  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Armoury', kind: 'key', defKey: 't', defBtn: 5, destination: 'character' },
+  // THREE DOORS, THREE NAMES. All three carried `short: 'Armoury'`, so the map's
+  // hint row read "D Armoury · R Armoury · T Armoury" — three keys that look
+  // like three ways to the same place when each one lands somewhere different.
+  // The short form names the DESTINATION each row declares below it, which is
+  // exactly what `actionShort`'s own note asks for ("the bar wants the short
+  // form"), and the middle row's full label stops being the only one that
+  // does not say where it goes.
+  { id: 'deck', label: 'Open Armoury (Deck)', short: 'Deck', kind: 'key', defKey: 'd', defBtn: 3, destination: 'cards' },
+  { id: 'relics', label: 'Open Armoury (Equipment)', short: 'Equipment', kind: 'key', defKey: 'r', defBtn: 4, destination: 'equipment' },
+  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Stats', kind: 'key', defKey: 't', defBtn: 5, destination: 'character' },
   // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
   // we give both a rebindable key per slot).
   { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
@@ -383,7 +391,9 @@ function scopeRoot() {
 function focusables() {
   const root = scopeRoot();
   const inModal = root.classList && root.classList.contains('modal-veil');
-  return Array.from(root.querySelectorAll(FOCUS_SELECTOR)).filter(
+  const controls = Array.from(root.querySelectorAll(FOCUS_SELECTOR));
+  if (root.id === 'app') controls.push(...document.querySelectorAll('#tooltip[data-open="true"][role="dialog"] button:not([disabled])'));
+  return controls.filter(
     (el) => visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
   );
 }
@@ -683,7 +693,7 @@ function pressTarget(id) {
   if (!el || !el.isConnected) return null;
   if (!(Number(el.dataset.holdMs) > 0)) return null;
   const root = scopeRoot();
-  if (!root || !root.contains(el)) return null;
+  if (!root || (!root.contains(el) && !(root.id === 'app' && el.closest('#tooltip[data-open="true"][role="dialog"]')))) return null;
   return el;
 }
 

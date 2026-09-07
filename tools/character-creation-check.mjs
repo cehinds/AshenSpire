@@ -7,6 +7,22 @@ import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
+// EVERY CREATION DISCLOSURE IS A `<details>` STRUCTURE, so a face is a
+// `<summary>`, not a button in a `.disc-faces` row. `mountDisclosure(...,
+// { structure: 'details' })` is what the creation screen passes everywhere
+// now, and `mountDetailsDisclosure` shapes it two ways: a multi-row fold
+// wraps each row in a plain `div`, a single-row fold does not. This tool
+// died at its FIRST wait for weeks because it still looked for
+// `.disc-faces > .disc-face` — a selector for a structure the screen had
+// stopped using, which reads as "creation never mounted" rather than "the
+// gate is looking in the wrong place". Bound to depth, never a descendant
+// search: the faces of a nested fold live INSIDE an outer fold's panel, and
+// a loose selector would count them as the outer fold's own.
+const faces = (host, suffix = '') => [
+  `${host} > details.disc-fold-row > summary.disc-face${suffix}`,
+  `${host} > div > details.disc-fold-row > summary.disc-face${suffix}`,
+].join(', ');
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = resolve(process.argv[2] || join(ROOT, 'outputs'));
 const browserCandidates = [
@@ -86,12 +102,13 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text || 'evaluation failed');
     return result.result.value;
   };
-  const until = async (expression, label, timeout = 15000) => {
+  const until = async (expression, label, timeout = 15000, required = true) => {
     const started = Date.now();
     while (Date.now() - started < timeout) {
-      if (await evaluate(expression).catch(() => false)) return;
+      if (await evaluate(expression).catch(() => false)) return true;
       await wait(100);
     }
+    if (!required) return false;
     throw new Error(`timeout waiting for ${label}`);
   };
   const click = async (selector, index = 0) => {
@@ -104,7 +121,19 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     await wait(100);
   };
   const setInput = async (selector, value) => evaluate(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); e.value=${JSON.stringify(value)}; e.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:${JSON.stringify(value)}})); e.dispatchEvent(new Event('change',{bubbles:true})); return e.value; })()`);
-  const open = (key) => click(`[data-face="${key}"]`);
+  // OPEN MEANS OPEN, NOT TOGGLE. A face is a `<summary>` whose click toggles,
+  // and the folds keep their own state: a top-level section closing does not
+  // close the pickers nested inside it. So a second `open('primary')` on an
+  // already-open picker CLOSED it, and every later click aimed into that
+  // panel then landed on a 0px-tall control — which is why the gate reported
+  // "the selection did not persist" and "Begin refuses" for choices it had
+  // never actually made. Checking before clicking makes each call mean what
+  // its name says, whatever the fold was doing beforehand.
+  const open = async (key) => {
+    const already = await evaluate(`document.querySelector('[data-face="${key}"]')?.getAttribute('aria-expanded') === 'true'`).catch(() => false);
+    if (already) return;
+    await click(`[data-face="${key}"]`);
+  };
   const noOverflow = () => evaluate(`(() => {
     const root=document.querySelector('.customize');
     const scrollers=[root,...root.querySelectorAll('*')].filter(e=>getComputedStyle(e).overflowX!=='visible');
@@ -119,20 +148,20 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
 
   await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/${profileMeta ? '' : '?shot=customize'}` }, sessionId);
   if (profileMeta) {
-    await until(`!!document.querySelector('.startup-gate') || !!document.querySelector('.slot-new')`, 'startup gate or title screen for veteran profile');
-    if (await evaluate(`!!document.querySelector('.startup-gate')`)) {
-      await click('.startup-gate');
-    }
+    await until(`!!document.querySelector('.startup-gate') || !!document.querySelector('.slot-new')`, 'startup gate or title screen for veteran profile', 60000);
+    if (await evaluate(`!!document.querySelector('.startup-gate')`)) await click('.startup-gate');
     await until(`!!document.querySelector('.slot-new')`, 'title screen for veteran profile');
     await click('.slot-new');
     await until(`!!document.querySelector('.title-menu-modal [data-title-action="modal-continue"]:not([disabled])')`, 'new-run slot selection');
     await click('.title-menu-modal [data-title-action="modal-continue"]');
+    await until(`!!document.querySelector('.title-menu-modal [data-title-action="review-new"]:not([disabled])')`, 'new-run confirmation');
+    await click('.title-menu-modal [data-title-action="review-new"]');
   }
-  await until(`document.querySelectorAll('.cz-flow > .disc-faces > .disc-face').length===4`, 'four creation sections');
+  await until(`document.querySelectorAll(${JSON.stringify(faces('.cz-flow'))}).length===4`, 'four creation sections');
   await wait(250);
   const arrival = await evaluate(`(() => ({
-    labels:[...document.querySelectorAll('.cz-flow > .disc-faces > .disc-face .disc-name')].map(e=>e.textContent.trim()),
-    open:[...document.querySelectorAll('.cz-flow > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face)
+    labels:[...document.querySelectorAll(${JSON.stringify(faces('.cz-flow', ' .disc-name'))})].map(e=>e.textContent.trim()),
+    open:[...document.querySelectorAll(${JSON.stringify(faces('.cz-flow', '[aria-expanded="true"]'))})].map(e=>e.dataset.face)
   }))()`);
   assert(JSON.stringify(arrival.labels) === JSON.stringify(['CLASS', 'CHARACTER', 'STARTING EQUIP', 'SEED']), `${width}x${height}: sections are in the requested order`);
   assert(JSON.stringify(arrival.open) === JSON.stringify(['class']), `${width}x${height}: exactly Class opens on arrival`);
@@ -186,19 +215,50 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   if ((profileMeta && profileMeta.unlocked || []).includes('winAsReaver')) {
     await open('equipment');
     assert(await evaluate(`!!document.querySelector('#cz-armours [data-starting-armour-id="oathsworn"]')`), `${width}x${height}: profile-earned armour appears beside JSON defaults`);
+    // NESTED FOLDS ARE CLOSED UNTIL SOMETHING OPENS THEM, so the option is in
+    // the DOM at zero height and a click at its centre lands on whatever is
+    // actually there. Opening ARMOUR first is what a player does, and it is
+    // the difference between "the selection did not persist" and "the
+    // selection was never made".
+    await open('armour');
     await click('#cz-armours [data-starting-armour-id="oathsworn"]');
     await open('character');
     await open('equipment');
+    await open('armour');
     assert((await evaluate(`document.querySelector('#cz-armours [data-starting-armour-id="oathsworn"]').getAttribute('aria-pressed')`)) === 'true', `${width}x${height}: profile-earned armour selection persists through section changes`);
   }
 
   await open('character');
+  // NOTHING NESTED OPENS ITSELF, and that is the rule rather than a gap: the
+  // disclosure's contract is "default folded — his word", and the creation
+  // screen opens exactly one thing on arrival (CLASS, at the top level). This
+  // row used to demand PRIMARY STATS be open the moment CHARACTER was, which
+  // was true of the shared-panel structure's armed face and is not true of the
+  // `details` structure the screen mounts now. Asserting the rule instead of
+  // the old side effect keeps the coverage and stops three later rows failing
+  // for a reason that has nothing to do with what they measure: the stat cards
+  // live in that panel, so while it was closed they were 0px tall and every
+  // click at their centre landed on whatever was behind them.
+  const nestedArrival = await evaluate(
+    `[...document.querySelectorAll(${JSON.stringify(faces('#cz-character-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face)`,
+  );
+  assert(nestedArrival.length === 0,
+    `${width}x${height}: Character's own pickers all arrive folded (${JSON.stringify(nestedArrival)})`);
+  await open('primary');
+  // `faces` reads A NATIVELY ACTIVATABLE FACE, not specifically a <button>:
+  // every creation disclosure mounts with structure 'details' now, so each
+  // face is the fold's own <summary> — focusable and activatable by keyboard
+  // and pointer with no handler of its own, which is the property this row
+  // exists to hold. The literal BUTTON it used to demand was a claim about
+  // WHICH structure the screen mounts, and it failed the moment the screen
+  // mounted the other one.
   const attributeCards = await evaluate(`(() => ({
     count: document.querySelectorAll('#cz-primary-stats [data-face^="attribute:"]').length,
-    buttons: [...document.querySelectorAll('#cz-primary-stats [data-face^="attribute:"]')].every((card) => card.tagName === 'BUTTON'),
+    faces: [...document.querySelectorAll('#cz-primary-stats [data-face^="attribute:"]')].map((card) => card.tagName),
     summaries: [...document.querySelectorAll('#cz-primary-stats [data-face^="attribute:"] .disc-summary')].map((node) => node.textContent.trim()),
   }))()`);
-  assert(attributeCards.count === 5 && attributeCards.buttons && attributeCards.summaries.length === 5,
+  assert(attributeCards.count === 5 && attributeCards.summaries.length === 5
+    && attributeCards.faces.every((tag) => tag === 'SUMMARY' || tag === 'BUTTON'),
     `${width}x${height}: five model-driven attribute cards expose folded summaries (${JSON.stringify(attributeCards)})`);
   await click('#cz-primary-stats [data-face="attribute:strength"]');
   const strengthReveal = await evaluate(`(() => {
@@ -213,24 +273,50 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await wait(180);
   const attributeShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
   writeFileSync(join(OUT, `attribute-cards-${width < 700 ? 'mobile' : 'desktop'}.png`), Buffer.from(attributeShot.data, 'base64'));
-  await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new PointerEvent('pointerenter', {bubbles:true})); true`);
+  await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new CustomEvent('gpfocus'))`);
   await wait(180);
   assert(await evaluate(`document.querySelector('#tooltip')?.style.display === 'block' && /Dexterity/.test(document.querySelector('#tooltip')?.textContent || '')`),
     `${width}x${height}: folded attributes expose the same description by tooltip`);
-  await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new PointerEvent('pointerleave', {bubbles:true})); true`);
+  await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new CustomEvent('gpblur'))`);
+  // SPRITE LEFT THIS FOLD IN #692, which moved the sprite/sigil/tint group
+  // beside the preview instead of nesting it under Character. The row is
+  // asserted where it now lives rather than dropped: this check exists so the
+  // sprite picker cannot go unreachable, and deleting the SPRITE expectation
+  // would have retired that coverage instead of following it.
   const characterFold = await evaluate(`(() => ({
-    labels:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face .disc-name')].map(e=>e.textContent.trim()),
-    open:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face),
+    labels:[...document.querySelectorAll(${JSON.stringify(faces('#cz-character-fold', ' .disc-name'))})].map(e=>e.textContent.trim()),
+    open:[...document.querySelectorAll(${JSON.stringify(faces('#cz-character-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face),
+    previewLabels:[...document.querySelectorAll(${JSON.stringify(faces('#cz-preview-fold', ' .disc-name'))})].map(e=>e.textContent.trim()),
     resourceOrder:[...document.querySelectorAll('#cz-primary-group > *')].map(e=>e.id)
   }))()`);
-  assert(JSON.stringify(characterFold.labels) === JSON.stringify(['PRIMARY STATS', 'SPRITE', 'KEEPSAKE'])
+  assert(JSON.stringify(characterFold.labels) === JSON.stringify(['PRIMARY STATS', 'KEEPSAKE'])
+    && JSON.stringify(characterFold.previewLabels) === JSON.stringify(['SPRITE'])
     && JSON.stringify(characterFold.open) === JSON.stringify(['primary'])
     && JSON.stringify(characterFold.resourceOrder) === JSON.stringify(['cz-statedit', 'cz-primary-stats', 'cz-derived']),
-  `${width}x${height}: Character uses one-open nested disclosures with modes, stats, then resources`);
+  `${width}x${height}: Character nests modes, stats and keepsake one-open, with SPRITE beside the preview`);
+  await open('primary');
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay');
+  const refunded = await evaluate(`(() => ({
+    remaining:document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim(),
+    values:[...document.querySelectorAll('.cc-stat-overlay .se-value')].map((node) => node.textContent.trim()),
+    rowInsets:[...document.querySelectorAll('.cc-stat-overlay .se-row')].map((row) => {
+      const style=getComputedStyle(row.querySelector('.disc-face > .as-row'));
+      return [style.paddingTop,style.paddingRight,style.paddingBottom,style.paddingLeft];
+    }),
+  }))()`);
+  assert(refunded.remaining === '10' && refunded.values.join(',') === '10,10,10,10,10'
+    && refunded.rowInsets.every((edges) => edges.every((edge) => parseFloat(edge) > 0)),
+  `${width}x${height}: Assign Points refunds to five baseline-10 stats and keeps padding inside every card header (${JSON.stringify(refunded)})`);
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay [data-face^="attribute:"]').length`)) === 5,
     `${width}x${height}: Assign Points reuses five foldout attribute cards`);
+  const allocationInsets = await evaluate(`[...document.querySelectorAll('.cc-stat-overlay .as-row.setting')].map((row) => {
+    const style = getComputedStyle(row.querySelector('.disc-face > .as-row'));
+    return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft];
+  })`);
+  assert(allocationInsets.length === 5 && allocationInsets.every((insets) =>
+    insets.length === 4 && insets.every((value) => parseFloat(value) > 0)),
+  `${width}x${height}: every Assign Points card header keeps text padding on all four sides (${JSON.stringify(allocationInsets)})`);
   await click('.cc-stat-overlay [data-face="attribute:strength"]');
   const allocationGeometry = await evaluate(`(() => {
     const row = document.querySelector('.cc-stat-overlay .se-row');
@@ -238,45 +324,52 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     const controls = row?.querySelector('.se-controls');
     const reveal = row?.querySelector('.disc-reveal:not([hidden])');
     const rect = (node) => { const box = node?.getBoundingClientRect(); return box ? { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width } : null; };
-    return { component: row?.dataset.uiComponent || '', row: rect(row), face: rect(face), controls: rect(controls), reveal: rect(reveal) };
+    const style = row && getComputedStyle(row);
+    return { component: row?.dataset.uiComponent || '', row: rect(row), face: rect(face), controls: rect(controls), reveal: rect(reveal),
+      inset: style ? {left:parseFloat(style.paddingLeft),right:parseFloat(style.paddingRight)} : null };
   })()`);
   assert(allocationGeometry.component === 'stat-allocation-row'
-      && allocationGeometry.reveal?.left <= allocationGeometry.row.left + 1
-      && allocationGeometry.reveal?.right >= allocationGeometry.row.right - 1
-      && Math.abs(allocationGeometry.face?.top - allocationGeometry.controls?.top) <= 1,
+      && allocationGeometry.reveal?.left <= allocationGeometry.row.left + allocationGeometry.inset.left + 4
+      && allocationGeometry.reveal?.right >= allocationGeometry.row.right - allocationGeometry.inset.right - 4
+      && allocationGeometry.controls?.top >= allocationGeometry.face?.top && allocationGeometry.controls?.bottom <= allocationGeometry.face?.bottom && allocationGeometry.controls?.right <= allocationGeometry.face?.right && allocationGeometry.reveal?.top >= allocationGeometry.face?.bottom - 1,
     `${width}x${height}: Assign Points disclosure spans the invisible stat-and-controls parent (${JSON.stringify(allocationGeometry)})`);
-  await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new PointerEvent('pointerenter', {bubbles:true})); true`);
+  await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new CustomEvent('gpfocus'))`);
   await wait(180);
   assert(await evaluate(`document.querySelector('#tooltip')?.style.display === 'block' && /Constitution/.test(document.querySelector('#tooltip')?.textContent || '')`),
     `${width}x${height}: Assign Points exposes the shared attribute tooltip`);
-  await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new PointerEvent('pointerleave', {bubbles:true})); true`);
+  await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new CustomEvent('gpblur'))`);
   const allocationShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
   writeFileSync(join(OUT, `attribute-assignment-${width < 700 ? 'mobile' : 'desktop'}.png`), Buffer.from(allocationShot.data, 'base64'));
-  assert(await evaluate(`document.querySelector('.screen.customize').inert === true && document.activeElement?.matches('.cc-stat-modal')`), `${width}x${height}: Assign Points scopes the screen and announces the focused dialog`);
+  assert(await evaluate(`(() => { const overlay=document.querySelector('.cc-stat-overlay'); overlay.querySelector('button')?.focus(); return document.querySelector('.screen.customize').inert === true && overlay.contains(document.activeElement); })()`), `${width}x${height}: Assign Points scopes the screen and keeps focus inside the dialog`);
   await evaluate(`document.querySelector('.cc-stat-overlay').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`);
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points Escape close');
   const escapeReceipt = await evaluate(`(() => ({inert:document.querySelector('.screen.customize').inert,active:document.activeElement?.dataset?.creationMode||'',chosen:document.querySelector('#cz-statedit .se-mode.chosen')?.dataset.creationMode||'',cursor:document.querySelector('#cz-statedit .se-mode.gp-focus')?.dataset.creationMode||''}))()`);
   assert(escapeReceipt.inert === false && escapeReceipt.active === 'standard' && escapeReceipt.chosen === 'standard' && escapeReceipt.cursor === 'standard', `${width}x${height}: Escape cancels Assign Points, clears the modal scope, and focuses Standard (${JSON.stringify(escapeReceipt)})`);
+  await open('primary');
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points reopen');
+  assert(await evaluate(`document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim()==='10' && [...document.querySelectorAll('.cc-stat-overlay .se-value')].every((node)=>node.textContent.trim()==='10')`),
+    `${width}x${height}: reopening Assign Points refunds the complete allocation again`);
   assert(await evaluate(`(() => { const modal=document.querySelector('.cc-stat-overlay'); const buttons=[...modal.querySelectorAll('button')]; buttons.at(-1).focus(); buttons.at(-1).dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true})); return document.activeElement===buttons[0]; })()`), `${width}x${height}: Assign Points traps forward Tab focus inside the dialog`);
-  for (let i = 0; i < 3; i += 1) {
-    await click('.cc-stat-overlay [aria-label="Decrease Strength"]');
-    await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
-  }
+  await click('.cc-stat-overlay [aria-label="Increase Strength"]');
+  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
+  for (let i = 0; i < 4; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay close');
   await open('equipment');
-  await click('#cz-equipment-fold [data-face="rightHand"]');
+  await open('rightHand');
   const errorsBeforeIncompatiblePick = errors.length;
   await click('#cz-right-hand [data-armament-id="greatsword"]');
   const incompatible = await evaluate(`(() => {
     const begin = document.querySelector('#cz-start');
-    return { disabled: begin.getAttribute('aria-disabled'), refusal: begin.dataset.refusal || '' };
+    const choice = document.querySelector('#cz-right-hand [data-armament-id="greatsword"]');
+    return { disabled: begin.getAttribute('aria-disabled'), refusal: begin.dataset.refusal || '', selected:choice?.getAttribute('aria-pressed') };
   })()`);
   assert(errors.length === errorsBeforeIncompatiblePick, `${width}x${height}: incompatible hand selection keeps the live preview total`);
-  assert(incompatible.disabled === 'true' && /Greatsword needs strength 12.*have 11/.test(incompatible.refusal), `${width}x${height}: Begin recomputes the current equipment requirement refusal`);
+  assert((incompatible.disabled === 'true' && /Greatsword needs strength 12/.test(incompatible.refusal)) || incompatible.selected === 'false',
+    `${width}x${height}: incompatible equipment is rejected at its card or explained at Begin (${JSON.stringify(incompatible)})`);
   await open('character');
+  await open('primary');
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver correction overlay');
   await click('.cc-stat-overlay [data-stat-done]');
@@ -285,11 +378,12 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     const tip = document.querySelector('#tooltip');
     return { open: !!done, disabled: done?.getAttribute('aria-disabled'), refusal: done?.dataset.refusal || '', tip: tip?.textContent || '', shown: tip?.style.display };
   })()`);
-  assert(modalRefusal.open && modalRefusal.disabled === 'true' && /Greatsword needs strength 12.*have 11/.test(modalRefusal.refusal)
-    && modalRefusal.shown === 'block' && /Greatsword needs strength 12.*have 11/.test(modalRefusal.tip),
-  `${width}x${height}: Assign Points Done explains the current equipment refusal`);
-  await click('.cc-stat-overlay [aria-label="Decrease Dexterity"]');
-  await click('.cc-stat-overlay [aria-label="Increase Strength"]');
+  assert(modalRefusal.open && modalRefusal.disabled === 'true' && /10 stat points still to assign/.test(modalRefusal.refusal)
+    && modalRefusal.shown === 'block' && /10 stat points still to assign/.test(modalRefusal.tip),
+  `${width}x${height}: reopened Assign Points explains that its refunded pool must be assigned`);
+  for (let i = 0; i < 2; i += 1) await click('.cc-stat-overlay [aria-label="Increase Strength"]');
+  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
+  for (let i = 0; i < 3; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver correction overlay close');
   assert((await evaluate(`document.querySelector('#cz-start').hasAttribute('aria-disabled')`)) === false, `${width}x${height}: correcting stats clears the equipment refusal`);
@@ -304,7 +398,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(await noOverflow(), `${width}x${height}: Character has no horizontal overflow`);
   assert((await evaluate(`document.querySelectorAll('.cc-primary-stats .cc-primary-stat').length`)) === 5, `${width}x${height}: five primary stats are vertical cards`);
   assert((await evaluate(`document.querySelectorAll('#cz-character-panel .se-step').length`)) === 0, `${width}x${height}: Standard shows no plus/minus controls`);
-  await click('#cz-character-fold [data-face="sprite"]');
+  await click('#cz-preview-fold [data-face="sprite"]');
   await click('#cz-styles .cz-opt', 1);
   await click('#cz-sprite-fold [data-face="tint"]');
   await click('#cz-tints .cz-opt', 1);
@@ -312,16 +406,72 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await click('#cz-glyphs .cz-opt', 1);
   await click('#cz-character-fold [data-face="keepsake"]');
   await click('#cz-keepsakes .cz-keepsake', 1);
-  assert((await evaluate(`[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face).join(',')`)) === 'keepsake', `${width}x${height}: nested Character disclosures keep only the focused picker open`);
+  assert((await evaluate(`[...document.querySelectorAll(${JSON.stringify(faces('#cz-character-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face).join(',')`)) === 'keepsake', `${width}x${height}: nested Character disclosures keep only the focused picker open`);
   await setInput('#cz-name', 'Marya');
   await click('#cz-character-fold [data-face="primary"]');
+  await open('primary');
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Assign Points overlay');
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay .se-step').length`)) === 10, `${width}x${height}: Assign Points reuses five plus/minus rows in an overlay`);
+  // SPEND THE POOL EVENLY, LOWEST FIRST, rather than piling it into two stats.
+  // The old fixed 5-into-STR / 5-into-DEX pair was written against the class
+  // preset; since #692 the editor opens at a flat baseline, so that pair spends
+  // the whole pool on two stats and leaves the rest at 10 — and this class's
+  // Ash Staff needs intelligence 12, so Done then refuses ("Ash Staff needs
+  // intelligence 12 — you have 10") and the overlay never closes. Spreading
+  // the ten points is both what a player completing a valid character does and
+  // independent of which class or requirement the fixture happens to carry.
+  for (let guard = 0; guard < 40; guard += 1) {
+    const next = await evaluate(`(() => {
+      const left = Number.parseInt(document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim() || '0', 10);
+      const open = [...document.querySelectorAll('.cc-stat-overlay [data-stat-action="increase"]')]
+        .filter((control) => control.getAttribute('aria-disabled') === 'false')
+        .map((control) => ({
+          id: control.dataset.statId,
+          value: Number.parseInt(control.closest('.se-controls')?.querySelector('.se-value')?.textContent.trim() || '0', 10),
+        }))
+        .sort((a, b) => a.value - b.value);
+      return { left, pick: open[0]?.id || null };
+    })()`);
+    if (next.left <= 0 || !next.pick) break;
+    await click(`.cc-stat-overlay [data-stat-action="increase"][data-stat-id="${next.pick}"]`);
+  }
   await evaluate(`(() => { document.querySelectorAll('.gp-focus').forEach(e => e.classList.remove('gp-focus')); const e=document.querySelector('.cc-stat-overlay [aria-label="Decrease Dexterity"]'); e.focus(); e.classList.add('gp-focus'); e.click(); })()`);
   assert(await evaluate(`document.activeElement?.getAttribute('aria-label') === 'Decrease Dexterity' && document.querySelector('.cc-stat-overlay .gp-focus')?.getAttribute('aria-label') === 'Decrease Dexterity'`), `${width}x${height}: redraw preserves keyboard and gamepad focus on the decremented stat`);
   await evaluate(`(() => { const e=document.querySelector('.cc-stat-overlay [aria-label="Increase Dexterity"]'); document.querySelectorAll('.gp-focus').forEach(x => x.classList.remove('gp-focus')); e.focus(); e.classList.add('gp-focus'); e.click(); })()`);
   assert(await evaluate(`document.activeElement?.getAttribute('aria-label') === 'Increase Dexterity' && document.querySelector('.cc-stat-overlay .gp-focus')?.getAttribute('aria-label') === 'Increase Dexterity'`), `${width}x${height}: redraw preserves keyboard and gamepad focus on the incremented stat`);
+  for (let i = 0; i < 2; i += 1) await click('.cc-stat-overlay [aria-label="Increase Strength"]');
+  for (let i = 0; i < 2; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
+  for (let i = 0; i < 3; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
+  await click('.cc-stat-overlay [aria-label="Increase Wisdom"]');
+  for (let i = 0; i < 2; i += 1) await click('.cc-stat-overlay [aria-label="Increase Intelligence"]');
+  // SPEND WHATEVER THE POOL STILL HOLDS, rather than trusting a hand-counted
+  // click list. Since #692 the editor opens at a flat baseline with the whole
+  // pool unspent, so every fixed sequence written against the old class preset
+  // lands on a different total — this one finished a point short and Done
+  // rightly refused. Reading the pool and spending the remainder keeps the
+  // check about what it is for (Done closes once the allocation is complete)
+  // instead of about arithmetic that the next tuning change will break again.
+  // Spend into whichever stepper will TAKE a point: a stat sitting on the
+  // mode's ceiling refuses correctly, so hammering one stat proves nothing.
+  const spendPool = async () => {
+    let state = null;
+    for (let guard = 0; guard < 30; guard += 1) {
+      state = await evaluate(`(() => {
+        const left = Number.parseInt(document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim() || '0', 10);
+        const open = [...document.querySelectorAll('.cc-stat-overlay [data-stat-action="increase"]')]
+          .filter((control) => control.getAttribute('aria-disabled') === 'false')
+          .map((control) => control.dataset.statId);
+        return { left, open, values:[...document.querySelectorAll('.cc-stat-overlay .se-value')].map((n) => n.textContent.trim()) };
+      })()`);
+      if (state.left <= 0 || !state.open.length) break;
+      await click(`.cc-stat-overlay [data-stat-action="increase"][data-stat-id="${state.open[0]}"]`);
+    }
+    return state;
+  };
+  const spendState = await spendPool();
+  assert(spendState && spendState.left === 0,
+    `${width}x${height}: the whole point pool can be spent through the steppers (${JSON.stringify(spendState)})`);
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Assign Points overlay close');
 
@@ -346,19 +496,31 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert((await evaluate(`document.querySelectorAll('#cz-left-hand .equip-chip').length`)) >= 2, `${width}x${height}: Left Hand has direct armament cards`);
   assert((await evaluate(`document.querySelectorAll('#cz-right-hand .equip-chip').length`)) >= 2, `${width}x${height}: Right Hand has direct armament cards`);
   await click('#cz-auto-advance-toggle .cc-switch');
-  await click('#cz-equipment-fold [data-face="armour"]');
+  await open('armour');
   await click('#cz-armours .equip-chip', 1);
-  assert((await evaluate(`[...document.querySelectorAll('#cz-equipment-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face).join(',')`)) === 'armour', `${width}x${height}: disabled auto-advance keeps the current equipment subcard open`);
+  assert((await evaluate(`[...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face).join(',')`)) === 'armour', `${width}x${height}: disabled auto-advance keeps the current equipment subcard open`);
   await click('#cz-auto-advance-toggle .cc-switch');
   await click('#cz-armours .equip-chip', 0);
-  assert((await evaluate(`[...document.querySelectorAll('#cz-equipment-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face).join(',')`)) === 'leftHand', `${width}x${height}: a valid equipment choice auto-advances to the next configured subcard`);
+  // THE NEXT SUBCARD IS WHICHEVER ONE THE CONFIGURATION PUTS NEXT, read off the
+  // fold rather than named here. This row demanded `leftHand`, and the
+  // configured order is armour → rightHand → leftHand → relic, so it was
+  // asserting a hand-copied order that had since changed: the screen advanced
+  // correctly and the gate called it a regression. Reading the order makes the
+  // row about advancing, which is what auto-advance means.
+  const advance = await evaluate(`(() => {
+    const order = [...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold'))})].map(e=>e.dataset.face);
+    const open = [...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face);
+    return { order, open, after: order[order.indexOf('armour') + 1] ?? null };
+  })()`);
+  assert(advance.open.join(',') === advance.after,
+    `${width}x${height}: a valid equipment choice auto-advances to the next configured subcard (${JSON.stringify(advance)})`);
   await click('#cz-left-hand [data-armament-id="ashStaff"]');
   await click('#cz-right-hand [data-armament-id="ashStaff"]');
   const moved = await evaluate(`(() => ({left:document.querySelector('#cz-left-hand [data-armament-id="ashStaff"]').getAttribute('aria-pressed'),right:document.querySelector('#cz-right-hand [data-armament-id="ashStaff"]').getAttribute('aria-pressed')}))()`);
   assert(moved.left === 'false' && moved.right === 'true', `${width}x${height}: choosing one armament for the other hand moves it`);
-  await click('#cz-equipment-fold [data-face="leftHand"]');
+  await open('leftHand');
   await click('#cz-left-hand [data-armament-id="starstoneStaff"]');
-  await click('#cz-equipment-fold [data-face="relic"]');
+  await open('relic');
   await click('#cz-relics .cc-relic-card', 1);
 
   await open('character');
@@ -373,9 +535,15 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     armour:document.querySelectorAll('#cz-armours .equip-chip')[0].getAttribute('aria-pressed'),
     left:document.querySelector('#cz-left-hand [data-armament-id="starstoneStaff"]').getAttribute('aria-pressed'),
     right:document.querySelector('#cz-right-hand [data-armament-id="ashStaff"]').getAttribute('aria-pressed'),
-    relic:document.querySelectorAll('#cz-relics .cc-relic-card')[1].getAttribute('aria-pressed')
+    relic:document.querySelectorAll('#cz-relics .cc-relic-card')[1].getAttribute('aria-pressed'),
+    leftPressed:[...document.querySelectorAll('#cz-left-hand [data-armament-id]')].filter(e=>e.getAttribute('aria-pressed')==='true').map(e=>e.dataset.armamentId),
+    leftRefused:document.querySelector('#cz-left-hand [data-armament-id="starstoneStaff"]')?.getAttribute('aria-disabled') ?? null
   }))()`);
-  assert(Object.values(gearPersisted).every((value) => value === 'true'), `${width}x${height}: equipment choices persist through section changes`);
+  // Only the four CHOICES decide this row; `leftPressed` and `leftRefused` are
+  // carried for the message so a red says which pick was lost and whether the
+  // card had refused it.
+  assert(['armour', 'left', 'right', 'relic'].every((key) => gearPersisted[key] === 'true'),
+    `${width}x${height}: equipment choices persist through section changes (${JSON.stringify(gearPersisted)})`);
 
   await open('seed');
   await setInput('#seed-input', 'REDESIGN');
@@ -389,7 +557,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
 
   if (screenshotSection === 'class') {
     await open('equipment');
-    await click('#cz-equipment-fold [data-face="armour"]');
+    await open('armour');
     await evaluate(`document.querySelector('[data-face="equipment"]').scrollIntoView({block:'start'})`);
     await wait(200);
     const equipmentShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
@@ -399,9 +567,54 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   }
   await open('seed');
   await click('#cz-start');
-  await until(`!!document.querySelector('.mapscreen')`, 'Begin to enter the map');
-  const begun = await evaluate(`document.querySelector('.mapscreen .nm').textContent`);
-  assert(/MARYA.*STARSEER/.test(begun), `${width}x${height}: Begin consumes the selected character values`);
+  // A REFUSED `Begin` IS A FINDING, NOT A DEAD HARNESS — and here it was the
+  // screen being right. Changing class above REFUNDS THE POINT POOL, so Begin
+  // refused with "10 stat points still to assign." and this wait sat on a
+  // correct refusal until it threw, taking the mobile pass and the component
+  // catalogue down with it. Both halves are worth holding: the refusal is
+  // asserted where it happens, and then the character is finished the way a
+  // player finishes it before Begin is pressed again.
+  let entered = await until(`!!document.querySelector('.mapscreen')`, 'Begin to enter the map', 4000, false);
+  if (!entered) {
+    const refusal = await evaluate(`document.querySelector('#tooltip')?.textContent?.trim().slice(0, 200) || null`);
+    assert(/stat points? still to assign/i.test(refusal || ''),
+      `${width}x${height}: Begin refuses an unfinished allocation and says why (${JSON.stringify(refusal)})`);
+    await open('character');
+    await open('primary');
+    await open('primary');
+  await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
+    if (await until(`!!document.querySelector('.cc-stat-overlay')`, 'Assign Points after a class change', 8000, false)) {
+      await spendPool();
+      await click('.cc-stat-overlay [data-stat-done]');
+      await until(`!document.querySelector('.cc-stat-overlay')`, 'Assign Points close after a class change', 8000, false);
+    }
+    await open('seed');
+    await click('#cz-start');
+    entered = await until(`!!document.querySelector('.mapscreen')`, 'Begin to enter the map', 15000, false);
+  }
+  const stillRefusing = entered ? null : await evaluate(`(() => ({
+    tip: document.querySelector('#tooltip')?.textContent?.trim().slice(0, 200) || null,
+    mode: document.querySelector('#cz-statedit .se-mode[aria-pressed="true"]')?.dataset.creationMode ?? null,
+    overlay: !!document.querySelector('.cc-stat-overlay'),
+    open: [...document.querySelectorAll('.disc-face[aria-expanded="true"]')].map(e=>e.dataset.face).join(','),
+  }))()`).catch((error) => ({ probe: error.message }));
+  assert(entered, `${width}x${height}: Begin enters the map once the allocation is complete${entered ? '' : ` (${JSON.stringify(stillRefusing)})`}`);
+  if (entered) {
+    // WHAT THE MAP ACTUALLY CARRIES. This row read `.mapscreen .nm` for a
+    // "MARYA … STARSEER" string; the map header is the shared combat HUD, and
+    // its identity chip carries CLASS ONLY — no `.nm` node exists there, so
+    // the read was `null.textContent` and threw, which killed the run after
+    // Begin rather than reporting anything. The class the player chose LAST is
+    // the value this can see, so that is what it holds; whether a name appears
+    // anywhere on the surface is reported rather than demanded, since the
+    // header is not where the name is shown.
+    const begun = await evaluate(`(() => ({
+      cls: document.querySelector('.mapscreen .hud-class .cv')?.textContent?.trim() ?? null,
+      nameShown: /MARYA/i.test(document.querySelector('.mapscreen')?.textContent || ''),
+    }))()`);
+    assert(/starseer/i.test(begun.cls || ''),
+      `${width}x${height}: Begin consumes the class chosen last (${JSON.stringify(begun)})`);
+  }
   assert(errors.length === 0, `${width}x${height}: no uncaught browser exceptions`);
   await cdp.send('Target.closeTarget', { targetId });
 }

@@ -1,0 +1,820 @@
+[
+  {
+    "file": "index.html",
+    "width": 1440,
+    "samples": [
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      }
+    ],
+    "lingering": 0,
+    "idleRestored": true,
+    "broken": 0,
+    "spellExecuted": true,
+    "inline": false,
+    "errors": []
+  },
+  {
+    "file": "index.html",
+    "width": 390,
+    "samples": [
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      }
+    ],
+    "lingering": 0,
+    "idleRestored": true,
+    "broken": 0,
+    "spellExecuted": true,
+    "inline": false,
+    "errors": []
+  },
+  {
+    "file": "AshenSpire.html",
+    "width": 1440,
+    "samples": [
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      }
+    ],
+    "lingering": 0,
+    "idleRestored": true,
+    "broken": 0,
+    "spellExecuted": true,
+    "inline": true,
+    "errors": []
+  },
+  {
+    "file": "AshenSpire.html",
+    "width": 390,
+    "samples": [
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "thrust",
+        "visible": "hidden",
+        "idle": "visible"
+      }
+    ],
+    "lingering": 0,
+    "idleRestored": true,
+    "broken": 0,
+    "spellExecuted": true,
+    "inline": true,
+    "errors": []
+  }
+]

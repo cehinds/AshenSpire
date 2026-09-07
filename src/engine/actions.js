@@ -27,10 +27,11 @@ import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas
 import { evaluate, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
-import { playerWeightClass } from './combat.js';
+import { playerWeightClass } from '../model/combatWeight.js';
 import { isEquipmentComposedInstance } from '../model/loadout.js';
-import { flaskSlotCap } from '../model/gracerefill.js';
+import { flaskSlotCap, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
+import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 
 // ---------------------------------------------------------------------------
@@ -770,13 +771,15 @@ function runRunOpcode(ctx, action, eff) {
  * heal apply to the run's HP through a player facade so events like
  * "take 6 damage" and "heal 20% max HP" work.
  */
-export function executeRunEffects({ run, registries, rng }, effects) {
+export function executeRunEffects({ run, registries, rng }, effects, meta = {}) {
   const events = [];
   const facade = {
     id: 'player',
     kind: 'player',
     hp: run.hp,
     maxHp: run.maxHp,
+    mana: run.mana,
+    maxMana: run.maxMana,
     block: 0,
     statuses: {},
     stanceId: null,
@@ -810,7 +813,7 @@ export function executeRunEffects({ run, registries, rng }, effects) {
     },
   };
   for (const eff of effects) {
-    ctx.enqueue({ effect: eff, source: facade, owner: facade, target: facade, meta: {} });
+    ctx.enqueue({ effect: eff, source: facade, owner: facade, target: facade, meta });
   }
   let guard = 0;
   while (ctx.queue.length) {
@@ -818,5 +821,30 @@ export function executeRunEffects({ run, registries, rng }, effects) {
     executeAction(ctx, ctx.queue.shift());
   }
   run.hp = Math.min(facade.hp, run.maxHp);
+  run.mana = Math.min(facade.mana, run.maxMana);
   return { events };
+}
+
+/** Spend one permanent restorative charge and apply its authored run effects. */
+export function useRunChargeFlask({ run, registries, rng, kind }) {
+  const def = chargeFlaskDefinition(registries, kind);
+  const currentKey = `${kind}Current`;
+  if (!def || !run.flaskCharges || run.flaskCharges[currentKey] <= 0) {
+    throw new Error(`No ${kind} flask charges`);
+  }
+  // Cracked Tear-style passives scale flask amounts (rounded up, SPEC §5.4).
+  // The combat path does this in combat.js; a flask drunk on the map is the
+  // same flask and the relic makes the same promise, so it scales here too.
+  // The multiplier is applied at THIS call site rather than inside
+  // executeRunEffects, because that function also runs event choices and
+  // keepsakes, which flaskPowerMult has nothing to do with.
+  const amountMult = passiveMult(registries, run.relics || [], 'flaskPowerMult');
+  const result = executeRunEffects(
+    { run, registries, rng },
+    def.effects || [],
+    amountMult !== 1 ? { amountMult } : {},
+  );
+  run.flaskCharges[currentKey] -= 1;
+  result.events.unshift({ type: 'flaskUsed', flaskId: def.id, chargeKind: kind });
+  return result;
 }

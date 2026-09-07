@@ -825,6 +825,46 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   else zoomExtra++;
 }
 
+// 79 — the shipped pose frames and their generated table agree.
+//
+// Two ways this goes wrong silently. The table (src/content/poseSprites.js) is
+// generated from art/poses by tools/pose-ship.mjs; rerunning it for a different
+// pose set, or committing one side without the other, leaves rows naming files
+// that are not there — the figure then loads nothing for a pose and holds the
+// last frame. And registration lives entirely in these numbers: a frame whose
+// floor line is not below its crop top would place the figure off its feet.
+{
+  const { existsSync } = await import('node:fs');
+  const { resolve, dirname } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  const { POSE_FRAMES, POSE_STRIP, POSE_DIR, POSE_CANVAS } = await import('../src/content/poseSprites.js');
+  const classes = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_')[0]))];
+  const tints = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_').at(-1)))];
+  const bad = [];
+  for (const c of classes) {
+    for (const t of tints) {
+      for (const pose of POSE_STRIP) {
+        const row = POSE_FRAMES.get(`${c}_${pose}_${t}`);
+        if (!row) { bad.push(`${c}/${pose}/${t}: no row`); continue; }
+        if (!existsSync(resolve(root, POSE_DIR + row.f))) bad.push(`${c}/${pose}/${t}: ${row.f} missing`);
+        if (!(row.g > row.y)) bad.push(`${c}/${pose}/${t}: floor ${row.g} is not below the crop top ${row.y}`);
+        if (row.x + row.w > POSE_CANVAS.width + 1 || row.y + row.h > POSE_CANVAS.height + 1) {
+          bad.push(`${c}/${pose}/${t}: crop runs off the ${POSE_CANVAS.width}x${POSE_CANVAS.height} canvas`);
+        }
+      }
+    }
+  }
+  const want = classes.length * tints.length * POSE_STRIP.length;
+  console.log(
+    `${bad.length ? 'FAIL' : 'PASS'}  79. every shipped pose frame has a file and registers on its floor` +
+      ` — ${bad.length ? `${bad.length} bad: ${bad.slice(0, 3).join('; ')}` : `${want}/${want} frames over ${classes.length} classes x ${tints.length} tints x ${POSE_STRIP.length} poses.`}` +
+      ' (tools/pose-ship.mjs regenerates both sides; this check reads them, it does not run it)'
+  );
+  if (bad.length) zoomExtra++;
+  else zoomPassed++;
+}
+
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
 console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
 console.log('          check over coordinate spaces — they prove a transform has two');

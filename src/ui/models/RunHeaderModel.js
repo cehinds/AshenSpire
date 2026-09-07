@@ -2,13 +2,11 @@ import { componentModel } from './ComponentModel.js';
 import { metadataFieldModel } from './HudPrimitiveModels.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
-export function identityClusterModel(identity) {
+// The compact header exposes only the class identity. Character name, portrait,
+// sigil and screen-context copy remain on their dedicated surfaces.
+export function identityClusterModel(identity = {}) {
   return componentModel(UI.identityCluster, {
-    properties: { name: identity.name, classLabel: identity.classLabel, context: identity.context || '' },
-    children: [
-      componentModel(UI.portraitBadge, { properties: { glyph: identity.glyph, tint: identity.tint } }),
-      componentModel(UI.characterTitle, { properties: { name: identity.name, classLabel: identity.classLabel } }),
-    ],
+    properties: { className: identity.className || '' },
   });
 }
 

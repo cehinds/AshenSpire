@@ -26,10 +26,13 @@ import {
   commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan,
 } from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
-import { buildActMap } from '../src/engine/actmap.js';
+import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
+import { assertSavedBossReferences } from '../src/model/mapReferences.js';
+import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
+import { DEFAULT_SPRITE_STYLE } from '../src/model/spriteStyle.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward, shrineHealAmount, applyGraceRefill,
@@ -106,6 +109,11 @@ export function restoreSession(registries, data) {
 
 export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {} }) {
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
+  if (restore) {
+    const mapAct = endless ? ((restore.actNumber - 1) % LAST_ACT) + 1 : restore.actNumber;
+    assertSavedBossReferences(registries, restore.mapGraph, mapAct);
+    restore = { ...restore, mapGraph: refreshBossDestinationLabels(registries, restore.mapGraph, mapAct) };
+  }
   const seed = restore ? (restore.seed >>> 0) : seedOf(seedString);
   const rng = createRng(seed, restore ? restore.rng : {}); // shared: map gen, encounter rolls
   const members = new Map(); // id → member
@@ -174,7 +182,7 @@ export function createSession({ registries, seedString, endless = false, restore
         initializeRunFlaskCharges(md.run, registries);
         delete md.run.migratedFromRunSchemaVersion;
         members.set(md.id, {
-          id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || 'rendered',
+          id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || DEFAULT_SPRITE_STYLE,
           connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
           discoveredArmaments,
           catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
@@ -235,7 +243,7 @@ export function createSession({ registries, seedString, endless = false, restore
       classId,
       connected: true,
       tint: tint || 'gold', // chosen accent — colors this hero's sprite for everyone
-      spriteStyle: spriteStyle || 'rendered', // rendered PNG / classic SVG / sigil glyph
+      spriteStyle: spriteStyle || DEFAULT_SPRITE_STYLE, // animated poses / rendered PNG / classic SVG / sigil glyph
       run, // per-member build: deck/relics/flasks/hp/maxHp/cinders
       discoveredArmaments: entitlement,
       rng: memberRng(seed, index),
@@ -404,7 +412,7 @@ export function createSession({ registries, seedString, endless = false, restore
   function advanceFromNode() {
     const node = session.mapGraph.nodes[session.cursorId];
     let next = node.next;
-    if (!next || !next.length) next = [session.mapGraph.bossId];
+    if (!next || !next.length) next = session.mapGraph.bossIds || [session.mapGraph.bossId];
     session.reachableIds = next.slice();
     session.scene = { kind: 'map' };
   }
@@ -445,7 +453,9 @@ export function createSession({ registries, seedString, endless = false, restore
   // relic, the Smithing Stone), exactly as main.js's enterCombat reads
   // `enc.pool` for the solo player; the caller's pool is only for the roll.
   function enterCombat(pool, forcedEncounterId = null) {
-    const encounterId = forcedEncounterId || rollEncounter(registries, rng, { pool, act: contentAct() });
+    const encounterId = forcedEncounterId || (pool === 'boss'
+      ? bossEncounterForNode(registries, session.mapGraph, session.cursorId, contentAct())
+      : rollEncounter(registries, rng, { pool, act: contentAct() }));
     const enc = registries.encounters.get(encounterId);
     if (forcedEncounterId) pool = enc.pool;
     const loop = loopCount();
@@ -530,10 +540,13 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => ['enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
+      .filter((e) => ['cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
+        manaSpent: e.manaSpent, staminaSpent: e.staminaSpent,
+        cardId: e.cardId, cardType: e.cardType, cardInstanceId: e.cardInstanceId, profileId: e.profileId,
+        upgraded: e.upgraded, sourceArmamentId: e.sourceArmamentId,
         kind: e.kind, targetId: e.targetId, playerId: e.playerId,
         reason: e.reason, school: e.school, amount: e.amount, value: e.value,
         blocked: e.blocked, isAttack: e.isAttack, cause: e.cause,
@@ -1176,6 +1189,7 @@ export function createSession({ registries, seedString, endless = false, restore
   // ---- snapshot (authoritative state to broadcast) -------------------------
   function memberView(m) {
     return {
+      loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
       startingKitId: m.run.startingKitId,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
@@ -1257,7 +1271,9 @@ export function createSession({ registries, seedString, endless = false, restore
           columns: g.columns,
           startIds: g.startIds,
           bossId: g.bossId,
-          nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })),
+          bossIds: g.bossIds,
+          nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next,
+            ...(n.type === 'boss' ? { encounterId: n.encounterId, destinationLabel: n.destinationLabel } : {}) })),
         }
       : null;
     return {

@@ -1,3 +1,4 @@
+import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 // A DOM-free read model for the Shrine armament Smith transaction.
 // Selection is reversible; only the modal's explicit Confirm command commits.
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
@@ -76,9 +77,9 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
     const piece = pieceForCandidate(registries, { ...candidate, itemKind, itemId });
     if (!piece) throw new Error(`Unknown Smithing item '${itemRef}'`);
     const artAsset = itemKind === 'armor'
-      ? `assets/equipment/body_${candidate.classId}_${piece.artKey || piece.id}.webp`
+      ? armourMenuAsset(candidate.classId, piece.id)
       : itemKind === 'armament'
-        ? `assets/equipment/icon_${piece.artKey || piece.id}.webp`
+        ? `assets/equipment/icon_${piece.id}.webp`
         : null;
     const itemTypes = (piece.itemTypes || []).map((type) => freeze({ ...type }));
     return freeze({

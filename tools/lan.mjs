@@ -22,6 +22,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createSession, restoreSession } from './session.mjs';
 import { SEED_MAX_LEN, seedProblem } from '../src/engine/rng.js';
+import { DEFAULT_SPRITE_STYLE } from '../src/model/spriteStyle.js';
 
 const REG = createRegistries(contentBundle);
 
@@ -249,7 +250,7 @@ export function attachLan(server, { port, root }) {
         pl.startingKitId = msg.startingKitId || null;
         pl.discoveredArmaments = Array.isArray(msg.discoveredArmaments) ? [...new Set(msg.discoveredArmaments.filter((id) => typeof id === 'string'))] : [];
         pl.tint = msg.tint || 'gold';
-        pl.spriteStyle = msg.spriteStyle || 'rendered';
+        pl.spriteStyle = msg.spriteStyle || DEFAULT_SPRITE_STYLE;
         pl.isHost = !!(hosting && msg.hostKey === hosting.hostKey);
         // Reconnect into a running game as the same member, if it exists.
         if (session.game && msg.rejoinId && session.game.session.members.has(msg.rejoinId)) {
@@ -281,7 +282,7 @@ export function attachLan(server, { port, root }) {
           startingKitId: (lp && lp.startingKitId) || null,
           discoveredArmaments: Array.isArray(lp && lp.discoveredArmaments) ? [...new Set(lp.discoveredArmaments.filter((id) => typeof id === 'string'))] : [],
           tint: (lp && lp.tint) || 'gold',
-          spriteStyle: (lp && lp.spriteStyle) || 'rendered',
+          spriteStyle: (lp && lp.spriteStyle) || DEFAULT_SPRITE_STYLE,
         }));
         pl.locals = sane;
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });

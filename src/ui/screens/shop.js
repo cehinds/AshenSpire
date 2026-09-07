@@ -1,45 +1,6 @@
-// src/ui/screens/shop.js — the wandering merchant (SPEC §7.1; prices from
-// balance.shop via engine/encounters.js buildShopStock)
-//
-// The stock lives on run.shopStock (rolled once on first entry and saved),
-// so a reload restores the exact same shelves — SPEC §3.11 determinism.
-//
-// ---- THE BARS (E2 / #247) -----------------------------------------------
-// Constantine, 2026-08-15, verbatim: "the shop is really hard to see cards...
-// relics cards and weapons/armaments, and a sell function should be
-// horizontal buttons that expand and collapse. show examples." Dealt by
-// Marina's wave-two (family f30e1ca) as ONE pattern with B9/B10/E4 — the
-// same mountDisclosure, never a second renderer (tools/onefold.mjs counts).
-//
-// FIVE BARS over the stock this merchant actually rolls — CARDS · RELICS ·
-// FLASKS · REMOVE A CARD · SELL — each a full-width face carrying its label
-// and its answer in words (what is left, what it costs), one open at a time,
-// CARDS open on arrival because the cards are what he said he could not see.
-// There is deliberately NO weapons/armaments bar: buildShopStock rolls no
-// armament stock (balance.equipment.drops has no shop channel), and a bar
-// for a category that cannot occur is a lie about the shop. The day the
-// merchant stocks armaments, its bar is one entry in BARS below.
-//
-// SELL, and whose numbers these are. The recorded answer on the E2 row:
-// Sell is its own bar, conditional on a NEW Settings toggle ('Merchant buys
-// back', Advanced, DEFAULT ON until he says otherwise), and ABSENT — not
-// greyed — when the toggle is off, because a feature he switched off that
-// still greys at him is a nag. WHAT is sellable is OUR derivation, labelled:
-// the merchant buys back what the merchant SELLS — relics and flasks, never
-// deck cards, because burning a card already COSTS cinders at this same
-// counter (Remove), and a shop that pays you for the thing it charges to
-// destroy is two prices for one act. Starter-rarity relics are not offered:
-// they are the class's identity, not goods, and no cost table prices them.
-// The PRICE is table arithmetic, not a typed number per item — see
-// sellPriceFor and balance.shop.sellFraction, whose comment states the same
-// derivation. One word from him flips any clause of this paragraph.
-//
-// THE FOLD SURVIVES THE RE-RENDER. Every purchase re-renders the whole
-// screen (the stock moved); the open bar is read off the mount before the
-// rebuild and re-opened after, so buying a flask leaves you looking at
-// flasks, not snapped back to cards.
-//
-// The rendered check on all of it is tools/shopbars.mjs, both shapes.
+// The wandering merchant. Stock is rolled once, saved with the run, and read
+// through shared disclosure shelves. Armament inspection uses the Armoury
+// card components; transactions revalidate through armamentTrading.js.
 
 import { renderCard } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
@@ -49,7 +10,13 @@ import { isEngaged, focusFirst } from '../input.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { flaskIdentityHtml } from '../components/flask.js';
-import { isEquipmentComposedInstance } from '../../model/loadout.js';
+import { isEquipmentComposedInstance, carriedIds, modEffectLines } from '../../model/loadout.js';
+import { armamentPurchasePlan, armamentSalePlan, commitArmamentPurchase, commitArmamentSale } from '../../model/armamentTrading.js';
+import { inventoryItemCardModel, inventoryDetailCardModel } from '../models/ArmouryModels.js';
+import { renderInventoryItemCard, renderInventoryDetailCard } from '../components/armouryComponents.js';
+import { openModal } from '../components/modalShell.js';
+import { button, statusText, el } from '../kit/index.js';
+import { assetUrl } from '../assetmap.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import { settingOn } from './settings.js';
@@ -78,7 +45,7 @@ function sellPriceFor(balance, kind, def) {
   return Math.floor(shop.flaskCost[0] * fraction);
 }
 
-export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
+export function mountShop(app, { registries, run, meta, onLeave, onChanged, onArmamentPurchased = () => {} }) {
   const stock = run.shopStock;
   // BUYING AND BURNING ARE NOT THE SAME ACTION and the table says why: a
   // purchase spends cinders, which the run refills (`shopBuy`: tempo, faucet —
@@ -121,6 +88,8 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         <p class="as-status" style="text-align:center">Cinders <b>${run.cinders}</b> · HP ${run.hp}/${run.maxHp}</p>
         <div class="shop-bars cz-disc">
           <div class="reward-row" id="shop-cards"></div>
+          <div class="reward-row" id="shop-armaments"></div>
+          <div class="reward-row" id="shop-weapon-arts"></div>
           <div class="class-row" id="shop-relics"></div>
           <div class="class-row" id="shop-flasks"></div>
           <div id="shop-remove">
@@ -146,6 +115,16 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       tag.className = 'mini';
       tag.textContent = `${item.cost} cinders`;
       tag.style.color = run.cinders >= item.cost ? 'var(--gold)' : 'var(--muted)';
+      // THE CARD IS A FIXED BOX (kit CARD: fixed name, fixed ArtWell, fixed
+      // band, one shared row budget below it). Appending the hold hint INTO it
+      // — which is what `arm` does with no host — put the word inside that
+      // budget, where the card's own bottom edge clipped it: photographed at
+      // 390x844 as half a line of letters under every price. The hint's host
+      // is the wrap that already holds the card and its price, so the word
+      // stands outside the box it describes. Both children are in place first,
+      // so HOLD reads last, after the cost.
+      wrap.appendChild(el);
+      wrap.appendChild(tag);
       if (run.cinders >= item.cost) {
         // ROUTED THROUGH THE MACHINERY EVEN THOUGH IT OWES NO BEAT, and that is
         // the falsifier for Law 0 on this control rather than a formality:
@@ -154,6 +133,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         // ZERO commits outside that table. An action wired with a bare
         // `addEventListener` can only ever be changed by editing this line.
         arm(el, 'shopBuy', {
+          hintHost: wrap,
           question: `Buy ${registries.cards.get(item.id).name} for ${item.cost} cinders? You have ${run.cinders}.`,
           confirmLabel: 'BUY IT',
           onConfirm: () => {
@@ -168,10 +148,38 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       } else {
         el.classList.add('unaffordable');
       }
-      wrap.appendChild(el);
-      wrap.appendChild(tag);
       cardsRow.appendChild(wrap);
     });
+
+    const armamentsRow = app.querySelector('#shop-armaments');
+    for (const item of stock.armaments || []) {
+      const plan = armamentPurchasePlan(registries, run, item);
+      if (plan.def) armamentsRow.appendChild(armamentOffer(plan.def, () => inspectArmament(item, 'buy'), plan.ok ? `${plan.cost} cinders` : plan.reason));
+    }
+    if (!(stock.armaments || []).length) armamentsRow.appendChild(statusText('No armaments for sale on this visit.'));
+    const artsRow = app.querySelector('#shop-weapon-arts');
+    for (const item of stock.weaponArts || []) {
+      const card = renderCard(registries, { cardId: item.id, upgraded: false }, { small: true });
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); card.click(); }
+      });
+      const wrap = el('div', {}, [card, statusText(`${item.cost} cinders · loose card`)]);
+      card.addEventListener('click', () => {
+        const quote = armamentPurchasePlan(registries, run, item, 'weaponArt');
+        const buy = button({ label: `Buy · ${quote.cost} cinders`, weight: 'primary', disabled: !quote.ok });
+        const message = statusText(quote.reason || 'Adds a loose card to your deck. A smith can seat it in a compatible open mount.');
+        const shell = openModal({ title: quote.def.name, eyebrow: 'Weapon art', bodyClassName: 'as-pane', opener: card, body: (host) => host.append(renderCard(registries, { cardId: item.id, upgraded: false }, { small: true }), message), primary: buy });
+        buy.addEventListener('click', () => {
+          try { commitArmamentPurchase(registries, run, quote); }
+          catch (error) { message.textContent = error.message; buy.disabled = true; return; }
+          finishTrade(shell);
+        });
+      });
+      artsRow.appendChild(wrap);
+    }
+    if (!(stock.weaponArts || []).length) artsRow.appendChild(statusText('No mountable weapon arts for sale on this visit.'));
 
     const relicsRow = app.querySelector('#shop-relics');
     stock.relics.forEach((item, i) => {
@@ -216,7 +224,12 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
           if (isEquipmentComposedInstance(inst)) return;
           const el = renderCard(registries, inst, { small: true });
           const def = registries.cards.get(inst.cardId);
+          // Same fixed box, same host: the hold hint stands under the card.
+          const wrap = document.createElement('div');
+          wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px';
+          wrap.appendChild(el);
           arm(el, 'shopRemove', {
+            hintHost: wrap,
             question: `Burn ${def.name} out of the deck? ${stock.removeCost} cinders, and the card is gone.`,
             confirmLabel: 'BURN IT',
             onConfirm: () => {
@@ -229,7 +242,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
               render();
             },
           });
-          grid.appendChild(el);
+          grid.appendChild(wrap);
         });
       });
     }
@@ -237,6 +250,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     // ---- the SELL shelf: the player's own goods, priced by the table ------
     const sellRow = app.querySelector('#shop-sell');
     const goods = sellOn() ? sellables() : [];
+    const armamentGoods = sellOn() ? carriedIds(run.loadout).map((id) => armamentSalePlan(registries, run, id)).filter((plan) => plan.def) : [];
+    for (const plan of armamentGoods) {
+      sellRow.appendChild(armamentOffer(plan.def, () => inspectArmament(plan.id, 'sell'), plan.ok ? `${plan.price} cinders back` : plan.reason));
+    }
     goods.forEach((row) => {
       const el = shopItem(row.title, row.desc, row.price, true, null, { titleHtml: !!row.titleHtml, costWord: 'cinders back' });
       arm(el, 'shopSell', {
@@ -329,6 +346,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       { key: 'bar:cards', label: 'CARDS', node: cardsRow,
         value: () => (stock.cards.length ? `${stock.cards.length} for sale` : 'sold out'),
         tip: 'Cards for cinders. Tap to browse the shelf.' },
+      { key: 'bar:armaments', label: 'ARMAMENTS', node: armamentsRow,
+        value: () => `${(stock.armaments || []).length} for sale`, tip: 'Inspect an armament before buying it for your inventory.' },
+      { key: 'bar:weapon-arts', label: 'WEAPON ARTS', node: artsRow,
+        value: () => `${(stock.weaponArts || []).length} for sale`, tip: 'Loose weapon-art cards. A smith can seat compatible cards in an open mount.' },
       { key: 'bar:relics', label: 'RELICS', node: relicsRow,
         value: () => (stock.relics.length ? `${stock.relics.length} for sale` : 'sold out'),
         tip: 'Relics for cinders.' },
@@ -340,8 +361,8 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         tip: 'Pay the merchant to burn a card out of the deck.' },
       // ABSENT, never greyed, when his toggle is off — the recorded answer.
       ...(sellOn() ? [{ key: 'bar:sell', label: 'SELL', node: sellRow,
-        value: () => (goods.length ? `${goods.length} the merchant will take` : 'nothing he wants'),
-        tip: 'The merchant buys back relics and flasks, at his prices.' }] : []),
+        value: () => (goods.length + armamentGoods.filter((plan) => plan.ok).length ? `${goods.length + armamentGoods.filter((plan) => plan.ok).length} the merchant will take` : 'nothing he wants'),
+        tip: 'Sell stored armaments, relics and flasks. Equipped armaments must be unequipped first.' }] : []),
       // ABSENT when the roll at the door said no smith travels with him.
       ...(smithCards.length ? [{ key: 'bar:smith', label: 'THE SMITH', node: smithRow,
         value: () => `${smithCards.filter((el) => !el.classList.contains('locked')).length} of ${smithCards.length} services open`,
@@ -357,6 +378,53 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     // the toggle is a rebuild away) falls back to CARDS rather than throwing.
     if (!BARS.some((bar) => bar.key === openBar)) openBar = 'bar:cards';
     fold.open(openBar);
+  }
+
+  function armamentRow(def) {
+    const equipped = Object.values(run.loadout?.sets || {}).some((ids) => ids.includes(def.id));
+    return { key: `armament:${def.id}`, id: def.id, name: def.name, category: def.kind === 'shield' ? 'Shield' : def.kind === 'staff' ? 'Staff' : 'Weapon', item: def, count: carriedIds(run.loadout).includes(def.id) ? 1 : 0, equippedLabels: equipped ? ['Equipped'] : [] };
+  }
+
+  function armamentOffer(def, inspect, summary) {
+    const face = renderInventoryItemCard(inventoryItemCardModel(armamentRow(def)));
+    const card = el('button', { type: 'button', class: 'as-option noarrow hosts-face' }, face);
+    card.setAttribute('aria-label', `${def.name}. ${summary}. Inspect.`);
+    card.addEventListener('click', () => { card.focus({ preventScroll: true }); inspect(); });
+    return el('div', {}, [card, statusText(summary)]);
+  }
+
+  function inspectArmament(item, mode) {
+    const quote = mode === 'sell' ? armamentSalePlan(registries, run, item) : armamentPurchasePlan(registries, run, item);
+    const def = quote.def;
+    const packageInfo = mode === 'sell' ? quote : armamentSalePlan(registries, run, def.id);
+    const label = mode === 'sell' ? `Sell · ${quote.price} cinders` : `Buy · ${quote.cost} cinders`;
+    const confirm = button({ label, weight: 'primary', disabled: !quote.ok });
+    const message = statusText(quote.reason || (mode === 'sell' ? 'Tier and mounted cards stay with this item if you reacquire it. Discovery is retained.' : 'Adds this armament to inventory. Equip it in the Armoury.'));
+    message.setAttribute('role', 'status');
+    const detail = renderInventoryDetailCard(inventoryDetailCardModel({
+      row: armamentRow(def), art: { kind: 'image', value: assetUrl(`assets/equipment/icon_${def.id}.webp`) },
+      description: def.blurb || '', mods: modEffectLines(registries, def),
+      instruction: `Smithing tier ${packageInfo.tier}. Attached cards: ${packageInfo.mounts.map((mount) => mount.cardName).join(', ') || 'none'}.`,
+    }));
+    const cancel = button({ label: 'Back' });
+    const shell = openModal({ title: def.name, eyebrow: mode === 'sell' ? 'Sell armament' : 'Buy armament', bodyClassName: 'as-pane', body: (host) => host.append(detail, message), secondary: [cancel], primary: confirm });
+    cancel.addEventListener('click', shell.close);
+    confirm.addEventListener('click', () => {
+      let receipt;
+      try { receipt = mode === 'sell' ? commitArmamentSale(registries, run, quote) : commitArmamentPurchase(registries, run, quote); }
+      catch (error) { message.textContent = error.message; confirm.disabled = true; return; }
+      if (mode === 'buy') onArmamentPurchased(receipt.id);
+      finishTrade(shell);
+    });
+  }
+
+  function finishTrade(shell) {
+    shell.close();
+    sfx.play('buy');
+    onChanged();
+    render();
+    const shelf = openBar === 'bar:sell' ? '#shop-sell' : openBar === 'bar:weapon-arts' ? '#shop-weapon-arts' : '#shop-armaments';
+    (app.querySelector(`${shelf} button, ${shelf} [role="button"]`) || app.querySelector('#leave-shop'))?.focus({ preventScroll: true });
   }
 
   function shopItem(title, desc, cost, affordable, onBuy, { titleHtml = false, costWord = 'cinders' } = {}) {

@@ -12,7 +12,7 @@
 // `.se-step`, `.se-value`, `.se-controls`, `[data-stat-action]`,
 // `[data-stat-done]`, `[data-stat-cancel]`, `#cc-stat-title`, `.cc-stat-modal`,
 // `.cc-stat-overlay`) ride on the kit elements.
-import { primaryStatCard } from './creationCards.js';
+import { primaryStatCards } from './creationCards.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import {
   el, eyebrow, titleS, flavour, hairline, statPair, row, button, buttonRow, openModal,
@@ -26,7 +26,12 @@ function stepperFor(rowModel, { onDecrease, onIncrease }) {
       'aria-label': `${label} ${rowModel.label}`,
       'aria-disabled': allowed ? 'false' : 'true',
     });
-    control.addEventListener('click', () => { if (allowed) (action === 'decrease' ? onDecrease : onIncrease)?.(rowModel.id); });
+    control.addEventListener('click', (event) => {
+      // The controls live in a summary; spending a point must not toggle it.
+      event.preventDefault();
+      event.stopPropagation();
+      if (allowed) (action === 'decrease' ? onDecrease : onIncrease)?.(rowModel.id);
+    });
     return control;
   };
   return el('span', { class: 'as-seg stepper se-controls' }, [
@@ -37,19 +42,24 @@ function stepperFor(rowModel, { onDecrease, onIncrease }) {
 }
 
 function drawRows(rowsHost, rows, handlers) {
-  rowsHost.replaceChildren(...rows.map((rowModel) => {
-    const attribute = primaryStatCard({
+  const expanded = new Set([...rowsHost.querySelectorAll('.disc-face[aria-expanded="true"]')].map((face) => face.dataset.face));
+  const attributes = primaryStatCards(rows.map((rowModel) => ({
       ...rowModel.card,
       face: { ...rowModel.card.face, value: '' },
-    });
+  })));
+  rowsHost.replaceChildren(...rows.map((rowModel, index) => {
+    const attribute = attributes[index];
     attribute.classList.add('se-attribute-card');
+    attribute.querySelector('.disc-face > .as-row').appendChild(stepperFor(rowModel, handlers));
     const line = row({
       tag: 'div', setting: true, className: 'se-row',
       labelNode: attribute,
-      trail: stepperFor(rowModel, handlers),
     });
     return markUiComponent(line, UI.statAllocationRow);
   }));
+  for (const face of rowsHost.querySelectorAll('.disc-face')) {
+    if (expanded.has(face.dataset.face)) face.click();
+  }
 }
 
 /**

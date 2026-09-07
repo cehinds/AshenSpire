@@ -36,7 +36,7 @@ import { attributeCardModels } from '../src/model/creationBrief.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
-import { executeRunEffects } from '../src/engine/actions.js';
+import { executeRunEffects, useRunChargeFlask } from '../src/engine/actions.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -52,9 +52,9 @@ import {
   endlessActInfo, activeMods, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP,
 } from '../src/content/customMods.js';
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
-import { statProjection } from '../src/model/statProjection.js';
+import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statProjection.js';
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
-import { attributeAllocationProblems, classAttributePreset, allocationTotal, defaultCreationModeId } from '../src/model/attributes.js';
+import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
@@ -80,7 +80,7 @@ import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
 import {
   equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
-  orderArmourySlots, trayPresentationState,
+  orderArmouryPositions, orderArmourySlots, trayPresentationState,
 } from '../src/model/armouryLayout.js';
 import { inventoryItemCardModel, inventoryDetailCardModel } from '../src/ui/models/ArmouryModels.js';
 import { hudQuickSettingsModel, musicQuickSettingsPlan } from '../src/ui/models/HudQuickSettingsModel.js';
@@ -1452,6 +1452,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(rn3.deck.some((x) => x.cardId === 'guilt'), 'curse added to deck');
     eq(rn3.combatEntered, 'loneSoldier', 'startCombat handed off');
 
+    rn3.mana = 0;
+    const manaBefore = rn3.flaskCharges.manaCurrent;
+    useRunChargeFlask({ run: rn3, registries: REG, rng: createRng(5), kind: 'mana' });
+    eq(rn3.mana, 1, 'run-level flask effects copy restored Mana back to the run');
+    eq(rn3.flaskCharges.manaCurrent, manaBefore - 1, 'out-of-combat use spends its charge without touching utility slots');
+
     const rn4 = createRunState({ seed: 4, classId: 'reaver', registries: REG });
     rn4.hp = 10;
     eq(shrineHealAmount(REG, rn4), Math.floor((rn4.maxHp * 35) / 100), 'shrine heal 35%');
@@ -1702,7 +1708,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(rollEncounter(REG, r, { pool: 'normal', act: 3 }).startsWith('a3_'), 'act 3 pool only');
       assert(!rollEncounter(REG, r, { pool: 'normal', act: 1 }).startsWith('a2_'), 'act 1 pool untouched');
     }
-    eq(rollEncounter(REG, createRng(1), { pool: 'boss', act: 3 }), 'a3_bossRotValkyrie', 'act 3 boss');
+    const act3Boss = REG.encounters.get(rollEncounter(REG, createRng(1), { pool: 'boss', act: 3 }));
+    eq(act3Boss.act, 3, 'boss stays in act 3');
+    eq(act3Boss.pool, 'boss', 'boss pool only');
 
     // Blighted Valkyrie: heals 2 whenever SHE lands a hit (persistent phase trigger);
     // her thrust also Bleeds the PLAYER (entity-agnostic status model).
@@ -3573,7 +3581,72 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(combat.player.energy, energyBefore - bal.swapCost, 'the swap costs what the config says');
     const inHand = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
     eq(dmgOf(resolveCard(REG, inHand)), 12, 'every Strike now carries the greatsword profile, rarity, tier, and explicit mod');
-    // Armour is not something you change with a knight in the room.
+
+    // Re-arming a position in combat uses the same priced action economy, but
+    // it can replace/move/unequip the item rather than only select a prepared
+    // set. The engine owns the mutation and immediately re-stamps live piles.
+    combat.player.energy = combat.player.energyMax;
+    const rearmed = dispatch(combat, {
+      type: 'changeEquipment', slotId: 'rightHand', setIndex: 1, pieceId: 'dagger',
+    });
+    eq(combat.player.energy, combat.player.energyMax - bal.swapCost,
+      'changing an equipped item pays the configured combat equipment cost');
+    eq(combat.loadout.sets.rightHand[1], 'dagger', 'the active combat position now holds the chosen item');
+    eq(combat.loadout.sets.rightHand[0], null, 'moving the dagger clears its previous position');
+    assert(combat.loadout.storage.includes('greatsword'), 'the replaced greatsword returns to carried storage');
+    const daggerStrike = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
+    eq(dmgOf(resolveCard(REG, daggerStrike)), 5, 'live Strikes immediately use the newly equipped dagger profile');
+    assert(rearmed.events.some((event) => event.type === 'equipmentRearmed' && event.pieceId === 'dagger'),
+      'the combat receipt names the item that was equipped');
+
+    combat.player.energy = combat.player.energyMax;
+    const poiseBeforeArmour = combat.player.poiseMeter.max;
+    const armourChanged = dispatch(combat, {
+      type: 'changeEquipment', slotId: 'armor', setIndex: 0, pieceId: 'default',
+    });
+    eq(combat.loadout.sets.armor[0], 'default', 'armour can also be changed during the player turn');
+    eq(combat.player.poiseMeter.max, playerPoiseThresholdReceipt(REG, {
+      loadout: combat.loadout, relics: combat.player.relicIds, class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels,
+    }).value, 'changing armour immediately stamps the exact live Poise threshold');
+    assert(combat.player.poiseMeter.max !== poiseBeforeArmour,
+      'changing from Oathsworn armour to Wayfarer Plate visibly changes the Poise vessel');
+    assert(armourChanged.events.some((event) => event.type === 'equipmentChanged'),
+      'the armour mutation emits the canonical equipment-change receipt');
+
+    combat.player.energy = combat.player.energyMax;
+    const unequipped = dispatch(combat, {
+      type: 'changeEquipment', slotId: 'rightHand', setIndex: 1, pieceId: null,
+    });
+    eq(combat.player.energy, combat.player.energyMax - bal.swapCost,
+      'unequipping an active combat item pays the same configured action price');
+    eq(combat.loadout.sets.rightHand[1], null, 'the requested combat position is empty after unequip');
+    assert(combat.loadout.storage.includes('dagger'), 'the unequipped dagger returns to carried storage');
+    const bareStrike = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
+    eq(dmgOf(resolveCard(REG, bareStrike)), 4,
+      'live Strikes are re-stamped to the run\'s tuned unarmed profile after unequip');
+    assert(unequipped.events.some((event) => event.type === 'equipmentChanged'
+      && event.changedPositions.some((position) => position.slotId === 'rightHand'
+        && position.setIndex === 1 && position.beforeItemId === 'dagger' && position.afterItemId === null)),
+    'the canonical receipt identifies the paid active-position unequip');
+    assert(unequipped.events.some((event) => event.type === 'equipmentRearmed'
+      && event.slotId === 'rightHand' && event.setIndex === 1 && event.pieceId === null),
+    'the combat receipt preserves null as the explicit unequip target');
+
+    combat.player.energy = 0;
+    const beforeUnpaid = JSON.stringify(combat.loadout);
+    let unpaid = '';
+    try {
+      dispatch(combat, { type: 'changeEquipment', slotId: 'rightHand', setIndex: 1, pieceId: 'straightSword' });
+    } catch (error) {
+      unpaid = error.message;
+    }
+    assert(/costs \d+ Energy/.test(unpaid), `an unpaid combat equipment change names its Energy price — got: ${unpaid}`);
+    eq(JSON.stringify(combat.loadout), beforeUnpaid, 'an unpaid combat equipment change leaves the loadout atomic');
+    eq(combat.player.energy, 0, 'an unpaid combat equipment change spends nothing');
+    combat.player.energy = combat.player.energyMax;
+
+    // Armour items can change, but armour has no prepared-set cycle in combat.
     let refused = '';
     try {
       dispatch(combat, { type: 'swapArmament', slotId: 'armor', setIndex: 0 });
@@ -3626,8 +3699,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const saves = createSaveManager(storage);
     saves.saveRun(run, rng);
     const loaded = saves.loadRun(REG);
-    eq(loaded.loadout.sets.rightHand[1], 'greatsword', 'the loadout round-trips');
-    eq(dmgOf(resolveCard(REG, loaded.deck.find((c) => c.cardId === 'strike'))), 12, 'stamped cards round-trip');
+    eq(loaded.loadout.sets.rightHand[1], null, 'the combat unequip round-trips');
+    assert(loaded.loadout.storage.includes('dagger'), 'the unequipped item round-trips in carried storage');
+    eq(dmgOf(resolveCard(REG, loaded.deck.find((c) => c.cardId === 'strike'))), 4,
+      'the saved deck round-trips with the live unarmed profile');
 
     // And a run saved before equipment existed is healed, not refused.
     const legacy = JSON.parse(JSON.stringify(run));
@@ -3723,6 +3798,35 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     combat.player.energy = REG.balance.equipment.swapCost;
     dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
     eq(combat.player.mana, 0, 'swapping back cannot refill spent Mana');
+
+    const deficitBeforeUnequip = {
+      hp: combat.player.maxHp - combat.player.hp,
+      mana: combat.player.maxMana - combat.player.mana,
+      stamina: combat.player.maxStamina - combat.player.stamina,
+    };
+    combat.player.energy = REG.balance.equipment.swapCost;
+    const poolUnequipped = dispatch(combat, {
+      type: 'changeEquipment', slotId: 'rightHand', setIndex: 1, pieceId: null,
+    });
+    eq(combat.player.energy, 0, 'the direct pool-item unequip charges its exact combat price');
+    eq(combat.loadout.sets.rightHand[1], null, 'the pool probe leaves its active position');
+    assert(combat.loadout.storage.includes(probe.id), 'the unequipped pool probe remains carried in storage');
+    eq(combat.player.maxHp, base.hp, 'direct combat unequip removes the maximum HP bonus');
+    eq(combat.player.maxHp - combat.player.hp, deficitBeforeUnequip.hp,
+      'direct combat unequip preserves the absolute HP deficit');
+    eq(combat.player.maxMana, base.mana, 'direct combat unequip removes the maximum Mana bonus');
+    eq(combat.player.mana, Math.max(0, base.mana - deficitBeforeUnequip.mana),
+      'direct combat unequip preserves spent Mana beyond the smaller vessel');
+    eq(combat.player.maxStamina, base.stamina, 'direct combat unequip removes the maximum Stamina bonus');
+    eq(combat.player.stamina, Math.max(0, base.stamina - deficitBeforeUnequip.stamina),
+      'direct combat unequip preserves the absolute Stamina deficit');
+    eq(JSON.stringify(combat.equipmentPoolDeficits), JSON.stringify(deficitBeforeUnequip),
+      'the carried equipment deficits remain the single source for later re-equips');
+    assert(poolUnequipped.events.some((event) => event.type === 'equipmentChanged'),
+      'the pool unequip emits the canonical mutation receipt');
+    assert(poolUnequipped.events.some((event) => event.type === 'equipmentRearmed'
+      && event.pieceId === null && event.cost === REG.balance.equipment.swapCost),
+    'the pool unequip emits a priced null-target combat receipt');
 
     const OLD_REG = {
       ...REG,
@@ -3926,7 +4030,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // ---- 28r. bad data fails loud and names the row -------------------------
-  test('28r. every way to author the swap price wrong is refused BY NAME', () => {
+  test('28r. every way to author combat equipment tuning wrong is refused BY NAME', () => {
     // Law 1 clause 5. Each of these is a plausible edit that would otherwise be
     // SILENT — the game keeps charging 2 and nobody can tell a setting that is
     // off from one that is broken. Observed red here before being cited:
@@ -3950,6 +4054,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'vibes', 'a rule whose base is outside the closed set');
     oneProblem(bend({ swapCostRules: [{ id: 'flat', base: 'default', gear: 'yes' }], swapCostRule: 'flat' }),
       'gear', 'a rule whose gear rung is not a boolean');
+    oneProblem(bend({ allowChangesInCombat: 'yes' }), 'allowChangesInCombat',
+      'a combat equipment permission that is not a boolean');
 
     // ---- the shelf's own three, same standard (A7) -------------------------
     oneProblem(bend({ basicTag: 'starter' }), 'starter', 'a basicTag no armament carries');
@@ -4728,60 +4834,41 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       `…and it is a real number (${REG_CHARM.balance.equipment.swapCost}), which is what makes the remaining bypass worth an act`);
   });
 
-  // ---- 31d. the inventory is VISIBLE in combat and the slots are SEALED ----
-  test('31d. a fight seals what a set holds without sealing which set is active', () => {
-    // Constantine, 2026-08-08: "I think you should be able to see your inventory
-    // in combat, just have the slots locked in combat only."
-    //
-    // THE WHOLE DISTINCTION IS TWO MUTATIONS, NOT ONE, and this block exists to
-    // keep them apart. A slot has N sets; a set holds a piece.
-    //   cycleSet   — which set is ACTIVE. A designed, PRICED mid-fight mechanic
-    //                (balance.equipment.swapCost), per-slot in equipSlots.csv.
-    //                Test 28 owns it and #95 does not touch it.
-    //   equipPiece — what a set HOLDS. Sealed for every slot once a fight is on.
-    // Sealing the first would delete a shipped feature; sealing only the screen
-    // would leave the second enforced by nothing.
+  // ---- 31d. the inventory and its equipment actions stay live in combat ----
+  test('31d. a fight permits item changes while active-set cycling keeps its slot rule', () => {
+    // The latest owner ruling supersedes the old sealed-slot rule: carried
+    // equipment may now move in, out, or between positions during combat. Set
+    // cycling remains a separate per-slot capability governed by canSwap.
     const slots = (REG.equipment.slots || []);
     assert(slots.length > 0, 'the fixture has slots to examine');
 
     // ---- 1. both edges, over every slot, with the denominator asserted -----
-    let sealed = 0;
+    let changeable = 0;
     let cyclable = 0;
     for (const slot of slots) {
       eq(canEquip(REG, slot.id, { inCombat: false }).ok, true, `${slot.id}: at camp a set may be re-armed`);
-      const seal = canEquip(REG, slot.id, { inCombat: true });
-      eq(seal.ok, false, `${slot.id}: mid-fight it may not`);
-      // INVERTED AT #98, and the old assertion is the defect it was written to
-      // hold. It read `seal.reason.includes(slot.label)` — I made a screen-wide
-      // fact wear a per-slot voice and then asserted it did. No slot may be
-      // re-armed mid-fight; saying "Right Hand is sealed" under a Right Hand
-      // header carrying no badge said the opposite of what is true.
-      assert(!seal.reason.includes(slot.label),
-        `${slot.id}: the seal is not a fact about one slot and must not name one — got: ${seal.reason}`);
-      sealed += 1;
+      const combatChange = canEquip(REG, slot.id, { inCombat: true });
+      eq(combatChange.ok, true, `${slot.id}: the authored combat rule permits item changes`);
+      if (combatChange.ok) changeable += 1;
       if (canSwap(REG, slot.id, { inCombat: true }).ok) cyclable += 1;
     }
-    eq(sealed, slots.length, 'every slot in the table was examined, not a lucky subset');
+    eq(changeable, slots.length, 'every slot in the table was examined, not a lucky subset');
     // THE CAPABILITY THAT MUST SURVIVE, asserted as a floor rather than assumed:
     // if this ever reaches zero the priced swap has been deleted and test 28 is
     // passing over a mechanic no slot can use.
     assert(cyclable > 0, `at least one slot still cycles mid-fight (${cyclable} of ${slots.length})`);
 
-    // ---- 2. the gate is on the MUTATION, not on the screen ----------------
-    // Measured at 98fedde, before this change: this call returned true.
+    // ---- 2. the permission is on the mutation, not only on the screen ------
     const held = createLoadout(REG, 'reaver');
     assert(equipPiece(REG, held, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, AT_CAMP), 'it goes in at camp');
-    assert(!equipPiece(REG, held, 'rightHand', 0, 'greatsword', OWNS_EVERYTHING, MID_FIGHT),
-      'a piece you own and that fits is still refused mid-fight');
-    eq(held.sets.rightHand[0], 'dagger', 'and the refusal left the slot exactly as it was');
+    assert(equipPiece(REG, held, 'rightHand', 0, 'greatsword', OWNS_EVERYTHING, MID_FIGHT),
+      'a piece you own and that fits can be equipped mid-fight');
+    eq(held.sets.rightHand[0], 'greatsword', 'and the combat mutation reaches the selected position');
 
-    // ---- 3. putting a thing DOWN is re-arming too --------------------------
-    // Ownership has no opinion about clearing; the seal does. The order of the
-    // two checks inside equipPiece is what makes this true, so it is asserted.
-    assert(!equipPiece(REG, held, 'rightHand', 0, null, OWNS_EVERYTHING, MID_FIGHT),
-      'a slot cannot be emptied mid-fight either');
-    eq(held.sets.rightHand[0], 'dagger', 'and that refusal left it alone as well');
-    assert(equipPiece(REG, held, 'rightHand', 0, null, OWNS_EVERYTHING, AT_CAMP), 'at camp it empties');
+    // ---- 3. unequip is the same permitted combat action --------------------
+    assert(equipPiece(REG, held, 'rightHand', 0, null, OWNS_EVERYTHING, MID_FIGHT),
+      'a slot can be emptied mid-fight too');
+    eq(held.sets.rightHand[0], null, 'the unequip leaves the selected position empty');
 
     // ---- 4. a call site that says nothing fails CLOSED --------------------
     // The reason the context is required rather than defaulted: a default of
@@ -4803,52 +4890,39 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(ghost.ok, false, 'an unknown slot refuses');
     assert(ghost.reason.includes('rihgtHand'), `and prints the id it was given — got: ${ghost.reason}`);
 
-    // ---- 5b. MAX EDGE: a profile that owns everything still owns nothing it
-    // can act on mid-fight. One piece proves the gate fires; the whole pool
-    // proves nothing slips past it, and the denominator is asserted so an empty
-    // pool cannot pass by being empty.
+    // ---- 5b. MAX EDGE: every owned, fitting piece remains actionable -------
     const pool = (REG.equipment.armaments || []).filter((p) => fitsSlot(REG.equipment.slots.find((s) => s.id === 'rightHand'), p));
     assert(pool.length > 1, `the right hand has a pool to sweep (${pool.length})`);
-    const rich = createLoadout(REG, 'reaver');
-    let refusedAll = 0;
+    let acceptedAll = 0;
     for (const piece of pool) {
-      if (!equipPiece(REG, rich, 'rightHand', 0, piece.id, OWNS_EVERYTHING, MID_FIGHT)) refusedAll += 1;
+      const combatProbe = createLoadout(REG, 'reaver');
+      if (equipPiece(REG, combatProbe, 'rightHand', 0, piece.id, OWNS_EVERYTHING, MID_FIGHT)) acceptedAll += 1;
     }
-    eq(refusedAll, pool.length, `every one of ${pool.length} owned, fitting pieces is refused mid-fight`);
-    eq(rich.sets.rightHand[0], 'straightSword', 'and after the whole sweep the slot is still at its authored start');
-    // …and the same sweep at camp is the control group. If BOTH sides refused,
-    // the count above would be green for the wrong reason.
+    // The same sweep at camp is the control group. Requirements still apply,
+    // so the property is parity between contexts rather than accepting every
+    // fitting item regardless of the character's attributes.
     let tookAll = 0;
     for (const piece of pool) {
       const campProbe = createLoadout(REG, 'reaver');
       if (equipPiece(REG, campProbe, 'rightHand', 0, piece.id, OWNS_EVERYTHING, AT_CAMP)) tookAll += 1;
     }
-    eq(tookAll, pool.length, `and every one of them goes in at camp — the control group`);
+    assert(tookAll > 0,
+      `the requirement gate admits real pieces (${tookAll} of ${pool.length})`);
+    eq(acceptedAll, tookAll,
+      `combat admits the same ${tookAll} owned, fitting, requirement-valid pieces as camp`);
 
-    // ---- 6. the three refusals on this screen share no word ---------------
-    // Bjorn, #98: the ARMOUR header said "sealed" (canSwap, about the ACTIVE
-    // SET) while the picker said "Right Hand is sealed in combat" (canEquip,
-    // about a set's CONTENTS) under a Right Hand header with no badge. BOTH
-    // WERE TRUE. Not one fact written twice — ONE WORD CARRYING TWO FACTS, with
-    // the copies visibly disagreeing, which is worse: a duplicate at least says
-    // the same thing twice.
-    //
-    // THE BRITTLENESS IS THE CHECK. A future edit that reintroduces the shared
-    // word goes red, and that is correct — this is the one property a reader on
-    // the glass can actually be misled by, and it has no other home.
-    const rungHint = rungFor(REG, REG.equipment.slots.find((s) => s.id === 'rightHand'), 1).hint;
-    const sealSaid = canEquip(REG, 'rightHand', { inCombat: true }).reason;
-    const badge = canSwap(REG, 'armor', { inCombat: true });
-    eq(badge.ok, false, 'armour carries a badge mid-fight');
-    assert(badge.word, `and the badge has a word to print — got: ${JSON.stringify(badge.word)}`);
-    assert(rungHint && sealSaid, 'both other refusals have something to say');
-    for (const [name, said] of [['the rung hint', rungHint], ['the seal', sealSaid]]) {
-      assert(!said.toLowerCase().includes(badge.word.toLowerCase()),
-        `${name} must not borrow the badge's word "${badge.word}" — got: "${said}"`);
-    }
-    assert(rungHint !== sealSaid, 'and the ladder and the seal are not one string');
+    // ---- 6. the data switch still closes the mutation when disabled --------
+    const disabled = {
+      ...REG,
+      balance: { ...REG.balance, equipment: { ...REG.balance.equipment, allowChangesInCombat: false } },
+    };
+    eq(canEquip(disabled, 'rightHand', { inCombat: true }).ok, false,
+      'the authored off value disables combat equipment changes');
+    const disabledLoadout = createLoadout(disabled, 'reaver');
+    assert(!equipPiece(disabled, disabledLoadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, MID_FIGHT),
+      'the mutation itself enforces the authored off value');
 
-    // ---- 7. no context is SEALED, never "not in combat" -------------------
+    // ---- 7. no context is permission --------------------------------------
     // The old signature defaulted inCombat to false, so a caller that said
     // nothing was told it may re-arm. Silence meaning permission is the whole
     // defect the required argument exists to close, and it was still sitting in
@@ -4862,8 +4936,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       blind = canEquip(REG, 'rightHand');
       nulled = canEquip(REG, 'rightHand', { inCombat: null });
     } finally { console.error = hush; }
-    eq(blind.ok, false, 'no context at all → sealed');
-    eq(nulled.ok, false, 'a null flag is not a false one → sealed');
+    eq(blind.ok, false, 'no context at all → refused');
+    eq(nulled.ok, false, 'a null flag is not a false one → refused');
     assert(heard.includes('inCombat'), `and it names what it wanted — got: ${heard || '(nothing)'}`);
 
     // ---- 8. the VALUE is checked, not the key -----------------------------
@@ -4900,7 +4974,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // The control group: the two REAL shapes still work, so the check above is
     // not green because everything refuses.
     assert(equipPiece(REG, shapeProbe, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, { inCombat: false, attributes: REQUIREMENT_TEST_ATTRIBUTES }), 'a real false still equips');
-    assert(!equipPiece(REG, shapeProbe, 'rightHand', 1, 'dagger', OWNS_EVERYTHING, { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES }), 'a real true still refuses');
+    assert(equipPiece(REG, shapeProbe, 'rightHand', 1, 'dagger', OWNS_EVERYTHING, { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES }), 'a real true equips when the authored combat rule is on');
   });
 
   // ---- 31c. the ladder gates the MUTATION, not just the screen ------------
@@ -5194,6 +5268,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // this only proves the one polarity it was written for.
     eq(settingOn({}, 'colorblindSafe'), false, 'a def:false row still defaults off');
     eq(settingOn({ colorblindSafe: true }, 'colorblindSafe'), true, 'and can be turned on');
+    eq(settingOn({}, 'useRestorativeFlasksOutsideCombat'), false, 'map flask use defaults off');
+    eq(settingOn({ useRestorativeFlasksOutsideCombat: true }, 'useRestorativeFlasksOutsideCombat'), true,
+      'the player can enable restorative flask use on the map');
 
     // An unknown key must throw, not answer false: a silent false is how a
     // renamed setting becomes a quietly-disabled feature.
@@ -7195,6 +7272,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(std.bonusPool, 5, 'standard pool unchanged');
     eq(std.minimum, 10, 'standard floor unchanged');
     eq(allocationTotal(REG, 'pointbuy'), 60, 'pointbuy fixed total = 5x10 baseline + the 10-point pool');
+    const freshEditor = baselineAttributeAllocation(REG, 'pointbuy');
+    eq(Object.values(freshEditor).join(','), '10,10,10,10,10', 'pointbuy editor opens every authored stat at the mode baseline');
+    eq(allocationTotal(REG, 'pointbuy') - Object.values(freshEditor).reduce((sum, value) => sum + value, 0), 10,
+      'pointbuy editor opens with all 10 bonus points available');
 
     // The allocation gate, both edges at every boundary his sentence names.
     const legal = { strength: 15, dexterity: 8, constitution: 15, wisdom: 12, intelligence: 10 };
@@ -7532,7 +7613,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(constitution.reveal.lines.some((line) => /^HP \+2 every 1 point$/.test(line))
       && constitution.reveal.lines.some((line) => /^Stamina \+1 every 5 points$/.test(line)),
     'multiple mechanical benefits are projected as separate bullets');
-    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical attacks +1 every 1 point'),
+    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical AR +1 every 1 point'),
       'the active run profile projects Strength attack scaling without copied UI prose');
 
     const changed = {
@@ -7577,11 +7658,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(layout.combatPower.cards[1].label, 'Magic', 'the primary technique-facing combat value is presented as Magic');
     eq(layout.combatPower.cards[1].fullLabel, 'Magic Power', 'the expanded primary value is presented as Magic Power, not Potency');
     eq(layout.viewModes.grid.label, 'Character', 'the character view has a player-facing authored label');
-    eq(layout.viewModes.rack.label, 'Inventory', 'the inventory view has a player-facing authored label');
+    eq(layout.viewModes.rack.label, 'Equipment', 'equipped gear has its own authored tab');
+    eq(layout.viewModes.hybrid.label, 'Inventory', 'carried items have their own authored tab');
+    eq(layout.viewModes.cards.label, 'Cards', 'the full deck has its own authored tab');
     eq(layout.viewModes.grid.pane, 'character', 'Character promotes the character pane to the full surface');
     eq(layout.viewModes.rack.pane, 'inventory', 'Inventory pairs the armaments and inventory panes');
     eq(layout.viewModes.rack.armaments, 'expanded', 'Inventory exposes the authored Armaments position list');
-    eq(layout.viewModes.hybrid.pane, 'both', 'Hybrid keeps the two panes split');
+    eq(layout.viewModes.hybrid.pane, 'inventory', 'Inventory uses the full surface');
     eq(layout.viewModes.hybrid.armaments, 'expanded', 'Hybrid preserves its currently approved visible Armaments pane');
     eq(layout.inventorySplit.snapRatios.join(','), '0.4,0.5,0.6,0.7', 'Inventory pane widths snap to authored ratios');
     eq(layout.inventorySplit.foldSubcardsBelowPx, 420, 'narrow armament subcards fold at an authored pane width');
@@ -7600,7 +7683,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(invalidHoldClass.includes('holdAction must be true or false'),
       'the card class hold capability rejects truthy strings instead of silently arming them');
     eq(layout.comparison.presentation, 'tooltip', 'equipment comparison presentation is authored as tooltip or inline data');
-    eq(layout.comparison.hoverDelayMs, 550, 'equipment comparison hover delay is authored in milliseconds');
+    eq(layout.comparison.holdPreviewDelayMs, 160, 'equipment comparison sustained-hold preview delay is authored in milliseconds');
     eq(layout.comparison.tooltipWidthRem, 52, 'equipment comparison tooltip width is authored rather than buried in CSS');
     eq(layout.comparison.tooltipMaxHeightRatio, 0.8, 'equipment comparison tooltip viewport cap is authored');
     let invalidComparison = '';
@@ -7608,9 +7691,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(invalidComparison.includes('comparison.presentation must be tooltip or inline'),
       'unknown equipment comparison presentations are refused by name');
     let invalidComparisonDelay = '';
-    try { normalizeArmouryLayout({ comparison: { hoverDelayMs: -1 } }); } catch (error) { invalidComparisonDelay = error.message; }
-    assert(invalidComparisonDelay.includes('comparison.hoverDelayMs'),
-      'negative equipment comparison hover delays are refused by name');
+    try { normalizeArmouryLayout({ comparison: { holdPreviewDelayMs: -1 } }); } catch (error) { invalidComparisonDelay = error.message; }
+    assert(invalidComparisonDelay.includes('comparison.holdPreviewDelayMs'),
+      'negative equipment comparison hold preview delays are refused by name');
     const sharedInventoryRow = {
       key: 'weapon:straightSword', id: 'straightSword', name: 'Straight Sword', category: 'Weapon',
       count: 1, equippedLabels: [], item: { name: 'Straight Sword', tags: [] },
@@ -7693,6 +7776,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(orderArmourySlots([
       { id: 'leftFoot', order: 50 }, { id: 'back', order: 40 }, { id: 'rightHand', order: 20 }, { id: 'armor', order: 10 },
     ], layout).map((slot) => slot.id).join(','), 'armor,rightHand,back,leftFoot', 'arbitrary equipment groups iterate by authored order without named-slot branches');
+    eq(orderArmouryPositions([
+      { index: 0, state: 'empty' }, { index: 1, state: 'occupied' },
+      { index: 2, state: 'locked' }, { index: 3, state: 'empty' },
+    ]).map((position) => `${position.index}:${position.state}`).join(','),
+    '1:occupied,2:locked,0:empty,3:empty',
+    'empty equipment positions move to the bottom while every state keeps its authored order');
     const occupiedPosition = equipmentPositionCardState({
       slot: { id: 'backHand', label: 'Back Hand', positionLabel: 'Back Hand Slot {n}', positionCode: 'BH{n}', sets: 3 },
       index: 1,

@@ -53,6 +53,19 @@
 // the defect this house exists to catch. A flex row cannot disagree with its
 // own container's gap.
 //
+// AND IT ONLY WORKS IF THE FACES ARE ON MORE THAN ONE LINE — the placement is a
+// choice between siblings, so a row whose faces all share a line has exactly one
+// place to put the panel, and that place is the bottom. Constantine, 2026-09-05,
+// on the shipped build: "when class is selected, the class selection should be
+// under it. same with character, starting equipment too. isntead it just shows
+// up at hte bottom". The renderer had not moved; the stylesheet had. The kit
+// sweep of 2026-09-04 put `.as-options.flow > .as-option { flex: 1 1 auto }`
+// (three classes) above `.disc-face.disc-pick { flex: 1 1 100% }` (two), so
+// every face of the creation screen computed `1 1 auto` and all four sections
+// sat on ONE line at top=77 (measured, headless Chromium 1200x730). The fix is
+// in styles/kit.css, at the rule that says so; NOTHING IN THIS FILE COULD HAVE
+// FIXED IT, and that is worth knowing before reading the placement again.
+//
 // NOT DONE, and it was the instruction I was given: `place(anchor)` from
 // components/tooltip.js was NOT extracted and wired here. Three reasons, and
 // the first is the one that would have shipped a worse screen than the defect:
@@ -153,6 +166,118 @@ function tipHtml(entry) {
     + (entry.reveal.receipt ? `<span class="as-flavor">${esc(entry.reveal.receipt)}</span>` : '');
 }
 
+// A FOLD INSIDE A FOLD IS MOUNTED AND OPENED WHILE ITS HOST IS OFF THE GLASS,
+// and that is the second half of the same defect (2026-09-05). The creation
+// screen's CHARACTER and STARTING EQUIPMENT panels are `display: none` — stashed
+// by the outer fold — at the moment the folds inside them mount and open, and
+// `renderEquipment()` re-mounts the equipment fold on every class change with
+// that panel still shut. Every rect placeUnderRow could read is then ZERO, no
+// sibling starts a later line, and the panel is appended after the last face:
+// the bottom. Measured at d51b46a, 1200x730: `#cz-character-fold` and
+// `#cz-equipment-fold` both reported every face at top=0, width=0.
+//
+// So the placement is RE-DERIVED the moment the host is back on the glass,
+// rather than remembered from a measurement that could not be taken. Each mount
+// registers its own re-placer here, and opening a panel re-places every fold
+// that panel just revealed. `reflow` is open()'s placement step called again on
+// a laid-out host — not a second copy of it, and not an arithmetic that predicts
+// what the browser has not yet decided.
+const MOUNTS = new WeakMap();
+
+/**
+ * Render one independent entry with the platform's fold structure.
+ *
+ * A primary stat owns its own inspector; it is not a choice sharing one
+ * movable inspector with its peers. Keeping summary and DetailCard together
+ * under `<details>` gives those cards the same structure as Armoury card rows,
+ * while returning the regular disclosure controller keeps open-state policy in
+ * callers rather than growing a second behavior implementation.
+ */
+function mountDetailsDisclosure(host, rows) {
+  if (rows.length > 1) {
+    host.replaceChildren();
+    const members = new Map();
+    const close = () => { for (const member of members.values()) member.close(); };
+    const open = key => {
+      if (!members.has(key)) return;
+      close();
+      members.get(key).open(key);
+    };
+    for (const entry of rows) {
+      const child = document.createElement('div');
+      host.appendChild(child);
+      const member = mountDetailsDisclosure(child, [entry]);
+      members.set(entry.key, member);
+      child.querySelector('summary').addEventListener('click', () => {
+        if (member.openKey) for (const [key, peer] of members) if (key !== entry.key) peer.close();
+      });
+    }
+    return { open, close, setValue(key, value) { members.get(key)?.setValue(key, value); },
+      reflow() {}, get openKey() { return [...members.values()].find(member => member.openKey)?.openKey || null; } };
+  }
+  if (rows.length !== 1 || rows[0].disclosure !== 'face') {
+    throw new Error('details disclosure structure requires exactly one face entry');
+  }
+  const entry = rows[0];
+  host.replaceChildren();
+
+  const card = document.createElement('details');
+  card.className = `disc-fold-row disc-${entry.kind}`;
+  card.dataset.reveal = 'closed';
+
+  const summary = document.createElement('summary');
+  summary.className = `as-option noarrow disc-face disc-${entry.kind}${entry.face?.node ? ' hosts-face' : ''}${entry.face?.compact ? ' compact' : ''}`;
+  summary.dataset.face = entry.key;
+  summary.dataset.disclosure = entry.disclosure;
+  summary.dataset.reveal = 'closed';
+  summary.setAttribute('aria-expanded', 'false');
+  if (entry.face?.node) summary.appendChild(entry.face.node);
+  else summary.innerHTML = faceHtml(entry);
+
+  const panel = detailCard({ attrs: { class: 'disc-reveal', hidden: true } });
+  if (entry.reveal?.node) panel.appendChild(entry.reveal.node);
+  else panel.innerHTML = `<div class="disc-words">${revealHtml(entry)}</div>`;
+  card.append(summary, panel);
+  host.appendChild(card);
+
+  let openKey = null;
+  function close() {
+    openKey = null;
+    card.open = false;
+    card.dataset.reveal = 'closed';
+    summary.dataset.reveal = 'closed';
+    summary.setAttribute('aria-expanded', 'false');
+    summary.classList.remove('is-selected');
+    panel.hidden = true;
+    panel.removeAttribute('data-reveal-for');
+  }
+  function open(key) {
+    if (key !== entry.key) return;
+    openKey = key;
+    card.open = true;
+    card.dataset.reveal = 'open';
+    summary.dataset.reveal = 'open';
+    summary.setAttribute('aria-expanded', 'true');
+    summary.classList.add('is-selected');
+    panel.hidden = false;
+    panel.dataset.revealFor = key;
+  }
+  function setValue(key, value) {
+    if (key !== entry.key || entry.face?.node) return;
+    entry.face.value = value;
+    summary.innerHTML = faceHtml(entry);
+  }
+
+  summary.addEventListener('click', (event) => {
+    event.preventDefault();
+    hideTooltip();
+    if (openKey === entry.key) close(); else open(entry.key);
+  });
+  if (tipHtml(entry)) attachTooltip(summary, () => tipHtml(entry));
+
+  return { open, close, setValue, reflow() {}, get openKey() { return openKey; } };
+}
+
 /**
  * mountDisclosure(host, entries, { moreLabel, armFace? })
  *   → { open(key), close(), setValue(key, value), openKey }
@@ -165,8 +290,11 @@ function tipHtml(entry) {
  * adopted into the panel at mount and the panel starts `hidden`, so the
  * arrival screen is short and one tap opens it. Default folded — his word.
  */
-export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = null, layout = 'flow' } = {}) {
+export function mountDisclosure(host, entries, {
+  moreLabel = 'more', armFace = null, layout = 'flow', structure = 'shared',
+} = {}) {
   const rows = [...(entries || [])];
+  if (structure === 'details') return mountDetailsDisclosure(host, rows);
   const faces = rows.filter((entry) => entry.disclosure === 'face');
   const behind = rows.filter((entry) => entry.disclosure !== 'face');
   // The panel is a CHILD of `.disc-faces`, not its sibling: it is a full-width
@@ -262,6 +390,29 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
     faceBox.insertBefore(panel, next || null);
   }
 
+  /** Every fold the open panel is showing, re-placed on the layout it now has. */
+  function reflowNested() {
+    if (panel.hidden) return;
+    for (const box of panel.querySelectorAll('.disc-faces')) MOUNTS.get(box.parentElement)?.reflow();
+  }
+
+  /**
+   * Re-run the placement for the currently open key, now that the host may have
+   * a layout it did not have when `open()` ran. A no-op while the host is still
+   * off the glass — a zero rect is not a measurement, and placing against one is
+   * exactly how the panel got to the bottom.
+   */
+  function reflow() {
+    const button = openKey ? buttons.get(openKey) : null;
+    if (button && host.getClientRects().length) {
+      // Shut for the measurement, for the reason placeUnderRow gives.
+      panel.hidden = true;
+      placeUnderRow(button);
+      panel.hidden = false;
+    }
+    reflowNested();
+  }
+
   function open(key) {
     const entry = rows.find((row) => row.key === key);
     if (!entry) return;
@@ -283,6 +434,9 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
       button.dataset.reveal = 'open';
       button.classList.add('is-selected');
     }
+    // What this panel just put on the glass may itself be a fold that was
+    // placed blind. See MOUNTS, above.
+    reflowNested();
   }
 
   /** The folded row keeps reporting the current choice after it changes. */
@@ -377,5 +531,7 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
     faceBox.appendChild(more);
   }
 
-  return { open, close, setValue, get openKey() { return openKey; } };
+  const handle = { open, close, setValue, reflow, get openKey() { return openKey; } };
+  MOUNTS.set(host, handle);
+  return handle;
 }

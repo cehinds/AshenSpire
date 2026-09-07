@@ -1,0 +1,2071 @@
+{
+  "schema": 1,
+  "generator": "Built-in image_gen; extracted with tools/painted-poses.mjs",
+  "status": "Art preview; not installed in game",
+  "outfits": [
+    {
+      "id": "rogue",
+      "name": "Rogue · Base",
+      "scale": 0.8651399491094147,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/rogue.png",
+          "file": "combat/rogue/idle.png",
+          "box": {
+            "x0": 216,
+            "x1": 432,
+            "y0": 324,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/rogue.png",
+          "file": "combat/rogue/guard.png",
+          "box": {
+            "x0": 216,
+            "x1": 432,
+            "y0": 324,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "menu-sheets/rogue.png",
+          "file": "combat/rogue/attack1.png",
+          "box": {
+            "x0": 202,
+            "x1": 489,
+            "y0": 325,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "menu-sheets/rogue.png",
+          "file": "combat/rogue/attack2.png",
+          "box": {
+            "x0": 241,
+            "x1": 609,
+            "y0": 370,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "menu-sheets/rogue.png",
+          "file": "combat/rogue/attack3.png",
+          "box": {
+            "x0": 210,
+            "x1": 512,
+            "y0": 347,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/rogue.png",
+          "file": "combat/rogue/attack4.png",
+          "box": {
+            "x0": 211,
+            "x1": 558,
+            "y0": 405,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "menu-sheets/rogue.png",
+          "file": "combat/rogue/hit.png",
+          "box": {
+            "x0": 155,
+            "x1": 398,
+            "y0": 324,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/rogue/stand.png",
+        "detail": "menu/rogue/detail.png",
+        "portrait": "menu/rogue/portrait.png"
+      },
+      "source": "menu-sheets/rogue.png"
+    },
+    {
+      "id": "rogue-nightveil",
+      "name": "Nightveil Coat",
+      "scale": 0.8169014084507042,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/rogue-nightveil.png",
+          "file": "combat/rogue-nightveil/idle.png",
+          "box": {
+            "x0": 171,
+            "x1": 431,
+            "y0": 291,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/rogue-nightveil.png",
+          "file": "combat/rogue-nightveil/guard.png",
+          "box": {
+            "x0": 171,
+            "x1": 431,
+            "y0": 291,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "menu-sheets/rogue-nightveil.png",
+          "file": "combat/rogue-nightveil/attack1.png",
+          "box": {
+            "x0": 200,
+            "x1": 513,
+            "y0": 314,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "menu-sheets/rogue-nightveil.png",
+          "file": "combat/rogue-nightveil/attack2.png",
+          "box": {
+            "x0": 216,
+            "x1": 610,
+            "y0": 343,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "menu-sheets/rogue-nightveil.png",
+          "file": "combat/rogue-nightveil/attack3.png",
+          "box": {
+            "x0": 193,
+            "x1": 524,
+            "y0": 342,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/rogue-nightveil.png",
+          "file": "combat/rogue-nightveil/attack4.png",
+          "box": {
+            "x0": 175,
+            "x1": 451,
+            "y0": 334,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "menu-sheets/rogue-nightveil.png",
+          "file": "combat/rogue-nightveil/hit.png",
+          "box": {
+            "x0": 158,
+            "x1": 477,
+            "y0": 259,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/rogue-nightveil/stand.png",
+        "detail": "menu/rogue-nightveil/detail.png",
+        "portrait": "menu/rogue-nightveil/portrait.png"
+      },
+      "source": "menu-sheets/rogue-nightveil.png"
+    },
+    {
+      "id": "rogue-duelist",
+      "name": "Duelist Jerkin",
+      "scale": 0.8172144299775679,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "guard",
+          "sourceSheet": "combat-sheets/rogue-duelist-facing-corrections.png",
+          "file": "combat/rogue-duelist/idle.png",
+          "box": {
+            "x0": 221,
+            "x1": 484,
+            "y0": 317,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "combat-sheets/rogue-duelist-facing-corrections.png",
+          "file": "combat/rogue-duelist/guard.png",
+          "box": {
+            "x0": 221,
+            "x1": 484,
+            "y0": 317,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "combat-sheets/rogue-duelist-facing-corrections.png",
+          "file": "combat/rogue-duelist/attack1.png",
+          "box": {
+            "x0": 210,
+            "x1": 586,
+            "y0": 331,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "combat-sheets/rogue-duelist-facing-corrections.png",
+          "file": "combat/rogue-duelist/attack2.png",
+          "box": {
+            "x0": 198,
+            "x1": 611,
+            "y0": 341,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "combat-sheets/rogue-duelist-facing-corrections.png",
+          "file": "combat/rogue-duelist/attack3.png",
+          "box": {
+            "x0": 201,
+            "x1": 541,
+            "y0": 320,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "combat-sheets/rogue-duelist-facing-corrections.png",
+          "file": "combat/rogue-duelist/attack4.png",
+          "box": {
+            "x0": 220,
+            "x1": 503,
+            "y0": 331,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "combat-sheets/rogue-duelist-facing-corrections.png",
+          "file": "combat/rogue-duelist/hit.png",
+          "box": {
+            "x0": 208,
+            "x1": 442,
+            "y0": 325,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/rogue-duelist/stand.png",
+        "detail": "menu/rogue-duelist/detail.png",
+        "portrait": "menu/rogue-duelist/portrait.png"
+      },
+      "source": "menu-sheets/rogue-duelist.png"
+    },
+    {
+      "id": "rogue-shadow",
+      "name": "Shadow Mantle",
+      "scale": 0.8,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/rogue-shadow.png",
+          "file": "combat/rogue-shadow/idle.png",
+          "box": {
+            "x0": 202,
+            "x1": 447,
+            "y0": 305,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/rogue-shadow.png",
+          "file": "combat/rogue-shadow/guard.png",
+          "box": {
+            "x0": 202,
+            "x1": 447,
+            "y0": 305,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "menu-sheets/rogue-shadow.png",
+          "file": "combat/rogue-shadow/attack1.png",
+          "box": {
+            "x0": 213,
+            "x1": 524,
+            "y0": 306,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "menu-sheets/rogue-shadow.png",
+          "file": "combat/rogue-shadow/attack2.png",
+          "box": {
+            "x0": 217,
+            "x1": 566,
+            "y0": 340,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "menu-sheets/rogue-shadow.png",
+          "file": "combat/rogue-shadow/attack3.png",
+          "box": {
+            "x0": 197,
+            "x1": 510,
+            "y0": 320,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/rogue-shadow.png",
+          "file": "combat/rogue-shadow/attack4.png",
+          "box": {
+            "x0": 200,
+            "x1": 466,
+            "y0": 335,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "menu-sheets/rogue-shadow.png",
+          "file": "combat/rogue-shadow/hit.png",
+          "box": {
+            "x0": 185,
+            "x1": 463,
+            "y0": 295,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/rogue-shadow/stand.png",
+        "detail": "menu/rogue-shadow/detail.png",
+        "portrait": "menu/rogue-shadow/portrait.png"
+      },
+      "source": "menu-sheets/rogue-shadow.png"
+    },
+    {
+      "id": "reaver",
+      "name": "Reaver · Base",
+      "scale": 0.9714285714285714,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/reaver.png",
+          "file": "combat/reaver/idle.png",
+          "box": {
+            "x0": 221,
+            "x1": 417,
+            "y0": 260,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "combat-sheets/reaver-facing-corrections.png",
+          "file": "combat/reaver/guard.png",
+          "box": {
+            "x0": 187,
+            "x1": 566,
+            "y0": 261,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "combat-sheets/reaver-selected-attacks.png",
+          "file": "combat/reaver/attack1.png",
+          "box": {
+            "x0": 197,
+            "x1": 516,
+            "y0": 343,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "combat-sheets/reaver-selected-attacks.png",
+          "file": "combat/reaver/attack2.png",
+          "box": {
+            "x0": 146,
+            "x1": 453,
+            "y0": 240,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "combat-sheets/reaver-selected-attacks.png",
+          "file": "combat/reaver/attack3.png",
+          "box": {
+            "x0": 62,
+            "x1": 477,
+            "y0": 361,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/reaver.png",
+          "file": "combat/reaver/attack4.png",
+          "box": {
+            "x0": 171,
+            "x1": 554,
+            "y0": 314,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "combat-sheets/reaver-facing-corrections.png",
+          "file": "combat/reaver/hit.png",
+          "box": {
+            "x0": 164,
+            "x1": 504,
+            "y0": 252,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/reaver/stand.png",
+        "detail": "menu/reaver/detail.png",
+        "portrait": "menu/reaver/portrait.png"
+      },
+      "source": "menu-sheets/reaver.png"
+    },
+    {
+      "id": "reaver-vigil",
+      "name": "Ashen Vigil",
+      "scale": 0.8272506082725061,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/reaver-vigil.png",
+          "file": "combat/reaver-vigil/idle.png",
+          "box": {
+            "x0": 196,
+            "x1": 422,
+            "y0": 260,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "combat-sheets/reaver-facing-corrections.png",
+          "file": "combat/reaver-vigil/guard.png",
+          "box": {
+            "x0": 175,
+            "x1": 558,
+            "y0": 260,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "combat-sheets/reaver-vigil-selected-attacks.png",
+          "file": "combat/reaver-vigil/attack1.png",
+          "box": {
+            "x0": 151,
+            "x1": 512,
+            "y0": 350,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "combat-sheets/reaver-vigil-selected-attacks.png",
+          "file": "combat/reaver-vigil/attack2.png",
+          "box": {
+            "x0": 162,
+            "x1": 472,
+            "y0": 248,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "combat-sheets/reaver-vigil-selected-attacks.png",
+          "file": "combat/reaver-vigil/attack3.png",
+          "box": {
+            "x0": 89,
+            "x1": 498,
+            "y0": 361,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/reaver-vigil.png",
+          "file": "combat/reaver-vigil/attack4.png",
+          "box": {
+            "x0": 164,
+            "x1": 489,
+            "y0": 370,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "combat-sheets/reaver-facing-corrections.png",
+          "file": "combat/reaver-vigil/hit.png",
+          "box": {
+            "x0": 173,
+            "x1": 520,
+            "y0": 250,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/reaver-vigil/stand.png",
+        "detail": "menu/reaver-vigil/detail.png",
+        "portrait": "menu/reaver-vigil/portrait.png"
+      },
+      "source": "menu-sheets/reaver-vigil.png"
+    },
+    {
+      "id": "reaver-oathsworn",
+      "name": "Gilded Oathsworn",
+      "scale": 0.8877284595300261,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "swordRest",
+          "sourceSheet": "sheets/reaver-oathsworn.png",
+          "file": "combat/reaver-oathsworn/idle.png",
+          "box": {
+            "x0": 222,
+            "x1": 408,
+            "y0": 261,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "combat-sheets/reaver-facing-corrections.png",
+          "file": "combat/reaver-oathsworn/guard.png",
+          "box": {
+            "x0": 192,
+            "x1": 553,
+            "y0": 261,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "combat-sheets/reaver-oathsworn-selected-attacks.png",
+          "file": "combat/reaver-oathsworn/attack1.png",
+          "box": {
+            "x0": 184,
+            "x1": 509,
+            "y0": 369,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "combat-sheets/reaver-oathsworn-selected-attacks.png",
+          "file": "combat/reaver-oathsworn/attack2.png",
+          "box": {
+            "x0": 163,
+            "x1": 452,
+            "y0": 261,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "combat-sheets/reaver-oathsworn-selected-attacks.png",
+          "file": "combat/reaver-oathsworn/attack3.png",
+          "box": {
+            "x0": 125,
+            "x1": 455,
+            "y0": 382,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/reaver-oathsworn.png",
+          "file": "combat/reaver-oathsworn/attack4.png",
+          "box": {
+            "x0": 198,
+            "x1": 466,
+            "y0": 305,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "combat-sheets/reaver-facing-corrections.png",
+          "file": "combat/reaver-oathsworn/hit.png",
+          "box": {
+            "x0": 177,
+            "x1": 514,
+            "y0": 264,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/reaver-oathsworn/stand.png",
+        "detail": "menu/reaver-oathsworn/detail.png",
+        "portrait": "menu/reaver-oathsworn/portrait.png"
+      },
+      "source": "menu-sheets/reaver-oathsworn.png"
+    },
+    {
+      "id": "reaver-warden",
+      "name": "Warden Mail",
+      "scale": 0.9855072463768116,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/reaver-warden.png",
+          "file": "combat/reaver-warden/idle.png",
+          "box": {
+            "x0": 206,
+            "x1": 414,
+            "y0": 260,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "combat-sheets/reaver-facing-corrections.png",
+          "file": "combat/reaver-warden/guard.png",
+          "box": {
+            "x0": 193,
+            "x1": 546,
+            "y0": 261,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "combat-sheets/reaver-warden-selected-attacks.png",
+          "file": "combat/reaver-warden/attack1.png",
+          "box": {
+            "x0": 194,
+            "x1": 520,
+            "y0": 358,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "combat-sheets/reaver-warden-selected-attacks.png",
+          "file": "combat/reaver-warden/attack2.png",
+          "box": {
+            "x0": 162,
+            "x1": 460,
+            "y0": 269,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "combat-sheets/reaver-warden-selected-attacks.png",
+          "file": "combat/reaver-warden/attack3.png",
+          "box": {
+            "x0": 120,
+            "x1": 468,
+            "y0": 391,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/reaver-warden.png",
+          "file": "combat/reaver-warden/attack4.png",
+          "box": {
+            "x0": 187,
+            "x1": 445,
+            "y0": 322,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "combat-sheets/reaver-facing-corrections.png",
+          "file": "combat/reaver-warden/hit.png",
+          "box": {
+            "x0": 172,
+            "x1": 528,
+            "y0": 253,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/reaver-warden/stand.png",
+        "detail": "menu/reaver-warden/detail.png",
+        "portrait": "menu/reaver-warden/portrait.png"
+      },
+      "source": "menu-sheets/reaver-warden.png"
+    },
+    {
+      "id": "starseer",
+      "name": "Starseer · Base",
+      "scale": 0.8232445520581114,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/starseer.png",
+          "file": "combat/starseer/idle.png",
+          "box": {
+            "x0": 239,
+            "x1": 422,
+            "y0": 260,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/starseer.png",
+          "file": "combat/starseer/guard.png",
+          "box": {
+            "x0": 217,
+            "x1": 455,
+            "y0": 318,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "menu-sheets/starseer.png",
+          "file": "combat/starseer/attack1.png",
+          "box": {
+            "x0": 197,
+            "x1": 471,
+            "y0": 338,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "menu-sheets/starseer.png",
+          "file": "combat/starseer/attack2.png",
+          "box": {
+            "x0": 224,
+            "x1": 531,
+            "y0": 365,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "menu-sheets/starseer.png",
+          "file": "combat/starseer/attack3.png",
+          "box": {
+            "x0": 216,
+            "x1": 548,
+            "y0": 386,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/starseer.png",
+          "file": "combat/starseer/attack4.png",
+          "box": {
+            "x0": 233,
+            "x1": 549,
+            "y0": 363,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "menu-sheets/starseer.png",
+          "file": "combat/starseer/hit.png",
+          "box": {
+            "x0": 225,
+            "x1": 433,
+            "y0": 349,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/starseer/stand.png",
+        "detail": "menu/starseer/detail.png",
+        "portrait": "menu/starseer/portrait.png"
+      },
+      "source": "menu-sheets/starseer.png"
+    },
+    {
+      "id": "starseer-eclipse",
+      "name": "Eclipse Habit",
+      "scale": 0.9659090909090909,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/starseer-eclipse.png",
+          "file": "combat/starseer-eclipse/idle.png",
+          "box": {
+            "x0": 201,
+            "x1": 458,
+            "y0": 260,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/starseer-eclipse.png",
+          "file": "combat/starseer-eclipse/guard.png",
+          "box": {
+            "x0": 197,
+            "x1": 451,
+            "y0": 301,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "menu-sheets/starseer-eclipse.png",
+          "file": "combat/starseer-eclipse/attack1.png",
+          "box": {
+            "x0": 179,
+            "x1": 471,
+            "y0": 284,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "menu-sheets/starseer-eclipse.png",
+          "file": "combat/starseer-eclipse/attack2.png",
+          "box": {
+            "x0": 190,
+            "x1": 539,
+            "y0": 302,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "menu-sheets/starseer-eclipse.png",
+          "file": "combat/starseer-eclipse/attack3.png",
+          "box": {
+            "x0": 193,
+            "x1": 567,
+            "y0": 321,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/starseer-eclipse.png",
+          "file": "combat/starseer-eclipse/attack4.png",
+          "box": {
+            "x0": 139,
+            "x1": 501,
+            "y0": 335,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "menu-sheets/starseer-eclipse.png",
+          "file": "combat/starseer-eclipse/hit.png",
+          "box": {
+            "x0": 202,
+            "x1": 447,
+            "y0": 324,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/starseer-eclipse/stand.png",
+        "detail": "menu/starseer-eclipse/detail.png",
+        "portrait": "menu/starseer-eclipse/portrait.png"
+      },
+      "source": "menu-sheets/starseer-eclipse.png"
+    },
+    {
+      "id": "starseer-starlit",
+      "name": "Starlit Silks",
+      "scale": 0.8947368421052632,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/starseer-starlit.png",
+          "file": "combat/starseer-starlit/idle.png",
+          "box": {
+            "x0": 193,
+            "x1": 449,
+            "y0": 261,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/starseer-starlit.png",
+          "file": "combat/starseer-starlit/guard.png",
+          "box": {
+            "x0": 196,
+            "x1": 499,
+            "y0": 299,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "menu-sheets/starseer-starlit.png",
+          "file": "combat/starseer-starlit/attack1.png",
+          "box": {
+            "x0": 201,
+            "x1": 481,
+            "y0": 298,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "menu-sheets/starseer-starlit.png",
+          "file": "combat/starseer-starlit/attack2.png",
+          "box": {
+            "x0": 207,
+            "x1": 541,
+            "y0": 300,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "menu-sheets/starseer-starlit.png",
+          "file": "combat/starseer-starlit/attack3.png",
+          "box": {
+            "x0": 223,
+            "x1": 566,
+            "y0": 298,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/starseer-starlit.png",
+          "file": "combat/starseer-starlit/attack4.png",
+          "box": {
+            "x0": 180,
+            "x1": 508,
+            "y0": 289,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "menu-sheets/starseer-starlit.png",
+          "file": "combat/starseer-starlit/hit.png",
+          "box": {
+            "x0": 197,
+            "x1": 495,
+            "y0": 318,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/starseer-starlit/stand.png",
+        "detail": "menu/starseer-starlit/detail.png",
+        "portrait": "menu/starseer-starlit/portrait.png"
+      },
+      "source": "menu-sheets/starseer-starlit.png"
+    },
+    {
+      "id": "starseer-astral",
+      "name": "Astral Vestment",
+      "scale": 1.0179640718562875,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/starseer-astral.png",
+          "file": "combat/starseer-astral/idle.png",
+          "box": {
+            "x0": 199,
+            "x1": 453,
+            "y0": 260,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/starseer-astral.png",
+          "file": "combat/starseer-astral/guard.png",
+          "box": {
+            "x0": 207,
+            "x1": 489,
+            "y0": 299,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "menu-sheets/starseer-astral.png",
+          "file": "combat/starseer-astral/attack1.png",
+          "box": {
+            "x0": 210,
+            "x1": 453,
+            "y0": 231,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "menu-sheets/starseer-astral.png",
+          "file": "combat/starseer-astral/attack2.png",
+          "box": {
+            "x0": 199,
+            "x1": 563,
+            "y0": 325,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "menu-sheets/starseer-astral.png",
+          "file": "combat/starseer-astral/attack3.png",
+          "box": {
+            "x0": 219,
+            "x1": 596,
+            "y0": 336,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/starseer-astral.png",
+          "file": "combat/starseer-astral/attack4.png",
+          "box": {
+            "x0": 203,
+            "x1": 562,
+            "y0": 320,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "menu-sheets/starseer-astral.png",
+          "file": "combat/starseer-astral/hit.png",
+          "box": {
+            "x0": 163,
+            "x1": 480,
+            "y0": 296,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/starseer-astral/stand.png",
+        "detail": "menu/starseer-astral/detail.png",
+        "portrait": "menu/starseer-astral/portrait.png"
+      },
+      "source": "menu-sheets/starseer-astral.png"
+    },
+    {
+      "id": "herald",
+      "name": "Herald · Base",
+      "scale": 0.9214092140921409,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/herald.png",
+          "file": "combat/herald/idle.png",
+          "box": {
+            "x0": 253,
+            "x1": 386,
+            "y0": 260,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/herald.png",
+          "file": "combat/herald/guard.png",
+          "box": {
+            "x0": 195,
+            "x1": 466,
+            "y0": 293,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "menu-sheets/herald.png",
+          "file": "combat/herald/attack1.png",
+          "box": {
+            "x0": 181,
+            "x1": 468,
+            "y0": 309,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "menu-sheets/herald.png",
+          "file": "combat/herald/attack2.png",
+          "box": {
+            "x0": 188,
+            "x1": 525,
+            "y0": 316,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "menu-sheets/herald.png",
+          "file": "combat/herald/attack3.png",
+          "box": {
+            "x0": 194,
+            "x1": 556,
+            "y0": 318,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/herald.png",
+          "file": "combat/herald/attack4.png",
+          "box": {
+            "x0": 197,
+            "x1": 483,
+            "y0": 316,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "menu-sheets/herald.png",
+          "file": "combat/herald/hit.png",
+          "box": {
+            "x0": 206,
+            "x1": 418,
+            "y0": 310,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/herald/stand.png",
+        "detail": "menu/herald/detail.png",
+        "portrait": "menu/herald/portrait.png"
+      },
+      "source": "menu-sheets/herald.png"
+    },
+    {
+      "id": "herald-ossuary",
+      "name": "Ossuary Weave",
+      "scale": 0.9418282548476454,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/herald-ossuary.png",
+          "file": "combat/herald-ossuary/idle.png",
+          "box": {
+            "x0": 217,
+            "x1": 425,
+            "y0": 260,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/herald-ossuary.png",
+          "file": "combat/herald-ossuary/guard.png",
+          "box": {
+            "x0": 217,
+            "x1": 426,
+            "y0": 298,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "menu-sheets/herald-ossuary.png",
+          "file": "combat/herald-ossuary/attack1.png",
+          "box": {
+            "x0": 215,
+            "x1": 456,
+            "y0": 291,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "menu-sheets/herald-ossuary.png",
+          "file": "combat/herald-ossuary/attack2.png",
+          "box": {
+            "x0": 212,
+            "x1": 495,
+            "y0": 294,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "menu-sheets/herald-ossuary.png",
+          "file": "combat/herald-ossuary/attack3.png",
+          "box": {
+            "x0": 215,
+            "x1": 544,
+            "y0": 294,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/herald-ossuary.png",
+          "file": "combat/herald-ossuary/attack4.png",
+          "box": {
+            "x0": 210,
+            "x1": 482,
+            "y0": 294,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "menu-sheets/herald-ossuary.png",
+          "file": "combat/herald-ossuary/hit.png",
+          "box": {
+            "x0": 211,
+            "x1": 429,
+            "y0": 291,
+            "y1": 600
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/herald-ossuary/stand.png",
+        "detail": "menu/herald-ossuary/detail.png",
+        "portrait": "menu/herald-ossuary/portrait.png"
+      },
+      "source": "menu-sheets/herald-ossuary.png"
+    },
+    {
+      "id": "herald-emberhabit",
+      "name": "Emberlight Habit",
+      "scale": 0.9115281501340483,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/herald-emberhabit.png",
+          "file": "combat/herald-emberhabit/idle.png",
+          "box": {
+            "x0": 209,
+            "x1": 441,
+            "y0": 261,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/herald-emberhabit.png",
+          "file": "combat/herald-emberhabit/guard.png",
+          "box": {
+            "x0": 208,
+            "x1": 444,
+            "y0": 292,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "menu-sheets/herald-emberhabit.png",
+          "file": "combat/herald-emberhabit/attack1.png",
+          "box": {
+            "x0": 210,
+            "x1": 468,
+            "y0": 294,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "menu-sheets/herald-emberhabit.png",
+          "file": "combat/herald-emberhabit/attack2.png",
+          "box": {
+            "x0": 204,
+            "x1": 510,
+            "y0": 308,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "menu-sheets/herald-emberhabit.png",
+          "file": "combat/herald-emberhabit/attack3.png",
+          "box": {
+            "x0": 210,
+            "x1": 540,
+            "y0": 311,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/herald-emberhabit.png",
+          "file": "combat/herald-emberhabit/attack4.png",
+          "box": {
+            "x0": 204,
+            "x1": 496,
+            "y0": 315,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "menu-sheets/herald-emberhabit.png",
+          "file": "combat/herald-emberhabit/hit.png",
+          "box": {
+            "x0": 210,
+            "x1": 433,
+            "y0": 303,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/herald-emberhabit/stand.png",
+        "detail": "menu/herald-emberhabit/detail.png",
+        "portrait": "menu/herald-emberhabit/portrait.png"
+      },
+      "source": "menu-sheets/herald-emberhabit.png"
+    },
+    {
+      "id": "herald-pilgrim",
+      "name": "Pilgrim Wrap",
+      "scale": 0.821256038647343,
+      "canvas": [
+        640,
+        640
+      ],
+      "frames": [
+        {
+          "pose": "idle",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/herald-pilgrim.png",
+          "file": "combat/herald-pilgrim/idle.png",
+          "box": {
+            "x0": 221,
+            "x1": 427,
+            "y0": 261,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "guard",
+          "sourcePose": "guard",
+          "sourceSheet": "menu-sheets/herald-pilgrim.png",
+          "file": "combat/herald-pilgrim/guard.png",
+          "box": {
+            "x0": 204,
+            "x1": 426,
+            "y0": 298,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack1",
+          "sourcePose": "attack1",
+          "sourceSheet": "menu-sheets/herald-pilgrim.png",
+          "file": "combat/herald-pilgrim/attack1.png",
+          "box": {
+            "x0": 207,
+            "x1": 473,
+            "y0": 300,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack2",
+          "sourcePose": "attack2",
+          "sourceSheet": "menu-sheets/herald-pilgrim.png",
+          "file": "combat/herald-pilgrim/attack2.png",
+          "box": {
+            "x0": 220,
+            "x1": 547,
+            "y0": 312,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack3",
+          "sourcePose": "attack3",
+          "sourceSheet": "menu-sheets/herald-pilgrim.png",
+          "file": "combat/herald-pilgrim/attack3.png",
+          "box": {
+            "x0": 225,
+            "x1": 473,
+            "y0": 310,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "attack4",
+          "sourcePose": "attack4",
+          "sourceSheet": "menu-sheets/herald-pilgrim.png",
+          "file": "combat/herald-pilgrim/attack4.png",
+          "box": {
+            "x0": 226,
+            "x1": 457,
+            "y0": 312,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        },
+        {
+          "pose": "hit",
+          "sourcePose": "hit",
+          "sourceSheet": "menu-sheets/herald-pilgrim.png",
+          "file": "combat/herald-pilgrim/hit.png",
+          "box": {
+            "x0": 231,
+            "x1": 416,
+            "y0": 330,
+            "y1": 601
+          },
+          "anchor": [
+            320,
+            600
+          ]
+        }
+      ],
+      "menu": {
+        "stand": "menu/herald-pilgrim/stand.png",
+        "detail": "menu/herald-pilgrim/detail.png",
+        "portrait": "menu/herald-pilgrim/portrait.png"
+      },
+      "source": "menu-sheets/herald-pilgrim.png"
+    }
+  ]
+}

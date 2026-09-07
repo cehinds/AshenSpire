@@ -96,7 +96,7 @@ export const weapons = [
     "techniqueProfile": "bowTechnique",
     "mods": "",
     "unlock": "",
-    "blurb": "A compact bow represented by a generic armament silhouette in this slice.",
+    "blurb": "A compact ash-wood bow bound for a quick draw.",
     "dropWeight": 10,
     "artKey": "dagger",
     "poiseThreshold": 2,

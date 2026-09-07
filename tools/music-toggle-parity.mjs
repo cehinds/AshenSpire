@@ -104,8 +104,8 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'aria-state-stale', file: 'src/ui/components/menuComponents.js',
-        find: "button.setAttribute('aria-checked', String(row.checked));",
-        replace: "button.setAttribute('aria-checked', 'false');",
+        find: "'aria-checked': item.control === 'switch' ? String(!!item.checked) : null,",
+        replace: "'aria-checked': item.control === 'switch' ? 'false' : null,",
         expectRed: /switch renderer reflects checked state/,
       },
       {
@@ -198,7 +198,19 @@ check(overlay.includes("ashenspire:quicknav-mode-change")
   && quick.includes("new CustomEvent('ashenspire:quicknav-mode-change'")
   && menuModel.includes("'menuitemcheckbox'"),
   'open overlays rebuild their Quick Menu launcher mode and stateful rows keep an owned menu role');
-check(renderer.includes("button.setAttribute('aria-checked', String(row.checked));"), 'switch renderer reflects checked state');
+// This asserted the pre-kit imperative call
+// `button.setAttribute('aria-checked', String(row.checked));` by its exact text.
+// The component-kit rewrite (#605) moved the row onto kit `row()` with a
+// declarative attrs bag, so that string left the file and this check went red
+// with the BEHAVIOUR INTACT — the same way #498 Red 2 broke the check three
+// below, and for the same reason. Worse, the plant that proves this check can
+// fail searched for the same vanished string, so it reported PLANT SITE DRIFTED
+// and the gate had quietly stopped testing anything at all.
+// It now asserts the derivation rather than the spelling: a switch row's
+// aria-checked must come FROM item.checked. A value pinned to a constant is
+// exactly what the rewritten plant installs, and it goes red here.
+check(/'aria-checked':\s*item\.control === 'switch'\s*\?\s*String\(!!item\.checked\)\s*:\s*null/.test(renderer),
+  'switch renderer reflects checked state');
 check(overlay.includes('controls: {') && overlay.includes('...quickControls,'), 'overlay forwards the shared controls');
 // #498 Red 2: this asserted the pre-refactor inline call by its exact text and
 // went red when dispatchPanel replaced it, with the behaviour intact. It now

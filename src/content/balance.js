@@ -61,6 +61,10 @@ export const balance = {
     cardStock: 5,
     relicStock: 2,
     flaskStock: 2,
+    armamentStock: 3,
+    weaponArtStock: 2,
+    armamentCost: { common: [80, 100], uncommon: [120, 150], rare: [200, 240] },
+    weaponArtCost: [90, 120],
     cardCost: { common: [45, 55], uncommon: [68, 82], rare: [135, 160] },
     relicCost: { common: [140, 160], uncommon: [200, 230], rare: [270, 300] },
     flaskCost: [50, 80],
@@ -329,7 +333,7 @@ export const balance = {
       portraitScale: 0.58,
       primaryRowGapPx: 4,
       controlGapPx: 0,
-      resourceRowGapPx: 2,
+      resourceRowGapPx: 3,
       panelPadPx: 0,
       mobilePanelPadPx: 0,
       mobileControlGapPx: 1,
@@ -1034,6 +1038,10 @@ export const balance = {
     swapCost: 2,
     swapAllowancePerTurn: 1, // only consulted when swapCostKind === 'allowance'
     swapEndsTurn: false,
+    // The Armoury remains actionable during the player's combat turn. Replacing,
+    // moving, or unequipping a carried item uses the same priced combat action
+    // as switching a prepared weapon set; the engine, never the panel, commits it.
+    allowChangesInCombat: true,
 
     // ---- WHAT A SWAP COSTS: three prices he can try, one chain ------------
     // Constantine, 2026-08-08: *"switching sets should cost actions. perhaps
@@ -1135,7 +1143,8 @@ export const balance = {
     views: [
       { id: 'grid', figure: true, slots: 'flank' },
       { id: 'rack', figure: false, slots: 'list' },
-      { id: 'hybrid', figure: true, slots: 'list' },
+      { id: 'hybrid', figure: false, slots: 'list' },
+      { id: 'cards', figure: false, slots: 'list' },
     ],
     // WHICH PANE IS THE SUBJECT. One field, and it is the whole of "collapsible"
     // (#90). Constantine: *"I still want the armoury card list to be collapsable

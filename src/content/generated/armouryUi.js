@@ -90,7 +90,7 @@ export const armouryUi = {
     },
     "comparison": {
       "presentation": "tooltip",
-      "hoverDelayMs": 550,
+      "holdPreviewDelayMs": 160,
       "tooltipWidthRem": 52,
       "tooltipMaxHeightRatio": 0.8
     },
@@ -109,7 +109,7 @@ export const armouryUi = {
         "cards": "expanded"
       },
       "rack": {
-        "label": "Inventory",
+        "label": "Equipment",
         "pane": "inventory",
         "character": "folded",
         "armaments": "expanded",
@@ -117,12 +117,20 @@ export const armouryUi = {
         "cards": "folded"
       },
       "hybrid": {
-        "label": "Hybrid",
-        "pane": "both",
+        "label": "Inventory",
+        "pane": "inventory",
         "character": "folded",
         "armaments": "expanded",
-        "inventory": "folded",
+        "inventory": "expanded",
         "cards": "folded"
+      },
+      "cards": {
+        "label": "Cards",
+        "pane": "inventory",
+        "character": "folded",
+        "armaments": "folded",
+        "inventory": "folded",
+        "cards": "expanded"
       }
     },
     "responsive": {

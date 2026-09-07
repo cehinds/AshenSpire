@@ -192,7 +192,23 @@
 /* The row's tallest cell and the deepest fanned card need a real separation
    band. These measured reservations keep that band intact in the portrait
    884x1326 matrix and in the compressed short-wide composition below. */
-.combat { --action-row-drop: 6.4rem; }
+/* 6.4rem -> 7.6rem (#679). That PR grew the row from four cells to six AND gave
+   every cell a 44px tap floor, so the tallest cell got taller — but this token,
+   which the comment above calls a MEASURED reservation for exactly that cell
+   plus the deepest fanned card, was not re-measured with it. The band went
+   ~4.3px short and the hand's lowest cards came to rest ON the Draw and End Turn
+   buttons at 1200x730, every text size (hintstrip H1). The overlap is near
+   constant in px across text sizes, which is the signature of the absolute
+   44px floor rather than anything that scales with text.
+   Re-measured here rather than reverting the row: six cells and a 44px tap
+   target are both deliberate, so the reservation follows the row.
+   7.6rem, not the 7.2rem that merely clears: 7.2 leaves 2.94/3.70/5.24 px at
+   1200x730 S/M/XL, which is thinner than the band this token exists to hold and
+   is exactly how much slack #679 needed to break it. 7.6 measures 6.53/7.70/
+   10.04 px there and still costs nothing above: hintstrip H5 reports 0 px of
+   column overflow at every wide cell, so the extra reservation is absorbed by
+   the column rather than pushing the row toward the viewport edge. */
+.combat { --action-row-drop: 7.6rem; }
 .hand-area {
   height: 23rem; flex-shrink: 0; position: relative;
   display: flex; align-items: flex-end; justify-content: center;
@@ -355,6 +371,26 @@
 /* ---------- paced playback: one actor at a time (SPEC §7.4) ---------- */
 /* Attack lunge: enemies step left toward the player, the player steps right. */
 .enemy .sprite.act-attack { animation: lunge-left 280ms ease-out; }
+.enemy-pose-attack { visibility: hidden; }
+.enemy .sprite:is(.act-attack, .enemy-attack-pose) [data-attack-ready="true"] > .enemy-pose-idle { visibility: hidden; }
+.enemy .sprite:is(.act-attack, .enemy-attack-pose) [data-attack-ready="true"] > .enemy-pose-attack { visibility: visible; }
+/* Keep the idle drawing for anticipation and recovery. The attack drawing
+   covers the family's impact at 55%, using the actor's playback duration. */
+.enemy .sprite.enemy-attack-pose { transform-origin: 50% 100%; }
+.enemy .sprite.enemy-attack-pose [data-attack-ready="true"] > .enemy-pose-idle {
+  animation: enemy-idle-frames var(--enemy-attack-duration, 280ms) steps(1, end) both;
+}
+.enemy .sprite.enemy-attack-pose [data-attack-ready="true"] > .enemy-pose-attack {
+  animation: enemy-attack-frames var(--enemy-attack-duration, 280ms) steps(1, end) both;
+}
+@keyframes enemy-idle-frames {
+  0%, 80%, 100% { visibility: visible; }
+  25% { visibility: hidden; }
+}
+@keyframes enemy-attack-frames {
+  0%, 80%, 100% { visibility: hidden; }
+  25% { visibility: visible; }
+}
 .player .sprite.act-attack { animation: lunge-right 280ms ease-out; }
 .sprite.act-move { animation: act-step 260ms ease-out; }
 @keyframes lunge-left {
@@ -374,6 +410,54 @@
 }
 .reduced-motion .sprite.act-attack,
 .reduced-motion .sprite.act-move { animation: none; }
+
+/* Action families move existing sprites; they do not require new pose art.
+   Signed distances come from the actor's bounded reach and facing direction. */
+.sprite.act-attack[data-action-motion="sweep"] { animation-name: family-slash; }
+.sprite.act-attack[data-action-motion="lunge"] { animation-name: family-thrust; }
+.sprite.act-attack[data-action-motion="impact"] { animation-name: family-strike; }
+.sprite.act-attack[data-action-motion="release"] { animation-name: family-projectile; }
+.sprite.act-move[data-action-motion="cast"] { animation-name: family-spell; }
+.sprite.act-move[data-action-motion="brace"] { animation-name: family-guard; }
+.sprite.act-move[data-action-motion="sidestep"] { animation-name: family-dodge; }
+@keyframes family-slash {
+  0%, 100% { transform: none; filter: none; }
+  22% { transform: translateX(var(--action-recoil, -12px)) rotate(var(--action-windup-tilt, -8deg)); }
+  55% { transform: translate(var(--action-travel, 26px), var(--action-lift, -8px)) rotate(var(--action-tilt, 12deg)); filter: brightness(1.25); }
+}
+@keyframes family-thrust {
+  0%, 100% { transform: none; filter: none; }
+  30% { transform: translateX(var(--action-recoil, -12px)); }
+  55%, 65% { transform: translateX(var(--action-travel, 26px)); filter: brightness(1.25); }
+}
+@keyframes family-strike {
+  0%, 100% { transform: none; filter: none; }
+  30% { transform: translateY(var(--action-lift, -8px)) rotate(var(--action-windup-tilt, -8deg)); }
+  55% { transform: translateY(7px) scaleY(0.96); filter: brightness(1.4); }
+}
+@keyframes family-projectile {
+  0%, 100% { transform: none; filter: none; }
+  40% { transform: none; filter: brightness(1.25); }
+  55% { transform: translateX(var(--action-recoil, -12px)) rotate(var(--action-windup-tilt, -8deg)); }
+}
+@keyframes family-spell {
+  0%, 100% { filter: none; }
+  55% { filter: brightness(1.4) drop-shadow(0 0 10px var(--gold)); }
+}
+@keyframes family-guard {
+  0%, 100% { filter: none; }
+  35%, 70% { filter: brightness(1.2) drop-shadow(0 0 5px var(--parchment)); }
+}
+@keyframes family-dodge {
+  0%, 100% { transform: none; opacity: 1; }
+  40%, 60% { transform: translate(var(--action-recoil, -12px), var(--action-lift, -8px)); opacity: 0.65; }
+}
+.reduced-motion .sprite[data-action-motion].act-attack,
+.reduced-motion .sprite[data-action-motion].act-move { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .sprite[data-action-motion].act-attack,
+  .sprite[data-action-motion].act-move { animation: none; }
+}
 
 /* ---------- ability / relic / status fx ---------- */
 /* Hit reaction: the victim flashes AND recoils away from the blow — enemies are
@@ -502,6 +586,19 @@
 /* ---- rendered sprites: idle bob + death fade (solo + co-op boards) -------- */
 @keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 .combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; }
+.player .sprite.reaver-attack-playing { overflow: visible; }
+.combatant .sprite > img.reaver-attack-sequence {
+  width: 17rem;
+  height: 17rem;
+  max-width: none;
+  flex: 0 0 auto;
+  object-fit: contain;
+  object-position: center bottom;
+  margin-bottom: -1.1rem;
+  pointer-events: none;
+  animation: none;
+  filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
+}
 .combatant.enemy .sprite > img { animation-duration: 2.6s; }
 .combatant.enemy.context-selected .combatant-card {
   filter: drop-shadow(0 0 5px rgba(201, 162, 39, 0.72));
@@ -564,6 +661,12 @@
 }
 :root[data-composition='short-wide'] .enemy .sprite > :first-child {
   width: 4rem !important; height: 5rem !important;
+}
+:root[data-composition='short-wide'] .combatant .sprite > img.reaver-attack-sequence {
+  width: 9rem;
+  height: 9rem;
+  max-width: none;
+  margin-bottom: -0.6rem;
 }
 :root[data-composition='short-wide'] .combatant .meters { width: 8rem; }
 
@@ -654,6 +757,13 @@
      about the zone it stands in; at 390x844 it ran 9px past the left edge of
      the screen. Capped by width, height auto so it does not squash. */
   :root[data-layout='narrow'] .player-zone .combatant .sprite > img { max-width: 11rem; height: auto; }
+  :root[data-layout='narrow'] .player-zone .combatant .sprite.reaver-attack-playing { overflow: visible; }
+  :root[data-layout='narrow'] .player-zone .combatant .sprite > img.reaver-attack-sequence {
+    width: 12rem;
+    height: 12rem;
+    max-width: none;
+    margin-bottom: -0.75rem;
+  }
   :root[data-layout='narrow'] .enemy-row { padding-block: 0.6rem; gap: 0.4rem; }
   /* The complete combatant frame compacts as one component on phones. Intent,
      art, name, meters and statuses therefore keep their order and stay inside
@@ -765,3 +875,114 @@
 @keyframes bi-rise { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
 @keyframes bi-rule { from { transform: scaleX(0.2); opacity: 0; } }
 @keyframes bi-fade { to { opacity: 0; } }
+
+/* Animated class figure (src/ui/services/PoseAnimator.js).
+   The layer is a canvas-shaped box positioned so the pose art's floor line sits
+   on the bottom of the figure box; frames are placed inside it by percentage, so
+   a swap keeps the feet planted. A lunge reaches past the box on purpose, which
+   is why nothing here clips. */
+.class-sprite.animated { overflow: visible; }
+.pose-stage { position: relative; width: 100%; height: 100%; }
+.pose-layer { position: absolute; left: 50%; }
+.pose-frame { position: absolute; image-rendering: auto; pointer-events: none; }
+
+/* Six stable bottom controls; the final column always opens Potions. */
+.combat > .hand-area > .combat-action-row {
+  grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-flow: row;
+  bottom: calc(-1 * var(--action-row-drop) + max(1rem, var(--safe-bottom-local, 0px)));
+}
+.combat .combat-action-row > .wide { grid-column: auto; }
+.combat-action-row > button { min-height: max(44px, calc(44px / var(--ui-zoom, 1))); }
+.combat-action-row .spent small { font-size: 0.9em; white-space: nowrap; }
+.combat-art-choice { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.combat-art-choice > .card { align-self: center; }
+.combat-art-choice > button { min-height: max(44px, calc(44px / var(--ui-zoom, 1))); white-space: normal; }
+.combat-potion-menu .as-option { width: 100%; min-height: max(44px, calc(44px / var(--ui-zoom, 1))); }
+@media (max-width: 480px) {
+  .combat > .hand-area > .combat-action-row { inset-inline: 8px; gap: 4px; }
+  .combat-action-row > button { padding-inline: 2px; font-size: 1.1rem; }
+}
+
+/* Finite feedback uses opacity/light, preserving the hand fan and hit boxes. */
+.hand .card.card-drawn { animation: card-arrive 240ms ease-out; }
+@keyframes card-arrive { from { opacity: 0.35; filter: brightness(1.6); } to { opacity: 1; filter: none; } }
+.combat .pile.spent.pile-received { animation: pile-receive 320ms ease-out; }
+@keyframes pile-receive { 35% { box-shadow: inset 0 0 16px var(--gold); } }
+.combat .pile.spent[data-card-outcome="exhaust"] { border-bottom-color: var(--ember); }
+.combat .pile.spent[data-card-outcome="discard"] { border-bottom-color: var(--gold); }
+.reduced-motion .hand .card.card-drawn,
+.reduced-motion .combat .pile.spent.pile-received { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .hand .card.card-drawn, .combat .pile.spent.pile-received { animation: none; }
+}
+
+/* Readable cards and controls occupy separate flow rows. */
+:root .combat:not(.coop) > .hand-area {
+ height: auto; margin-bottom: 0; display: grid;
+ grid-template-areas: "hand" "actions"; grid-template-columns: minmax(0, 1fr);
+ gap: clamp(28px, 4vh, 48px); padding: 0 12px max(24px, var(--safe-bottom-local));
+}
+:root .combat:not(.coop) .hand-overlay { width: 100%; height: auto; grid-area: hand; }
+:root .combat:not(.coop) .hand {
+ height: auto; justify-content: safe center; align-items: end;
+ padding: 64px 24px 24px; gap: 0; overflow-x: auto; scrollbar-width: thin;
+}
+:root .combat:not(.coop) .hand .card {
+ --card-w: max(178px, calc(178px / var(--ui-zoom, 1))); --card-name-h: max(32px, calc(32px / var(--ui-zoom, 1))); --card-art-h: max(70px, calc(70px / var(--ui-zoom, 1)));
+ --card-band-h: max(22px, calc(22px / var(--ui-zoom, 1))); --card-row: max(22px, calc(22px / var(--ui-zoom, 1))); --card-pad: max(8px, calc(8px / var(--ui-zoom, 1))); --card-gap: max(5px, calc(5px / var(--ui-zoom, 1)));
+ margin: 0; touch-action: pan-x;
+}
+:root:not([data-composition='short-wide']) .combat:not(.coop) .hand .card .cname { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); }
+:root:not([data-composition='short-wide']) .combat:not(.coop) .hand .card .ctext { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); line-height: max(22px, calc(22px / var(--ui-zoom, 1))); }
+:root .combat:not(.coop) > .hand-area > .combat-action-row {
+ position: relative; inset: auto; grid-area: actions; width: 100%;
+  --combat-control-size: max(64px, calc(64px / var(--ui-zoom, 1)));
+ grid-template-columns: var(--combat-control-size) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr) var(--combat-control-size); align-items: center; gap: 6px;
+}
+:root .combat:not(.coop) .combat-action-row > :is(.end-turn, .energy-orb, .combat-potions) { height: var(--combat-control-size); min-height: var(--combat-control-size); box-sizing: border-box; }
+:root .combat:not(.coop) .combat-action-row > :is(.energy-orb, .combat-potions) { width: var(--combat-control-size); min-width: 0; border-radius: 50%; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+:root .combat:not(.coop) .combat-action-row > .combat-potions { font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
+:root .combat:not(.coop) .combat-action-row .spent { display: flex; flex-direction: column; justify-content: center; }
+
+/* Focus the figure, never paint the full-height combatant layout box. */
+.combat:not(.coop) .combatant { border: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; }
+.combat .combatant:focus-visible .sprite { filter: drop-shadow(0 0 3px var(--gold)); }
+:root .combat:not(.coop) .hand .card:hover,
+:root .combat:not(.coop) .hand .card.selected { transform: translateY(-28px) !important; z-index: 50 !important; }
+:root .combat:not(.coop) .hand .card .mana-cost { right: auto; left: -0.7rem; top: 2.4rem; }
+:root .combat:not(.coop) .hand .card .stamina-cost { right: auto; left: -0.7rem; top: 5rem; }
+
+@media (max-width: 480px) {
+  :root .combat:not(.coop) .hand { padding-inline: 16px; }
+  :root .combat:not(.coop) .hand .card { --card-w: calc(146.5px / var(--ui-zoom, 1)); }
+}
+
+/* Give the enemy group the right edge; stage fitting reserves each fighter's cell. */
+:root .combat:not(.coop) .field { padding-inline: 12px; gap: 12px; }
+:root .combat:not(.coop) .player-zone { width: 28%; flex: 0 0 28%; }
+:root .combat:not(.coop) .enemy-row { justify-content: flex-end; min-width: 0; gap: 16px; }
+:root .combat:not(.coop) .enemy-row > .combatant { flex: 0 1 42%; min-width: 0; }
+:root .combat:not(.coop) .combatant-card { width: max-content; }
+:root .combat:not(.coop) .combatant .sprite { flex: 0 0 auto; min-width: max-content; overflow: visible; }
+
+/* A hand card has one portrait profile; viewport changes never resize one axis alone. */
+:root .combat:not(.coop) .hand .card {
+  height: calc(var(--card-w) * 1.4); aspect-ratio: 5 / 7;
+  --card-art-h: calc(var(--card-w) * 0.30);
+  --card-name-h: calc(var(--card-w) * 0.18);
+}
+:root .combat:not(.coop) .hand .card .art { overflow: hidden; }
+:root .combat:not(.coop) .hand .card .art img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Increase the reading inside the existing five fixed HUD tracks. */
+:root .combat:not(.coop) .combat-action-row .sp-k { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.1; letter-spacing: 0; }
+:root .combat:not(.coop) .combat-action-row .sp-v { font-size: max(1.5rem, calc(17px / var(--ui-zoom, 1))); line-height: 1.1; }
+:root .combat:not(.coop) .combat-action-row > :is(.end-turn, .combat-potions) { font-size: max(1.38rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.1; }
+:root .combat:not(.coop) .combat-action-row .spent { padding-inline: 2px; font-size: max(1.1rem, calc(11px / var(--ui-zoom, 1))); line-height: 1.15; }
+:root .combat:not(.coop) .combat-action-row .spent small { font-size: inherit; }
+:root .combat:not(.coop) .combat-action-row :is(.hold-hint, .et-key) { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1; }
+
+/* Painted frames own their alpha-shaped glow; do not add the generic gold or
+   white cast halo around their parent (which also contains HUD elements). */
+.sprite.act-move[data-action-motion="cast"]:has(.painted-stage),
+.sprite.act-move[data-action-motion="brace"]:has(.painted-stage) { animation-name: none; }

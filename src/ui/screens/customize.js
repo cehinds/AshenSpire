@@ -1,3 +1,4 @@
+import { paintedPresentation } from '../paintedOutfits.js';
 // Character creation: four progressive sections backed by validated content.
 //
 // ON THE KIT. The screen is a page door (§05 without the veil): the head
@@ -14,7 +15,7 @@
 // elements and draw nothing of their own.
 
 import { LOCKED_CLASSES } from '../../content/index.js';
-import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
+import { DEFAULT_SPRITE_STYLE, PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, paintedFigure, spritesAreEnabled } from '../assets.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { focusElement } from '../input.js';
 import { mountDisclosure } from '../components/disclosure.js';
@@ -24,7 +25,7 @@ import { createRunState } from '../../model/state.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
-import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal } from '../../model/attributes.js';
+import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation } from '../../model/attributes.js';
 import { previewCompatibleHands, startingHandsRequirementFailure } from '../../model/loadout.js';
 import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
@@ -37,7 +38,7 @@ import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import {
-  primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton,
+  primaryStatCard, primaryStatCards, resourceStrip, modeChoiceButton, spriteChoiceButton,
   tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle,
   booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, relicChoiceButton,
   selectionSectionFace,
@@ -71,7 +72,7 @@ export function mountCustomize(app, {
     name: 'Forsaken',
     glyph: PORTRAIT_GLYPHS[0],
     tint: PORTRAIT_TINTS[0].id,
-    spriteStyle: 'rendered',
+    spriteStyle: DEFAULT_SPRITE_STYLE,
     keepsakeId: registries.characterCreation.keepsakes[0].id,
     startingKitId: null,
     startingHands: { leftHand: null, rightHand: null },
@@ -100,7 +101,6 @@ export function mountCustomize(app, {
     }
   }
 
-  let previewAttributes = null;
   let pointBuy = null;
   let pointBuyReturnFocus = null;
   let pointBuyKeydown = null;
@@ -118,6 +118,13 @@ export function mountCustomize(app, {
   const nameInput = el('input', { id: 'cz-name', class: 'cz-name', type: 'text', maxlength: '16', spellcheck: 'false', autocomplete: 'off', value: 'Forsaken', 'aria-labelledby': 'cz-name-label' });
   const nameRow = row({ tag: 'div', setting: true, className: 'cc-name-row', labelNode: labelStack({ label: 'Name', hint: 'Up to 16 characters.' }), trail: nameInput });
   nameRow.querySelector('.ls-label').id = 'cz-name-label';
+  const spriteGroup = el('section', { id: 'cz-sprite-group', class: 'as-stack cc-character-picker' }, [
+    el('span', { id: 'cz-styles', class: 'as-seg cz-opts' }),
+    el('div', { id: 'cz-sprite-fold', class: 'cc-sprite-fold cz-disc' }, [
+      el('section', { id: 'cz-sigil-group', class: 'cc-character-picker' }, el('div', { id: 'cz-glyphs', class: 'as-swatches cz-opts' })),
+      el('section', { id: 'cz-tint-group', class: 'cc-character-picker' }, el('div', { id: 'cz-tints', class: 'as-swatches cz-opts' })),
+    ]),
+  ]);
   const statsSide = el('div', { class: 'as-stack cc-stats-side' }, [
     nameRow,
     el('div', { id: 'cz-character-fold', class: 'cc-character-fold cz-disc' }, [
@@ -126,17 +133,13 @@ export function mountCustomize(app, {
         el('div', { id: 'cz-primary-stats', class: 'as-stack tight cc-primary-stats' }),
         el('div', { id: 'cz-derived', class: 'cc-derived', 'aria-label': 'Derived resources' }),
       ]),
-      el('section', { id: 'cz-sprite-group', class: 'as-stack cc-character-picker' }, [
-        el('span', { id: 'cz-styles', class: 'as-seg cz-opts' }),
-        el('div', { id: 'cz-sprite-fold', class: 'cc-sprite-fold cz-disc' }, [
-          el('section', { id: 'cz-sigil-group', class: 'cc-character-picker' }, el('div', { id: 'cz-glyphs', class: 'as-swatches cz-opts' })),
-          el('section', { id: 'cz-tint-group', class: 'cc-character-picker' }, el('div', { id: 'cz-tints', class: 'as-swatches cz-opts' })),
-        ]),
-      ]),
       el('section', { id: 'cz-keepsake-group', class: 'cc-character-picker' }, options([], { id: 'cz-keepsakes', class: 'cz-keepsakes' })),
     ]),
   ]);
-  const previewSide = el('div', { class: 'as-pane flush cc-preview-side' }, portrait);
+  const previewSide = el('div', { class: 'as-pane flush cc-preview-side' }, [
+    portrait,
+    el('div', { id: 'cz-preview-fold', class: 'cc-preview-fold cz-disc' }, spriteGroup),
+  ]);
   const seedInput = el('input', { id: 'seed-input', type: 'text', value: defaultSeedString });
   const seedRow = row({ tag: 'div', setting: true, className: 'seed-line', labelNode: labelStack({ label: 'Seed', hint: 'The same seed produces the same climb.' }), trail: seedInput });
 
@@ -260,8 +263,11 @@ export function mountCustomize(app, {
   }
 
   function resetAttributes() {
-    state.attributes = { ...classAttributePreset(registries, state.classId, POINTBUY) };
-    previewAttributes = { ...state.attributes };
+    // Opening Assign Points is a refund boundary, not a return to the authored
+    // class suggestion. Every stat goes back to the mode's baseline and the
+    // complete bonus pool becomes available again (SPEC 7.2). The helper is
+    // #692's; this branch computed the same thing inline before it existed.
+    state.attributes = baselineAttributeAllocation(registries, POINTBUY);
   }
 
   function resetClassChoices() {
@@ -296,36 +302,45 @@ export function mountCustomize(app, {
   }
 
   function previewRun() {
-    const attributes = state.attributeMode === POINTBUY && previewAttributes
-      ? previewAttributes
-      : classAttributePreset(registries, state.classId, state.attributeMode);
+    // Validate the live allocation independently of weapon requirements.
+    // An incomplete point-buy draft uses a valid standard preset for hints.
+    const hasCompletePointBuy = state.attributeMode === POINTBUY && state.attributes
+      && attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes).length === 0;
+    const previewMode = hasCompletePointBuy ? POINTBUY : STANDARD;
+    const attributes = hasCompletePointBuy
+      ? state.attributes
+      : classAttributePreset(registries, state.classId, previewMode);
     return createRunState({
       seed: 0, classId: state.classId, registries,
       startingKitId: state.startingKitId,
       startingHands: previewCompatibleHands(registries, state.startingHands, attributes),
       startingArmourId: state.startingArmourId,
       startingRelicId: state.startingRelicId,
-      attributeMode: state.attributeMode,
-      ...(state.attributeMode === POINTBUY && previewAttributes ? { attributes: { ...previewAttributes } } : {}),
+      attributeMode: previewMode,
+      ...(hasCompletePointBuy ? { attributes: { ...state.attributes } } : {}),
       profileMeta: meta,
     });
   }
-
   function renderCharacterPreview() {
     // The tint is the player's own choice, so the well's edge wears it.
     portrait.style.borderColor = tintCss(state.tint);
     portrait.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
     const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
-      ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, state.spriteStyle)
+      ? (state.spriteStyle === 'classic'
+        ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'classic')
+        // Framed, not bare: the chosen sigil rides the figure here as it does
+        // everywhere else a figure is drawn. `classic` draws its own sigil
+        // inside the silhouette, so it keeps going through classSprite().
+        : paintedFigure(state.classId, tintCss(state.tint), state.glyph, state.startingArmourId, 'detail'))
       : null;
     portrait.replaceChildren(sprite || state.glyph);
 
     const run = previewRun();
     const projection = statProjection(registries, run);
-    $('#cz-primary-stats').replaceChildren(...attributeCardModels(registries, run.attributes, {
+    $('#cz-primary-stats').replaceChildren(...primaryStatCards(attributeCardModels(registries, run.attributes, {
       projection,
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
-    }).map(primaryStatCard));
+    })));
     const poise = playerPoiseThresholdReceipt(registries, run);
     $('#cz-derived').replaceChildren(resourceStrip(projection.derived, poise));
     renderClassPreview();
@@ -336,7 +351,7 @@ export function mountCustomize(app, {
     const run = previewRun();
     const projection = statProjection(registries, run);
     const sprite = spritesAreEnabled()
-      ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered')
+      ? paintedPresentation(state.classId, state.startingArmourId, 'portrait')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
     const previewPane = classPreviewPane({
@@ -354,11 +369,13 @@ export function mountCustomize(app, {
       modes.appendChild(modeChoiceButton(mode, state.attributeMode === mode.id, () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
-          if (!state.attributes) resetAttributes();
+          // Entering Assign Points is an explicit fresh allocation. Return the
+          // entire authored pool instead of reopening the class-biased preset
+          // (or a previous edit) with points already spent.
+          resetAttributes();
           openPointBuy();
         } else {
           closePointBuy();
-          previewAttributes = null;
         }
         renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
       }));
@@ -387,6 +404,7 @@ export function mountCustomize(app, {
 
   function openPointBuy() {
     closePointBuy({ restoreFocus: false });
+    resetAttributes();
     pointBuyReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     customizeScreen.inert = true;
     const mode = pointbuyMode();
@@ -407,8 +425,29 @@ export function mountCustomize(app, {
     let refreshDone = () => {};
     const door = { outcome: null, restoreFocus: true, close: () => {} };
     const step = (id, delta) => {
+      // ENFORCE THE BOUND WHERE THE CHANGE HAPPENS, not only on the control.
+      // This mutated on trust: the stepper's own listener checks `allowed`,
+      // but that is a closure captured when the control was drawn, so any
+      // activation that reaches this function with a stale or bypassed control
+      // moved the stat anyway. Measured, not theorised — the creation gate's
+      // own click sequence drove the pool to **-1** (STR 15, DEX 16 out of a
+      // 60-point total), after which Done refused with "1 stat point over the
+      // pool" and a player would have had to work out for themselves which
+      // stat to put back. The row model already computes whether a stat may
+      // move; the same predicate is read here rather than restated, so the
+      // control and the mutation cannot disagree.
+      // The same predicate `rowsNow()` gives the controls, computed directly:
+      // reading it through `rowsNow()` drags in `previewRun()` on every press,
+      // and that round trip made a legitimate press do nothing at all — the
+      // pool sat at 1 with four steppers reporting themselves enabled and no
+      // click able to spend it. Cheap, and it cannot disagree with the row
+      // model while both read `mode` and `remainingPoints()`.
+      const current = state.attributes[id];
+      const allowed = delta > 0
+        ? current < mode.maximum && remainingPoints() > 0
+        : current > mode.minimum;
+      if (!allowed) return;
       state.attributes[id] += delta;
-      if (!statsProblem()) previewAttributes = { ...state.attributes };
       // The pressed stepper keeps the cursor across the redraw.
       const overlay = allocation.card;
       const focusedStep = overlay.querySelector('.se-step.gp-focus')
@@ -447,13 +486,11 @@ export function mountCustomize(app, {
         teardownPointBuy();
         if (outcome === 'reopen') return;
         if (outcome === 'done') {
-          previewAttributes = { ...state.attributes };
           renderCharacterPreview();
           if (restore) focusElement(statBox.querySelector('.se-mode.chosen'));
           return;
         }
         state.attributeMode = STANDARD;
-        previewAttributes = null;
         renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
         if (restore) {
           const standard = statBox.querySelector('.se-mode.chosen');
@@ -568,21 +605,26 @@ export function mountCustomize(app, {
       key: section.id, kind: 'pick', disclosure: 'face',
       face: { node: equipmentFaces.get(section.id).node },
       reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
-    })));
+    })), { structure: 'details' });
     refreshEquipmentFaces = () => {
       for (const section of equipmentSectionViews) equipmentFaces.get(section.id).setValue(equipmentValue(section));
     };
     const openId = equipmentSectionViews.some((section) => section.id === preferredOpenId)
       ? preferredOpenId
       : equipmentSectionViews[0]?.id;
-    if (openId) equipmentFold.open(openId);
+    if (preferredOpenId && openId) equipmentFold.open(openId);
 
     const surface = equipmentSurfaceReceipt(registries, previewRun());
-    $('#cz-equipment-receipts').innerHTML = '<section class="equip-role-receipts"><b>Starting equipment card packages</b>'
+    const receiptBody = el('div', { class: 'as-stack' });
+    receiptBody.innerHTML = '<section class="equip-role-receipts"><b>Starting equipment card packages</b>'
       + renderRoleCopies(surface)
       + '</section>'
       + renderEquipmentRequirements(surface.requirements)
       + renderPlayerPoise(surface.poise);
+    mountDisclosure($('#cz-equipment-receipts'), [{ key: 'equipment-summary', kind: 'pick', disclosure: 'face',
+      face: { label: 'Equipment summary', value: 'Cards, requirements and poise' },
+      reveal: { node: receiptBody },
+    }], { structure: 'details' });
   }
 
   function advanceEquipment(sectionId) {
@@ -604,7 +646,7 @@ export function mountCustomize(app, {
     key: row.key, kind: 'pick', disclosure: 'face',
     face: { label: row.label, value: row.value() },
     reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
+  })), { structure: 'details' });
   refreshSpriteFaces = () => {
     for (const row of spriteRows) spriteFold.setValue(row.key, row.value());
   };
@@ -612,9 +654,6 @@ export function mountCustomize(app, {
   const characterRows = [
     { key: 'primary', label: 'PRIMARY STATS', node: $('#cz-primary-group'), value: () => (
       selectedRow(state.attributeMode, visibleModes)?.label || state.attributeMode
-    ) },
-    { key: 'sprite', label: 'SPRITE', node: $('#cz-sprite-group'), value: () => (
-      selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle
     ) },
     { key: 'keepsake', label: 'KEEPSAKE', node: $('#cz-keepsake-group'), value: () => (
       selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || state.keepsakeId
@@ -624,12 +663,22 @@ export function mountCustomize(app, {
     key: row.key, kind: 'pick', disclosure: 'face',
     face: { label: row.label, value: row.value() },
     reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
+  })), { structure: 'details' });
   markUiComponent($('#cz-character-fold'), UI.characterDisclosure);
   refreshCharacterFaces = () => {
     for (const row of characterRows) characterFold.setValue(row.key, row.value());
   };
-  characterFold.open('primary');
+  const previewFold = mountDisclosure($('#cz-preview-fold'), [{
+    key: 'sprite', kind: 'pick', disclosure: 'face',
+    face: { label: 'SPRITE', value: selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle },
+    reveal: { node: $('#cz-sprite-group'), sense: 'Edit sprite.' },
+  }], { structure: 'details' });
+  const refreshPreviewFace = () => previewFold.setValue(
+    'sprite', selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle,
+  );
+  const refreshExistingCharacterFaces = refreshCharacterFaces;
+  refreshCharacterFaces = () => { refreshExistingCharacterFaces(); refreshPreviewFace(); };
+  // Character choices stay folded until requested.
 
   const equipmentValue = (section) => {
     if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
@@ -701,7 +750,7 @@ export function mountCustomize(app, {
     ]);
     markUiComponent(disclosureHost, UI.characterDisclosure);
     disclosureSpecimen.open('sample-primary');
-    const statHost = el('div', { class: 'as-stack tight cc-primary-stats cc-catalog-specimen' }, specimenAttributes.map(primaryStatCard));
+    const statHost = el('div', { class: 'as-stack tight cc-primary-stats cc-catalog-specimen' }, primaryStatCards(specimenAttributes));
     const classChoiceHost = options([], { class: 'cc-catalog-specimen', dataset: { view: 'list' } });
     let specimenClassId = state.classId;
     const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => classChoiceCard(cls, {
@@ -713,7 +762,7 @@ export function mountCustomize(app, {
     const previewRelic = registries.relics.get(state.startingRelicId);
     const classPreviewHost = classPreviewPane({
       cls: registries.classes.get(state.classId),
-      sprite: classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered'),
+      sprite: paintedPresentation(state.classId, state.startingArmourId, 'portrait'),
       resources: classResourceGrid(specimenProjection.derived.slice(0, 5)),
       relic: previewRelic,
       relicDescription: relicText(previewRelic, registries),
@@ -795,7 +844,7 @@ export function mountCustomize(app, {
       key: row.key, kind: 'pick', disclosure: 'face',
       face: { label: row.label, value: row.value() },
       reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-    })));
+    })), { structure: 'details' });
     refreshSectionFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
     fold.open('class');
   }

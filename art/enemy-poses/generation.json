@@ -1,0 +1,408 @@
+{
+  "tool": "built-in image_gen",
+  "date": "2026-09-07",
+  "enemies": [
+    {
+      "id": "wanderingSoldier",
+      "name": "Wandering Soldier",
+      "moves": [
+        "slash",
+        "guard",
+        "warcry"
+      ],
+      "ref": "assets/enemies-unity/painted_wanderingSoldier.png",
+      "old": false,
+      "prompt": "Edit identity-preserving game sprite: Wandering Soldier. Use reference as exact character design and painted style. Generate ONE new full-body ATTACK pose facing LEFT: lunging sword slash toward left, sword arm extended, shield still attached to other arm and red scarf trailing. Preserve helmet, armor, colors, shield emblem and proportions. Actual transparent background. Entire sword, shield and feet inside square canvas with 10 percent margin. No floor, no scene, no words. This is a matching attack frame for the supplied idle character. 1024x1024."
+    },
+    {
+      "id": "blightHound",
+      "name": "Blight Hound",
+      "moves": [
+        "bite",
+        "lunge"
+      ],
+      "ref": "assets/enemies-unity/painted_blightHound.png",
+      "old": false,
+      "prompt": "Generate ONE matching full-body attack sprite of this exact Blight Hound: same emaciated canine, green pustules, orange diseased flesh, thorny spine, dark skin and proportions. Pose: leap and bite toward LEFT, jaws spread, front claws extended, hind legs pushing off. Preserve supplied painted art style and character. Fully isolated on GENUINELY TRANSPARENT alpha background, not a painted checkerboard. No scenery, no floor, no text. Fit entire creature with generous margins inside square 1024x1024 canvas."
+    },
+    {
+      "id": "huskBrute",
+      "name": "Husk Brute",
+      "moves": [
+        "club",
+        "bellow",
+        "brace"
+      ],
+      "ref": "assets/sprites/enemy_huskBrute.webp",
+      "old": true,
+      "prompt": "Upgrade the old stone Husk Brute using Wandering Soldier as painted style reference. Two full-body left-facing poses: idle and overhead stone-fist smash, transparent background, consistent design and scale."
+    },
+    {
+      "id": "graveWisp",
+      "name": "Grave Wisp",
+      "moves": [
+        "curse",
+        "drain"
+      ],
+      "ref": "assets/enemies-unity/painted_graveWisp.png",
+      "old": false,
+      "prompt": "One attack sprite of the EXACT supplied Grave Wisp, preserve teal spectral skeleton, ragged black hood and robes, cyan ribcage glow, wispy smoke and painting style. New action: both skeletal hands reaching LEFT to drain life, body leaning left, compact teal curse energy coiling from hands. Full body including trailing ghost tail visible. Single character facing left, true transparent alpha background, no checkerboard drawing, no floor, no text, no environment. Generous margins on square 1024x1024."
+    },
+    {
+      "id": "wyrmAspirant",
+      "name": "Wyrm Aspirant",
+      "moves": [
+        "consecrate",
+        "halberdSweep",
+        "tailSlam",
+        "goldenGuard"
+      ],
+      "ref": "assets/enemies-unity/painted_wyrmAspirant.png",
+      "old": false,
+      "prompt": "One matching ATTACK sprite of exact referenced Wyrm Aspirant. Preserve red-scaled dragon humanoid, horned head, black bronze armor, curved blade, clawed feet, long tail and painted style. Dynamic sweeping slash LEFT with the existing curved weapon, torso twisted and tail counterbalancing. Do not change weapon or costume. Single full-body figure with entire blade and tail visible in square frame, generous margins. Genuinely transparent alpha background, no checkerboard, no floor, no text. 1024x1024."
+    },
+    {
+      "id": "fellWarden",
+      "name": "The Fell Warden",
+      "moves": [
+        "caneStrike",
+        "hammerToss",
+        "heldBlade",
+        "twinDaggers"
+      ],
+      "ref": "assets/enemies-unity/painted_fellWarden.png",
+      "old": false,
+      "prompt": "One full-body attack frame of EXACT reference Fell Warden. Keep jagged black plate, horned closed helmet, orange ember cracks, ragged dark red cloak and flaming poleaxe. Powerful two-handed diagonal poleaxe cleave toward LEFT, bent knees and rotating shoulders, cloak sweeping back. Preserve design and painted style. Single complete character, weapon blade and boots fully visible, generous empty margins. True transparent background with alpha, no painted checkerboard, no ground or text. 1024x1024."
+    },
+    {
+      "id": "lanternMoth",
+      "name": "Lantern Moth",
+      "moves": [
+        "lanternDust",
+        "wingSparks"
+      ],
+      "ref": "assets/enemies-expansion/lanternMoth.png",
+      "old": false,
+      "prompt": "Create ONE new matching ATTACK frame of exact supplied Lantern Moth. Preserve its existing anatomy, costume or shell, colors, equipment and detailed painted dark fantasy style. Action: wings beating forward as it releases a compact spray of amber lantern dust toward LEFT. Face LEFT. Full body, every wing tip and appendage visible, zoom out enough for 15% empty padding on ALL sides. Genuinely transparent alpha background, no painted checkerboard, no text or scenery. Square 1024x1024."
+    },
+    {
+      "id": "briarHermit",
+      "name": "Briar Hermit",
+      "moves": [
+        "rootShelter",
+        "briarCast",
+        "sapMend"
+      ],
+      "ref": "assets/enemies-expansion/briarHermit.png",
+      "old": false,
+      "prompt": "Create ONE matching ATTACK frame of exact supplied Briar Hermit. Preserve hooded mossy root-covered robe, wooden staff with amber light, face hidden behind hanging roots, and painted dark fantasy style. Action: hunched torso twisting, branch arm casting a thorny briar tendril toward LEFT, keeping staff in other hand. Face LEFT. Full body, staff and roots entirely visible, zoom out for 15% empty padding on all sides. Genuinely transparent alpha background, no checkerboard, no text or scenery. Square 1024x1024."
+    },
+    {
+      "id": "chainScavenger",
+      "name": "Chain Scavenger",
+      "moves": [
+        "hookCast",
+        "chainSnare",
+        "draggingBlow"
+      ],
+      "ref": "assets/enemies-expansion/chainScavenger.png",
+      "old": false,
+      "prompt": "Create ONE matching ATTACK frame of exact supplied Chain Scavenger. Preserve skeletal masked hooded scavenger, dark leather armor, ragged rusty-red cloak, rope backpack, hooked chain, and painted dark fantasy style. Action: lunging and casting its hooked chain toward LEFT, chain arcing clearly away from its body. Face LEFT, clearly new dynamic pose. Full body, entire hook and chain visible, zoom out for ample padding. Genuinely transparent alpha background, no checkerboard, no text or scenery. Square 1024x1024."
+    },
+    {
+      "id": "bellKeeper",
+      "name": "The Bell Keeper",
+      "moves": [
+        "bronzeToll",
+        "clapperSwing",
+        "muffledPrayer",
+        "crackedPeal"
+      ],
+      "ref": "assets/enemies-expansion/bellKeeper.png",
+      "old": false,
+      "prompt": "One new attack sprite of exact referenced Bell Keeper. Preserve bell helmet, bronze armor, hanging small bells, ragged pale-red cloth and huge bell-headed hammer. Pose a decisive two-handed hammer swing toward LEFT, knees bent, hammer extended away from body. Same detailed painted style and proportions. Full body and entire hammer with generous padding in square frame. Genuinely transparent alpha background, no checkerboard, floor, scene or labels. 1024x1024."
+    },
+    {
+      "id": "thornMatriarch",
+      "name": "The Thorn Matriarch",
+      "moves": [
+        "rootCrown",
+        "thornNeedles",
+        "entwiningRoots"
+      ],
+      "ref": "assets/enemies-expansion/thornMatriarch.png",
+      "old": false,
+      "prompt": "One matching attack sprite of exact Thorn Matriarch reference. Preserve pale face, crown of branches, deep crimson ragged gown, twisted root lower body and red jewel thorn staff. Action: lean toward LEFT, leftward extended clawed hand releases several sharp thorns, staff held in other hand, root skirt coiling with gesture. Same detailed dark fantasy painting. Entire character and staff visible, isolated with ample transparent margins. Real transparent alpha, no checkerboard, no floor, no scene or text. Square."
+    },
+    {
+      "id": "gildedKnight",
+      "name": "Gilded Knight",
+      "moves": [
+        "thrust",
+        "parry",
+        "rally"
+      ],
+      "ref": "assets/enemies-unity/painted_gildedKnight.png",
+      "old": false,
+      "prompt": "Matching attack frame for exact reference Gilded Knight. Preserve ornate gold plate, crown-shaped closed helmet, dark blue cape with fur collar, sun-emblem shield and longsword. Dynamic sword THRUST toward LEFT with wide fencing step, shield braced on other arm. Full body and sword tip visible with large empty border, same painted dark fantasy style. One figure only, genuine transparent alpha background, no checkerboard or scenery or labels. Square."
+    },
+    {
+      "id": "courtSurgeon",
+      "name": "Court Surgeon",
+      "moves": [
+        "scalpel",
+        "sedate",
+        "stitch"
+      ],
+      "ref": "assets/enemies-unity/painted_courtSurgeon.png",
+      "old": false,
+      "prompt": "One ATTACK pose of exact Court Surgeon reference: plague doctor beak mask, amber glowing eyes, black ragged hooded robes, belt of medical tools, curved skull-handled surgical blade and green lantern. Lunging LEFT with blade arm extended in a scalpel slash, lantern retained in other hand, robe trailing. Preserve all design and painterly rendering. Entire body and equipment within canvas, 15% transparent padding. True alpha transparency, no checkerboard drawing, no scene, no text. Square."
+    },
+    {
+      "id": "stitchedHound",
+      "name": "Stitched Hound",
+      "moves": [
+        "maul",
+        "rend"
+      ],
+      "ref": "assets/sprites/enemy_stitchedHound.webp",
+      "old": true,
+      "prompt": "Create AshenSpire production sprite sheet for Stitched Hound. Reference 1 is the old identity: squat dark stitched hound, red glowing eye, pointed ears, long snout, thin legs and raised tail. Reference 2 is only detailed dark-fantasy painted rendering style. Upgrade old low polygon art to richly detailed painted flesh/leather seams while preserving recognizable design. Two equal square cells side by side, idle LEFT and attack RIGHT. Both face LEFT. Attack: ferocious mauling leap with jaws opened toward left, paws outstretched. Full body, consistent size, generous 8% transparent margin around each figure, nothing cropped. Genuinely transparent background, no labels, no grid, no scenery. 1536x768 sheet."
+    },
+    {
+      "id": "courtMarionette",
+      "name": "Court Marionette",
+      "moves": [
+        "dart",
+        "blowdart"
+      ],
+      "ref": "assets/sprites/enemy_courtMarionette.webp",
+      "old": true,
+      "prompt": "Create AshenSpire Court Marionette idle/attack sprite pair. First reference is identity: purple wooden jointed humanoid puppet suspended by strings from a small wooden crossbar, orange glowing eyes. Second reference is painted dark fantasy style only. Reinterpret the low-poly puppet as detailed sinister royal court marionette, preserving purple color, strings, crossbar and orange eyes. Two equal square cells side by side. LEFT cell idle facing left; RIGHT cell same puppet lunging left with arm extended to throw a small dart, strings taut and legs in dynamic pose. Full figure including crossbar and strings fully contained in EACH cell, generous transparent margin, consistent scale. True transparent background, no labels, no floor, no scenery. Detailed painted game art, 1536x768."
+    },
+    {
+      "id": "livingArmor",
+      "name": "Living Armor",
+      "moves": [
+        "slam",
+        "fortify",
+        "crush",
+        "rimeCrush"
+      ],
+      "ref": "assets/enemies-unity/painted_livingArmor.png",
+      "old": false,
+      "prompt": "One matching attack frame of exact Living Armor reference. Empty steel suit haunted by green spectral smoke, horned broken helmet, dark blue tabard, battered shield with faded gold emblem and sword. Pose a powerful shield SLAM toward LEFT, shield thrust forward, sword pulled back, knees braced. Retain same design/colors/painted style. Full body and weapons, comfortably inside frame with empty padding. Genuinely transparent alpha background, no checkerboard, no scenery, no words. Square."
+    },
+    {
+      "id": "courtDuelist",
+      "name": "Duelist of the Court",
+      "moves": [
+        "enGarde",
+        "flurry",
+        "lunge",
+        "riposte"
+      ],
+      "ref": "assets/enemies-unity/painted_courtDuelist.png",
+      "old": false,
+      "prompt": "One matching ATTACK pose of exact Court Duelist reference. Preserve pale masked face, feathered tricorn hat, ornate black-red-gold doublet, slender rapier, red cape, high boots. Elegant deep fencing lunge toward LEFT, rapier arm extended, off-hand balanced back. Same painterly dark fantasy character, no new gear. Entire sword tip, hat feather and feet visible with transparent margin. Real alpha transparency, no checkerboard, no floor or text. Square."
+    },
+    {
+      "id": "stitchedKing",
+      "name": "The Stitched King",
+      "moves": [
+        "scepterBlow",
+        "graspingHands",
+        "courtlyDecree",
+        "thousandHands"
+      ],
+      "ref": "assets/enemies-unity/painted_stitchedKing.png",
+      "old": false,
+      "prompt": "One new full-body ATTACK sprite of exact Stitched King reference. Preserve huge pale stitched flesh body, small gold crown, long dark hair, bloodstained regal red cape and white cloth, heavy cleaver, chains and iron bracers. Heavy leftward cleaver chop: arm swinging cleaver across body, hunched torso, spread feet, free hand grasping forward. Same painted dark fantasy style. Entire figure and cleaver visible with ample transparent padding. Genuinely transparent alpha, no checkerboard, no floor or text. Square.",
+      "facingCorrection": "Turn head, gaze and torso left toward the attacking cleaver; preserve character design and weapon direction. Generated with built-in image_gen on 2026-09-07.",
+      "sourceBackground": "The corrected source is opaque RGB with a baked checkerboard, despite the requested alpha in the original prompt. tools/painted-poses.mjs removes the border-connected background during build.mjs extraction; the exported attack is transparent RGBA. The full-resolution source link intentionally retains the raw generator output."
+    },
+    {
+      "id": "mirrorScribe",
+      "name": "Mirror Scribe",
+      "moves": [
+        "silverScript",
+        "shardVolley",
+        "polishedWard"
+      ],
+      "ref": "assets/enemies-expansion/mirrorScribe.png",
+      "old": false,
+      "prompt": "One matching attack frame of exact Mirror Scribe reference. Preserve silver mirror mask, purple hood and flowing purple/ivory robes, ornate mirror-book and quill, silver gauntlets and floating glass shards. Action: casting a small leftward volley of mirror shards with outstretched hand, open book held close in other hand, torso leaning left. Exact painted dark fantasy style. Full body and all shards within generous transparent margins. True alpha background, no checkerboard or scenery or text. Square."
+    },
+    {
+      "id": "stitchCrab",
+      "name": "Stitch Crab",
+      "moves": [
+        "shellFold",
+        "seamShears",
+        "scuttleRush"
+      ],
+      "ref": "assets/enemies-expansion/stitchCrab.png",
+      "old": false,
+      "prompt": "One matching ATTACK sprite of exact Stitch Crab reference, stitched red-brown fleshy crustacean in rusty riveted shell armor, large serrated metal-edged claws, red eyes. Scuttling lunge LEFT with foremost claw snapping outward and other claw raised, legs spread in dynamic thrust. Preserve anatomy, stitching, shell, colors and painted style. Full creature including every leg and claw tip visible with generous empty padding. Actual transparent alpha background, no checkerboard, floor, scene or words. Square."
+    },
+    {
+      "id": "glassRegent",
+      "name": "The Glass Regent",
+      "moves": [
+        "prismGuard",
+        "crystalRapier",
+        "splinterRain",
+        "shatteredCourt"
+      ],
+      "ref": "assets/enemies-expansion/glassRegent.png",
+      "old": false,
+      "prompt": "One matching attack sprite of exact Glass Regent reference. Retain crystalline silver crown and plate armor, teal cloth and cape, translucent angular glass shield and cyan crystal rapier. Dynamic leftward rapier thrust, shield on other arm, long step and swept cape. Entire body, blade tip and cape visible, small figure with large transparent padding inside square canvas. Same dark fantasy painted rendering. True alpha transparency, no checkerboard or floor or text."
+    },
+    {
+      "id": "marrowOrganist",
+      "name": "The Marrow Organist",
+      "moves": [
+        "bonePrelude",
+        "ivoryKeys",
+        "funeralChord",
+        "quietRefrain"
+      ],
+      "ref": "assets/enemies-expansion/marrowOrganist.png",
+      "old": false,
+      "prompt": "One matching ATTACK sprite of exact Marrow Organist reference. Keep skeletal face with crown, enormous bone organ pipes on back, crimson/ivory priest robes, skull staff and long skeletal fingers. Attack: hunched leftward, claw-hand conducting a forceful funeral chord, compact pale spectral sound wisps directed LEFT from the organ pipes, staff braced. Preserve exact costume and painted art style. Full figure, all pipes and staff visible with ample empty border. Genuine alpha transparency, no checkerboard, no words or scene. Square."
+    },
+    {
+      "id": "ashRevenant",
+      "name": "Ash Revenant",
+      "moves": [
+        "cinderSlash",
+        "reform"
+      ],
+      "ref": "assets/sprites/enemy_ashRevenant.webp",
+      "old": true,
+      "prompt": "AshenSpire Ash Revenant sprite sheet. Image 1 identity reference: floating dark ash spirit, narrow tapering shroud, pale glowing eyes, wispy arms. Image 2 painted fantasy style reference only. Repaint into detailed dark fantasy ash apparition retaining that identity. Exactly two separate figures side by side, idle on left and cinder-slash attack on right. Both face LEFT. Attack extends a spectral claw leftward with a restrained arc of burning cinders, shroud twisting dynamically. Transparent background. Full silhouettes with wide margins, no scenery or lettering, keep each figure wholly inside its own half and a clear empty gutter. Same scale, lighting and palette. 1536x768."
+    },
+    {
+      "id": "emberStarvedPilgrim",
+      "name": "Ember-Starved Pilgrim",
+      "moves": [
+        "desperateClaw",
+        "wail"
+      ],
+      "ref": "assets/sprites/enemy_emberStarvedPilgrim.webp",
+      "old": true,
+      "prompt": "AshenSpire Ember-Starved Pilgrim production sprite sheet. Reference 1 identity: gaunt dark hooded pilgrim in long ragged brown-grey robe, small pale glowing eyes within black hood. Reference 2 detailed painted dark fantasy style only. Upgrade old polygon model into richly painted sprite, preserve robe silhouette and eyes. Two distinct full-body sprites separated by a wide transparent gutter: left idle, right desperate claw attack reaching LEFT with bony hands, hunched lunging torso, robe trailing. Both facing left. Consistent size and palette. True transparency, no scene, no text, no borders. Generous outer margins, absolutely no cut-off body parts. 1536x768."
+    },
+    {
+      "id": "valkyrieShade",
+      "name": "Valkyrie Shade",
+      "moves": [
+        "spiralLance",
+        "bloodFeather"
+      ],
+      "ref": "assets/enemies-unity/painted_valkyrieShade.png",
+      "old": false,
+      "prompt": "One matching attack sprite of exact Valkyrie Shade reference: pale blue spectral woman, long white hair, bronze horned wing helmet and armor, huge teal feather wings, cyan double-ended lance, trailing teal ethereal skirt. Pose a dynamic aerial lance thrust toward LEFT, wings swept back, lance held in both hands. Preserve exact character and painted style. Entire wings, spear tips and body visible with generous empty padding. True transparent alpha, no checkerboard, scenery or words. Square."
+    },
+    {
+      "id": "charredColossus",
+      "name": "Charred Colossus",
+      "moves": [
+        "smash",
+        "ashCloud",
+        "harden"
+      ],
+      "ref": "assets/sprites/enemy_charredColossus.webp",
+      "old": true,
+      "prompt": "AshenSpire Charred Colossus idle and attack sheet. Reference 1 identity: massive broad-shouldered stone humanoid, long arms, tiny head, white glowing eyes, scattered pale glowing chest cracks. Reference 2 painted dark fantasy rendering only. Upgrade to blackened volcanic stone giant with pale hot cores and charred fissures, distinct from plain Husk Brute. Exactly two separated full-body figures on transparent background: left idle facing left; right same colossus performing a heavy two-fist ground smash toward LEFT, torso bent, knees braced, sparse ash fragments. Richly detailed painterly game sprite. Consistent scale. No words, floor or scenery, wide blank gutter and outer padding, nothing cropped. 1536x768."
+    },
+    {
+      "id": "wyrmLord",
+      "name": "Wyrm Lord",
+      "moves": [
+        "consecration",
+        "halberdReign",
+        "tailSweep",
+        "goldenBulwark"
+      ],
+      "ref": "assets/enemies-unity/painted_wyrmLord.png",
+      "old": false,
+      "prompt": "One ATTACK frame of exact Wyrm Lord reference. Preserve upright black-scaled draconic lord with bronze armor, orange molten throat and chest, red-black wings, long thick tail and clawed limbs. Dynamic leftward sweeping claw strike, torso rotating, tail counterbalancing, mouth snarling, wings partially folded to fit. Keep same painting style and design, no weapon added. Full creature visible. ZOOM OUT: figure occupies central 70% of square, broad empty transparent margin on every side. True alpha transparency, no checkerboard, floor or text."
+    },
+    {
+      "id": "blightedValkyrie",
+      "name": "The Blighted Valkyrie",
+      "moves": [
+        "spiralThrust",
+        "whirlwind",
+        "rotWings",
+        "scarletDance"
+      ],
+      "ref": "assets/sprites/enemy_blightedValkyrie.webp",
+      "old": true,
+      "prompt": "Create AshenSpire Blighted Valkyrie two-pose sprite sheet. Identity reference 1: tall dark armored female winged warrior with orange visor, large pale spread wings and long upright spear. Reference 2 rendering style only: detailed dark fantasy painted sprite. Preserve dark armor, fiery visor, pale wings, spear; add restrained blight weathering. LEFT figure idle facing LEFT, RIGHT figure same warrior in a dynamic leftward spiral spear thrust, wings swept back. All wings and spear tips fully visible. Separate full body figures, wide blank gutter, generous 10% margins. Actual transparent background, no typography, no scenery. Consistent character scale and materials. 1536x768."
+    },
+    {
+      "id": "cinderMantis",
+      "name": "Cinder Mantis",
+      "moves": [
+        "scythePair",
+        "emberPounce",
+        "foldedBlades"
+      ],
+      "ref": "assets/enemies-expansion/cinderMantis.png",
+      "old": false,
+      "prompt": "One matching ATTACK sprite of exact Cinder Mantis reference. Preserve tall black volcanic insect, orange molten seams and eyes, long antennae, bladed forelimbs and folded jagged wings. Pose lunging LEFT in a double scythe slash, both forelimbs extended at distinct angles, hind legs pushing forward. Same detailed painted design. Full insect, tips and legs all visible, zoomed out with generous transparent padding. True alpha transparency, no checkerboard, scene or words. Square."
+    },
+    {
+      "id": "eclipseCantor",
+      "name": "Eclipse Cantor",
+      "moves": [
+        "darkHymn",
+        "lunarRay",
+        "fadingEcho"
+      ],
+      "ref": "assets/enemies-expansion/eclipseCantor.png",
+      "old": false,
+      "prompt": "One matching attack sprite of EXACT Eclipse Cantor reference. Preserve deep blue hooded robes, blue spectral face/hands, black solar eclipse halo edged gold, ornate lunar staff and trailing blue wisps. Attack: staff held back in one hand, other arm thrust LEFT projecting a compact blue lunar ray, body leaning forward. Same painted dark fantasy design, full body and staff visible, broad transparent padding. Genuinely transparent alpha background, no checkerboard, text or scene. Square."
+    },
+    {
+      "id": "furnaceSaint",
+      "name": "The Furnace Saint",
+      "moves": [
+        "openFurnace",
+        "censerSweep",
+        "coolingAsh"
+      ],
+      "ref": "assets/enemies-expansion/furnaceSaint.png",
+      "old": false,
+      "prompt": "One matching ATTACK sprite of exact Furnace Saint reference. Preserve armored saint, radiant orange sun halo, closed bronze helm, burning furnace grille in chest, white/red tattered vestments, flaming chain censer. Pose sweeping censer on its chain toward LEFT, wide grounded stance, opposite hand braced, robe twisting. Same painted dark fantasy design. Keep entire chain, censer, halo and feet visible with ample empty border. Genuine transparent alpha, no checkerboard, no floor or text. Square."
+    },
+    {
+      "id": "hollowAstronomer",
+      "name": "The Hollow Astronomer",
+      "moves": [
+        "starChart",
+        "orbitalShards",
+        "totalEclipse",
+        "fallingHeavens"
+      ],
+      "ref": "assets/enemies-expansion/hollowAstronomer.png",
+      "old": false,
+      "prompt": "One matching ATTACK sprite of exact Hollow Astronomer reference. Preserve star-speckled navy hooded robe, hidden black face, gold orbital armillary rings around shoulders, celestial staff and star chart. Pose casting orbital shards LEFT, one hand extended, golden small orbit rings and starlight near hand, staff in other hand, robes twisting. Same painterly style and design. Entire body and staff visible, ample transparent border. Genuine alpha transparency, no checkerboard, floor or text. Square."
+    },
+    {
+      "id": "ashheartDragon",
+      "name": "The Ashheart Dragon",
+      "moves": [
+        "obsidianClaws",
+        "tailBastion",
+        "heartRumble",
+        "ashBreath"
+      ],
+      "ref": "assets/enemies-expansion/ashheartDragon.png",
+      "old": false,
+      "prompt": "One matching ATTACK sprite of exact Ashheart Dragon reference. Preserve black obsidian-scaled upright dragon, fiery orange chest, gold armor accents, red-black wings, huge curled tail and horned head. Pose leaning forward LEFT exhaling a SHORT compact plume of ash and embers from open jaws, claws braced, wings lifted. Match painted style and design. FULL body and wings and tail and entire breath effect visible. Zoom far out, figure occupies central 65% of square image, transparent space all around. Genuine alpha transparency, no checkerboard, no scenery, no lettering."
+    }
+  ]
+}

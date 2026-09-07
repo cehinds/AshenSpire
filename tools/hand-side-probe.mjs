@@ -155,7 +155,14 @@ function csvFields(line) {
 
 // weapons.csv carries no machine-readable header row (line 1 is a comment), so
 // the column contract is positional. Named here rather than counted inline.
-const COL = { id: 0, kind: 2, hand: 3, artKey: 17 };
+// artKey WAS 17 and is 16. The third-normal-form normalisation (a437fc34)
+// removed a column ahead of it and this positional constant did not follow.
+// Nothing caught it: the tool read `poiseThreshold` — a number — as the art
+// key, built `assets/equipment/weapon_2.webp`, found no such file for ANY row,
+// and died at "every armament is missing its asset". The verdict door calls
+// that HARNESS COULD NOT RUN rather than a finding, which is right, and is why
+// the gate sat unknown instead of loud.
+const COL = { id: 0, kind: 2, hand: 3, artKey: 16 };
 
 // THE ASSET IS DERIVED THE WAY THE RUNTIME DERIVES IT — that is now this
 // function's whole job. `src/model/loadout.js:962` reads `piece.artKey ||
@@ -176,6 +183,24 @@ const COL = { id: 0, kind: 2, hand: 3, artKey: 17 };
 // omission. One whose asset is absent is named and fails the gate.
 function armaments() {
   const csv = readFileSync(resolve(ROOT, 'content/source/weapons.csv'), 'utf8');
+  // THE POSITIONAL CONTRACT IS ASSERTED, NOT ASSUMED. The comment above this
+  // function used to say the file "carries no machine-readable header row"; it
+  // does — the first non-comment line names every column — and not reading it
+  // is exactly how artKey drifted from 17 to 16 unnoticed. Checked here so a
+  // reorder throws by name instead of silently deriving a nonexistent asset for
+  // every row.
+  const header = csv.split('\n').find((l) => l.trim() && !l.startsWith('#'));
+  if (!header) throw new Error('content/source/weapons.csv has no header row — the column contract cannot be checked');
+  const names = csvFields(header);
+  for (const [key, index] of Object.entries(COL)) {
+    if (names[index] !== key) {
+      throw new Error(
+        `weapons.csv column contract broke: COL.${key} says index ${index}, but that column is `
+        + `'${names[index] ?? '(past the end)'}'. ${key} is at index ${names.indexOf(key)}. `
+        + 'Update COL rather than the file.',
+      );
+    }
+  }
   const rows = [];
   for (const line of csv.split('\n')) {
     if (!line.trim() || line.startsWith('#')) continue;
@@ -310,13 +335,10 @@ async function renderedMeasure(cdp, S, port, pieces) {
     window.__probeShow = async (wrapper, piece) => {
       host.innerHTML = '';
       let outer = host;
-      if (wrapper === 'nested') {
-        const cs = document.createElement('div');
-        cs.className = 'class-sprite';
-        cs.style.cssText = 'position:absolute;inset:0;';
-        host.appendChild(cs);
-        outer = cs;
-      }
+      // The 'nested' wrapper is gone with the arm that used it — see ARM 2b.
+      // It built a .class-sprite around the figure to model combat, a shape the
+      // app stopped producing at #590. (No backticks in this block: it is
+      // serialized into a template literal, so one would close the string.)
       const slotId = piece && piece.hand === 'left' ? 'leftHand' : 'rightHand';
       const loadout = piece ? {
         sets: { [slotId]: [piece.pieceId] },
@@ -357,8 +379,6 @@ async function renderedMeasure(cdp, S, port, pieces) {
   const witness = pieces.find((p) => p.hand === 'right') || pieces[0];
   await show('bare', witness);
   const witnessBare = await shoot();
-  await show('nested', witness);
-  const witnessNested = await shoot();
   // REPEATABILITY CONTROL. A difference between two SHAPES means nothing until
   // the same shape twice means nothing — otherwise noise in the harness is read
   // as a finding about the page. Measured before the shapes are compared.
@@ -370,7 +390,7 @@ async function renderedMeasure(cdp, S, port, pieces) {
     await show('bare', p);
     rows.push({ ...p, piece: await shoot() });
   }
-  return { bodyBare, witnessBare, witnessNested, witnessBareAgain, witness, rows };
+  return { bodyBare, witnessBare, witnessBareAgain, witness, rows };
 }
 
 if (process.argv.includes('--selftest')) {
@@ -378,11 +398,12 @@ if (process.argv.includes('--selftest')) {
   // `assets` is NOT in doorplant's COPY_SET and this probe reads nothing else:
   // without it every plant would fail to load an image and go red for a reason
   // that has nothing to do with handedness — a catch that proves nothing.
-  const selftestCode = await doorSelftest({
-    tool: 'hand-side-probe.mjs',
-    extraCopy: ['assets'],
-    env: process.env.CHROME ? { CHROME: process.env.CHROME } : {},
-    plants: [
+  // THE COUNT IS DERIVED, never typed. It used to be the literal `5/5` in the
+  // line below, and deleting P2 left that literal claiming a fifth mutation had
+  // gone red when only four ran — coverage asserted for a plant that no longer
+  // exists, which is the same vacuous green this corpus is here to refuse.
+  // Reading `plants.length` means the next deletion cannot reintroduce it.
+  const plants = [
       {
         // DIRECTION 1 — the correction is gone. This is the shipped defect.
         name: 'P1 the mirror is removed — the reported bug, restored',
@@ -391,18 +412,12 @@ if (process.argv.includes('--selftest')) {
         replace: '.equipped-figure { transform: none; }',
         expectRed: /WRONG straightSword@right.*drawn viewer-right/,
       },
-      {
-        // DIRECTION 2 — mirrored the WRONG WAY: applied TWICE on the nested
-        // shape, which cancels to identity on the combat board while the
-        // Armoury still looks fixed. This is the plant a per-selector rule
-        // written without the guard would walk straight into, and NO per-piece
-        // row goes red for it — only the nesting check can see it.
-        name: 'P2 the one-mirror guard is removed — combat double-mirrors back to the bug',
-        file: 'styles/ui.css',
-        find: '.class-sprite .equipped-figure { transform: none; }',
-        replace: '/* guard removed */',
-        expectRed: /WRONG ONE MIRROR PER FIGURE/,
-      },
+      // P2 IS DELETED, not renumbered, so the gap is visible. It planted the
+      // removal of `.class-sprite .equipped-figure { transform: none; }` and
+      // expected the nesting arm to go red. Both the rule and that arm are gone
+      // — see ARM 2b for why — so this plant could only ever have reported
+      // PLANT SITE DRIFTED. A plant guarding a check that no longer exists is
+      // the same defect the corpus is meant to catch.
       {
         name: 'P3 a slot correction is removed — either-hand pieces collapse to their authored socket',
         file: 'src/model/loadout.js',
@@ -424,10 +439,15 @@ if (process.argv.includes('--selftest')) {
         replace: "    const hands = [authoredHand];",
         expectRed: /POPULATION WRONG.*hand=either.*both left and right/,
       },
-    ],
+  ];
+  const selftestCode = await doorSelftest({
+    tool: 'hand-side-probe.mjs',
+    extraCopy: ['assets'],
+    env: process.env.CHROME ? { CHROME: process.env.CHROME } : {},
+    plants,
   });
   if (selftestCode === 0) {
-    console.log('hand-side-probe --selftest: OK — 5/5 known-bads observed red');
+    console.log(`hand-side-probe --selftest: OK — ${plants.length}/${plants.length} known-bads observed red`);
   }
   process.exit(selftestCode);
 }
@@ -503,7 +523,7 @@ async function main() {
     console.log(`  This is diagnostic only: actual placement belongs to the slot and is measured below.`);
 
     // ---- ARM 2 · what the player receives (THE GATE) ----
-    if (!rendered.bodyBare || !rendered.witnessBare || !rendered.witnessNested) throw new Error('the rendered figure produced no ink — the harness did not draw');
+    if (!rendered.bodyBare || !rendered.witnessBare) throw new Error('the rendered figure produced no ink — the harness did not draw');
     const rbw = rendered.bodyBare.max - rendered.bodyBare.min;
     const band2 = rbw * NEUTRAL_BAND;
     console.log(`\nARM 2 · the RENDERED figure, through styles/ui.css (THE GATE)`);
@@ -529,19 +549,35 @@ async function main() {
       bad.push({ id: m.id, reason: `declared hand=${m.declaredHand} permits slot=${m.hand} but ${m.url} does not exist` });
     }
 
-    // ---- ARM 2b · EXACTLY ONE MIRROR ----
-    // The Armoury mounts `.equipped-figure` bare; combat nests it inside
-    // `.class-sprite`. A rule that mirrors both selectors cancels to identity on
-    // the nested shape, which is the combat board — so the two must agree.
+    // ---- ARM 2b · REPEATABILITY ----
+    // THE NESTING ARM IS GONE, and this is the reason rather than a silent
+    // deletion. It compared `.equipped-figure` mounted bare against the same
+    // figure nested inside `.class-sprite`, on the stated premise that "the
+    // Armoury mounts it bare; combat nests it inside `.class-sprite`". That
+    // stopped being true at #590, when the class figures became paintings:
+    // `equippedFigure()` has ONE call site left in the whole app — the Armoury
+    // preview, `screens/equipment.js:423` — and it mounts into `.armoury-figure`
+    // as `fig || playerSprite(...)`, which is either/or, never nested.
+    // `combat.js` does not mention it at all. `assets.js` says so outright:
+    // "it is just no longer the combat figure".
+    //
+    // So the nested composition this arm measured does not occur. It kept
+    // passing only because `.class-sprite` itself carried the mirror, which
+    // happened to feed the probe's synthetic wrapper; #618 moved that mirror
+    // onto `.class-sprite > .facing` and the wrapper stopped inheriting it. The
+    // arm then read 184px and looked like a rendering regression. It was not:
+    // the model had been wrong since #590 and #618 merely stopped satisfying it.
+    //
+    // Re-pointing it at `.armoury-figure` was considered and refused: that
+    // element carries no transform, so the comparison would be a shape against
+    // itself — a green that measures nothing, which is the one thing the verdict
+    // door in this repo exists to refuse.
+    //
+    // The repeatability control stays. It is what keeps the 50 real hand-side
+    // placements below honest about their own noise floor.
     const dRepeat = Math.abs(rendered.witnessBareAgain.centroid - rendered.witnessBare.centroid);
     console.log(`  repeatability control — the SAME shape measured twice differs by ${dRepeat.toFixed(2)}px`);
-    if (dRepeat > 1.0) bad.push({ id: 'repeatability', reason: `the same shape measured twice differs by ${dRepeat.toFixed(2)}px — this harness is too noisy for its own nesting verdict to mean anything` });
-    const dNest = Math.abs(rendered.witnessNested.centroid - rendered.witnessBare.centroid);
-    const nestOk = dNest <= 1.0;
-    console.log(`\n  ${nestOk ? 'ok  ' : 'WRONG'} ONE MIRROR PER FIGURE — bare vs nested differ by ${dNest.toFixed(2)}px, `
-      + `measured on ${rendered.witness.id} (an ARMAMENT: the body is symmetric and cannot see this)`);
-    console.log(`        (bare = the Armoury's shape, nested = combat's; a double mirror shows up here as a mismatch)`);
-    if (!nestOk) bad.push({ id: 'nesting', reason: 'bare and nested figures do not render alike' });
+    if (dRepeat > 1.0) bad.push({ id: 'repeatability', reason: `the same shape measured twice differs by ${dRepeat.toFixed(2)}px — this harness is too noisy for its own placement verdicts to mean anything` });
 
     if (bad.length) {
       console.log(`\nhand-side-probe: RED — ${bad.length} finding(s).`);
@@ -556,16 +592,18 @@ async function main() {
       // FILE holds, so the count cannot quietly shrink to the size of whatever
       // this run happened to manage to measure.
       console.log(`\nhand-side-probe: OK — ${rows.length} of ${population.length} legal armament-slot placement checks ran.`);
-      console.log(`  Every measured placement reaches the player's correct side with exactly one global mirror.`);
+      console.log(`  Every measured placement reaches the player's correct side, as the Armoury draws it.`);
       console.log(`  Every hand=either row is measured in both slots; each asset is derived`);
       console.log(`  as artKey || id — the runtime's own rule (src/model/loadout.js:962).`);
     }
     console.log('\nBOUNDARY — what a green here does NOT mean:');
     console.log('  · nothing about a future slot-neutral ART protocol. The current assets keep');
     console.log('    type-default sockets; a re-render must delete the CSS correction in the same act.');
-    console.log('  · nothing about the three SCREENS individually. It renders the two CONTAINER');
-    console.log('    shapes every view uses, not the views; a screen that stopped using them is');
-    console.log('    invisible here.');
+    console.log('  · ONE SHAPE, NOT THREE SCREENS. It renders `.equipped-figure` as the ARMOURY');
+    console.log('    mounts it — the only place the app still builds one (screens/equipment.js);');
+    console.log('    #590 made the class figures paintings and combat stopped using it. So this');
+    console.log('    says NOTHING about the combat board, whose figure is a painted pose frame on');
+    console.log('    a different path entirely, and nothing about any screen individually.');
     console.log('  · nothing about whether the body faces the viewer — that is read from the');
     console.log('    producers\' own camera ("camera looks from -Y; front is -Y") and asserted, not measured.');
     console.log('  · a `centre` verdict is neither pass nor fail: it is a piece whose mass sits inside');

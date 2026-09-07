@@ -7,17 +7,15 @@ import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
 const VALID_KINDS = Object.freeze(['load', 'new']);
 
-export function saveSlotSelectionModel(slots, { kind, selectedSlot = null } = {}) {
+export function saveSlotSelectionModel(slots, { kind, selectedSlot = null, allowEmpty = true } = {}) {
   if (!VALID_KINDS.includes(kind)) throw new Error(`Unknown save-slot selection kind: ${kind}`);
 
   const records = (Array.isArray(slots) ? slots : []).map(({ slot, summary }) => ({
     slot: Number(slot),
     hasSave: Boolean(summary),
-    // Every row is selectable in both doors (Constantine, 2026-09-04): an
-    // empty Load row leads to "start a new game here", an occupied New Game
-    // row to "overwrite?". The decision door says which; this model only
-    // names the command.
-    selectable: true,
+    // Title can offer a new climb in an empty slot; an in-run Load
+    // selector has no such destination and excludes those slots.
+    selectable: kind === 'new' || allowEmpty || Boolean(summary),
   }));
   const requestedSlot = Number(selectedSlot);
   const requested = records.find((record) => record.slot === requestedSlot && record.selectable) || null;

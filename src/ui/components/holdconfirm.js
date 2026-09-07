@@ -144,11 +144,16 @@ export function beatCue(phase, id, form) {
 }
 
 /**
- * armHold(btn, { ms, onConfirm, onTap?, id }) -> disarm() (with .refresh())
+ * armHold(btn, { ms, onConfirm, onTap?, id, onHoldStart?, onHoldEnd? })
+ *   -> disarm() (with .refresh())
  *
  * `ms` may be a NUMBER or a FUNCTION returning one, read at the moment the
  * finger lands. The function form remains available to rows whose state can
  * change while a screen is mounted; End Turn itself is deliberately constant.
+ *
+ * `onHoldStart` and `onHoldEnd` expose this one gesture's lifecycle to temporary
+ * presentation such as a sustained-hold preview. The end hook runs on every
+ * exit — early release, movement, cancellation, completion, Escape or disarm.
  *
  * `ms <= 0` is the "off" position of the dial: one completed press commits.
  * It is not a hold with a zero timer, and it does not depend on a trailing
@@ -157,6 +162,7 @@ export function beatCue(phase, id, form) {
 export function armHold(btn, {
   ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
   feedbackHosts = null, pointerOnly = false, tapOnEarlyRelease = false,
+  onHoldStart = null, onHoldEnd = null,
 }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
 
@@ -177,6 +183,7 @@ export function armHold(btn, {
   // under a thumb that was trying to scroll) and never a commit. Both press
   // forms set it; onClick consumes it; a press resets it.
   let movedThisPress = false;
+  let holdLifecycleActive = false;
 
   const paint = (p) => {
     for (const target of [btn, ...activeFeedback]) {
@@ -262,6 +269,10 @@ export function armHold(btn, {
     if (btn.dataset.hold) btn.dataset.hold = state;
     paint(0);
     clearFeedback();
+    if (holdLifecycleActive) {
+      holdLifecycleActive = false;
+      if (onHoldEnd) onHoldEnd(state);
+    }
   }
 
   function begin(origin, track) {
@@ -330,6 +341,8 @@ export function armHold(btn, {
     heldThisPress = origin.source === 'pointer';
     armed = true;
     btn.dataset.hold = 'holding';
+    holdLifecycleActive = true;
+    if (onHoldStart) onHoldStart({ duration: ms0, origin });
     const t0 = performance.now();
     const x0 = origin.x;
     const y0 = origin.y;
@@ -923,6 +936,16 @@ export function holdMs(settings, holdConfirm) {
  *   question     confirm form only — the sentence above the buttons.
  *   detailHtml   confirm form only — what the action actually does.
  *   confirmLabel confirm form only.
+ *   hintHost     where the HOLD word goes, when the armed control is a FIXED
+ *                box that cannot hold it. `armHold` has always taken this; the
+ *                door dropped it, so a shop card got the hint appended INSIDE
+ *                the kit's card — which clips its own overflow, and the word
+ *                came out as half a line of letters (photographed at 390x844).
+ *                A screen naming a host is not naming a form; the hint's
+ *                placement is the caller's geometry, and only the caller knows
+ *                which of its elements is the one with room.
+ *   hintBefore   the child of that host to insert the hint before (default:
+ *                appended last).
  *
  * EVERY ARMED CONTROL MARKS ITSELF, including the ones that owe no beat:
  * `data-beat="none|hold|confirm"` and `data-beat-action="<id>"`. That is not
@@ -934,7 +957,7 @@ export function holdMs(settings, holdConfirm) {
 export function beatArmer(meta, registries) {
   const dialMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
 
-  return function arm(el, actionId, { ctx = {}, onConfirm, question, detailHtml, confirmLabel } = {}) {
+  return function arm(el, actionId, { ctx = {}, onConfirm, question, detailHtml, confirmLabel, hintHost = null, hintBefore = null } = {}) {
     // `ctxOf` so a row whose stakes move with the game state (End Turn) is
     // evaluated at the moment the finger lands, not at the moment the screen
     // mounted. A screen passes a function; a static action passes an object.
@@ -976,6 +999,8 @@ export function beatArmer(meta, registries) {
       onTap: review,
       tapOnEarlyRelease: true,
       id: actionId,
+      hintHost,
+      hintBefore,
     });
     // THE OTHER HALF OF "ALL INSTANCES" (S7 wide), and it is a REGISTRATION,
     // never a list. Some actions are reached without the focus cursor at all —

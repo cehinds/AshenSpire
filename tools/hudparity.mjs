@@ -285,6 +285,7 @@ const READ = `(() => {
       width: b.width, height: b.height, center: (b.left + b.right) / 2,
       cinders: el.querySelectorAll('.hud-cinders').length,
       floor: el.querySelectorAll('.hud-floor').length,
+      className: el.querySelectorAll('.hud-class').length,
     } : null;
   };
   const metadataField = (selector) => {
@@ -314,6 +315,7 @@ const READ = `(() => {
       const b = el.getBoundingClientRect();
       return { id: el.id || null, left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height };
     }),
+    identityMeta: receiptBox('.topbar .hud-top .hud-identity'),
     centerMeta: receiptBox('.topbar .hud-top .hud-center'),
     runMeta: receiptBox('.topbar .hud-top .hud-run-meta'),
     runMetaFields: {
@@ -325,6 +327,7 @@ const READ = `(() => {
     receiptTotals: {
       cinders: document.querySelectorAll('.topbar .hud-top .hud-cinders').length,
       floor: document.querySelectorAll('.topbar .hud-top .hud-floor').length,
+      className: document.querySelectorAll('.topbar .hud-top .hud-class').length,
     },
     // THE SECOND RENDERER'S CENSUS. Scoped to .topbar because that is where the
     // duplicate lived; the under-model strips are named in the boundary.
@@ -396,17 +399,23 @@ function p8ReceiptFindings(read) {
   const findings = [];
   const center = read.centerMeta;
   const right = read.runMeta;
-  const totals = read.receiptTotals || { cinders: 0, floor: 0 };
+  const left = read.identityMeta;
+  const totals = read.receiptTotals || { cinders: 0, floor: 0, className: 0 };
   if (totals.cinders !== 1) findings.push(`cinders-count=${totals.cinders}`);
-  else if (!center || center.cinders !== 1 || center.floor !== 0 || !right || right.cinders !== 0) {
+  else if (!center || center.cinders !== 1 || center.floor !== 0 || center.className !== 0
+      || !right || right.cinders !== 0 || !left || left.cinders !== 0) {
     findings.push(`cinders-placement center=${center ? `${center.cinders}/${center.floor}` : 'MISSING'} right=${right ? right.cinders : 'MISSING'}`);
   }
   if (center && Math.abs(center.center - read.vp.w / 2) > 1) {
     findings.push(`cinders-centre=${center.center.toFixed(2)} viewport=${(read.vp.w / 2).toFixed(2)}`);
   }
   if (totals.floor !== 1) findings.push(`floor-count=${totals.floor}`);
-  else if (!right || right.floor !== 1 || right.cinders !== 0 || !center || center.floor !== 0) {
-    findings.push(`floor-placement center=${center ? center.floor : 'MISSING'} right=${right ? `${right.floor}/${right.cinders}` : 'MISSING'}`);
+  else if (!right || right.floor !== 1 || center?.floor !== 0 || left?.floor !== 0) {
+    findings.push(`floor-placement left=${left?.floor ?? 'MISSING'} center=${center?.floor ?? 'MISSING'} right=${right?.floor ?? 'MISSING'}`);
+  }
+  if (totals.className !== 1) findings.push(`class-count=${totals.className}`);
+  else if (!left || left.className !== 1 || center?.className !== 0 || right?.className !== 0) {
+    findings.push(`class-placement left=${left?.className ?? 'MISSING'} center=${center?.className ?? 'MISSING'} right=${right?.className ?? 'MISSING'}`);
   }
   return findings;
 }
@@ -423,8 +432,8 @@ function judgeCell(cell, mapR, comR, refTable) {
     return;
   }
 
-  // P8 SHARED TOP-ROW COMPOSITION — Cinders alone owns the true centre; Floor
-  // owns the right metadata, and visible resource cards must not overlap it.
+  // P8 SHARED TOP-ROW COMPOSITION — Class left, Cinders in the true centre,
+  // Act/Floor right; visible resource cards must not overlap the centre.
   // Shared-shell width authority belongs to hud-potion-followup's config and
   // applied-geometry receipts; duplicating that verdict here made the gates
   // disagree after the approved 82-percent design replaced the old host cap.
@@ -432,23 +441,16 @@ function judgeCell(cell, mapR, comR, refTable) {
     const receiptFindings = p8ReceiptFindings(read);
     const centreMiss = read.centerMeta ? Math.abs(read.centerMeta.center - read.vp.w / 2) : Infinity;
     if (receiptFindings.length) {
-      fail(`FINDING P8/top-row ${cell} ${screen} receipts=${JSON.stringify(receiptFindings)} center=${JSON.stringify(read.centerMeta)} right=${JSON.stringify(read.runMeta)} — exactly one Cinders receipt must be centred and exactly one Floor receipt must live in right metadata.`);
+      fail(`FINDING P8/top-row ${cell} ${screen} receipts=${JSON.stringify(receiptFindings)} left=${JSON.stringify(read.identityMeta)} center=${JSON.stringify(read.centerMeta)} right=${JSON.stringify(read.runMeta)} — exactly one Class must be left, Cinders centred, and Floor right.`);
     } else {
-      ok(`P8/top-row ${cell} ${screen} — one centred Cinders (miss ${centreMiss.toFixed(2)} px), one right-metadata Floor`);
+      ok(`P8/top-row ${cell} ${screen} — Class left, Cinders centred (miss ${centreMiss.toFixed(2)} px), Floor right`);
     }
     const fields = read.runMetaFields || {};
-    const priority = ['act', 'floor', 'build', 'source'];
-    const priorityFindings = [];
-    for (let i = 0; i < priority.length; i++) {
-      const name = priority[i];
-      if (!fields[name]?.visible && priority.slice(i + 1).some((lower) => fields[lower]?.visible)) {
-        priorityFindings.push(`${name}-hidden-before-${priority.slice(i + 1).find((lower) => fields[lower]?.visible)}`);
-      }
-    }
-    if (!fields.act?.visible || !fields.floor?.visible || priorityFindings.length) {
-      fail(`FINDING P8/metadata-priority ${cell} ${screen} fields=${JSON.stringify(fields)} priority=${JSON.stringify(priorityFindings)} — Act and Floor stay visible first; Build, Seed, then Source yield in that order.`);
+    const visibleMeta = Object.entries(fields).filter(([, field]) => field?.visible).map(([name]) => name);
+    if (JSON.stringify(visibleMeta) !== JSON.stringify(['act', 'floor'])) {
+      fail(`FINDING P8/metadata-priority ${cell} ${screen} fields=${JSON.stringify(fields)} visible=${JSON.stringify(visibleMeta)} — Act and Floor must be visible; Build and Source must remain absent.`);
     } else {
-      ok(`P8/metadata-priority ${cell} ${screen} — Act and Floor visible; optional metadata yields Build, Seed, Source in priority order`);
+      ok(`P8/metadata-priority ${cell} ${screen} — Act and Floor visible; Build and Source absent`);
     }
     const frameOverlaps = read.centerMeta ? read.bars.filter((bar) => bar.frame && bar.frame.painted
       && bar.frame.right > read.centerMeta.left + PX_TOL && bar.frame.left < read.centerMeta.right - PX_TOL
@@ -890,9 +892,10 @@ function closeServer(s) {
 function p8Selftest() {
   const clean = () => ({
     vp: { w: 1000, h: 700 },
-    centerMeta: { left: 480, right: 520, top: 10, bottom: 40, width: 40, height: 30, center: 500, cinders: 1, floor: 0 },
-    runMeta: { left: 760, right: 990, top: 10, bottom: 40, width: 230, height: 30, center: 875, cinders: 0, floor: 1 },
-    receiptTotals: { cinders: 1, floor: 1 },
+    identityMeta: { left: 10, right: 160, top: 10, bottom: 40, width: 150, height: 30, center: 85, cinders: 0, floor: 0, className: 1 },
+    centerMeta: { left: 480, right: 520, top: 10, bottom: 40, width: 40, height: 30, center: 500, cinders: 1, floor: 0, className: 0 },
+    runMeta: { left: 760, right: 990, top: 10, bottom: 40, width: 230, height: 30, center: 875, cinders: 0, floor: 1, className: 0 },
+    receiptTotals: { cinders: 1, floor: 1, className: 1 },
   });
   const plants = [
     ['missing Cinders', 'cinders-count=0', (r) => { r.centerMeta.cinders = 0; r.receiptTotals.cinders = 0; }],
@@ -901,6 +904,8 @@ function p8Selftest() {
     ['Cinders container moved off centre', 'cinders-centre', (r) => { r.centerMeta.center = 540; }],
     ['missing Floor', 'floor-count=0', (r) => { r.runMeta.floor = 0; r.receiptTotals.floor = 0; }],
     ['Floor moved into the centre', 'floor-placement', (r) => { r.runMeta.floor = 0; r.centerMeta.floor = 1; }],
+    ['missing Class', 'class-count=0', (r) => { r.identityMeta.className = 0; r.receiptTotals.className = 0; }],
+    ['Class moved into the centre', 'class-placement', (r) => { r.identityMeta.className = 0; r.centerMeta.className = 1; }],
   ];
   let failed = 0;
   const cleanFindings = p8ReceiptFindings(clean());
@@ -969,9 +974,12 @@ async function selftest() {
       expectRed: /FINDING P8\/top-row .*cinders-count=2/,
     },
     {
-      // The centre and the right metadata are separate builders now, so this
-      // needs one edit in each: the centre loses the class, the act field
-      // gains it.
+      // The centre and the right metadata are separate builders, so this needs
+      // one edit in each: the centre loses the class, something in the trail
+      // gains it. Two edits and not one, because a single edit would leave
+      // `cinders-count=0` and fire the WRONG finding — the rule under test here
+      // is placement with the count intact.
+      //
       name: 'Cinders moves from the centre into right metadata',
       edits: [{
         file: 'src/ui/components/hudmeta.js',
@@ -979,30 +987,43 @@ async function selftest() {
         replace: "el('span', { class: 'as-chip' }",
       }, {
         file: 'src/ui/components/hudmeta.js',
-        find: "progressChip('hud-act', uiComponentAttrs(UI.metadataField, 'act'), act)",
-        replace: "progressChip('hud-act hud-cinders', uiComponentAttrs(UI.metadataField, 'act'), act)",
+        find: "class: 'hud-run-meta as-statstrip trail', 'aria-label': 'Run position'",
+        replace: "class: 'hud-run-meta as-statstrip trail hud-cinders', 'aria-label': 'Run position'",
       }],
       expectRed: /FINDING P8\/top-row .*cinders-placement/,
     },
     {
-      name: 'the shared HUD drops Floor',
-      file: 'src/ui/components/hudmeta.js',
-      find: "progressChip('hud-floor', uiComponentAttrs(UI.metadataField, 'floor'), floor)",
-      replace: "progressChip('floor-removed-by-plant', uiComponentAttrs(UI.metadataField, 'floor'), floor)",
-      expectRed: /FINDING P8\/top-row .*floor-count=0/,
-    },
-    {
-      name: 'Floor moves from right metadata into the centre',
+      name: 'the Floor receipt moves into the centred Cinders track',
       edits: [{
         file: 'src/ui/components/hudmeta.js',
-        find: "progressChip('hud-floor', uiComponentAttrs(UI.metadataField, 'floor'), floor)",
-        replace: "progressChip('floor-moved-by-plant', uiComponentAttrs(UI.metadataField, 'floor'), floor)",
+        find: 'class: `as-chip hud-${model.variant}`',
+        replace: 'class: `as-chip metadata-${model.variant}`',
       }, {
         file: 'src/ui/components/hudmeta.js',
         find: "el('span', { class: 'ck', text: 'Cinders' })",
         replace: "el('span', { class: 'ck hud-floor', text: 'Cinders' })",
       }],
       expectRed: /FINDING P8\/top-row .*floor-placement/,
+    },
+    {
+      name: 'the shared HUD drops Class',
+      file: 'src/ui/components/hudmeta.js',
+      find: "class: 'as-chip hud-class'",
+      replace: "class: 'as-chip class-removed-by-plant'",
+      expectRed: /FINDING P8\/top-row .*class-count=0/,
+    },
+    {
+      name: 'Class moves from the left into the centred Cinders track',
+      edits: [{
+        file: 'src/ui/components/hudmeta.js',
+        find: "class: 'as-chip hud-class'",
+        replace: "class: 'as-chip'",
+      }, {
+        file: 'src/ui/components/hudmeta.js',
+        find: "el('span', { class: 'ck', text: 'Cinders' })",
+        replace: "el('span', { class: 'ck hud-class', text: 'Cinders' })",
+      }],
+      expectRed: /FINDING P8\/top-row .*class-placement/,
     },
     {
       // The centre can remain mathematically exact while visible resource ink

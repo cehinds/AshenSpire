@@ -1,23 +1,22 @@
 // Reusable Map/Combat HUD Views. Structure is rendered from immutable
 // Presentation Models; this module owns DOM, not domain projection or commands.
 //
-// THE HUD IS A KIT BAND (styles/kit.css `.as-band`), three rows deep:
-//   1. the run header — identity as a LabelStack (Eyebrow "name · class",
-//      Title·S = the context: the act on the map, the fight in combat), the
-//      Cinders receipt as a StatChip, and the Act · Floor · Build trail as a
-//      StatStrip;
-//   2. the resource row — the meters (components/resbars.js, the kit Meter)
-//      and, on the right, a cluster of IconButtons (⚒ ☰ ⛶ ♫) over the flask
-//      Slots the screen mounts;
-//   3. the belt — relic Slots and carried-potion Slots.
+// THE HUD IS A KIT BAND (styles/kit.css `.as-band`), two rows deep, followed by
+// a visually detached item rail:
+//   1. class left, Cinders centred, Act/Floor right;
+//   2. the meters (components/resbars.js, the kit Meter) and, on the right,
+//      full-height Armoury and Menu controls;
+//   below the band: relic Slots left and every potion control right. Crimson
+//      and Azure live there too, without becoming utility inventory entries.
+// The character name, portrait, sigil, screen-context line, build/seed/source,
+// fullscreen and music remain off this compact band.
+// Each function below says why its own is gone.
 // The classes that are not `as-*` are HOOKS the instruments read; kit.css
 // draws nothing for them and no stylesheet may any more.
 import { esc } from './tooltip.js';
-import { buildStampHtml } from './buildstamp.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs } from './uiComponents.js';
 import { childModel } from '../models/ComponentModel.js';
-import { hudQuickSettingsHtml } from './hudQuickSettings.js';
-import { el, html, eyebrow, titleS, iconButton } from '../kit/index.js';
+import { el, html, iconButton } from '../kit/index.js';
 
 function attrsOf(componentAttrs) {
   // uiComponentAttrs() returns attribute TEXT for string templates; the kit's
@@ -27,23 +26,16 @@ function attrsOf(componentAttrs) {
   return out;
 }
 
-function progressChip(className, componentAttrs, { label, value, total }) {
-  return el('span', { ...attrsOf(componentAttrs), class: `as-chip ${className}` }, [
-    el('span', { class: 'ck', text: label }),
-    el('span', { class: 'cv' }, [
-      String(value),
-      total == null ? null : el('span', { class: 'hud-progress-total', text: ` / ${total}` }),
-    ]),
-  ]);
-}
-
+// The left track is deliberately terse: class only. It identifies the active
+// kit without restoring the older portrait/name/context stack.
 export function identityClusterHtml(model) {
-  const title = childModel(model, UI.characterTitle).properties;
-  const context = model.properties.context || '';
-  return html(el('div', { ...attrsOf(uiComponentAttrs(model.component, model.variant)), class: 'hud-identity as-labelstack' }, [
-    eyebrow(`${title.name} · ${title.classLabel}`, { ...attrsOf(uiComponentAttrs(UI.characterTitle)), class: 'nm' }),
-    context ? titleS(context, { tag: 'span', class: 'ls-label hud-context fold' }) : null,
-  ]));
+  return html(el('div', {
+    ...attrsOf(uiComponentAttrs(model.component, model.variant)),
+    class: 'hud-identity as-statstrip', 'aria-label': `Class: ${model.properties.className}`,
+  }, el('span', { class: 'as-chip hud-class' }, [
+    el('span', { class: 'ck', text: 'Class' }),
+    el('span', { class: 'cv', text: model.properties.className }),
+  ])));
 }
 
 export function cindersCounterHtml(model) {
@@ -56,16 +48,27 @@ export function cindersCounterHtml(model) {
   ])));
 }
 
-export function buildMetadataTrailHtml(model) {
-  const act = childModel(model, UI.metadataField, 'act').properties;
-  const floor = childModel(model, UI.metadataField, 'floor').properties;
-  return `<div class="hud-run-meta as-statstrip trail" ${uiComponentAttrs(model.component, model.variant)}>
-    ${html(progressChip('hud-act', uiComponentAttrs(UI.metadataField, 'act'), act))}
-    ${html(progressChip('hud-floor', uiComponentAttrs(UI.metadataField, 'floor'), floor))}
-    ${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}
-  </div>`;
+function metadataFieldHtml(model) {
+  return el('span', {
+    ...attrsOf(uiComponentAttrs(model.component, model.variant)),
+    class: `as-chip hud-${model.variant}`,
+  }, [
+    el('span', { class: 'ck', text: model.properties.label }),
+    el('span', { class: 'cv', text: String(model.properties.value) }),
+  ]);
 }
 
+export function buildMetadataTrailHtml(model) {
+  return html(el('div', {
+    ...attrsOf(uiComponentAttrs(model.component, model.variant)),
+    class: 'hud-run-meta as-statstrip trail', 'aria-label': 'Run position',
+  }, [
+    metadataFieldHtml(childModel(model, UI.metadataField, 'act')),
+    metadataFieldHtml(childModel(model, UI.metadataField, 'floor')),
+  ]));
+}
+
+// One baseline with three negotiating tracks: class, Cinders, Act/Floor.
 export function runHeaderStripHtml(model) {
   return `<div class="hud-info-row as-band-row thirds" ${uiComponentAttrs(model.component, model.variant)}>
     ${identityClusterHtml(childModel(model, UI.identityCluster))}
@@ -81,7 +84,17 @@ export function vitalsPanelHtml(model) {
   </section>`;
 }
 
-export function quickAccessPanelHtml(model, { quickSettingsHtml = '' } = {}) {
+// TWO CONTROLS, NOT FOUR. Fullscreen and music are gone from the band (owner,
+// 2026-09-05: "the full screen and music buttons don't need to be there since
+// we have it in the quick and main menu settings"). Verified before removing
+// rather than after: `screens/settings.js` carries Fullscreen under Display and
+// Music with its volume under Audio, so neither affordance is stranded by this.
+// They still sit on the TITLE screen, which is the main menu the owner names.
+//
+// `quickSettingsHtml` is gone from the signature too, not just unused — an
+// options bag that silently accepts a pair nobody draws is how the pair comes
+// back by accident.
+export function quickAccessPanelHtml(model) {
   const armoury = childModel(model, UI.armouryControl);
   const menu = childModel(model, UI.quickMenuControl);
   const button = (control, extra = {}) => html(iconButton({
@@ -93,16 +106,14 @@ export function quickAccessPanelHtml(model, { quickSettingsHtml = '' } = {}) {
     <div class="hud-actions as-cluster">
       ${button(armoury)}
       ${button(menu, { 'data-action-hint': 'menu' })}
-      ${quickSettingsHtml}
     </div>
-    <div class="flasks hud-charge-flasks as-cluster" aria-label="Healing and mana flasks"></div>
   </section>`;
 }
 
-export function primaryHudRowHtml(model, options = {}) {
+export function primaryHudRowHtml(model) {
   return `<div class="hud-resource-row as-band-row" ${uiComponentAttrs(model.component, model.variant)}>
     ${vitalsPanelHtml(childModel(model, UI.vitalsPanel))}
-    ${quickAccessPanelHtml(childModel(model, UI.quickAccessPanel), options)}
+    ${quickAccessPanelHtml(childModel(model, UI.quickAccessPanel))}
   </div>`;
 }
 
@@ -118,7 +129,6 @@ export function inventoryBeltHtml(model) {
 export function sharedRunHudHtml(model) {
   const { place, headerClass, overlayHtml, hudMode } = model.properties;
   const grip = childModel(model, UI.hudModeGrip);
-  const quickSettingsHtml = hudQuickSettingsHtml(childModel(model, UI.hudQuickSettings));
   const gripButton = iconButton({
     glyph: hudMode === 'compact' ? '⌄' : '⌃', label: grip.accessibility.label, className: 'hud-mode-grip as-grip',
     attrs: { ...attrsOf(uiComponentAttrs(grip.component, grip.variant)), 'data-next-mode': grip.properties.next, title: grip.accessibility.hint },
@@ -126,7 +136,7 @@ export function sharedRunHudHtml(model) {
   return `<header class="topbar combat-hud shared-hud as-band stack${headerClass ? ` ${esc(headerClass)}` : ''}" data-hud-mode="${esc(hudMode)}" data-has-utility-potions="false" ${uiComponentAttrs(model.component, place)}>
     <div class="hud-top as-cluster stack">
       ${runHeaderStripHtml(childModel(model, UI.runHeaderStrip))}
-      ${primaryHudRowHtml(childModel(model, UI.primaryHudRow), { quickSettingsHtml })}
+      ${primaryHudRowHtml(childModel(model, UI.primaryHudRow))}
       ${inventoryBeltHtml(childModel(model, UI.inventoryBelt))}
     </div>
     ${html(gripButton)}
