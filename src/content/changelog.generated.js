@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-716",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Inspect directly from combat sprites and hover panels",
+    "detail": "The inspect icon sits on the sprite without a floating box. Hover panels stay open while you move into them and include Inspect. Mouse, touch and keyboard share the same detail dialog without targeting a combat action; closing restores focus to the sprite control.",
+    "build": "0.5.5.67",
+    "pullRequest": 716,
+    "url": "https://github.com/cehinds/AshenSpire/pull/716"
+  },
+  {
     "id": "pr-714",
     "date": "2026-09-07",
     "group": "2026-09-07",
