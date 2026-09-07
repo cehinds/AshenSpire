@@ -625,6 +625,8 @@
 
 :root[data-composition='short-wide'] .hand { padding-bottom: 2rem; }
 :root[data-composition='short-wide'] .hand .card {
+  --card-name-h: 1.3rem; --card-art-h: 2.2rem; --card-band-h: 1.1rem;
+  --card-row: 0.75rem; --card-gap: 0.2rem;
   width: 8rem; height: 10rem; margin: 0 -0.8rem; padding: 1.3rem 0.3rem 0.3rem;
   transform: translateY(calc(-1 * var(--fan-lift, 0px))) !important;
 }

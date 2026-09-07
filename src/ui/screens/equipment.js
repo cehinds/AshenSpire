@@ -745,7 +745,9 @@ export function mountEquipment(host, {
   const savedHybridRatio = meta.settings && Number(meta.settings.armouryHybridRatio);
   let hybridRatio = clampPaneRatio(Number.isFinite(savedHybridRatio)
     ? savedHybridRatio : layout.shell.characterRatio);
+  const responsiveMode = () => typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint ? 'phone' : 'desktop';
   let paneObserver = null;
+  let paneFrame = 0;
   let inventoryDisclosure = null;
   let holdDisarms = [];
   const clearHoldDisarms = () => {
@@ -796,6 +798,7 @@ export function mountEquipment(host, {
   const close = () => {
     document.removeEventListener('keydown', onKey);
     if (paneObserver) paneObserver.disconnect();
+    cancelAnimationFrame(paneFrame);
     clearHoldDisarms();
     wrap.remove();
     if (onClose) onClose();
@@ -1955,6 +1958,7 @@ export function mountEquipment(host, {
    */
   function draw() {
     if (paneObserver) paneObserver.disconnect();
+    cancelAnimationFrame(paneFrame);
     clearHoldDisarms();
     // The layout is READ off the row, never inferred from the id. `data-surface`
     // / `data-member` are the house convention for a navigable set (#78): the
@@ -1985,8 +1989,7 @@ export function mountEquipment(host, {
     panel.dataset.pane = viewMode().pane;
     panel.dataset.characterState = viewMode().character;
     panel.dataset.composition = 'character-equipment';
-    panel.dataset.responsive = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
-      ? 'phone' : 'desktop';
+    panel.dataset.responsive = responsiveMode();
     const applyHybridRatio = () => {
       panel.style.setProperty('--armoury-character-ratio', `${hybridRatio}fr`);
       panel.style.setProperty('--armoury-equipment-ratio', `${1 - hybridRatio}fr`);
@@ -2079,12 +2082,18 @@ export function mountEquipment(host, {
     else statsTray.remove();
     mountRegionTrays();
 
+    let lastPaneWidths = null;
     const applyPaneDensity = () => {
       const equipmentPane = panel.querySelector('.armoury-equipment');
       const inventoryPane = panel.querySelector('.armoury-inventory');
       if (!equipmentPane) return;
       const equipmentWidth = equipmentPane.getBoundingClientRect().width;
       const inventoryWidth = inventoryPane ? inventoryPane.getBoundingClientRect().width : 0;
+      const widths = [equipmentWidth, inventoryWidth, panel.dataset.responsive];
+      if (lastPaneWidths && Math.abs(widths[0] - lastPaneWidths[0]) < 1
+        && Math.abs(widths[1] - lastPaneWidths[1]) < 1 && widths[2] === lastPaneWidths[2]) return;
+      const enteringPhone = widths[2] === 'phone' && lastPaneWidths?.[2] !== 'phone';
+      lastPaneWidths = widths;
       panel.dataset.armamentDensity = equipmentWidth < layout.inventorySplit.foldGroupsBelowPx
         ? 'minimal' : equipmentWidth < layout.inventorySplit.compactItemsBelowPx ? 'compact' : 'comfortable';
       panel.dataset.inventoryDensity = viewMode().pane === 'inventory' && inventoryWidth < layout.inventorySplit.compactItemsBelowPx ? 'compact' : 'comfortable';
@@ -2092,7 +2101,7 @@ export function mountEquipment(host, {
       // breakpoint would otherwise consume the inventory tray and push the
       // folded rows out of reach. Folding is presentation only; the player may
       // immediately reopen any item once the full-width tray has settled.
-      if (panel.dataset.responsive === 'phone' && inventoryDisclosure) inventoryDisclosure.close();
+      if (enteringPhone && inventoryDisclosure) inventoryDisclosure.close();
       const cards = panel.querySelectorAll('details.armoury-position-card');
       if (equipmentWidth < layout.inventorySplit.foldSubcardsBelowPx) {
         for (const card of cards) {
@@ -2202,7 +2211,16 @@ export function mountEquipment(host, {
     }
     applyPaneDensity();
     if (typeof ResizeObserver !== 'undefined') {
-      paneObserver = new ResizeObserver(applyPaneDensity);
+      // Density writes can change observed geometry. Run them outside the
+      // observer delivery, and ignore height-only changes when a fold opens.
+      paneObserver = new ResizeObserver(() => {
+        cancelAnimationFrame(paneFrame);
+        paneFrame = requestAnimationFrame(() => {
+          if (!panel.isConnected) return;
+          if (panel.dataset.responsive !== responsiveMode()) draw();
+          else applyPaneDensity();
+        });
+      });
       const content = panel.querySelector('.armoury-content');
       if (content) paneObserver.observe(content);
       const equipment = panel.querySelector('.armoury-equipment');

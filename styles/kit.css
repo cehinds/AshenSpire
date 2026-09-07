@@ -68,6 +68,21 @@
 .as-detailbody, .as-detailbody .lines { min-width: 0; }
 .as-btnrow > *, .as-row > *, .as-option > *, .as-statrow > *, .as-pane-head > * { min-width: 0; }
 
+/* Text in a flex heading needs its own shrinking box: ellipsis cannot paint
+   on an anonymous flex text item. Badges and controls keep their own space. */
+.as-label-text { display: block; flex: 0 1 auto; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.as-option .on, .as-face .on { min-width: 0; max-width: 100%; }
+.as-option .on > :not(.as-label-text), .as-face .on > :not(.as-label-text) { flex: 0 0 auto; max-width: 100%; }
+.as-option, .as-face, .as-detailcard, .as-optionrow, .as-options, .as-statpair, .as-kitline .ki { min-width: 0; max-width: 100%; }
+.as-option .ob, .as-face .ob, .as-option .ob > *, .as-face .ob > *, .as-detailcard > * { min-width: 0; max-width: 100%; }
+.as-option .od, .as-option .om, .as-face .od, .as-face .om,
+.as-detailcard, .as-prose, .as-subtitle, .as-flavor, .as-labelstack .ls-hint,
+.as-statrow .sr-hint, .as-blocker { overflow-wrap: anywhere; }
+.as-detailcard .dc-name { white-space: normal; }
+.as-row > .r-trail, .as-option > .r-trail { min-width: 0; max-width: 50%; flex-wrap: wrap; }
+.as-row > .r-trail > *, .as-option > .r-trail > * { min-width: 0; max-width: 100%; }
+button, .as-btn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
 /* ═══ CONTROL ATOMS ═════════════════════════════════════════════════════════ */
 /* Button — three weights, no fourth. The base `button` element IS the kit's
    secondary button, so a screen that writes <button> gets the kit for free
@@ -282,7 +297,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 }
 .as-row:hover, .as-row:focus-visible { background: var(--panel); border-color: transparent; outline: none; box-shadow: none; }
 .as-row:focus-visible { box-shadow: inset 0 0 0 1px var(--gold); }
-.as-row > .r-label { flex: 0 0 auto; }
+.as-row > .r-label { flex: 0 1 auto; }
 .as-row > .as-status, .as-row > .r-trail { margin-left: auto; }
 .as-row > .as-status + .r-trail { margin-left: 0; }
 .as-row > .as-status { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -478,7 +493,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 
 /* TitleMenu — the one menu with no panel around it. */
 .as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
-.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1 var(--font-display); font-size: clamp(3.2rem, 13.5cqi, 5.4rem); letter-spacing: var(--track); text-indent: var(--track); color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
 .as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
 .as-titlemenu li + li { border-top: 1px solid var(--rule); }
@@ -695,7 +710,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .card .cname, .as-card .cd-name {
   --track: 0.02em;
   flex: 0 0 var(--card-name-h); height: var(--card-name-h);
-  display: grid; place-items: center;
+  display: block; align-content: center; text-overflow: ellipsis;
   font: 600 1.2rem/1.15 var(--font-display); letter-spacing: var(--track); text-indent: var(--track);
   text-align: center; white-space: nowrap; overflow: hidden; min-width: 0;
 }
@@ -1224,7 +1239,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* `.as-options` is the column. `grid` is as many columns as fit (`--opt-min`
    the floor); `flow` is a wrapping row of self-sized cards where `wide` takes
    its line; `tight` closes the gap for a dense list. */
-.as-options.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--opt-min, 16rem), 1fr)); gap: 1.05rem; }
+.as-options.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--opt-min, 22rem)), 1fr)); gap: 1.05rem; }
 .as-options.grid > .as-option { width: auto; }
 .as-options.flow { flex-direction: row; flex-wrap: wrap; align-items: stretch; gap: 0.6rem; }
 .as-options.flow > .as-option { width: auto; flex: 1 1 auto; }
@@ -1612,7 +1627,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .reduced-motion .startup-gate { transition-duration: 140ms; transition-timing-function: linear; }
 .startup-gate > .as-titlemenu { position: relative; z-index: 1; align-self: center; animation: startupMarkIn 520ms ease-out both; }
 .startup-gate > .as-titlemenu .tm-name {
-  font-size: clamp(3.2rem, 12cqi, 5.4rem);
+  font-size: min(12cqi, 5.4rem);
   text-indent: 0;
   text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38);
 }
@@ -1799,7 +1814,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .as-option[data-rarity="rare"]:not(.is-selected) { border-left: 3px solid var(--gold); }
 .as-option[data-rarity="uncommon"]:not(.is-selected) { border-left: 3px solid var(--frost); }
 /* A grid of OptionCards: the compendium's constant grid. */
-.as-options.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); align-content: start; }
+.as-options.grid { align-content: start; }
 .as-options.grid > .as-option { width: auto; }
 /* The kit's danger tint (the kit page's rgba(212, 98, 46)); nothing in
    base.css named it, so every `.danger` weight read an unset variable. */
@@ -2476,17 +2491,17 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .modal:has(.pile-body) .modal-tab { font-size: calc(15px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); }
 
 /* Read-only detail rows: let names claim 10–30%, then wrap the explanation. */
-:is(.modal, .as-tip) div.as-row:has(> .r-label):has(> .as-status),
+:is(.modal, .as-tip) div.as-row:not(.character-info-head):has(> .r-label):has(> .as-status),
 .combatant-inspector-row {
   align-items: flex-start; white-space: normal; gap: 0.75rem;
   font-size: max(1.47rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.45;
 }
-:is(.modal, .as-tip) div.as-row:has(> .as-status) > .r-label,
+:is(.modal, .as-tip) div.as-row:not(.character-info-head):has(> .as-status) > .r-label,
 .combatant-inspector-row:has(> .as-status) > .r-label {
   flex: 0 0 auto; width: max-content; min-width: 10%; max-width: 30%;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-:is(.modal, .as-tip) div.as-row:has(> .r-label) > .as-status,
+:is(.modal, .as-tip) div.as-row:not(.character-info-head):has(> .r-label) > .as-status,
 .combatant-inspector-row > .as-status {
   flex: 1 1 0; min-width: 0; margin-left: 0; font-size: inherit; line-height: inherit;
   white-space: normal; overflow-wrap: anywhere; overflow: visible; text-overflow: clip; text-align: left;
@@ -2553,3 +2568,17 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .inventory-face.as-face > .r-trail { grid-column: 2; grid-row: 2; justify-content: flex-start; width: auto; margin-left: 0; }
 .inventory-face .inventory-name { white-space: normal; overflow-wrap: anywhere; }
 .inventory-face .on { white-space: normal; overflow: visible; text-overflow: clip; }
+/* Compact inventory panes must yield before their text loses its padding. */
+.armoury .as-statrow { flex-wrap: wrap; gap: 0.4rem 1rem; }
+.armoury .as-statrow .sr-id { flex: 1 1 10rem; width: auto; max-width: 100%; }
+.armoury .as-statrow .sr-vals { flex: 1 1 8rem; min-width: 0; max-width: 100%; }
+.armoury .as-statpair { flex-wrap: wrap; }
+.armoury .as-statpair .sp-k, .armoury .as-statpair .sp-v { max-width: 100%; }
+.armoury-position-grid-card > .ob { width: 100%; }
+.armoury-stats-summary { grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
+.armoury[data-pane="both"][data-responsive="phone"] .armoury-body { display: flex; flex-direction: column; overflow-y: auto; gap: 1.2rem; }
+.armoury[data-pane="both"][data-responsive="phone"] .armoury-left,
+.armoury[data-pane="both"][data-responsive="phone"] .armoury-right { flex: 0 0 auto; overflow: visible; padding-inline: 0; }
+.armoury[data-pane="both"][data-responsive="phone"] .armoury-hybrid-splitter { display: none; }
+.armoury[data-pane="both"][data-responsive="phone"] .armoury-character { min-height: 0; grid-template-rows: auto 18rem auto; }
+.armoury[data-pane="both"][data-responsive="phone"] .armoury-character-stats { overflow: visible; }
