@@ -377,7 +377,7 @@ jobs:
         # armament slot through the actual stylesheet and browser compositor.
         run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs
 
-      - name: The hand-side gate can fail — five same-door plants caught
+      - name: The hand-side gate can fail — its same-door plants, each caught
         # The selftest copies the real tree, plants each known-bad in the file a
         # real regression would change, and requires the named red from the whole
         # browser door. A green baseline alone is not evidence that this is a gate.

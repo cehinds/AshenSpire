@@ -11,6 +11,17 @@ A roguelike deckbuilder for the browser — single-player, with optional LAN co-
 
 ## Play a build
 
+Twelve enemies now use the painted sprites from the Unity fork, including the
+Wandering Soldier, Blight Hound, Fell Warden, Stitched King and Wyrm Lord.
+
+Traders now offer armaments and mountable weapon arts alongside their usual stock.
+Inspect an item before buying, or sell an unequipped armament from storage.
+Equipped items explain why they cannot be sold. Weapon arts are bought at traders
+and installed through the Armoury's existing card-mounting controls.
+The combat action row keeps Potions at the far right. Piles opens separate
+Discard and Exhaust tabs with their own counts. Arts shows equipped weapon arts
+and techniques, with selection available when the card is in your hand.
+
 **[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)** — the stable
 build from `main`. **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** — the builds
 index: the current `dev`, `test`, `release` and `main` builds, each playable at its own address.
@@ -261,3 +272,9 @@ Flow: `feature/* → dev → release → main`. See [CONTRIBUTING.md](CONTRIBUTI
 ## Legal
 
 Code is MIT ([LICENSE](LICENSE)). This is a fan-inspired original work: it contains **no** FromSoftware assets, music, or proper nouns, and is not affiliated with or endorsed by FromSoftware or Bandai Namco. All art assets are CC0/CC-BY/OFL and attributed in [CREDITS.md](CREDITS.md).
+
+## Dodge feedback and motion
+
+After a Dodge roll, select **Dodge succeeded** or **Dodge failed** beside your character to inspect the last result. The explanation shows the roll, check, difficulty and base guard. Dodge grants Block on success; it does not guarantee avoiding the next attack. Block modifiers and retention effects still apply.
+
+Armoury card scrolling honors both the in-game Reduced motion setting and your operating system preference.
