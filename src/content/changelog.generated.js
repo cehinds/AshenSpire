@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-701",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The receipts catch up, and the gate that asks for them did the asking",
+    "detail": "Nothing a player sees changes. #695 landed without an entry here, and for the first time nobody had to notice: the check added in #652 went red on the development branch the moment it merged, naming the pull request it wanted. Both receipts are written up and the changelog inside the game was regenerated from this file so it carries them too.",
+    "build": "0.5.5.49",
+    "pullRequest": 701,
+    "url": "https://github.com/cehinds/AshenSpire/pull/701"
+  },
+  {
+    "id": "pr-695",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The five stat rows in Assign Points line up again",
+    "detail": "On a phone, the Intelligence row in Assign Points stood a hair taller than the other four: its hint — the longest of the five — ran onto a second line in an overlay narrower than the column that hint was written for. The five now read as one block again, the long hint trailing off with an ellipsis the way the same rows already do in the Armoury. Character Creation is untouched and still shows the sentence in full, because there is room for it there. This also clears a check that had been failing on the development branch since it was written, and which two later changes inherited without anyone finding out why.",
+    "build": "0.5.5.48",
+    "pullRequest": 695,
+    "url": "https://github.com/cehinds/AshenSpire/pull/695"
+  },
+  {
     "id": "pr-683",
     "date": "2026-09-07",
     "group": "2026-09-07",
