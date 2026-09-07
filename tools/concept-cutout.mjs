@@ -44,7 +44,7 @@ import { dirname, join, resolve } from 'node:path';
 // The medallion anchors are the game's, not this tool's — one home, two
 // readers. classArtAnchors.js is data only and touches no document, which is
 // what makes it importable from a build tool at all.
-import { medallionPct, medallionDeclared } from '../src/content/classArtAnchors.js';
+import { medallionAnchor, medallionDeclared } from '../src/content/classArtAnchors.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -558,7 +558,7 @@ if (foreign.length && !process.argv.includes('--overwrite-foreign')) {
   process.exit(1);
 }
 
-// `medallionDeclared`, not `medallionPct != null`: a class may be measured and
+// `medallionDeclared`, not `medallionAnchor() != null`: a class may be measured and
 // found to have NO placeable anchor, which is a check rather than a gap and
 // ships with no overlay. Reading the percentage here instead would refuse that
 // class with "measure this" — a tool failing for a reason that is not true, and
@@ -688,7 +688,7 @@ for (const [cls, { cut, box, bottomIsCrop }] of Object.entries(cuts)) {
         // the inventory records the anchor the GAME uses. A number typed here
         // as well would be a second copy of a measurement, and this PR has
         // already produced three findings about derived records drifting.
-        medallion_center_pct: medallionPct(cls),
+        medallion_center_pct: medallionAnchor(cls),
       },
       runtime_budget: 'embedded base64 in the single-file build; WebP chosen over '
         + 'PNG for that reason (see tools/sprites-blender.py header)',

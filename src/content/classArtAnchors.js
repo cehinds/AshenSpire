@@ -33,66 +33,64 @@
 // Headless-safe: data only, no document, no storage, no timers.
 
 /**
- * Medallion centre as a percentage of the sprite frame's height, per class.
- * Measured on the 450x570 outputs of `node tools/concept-cutout.mjs`.
+ * Medallion centre per class, as `{ x, y }` percentages of the sprite frame.
+ * Measured on the 450x570 outputs of the cutters.
  */
-// RE-MEASURED 2026-09-04 for the three classes whose art became FULL BODY
-// (docs/art-evidence/2026-09-04/poses, shipped by `pose-cutout.mjs --ship`).
-// The old values were right for busts and wrong the moment the art changed,
-// exactly as the note above warns: a bust's chest sat around the middle of the
-// frame, and a full-body figure's sits in its upper third. Taken by the same
-// method — the disc drawn at candidate heights over the shipped 450x570 output
-// and inspected.
+// RE-MEASURED 2026-09-07, AND THE ANCHOR GREW AN X.
 //
-// ONE THING THE BAND RULE ABOVE CANNOT MEET ON FULL-BODY ART, said plainly
-// rather than quietly relaxed: the disc is a fixed 22px in a 190px frame, so it
-// spans ±5.8 points whatever the art does, while a full-body figure's chest is
-// roughly half the share of frame height a bust's was. No candidate puts that
-// whole band on chest any more — the values below put the disc's CENTRE and the
-// bulk of it on chest, clear of the face opening above and the hands or belt
-// below, which is the best the current disc size allows. Making the disc scale
-// with the figure is the real fix and belongs with the disc, not here.
+// The 2026-09-04 pass recorded three of these as null — "measured as
+// unplaceable" — and named the two things that defeated every candidate. Both
+// were properties of the DISC, not of the art, and both are fixed now, so the
+// measurement is possible again and these are real numbers:
+//
+//   · SIZE. The disc was a fixed 22px in a 190px frame — 11.6% of the frame's
+//     height whatever the art did. A bust's chest was about a third of the
+//     frame; a full-body chest is about a tenth, so 22px covered the Reaver's
+//     chest from collar to forearm. The disc is now a share of the frame
+//     (7% of its height, in `classSprite()`), which is a chest-sized jewel on
+//     a full-body figure and scales with whatever frame it is drawn in.
+//   · POSITION. The anchor was a HEIGHT only, and the overlay was centred at
+//     `left: 50%` — a claim that the torso is horizontally centred. A cape
+//     sweeping to one side moves the content box's centre off the body's. The
+//     anchor now carries an x as well, so the disc goes where the chest is
+//     rather than where the frame's middle is.
+//
+// HOW THESE WERE TAKEN. The method the file has always used: candidate discs
+// drawn over the SHIPPED 450x570 sprites at the shipped 7% size and inspected,
+// four candidates per class, then the surviving pair re-inspected at the real
+// 150x190 combat host so the choice was judged at the size a player sees. The
+// accepted value puts the whole disc on chest, clear of the face opening above
+// and of the hands, belt or existing gold clasp below. Evidence: the candidate
+// and size sheets in the 2026-09-07 anchor pass.
+//
+// Per class, and why that spot: the Reaver's chest plate sits in the hollow
+// between his crossed forearms; the Starseer's is the V below the mantle
+// collar, above the belt tabard's own gold triangle; the Rogue's is the clean
+// field of the jerkin below the hood's shadow. The Herald keeps 61 — its
+// shipped sprite is STILL THE BUST, that number was measured for this art, and
+// it re-inspected well, so it is left alone rather than churned. It is wrong
+// the moment its full-body figure ships, exactly as before.
 export const CLASS_MEDALLION_PCT = Object.freeze({
-  // MEASURED AS UNPLACEABLE, not unmeasured — the distinction the tools read
-  // below. Candidates were drawn at 22/25/27/29/31/34/38% over each shipped
-  // full-body sprite and inspected. Two things defeat every one of them, and
-  // both are consequences of the art becoming full body rather than of the
-  // heights being badly chosen:
-  //
-  //   · SIZE. The disc is a fixed 22px in a 190px frame — 11.6% of the frame's
-  //     height whatever the art does. A bust's chest was about a third of the
-  //     frame; a full-body chest is about a tenth. The best candidates put the
-  //     disc on the Reaver's pauldron and on the Starseer's hood shadow, which
-  //     is the same defect this file was written to stop ("53% lands on the
-  //     Starseer's face under the hat brim").
-  //   · POSITION. The anchor is a HEIGHT only, and the overlay is centred at
-  //     `left: 50%` — a claim that the torso is horizontally centred in the
-  //     frame. True of a bust. False of a full-body figure whose cape sweeps to
-  //     one side, which moves the CONTENT box's centre off the body's centre.
-  //
-  // So these are null: no overlay, which this file already argues is strictly
-  // better than a wrong one. Restoring the sigil needs the anchor to carry an x
-  // as well as a y and the disc to scale with the figure — a change to the
-  // medallion, not a different number here, and carded rather than smuggled in.
-  reaver: null,
-  starseer: null,
-  rogue: null,
-  // STILL A BUST, and still measured for one: the Herald's full-body source was
-  // refused by the image service's daily limit, so its shipped sprite is the
-  // 2026-09-03 crop and 61 remains the value that art was measured at. This
-  // number is wrong the moment its full-body figure ships.
-  herald: 61,
+  reaver: Object.freeze({ x: 50, y: 35 }),
+  starseer: Object.freeze({ x: 48, y: 37 }),
+  rogue: Object.freeze({ x: 49, y: 35 }),
+  herald: Object.freeze({ x: 50, y: 61 }),
 });
 
 /**
- * The medallion centre for a class, or null when that class has no measurement.
+ * The medallion centre for a class as `{ x, y }` percentages of the sprite
+ * frame, or null when that class has no measurement.
  *
- * Null rather than a fallback percentage ON PURPOSE: a default here would be
- * the shared-53% assumption smuggled back in, and it would put the overlay on
- * an unmeasured figure's face exactly as before, silently. Callers decide —
+ * Null rather than a fallback ON PURPOSE: a default here would be the shared
+ * assumption smuggled back in, and it would put the overlay on an unmeasured
+ * figure's face exactly as before, silently. Callers decide —
  * `classSprite()` omits the overlay, `concept-cutout.mjs` fails the run.
+ *
+ * BOTH AXES OR NEITHER. A y with no x would be the `left: 50%` claim again,
+ * so the anchor is one value carrying both and there is no accessor for half
+ * of it.
  */
-export function medallionPct(classId) {
+export function medallionAnchor(classId) {
   return Object.prototype.hasOwnProperty.call(CLASS_MEDALLION_PCT, classId)
     ? CLASS_MEDALLION_PCT[classId]
     : null;

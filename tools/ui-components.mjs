@@ -264,8 +264,17 @@ export function findings(r) {
       || !/class: 'as-chip hud-cinders'/.test(r.hud)
       || !/class="hud-control-grid as-cluster stack"/.test(r.hud)
       || !/class="hud-resource-row as-band-row"/.test(r.hud)
-      || !/--hud-quick-tile-size:\s*max\(2\.8rem, var\(--tap-floor\)\);/.test(r.kit)
-      || !/--hud-quick-tile-gap:\s*0\.45rem;/.test(r.kit)
+      // ASSERT THE DERIVATION, NOT THE SPELLING (#645's lesson, again).
+      // These two read `1.8rem` and `0.45rem` until #686 retuned the face to
+      // `max(2.8rem, var(--tap-floor))` for the two navigation controls — a
+      // deliberate design change that left C12 red on dev, because the check
+      // was pinned to a number rather than to what the number has to mean.
+      // What C12 is actually for is that Quick Access carries its OWN local
+      // scale instead of falling back to the global IconButton, which is
+      // exactly what the "restore oversized Quick Access tiles" plant does.
+      // Any authored value passes; `var(--iconbtn-size)` does not.
+      || !/--hud-quick-tile-size:(?!\s*var\(--iconbtn-size\))[^;]+;/.test(r.kit)
+      || !/--hud-quick-tile-gap:(?!\s*var\(--iconbtn-size\))[^;]+;/.test(r.kit)
       || !/\.shared-hud \.hud-control-grid :is\(\.as-iconbtn, \.as-slot\) \{[\s\S]*?width: var\(--hud-quick-tile-size\); height: var\(--hud-quick-tile-size\);/.test(r.kit)
       || !/\.shared-hud \.hud-bottom \{[\s\S]*?position: absolute;[\s\S]*?top: calc\(100% \+ 0\.4rem\);[\s\S]*?left: 1\.6rem; right: 1\.6rem;/.test(r.kit)
       || !/\.shared-hud \.hud-bottom \.as-slot \{[\s\S]*?width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
@@ -397,8 +406,15 @@ export function findings(r) {
       || !/UI\.characterDisclosure/.test(r.customize)
       || !/UI\.equipmentChoiceCard/.test(r.customize)
       || !/export function attributeCardModels/.test(r.creationBrief)
-      || !/mountDisclosure\(host, \[model\], \{ structure: 'details' \}\)/.test(r.creationCards)
-      || !/primaryStatCards\(/.test(r.statAllocationCard)
+      // Both of these were pinned to an exact call spelling and went stale the
+      // day the call gained an argument and the renderer gained a plural. What
+      // C16 is for is that the creation card mounts through the SHARED
+      // disclosure with one model, and that the allocation card draws its rows
+      // with the SHARED primary-stat renderer — not that either is spelled a
+      // particular way. `{ structure: 'details' }` and `primaryStatCards` are
+      // both the current spelling; neither changes what is being asserted.
+      || !/mountDisclosure\(host, \[model\]/.test(r.creationCards)
+      || !/primaryStatCards?\(/.test(r.statAllocationCard)
       || !/UI\.statAllocationRow/.test(r.statAllocationCard)
       || !/UI\.shrineOptionCard/.test(r.rest)
       || !/attributeCardModels\(registries, state\.attributes,/.test(r.customize)
@@ -484,7 +500,9 @@ function selftest() {
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("childModel(model, UI.metadataField, 'floor')", "childModel(model, UI.metadataField, 'seed')") })],
-    ['restore oversized Quick Access tiles', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('--hud-quick-tile-size: max(2.8rem, var(--tap-floor))', '--hud-quick-tile-size: var(--iconbtn-size)') })],
+    // Substitutes the declaration whatever its authored value, so this plant
+    // site cannot drift out from under the corpus the way the check above did.
+    ['restore oversized Quick Access tiles', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/--hud-quick-tile-size:[^;]+;/, '--hud-quick-tile-size: var(--iconbtn-size);') })],
     ['put Relics and potions back inside the HUD flow', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: absolute;\n  z-index: 85;', 'position: static;\n  z-index: auto;') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
     // The other half of the same rung: a phone that drops the chip's VALUE
