@@ -1334,6 +1334,24 @@ details.character-info-card > summary:focus-visible { outline: 2px solid var(--g
 .disc-faces > .disc-face .disc-value { white-space: nowrap; }
 .disc-faces > .disc-face .disc-summary { white-space: normal; }
 .disc-faces > .disc-face[data-reveal="open"] { border-color: var(--gold); }
+/* ASSIGN POINTS IS NARROWER THAN THE COLUMN THE RULE ABOVE WAS WRITTEN FOR.
+   `white-space: normal` lets a summary read in full where there is room, which
+   is right in Character Creation. Inside the Assign Points overlay there is not
+   room: Intelligence's hint — the longest of the five — wraps to a second line,
+   which takes its inner row from 29.41px to 43.44px and its card from the 44px
+   tap floor the other four sit exactly on to 45.44px. Five cards, four at 44
+   and one at 45.44, is no longer the one compact family this surface promises,
+   and tools/uniform-stat-foldouts.mjs has been red on dev for it since #647.
+   Measured in headless Chromium at 390x844.
+
+   The compact face row already ellipsises by default (`.disc-face > .as-row
+   .ls-hint`, above); this restores that default on the one surface too narrow
+   to honour the wrap, which is what `.armoury-character-stats` does for the
+   same content. Scoped to the overlay on purpose — Character Creation is wide
+   enough to wrap without overflowing, and keeps the full sentence. */
+.cc-stat-overlay .disc-faces > .disc-face .disc-summary {
+  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 /* A FULL-WIDTH FACE IS A LINE OF ITS OWN, AND THE `.disc-faces >` IS LOAD-BEARING.
    Without it this reads `.disc-face.disc-pick` — two classes — and loses on
    specificity to `.as-options.flow > .as-option { flex: 1 1 auto }` three rules
