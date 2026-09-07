@@ -9,6 +9,14 @@ For how work is branched, reviewed, and merged, see the
 
 ## Run & test
 
+Boss destinations are assigned when an act map is created. `bossIds` lists the
+terminal nodes, each carrying its saved `encounterId`; `bossId` remains a
+compatibility alias. Resolve the chosen terminal through
+`bossEncounterForNode()` in solo, LAN and simulations. Legacy maps without this
+metadata resolve their original act boss without consuming RNG. Run
+`node tests/branchingBosses.test.mjs` for topology, deterministic selection,
+LAN choice and real save-manager round trips.
+
 Painted enemy art is selected in `src/content/enemyArt.js` and rendered through
 the shared `enemySprite()` asset function. The twelve PNGs in
 `assets/enemies-unity/` are unchanged imports from the Unity fork; retain their

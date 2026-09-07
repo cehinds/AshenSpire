@@ -1954,12 +1954,20 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 /* ═══ HOLD — the second beat on a control ══════════════════════════════════ */
 /* `.beat-hold` is written by the machinery (components/holdconfirm.js) on any
    control the second-beat table arms; `--hold` is 0..1 per frame. The fill is a
-   BACKGROUND (paints under a bare text node), never eased (an abort must read
-   instantly), and it survives reduced-motion because it is state, not motion.
+   high-contrast light/dark stripe instead of an accent wash: accent-filled
+   primary buttons already look lit, so another gold layer disappears on them.
+   Alternating luminance stays legible on both primary and plain controls. It
+   is a BACKGROUND (paints under a bare text node), never eased (an abort must
+   read instantly), and it survives reduced-motion because it is state, not motion.
    `.hold-hint` is the word beside the label; it leaves an icon-sized control
    and leaves the control a focus cursor is on (a pad confirms in one press). */
-.beat-hold, .beat-hold:hover, .beat-hold:focus, .beat-hold:active {
-  background-image: linear-gradient(to right, rgba(var(--accent-rgb), 0.30) 0 100%);
+.beat-hold, button.beat-hold, .as-btn.beat-hold,
+button.beat-hold:hover, .as-btn.beat-hold:hover,
+button.beat-hold:focus, .as-btn.beat-hold:focus,
+button.beat-hold:active, .as-btn.beat-hold:active {
+  background-image: repeating-linear-gradient(135deg,
+    rgba(255, 255, 255, 0.52) 0 8px,
+    rgba(0, 0, 0, 0.58) 8px 16px);
   background-repeat: no-repeat;
   background-size: calc(var(--hold, 0) * 100%) 100%;
   transition-property: border-color, color, transform;
