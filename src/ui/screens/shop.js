@@ -15,6 +15,7 @@ import { armamentPurchasePlan, armamentSalePlan, commitArmamentPurchase, commitA
 import { openModal } from '../components/modalShell.js';
 import { button, statusText, el } from '../kit/index.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
+import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import { settingOn } from './settings.js';
@@ -190,7 +191,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         sfx.play('buy');
         onChanged();
         render();
-      }));
+      }, { card: renderCollectibleCard(registries, def, 'Relic', { interactive: false }).card }));
     });
     const flasksRow = app.querySelector('#shop-flasks');
     stock.flasks.forEach((item, i) => {
@@ -203,7 +204,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         sfx.play('buy');
         onChanged();
         render();
-      }, { titleHtml: true }));
+      }, { titleHtml: true, card: renderCollectibleCard(registries, def, 'Potion', { interactive: false }).card }));
     });
 
     if (run.cinders >= stock.removeCost && run.deck.length > 1) {
@@ -417,12 +418,19 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     (app.querySelector(`${shelf} button, ${shelf} [role="button"]`) || app.querySelector('#leave-shop'))?.focus({ preventScroll: true });
   }
 
-  function shopItem(title, desc, cost, affordable, onBuy, { titleHtml = false, costWord = 'cinders' } = {}) {
+  function shopItem(title, desc, cost, affordable, onBuy, { titleHtml = false, costWord = 'cinders', card = null } = {}) {
     const el = document.createElement('div');
     el.className = `class-pick${affordable ? '' : ' locked'}`;
     el.innerHTML = `<div class="cp-body"><h3>${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} ${esc(costWord)}</span></div>`;
+    const itemName = el.querySelector('h3')?.textContent?.trim() || 'this item';
+    if (card) {
+      el.classList.add('shop-collectible-offer');
+      el.querySelector('h3').remove();
+      if (affordable) el.querySelector('p').remove();
+      el.prepend(card);
+      el.setAttribute('aria-label', itemName);
+    }
     if (affordable && onBuy) {
-      const itemName = el.querySelector('h3')?.textContent?.trim() || 'this item';
       arm(el, 'shopBuy', {
         question: `Buy ${itemName} for ${cost} ${costWord}? You have ${run.cinders} cinders.`,
         confirmLabel: 'BUY IT',

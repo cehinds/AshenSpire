@@ -117,6 +117,41 @@ try {
   await screenshot('merchant-inspection');
   await evaluate("document.querySelector('.modal-close').click()");
   check(await evaluate('JSON.stringify(weaponPreviewRun)') === before, 'merchant close does not transact');
+  // All potion/relic faces share the canvas and must fit their authored text.
+  await evaluate(`(async()=>{const {contentBundle}=await import('/src/content/index.js');const {createRegistries}=await import('/src/model/registries.js');const {renderCollectibleInspection}=await import('/src/ui/components/collectibleCard.js');const r=createRegistries(contentBundle);document.body.replaceChildren(Object.assign(document.createElement('main'),{id:'collectible-gallery'}));const gallery=document.querySelector('main');gallery.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,280px);gap:20px;padding:20px';for(const [kind,items] of [['Potion',r.flasks],['Relic',r.relics]])for(const item of items.all()){const inspection=renderCollectibleInspection(r,item,kind);inspection.dataset.kind=kind;gallery.append(inspection);}})()`);
+  await wait(300);
+  const collectibles = await evaluate("[...document.querySelectorAll('.collectible-poker-card')].map(card=>({id:card.dataset.item,overflow:[...card.querySelectorAll('.epc-frame > *')].filter(e=>e.scrollHeight>e.clientHeight+2||e.scrollWidth>e.clientWidth+2).map(e=>e.className)}))");
+  check(collectibles.length>40, 'all canonical potions and relics render');
+  check(collectibles.every(item=>!item.overflow.length), `collectible text fits: ${JSON.stringify(collectibles.filter(item=>item.overflow.length))}`);
+  await screenshot('collectible-cards');
+  // Real Armoury mount, real delegated hold-progress owner and native pointer input.
+  await send('Page.navigate', { url: `http://localhost:${server.server.address().port}/index.html?shot=reward` });
+  await until("typeof window.__spoils==='function'", 'game boot');
+  await evaluate(`(async()=>{const {contentBundle}=await import('/src/content/index.js');const {createRegistries}=await import('/src/model/registries.js');const {createRunState}=await import('/src/model/state.js');const {mountEquipment}=await import('/src/ui/screens/equipment.js');const r=createRegistries(contentBundle);const run=createRunState({seed:671,classId:'reaver',registries:r});run.relics=r.relics.ids().slice(0,3);run.flasks=r.flasks.ids().slice(0,3).map(flaskId=>({flaskId}));window.cardGridRun=run;window.cardGridChanges=0;document.querySelector('#app').replaceChildren();mountEquipment(document.querySelector('#app'),{registries:r,run,meta:{found:r.equipment.armaments.map(p=>p.id),settings:{holdConfirm:'normal'}},inCombat:false,onClose(){},onEquipmentChanged(){window.cardGridChanges++}});})()`);
+  await wait(1800);
+  await evaluate("[...document.querySelectorAll('[role=tab]')].find(e=>e.textContent.includes('Inventory'))?.click()");
+  await wait(200);
+  check(await evaluate("!!document.querySelector('.poker-inventory-face')"), 'Armoury uses item cards');
+  check(await evaluate("getComputedStyle(document.querySelector('.disc-faces:has(.poker-inventory-face)')).display==='grid'"), 'Armoury uses uniform grid tracks');
+  await screenshot('desktop-inventory-grid');
+  const holdSelector = '[data-hold-capable=true]';
+  const point = await evaluate(`(()=>{const e=document.querySelector('${holdSelector}');e?.scrollIntoView({block:'center'});const r=e?.getBoundingClientRect();return r?{x:r.x+r.width/2,y:r.y+r.height/2}:null})()`);
+  check(!!point, 'inventory has an actionable hold target');
+  await send('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});
+  await wait(220);
+  check(await evaluate("(()=>{const host=document.querySelector('.inventory-face[data-hold=holding]');const card=host?.querySelector('.equipment-poker-card');return Number(host?.dataset.holdProgress)>0 && getComputedStyle(card,'::after').content!=='none' && getComputedStyle(card,'::after').clipPath!=='none'})()"), 'hold progress paints above the card art');
+  await screenshot('inventory-hold-progress');
+  await send('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
+  check(await evaluate('window.cardGridChanges===0'), 'early release does not equip');
+  check(await evaluate("!document.querySelector('.inventory-face[data-hold=holding]')"), 'early release clears progress');
+  await send('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});
+  await wait(850);
+  await send('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
+  check(await evaluate('window.cardGridChanges===1'), 'completed hold commits exactly once');
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  await wait(250);
+  check(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'), 'phone inventory has no horizontal overflow');
+  await screenshot('phone-inventory-grid');
   // Enter the game's real reward flow; inspecting and backing out must not collect.
   for (const [name, width, height] of [['desktop',1280,1000],['phone',390,844]]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor:1, mobile:name==='phone' });
@@ -137,10 +172,11 @@ try {
     await evaluate("document.querySelector('.reward-kind[data-kind=armament]').click();document.querySelector('#reward-detail-take').click()");
     check(await evaluate("document.querySelector('.reward-kind[data-kind=armament]')?.dataset.state==='taken'"), `${name}: Take collects armament`);
   }
-  // index.html has no favicon; its browser-generated 404 is unrelated to gameplay.
-  const appErrors = errors.filter(error => !error.includes('/favicon.ico:'));
+  // The game synthesizes these cues immediately and probes optional recordings
+  // in the background (audio.js). Missing recordings and favicon are expected.
+  const appErrors = errors.filter(error => !error.includes('/favicon.ico:') && !/\/assets\/sfx\/(hold(Tick|Commit)_equipInventory|cardPlay)\.ogg:/.test(error));
   check(appErrors.length===0, `no browser errors: ${appErrors.join('; ')}`);
-  console.log(`PASS — ${checks} checks, ${pieces.length} armaments at desktop and phone sizes${output ? `; screenshots: ${output}` : ''}`);
+  console.log(`PASS — ${checks} checks, ${pieces.length} armaments, ${collectibles.length} potions/relics, Inventory grid and hold gestures${output ? `; screenshots: ${output}` : ''}`);
 } finally {
   cdp?.close();
   server.server.close();

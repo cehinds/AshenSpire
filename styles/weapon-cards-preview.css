@@ -10,8 +10,12 @@ body.weapon-preview { display:block; height:auto; min-height:100vh; margin:0; ba
 .weapon-preview :is(input, select, form button) { min-height:44px; border:1px solid #74603c; border-radius:5px; background:#221b14; color:#eee3ca; padding:8px 12px; font:14px Arial,sans-serif; }
 .weapon-preview input { width:min(340px,100%); }
 .weapon-preview :focus-visible { outline:2px solid #f2d87e; outline-offset:3px; }
-#weapon-gallery { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:28px; align-items:start; }
+#weapon-gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(0,280px)); justify-content:center; gap:20px; align-items:start; }
 #weapon-gallery article { min-width:0; }
 .weapon-preview .weapon-enlarge { margin-top:10px; width:100%; min-height:44px; font-size:14px; }
 @media(max-width:1000px) { #weapon-gallery { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .weapon-preview main { padding:24px 16px; } .weapon-preview h1 { font-size:28px; } #weapon-gallery { grid-template-columns:minmax(0,1fr); max-width:360px; margin:auto; } .weapon-preview form > label:first-child { width:100%; } }
+
+#weapon-gallery .equipment-poker-inspection > .equipment-poker-card { width:100%; }
+@media(max-width:1000px) { #weapon-gallery { grid-template-columns:repeat(auto-fit,minmax(0,280px)); } }
+@media(max-width:600px) { #weapon-gallery { grid-template-columns:minmax(0,280px); } }

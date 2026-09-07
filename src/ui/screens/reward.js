@@ -43,6 +43,7 @@
 
 import { renderCard } from '../components/card.js';
 import { renderEquipmentInspection } from '../components/equipmentCard.js';
+import { renderCollectibleInspection } from '../components/collectibleCard.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
@@ -385,6 +386,7 @@ export function mountRewards(app, {
     const detailBody = el('div', { class: 'class-row reward-menu' });
     const armament = !isFlask && registries.equipment.armaments.find(piece => piece.id === row.armamentId);
     if (armament) detailBody.append(renderEquipmentInspection(registries, armament));
+    else if (isFlask) detailBody.append(renderCollectibleInspection(registries, registries.flasks.get(row.flaskId), 'Potion'));
     else detailBody.innerHTML = `<div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
       <div class="glyph">${KIND_GLYPHS[row.kind]}</div>
       <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>

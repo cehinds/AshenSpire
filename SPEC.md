@@ -1447,3 +1447,5 @@ weapon, shield and staff through the same equipment inspection component, with
 search, type filtering and enlarged inspection. Merchant offers and buy/sell
 inspection also use that component; prices, smithing tiers, mounted cards and
 transaction rules remain live receipts outside the base-value card (#799).
+
+Item card presentation: weapon, potion and relic inventory faces share a 5:7 canvas. Standard listing cards use a 280px track (20% smaller than 350px), arranged in a responsive grid with no last-row stretching. Hold progress overlays the face; the existing hold duration and commit/cancel rules are unchanged. Potion and relic cards display authored effects, with full-text inspection.
