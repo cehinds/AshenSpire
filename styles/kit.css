@@ -756,6 +756,16 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .combatant .nm-inspect { cursor: help; min-height: var(--tap-floor); display: flex; flex-direction: column; justify-content: center; }
 .combatant .nm-inspect:hover .ls-label, .combatant .nm-inspect:focus-visible .ls-label { color: var(--gold); }
 .combatant .nm-inspect:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1); }
+/* The keyboard's Inspect action has a literal touch counterpart. This sits in
+   the frame rather than its name so the full read is discoverable without a
+   hover hint, and remains a 44px-class tap target through the kit IconButton. */
+.combatant .combatant-inspect-control {
+  position: absolute; top: 0; right: 0; z-index: 4;
+  border-color: color-mix(in srgb, var(--gold) 65%, transparent);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  color: var(--gold); font-size: 1rem;
+}
+.combatant .combatant-inspect-control:active { transform: scale(0.94); }
 /* The full read, in a door: the same sections the edge tray renders. */
 .combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
 
