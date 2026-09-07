@@ -347,14 +347,14 @@
    "focus": ".armoury-position-card.is-locked",
    "expect": {
     "present": {
-        "exactly the next locked position": ".armoury-position-card.is-locked"
+     "exactly the next locked position": ".armoury-position-card.is-locked"
     },
     "measure": {
-        "perSlot": "Object.entries([...document.querySelectorAll('[data-slot-position]')].reduce((m,e)=>{const id=e.dataset.slotPosition.split(':')[0]; m[id]=(m[id]||0)+(e.matches('.armoury-position-card.is-locked')?1:0); return m;},{})).map(([id,n])=>id+':'+n+' locked').join(' | ')"
+     "perSlot": "Object.entries([...document.querySelectorAll('[data-slot-position]')].reduce((m,e)=>{const id=e.dataset.slotPosition.split(':')[0]; m[id]=(m[id]||0)+(e.matches('.armoury-position-card.is-locked')?1:0); return m;},{})).map(([id,n])=>id+':'+n+' locked').join(' | ')"
     },
     "wrong": [
      {
-          "js": "Object.values([...document.querySelectorAll('[data-slot-position]')].reduce((m,e)=>{const id=e.dataset.slotPosition.split(':')[0]; m[id]=(m[id]||0)+(e.matches('.armoury-position-card.is-locked')?1:0); return m;},{})).some(n=>n>1)",
+      "js": "Object.values([...document.querySelectorAll('[data-slot-position]')].reduce((m,e)=>{const id=e.dataset.slotPosition.split(':')[0]; m[id]=(m[id]||0)+(e.matches('.armoury-position-card.is-locked')?1:0); return m;},{})).some(n=>n>1)",
       "why": "a slot block shows more than one locked rung — the ladder is showing more than the NEXT locked thing"
      }
     ]
@@ -506,7 +506,7 @@
    "focus": ".armoury-position-card.is-locked",
    "expect": {
     "present": {
-        "the locked position card": ".armoury-position-card.is-locked",
+     "the locked position card": ".armoury-position-card.is-locked",
      "a refusal that says why": "#tooltip"
     },
     "measure": {
@@ -1757,39 +1757,42 @@
   },
   {
    "id": "K6",
-   "by": "Bjorn",
-   "read": "src/ui/screens/combat.js (.flask-charge with .flask-charge-count, one per CHARGE_FLASK_KINDS; pool slots [data-flask-slot]) · src/content/balance.js (flaskCapacity 3)",
+   "by": "Codex, HUD menu migration",
+   "read": "src/ui/screens/combat.js (potionEntries and CHARGE_FLASK_KINDS, potion menu data-charges) · src/content/balance.js (flaskCapacity 3)",
    "anchors": [
-    "flask-charge-count",
+    "function potionEntries()",
     "CHARGE_FLASK_KINDS"
    ],
-   "screen": "combat › the flask row: HP and MP dedicated, their pool of 3, the won-flask slots beside them",
+   "screen": "combat › Potions menu: dedicated HP and MP charges plus carried potions",
    "reach": [
     {
      "op": "goto",
      "q": "?shot=combat",
      "ms": 2600
+    },
+    {
+     "op": "click",
+     "sel": ".combat-potions"
     }
    ],
-   "focus": ".flasks",
+   "focus": ".combat-potion-menu",
    "expect": {
     "present": {
-     "the dedicated charge flasks": ".flask-charge",
-     "their charge counts": ".flask-charge-count"
+     "dedicated charge choices": ".combat-potion-menu [data-charge-kind]"
     },
     "count": [
      {
-      "sel": ".flask-charge",
+      "sel": ".combat-potion-menu [data-charge-kind]",
       "eq": 2
      }
     ],
     "measure": {
-     "charges": "[...document.querySelectorAll('.flask-charge-count')].map(e=>e.textContent).join('+')",
-     "poolSlots": "document.querySelectorAll('.flask-slot[data-flask-slot]').length"
+     "charges": "[...document.querySelectorAll('.combat-potion-menu [data-charges]')].map(e=>e.dataset.charges).join('+')",
+     "poolSlots": "document.querySelectorAll('.combat-potion-menu [data-potion-slot]').length"
     },
     "wrong": [
      {
-      "js": "[...document.querySelectorAll('.flask-charge-count')].reduce((a,e)=>a+ +e.textContent,0)!==3",
+      "js": "[...document.querySelectorAll('.combat-potion-menu [data-charges]')].reduce((sum,e)=>sum+Number(e.dataset.charges),0)!==3",
       "why": "the hp+mana pool does not open at his capacity of 3 (D19 C1) — growth is K7, but a fresh run starts at 3"
      }
     ]
