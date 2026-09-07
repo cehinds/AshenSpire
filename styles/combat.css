@@ -372,8 +372,8 @@
 /* Attack lunge: enemies step left toward the player, the player steps right. */
 .enemy .sprite.act-attack { animation: lunge-left 280ms ease-out; }
 .enemy-pose-attack { visibility: hidden; }
-.enemy .sprite.act-attack [data-attack-ready="true"] > .enemy-pose-idle { visibility: hidden; }
-.enemy .sprite.act-attack [data-attack-ready="true"] > .enemy-pose-attack { visibility: visible; }
+.enemy .sprite:is(.act-attack, .enemy-attack-pose) [data-attack-ready="true"] > .enemy-pose-idle { visibility: hidden; }
+.enemy .sprite:is(.act-attack, .enemy-attack-pose) [data-attack-ready="true"] > .enemy-pose-attack { visibility: visible; }
 .player .sprite.act-attack { animation: lunge-right 280ms ease-out; }
 .sprite.act-move { animation: act-step 260ms ease-out; }
 @keyframes lunge-left {
