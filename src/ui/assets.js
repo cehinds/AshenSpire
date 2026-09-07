@@ -6,7 +6,7 @@
 // with a CREDITS.md row — no game-code changes.
 
 import { balance } from '../content/balance.js';
-import { PAINTED_ENEMIES, EXPANSION_ENEMIES } from '../content/enemyArt.js';
+import { PAINTED_ENEMIES, EXPANSION_ENEMIES, ENEMY_POSES } from '../content/enemyArt.js';
 import { medallionAnchor } from '../content/classArtAnchors.js';
 import { DEFAULT_SPRITE_STYLE, SPRITE_STYLES } from '../model/spriteStyle.js';
 import { createPaintedStage, paintedPresentation } from './paintedOutfits.js';
@@ -80,7 +80,8 @@ export function spriteMirror(artFaces, side = 'enemy') {
 export function enemySprite(enemyDef) {
   const unity = PAINTED_ENEMIES.includes(enemyDef.id);
   const expansion = EXPANSION_ENEMIES.includes(enemyDef.id);
-  const painted = unity || expansion;
+  const posed = ENEMY_POSES.includes(enemyDef.id);
+  const painted = posed || unity || expansion;
   const artFaces = painted ? 'left' : enemyDef.artFaces;
   const tier = SIZE_TIERS[enemyDef.size || 'medium'];
   const tint = enemyDef.tint || 'var(--line-soft)';
@@ -139,13 +140,14 @@ export function enemySprite(enemyDef) {
     + (spriteMirror(artFaces) ? 'transform:scaleX(-1);' : '');
   const img = document.createElement('img');
   const original = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
-  img.src = unity ? assetUrl(`assets/enemies-unity/painted_${enemyDef.id}.png`)
+  img.src = posed ? assetUrl(`assets/enemy-poses/${enemyDef.id}_idle.png`)
+    : unity ? assetUrl(`assets/enemies-unity/painted_${enemyDef.id}.png`)
     : expansion ? assetUrl(`assets/enemies-expansion/${enemyDef.id}.png`) : original;
   img.alt = enemyDef.name || enemyDef.id;
   img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
     `filter:drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
   if (painted) {
-    img.dataset.artSource = unity ? 'unity' : 'expansion';
+    img.dataset.artSource = posed ? 'enemy-poses' : unity ? 'unity' : 'expansion';
     // Align the common foot line without cropping or stretching the frame.
     img.style.width = 'auto';
     img.style.height = '100%';
@@ -153,6 +155,7 @@ export function enemySprite(enemyDef) {
     img.style.transform = 'translateY(5.208333%)';
   }
   img.addEventListener('error', () => {
+    delete facing.dataset.attackReady;
     if (img.dataset.artSource) {
       delete img.dataset.artSource;
       img.style.width = '100%'; img.style.height = '100%'; img.style.maxWidth = ''; img.style.transform = '';
@@ -162,6 +165,21 @@ export function enemySprite(enemyDef) {
     } else placeholder();
   });
   facing.appendChild(img);
+  if (posed) {
+    img.classList.add('enemy-pose-idle');
+    const attack = img.cloneNode(false);
+    attack.className = 'enemy-pose-attack';
+    attack.alt = '';
+    attack.setAttribute('aria-hidden', 'true');
+    attack.style.position = 'absolute';
+    attack.style.bottom = '0';
+    attack.src = assetUrl(`assets/enemy-poses/${enemyDef.id}_attack.png`);
+    attack.addEventListener('load', () => {
+      if (img.dataset.artSource === 'enemy-poses') facing.dataset.attackReady = 'true';
+    });
+    attack.addEventListener('error', () => { delete facing.dataset.attackReady; });
+    facing.appendChild(attack);
+  }
   el.appendChild(facing);
   return el;
 }
@@ -517,8 +535,28 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
 export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false }) {
-  const painted = paintedPresentation(classId, armourId, 'stand');
-  if (painted) return painted;
+  // NO PAINTED SHORT-CIRCUIT HERE, and the reason is the whole point of this
+  // function. A `return paintedPresentation(classId, armourId, 'stand')` sat on
+  // these two lines and returned a single standing frame, so the armament layers
+  // below were never built: the Armoury drew your figure without the weapon or
+  // shield you had equipped. `hand-side-probe` measured every one of the 25
+  // armaments in both hands landing at the identical centroid — 50 findings, all
+  // `drawn centre`, because there was no held piece on the figure to be drawn on
+  // a side at all.
+  //
+  // It was also unreachable in the case it was written for, and harmful in the
+  // case it did reach. The one call site left in the app, `figureFor` in
+  // screens/equipment.js, already chooses painted art itself and returns before
+  // calling here — but only when the player has NOT asked for `classic` or
+  // `glyph` and sprites are on. So the only calls that arrived here were the
+  // ones that had deliberately declined painted art, and this handed it back
+  // anyway, overriding the sprite style the player chose. It defeated
+  // `reacts === 'hands'` the same way, which sets `armourId` to `default`
+  // precisely so the held pieces show.
+  //
+  // Painted presentation belongs at the call site that wants it, next to the
+  // preference that decides it. This function composites equipment; that is the
+  // only thing anything asks it for.
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const el = document.createElement('div');
   el.className = 'equipped-figure';
