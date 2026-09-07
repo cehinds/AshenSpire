@@ -328,6 +328,42 @@ if (ship) {
       if (at >= 0) manifest.assets[at] = row; else manifest.assets.push(row);
     }
   }
+  // A PARTIAL SHIP MUST NOT LEAVE TWO ANCHOR SCHEMAS IN ONE INVENTORY.
+  //
+  // Codex on #725: the shipped rows still recorded `medallion_center_pct` as a
+  // bare number (or null) from before the anchor grew an x, so "a later partial
+  // `--ship` run would produce a manifest containing a mixture of old
+  // scalar/null and new object records". That is exactly right, and it is not
+  // hypothetical: only three of the four classes have pose sources today, so a
+  // run from this directory rewrites fifteen rows in the new shape and leaves
+  // the Herald's five holding a scalar. The inventory would then describe two
+  // different schemas and no reader could tell which one a row meant.
+  //
+  // The data can only be corrected by ONE run covering all four classes, which
+  // is what the Herald's full-body plate is waited on for. Until then this
+  // refuses rather than shipping the mixture quietly. Null is accepted on
+  // either side: "measured and unplaceable" is a legal value in both schemas,
+  // so only a genuine leftover number is a conflict.
+  const shipped = new Set(rows.map(({ cls }) => cls));
+  const stale = manifest.assets.filter((asset) => {
+    const id = String(asset.asset_id || '');
+    if (!id.startsWith('class.sprite.')) return false;
+    if (shipped.has(id.split('.')[2])) return false;
+    return typeof asset.anchor?.medallion_center_pct === 'number';
+  });
+  if (stale.length && !args.includes('--allow-mixed-anchors')) {
+    console.error(
+      `Refusing to leave two medallion-anchor schemas in ${manifestPath}.\n`
+      + `  This run writes { x, y } for: ${[...shipped].sort().join(', ')}.\n`
+      + `  These rows would keep a bare number from the old schema:\n    `
+      + `${stale.map((a) => `${a.asset_id} = ${a.anchor.medallion_center_pct}`).join('\n    ')}\n\n`
+      + '  Ship every class in ONE run so the inventory speaks one schema. The\n'
+      + '  shared scale is derived across the whole --in set anyway, so a partial\n'
+      + '  run also re-frames a subset against a different scale than its peers.\n'
+      + '  If a mixed inventory really is the intent, pass --allow-mixed-anchors.',
+    );
+    process.exit(1);
+  }
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   console.log(`manifest: ${rows.length * Object.keys(TINTS).length} row(s) rewritten in ${manifestPath}`);
 

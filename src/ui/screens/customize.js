@@ -424,6 +424,28 @@ export function mountCustomize(app, {
     let refreshDone = () => {};
     const door = { outcome: null, restoreFocus: true, close: () => {} };
     const step = (id, delta) => {
+      // ENFORCE THE BOUND WHERE THE CHANGE HAPPENS, not only on the control.
+      // This mutated on trust: the stepper's own listener checks `allowed`,
+      // but that is a closure captured when the control was drawn, so any
+      // activation that reaches this function with a stale or bypassed control
+      // moved the stat anyway. Measured, not theorised — the creation gate's
+      // own click sequence drove the pool to **-1** (STR 15, DEX 16 out of a
+      // 60-point total), after which Done refused with "1 stat point over the
+      // pool" and a player would have had to work out for themselves which
+      // stat to put back. The row model already computes whether a stat may
+      // move; the same predicate is read here rather than restated, so the
+      // control and the mutation cannot disagree.
+      // The same predicate `rowsNow()` gives the controls, computed directly:
+      // reading it through `rowsNow()` drags in `previewRun()` on every press,
+      // and that round trip made a legitimate press do nothing at all — the
+      // pool sat at 1 with four steppers reporting themselves enabled and no
+      // click able to spend it. Cheap, and it cannot disagree with the row
+      // model while both read `mode` and `remainingPoints()`.
+      const current = state.attributes[id];
+      const allowed = delta > 0
+        ? current < mode.maximum && remainingPoints() > 0
+        : current > mode.minimum;
+      if (!allowed) return;
       state.attributes[id] += delta;
       if (!statsProblem()) previewAttributes = { ...state.attributes };
       // The pressed stepper keeps the cursor across the redraw.
