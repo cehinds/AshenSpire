@@ -29,12 +29,28 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL disabled actions always carry a reason/,
       },
       {
-        name: 'the combat screen calls useFlask on selection instead of opening the shared menu',
+        // RE-POINTED 2026-09-07 (#720). Combat's flask surface stopped being the
+        // popup menu: a potion row is now the Armoury's own OptionCard/DetailCard
+        // fold, opened in place. `mountFlaskActionMenu` is therefore gone from
+        // combat.js and this plant armed nothing — tools/plantsites.mjs caught it.
+        // What the contract MEANS is unchanged and is what is planted against now:
+        // combat must draw its rows from the SHARED flask component, not a local
+        // copy of one.
+        name: 'the combat screen grows its own potion surface instead of the shared one',
         file: 'src/ui/screens/combat.js',
-        find: 'mountFlaskActionMenu',
-        replace: 'plantedDirectUseFlask',
-        all: true, // the token appears twice in the real file; half a plant is a false NOT-CAUGHT
-        expectRed: /FAIL one shared menu surface is used in and out of combat/,
+        find: "import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from '../components/flask.js';",
+        replace: "const flaskTooltipHtml = () => ''; const flaskDetailLines = () => []; const flaskPresentation = () => null; // planted: a combat-local potion surface",
+        expectRed: /FAIL one shared flask surface serves in and out of combat/,
+      },
+      {
+        // The second half of the same contract, and it needed its own plant: the
+        // old single plant reddened both checks only because both looked for the
+        // same token. Selection must stay inert — only the confirmed Use commits.
+        name: 'the combat screen calls useFlask on selection instead of the confirmed Use',
+        file: 'src/ui/screens/combat.js',
+        find: "        if (action.enabled) arm(use, 'useFlask', {",
+        replace: "        if (action.enabled) use.addEventListener('click', () => useFlask(slot, null, chargeKind)); // planted: selection commits directly\n        if (false) arm(use, 'useFlask', {",
+        expectRed: /FAIL flask selection does not call useFlask directly/,
       },
       {
         name: 'LAN stops routing the explicit flaskIntent through the host',
@@ -81,14 +97,27 @@ if (actions?.flaskActionPlan) {
   check('selection itself is inert', false);
 }
 
-check('one shared menu surface is used in and out of combat',
-  /mountFlaskActionMenu/.test(component) && /mountFlaskActionMenu/.test(combat) && /mountFlaskActionMenu/.test(map));
+// ONE SURFACE, TWO SHAPES OF IT (#720). Out of combat a flask still opens the
+// shared `mountFlaskActionMenu`. In combat the row IS the surface — the Armoury's
+// OptionCard/DetailCard fold, opened in place — so the token this once matched on
+// is legitimately absent there. What the contract has always been about survives
+// the move and is what is asserted: combat renders a potion from the SHARED flask
+// component's presentation, never from a combat-local copy of it.
+check('one shared flask surface serves in and out of combat',
+  /mountFlaskActionMenu/.test(component) && /mountFlaskActionMenu/.test(map)
+    && /from '\.\.\/components\/flask\.js'/.test(combat)
+    && /flaskPresentation/.test(combat) && /flaskDetailLines/.test(combat));
 check('menu supports focus navigation, cancel, and back without dispatch',
   /focusFirst|\.focus\(/.test(component) && /Escape|cancel/i.test(component)
     && /onCancel/.test(component) && /remove\(\)/.test(component));
+// The commit is the CONFIRMED Use and nothing else: combat routes its Use control
+// through the hold/confirm door (`arm(el, 'useFlask', { onConfirm })`), and no
+// select/open/toggle handler reaches useFlask. The negative clause stops at the
+// first `;` on purpose — the enemy-click and number-key paths DO call useFlask,
+// legitimately, once targeting has already been armed by a confirmed Use.
 check('flask selection does not call useFlask directly',
-  /mountFlaskActionMenu/.test(combat)
-    && !/flask-slot[\s\S]{0,500}(?:onConfirm|click)[\s\S]{0,120}useFlask/.test(combat));
+  /arm\(use, 'useFlask',[\s\S]{0,600}?onConfirm/.test(combat)
+    && !/addEventListener\('(?:toggle|click)',[^;]{0,200}useFlask\(/.test(combat));
 check('co-op flask selection also opens the shared menu instead of sending use',
   /mountFlaskActionMenu/.test(coop) && !/coop-flask[\s\S]{0,500}send\(\{ t: 'useFlask'/.test(coop));
 check('co-op transports an explicit flask intent to host authority',
