@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-726",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The branch histories are rejoined",
+    "detail": "Nothing a player sees changes. The test branch had stopped being only a promotion target — seven pull requests landed on it directly — so it had diverged from dev and a promotion could not merge at all. This rejoins them, keeping both of the receipts numbered 711 and 712 for what is the same change on two branches rather than folding one into the other. It also pays two debts the action-row fix left behind: its own receipt, and a standalone build left stale because the launch script does not write build/ — the bundler does, and only the bundler.",
+    "build": "0.5.5.73",
+    "pullRequest": 726,
+    "url": "https://github.com/cehinds/AshenSpire/pull/726"
+  },
+  {
+    "id": "pr-730",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "A receipts pass that names itself",
+    "detail": "Nothing a player sees changes. The entry above was owed by a pull request that, being one itself, owed one in turn; this is that one, and it names its own number so the debt does not pass to a third. That regress has been walked three times already, at 714, 717 and 718: each wrote the receipts that were owed and then owed one itself. The escape is the same every time — open the pull request first, because a receipt cannot name a number that does not yet exist, then write the receipt.",
+    "build": "0.5.5.73",
+    "pullRequest": 730,
+    "url": "https://github.com/cehinds/AshenSpire/pull/730"
+  },
+  {
     "id": "pr-721",
     "date": "2026-09-07",
     "group": "2026-09-07",
