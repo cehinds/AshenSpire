@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-787",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Equipment as painted poker cards",
+    "detail": "Inventory and equipment inspection use the approved gold-bordered 5:7 design, with canonical item facts and painted artwork. Hover or focus a field for its explanation, or read all details on touch. Long text remains available without stretching the card. Equip, compare and combat equipment behavior are preserved.",
+    "build": "0.5.5.119",
+    "pullRequest": 787,
+    "url": "https://github.com/cehinds/AshenSpire/pull/787"
+  },
+  {
     "id": "pr-771",
     "date": "2026-09-07",
     "group": "2026-09-07",
