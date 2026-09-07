@@ -7,7 +7,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8');
+const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
 
 // A composition names a stable id as the literal attribute, or through the
 // ONE home of ids (UI.<camelKey>) when it builds its markup from the kit.
@@ -178,7 +178,7 @@ export function findings(r) {
       // different width. It now measures every frame and applies the smallest
       // scale any of them needs — this asserts the reduce and the apply, so a
       // return to per-frame scaling is red.
-      || !/measures\.reduce\(\(least, m\) => Math\.min\(least, m\.fits\), 1\)/.test(r.battlefieldStage)
+      || !/measures\.reduce\(\(least, m\) => Math\.min\(least, m\.fits\), Infinity\)/.test(r.battlefieldStage)
       || !/for \(const measure of measures\) applyFrame\(measure, scale\)/.test(r.battlefieldStage)
       || !/function renderCombatantStage\(\)[\s\S]*?renderPlayer\(\);\s*renderEnemies\(\);[\s\S]*?battlefieldStage\.refresh\(\);[\s\S]*?function render\(\)/.test(r.combat)
       || (r.combat.match(/renderCombatantStage\(\);/g) || []).length < 2

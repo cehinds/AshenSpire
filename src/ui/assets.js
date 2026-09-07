@@ -9,6 +9,7 @@ import { balance } from '../content/balance.js';
 import { PAINTED_ENEMIES, EXPANSION_ENEMIES } from '../content/enemyArt.js';
 import { medallionAnchor } from '../content/classArtAnchors.js';
 import { DEFAULT_SPRITE_STYLE, SPRITE_STYLES } from '../model/spriteStyle.js';
+import { createPaintedStage, paintedPresentation } from './paintedOutfits.js';
 import { assetUrl } from './assetmap.js';
 import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
 
@@ -303,6 +304,18 @@ function renderedSpriteUrl(classId, tintId) {
 export function classSprite(classId, tint, sigil, tintId, style, figureId, armourId = 'default') {
   const build = CLASS_SVG[classId];
   if (!build) return null;
+  if (style === 'animated' || style === 'rendered') {
+    const stage = style === 'animated' ? createPaintedStage(classId, armourId) : null;
+    const art = stage?.el || paintedPresentation(classId, armourId);
+    if (art) {
+      const host = document.createElement('div');
+      host.className = 'class-sprite painted-outfit' + (stage ? ' animated' : '');
+      host.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';
+      host.appendChild(art);
+      if (stage) registerStage(host, stage);
+      return host;
+    }
+  }
   const el = document.createElement('div');
   el.className = 'class-sprite';
   el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
@@ -464,6 +477,8 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
 export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false }) {
+  const painted = paintedPresentation(classId, armourId, 'stand');
+  if (painted) return painted;
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const el = document.createElement('div');
   el.className = 'equipped-figure';
