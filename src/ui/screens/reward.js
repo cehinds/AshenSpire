@@ -399,19 +399,25 @@ export function mountRewards(app, {
     if (isEngaged()) setTimeout(() => focusFirst('#reward-detail-take') || focusFirst('#reward-back'), 0);
   }
 
-  // ---- the card chooser: opens from the card row, Back returns -------------
+  // ---- the card chooser: select first, then explicitly confirm -------------
   function renderChooser() {
     const row = plan.rows.find((r) => r.kind === 'card');
     const backButton = button({ label: 'Back', id: 'reward-back', className: 'subtle' });
+    const confirmButton = button({
+      label: 'Confirm', weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
+    });
     door({
       eyebrow: 'Choose a card',
       title: rewards.title || 'Victory',
-      body: el('div', { class: 'reward-row' }),
-      foot: modalFooter({ secondary: [backButton], className: 'reward-foot', size: 'medium' }),
+      body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': 'Card rewards' }),
+      foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
     });
     const strip = app.querySelector('.reward-row');
+    let selectedCardId = null;
     for (const cardId of row.cardIds) {
       const el = renderCard(registries, { cardId, upgraded: false }, {});
+      el.setAttribute('role', 'radio');
+      el.setAttribute('aria-checked', 'false');
       if (marks.cards.includes(cardId)) {
         // The marker is a RENDERED badge, not only a data attribute — Codex
         // 4989824448's third finding: `data-new` alone had no consumer in any
@@ -425,9 +431,20 @@ export function mountRewards(app, {
         badge.textContent = 'NEW';
         el.appendChild(badge);
       }
-      el.addEventListener('click', () => take({ ...row, cardId }, 'card'));
+      el.addEventListener('click', () => {
+        selectedCardId = cardId;
+        for (const candidate of strip.querySelectorAll('.card')) {
+          const selected = candidate === el;
+          candidate.classList.toggle('reward-selected', selected);
+          candidate.setAttribute('aria-checked', String(selected));
+        }
+        confirmButton.disabled = false;
+      });
       strip.appendChild(el);
     }
+    confirmButton.addEventListener('click', () => {
+      if (selectedCardId) take({ ...row, cardId: selectedCardId }, 'card');
+    });
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">Back</div>${esc('Return to the spoils — the offer keeps.')}`);
     back.addEventListener('click', () => renderMenu('card'));

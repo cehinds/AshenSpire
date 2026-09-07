@@ -1067,6 +1067,21 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-menu { max-width: none; width: 100%; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
+.reward-door .reward-row .card.reward-selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold), 0 10px 30px rgba(var(--accent-rgb), 0.28);
+  transform: translateY(-8px) scale(1.06);
+}
+.reward-door .reward-confirm:not(:disabled) {
+  background: color-mix(in srgb, var(--green) 22%, var(--panel));
+  border-color: var(--green);
+  color: var(--parchment);
+}
+.reward-door .reward-confirm:not(:disabled):hover,
+.reward-door .reward-confirm:not(:disabled):focus-visible {
+  background: color-mix(in srgb, var(--green) 34%, var(--panel));
+  border-color: var(--green);
+}
 
 /* ═══ PAGE DOOR — a door that stands on the page, edge to edge ═══════════ */
 /* A PAGE DOOR wears the door's box without the veil (as the event does), in
