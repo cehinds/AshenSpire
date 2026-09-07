@@ -18,9 +18,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-07",
     "summary": "Combat groups potions, piles and weapon arts into shared menus",
     "detail": "Potions stays at the far right, with quantities and explicit Use actions. Discard and Exhaust share an entry but retain separate tabs and counts. Arts shows equipped cards and selects only cards currently in hand. Map Quick Access controls use full-size targets so nearby controls no longer overlap.",
-    "build": "0.5.5.45",
+    "build": "0.5.5.48",
     "pullRequest": 679,
     "url": "https://github.com/cehinds/AshenSpire/pull/679"
+  },
+  {
+    "id": "pr-676",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Traders buy and sell armaments and stock weapon arts",
+    "detail": "Inspect equipment before buying, sell unequipped items from storage, and buy Draw Cut or Sundering Hew for the existing mounting system. Equipped items explain their sale restriction. Cancelled or stale quotes spend nothing; upgrades, mount history and discoveries survive a sale and reacquisition.",
+    "build": "0.5.5.45",
+    "pullRequest": 676,
+    "url": "https://github.com/cehinds/AshenSpire/pull/676"
   },
   {
     "id": "pr-657",

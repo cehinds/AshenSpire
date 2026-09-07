@@ -15,6 +15,14 @@ separate pile tabs. `node tools/screenreach.mjs --only 390x650` checks reachable
 controls across screens. Potion selection uses the shared flask action plan;
 only explicit Use may spend a charge. The map Quick Access faces retain real
 44px target boxes to prevent neighboring invisible hit regions overlapping.
+Armament trading uses `src/model/armamentTrading.js` for inert quotes and atomic
+commits. Stored ownership, equipped sets, capacity, currency and stock revisions
+are rechecked at commit. Selling retains upgrades, mount history and permanent
+discovery; it removes only card instances granted by the sold item. Legacy shops
+without the new shelves retain empty shelves instead of rerolling their stock.
+Run `node --test tests/armamentTrading.test.mjs` for purchase, sale, stale quote,
+mounting and save round-trip coverage. Weapon-art packages are authored in
+`content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
 
 ```
 # play (no build step — any static server, or open index.html directly)
