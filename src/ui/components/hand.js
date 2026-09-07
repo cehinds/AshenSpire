@@ -76,6 +76,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   // Snapshot clients remount this strip; arrivals are opt-in for persistent mounts.
   let previousCards = new Set();
   let handEls = []; // the rendered cards, in hand order (filled by render)
+  let fanMeasurement = null;
   let handFan = []; // each card's shipped fan transform, same index
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
 
@@ -87,6 +88,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const cs = getComputedStyle(handEl);
       const available = handEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       const width = cards[0].offsetWidth;
+      const measurement = [available, width, zoom, cards.length].join(':');
+      if (measurement === fanMeasurement) return;
+      fanMeasurement = measurement;
       const shown = Math.min(cards.length, 7);
       const step = shown > 1 ? Math.max(28 / zoom, Math.min(width + 12, (available - width) / (shown - 1))) : width;
       cards.forEach((el, i) => {
@@ -138,10 +142,21 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   // replaced (co-op re-mounts per snapshot; solo replaces the screen wholesale).
   let ro = null;
   let mo = null;
+  let layoutFrame = 0;
+  const scheduleHandLayout = () => {
+    if (layoutFrame) return;
+    // ResizeObserver delivers during layout. Defer writes to the next frame
+    // so changing the fan cannot resize another observed box in that delivery.
+    layoutFrame = requestAnimationFrame(() => {
+      layoutFrame = 0;
+      if (!handEl.isConnected) { ro?.disconnect(); mo?.disconnect(); return; }
+      applyHandLayout();
+    });
+  };
   if (typeof ResizeObserver !== 'undefined' && (fitFan || handLayoutWord() === 'overlap')) {
     const alive = () => document.body.contains(handEl);
-    ro = new ResizeObserver(() => { if (alive()) applyHandLayout(); else ro.disconnect(); });
-    mo = new MutationObserver(() => { if (alive()) applyHandLayout(); else mo.disconnect(); });
+    ro = new ResizeObserver(() => { if (alive()) scheduleHandLayout(); else ro.disconnect(); });
+    mo = new MutationObserver(() => { if (alive()) scheduleHandLayout(); else mo.disconnect(); });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout'] });
     ro.observe(handEl);
   }
@@ -149,6 +164,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   function render({ cards = [], emptyHtml = null }) {
     const drawn = new Set(cards.filter(entry => !previousCards.has(entry.inst.instanceId)).map(entry => entry.inst.instanceId));
     previousCards = new Set(cards.map(entry => entry.inst.instanceId));
+    fanMeasurement = null;
     handEl.innerHTML = '';
     handEls = [];
     handFan = [];
@@ -243,6 +259,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   }
 
   function teardown() {
+    cancelAnimationFrame(layoutFrame);
+    layoutFrame = 0;
     if (ro) ro.disconnect();
     if (mo) mo.disconnect();
   }
