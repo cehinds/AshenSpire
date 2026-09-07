@@ -260,7 +260,10 @@ export function mountCustomize(app, {
   }
 
   function resetAttributes() {
-    state.attributes = { ...classAttributePreset(registries, state.classId, POINTBUY) };
+    const mode = pointbuyMode();
+    state.attributes = Object.fromEntries(
+      orderedAttributes(registries).map((attribute) => [attribute.id, mode.baseline]),
+    );
     previewAttributes = { ...state.attributes };
   }
 
@@ -354,7 +357,10 @@ export function mountCustomize(app, {
       modes.appendChild(modeChoiceButton(mode, state.attributeMode === mode.id, () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
-          if (!state.attributes) resetAttributes();
+          // Entering Assign Points is an explicit fresh allocation. Return the
+          // entire authored pool instead of reopening the class-biased preset
+          // (or a previous edit) with points already spent.
+          resetAttributes();
           openPointBuy();
         } else {
           closePointBuy();

@@ -2525,7 +2525,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* The settings variant: same grammar, hairline between, no hover fill — a
    settings row is read, not chosen. It may wrap its control under the label
    when the pane is narrow, and it never clips a hint. */
-.as-row.setting { padding-inline: 0; border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
+.as-row.setting { padding: 0.7rem; border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
 .as-row.setting:hover { background: transparent; }
 .as-row.setting:last-child { border-bottom: 0; }
 .as-row.setting > .as-labelstack { flex: 1 1 18rem; }
@@ -52809,7 +52809,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '03e96c7195';
+const SOURCE = '0c06dc43cb';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52843,7 +52843,7 @@ const SOURCE = '03e96c7195';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '13';
+const ORDINAL = '15';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58908,7 +58908,10 @@ function mountCustomize(app, {
   }
 
   function resetAttributes() {
-    state.attributes = { ...classAttributePreset(registries, state.classId, POINTBUY) };
+    const mode = pointbuyMode();
+    state.attributes = Object.fromEntries(
+      orderedAttributes(registries).map((attribute) => [attribute.id, mode.baseline]),
+    );
     previewAttributes = { ...state.attributes };
   }
 
@@ -59002,7 +59005,10 @@ function mountCustomize(app, {
       modes.appendChild(modeChoiceButton(mode, state.attributeMode === mode.id, () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
-          if (!state.attributes) resetAttributes();
+          // Entering Assign Points is an explicit fresh allocation. Return the
+          // entire authored pool instead of reopening the class-biased preset
+          // (or a previous edit) with points already spent.
+          resetAttributes();
           openPointBuy();
         } else {
           closePointBuy();

@@ -707,6 +707,11 @@ The preset is an editor opening position, not a lock: players may redistribute t
 total within the mode's data-authored bounds. Starting derived values come only from the
 formulas in §3.5; classes do not carry a second hidden HP/Actions/hand formula.
 
+Choosing **Assign Points** always begins a fresh allocation at that mode's baseline for every
+attribute, with its complete bonus pool unspent. Reopening Assign Points refunds the current
+allocation the same way; class presets and earlier edits do not consume points before the
+player assigns them.
+
 **Level curve.** A fresh run starts at displayed level 1. A purchase increments the displayed
 level by one and grants exactly 1 configurable attribute point by default. Price purchase
 `n` (zero-based) as `firstCost + costStep × n`, with `firstCost = 20` and `costStep = 4`
