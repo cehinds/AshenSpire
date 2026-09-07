@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-721",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Hand cards no longer come to rest on Draw and End Turn",
+    "detail": "On a desktop-shaped window the lowest cards in your hand overlapped the buttons beneath them at every text size — the defect #713's repaired gate found and recorded rather than fixed. The cause was one number: the band the combat column reserves under the hand is measured for the row's tallest cell, and #679 grew that row from four controls to six and gave every one of them a 44px minimum tap height without re-measuring it. The reservation is re-measured to match the row it now has to clear, with room to spare rather than the few pixels that merely avoid a touch. Two of the gate's own plants were pinned to the old number and stopped proving anything the moment it changed; one is re-pointed and the other re-anchored so a future re-measure cannot disarm it again.",
+    "build": "0.5.5.71",
+    "pullRequest": 721,
+    "url": "https://github.com/cehinds/AshenSpire/pull/721"
+  },
+  {
     "id": "pr-722",
     "date": "2026-09-07",
     "group": "2026-09-07",
@@ -131,6 +141,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.5.5.60",
     "pullRequest": 711,
     "url": "https://github.com/cehinds/AshenSpire/pull/711"
+  },
+  {
+    "id": "pr-712",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Saved boss destinations follow current content safely",
+    "detail": "Loading validates the original boss behind legacy maps and refuses missing or invalid encounters before play. Named destinations refresh when enemies are renamed or encounter composition changes, preserving paths, selected encounters and RNG state in solo and LAN saves. This applies the development fix from PR #711.",
+    "build": "0.5.5.57",
+    "pullRequest": 712,
+    "url": "https://github.com/cehinds/AshenSpire/pull/712"
   },
   {
     "id": "pr-704",
