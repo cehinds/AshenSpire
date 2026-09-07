@@ -143,14 +143,15 @@ export function enemySprite(enemyDef) {
   if (painted) {
     img.dataset.artSource = 'unity';
     // Align the common foot line without cropping or stretching the frame.
-    img.style.height = 'auto';
-    img.style.maxHeight = '100%';
+    img.style.width = 'auto';
+    img.style.height = '100%';
+    img.style.maxWidth = 'none';
     img.style.transform = 'translateY(5.208333%)';
   }
   img.addEventListener('error', () => {
     if (img.dataset.artSource === 'unity') {
       delete img.dataset.artSource;
-      img.style.height = '100%'; img.style.maxHeight = ''; img.style.transform = '';
+      img.style.width = '100%'; img.style.height = '100%'; img.style.maxWidth = ''; img.style.transform = '';
       facing.dataset.facing = spriteMirror(enemyDef.artFaces) ? 'mirrored' : 'as-drawn';
       facing.style.transform = spriteMirror(enemyDef.artFaces) ? 'scaleX(-1)' : '';
       img.src = original;
