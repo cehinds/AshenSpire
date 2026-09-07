@@ -1,7 +1,7 @@
 {
   "setups": 8,
   "classes": 2,
-  "phasesPerSetup": 4,
+  "phasesPerSetup": 5,
   "visualFrames": 24,
   "clippedFrames": 0,
   "browserErrors": [],

@@ -1,0 +1,74 @@
+{
+  "pelvis": {
+    "left": 116,
+    "top": 120,
+    "width": 213,
+    "height": 222
+  },
+  "nearThigh": {
+    "left": 484,
+    "top": 52,
+    "width": 117,
+    "height": 188
+  },
+  "nearShin": {
+    "left": 814,
+    "top": 56,
+    "width": 105,
+    "height": 229
+  },
+  "nearBoot": {
+    "left": 1078,
+    "top": 143,
+    "width": 202,
+    "height": 158
+  },
+  "frontSkirt": {
+    "left": 134,
+    "top": 439,
+    "width": 170,
+    "height": 234
+  },
+  "farThigh": {
+    "left": 434,
+    "top": 411,
+    "width": 140,
+    "height": 209
+  },
+  "farShin": {
+    "left": 817,
+    "top": 398,
+    "width": 103,
+    "height": 217
+  },
+  "farBoot": {
+    "left": 1082,
+    "top": 486,
+    "width": 205,
+    "height": 155
+  },
+  "torsoCrouch": {
+    "left": 87,
+    "top": 751,
+    "width": 209,
+    "height": 312
+  },
+  "torsoOverhead": {
+    "left": 400,
+    "top": 748,
+    "width": 301,
+    "height": 310
+  },
+  "cloakAction": {
+    "left": 701,
+    "top": 768,
+    "width": 310,
+    "height": 271
+  },
+  "backSkirt": {
+    "left": 1108,
+    "top": 819,
+    "width": 196,
+    "height": 204
+  }
+}

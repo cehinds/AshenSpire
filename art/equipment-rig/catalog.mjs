@@ -1,6 +1,6 @@
 export const WEAPONS = {
  straightSword: {name:'Straight Sword',family:'blade',grip:[116,401],tip:[490,20],scale:.45},
- greatsword: {name:'Greatsword',family:'heavy',grip:[147,365],support:[98,412],tip:[496,17],scale:.59},
+ greatsword: {name:'Greatsword',family:'heavy',grip:[147,365],support:[98,412],tip:[496,17],scale:.51},
  kiteShield: {name:'Kite Shield',family:'shield',grip:[255,230],tip:[255,5],scale:.40},
  starstoneStaff: {name:'Starstone Staff',family:'focus',grip:[241,275],support:[184,336],tip:[464,52],scale:.52},
  katana: {name:'Katana',family:'blade',grip:[129,369],tip:[490,20],scale:.48},

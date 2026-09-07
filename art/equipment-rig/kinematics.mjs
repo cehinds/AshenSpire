@@ -1,27 +1,50 @@
+import {referenceKeys} from './reference-poses.mjs';
 export const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const lerp=(a,b,t)=>a+(b-a)*t;
-export function solveArm(shoulder,target,upper,lower,bend=1){
- const dx=target[0]-shoulder[0],dy=target[1]-shoulder[1];
- const desired=Math.hypot(dx,dy),d=clamp(desired,Math.abs(upper-lower)+.001,upper+lower-.001);
- const angle=Math.atan2(dy,dx),a=Math.acos(clamp((upper*upper+d*d-lower*lower)/(2*upper*d),-1,1));
- const elbow=[shoulder[0]+Math.cos(angle+bend*a)*upper,shoulder[1]+Math.sin(angle+bend*a)*upper];
- const wrist=[shoulder[0]+Math.cos(angle)*d,shoulder[1]+Math.sin(angle)*d];
- return {shoulder,elbow,wrist,error:Math.max(0,desired-d)};
+export const radians=d=>d*Math.PI/180;
+export const degrees=r=>r*180/Math.PI;
+export const wrapAngle=a=>((a+180)%360+360)%360-180;
+export const rotate=(p,a)=>{const r=radians(a);return [p[0]*Math.cos(r)-p[1]*Math.sin(r),p[0]*Math.sin(r)+p[1]*Math.cos(r)]};
+export const add=(a,b)=>[a[0]+b[0],a[1]+b[1]];
+export const LIMITS={
+ nearArm:{joint:[-155,172],flex:[8,165]},farArm:{joint:[-172,140],flex:[8,165]},
+ leg:{joint:[-25,160],flex:[8,145]},wrist:[-50,50],ankle:[-60,60],spine:[-12,40],
+};
+export function solveArm(shoulder,target,upper,lower,bend=1,limits={joint:[-360,360],flex:[.01,179.99]},baseAngle=0){
+ const delta=rotate([target[0]-shoulder[0],target[1]-shoulder[1]],-baseAngle);
+ const radius=flex=>Math.sqrt(upper*upper+lower*lower+2*upper*lower*Math.cos(radians(flex)));
+ const desired=Math.hypot(...delta),d=clamp(desired,radius(limits.flex[1]),radius(limits.flex[0]));
+ const direction=Math.atan2(delta[1],delta[0]),offset=Math.acos(clamp((upper*upper+d*d-lower*lower)/(2*upper*d),-1,1));
+ let requested=degrees(direction+bend*offset);requested=wrapAngle(requested);
+ const joint=clamp(requested,...limits.joint),flex=degrees(Math.acos(clamp((d*d-upper*upper-lower*lower)/(2*upper*lower),-1,1)));
+ const elbow=add(shoulder,rotate([upper,0],joint+baseAngle));
+ const foreAngle=joint-bend*flex+baseAngle,wrist=add(elbow,rotate([lower,0],foreAngle));
+ const error=Math.hypot(wrist[0]-target[0],wrist[1]-target[1]);
+ return {shoulder,elbow,wrist,error,joint,flex,foreAngle,limited:error>.01,limits};
 }
 export function weaponPoint(item,wrist,angle,point){
- const base=Math.atan2(item.tip[1]-item.grip[1],item.tip[0]-item.grip[0]);
- const a=angle*Math.PI/180-base,x=(point[0]-item.grip[0])*item.scale,y=(point[1]-item.grip[1])*item.scale;
- return [wrist[0]+Math.cos(a)*x-Math.sin(a)*y,wrist[1]+Math.sin(a)*x+Math.cos(a)*y];
+ const base=degrees(Math.atan2(item.tip[1]-item.grip[1],item.tip[0]-item.grip[0]));
+ return add(wrist,rotate([(point[0]-item.grip[0])*item.scale,(point[1]-item.grip[1])*item.scale],angle-base));
 }
-// Each family owns one motion; items supply dimensions and attachment points only.
-const blade=[ [0,342,330,-65,0],[.2,299,288,-155,-4],[.43,321,200,-120,-8],[.64,386,303,22,9],[.82,357,358,65,4],[1,342,330,-65,0] ];
-const heavy=[ [0,345,328,-65,0],[.24,310,270,-155,-6],[.46,318,185,-110,-9],[.69,382,316,36,10],[.85,353,355,60,5],[1,345,328,-65,0] ];
-const cast=[ [0,342,330,-70,0],[.28,325,296,-85,-3],[.52,358,282,-30,3],[.7,372,275,-20,5],[1,342,330,-70,0] ];
-const guard=[ [0,342,330,-65,0],[.27,332,290,-75,-3],[.62,346,279,-55,2],[.8,339,297,-65,1],[1,342,330,-65,0] ];
-export function sampleMotion(family,action,t){
- const frames=action==='cast'?cast:action==='guard'?guard:family==='heavy'?heavy:blade;
- t=clamp(t,0,1);let i=frames.findIndex((f,j)=>j>0&&f[0]>=t);if(i<1)i=frames.length-1;
- const a=frames[i-1],b=frames[i],u=(t-a[0])/(b[0]-a[0]),s=u*u*(3-2*u);
- const values=a.slice(1).map((v,k)=>lerp(v,b[k+1],s));
- return {wrist:values.slice(0,2),angle:values[2],lean:values[3],phase:t};
+// Monotone Hermite curves share tangents at reference keys. Unlike independent
+// easing per segment, clearance keys do not introduce a stop/start jerk.
+function interpolate(frames,index,t,value){
+ const tangent=k=>{
+  if(k===0||k===frames.length-1)return 0;
+  const h0=frames[k].t-frames[k-1].t,h1=frames[k+1].t-frames[k].t;
+  const d0=(value(frames[k])-value(frames[k-1]))/h0,d1=(value(frames[k+1])-value(frames[k]))/h1;
+  if(d0*d1<=0)return 0;
+  const w0=2*h1+h0,w1=h1+2*h0;return (w0+w1)/(w0/d0+w1/d1);
+ };
+ const a=frames[index-1],b=frames[index],h=b.t-a.t,u=(t-a.t)/h;
+ return (2*u**3-3*u*u+1)*value(a)+(u**3-2*u*u+u)*h*tangent(index-1)+(-2*u**3+3*u*u)*value(b)+(u**3-u*u)*h*tangent(index);
+}
+export function sampleMotion(family,action,t,classId='reaver'){
+ const frames=referenceKeys(classId,family,action);t=clamp(t,0,1);let i=frames.findIndex((f,j)=>j>0&&f.t>=t);if(i<1)i=frames.length-1;
+ const a=frames[i-1],b=frames[i],u=(t-a.t)/(b.t-a.t),s=u*u*u*(u*(u*6-15)+10);
+ const curve=read=>interpolate(frames,i,t,read);
+ const pair=key=>a[key].map((v,k)=>curve(f=>f[key][k]));
+ const root=pair('root'),offset=pair('wrist'),spine=clamp(curve(f=>f.spine),...LIMITS.spine);
+ const foot=(key)=>{const stepping=Math.abs(a[key]-b[key])>1,lift=stepping?12*Math.sin(Math.PI*u)**2:0;return {point:[lerp(a[key],b[key],s),520-lift],planted:lift<.001,lift}};
+ return {wrist:add(root,offset),angle:wrapAngle(curve(f=>f.angle)),root,spine,lean:root[0]-300,phase:t,front:foot('front'),rear:foot('rear'),from:a,to:b,blend:s};
 }

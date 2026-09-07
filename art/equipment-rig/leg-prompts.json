@@ -1,0 +1,13 @@
+{
+  "tool": "Built-in image_gen",
+  "prompt": "Create a painted 2D character puppet extension atlas for the SAME character in the supplied approved combat sprites. Use these sprite poses and their costume as the reference. Preserve dark painted materials and palette. Exactly 4 columns by 3 rows of separated components in equal cells, with generous empty margins. Actual transparent background, no text, no grid lines. All parts three-quarter facing RIGHT. Do not draw whole characters, weapons, arms or hands. Twelve individual reusable parts:\nRow 1: pelvis/belt armor only (no torso or legs); near thigh segment pointing down from hip to knee; near shin segment pointing down from knee to ankle; near boot pointing RIGHT with ankle at top.\nRow 2: short detached front skirt/tassets panel from belt to upper thigh only; far thigh segment down; far shin segment down; far boot pointing RIGHT.\nRow 3: torso only from neck to waist, without arms/head/legs/cloak, painted for forward crouching attack (match attack1 reference); same torso only painted for overhead windup (match attack2 reference); broad detached cloak flaring/trailing LEFT during attack; detached short back skirt/tassets panel with no legs.\nEach leg segment must have painted rounded joint overlap ends, not exposed skin or gore. Knee/ankle connection areas painted fully. Both boots should have flat grounded soles and point right. Segments should be vertical and isolated so code can rotate them. The torso variants must retain the same chest design, neck connection and belt/waist landmark for blending with the existing neutral torso. This is polished production game texture artwork, not concept poster art. Each component fills its cell well but never touches neighboring cells.",
+  "referenceImages": [
+    "assets/painted-outfits/reaver/attack1.webp",
+    "assets/painted-outfits/reaver/attack2.webp",
+    "assets/painted-outfits/reaver/attack3.webp",
+    "assets/painted-outfits/starseer/attack1.webp",
+    "assets/painted-outfits/starseer/attack2.webp",
+    "assets/painted-outfits/starseer/attack3.webp"
+  ],
+  "normalization": "Preserved masters; extracted matte and cropped intended thigh/shin segments, since generated cells included some adjacent limb anatomy. See normalize-legs.mjs."
+}
