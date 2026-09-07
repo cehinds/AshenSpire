@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-714",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Eight merges get the receipts they owed",
+    "detail": "Nothing a player sees changes. Eight pull requests had landed on dev with no receipt in this file — #686, #690, #692, #694, #697, #698, #706 and #713 — so the changelog you can read inside the game carried none of them, and the gate that checks this before a promotion was red. All eight are written up below at the build standing at their own merge, and the projection was regenerated so both now say the same thing. Two of them state something a summary would have rounded off: #698's records that none of its own code was applied, because the game already solved what it set out to solve and solved it with painted frames rather than a transform; and #713's records the defect its repaired gate found — hand cards overlapping Draw and End Turn at 1200x730 — which is still open. This receipt names its own pull request, which is only possible because the pull request was opened before the receipt was written.",
+    "build": "0.5.5.66",
+    "pullRequest": 714,
+    "url": "https://github.com/cehinds/AshenSpire/pull/714"
+  },
+  {
     "id": "pr-698",
     "date": "2026-09-07",
     "group": "2026-09-07",
