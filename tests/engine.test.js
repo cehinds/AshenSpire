@@ -36,7 +36,7 @@ import { attributeCardModels } from '../src/model/creationBrief.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
-import { executeRunEffects } from '../src/engine/actions.js';
+import { executeRunEffects, useRunChargeFlask } from '../src/engine/actions.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -54,7 +54,7 @@ import {
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statProjection.js';
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
-import { attributeAllocationProblems, classAttributePreset, allocationTotal, defaultCreationModeId } from '../src/model/attributes.js';
+import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
@@ -1451,6 +1451,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     ]);
     assert(rn3.deck.some((x) => x.cardId === 'guilt'), 'curse added to deck');
     eq(rn3.combatEntered, 'loneSoldier', 'startCombat handed off');
+
+    rn3.mana = 0;
+    const manaBefore = rn3.flaskCharges.manaCurrent;
+    useRunChargeFlask({ run: rn3, registries: REG, rng: createRng(5), kind: 'mana' });
+    eq(rn3.mana, 1, 'run-level flask effects copy restored Mana back to the run');
+    eq(rn3.flaskCharges.manaCurrent, manaBefore - 1, 'out-of-combat use spends its charge without touching utility slots');
 
     const rn4 = createRunState({ seed: 4, classId: 'reaver', registries: REG });
     rn4.hp = 10;
@@ -5262,6 +5268,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // this only proves the one polarity it was written for.
     eq(settingOn({}, 'colorblindSafe'), false, 'a def:false row still defaults off');
     eq(settingOn({ colorblindSafe: true }, 'colorblindSafe'), true, 'and can be turned on');
+    eq(settingOn({}, 'useRestorativeFlasksOutsideCombat'), false, 'map flask use defaults off');
+    eq(settingOn({ useRestorativeFlasksOutsideCombat: true }, 'useRestorativeFlasksOutsideCombat'), true,
+      'the player can enable restorative flask use on the map');
 
     // An unknown key must throw, not answer false: a silent false is how a
     // renamed setting becomes a quietly-disabled feature.
@@ -7263,6 +7272,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(std.bonusPool, 5, 'standard pool unchanged');
     eq(std.minimum, 10, 'standard floor unchanged');
     eq(allocationTotal(REG, 'pointbuy'), 60, 'pointbuy fixed total = 5x10 baseline + the 10-point pool');
+    const freshEditor = baselineAttributeAllocation(REG, 'pointbuy');
+    eq(Object.values(freshEditor).join(','), '10,10,10,10,10', 'pointbuy editor opens every authored stat at the mode baseline');
+    eq(allocationTotal(REG, 'pointbuy') - Object.values(freshEditor).reduce((sum, value) => sum + value, 0), 10,
+      'pointbuy editor opens with all 10 bonus points available');
 
     // The allocation gate, both edges at every boundary his sentence names.
     const legal = { strength: 15, dexterity: 8, constitution: 15, wisdom: 12, intelligence: 10 };

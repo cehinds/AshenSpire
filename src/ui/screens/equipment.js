@@ -38,6 +38,7 @@ import { attributeCardModels } from '../../model/creationBrief.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
+import { primaryStatCards } from '../components/creationCards.js';
 import {
   equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
   orderArmouryPositions, orderArmourySlots,
@@ -1591,7 +1592,7 @@ export function mountEquipment(host, {
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
     });
     for (const entry of attributeRows) entry.face = { ...entry.face, compact: true };
-    mountDisclosure(attributeHost, attributeRows, { moreLabel: 'more attributes', layout: 'column' });
+    attributeHost.replaceChildren(...primaryStatCards(attributeRows));
     attributes.appendChild(attributeHost);
     box.appendChild(informationCard({
       id: 'attributesCard',

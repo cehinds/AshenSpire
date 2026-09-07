@@ -167,12 +167,34 @@ const primaryGeometry = `((rootSelector) => {
   const root=document.querySelector(rootSelector);
   const cards=[...(root?.querySelectorAll('[data-face^="attribute:"]') || [])];
   const rects=cards.map((card) => card.getBoundingClientRect());
+  // A node-backed primary face owns its inset on the adopted Row. Armoury's
+  // string-backed equivalent owns the same inset on the OptionCard itself.
+  const rows=cards.map((card) => card.querySelector(':scope > .as-row') || card);
+  const insets=rows.map((row) => {
+    if (!row) return null;
+    const style=getComputedStyle(row);
+    return {
+      top:parseFloat(style.paddingTop), right:parseFloat(style.paddingRight),
+      bottom:parseFloat(style.paddingBottom), left:parseFloat(style.paddingLeft),
+    };
+  });
+  const balancedInsets=insets.length>0 && insets.every((inset) => inset
+    && inset.left>0 && inset.top>0
+    && Math.abs(inset.left-inset.right)<=0.01
+    && Math.abs(inset.top-inset.bottom)<=0.01);
+  const sameInsets=insets.length>0 && insets.every((inset) => inset
+    && Object.keys(inset).every((edge) => Math.abs(inset[edge]-insets[0][edge])<=0.01));
   return {
     count:cards.length,
+    semanticCards:cards.filter((card) => card.matches('details > summary')).length,
+    attachedReveals:cards.filter((card) => card.nextElementSibling?.classList.contains('disc-reveal')).length,
     labels:cards.map((card) => (card.querySelector('.ls-label,.disc-name')?.textContent || '').trim()),
     summaries:cards.map((card) => (card.querySelector('.disc-summary')?.textContent || '').trim()),
     equalWidth:rects.length>0 && rects.every((rect) => Math.abs(rect.width-rects[0].width)<=1),
     equalHeight:rects.length>0 && rects.every((rect) => Math.abs(rect.height-rects[0].height)<=1),
+    balancedInsets,
+    sameInsets,
+    insets,
     widths:rects.map((rect) => Math.round(rect.width*100)/100),
     heights:rects.map((rect) => Math.round(rect.height*100)/100),
   };
@@ -186,8 +208,10 @@ async function checkCreation(shape) {
   await page.until("!!document.querySelector('#cz-primary-stats [data-face=\"attribute:strength\"]')", 'primary stats');
 
   const geometry = await page.evaluate(`${primaryGeometry}('#cz-primary-stats')`);
-  check(geometry.count === 5 && geometry.labels.join(',') === 'STR,DEX,CON,WIS,INT'
-    && geometry.summaries.every(Boolean) && geometry.equalWidth && geometry.equalHeight,
+  check(geometry.count === 5 && geometry.semanticCards === 5 && geometry.attachedReveals === 5
+    && geometry.labels.join(',') === 'STR,DEX,CON,WIS,INT'
+    && geometry.summaries.every(Boolean) && geometry.equalWidth && geometry.equalHeight
+    && geometry.balancedInsets && geometry.sameInsets,
   `${shape.name}: Character Creation uses five compact, uniform primary-stat faces`, geometry);
 
   await trustedClick(page, shape, '#cz-primary-stats [data-face="attribute:strength"]');
@@ -203,8 +227,10 @@ async function checkCreation(shape) {
   await trustedClick(page, shape, '#cz-statedit [data-creation-mode="pointbuy"]');
   await page.until("!!document.querySelector('.cc-stat-overlay')", 'Assign Points');
   const allocationGeometry = await page.evaluate(`${primaryGeometry}('.cc-stat-overlay')`);
-  check(allocationGeometry.count === 5 && allocationGeometry.labels.join(',') === 'STR,DEX,CON,WIS,INT'
-    && allocationGeometry.equalHeight,
+  check(allocationGeometry.count === 5 && allocationGeometry.semanticCards === 5 && allocationGeometry.attachedReveals === 5
+    && allocationGeometry.labels.join(',') === 'STR,DEX,CON,WIS,INT'
+    && allocationGeometry.equalHeight
+    && allocationGeometry.balancedInsets && allocationGeometry.sameInsets,
   `${shape.name}: Assign Points reuses the same compact primary-stat family`, allocationGeometry);
   await trustedClick(page, shape, '.cc-stat-overlay [data-face="attribute:strength"]');
   await trustedClick(page, shape, '.cc-stat-overlay [data-face="attribute:dexterity"]');
@@ -237,10 +263,20 @@ async function checkArmoury(shape) {
   `${shape.name}: Armoury Character arrives with only Attributes expanded`, arrival);
 
   const geometry = await page.evaluate(`${primaryGeometry}('.attributesCard')`);
-  check(geometry.count === 5 && geometry.labels.join(',') === 'STR,DEX,CON,WIS,INT'
-    && geometry.summaries.every(Boolean) && geometry.equalWidth && geometry.equalHeight,
+  check(geometry.count === 5 && geometry.semanticCards === 5 && geometry.attachedReveals === 5
+    && geometry.labels.join(',') === 'STR,DEX,CON,WIS,INT'
+    && geometry.summaries.every(Boolean) && geometry.equalWidth && geometry.equalHeight
+    && geometry.balancedInsets && geometry.sameInsets,
   `${shape.name}: Armoury Attributes matches the five compact, uniform rows`, geometry);
 
+  await trustedClick(page, shape, '.attributesCard [data-face="attribute:strength"]');
+  await trustedClick(page, shape, '.attributesCard [data-face="attribute:dexterity"]');
+  const attributeOpen = await page.evaluate(`(() => ({
+    faces:[...document.querySelectorAll('.attributesCard [data-face][aria-expanded="true"]')].map((node) => node.dataset.face),
+    reveals:[...document.querySelectorAll('.attributesCard .disc-reveal')].filter((node) => !node.hidden).map((node) => node.dataset.revealFor),
+  }))()`);
+  check(attributeOpen.faces.join(',') === 'attribute:dexterity' && attributeOpen.reveals.join(',') === 'attribute:dexterity',
+    `${shape.name}: Armoury Attributes keeps each detail attached and only one stat open`, attributeOpen);
   await trustedClick(page, shape, '.attributesCard > summary');
   const folded = await page.evaluate(`(() => {
     const cards=[...document.querySelectorAll('.character-info-card')];

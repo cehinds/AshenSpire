@@ -24,7 +24,7 @@ import { createRunState } from '../../model/state.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
-import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal } from '../../model/attributes.js';
+import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation } from '../../model/attributes.js';
 import { previewCompatibleHands, startingHandsRequirementFailure } from '../../model/loadout.js';
 import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
@@ -118,6 +118,13 @@ export function mountCustomize(app, {
   const nameInput = el('input', { id: 'cz-name', class: 'cz-name', type: 'text', maxlength: '16', spellcheck: 'false', autocomplete: 'off', value: 'Forsaken', 'aria-labelledby': 'cz-name-label' });
   const nameRow = row({ tag: 'div', setting: true, className: 'cc-name-row', labelNode: labelStack({ label: 'Name', hint: 'Up to 16 characters.' }), trail: nameInput });
   nameRow.querySelector('.ls-label').id = 'cz-name-label';
+  const spriteGroup = el('section', { id: 'cz-sprite-group', class: 'as-stack cc-character-picker' }, [
+    el('span', { id: 'cz-styles', class: 'as-seg cz-opts' }),
+    el('div', { id: 'cz-sprite-fold', class: 'cc-sprite-fold cz-disc' }, [
+      el('section', { id: 'cz-sigil-group', class: 'cc-character-picker' }, el('div', { id: 'cz-glyphs', class: 'as-swatches cz-opts' })),
+      el('section', { id: 'cz-tint-group', class: 'cc-character-picker' }, el('div', { id: 'cz-tints', class: 'as-swatches cz-opts' })),
+    ]),
+  ]);
   const statsSide = el('div', { class: 'as-stack cc-stats-side' }, [
     nameRow,
     el('div', { id: 'cz-character-fold', class: 'cc-character-fold cz-disc' }, [
@@ -126,17 +133,13 @@ export function mountCustomize(app, {
         el('div', { id: 'cz-primary-stats', class: 'as-stack tight cc-primary-stats' }),
         el('div', { id: 'cz-derived', class: 'cc-derived', 'aria-label': 'Derived resources' }),
       ]),
-      el('section', { id: 'cz-sprite-group', class: 'as-stack cc-character-picker' }, [
-        el('span', { id: 'cz-styles', class: 'as-seg cz-opts' }),
-        el('div', { id: 'cz-sprite-fold', class: 'cc-sprite-fold cz-disc' }, [
-          el('section', { id: 'cz-sigil-group', class: 'cc-character-picker' }, el('div', { id: 'cz-glyphs', class: 'as-swatches cz-opts' })),
-          el('section', { id: 'cz-tint-group', class: 'cc-character-picker' }, el('div', { id: 'cz-tints', class: 'as-swatches cz-opts' })),
-        ]),
-      ]),
       el('section', { id: 'cz-keepsake-group', class: 'cc-character-picker' }, options([], { id: 'cz-keepsakes', class: 'cz-keepsakes' })),
     ]),
   ]);
-  const previewSide = el('div', { class: 'as-pane flush cc-preview-side' }, portrait);
+  const previewSide = el('div', { class: 'as-pane flush cc-preview-side' }, [
+    portrait,
+    el('div', { id: 'cz-preview-fold', class: 'cc-preview-fold cz-disc' }, spriteGroup),
+  ]);
   const seedInput = el('input', { id: 'seed-input', type: 'text', value: defaultSeedString });
   const seedRow = row({ tag: 'div', setting: true, className: 'seed-line', labelNode: labelStack({ label: 'Seed', hint: 'The same seed produces the same climb.' }), trail: seedInput });
 
@@ -260,7 +263,11 @@ export function mountCustomize(app, {
   }
 
   function resetAttributes() {
-    state.attributes = { ...classAttributePreset(registries, state.classId, POINTBUY) };
+    // Opening Assign Points is a refund boundary, not a return to the authored
+    // class suggestion. Every stat goes back to the mode's baseline and the
+    // complete bonus pool becomes available again (SPEC 7.2). The helper is
+    // #692's; this branch computed the same thing inline before it existed.
+    state.attributes = baselineAttributeAllocation(registries, POINTBUY);
     previewAttributes = { ...state.attributes };
   }
 
@@ -296,7 +303,12 @@ export function mountCustomize(app, {
   }
 
   function previewRun() {
-    const attributes = state.attributeMode === POINTBUY && previewAttributes
+    // A baseline point-buy draft intentionally totals less than the finished
+    // allocation. Do not send that provisional draft through createRunState's
+    // final-allocation validator; the modal renders the draft directly until
+    // all points have been assigned.
+    const hasCompletePointBuy = state.attributeMode === POINTBUY && previewAttributes && remainingPoints() === 0;
+    const attributes = hasCompletePointBuy
       ? previewAttributes
       : classAttributePreset(registries, state.classId, state.attributeMode);
     return createRunState({
@@ -306,7 +318,7 @@ export function mountCustomize(app, {
       startingArmourId: state.startingArmourId,
       startingRelicId: state.startingRelicId,
       attributeMode: state.attributeMode,
-      ...(state.attributeMode === POINTBUY && previewAttributes ? { attributes: { ...previewAttributes } } : {}),
+      ...(hasCompletePointBuy ? { attributes: { ...previewAttributes } } : {}),
       profileMeta: meta,
     });
   }
@@ -354,7 +366,10 @@ export function mountCustomize(app, {
       modes.appendChild(modeChoiceButton(mode, state.attributeMode === mode.id, () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
-          if (!state.attributes) resetAttributes();
+          // Entering Assign Points is an explicit fresh allocation. Return the
+          // entire authored pool instead of reopening the class-biased preset
+          // (or a previous edit) with points already spent.
+          resetAttributes();
           openPointBuy();
         } else {
           closePointBuy();
@@ -387,6 +402,7 @@ export function mountCustomize(app, {
 
   function openPointBuy() {
     closePointBuy({ restoreFocus: false });
+    resetAttributes();
     pointBuyReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     customizeScreen.inert = true;
     const mode = pointbuyMode();
@@ -613,9 +629,6 @@ export function mountCustomize(app, {
     { key: 'primary', label: 'PRIMARY STATS', node: $('#cz-primary-group'), value: () => (
       selectedRow(state.attributeMode, visibleModes)?.label || state.attributeMode
     ) },
-    { key: 'sprite', label: 'SPRITE', node: $('#cz-sprite-group'), value: () => (
-      selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle
-    ) },
     { key: 'keepsake', label: 'KEEPSAKE', node: $('#cz-keepsake-group'), value: () => (
       selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || state.keepsakeId
     ) },
@@ -629,6 +642,16 @@ export function mountCustomize(app, {
   refreshCharacterFaces = () => {
     for (const row of characterRows) characterFold.setValue(row.key, row.value());
   };
+  const previewFold = mountDisclosure($('#cz-preview-fold'), [{
+    key: 'sprite', kind: 'pick', disclosure: 'face',
+    face: { label: 'SPRITE', value: selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle },
+    reveal: { node: $('#cz-sprite-group'), sense: 'Edit sprite.' },
+  }]);
+  const refreshPreviewFace = () => previewFold.setValue(
+    'sprite', selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle,
+  );
+  const refreshExistingCharacterFaces = refreshCharacterFaces;
+  refreshCharacterFaces = () => { refreshExistingCharacterFaces(); refreshPreviewFace(); };
   characterFold.open('primary');
 
   const equipmentValue = (section) => {

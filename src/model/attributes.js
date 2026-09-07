@@ -100,6 +100,12 @@ export function allocationTotal(source, modeId = defaultCreationModeId(source)) 
   return mode.baseline * orderedAttributes(source).length + mode.bonusPool;
 }
 
+/** The neutral editor position: every authored attribute at this mode's baseline. */
+export function baselineAttributeAllocation(source, modeId = defaultCreationModeId(source)) {
+  const mode = creationMode(source, modeId);
+  return Object.fromEntries(orderedAttributes(source).map((def) => [def.id, mode.baseline]));
+}
+
 function retiredNames(t) {
   const map = plainObject(t.attributeRules) ? t.attributeRules.retired : undefined;
   return plainObject(map) ? map : {};

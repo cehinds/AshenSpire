@@ -707,6 +707,11 @@ The preset is an editor opening position, not a lock: players may redistribute t
 total within the mode's data-authored bounds. Starting derived values come only from the
 formulas in §3.5; classes do not carry a second hidden HP/Actions/hand formula.
 
+Choosing **Assign Points** always begins a fresh allocation at that mode's baseline for every
+attribute, with its complete bonus pool unspent. Reopening Assign Points refunds the current
+allocation the same way; class presets and earlier edits do not consume points before the
+player assigns them.
+
 **Level curve.** A fresh run starts at displayed level 1. A purchase increments the displayed
 level by one and grants exactly 1 configurable attribute point by default. Price purchase
 `n` (zero-based) as `firstCost + costStep × n`, with `firstCost = 20` and `costStep = 4`
@@ -818,6 +823,12 @@ The Crimson/Azure charge pool's shared capacity is 4 (`balance.flaskCapacity`). 
 potions remain separate inventory entries sized by `balance.flaskSlots`; increasing one does
 not silently increase the other. Utility potions are found from combats, shops and events,
 while Crimson/Azure charges refill at every grace (§5.5.1).
+
+Crimson and Azure are displayed in the same potion tray as utility potions, but remain permanent
+charge vessels: they are always present, do not consume utility-potion slots, and are never dropped.
+A persisted Gameplay setting may allow those restorative charges to be used between combats;
+it is off by default. An out-of-combat use applies the same authored healing or Mana effect and
+spends one charge, exactly as combat does.
 
 **Kind.** Every flask has a `kind` from the closed set `FLASK_KINDS` (`hp`, `mana`, `utility`, `model/schemas.js`). It is **derived, not authored** (`model/gracerefill.js` `flaskKindOf`): `heal` is `hp`, the real `restoreMana` opcode is `mana`, everything else is `utility`, and an explicit `kind:` overrides an ambiguous entry.
 

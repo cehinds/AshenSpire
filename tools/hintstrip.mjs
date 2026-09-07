@@ -162,7 +162,7 @@ if (process.argv.includes('--selftest')) {
         name: 'the row rises into the hand-area and the cards lie on it',
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat { --action-row-drop: 6.4rem; }',
+          find: '.combat { --action-row-drop: 7.6rem; }',
           replace: '.combat { --action-row-drop: -5rem; }',
         }],
         expectRed: /BAD\s+H1 /,
@@ -225,10 +225,10 @@ if (process.argv.includes('--selftest')) {
         // THE SAME CONTROL GOES QUIET WITHOUT display:none. visibility:hidden
         // keeps the pile's box and class; only "rendered" as the player sees it
         // can tell. Red by name on H3, like the display:none plant.
-        name: 'a stylesheet makes the DISCARD pile visibility:hidden and the row still measures five boxes',
+        name: 'a stylesheet makes the shared SPENT pile visibility:hidden and the row still measures six boxes',
         edits: [{
           file: 'styles/combat.css',
-          append: '.combat-action-row > .pile.discard { visibility: hidden; }',
+          append: '.combat-action-row > .pile.spent { visibility: hidden; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -236,10 +236,10 @@ if (process.argv.includes('--selftest')) {
         // THE THIRD WAY A CONTROL GOES QUIET: opacity:0 keeps display,
         // visibility and geometry. Only the ancestor-walking opacity read in
         // rendered() can tell. Red by name on H3.
-        name: 'a stylesheet makes the DISCARD pile opacity:0 and the row still measures five boxes',
+        name: 'a stylesheet makes the shared SPENT pile opacity:0 and the row still measures six boxes',
         edits: [{
           file: 'styles/combat.css',
-          append: '.combat-action-row > .pile.discard { opacity: 0; }',
+          append: '.combat-action-row > .pile.spent { opacity: 0; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -416,8 +416,13 @@ if (process.argv.includes('--selftest')) {
         name: 'a stylesheet makes the root element opacity:0 and every control keeps its box',
         edits: [{
           file: 'styles/combat.css',
-          find: '.combat { --action-row-drop: 6.4rem; }',
-          replace: '.combat { --action-row-drop: 6.4rem; }\nhtml { opacity: 0; }',
+          // Anchored on the section heading, not on the `--action-row-drop`
+          // declaration it used to patch: this plant needs any injection site in
+          // combat.css, and pinning it to a MEASURED constant meant every
+          // re-measure of the reservation drifted a plant that has nothing to do
+          // with the reservation (it did, at 6.4rem -> 7.6rem).
+          find: '/* ---------- hand + controls ---------- */',
+          replace: '/* ---------- hand + controls ---------- */\nhtml { opacity: 0; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -501,7 +506,23 @@ const WIDE_KEY = { action: 'endTurn', code: 'Backspace', label: 'Backspace' };
 // row no longer names, or one it names that this list does not, throws by
 // name before a single cell is measured — the change and this list move in
 // the same commit, or the gate refuses to run.
-const DECLARED_CONTROLS = Object.freeze(['energy-orb', 'pile draw', 'end-turn', 'pile discard', 'pile exhaust']);
+// THE SIX CELLS THE ROW ACTUALLY RENDERS, and the row's own comment says six.
+// It read `pile discard`, `pile exhaust` until the two spent piles were merged
+// into ONE shared entry (`.pile.spent`, labelled "Piles", showing D: and E:
+// counts) — a deliberate design change, not a loss, so the contract follows the
+// row rather than the row being reverted to satisfy the contract.
+// Arts and Potions were never declared at all: the extractor below could not
+// see them, so their absence never registered as a disagreement.
+const DECLARED_CONTROLS = Object.freeze([
+  'energy-orb', 'pile draw', 'end-turn', 'pile spent', 'combat-arts', 'combat-potions',
+]);
+
+// A control's IDENTITY is its class tokens minus the kit's layout modifiers.
+// The extractor used to whitelist three literal names, so every control added
+// after it was written was invisible — the row could grow and this gate would
+// not notice. Naming what is NOT identity is the smaller, more durable list.
+const LAYOUT_MODIFIERS = new Set(['cell', 'stack', 'lg', 'sm', 'wide', 'tall', 'fill']);
+const identityOf = (classList) => classList.split(/\s+/).filter((k) => k && !LAYOUT_MODIFIERS.has(k)).join(' ');
 const EXPECTED_CONTROLS = (() => {
   const src = readFileSync(join(ROOT, 'src/ui/screens/combat.js'), 'utf8');
   // The row is found by its class PREFIX so the H0 plant (which renames the
@@ -513,10 +534,14 @@ const EXPECTED_CONTROLS = (() => {
   // hook classes are read off the builder calls — the StatPair's `class:`,
   // `pileButton('<kind>')`, End Turn's `className:` — the same names the
   // rendered elements carry.
+  // Both `class:` (StatPair's attrs) and `className:` (button's) carry hooks, and
+  // `pileButton('<kind>')` renders `pile <kind> tall`, so its kind is resolved to
+  // the same shape the element ends up with. Anything left empty after the layout
+  // modifiers are stripped — pileButton's inner count StatPair is `class: 'stack'`
+  // — drops out on the Boolean filter rather than being special-cased.
   const named = [
-    ...[...row[0].matchAll(/class: '([^']+)'/g)].map((m) => m[1].split(/\s+/).filter((k) => k === 'energy-orb').join(' ')),
+    ...[...row[0].matchAll(/class(?:Name)?: '([^']+)'/g)].map((m) => identityOf(m[1])),
     ...[...row[0].matchAll(/pileButton\('([a-z]+)'/g)].map((m) => `pile ${m[1]}`),
-    ...[...row[0].matchAll(/className: '([^']+)'/g)].map((m) => m[1].split(/\s+/).filter((k) => k === 'end-turn').join(' ')),
   ].filter(Boolean);
   const sameSet = (x) => x.split(/\s+/).sort().join(' ');
   const missing = DECLARED_CONTROLS.filter((d) => !named.some((n) => sameSet(n) === sameSet(d)));

@@ -294,7 +294,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* The settings variant: same grammar, hairline between, no hover fill — a
    settings row is read, not chosen. It may wrap its control under the label
    when the pane is narrow, and it never clips a hint. */
-.as-row.setting { padding-inline: 0; border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
+.as-row.setting { padding: var(--modal-inset, 1.4rem); border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
 .as-row.setting:hover { background: transparent; }
 .as-row.setting:last-child { border-bottom: 0; }
 .as-row.setting > .as-labelstack { flex: 1 1 18rem; }
@@ -1182,12 +1182,30 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* A disclosure host in a settings row dissolves: its face and its reveal
    become the row's own wrap items, so the reveal drops under the whole row
    (trail included) with the row's own gap — the D26 mechanism, unchanged. */
-.as-row.setting > .as-row-fold, .as-row.setting > .as-row-fold > .disc-faces { display: contents; }
+.as-row.setting > .as-row-fold, .as-row.setting > .as-row-fold > .disc-faces,
+.as-row.setting > .as-row-fold > .disc-fold-row { display: contents; }
 .as-row.setting > .as-row-fold .disc-face { flex: 1 1 16rem; min-width: 0; }
 .as-row-fold > .disc-faces > .disc-face { flex: 1 1 100%; }
+.as-row-fold > .disc-fold-row > .disc-face { width: 100%; }
 /* An open reveal drops UNDER the whole row: the face and the trail keep their line. */
 .as-row.setting > .as-row-fold .disc-reveal { order: 2; }
 .as-row.setting:has(> .as-row-fold) { align-items: flex-start; }
+
+/* Attribute allocation is a two-column setting line: the complete stat face
+   owns the flexible column and the stepper owns the fixed column. The reveal
+   alone may take a second line. Its equal inset is intentional — a setting
+   surface must not shave the horizontal padding off the shared Row. */
+.as-row.setting.se-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  padding: 0.7rem;
+}
+.as-row.setting.se-row > .r-trail { grid-column: 2; margin-left: 0; }
+.as-row.setting.se-row > .disc-reveal { grid-column: 1 / -1; }
+.as-row.setting.se-row .disc-face { width: 100%; }
+.as-row.setting.se-row .disc-face > .as-row { flex-wrap: nowrap; }
 .disc-face > .as-row { padding: 0; min-height: 0; width: 100%; gap: 0.75rem; }
 .disc-face > .as-row > .as-labelstack { flex: 1 1 auto; }
 .disc-face > .as-row .ls-label { color: var(--gold); font: 600 1.5rem/1.2 var(--font-display); letter-spacing: 0.03em; }
@@ -1238,11 +1256,19 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .as-option .od, .as-option .om, .as-face .od, .as-face .om { overflow-wrap: anywhere; }
 .as-option .ob > .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
 /* ═══ FACE HOST — an option whose whole content is one face element ════════ */
-/* The host stays bare so the face owns the padding and can paint the whole
-   card (a hold fill, a drag ghost); the face is the OptionCard's grammar. */
+/* The host stays bare so its one child owns the padding and can paint the
+   whole card (a hold fill, a drag ghost). Both supported children — Face and
+   Row — use the same balanced inset; a hosted Row must not dissolve all the
+   way to the border. */
 .as-option.hosts-face { padding: 0; }
 .as-face { display: flex; align-items: center; gap: 1.5rem; width: 100%; min-width: 0; min-height: var(--tap-floor); padding: 1.28rem 1.5rem; border-radius: inherit; text-align: left; }
+.as-option.hosts-face > .as-row { width: 100%; min-height: var(--tap-floor); padding: 1.28rem 1.5rem; }
 .as-option.compact.hosts-face > .as-face { padding: 0.75rem 1.2rem; gap: 1rem; }
+.as-option.compact.hosts-face > .as-row { min-height: 5rem; padding: 0.75rem 1.2rem; gap: 1rem; }
+/* Primary stats keep this compact face in creation, allocation, and Armoury.
+   Two text lines are reserved even when a short summary happens to fit on one,
+   so a narrow INT or CON summary cannot make one card taller than its peers. */
+.as-option.cc-primary-stat.hosts-face > .as-row { min-height: 7rem; padding: 0.75rem 1.2rem; gap: 1rem; }
 .as-face > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
 .as-face > .ob { flex: 1 1 8rem; }
 .as-face > .r-trail { flex: 0 1 auto; margin-left: auto; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0.5rem; max-width: 50%; }
@@ -1359,6 +1385,13 @@ details.character-info-card > summary:focus-visible { outline: 2px solid var(--g
 .disc-faces > .disc-face .disc-value { white-space: nowrap; }
 .disc-faces > .disc-face .disc-summary { white-space: normal; }
 .disc-faces > .disc-face[data-reveal="open"] { border-color: var(--gold); }
+/* A self-contained fold keeps its face and reveal as siblings inside one
+   semantic card, matching the Armoury's card-row grammar. */
+details.disc-fold-row { min-width: 0; }
+details.disc-fold-row > summary { list-style: none; }
+details.disc-fold-row > summary::-webkit-details-marker { display: none; }
+details.disc-fold-row[open] > summary { border-radius: var(--r-3) var(--r-3) 0 0; border-color: var(--gold); }
+details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3); border-top: 0; }
 /* ASSIGN POINTS IS NARROWER THAN THE COLUMN THE RULE ABOVE WAS WRITTEN FOR.
    `white-space: normal` lets a summary read in full where there is room, which
    is right in Character Creation. Inside the Assign Points overlay there is not
@@ -1878,11 +1911,16 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .as-cluster.wrap { flex-wrap: wrap; }
 .as-cluster.stack { flex-direction: column; align-items: stretch; }
 .as-cluster.end { margin-left: auto; }
-/* QUICK ACCESS stays a compact 2 × 2 square whose lower edge meets the SP row.
-   Quick Access reserves each full tap box so neighboring hit regions cannot overlap. The transparent
-   ::after continues to carry the authored tap floor around each small face. */
+/* QUICK ACCESS now carries only Armoury and Menu — Crimson and Azure moved
+   into the potion belt — so the two remaining controls take the full
+   meter-stack height instead of staying a compact 2 x 2 square. The max()
+   keeps the guarantee that a face never falls below the authored tap floor,
+   and the transparent ::after still carries that floor around each face.
+   hud-quick-compact.mjs, which measures this edge against the SP row, is
+   ALREADY red on dev (15 findings) before this change; it reads 12 with this
+   change and 12 with the old 1.8rem face, so the size is not what breaks it. */
 .shared-hud {
-  --hud-quick-tile-size: max(1.8rem, var(--tap-floor));
+  --hud-quick-tile-size: max(2.8rem, var(--tap-floor));
   --hud-quick-tile-gap: 0.45rem;
   --hud-belt-tile-face-size: 2.8rem;
 }

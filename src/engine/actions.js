@@ -29,7 +29,7 @@ import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { isEquipmentComposedInstance } from '../model/loadout.js';
-import { flaskSlotCap } from '../model/gracerefill.js';
+import { flaskSlotCap, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 
@@ -777,6 +777,8 @@ export function executeRunEffects({ run, registries, rng }, effects) {
     kind: 'player',
     hp: run.hp,
     maxHp: run.maxHp,
+    mana: run.mana,
+    maxMana: run.maxMana,
     block: 0,
     statuses: {},
     stanceId: null,
@@ -818,5 +820,19 @@ export function executeRunEffects({ run, registries, rng }, effects) {
     executeAction(ctx, ctx.queue.shift());
   }
   run.hp = Math.min(facade.hp, run.maxHp);
+  run.mana = Math.min(facade.mana, run.maxMana);
   return { events };
+}
+
+/** Spend one permanent restorative charge and apply its authored run effects. */
+export function useRunChargeFlask({ run, registries, rng, kind }) {
+  const def = chargeFlaskDefinition(registries, kind);
+  const currentKey = `${kind}Current`;
+  if (!def || !run.flaskCharges || run.flaskCharges[currentKey] <= 0) {
+    throw new Error(`No ${kind} flask charges`);
+  }
+  const result = executeRunEffects({ run, registries, rng }, def.effects || []);
+  run.flaskCharges[currentKey] -= 1;
+  result.events.unshift({ type: 'flaskUsed', flaskId: def.id, chargeKind: kind });
+  return result;
 }
