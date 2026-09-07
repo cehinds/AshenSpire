@@ -3,12 +3,22 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-764",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Sigils stay beside class information",
+    "detail": "Painted character figures no longer carry the sigil overlay added in the earlier build. The sigil remains in the class picker.",
+    "build": "0.5.5.109",
+    "pullRequest": 764,
+    "url": "https://github.com/cehinds/AshenSpire/pull/764"
+  },
+  {
     "id": "pr-758",
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Enemy attacks face the target and have more impact",
     "detail": "The Stitched King now looks toward the player during his attack. Enemy attack frames are five percent larger than idle frames while keeping their shared foot line fixed.",
-    "build": "0.5.5.109",
+    "build": "0.5.5.110",
     "pullRequest": 758,
     "url": "https://github.com/cehinds/AshenSpire/pull/758"
   },

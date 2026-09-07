@@ -64,7 +64,8 @@ landed a change, and inventing one to fit these would be the reconstruction
 this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-07
-- **Enemy attacks face the target and have more impact** ([#758](https://github.com/cehinds/AshenSpire/pull/758), `0.5.5.109`). The Stitched King now looks toward the player during his attack. Enemy attack frames are five percent larger than idle frames while keeping their shared foot line fixed.
+- **Sigils stay beside class information** ([#764](https://github.com/cehinds/AshenSpire/pull/764), `0.5.5.109`). Painted character figures no longer carry the sigil overlay added in the earlier build. The sigil remains in the class picker.
+- **Enemy attacks face the target and have more impact** ([#758](https://github.com/cehinds/AshenSpire/pull/758), `0.5.5.110`). The Stitched King now looks toward the player during his attack. Enemy attack frames are five percent larger than idle frames while keeping their shared foot line fixed.
 
 - **Damaging spells show the enemy attack frame** ([#755](https://github.com/cehinds/AshenSpire/pull/755), `0.5.5.108`). Enemy spells retain their casting motion while showing their attack artwork, then return to the idle frame when the animation finishes or is cancelled.
 
