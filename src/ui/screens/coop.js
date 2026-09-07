@@ -36,7 +36,14 @@
 // this screen supplies is the VIEWER — who `me` is, and what `me` voted for.
 
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
-import { renderCard, upgradePreviewHtml } from '../components/card.js';
+import { playPoseOn, stageFor } from '../services/PoseAnimator.js';
+import { resourceAura } from '../combatAura.js';
+import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
+import { equippedPieces, figureSpec } from '../../model/loadout.js';
+import { tagService } from '../../model/tagService.js';
+import { renderCard } from '../components/card.js';
+import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
+import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
@@ -46,8 +53,8 @@ import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
-import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { flaskIdentityHtml, flaskTooltipHtml, mountFlaskActionMenu } from '../components/flask.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } from '../input.js';
@@ -55,6 +62,18 @@ import { decorateFriendlyTarget } from '../components/friendlyTargets.js';
 import { friendlyTargetPlan } from '../../model/friendlyTargets.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
+// THE CHROME IS THE KIT'S: the seat strip is a Dock of Tabs with a Keycap and a
+// StatePill, the turn announcement a Banner, the seat line a StatStrip (tinted
+// name · energy Chip · state Pill), the party read-out a strip of Meters, the
+// flasks a ButtonRow, the arming prompt a DetailCard, every asking scene a
+// decision door (pageDoor + decide + OptionCards). Behaviour hooks the
+// instruments read (`.coop-seat-tabs`, `.seat-tab`, `.coop-turn-banner`,
+// `.coop-seat-name`, `.coop-voteline`, `.coop-flask(s)`, `#coop-*`) ride on
+// the kit's parts and draw nothing.
+import {
+  el, html, button, buttonRow, tab, dock, keycap, pill, chip, statStrip, meter, banner as kitBanner, detailCard,
+  kitItem, pageDoor, decide, options, optionCard, flavour, prose, subtitle, blocker, glyph as kitGlyph,
+} from '../kit/index.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -68,6 +87,31 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
   let armedFriendlyCard = null; // friendly-targeted card instanceId awaiting a legal seat
   let prevCombat = null; // last combat scene, for snapshot-diff FX
+  const combatRests = new Map();
+  let animationReceiptSeq = 0;
+  let pendingAnimations = new Map();
+  function prepareCombatAnimations(scene) {
+    pendingAnimations = new Map();
+    const seq = Number(scene.receiptSeq) || 0;
+    if (seq <= animationReceiptSeq) return;
+    animationReceiptSeq = seq;
+    for (const event of scene.events || []) {
+      const ownerId = event.playerId;
+      if (!ownerId) continue;
+      const member = snap.party.find(member => member.id === ownerId);
+      let plan;
+      if (event.type === 'cardPlayed' && member) {
+        const definition = resolveCard(registries, { cardId: event.cardId, profileId: event.profileId, upgraded: event.upgraded });
+        const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
+        plan = resolveCombatAnimation({ ...definition, cardTags: tags, sourceArmamentId: event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId));
+        const hpSpent = (scene.events || []).filter(e => e.type === 'hpLost' && e.targetId === ownerId && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
+        plan.aura = resourceAura(definition, { ...event, hpSpent });
+        pendingAnimations.set(ownerId, plan);
+      }
+      combatRests.set(ownerId, combatRestAfterEvent(combatRests.get(ownerId) || 'idle', event, ownerId, plan));
+      if (event.type === 'playerTurnStart') pendingAnimations.delete(ownerId);
+    }
+  }
   let pacing = false; // an enemy-turn replay is holding the render
   let pendingSnaps = []; // every unrendered authoritative frame, causal order
   let latestWireSnap = null; // newest wire state, even while the old board paces
@@ -89,19 +133,32 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (msg.t === 'rejoined') { seats = [msg.id]; seatIdx = 0; me = msg.id; return; }
       if (msg.t === 'state') receiveSnapshot(msg.snapshot);
     },
-    onClose: () => { teardown(); app.innerHTML = `<div class="screen"><div class="coop-note">⚠ Connection to the fire was lost.</div><button class="subtle" id="coop-leave">Leave</button></div>`; wireLeave(); },
+    onClose: () => {
+      teardown();
+      const leave = button({ label: 'Leave', weight: 'primary', id: 'coop-leave' });
+      app.innerHTML = '';
+      app.appendChild(el('div', { class: 'screen coop-scene' }, pageDoor({
+        eyebrow: 'Forsaken Together', title: 'The fire went out', size: 'sm', className: 'coop-door',
+        body: decide({ title: 'Connection lost', children: [blocker('Connection to the fire was lost.', { attrs: { class: 'coop-note' } }), buttonRow({ size: 'medium', buttons: [leave] })] }),
+      })));
+      wireLeave();
+    },
   });
 
   // Every game intent carries the ACTIVE seat (`as`); the server validates
   // ownership and falls back to the connection's main seat.
-  const send = (obj) => conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
+  // Animation follows authoritative cardPlayed receipts below, never an
+  // optimistic local intent. Remote seats and repeated resyncs use the same path.
+  const send = (obj) => {
+    return conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
+  };
 
   const sendFlaskUse = ({ slot = null, targetId = undefined, chargeKind = null } = {}) => send({
     t: 'flaskIntent',
     intent: { action: 'use', ...(slot != null ? { slot } : {}), ...(targetId ? { targetId } : {}), ...(chargeKind ? { chargeKind } : {}) },
   });
 
-  function openCoopFlaskMenu(anchor, def, meP, { slot = null, chargeKind = null, remaining = 1 } = {}) {
+  function openCoopFlaskMenu(anchor, def, meP, { slot = null, chargeKind = null, remaining = 1, charges = null, useActionId = null } = {}) {
     const canUse = meP.alive && meP.connected && !meP.ended && remaining > 0;
     const useReason = remaining <= 0 ? 'No charges remaining'
       : !meP.connected ? 'This player is disconnected'
@@ -110,6 +167,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     mountFlaskActionMenu(anchor, {
       def,
       plan,
+      charges,
+      useActionId,
       onCancel: () => {},
       onAction: (actionId) => {
         if (actionId !== 'use') return;
@@ -142,13 +201,26 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return true;
   }
 
+  // A co-op client reads a snapshot, not the engine, so it prices the card the
+  // way the host will charge it: the framework cost profile with this seat's
+  // Power reduction and its live Weight Class (the pure dodge is class-priced),
+  // in every pool the host checks — Energy, Mana AND Stamina.
+  function snapshotCosts(def, player) {
+    const pools = registries.framework.costProfile(def, {
+      powerCostReduction: passiveSum(registries, player.relicIds, 'powerCostReduction', player.itemUpgradeLevels || {}),
+      weightClass: player.weightClass || null,
+    });
+    return {
+      energy: pools.variable ? 1 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0,
+      // The same numbers as a live preview, so the card face and its tooltip
+      // show what the host will charge (renderCard reads opts.preview).
+      preview: { costIsX: !!pools.variable, cost: pools.action, manaCost: pools.mana || 0, staminaCost: pools.stamina || 0, tokens: {} },
+    };
+  }
   function cardAffordableFromSnapshot(def, player) {
     if (!def || !player || player.ended || !player.alive || !player.connected) return false;
-    let energyCost = def.cost === 'X' ? 1 : def.cost;
-    if (def.type === 'power') {
-      energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction'));
-    }
-    return player.energy >= energyCost && player.mana >= (def.manaCost || 0);
+    const costs = snapshotCosts(def, player);
+    return player.energy >= costs.energy && player.mana >= costs.mana && (player.stamina || 0) >= costs.stamina;
   }
 
   function armFriendlyTargeting(cardInstanceId) {
@@ -170,6 +242,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (sc.kind === 'map') return !!(sc.votes && !sc.votes[id]) || !sc.votes;
     if (sc.kind === 'combat') { const p = sc.players.find((x) => x.id === id); return !!(p && p.alive && p.connected && !p.ended); }
     if (sc.kind === 'reward') return !!(sc.offers[id] && !sc.chosen[id]);
+    if (sc.kind === 'event' && sc.next) return !(sc.ack && sc.ack[id]);
     if (sc.kind === 'shrine' || sc.kind === 'event') return !(sc.done && sc.done[id]);
     return false;
   }
@@ -179,18 +252,20 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // The tab bar lives on document.body (a fixed overlay), so look it up there
     // — querying inside `app` never finds it and would spawn a duplicate per
     // render (stacking stale seat tabs).
-    const host = document.querySelector('.coop-seat-tabs') || (() => {
-      const d = document.createElement('div');
-      d.className = 'coop-seat-tabs';
-      document.body.appendChild(d);
-      return d;
-    })();
-    host.innerHTML = seats.map((id, i) => {
+    // THE DOCK: one Tab per seat this screen owns, the seat's glyph in its
+    // tint, a StatePill when that seat has something to do, and the Keycap
+    // that switches. Rebuilt whole per render, the old strip replaced in place.
+    const tabs = seats.map((id, i) => {
       const p = snap.party.find((x) => x.id === id) || {};
-      return `<button class="seat-tab${i === seatIdx ? ' on' : ''}" data-seat-i="${i}" style="border-color:${tintCss(p.tint)}">
-        ${classGlyph(p.classId)} ${esc(p.name || id)}${seatPending(id) ? ' <span class="pip">●</span>' : ''}</button>`;
-    }).join('') + '<span class="seat-hint">Tab</span>';
-    host.querySelectorAll('.seat-tab').forEach((b) => b.addEventListener('click', () => setSeat(Number(b.dataset.seatI))));
+      const t = tab({ label: p.name || id, selected: i === seatIdx, className: 'seat-tab', attrs: { dataset: { seatI: String(i) } } });
+      t.insertBefore(el('span', { class: 'as-glyph', 'aria-hidden': 'true', style: { color: tintCss(p.tint) }, text: classGlyph(p.classId) }), t.firstChild);
+      if (seatPending(id)) t.appendChild(pill({ label: '●', round: true, on: true, attrs: { class: 'pip', 'aria-label': 'has something to do' } }));
+      t.addEventListener('click', () => setSeat(i));
+      return t;
+    });
+    const strip = dock(tabs, { trail: [keycap('Tab', { class: 'seat-hint' })], attrs: { class: 'coop-seat-tabs', 'aria-label': 'Seats on this screen' } });
+    const previous = document.querySelector('.coop-seat-tabs');
+    if (previous) previous.replaceWith(strip); else document.body.appendChild(strip);
   }
 
   function removeSeatTabs() {
@@ -269,6 +344,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
+    app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     releaseFlaskKeyClaim();
     removeEventListener('keydown', flaskKeyHandler, true);
     removeEventListener('keydown', keyHandler);
@@ -290,8 +366,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const card = player?.hand.find((entry) => {
         const def = cardDef(entry);
         return (def.effects || []).some((effect) => effect.target === 'enemy')
-          && player.energy >= (def.cost === 'X' ? 1 : def.cost)
-          && player.mana >= (def.manaCost || 0);
+          && cardAffordableFromSnapshot(def, player);
       });
       const enemy = sc?.enemies.find((entry) => entry.alive);
       if (!card || !enemy) return null;
@@ -318,6 +393,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function render() {
     if (!snap) return;
+    app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
+    if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
+    else { combatRests.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); }
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
@@ -336,7 +414,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       case 'shrine': return renderShrine();
       case 'event': return renderEvent();
       case 'complete': return renderComplete();
-      default: app.innerHTML = `<div class="screen"><div class="coop-note">${esc(snap.scene.kind)}…</div></div>`;
+      default: app.innerHTML = ''; app.appendChild(el('div', { class: 'screen coop-scene' }, flavour(`${snap.scene.kind}…`, { class: 'coop-note' })));
     }
   }
 
@@ -346,7 +424,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     row.className = 'statuses';
     for (const [sid, inst] of Object.entries(statuses || {})) {
       if (!registries.statuses.has(sid)) continue;
-      const def = registries.statuses.get(sid);
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
       const el = document.createElement('div');
@@ -373,7 +451,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const poise = document.createElement('div');
       poise.className = `bar poisebar${ent.poiseMeter.value >= ent.poiseMeter.max * 0.75 ? ' full' : ''}`;
       poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (ent.poiseMeter.value / ent.poiseMeter.max) * 100)}%"></div>`;
-      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      const staggered = registries.frameworkTerms.statusDisplay('staggered');
+      const stagDesc = (staggered && staggered.tooltip) || '';
       attachTooltip(poise, () => `<div class="tt-title">Poise</div>${ent.poiseMeter.value} / ${ent.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
     }
@@ -392,12 +471,18 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return b;
   }
   function intentEl(intent) {
-    const el = document.createElement('div');
+    // ONE INTENT PIECE, the kit's StatePill in the fact's own tone — the same
+    // composition solo combat draws (screens/combat.js intentEl). This read
+    // `badge.html`, which intentBadge has never returned, so the co-op board
+    // printed the word "undefined" over every enemy.
     const badge = intentBadge(intent);
-    el.className = `intent ${badge.cls}`;
-    el.innerHTML = badge.html;
-    attachTooltip(el, () => intentTooltip(intent, { victim: 'each hero' }));
-    return el;
+    const node = pill({
+      label: badge.label,
+      attrs: { class: `intent lg ${badge.cls}${badge.dashed ? ' dashed' : ''}`, dataset: { tone: badge.tone || undefined } },
+    });
+    if (badge.glyph) node.prepend(kitGlyph(badge.glyph, { class: 'ic' }));
+    attachTooltip(node, () => intentTooltip(intent, { victim: 'each hero' }));
+    return node;
   }
 
   // ---- combat (parity board) ------------------------------------------------
@@ -440,11 +525,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           <div class="player-zone"></div>
           <div class="enemy-row"></div>
         </div>
-        ${meP && ((meP.flasks && meP.flasks.length) || meP.flaskCharges) ? '<div class="coop-flasks"></div>' : ''}
-        ${armedFlask != null ? `<div class="coop-arm">Throwing <b>${esc(registries.flasks.get(meP.flasks[armedFlask].flaskId).name)}</b> — click a hero seat to give it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
-        ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — choose a highlighted hero. <button class="subtle" id="coop-cancel-target">Cancel</button></div>` : ''}
+        ${meP && ((meP.flasks && meP.flasks.length) || meP.flaskCharges) ? '<div class="coop-flasks-host"></div>' : ''}
+        ${arming ? '<div class="coop-arm-host"></div>' : ''}
         <div class="hand-area">
-          <div class="energy-orb">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</div>
+          <!-- The kit's StatPair and Button (styles/kit.css): the co-op board's
+               two hand-rolled controls wear the same atoms the solo action row
+               does, so neither surface carries a shape of its own. -->
+          <span class="as-statpair energy-orb cell stack lg" role="status" aria-label="Actions remaining"><span class="sp-k">Actions</span><span class="sp-v">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</span></span>
           <!-- The strip is components/hand.js — THE one hand renderer, the same
                one solo combat mounts, so this hand honors data-hand-layout
                (overlap overlaps, paging pages), carries the inspect hold, and
@@ -455,7 +542,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
                supplies only the viewer half below: snapshot-fed entries with
                spelled-out reasons, and network intents as the play wiring. -->
           <div class="hand"></div>
-          <button class="end-turn" id="coop-endturn">END TURN</button>
+          <button type="button" class="as-btn primary end-turn tall" id="coop-endturn">End Turn</button>
         </div>
         <div class="fx-layer"></div>
       </div>`;
@@ -479,12 +566,20 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.dataset.seat = p.id;
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle }, m.classId));
+      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId));
+      stageFor(sprite)?.setRestPose?.(combatRests.get(p.id) || 'idle');
       const bb = blockBadge(p.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
-      const nm = document.createElement('div');
-      nm.className = 'coop-seat-name';
-      nm.innerHTML = `<span style="color:${tintCss(m.tint)}">${esc(m.name || p.id)}</span>${p.id === me ? ' <b>(you)</b>' : ''} · ⚡${p.energy}/${p.energyMax} <span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
+      // THE SEAT LINE: the tinted name (the identity span hudbars reads,
+      // first child), a "you" Pill, the energy Chip, and the seat's state as
+      // a StatePill — one StatStrip, centred under the sprite.
+      const seatState = !p.connected ? { label: 'away', on: false } : !p.alive ? { label: 'down', on: false } : p.ended ? { label: '✓ ended', on: false } : { label: '● turn', on: true };
+      const nm = statStrip([
+        el('span', { class: 'coop-seat-player', style: { color: tintCss(m.tint) }, text: m.name || p.id }),
+        p.id === me ? pill({ label: 'you', round: true, on: true }) : null,
+        chip({ key: '⚡', value: `${p.energy}/${p.energyMax}`, attrs: { 'aria-label': `Energy ${p.energy} of ${p.energyMax}` } }),
+        pill({ ...seatState, attrs: { class: 'coop-turnflag' } }),
+      ], { class: 'centered coop-seat-name' });
       box.appendChild(nm);
       // Your own seat glows in YOUR accent, not a fixed gold.
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
@@ -558,17 +653,21 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       handStrip.render({
         cards: meP.hand.map((c) => {
           const def = cardDef(c);
-          const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
-          const manaAffordable = meP.mana >= (def.manaCost || 0);
+          const costs = snapshotCosts(def, meP);
+          const energyAffordable = meP.energy >= costs.energy;
+          const manaAffordable = meP.mana >= costs.mana;
+          const staminaAffordable = (meP.stamina || 0) >= costs.stamina;
           const affordable = cardAffordableFromSnapshot(def, meP);
           // The spelled-out reason is this viewer's data: a co-op client reads
           // a snapshot, not the engine, so the card itself says why it is grey.
           const reason = affordable ? null
-            : !manaAffordable ? `Need ${def.manaCost || 0} Mana; have ${meP.mana}`
-              : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
+            : !manaAffordable ? `Need ${costs.mana} Mana; have ${meP.mana}`
+              : !staminaAffordable ? `Need ${costs.stamina} Stamina; have ${meP.stamina || 0}`
+                : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
           return {
             inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
             def, name: def.name, affordable, reason,
+            preview: costs.preview,
             selected: c.instanceId === armedFriendlyCard,
           };
         }),
@@ -577,31 +676,42 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       handStrip.render({ cards: [], emptyHtml: '<div class="coop-note">Spectating the fight…</div>' });
     }
 
-    // Flasks.
-    const fwrap = app.querySelector('.coop-flasks');
-    if (fwrap && meP) {
+    // Flasks — a ButtonRow of the kit's buttons; an armed one wears primary.
+    const fhost = app.querySelector('.coop-flasks-host');
+    if (fhost && meP) {
+      const flaskButtons = [];
       for (const kind of CHARGE_FLASK_KINDS) {
         const fd = chargeFlaskDefinition(registries, kind);
         const current = meP.flaskCharges ? meP.flaskCharges[`${kind}Current`] : 0;
-        const b = document.createElement('button');
-        b.className = 'coop-flask flask-charge';
-        b.setAttribute('aria-disabled', String(current <= 0));
+        const b = button({ label: '', className: 'coop-flask flask-charge', attrs: { 'aria-disabled': String(current <= 0), 'aria-label': `${fd.name}: ${current} charges remaining` } });
         b.innerHTML = `${flaskIdentityHtml(fd)} <b>${current}</b>`;
-        b.setAttribute('aria-label', `${fd.name}: ${current} charges remaining`);
-        attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
-        b.addEventListener('click', () => openCoopFlaskMenu(b, fd, meP, { chargeKind: kind, remaining: current }));
-        fwrap.appendChild(b);
+        attachTooltip(b, () => flaskTooltipHtml(fd, { charges: current }));
+        b.addEventListener('click', () => openCoopFlaskMenu(b, fd, meP, { chargeKind: kind, remaining: current, charges: current }));
+        flaskButtons.push(b);
       }
       meP.flasks.forEach((f, i) => {
         const fd = registries.flasks.get(f.flaskId);
-        const b = document.createElement('button');
-        b.className = `coop-flask${armedFlask === i ? ' armed' : ''}`;
-        b.dataset.coopFlaskSlot = String(i);
+        const b = button({ label: '', className: `coop-flask${armedFlask === i ? ' armed primary' : ''}`, attrs: { dataset: { coopFlaskSlot: String(i) }, 'aria-pressed': armedFlask === i ? 'true' : 'false' } });
         b.innerHTML = `${flaskIdentityHtml(fd)}${fd.targeted ? '' : ' ▾'}`;
-        attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
+        attachTooltip(b, () => flaskTooltipHtml(fd));
         b.addEventListener('click', () => openCoopFlaskMenu(b, fd, meP, { slot: i }));
-        fwrap.appendChild(b);
+        flaskButtons.push(b);
       });
+      fhost.replaceWith(buttonRow({ size: 'medium', buttons: flaskButtons, className: 'center coop-flasks' }));
+    }
+    // The arming prompt: a DetailCard saying what is in hand and what to do,
+    // with the way out beside it.
+    const ahost = app.querySelector('.coop-arm-host');
+    if (ahost) {
+      const throwing = armedFlask != null;
+      const card = detailCard({
+        eyebrow: throwing ? 'Throwing' : 'Playing',
+        name: throwing ? registries.flasks.get(meP.flasks[armedFlask].flaskId).name : armedCardDef.name,
+        line: throwing ? 'Click a hero seat to give it.' : 'Choose a highlighted hero.',
+        attrs: { class: 'floating coop-arm', role: 'status' },
+      });
+      card.appendChild(buttonRow({ size: 'short', buttons: [button({ label: 'Cancel', id: throwing ? 'coop-cancel-flask' : 'coop-cancel-target' })] }));
+      ahost.replaceWith(card);
     }
 
     const canEnd = meP && meP.alive && meP.connected && !meP.ended;
@@ -628,6 +738,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         : null;
       if (!preservedTarget || !focusElement(preservedTarget)) focusFirst('.coop-seat[data-friendly-target]');
     }
+    for (const [ownerId, plan] of pendingAnimations) {
+      const stage = stageFor(app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`));
+      stage?.play(stage.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle', 420, plan.aura);
+    }
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
     wireLeave();
@@ -644,10 +758,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     for (const [pid, nid] of Object.entries(votes)) (votesByNode[nid] = votesByNode[nid] || []).push(pid);
     const present = snap.party.filter((p) => p.connected && p.alive);
     const voting = present.length > 1;
+    // The vote count is a StatePill in the header (uppercase by the kit's
+    // rule, never by the string); tools/coop-shoot.mjs reads it case-blind.
     const voteLine = voting
-      ? `<span class="mh-stat coop-voteline">${Object.keys(votes).length ? `VOTES ${Object.keys(votes).length}/${present.length}` : 'VOTE FOR THE PATH'}</span>`
+      ? html(pill({ label: Object.keys(votes).length ? `Votes ${Object.keys(votes).length}/${present.length}` : 'Vote for the path', on: true, attrs: { class: 'mh-stat coop-voteline' } }))
       : '';
 
+    const smithReceipts = snap.party.filter((member) => member.lastSmithingReceipt);
     app.innerHTML = `
       <div class="mapscreen">
         <header class="topbar map-header">
@@ -662,6 +779,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           <div class="coop-partybar"></div>
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
+        ${smithReceipts.length ? html(el('div', { class: 'as-kitline coop-smithing-receipts', 'aria-live': 'polite' }, smithReceipts.map((member) => {
+          const receipt = member.lastSmithingReceipt;
+          return kitItem({ glyph: '⚒', name: `${member.name} smithed ${receipt.armamentName} · tier ${receipt.beforeLevel}→${receipt.afterLevel} · ${receipt.cost} Stone · ${receipt.affectedCards.length} cards` });
+        }))) : ''}
       </div>`;
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
@@ -677,7 +798,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // this sit.
       act: {
         nodes: map.nodes, columns: map.columns, actNumber: snap.actNumber,
-        startIds: map.startIds, bossId: map.bossId,
+        startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds,
       },
       // THE VIEWER — the half that is legitimately different on every screen.
       viewer: {
@@ -709,7 +830,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           return `<text class="vote-pips" x="${geom.x}" y="${geom.y - geom.r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)">${glyphs}</text>`;
         },
         tooltip: (n, { shownType, reachable }) =>
-          `<div class="tt-title">${esc(nodeName(shownType))}</div>${nodeBlurb(shownType)}${reachable ? '<br>Click to vote for this path.' : ''}`,
+          `<div class="tt-title">${esc(nodeName(shownType))}</div>${nodeBlurb(shownType)}`
+            + (shownType === 'boss' && n.destinationLabel ? `<br><strong>${esc(n.destinationLabel)}</strong>` : '')
+            + (reachable ? '<br>Click to vote for this path.' : ''),
         onPick: (id) => send({ t: 'chooseNode', nodeId: id }),
       },
     });
@@ -718,19 +841,32 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     wireLeave();
   }
 
-  // Compact party read-out in the map header (names + HP + presence).
+  // Compact party read-out in the map header (names + HP + presence): the
+  // kit's party strip — one Member per seat, its glyph in its tint and an
+  // inline HP Meter labelled with its name.
+  const partyStrip = (attrs = {}) => el('div', { ...attrs, class: `as-party ${attrs.class || ''}`.trim(), role: 'group', 'aria-label': 'The party' });
   function renderPartyBar() {
     const bar = app.querySelector('.coop-partybar');
     if (!bar) return;
-    bar.innerHTML = snap.party.map((p) => {
-      const pct = Math.max(0, Math.min(100, Math.round((p.hp / Math.max(1, p.maxHp)) * 100)));
-      return `<span class="coop-pc${p.id === me ? ' me' : ''}${p.connected ? '' : ' away'}${p.alive ? '' : ' dead'}" data-pc="${p.id}" style="border-color:${tintCss(p.tint)}">
-        <span class="coop-pc-glyph" style="color:${tintCss(p.tint)}">${classGlyph(p.classId)}</span>${esc(p.name)}
-        <span class="coop-pc-hp"><i style="width:${pct}%"></i><b>${p.hp}/${p.maxHp}</b></span></span>`;
-    }).join('');
-    bar.querySelectorAll('.coop-pc').forEach((chip) => {
-      const p = snap.party.find((x) => x.id === chip.dataset.pc);
-      if (p) attachTooltip(chip, () => {
+    bar.innerHTML = '';
+    for (const p of snap.party) {
+      const state = p.id === me ? 'me' : !p.connected ? 'away' : !p.alive ? 'dead' : '';
+      bar.appendChild(el('span', { class: `as-member coop-pc${state ? ` ${state}` : ''}`, dataset: { pc: p.id, ...(state ? { state } : {}) } }, [
+        kitGlyph(classGlyph(p.classId), { class: 'coop-pc-glyph', style: { color: tintCss(p.tint) } }),
+        // The kit's one Meter (a plate beside a well). A party member reads as
+        // name + hp over a short track, so the plate rides INSIDE the track
+        // (`inset`) and the surface derives the fill the atom draws.
+        meter({
+          inset: true, tone: 'hp', label: p.name, value: `${Math.max(0, p.hp)}/${p.maxHp}`,
+          cur: Math.max(0, p.hp), max: p.maxHp,
+          pct: p.maxHp > 0 ? (Math.max(0, p.hp) / p.maxHp) * 100 : 0,
+          attrs: { class: 'coop-pc-hp' },
+        }),
+      ]));
+    }
+    bar.querySelectorAll('.coop-pc').forEach((member) => {
+      const p = snap.party.find((x) => x.id === member.dataset.pc);
+      if (p) attachTooltip(member, () => {
         const cls = registries.classes.get(p.classId);
         return `<div class="tt-title">${esc(p.name)} — ${esc(cls ? cls.name : p.classId)}</div>` +
           `HP ${p.hp}/${p.maxHp} · ⛁ ${p.cinders ?? 0} · deck ${p.deckSize ?? '?'} · relics ${p.relics ?? 0}` +
@@ -739,92 +875,233 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     });
   }
 
-  // ---- reward / shrine / event (reuse renderCard + solo styling) ------------
-  function rewardShell(inner) {
-    return `<div class="screen"><div class="coop-partybar" style="margin-bottom:10px"></div>${inner}<button class="subtle" id="coop-leave" style="margin-top:14px">Leave</button></div>`;
+  // ---- reward / shrine / event (reuse renderCard + the kit's decision door) --
+  // EVERY SCENE THAT ASKS THE SEAT SOMETHING IS BODY C ON THE PAGE: the party
+  // strip above, a door whose head names the scene, a decide body (Title·L
+  // + ornament, Flavour for a note, the shared renderCard row, OptionCards
+  // for the ways on), and Leave on the foot's ladder. One shell, five scenes.
+  function sceneDoor({ title, eyebrow: eb = 'Forsaken Together', children = [], note = '' }) {
+    const leave = button({ label: 'Leave', id: 'coop-leave' });
+    const door = pageDoor({
+      eyebrow: eb, title, size: 'md', className: 'coop-door',
+      body: decide({ title, children: [note ? flavour(note, { class: 'coop-note' }) : null, ...children] }),
+      secondary: [leave], footSize: 'short',
+    });
+    app.innerHTML = '';
+    app.appendChild(el('div', { class: 'screen coop-scene' }, [partyStrip({ class: 'coop-partybar' }), door]));
+    renderPartyBar();
+    wireLeave();
+    return door;
   }
-  const rTitle = (t) => `<h2 style="color:var(--gold);font-size:26px">${esc(t)}</h2>`;
+  const waiting = (text) => flavour(text, { class: 'coop-note' });
+  /** A way on: the kit's OptionCard, no chevron, with the seat's data hooks. */
+  function choice({ name, description = '', glyph: g = '', disabled = false, reason = '', attrs = {}, className = '' }) {
+    const card = optionCard({ glyph: g, name, description, arrow: false, disabled, attrs, className });
+    if (reason) attachTooltip(card, () => esc(reason));
+    return card;
+  }
   function renderReward() {
     const offer = snap.scene.offers[me];
-    if (!offer) { app.innerHTML = rewardShell(`${rTitle('Spoils')}<div class="coop-note">Waiting for the others to choose…</div>`); renderPartyBar(); wireLeave(); return; }
-    app.innerHTML = rewardShell(`${rTitle(`${(snap.scene.pool || '').toUpperCase()} — CHOOSE A CARD`)}<div class="reward-row"></div>
-      <div class="coop-choices" style="margin-top:12px">
-        ${offer.relicId ? `<button class="coop-take" data-take="relic">Take relic: ${esc(registries.relics.get(offer.relicId).name)}</button>` : ''}
-        ${offer.flaskId ? `<button class="coop-take" data-take="flask">Take flask: ${flaskIdentityHtml(registries.flasks.get(offer.flaskId))}</button>` : ''}
-        <button class="subtle" data-take="skip">Skip card</button>
-      </div>`);
-    const grid = app.querySelector('.reward-row');
+    if (!offer) { sceneDoor({ title: 'Spoils', children: [waiting('Waiting for the others to choose…')] }); return; }
+    const stone = offer.smithingStoneReceipt;
+    const grid = el('div', { class: 'reward-row' });
     let pick = { cardId: null, takeRelic: false, flask: false };
     const submit = () => send({ t: 'chooseReward', pick });
     offer.cardIds.forEach((cid) => {
-      const el = renderCard(registries, { cardId: cid, upgraded: false }, {});
-      el.addEventListener('click', () => { pick.cardId = cid; submit(); });
-      grid.appendChild(el);
+      const card = renderCard(registries, { cardId: cid, upgraded: false }, {});
+      card.addEventListener('click', () => { pick.cardId = cid; submit(); });
+      grid.appendChild(card);
     });
-    app.querySelectorAll('.coop-take').forEach((b) => b.addEventListener('click', () => { if (b.dataset.take === 'relic') pick.takeRelic = true; else if (b.dataset.take === 'flask') pick.flask = true; submit(); }));
-    renderPartyBar(); wireLeave();
+    const takes = [
+      offer.relicId ? choice({ glyph: '◆', name: 'Take the relic', description: registries.relics.get(offer.relicId).name, className: 'coop-take', attrs: { dataset: { take: 'relic' } } }) : null,
+      offer.flaskId ? choice({ glyph: '⚗', name: 'Take the flask', description: registries.flasks.get(offer.flaskId).name, className: 'coop-take', attrs: { dataset: { take: 'flask' } } }) : null,
+      choice({ glyph: '›', name: 'Skip the card', attrs: { dataset: { take: 'skip' } } }),
+    ];
+    sceneDoor({
+      title: `${String(snap.scene.pool || 'The').replace(/^./, (c) => c.toUpperCase())} spoils`,
+      note: stone?.amount > 0 ? `⚒ ${stone.amount} Smithing Stone secured · ${stone.stoneBalanceAfter} total` : '',
+      children: [subtitle('Choose a card'), grid, options(takes, { class: 'coop-choices' })],
+    });
+    app.querySelectorAll('[data-take]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.take === 'relic') pick.takeRelic = true; else if (b.dataset.take === 'flask') pick.flask = true; submit(); }));
   }
   function renderShrine() {
     const done = snap.scene.done && snap.scene.done[me];
     const allies = snap.party.filter((p) => p.id !== me && p.alive && p.connected);
     const mm = myMember();
-    const upgradable = ((mm && mm.deck) || []).filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
-    app.innerHTML = rewardShell(`${rTitle('Shrine of Emberlight')}
-      ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">
-        <button data-shrine="rest">Rest — heal yourself</button>
-        <button id="coop-smith" ${upgradable.length ? '' : 'disabled'}>Smith — upgrade a card</button>
-        ${allies.map((a) => `<button class="coop-take" data-mend="${a.id}">Mend ${esc(a.name)} (+30% HP)</button>`).join('')}
-      </div>
-      <div id="coop-smith-grid" class="reward-row" style="display:none;max-width:900px;flex-wrap:wrap"></div>`}`);
+    const smith = snap.scene.smithing?.[me];
+    const candidates = smith?.candidates || [];
+    const stones = mm?.smithingStones || 0;
+    sceneDoor({
+      title: 'Shrine of Emberlight',
+      children: done ? [waiting('Waiting for the party…')] : [options([
+        choice({ glyph: '✚', name: 'Rest', description: 'Heal yourself.', attrs: { dataset: { shrine: 'rest' } } }),
+        choice({ glyph: '⚒', name: 'Upgrade an item', description: `${stones} Stone${stones === 1 ? '' : 's'}`, disabled: !candidates.length, reason: candidates.length ? '' : 'Nothing here can be upgraded.', attrs: { id: 'coop-smith' } }),
+        ...allies.map((a) => choice({ glyph: '❤', name: `Mend ${a.name}`, description: '+30% HP', className: 'coop-take', attrs: { dataset: { mend: a.id } } })),
+      ], { class: 'coop-choices' })],
+    });
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));
     app.querySelectorAll('[data-mend]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'mend', targetId: b.dataset.mend })));
-    // Smith opens a picker of your unupgraded cards; hover/focus previews the
-    // exact upgrade (changed values highlighted) before you commit.
+    // The shared modal keeps the co-op transaction identical to solo:
+    // reversible selection, every real delta, explicit affordability, then a
+    // separate Confirm. The client sends only that final stable item ref;
+    // the host still rebuilds and revalidates before committing.
     const smithBtn = app.querySelector('#coop-smith');
-    if (smithBtn && upgradable.length) smithBtn.addEventListener('click', () => {
-      const grid = app.querySelector('#coop-smith-grid');
-      if (grid.style.display !== 'none') return;
-      grid.style.display = 'flex';
-      for (const inst of upgradable) {
-        const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
-        el.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'smith', targetId: inst.instanceId }));
-        grid.appendChild(el);
-      }
+    if (smithBtn && candidates.length) smithBtn.addEventListener('click', () => {
+      let selectedItemRef = null;
+      const model = () => smithSelectionModel(registries, smith, selectedItemRef);
+      const modal = mountSmithUpgradeModal(app, model(), {
+        registries,
+        meta,
+        returnFocusElement: smithBtn,
+        onSelect: (itemRef) => {
+          selectedItemRef = itemRef;
+          modal.update(model());
+        },
+        onBack: () => {},
+        onConfirm: (itemRef) => send({ t: 'shrineChoice', choice: 'smith', targetId: itemRef }),
+      });
     });
-    renderPartyBar(); wireLeave();
+  }
+  /** An authored choice as a card; a priced one the seat cannot pay is drawn disabled and says why. */
+  function eventChoice(c, i, purse, datasetKey) {
+    const need = c.requires && typeof c.requires.cinders === 'number' ? c.requires.cinders : null;
+    const short = need != null && purse < need;
+    return choice({
+      name: c.label || c.text || 'Choose',
+      disabled: short, reason: short ? `Needs ${need} cinders` : '',
+      attrs: { dataset: { [datasetKey]: String(i), ...(short ? { requires: '1' } : {}) } },
+    });
   }
   function renderEvent() {
     const done = snap.scene.done && snap.scene.done[me];
     let ev = null; try { ev = registries.events.get(snap.scene.eventId); } catch { /* unknown */ }
-    app.innerHTML = rewardShell(`${rTitle(ev ? ev.name : 'A Happening')}
-      ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">${(ev && ev.choices ? ev.choices : [{ label: 'Continue' }]).map((c, i) => `<button data-ev="${i}">${esc(c.label || c.text || 'Choose')}</button>`).join('')}</div>`}`);
+    // THE RESULT SHOWS BEFORE THE ROOM MOVES ON: every seat reads its own
+    // result first and asks for what follows — STEEL YOURSELF when the
+    // choice bought a fight, CONTINUE otherwise; the host opens the shared
+    // combat, or advances, once every present seat has (DEVELOPER.md's
+    // event contract — control passes on after resultText shows).
+    if (snap.scene.next) {
+      const text = (snap.scene.results && snap.scene.results[me]) || '';
+      const acked = !!(snap.scene.ack && snap.scene.ack[me]);
+      // A FALLEN SEAT IS NOT IN THIS EVENT, and must not be handed a control
+      // that cannot work. The host refuses `eventContinue` from a member whose
+      // `alive` is false, and `settleEvent` waits only on connectedMembers()
+      // — which is `connected && alive` — so this seat's ack is never wanted
+      // and never arrives. The result: `acked` stays false forever, and the
+      // branch below drew CONTINUE for a click the host answers by
+      // rebroadcasting the same snapshot, leaving the button exactly where it
+      // was. Every other surface in this file already asks `alive` before
+      // offering an action (the flask menu, card affordability, targeting,
+      // End Turn); the event result was the one that did not.
+      const fallen = !(myMember() || {}).alive;
+      sceneDoor({
+        title: ev ? ev.name : 'A Happening',
+        children: [
+          prose(text, { class: 'coop-event-result' }),
+          fallen ? waiting('You have fallen. The party reads on without you.')
+            : acked ? waiting('Waiting for the party…') : options([
+            choice({ glyph: '›', name: snap.scene.next.kind === 'combat' ? 'Steel yourself' : 'Continue', attrs: { dataset: { evContinue: '1' } } }),
+          ], { class: 'coop-choices' }),
+        ],
+      });
+      const go = app.querySelector('[data-ev-continue]');
+      if (go) go.addEventListener('click', () => send({ t: 'eventContinue' }));
+      return;
+    }
+    const purse = (myMember() || {}).cinders ?? 0;
+    const cards = (ev && ev.choices ? ev.choices : [{ label: 'Continue' }]).map((c, i) => ({ c, i }))
+      // Only the choices this seat's history admits (scene.open, by authored
+      // index, from the host); a gated choice drawn here would be refused
+      // with no visible answer. No projection = every authored choice.
+      .filter(({ i }) => !(snap.scene.open && Array.isArray(snap.scene.open[me])) || snap.scene.open[me].includes(i))
+      // A PRICED CHOICE THE SEAT CANNOT AFFORD IS DRAWN DISABLED, the solo
+      // event screen's `meets` rule read off this seat's snapshot purse: the
+      // host refuses it, and a refusal only rebroadcasts the same snapshot,
+      // so an enabled button here would be one that does nothing.
+      .map(({ c, i }) => eventChoice(c, i, purse, 'ev'));
+    sceneDoor({
+      title: ev ? ev.name : 'A Happening',
+      children: [done ? waiting('Waiting for the party…') : options(cards, { class: 'coop-choices' })],
+    });
     app.querySelectorAll('[data-ev]').forEach((b) => b.addEventListener('click', () => send({ t: 'eventChoice', choiceIndex: Number(b.dataset.ev) })));
-    renderPartyBar(); wireLeave();
   }
 
   // ---- catch-up + complete --------------------------------------------------
+  // A MISSED EVENT IS CHOSEN THE WAY A LIVE ONE IS: the choices the seat's
+  // history admitted when the party met it, priced ones disabled when short,
+  // and the choice's result read before the next debt (DEVELOPER.md's event
+  // contract). The pick is sent the moment it is made and the host keeps the
+  // entry at the head of the queue, marked done with its result, until the
+  // seat continues — so a reload between the choice and CONTINUE shows the
+  // result again, never the choices (Codex on #549).
   function renderCatchup(mm) {
     const item = mm.catchupQueue[0];
     const remaining = mm.catchupQueue.length;
-    let inner = `${rTitle(`Ember Debt — ${remaining} missed`)}<p class="coop-note">Claim what you would have earned while away.</p>`;
-    if (item.type === 'reward') inner += '<div class="reward-row"></div>';
-    inner += `<div class="coop-choices" style="margin-top:12px">
-      ${(item.type === 'reward' && item.offer.relicId) || (item.type === 'treasure' && item.relicId) ? `<button class="coop-take" data-cu="relic">Take relic</button>` : ''}
-      <button class="subtle" data-cu="skip">Skip</button></div>`;
-    app.innerHTML = rewardShell(inner);
+    const title = 'Ember debt';
+    const debt = `${remaining} missed`;
+    if (item.type === 'event') {
+      let ev = null; try { ev = registries.events.get(item.eventId); } catch { ev = null; }
+      const admitted = (ev && ev.choices ? ev.choices : []).map((c, i) => ({ c, i }))
+        .filter(({ i }) => !Array.isArray(item.open) || item.open.includes(i));
+      if (item.done) {
+        sceneDoor({
+          title, eyebrow: debt,
+          children: [
+            prose(item.done.resultText || '', { class: 'coop-event-result' }),
+            options([choice({ glyph: '›', name: 'Continue', attrs: { dataset: { cuGo: '1' } } })], { class: 'coop-choices' }),
+          ],
+        });
+        const go = app.querySelector('[data-cu-go]');
+        if (go) go.addEventListener('click', () => send({ t: 'catchupChoice', index: 0, pick: { continue: true } }));
+        return;
+      }
+      // The purse the seat had when the party met the event, and the one in hand.
+      const purse = Math.min(mm.cinders ?? 0, typeof item.purse === 'number' ? item.purse : (mm.cinders ?? 0));
+      const cards = admitted.map(({ c, i }) => eventChoice(c, i, purse, 'cuEv'));
+      sceneDoor({
+        title, eyebrow: debt,
+        note: `The party met ${ev ? ev.name : 'a happening'} while you were away. Make the choice you would have made.`,
+        children: [
+          ev && ev.text ? prose(ev.text, { class: 'coop-event-result' }) : null,
+          options(cards.length ? cards : [choice({ glyph: '›', name: 'Continue', attrs: { dataset: { cuEv: '-1' } } })], { class: 'coop-choices' }),
+        ],
+      });
+      app.querySelectorAll('[data-cu-ev]').forEach((b) => b.addEventListener('click', () => {
+        const choiceIndex = Number(b.dataset.cuEv);
+        send({ t: 'catchupChoice', index: 0, pick: choiceIndex < 0 ? {} : { choiceIndex } });
+      }));
+      return;
+    }
+    const grid = item.type === 'reward' ? el('div', { class: 'reward-row' }) : null;
+    const relic = (item.type === 'reward' && item.offer.relicId) || (item.type === 'treasure' && item.relicId);
+    sceneDoor({
+      title, eyebrow: debt,
+      note: 'Claim what you would have earned while away.',
+      children: [
+        grid,
+        options([
+          relic ? choice({ glyph: '◆', name: 'Take the relic', className: 'coop-take', attrs: { dataset: { cu: 'relic' } } }) : null,
+          choice({ glyph: '›', name: 'Skip', attrs: { dataset: { cu: 'skip' } } }),
+        ], { class: 'coop-choices' }),
+      ],
+    });
     const resolve = (pick) => send({ t: 'catchupChoice', index: 0, pick });
-    if (item.type === 'reward') {
-      const grid = app.querySelector('.reward-row');
-      item.offer.cardIds.forEach((cid) => { const el = renderCard(registries, { cardId: cid, upgraded: false }, {}); el.addEventListener('click', () => resolve({ cardId: cid })); grid.appendChild(el); });
+    if (grid) {
+      item.offer.cardIds.forEach((cid) => { const card = renderCard(registries, { cardId: cid, upgraded: false }, {}); card.addEventListener('click', () => resolve({ cardId: cid })); grid.appendChild(card); });
     }
     app.querySelectorAll('[data-cu]').forEach((b) => b.addEventListener('click', () => resolve(b.dataset.cu === 'relic' ? { takeRelic: true } : {})));
-    renderPartyBar(); wireLeave();
   }
   function renderComplete() {
     const win = snap.scene.victory;
-    app.innerHTML = `<div class="screen"><h1 class="title-big" style="color:var(--gold)">${win ? '👑 The Spire is Yours' : '☠ The Party Has Fallen'}</h1>
-      <button id="coop-leave2" style="margin-top:20px">Return to the fire</button></div>`;
-    const b = app.querySelector('#coop-leave2'); if (b) b.addEventListener('click', () => { teardown(); conn.close(); onLeave(); });
+    const leave = button({ label: 'Return to the fire', weight: 'primary', id: 'coop-leave2' });
+    const door = pageDoor({
+      eyebrow: 'Forsaken Together', title: win ? 'Victory' : 'Defeat', size: 'md', className: 'coop-door',
+      body: decide({ title: win ? 'The Spire is yours' : 'The party has fallen', children: [buttonRow({ size: 'long', buttons: [leave] })] }),
+    });
+    if (!win) door.querySelector('.as-title-l').dataset.tone = 'loss';
+    app.innerHTML = '';
+    app.appendChild(el('div', { class: 'screen coop-scene' }, door));
+    leave.addEventListener('click', () => { teardown(); conn.close(); onLeave(); });
   }
 
   // ---- enemy-turn pacing -----------------------------------------------------
@@ -896,11 +1173,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
 
   function banner(text, small) {
-    const el = document.createElement('div');
-    el.className = `coop-turn-banner${small ? ' small' : ''}`;
-    el.textContent = text;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), small ? 900 : 1100);
+    const node = kitBanner(text, { small: !!small, attrs: { class: 'coop-turn-banner' } });
+    document.body.appendChild(node);
+    setTimeout(() => node.remove(), small ? 900 : 1100);
   }
 
   // ---- snapshot-diff combat FX ---------------------------------------------
@@ -977,7 +1252,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     };
     const recoil = (sel, heavy) => {
       const box = app.querySelector(sel);
-      if (box) box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
+      if (!box) return;
+      box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
+      playPoseOn(box, 'hit', heavy ? 380 : 220);
     };
     // Authoritative receipts own hit floats. Snapshot deltas remain the home
     // for healing, guard gain and legacy non-attack HP changes only.

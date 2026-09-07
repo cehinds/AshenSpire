@@ -21,13 +21,13 @@ export const characterCreation = {
     },
     {
       "id": "rightHand",
-      "label": "RIGHT HAND",
+      "label": "MAIN HAND",
       "kind": "hand",
       "slot": "rightHand"
     },
     {
       "id": "leftHand",
-      "label": "LEFT HAND",
+      "label": "OFF HAND",
       "kind": "hand",
       "slot": "leftHand"
     },
@@ -146,7 +146,7 @@ export const characterCreation = {
       "id": "whetstoneMemory",
       "name": "Whetstone Memory",
       "icon": "🪨",
-      "desc": "Begin with one Strike already upgraded.",
+      "desc": "Begin with one armament already Smithed, improving all of its sourced basic cards.",
       "effects": [
         {
           "op": "upgradeCard",

@@ -187,6 +187,8 @@
 // scales these glyphs and only these glyphs; what is cancelled is UI size, which
 // is the thing being reported on.
 
+import { el, decide, titleL, prose, flavour } from '../kit/index.js';
+
 /** The gate's own element, or null when nothing is standing. */
 let gate = null;
 
@@ -280,14 +282,20 @@ export function updateUprightGate({ short, offerRotate, enabled = true } = {}) {
   }
   const say = SAY[advice];
   gate.dataset.advice = advice;
-  gate.innerHTML = `
-    <div class="upright-card">
-      <div class="upright-glyph" aria-hidden="true"><span class="upright-phone"></span></div>
-      <h2 id="upright-title">${say.title}</h2>
-      <p class="upright-say">${say.body}</p>
-      <p class="upright-safe">${say.safe}</p>
-      <p class="upright-hint">${say.hint}</p>
-    </div>`;
+  // THE REFUSAL IS THE KIT'S DECISION BODY (§05 C): a Title·L, the instruction
+  // as Prose, the reassurance and the way out as the two quieter lines the
+  // body already has. No control in it — see the header for why that is ruled
+  // rather than omitted.
+  gate.replaceChildren(decide({
+    attrs: { class: 'upright-card' },
+    children: [
+      el('div', { class: 'upright-glyph', 'aria-hidden': 'true' }, el('span', { class: 'upright-phone' })),
+      titleL(say.title, { tag: 'h2', id: 'upright-title' }),
+      prose(say.body, { class: 'upright-say' }),
+      prose(say.safe, { class: 'upright-safe' }),
+      flavour(say.hint, { class: 'upright-hint' }),
+    ],
+  }));
   return gate;
 }
 

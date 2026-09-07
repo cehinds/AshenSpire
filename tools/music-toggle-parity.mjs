@@ -63,8 +63,13 @@ if (process.argv.includes('--selftest')) {
         expectRed: /restore applies the complete settings bag/,
       },
       {
+        // #498 Red 2: the site was `panelFor('settings')(body, ctx)` inline until
+        // a refactor extracted it into dispatchPanel; this plant patched nothing
+        // for the duration and the selftest said PLANT SITE DRIFTED. The find is
+        // the current call site, and the paired assertion holds the helper to
+        // reaching panel(body, ctx) so a rename cannot satisfy it again.
         name: 'overlay-settings-stale', file: 'src/ui/components/overlay.js',
-        find: "if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);",
+        find: "if (currentTab === 'settings' && result?.changed) dispatchPanel('settings');",
         replace: '/* planted: Settings panel stays stale after Quick Menu Music */',
         expectRed: /overlay refreshes Settings after a Quick Menu music change/,
       },
@@ -99,8 +104,8 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'aria-state-stale', file: 'src/ui/components/menuComponents.js',
-        find: "button.setAttribute('aria-checked', String(row.checked));",
-        replace: "button.setAttribute('aria-checked', 'false');",
+        find: "'aria-checked': item.control === 'switch' ? String(!!item.checked) : null,",
+        replace: "'aria-checked': item.control === 'switch' ? 'false' : null,",
         expectRed: /switch renderer reflects checked state/,
       },
       {
@@ -193,9 +198,29 @@ check(overlay.includes("ashenspire:quicknav-mode-change")
   && quick.includes("new CustomEvent('ashenspire:quicknav-mode-change'")
   && menuModel.includes("'menuitemcheckbox'"),
   'open overlays rebuild their Quick Menu launcher mode and stateful rows keep an owned menu role');
-check(renderer.includes("button.setAttribute('aria-checked', String(row.checked));"), 'switch renderer reflects checked state');
+// This asserted the pre-kit imperative call
+// `button.setAttribute('aria-checked', String(row.checked));` by its exact text.
+// The component-kit rewrite (#605) moved the row onto kit `row()` with a
+// declarative attrs bag, so that string left the file and this check went red
+// with the BEHAVIOUR INTACT — the same way #498 Red 2 broke the check three
+// below, and for the same reason. Worse, the plant that proves this check can
+// fail searched for the same vanished string, so it reported PLANT SITE DRIFTED
+// and the gate had quietly stopped testing anything at all.
+// It now asserts the derivation rather than the spelling: a switch row's
+// aria-checked must come FROM item.checked. A value pinned to a constant is
+// exactly what the rewritten plant installs, and it goes red here.
+check(/'aria-checked':\s*item\.control === 'switch'\s*\?\s*String\(!!item\.checked\)\s*:\s*null/.test(renderer),
+  'switch renderer reflects checked state');
 check(overlay.includes('controls: {') && overlay.includes('...quickControls,'), 'overlay forwards the shared controls');
-check(overlay.includes("if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);"),
+// #498 Red 2: this asserted the pre-refactor inline call by its exact text and
+// went red when dispatchPanel replaced it, with the behaviour intact. It now
+// asserts the behaviour in three parts: the Quick Menu change still triggers a
+// settings refresh, the refresh goes through dispatchPanel, and dispatchPanel
+// actually reaches panel(body, ctx) — the third clause is what fails if the
+// refresh is removed rather than merely renamed.
+check(/currentTab === 'settings' && result\?\.changed/.test(overlay)
+  && /result\?\.changed\) dispatchPanel\('settings'\)/.test(overlay)
+  && /const dispatchPanel = \(id\) => \{[\s\S]*?panel\(body, ctx\);/.test(overlay),
   'overlay refreshes Settings after a Quick Menu music change');
 check(settingsSource.includes("document.addEventListener('fullscreenerror', onFullscreenError);")
   && settingsSource.includes('Fullscreen was refused by the browser.'),

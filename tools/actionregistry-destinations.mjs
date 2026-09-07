@@ -42,7 +42,7 @@ inputRuntime.setKeyBindings({ deck: 'x', relics: 'x', stats: 'z' });
 const duplicateBindingRefused = inputRuntime.actionDestinationForEvent({ key: 'x' }) === null;
 const cardsPlan = equipmentRuntime.armouryDestinationPlan('cards');
 cardsPlan.view = 'rack';
-const planCopyIsolated = equipmentRuntime.armouryDestinationPlan('cards')?.view === 'grid';
+const planCopyIsolated = equipmentRuntime.armouryDestinationPlan('cards')?.view === 'cards';
 const runtimeProjectionOk = JSON.stringify(runtimeReceipts) === JSON.stringify([
   { actionId: 'deck', direct: 'cards', rebound: { actionId: 'deck', destination: 'cards' } },
   { actionId: 'relics', direct: 'equipment', rebound: { actionId: 'relics', destination: 'equipment' } },
@@ -135,10 +135,20 @@ function contract(s, { paths = changedPaths() } = {}) {
   const destinationFields = [...actions.matchAll(/destination: '([^']+)'/g)].map((match) => match[1]);
   const quickMap = "inventory: () => onArmoury('rack'), character: () => onArmoury('grid')";
   const quickCombat = "inventory: () => openCombatArmoury('rack'),\n          character: () => openCombatArmoury('grid')";
+  // The two card-grouping anchors name a FACT — the list and each row carry
+  // `data-component="armoury.cardList"` / `"armoury.cardRow"`, which is what a
+  // reader downstream matches on. They used to be spelled as assignments
+  // (`box.dataset.component = …`). The kit rebuild composes both elements
+  // through the kit's builders, which take the same values in their `dataset:`
+  // option, so the attributes still reach the page and only the SOURCE SPELLING
+  // moved. This tool reads source text, so the anchor follows the spelling
+  // rather than reporting a fact that is still true as missing. It is no
+  // weaker: the value string is the whole anchor either way, and deleting the
+  // marker still turns this red.
   const s6Anchors = [
     'onEquipmentChanged: captureEquipmentChanged',
-    "box.dataset.component = 'armoury.cardList';",
-    "row.dataset.component = 'armoury.cardRow';",
+    "component: 'armoury.cardList'",
+    "component: 'armoury.cardRow'",
     "host.dispatchEvent(new CustomEvent('ashenspire:equipmentChanged'",
   ];
   return [
@@ -210,7 +220,7 @@ function contract(s, { paths = changedPaths() } = {}) {
     {
       code: 'EQUIPMENT-ADAPTER',
       ok: /export function armouryDestinationPlan\(destination\)/.test(s.equipment)
-        && /cards: Object\.freeze\(\{ view: 'grid', region: 'cards' \}\)/.test(s.equipment)
+        && /cards: Object\.freeze\(\{ view: 'cards', region: null \}\)/.test(s.equipment)
         && /equipment: Object\.freeze\(\{ view: 'rack', region: null \}\)/.test(s.equipment)
         && /character: Object\.freeze\(\{ view: 'grid', region: null \}\)/.test(s.equipment)
         && /const destinationPlan = destination \? armouryDestinationPlan\(destination\) : null;/.test(mountPrefix)
@@ -287,7 +297,7 @@ if (process.argv.includes('--selftest')) {
     })],
     ['missing destination subject', 'EQUIPMENT-ADAPTER', (s) => ({
       ...s,
-      equipment: s.equipment.replace("view: 'grid', region: 'cards'", "view: 'grid', region: 'missing'"),
+      equipment: s.equipment.replace("view: 'cards', region: null", "view: 'grid', region: 'missing'"),
     })],
     ['opening mutates the run deck', 'MUTATION-FREE-OPEN', (s) => ({
       ...s,

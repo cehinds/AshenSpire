@@ -12,13 +12,15 @@ import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
 import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
+import { grantSmithingReward, smithingPlan } from './model/smithing.js';
+import { smithServicesAt } from './model/cardExtraction.js';
 import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
-import { buildActMap } from './engine/actmap.js';
+import { buildActMap, bossEncounterForNode } from './engine/actmap.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
 import {
   rollEncounter,
@@ -47,13 +49,13 @@ import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
 import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { openConfirmationModal } from './ui/components/confirmationModal.js';
-import { openSaveSlotSelector } from './ui/components/saveSlotSelector.js';
+import { openSaveSlotSelector, slotFacts } from './ui/components/saveSlotSelector.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
@@ -71,6 +73,9 @@ import { surfaceReport } from './ui/surfaces.js';
 // wrong" — the two boot checks below used to build that element by hand, and a
 // third hand-built copy is the defect this import exists to prevent.
 import { dlog, failureBanner } from './ui/debuglog.js';
+// The command log's chrome, on the kit (debuglog.js is a leaf; see debugChrome.js).
+import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
+void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
 
@@ -608,6 +613,8 @@ function applyDisplaySettings(settings) {
     console.warn(msg);
   }
   document.documentElement.dataset.handLayout = handLayout;
+  document.documentElement.dataset.armamentsPresentation = resolveArmamentsPresentation(settings);
+  document.documentElement.dataset.armamentsPhonePlacement = resolveArmamentsPhonePlacement(settings);
   const strengths = UI.cardMotifStrength;
   const sKey = strengths[settings.cardMotifStrength] != null ? settings.cardMotifStrength : 'normal';
   document.documentElement.style.setProperty('--card-motif-strength', String(strengths[sKey]));
@@ -832,7 +839,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
-  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
   persist();
   showMap();
 }
@@ -889,7 +896,7 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
-  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
   persist();
   showMap();
 }
@@ -900,7 +907,9 @@ function resumeRun(slot = 1) {
   run = saves.loadRun(registries, slot);
   if (!run) return showTitle();
   rng = createRng(run.seed, run.streamCounters);
-  if (run.combatEntered && run.combatEntered.encounterId) {
+  if (run.pendingReward) {
+    mountPendingReward();
+  } else if (run.combatEntered && run.combatEntered.encounterId) {
     // Current saves resume the exact committed turn. Older saves that only
     // carry the encounter receipt still use the deterministic restart path.
     enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true });
@@ -922,12 +931,21 @@ function saveSlotRecords() {
 }
 
 function confirmSlotLoad(slot, { returnFocusElement } = {}) {
+  // WHICH CLIMB, NOT JUST WHICH SLOT. This is the in-run door's only stop
+  // before the load, and it named a number and nothing else. The title's list
+  // hands the seed to a review door on the way through; this path has no
+  // review door, so the receipt belongs here.
+  const summary = saveSlotRecords().find((record) => record.slot === slot)?.summary || null;
+  const climb = summary
+    ? `${summary.className} — ${slotFacts(summary)}. Seed ${summary.seedString}. `
+    : '';
   openConfirmationModal({
     title: `Load slot ${slot}?`,
-    message: 'The saved run will replace changes made since your last save.',
+    message: `${climb}The saved run will replace changes made since your last save.`,
     confirmLabel: 'Load saved run',
     consequence: 'DISCARDS UNSAVED CHANGES',
-    tone: 'danger',
+    // Whether this reads as destructive is the ConfirmationRegistry's call.
+    tone: registries.framework.confirmationTone('action.loadSlot'),
     returnFocusElement,
     onConfirm: () => {
       closeOverlay();
@@ -952,7 +970,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
     message: 'Changes since your last save will be lost. Your existing save slot will remain available.',
     confirmLabel: 'Quit without saving',
     consequence: 'LEAVES THE RUN',
-    tone: 'danger',
+    tone: registries.framework.confirmationTone('action.quitWithoutSaving'),
     returnFocusElement,
     onConfirm: () => {
       closeOverlay();
@@ -1020,7 +1038,7 @@ function showCollapsedTitle() {
   showTitle();
 }
 
-function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true } = {}) {
+function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true, reopen = null } = {}) {
   if (showProfileNoticeIfNeeded()) return;
   audio.music('title');
   resetArmouryTraySession();
@@ -1033,15 +1051,17 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   const slots = saveSlotRecords();
   mountTitle(app, {
     slots,
+    reopen,
     // The delete beat rides the shared machinery now: the armer reads the
     // dial from meta.settings and the table from the registries.
     meta: saves.loadMeta(),
     registries,
     onContinue: (slot) => resumeRun(slot),
     onNew: (slot) => showCustomize(slot),
-    onDelete: (slot) => {
+    // A delete returns to the door it came from, with the slot now empty.
+    onDelete: (slot, from = null) => {
       saves.clearRun(slot);
-      showTitle();
+      showTitle({ reopen: from });
     },
     onHistory: showHistory,
     onCompendium: showCompendium,
@@ -1304,6 +1324,13 @@ function collectArmament(id, source) {
   // the depth behind that face — same array, its own answer.
   const stored = addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
   if (!stored) return false; // the bag refused: nothing entered storage, so nothing is found — meta stays clean
+  recordCollectedArmament(id, source);
+  return true;
+}
+
+// Called only after collection or a committed trader purchase stored the item.
+function recordCollectedArmament(id, source) {
+  if (!carriedIds(run.loadout).includes(id)) return;
   if ((registries.balance.equipment.drops || {}).permanentOnFind) {
     const meta = saves.loadMeta();
     if (!(meta.found || []).includes(id)) {
@@ -1316,9 +1343,9 @@ function collectArmament(id, source) {
       saves.saveMeta(recorded.meta);
     }
   }
-  // The reward row may say Taken only after both ownership homes and the
-  // resumable run agree. This is the production collector's commit boundary.
-  persist();
+  // The reward screen persists this mutation together with its Taken state.
+  // Saving inside this collector would create an interruption window where
+  // storage changed but the resumable reward checkpoint still said pending.
   return true;
 }
 
@@ -1339,6 +1366,14 @@ function showCustomize(slot = 1, catalog = false) {
     // A ?shot= boot gets a fixed seed so the field photographs identically on
     // every capture; a real boot still gets a random one.
     defaultSeedString: shotState === 'customize' || shotState === 'components' ? 'SHOWCASE' : randomSeedString(),
+    // ?shotClass= / ?shotTint= pose the class figure for a capture. Without
+    // them this screen only ever photographs the FIRST class in the first tint,
+    // so evidence for a change touching every class × tint showed one of twenty.
+    // Unknown values are ignored rather than throwing: a capture list is not a
+    // place to fail a boot, and the shot then simply shows the default.
+    shotPose: shotState === 'customize'
+      ? { classId: shotParams.get('shotClass'), tint: shotParams.get('shotTint') }
+      : null,
     onBack: showTitle,
     onStart: (config) => newRun({ ...config, slot }),
     catalog,
@@ -1348,7 +1383,7 @@ function showCustomize(slot = 1, catalog = false) {
 function showCustomRun(slot = 1) {
   mountCustomRun(app, {
     registries,
-    defaultSeedString: randomSeedString(),
+    defaultSeedString: shotState === 'customrun' ? 'SHOWCASE' : randomSeedString(),
     onBack: showTitle,
     onStart: (config) => newRun({ ...config, slot }),
   });
@@ -1459,6 +1494,10 @@ function enterNode(nodeId) {
         }
         stock.removeCost = Math.ceil(stock.removeCost * pm);
       }
+      // Does a smith travel with him? Rolled once here, on the smith's own
+      // stream (balance.smithing.services.offeredAt.merchant), and kept with
+      // the stock so leaving and re-entering the screen does not roll again.
+      stock.smith = smithServicesAt(registries, 'merchant', rng);
       run.shopStock = stock;
       persist();
       return showShop();
@@ -1511,7 +1550,9 @@ function combatMods(pool) {
 function startFight(pool, nodeId) {
   // "Elite Gauntlet" chaos rule promotes ordinary monster nodes to elites.
   if (pool === 'normal' && run.custom && activeMods(run.custom).allElite) pool = 'elite';
-  const encounterId = rollEncounter(registries, rng, { pool, act: contentAct(), exclude: run.lastEncounters });
+  const encounterId = pool === 'boss'
+    ? bossEncounterForNode(registries, run.mapGraph, nodeId, contentAct())
+    : rollEncounter(registries, rng, { pool, act: contentAct(), exclude: run.lastEncounters });
   if (pool === 'normal') {
     run.lastEncounters.push(encounterId);
     if (run.lastEncounters.length > 2) run.lastEncounters.shift();
@@ -1528,7 +1569,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   const enc = registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot }) : createCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount }) : createCombat({
     registries,
     rng,
     player: {
@@ -1544,7 +1585,11 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       drawPerTurn: run.drawPerTurn,
       damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+      equipmentAttackSlotCount: run.equipmentAttackSlotCount,
       equipmentPoolDeficits: run.equipmentPoolDeficits,
+      itemUpgradeLevels: run.itemUpgradeLevels,
+      itemMounts: run.itemMounts,
+      armamentLevels: run.armamentLevels,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
@@ -1622,17 +1667,10 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     }
     subject.statuses.crimsonBlight = { stacks: 3, duration: 3 };
   }
-  const label =
-    enc.pool === 'boss'
-      ? registries.enemies.get(enc.enemies[0]).name.toUpperCase()
-      : enc.pool === 'elite'
-        ? `ELITE · FLOOR ${run.floor}`
-        : `ACT ${run.actNumber} · FLOOR ${run.floor}`;
   mountCombat(app, {
     registries,
     run,
     combat,
-    label,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
     meta: activeMeta,
@@ -1694,6 +1732,16 @@ function onCombatEnd(result, combat, enc) {
 
   run.stats.fightsWon += 1;
   run.combatEntered = null;
+  const smithingStoneReceipt = grantSmithingReward(
+    registries,
+    run,
+    enc.pool,
+    `combat:${run.actNumber}:${run.floor}:${run.mapNodeId || 'unknown'}:${enc.pool}`,
+  );
+  // The Stone, its idempotent claim, the cleared combat receipt, every RNG
+  // counter used to roll the offer, and the offer itself cross one persistence
+  // boundary below. A reload therefore resumes the reward menu instead of
+  // losing either the Stone or the other spoils.
 
   if (enc.pool === 'boss') {
     run.bossesBeaten = run.bossesBeaten || [];
@@ -1718,17 +1766,9 @@ function onCombatEnd(result, combat, enc) {
       cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       armamentId: bossArmament,
+      smithingStoneReceipt,
     };
-    return mountRewards(app, {
-      registries,
-      run,
-      saves,
-      rng,
-      onCollectArmament: (id) => collectArmament(id, 'boss'),
-      onPersist: persist,
-      rewards: bossRewards,
-      onDone: () => { rewardDoneCount++; advanceAct(); },
-    });
+    return beginPendingReward(bossRewards, { source: 'boss', after: 'advanceAct' });
   }
 
   const rewards = {
@@ -1741,19 +1781,45 @@ function onCombatEnd(result, combat, enc) {
     // (balance.equipment.drops.chance has no 'normal' key, so the roll is a
     // no-op there rather than a hidden 0%).
     armamentId: rollDrop(enc.pool),
+    smithingStoneReceipt,
   };
-  mountRewards(app, {
+  beginPendingReward(rewards, { source: enc.pool, after: 'map' });
+}
+
+function beginPendingReward(rewards, { source, after }) {
+  run.pendingReward = {
+    schemaVersion: 1,
+    source,
+    after,
+    rewards: structuredClone(rewards),
+    states: rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {},
+    chosenCardId: null,
+  };
+  persist();
+  return mountPendingReward();
+}
+
+function mountPendingReward() {
+  const checkpoint = run.pendingReward;
+  if (!checkpoint) throw new Error('No pending reward checkpoint to mount');
+  return mountRewards(app, {
     registries,
     run,
     saves,
     rng,
-    onCollectArmament: (id) => collectArmament(id, enc.pool),
+    rewards: checkpoint.rewards,
+    checkpoint,
+    onCollectArmament: (id) => collectArmament(id, checkpoint.source),
     onPersist: persist,
-    rewards,
     onDone: () => {
+      const after = checkpoint.after;
+      delete run.pendingReward;
       rewardDoneCount++;
-      persist();
-      showMap();
+      if (after === 'advanceAct') advanceAct();
+      else {
+        persist();
+        showMap();
+      }
     },
   });
 }
@@ -1793,6 +1859,9 @@ function showRest() {
     healMult,
     refill,
     meta: saves.loadMeta(),
+    // Which smith services this Shrine offers — the table's word, resolved
+    // here so the screen reads one answer (a chance of 100 consumes no roll).
+    services: smithServicesAt(registries, 'shrine', rng),
     // HIS LEVEL-VALUE DIAL, resolved at the door of the screen that spends it,
     // so turning it applies to the NEXT level bought — in any run, including
     // one already in progress. Unlike the tier size it needs no new run,
@@ -1804,6 +1873,9 @@ function showRest() {
     // bought, not when the player leaves the shrine, for the same reason the
     // reallocation above does: a closed tab must not be able to un-spend it.
     onLevelUp: () => persist(),
+    // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
+    // leaving it, and the screen carries its own LEAVE.
+    multiUse: settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
       persist();
       showMap();
@@ -1818,6 +1890,7 @@ function showShop() {
     run,
     meta: saves.loadMeta(),
     onChanged: () => persist(),
+    onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
     onLeave: () => {
       run.shopStock = null;
       persist();
@@ -2019,7 +2092,9 @@ function coopMapShot(steps = 0) {
     // (tools/session.mjs) — the client just never drew it.
     cursorId,
     reachableIds,
-    map: { floors: g.floors, columns: g.columns, startIds: g.startIds, bossId: g.bossId, nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })) },
+    map: { floors: g.floors, columns: g.columns, startIds: g.startIds, bossId: g.bossId, bossIds: g.bossIds,
+      nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next,
+        ...(n.type === 'boss' ? { encounterId: n.encounterId, destinationLabel: n.destinationLabel } : {}) })) },
     party: [
       { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, catchupQueue: [] },
       { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, catchupQueue: [] },
@@ -2041,7 +2116,37 @@ function coopRewardShot() {
   };
 }
 function coopShrineShot() {
-  return { actNumber: 1, floor: 5, seedString: 'SHOWCASE', endless: false, scene: { kind: 'shrine', done: {} }, party: coopShotParty() };
+  // A real host-authored Smithing view, not a hand-built client fixture. The
+  // ephemeral shot run crosses the same creation/stamping door as play, owns
+  // exactly one Stone, and the modal receives the host plan it would receive
+  // over the session wire. Confirm still sends intent only through the stub.
+  newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
+  run.smithingStones = 1;
+  const party = coopShotParty();
+  party[0] = {
+    ...party[0],
+    classId: run.class,
+    hp: run.hp,
+    maxHp: run.maxHp,
+    cinders: run.cinders,
+    smithingStones: run.smithingStones,
+    itemUpgradeLevels: { ...(run.itemUpgradeLevels || {}) },
+    armamentLevels: { ...run.armamentLevels },
+    deckSize: run.deck.length,
+  };
+  return {
+    actNumber: 1,
+    floor: 5,
+    seedString: 'SHOWCASE',
+    endless: false,
+    scene: {
+      kind: 'shrine',
+      done: {},
+      smithing: { p1: smithingPlan(registries, run) },
+      receipts: {},
+    },
+    party,
+  };
 }
 function coopCatchupShot() {
   const party = coopShotParty();
@@ -2091,10 +2196,12 @@ if (shotState) {
   // own loadMeta and the live run, never a copy. The map slice is the drive's
   // door finder: it needs a real treasure node to click, and the graph is run
   // state. Read-only, shot boots only; a player never has it.
-  window.__spoils = () => ({
+  window.__spoils = () => {
+    const saved = saves.loadRun(registries, activeSlot);
+    return {
     found: [...((saves.loadMeta() || {}).found || [])],
     storage: [...(((run || {}).loadout || {}).storage || [])],
-    savedStorage: [...((((saves.loadRun(registries, activeSlot) || {}).loadout || {}).storage) || [])],
+    savedStorage: [...((((saved || {}).loadout || {}).storage) || [])],
     // Receipt COUNT only. Boundary, stated: a shot boot's progressionMode is
     // 'showcase', in which recordArmamentDiscovery deliberately writes no
     // receipt — so through this door the count is structurally 0 and proves
@@ -2102,12 +2209,17 @@ if (shotState) {
     // because found and receipts ride the same gated saveMeta.
     receipts: ((saves.loadMeta() || {}).discoveryReceipts || []).length,
     liveDeck: [...((run || {}).deck || [])].map((card) => card.cardId),
-    savedDeck: [...((saves.loadRun(registries, activeSlot) || {}).deck || [])].map((card) => card.cardId),
+    savedDeck: [...((saved || {}).deck || [])].map((card) => card.cardId),
+    smithingStones: run?.smithingStones ?? null,
+    savedSmithingStones: saved?.smithingStones ?? null,
+    pendingReward: run?.pendingReward ? structuredClone(run.pendingReward) : null,
+    savedPendingReward: saved?.pendingReward ? structuredClone(saved.pendingReward) : null,
     done: rewardDoneCount,
     map: run && run.mapGraph
       ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
       : [],
-  });
+    };
+  };
   // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
   // the clipping lives — a probe anchored to the leftmost cannot reproduce the
   // defect and would be a green that can't fail.
@@ -2121,7 +2233,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -2291,6 +2403,15 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.stats.damageTaken = 96;
     run.hp = 0;
     mountGameOver(app, { registries, game: run, victory: false, earned: [], onTitle: showTitle, onHistory: showHistory });
+  } else if (shotState === 'victory') {
+    // The other end of the same door as ?shot=death: the run won, the stats
+    // real, the deck the class's own — so the victory face is photographed
+    // rather than trusted from the defeat one.
+    run.floor = run.mapGraph ? run.mapGraph.floors : 12;
+    run.stats.fightsWon = 11;
+    run.stats.damageDealt = 640;
+    run.stats.damageTaken = 212;
+    mountGameOver(app, { registries, game: run, victory: true, earned: [{ name: 'Twinblade', kind: 'armament' }], onTitle: showTitle, onHistory: showHistory });
   } else if (shotState === 'boss') {
     // Straight into the act-1 boss; the intro card is held for the camera.
     enterCombat(run.mapGraph.startIds[0], 'bossOmen');
@@ -2326,6 +2447,18 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     // deck the bug was reproduced on.
     run.floor = 8;
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
+    // `?shotSmithingStones=0|1` — stand on both sides of the Smith affordability
+    // edge without writing durable storage. The accepted values are deliberately
+    // closed to the owner-approved issue #211 economy: this reach door cannot
+    // pose a purse the shipped faucet/cost table cannot currently produce.
+    const shotSmithingStonesRaw = shotParams.get('shotSmithingStones');
+    if (shotSmithingStonesRaw != null) {
+      const shotSmithingStones = Number(shotSmithingStonesRaw);
+      if (!Number.isInteger(shotSmithingStones) || ![0, 1].includes(shotSmithingStones)) {
+        throw new Error(`?shotSmithingStones=${shotSmithingStonesRaw}: expected exactly 0 or 1. A silent fallback would photograph the wrong affordability state.`);
+      }
+      run.smithingStones = shotSmithingStones;
+    }
     // AND A PURSE THAT CAN PAY, for the reason `?shot=shop` twelve lines below
     // already states about its own remove grid: a fresh run holds 0 cinders, so
     // the Level up panel this state now has to reach mounts LOCKED, and a
@@ -2378,6 +2511,9 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     // ids came from. tools/reward-collect-drive.mjs exercises the real
     // rollDrop → mountRewards door; this pose is for photographs.
     const pose = shotParams.get('shotReward') || 'full';
+    const smithingStoneReceipt = pose === 'empty'
+      ? null
+      : grantSmithingReward(registries, run, 'elite', 'shot:reward');
     const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
       title: 'VICTORY',
       cinders: 32,
@@ -2385,14 +2521,23 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
       flaskId: 'crimsonFlask',
       relicId: 'forsakenMedallion',
       armamentId: 'greatsword',
+      smithingStoneReceipt,
     };
-    mountRewards(app, {
-      registries, run, saves, rng,
-      onCollectArmament: (id) => collectArmament(id, 'showcase'),
-      onPersist: persist,
-      rewards: shotOffer,
-      onDone: () => { rewardDoneCount++; showMap(); },
-    });
+    if (pose === 'pending') {
+      beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
+      // Cross the ordinary load door in the same ephemeral shot store. This is
+      // the interruption/reload proof: the mounted row below comes from saved
+      // pendingReward bytes, not the just-rolled local object.
+      resumeRun(activeSlot);
+    } else {
+      mountRewards(app, {
+        registries, run, saves, rng,
+        onCollectArmament: (id) => collectArmament(id, 'showcase'),
+        onPersist: persist,
+        rewards: shotOffer,
+        onDone: () => { rewardDoneCount++; showMap(); },
+      });
+    }
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
     // four POOL doors (which sit above the shot branches, right after newRun,
@@ -2481,6 +2626,23 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // saves.listArchives. The instrument still opens the section by the
   // player's own door: Profile on the title screen.
   saves.ensureProfile();
+  // A PROFILE THE PLAYER HAS TOUCHED, not a second fresh one. Two untouched
+  // profiles are the same bytes, and the archive de-duplicates by content
+  // (save.js archiveMeta): restoring A over an identical B set B aside INTO
+  // A's own entry — the drawer read "seen 2 times" instead of growing, and
+  // tools/holdconfirm.mjs read "entries 1 -> 1" as a restore that set nothing
+  // aside. A real outgoing profile is never byte-identical to the one it
+  // replaces (it carries its results), so the pose writes one setting through
+  // the real writer — the default value, so nothing behaves differently — and
+  // the two profiles are distinct the way two real ones are. ONLY WHEN THE
+  // PROFILE IS UNTOUCHED: ?shotSettings has already written the settings an
+  // instrument asked for (holdConfirm 'off' or 'long' on this very screen),
+  // and those bytes already make the profile distinct — overwriting them
+  // would pose the default where the caller asked for an edge (Codex, #537).
+  {
+    const posed = saves.loadMeta();
+    if (!Object.keys(posed.settings || {}).length) saves.saveMeta({ ...posed, settings: { holdConfirm: 'normal' } });
+  }
   saves.startNewProfile();
   showTitle();
   showProfile();
@@ -2492,6 +2654,38 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // showTitle → showProfileNoticeIfNeeded → profileStatus().ok is false →
   // mountProfileNotice. Nothing on this branch mentions the notice screen.
   showTitle();
+} else if (shotState === 'customrun') {
+  // The Custom Climb has no entry on the title menu today (title.js voids
+  // `onCustom`), so a capture reaches it here, the way every other screen
+  // without a door of its own does — same memory storage, same fixed seed.
+  showCustomRun(1);
+} else if (shotState === 'history') {
+  // Run history with runs IN it, written through the real recorder
+  // (saves.recordResult → the same bytes finishRun writes), so the screen is
+  // read back the way a player's is. Three results, one of them custom, so
+  // the win-rate line, the per-class chips and the excluded tag all show.
+  saves.recordResult({ victory: true, className: 'Reaver', act: 3, floor: 12, fightsWon: 11, seed: 'SHOWCASE' });
+  saves.recordResult({ victory: false, className: 'Starseer', act: 1, floor: 4, fightsWon: 3, seed: 'GOLDBOUGH' });
+  saves.recordResult({ victory: false, className: 'Reaver', act: 2, floor: 7, fightsWon: 6, seed: 'ASHFALL', custom: true, ascension: 2 });
+  showHistory();
+} else if (shotState === 'lobby') {
+  // Forsaken Together's browse view. No launcher stands behind a ?shot= boot,
+  // so the fire list stays at "Scanning…" — which is the state a player who
+  // opened the page without run.bat sees, and the one worth photographing.
+  showLobby();
+} else if (shotState === 'about') {
+  // Settings → About, opened through the real door: the category rides in
+  // the profile the way a player's last-chosen tab does (settings.js CAT_KEY),
+  // posed here into the ephemeral shot store, and Settings opens from the
+  // title as it does for a player.
+  {
+    const posed = saves.loadMeta();
+    saves.saveMeta({ ...posed, settings: { ...(posed.settings || {}), settingsCategory: 'About' } });
+    activeMeta = saves.loadMeta();
+    activeSettings = activeMeta.settings || (activeMeta.settings = {});
+  }
+  showTitle();
+  showSettings();
 } else if (shotState === 'customize' || shotState === 'components') {
   // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
   // and #29's own boundary records what that cost: no sweep can open a screen

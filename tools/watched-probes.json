@@ -347,14 +347,14 @@
    "focus": ".armoury-position-card.is-locked",
    "expect": {
     "present": {
-        "exactly the next locked position": ".armoury-position-card.is-locked"
+     "exactly the next locked position": ".armoury-position-card.is-locked"
     },
     "measure": {
-        "perSlot": "Object.entries([...document.querySelectorAll('[data-slot-position]')].reduce((m,e)=>{const id=e.dataset.slotPosition.split(':')[0]; m[id]=(m[id]||0)+(e.matches('.armoury-position-card.is-locked')?1:0); return m;},{})).map(([id,n])=>id+':'+n+' locked').join(' | ')"
+     "perSlot": "Object.entries([...document.querySelectorAll('[data-slot-position]')].reduce((m,e)=>{const id=e.dataset.slotPosition.split(':')[0]; m[id]=(m[id]||0)+(e.matches('.armoury-position-card.is-locked')?1:0); return m;},{})).map(([id,n])=>id+':'+n+' locked').join(' | ')"
     },
     "wrong": [
      {
-          "js": "Object.values([...document.querySelectorAll('[data-slot-position]')].reduce((m,e)=>{const id=e.dataset.slotPosition.split(':')[0]; m[id]=(m[id]||0)+(e.matches('.armoury-position-card.is-locked')?1:0); return m;},{})).some(n=>n>1)",
+      "js": "Object.values([...document.querySelectorAll('[data-slot-position]')].reduce((m,e)=>{const id=e.dataset.slotPosition.split(':')[0]; m[id]=(m[id]||0)+(e.matches('.armoury-position-card.is-locked')?1:0); return m;},{})).some(n=>n>1)",
       "why": "a slot block shows more than one locked rung — the ladder is showing more than the NEXT locked thing"
      }
     ]
@@ -506,7 +506,7 @@
    "focus": ".armoury-position-card.is-locked",
    "expect": {
     "present": {
-        "the locked position card": ".armoury-position-card.is-locked",
+     "the locked position card": ".armoury-position-card.is-locked",
      "a refusal that says why": "#tooltip"
     },
     "measure": {
@@ -733,9 +733,9 @@
   {
    "id": "T4",
    "by": "Bjorn",
-   "read": "styles/ui.css (#100 — the tab takes the chip's weight) · settings.js .set-tabs",
+   "read": "styles/kit.css (the NavRail — the strip is a vertical rail of RailItems now) · src/ui/screens/settings.js .set-tabs",
    "anchors": [
-    ".set-tabs"
+    "as-rail set-tabs"
    ],
    "screen": "Settings › the tab strip, measured",
    "why-tolerance": "NO tolerance is asserted here and that is deliberate: WHICH of four numbers his '20% smaller' named is DEC-9 and undecided, so a threshold typed here would be me deciding it. What is asserted is the tap floor (44, card #37) and one row; the height is REPORTED.",
@@ -846,9 +846,9 @@
   {
    "id": "G5",
    "by": "Bjorn",
-   "read": "src/ui/components/mapboard.js (.map-zoom and #zoom-out / #zoom-reset / #zoom-in — they LEFT src/ui/screens/map.js and the old citation pointed at a line past the end of it)",
+   "read": "src/ui/components/mapboard.js (the zoom bar is a kit Band — `map-zoom as-band foot` — of four IconButtons #zoom-out / #zoom-reset / #zoom-in / #map-legend; they LEFT src/ui/screens/map.js and the old citation pointed at a line past the end of it)",
    "anchors": [
-    "class=\"map-zoom\"",
+    "map-zoom as-band",
     "zoom-reset"
    ],
    "screen": "the act map › the zoom bar",
@@ -1757,39 +1757,42 @@
   },
   {
    "id": "K6",
-   "by": "Bjorn",
-   "read": "src/ui/screens/combat.js (.flask-charge with .flask-charge-count, one per CHARGE_FLASK_KINDS; pool slots [data-flask-slot]) · src/content/balance.js (flaskCapacity 3)",
+   "by": "Codex, HUD menu migration",
+   "read": "src/ui/screens/combat.js (potionEntries and CHARGE_FLASK_KINDS, potion menu data-charges) · src/content/balance.js (flaskCapacity 3)",
    "anchors": [
-    "flask-charge-count",
+    "function potionEntries()",
     "CHARGE_FLASK_KINDS"
    ],
-   "screen": "combat › the flask row: HP and MP dedicated, their pool of 3, the won-flask slots beside them",
+   "screen": "combat › Potions menu: dedicated HP and MP charges plus carried potions",
    "reach": [
     {
      "op": "goto",
      "q": "?shot=combat",
      "ms": 2600
+    },
+    {
+     "op": "click",
+     "sel": ".combat-potions"
     }
    ],
-   "focus": ".flasks",
+   "focus": ".combat-potion-menu",
    "expect": {
     "present": {
-     "the dedicated charge flasks": ".flask-charge",
-     "their charge counts": ".flask-charge-count"
+     "dedicated charge choices": ".combat-potion-menu [data-charge-kind]"
     },
     "count": [
      {
-      "sel": ".flask-charge",
+      "sel": ".combat-potion-menu [data-charge-kind]",
       "eq": 2
      }
     ],
     "measure": {
-     "charges": "[...document.querySelectorAll('.flask-charge-count')].map(e=>e.textContent).join('+')",
-     "poolSlots": "document.querySelectorAll('.flask-slot[data-flask-slot]').length"
+     "charges": "[...document.querySelectorAll('.combat-potion-menu [data-charges]')].map(e=>e.dataset.charges).join('+')",
+     "poolSlots": "document.querySelectorAll('.combat-potion-menu [data-potion-slot]').length"
     },
     "wrong": [
      {
-      "js": "[...document.querySelectorAll('.flask-charge-count')].reduce((a,e)=>a+ +e.textContent,0)!==3",
+      "js": "[...document.querySelectorAll('.combat-potion-menu [data-charges]')].reduce((sum,e)=>sum+Number(e.dataset.charges),0)!==3",
       "why": "the hp+mana pool does not open at his capacity of 3 (D19 C1) — growth is K7, but a fresh run starts at 3"
      }
     ]
@@ -1887,10 +1890,10 @@
   {
    "id": "H3",
    "by": "Bjorn",
-   "read": "src/ui/components/resbars.js (the ONE renderer for every resource bar; .resbar-<weight>, .l-num cur/max) · src/ui/screens/combat.js (.resbars-host in the topbar) · hudbars at train two: 24 assertions, exit 0",
+   "read": "src/ui/components/resbars.js (the ONE renderer for every resource bar; .resbar-<weight> on the kit Meter's track, .m-value cur/max on its plate) · src/ui/screens/combat.js (.resbars-host in the topbar) · hudbars at train two: 24 assertions, exit 0",
    "anchors": [
     "resbars-host",
-    "l-num"
+    "m-value"
    ],
    "screen": "combat › the resource bars, one per resource, each scaled to its own max",
    "reach": [
@@ -1912,7 +1915,7 @@
      }
     ],
     "measure": {
-     "bars": "[...document.querySelectorAll('.topbar .resbars-host .resbar')].map(e=>(e.className.match(/resbar-[a-z]+/)||['?'])[0]+' '+((e.querySelector('.l-num')||e.querySelector('.l-full')||{}).textContent||'').trim()).join(' | ')",
+     "bars": "[...document.querySelectorAll('.topbar .resbars-host .resbar')].map(e=>(e.className.match(/resbar-[a-z]+/)||['?'])[0]+' '+((e.closest('.as-meter')?.querySelector('.m-value')||{}).textContent||'').trim()).join(' | ')",
      "widthsPx": "[...document.querySelectorAll('.topbar .resbars-host .resbar')].map(e=>Math.round(e.getBoundingClientRect().width)).join('/')"
     }
    }

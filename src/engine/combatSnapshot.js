@@ -16,6 +16,9 @@ export function serializeCombatSnapshot(combat) {
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
+    equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
+    itemUpgradeLevels: combat.itemUpgradeLevels,
+    itemMounts: combat.itemMounts,
     equipmentPoolDeficits: combat.equipmentPoolDeficits,
     equipmentChanged: !!combat.equipmentChanged,
     turn: combat.turn,
@@ -40,13 +43,32 @@ export function serializeCombatSnapshot(combat) {
 }
 
 /** Restore a snapshot without replaying combat start, draws, or enemy rolls. */
-export function restoreCombatSnapshot({ registries, rng, snapshot }) {
+/**
+ * `fallbackAttackSlotCount` is the RUN's birth quota, for a snapshot written
+ * before that field existed. The run is the authority — save.js recovers it at
+ * the load door from the run's own deck — and the snapshot carrying a copy is
+ * an optimisation, so the read falls back rather than the migration writing
+ * into stored data. Healing the snapshot instead would make migration
+ * non-idempotent for a current one, which tools/weapon-card-packages.mjs is
+ * right to assert against: a load must not rewrite a snapshot it understands.
+ */
+export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount }) {
   assertCombatSnapshot(snapshot);
   const saved = structuredClone(snapshot);
   const combat = {
     registries,
     rng,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
+    equipmentAttackSlotCount: Number.isFinite(saved.equipmentAttackSlotCount)
+      ? saved.equipmentAttackSlotCount
+      : (Number.isFinite(fallbackAttackSlotCount) ? fallbackAttackSlotCount : undefined),
+    itemUpgradeLevels: saved.itemUpgradeLevels || Object.fromEntries(
+      Object.entries(saved.armamentLevels || {}).map(([id, level]) => [`armament/${id}`, level]),
+    ),
+    // Absent on a snapshot written before mounts existed, and left absent:
+    // every reader treats a missing map as "nothing done", and writing `{}`
+    // here would rewrite a snapshot the load already understood.
+    itemMounts: saved.itemMounts,
     equipmentPoolDeficits: saved.equipmentPoolDeficits,
     equipmentChanged: saved.equipmentChanged,
     turn: saved.turn,
@@ -87,6 +109,8 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
   run.flasks = structuredClone(combat.player.flasks);
   run.flaskCharges = structuredClone(combat.player.flaskCharges);
   run.equipmentPoolDeficits = structuredClone(combat.equipmentPoolDeficits);
+  run.itemUpgradeLevels = structuredClone(combat.itemUpgradeLevels || {});
+  delete run.armamentLevels;
   for (const field of ['hp', 'mana', 'stamina']) {
     run[field] = combat.player[field];
     const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;

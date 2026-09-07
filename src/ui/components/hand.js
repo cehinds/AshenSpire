@@ -48,10 +48,12 @@
 // if a live toggle ever ships, callers must re-mount (or this must re-derive)
 // on flip; the same warning rides handAxis.js.
 
+import { reducedMotionRequested } from '../motion.js';
 import { renderCard } from './card.js';
-import { armInspect } from './holdconfirm.js';
+import { armInspect } from '../../framework/optionDecision.js';
 import { stickTooltip } from './tooltip.js';
 import { applyHandExemption } from '../handAxis.js';
+import { keycap, pill } from '../kit/index.js';
 
 // The custom property this component publishes so the stylesheets can reserve
 // room for the fan's upward lift without knowing how it is computed. Named here
@@ -60,7 +62,7 @@ import { applyHandExemption } from '../handAxis.js';
 // asserting a property nobody writes.
 export const FAN_LIFT_PROP = '--fan-lift';
 
-export function mountHand(handEl, { registries, wireCard = null }) {
+export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
   // value here would silently turn the gesture off.
@@ -71,11 +73,32 @@ export function mountHand(handEl, { registries, wireCard = null }) {
   // DOM stays byte-identical across the collapse.
   applyHandExemption(handEl);
 
+  // Snapshot clients remount this strip; arrivals are opt-in for persistent mounts.
+  let previousCards = new Set();
   let handEls = []; // the rendered cards, in hand order (filled by render)
+  let fanMeasurement = null;
   let handFan = []; // each card's shipped fan transform, same index
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
 
   function applyHandLayout() {
+    if (fitFan) {
+      const cards = handEls.filter(el => el.parentNode === handEl);
+      if (!cards.length || !handEl.isConnected) return;
+      const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+      const cs = getComputedStyle(handEl);
+      const available = handEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const width = cards[0].offsetWidth;
+      const measurement = [available, width, zoom, cards.length].join(':');
+      if (measurement === fanMeasurement) return;
+      fanMeasurement = measurement;
+      const shown = Math.min(cards.length, 7);
+      const step = shown > 1 ? Math.max(28 / zoom, Math.min(width + 12, (available - width) / (shown - 1))) : width;
+      cards.forEach((el, i) => {
+        el.style.marginLeft = i ? (step - width) + 'px' : '0px';
+        el.style.transform = handFan[i];
+      });
+      return;
+    }
     if (handLayoutWord() !== 'overlap') return;
     if (!handEl.isConnected) return;
     const els = handEls.filter((el) => el.parentNode === handEl);
@@ -119,15 +142,29 @@ export function mountHand(handEl, { registries, wireCard = null }) {
   // replaced (co-op re-mounts per snapshot; solo replaces the screen wholesale).
   let ro = null;
   let mo = null;
-  if (typeof ResizeObserver !== 'undefined' && handLayoutWord() === 'overlap') {
+  let layoutFrame = 0;
+  const scheduleHandLayout = () => {
+    if (layoutFrame) return;
+    // ResizeObserver delivers during layout. Defer writes to the next frame
+    // so changing the fan cannot resize another observed box in that delivery.
+    layoutFrame = requestAnimationFrame(() => {
+      layoutFrame = 0;
+      if (!handEl.isConnected) { ro?.disconnect(); mo?.disconnect(); return; }
+      applyHandLayout();
+    });
+  };
+  if (typeof ResizeObserver !== 'undefined' && (fitFan || handLayoutWord() === 'overlap')) {
     const alive = () => document.body.contains(handEl);
-    ro = new ResizeObserver(() => { if (alive()) applyHandLayout(); else ro.disconnect(); });
-    mo = new MutationObserver(() => { if (alive()) applyHandLayout(); else mo.disconnect(); });
+    ro = new ResizeObserver(() => { if (alive()) scheduleHandLayout(); else ro.disconnect(); });
+    mo = new MutationObserver(() => { if (alive()) scheduleHandLayout(); else mo.disconnect(); });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout'] });
     ro.observe(handEl);
   }
 
   function render({ cards = [], emptyHtml = null }) {
+    const drawn = new Set(cards.filter(entry => !previousCards.has(entry.inst.instanceId)).map(entry => entry.inst.instanceId));
+    previousCards = new Set(cards.map(entry => entry.inst.instanceId));
+    fanMeasurement = null;
     handEl.innerHTML = '';
     handEls = [];
     handFan = [];
@@ -176,6 +213,12 @@ export function mountHand(handEl, { registries, wireCard = null }) {
       const mid = (n - 1) / 2;
       el.style.transform = `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
       el.style.zIndex = i;
+      if (animateArrival && drawn.has(entry.inst.instanceId) && !reducedMotionRequested()) {
+        el.classList.add('card-drawn');
+        el.addEventListener('animationend', event => {
+          if (event.target === el) el.classList.remove('card-drawn');
+        });
+      }
       if (entry.selected) el.classList.add('selected');
       // The spelled-out unavailability reason is VIEWER data (co-op supplies
       // it; solo's player reads live previews and the hint bar instead). When
@@ -184,20 +227,12 @@ export function mountHand(handEl, { registries, wireCard = null }) {
         el.dataset.unavailableReason = entry.reason;
         el.setAttribute('aria-disabled', 'true');
         el.setAttribute('aria-label', `${entry.name || ''} unavailable: ${entry.reason}`);
-        const badge = document.createElement('div');
-        badge.className = 'card-unavailable-reason';
-        badge.textContent = entry.reason;
-        el.appendChild(badge);
+        el.appendChild(pill({ label: entry.reason, attrs: { class: 'foot card-unavailable-reason', 'data-tone': 'danger' } }));
       }
       // Positional quick-play key badge: 1-9 then Q, tied to the slot not the
       // card — BOTH surfaces map those keys to the same slots. Hidden while a
       // gamepad drives (body.pad-mode via refreshHintBars).
-      if (i < 10) {
-        const hint = document.createElement('span');
-        hint.className = 'key-hint';
-        hint.textContent = i < 9 ? i + 1 : 'Q';
-        el.appendChild(hint);
-      }
+      if (i < 10) el.appendChild(keycap(i < 9 ? String(i + 1) : 'Q', { class: 'float key-hint' }));
       // The reading hold — EVERY card, before the play wiring on purpose:
       // affordability gates playing, never reading (the card you cannot pay
       // for is the one you most need to read), and same-element listeners run
@@ -215,7 +250,7 @@ export function mountHand(handEl, { registries, wireCard = null }) {
     // in 'paging' the loop above was the whole render, unchanged.
     handEls = [...handEl.children];
     handFan = handEls.map((el) => el.style.transform);
-    if (ro && handLayoutWord() === 'overlap') {
+    if (ro && (fitFan || handLayoutWord() === 'overlap')) {
       ro.disconnect();
       ro.observe(handEl);
       handEls.forEach((el) => ro.observe(el));
@@ -224,6 +259,8 @@ export function mountHand(handEl, { registries, wireCard = null }) {
   }
 
   function teardown() {
+    cancelAnimationFrame(layoutFrame);
+    layoutFrame = 0;
     if (ro) ro.disconnect();
     if (mo) mo.disconnect();
   }

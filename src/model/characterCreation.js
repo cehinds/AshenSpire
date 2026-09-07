@@ -162,7 +162,11 @@ export function characterCreationProblems(source) {
   const seen = new Set();
   for (const row of Array.isArray(keepsakes) ? keepsakes : []) {
     const path = `characterCreation.keepsakes.${(row && row.id) || '?'}`;
-    for (const key of Object.keys(row || {})) if (!['id', 'name', 'icon', 'desc', 'effects'].includes(key)) problems.push(`${path}.${key}: Unknown field`);
+    // `tags` is MATERIALISED, not authored: model/registries.js stamps it from
+    // tagging.csv, so it is present when this reads registries and absent when
+    // it reads the raw bundle. Both are legal; authoring one is not, and
+    // model/tags.js refuses that at the boot door.
+    for (const key of Object.keys(row || {})) if (!['id', 'name', 'icon', 'desc', 'effects', 'tags'].includes(key)) problems.push(`${path}.${key}: Unknown field`);
     if (!row || typeof row.id !== 'string' || !row.id) problems.push(`${path}.id: must be non-empty`);
     else if (seen.has(row.id)) problems.push(`${path}.id: duplicate keepsake id`);
     else seen.add(row.id);

@@ -56,6 +56,7 @@
 // is the board, not the screen.
 
 import { attachTooltip } from './tooltip.js';
+import { html, iconButton } from '../kit/index.js';
 import { assetUrl } from '../assetmap.js';
 import { nodeIcon, actTitle, parchmentAsset, parchmentClass } from '../uiContent.js';
 import { trackGesture } from '../gesture.js';
@@ -203,7 +204,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const reachable = viewer.reachable instanceof Set ? viewer.reachable : new Set(viewer.reachable || []);
   const traveled = viewer.traveled instanceof Set ? viewer.traveled : new Set(viewer.path || []);
   const current = viewer.current || null;
-  const map = { nodes: byId, startIds: act.startIds || [], bossId: act.bossId };
+  const map = { nodes: byId, startIds: act.startIds || [], bossId: act.bossId, bossIds: act.bossIds };
   const run = { mapNodeId: current, path: viewer.path || [] };
   const app = host;
   const reveal = !!viewer.reveal;
@@ -214,7 +215,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const mode = viewer.mode || (viewer.meta ? resolveMapMode(viewer.meta) : MAP_MODE_DEFAULT);
   const fog = mode === 'fog';
   const know = mapKnowledge({
-    graph: { nodes: byId, startIds: act.startIds, bossId: act.bossId },
+    graph: map,
     run: { path: viewer.path || [], mapNodeId: current },
     mode,
     reveal,
@@ -240,7 +241,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     ? !!viewer.shrineGlow
     : resolveShrineGlow(viewer.meta);
   const lane = glowOn
-    ? shrineLane({ graph: { nodes: byId, startIds: act.startIds, bossId: act.bossId }, run })
+    ? shrineLane({ graph: map, run })
     : [];
   const laneNodes = new Set(lane.filter(isDrawn));
   const laneEdge = new Set();
@@ -323,7 +324,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
          proposal: "a line that says the same thing every time you open the
          screen is not a warning, it is decoration with a worried face."
          Every number in it is READ, never typed. -->
-    <p class="map-tapnote" hidden></p>
+    <p class="as-status map-tapnote" hidden></p>
     <!-- THE OFF-SCREEN CHOICE, SAID WHERE THE PLAYER IS — the tap note's
          sibling, same discipline: SILENT whenever the promise is kept. It
          exists because the camera owns the horizontal axis now (sizeSvg): a
@@ -335,7 +336,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
          nothing but a line of edge ink to say so. report() drives it from
          the same overflow the confession reads, so the note and data-framing
          cannot disagree. Still no backticks. -->
-    <p class="map-clipnote" hidden></p>
+    <p class="as-status map-clipnote" hidden></p>
     <!-- OUTSIDE the scrollport, and that is the whole fix (EldenSpire#28).
          The zoom controls used to be the last child of .map-scroll,
          absolutely positioned over it, so they covered a piece of the pannable
@@ -344,11 +345,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
          see and could not tap. A sibling is laid out in the flow beside the
          scrollport, so the scrollport is smaller by exactly the bar and there is
          no offset left for a node to be trapped at. Still no backticks. -->
-    <div class="map-zoom">
-      <button class="zbtn zoom-out" id="zoom-out" title="Zoom out">−</button>
-      <button class="zbtn zoom-reset" id="zoom-reset" title="Reset / center">⊙</button>
-      <button class="zbtn zoom-in" id="zoom-in" title="Zoom in">+</button>
-      ${showLegendControl ? '<button class="zbtn map-legend-btn" id="map-legend" title="Map legend" aria-label="Map legend">?</button>' : ''}
+    <div class="map-zoom as-band foot as-band-row end">
+      ${html(iconButton({ glyph: '−', label: 'Zoom out', id: 'zoom-out', className: 'zbtn zoom-out' }))}
+      ${html(iconButton({ glyph: '⊙', label: 'Reset / center', id: 'zoom-reset', className: 'zbtn zoom-reset' }))}
+      ${html(iconButton({ glyph: '+', label: 'Zoom in', id: 'zoom-in', className: 'zbtn zoom-in' }))}
+      ${showLegendControl ? html(iconButton({ glyph: '?', label: 'Map legend', id: 'map-legend', className: 'zbtn map-legend-btn' })) : ''}
     </div>`);
 
   const scroll = host.querySelector('.map-scroll');
@@ -391,6 +392,12 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // a fogged player must not have: only DRAWN nodes get an element, and the id
     // is a floor and a column, never a type.
     el.dataset.node = n.id;
+    if (shownType === 'boss' && n.destinationLabel) {
+      el.setAttribute('aria-label', `Boss: ${n.destinationLabel}`);
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      title.textContent = n.destinationLabel;
+      el.appendChild(title);
+    }
     // THE RADIUS IS SOLVED FROM THE TAP FLOOR (model/mapview.js), and it is the
     // node's own in every mode and on every screen: fog changes WHICH nodes are
     // drawn and never HOW BIG one is, and neither does having a partner.
@@ -400,7 +407,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // the geometry rather than left to re-derive it — a second copy of `y()` is
     // how this whole file came to be needed.
     const mark = viewer.mark ? viewer.mark(n, { x: x(n.col), y: y(n.floor), r }) : '';
-    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>${mark || ''}`;
+    el.insertAdjacentHTML('beforeend', `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>${mark || ''}`);
     if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));
     if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }));
     g.appendChild(el);
@@ -717,10 +724,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // The far end of the climb, and only if it is PAINTED — `isDrawn` is the same
     // predicate the node loop, the edges and the look-ahead use, so the camera
     // can never frame a node nobody drew.
-    const end = nodes.find((n) => n.type === 'boss' && isDrawn(n.id));
-    if (!end) return { aim: doors, end: null };
-    const endBox = framingBox([end], height);
-    const ends = framingBox([...doorNodes, end], height);
+    const terminals = nodes.filter((n) => n.type === 'boss' && isDrawn(n.id));
+    if (!terminals.length) return { aim: doors, end: null };
+    const endBox = framingBox(terminals, height);
+    const ends = framingBox([...doorNodes, ...terminals], height);
     const fits = (b) => b.w * zoom <= scroll.clientWidth && b.h * zoom <= scroll.clientHeight;
     // THE MARGIN IS WHAT THE HALO PAINTS, NOT WHAT IT MEASURES, and my first
     // draft got that wrong in a way only a machine caught: I padded by HALO_PAD

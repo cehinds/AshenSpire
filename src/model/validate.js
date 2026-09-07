@@ -33,16 +33,25 @@ import {
   MUSIC_BED_SCHEMA,
   DAMAGE_SCHOOLS,
   RELIC_MODIFIER_TAGS,
-  CREATURE_TAGS,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
+import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
+import { eventChoiceRequirementProblems } from './quests.js';
 import { characterCreationProblems } from './characterCreation.js';
-import { enemyLevelProfileProblems, levelConfigProblems } from './levels.js';
+import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
+import {
+  itemRefIdentity,
+  itemUpgradeTagMatchesKind,
+  parseItemUpgradeTag,
+  UPGRADE_COST_TAG,
+} from './itemUpgrades.js';
+import { normalizeSmithingRules } from './smithingRules.js';
+import { normalizeCardMountRules } from './cardMounts.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -85,10 +94,15 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'unlocks',
   'sfx',
   'music',
-  'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
+  'tagDomains', // what a tag can be about — the domain lookup
+  'tags', // THE tag registry — one vocabulary for every carrier (#61)
+  'tagFamilies', // what can be tagged: its collection, and how its id is keyed
+  'tagFamilyDomains', // family x domain — which words each family may carry
+  'tagging', // family, scope, objectId, tagId — the only home a tag is written
   'attributeRules',
   'derivedStatRules',
   'characterCreation',
+  'eventHistoryRequirements', // quest steps (E12): event-level history gates
 ]);
 
 /**
@@ -219,8 +233,39 @@ export function extractTemplateTokens(template) {
  * validateContent(bundle) → { ok, errors: [{ path, msg }], scriptReport }.
  * `bundle` is the raw content bundle (same shape createRegistries takes).
  */
+/**
+ * A VALIDATION DOOR MAY NOT THROW — the structural half of that rule.
+ *
+ * Four rounds of review found the same shape at four addresses: a pass that
+ * exists to ANSWER questions about content, crashing on content instead
+ * (`sourceOrder.join`, `keywords.map`, `global.grants` iteration, a non-string
+ * tag `source`). Each was a real gap and each got a named rule, but fixing them
+ * one at a time is how the fifth arrives. Malformed content is infinite and this
+ * pass reads hundreds of fields, so the guarantee cannot rest on having guarded
+ * every one — it rests on the door being structurally unable to throw.
+ *
+ * So the whole pass runs inside a catch, and an unexpected throw becomes the
+ * last problem in the list rather than an exception at the boot banner. Specific
+ * rules still come first and still say the useful thing; this is the floor under
+ * them, not a substitute for them.
+ */
 export function validateContent(bundle) {
+  // The accumulator is created HERE and handed in, so a throw partway through
+  // KEEPS every field-addressed error found before it. A floor that returns a
+  // fresh list erases the diagnosis it was meant to stand behind.
   const errors = [];
+  try {
+    return collectContentProblems(bundle, errors);
+  } catch (error) {
+    errors.push({
+      path: '<bundle>',
+      msg: `content validation could not finish reading this bundle: ${error && error.message} — a field is malformed in a way no rule names yet; any errors listed above were found before it, and the stack points at the field that threw`,
+    });
+    return { ok: false, errors, scriptReport: null };
+  }
+}
+
+function collectContentProblems(bundle, errors = []) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
 
@@ -231,6 +276,50 @@ export function validateContent(bundle) {
     for (const [school, multiplier] of Object.entries(schoolBuildup)) {
       if (!DAMAGE_SCHOOLS.includes(school)) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, `unknown damage school '${school}'`);
       if (!Number.isFinite(multiplier) || multiplier < 0) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, 'must be finite and non-negative');
+    }
+  }
+
+  // Quest steps (E12): an event-level history gate must name a shipped event,
+  // carry a well-formed requirement (model/quests.js is the one grammar), and
+  // point only at shipped events. Choice ids are the events module's sidecar
+  // contract and are proven by tools/quest-choice-contract.mjs.
+  const eventGates = b.eventHistoryRequirements;
+  if (eventGates !== undefined) {
+    if (!eventGates || typeof eventGates !== 'object' || Array.isArray(eventGates)) {
+      err('eventHistoryRequirements', 'must be an object keyed by event id');
+    } else {
+      const eventIds = new Set((Array.isArray(b.events) ? b.events : []).map((e) => e && e.id));
+      for (const [eventId, requirement] of Object.entries(eventGates)) {
+        if (!eventIds.has(eventId)) err(`eventHistoryRequirements.${eventId}`, 'unknown event');
+        for (const problem of eventChoiceRequirementProblems(requirement)) err(`eventHistoryRequirements.${eventId}`, problem);
+        for (const group of ['all', 'any', 'none']) {
+          for (const ref of (requirement && Array.isArray(requirement[group]) ? requirement[group] : [])) {
+            if (ref && ref.eventId === eventId) err(`eventHistoryRequirements.${eventId}.${group}`, 'an event cannot be gated on its own choice');
+            if (ref && !eventIds.has(ref.eventId)) err(`eventHistoryRequirements.${eventId}.${group}`, `unknown event '${ref && ref.eventId}'`);
+          }
+        }
+      }
+    }
+  }
+
+  // A quest-pool relic (RELIC_POOLS) is withheld from every generic reward
+  // pool, so the only road to it is an event choice that grants it by id. A
+  // quest-pool relic no choice names is unreachable content, and a class's
+  // starting relic is a starter, not a quest reward.
+  {
+    const granted = new Set();
+    for (const event of (Array.isArray(b.events) ? b.events : [])) {
+      for (const choice of (event && Array.isArray(event.choices) ? event.choices : [])) {
+        for (const eff of (choice && Array.isArray(choice.effects) ? choice.effects : [])) {
+          if (eff && eff.op === 'addRelic' && typeof eff.id === 'string') granted.add(eff.id);
+        }
+      }
+    }
+    const startingRelics = new Set((Array.isArray(b.classes) ? b.classes : []).map((row) => row && row.startingRelic));
+    for (const relic of (Array.isArray(b.relics) ? b.relics : [])) {
+      if (!relic || relic.pool !== 'quest') continue;
+      if (!granted.has(relic.id)) err(`relics.${relic.id}.pool`, 'a quest-pool relic must be granted by id from at least one event choice');
+      if (startingRelics.has(relic.id)) err(`relics.${relic.id}.pool`, 'a class starting relic cannot be quest-pool');
     }
   }
 
@@ -254,16 +343,50 @@ export function validateContent(bundle) {
     });
   }
 
-  // Mana costs are semantic bounds, not merely integer shapes. A negative
-  // cost would mint Mana when a card is played. Mana maxima are derived from
-  // the rules table; classes deliberately own no second maximum.
+  // Secondary costs are semantic bounds, not merely integer shapes. A negative
+  // cost would mint the resource when a card is played.
   for (const card of Array.isArray(b.cards) ? b.cards : []) {
     if (card && card.manaCost != null && Number.isInteger(card.manaCost) && card.manaCost < 0) {
       err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
     }
+    if (card && card.staminaCost != null && Number.isInteger(card.staminaCost) && card.staminaCost < 0) {
+      err(`cards.${card.id || '?'}.staminaCost`, 'must be >= 0');
+    }
   }
   const flaskCapacity = b.balance && b.balance.flaskCapacity;
   if (!Number.isInteger(flaskCapacity) || flaskCapacity <= 0) err('balance.flaskCapacity', 'must be a positive integer');
+  try {
+    normalizeSmithingRules(b.balance && b.balance.smithing);
+  } catch (error) {
+    err('balance.smithing', error?.message || 'must be a complete Smithing economy block');
+  }
+  // Card mounts: the block is optional (a bundle without it composes as it
+  // always did) but when authored it must be whole, and the tag it names as
+  // "extractable" must be a registered card-domain tag — otherwise nothing
+  // could ever carry it and every mount would be sealed in silence.
+  if (b.balance && b.balance.equipment && b.balance.equipment.cardMounts !== undefined) {
+    try {
+      const rules = normalizeCardMountRules(b.balance.equipment.cardMounts);
+      const tag = (b.tags || []).find((row) => row && row.id === rules.extractableTag);
+      if (!tag) err('balance.equipment.cardMounts.extractableTag', `names unknown tag '${rules.extractableTag}' — add a row to tags.csv in the card domain`);
+      else if (tag.domain !== 'card') err('balance.equipment.cardMounts.extractableTag', `'${rules.extractableTag}' is in the ${tag.domain} domain, not card — a card could never carry it`);
+      for (const [kind, spec] of Object.entries(rules.kinds)) {
+        for (const accepted of spec.accepts) {
+          if (!(b.tags || []).some((row) => row && row.id === accepted && row.domain === 'card')) {
+            err(`balance.equipment.cardMounts.kinds.${kind}.accepts`, `names unknown card tag '${accepted}'`);
+          }
+        }
+        if (spec.fallback && spec.fallback.cardId && !(b.cards || []).some((card) => card && card.id === spec.fallback.cardId)) {
+          err(`balance.equipment.cardMounts.kinds.${kind}.fallback`, `names unknown card '${spec.fallback.cardId}'`);
+        }
+        if (spec.fallback && spec.fallback.unarmedProfile && !((b.balance.equipment.unarmedProfiles || {})[spec.fallback.unarmedProfile])) {
+          err(`balance.equipment.cardMounts.kinds.${kind}.fallback`, `names unarmed profile role '${spec.fallback.unarmedProfile}', which balance.equipment.unarmedProfiles does not author`);
+        }
+      }
+    } catch (error) {
+      err('balance.equipment.cardMounts', error?.message || 'must be a complete card-mount block');
+    }
+  }
   for (const cls of Array.isArray(b.classes) ? b.classes : []) {
     const a = cls && cls.startingFlaskAllocation;
     if (!a || !Number.isInteger(a.hp) || a.hp < 0 || !Number.isInteger(a.mana) || a.mana < 0
@@ -272,9 +395,22 @@ export function validateContent(bundle) {
     }
   }
 
-  // Effect-tag vocabulary: the card-tag registry rides the bundle so effect
-  // `tags` and taggedVulnerability lists validate against ONE home (#61).
-  const tagIds = new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => t && t.id).filter(Boolean));
+  // The whole tag system in one pass: the registry, who may carry which
+  // domain, and every carrier's tags (model/tags.js states the rules).
+  const keywordIds = Array.isArray(b.keywords) ? b.keywords.map((k) => k && k.id) : [];
+  for (const problem of tagContentProblems(b, keywordIds)) {
+    err(problem.path, problem.message);
+  }
+  // Effect-tag vocabulary, FROM THE JOIN rather than from memory. Effect `tags`
+  // and taggedVulnerability lists draw from whatever domains tagFamilyDomains
+  // pairs the `effect` family with — today `card`, which is why this reads the
+  // same as the hard-coded set it replaces. Hard-coding it made that row
+  // decorative: editing `effect,card` to `effect,item` changed the table and
+  // nothing else, so the normalised constraint was not actually the constraint.
+  const tagIds = new Set(tagIdsAllowedFor(b, 'effect'));
+  // Creature identity is the creature domain of that same registry, so adding
+  // a kind is a row in tags.csv rather than an edit to a frozen array.
+  const creatureTagIds = tagIdsInDomain(b, 'creature');
   const vctx = { ids, err, tagIds };
 
   // Equipment profiles are nested tables, but receive the same strict central
@@ -305,6 +441,45 @@ export function validateContent(bundle) {
       }
     }
 
+    // Intrinsic armament facts are an authored presentation contract, not a
+    // second route into generated-card or combat arithmetic. Missing values
+    // fail here rather than being displayed as plausible zeroes.
+    // The armament slice of the tag junction, folded once for the rules below.
+    const armamentTags = new Map();
+    for (const row of Array.isArray(b.tagging) ? b.tagging : []) {
+      if (!row || row.family !== 'armament') continue;
+      const list = armamentTags.get(row.objectId);
+      if (list) list.push(row.tagId);
+      else armamentTags.set(row.objectId, [row.tagId]);
+    }
+    const armamentTagIds = (id) => armamentTags.get(id) || [];
+
+    const intrinsicFields = ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost'];
+    for (const row of Array.isArray(equipment.armaments) ? equipment.armaments : []) {
+      const id = row && row.id || '?';
+      for (const field of intrinsicFields) {
+        const value = row && row[field];
+        if (!Number.isInteger(value) || value < 0) {
+          err(`equipment.armaments.${id}.${field}`, `must be an explicit non-negative integer, got ${JSON.stringify(value)}`);
+        }
+      }
+      if (Number.isInteger(row?.weight) && row.weight !== row.poiseThreshold) {
+        err(`equipment.armaments.${id}.weight`, `must equal authored poiseThreshold ${JSON.stringify(row.poiseThreshold)}`);
+      }
+      // Item-type tags are tagging.csv rows now, so the boot door reads them
+      // from the junction: this pass sees the bundle, which is BEFORE
+      // model/registries.js stamps `itemTypeTags` onto the piece.
+      const isStaffTechnique = armamentTagIds(id).includes('item:magic-focus')
+        && row?.techniqueProfile === 'staffTechnique';
+      const expectedManaCost = isStaffTechnique ? 1 : 0;
+      if (row?.weaponArtManaCost !== expectedManaCost) {
+        err(`equipment.armaments.${id}.weaponArtManaCost`, `must be ${expectedManaCost} for its authored item type and technique profile`);
+      }
+      if (row?.uniqueSkillStaminaCost !== 0) {
+        err(`equipment.armaments.${id}.uniqueSkillStaminaCost`, 'must remain 0 until an explicit unique-skill consumer exists');
+      }
+    }
+
     const seenProfiles = new Set();
     for (const profile of equipment.basicCardProfiles) {
       const id = profile && profile.id || '?';
@@ -317,7 +492,8 @@ export function validateContent(bundle) {
       if (!Number.isInteger(profile && profile.exposureBuildupPerHit) || profile.exposureBuildupPerHit < 0) err(`equipment.basicCardProfiles.${id}.exposureBuildupPerHit`, 'must be a non-negative integer');
       if (profile && profile.cap !== '' && profile.cap != null && !Number.isFinite(profile.cap)) err(`equipment.basicCardProfiles.${id}.cap`, 'must be blank or finite');
       if (profile && profile.compatibility !== `${profile.role}-v1`) err(`equipment.basicCardProfiles.${id}.compatibility`, `must match role '${profile.role}-v1'`);
-      for (const tag of (profile && profile.tags) || []) if (!tagIds.has(tag)) err(`equipment.basicCardProfiles.${id}.tags`, `unknown tag '${tag}'`);
+      // A profile's tags are tagging.csv rows now, checked with every other
+      // carrier's by tagContentProblems above — one rule, one message, for all.
     }
 
     // Validate the raw authored carrier rows before their map is joined onto
@@ -376,6 +552,73 @@ export function validateContent(bundle) {
         const key = `${itemId}:${attributeId}`;
         if (seen.has(key)) err(path, `Duplicate item/stat requirement '${key}'`);
         seen.add(key);
+      }
+    }
+    if (!Array.isArray(equipment.itemUpgradeChanges)) {
+      err('equipment.itemUpgradeChanges', 'Missing required generated itemUpgradeChanges array');
+    } else {
+      const itemDefinitions = new Map([
+        ...(Array.isArray(equipment.armaments) ? equipment.armaments : []).filter(Boolean).map((row) => [`armament/${row.id}`, row]),
+        ...(Array.isArray(equipment.armour) ? equipment.armour : []).filter(Boolean).map((row) => [`armor/${row.classId}/${row.id}`, row]),
+        ...(Array.isArray(b.relics) ? b.relics : []).filter(Boolean).map((row) => [`relic/${row.id}`, row]),
+      ]);
+      const knownItemRefs = new Set(itemDefinitions.keys());
+      const seen = new Set();
+      const packages = new Map();
+      for (const row of equipment.itemUpgradeChanges) {
+        const itemRef = row && row.itemRef;
+        const nextTier = row && row.nextTier;
+        const tag = row && row.tag;
+        const path = `equipment.itemUpgradeChanges.${itemRef || '?'}:tier${nextTier || '?'}:${tag || '?'}`;
+        for (const key of Object.keys(row || {})) if (!['itemRef', 'nextTier', 'tag', 'value'].includes(key)) err(`${path}.${key}`, 'Unknown field');
+        const identity = itemRefIdentity(itemRef);
+        if (!identity || !knownItemRefs.has(itemRef)) err(`${path}.itemRef`, `unknown namespaced item '${itemRef}'`);
+        if (!Number.isInteger(nextTier) || nextTier < 1) err(`${path}.nextTier`, 'must be a positive integer');
+        const descriptor = parseItemUpgradeTag(tag, [...ids.attributes]);
+        if (!descriptor) err(`${path}.tag`, `unknown upgrade tag '${tag}'`);
+        else if (!identity || !itemUpgradeTagMatchesKind(descriptor, identity.itemKind)) {
+          err(`${path}.tag`, `upgrade tag '${tag}' is invalid for item kind '${identity?.itemKind || 'unknown'}'`);
+        } else if (descriptor.kind === 'equipmentPoise') {
+          const before = itemDefinitions.get(itemRef)?.poiseThreshold;
+          if (!Number.isInteger(before) || before + row.value < 0) {
+            err(`${path}.value`, `must keep authored poiseThreshold non-negative (base ${JSON.stringify(before)})`);
+          }
+        } else if (descriptor.kind === 'relicPassive') {
+          const before = itemDefinitions.get(itemRef)?.passives?.[descriptor.passiveKey];
+          if (!Number.isInteger(before) || before + row.value < 0) {
+            err(`${path}.value`, `must target an existing non-negative integer passive '${descriptor.passiveKey}' (base ${JSON.stringify(before)})`);
+          }
+        }
+        if (!Number.isInteger(row && row.value) || row.value === 0) err(`${path}.value`, 'must be a non-zero integer');
+        if (tag === UPGRADE_COST_TAG && (!Number.isInteger(row.value) || row.value < 1)) err(`${path}.value`, 'Smithing Stone cost must be a positive integer');
+        const exact = `${itemRef}|${nextTier}|${tag}`;
+        if (seen.has(exact)) err(path, `Duplicate item/tier/tag row '${exact}'`);
+        seen.add(exact);
+        const packageKey = `${itemRef}|${nextTier}`;
+        if (!packages.has(packageKey)) packages.set(packageKey, []);
+        packages.get(packageKey).push(row);
+      }
+      const tiersByItem = new Map();
+      for (const [packageKey, rows] of packages) {
+        const split = packageKey.lastIndexOf('|');
+        const itemRef = packageKey.slice(0, split);
+        const nextTier = Number(packageKey.slice(split + 1));
+        const costs = rows.filter((row) => row.tag === UPGRADE_COST_TAG);
+        if (costs.length !== 1) err(`equipment.itemUpgradeChanges.${itemRef}:tier${nextTier}`, `must have exactly one ${UPGRADE_COST_TAG} row`);
+        if (rows.length === costs.length) err(`equipment.itemUpgradeChanges.${itemRef}:tier${nextTier}`, 'must have at least one gameplay change row');
+        const effective = rows.filter((row) => {
+          const descriptor = parseItemUpgradeTag(row.tag, [...ids.attributes]);
+          return descriptor && descriptor.kind !== 'upgradeCost' && itemUpgradeTagMatchesKind(descriptor, itemRefIdentity(itemRef)?.itemKind);
+        });
+        if (!effective.length) err(`equipment.itemUpgradeChanges.${itemRef}:tier${nextTier}`, 'must have at least one kind-compatible non-cost change');
+        if (!tiersByItem.has(itemRef)) tiersByItem.set(itemRef, []);
+        tiersByItem.get(itemRef).push(nextTier);
+      }
+      for (const [itemRef, tiers] of tiersByItem) {
+        const ordered = [...new Set(tiers)].sort((a, b) => a - b);
+        ordered.forEach((tier, index) => {
+          if (tier !== index + 1) err(`equipment.itemUpgradeChanges.${itemRef}`, `tiers must be contiguous from 1; found ${ordered.join(', ')}`);
+        });
       }
     }
     if (!Array.isArray(equipment.cardEquipmentExceptions)) {
@@ -445,6 +688,13 @@ export function validateContent(bundle) {
     classes: SCHEMAS.class,
   };
   for (const type of REGISTRY_TYPES) {
+    // A registry that is present but not an array was SILENTLY SKIPPED here —
+    // every rule below read it as empty — and then a later unguarded `for…of`
+    // threw, so the bundle failed with a stack instead of an answer. Named, so
+    // the author is told which registry and what it should be.
+    if (b[type] !== undefined && !Array.isArray(b[type])) {
+      err(type, `must be an array of ${type} rows (got ${Array.isArray(b[type]) ? 'array' : typeof b[type]})`);
+    }
     const defs = Array.isArray(b[type]) ? b[type] : [];
     defs.forEach((def) => {
       const path = `${type}.${(def && def.id) || '?'}`;
@@ -485,7 +735,7 @@ export function validateContent(bundle) {
   }
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
-    classFields: ['maxHp', 'hpPerConTier'],
+    classFields: ['maxHp'],
   })) err(problem.path, problem.msg);
   // D26's short form: every derived stat carries how it READS, beside the rule
   // it describes. Content-door only — a save's restored snapshot has rules and
@@ -556,9 +806,6 @@ export function validateContent(bundle) {
   }
 
   for (const cls of b.classes || []) {
-    if (cls && (!Number.isInteger(cls.hpPerConTier) || cls.hpPerConTier <= 0)) {
-      err(`classes.${cls.id}.hpPerConTier`, 'must be a positive integer');
-    }
   }
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
@@ -593,6 +840,15 @@ export function validateContent(bundle) {
     if (!enemy || enemy.levelProfile == null) continue;
     for (const problem of enemyLevelProfileProblems(enemy.levelProfile, `enemies.${enemy.id || '?'}.levelProfile`)) {
       err(problem.path, problem.msg);
+    }
+  }
+  for (const encounter of Array.isArray(b.encounters) ? b.encounters : []) {
+    if (!encounter) continue;
+    for (const field of ['floorBand', 'targetBand']) {
+      if (encounter[field] == null) continue;
+      for (const problem of levelBandProblems(encounter[field], `encounters.${encounter.id || '?'}.${field}`)) {
+        err(problem.path, problem.msg);
+      }
     }
   }
   // balance.ui.holdConfirm — THE DIAL THAT DISABLES A SAFETY FEATURE WHEN IT IS
@@ -1011,8 +1267,8 @@ export function validateContent(bundle) {
       }
       if (p.resistance) {
         for (const tag of p.resistance.tags || []) {
-          if (!CREATURE_TAGS.includes(tag)) {
-            err(`${path}.proc.resistance.tags`, `unknown creature tag '${tag}' (legal: ${CREATURE_TAGS.join(', ')})`);
+          if (!creatureTagIds.includes(tag)) {
+            err(`${path}.proc.resistance.tags`, `unknown creature tag '${tag}' (legal: ${creatureTagIds.join(', ')})`);
           }
         }
         // Empty tag list = a resistance the proc can never grant — same dead
@@ -1059,11 +1315,8 @@ export function validateContent(bundle) {
 
   for (const enemy of b.enemies || []) {
     const path = `enemies.${enemy.id}`;
-    for (const tag of enemy.tags || []) {
-      if (!CREATURE_TAGS.includes(tag)) {
-        err(`${path}.tags`, `unknown creature tag '${tag}' (legal: ${CREATURE_TAGS.join(', ')})`);
-      }
-    }
+    // An enemy's own tags are checked with every other carrier's, by
+    // tagContentProblems above — one rule, one message, for all of them.
     const moveIds = new Set(Object.keys(enemy.moves || {}));
     if (enemy.firstMove != null && !moveIds.has(enemy.firstMove)) {
       err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is not one of this enemy's moves`);
@@ -1082,7 +1335,7 @@ export function validateContent(bundle) {
   const scriptUsers = [];
   let totalObjects = 0;
   for (const type of REGISTRY_TYPES) {
-    for (const def of b[type] || []) {
+    for (const def of Array.isArray(b[type]) ? b[type] : []) {
       totalObjects++;
       if (usesScript(def)) scriptUsers.push(`${type}.${def.id}`);
     }

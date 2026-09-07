@@ -13,7 +13,11 @@
 // Headless: no document/window/localStorage/timers.
 
 import { passiveMult, passiveFlag } from '../model/registries.js';
+import { relicInRewardPool } from '../model/schemas.js';
+import { eventChoiceRequirementMet, EVENT_CHOICE_HISTORY_KIND } from '../model/quests.js';
 import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
+import { eligibleWeaponArts } from '../model/armamentTrading.js';
+import { carriedIds } from '../model/loadout.js';
 
 // ---------------------------------------------------------------------------
 // Encounters
@@ -113,13 +117,13 @@ export function rollFlaskDrop(registries, rng, run) {
 
 /**
  * rollRelicReward(registries, rng, ownedIds, { rarities }) → relic id | null.
- * Excludes owned relics; default pool is common/uncommon/rare (elite drops);
- * pass ['boss'] for boss rewards.
+ * Excludes owned relics and quest-pool relics (RELIC_POOLS); default pool is
+ * common/uncommon/rare (elite drops); pass ['boss'] for boss rewards.
  */
 export function rollRelicReward(registries, rng, ownedIds, { rarities = ['common', 'uncommon', 'rare'] } = {}) {
   const pool = registries.relics
     .all()
-    .filter((r) => rarities.includes(r.rarity) && !ownedIds.includes(r.id))
+    .filter((r) => relicInRewardPool(r) && rarities.includes(r.rarity) && !ownedIds.includes(r.id))
     .map((r) => r.id);
   return pool.length ? rng.pick('relicRewards', pool) : null;
 }
@@ -198,7 +202,7 @@ export function buildShopStock(registries, rng, run) {
 
   const relicPool = registries.relics
     .all()
-    .filter((r) => ['common', 'uncommon', 'rare'].includes(r.rarity) && !run.relics.includes(r.id))
+    .filter((r) => relicInRewardPool(r) && ['common', 'uncommon', 'rare'].includes(r.rarity) && !run.relics.includes(r.id))
     .map((r) => r.id);
   const relics = [];
   for (let i = 0; i < bal.relicStock && relicPool.length; i++) {
@@ -215,7 +219,23 @@ export function buildShopStock(registries, rng, run) {
   }
 
   const removeCost = bal.removeBase + bal.removeStep * (run.removesPurchased || 0);
-  return { cards, relics, flasks, removeCost };
+  const owned = new Set(carriedIds(run.loadout));
+  const armamentPool = (registries.equipment.armaments || [])
+    .filter((piece) => !owned.has(piece.id) && bal.armamentCost?.[piece.rarity]);
+  const armaments = [];
+  for (let i = 0; i < (bal.armamentStock || 0) && armamentPool.length; i++) {
+    const piece = rng.pick('shop', armamentPool);
+    armamentPool.splice(armamentPool.indexOf(piece), 1);
+    armaments.push({ id: piece.id, cost: rng.int('shop', ...bal.armamentCost[piece.rarity]) });
+  }
+  const artPool = eligibleWeaponArts(registries);
+  const weaponArts = [];
+  for (let i = 0; i < (bal.weaponArtStock || 0) && artPool.length; i++) {
+    const id = rng.pick('shop', artPool);
+    artPool.splice(artPool.indexOf(id), 1);
+    weaponArts.push({ id, cost: rng.int('shop', ...bal.weaponArtCost) });
+  }
+  return { cards, relics, flasks, armaments, weaponArts, removeCost };
 }
 
 // Shop card pool = the class pool + neutral colorless cards (StS-faithful:
@@ -223,9 +243,10 @@ export function buildShopStock(registries, rng, run) {
 // The status/curse colorless are rarity 'special' and excluded here.
 const SHOP_RARITIES = ['common', 'uncommon', 'rare'];
 function rollShopCards(registries, rng, classId, count) {
+  const artIds = new Set(eligibleWeaponArts(registries));
   const colorless = registries.cards
     .all()
-    .filter((c) => c.class === 'colorless' && SHOP_RARITIES.includes(c.rarity))
+    .filter((c) => c.class === 'colorless' && SHOP_RARITIES.includes(c.rarity) && !artIds.has(c.id))
     .map((c) => c.id);
   const pool = [...registries.classes.get(classId).cardPool, ...colorless];
   const out = [];
@@ -242,7 +263,7 @@ function rollShopCards(registries, rng, classId, count) {
 // ---------------------------------------------------------------------------
 
 /**
- * resolveUnknownNode(registries, rng, { seenEvents }) →
+ * resolveUnknownNode(registries, rng, { seenEvents, act, history }) →
  *   { kind: 'event', eventId } | { kind: 'fight'|'shrine'|'treasure' }
  * Odds from mapConfigs[act].unknownWeights — per act, beside the geometry they
  * describe (they used to be `balance.unknownNode`, a flat global that could not
@@ -251,7 +272,7 @@ function rollShopCards(registries, rng, classId, count) {
  * Events avoid repeats within a run while unseen ones remain. Stream 'events'
  * (SPEC §5.6).
  */
-export function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {}) {
+export function resolveUnknownNode(registries, rng, { seenEvents = [], act, history = [] } = {}) {
   const cfg = registries.mapConfig(act);
   const odds = cfg && cfg.unknownWeights;
   if (!odds) throw new Error(`resolveUnknownNode: act ${JSON.stringify(act)} has no unknownWeights`);
@@ -266,8 +287,23 @@ export function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {
     }
   }
   if (kind !== 'event') return { kind };
-  let pool = registries.events.ids().filter((id) => !seenEvents.includes(id));
-  if (!pool.length) pool = registries.events.ids();
+  // Quest steps (E12): an event with a history requirement is in the pool only
+  // once the run's choices have earned it — and it never falls back in either,
+  // because a step met before the step it answers is a broken chain, not a
+  // repeat. Everything ungated behaves exactly as before.
+  // A gated step the run has already answered is COMPLETE, not re-earned: the
+  // keeper does not come twice for one grave, and the reward it carries is
+  // handed over once. Only gated events are consulted — an ungated event that
+  // appears in the history keeps its shipped behaviour (repeatable across
+  // acts; `seenEvents` de-duplicates within one map).
+  const gates = registries.eventHistoryRequirements || {};
+  const completed = new Set(history
+    .filter((row) => row && row.kind === EVENT_CHOICE_HISTORY_KIND)
+    .map((row) => row.eventId));
+  const earned = registries.events.ids()
+    .filter((id) => !gates[id] || (!completed.has(id) && eventChoiceRequirementMet(gates[id], { history })));
+  let pool = earned.filter((id) => !seenEvents.includes(id));
+  if (!pool.length) pool = earned;
   if (!pool.length) return { kind: 'fight' }; // no events shipped: fall back
   return { kind: 'event', eventId: rng.pick('events', pool) };
 }

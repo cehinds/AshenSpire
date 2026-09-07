@@ -6,11 +6,27 @@
 
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { resolveCard } from '../../model/registries.js';
-import { openPileModal } from '../components/piles.js';
-import { attachTooltip, ensureTooltip, hideTooltip, showTooltipForRect, esc } from '../components/tooltip.js';
-import { relicText } from '../components/card.js';
-import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
+import { dodgeReceipt } from '../components/dodgeReceipt.js';
+import { openPileModal, openSpentPileModal } from '../components/piles.js';
+import { resolveActionAnimation } from '../../model/actionAnimation.js';
+import { enemyMoveCards } from '../../model/enemyMoveCards.js';
+import { tagService } from '../../model/tagService.js';
+import { reducedMotionRequested } from '../motion.js';
+import { stageFor } from '../services/PoseAnimator.js';
+import { attachTooltip, ensureTooltip, hideTooltip, scheduleTooltipClose, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
+import { combatantDetailBody } from '../components/combatantInspector.js';
+import { relicText, renderCard } from '../components/card.js';
+import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { figureSpec, equippedPieces } from '../../model/loadout.js';
+import { resourceAura } from '../combatAura.js';
+import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
+import {
+  isReaverAttackEligible,
+  playReaverAttack,
+  preloadReaverAttackFrames,
+  reaverAttackTiming,
+} from '../reaverAttack.js';
 import { intentBadge, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
@@ -18,31 +34,41 @@ import { mountTutorial } from '../components/tutorial.js';
 import { veilIsOpen } from '../components/veil.js';
 import { focusElement, focusFirst, matchAction, actionDestinationForEvent, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } from '../input.js';
 import { clearTargetSilhouettes, renderTargetSilhouette } from '../components/friendlyTargets.js';
-import { friendlyTargetMode } from '../../model/friendlyTargets.js';
+import { friendlyTargetMode, friendlyTargetPlan } from '../../model/friendlyTargets.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
-import { figureSpec } from '../../model/loadout.js';
 import { trackGesture } from '../gesture.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
-import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
+import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { combatantFrame } from '../components/combatantFrame.js';
+import { statureFor } from '../components/stature.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
+import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 
-export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
+/** A pile control: a kit button carrying a stacked StatPair (count over name). */
+function pileButton(kind, label) {
+  const count = statPair({ key: label, value: '0', attrs: { class: 'stack' } });
+  count.querySelector('.sp-v').classList.add('n'); // the hook the instruments count by
+  const node = button({ label: '', className: `pile ${kind} tall` });
+  node.appendChild(count);
+  return node;
+}
+
+export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -64,32 +90,25 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         floor: run.floor,
         floorTotal: run.mapGraph?.floors ?? null,
         seed: run.seedString,
-        identity: {
-          name: ((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase(),
-          classLabel: registries.classes.get(run.class).name.toUpperCase(),
-          glyph: (run.customization && run.customization.glyph) || classGlyph(run.class),
-          tint: tintCss(run.customization && run.customization.tint),
-          context: label,
-        },
+        identity: { className: registries.classes.get(run.class).name },
         controls: {
           armouryId: 'combat-armoury',
           menuId: 'combat-menu',
           menuHint: actionHint('menu'),
         },
-        quickSettings: {
-          presentation: registries.balance.ui.hudQuickSettings,
-          settings: meta.settings || {},
-        },
+        // The settings bag, for `runHudMode` — the band's compact/expanded
+        // state. `presentation` went with the fullscreen/music pair.
+        quickSettings: { settings: meta.settings || {} },
       }))}
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>
+        <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>
         <div class="enemy-row"></div>
       </div>
       <div class="hand-area">
         <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
-          <button class="hand-page hand-prev" type="button" data-focusable hidden
-            aria-controls="combat-hand" aria-label="Previous card" title="Previous card">&#8249;</button>
+          ${html(iconButton({ glyph: '‹', label: 'Previous card', className: 'hand-page hand-prev', attrs: { 'data-focusable': '', hidden: '', 'aria-controls': 'combat-hand' } }))}
           <!-- The strip itself — cards, fan, key hints, the inspect hold, the
                overlap arm and the Law 5 exemption — is components/hand.js, THE
                one hand renderer (both surfaces; the exemption's home is
@@ -97,32 +116,23 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
                live previewCard entries off the paced snapshot, and the local
                dispatch wiring (wireCardInput). -->
           <div class="hand" id="combat-hand"></div>
-          <button class="hand-page hand-next" type="button" data-focusable hidden
-            aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
+          ${html(iconButton({ glyph: '›', label: 'Next card', className: 'hand-page hand-next', attrs: { 'data-focusable': '', hidden: '', 'aria-controls': 'combat-hand' } }))}
         </div>
-        <!-- One grid owns every persistent combat action destination. Keeping
-             the optional Exhaust cell in that same grid means revealing it
-             cannot shift, cover, or steal a standing control's hit box. -->
-        <div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
-          <div class="energy-orb"></div>
-          <button class="end-turn">END TURN</button>
-          <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
-          <div class="pile exhaust" style="display:none"><span class="n"></span><small>EXHAUST</small></div>
-          <div class="pile discard"><span class="n"></span><small>DISCARD</small></div>
-          <!-- THE HINT STRIP IS A SIXTH DESTINATION IN THIS GRID, AND IT IS HERE
-               FOR THE REASON THE COMMENT ABOVE ALREADY GIVES. The chips became
-               real buttons (components/hints.js, Sten 15d4bca), so "every
-               persistent combat action destination" now includes them — and the
-               grid's guarantee that revealing a cell "cannot shift, cover, or
-               steal a standing control's hit box" is exactly the guarantee the
-               strip was missing. It sat outside as a centred sibling row, so at
-               Text XL and under a wide rebind it grew into END TURN: #295,
-               3368.8 px2 / 2700.3 px2, regression from f2acfc9 (#21). The empty
-               gutter column this grid already declared was the space meant for it.
-               Grid areas cannot overlap, so the clearance is now structural and
-               stops being a number anybody re-tunes when a label changes. -->
-          ${hintBarHtml('combat')}
+        <!-- THE ACTION ROW IS A KIT ButtonRow: the Actions receipt as a StatPair,
+             Draw, Discard with Exhaust, and Potions. End Turn is the
+             primary with its Keycap and, from the second-beat
+             machinery, its HOLD hint. All five cells stay present at zero so no
+             control appears late or shifts the row. -->
+        <div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
+          ${html(statPair({ key: 'Actions', value: '', attrs: { class: 'energy-orb cell stack lg', role: 'status', 'aria-label': 'Actions remaining' } }))}
+          ${html(pileButton('draw', 'Draw'))}
+          ${html(button({ label: 'End Turn', weight: 'primary', className: 'end-turn wide tall' }))}
+          ${html(button({ label: 'Discard', className: 'pile spent tall' }))}
+          ${html(button({ label: 'Potions', className: 'combat-potions tall' }))}
         </div>
+        <!-- Context hints: the strip is mounted for its readers but stays hidden
+             on this screen — the action row carries every key it would name. -->
+        ${hintBarHtml('combat').replace('<div class="hint-bar', '<div hidden class="hint-bar')}
       </div>
       <div class="fx-layer"></div>
       <svg id="target-arrow" width="100%" height="100%" style="display:none">
@@ -140,6 +150,16 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // Once per mount: it is a fact about the content, not about the frame.
   const resDomains = resourceDomains(registries);
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
+  let playerRest = 'idle';
+  let visualPlans = new Map();
+  let appliedVisualEvents = new Set();
+  function applyVisualEvents(events) {
+    for (const event of events) {
+      if (appliedVisualEvents.has(event)) continue;
+      appliedVisualEvents.add(event);
+      playerRest = combatRestAfterEvent(playerRest, event, 'player', visualPlans.get(event.cardInstanceId));
+    }
+  }
   const tooltipPlacement = tooltipPlacementModel(registries.balance.ui.tooltipPlacement);
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
   const fxCtx = {
@@ -149,15 +169,99 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
     orb: () => app.querySelector('.energy-orb'),
     // #61: fx beats read a proc row's display data (name/tint/icon) through
-    // this accessor — one home, the status def itself.
-    statusInfo: (sid) => registries.statuses.get(sid),
+    // this accessor — one home, the status def itself, with the WORDS
+    // resolved through the framework term overlay.
+    statusInfo: (sid) => registries.frameworkTerms.withStatusWords(registries.statuses.get(sid)),
+    maxActorAnimationMs: (speed) => reaverAttackTiming(speed).totalMs,
+    animateActor: (beat, actorEl, speed) => {
+      const played = beat.events.find(event => event.type === 'cardPlayed');
+      const moved = beat.events.find(event => event.type === 'enemyMoveStarted');
+      if (!played && !moved) return null;
+      // The pre-dispatch hand snapshot retains Powers removed from every pile,
+      // and the full instance carries equipment profile tags and upgrades.
+      // Resolve it before falling back to a live pile or bare legacy receipt.
+      const playedInstance = played && (disp?.hand.find((card) => card.instanceId === played.cardInstanceId)
+        || findInst(played.cardInstanceId) || { cardId: played.cardId });
+      const definition = played ? resolveCard(registries, playedInstance)
+        : registries.enemies.get(moved.enemyId)?.moves?.[moved.moveId];
+      const tags = played && definition
+        ? (definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition))
+        : definition?.tags || [];
+      const stage = stageFor(actorEl);
+      let plan = resolveActionAnimation({
+        actorId: played ? run.class : moved.enemyId,
+        actionId: played ? played.cardId : moved.moveId,
+        tags, type: played?.cardType, intent: moved?.kind,
+        availablePoses: stage?.poses || [],
+      });
+      if (played && definition) {
+        const grouped = visualPlans.get(played.cardInstanceId) || resolveCombatAnimation({ ...definition, cardTags: tags }, equippedPieces(registries, run.loadout, run.class));
+        const pose = stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
+        plan = { ...plan, ...grouped, pose };
+        if (grouped.rest) stage?.setRestPose?.(grouped.rest);
+        actorEl.dataset.actionGroup = grouped.group;
+      }
+      actorEl.dataset.actionFamily = plan.family;
+      actorEl.dataset.actionMotion = plan.motion;
+      // The painted Reaver sequence remains the specialized attack renderer.
+      // Other actors use existing CSS and only sprite poses they actually ship.
+      if (beat.actorId !== 'player' || beat.kind !== 'attack' || run.class !== 'reaver') {
+        return playFamilyAnimation(actorEl, stage, plan, speed, beat.actorId !== 'player' && beat.kind === 'attack');
+      }
+      const figure = figureSpec(registries, run.loadout, run.class);
+      const eligible = isReaverAttackEligible({
+        classId: run.class,
+        figure,
+        customization: run.customization,
+        spritesEnabled: spritesAreEnabled(),
+      });
+      return eligible && !actorEl.querySelector('.painted-outfit') ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : playFamilyAnimation(actorEl, stage, plan, speed);
+    },
   };
+
+  let lastDodge = [...(combat.eventLog || [])].reverse().find((event) => event.type === 'dodgeRolled' && event.sourceId === combat.player.id) || null;
+  function playFamilyAnimation(actorEl, stage, plan, speed, enemyAttack = false) {
+    const tempo = Number.isFinite(plan.tempo) ? Math.min(2, Math.max(0.25, plan.tempo)) : 1;
+    const reach = Number.isFinite(plan.reach) ? Math.min(2, Math.max(0.25, plan.reach)) : 1;
+    const direction = actorEl.closest('.enemy') ? -1 : 1;
+    const totalMs = plan.family === 'neutral' ? 0 : Math.round(speed.lungeMs * tempo);
+    const actionClass = ['slash', 'thrust', 'strike', 'projectile'].includes(plan.family) ? 'act-attack' : 'act-move';
+    const overrides = {
+      'animation-duration': totalMs + 'ms',
+      '--enemy-attack-duration': totalMs + 'ms',
+      '--action-travel': `${direction * 26 * reach}px`,
+      '--action-recoil': `${-direction * 12 * reach}px`,
+      '--action-tilt': `${direction * 12 * reach}deg`,
+      '--action-windup-tilt': `${-direction * 8 * reach}deg`,
+      '--action-lift': `${-8 * reach}px`,
+    };
+    const original = Object.keys(overrides).map((name) => [name, actorEl.style.getPropertyValue(name), actorEl.style.getPropertyPriority(name)]);
+    if (totalMs) {
+      actorEl.classList.remove(actionClass);
+      void actorEl.offsetWidth;
+      for (const [name, value] of Object.entries(overrides)) actorEl.style.setProperty(name, value);
+      actorEl.classList.add(actionClass);
+      // A damaging spell still needs its enemy attack drawing; its motion
+      // family remains a cast rather than being changed into a melee lunge.
+      if (enemyAttack) actorEl.classList.add('enemy-attack-pose');
+      if (plan.pose) stage?.play(plan.pose, totalMs, plan.aura);
+    }
+    return { totalMs, impactMs: Math.round(totalMs * 0.55), cancel: () => {
+      actorEl.classList.remove(actionClass);
+      if (enemyAttack) actorEl.classList.remove('enemy-attack-pose');
+      for (const [name, value, priority] of original) {
+        if (value) actorEl.style.setProperty(name, value, priority);
+        else actorEl.style.removeProperty(name);
+      }
+      stage?.settle();
+    } };
+  }
 
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
   let selectedEnemyId = null; // contextual reading selection; never combat targeting
-  let enemyTooltipDelayTimer = null;
+  let combatantTooltipDelayTimer = null;
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
@@ -170,7 +274,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // is a separately owned Folding Tray and remains until its label is folded.
   combatEl.addEventListener('click', (event) => {
     if (event.target.closest('.combatant, .combatant-inspector-host')) return;
-    clearTimeout(enemyTooltipDelayTimer);
+    clearTimeout(combatantTooltipDelayTimer);
     selectedEnemyId = null;
     combatEl.querySelectorAll('.combatant.enemy.context-selected').forEach((enemy) => enemy.classList.remove('context-selected'));
     combatEl.querySelectorAll('.combatant.enemy[aria-pressed="true"]').forEach((enemy) => enemy.setAttribute('aria-pressed', 'false'));
@@ -185,40 +289,72 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // wireCardInput is a hoisted declaration below; cards with no preview
   // (stale playback snapshot on a combat-ending play) render inert.
   const handStrip = mountHand($('.hand'), {
+    animateArrival: true,
+    fitFan: true,
     registries,
     wireCard: (el, entry) => { if (entry.preview) wireCardInput(el, entry.inst, entry.preview, entry.affordable); },
   });
 
-  function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1 } = {}) {
-    const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
-    const useReason = remaining <= 0 ? 'No charges remaining'
-      : busy ? 'Wait for the current action to finish'
-        : combat.result ? 'Combat is already over' : combat.phase !== 'player' ? 'Wait for your turn' : '';
-    const plan = flaskActionPlan({ context: 'combat', canUse, useReason });
-    mountFlaskActionMenu(anchor, {
-      def,
-      plan,
-      onCancel: () => {},
-      onAction: (actionId) => {
-        if (actionId !== 'use') return;
-        if (def.targeted) {
-          selectedFlask = selectedFlask === slot ? null : slot;
-          selected = null;
-          selfArm = null;
-          render();
-          if (selectedFlask != null) focusTargeting();
-        } else {
-          useFlask(slot, null, chargeKind);
-        }
-      },
-      // The menu is the selection boundary; the explicit Use row still reads
-      // the shared second-beat rule rather than inventing a screen-local rule.
-      wireAction: (row, button, invoke) => {
-        if (row.id !== 'use' || !row.enabled) return false;
-        arm(button, 'useFlask', { ctx: { targeted: !!def.targeted }, onConfirm: invoke });
-        return true;
-      },
-    });
+  function potionEntries() {
+    const p = combat.player;
+    return [
+      ...CHARGE_FLASK_KINDS.map((kind, index) => {
+        const charges = p.flaskCharges?.[kind + 'Current'] || 0;
+        return { def: chargeFlaskDefinition(registries, kind), options: { chargeKind: kind, remaining: charges, charges, useActionId: 'flask' + (index + 1) } };
+      }),
+      ...p.flasks.map((item, slot) => ({ def: registries.flasks.get(item.flaskId), options: { slot, remaining: 1, useActionId: slot === 0 ? 'flask3' : null } })),
+    ];
+  }
+
+  function openPotions(shortcut = null) {
+    const opener = $('.combat-potions');
+    const entries = potionEntries();
+    let shell;
+    shell = openModal({ title: 'Potions', size: 'md', className: 'combat-potion-menu', opener, bodyClassName: 'as-pane', body: host => {
+      entries.forEach((entry, index) => {
+        const { def, options } = entry;
+        const { slot = null, chargeKind = null, remaining, charges } = options;
+        const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
+        const reason = remaining <= 0 ? 'No charges remaining' : !canUse ? 'Wait for your turn' : '';
+        const action = flaskActionPlan({ context: 'combat', canUse, useReason: reason }).actions.find(row => row.id === 'use');
+        const use = button({ label: 'Use', disabled: !action.enabled, className: 'potion-use', attrs: { 'aria-label': 'Use ' + def.name } });
+        const fold = el('details', { class: 'armoury-card-row potion-fold' });
+        if (chargeKind) { fold.dataset.chargeKind = chargeKind; fold.dataset.charges = String(charges); }
+        else fold.dataset.potionSlot = String(slot);
+        const summary = optionCard({ tag: 'summary', name: def.name,
+          art: flaskPresentation(def, { showName: false }),
+          description: flaskDetailLines(def, { charges }).join(' '),
+          meta: charges == null ? '1 carried potion' : charges + ' charges', trail: [use], arrow: true });
+        const detail = detailCard({ eyebrow: 'Potion', name: def.name + ' details',
+          line: def.textTemplate || '', meta: def.targeted ? 'Choose an enemy after Use.' : 'Applies to your character.',
+          children: [flavour(charges == null ? '1 carried potion' : charges + ' charges remaining'), reason ? flavour(reason) : null] });
+        fold.append(summary, detail);
+        const moveUse = () => {
+          if (fold.open) {
+            for (const sibling of host.querySelectorAll('.potion-fold')) if (sibling !== fold) sibling.open = false;
+            detail.appendChild(use);
+          } else summary.querySelector('.r-trail').appendChild(use);
+        };
+        fold.addEventListener('toggle', moveUse);
+        use.addEventListener('click', event => { event.stopPropagation(); event.preventDefault(); });
+        if (action.enabled) arm(use, 'useFlask', {
+          ctx: { targeted: !!def.targeted },
+          question: 'Use ' + def.name + '? ' + remaining + ' remaining.', confirmLabel: 'USE',
+          onConfirm: () => {
+            // Recheck the live combat before committing a menu snapshot.
+            if (busy || combat.result || combat.phase !== 'player') return;
+            shell.close();
+            if (def.targeted) {
+              selectedFlask = slot; selected = null; selfArm = null;
+              render(); focusTargeting();
+            } else useFlask(slot, null, chargeKind);
+          },
+        });
+        host.appendChild(fold);
+        if (index === shortcut) { fold.open = true; moveUse(); }
+      });
+      if (!entries.length) host.appendChild(flavour('No potions carried.'));
+    } });
   }
 
   // Entering targeting mode: move the focus cursor onto an enemy so keyboard /
@@ -310,7 +446,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       if (!instance) return [];
       const amount = instance.meter ? instance.meter.value : instance.stacks;
       if (!(amount > 0)) return [];
-      const def = registries.statuses.get(statusId);
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(statusId));
       if (!def) return [];
       const presentation = statusInstancePresentation(def, instance);
       return [{ name: def.name, detail: presentation.tooltip }];
@@ -335,13 +471,14 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const v = dv(entity);
     if (role === 'player') {
       const classDef = registries.classes.get(run.class);
-      const stance = entity.stanceId ? registries.stances.get(entity.stanceId) : null;
+      const stance = entity.stanceId ? registries.frameworkTerms.withStanceWords(registries.stances.get(entity.stanceId)) : null;
       const skills = [];
       if (stance) skills.push({ name: stance.name, detail: stance.tooltip || 'Current stance.', active: true });
       skills.push({ name: classDef.name, detail: classDef.description || 'Current combat role.', active: true });
       return {
+        role: 'player',
         name: (run.customization?.name || classDef.name).toUpperCase(),
-        subtitle: `${classDef.name} · Level ${run.level}`,
+        subtitle: `${classDef.name} · Level ${run.level ?? 1}`,
         resources: [
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },
@@ -364,6 +501,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     }));
     const current = currentMoveId && def.moves?.[currentMoveId];
     return {
+      role: 'enemy',
       name: def.name,
       subtitle: (def.tags || []).map(words).join(' · ') || 'Enemy',
       resources: [
@@ -377,19 +515,46 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         active: true,
       },
       skillLabel: 'Move set',
+      moveCards: enemyMoveCards(def, { enemy: entity, preview: intent, registries }),
       skills,
       statuses: statusDetails(entity),
     };
   }
 
-  function enemyContextTooltip(subject) {
+  function combatantContextTooltip(subject) {
     const hp = subject.resources.find((row) => row.label === 'HP');
     const poise = subject.resources.find((row) => row.label === 'Poise');
     const effects = subject.statuses.map((row) => row.name).join(', ') || 'None';
     return `<div class="tt-title">${esc(subject.name)}</div>`
       + `<div class="tt-combatant-line"><b>HP</b> ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</div>`
       + `<div class="tt-combatant-line"><b>Poise</b> ${esc(poise?.value ?? '—')}/${esc(poise?.max ?? '—')}</div>`
-      + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`;
+      + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`
+      + '<div class="ti-detail">Inspect for the full read · I</div>';
+  }
+
+  /**
+   * openCombatantDoor(subject) — THE FULL READ, in the kit's own door
+   * (Constantine, 2026-09-04: "no way to expand combatant tooltip to see more
+   * details"). The tooltip is the glance: HP, poise, effects. This is the
+   * study: pools as Meters, the current intent, the whole move set, every
+   * active effect — `combatantDetailBody`, the same sections the edge tray
+   * renders, so the two can never drift.
+   */
+  function openCombatantDoor(subject, opener = document.activeElement) {
+    if (!subject?.name) return;
+    hideTooltip();
+    openModal({
+      size: 'md',
+      className: 'combatant-door',
+      opener,
+      eyebrow: subject.subtitle || 'Combatant',
+      title: subject.name,
+      closeLabel: `Close ${subject.name}`,
+      bodyClassName: 'combatant-inspector-body',
+      body: (host) => host.replaceChildren(...combatantDetailBody(subject, { heading: false })),
+      primary: button({ label: 'Close', weight: 'primary', attrs: { 'data-focusable': 'true' } }),
+      footSize: 'short',
+    });
   }
 
   function renderedContentRect(el) {
@@ -404,20 +569,42 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     return { left, top, right, bottom, width: right - left, height: bottom - top };
   }
 
-  function showEnemyContext(box, enemy) {
-    clearTimeout(enemyTooltipDelayTimer);
-    if (!box.isConnected || !enemy.alive) return false;
+  /**
+   * showCombatantContext(box, role, entity) — THE GLANCE, for either side of
+   * the field. #045/#046 made this the single battlefield tooltip surface;
+   * until 2026-09-05 it answered for enemies only, so the player's own frame
+   * answered nothing at all (Constantine: "no tool tip for ... player
+   * combatants"). One surface, both roles: `combatantContextTooltip` already
+   * wrote the player's footer sentence, and `combatantSubject` already read
+   * the player's pools, stance and effects — nothing new is being invented
+   * here, the door was simply never opened on his side.
+   */
+  function showCombatantContext(box, role, entity) {
+    clearTimeout(combatantTooltipDelayTimer);
+    if (!box.isConnected) return false;
+    if (role === 'enemy' && !entity.alive) return false;
     const card = renderedContentRect(box.querySelector('.combatant-card'));
     if (!card) return false;
-    showTooltipForRect(card, enemyContextTooltip(combatantSubject('enemy', enemy)), {
+    const inspect = button({ label: 'Inspect', attrs: { 'aria-label': `Inspect ${combatantSubject(role, entity).name}`, 'aria-haspopup': 'dialog' } });
+    inspect.addEventListener('click', (event) => {
+      event.stopPropagation();
+      openCombatantDoor(combatantSubject(role, entity), box);
+    });
+    inspect.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') box?.focus({ preventScroll: true });
+    });
+    showTooltipForRect(card, combatantContextTooltip(combatantSubject(role, entity)), {
       intent: 'above',
       align: 'center',
       clear: [box.querySelector('.intent'), app.querySelector('.topbar.combat-hud')],
-      appearance: { variant: 'enemy-context', maxWidthRem: 21 },
-      autoHideMs: tooltipPlacement.tokens.autoFadeMs,
+      appearance: { variant: 'combatant-context', maxWidthRem: 21 },
+      target: box,
+      action: inspect,
     });
     return true;
   }
+
+  const showEnemyContext = (box, enemy) => showCombatantContext(box, 'enemy', enemy);
 
   function restoreSelectedEnemyContext(exceptId = null) {
     if (!selectedEnemyId || selectedEnemyId === exceptId) {
@@ -429,39 +616,90 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     if (!selectedBox || !showEnemyContext(selectedBox, selectedEntity)) hideTooltip();
   }
 
+  /**
+   * childAnswers(box, event) — does a surface INSIDE the frame own this
+   * pointer or focus cursor? A status pip answers for itself (#045/#046's
+   * one-surface rule, reversed for the status surfaces on 2026-09-05), and the
+   * frame must not talk over it with its own glance. The two input paths need
+   * two readings: the focus cursor arrives as a bubbling `gpfocus`, so the
+   * frame sees the pip's own event with `target` still the pip; hover does not
+   * bubble, so the pointer's real subject is whatever sits under it. Without
+   * this the frame's timer, scheduled second on the bubbling path, replaced
+   * the pip's reading a moment after it opened.
+   */
+  function childAnswers(box, event) {
+    if (event.target && event.target !== box && event.target.closest) return !!event.target.closest('[data-tip-attached]');
+    if (event.clientX == null) return false;
+    const under = document.elementFromPoint(event.clientX, event.clientY);
+    return !!under && box.contains(under) && !!under.closest('[data-tip-attached]');
+  }
+
   function wireEnemyContext(box, enemy) {
     ensureTooltip();
     box.classList.add('inspectable');
+    box.tabIndex = -1;
     box.dataset.focusable = '';
     box.tabIndex = -1;
     box.setAttribute('role', 'button');
     box.setAttribute('aria-pressed', selectedEnemyId === enemy.id ? 'true' : 'false');
     box.setAttribute('aria-describedby', 'tooltip');
     box.setAttribute('aria-label', `Select ${combatantSubject('enemy', enemy).name} for combat details`);
-    box.addEventListener('pointerenter', () => {
-      clearTimeout(enemyTooltipDelayTimer);
-      enemyTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
+    box.addEventListener('pointerenter', (event) => {
+      if (childAnswers(box, event)) return;
+      clearTimeout(combatantTooltipDelayTimer);
+      combatantTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
     });
     box.addEventListener('pointerleave', () => {
       if (selectedEnemyId === enemy.id) return;
-      clearTimeout(enemyTooltipDelayTimer);
-      restoreSelectedEnemyContext(enemy.id);
+      clearTimeout(combatantTooltipDelayTimer);
+      scheduleTooltipClose(box, restoreSelectedEnemyContext);
     });
-    box.addEventListener('gpfocus', () => {
-      clearTimeout(enemyTooltipDelayTimer);
-      enemyTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
+    box.addEventListener('gpfocus', (event) => {
+      if (childAnswers(box, event)) return;
+      clearTimeout(combatantTooltipDelayTimer);
+      combatantTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
     });
-    box.addEventListener('gpblur', () => {
+    box.addEventListener('gpblur', (event) => {
+      if (childAnswers(box, event)) return;
       if (selectedEnemyId === enemy.id) return;
-      clearTimeout(enemyTooltipDelayTimer);
-      restoreSelectedEnemyContext(enemy.id);
+      clearTimeout(combatantTooltipDelayTimer);
+      scheduleTooltipClose(box, restoreSelectedEnemyContext);
     });
     box.addEventListener('keydown', (event) => {
+      if (event.target !== box) return;
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       box.click();
     });
   }
+  // The player remains reachable by the controller for inspection. Arming a
+  // self-target card adds confirmation semantics to that same focus stop.
+  function wirePlayerContext(box, player) {
+    box.tabIndex = -1;
+    box.dataset.focusable = '';
+    box.setAttribute('aria-label', 'Player information');
+    ensureTooltip();
+    box.classList.add('inspectable');
+    box.setAttribute('aria-describedby', 'tooltip');
+    const open = (event) => {
+      if (childAnswers(box, event)) return;
+      clearTimeout(combatantTooltipDelayTimer);
+      combatantTooltipDelayTimer = setTimeout(
+        () => showCombatantContext(box, 'player', player),
+        tooltipPlacement.tokens.hoverDelayMs,
+      );
+    };
+    const close = (event) => {
+      if (childAnswers(box, event)) return;
+      clearTimeout(combatantTooltipDelayTimer);
+      scheduleTooltipClose(box, restoreSelectedEnemyContext);
+    };
+    box.addEventListener('pointerenter', open);
+    box.addEventListener('pointerleave', close);
+    box.addEventListener('gpfocus', open);
+    box.addEventListener('gpblur', close);
+  }
+
   // The snapshot is the PACED state the whole HUD renders from. It must carry
   // every value the board draws, or that layer silently renders post-state
   // while the rest plays back (Sunna's PX gate: meters were missing, so the
@@ -599,7 +837,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
 
   // ---------- rendering ----------
   function renderCombatantStage() {
-    clearTimeout(enemyTooltipDelayTimer);
+    clearTimeout(combatantTooltipDelayTimer);
     hideTooltip();
     if (selected || selectedFlask != null) selectedEnemyId = null;
     if (selectedEnemyId && !combat.enemies.some((enemy) => enemy.id === selectedEnemyId && enemy.alive)) selectedEnemyId = null;
@@ -609,7 +847,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const selectedEntity = combat.enemies.find((enemy) => enemy.id === selectedEnemyId && enemy.alive);
       const selectedBox = selectedEntity && app.querySelector(`.combatant.enemy[data-eid="${CSS.escape(selectedEnemyId)}"]`);
       if (selectedBox) {
-        enemyTooltipDelayTimer = setTimeout(
+        combatantTooltipDelayTimer = setTimeout(
           () => showEnemyContext(selectedBox, selectedEntity),
           tooltipPlacement.tokens.hoverDelayMs,
         );
@@ -629,6 +867,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
   if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
     window.__renderCombatForShot = render;
+    window.__combatRunForShot = run;
   }
 
   function renderTopbar() {
@@ -646,71 +885,21 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     relics.innerHTML = '';
     for (const rid of p.relicIds) {
       const def = registries.relics.get(rid);
-      const el = document.createElement('div');
-      el.className = 'relic';
-      el.dataset.relicId = rid;
+      const el = slot({ art: def.icon || '◆', small: true, static: true, tag: 'div', label: def.name, className: 'relic', attrs: { dataset: { relicId: rid } } });
       markUiComponent(el, UI.relicSlot);
-      el.textContent = def.icon || '◆';
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
       relics.appendChild(el);
     }
-    // Flask selection is inert. Every slot opens one shared action plan; only
-    // its explicit Use row may spend a charge or enter targeting mode.
-    const chargeFlasks = $('.topbar .hud-charge-flasks');
-    const potions = $('.topbar .hud-potions');
-    chargeFlasks.innerHTML = '';
-    potions.innerHTML = '';
-    const appendFlaskHotkey = (el, hotkeySlot) => {
-      if (hotkeySlot >= 3) return;
-      el.dataset.flaskHotkeySlot = String(hotkeySlot);
-      const kb = document.createElement('span');
-      kb.className = 'flask-key';
-      const id = `flask${hotkeySlot + 1}`;
-      kb.textContent = hasGamepad() ? padLabel(id) || keyLabel(id) : keyLabel(id);
-      el.appendChild(kb);
-    };
-    for (const [hotkeySlot, kind] of CHARGE_FLASK_KINDS.entries()) {
-      const def = chargeFlaskDefinition(registries, kind);
-      const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
-      const el = document.createElement('button');
-      el.className = 'relic flask-slot flask-charge';
-      el.type = 'button';
-      markUiComponent(el, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
-      el.setAttribute('aria-disabled', String(current <= 0));
-      el.appendChild(flaskPresentation(def, { showName: false }));
-      const count = document.createElement('b');
-      count.className = 'flask-charge-count';
-      count.textContent = String(current);
-      el.appendChild(count);
-      appendFlaskHotkey(el, hotkeySlot);
-      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
-      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current }));
-      chargeFlasks.appendChild(el);
+    // Combat potions live in the bottom menu; the shared map HUD is unchanged.
+    // Quick Access no longer carries a charge-flask tray — Crimson and Azure
+    // moved into the potion belt — so the tray is looked up optionally rather
+    // than assumed present. A missing tray is the expected state, not a fault.
+    for (const selector of ['.hud-charge-flasks', '.hud-potions']) {
+      const tray = $('.topbar ' + selector);
+      if (!tray) continue;
+      tray.replaceChildren(); tray.hidden = true;
     }
-    p.flasks.forEach((f, slot) => {
-      const def = registries.flasks.get(f.flaskId);
-      const el = document.createElement('button');
-      el.type = 'button';
-      el.className = 'relic flask-slot';
-      markUiComponent(el, UI.potionControl);
-      el.dataset.flaskSlot = String(slot);
-      el.style.cursor = 'pointer';
-      if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
-      el.appendChild(flaskPresentation(def, { showName: false }));
-      // Health and Mana own the first two HUD flask shortcuts. The first
-      // carried potion receives the third; every remaining potion stays
-      // reachable through ordinary spatial focus.
-      appendFlaskHotkey(el, CHARGE_FLASK_KINDS.length + slot);
-      // THE LABEL READS THE BEAT, IT DOES NOT RESTATE IT. `data-beat` is written
-      // by the machinery from the table, so the sentence a player reads and the
-      // gesture the button actually wants cannot drift — and the icon is far too
-      // small for the HOLD word the event bars carry (hidden in ui.css).
-      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`
-        + '<br><i>Open actions to Use or Inspect.</i>');
-      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot }));
-      potions.appendChild(el);
-    });
-    potions.closest('.shared-hud').dataset.hasUtilityPotions = potions.children.length ? 'true' : 'false';
+    $('.topbar .shared-hud')?.setAttribute('data-has-utility-potions', 'false');
   }
 
   // #61 M4 — ONE meter grammar for every threshold-proc row, data-driven so a
@@ -737,45 +926,68 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     });
   }
 
-  function statusRow(entity, { tooltips = true } = {}) {
-    const row = document.createElement('div');
-    row.className = 'statuses';
+  /**
+   * answerOnTap(el, contentFn) — a tap IS the question on a phone, where
+   * `attachTooltip`'s hover clock never runs and its touch route wants a
+   * double tap. Without this a tap on a status pip travels to the frame,
+   * which answers with a DIFFERENT reading (its own glance) over the top of
+   * the one the player asked for. It yields entirely while a card or flask is
+   * armed: then a tap on the frame is a play, and swallowing it would make
+   * the pips dead patches on a target.
+   */
+  function answerOnTap(el, contentFn) {
+    el.addEventListener('click', (event) => {
+      if (selected || selectedFlask != null || selfArm) return;
+      event.stopPropagation();
+      showTooltipFor(el, contentFn(), { intent: 'above', align: 'center' });
+    });
+  }
+
+  function statusRow(entity) {
+    // The status row is the kit's Pips: one round badge per effect, its count a
+    // round StatePill on the corner.
+    // EVERY PIP ANSWERS FOR ITSELF — the one exception to #045/#046's single
+    // battlefield tooltip surface, and Constantine's own reversal of it
+    // (2026-09-05: "no tool tip for Status effects"). The frame's context
+    // reading repeats HP, Poise and the intent, so a second tooltip on those
+    // is redundant and stays suppressed; it only NAMES the effects ("Effects
+    // Crimson Blight"), so a pip with no tooltip is a glyph the player cannot
+    // read. Naming without explaining is the gap this closes. The same holds
+    // for the threshold proc bars below — they are status rows too.
+    const row = pips([], { class: 'statuses' });
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
-      const def = registries.statuses.get(sid);
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
       // M1's "absent at zero", applied to pips too: a spent proc row (💧0
       // after a burst) is an empty frame, not information (Sunna's S-flag).
       if (def.proc && stacks <= 0) continue;
-      const el = document.createElement('div');
-      el.className = 'status-icon';
+      const shownValue = def.resists && inst.duration != null ? inst.duration : presentation.valueText;
+      const el = pip({ glyph: def.icon || '?', count: shownValue, tone: def.tint || 'var(--muted)', ring: plan.pips.includes(sid), attrs: { class: 'status-icon' } });
       const semanticAttrs = statusInstanceSemanticAttrs(presentation);
       el.setAttribute('data-status-id', semanticAttrs['data-status-id']);
       el.setAttribute('data-status-value-token', semanticAttrs['data-status-value-token']);
       el.setAttribute('aria-label', semanticAttrs['aria-label']);
-      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       // Collapsed proc meter (M4 display cap): ring-fill pip — the pip's own
       // background is a conic fill in the row's tint, same value/threshold
-      // semantics as the bar it stands in for.
+      // semantics as the bar it stands in for. A resistance pip's number is its
+      // countdown (M3 — the receipt reads in turns); every other pip keeps its
+      // stack count, and that choice is made where `shownValue` is derived.
       if (plan.pips.includes(sid)) {
         const fillPct = Math.min(100, (inst.meter.value / inst.meter.max) * 100);
         el.classList.add('proc-pip');
         el.style.background = `conic-gradient(${def.tint || 'var(--muted)'} ${fillPct}%, transparent ${fillPct}%)`;
       }
-      // A resistance pip's number is its countdown (M3 — the receipt reads in
-      // turns); every other pip keeps its stack count.
-      const shown = def.resists && inst.duration != null ? inst.duration : presentation.valueText;
-      el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${shown}</span>`;
-      if (tooltips) {
-        attachTooltip(el, () => {
-          let extra = '';
-          if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
-          if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
-          return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
-        });
-      }
+      const statusTip = () => {
+        let extra = '';
+        if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
+        if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
+        return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
+      };
+      attachTooltip(el, statusTip);
+      answerOnTap(el, statusTip);
       row.appendChild(el);
     }
     return row;
@@ -796,15 +1008,15 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       if (kind === 'player') {
         return 'Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet.';
       }
-      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      const staggered = registries.frameworkTerms.statusDisplay('staggered');
+      const stagDesc = (staggered && staggered.tooltip) || '';
       return `Fill it to Stagger. ${esc(stagDesc)}`;
     };
   }
 
   function meterBars(entity, { tooltips = true } = {}) {
     const v = dv(entity);
-    const wrap = document.createElement('div');
-    wrap.className = 'meters';
+    const wrap = meters([], { class: 'meters tight' });
     // THE UNDER-MODEL HUD — "should really just show health and poise", his
     // words. Same renderer, same table, different surface: the rows carry which
     // surfaces they appear on, so the two-HUD split he drew is DATA and neither
@@ -824,8 +1036,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // on this screen rather than moving into the shared renderer.
     for (const bar of plan) {
       if (bar.id === 'poise' && bar.cur >= bar.max * 0.75) {
-        const el = bars.querySelector('[data-res="poise"]');
-        if (el) el.classList.add('full');
+        const el = bars.querySelector('.as-meter[data-res="poise"]');
+        if (el) el.classList.add('pulse', 'full');
       }
     }
     while (bars.firstChild) wrap.appendChild(bars.firstChild);
@@ -841,75 +1053,130 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         // v, not entity: the bar is the thing the drain animates, so it must
         // read the paced snapshot like every other meter on this card.
         const inst = v.statuses[sid];
-        const def = registries.statuses.get(sid);
-        const bar = document.createElement('div');
-        bar.className = 'bar procbar';
-        markUiComponent(bar, UI.procStatusBar, sid);
-        bar.dataset.status = sid;
-        // S2: an active resistance dims the meter — the state reads without
-        // opening a tooltip.
-        if (hasResistAgainst(entity, sid)) bar.classList.add('resisted');
-        bar.style.setProperty('--proc-tint', def.tint || 'var(--muted)');
-        bar.innerHTML =
-          `<div class="fill" style="width:${Math.min(100, (inst.meter.value / inst.meter.max) * 100)}%"></div>` +
-          `<span class="glyph">${esc(def.icon || '?')}</span>`; // hue is never the only channel
-        if (tooltips) attachTooltip(bar, () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`);
-        wrap.appendChild(bar);
+        const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
+        // A threshold-proc row is a skinny Meter in the row's own tint, with the
+        // row's glyph as its plate — hue is never the only channel. S2: an
+        // active resistance stripes the fill, so the state reads without a
+        // tooltip.
+        const resisted = hasResistAgainst(entity, sid);
+        const meterEl = meter({
+          id: sid, value: def.icon || '?',
+          cur: inst.meter.value, max: inst.meter.max,
+          pct: Math.min(100, (inst.meter.value / inst.meter.max) * 100),
+          ariaLabel: `${def.name} ${inst.meter.value} of ${inst.meter.max}`,
+          attrs: { class: `procbar${resisted ? ' resisted' : ''}`, style: { '--meter-tone': def.tint || 'var(--muted)' } },
+          trackAttrs: { class: 'bar procbar-track', dataset: { status: sid } },
+        });
+        meterEl.dataset.status = sid;
+        markUiComponent(meterEl, UI.procStatusBar, sid);
+        // A proc bar is a status row: it answers for itself like the pips.
+        const procTip = () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`;
+        attachTooltip(meterEl, procTip);
+        answerOnTap(meterEl, procTip);
+        wrap.appendChild(meterEl);
       }
     }
     return wrap;
   }
 
+  // Block is a StatePill in the frost tone, filled: a number a player reads off
+  // the sprite at a glance.
   function blockBadge(entity, { tooltips = true } = {}) {
     const v = dv(entity);
     if (v.block <= 0) return null;
-    const b = document.createElement('div');
-    b.className = 'block-badge';
+    const b = pill({ label: String(v.block), round: true, attrs: { class: 'block-badge solid lg' } });
     markUiComponent(b, UI.blockBadge);
-    b.textContent = v.block;
     if (tooltips) attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
     return b;
   }
 
   function renderPlayer() {
     const zone = $('.player-zone');
+    stageFor(zone)?.dispose?.();
     zone.innerHTML = '';
     const p = combat.player;
+    const figure = figureSpec(registries, run.loadout, run.class);
+    if (isReaverAttackEligible({
+      classId: run.class,
+      figure,
+      customization: run.customization,
+      spritesEnabled: spritesAreEnabled(),
+    })) preloadReaverAttackFrames();
     const trailing = [];
     if (p.stanceId) {
-      const st = registries.stances.get(p.stanceId);
-      const chip = document.createElement('div');
-      chip.className = `stance-chip ${p.stanceId}`;
-      chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
+      const st = registries.frameworkTerms.withStanceWords(registries.stances.get(p.stanceId));
+      // The stance is a StatePill in its own tone — ember by default, frost for
+      // Bulwark, which is the stance's own colour and not this screen's.
+      const chip = pill({
+        label: st.name,
+        attrs: { class: `stance-chip lg ${p.stanceId}`, dataset: { tone: p.stanceId === 'bulwark' ? 'frost' : 'ember' } },
+      });
+      if (st.icon) chip.prepend(glyph(st.icon, { class: 'ic' }));
       trailing.push(chip);
     }
-    trailing.push(statusRow(p, { tooltips: false }));
+    trailing.push(statusRow(p));
+    if (lastDodge) {
+      const receipt = dodgeReceipt(lastDodge);
+      const outcome = button({ label: receipt.outcome, className: 'dodge-receipt', attrs: {
+        'data-focusable': 'true', 'aria-label': receipt.outcome + '. View last Dodge result',
+      } });
+      outcome.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openModal({ title: 'Last Dodge result', size: 'sm', opener: outcome, bodyClassName: 'as-pane', body: (host) => {
+          const text = document.createElement('p');
+          text.className = 'as-prose';
+          text.textContent = receipt.detail;
+          host.appendChild(text);
+        } });
+      });
+      trailing.push(outcome);
+    }
     const box = combatantFrame({
       role: 'player',
       entityId: 'player',
       classNames: selfArm ? ['armed'] : [],
-      sprite: playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)),
+      sprite: playerSprite(run.customization || {}, run.class, figure.armourId),
       blockBadge: blockBadge(p, { tooltips: false }),
       meters: meterBars(p, { tooltips: false }),
       trailing,
     });
+    wirePlayerContext(box, p);
     // When a self/buff card is armed, the player is a confirmable target.
+    // Publish that temporary target through the same unified focus door as an
+    // enemy target. Without this, armSelf() asks focusFirst() for the player,
+    // focusFirst() correctly refuses the non-focusable frame, and the cursor
+    // remains on the card: a second controller Confirm then toggles the card
+    // off instead of committing it.
+    if (selfArm) {
+      const armedInst = findInst(selfArm);
+      const armedDef = armedInst ? resolveCard(registries, armedInst) : null;
+      const playerName = combatantSubject('player', p).name;
+      box.dataset.focusable = '';
+      box.tabIndex = -1;
+      box.setAttribute('role', 'button');
+      box.setAttribute('aria-label', `Confirm ${armedDef?.name || 'selected card'} on ${playerName}`);
+    }
     box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
-      else hideTooltip();
+      else showCombatantContext(box, 'player', p);
     });
     zone.appendChild(box);
+    stageFor(box)?.setRestPose?.(playerRest);
   }
 
+  // The intent is one StatePill in the fact's own tone, glyph first — the kit's
+  // `pill.lg` (uiContent.js intentBadge picks the tone and the words).
   function intentEl(enemy) {
     const iv = previewIntent(combat, enemy.id);
-    const el = document.createElement('div');
     const badge = intentBadge(iv);
-    el.className = `intent ${badge.cls}`;
-    markUiComponent(el, UI.intentIndicator, badge.cls);
-    el.innerHTML = badge.html;
-    return el;
+    const node = pill({
+      label: badge.label,
+      attrs: { class: `intent lg ${badge.cls}${badge.dashed ? ' dashed' : ''}`, dataset: { tone: badge.tone || undefined } },
+    });
+    if (badge.glyph) node.prepend(glyph(badge.glyph, { class: 'ic' }));
+    markUiComponent(node, UI.intentIndicator, badge.cls);
+    return node;
   }
 
   function renderEnemies() {
@@ -924,16 +1191,29 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       // Target-number badge for keyboard targeting (SPEC §7.3).
       if (enemy.alive && targeting) {
         const idx = living.indexOf(enemy);
-        if (idx < 9) {
-          const kh = document.createElement('span');
-          kh.className = 'enemy-key';
-          kh.textContent = idx + 1;
-          leading.push(kh);
-        }
+        // The target number is a Keycap, the same atom every other key wears.
+        if (idx < 9) leading.push(keycap(String(idx + 1), { class: 'enemy-key' }));
       }
-      const nm = document.createElement('div');
-      nm.className = 'nm';
-      nm.textContent = def.name;
+      // The nameplate is a LabelStack: the name, and under it what kind of
+      // thing it is (its stature reads from the frame, so the hint is the tags).
+      const nm = labelStack({ label: def.name, attrs: { class: 'nm' } });
+      // The name is the way into the full read on touch, where there is no `I`.
+      // It stops the frame's own click so tapping the name never plays a card
+      // or retargets — the door is a reading, not a move.
+      nm.classList.add('nm-inspect');
+      nm.setAttribute('role', 'button');
+      nm.tabIndex = 0;
+      nm.setAttribute('aria-label', `${def.name} — the full read`);
+      const openThisRead = (event) => {
+        event.stopPropagation();
+        openCombatantDoor(combatantSubject('enemy', enemy));
+      };
+      nm.addEventListener('click', openThisRead);
+      nm.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        openThisRead(event);
+      });
       const box = combatantFrame({
         role: 'enemy',
         entityId: enemy.id,
@@ -943,8 +1223,9 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         blockBadge: blockBadge(enemy, { tooltips: false }),
         name: nm,
         meters: meterBars(enemy, { tooltips: false }),
-        trailing: [statusRow(enemy, { tooltips: false })],
+        trailing: [statusRow(enemy)],
       });
+      box.dataset.stature = statureFor(registries, def.id);
       if (enemy.alive) {
         wireEnemyContext(box, enemy);
         box.addEventListener('click', (event) => {
@@ -958,11 +1239,11 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
               candidate.classList.toggle('context-selected', current);
               candidate.setAttribute('aria-pressed', current ? 'true' : 'false');
             });
-            clearTimeout(enemyTooltipDelayTimer);
+            clearTimeout(combatantTooltipDelayTimer);
             // Selection state answers immediately through aria-pressed and the
             // selected treatment; its contextual reading uses the same configured,
             // cancellable delay as pointer and focus preview.
-            enemyTooltipDelayTimer = setTimeout(
+            combatantTooltipDelayTimer = setTimeout(
               () => showEnemyContext(box, enemy),
               tooltipPlacement.tokens.hoverDelayMs,
             );
@@ -990,7 +1271,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }
-        const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && !isUnplayable(inst);
+        const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
         return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm };
       }),
     });
@@ -1048,37 +1329,48 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
 
   function isUnplayable(inst) {
-    return (resolveCard(registries, inst).keywords || []).includes('unplayable');
+    return registries.framework.isUnplayable(resolveCard(registries, inst));
   }
 
   /** The pulse reports that the player still has an affordable play. */
   function endTurnHasPlayable() {
     const anyPlayable = combat.piles.hand.some((inst) => {
-      const def = resolveCard(registries, inst);
-      if ((def.keywords || []).includes('unplayable')) return false;
-      return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost)
-        && combat.player.mana >= (def.manaCost || 0);
+      if (registries.framework.isUnplayable(resolveCard(registries, inst))) return false;
+      // The live preview — class-priced dodge costs, Power reductions — the
+      // same numbers the badge shows and the engine charges, in all three
+      // pools. A card the preview cannot resolve is not a playable card.
+      let pv = null;
+      try { pv = previewCard(combat, inst.instanceId); } catch (e) { return false; }
+      return combat.player.energy >= (pv.costIsX ? 0 : pv.cost)
+        && combat.player.mana >= pv.manaCost
+        && combat.player.stamina >= (pv.staminaCost || 0);
     });
-    return combat.player.energy > 0 && anyPlayable;
+    // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
+    // player at 0 Energy with Stamina left still holds a playable card, and
+    // the per-card check above already prices every pool.
+    return anyPlayable;
   }
 
   function renderControls() {
-    $('.energy-orb').textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    const energy = $('.energy-orb');
+    energy.querySelector('.sp-v').textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    energy.setAttribute('aria-label', `Actions ${combat.player.energy} of ${combat.player.energyMax}`);
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
-    $('.end-turn').innerHTML = `END TURN <kbd class="et-key">${esc(etKey)}</kbd>`;
+    $('.end-turn').replaceChildren('End Turn', keycap(etKey, { class: 'et-key' }));
     $('.end-turn').classList.toggle('pulse', endTurnHasPlayable());
     // The innerHTML above just dropped the HOLD hint on the floor. `refresh()`
     // re-reads the action's state and re-dresses the button — and it is the
     // reason a beat can live on a control its own screen repaints every frame
     // without any screen tracking the dressing.
     if (endTurnBeat) endTurnBeat.refresh();
-    $('.pile.draw .n').textContent = combat.piles.draw.length;
-    $('.pile.discard .n').textContent = combat.piles.discard.length;
-    const ex = $('.pile.exhaust');
-    ex.style.display = combat.piles.exhaust.length ? '' : 'none';
-    ex.querySelector('.n').textContent = combat.piles.exhaust.length;
+    $('.pile.draw .sp-v').textContent = combat.piles.draw.length;
+    $('.pile.spent').innerHTML = '<span>Discard ' + combat.piles.discard.length + '</span><small>Exhaust ' + combat.piles.exhaust.length + '</small>';
+
+    $('.pile.draw').setAttribute('aria-label', `Draw pile, ${combat.piles.draw.length}`);
+    $('.pile.spent').setAttribute('aria-label', `Discard ${combat.piles.discard.length}; Exhaust ${combat.piles.exhaust.length}. Open piles`);
+
   }
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
@@ -1093,13 +1385,23 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // A card whose only legal target is the player has ONE destination, so the
     // drag names it instead of making him aim at it (his words: "dragging a
     // block should default highlight player character since it can only target
-    // that character"). `friendlyTargetMode` is the ONE home of "can only
-    // target X" — model/friendlyTargets.js, #209 — and `'self'` is the only
-    // mode a solo board can resolve to a single target. `'ally'` and `'mixed'`
-    // depend on who is alive and connected and are deliberately NOT wired
-    // here; solo has no allies to state that rule against.
+    // that character"). #313 asked which "can only target X" means — the
+    // card's DECLARED mode or the BOARD'S current legal set. This is the
+    // B-side of that A/B: the legal set, taken at drag start from the one
+    // home of the rule (model/friendlyTargets.js, friendlyTargetPlan). On a
+    // solo board the set is the player for `self` AND for `mixed` (a
+    // self+ally card with no ally has exactly one legal target), and the
+    // highlight lights only when the set has exactly one member and it is the
+    // player — so it can never light a target the release would refuse. The
+    // A-side (declared mode only: `self` lights, `mixed` never does) is the
+    // shipped behaviour this replaces. Co-op keeps its own aiming.
+    const dragDef = resolveCard(registries, inst);
+    const friendlyLegal = friendlyTargetPlan(dragDef, combat.player.id, [
+      { id: combat.player.id, alive: combat.player.alive, connected: true },
+    ]).legalIds;
     const selfOnlyTarget = dragTargetMode === 'none'
-      && friendlyTargetMode(resolveCard(registries, inst)) === 'self';
+      && friendlyTargetMode(dragDef) !== 'none'
+      && friendlyLegal.length === 1 && friendlyLegal[0] === combat.player.id;
 
     const livingEnemyEls = () => [...app.querySelectorAll('.enemy:not(.dead)')];
 
@@ -1319,6 +1621,16 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // the in-combat Armoury, both shapes: tools/veil-owns-input.mjs.
     if (veilIsOpen()) return;
 
+    // `I` is Inspect, everywhere: the full read of whatever the player is
+    // looking at — the enemy they selected, else themselves (Constantine,
+    // 2026-09-04: "no way to expand combatant tooltip to see more details").
+    if (ev.key === 'i' || ev.key === 'I') {
+      ev.preventDefault();
+      const selected = combat.enemies.find((enemy) => enemy.id === selectedEnemyId && enemy.alive);
+      openCombatantDoor(combatantSubject(selected ? 'enemy' : 'player', selected || combat.player));
+      return;
+    }
+
     // The menu key opens Settings. The legacy Deck/Stats/Relics bindings all
     // land in Armoury now that it owns every run-information surface.
     const armouryAction = actionDestinationForEvent(ev);
@@ -1348,7 +1660,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         else focusHandDefault();
       }
       if (selectedEnemyId) {
-        clearTimeout(enemyTooltipDelayTimer);
+        clearTimeout(combatantTooltipDelayTimer);
         selectedEnemyId = null;
         hideTooltip();
         app.querySelectorAll('.combatant.enemy.context-selected').forEach((enemy) => enemy.classList.remove('context-selected'));
@@ -1364,12 +1676,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       return;
     }
 
-    // Flask keys activate the numbered visible HUD control; they never auto-use.
+    // Flask keys open the corresponding potion action menu; they
+    // never auto-use.
     for (let slot = 0; slot < 3; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
-        const slotEl = $(`.flask-slot[data-flask-hotkey-slot="${slot}"]`);
-        if (slotEl) slotEl.click();
+        openPotions(slot);
         return;
       }
     }
@@ -1391,7 +1703,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const inst = combat.piles.hand[cardIdx];
       if (!inst) return;
       const pv = previewCard(combat, inst.instanceId);
-      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && !isUnplayable(inst);
+      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
       if (!affordable) return;
       if (pv.needsTarget) {
         const living = combat.enemies.filter((e) => e.alive);
@@ -1443,11 +1755,27 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
 
   function afterDispatch(events) {
+    // Capture definitions while disp still holds consumed Powers and equipment
+    // profile instances. Reduce the SAME events on paced and skipped paths.
+    appliedVisualEvents = new Set();
+    visualPlans = new Map(events.filter(e => e.type === 'cardPlayed').map(event => {
+      const instance = disp?.hand.find(card => card.instanceId === event.cardInstanceId) || findInst(event.cardInstanceId) || { cardId: event.cardId };
+      const definition = resolveCard(registries, instance);
+      const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
+      const hpSpent = events.filter(e => e.type === 'hpLost' && e.targetId === combat.player.id && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
+      return [event.cardInstanceId, { aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, sourceArmamentId: instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class)) }];
+    }));
     // Nothing between here and playTimeline may prevent the timeline from
     // starting: busy is already true, and only the timeline's finish releases
     // it (and fires onEnd on victory/defeat). A render throw here once froze
     // the game permanently on the killing blow.
     try {
+      // Skipping or reducing motion must never erase the last result.
+      const rolled = [...events].reverse().find((event) => event.type === 'dodgeRolled' && event.sourceId === combat.player.id);
+      if (rolled) {
+        lastDodge = rolled;
+        $('.dodge-announcement').textContent = dodgeReceipt(rolled).detail;
+      }
       recentArcaneEvents = events.filter((event) => (
         event.type === 'arcaneExposureChanged' || event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak'
       ));
@@ -1461,18 +1789,24 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       {
         ...fxCtx,
         onBeatApplied: (beat) => {
+          applyVisualEvents(beat.events);
           applyBeatToDisp(beat);
           renderTopbar();
           renderCombatantStage();
           renderHand();
           renderControls();
+          showPileFeedback(beat.events);
         },
         onFlush: () => {
+          applyVisualEvents(events);
           disp = null;
           render();
+          clearCardFeedback();
+          showPileFeedback(events, false);
         },
       },
       () => {
+        applyVisualEvents(events);
         disp = null;
         render();
         busy = false;
@@ -1486,58 +1820,65 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     );
   }
 
-  // Ghost the played card flying toward its target (≤220 ms, purely cosmetic).
+  // Cosmetic animations never own combat timing or retain interactive clones.
+  const cardFlights = new Set();
+  function clearCardFeedback() {
+    for (const animation of cardFlights) animation.cancel();
+    cardFlights.clear();
+    app.querySelectorAll('.hand .card.card-drawn').forEach(el => el.classList.remove('card-drawn'));
+    $('.pile.spent')?.classList.remove('pile-received');
+  }
+  function showPileFeedback(events, animate = true) {
+    // Ordinary plays enter discard without a separate cardDiscarded receipt.
+    // Read their actual destination; Powers and victory plays must not be counted.
+    const discardIds = new Set(events.filter(event => event.type === 'cardDiscarded').map(event => event.cardInstanceId));
+    for (const event of events) {
+      if (event.type === 'cardPlayed' && combat.piles.discard.some(card => card.instanceId === event.cardInstanceId)) discardIds.add(event.cardInstanceId);
+    }
+    const discarded = discardIds.size;
+    const exhausted = events.filter(event => event.type === 'cardExhausted').length;
+    if (!discarded && !exhausted) return;
+    const pile = $('.pile.spent');
+    pile.dataset.cardOutcome = exhausted ? 'exhaust' : 'discard';
+    pile.setAttribute('aria-description', [discarded && (discarded + ' discarded'), exhausted && (exhausted + ' exhausted')].filter(Boolean).join('; '));
+    if (animate && !reducedMotionRequested()) {
+      pile.classList.remove('pile-received');
+      void pile.offsetWidth;
+      pile.classList.add('pile-received');
+    }
+  }
+  $('.pile.spent').addEventListener('animationend', event => {
+    if (event.target === event.currentTarget) event.currentTarget.classList.remove('pile-received');
+  });
+
+  // Fly only accepted plays, with one cancellable browser-owned animation.
   function flyCard(instanceId, targetId) {
+    if (reducedMotionRequested()) return;
     const cardEl = app.querySelector(`.hand .card[data-instance-id="${instanceId}"]`);
-    if (!cardEl) return;
+    if (!cardEl || typeof cardEl.animate !== 'function') return;
     const dest = (targetId && fxCtx.anchorFor(targetId)) || fxCtx.anchorFor('player');
-    // Container: THE VIEWPORT — `.card-ghost` is `position: fixed` (combat.css:364).
-    // EldenSpire#15: `from`/`to` are raw visual rects, so at 1920×1080 the ghost
-    // started 190 local px below the card it was a ghost of, entirely under the
-    // bottom edge, and flew to a point that was not the enemy.
-    //
-    // THE TRANSFORM IS THE SAME SPACE, and it is the half no instrument here can
-    // see: zoomunits.mjs reads neither `transform` nor `cssText` and says so in its
-    // own boundary block, so `dx`/`dy` below were never in the carried set and
-    // never could have been. Marina measured the mechanism — `translate(100px)`
-    // under `zoom: 1.5` moves 150 visual px — which is why the deltas convert too.
-    // Found by hand, on a screen. Not by the detector, which cannot.
-    const view = viewportLocalBox();
     const b = anchorLocalBox(VIEWPORT_ORIGIN, cardEl);
     const t = anchorLocalBox(VIEWPORT_ORIGIN, dest || cardEl);
+    const at = clampBox(b, viewportLocalBox(), { keep: 40 });
     const ghost = cardEl.cloneNode(true);
-    ghost.className = `${cardEl.className} card-ghost`;
-    // keep:40 — the start box is the card's own, already on screen, so this never
-    // fires in play; it is here so a future wrong `b` is a misplaced ghost rather
-    // than an invisible one.
-    const at = clampBox(b, view, { keep: 40 });
-    ghost.style.left = `${at.left}px`;
-    ghost.style.top = `${at.top}px`;
-    ghost.style.width = `${b.width}px`;
-    ghost.style.margin = '0';
+    ghost.className = 'card card-ghost';
+    ghost.setAttribute('aria-hidden', 'true');
+    ghost.setAttribute('inert', '');
+    ghost.removeAttribute('id');
+    ghost.removeAttribute('tabindex');
+    ghost.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+    Object.assign(ghost.style, { left: at.left + 'px', top: at.top + 'px', width: b.width + 'px', margin: '0', animation: 'none', transition: 'none' });
     document.body.appendChild(ghost);
-    requestAnimationFrame(() => {
-      // Centred on the CARD's box — the original model, kept. I tried measuring the
-      // ghost's own box here instead, since the ghost is the thing that flies, and
-      // it is worse: the clone inherits the card's class list including its entry
-      // animation, so a rect read inside this rAF catches that animation mid-frame
-      // (measured 203.59 tall against a 196 layout box — an 8.18 px offset that
-      // changes with WHEN you look). A number read off a running animation is not a
-      // measurement. The card's box holds still.
-      //
-      // What that leaves is a real ~3.5 local px approximation: the card carries
-      // `.hand .card.selected` — translateY(-56px) scale(1.32), combat.css:180 —
-      // and the ghost stops matching that selector the moment it is reparented to
-      // <body>. It is CONSTANT at every zoom, which is exactly how zoomplace.mjs
-      // separates it from the #15 defect, whose error is (1−1/z)·offset and runs
-      // from −207 to +403 local px across the dial. Cosmetic, pre-existing, and not
-      // this card's subject — named here so the next reader does not re-find it.
-      const dx = t.left + t.width / 2 - (at.left + b.width / 2);
-      const dy = t.top + t.height / 2 - (at.top + b.height / 2);
-      ghost.style.transform = `translate(${dx}px, ${dy}px) scale(0.35) rotate(6deg)`;
-      ghost.style.opacity = '0';
-    });
-    setTimeout(() => ghost.remove(), 260);
+    const dx = t.left + t.width / 2 - (at.left + b.width / 2);
+    const dy = t.top + t.height / 2 - (at.top + b.height / 2);
+    const animation = ghost.animate([
+      { transform: 'translate(0,0)', opacity: 0.85 },
+      { transform: `translate(${dx}px, ${dy}px) scale(0.35) rotate(6deg)`, opacity: 0 },
+    ], { duration: 220, easing: 'ease-out', fill: 'forwards' });
+    cardFlights.add(animation);
+    const remove = () => { ghost.remove(); cardFlights.delete(animation); };
+    animation.onfinish = remove;
+    animation.oncancel = remove;
   }
 
   function playCard(instanceId, targetId) {
@@ -1553,7 +1894,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     selfArm = null;
     clearAim();
     hideTooltip();
-    flyCard(instanceId, targetId);
     disp = takeSnapshot();
     let out;
     try {
@@ -1566,6 +1906,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       return;
     }
     dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
+    flyCard(instanceId, targetId);
     sfx.play('cardPlay');
     busy = true;
     afterDispatch(out.events);
@@ -1578,6 +1919,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // Nothing on this line says "hold", and adding a third action to this screen
   // would say even less.
   endTurnBeat = arm($('.end-turn'), 'endTurn', {
+    question: 'End your turn and let the enemies act?',
+    confirmLabel: 'END TURN',
     onConfirm: () => {
     if (busy || combat.result || combat.phase !== 'player') {
       const why = { busy, result: combat.result, phase: combat.phase };
@@ -1606,10 +1949,29 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   endTurnBeat.refresh();
 
   const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
-  const showDiscard = () => openPileModal(registries, 'Discard pile', combat.piles.discard);
+  const showSpent = () => openSpentPileModal(registries, combat.piles, $('.pile.spent'));
+
   $('.pile.draw').addEventListener('click', showDraw);
-  $('.pile.discard').addEventListener('click', showDiscard);
-  $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
+  $('.pile.spent').addEventListener('click', showSpent);
+  $('.combat-potions').addEventListener('click', () => openPotions());
+
+  // THE BOTTOM ROW SAYS WHAT IT IS (Constantine, 2026-09-04: "no tool tips on
+  // bottom row for end turn, draw, end turn, discard and exhaust"). Every
+  // other control on this screen carries a tooltip; the five that decide a
+  // turn carried none. Counts are read at open time, so the panel is never a
+  // stale copy of a number the row already shows.
+  attachTooltip($('.energy-orb'), () => `<div class="tt-title">Actions</div>`
+    + `${dv(combat.player).energy ?? combat.player.energy} of ${combat.player.energyMax} left this turn.`
+    + `<div class="ti-detail">Playing a card spends its cost. Unspent actions do not carry over.</div>`);
+  attachTooltip($('.pile.draw'), () => `<div class="tt-title">Draw pile</div>`
+    + `${combat.piles.draw.length} card${combat.piles.draw.length === 1 ? '' : 's'} left to draw.`
+    + `<div class="ti-detail">Tap to look through it. When it empties, the discard pile is shuffled back in.</div>`);
+  attachTooltip($('.pile.spent'), () => '<div class="tt-title">Discard and Exhaust</div>Separate views and counts. Discard can reshuffle; exhausted cards remain out for this fight.');
+  attachTooltip($('.combat-potions'), () => '<div class="tt-title">Potions</div>Choose a healing, mana or carried potion. Only Use spends it.');
+  attachTooltip($('.end-turn'), () => `<div class="tt-title">End Turn</div>`
+    + `Hand off to the enemies, then draw a fresh hand.`
+    + `<div class="ti-detail">Block expires at the start of your next turn. `
+    + `Press <b>${esc(hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn'))}</b>, or hold this.</div>`);
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
   $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
@@ -1651,9 +2013,9 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         : 'Everywhere you can go from here.')}`);
   }
 
-  // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
-  // storage seal themselves, and picking another hand set routes through the
-  // engine intent that charges for it instead of mutating the loadout here.
+  // The Armoury mid-fight is the SAME panel, told it is in combat. Both active
+  // set switches and item replacement route through engine intents so Energy,
+  // live card piles, resources, Poise, and the combat snapshot stay atomic.
   function openCombatArmoury(request = '') {
     if (!registries.balance.equipment.enabled) return;
     const equipView = typeof request === 'string' ? request : '';
@@ -1676,6 +2038,18 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         panel.redraw();
         render();
         afterDispatch(out.events);
+      },
+      onEquip: (slotId, setIndex, pieceId) => {
+        let out;
+        try {
+          out = dispatch(combat, { type: 'changeEquipment', slotId, setIndex, pieceId });
+        } catch (e) {
+          dlog('equip', e.message);
+          return e.message;
+        }
+        render();
+        afterDispatch(out.events);
+        return '';
       },
     });
   }

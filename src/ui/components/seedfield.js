@@ -48,6 +48,7 @@
 
 import { SEED_MAX_LEN, seedProblem } from '../../engine/rng.js';
 import { attachTooltip, esc } from './tooltip.js';
+import { el } from '../kit/index.js';
 
 /**
  * The promise, once. It used to live as prose on one of the three fields; the
@@ -83,11 +84,12 @@ export function attachSeedField(input, { promise = SEED_PROMISE } = {}) {
   // over). Set here so a fourth seed field cannot repeat it.
   if (!input.getAttribute('type')) input.setAttribute('type', 'text');
 
-  const note = document.createElement('span');
-  note.className = 'seed-problem';
-  note.setAttribute('role', 'alert');
+  // The kit's FieldNote — the sentence under a field that refuses. It lands
+  // in the field's own Row·setting (`.seed-line` is the hook every screen's
+  // seed row wears), so it drops under the field on the row's own wrap.
+  const note = el('span', { class: 'as-fieldnote seed-problem', role: 'alert' });
   note.hidden = true;
-  (input.closest('.seed-line') || input.parentElement || input).appendChild(note);
+  (input.closest('.seed-line') || input.closest('.as-row') || input.parentElement || input).appendChild(note);
 
   let listener = null;
 

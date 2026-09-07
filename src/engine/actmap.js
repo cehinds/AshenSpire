@@ -21,13 +21,19 @@
 //
 // Headless: pure function of (registries, rng, act) — no DOM, no storage.
 
-import { generateActMap } from './mapgen.js';
+import { generateActMap, assignBossDestinations } from './mapgen.js';
 import { resolveUnknownNode } from './encounters.js';
 import { applyRunShape } from '../model/floorplan.js';
-import { MAP_SHAPE_LIMITS } from '../content/mapconfig.js';
+import { MAP_SHAPE_LIMITS, LEGACY_ACT_BOSSES } from '../content/mapconfig.js';
+import { bossDestinationLabel } from '../model/bossDestinationLabels.js';
 
 /**
- * buildActMap(registries, rng, act, mapShape) → mapGraph
+ * buildActMap(registries, rng, act, mapShape, { history }) → mapGraph
+ *
+ * `history` is the run's choice history at map birth (quest steps, E12): an
+ * event gated on an earlier choice enters this act's Unknown nodes only once
+ * that choice was made — so an act answers the acts before it. Absent ⇒ the
+ * ungated pool, byte-for-byte today's act for every existing seed.
  *
  * `act` is the CONTENT act (the caller answers Endless looping — main.js and
  * the tools pass their contentAct), required for the same reason
@@ -47,7 +53,7 @@ import { MAP_SHAPE_LIMITS } from '../content/mapconfig.js';
  * means a shape arrived from somewhere the screen does not guard — a hand-edited
  * save, a future caller. That is precisely when a loud failure is worth its cost.
  */
-export function buildActMap(registries, rng, act, mapShape = null) {
+export function buildActMap(registries, rng, act, mapShape = null, { history = [] } = {}) {
   const authored = registries.mapConfig(act);
   const shaped = applyRunShape(authored, mapShape, MAP_SHAPE_LIMITS);
   if (shaped.errors.length) {
@@ -58,9 +64,28 @@ export function buildActMap(registries, rng, act, mapShape = null) {
   const assigned = [];
   for (const node of Object.values(map.nodes)) {
     if (node.type === 'event') {
-      node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned, act });
+      node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned, act, history });
       if (node.resolved.kind === 'event') assigned.push(node.resolved.eventId);
     }
   }
-  return map;
+  const pool = registries.encounters.all().filter((encounter) => encounter.pool === 'boss' && (encounter.act || 1) === act);
+  if (!pool.length) throw new Error(`buildActMap: act ${act} has no boss encounters`);
+  // Every available slot has a different destination. When a narrow custom
+  // map cannot fit the pool, choose a seeded subset without replacement.
+  const selected = pool.length > map.columns ? rng.shuffle('map', pool).slice(0, map.columns) : pool;
+  return assignBossDestinations(map, selected.map((encounter) => ({
+    encounterId: encounter.id,
+    label: bossDestinationLabel(registries, encounter.id),
+  })));
+}
+
+/** Authoritative encounter identity for solo, LAN, and simulations. Read-only:
+ * loading/entering a legacy terminal never rerolls or regenerates its graph. */
+export function bossEncounterForNode(registries, graph, nodeId, act) {
+  const node = graph?.nodes?.[nodeId];
+  if (!node || node.type !== 'boss') throw new Error(`Boss destination '${nodeId}' is not a boss node`);
+  const encounterId = node.encounterId || (!graph.bossIds && graph.bossId === nodeId ? LEGACY_ACT_BOSSES[act] : null);
+  const encounter = encounterId && registries.encounters.get(encounterId);
+  if (!encounter || encounter.pool !== 'boss' || (encounter.act || 1) !== act) throw new Error(`Boss destination '${nodeId}' has no valid encounter for act ${act}`);
+  return encounterId;
 }

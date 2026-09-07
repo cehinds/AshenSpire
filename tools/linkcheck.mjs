@@ -62,7 +62,12 @@ import vm from 'node:vm';
 // has to remember it is a caller who will run this without it and read the
 // crash as "the tool is broken". So the tool re-execs ITSELF, once, and says so.
 if (!vm.SourceTextModule) {
-  const r = spawnSync(process.execPath, ['--experimental-vm-modules', fileURLToPath(import.meta.url), ...process.argv.slice(2)],
+  // --selftest copies the tree and links every module graph of the copy on top
+  // of the real one; on a 2 GB default heap (macOS arm64 runners) that child
+  // died of "Reached heap limit" (#498, run 296). The room is granted here, in
+  // the one place the child starts, so no caller has to remember it either.
+  const heap = process.argv.includes('--selftest') ? ['--max-old-space-size=4096'] : [];
+  const r = spawnSync(process.execPath, ['--experimental-vm-modules', ...heap, fileURLToPath(import.meta.url), ...process.argv.slice(2)],
     { stdio: 'inherit' });
   process.exit(r.status == null ? 2 : r.status);
 }

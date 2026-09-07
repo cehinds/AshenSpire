@@ -655,6 +655,9 @@ export const relics = [
     id: 'gravetendersBell',
     name: "Gravetender's Bell",
     rarity: 'uncommon',
+    // E12: the Keeper's thanks, and nothing else, hands this over — see
+    // RELIC_POOLS in model/schemas.js. Rarity still prices its buy-back.
+    pool: 'quest',
     icon: '🔔',
     triggers: [{ on: 'enemyDied', do: [{ op: 'draw', amount: 1 }] }],
     textTemplate: 'Whenever an enemy dies, draw {draw} card.',

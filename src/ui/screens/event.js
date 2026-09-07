@@ -5,10 +5,15 @@
 // launches it after the result text.
 
 import { executeRunEffects } from '../../engine/actions.js';
+import { eventChoicesWithHistory } from '../../content/events.js';
 import { esc } from '../components/tooltip.js';
 import { isEngaged, focusFirst } from '../input.js';
-import { isBindingChoice } from '../../model/consequence.js';
-import { beatArmer } from '../components/holdconfirm.js';
+// The fail-closed level rule goes through the framework's adopted door
+// (owner ruling; the derivation itself still lives in model/consequence.js).
+import { isBindingChoice } from '../../framework/confirmationRule.js';
+import { availableEventChoices, recordEventChoice } from '../../model/quests.js';
+import { beatArmer } from '../../framework/optionDecision.js';
+import { el, html, modalHead, modalFooter, artWell, prose, options, optionCard, decide, button } from '../kit/index.js';
 
 export function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
   const def = registries.events.get(eventId);
@@ -37,30 +42,40 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
   // bound is what the fix adds (Law 2: named container, proven inside it).
   // The bars inside stretch to the column; their `min-height: var(--tap-floor)`
   // (button.ev-choice, ui.css) is untouched, so nothing shrinks under 44.
-  app.innerHTML = `
-    <div class="screen" style="gap:20px">
-      <div class="event-art" style="font-size:56px">${esc(def.art || '❖')}</div>
-      <h2 style="color:var(--gold);font-size:24px">${esc(def.name).toUpperCase()}</h2>
-      <p style="max-width:560px;text-align:center;line-height:1.7;color:var(--parchment)">${esc(def.text)}</p>
-      <div id="choices" style="display:flex;flex-direction:column;gap:10px;min-width:min(420px,100%)"></div>
-    </div>`;
+  // THE EVENT IS BODY C ON THE PAGE (kit §05/§12): the door's head names it,
+  // the body is ArtWell + prose + one OptionCard per choice, the foot carries
+  // the way on once a choice has been made. It stands on the page rather
+  // than over one, so it wears the door's box without the veil.
+  const head = modalHead({ eyebrow: 'Event', title: def.name, closeLabel: 'Event' });
+  head.querySelector('.modal-close').hidden = true; // a decision has no way out but a choice
+  const door = el('section', { class: 'modal event-door', dataset: { size: 'md' }, role: 'region', 'aria-label': def.name }, [
+    head,
+    el('div', { class: 'modal-body' }, decide({
+      children: [
+        artWell({ glyph: def.art || '❖' }),
+        prose(def.text),
+        options([], { id: 'choices', class: 'ev-choices' }),
+      ],
+    })),
+  ]);
+  app.innerHTML = '';
+  const screen = el('div', { class: 'screen event-screen' }, door);
+  app.appendChild(screen);
 
   const box = app.querySelector('#choices');
-  def.choices.forEach((choice, i) => {
-    const btn = document.createElement('button');
-    // `ev-choice`, not a bare `.subtle`: these three bars are the only control
-    // on this screen and the floor belongs to THEM, not to every subtle button
-    // in the game. Law 4 is a ratchet, not a sweep — flooring `.subtle` would
-    // be the blanket conversion the law tells nobody to attempt.
-    btn.className = 'subtle ev-choice';
+  const visibleChoices = availableEventChoices(eventChoicesWithHistory(def), run);
+  visibleChoices.forEach(({ choice, index: i }, visibleIndex) => {
+    // Each choice is the kit's OptionCard: its label is the title; a price
+    // or a binding consequence rides as data the instruments read.
+    // No chevron: the hold hint the beat draws IS this card's affordance.
+    const btn = optionCard({ name: choice.label, className: 'ev-choice', arrow: false });
     // `style.fontSize = '13px'` was here, and it was Law 4 clause 1 backwards:
     // a px label does NOT answer the Text size control, while `.subtle`'s
     // `padding: 0.6rem` meant the BOX did. Text that will not grow inside a box
     // that will. The size now lives in the stylesheet in rem, where the one
     // question it answers is "how big is a letter".
     btn.dataset.choice = String(i);
-    btn.style.animationDelay = `${i * 70}ms`; // staggered entrance
-    btn.textContent = choice.label;
+    btn.style.animationDelay = `${visibleIndex * 70}ms`; // staggered entrance
     // A PRICE IS A CONTENT FACT AND THE SCREEN PUBLISHES IT, whether or not the
     // player can pay today. Vira's finding, and it is my own sentence back at
     // me — latent is not fixed.
@@ -109,10 +124,11 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
 
     if (!meets(choice.requires)) {
       btn.disabled = true;
-      btn.textContent += ' (cannot afford)';
+      btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: 'Cannot afford' }));
     } else {
       const commit = () => {
         executeRunEffects({ run, registries, rng }, choice.effects);
+        recordEventChoice(run, { eventId: def.id, choiceId: choice.id });
         showResult(choice.resultText);
       };
       // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
@@ -122,7 +138,13 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
       // position all moved into the machinery with it — a bar that cannot be
       // pressed still never gets armed, because this branch is the affordable
       // one and always was.
-      disarmers.push(arm(btn, 'eventChoice', { ctx: { binding }, onConfirm: commit }));
+      disarmers.push(arm(btn, 'eventChoice', {
+        ctx: { binding },
+        question: `Choose ${choice.label || choice.text || 'this event option'}?`,
+        detailHtml: choice.resultText ? `<p>${esc(choice.resultText)}</p>` : '',
+        confirmLabel: 'CHOOSE',
+        onConfirm: commit,
+      }));
     }
     box.appendChild(btn);
   });
@@ -137,14 +159,11 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
     // about — one screen's worth is nothing, thirteen floors of it is not.
     while (disarmers.length) disarmers.pop()();
     box.innerHTML = '';
-    const p = document.createElement('p');
-    p.style.cssText = 'max-width:560px;text-align:center;line-height:1.7;color:var(--muted);font-style:italic';
-    p.textContent = text;
-    const cont = document.createElement('button');
-    cont.textContent = run.combatEntered ? 'STEEL YOURSELF' : 'CONTINUE';
+    // The result reads as the decision's own sentence; the way on is the foot's primary.
+    box.appendChild(prose(text, { class: 'as-flavor event-result' }));
+    const cont = button({ label: run.combatEntered ? 'Steel yourself' : 'Continue', weight: 'primary' });
     cont.addEventListener('click', onDone);
-    box.appendChild(p);
-    box.appendChild(cont);
-    if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
+    door.appendChild(modalFooter({ primary: cont, size: 'medium' }));
+    if (isEngaged()) setTimeout(() => focusFirst('.event-door .modal-foot button'), 0);
   }
 }

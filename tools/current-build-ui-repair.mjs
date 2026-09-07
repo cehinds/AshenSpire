@@ -1,6 +1,17 @@
 #!/usr/bin/env node
 // #045/#046 current-build acceptance: real rendered title/combat geometry and
 // pointer/touch/keyboard timing against the single shipped tooltip surface.
+//
+// 2026-09-05 — Constantine reversed part of that acceptance: "no tool tip for
+// Status effects and player combatants". The one-surface rule stood on the
+// grounds that a second tooltip repeats what the frame's glance already says,
+// and that is still true of the intent and the HP/Poise bars — they stay
+// silent. It was never true of a status pip: the glance NAMES the effect
+// ("Effects Crimson Blight") and never explains it, so the pip now answers for
+// itself. The other half of his sentence was not a suppression at all but a
+// hole: the glance had only ever been wired to enemies, so the player's frame
+// answered nothing. Both sides now open the same surface, which is why its
+// variant is `combatant-context` and no longer `enemy-context`.
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -77,7 +88,7 @@ function boxReader() {
     const bottom = Math.max(...boxes.map((box) => box.bottom));
     return { left, top, right, bottom, width: right - left, height: bottom - top };
   })() : null;
-  const title = document.querySelector('.title-stack');
+  const title = document.querySelector('.title-menu');
   const wordmark = document.querySelector('[data-component="title-wordmark"]');
   const lines = [...(tip?.querySelectorAll('.tt-title, .tt-combatant-line') || [])].map((el) => el.textContent.replace(/\s+/g, ' ').trim());
   const tipBox = tip && getComputedStyle(tip).display !== 'none' ? rect(tip) : null;
@@ -184,7 +195,7 @@ async function main() {
       await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: shape.mobile, maxTouchPoints: 1 }, sessionId);
 
       await cdp.send('Page.navigate', { url: `${appUrl}?shot=title` }, sessionId);
-      await until(`!!document.querySelector('.title-stack')`, `${shape.name} title`);
+      await until(`!!document.querySelector('.title-menu')`, `${shape.name} title`);
       await wait(160);
       const titleState = await read();
       check(Math.abs(titleState.title?.centerDelta ?? 99) <= 1 && Math.abs(titleState.title?.wordmark?.centerDelta ?? 99) <= 1,
@@ -200,41 +211,53 @@ async function main() {
         `TOOLTIP-SEMANTICS-${shape.name.toUpperCase()}`, JSON.stringify(baseline.tooltip));
       check(baseline.hud?.paddingTop <= 1.2 && baseline.hud?.paddingBottom <= 1.2 && baseline.hud?.topGap <= 1.2,
         `HUD-DENSITY-${shape.name.toUpperCase()}`, `${baseline.hud?.mode} p${baseline.hud?.paddingTop}/${baseline.hud?.paddingBottom} gap${baseline.hud?.topGap}`);
-      const suppressedSurfaces = await evaluate(`(() => {
-        const selectors=['.combatant.enemy .intent','.combatant.enemy .status-icon','.combatant.enemy .meters .bar','.combatant.player .meters .bar'];
-        return selectors.map((selector) => {
+      // Per surface now, not blanket: `answers` is whether that surface is
+      // allowed its own attached tooltip. `data-tip-attached` is the real
+      // marker attachTooltip leaves — the older aria/data-tooltip pair alone
+      // could not see an attached pip, so a reversal here would have read as a
+      // pass.
+      const surfaceOwnership = await evaluate(`(() => {
+        const rows=[['.combatant.enemy .intent',false],['.combatant.enemy .meters .bar',false],['.combatant.player .meters .bar',false],['.combatant.enemy .status-icon',true]];
+        return rows.map(([selector,answers]) => {
           const el=document.querySelector(selector);
-          return {selector,found:!!el,ownsTooltip:!!el?.matches('[data-tooltip],[aria-describedby="tooltip"]')};
+          return {selector,answers,found:!!el,ownsTooltip:!!el?.matches('[data-tooltip],[aria-describedby="tooltip"],[data-tip-attached]')};
         });
       })()`);
-      check(suppressedSurfaces.every((entry) => entry.found && !entry.ownsTooltip)
+      check(surfaceOwnership.every((entry) => entry.found && entry.ownsTooltip === entry.answers)
           && baseline.redundantEnemyTooltips === 0,
-        `SECONDARY-TOOLTIP-SUPPRESSION-${shape.name.toUpperCase()}`, JSON.stringify(suppressedSurfaces));
+        `SECONDARY-TOOLTIP-SUPPRESSION-${shape.name.toUpperCase()}`, JSON.stringify(surfaceOwnership));
       if (!shape.mobile) {
         const suppressionBehavior = [];
         for (const [selector, expectedVariant] of [
-          ['.combatant.enemy .intent', 'enemy-context'],
-          ['.combatant.enemy .status-icon', 'enemy-context'],
-          ['.combatant.enemy .meters .bar', 'enemy-context'],
-          ['.combatant.player .meters .bar', null],
+          ['.combatant.enemy .intent', 'combatant-context'],
+          ['.combatant.enemy .meters .bar', 'combatant-context'],
+          // The player's frame answers the same glance the enemies do — it is
+          // the one surface, not a second one, so his bars own no tooltip.
+          ['.combatant.player .meters .bar', 'combatant-context'],
+          // The pip's own reading: no variant, and its title is the effect.
+          ['.combatant.enemy .status-icon', 'status'],
         ]) {
           const target = await evaluate(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); const r=e?.getBoundingClientRect(); return r&&{x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
           await move(target.x, target.y); await wait(560);
           const hoverState = await read();
-          suppressionBehavior.push({ selector, input: 'hover', count: hoverState.tooltip.count, visible: hoverState.tooltip.visible, variant: hoverState.tooltip.variant });
+          suppressionBehavior.push({ selector, input: 'hover', count: hoverState.tooltip.count, visible: hoverState.tooltip.visible, variant: hoverState.tooltip.variant, title: hoverState.tooltip.lines[0] || null });
           await move(2, shape.height - 2); await wait(80);
           await evaluate(`document.querySelector(${JSON.stringify(selector)}).dispatchEvent(new Event('gpfocus',{bubbles:true}))`);
           await wait(560);
           const focusState = await read();
-          suppressionBehavior.push({ selector, input: 'focus', count: focusState.tooltip.count, visible: focusState.tooltip.visible, variant: focusState.tooltip.variant });
+          suppressionBehavior.push({ selector, input: 'focus', count: focusState.tooltip.count, visible: focusState.tooltip.visible, variant: focusState.tooltip.variant, title: focusState.tooltip.lines[0] || null });
           await evaluate(`document.querySelector(${JSON.stringify(selector)}).dispatchEvent(new Event('gpblur',{bubbles:true}))`);
           await wait(80);
-          const expected = (state) => state.count === 1 && (expectedVariant ? state.visible && state.variant === expectedVariant : !state.visible);
+          const expected = (state) => state.count === 1 && state.visible && (expectedVariant === 'status'
+            ? state.variant === null && /Blight/.test(state.lines[0] || '')
+            : state.variant === expectedVariant);
           if (!expected(hoverState.tooltip) || !expected(focusState.tooltip)) break;
         }
         const trayEmpty = await evaluate(`!document.querySelector('.combatant-inspector-host')?.children.length`);
-        check(suppressionBehavior.length === 8 && suppressionBehavior.every((state) => state.count === 1
-            && (state.selector.includes('player') ? !state.visible : state.visible && state.variant === 'enemy-context'))
+        check(suppressionBehavior.length === 8 && suppressionBehavior.every((state) => state.count === 1 && state.visible
+            && (state.selector.includes('status-icon')
+              ? state.variant === null && /Blight/.test(state.title || '')
+              : state.variant === 'combatant-context'))
             && trayEmpty,
           'SECONDARY-TOOLTIP-BEHAVIOR-DESKTOP', JSON.stringify(suppressionBehavior));
         await cdp.send('Page.navigate', { url: `${appUrl}?shot=combat&shotEnemyContext=status&shotSettings=${settings}` }, sessionId);
@@ -262,7 +285,7 @@ async function main() {
       await wait(360);
       const visible = await read();
       const expected = visible.tooltip.lines;
-      check(visible.tooltip.visible && visible.tooltip.ariaHidden === 'false' && visible.tooltip.variant === 'enemy-context',
+      check(visible.tooltip.visible && visible.tooltip.ariaHidden === 'false' && visible.tooltip.variant === 'combatant-context',
         `DELAY-AFTER-500-${shape.name.toUpperCase()}`, JSON.stringify(expected));
       check(expected.length === 4 && /^HP \d+\/\d+$/.test(expected[1] || '') && /^Poise \d+\/\d+$/.test(expected[2] || '')
           && expected[3] === 'Effects Crimson Blight' && !/Intent|Move set|Block|Damage/i.test(expected.join(' ')),

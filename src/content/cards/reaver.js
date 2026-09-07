@@ -37,6 +37,29 @@ export const reaverCards = [
     textTemplate: 'Gain {block} Block. Draw {draw} card.',
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 5 }, { op: 'draw', amount: 1 }] },
   },
+  // THE UNARMED PACKAGE (framework contract: Unarmed fallback — the entities
+  // framework.evasiveGuard and framework.dodgeRoll, authored here as the base
+  // cards the unarmed guard and technique profiles resolve to). Evasive Guard
+  // is a guard that also dodges; Dodge Roll is the pure dodge, priced by the
+  // Weight Class the player stands in (mechanics.json), not by this cost.
+  {
+    id: 'evasiveGuard', name: 'Evasive Guard', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
+    keywords: [], icon: '🌀',
+    effects: [{ op: 'block', target: 'self', amount: 1 }, { op: 'dodgeRoll', target: 'self' }],
+    textTemplate: 'Gain {block} Block, then roll to evade: on a success, gain Block equal to the dodge.',
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 3 }, { op: 'dodgeRoll', target: 'self' }] },
+  },
+  {
+    id: 'dodgeRoll', name: 'Dodge Roll', class: 'colorless', rarity: 'starter', cost: 0, staminaCost: 1, type: 'skill',
+    keywords: [], icon: '💨',
+    effects: [{ op: 'dodgeRoll', target: 'self' }],
+    textTemplate: 'Roll to evade: on a success, gain Block from the dodge. Light: 1 Stamina. Medium: 2 Stamina, 1 Energy. Heavy: 3 Stamina, 2 Energy.',
+    // No `upgrade`: the pure dodge has nothing of its own to improve — its
+    // check is Dexterity and the Weight Class, its guard is the framework
+    // rule's, its price is the class's. An upgrade that changed none of them
+    // would spend an upgrade for nothing, so the card offers none and the
+    // upgrade opcode never lists a composed instance (see actions.js).
+  },
   {
     id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🗡',

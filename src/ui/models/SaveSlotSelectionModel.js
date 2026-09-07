@@ -7,17 +7,19 @@ import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
 const VALID_KINDS = Object.freeze(['load', 'new']);
 
-export function saveSlotSelectionModel(slots, { kind, selectedSlot = null } = {}) {
+export function saveSlotSelectionModel(slots, { kind, selectedSlot = null, allowEmpty = true } = {}) {
   if (!VALID_KINDS.includes(kind)) throw new Error(`Unknown save-slot selection kind: ${kind}`);
 
   const records = (Array.isArray(slots) ? slots : []).map(({ slot, summary }) => ({
     slot: Number(slot),
     hasSave: Boolean(summary),
-    selectable: kind === 'new' || Boolean(summary),
+    // Title can offer a new climb in an empty slot; an in-run Load
+    // selector has no such destination and excludes those slots.
+    selectable: kind === 'new' || allowEmpty || Boolean(summary),
   }));
   const requestedSlot = Number(selectedSlot);
   const requested = records.find((record) => record.slot === requestedSlot && record.selectable) || null;
-  const preferred = records.find((record) => record.selectable && (kind !== 'new' || !record.hasSave))
+  const preferred = records.find((record) => record.selectable && (kind === 'new' ? !record.hasSave : record.hasSave))
     || records.find((record) => record.selectable)
     || null;
   // An absent selection chooses the authored default. An explicit invalid
@@ -54,7 +56,7 @@ export function saveSlotSelectionModel(slots, { kind, selectedSlot = null } = {}
     accessibility: { role: 'button', disabled: actionSlot == null },
     behaviors: actionSlot == null ? [] : [behaviorModel(`${kind}-selected-save-slot`, {
       event: 'activate',
-      command: kind === 'new' ? 'create-in-save-slot' : 'load-save-slot',
+      command: kind === 'new' || !selected.hasSave ? 'create-in-save-slot' : 'load-save-slot',
       payload: { slot: actionSlot },
     })],
   });

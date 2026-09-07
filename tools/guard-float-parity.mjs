@@ -463,7 +463,7 @@ async function browserDoor() {
         await until(host, `!!document.querySelector('#lb-name')`, 'host lobby');
         await evaluate(host, `(()=>{const n=document.querySelector('#lb-name');n.value='Wren';n.dispatchEvent(new Event('input',{bubbles:true}));return true})()`);
         await evaluate(host, click('#lb-host'));
-        await until(host, `document.querySelector('h2')?.textContent==='AT THE FIRE'`, 'host fire');
+        await until(host, `/at the fire/i.test(document.querySelector('.lobby-room .as-title-m')?.textContent || '')`, 'host fire');
 
         await cdp.send('Page.navigate', { url: base }, guest.sessionId);
         await until(guest, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'guest LAN door');

@@ -46,13 +46,15 @@ import { esc, attachTooltip } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
-import { flaskIdentityHtml } from '../components/flask.js';
+import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, resolveContinue, unseenIds } from '../../model/rewardplan.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
+import { modEffectLines } from '../../model/loadout.js';
+import { el, modalHead, modalFooter, button } from '../kit/index.js';
 
-const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
+const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
 // caller (main.js collectArmament): run storage + meta.found + the discovery
@@ -62,7 +64,7 @@ const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔
 // no such caller exists today; the boundary is named, not covered.
 export function mountRewards(app, {
   registries, run, rewards, onDone, saves = null, rng = null,
-  onCollectArmament = null, onPersist = null,
+  onCollectArmament = null, onPersist = null, checkpoint = null,
 }) {
   const plan = rewardPlan(rewards, {
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
@@ -75,8 +77,19 @@ export function mountRewards(app, {
       (registries.balance.equipment.storageSlots || 8) - (((run.loadout || {}).storage) || []).length,
     ),
   });
-  const states = {}; // kind → 'taken' (absent = pending / implicitly left in manual mode)
-  let chosenCardId = null;
+  const states = {
+    ...(checkpoint?.states || {}),
+    ...(rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {}),
+  }; // kind → 'taken'|'skipped' (absent = pending / implicitly left in manual mode)
+  let chosenCardId = checkpoint?.chosenCardId || null;
+
+  function persistProgress() {
+    if (checkpoint) {
+      checkpoint.states = { ...states };
+      checkpoint.chosenCardId = chosenCardId;
+    }
+    if (onPersist) onPersist();
+  }
 
   // ---- the 'new' derivation: run inventory ∪ the profile's record ----------
   const meta = (saves && saves.loadMeta && saves.loadMeta()) || {};
@@ -105,30 +118,27 @@ export function mountRewards(app, {
   const apply = {
     cinders(row) {
       run.cinders += row.amount;
-      if (onPersist) onPersist();
       return true;
     },
+    // Smithing Stones are granted and durably claimed at combat resolution,
+    // before this presentation can be interrupted. This row is informational
+    // and begins in Taken state; reaching this function would be a contract bug.
+    smithingStone() { return false; },
     card(row) {
       run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
       recordSeen('card', [row.cardId]);
-      // A selected card is durable before Continue can close the offer. The
-      // caller hands in the run's one persistence door; a failed write throws
-      // before the row can claim Taken (the armament ordering, same rule).
-      if (onPersist) onPersist();
       return true;
     },
     flask(row) {
       run.flasks.push({ flaskId: row.flaskId });
       recordSeen('flask', [row.flaskId]);
-      if (onPersist) onPersist();
       return true;
     },
     relic(row) {
       run.relics.push(row.relicId);
       syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
       recordSeen('relic', [row.relicId]);
-      if (onPersist) onPersist();
       return true;
     },
     armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
@@ -140,6 +150,10 @@ export function mountRewards(app, {
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
     if (!apply[row.kind](row)) return false;
     states[row.kind] = 'taken';
+    // Reward state and the run mutation cross one save door. A reload can now
+    // distinguish an already-applied row from an untouched one and cannot
+    // duplicate a card, currency, flask, relic, or armament.
+    persistProgress();
     sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
     renderMenu(viaKind || row.kind);
     return true;
@@ -150,7 +164,12 @@ export function mountRewards(app, {
     const state = states[row.kind];
     switch (row.kind) {
       case 'cinders':
-        return { title: `${row.amount} cinders`, body: state === 'taken' ? `${run.cinders} total` : 'The climb’s coin.' };
+        return { title: `${row.amount} cinders`, body: state === 'taken' ? `Granted · ${run.cinders} total` : 'The climb’s coin.' };
+      case 'smithingStone':
+        return {
+          title: `${row.amount} Smithing Stone${row.amount === 1 ? '' : 's'}`,
+          body: `<b>${row.stoneBalanceAfter} total</b> · secured for the next Shrine.`,
+        };
       case 'card': {
         if (state === 'taken') {
           const def = registries.cards.get(chosenCardId);
@@ -161,14 +180,27 @@ export function mountRewards(app, {
       case 'flask': {
         const def = registries.flasks.get(row.flaskId);
         if (row.blockedBy === 'slots') return { title: 'Flask', body: `A ${esc(def.name)} — but your flask slots are full. It stays in the mud.` };
-        return { title: 'Flask', body: `<b>${flaskIdentityHtml(def)}</b>` };
+        // WHAT IT DOES, ON THE ROW (Constantine, 2026-09-04: "I have no idea
+        // what this potion does"). The relic row has always carried its
+        // sentence and the shop shows `textTemplate`; a flask offered as
+        // spoils showed a name and an icon alone, and Take was a blind choice.
+        // `flaskDetailLines` is that sentence's one home (components/flask.js),
+        // the same lines the flask menu and its inspect door read — not a
+        // tooltip: a player deciding whether to take it must SEE it.
+        const lines = flaskDetailLines(def).map((line) => esc(line)).join('<br>');
+        return { title: 'Flask', body: `<b>${flaskIdentityHtml(def)}</b>${lines ? `<br>${lines}` : ''}` };
       }
       case 'armament': {
         // The copy tracks the STATE, because the state is now true: nothing is
         // stored until the row is taken (the roll is pure — main.js rollDrop),
         // so "Carried" before a take would be the f29d468 lie re-worded.
         const a = (registries.equipment.armaments || []).find((x) => x.id === row.armamentId);
-        const name = a ? `<b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` : 'An armament.';
+        // `a.mods` is the raw vocabulary (`strike.damage=+4`) and this line used
+        // to print it verbatim — engine keys on the screen where a reward is
+        // chosen. modEffectLines is the one home for turning them into a
+        // sentence (src/model/loadout.js).
+        const effects = modEffectLines(registries, a).join(', ');
+        const name = a ? `<b>${esc(a.name)}</b> — ${esc(effects || 'plain steel')}` : 'An armament.';
         // A full bag reads its refusal in the flask's own idiom — the copy
         // switches on the model's token (blockedBy), never a re-derivation.
         if (row.blockedBy === 'storage') return { title: 'Armament', body: `${name} — but your storage is full. It stays where it fell.` };
@@ -204,39 +236,75 @@ export function mountRewards(app, {
     return dial.modes.includes(settings.rewardCollect) ? settings.rewardCollect : dial.def;
   }
 
+  // ---- THE DOOR: a decision modal OVER whatever stands beneath ---------------
+  // Constantine: victory is a modal over the battlefield, and the cinders are
+  // granted on arrival. Each view (menu, detail, chooser) is the same md door
+  // rebuilt: kit head (Eyebrow + Title, no way out but a choice), a body, and
+  // a foot on the button ladder. It lives inside `app`, so the next screen's
+  // own mount clears it exactly as it cleared the old full-screen menu.
+  function door({ eyebrow, title, body, foot, attrs = {} }) {
+    app.querySelector('.reward-veil')?.remove();
+    if (!app.firstElementChild) app.appendChild(el('div', { class: 'screen reward-backdrop' }));
+    const head = modalHead({ eyebrow, title, closeLabel: 'Rewards' });
+    head.querySelector('.modal-close').hidden = true;
+    const modal = el('section', {
+      class: 'modal reward-door', dataset: { size: 'md' }, role: 'dialog', 'aria-modal': 'true', 'aria-label': title, ...attrs,
+    }, [head, el('div', { class: 'modal-body reward-body' }, body), foot]);
+    const veil = el('div', { class: 'modal-veil reward-veil' }, modal);
+    app.appendChild(veil);
+    return modal;
+  }
+  function grantCinders() {
+    const row = plan.rows.find((r) => r.kind === 'cinders');
+    if (!row || states.cinders || row.blockedBy) return;
+    if (apply.cinders(row)) {
+      states.cinders = 'taken';
+      persistProgress();
+    }
+  }
+
   // ---- the menu ------------------------------------------------------------
   function renderMenu(focusKind = null) {
     const mode = collectMode();
     const pending = plan.rows.filter((r) => !states[r.kind] && !r.blockedBy);
-    app.innerHTML = `
-      <div class="screen" style="padding-bottom:calc(var(--tap-floor, 44px) + 16px)">
-        <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
-        ${plan.rows.length ? '<p class="subtitle">CLAIM YOUR SPOILS</p>' : ''}
-        <div class="class-row reward-menu">
-          ${plan.rows.map((row) => {
-            const state = states[row.kind] || (row.blockedBy ? 'blocked' : 'pending');
-            const { title, body } = rowBody(row);
-            return `
-            <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}"
-                 data-kind="${esc(row.kind)}" data-state="${esc(state)}"
-                 data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
-              <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
-              <div class="cp-body">
-                <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
-                <p>${body}</p>
-                ${state === 'taken' ? '<span class="chip">Taken</span>'
-                  : state === 'blocked' ? '<span class="chip">Full — choose Skip to leave it behind</span>'
-                  : state === 'skipped' ? '<span class="chip">Skipped</span>'
-                  : ''}
-              </div>
-              ${state === 'blocked' ? `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true" aria-label="Skip unavailable ${esc(title)} reward">Skip</button>` : ''}
-            </div>`;
-          }).join('')}
-        </div>
-        <button class="subtle" id="reward-continue" data-focusable="true" aria-describedby="reward-hold-copy">${
-          mode === 'auto' && pending.length ? 'CONTINUE — take the rest' : 'CONTINUE — leave the rest'}</button>
-        <p id="reward-hold-copy" class="subtitle" aria-live="polite">PRESS AND HOLD TO CONTINUE</p>
-      </div>`;
+    const rowsHtml = plan.rows.map((row) => {
+      const state = states[row.kind] || (row.blockedBy ? 'blocked' : 'pending');
+      const { title, body } = rowBody(row);
+      return `
+        <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}"
+             data-kind="${esc(row.kind)}" data-state="${esc(state)}"
+             data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
+          <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
+          <div class="cp-body">
+            <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
+            <p>${body}</p>
+            ${state === 'taken' ? '<span class="chip">Taken</span>'
+              : state === 'blocked' ? '<span class="chip">Full — choose Skip to leave it behind</span>'
+              : state === 'skipped' ? '<span class="chip">Skipped</span>'
+              : ''}
+          </div>
+          ${state === 'blocked' ? `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true" aria-label="Skip unavailable ${esc(title)} reward">Skip</button>` : ''}
+        </div>`;
+    }).join('');
+    // The button is the verb; the FootNote says what the verb does here (the
+    // E11 dial: auto-collect takes the rest, manual leaves it) and how to press.
+    const cont = button({
+      label: 'Continue',
+      weight: 'primary', id: 'reward-continue', attrs: { 'aria-describedby': 'reward-hold-copy' },
+    });
+    const foot = modalFooter({
+      note: mode === 'auto' && pending.length ? 'Hold to continue — takes the rest' : 'Hold to continue — leaves the rest',
+      primary: cont, className: 'reward-foot', size: 'medium',
+    });
+    const note = foot.querySelector('.modal-foot-note');
+    note.id = 'reward-hold-copy';
+    note.setAttribute('aria-live', 'polite');
+    door({
+      eyebrow: plan.rows.length ? 'Claim your spoils' : 'Spoils',
+      title: rewards.title || 'Victory',
+      body: el('div', { class: 'class-row reward-menu', html: rowsHtml }),
+      foot,
+    });
 
     for (const el of app.querySelectorAll('.reward-kind')) {
       const kind = el.dataset.kind;
@@ -267,11 +335,11 @@ export function mountRewards(app, {
       btn.addEventListener('click', (ev) => {
         ev.stopPropagation();
         states[btn.dataset.skip] = 'skipped';
+        persistProgress();
         renderMenu(btn.dataset.skip);
       });
     }
 
-    const cont = app.querySelector('#reward-continue');
     attachTooltip(cont, () => (mode === 'auto'
       ? `<div class="tt-title">Continue</div>${esc('Takes every pending reward; a card offer is picked for you.')}`
       : `<div class="tt-title">Continue</div>${esc('Done — only what you chose comes along.')}`));
@@ -282,7 +350,10 @@ export function mountRewards(app, {
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
       const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
       for (const row of toTake) {
-        if (apply[row.kind](row)) states[row.kind] = 'taken';
+        if (apply[row.kind](row)) {
+          states[row.kind] = 'taken';
+          persistProgress();
+        }
       }
       if (toTake.length) sfx.play('rewardTake');
       onDone(chosenCardId);
@@ -290,7 +361,11 @@ export function mountRewards(app, {
     // The action is registered in secondbeat's enumerable table, so native
     // keyboard/gamepad presses enter the same shared armPress door as pointer
     // and touch; the configured dial remains the one duration authority.
-    beatArmer(meta, registries)(cont, 'rewardContinue', { onConfirm: finish });
+    beatArmer(meta, registries)(cont, 'rewardContinue', {
+      question: 'Leave these rewards and continue?',
+      confirmLabel: 'CONTINUE',
+      onConfirm: finish,
+    });
 
     if (isEngaged()) {
       setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-kind="${focusKind}"]`))
@@ -304,19 +379,19 @@ export function mountRewards(app, {
   function renderDetail(row) {
     const body = rowBody(row);
     const isFlask = row.kind === 'flask';
-    app.innerHTML = `
-      <div class="screen" data-reward-detail="${esc(row.kind)}">
-        <h2 style="color:var(--gold);font-size:26px">${isFlask ? 'POTION' : 'ARMAMENT'}</h2>
-        <p class="subtitle">${isFlask ? 'INSPECT THE POTION' : 'INSPECT THE ARMAMENT'}</p>
+    const takeButton = button({ label: `Take ${isFlask ? 'potion' : 'armament'}`, weight: 'primary', id: 'reward-detail-take' });
+    const backButton = button({ label: 'Back', id: 'reward-back', className: 'subtle' });
+    door({
+      eyebrow: isFlask ? 'Inspect the potion' : 'Inspect the armament',
+      title: isFlask ? 'Potion' : 'Armament',
+      attrs: { dataset: { size: 'md', rewardDetail: row.kind } },
+      body: el('div', { class: 'class-row reward-menu', html: `
         <div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
           <div class="glyph">${KIND_GLYPHS[row.kind]}</div>
           <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-          <button class="subtle" id="reward-detail-take" data-focusable="true">TAKE ${isFlask ? 'POTION' : 'ARMAMENT'}</button>
-          <button class="subtle" id="reward-back" data-focusable="true">Back</button>
-        </div>
-      </div>`;
+        </div>` }),
+      foot: modalFooter({ secondary: [backButton], primary: takeButton, className: 'reward-foot', size: 'medium' }),
+    });
     app.querySelector('#reward-detail-take').addEventListener('click', () => take(row, row.kind));
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">Back</div>${esc('Return without collecting; your other choices keep.')}`);
@@ -324,19 +399,25 @@ export function mountRewards(app, {
     if (isEngaged()) setTimeout(() => focusFirst('#reward-detail-take') || focusFirst('#reward-back'), 0);
   }
 
-  // ---- the card chooser: opens from the card row, Back returns -------------
+  // ---- the card chooser: select first, then explicitly confirm -------------
   function renderChooser() {
     const row = plan.rows.find((r) => r.kind === 'card');
-    app.innerHTML = `
-      <div class="screen">
-        <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
-        <p class="subtitle">CHOOSE A CARD</p>
-        <div class="reward-row"></div>
-        <button class="subtle" id="reward-back" data-focusable="true">Back</button>
-      </div>`;
+    const backButton = button({ label: 'Back', id: 'reward-back', className: 'subtle' });
+    const confirmButton = button({
+      label: 'Confirm', weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
+    });
+    door({
+      eyebrow: 'Choose a card',
+      title: rewards.title || 'Victory',
+      body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': 'Card rewards' }),
+      foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
+    });
     const strip = app.querySelector('.reward-row');
+    let selectedCardId = null;
     for (const cardId of row.cardIds) {
       const el = renderCard(registries, { cardId, upgraded: false }, {});
+      el.setAttribute('role', 'radio');
+      el.setAttribute('aria-checked', 'false');
       if (marks.cards.includes(cardId)) {
         // The marker is a RENDERED badge, not only a data attribute — Codex
         // 4989824448's third finding: `data-new` alone had no consumer in any
@@ -350,9 +431,20 @@ export function mountRewards(app, {
         badge.textContent = 'NEW';
         el.appendChild(badge);
       }
-      el.addEventListener('click', () => take({ ...row, cardId }, 'card'));
+      el.addEventListener('click', () => {
+        selectedCardId = cardId;
+        for (const candidate of strip.querySelectorAll('.card')) {
+          const selected = candidate === el;
+          candidate.classList.toggle('reward-selected', selected);
+          candidate.setAttribute('aria-checked', String(selected));
+        }
+        confirmButton.disabled = false;
+      });
       strip.appendChild(el);
     }
+    confirmButton.addEventListener('click', () => {
+      if (selectedCardId) take({ ...row, cardId: selectedCardId }, 'card');
+    });
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">Back</div>${esc('Return to the spoils — the offer keeps.')}`);
     back.addEventListener('click', () => renderMenu('card'));
@@ -360,5 +452,6 @@ export function mountRewards(app, {
   }
 
   sfx.play('victory');
+  grantCinders();
   renderMenu();
 }

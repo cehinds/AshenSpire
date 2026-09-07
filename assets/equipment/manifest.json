@@ -4,6 +4,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "staffOrb",
+        "kind": "staff",
         "metal": "6B5D45",
         "scale": "1.00"
       },
@@ -16,6 +17,7 @@
       "fields": {
         "accent": "C9502E",
         "geom": "axe",
+        "kind": "weapon",
         "metal": "A8A090",
         "scale": "1.00"
       },
@@ -28,6 +30,7 @@
       "fields": {
         "accent": "B5541C",
         "geom": "staffOrb",
+        "kind": "staff",
         "metal": "4B3522",
         "scale": "0.95"
       },
@@ -40,6 +43,7 @@
       "fields": {
         "accent": "B5541C",
         "geom": "staffSkull",
+        "kind": "staff",
         "metal": "B8AE98",
         "scale": "1.00"
       },
@@ -52,6 +56,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "round",
+        "kind": "shield",
         "metal": "8E8678",
         "scale": "0.80"
       },
@@ -64,6 +69,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "dagger",
+        "kind": "weapon",
         "metal": "C0B8A6",
         "scale": "1.00"
       },
@@ -76,6 +82,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "staffFlame",
+        "kind": "staff",
         "metal": "6B5D45",
         "scale": "1.00"
       },
@@ -88,6 +95,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "staffBranch",
+        "kind": "staff",
         "metal": "6B5D45",
         "scale": "1.00"
       },
@@ -100,6 +108,7 @@
       "fields": {
         "accent": "C9502E",
         "geom": "staffFlame",
+        "kind": "staff",
         "metal": "4B3522",
         "scale": "0.95"
       },
@@ -112,6 +121,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "colossal",
+        "kind": "weapon",
         "metal": "B8B0A0",
         "scale": "1.00"
       },
@@ -124,6 +134,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "polearm",
+        "kind": "weapon",
         "metal": "A8A090",
         "scale": "1.00"
       },
@@ -136,6 +147,7 @@
       "fields": {
         "accent": "C9502E",
         "geom": "curved",
+        "kind": "weapon",
         "metal": "C6BEAC",
         "scale": "1.00"
       },
@@ -148,6 +160,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "kite",
+        "kind": "shield",
         "metal": "8E8678",
         "scale": "1.00"
       },
@@ -160,6 +173,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "lantern",
+        "kind": "shield",
         "metal": "6B5D45",
         "scale": "0.85"
       },
@@ -172,6 +186,7 @@
       "fields": {
         "accent": "7FA8C9",
         "geom": "dagger",
+        "kind": "shield",
         "metal": "C0B8A6",
         "scale": "0.85"
       },
@@ -184,6 +199,7 @@
       "fields": {
         "accent": "7FA8C9",
         "geom": "round",
+        "kind": "shield",
         "metal": "8E8678",
         "scale": "1.00"
       },
@@ -196,6 +212,7 @@
       "fields": {
         "accent": "C9502E",
         "geom": "spiked",
+        "kind": "shield",
         "metal": "8E8678",
         "scale": "1.00"
       },
@@ -208,6 +225,7 @@
       "fields": {
         "accent": "7FA8C9",
         "geom": "staffCrystal",
+        "kind": "staff",
         "metal": "6B5D45",
         "scale": "1.00"
       },
@@ -220,6 +238,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "sword",
+        "kind": "weapon",
         "metal": "B8B0A0",
         "scale": "1.00"
       },
@@ -232,6 +251,7 @@
       "fields": {
         "accent": "C9502E",
         "geom": "torch",
+        "kind": "shield",
         "metal": "6B5D45",
         "scale": "0.90"
       },
@@ -244,6 +264,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "tower",
+        "kind": "shield",
         "metal": "7E766A",
         "scale": "1.00"
       },
@@ -256,6 +277,7 @@
       "fields": {
         "accent": "7FA8C9",
         "geom": "twin",
+        "kind": "weapon",
         "metal": "C0B8A6",
         "scale": "1.00"
       },
@@ -268,6 +290,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "hammer",
+        "kind": "weapon",
         "metal": "8E8678",
         "scale": "1.00"
       },
@@ -280,6 +303,7 @@
       "fields": {
         "accent": "C9A227",
         "geom": "staffHorn",
+        "kind": "staff",
         "metal": "B8AE98",
         "scale": "1.00"
       },

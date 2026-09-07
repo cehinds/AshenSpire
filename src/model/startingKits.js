@@ -194,7 +194,14 @@ function armourRows(registries, classId) {
   return (((registries || {}).equipment || {}).armour || []).filter((o) => o.classId === classId);
 }
 
-function armourIsStartingEligible(row, meta, registries, classId) {
+/**
+ * Whether a class's armour row may be WORN AT RUN START. Three ways in: free,
+ * listed by character creation, or earned. Exported because it is the only
+ * answer to "what can a run start in" — validation asked that question by
+ * re-listing the axes it remembered and missed one every round, so it asks this
+ * instead (model/loadout.js selectableStartingLoadouts).
+ */
+export function armourIsStartingEligible(row, meta, registries, classId) {
   if (!row) return false;
   if (row.unlock === '') return true;
   if ((classCreationConfig(registries, classId).armourIds || []).includes(row.id)) return true;

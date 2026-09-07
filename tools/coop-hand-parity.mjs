@@ -272,7 +272,7 @@ async function main() {
     await until(host, `!!document.querySelector('#lb-name')`, 'host lobby');
     await ev(host, `(() => { const n = document.querySelector('#lb-name'); n.value = 'Wren'; n.dispatchEvent(new Event('input')); return true; })()`);
     await ev(host, click('#lb-host'));
-    await until(host, `document.querySelector('h2')?.textContent === 'AT THE FIRE'`, 'host at the fire');
+    await until(host, `/at the fire/i.test(document.querySelector('.lobby-room .as-title-m')?.textContent || '')`, 'host at the fire');
 
     await cdp.send('Page.navigate', { url: base }, guest.sessionId);
     await until(guest, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'guest sees LAN');

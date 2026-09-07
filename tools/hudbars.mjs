@@ -331,8 +331,18 @@ const READ = `(() => {
       : [];
     const labelW = vis.length ? Math.max(...vis.map((s) => s.getBoundingClientRect().width))
       : (labelHost ? labelHost.scrollWidth : 0);
+    // A CUT LABEL COUNTS AS A COLLISION, and it has to, because the kit changed
+    // what "does not fit" LOOKS like. The plate's label and value are contained
+    // (styles/kit.css gives them min-width 0, overflow hidden, ellipsis),
+    // so a label too wide for its plate no longer pushes the plate's scrollWidth
+    // past its clientWidth — it silently becomes "HEA…". Measured: with the
+    // degradation rung deleted (--selftest's label plant) the plate reported
+    // scrollWidth == clientWidth and A4 stayed green over a label the player
+    // cannot read. The visible label variant must fit the box WHOLE; an ellipsis
+    // is the last resort of a box that has already lost this argument.
+    const clipped = vis.some((sp) => sp.scrollWidth > sp.clientWidth + 0.5);
     const overflow = plate
-      ? (plate.scrollWidth > plate.clientWidth + 0.5 || unit.scrollWidth > unit.clientWidth + 0.5)
+      ? (plate.scrollWidth > plate.clientWidth + 0.5 || unit.scrollWidth > unit.clientWidth + 0.5 || clipped)
       : n(labelW) > n(el.getBoundingClientRect().width) + 0.5;
     return {
       id: el.dataset.res || 'hp(legacy)',
@@ -347,6 +357,7 @@ const READ = `(() => {
       floored: el.dataset.floored === '1',
       dashed: getComputedStyle(el).borderTopStyle === 'dashed',
       labelW: n(labelW),
+      clipped,
       overflow,
     };
   });
@@ -849,7 +860,8 @@ function judge(shape, rows, hpDomain) {
     for (const bar of r.bars) {
       if (bar.overflow) {
         fail('A4', bar.plated
-          ? `${tag}: at max ${r.max} the "${bar.id}" plate clips its own label ("${bar.visibleLabel}", ${bar.labelW} px) — the degradation stage (or its reserve) for this width is missing.`
+          ? `${tag}: at max ${r.max} the "${bar.id}" plate clips its own label ("${bar.visibleLabel}", ${bar.labelW} px`
+            + `${bar.clipped ? ', cut to an ellipsis' : ''}) — the degradation stage (or its reserve) for this width is missing.`
           : `${tag}: at max ${r.max} the "${bar.id}" label is ${bar.labelW} px inside a ${bar.w} px trough — it collides with itself. `
             + `The degradation stage for this width is missing.`);
       }
@@ -1006,25 +1018,43 @@ const MUTANTS = Object.freeze({
   // every width, exactly what deleting or mis-editing the container-query block
   // does. The reserve only applies inside the 6.75em window, so the widest
   // label lands in a plate that never reserved room for it.
+  // WHERE THE STAGE LIVES NOW: the plate is the kit's Meter (styles/kit.css
+  // § METER) and its degradation rung is a container query that drops the label
+  // under 9rem of the meter's own inline size, not three `.l-*` variants in
+  // combat.css. A4's claim is unchanged
+  // — the VISIBLE label must fit the box that holds it — so the plant is a plate
+  // whose box is too small for the label it is still showing.
+  // TWO AIMS THAT DID NOT FIRE, recorded so the next person does not spend the
+  // night I did. (1) Deleting the rung (`display: inline !important` inside the
+  // container query) changes nothing at 320x640: the shipped labels there are
+  // HP/MP/SP and the meters are not under 8em, so the rung is not the thing
+  // holding that shape together. (2) A 3.4rem label does not clip either — the
+  // plate is a flex item with no fixed width, so an oversized label STEALS ROOM
+  // FROM THE TROUGH instead of overflowing (which is P4/P5's subject in
+  // tools/hudparity.mjs, not A4's). A fixed narrow plate is the edit that puts
+  // the label in a box it cannot fit — the shape a reserved column gets written
+  // as — and it reds A4 at every bar (measured: hp "HP 40/40" 26.77 px in 12 px,
+  // 6 findings at 320x640).
   label: {
-    file: 'styles/combat.css',
-    find: '.resplate .l-full, .resplate .l-num, .resplate .l-glyph { display: none; }',
-    replace: '.resplate .l-full, .resplate .l-num, .resplate .l-glyph { display: none; }\n'
-      + '.resplate .l-full { display: inline !important; }',
+    file: 'styles/kit.css',
+    append: '\n.as-meter > .m-plate { width: 12px; }\n',
     expect: 'A4',
-    why: 'the widest label variant shown at every width — the missing degradation stage',
+    why: 'a plate boxed narrower than the label it is still showing — the missing degradation stage',
   },
   // A5 — THE TOP-ROW BUTTONS FALL UNDER THE TAP FLOOR. This is not invented:
   // `width/height: 3rem` is what those buttons WERE, and they rendered 27
   // device px against a 44 px floor on dev = 08e184a (the comment above the
   // rule in combat.css says so, from this tool). The plant deletes the
   // combat-scoped floor and lets them fall back to exactly that shipped defect.
+  // The top row's buttons are the kit's IconButton now, so their box is
+  // `--iconbtn-size` in one place instead of a combat-scoped floor. The plant
+  // still hands them back exactly the 3rem that shipped the defect.
   tapfloor: {
-    file: 'styles/combat.css',
-    find: '.topbar.combat-hud .topbar-btn {\n  width: auto; height: auto;\n  min-width: var(--tap-floor); min-height: var(--tap-floor);\n}',
-    replace: '/* floor removed by --selftest */',
+    file: 'styles/kit.css',
+    find: '  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;\n  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);',
+    replace: '  width: 3rem; height: 3rem; flex: 0 0 auto;\n  min-width: 3rem; min-height: 3rem;',
     expect: 'A5',
-    why: 'the combat tap floor deleted — the buttons fall back to the 3rem that really shipped',
+    why: 'the IconButton box shrunk to the 3rem that really shipped — the buttons fall under the floor',
   },
 });
 
@@ -1062,7 +1092,12 @@ async function runSelftest(href) {
   for (const [arm, m] of Object.entries(MUTANTS)) {
     const path = resolve(TREE, m.file);
     const before = readFileSync(path, 'utf8');
-    if (!before.includes(m.find)) {
+    // A PLANT IS EITHER A SUBSTITUTION OR AN APPEND, and both are real edits.
+    // `find`/`replace` needs an anchor and says so when the anchor goes; an
+    // `append` arrives at the end of the sheet, which is how a regression written
+    // after the kit's own rules would land (later in source order, same
+    // specificity, so it wins the tie honestly).
+    if (m.find && !before.includes(m.find)) {
       console.log(`  ${arm.padEnd(9)} PLANT DID NOT APPLY — the anchor is gone from ${m.file}.`);
       console.log(`            A known-bad that cannot be planted proves nothing; re-point it before trusting ${m.expect}.`);
       results.push({ arm, ok: false, reason: 'anchor absent' });
@@ -1070,7 +1105,7 @@ async function runSelftest(href) {
     }
     let got = null;
     try {
-      writeFileSync(path, before.replace(m.find, m.replace));
+      writeFileSync(path, m.append ? before + m.append : before.replace(m.find, m.replace));
       await build();
       got = await verdictAt(href, SHAPE, hpDomain);
     } finally {
@@ -1102,7 +1137,8 @@ async function runSelftest(href) {
   if (!cleanOk) for (const f of clean.fails) console.log(`            ${f}`);
 
   const bad = results.filter((r) => !r.ok);
-  console.log(`\nDOOR: every plant above is an edit to a REAL SHIPPED FILE (styles/combat.css), rebuilt through
+  console.log(`\nDOOR: every plant above is an edit to a REAL SHIPPED FILE (styles/kit.css, since the plate and
+      the top row's buttons are kit atoms), rebuilt through
       tools/launch.mjs into dist/AshenSpire.html and re-rendered in headless Chromium. The known-bad
       travels the stylesheet, the bundler, the browser, the cascade, the container queries and the same
       READ the standing run uses. NOTHING in this block is handed to judge() as a fixture.

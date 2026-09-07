@@ -360,8 +360,8 @@ jobs:
     name: the checks that need a real browser
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
 
@@ -371,6 +371,17 @@ jobs:
             [ -x "$p" ] && echo "found: $p" && "$p" --version
           done
           echo "(probe exits 2 if none of these exist — unknown, which blocks)"
+
+      - name: Hand-side placement reaches the correct rendered side
+        # #16's remaining live half after #306: exercise every legal left/right
+        # armament slot through the actual stylesheet and browser compositor.
+        run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs
+
+      - name: The hand-side gate can fail — its same-door plants, each caught
+        # The selftest copies the real tree, plants each known-bad in the file a
+        # real regression would change, and requires the named red from the whole
+        # browser door. A green baseline alone is not evidence that this is a gate.
+        run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs --selftest
 
       - name: Unavailable instrument resolves to 2, not to a verdict
         # THIS STEP EXISTS BECAUSE OF RUN 1 OF THIS WORKFLOW. The probe timed out
@@ -527,18 +538,25 @@ jobs:
       # THE STEP IS NOW A PLAIN BLOCKING GATE with nothing waived. If a future
       # act needs a waiver here, it needs a card id and it must fail the moment
       # its findings go away — the carve-out is not a standing permission.
-      - name: The combat hint strip is under the cards and touches no other control
-        # Six checks per cell over eight declared cells; a cell that stops being
-        # reached is red (H0), never absent. The strip is display:none on the
-        # narrow layout, so every check there is `unknown` and counts toward
-        # nothing — the tool prints that as a state with its reason.
+      - name: The combat action row's controls are clear of the cards, whole, and touch no other furniture
+        # Five checks per cell over eight declared cells (two shapes x three text
+        # sizes, plus a rebound-wide-label cell per shape), H4 on the wide cells;
+        # a cell that stops being reached is red (H0), never absent, and the
+        # number of checks made is asserted against the number owed. BOTH
+        # layouts are measured: the row renders on the narrow layout (the retired
+        # strip never did), and the phone cell runs under an emulated touch +
+        # coarse pointer so the stylesheet's coarse-pointer rules apply. An
+        # `unknown` blocks (exit 2) rather than counting toward nothing. (#527)
         run: node tools/verdict.mjs -- node tools/hintstrip.mjs
 
-      - name: …and that gate can fail — six known-bads, each through the real door
+      - name: …and that gate can fail — its known-bads, each through the real door
         # Inverted expectation, the idiom this job already uses three times.
-        # Seven whole-program runs (six plants + the unplanted clean edge), each
+        # One whole-program run per plant plus the unplanted clean edge (the
+        # tool declares its own corpus and prints the count — a number typed
+        # here would be the second home this block has been trimmed for), each
         # copying the real tree, editing it as FILE BYTES, and booting its own
-        # browser: ~9 minutes on the Linux box it was wired on. Stated rather
+        # browser: ~15 minutes for eleven plants on the Linux box it was re-aimed
+        # on (#527; ~9 for the original six). Stated rather
         # than guessed — this workflow bills by the minute and a runner will be
         # slower. This is the most expensive step in the file; if the budget
         # ever has to give, CUT IT ON PURPOSE WITH A NOTE, do not let it rot.
@@ -629,10 +647,15 @@ jobs:
           # and no cell list here — hintstrip declares its own population and
           # prints it, and a number typed beside the list that owns it is the
           # second-home defect this block has already been trimmed for twice.
-          echo "  · the combat hint strip is below every card, whole, on screen, and touching"
-          echo "    NO other combat control — at every cell hintstrip declares, including one"
-          echo "    written through the game's own rebind store; its six known-bads are each"
-          echo "    observed red through the same door. THIS IS RENDERED GEOMETRY."
+          echo "  · the combat action row's CONTROLS (orb, piles, END TURN and its key label — the"
+          echo "    contextual strip is retired on combat, #527) are clear of every card, whole, on"
+          echo "    screen, and the row touches NO other combat furniture — at every cell hintstrip"
+          echo "    declares, the phone cell under a coarse pointer, including one written through"
+          echo "    the game's own rebind store; its known-bads are each observed red through the"
+          echo "    same door. THIS IS RENDERED GEOMETRY of the controls: the row's empty gutters are"
+          echo "    not furniture, and a card dipping into them touching nothing is not measured."
+          echo "  · every legal left/right armament slot reaches the correct rendered side"
+          echo "    of the viewer-facing figure, with all five same-door known-bads caught"
           # WAS: "...and it is the only rendered claim in this file that is about the
           # GAME's layout." TRUE when Bjorn wrote it, FALSE the moment I added the
           # Armoury step below — a second browser-driven rendered-layout claim in this
@@ -646,7 +669,7 @@ jobs:
           echo "    arrives COLLAPSED on every shape, and ONE click expands it to a box with"
           echo "    AREA above the fold and folds it back — at 1440x860 and 390x844, with"
           echo "    #305's single compositing mirror required as a literal transform, so a"
-          echo "    mirror that is DOUBLED or GONE both fail. RENDERED GEOMETRY, second of two."
+          echo "    mirror that is DOUBLED or GONE both fail. THIS IS RENDERED GEOMETRY."
           echo "    Its known-bads were hand-planted and are NOT re-run here: this step proves"
           echo "    the tree passes and proves NOTHING about whether the check can still fail."
           echo ""
@@ -682,12 +705,12 @@ jobs:
           # leaves a reader uninformed; a FALSE one leaves them confidently wrong.
           # — Sunna.
           echo "  · that the game is playable. NOTHING HERE PLAYS IT. Two jobs open a browser."
-          echo "    browser-guard owns TWO gates: the hint strip at ?shot=combat and Armoury"
-          echo "    at ?shot=combat -> overlay. display-first owns Settings through BOTH the"
+          echo "    browser-guard owns focused guards including the hint strip, Armoury, and"
+          echo "    hand-side rendered placement. display-first owns Settings through BOTH the"
           echo "    cold Startup -> Title door and the in-run door. It sends a complete CDP"
           echo "    Enter down/up through Startup, then the Settings controls are DOM clicks."
-          echo "    These gates measure BOXES; Armoury also checks that its pane opened. None"
-          echo "    fights, wins, loses, or finishes a run, and none proves general playability."
+          echo "    These gates inspect focused rectangles or alpha-weighted rendered pixels;"
+          echo "    none fights, wins, loses, or finishes a run, or proves general playability."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
           # this branch." True when Sunna wrote it, false the moment #7 merges — a
           # boundary block that names a branch dates itself. Replaced with the thing that
@@ -716,13 +739,12 @@ jobs:
           # hint-strip gate reads rendered rects, so "nothing rendered" is no longer
           # true as written. What it never touched — and still does not — is ART.
           # — Bjorn, 2026-08-21, wiring #295.
-          echo "  · that the ART rendered. Art present in the file is not art on screen;"
-          echo "    no screenshot is compared, and screenshot bytes are not even"
-          echo "    deterministic on this app (two runs of identical code differ). The"
-          echo "    three browser gates read geometry off a live page — rects, never pixels —"
-          echo "    and between them they are silent about every surface but combat's control"
-          echo "    strip, the Armoury's figure-and-cards pane, and Title/in-run Settings."
-          echo "    NONE compares an image:"
+          echo "  · that the ART matches an approved visual reference. Art present in the"
+          echo "    file is not automatically correct art on screen; screenshot bytes are not"
+          echo "    deterministic on this app (two runs of identical code differ). The focused"
+          echo "    browser gates mostly read rects; hand-side alone reads alpha-weighted"
+          echo "    screenshot pixels to locate armament ink. They remain silent about every"
+          echo "    other art surface. NONE compares an image to an approved reference:"
           echo "    the pixel diffs in #316 were run by hand and are not repeated here."
           echo "  · that content is correct or balanced. README.md:55's counts disagree"
           echo "    with the loader (54 relics / 20 events / 39 cards vs 40 / 10 / ~30);"

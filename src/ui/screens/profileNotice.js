@@ -17,8 +17,18 @@
 //                   primary action is TO DO NOTHING, so that is the first
 //                   button and it is not destructive (Sunna D1).
 //   (empty/ok/migrated/recovered never reach this screen at all.)
+//
+// ON THE KIT: a decision door standing on the page (body C) — Title·L and
+// the ornament ask, Prose says what happened, a DetailCard says what survived
+// and where it is, the ButtonRow carries the ways on, a second row the one
+// destructive way, a Fold the support detail. The irreversible act opens the
+// kit's sm door through openModal. The hooks the instruments read
+// (`.profile-notice`, `.restore`/`.export`/`.notnow`/`.keep`/`.fresh`,
+// `.result`, `.confirm-fresh`, `.cancel`/`.go`) ride on kit parts.
 
-import { esc } from '../components/tooltip.js';
+import {
+  el, pageDoor, decide, prose, detailCard, statusText, button, buttonRow, fold, openModal,
+} from '../kit/index.js';
 
 // Human time, not a log line: "7 August, 5:09 AM" (Sunna). Second-precision and
 // locale-ambiguous slashes read as machine output at the worst moment.
@@ -76,44 +86,64 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
         .filter(Boolean)
         .join(' · ');
 
-  app.innerHTML = `
-    <div class="screen profile-notice">
-      <h1>${isNewer ? 'This profile is from a newer version' : 'We couldn’t read your profile'}</h1>
-      <p class="lead">${
-        isNewer
-          ? 'It was saved by a newer build of Ashen Spire. We’ve left it exactly as it is rather than risk changing it — nothing has been altered or deleted.<br><strong>Update Ashen Spire to open it again.</strong>'
-          : 'So we’ve set it aside instead of deleting it — it’s still here.'
-      }</p>
-      ${kept ? `<p class="kept">Saved: ${esc(String(kept.runs ?? '—'))} runs · ${esc(String(kept.wins ?? '—'))} wins · ${esc(String(kept.unlocked))} unlocks</p>` : ''}
-      <p class="where">${esc(whereLine)}</p>
-      <div class="actions">
-        ${isNewer
-          ? '<button class="keep">Keep it and close</button>'
-          : '<button class="restore">Try to restore</button>'}
-        <button class="export">Save a copy to a file</button>
-        ${isNewer ? '' : '<button class="notnow">Not now</button>'}
-      </div>
-      <div class="actions destructive">
-        <button class="fresh subtle">${isNewer ? 'Start a new profile anyway' : 'Start a new profile'}</button>
-      </div>
-      <p class="result" role="status"></p>
-      ${status.reason
-        ? `<details class="support"><summary>Details for support</summary><code>${esc(status.reason)}</code></details>`
-        : ''}
-    </div>
-  `;
+  const leave = isNewer
+    ? button({ label: 'Keep it and close', weight: 'primary', className: 'keep' })
+    : button({ label: 'Not now', className: 'notnow' });
+  const restore = isNewer ? null : button({ label: 'Try to restore', weight: 'primary', className: 'restore' });
+  const exportBtn = button({ label: 'Save a copy to a file', className: 'export' });
+  const fresh = button({ label: isNewer ? 'Start a new profile anyway' : 'Start a new profile', weight: 'danger', className: 'fresh' });
+  const result = statusText('', { class: 'result', role: 'status' });
+
+  const lead = isNewer
+    ? [
+        prose('It was saved by a newer build of Ashen Spire. We’ve left it exactly as it is rather than risk changing it — nothing has been altered or deleted.', { class: 'lead' }),
+        el('p', { class: 'as-prose lead' }, el('strong', { text: 'Update Ashen Spire to open it again.' })),
+      ]
+    : [prose('So we’ve set it aside instead of deleting it — it’s still here.', { class: 'lead' })];
+
+  const body = decide({
+    title: isNewer ? 'This profile is from a newer version' : 'We couldn’t read your profile',
+    children: [
+      ...lead,
+      detailCard({
+        eyebrow: 'Your profile',
+        name: kept ? `${kept.runs ?? '—'} runs · ${kept.wins ?? '—'} wins · ${kept.unlocked} unlocks` : (isNewer ? 'Untouched' : 'Set aside'),
+        line: kept ? 'Saved' : '',
+        meta: whereLine,
+        muted: !kept,
+        attrs: { class: kept ? 'kept' : 'where' },
+      }),
+      // The way forward stands alone on its own rung; the two quiet ways
+      // share the next; the one destructive way is last and never widest.
+      buttonRow({ size: 'long', buttons: [restore || leave], className: 'actions' }),
+      buttonRow({ size: 'fill', buttons: [exportBtn, isNewer ? null : leave].filter(Boolean), className: 'actions' }),
+      buttonRow({ size: 'long', buttons: [fresh], className: 'actions destructive' }),
+      result,
+      status.reason
+        ? fold({ label: 'Details for support', className: 'support', children: [el('code', { text: status.reason })] })
+        : null,
+    ],
+  });
+
+  const door = pageDoor({
+    eyebrow: 'Profile',
+    title: isNewer ? 'A newer version' : 'Couldn’t be read',
+    size: 'md',
+    body,
+    attrs: { 'aria-label': isNewer ? 'This profile is from a newer version' : 'We couldn’t read your profile' },
+  });
+  app.innerHTML = '';
+  app.appendChild(el('div', { class: 'screen profile-notice' }, door));
 
   const $ = (s) => app.querySelector(s);
-  const say = (msg) => { $('.result').textContent = msg; };
+  const say = (msg) => { result.textContent = msg; };
 
   // "Not now" / "Keep it and close" — the non-destructive exit that did not
   // exist (Sunna D1/D4). Nothing is written and the quarantine stays on, so a
   // player who wants to close the game and think about it loses nothing by
   // doing so.
-  const leave = $('.notnow') || $('.keep');
-  if (leave) leave.addEventListener('click', () => onContinue());
+  leave.addEventListener('click', () => onContinue());
 
-  const restore = $('.restore');
   if (restore) {
     restore.addEventListener('click', () => {
       const res = saves.restoreProfile(status.archiveId);
@@ -126,7 +156,7 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
 
   // Export works in EVERY state: from the archive when there is one, from the
   // live profile when there isn't (the newer case — where it matters most).
-  $('.export').addEventListener('click', () => {
+  exportBtn.addEventListener('click', () => {
     const text = mine ? saves.exportArchive(mine.id) : saves.exportProfile();
     if (!text) { say('There’s nothing to save to a file yet.'); return; }
     const blob = new Blob([text], { type: 'application/json' });
@@ -141,58 +171,57 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
 
   // The one irreversible action, behind a second act (Sunna D3). It is offered
   // to the reader least equipped to evaluate it, so it must be impossible to do
-  // by pressing the obvious button quickly.
-  $('.fresh').addEventListener('click', () => {
-    const wrap = document.createElement('div');
-    wrap.className = 'confirm-fresh';
-    wrap.innerHTML = `
-      <div class="confirm-box" role="dialog" aria-modal="true" aria-label="Start a new profile?">
-        <h2>Start a new profile?</h2>
-        <p>Your old one is set aside — this doesn’t delete it. You can come back to it any time from Profile on the title screen.</p>
-        <div class="actions">
-          <button class="cancel">Not yet</button>
-          <button class="go subtle">Start fresh</button>
-        </div>
-      </div>`;
-    app.appendChild(wrap);
-    const cancel = wrap.querySelector('.cancel');
-
+  // by pressing the obvious button quickly. THE DOOR IS THE KIT'S: a sm door
+  // through openModal, the way out in the corner, Escape and the scrim through
+  // bindModalDismiss, the way forward primary-danger on the ladder.
+  fresh.addEventListener('click', () => {
+    const cancel = button({ label: 'Not yet', className: 'cancel' });
+    const go = button({ label: 'Start fresh', weight: 'primary', className: 'danger go' });
     // A REAL focus trap (Sunna D9). The scrim stopped the mouse and nothing
     // else: five focusables sat reachable behind the open dialog, Escape did
     // nothing, and clicking the scrim did nothing. Nothing irreversible was
     // reachable back there, so it was confusing rather than dangerous — but a
     // dialog you can Tab out of is not a dialog.
     const behind = [...app.querySelectorAll('.profile-notice button, .profile-notice a[href], .profile-notice [tabindex]')];
-    behind.forEach((el) => {
-      el.setAttribute('tabindex', '-1');
-      el.setAttribute('aria-hidden', 'true');
+    behind.forEach((node) => {
+      node.setAttribute('tabindex', '-1');
+      node.setAttribute('aria-hidden', 'true');
     });
-    const close = () => {
-      behind.forEach((el) => {
-        el.removeAttribute('tabindex');
-        el.removeAttribute('aria-hidden');
-      });
-      document.removeEventListener('keydown', onKey, true);
-      wrap.remove();
-      $('.fresh').focus(); // the cursor comes back to where it left
-    };
+    let door2 = null;
     function onKey(e) {
-      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
-      if (e.key !== 'Tab') return;
-      const stops = [...wrap.querySelectorAll('button')];
+      if (e.key !== 'Tab' || !door2) return;
+      const stops = [...door2.panel.querySelectorAll('button:not([disabled])')];
       if (!stops.length) return;
       const first = stops[0];
       const last = stops[stops.length - 1];
       const active = document.activeElement;
-      if (e.shiftKey && (active === first || !wrap.contains(active))) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && (active === last || !wrap.contains(active))) { e.preventDefault(); first.focus(); }
+      if (e.shiftKey && (active === first || !door2.panel.contains(active))) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (active === last || !door2.panel.contains(active))) { e.preventDefault(); first.focus(); }
     }
+    door2 = openModal({
+      size: 'sm',
+      className: 'confirm-box',
+      eyebrow: 'Profile',
+      title: 'Start a new profile?',
+      closeLabel: 'Close',
+      body: decide({ children: [prose('Your old one is set aside — this doesn’t delete it. You can come back to it any time from Profile on the title screen.')] }),
+      secondary: [cancel],
+      primary: go,
+      footSize: 'medium',
+      opener: fresh,
+      onClose: () => {
+        behind.forEach((node) => {
+          node.removeAttribute('tabindex');
+          node.removeAttribute('aria-hidden');
+        });
+        document.removeEventListener('keydown', onKey, true);
+        $('.fresh')?.focus(); // the cursor comes back to where it left
+      },
+    });
+    door2.veil.classList.add('confirm-fresh');
     document.addEventListener('keydown', onKey, true);
-    // Clicking the scrim — outside the box — dismisses, matching every other
-    // veil in the game.
-    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
-    cancel.addEventListener('click', close);
-    wrap.querySelector('.go').addEventListener('click', () => {
+    cancel.addEventListener('click', door2.close);
+    go.addEventListener('click', () => {
       document.removeEventListener('keydown', onKey, true);
       saves.startNewProfile(); // archives the old bytes first (save.js) — Vira D1
       onContinue();
@@ -206,5 +235,5 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
   // where it exists (the action that tries to give the profile back), and in
   // the newer state that is "Keep it and close", which is the correct primary
   // action there. The destructive button never takes focus in any state.
-  (restore || leave || $('.export')).focus();
+  (restore || leave || exportBtn).focus();
 }

@@ -478,7 +478,7 @@ async function browserDoor() {
         console.log('  SETUP host room');
         await until(host, `!!document.querySelector('#lb-name')`, 'host lobby');
         await evaluate(host, `(()=>{const n=document.querySelector('#lb-name');n.value='Wren';n.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('#lb-host').click();return true})()`);
-        await until(host, `document.querySelector('h2')?.textContent==='AT THE FIRE'`, 'host fire');
+        await until(host, `/at the fire/i.test(document.querySelector('.lobby-room .as-title-m')?.textContent || '')`, 'host fire');
 
         console.log('  SETUP guest join');
         await cdp.send('Page.navigate', { url: base }, guest.sessionId);

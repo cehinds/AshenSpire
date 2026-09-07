@@ -42,7 +42,11 @@ export const balance = {
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
   rewards: {
     cardChoices: 3,
-    cinders: { normal: [15, 25], elite: [35, 50], boss: [75, 90] },
+    // ×3 the first ladder (Constantine, 2026-09-04: "3x the amount for the
+    // base") — cinders are granted on arrival at the reward door now, so the
+    // faucet is the whole economy lever; the level ladder (levelUp below) and
+    // shop prices are unchanged and read against this.
+    cinders: { normal: [45, 75], elite: [105, 150], boss: [225, 270] },
     rarityWeights: {
       normal: { common: 60, uncommon: 35, rare: 5 },
       elite: { common: 45, uncommon: 40, rare: 15 },
@@ -57,6 +61,10 @@ export const balance = {
     cardStock: 5,
     relicStock: 2,
     flaskStock: 2,
+    armamentStock: 3,
+    weaponArtStock: 2,
+    armamentCost: { common: [80, 100], uncommon: [120, 150], rare: [200, 240] },
+    weaponArtCost: [90, 120],
     cardCost: { common: [45, 55], uncommon: [68, 82], rare: [135, 160] },
     relicCost: { common: [140, 160], uncommon: [200, 230], rare: [270, 300] },
     flaskCost: [50, 80],
@@ -74,6 +82,33 @@ export const balance = {
 
   shrine: { healPct: 35 },
 
+  // Smithing promotes the owned armament, not one card copy. The model owns
+  // the transaction; balance owns the tier ceiling, price, and reward faucet.
+  smithing: {
+    // Item/tier costs, card changes, and requirement changes are authored in
+    // itemUpgradeChanges.csv. Balance owns only the reward faucet.
+    rewardByPool: { normal: 0, elite: 1, boss: 1, treasure: 0 },
+
+    // THE SMITH'S SERVICES, AND WHO OFFERS THEM (owner ruling, 2026-09-03).
+    // A smith does three things: upgrade an item (the tier promotion above),
+    // EXTRACT a card from one of an item's mounts so it becomes the run's own,
+    // and INSTALL a run-owned card into an emptied or open mount. Which node
+    // kinds offer which services is this table — a merchant rolls `chance`
+    // once per visit on its own RNG stream, so adding the roll cannot shift
+    // what any later reward draws in an existing seed. 100 means always, no
+    // roll consumed; 0 means never.
+    services: {
+      offeredAt: {
+        shrine: { chance: 100, services: ['upgrade', 'extract', 'install'] },
+        merchant: { chance: 25, services: ['upgrade', 'extract', 'install'] },
+      },
+      // Priced in Smithing Stones, the same purse as an upgrade. Free by the
+      // owner's word, configurable because he said so in the same breath.
+      extract: { cost: 0 },
+      install: { cost: 0 },
+    },
+  },
+
   // ---- canonical hidden level semantics (#237) ---------------------------
   //
   // Player level begins at one authored value and advances once per shrine
@@ -86,6 +121,16 @@ export const balance = {
   // encounter creation, saves, co-op, or the UI.
   levels: {
     playerStartingLevel: 1,
+    // Inert #238 content. The pure level planner consumes these coefficients
+    // only when a later activation story supplies a resolved enemy level.
+    // Every row states its rounding and hard result caps; hits, statuses,
+    // delays, phases, and move order are deliberately absent.
+    enemyScaling: {
+      hp: { perLevel: 2, rounding: 'round', min: 1, max: 9999 },
+      damage: { perLevel: 0.5, rounding: 'round', min: 0, max: 999 },
+      block: { perLevel: 0.5, rounding: 'round', min: 0, max: 999 },
+      poise: { perLevel: 1, rounding: 'round', min: 0, max: 999 },
+    },
   },
 
   // ---- levelling at a shrine (Constantine, D10 wave 1 + E13) ----------------
@@ -148,8 +193,16 @@ export const balance = {
   // single global reaching into all three would be collapsing three
   // distinctions into one number because it is tidier.
   levelUp: {
-    firstCost: 800,
-    costStep: 200,
+    // THE LADDER, MEASURED (E13, #258; tools/runsim.mjs --level-cost). His
+    // acceptance test is "10-20 level-ups a run, scalable". Over 40 greedy-bot
+    // runs per ladder, level-ups per FULL (victorious) run: 800+200 → 0.5;
+    // 60+10 → 7.2; 40+8 → 9.1; 30+5 → 11.8; 20+4 → 14.8. The bot spends
+    // every cinder on levels and nothing at merchants, so its number is the
+    // ceiling a real climb approaches; 20+4 puts that ceiling mid-range and a
+    // merchant-spending player at the low edge. Two numbers, one home, and
+    // the sweep flag reruns the measurement for any other pair.
+    firstCost: 20,
+    costStep: 4,
     pointsPerLevel: 1,
     maxLevels: null,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
@@ -280,7 +333,7 @@ export const balance = {
       portraitScale: 0.58,
       primaryRowGapPx: 4,
       controlGapPx: 0,
-      resourceRowGapPx: 2,
+      resourceRowGapPx: 3,
       panelPadPx: 0,
       mobilePanelPadPx: 0,
       mobileControlGapPx: 1,
@@ -589,11 +642,10 @@ export const balance = {
     // and on this screen the neighbour is "permanent curse", with no confirm
     // and no undo. Constantine, asked: "yes press and hold".
     //
-    // WHY A HOLD AND NOT A MODAL, because that choice is the whole design and
-    // it is not a preference: the held control FILLS, so the player watches the
-    // wrong words filling under their finger and lets go IN TIME. A modal asks
-    // "are you sure?" AFTER the commit, when the eye has already moved on. The
-    // hold puts the question in the same moment as the mistake.
+    // WHY BOTH FORMS SHIP. A short activation opens the shared review modal so
+    // the player sees the exact result and optional cost. A deliberate hold
+    // fills on the original control and commits without the modal for players
+    // who already know the result. Releasing the hold early remains an abort.
     //
     // `steps` IS THE CLOSED SET, in dial order, and `off` is first because it
     // is the A/B — the same "let me try each and decide" he asked for on the
@@ -602,15 +654,15 @@ export const balance = {
     // ELSE. That is the falsifier for Law 0 on this control, and it is the same
     // sentence tapSize above already ships.
     //
-    // `off` is the default: a card class may advertise the capability without
-    // silently changing anybody's controls. If the player enables the dial,
-    // `normal` is 600 ms because a long-press people already know is ~400-500
+    // `normal` is the default: state-changing option controls now use a short
+    // press to review and a deliberate hold to approve without the modal.
+    // 600 ms sits just past the familiar ~400-500 ms long-press threshold
     // ms (Android's own threshold) and a CONFIRM wants to sit just past reflex
     // without becoming a chore. `short` is for players who find the wait
-    // irritating, `long` for hands that need the room. `off` is 0 and means
-    // the pre-hold behaviour, byte for byte: one tap commits.
+    // irritating, `long` for hands that need the room. `off` is 0 and disables
+    // only the shortcut; the short activation still opens the review modal.
     holdConfirm: {
-      def: 'off',
+      def: 'normal',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
     },
     // TITLE SAVE SLOT QUICK LOAD. This is a pointer/touch convenience gesture,
@@ -673,8 +725,8 @@ export const balance = {
     //
     // WHY THIS IS NOT holdConfirm's DIAL, though both are a stationary press
     // with a timer. Two different jobs (Law 4's shape, applied to time): the
-    // confirm hold is a SAFETY step before an irreversible act — its length is
-    // a protection preference, and `off` means "one tap commits". The inspect
+    // confirm hold is a SHORTCUT around the review modal — its length is a
+    // protection preference, and `off` means "review only". The inspect
     // hold is how a player READS a card — turning the safety dial off must not
     // take reading away, and a hand that needs a longer confirm does not
     // thereby need slower reading. One dial answering both would break the
@@ -800,6 +852,74 @@ export const balance = {
       receiptLimit: 64,
     },
     roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1 },
+
+    // ---- Composed starting deck (togglable) ---------------------------------
+    // `roleCopies` above is a FIXED distribution that must sum to
+    // startingDeckSize by hand: grant a class one more card and the sum breaks.
+    // This block derives the same deck instead. Named cards ("grants") are
+    // dealt first — the weapon's technique, the class signature, anything
+    // global — and whatever budget remains is FILLER, split between the attack
+    // and guard roles. Filler still resolves through equipped profiles, so a
+    // sword-wielder's filler attacks are Slashing Strikes, not generic ones.
+    //
+    // With the defaults below the composed path reproduces 4/4/1/1 exactly
+    // (grants = technique 1 + signature 1; filler 8 at bias 0.5 → 4/4), which
+    // is what makes it safe to ship enabled. Set `enabled: false` to fall back
+    // to roleCopies verbatim.
+    startingDeck: {
+      enabled: true,
+
+      // `growToFit` and `minFiller` lived here. Both decided who yields when
+      // grants got greedy — the deck size, or the content author. Under the cap
+      // rule (SPEC, "The starting deck") nobody yields: the cap governs how many
+      // BASE strikes and defends are minted, bound cards are never capped or
+      // dropped, and a floor of basic cards is simply what the cap leaves over.
+
+      // Card ids every class starts with, whatever it wears. Cards named here
+      // must exist in the card registry; each is granted exactly one copy.
+      global: { grants: [] },
+
+      // The order bound cards are DEALT in at creation. Was `dropOrder`, which
+      // named a behaviour that no longer exists — nothing is ever dropped. Each
+      // entry is a tag id in the `grantSource` domain, so adding a source is a
+      // row in tags.csv rather than an edit to loadout.js.
+      sourceOrder: ['from:global', 'from:relic', 'from:armor', 'from:weapon', 'from:class'],
+
+      // WHICH TAG EACH MINTING SEAM STAMPS. `sourceOrder` is the vocabulary's
+      // order; this is the binding between that vocabulary and the four places
+      // in loadout.js that actually mint a bound card. It exists because the
+      // ids used to be typed at those seams: renaming `from:weapon` here and in
+      // `sourceOrder` validated clean and then silently dealt the weapon's
+      // cards last, because the minting site still stamped the old id. Now the
+      // seam READS its id from this map, so a rename is a data edit and an
+      // unbound or misspelt role is refused by name.
+      //
+      // The KEYS are the engine's seams, not content vocabulary — there is a
+      // weapon seam whatever an author calls its source. `from:relic` has no
+      // key because nothing mints it yet; it is declared vocabulary waiting for
+      // a minter, and ranking it early costs nothing until one exists.
+      sources: {
+        global: 'from:global',
+        armor: 'from:armor',
+        weapon: 'from:weapon',
+        class: 'from:class',
+      },
+
+      // Which role wins the remainder when the cap leaves an odd number of base
+      // cards. Authored rather than assumed — it used to be a rounding rule
+      // buried in the arithmetic.
+      oddFillerGoesTo: 'attack',
+
+      // Per-class filler split. `strikeBias` is the share of base cards that go
+      // to attacks; the rest are guards. Classes absent here use
+      // `defaultStrikeBias`.
+      defaultStrikeBias: 0.5,
+      classes: {
+        reaver: { strikeBias: 0.5 },
+        starseer: { strikeBias: 0.5 },
+      },
+    },
+
     rarityBonuses: {
       common: { attack: 0, guard: 0 },
       uncommon: { attack: 1, guard: 1 },
@@ -808,12 +928,33 @@ export const balance = {
     roleSources: {
       attack: [{ slot: 'rightHand' }],
       guard: [{ slot: 'leftHand' }, { slot: 'rightHand' }],
-      technique: [{ slot: 'rightHand' }],
+      technique: [{ slot: 'rightHand' }, { slot: 'leftHand' }],
     },
     unarmedProfiles: {
       attack: 'unarmedAttack',
       guard: 'unarmedGuard',
       technique: 'unarmedTechnique',
+    },
+
+    // CARD MOUNTS (owner ruling, 2026-09-03). Every card an item lends sits in
+    // a MOUNT on that item; a smith can extract it (it becomes the run's own,
+    // the mount empties) or refill the mount with another card. What is
+    // extractable is a TAG on the card — strikes and defends do not carry it
+    // today, and the day the game changes its mind that is a spreadsheet
+    // edit. What an emptied mount shows is a FALLBACK per mount kind: a
+    // weapon-art mount falls back to the unarmed technique (the Dodge Roll),
+    // read from `unarmedProfiles` above rather than typed here, and any item
+    // may override that under `fallbackByItem`. `extraMounts` is the seam a
+    // later rune feature opens: mounts beyond the authored ones, per item,
+    // behind a flag that is off.
+    cardMounts: {
+      extractableTag: 'extractable',
+      kinds: {
+        weaponArt: { accepts: ['extractable'], fallback: { unarmedProfile: 'technique' } },
+        granted: { accepts: ['extractable'], fallback: null },
+      },
+      fallbackByItem: {},
+      extraMounts: { enabled: false, perItem: 1, kind: 'granted' },
     },
     enabled: true,
 
@@ -897,6 +1038,10 @@ export const balance = {
     swapCost: 2,
     swapAllowancePerTurn: 1, // only consulted when swapCostKind === 'allowance'
     swapEndsTurn: false,
+    // The Armoury remains actionable during the player's combat turn. Replacing,
+    // moving, or unequipping a carried item uses the same priced combat action
+    // as switching a prepared weapon set; the engine, never the panel, commits it.
+    allowChangesInCombat: true,
 
     // ---- WHAT A SWAP COSTS: three prices he can try, one chain ------------
     // Constantine, 2026-08-08: *"switching sets should cost actions. perhaps
@@ -998,7 +1143,8 @@ export const balance = {
     views: [
       { id: 'grid', figure: true, slots: 'flank' },
       { id: 'rack', figure: false, slots: 'list' },
-      { id: 'hybrid', figure: true, slots: 'list' },
+      { id: 'hybrid', figure: false, slots: 'list' },
+      { id: 'cards', figure: false, slots: 'list' },
     ],
     // WHICH PANE IS THE SUBJECT. One field, and it is the whole of "collapsible"
     // (#90). Constantine: *"I still want the armoury card list to be collapsable

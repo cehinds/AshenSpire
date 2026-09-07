@@ -917,10 +917,15 @@ async function main() {
     // Set 1 and not set 2: the set ladder (#90) opens one cell at a time, so
     // index 1 is `next` and its picker is empty. Learned by the cell going ERR
     // rather than by reading the ladder — which is the right way round.
-    { what: 'Right Hand set 1, weapon candidates', slot: 'Right Hand', setIndex: 0, rule: 'flat' },
-    { what: 'Right Hand set 1, weapon candidates', slot: 'Right Hand', setIndex: 0, rule: 'category' },
-    { what: 'Right Hand set 1, weapon candidates', slot: 'Right Hand', setIndex: 0, rule: 'gear' },
-    { what: 'Left Hand set 1, off-hand candidates', slot: 'Left Hand', setIndex: 0, rule: 'category' },
+    // THE SLOT IS REACHED BY ITS PLAYER-FACING LABEL (PICK matches the block's
+    // text), so these literals are content, not identifiers: they moved when
+    // equipSlots.csv renamed Right/Left Hand to Main/Off Hand. The ids
+    // (`rightHand`/`leftHand`) and the `hand` column did NOT move — which hand
+    // the figure draws a piece in is geometry, not vocabulary.
+    { what: 'Main Hand set 1, weapon candidates', slot: 'Main Hand', setIndex: 0, rule: 'flat' },
+    { what: 'Main Hand set 1, weapon candidates', slot: 'Main Hand', setIndex: 0, rule: 'category' },
+    { what: 'Main Hand set 1, weapon candidates', slot: 'Main Hand', setIndex: 0, rule: 'gear' },
+    { what: 'Off Hand set 1, off-hand candidates', slot: 'Off Hand', setIndex: 0, rule: 'category' },
     { what: 'Talisman set 1, the charm', slot: 'Talisman', setIndex: 0, rule: 'flat' },
   ]) {
     const why = await reach(cell.rule, cell.slot, cell.setIndex);
@@ -1173,9 +1178,9 @@ const PLANTS = [
     // Same 2px artifact either way. The floor is what stands between this tool
     // and inventing a line of text that nobody printed.
     name: 'a 2px fringe with the ink floor removed invents a line (8 of 12 cells) — the floor is load-bearing',
-    file: 'styles/ui.css',
-    find: '.equip-resource-change small { display: block; }',
-    replace: '.equip-resource-change small { display: block; margin-top: 7px; border-top: 2px solid #fff; padding-top: 7px; }',
+    file: 'styles/kit.css',
+    find: '.equip-resource-change > .as-flavor { display: block; }',
+    replace: '.equip-resource-change > .as-flavor { display: block; margin-top: 7px; border-top: 2px solid #fff; padding-top: 7px; }',
     also: {
       file: 'tools/swap-row-reads.mjs',
       find: '  const kept = runs.filter(([a, b]) => (b - a + 1) >= INK_BAND_FLOOR_PX);',
@@ -1213,9 +1218,9 @@ const PLANTS = [
     // wrong element — the harness's drift check catches a MISSING anchor, never
     // a WRONG one, and only running it told me which I had.
     name: 'the rows sit behind .armoury-body\'s clip at phone widths — the reading must be unknown, not a count',
-    file: 'styles/ui.css',
-    find: ":root[data-layout='narrow'] .armoury-body { flex-direction: column; overflow-y: auto; }",
-    replace: ":root[data-layout='narrow'] .armoury-body { flex-direction: column; overflow-y: auto; max-height: 32px; }",
+    file: 'styles/kit.css',
+    find: '.armoury[data-responsive="phone"] .armoury-body { gap: 0.7rem; padding: 0.7rem; }',
+    replace: '.armoury[data-responsive="phone"] .armoury-body { gap: 0.7rem; padding: 0.7rem; max-height: 32px; }',
     expect: /INK — the row is not wholly on screen/,
   },
   {
@@ -1228,24 +1233,24 @@ const PLANTS = [
     // the crush is set at 0.4 on purpose — the value where the old reading is
     // most confidently wrong.
     name: 'the note is crushed onto one line of ink — two line boxes, one band (#179)',
-    file: 'styles/ui.css',
-    find: '.equip-resource-change small { display: block; }',
-    replace: '.equip-resource-change small { display: block; line-height: 0.4; }',
+    file: 'styles/kit.css',
+    find: '.equip-resource-change > .as-flavor { display: block; }',
+    replace: '.equip-resource-change > .as-flavor { display: block; line-height: 0.4; }',
     expect: /INK — bands\(\) reads/,
     alsoSilent: { name: 'the LINE BUDGET (the rect reading this card replaces)', re: /LINE BUDGET/ },
   },
   {
     name: 'the comparison stops wrapping — one long note bleeds the column sideways (LAW 5)',
-    file: 'styles/ui.css',
-    find: '.equip-candidate-comparison { margin-left: 4.5rem; border-left: 2px solid var(--line-soft); padding: 0.25rem 0 0.5rem 0.8rem; overflow-wrap: anywhere; }',
-    replace: '.equip-candidate-comparison { margin-left: 4.5rem; border-left: 2px solid var(--line-soft); padding: 0.25rem 0 0.5rem 0.8rem; overflow-wrap: normal; white-space: nowrap; overflow-x: auto; }',
+    file: 'styles/kit.css',
+    find: '.equip-candidate-comparison { min-width: 0; overflow-wrap: anywhere; }',
+    replace: '.equip-candidate-comparison { min-width: 0; overflow-wrap: normal; white-space: nowrap; overflow-x: auto; }',
     expect: /LAW 5/,
   },
   {
     name: 'the summary loses its tap floor (LAW 4)',
-    file: 'styles/ui.css',
-    find: '.equip-candidate-comparison summary { min-height: var(--tap-floor);',
-    replace: '.equip-candidate-comparison summary { min-height: 0;',
+    file: 'styles/kit.css',
+    find: '.equip-candidate-comparison > summary { display: flex; align-items: center; gap: 0.75rem; min-height: var(--tap-floor);',
+    replace: '.equip-candidate-comparison > summary { display: flex; align-items: center; gap: 0.75rem; min-height: 0;',
     expect: /LAW 4/,
   },
   {
@@ -1257,7 +1262,7 @@ const PLANTS = [
     // cannot see its own subject disappear reports on nothing.
     name: 'the note stops being rendered at all — the declined +2 goes silent again',
     file: 'src/ui/components/equipmentReceipts.js',
-    find: '${row.note ? `<small>${esc(row.note)}</small>` : \'\'}',
+    find: '${row.note ? flavourHtml(row.note) : \'\'}',
     replace: '',
     expect: /UNMOVED AND UNEXPLAINED/,
     silentNote: true,
@@ -1277,8 +1282,8 @@ const PLANTS = [
     // answers side by side. A known-bad that only proves the new check works
     // would leave the reason for the new check unmeasured.
     name: "the sibling's declaration copied literally — grid tears the price off its own arrow",
-    file: 'styles/ui.css',
-    find: '.equip-resource-change small { display: block; }',
+    file: 'styles/kit.css',
+    find: '.equip-resource-change > .as-flavor { display: block; }',
     replace: '.equip-resource-change { display: grid; gap: 0.2rem; overflow-wrap: anywhere; }',
     expect: /LINE BUDGET/,
     alsoSilent: { name: 'READS AS ONE WORD (the adjacency check)', re: /READS AS ONE WORD/ },

@@ -22,6 +22,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createSession, restoreSession } from './session.mjs';
 import { SEED_MAX_LEN, seedProblem } from '../src/engine/rng.js';
+import { DEFAULT_SPRITE_STYLE } from '../src/model/spriteStyle.js';
 
 const REG = createRegistries(contentBundle);
 
@@ -231,6 +232,7 @@ export function attachLan(server, { port, root }) {
       case 'chooseReward': g.chooseReward(id, msg.pick || {}); break;
       case 'shrineChoice': g.shrineChoice(id, msg.choice, msg.targetId); break;
       case 'eventChoice': g.eventChoice(id, msg.choiceIndex); break;
+      case 'eventContinue': g.eventContinue(id); break;
       case 'catchupChoice': g.resolveCatchup(id, msg.index, msg.pick || {}); break;
       default: return;
     }
@@ -248,7 +250,7 @@ export function attachLan(server, { port, root }) {
         pl.startingKitId = msg.startingKitId || null;
         pl.discoveredArmaments = Array.isArray(msg.discoveredArmaments) ? [...new Set(msg.discoveredArmaments.filter((id) => typeof id === 'string'))] : [];
         pl.tint = msg.tint || 'gold';
-        pl.spriteStyle = msg.spriteStyle || 'rendered';
+        pl.spriteStyle = msg.spriteStyle || DEFAULT_SPRITE_STYLE;
         pl.isHost = !!(hosting && msg.hostKey === hosting.hostKey);
         // Reconnect into a running game as the same member, if it exists.
         if (session.game && msg.rejoinId && session.game.session.members.has(msg.rejoinId)) {
@@ -280,7 +282,7 @@ export function attachLan(server, { port, root }) {
           startingKitId: (lp && lp.startingKitId) || null,
           discoveredArmaments: Array.isArray(lp && lp.discoveredArmaments) ? [...new Set(lp.discoveredArmaments.filter((id) => typeof id === 'string'))] : [],
           tint: (lp && lp.tint) || 'gold',
-          spriteStyle: (lp && lp.spriteStyle) || 'rendered',
+          spriteStyle: (lp && lp.spriteStyle) || DEFAULT_SPRITE_STYLE,
         }));
         pl.locals = sane;
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
@@ -344,14 +346,19 @@ export function attachLan(server, { port, root }) {
       const slot = i < socks.length ? socks[i] : socks[0];
       if (slot) assigned.get(slot[0]).push(mid);
     });
+    const resumed = [];
     for (const [sock2, cl] of socks) {
       const mids = assigned.get(sock2) || [];
       if (!mids.length) continue;
       cl.id = mids[0];
       cl.ownedIds = mids;
-      for (const mid of mids) game.setConnected(mid, true);
+      resumed.push(...mids);
       sock2.write(wsEncode(JSON.stringify({ t: 'resumed', yourId: mids[0], yourIds: mids, seedString: game.session.seedString })));
     }
+    // Everyone returns TOGETHER, then the room settles once — a saved event
+    // half answered must not advance after the first seat back while the
+    // rest are still marked absent (Codex on #547).
+    game.setConnectedMany(resumed, true);
     broadcastState();
   }
 

@@ -4,7 +4,7 @@
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { validateEquipment, stampDeck } from '../src/model/loadout.js';
+import { validateEquipment, stampDeck, startingDeckPlan } from '../src/model/loadout.js';
 import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { validateContent } from '../src/model/validate.js';
@@ -83,11 +83,23 @@ for (const [classId, want] of Object.entries(expected)) {
     `${classId} declares eligible starting kits`, JSON.stringify(cls.eligibleStartingKitIds));
   check(run.loadout.sets.rightHand[0] === want.rightHand, `${classId} equips authored right hand`, JSON.stringify(run.loadout.sets.rightHand));
   check(run.loadout.sets.leftHand[0] === want.leftHand, `${classId} equips authored left hand`, JSON.stringify(run.loadout.sets.leftHand));
-  check(run.deck.length === 10, `${classId} starts with exactly 10 cards`, String(run.deck.length));
-  for (const [role, count] of Object.entries(wantedCounts)) {
-    check(run.deck.filter((c) => c.equipmentRole === role).length === count,
-      `${classId} starts with ${count} ${role} instances`, JSON.stringify(run.deck));
-  }
+  // THE COMPOSED DECK IS DERIVED, SO THE EXPECTATION IS TOO. This used to assert
+  // a remembered snapshot — exactly 10 cards, 4/4/1 roles — which is the legacy
+  // roleCopies distribution and stopped being what the game builds the moment
+  // the cap started governing base cards only (owner ruling, 2026-09-03).
+  // Starseer and herald carry a weapon art, so their gear brings three cards and
+  // the cap leaves seven for strikes and defends: 4/3, not 4/4. Asserting the
+  // rule rather than the snapshot is also what caught nothing here for months
+  // while these two shipped at eleven cards.
+  const plan = startingDeckPlan(R, run.loadout, classId);
+  check(run.deck.length === plan.cap,
+    `${classId} starts at the ${plan.cap}-card cap`, `${run.deck.length} vs cap ${plan.cap}`);
+  check(run.deck.filter((c) => c.equipmentRole === 'attack').length === plan.attackCount,
+    `${classId} starts with the planned ${plan.attackCount} attack instances`, JSON.stringify(run.deck.map((c) => c.equipmentRole)));
+  check(run.deck.filter((c) => c.equipmentRole === 'guard').length === plan.guardCount,
+    `${classId} starts with the planned ${plan.guardCount} guard instances`, JSON.stringify(run.deck.map((c) => c.equipmentRole)));
+  check(plan.attackCount + plan.guardCount === plan.filler,
+    `${classId}: base cards fill exactly what the cap left (${plan.filler})`, `${plan.attackCount}+${plan.guardCount} vs ${plan.filler}`);
   const signatures = run.deck.filter((c) => !c.equipmentRole);
   check(signatures.length === 1 && signatures[0].cardId === want.signature,
     `${classId} preserves one fixed signature instance`, JSON.stringify(signatures));
@@ -165,12 +177,33 @@ refuses('mutant: dangling baseline piece is refused by name', /notAStaff/, { kit
 refuses('mutant: unknown profile ref is refused by name', /notAProfile/, { piecePatch: { attackProfile: 'notAProfile' } });
 refuses('mutant: wrong-target profile is refused by name', /wrong|guard|attack/i, { profilePatch: { role: 'guard' } });
 refuses('mutant: unknown damage school is refused by name', /magick/, { profilePatch: { damageSchool: 'magick' } });
-refuses('mutant: unknown profile tag is refused by name', /notMagic/, { profilePatch: { tags: ['notMagic'] } });
+// A profile's tags are tagging.csv rows now, so the plant goes there and the
+// refusal comes from the boot door rather than validateEquipment — same claim,
+// the door that actually owns it since the schema was normalised.
+{
+  const planted = validateContent({
+    ...contentBundle,
+    tagging: [...contentBundle.tagging,
+      { family: 'basicCardProfile', scope: '', objectId: 'staffMagicAttack', tagId: 'notMagic' }],
+  }).errors.map((row) => `${row.path}: ${row.msg}`).join(' | ');
+  check(/notMagic/.test(planted), 'mutant: unknown profile tag is refused by name', planted);
+}
 refuses('mutant: duplicate precedence slot is refused by name', /rightHand|duplicate/i, {
   balancePatch: { equipment: { ...contentBundle.balance.equipment, roleSources: { attack: [{ slot: 'rightHand' }, { slot: 'rightHand' }], guard: [{ slot: 'leftHand', kinds: ['shield'] }, { slot: 'rightHand' }], technique: [{ slot: 'rightHand' }] } } },
 });
+// The roleCopies sum is the LEGACY distribution's rule, and it is enforced only
+// while the legacy path is the one being read — holding it under the composed
+// deck would re-impose the hand-kept coupling that feature removes. So the
+// plant disables the composed path, which is where the rule still lives.
 refuses('mutant: role counts must sum to startingDeckSize', /10|sum|startingDeckSize/i, {
-  balancePatch: { startingDeckSize: 10, equipment: { ...contentBundle.balance.equipment, roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1 } } },
+  balancePatch: {
+    startingDeckSize: 10,
+    equipment: {
+      ...contentBundle.balance.equipment,
+      startingDeck: { ...contentBundle.balance.equipment.startingDeck, enabled: false },
+      roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1 },
+    },
+  },
 });
 
 // Host-resolved equipment scaling must be snapshotted, not recomputed from
@@ -193,11 +226,15 @@ check(layeredAttack?.profileReceipt?.gainPerTier === 4 && layeredAttack.profileR
 check(layered.equipmentProfileRuleSnapshot?.profiles?.staffMagicAttack?.gainPerTier === 4,
   'run persists the host-resolved equipment profile snapshot', JSON.stringify(layered.equipmentProfileRuleSnapshot));
 
+// A profile's tags are tagging.csv rows now, not a column on the profile, so
+// the clone copies the junction instead of a `tags` array that no longer exists
+// — and copies it, because the mutants below edit it.
 const cloneBundle = () => ({
   ...contentBundle,
+  tagging: contentBundle.tagging.map((row) => ({ ...row })),
   equipment: {
     ...contentBundle.equipment,
-    basicCardProfiles: (contentBundle.equipment.basicCardProfiles || []).map((p) => ({ ...p, tags: [...p.tags], mods: [...p.mods] })),
+    basicCardProfiles: (contentBundle.equipment.basicCardProfiles || []).map((p) => ({ ...p, mods: [...p.mods] })),
   },
 });
 const driftBundle = cloneBundle();
@@ -223,10 +260,20 @@ contentRefuses('schema: negative finite cap is refused', /cap.*negative|non-nega
   (b) => { b.equipment.basicCardProfiles[0].cap = -1; });
 contentRefuses('schema: compatibility vocabulary is role-bound', /compatibility/i,
   (b) => { b.equipment.basicCardProfiles[0].compatibility = 'guard-v1'; });
-for (const field of ['id', 'role', 'baseCardId', 'displayName', 'icon', 'damageSchool', 'baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap', 'tags', 'flavor', 'mods', 'compatibility']) {
+for (const field of ['id', 'role', 'baseCardId', 'displayName', 'icon', 'damageSchool', 'baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap', 'flavor', 'mods', 'compatibility']) {
   contentRefuses(`schema completeness: missing ${field} is refused`, new RegExp(`basicCardProfiles.*${field}`, 'i'),
     (b) => { delete b.equipment.basicCardProfiles[0][field]; });
 }
+// REPOINTED, NOT DROPPED. `tags` used to be a required COLUMN on the profile,
+// and 'missing tags is refused' above covered the defect of a profile shipping
+// with no identity — its tags become the equipment card's `cardTags`, which the
+// damage effect inherits and the fit check reads. The column moved into
+// tagging.csv, so deleting the field reinstates nothing; the same defect is
+// still writable as a profile with no junction rows, and that is what this
+// watches now. The repo's removal condition is that a case drops out only when
+// its defect becomes impossible to write, and this one has not.
+contentRefuses('tagging: a profile with no tag rows is refused', /basicCardProfiles.*carries no tag/i,
+  (b) => { b.tagging = b.tagging.filter((row) => !(row.family === 'basicCardProfile' && row.objectId === 'staffMagicAttack')); });
 contentRefuses('schema product: zero pointsPerTier is refused', /pointsPerTier.*> 0/i,
   (b) => { b.equipment.basicCardProfiles[0].pointsPerTier = 0; });
 contentRefuses('schema product: negative baseValue is refused', /baseValue.*non-negative/i,

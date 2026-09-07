@@ -45,7 +45,11 @@ async function open(settings = {}, extra = '') {
   await sleep(150);
 }
 const click = (sel) => ev(`(()=>{const e=document.querySelector(${JSON.stringify(sel)});if(!e)return false;e.click();return true})()`);
-const point = (sel) => ev(`(()=>{const e=document.querySelector(${JSON.stringify(sel)});if(!e)return null;const r=e.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,ms:Number(e.dataset.holdMs)||600}})()`);
+const point = async (sel) => {
+  await ev(`document.querySelector(${JSON.stringify(sel)})?.scrollIntoView({block:'center'})`);
+  await sleep(150);
+  return ev(`(()=>{const e=document.querySelector(${JSON.stringify(sel)});if(!e)return null;const r=e.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,ms:Number(e.dataset.holdMs)||600}})()`);
+};
 async function mouseHold(msDelta = 120) { const p = await point('#reward-continue'); await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: p.x, y: p.y, button: 'left', clickCount: 1 }); await sleep(Math.max(80, p.ms + msDelta)); await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: p.x, y: p.y, button: 'left', clickCount: 1 }); await sleep(250); }
 async function touchHold(msDelta = 120) { const p = await point('#reward-continue'); await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: p.x, y: p.y, id: 1 }] }); await sleep(Math.max(80, p.ms + msDelta)); await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await sleep(250); }
 async function focusContinue() { return ev(`(()=>{const e=document.querySelector('#reward-continue');if(!e)return false;document.querySelectorAll('.gp-focus').forEach(x=>x.classList.remove('gp-focus'));e.classList.add('gp-focus');e.focus();return true})()`); }
@@ -70,29 +74,43 @@ check('ordinary rows have zero Skip controls and labels', await ev(`!document.qu
 check('rewardContinue is rendered through the shared second-beat registry', await ev(`(()=>{const e=document.querySelector('#reward-continue');return e?.dataset.beatAction==='rewardContinue'&&e?.dataset.beat==='hold'&&Number(e?.dataset.holdMs)===600})()`));
 await click('.reward-kind[data-kind="cinders"]');
 await click('.reward-kind[data-kind="flask"]');
-check('Potion opens a distinct non-collecting detail', await ev(`document.querySelector('[data-reward-detail="flask"]')?.textContent.includes('INSPECT THE POTION')`));
+check('Potion opens a distinct non-collecting detail', await ev(`/inspect the potion/i.test(document.querySelector('[data-reward-detail="flask"]')?.textContent||'')`));
 await click('#reward-back');
 check('Potion Back preserves prior Taken state', await ev(`document.querySelector('[data-kind="cinders"]')?.dataset.state==='taken'`));
 await click('.reward-kind[data-kind="armament"]');
-check('Armament opens a distinct non-collecting detail', await ev(`document.querySelector('[data-reward-detail="armament"]')?.textContent.includes('INSPECT THE ARMAMENT')`));
+check('Armament opens a distinct non-collecting detail', await ev(`/inspect the armament/i.test(document.querySelector('[data-reward-detail="armament"]')?.textContent||'')`));
 await click('#reward-back');
 const beforeCard = await ev(`window.__spoils()`);
 await click('.reward-kind[data-kind="card"]'); await click('#reward-back');
 check('Cards Back preserves prior Taken state', await ev(`document.querySelector('[data-kind="cinders"]')?.dataset.state==='taken'`));
 await click('.reward-kind[data-kind="card"]'); await click('.reward-row .card');
+const afterSelect = await ev(`window.__spoils()`);
+check('Card selection highlights one option without collecting it',
+  afterSelect.liveDeck.length === beforeCard.liveDeck.length
+    && await ev(`document.querySelectorAll('.reward-row .card.reward-selected[aria-checked="true"]').length===1`),
+  JSON.stringify({ beforeCard, afterSelect }));
+check('Card chooser exposes equal-width Back and green Confirm actions after selection', await ev(`(()=>{
+  const back=document.querySelector('#reward-back'), confirm=document.querySelector('#reward-card-confirm');
+  if(!back||!confirm||confirm.disabled)return false;
+  const b=back.getBoundingClientRect(), c=confirm.getBoundingClientRect(), style=getComputedStyle(confirm);
+  return Math.abs(b.width-c.width)<1&&b.left<c.left&&style.borderColor!==getComputedStyle(back).borderColor;
+})()`));
+await click('#reward-card-confirm');
 const afterCard = await ev(`window.__spoils()`);
-check('Card is persisted before Continue and before the done callback',
+check('Confirm persists the selected card before Continue and before the done callback',
   afterCard.liveDeck.length === beforeCard.liveDeck.length + 1
     && afterCard.savedDeck.length === afterCard.liveDeck.length && afterCard.done === 0,
   JSON.stringify({ beforeCard, afterCard }));
 
 await open({ rewardCollect: 'manual', holdConfirm: 'normal' }); await mouseHold(-450);
-check('pre-threshold pointer release is inert', await ev(`!!document.querySelector('.reward-menu')`));
+check('short pointer press opens review without finalizing', await ev(`!!document.querySelector('.confirmation-modal')&&window.__spoils().done===0`));
+await click('.confirmation-cancel'); await sleep(200);
 await mouseHold(120);
 await click('#reward-continue');
 check('completed pointer hold calls onDone exactly once despite its trailing click', await ev(`window.__spoils().done===1`));
 await shape(390, 844, 2); await open({ rewardCollect: 'manual', holdConfirm: 'normal' }); await touchHold(-450);
-check('pre-threshold touch release is inert', await ev(`!!document.querySelector('.reward-menu')`));
+check('short touch press opens review without finalizing', await ev(`!!document.querySelector('.confirmation-modal')&&window.__spoils().done===0`));
+await click('.confirmation-cancel'); await sleep(200);
 await touchHold(120);
 check('completed touch hold finalizes once', await ev(`window.__spoils().done===1`));
 await open({ rewardCollect: 'manual', holdConfirm: 'normal' }); await nativeEnter(150);
@@ -109,6 +127,7 @@ for (const cell of [{ n: 'desktop', w: 1200, h: 730, d: 1, s: {} }, { n: 'phone'
   await ev(`document.querySelector('#reward-continue').scrollIntoView({block:'nearest'})`); await sleep(100);
   const g = await ev(`(()=>{const e=document.querySelector('#reward-continue'),h=document.querySelector('#reward-hold-copy'),r=e.getBoundingClientRect(),q=h.getBoundingClientRect();return{ok:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&q.left>=0&&q.right<=innerWidth&&q.top>=0&&q.bottom<=innerHeight,r:[r.left,r.top,r.right,r.bottom],q:[q.left,q.top,q.right,q.bottom]}})()`);
   check(`${cell.n} Continue and hold feedback are wholly scroll-reachable`, g.ok, JSON.stringify(g)); await shot(`${cell.n}-menu`);
+  await click('.reward-kind[data-kind="card"]'); await click('.reward-row .card'); await sleep(240); await shot(`${cell.n}-card-selected`); await click('#reward-back');
   await click('.reward-kind[data-kind="flask"]'); await sleep(240); await shot(`${cell.n}-potion-detail`); await click('#reward-back');
   await click('.reward-kind[data-kind="armament"]'); await sleep(240); await shot(`${cell.n}-armament-detail`);
   {

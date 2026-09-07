@@ -43,6 +43,7 @@ import { DISCLOSURE_TIERS } from './disclosure.js';
 export const COMBAT_OPCODES = Object.freeze([
   'damage',
   'block',
+  'dodgeRoll',
   'applyStatus',
   'removeStatus',
   'draw',
@@ -122,6 +123,9 @@ export const EVENTS = Object.freeze([
   'energySpent',
   'manaRestored',
   'manaSpent',
+  'staminaSpent',
+  'staminaRecovered', // framework Mana & Stamina rule: an idle turn's recovery
+  'dodgeRolled', // framework Weight Class & Dodge Roll: the roll's receipt
   'arcaneExposureChanged',
   'arcaneExposureRefused',
   'arcaneBreak',
@@ -251,21 +255,29 @@ export const STATUS_DURATION_TOKENS = Object.freeze(['turns']);
 //   additive       — (mult−1) sums across additive sources, applied once.
 export const VULN_STACKING = Object.freeze(['additive', 'multiplicative']);
 
-// Creature tags — the closed vocabulary proc resistance may gate on. An
-// enemy's `tags` and a proc row's `resistance.tags` must both draw from this
-// set. Distinct from card/effect tags (content/tags.js): creature identity vs
-// attack school — two concepts, deliberately two vocabularies.
-export const CREATURE_TAGS = Object.freeze([
-  'beast',
-  'humanoid',
-  'undead',
-  'construct',
-  'spirit',
-]);
+// Creature tags used to be a frozen array here, and then a field on the enemy
+// def. They are now rows in the one tag registry (content/source/tags.csv)
+// carrying domain 'creature', authored in content/source/tagging.csv like every
+// other tag and stamped onto the enemy at boot. Nothing about them is a schema
+// field any more, which is why neither the enemy nor the profile declares one.
+// model/tags.js gates them: an enemy and a proc row's `resistance.tags` may
+// draw from that domain and no other.
 
 export const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 'status']);
 export const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
 export const RELIC_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
+// Where a relic COMES FROM, as opposed to how rare it is. `reward` (the
+// default when the field is absent) is every generic pool — elite and boss
+// drops, the shop's stock, an event's "random relic". `quest` reserves the
+// relic for the event choice that names it by id (E12): no generic pool may
+// draw it, so the quest's promise is never pre-empted by a shop or a drop
+// and then silently kept by `addRelic`'s duplicate-ignore. validate.js refuses
+// a quest-pool relic that no event choice grants, because it would then be
+// unreachable content.
+export const RELIC_POOLS = Object.freeze(['reward', 'quest']);
+export function relicInRewardPool(relic) {
+  return (relic.pool || 'reward') === 'reward';
+}
 export const FLASK_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
 // What a flask IS, as opposed to how rare it is. The grace refill table
 // (balance.graceRefill) names kinds, never ids, so "restore 3 hp flasks" keeps
@@ -338,6 +350,10 @@ export const EFFECT_SPECS = Object.freeze({
   // two carriers — card chips for display, effect tags for combat).
   damage: { allowed: ['hits', 'tags'], required: ['amount'], refs: {} },
   block: { allowed: [], required: ['amount'], refs: {} },
+  // The dodge roll (framework contract: Weight Class and Dodge Roll): a
+  // target and nothing else — the check, the die and the guard are the
+  // framework's, and the price is the Weight Class's.
+  dodgeRoll: { allowed: [], required: [], refs: {} },
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status'], required: ['status'], refs: { status: 'statuses' } },
   draw: { allowed: [], required: ['amount'], refs: {} },
@@ -436,10 +452,9 @@ const enemyPhaseSchema = obj({
   unlockMoves: opt(arr(str)), // checked against the enemy's own moves in validate.js
 });
 
-// #237 reserves the strict authored constraint shape before #238 populates it.
-// Bounds are optional during this inert phase; once present, validate.js also
-// enforces positive integers and min <= max through model/levels.js.
-const enemyLevelProfileSchema = obj({
+// #237 defined the band vocabulary; #238 makes it complete authored content.
+// validate.js additionally enforces positive integers and min <= max.
+const levelBandSchema = obj({
   min: int,
   max: int,
 });
@@ -517,7 +532,6 @@ export const SCHEMAS = Object.freeze({
     rounding: en('floor', 'ceil', 'round'),
     gainPerTier: num,
     cap: union(num, str),
-    tags: arr(str),
     flavor: str,
     mods: arr(str),
     compatibility: en('attack-v1', 'guard-v1', 'technique-v1'),
@@ -571,6 +585,7 @@ export const SCHEMAS = Object.freeze({
     rarity: en(...CARD_RARITIES),
     cost: costNode,
     manaCost: opt(int),
+    staminaCost: opt(int),
     type: en(...CARD_TYPES),
     damageSchool: opt(en(...DAMAGE_SCHOOLS)),
     exposureBuildupPerHit: opt(int),
@@ -581,6 +596,8 @@ export const SCHEMAS = Object.freeze({
       obj({
         name: opt(str),
         cost: opt(costNode),
+        manaCost: opt(int),
+        staminaCost: opt(int),
         effects: opt(effects),
         keywords: opt(arr(ref('keywords'))),
         textTemplate: opt(str),
@@ -595,6 +612,7 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     rarity: en(...RELIC_RARITIES),
+    pool: opt(en(...RELIC_POOLS)),
     textTemplate: str,
     triggers: triggersNode,
     // DERIVED FROM PASSIVE_TYPES, never re-typed. `obj` is strict about unknown
@@ -647,7 +665,7 @@ export const SCHEMAS = Object.freeze({
         resistance: opt(
           obj({
             status: ref('statuses'), // the resist row applied post-proc
-            tags: arr(str), // creature-tag gate, ⊆ CREATURE_TAGS (validated)
+            tags: arr(str), // creature-tag gate; domain 'creature' of the tag registry
           })
         ),
       })
@@ -715,14 +733,19 @@ export const SCHEMAS = Object.freeze({
     name: str,
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
     poiseMax: int,
-    levelProfile: opt(enemyLevelProfileSchema),
-    tags: opt(arr(str)), // creature tags ⊆ CREATURE_TAGS — gates proc resistance
+    levelProfile: levelBandSchema,
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),
     art: opt(str),
     size: opt(en('small', 'medium', 'large')), // sprite size tier (display)
     tint: opt(str), // border/accent CSS color (display)
+    // WHICH WAY THIS ASSET WAS DRAWN (display). The board's own direction is
+    // one constant in ui/assets.js; only a mismatch between the two mirrors the
+    // sprite. `front` is not a third direction and never mirrors — a figure
+    // looking at the viewer has no left or right to turn — so a front-facing
+    // render declares nothing and is left exactly as drawn.
+    artFaces: opt(en('left', 'right', 'front')),
     // Strict absent | immune | configured Arcane Exposure policy. Absence is
     // represented by no field; it is not silently defaulted by the engine.
     arcaneExposure: opt(union(
@@ -750,7 +773,9 @@ export const SCHEMAS = Object.freeze({
     weight: num,
     minFloor: opt(int),
     pool: en(...ENCOUNTER_POOLS),
-    act: opt(int), // defaults to 1
+    act: int,
+    floorBand: levelBandSchema,
+    targetBand: levelBandSchema,
   }),
 
   event: obj({
@@ -796,7 +821,6 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
-    hpPerConTier: int,
     startingFlaskAllocation: obj({ hp: int, mana: int }),
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
@@ -836,8 +860,14 @@ export const SCHEMAS = Object.freeze({
     floorRules: opt(
       obj({
         fixed: opt(arr(floorAnchor({ type: en(...NODE_TYPES) }))),
-        noEliteOrShrineBefore: opt(floorAnchor()),
+        noShrineBefore: opt(floorAnchor()),
+        noEliteBefore: opt(floorAnchor()),
         noShrineOn: opt(floorAnchor()),
+        // The split key is NOT declared here, so an act that still authors it
+        // is refused for an undeclared field by the shape layer AND named by
+        // resolveFloorPlan's meaning layer. Two refusals is not redundancy: the
+        // schema cannot say what to write instead, and the resolver can.
+        restBeforeElite: opt(bool),
         minElites: opt(int),
         minMerchants: opt(int),
       })

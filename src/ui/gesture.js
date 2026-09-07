@@ -147,9 +147,16 @@ export function armPress(el, begin) {
 export function trackGesture(startEv, { onMove, onEnd } = {}) {
   const id = startEv.pointerId;
   const el = startEv.currentTarget;
-  // Capture can throw on a detached node or an exotic target; a gesture that
-  // cannot capture still gets scoped listeners and still cleans up — weaker
-  // (off-element moves may not arrive), never leaky.
+  // Capture is asked for so a pointer that leaves the control keeps reporting
+  // to it, but the gesture is NOT trusting capture to hold: the listeners sit
+  // on the window, filtered by pointerId, so a move or a release that lands
+  // somewhere else — capture refused on an exotic target, a browser that did
+  // not honour it, a headless driver — still reaches this gesture. Measured
+  // (tools/holdconfirm.mjs case 4b): with the listeners on the element, a
+  // drag that left the bar never reported its moves or its release, the hold
+  // timer ran on unopposed, and a binding choice COMMITTED at full under a
+  // pointer that had walked away. A gesture that cannot see its own end is a
+  // hold nobody can abort.
   try { el.setPointerCapture(id); } catch { /* tracked without capture */ }
   let done = false;
   const move = (ev) => {
@@ -159,15 +166,15 @@ export function trackGesture(startEv, { onMove, onEnd } = {}) {
   const finish = (cancelled) => (ev) => {
     if (ev.pointerId !== id || done) return;
     done = true;
-    el.removeEventListener('pointermove', move);
-    el.removeEventListener('pointerup', up);
-    el.removeEventListener('pointercancel', cancel);
+    window.removeEventListener('pointermove', move, true);
+    window.removeEventListener('pointerup', up, true);
+    window.removeEventListener('pointercancel', cancel, true);
     try { el.releasePointerCapture(id); } catch { /* already released */ }
     if (onEnd) onEnd(ev, { cancelled });
   };
   const up = finish(false);
   const cancel = finish(true);
-  el.addEventListener('pointermove', move);
-  el.addEventListener('pointerup', up);
-  el.addEventListener('pointercancel', cancel);
+  window.addEventListener('pointermove', move, true);
+  window.addEventListener('pointerup', up, true);
+  window.addEventListener('pointercancel', cancel, true);
 }

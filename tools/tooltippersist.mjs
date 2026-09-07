@@ -404,11 +404,11 @@ async function main() {
     // MOUSE, which is the other summoning path, and watch the text change.
     const p1 = await ev(otherNamed(p0.name));
     if (p1) {
-      await mouse('mouseMoved', p1.x, p1.y); await wait(400);
+      await mouse('mouseMoved', p1.x, p1.y); await wait(700); // 500ms open delay
       const t8 = await ev(tip);
       const swapped = t8.shown && t8.title && t8.title !== t2.title && t8.n === 1;
       // …and the replacement is not itself sticky: move off and it must go.
-      await mouse('mouseMoved', 4, 4); await wait(250);
+      await mouse('mouseMoved', 4, 4); await wait(2300); // a plain tooltip closes 2s after the pointer leaves
       const t8b = await ev(tip);
       ok(swapped && !t8b.shown,
         `replaced: hovering another card swaps the text ("${t2.title}" -> "${t8.title}") and the replacement is NOT stuck (${t8b.shown ? 'still shown' : 'gone on leave'})`);
@@ -417,9 +417,9 @@ async function main() {
     }
 
     // ---- 9 · UNCHANGED: a plain hover, no hold, still hides on leave --------
-    await mouse('mouseMoved', p0.x, p0.y); await wait(400);
+    await mouse('mouseMoved', p0.x, p0.y); await wait(700);
     const t9a = await ev(tip);
-    await mouse('mouseMoved', 4, 4); await wait(250);
+    await mouse('mouseMoved', 4, 4); await wait(2300);
     const t9b = await ev(tip);
     ok(t9a.shown && !t9b.shown,
       `unchanged: a plain hover still hides on leave (shown ${t9a.shown} -> ${t9b.shown}) — the change is the HOLD, not the tooltip`);

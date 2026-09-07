@@ -1,24 +1,203 @@
 // Shared Load-slot surface for Title and the in-run Quick Menu. Selection is
 // projected by SaveSlotSelectionModel; callers only decide what a confirmed
 // exact slot means. The component never reads or mutates save storage.
+//
+// THE DOOR IS THE KIT'S. A slot is an OptionCard (the slot number + the climb's
+// name + its facts), the list is `options`, the delete is the one
+// IconButton box, the chrome is modalHead + modalFooter, and the review is
+// body C (Title·L + Ornament + DetailCard + prompt). Title's NEW GAME door is
+// built from the same builders below (`slotDoor`), so the two doors cannot
+// drift — one home for what a save slot looks like.
 
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
-import { armHold, beatArmer } from './holdconfirm.js';
-import { esc, hideTooltip } from './tooltip.js';
-import { mountTitleSaveSlotTooltip } from './titleSaveSlotTooltip.js';
+import { armHold, beatArmer } from '../../framework/optionDecision.js';
+import { hideTooltip } from './tooltip.js';
+import {
+  el, html, modalHead, modalFooter, button, iconButton, optionCard, optionRow, options, decide, detailCard, ornament,
+} from '../kit/index.js';
 
 let activeSelector = null;
 
-export function saveSlotCopyHtml({ slot, summary }) {
-  if (!summary) {
-    return `<span class="title-slot-tag">SLOT ${slot}</span><span class="title-slot-empty">Empty</span>`;
+/**
+ * slotFacts(summary, { canStart }) → the one line of facts a slot card and its
+ * review share.
+ *
+ * `canStart` is whether an empty row leads anywhere. The in-run Quick Menu opens
+ * this same list with no `onRequestNew`, so empty rows are disabled and
+ * describe why. The title's doors can offer a new climb instead.
+ */
+export function slotFacts(summary, { canStart = true } = {}) {
+  if (summary) return `Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP`;
+  return canStart ? 'Start a new climb here' : 'No climb saved here';
+}
+
+/**
+ * The same facts as words. The printed line leans on `·` and `34/50`, which a
+ * screen reader either swallows or spells out; this is what it should hear.
+ */
+function slotFactsSpoken(summary, options) {
+  return summary
+    ? `Act ${summary.actNumber}, floor ${summary.floor}, ${summary.hp} of ${summary.maxHp} HP`
+    : slotFacts(null, options);
+}
+
+/**
+ * slotOption({ slot, summary, selected, selectable, deletable, hint }) → the
+ * OptionCard row for one save slot, with its delete laid over the card's own
+ * right edge when there is a save to delete.
+ *
+ * THE ROW SAYS EACH THING ONCE (Constantine, 2026-09-06). It used to say
+ * "empty" four ways — a ▢ that read as an unticked checkbox, "Empty" as the
+ * card's name, a `Slot n` chip, and an EMPTY pill — while the slot number, the
+ * only thing telling three rows apart, was the smallest text on the row. Worse,
+ * a slot with a save in it did not fit: the trailing pill squeezed the facts
+ * onto two lines and truncated itself to "REA…". So the number is now the
+ * glyph, the name is the climb (or that there is none), and the state is the
+ * line under it — `title-save-slot-state` marks that line rather than a pill
+ * repeating what it says.
+ *
+ * WHERE THE SEED WENT. Not onto the row: it made an occupied row taller than
+ * the empty ones for a string nobody chooses a slot by — the class and the
+ * act/floor/HP do that. It is on both doors that confirm a load (the title's
+ * review door, the Quick Menu's confirmation), and on the run's own header and
+ * run-info overlay once loaded. A hold-to-load passes none of those, which is
+ * what "hold to load it now" means: the shortcut is the feature, and the seed
+ * is a page-turn away on the other side of it.
+ */
+export function slotOption({ slot, summary, selected = false, selectable = true, deletable = false, canStart = true, hint = null }) {
+  const card = optionCard({
+    glyph: String(slot),
+    name: summary ? summary.className : 'Empty slot',
+    description: slotFacts(summary, { canStart }),
+    selected,
+    disabled: !selectable,
+    arrow: false,
+    className: `title-slot-pick${summary ? ' is-filled' : ' is-vacant'}`,
+    attrs: {
+      dataset: { slotPick: slot },
+      // The number is drawn in an aria-hidden glyph, so an unlabelled row never
+      // says which slot it is. A label that only said "Slot n" was worse: it
+      // REPLACES the visible text, so a listener lost the class, the act and
+      // the floor — everything a sighted player reads before choosing. The
+      // label is built from what the row shows, plus what the row does.
+      'aria-label': [
+        `Slot ${slot}`,
+        summary ? summary.className : 'Empty slot',
+        slotFactsSpoken(summary, { canStart }),
+        hint?.action,
+      ].filter(Boolean).join('. '),
+    },
+  });
+  const copy = card.querySelector('.ob');
+  copy.classList.add('title-slot-copy');
+  copy.dataset.component = UI.titleSaveSlotCopy;
+  card.querySelector('.og').classList.add('title-slot-num');
+  // The state projection is this line: the climb's facts when there is one,
+  // the invitation to start one when there is not.
+  const state = card.querySelector('.od');
+  state.classList.add('title-slot-state');
+  state.dataset.component = UI.titleSaveSlotState;
+  // No save, no delete — and no reserved column for one either. The button is
+  // positioned over the card, so an occupied row is exactly as wide as an
+  // empty one instead of losing 4rem of its text to a spacer.
+  const trailing = deletable
+    ? iconButton({ glyph: '✕', label: `Delete slot ${slot}`, className: 'title-slot-delete', attrs: { dataset: { slotDelete: slot, component: UI.titleSaveSlotDelete } } })
+    : null;
+  const rowEl = optionRow(card, trailing, {
+    class: `title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}${deletable ? ' has-delete' : ''}`,
+    'data-component': UI.titleSaveSlot,
+  });
+  return rowEl;
+}
+
+/**
+ * slotDoor({ eyebrow, title, closeLabel, rows, backLabel, continueLabel, canContinue, actionSlot, backAction })
+ * → the <section class="modal"> for a slot list — LOAD GAME and NEW GAME wear
+ * exactly this. The caller wraps it in its own veil and wires by delegation.
+ */
+export function slotDoor({ eyebrow, title, closeLabel, rows, backLabel = 'Back', continueLabel = 'Continue', canContinue = false, actionSlot = null, backAction = 'back', className = '' }) {
+  const head = modalHead({ eyebrow, title, titleId: 'title-modal-heading', closeLabel });
+  const close = head.querySelector('.modal-close');
+  close.classList.add('title-modal-close');
+  close.dataset.component = UI.titleModalCloseControl;
+  close.dataset.titleAction = 'close-modal';
+  head.querySelector('#title-modal-heading').dataset.component = UI.titleModalHeading;
+
+  const back = button({ label: backLabel, className: 'title-modal-back', attrs: { dataset: { titleAction: backAction, component: UI.titleModalBackControl } } });
+  const forward = button({ label: continueLabel, weight: 'primary', className: 'title-modal-continue', disabled: !canContinue, attrs: { dataset: { titleAction: 'modal-continue', actionSlot: actionSlot ?? '', component: UI.titleModalContinueControl } } });
+  const foot = modalFooter({ secondary: [back], primary: forward, size: 'medium' });
+  foot.querySelector('.modal-foot-actions').dataset.component = UI.titleModalActions;
+
+  const body = el('div', { class: 'modal-body' }, decide({
+    children: [
+      ornament({ 'data-component': UI.titleModalDivider }),
+      options(rows, { class: 'title-slot-list', 'data-component': UI.titleSaveSlotList, 'aria-label': 'Save slots' }),
+    ],
+  }));
+  return el('section', {
+    class: `modal title-menu-modal${className ? ` ${className}` : ''}`,
+    dataset: { size: 'sm', component: UI.titleMenuModal },
+    role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'title-modal-heading',
+  }, [head, body, foot]);
+}
+
+/**
+ * THE SLOT DECISION DOOR — body C, one shape for the four questions a slot
+ * can ask (Constantine, 2026-09-04: "a dynamic modal for loading, overwriting
+ * or starting a new game confirmation"). The head asks the question, the
+ * body shows what is at stake (the DetailCard of the save, when there is
+ * one) and the foot answers it: Back, or the one committing action.
+ *
+ *   load + occupied → "Load slot n?"       Load Save     (review-load)
+ *   load + empty    → "Slot n is empty"    New Game      (review-new)
+ *   new  + empty    → "Start in slot n?"   Start         (review-new)
+ *   new  + occupied → "Overwrite slot n?"  Overwrite     (review-new, danger)
+ *
+ * `.title-load-review` and `data-variant` are the hooks the instruments read;
+ * `title-modal-heading` is the door's one heading.
+ */
+const SLOT_DECISIONS = {
+  'load:occupied': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-review', title: (n) => `Load slot ${n}?`, prompt: 'Load this saved climb now?', back: 'Back to Saves', confirm: 'Load Save', action: 'review-load', card: true, danger: false },
+  'load:empty': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-empty', title: (n) => `Slot ${n} is empty`, prompt: 'Nothing is saved here yet. Start a new climb in this slot?', back: 'Back to Saves', confirm: 'New Game', action: 'review-new', card: false, danger: false },
+  'new:empty': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-start', title: (n) => `Start in slot ${n}?`, prompt: 'This slot is empty. The new climb will be saved here.', back: 'Back to Slots', confirm: 'Start', action: 'review-new', card: false, danger: false },
+  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-overwrite', title: (n) => `Overwrite slot ${n}?`, prompt: 'Starting here deletes this saved climb and begins a new one. There is no way back.', back: 'Back to Slots', confirm: 'Overwrite', action: 'review-new', card: true, danger: true },
+};
+
+export function slotDecisionDoor({ kind, slot, summary = null }) {
+  const spec = SLOT_DECISIONS[`${kind}:${summary ? 'occupied' : 'empty'}`];
+  if (!spec) throw new Error(`slotDecisionDoor: no decision for kind '${kind}'`);
+  const head = modalHead({ eyebrow: spec.eyebrow, title: spec.title(slot), titleId: 'title-modal-heading', closeLabel: spec.closeLabel });
+  const close = head.querySelector('.modal-close');
+  close.classList.add('title-modal-close');
+  close.dataset.component = UI.titleModalCloseControl;
+  close.dataset.titleAction = 'close-modal';
+  head.querySelector('#title-modal-heading').dataset.component = UI.titleModalHeading;
+  let card = null;
+  if (spec.card && summary) {
+    card = detailCard({ eyebrow: `Slot ${slot}`, name: summary.className, line: slotFacts(summary), meta: `Seed ${summary.seedString}` });
+    card.classList.add('title-load-review-slot');
+    if (spec.danger) card.classList.add('muted');
+    card.dataset.component = UI.titleSaveSlot;
+    card.setAttribute('aria-label', 'Selected save summary');
   }
-  return `<span class="title-slot-tag">SLOT ${slot}</span>
-    <span class="title-slot-name">${esc(summary.className)}</span>
-    <span class="title-slot-meta">Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP</span>
-    <span class="title-slot-seed">SEED ${esc(summary.seedString)}</span>`;
+  const body = el('div', { class: 'modal-body' }, decide({
+    children: [ornament({ 'data-component': UI.titleModalDivider }), card],
+    prompt: spec.prompt,
+  }));
+  const back = button({ label: spec.back, className: 'title-modal-back title-load-review-back', attrs: { dataset: { titleAction: 'review-back', component: UI.titleModalBackControl } } });
+  const confirm = button({
+    label: spec.confirm, weight: 'primary', className: `title-load-review-confirm${spec.danger ? ' danger' : ''}`,
+    attrs: { dataset: { titleAction: spec.action, component: UI.titleModalContinueControl, actionSlot: slot } },
+  });
+  const foot = modalFooter({ secondary: [back], primary: confirm, size: 'medium' });
+  foot.querySelector('.modal-foot-actions').dataset.component = UI.titleModalActions;
+  return el('section', {
+    class: 'modal title-menu-modal title-load-review',
+    dataset: { size: 'sm', component: UI.titleMenuModal, variant: spec.variant },
+    role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'title-modal-heading',
+  }, [head, body, foot]);
 }
 
 export function closeSaveSlotSelector({ restoreFocus = true } = {}) {
@@ -33,6 +212,7 @@ export function openSaveSlotSelector({
   returnFocusElement = null,
   inlineReview = false,
   onRequestLoad,
+  onRequestNew = null,
   onDelete = null,
 } = {}) {
   closeSaveSlotSelector({ restoreFocus: false });
@@ -40,7 +220,8 @@ export function openSaveSlotSelector({
   const veil = document.createElement('div');
   veil.className = 'modal-veil title-modal-veil';
   veil.dataset.titleModalScrim = '';
-  let selectedSlot = saveSlotSelectionModel(slots, { kind: 'load' }).properties.selectedSlot;
+  const canStart = typeof onRequestNew === 'function';
+  let selectedSlot = saveSlotSelectionModel(slots, { kind: 'load', allowEmpty: canStart }).properties.selectedSlot;
   let activatedLoadSlot = null;
   let loadReviewSlot = null;
   let closed = false;
@@ -51,7 +232,7 @@ export function openSaveSlotSelector({
     for (const cleanup of holdCleanups.splice(0)) cleanup();
   };
 
-  const model = () => saveSlotSelectionModel(slots, { kind: 'load', selectedSlot });
+  const model = () => saveSlotSelectionModel(slots, { kind: 'load', selectedSlot, allowEmpty: canStart });
   const selectedButton = () => veil.querySelector(`[data-slot-pick="${selectedSlot}"]`);
   const focus = (selector = '.title-slot-pick:not([disabled]), .title-modal-back') => {
     const control = veil.querySelector(selector);
@@ -82,73 +263,70 @@ export function openSaveSlotSelector({
     close({ restoreFocus: false });
     onRequestLoad(slot, { trigger, returnFocusElement });
   };
+  // An empty slot's one answer: start a new climb there (the title's onNew).
+  const requestNew = (slot, trigger) => {
+    if (slot == null || typeof onRequestNew !== 'function') return;
+    close({ restoreFocus: false });
+    onRequestNew(slot, { trigger, returnFocusElement });
+  };
+  const openReview = (slot) => {
+    if (slot == null) return;
+    loadReviewSlot = slot;
+    render();
+    focus('[data-title-action="review-load"], [data-title-action="review-new"]');
+  };
 
+  // Whether an empty row leads anywhere here. The in-run Quick Menu opens this
+  // list with no way to start a climb, and a row must not offer what its door
+  // cannot do.
   const slotRows = (selection) => selection.children
     .filter((child) => child.component === UI.titleSaveSlot)
     .map(({ properties }) => {
       const { slot, selectable, selected } = properties;
       const record = slots.find((candidate) => candidate.slot === slot);
       const summary = record?.summary || null;
-      const hint = summary
-        ? ` title="Select slot ${slot}. Hold to ${inlineReview ? 'load now' : 'review this load'}; activate the selected slot again to review." aria-label="Slot ${slot}, ${esc(summary.className)}. Hold to ${inlineReview ? 'load now' : 'review this load'}; activate twice to review."`
-        : '';
-      return `<div class="title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}" data-component="title-save-slot">
-        <button class="title-slot-pick${summary ? ' is-filled' : ''}" type="button" data-slot-pick="${slot}" aria-pressed="${selected}"${hint}${selectable ? '' : ' disabled'}>
-          <span class="title-slot-copy" data-component="title-save-slot-copy">${saveSlotCopyHtml({ slot, summary })}</span>
-          <span class="title-slot-state" data-component="title-save-slot-state">${summary ? 'READY' : 'EMPTY'}</span>
-        </button>
-        ${summary && onDelete ? `<button class="subtle title-slot-delete" data-component="title-save-slot-delete" type="button" data-slot-delete="${slot}" aria-label="Delete slot ${slot}">✕</button>` : ''}
-      </div>`;
-    }).join('');
+      // Only what the row DOES — slotOption says what it holds, so the two do
+      // not have to agree about wording that is already on screen.
+      // Only what the row DOES, and only when that is not already the line it
+      // shows: an empty slot's visible "Start a new climb here" IS the action.
+      const hint = summary ? { action: 'Tap to review this save; hold to load it now' } : null;
+      return slotOption({ slot, summary, selected, selectable, deletable: !!(onDelete && summary), canStart, hint });
+    });
 
   const render = () => {
     if (closed) return;
     clearSlotHolds();
     tooltipCleanup?.();
     tooltipCleanup = null;
+    veil.innerHTML = '';
     if (inlineReview && loadReviewSlot != null) {
       const record = slots.find(({ slot }) => slot === loadReviewSlot);
-      if (record?.summary) {
-        veil.innerHTML = `<section class="modal title-menu-modal title-load-review" data-component="title-menu-modal" data-variant="load-review" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
-          <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game">×</button>
-          <h2 id="title-modal-heading" data-component="title-modal-heading">LOAD SLOT ${record.slot}?</h2>
-          <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
-          <article class="title-load-review-slot" data-component="title-save-slot" aria-label="Selected save summary">
-            <span class="title-slot-copy" data-component="title-save-slot-copy">${saveSlotCopyHtml(record)}</span>
-          </article>
-          <p class="title-load-review-copy">Load this saved climb now?</p>
-          <div class="title-modal-actions" data-component="title-modal-actions">
-            <button class="title-modal-back title-load-review-back" data-component="title-modal-back-control" type="button" data-title-action="review-back">BACK TO SAVES</button>
-            <button class="title-load-review-confirm" data-component="title-modal-continue-control" type="button" data-title-action="review-load">LOAD SAVE</button>
-          </div>
-        </section>`;
-        return;
-      }
-      loadReviewSlot = null;
+      veil.appendChild(slotDecisionDoor({ kind: 'load', slot: loadReviewSlot, summary: record?.summary || null }));
+      return;
     }
 
     const selection = model();
-    veil.innerHTML = `<section class="modal title-menu-modal" data-component="title-menu-modal" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
-      <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game">×</button>
-      <h2 id="title-modal-heading" data-component="title-modal-heading">LOAD GAME</h2>
-      <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
-      <div class="title-slot-list" data-component="title-save-slot-list" aria-label="Save slots">${slotRows(selection)}</div>
-      <div class="title-modal-actions" data-component="title-modal-actions">
-        <button class="title-modal-back" data-component="title-modal-back-control" type="button" data-title-action="back">BACK</button>
-        <button class="title-modal-continue" data-component="title-modal-continue-control" type="button" data-title-action="modal-continue" data-action-slot="${selection.properties.actionSlot ?? ''}"${selection.properties.canContinue ? '' : ' disabled'}>CONTINUE</button>
-      </div>
-    </section>`;
+    veil.appendChild(slotDoor({
+      eyebrow: 'Load game',
+      title: 'Choose a slot',
+      closeLabel: 'Close Load Game',
+      rows: slotRows(selection),
+      backLabel: 'Back',
+      continueLabel: 'Continue',
+      canContinue: !!selection.properties.canContinue,
+      actionSlot: selection.properties.actionSlot,
+    }));
 
     const duration = Number(registries?.balance?.ui?.titleLoadHold?.ms);
     const holdMs = Number.isFinite(duration) && duration > 0 ? duration : 600;
-    veil.querySelectorAll('.title-slot-pick.is-filled').forEach((button) => {
-      const slot = Number(button.dataset.slotPick);
+    veil.querySelectorAll('.title-slot-pick.is-filled').forEach((slotButton) => {
+      const slot = Number(slotButton.dataset.slotPick);
       let clearPendingRelease = null;
-      const disarmHold = armHold(button, {
+      const disarmHold = armHold(slotButton, {
         ms: holdMs,
         id: 'loadSave',
         pointerOnly: true,
-        hintHost: button,
+        hintHost: slotButton,
         onTap: () => activateSlot(slot),
         onConfirm: (startEvent) => {
           hideTooltip();
@@ -165,8 +343,8 @@ export function openSaveSlotSelector({
           const pointerId = startEvent?.pointerId;
           if (!Number.isInteger(pointerId)) return;
           const clear = () => {
-            button.removeEventListener('pointerup', release);
-            button.removeEventListener('pointercancel', cancel);
+            slotButton.removeEventListener('pointerup', release);
+            slotButton.removeEventListener('pointercancel', cancel);
             if (clearPendingRelease === clear) clearPendingRelease = null;
           };
           const release = (endEvent) => {
@@ -179,8 +357,8 @@ export function openSaveSlotSelector({
           };
           clearPendingRelease?.();
           clearPendingRelease = clear;
-          button.addEventListener('pointerup', release);
-          button.addEventListener('pointercancel', cancel);
+          slotButton.addEventListener('pointerup', release);
+          slotButton.addEventListener('pointercancel', cancel);
         },
       });
       holdCleanups.push(() => {
@@ -191,47 +369,45 @@ export function openSaveSlotSelector({
 
     if (onDelete && meta && registries) {
       const arm = beatArmer(meta, registries);
-      veil.querySelectorAll('.title-slot-delete').forEach((button) => {
-        arm(button, 'deleteSave', {
+      veil.querySelectorAll('.title-slot-delete[data-slot-delete]').forEach((deleteButton) => {
+        arm(deleteButton, 'deleteSave', {
           onConfirm: () => {
-            const slot = Number(button.dataset.slotDelete);
+            const slot = Number(deleteButton.dataset.slotDelete);
             close({ restoreFocus: false });
             onDelete(slot);
           },
         });
-        button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
+        deleteButton.title = deleteButton.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
       });
     }
 
-    tooltipCleanup = mountTitleSaveSlotTooltip({
-      root: veil,
-      owner: selectedButton(),
-    });
+
   };
 
   const activateSlot = (slot) => {
     hideTooltip();
-    if (selectedSlot === slot && activatedLoadSlot === slot) {
-      if (inlineReview) {
-        loadReviewSlot = slot;
-        render();
-        focus('[data-title-action="review-load"]');
-      } else {
-        requestLoad(slot, 'repeat');
-      }
-      return;
-    }
+    if (!canStart && !slots.find((record) => record.slot === slot)?.summary) return;
+    // TWO TAPS (Constantine, 2026-09-04): the first highlights the slot, the
+    // second on the highlighted slot opens its decision door (Continue opens
+    // it too). Back returns to the list with the slot still highlighted, so
+    // the next tap opens it again. A hold on an occupied slot still loads.
+    const repeat = selectedSlot === slot && activatedLoadSlot === slot;
     selectedSlot = slot;
     activatedLoadSlot = slot;
+    if (repeat) {
+      if (inlineReview) openReview(slot);
+      else requestLoad(slot, 'repeat');
+      return;
+    }
     render();
     focus(`[data-slot-pick="${selectedSlot}"]`);
   };
 
   veil.addEventListener('click', (event) => {
     if (event.target === veil) return close();
-    const button = event.target.closest('[data-title-action], [data-slot-pick]');
-    if (!button || !veil.contains(button)) return;
-    const action = button.dataset.titleAction;
+    const control = event.target.closest('[data-title-action], [data-slot-pick]');
+    if (!control || !veil.contains(control)) return;
+    const action = control.dataset.titleAction;
     if (action === 'close-modal' || action === 'back') close();
     else if (action === 'review-back') {
       const slot = loadReviewSlot;
@@ -239,8 +415,13 @@ export function openSaveSlotSelector({
       render();
       focus(`[data-slot-pick="${slot}"]`);
     } else if (action === 'review-load') requestLoad(loadReviewSlot, 'review');
-    else if (action === 'modal-continue') requestLoad(model().properties.actionSlot, 'continue');
-    else if (button.dataset.slotPick && !button.classList.contains('is-filled')) activateSlot(Number(button.dataset.slotPick));
+    else if (action === 'review-new') requestNew(loadReviewSlot, 'review');
+    else if (action === 'modal-continue') {
+      // Continue asks before it acts: the decision door is the confirmation.
+      if (inlineReview) openReview(model().properties.actionSlot);
+      else requestLoad(model().properties.actionSlot, 'continue');
+    }
+    else if (control.dataset.slotPick && !control.classList.contains('is-filled')) activateSlot(Number(control.dataset.slotPick));
   });
   veil.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
@@ -271,4 +452,9 @@ export function openSaveSlotSelector({
   render();
   queueMicrotask(() => focus(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`));
   return activeSelector;
+}
+
+// Kept for the title screen's string renderer: the same card, serialised.
+export function saveSlotCopyHtml({ slot, summary }) {
+  return html(slotOption({ slot, summary }).querySelector('.title-slot-copy'));
 }

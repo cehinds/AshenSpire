@@ -406,7 +406,7 @@ const BOUNDARY = `
 BOUNDARY — what a green from this tool does NOT mean:
   · REACHED IS NOT EFFECTIVE. This proves something APPLIES the status, never
     that applying it changes a hit. Frost-Exposed and Unraveled now consume
-    cardTagging.csv identity through the action engine, and tests 7e2/7e3 play
+    tagging.csv identity through the action engine, and tests 7e2/7e3 play
     real shipped cards through both preview and execution. This tool runs none
     of that damage path; it stays silent about effectiveness by construction.
   · REACHED IS NOT DRAWABLE. A card with an applier still has to be in a class

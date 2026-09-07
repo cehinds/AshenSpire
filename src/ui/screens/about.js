@@ -7,11 +7,21 @@
 // exists to prevent.
 //
 // About stays inside Settings; the Profile archive is now a title-screen route.
+//
+// ON THE KIT: the acknowledgement is Prose under the settings pane's heading —
+// the lead as paragraphs, each section as Eyebrow + Title·S + Prose, a
+// ButtonRow for the one action, StatusText for its result, and Flavour for the
+// version line. The changelog is a column of kit Folds: the summary is a Row
+// (label = the change, StatusText = the build), the body is Prose. The hooks
+// tools/about-changelog.mjs reads (`.about-ai`, `.about-block`, `.about-copy`,
+// `.about-debug-version`, `.about-changelog`, `details.about-change`,
+// `.about-change-pr`) ride on the kit's parts and draw nothing.
 
 import { esc } from '../components/tooltip.js';
 import { AI_DISCLOSURE, disclosureAsText } from '../../content/aiDisclosure.js';
 import { ABOUT_BUILD_LINE, BUILD_VERSION, RUN_PATH } from '../../buildversion.js';
 import { CHANGELOG, PROJECT_REPOSITORY_URL } from '../../content/changelog.js';
+import { el, prose, eyebrow, titleS, button, buttonRow, statusText, flavour, fold, hairline } from '../kit/index.js';
 
 /**
  * A source-server build is development by construction. A standalone bundle
@@ -28,23 +38,26 @@ export function shouldLinkDebugVersion({ runPath = RUN_PATH, locationLike = glob
 export function shouldLinkChangelog(options = {}) {
   return shouldLinkDebugVersion(options);
 }
-function changelogHtml(entries, { linkExternal = false } = {}) {
+function changelogNodes(entries, { linkExternal = false } = {}) {
   let group = null;
-  return entries.map((entry) => {
-    const heading = entry.group === group ? '' : `<h3>${esc(entry.group)}</h3>`;
-    group = entry.group;
-    return `${heading}
-      <details class="about-change" data-change-id="${esc(entry.id)}">
-        <summary class="region-fold">
-          <span class="rf-label">${esc(entry.summary)}</span>
-          <span class="region-count">${esc(entry.build)}</span>
-        </summary>
-        <p class="set-note">${esc(entry.detail)}</p>
-        <p class="set-note">${linkExternal
-          ? `<a class="about-change-pr" href="${esc(entry.url)}" target="_blank" rel="noopener noreferrer">Pull request #${entry.pullRequest}</a>`
-          : `<span class="about-change-pr" aria-label="Pull request #${entry.pullRequest}; external navigation unavailable in this artifact">Pull request #${entry.pullRequest}</span>`}</p>
-      </details>`;
-  }).join('');
+  const nodes = [];
+  for (const entry of entries) {
+    if (entry.group !== group) {
+      nodes.push(el('div', { class: 'set-section-head about-group' }, [eyebrow('Changes'), titleS(entry.group, { tag: 'h3' })]));
+      group = entry.group;
+    }
+    const pr = linkExternal
+      ? el('a', { class: 'about-change-pr', href: entry.url, target: '_blank', rel: 'noopener noreferrer', text: `Pull request #${entry.pullRequest}` })
+      : el('span', { class: 'about-change-pr', 'aria-label': `Pull request #${entry.pullRequest}; external navigation unavailable in this artifact`, text: `Pull request #${entry.pullRequest}` });
+    nodes.push(fold({
+      label: entry.summary,
+      status: entry.build,
+      className: 'about-change',
+      attrs: { dataset: { changeId: entry.id } },
+      children: [prose(entry.detail), el('p', { class: 'as-prose' }, pr)],
+    }));
+  }
+  return nodes;
 }
 
 export function renderChangelogSection(container, {
@@ -53,12 +66,13 @@ export function renderChangelogSection(container, {
   locationLike = globalThis.location,
 } = {}) {
   const changeLinks = shouldLinkChangelog({ runPath, locationLike });
-  container.innerHTML = `
-    <section class="about-changelog" aria-labelledby="advanced-changelog-title">
-      <h2 id="advanced-changelog-title">What changed</h2>
-      <p class="set-note">Newest changes are first. Open an entry for the player-facing detail.</p>
-      ${changelogHtml(changelog, { linkExternal: changeLinks })}
-    </section>`;
+  container.innerHTML = '';
+  container.appendChild(el('section', { class: 'about-changelog', 'aria-labelledby': 'advanced-changelog-title' }, [
+    el('div', { class: 'set-section-head' }, [eyebrow('Advanced'), titleS('What changed', { tag: 'h2', id: 'advanced-changelog-title' })]),
+    flavour('Newest changes are first. Open an entry for the player-facing detail.'),
+    hairline(),
+    ...changelogNodes(changelog, { linkExternal: changeLinks }),
+  ]));
 }
 
 export function renderAboutSection(container, {
@@ -66,15 +80,10 @@ export function renderAboutSection(container, {
   runPath = RUN_PATH,
   locationLike = globalThis.location,
 } = {}) {
-  const sections = disclosure.sections
-    .map(
-      (s) => `
-        <div class="about-block">
-          <b>${esc(s.heading)}</b>
-          <p class="set-note">${esc(s.body)}</p>
-        </div>`
-    )
-    .join('');
+  const sections = disclosure.sections.map((s) => el('div', { class: 'about-block' }, [
+    el('div', { class: 'set-section-head' }, [eyebrow('About'), titleS(s.heading, { tag: 'h3' })]),
+    prose(s.body),
+  ]));
 
   // Sunna's non-blocking push: the lead ran 14 unbroken lines. It is PARAGRAPHED
   // here, never rewritten — the string stays byte-identical to the one the store
@@ -85,10 +94,7 @@ export function renderAboutSection(container, {
   const groups = sentences.length >= 4
     ? [sentences.slice(0, 2), sentences.slice(2, 4), sentences.slice(4)]
     : [sentences];
-  const lead = groups
-    .filter((g) => g.length)
-    .map((g) => `<p class="about-lead">${esc(g.join(' '))}</p>`)
-    .join('');
+  const lead = groups.filter((g) => g.length).map((g) => prose(g.join(' '), { class: 'about-lead' }));
 
   // THE VERSION LINE — A4, Constantine's pick of four ("a4 is really nice",
   // 2026-08-16), and every field on it is DERIVED. It used to read
@@ -110,21 +116,21 @@ export function renderAboutSection(container, {
   const buildLine = shouldLinkDebugVersion({ runPath, locationLike })
     ? `<a class="about-debug-version" href="${PROJECT_REPOSITORY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Open the AshenSpire source repository for development build ${esc(BUILD_VERSION)}">${esc(ABOUT_BUILD_LINE)}</a>`
     : esc(ABOUT_BUILD_LINE);
-  container.innerHTML = `
-    <div class="about-ai">
-      ${lead}
-      ${sections}
-      <div class="about-actions">
-        <button class="about-copy">Save this to a file</button>
-      </div>
-      <p class="about-result" role="status"></p>
-      <p class="set-note about-ver">${buildLine}<br>${esc(runPath)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
-    </div>`;
+  const copy = button({ label: 'Save this to a file', className: 'about-copy' });
+  const result = statusText('', { class: 'about-result', role: 'status' });
+  container.innerHTML = '';
+  container.appendChild(el('div', { class: 'about-ai' }, [
+    ...lead,
+    ...sections,
+    buttonRow({ size: 'long', buttons: [copy], className: 'about-actions' }),
+    result,
+    el('span', { class: 'as-flavor about-ver', html: `${buildLine}<br>${esc(runPath)} · acknowledgement last updated ${esc(disclosure.updated)}` }),
+  ]));
 
   // The player can keep a copy of what they were told. Same instinct as the
   // profile export: a claim you can save is a claim you can hold us to.
-  container.querySelector('.about-copy').addEventListener('click', () => {
-    const say = (m) => { container.querySelector('.about-result').textContent = m; };
+  copy.addEventListener('click', () => {
+    const say = (m) => { result.textContent = m; };
     try {
       const blob = new Blob([disclosureAsText(disclosure, BUILD_VERSION)], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);

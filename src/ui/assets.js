@@ -6,7 +6,14 @@
 // with a CREDITS.md row — no game-code changes.
 
 import { balance } from '../content/balance.js';
+import { PAINTED_ENEMIES, EXPANSION_ENEMIES, ENEMY_POSES } from '../content/enemyArt.js';
+import { medallionAnchor } from '../content/classArtAnchors.js';
+import { DEFAULT_SPRITE_STYLE, SPRITE_STYLES } from '../model/spriteStyle.js';
+import { createPaintedStage, paintedPresentation } from './paintedOutfits.js';
 import { assetUrl } from './assetmap.js';
+import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
+
+export { DEFAULT_SPRITE_STYLE, SPRITE_STYLES };
 
 // Sprite size tiers (the display dimensions each enemy def's `size` selects) are
 // data — content/balance.js → ui.spriteTiers. Sizes are generous on purpose: the
@@ -17,6 +24,52 @@ import { assetUrl } from './assetmap.js';
 const SIZE_TIERS = balance.ui.spriteTiers;
 const px = (value) => `${value}px`;
 
+// ── WHICH WAY A FIGHTER LOOKS ────────────────────────────────────────────────
+//
+// A FIGHTER FACES ITS OPPONENT. That is the rule, and it is a per-SIDE fact
+// because the two sides stand on opposite sides of the board: the player's zone
+// is on the left, the enemy row on the right, so the player looks right and the
+// enemies look left. Everything on a side looks the same way, and no surface
+// decides it.
+//
+// THIS REVERSES A LITERAL READING OF AN EARLIER ASK, and the reversal is the
+// point. Owner, 2026-09-04: "adjust so that all characters are facing the same
+// direction (to the right)" — implemented here as one global `FACES = 'right'`.
+// Applied to a board where the enemies stand to the RIGHT of the player, that
+// turned every enemy to face away from the fight: the Blight Hound was drawn
+// looking left, which is already correct for an enemy, and the global rule
+// flipped it. Owner, 2026-09-05, looking at the result: "notices characters
+// facing wrong way too". "The same direction" was a description of the symptom
+// he wanted gone (figures pointing every which way), not a specification that
+// survives contact with two opposing sides.
+//
+// The other half of the fact is per ASSET and lives with the rest of that
+// asset's art facts (`artFaces` on the enemy def, beside `art`, `size` and
+// `tint`): which way the painting or the render was drawn. Only the mismatch
+// between what a side wants and how the asset was drawn is a flip, which is
+// what the poses README already asks for — "Mirrored facings are a code flip,
+// never a generated frame."
+//
+// `front` is not a third direction and never flips. A figure looking at the
+// viewer has no left or right to turn: mirroring one only swaps which hand
+// holds the sword. Most of the roster is front-facing, so most of it declares
+// nothing and this rule leaves it exactly as drawn — the honest outcome, and
+// the reason this is a per-asset fact rather than a blanket transform.
+const SIDE_FACES = Object.freeze({ player: 'right', enemy: 'left' });
+
+/**
+ * spriteMirror(artFaces, side) — does this asset need flipping on this side?
+ *
+ * `side` defaults to 'enemy' because every caller today is an enemy sprite.
+ * Player combat paintings and pose frames are already authored facing right and
+ * the combat surface keeps them as drawn. Naming the side keeps this helper
+ * ready for a future profile asset.
+ */
+export function spriteMirror(artFaces, side = 'enemy') {
+  if (artFaces === 'front' || artFaces == null) return false;
+  return artFaces !== SIDE_FACES[side];
+}
+
 /**
  * Enemy sprite: the Blender-rendered PNG when it exists
  * (assets/sprites/enemy_<id>.webp, tools/sprites-blender.py), else the style
@@ -25,26 +78,112 @@ const px = (value) => `${value}px`;
  * placeholder, so content can ship art-less.
  */
 export function enemySprite(enemyDef) {
+  const unity = PAINTED_ENEMIES.includes(enemyDef.id);
+  const expansion = EXPANSION_ENEMIES.includes(enemyDef.id);
+  const posed = ENEMY_POSES.includes(enemyDef.id);
+  const painted = posed || unity || expansion;
+  const artFaces = painted ? 'left' : enemyDef.artFaces;
   const tier = SIZE_TIERS[enemyDef.size || 'medium'];
   const tint = enemyDef.tint || 'var(--line-soft)';
   const el = document.createElement('div');
   const placeholder = () => {
     el.innerHTML = '';
+    // This drops the facing layer with the rest of the children, and that is
+    // right rather than an omission: what replaces the art is a GLYPH, and
+    // mirrored text reads as a rendering fault. A placeholder therefore always
+    // draws as-drawn.
     el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};border-radius:10px;` +
       `background:var(--panel);border:2px solid ${tint};display:flex;align-items:center;` +
       `justify-content:center;font-size:${px(tier.font)};position:relative;` +
       `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
     el.textContent = enemyDef.art || '☠';
   };
-  el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};position:relative;` +
-    'display:flex;align-items:flex-end;justify-content:center;';
+  // THE MIRROR GETS ITS OWN LAYER, because every other element here is
+  // something's animation target and a CSS animation on `transform` sits in a
+  // HIGHER CASCADE ORIGIN than a normal declaration — inline styles included.
+  // An animated transform REPLACES the inline one rather than composing, so
+  // wherever the mirror sits, an animation reaching that element un-mirrors the
+  // fighter for as long as it runs.
+  //
+  // The three elements that are NOT available, each ruled out by measurement:
+  //   · the combatant frame outside this one — it carries the block badge and
+  //     the resource meters, and mirroring those would flip a number.
+  //   · this wrapper — `styles/combat.css` aims `hitflash`/`hit-enemy`,
+  //     `wobble` and `crumble` at `.sprite > :first-child`, and this wrapper IS
+  //     that first child. Driven on the board: hitflash took the wrapper to
+  //     `matrix(1,0,0,1,12.8,0)`, wobble held `matrix(1,…)` for its whole
+  //     550ms, and crumble interpolated -1 → -0.43, flipping THROUGH the
+  //     mirror and ending the death animation facing the wrong way.
+  //   · the `img` — `sprite-idle` (infinite) and `enemy-lunge` are aimed at
+  //     `.combatant .sprite > img`. Those selectors are dead today, because
+  //     the img is a grandchild of `.sprite` rather than a child, so the mirror
+  //     would survive there by accident; the day that selector is repaired it
+  //     would break, and it is already carded to be repaired.
+  //
+  // So: a layer between them that nothing selects. It carries the facing and
+  // only the facing.
+  el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};position:relative;`
+    + 'display:flex;align-items:flex-end;justify-content:center;';
+  const facing = document.createElement('div');
+  // Same element name as the player figure's layer (classSprite(), and the
+  // facing block in styles/ui.css) because it is the same mechanism. WHERE the
+  // decision lives differs, and has to: an enemy's facing is a per-asset fact
+  // and is set inline from `artFaces`, while the player's is one blanket
+  // socket correction for a whole producer's output and stays a CSS rule with
+  // its own removal condition. `data-facing` records the per-asset answer;
+  // the player layer carries no such marker precisely because it has no
+  // per-asset answer to record.
+  facing.className = 'facing';
+  facing.dataset.facing = spriteMirror(artFaces) ? 'mirrored' : 'as-drawn';
+  facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;'
+    + 'justify-content:center;'
+    + (spriteMirror(artFaces) ? 'transform:scaleX(-1);' : '');
   const img = document.createElement('img');
-  img.src = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
+  const original = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
+  img.src = posed ? assetUrl(`assets/enemy-poses/${enemyDef.id}_idle.png`)
+    : unity ? assetUrl(`assets/enemies-unity/painted_${enemyDef.id}.png`)
+    : expansion ? assetUrl(`assets/enemies-expansion/${enemyDef.id}.png`) : original;
   img.alt = enemyDef.name || enemyDef.id;
   img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
     `filter:drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
-  img.addEventListener('error', placeholder);
-  el.appendChild(img);
+  if (painted) {
+    img.dataset.artSource = posed ? 'enemy-poses' : unity ? 'unity' : 'expansion';
+    // Align the common foot line without cropping or stretching the frame.
+    img.style.width = 'auto';
+    img.style.height = '100%';
+    img.style.maxWidth = 'none';
+    img.style.transform = 'translateY(5.208333%)';
+  }
+  img.addEventListener('error', () => {
+    delete facing.dataset.attackReady;
+    if (img.dataset.artSource) {
+      delete img.dataset.artSource;
+      img.style.width = '100%'; img.style.height = '100%'; img.style.maxWidth = ''; img.style.transform = '';
+      facing.dataset.facing = spriteMirror(enemyDef.artFaces) ? 'mirrored' : 'as-drawn';
+      facing.style.transform = spriteMirror(enemyDef.artFaces) ? 'scaleX(-1)' : '';
+      img.src = original;
+    } else placeholder();
+  });
+  facing.appendChild(img);
+  if (posed) {
+    img.classList.add('enemy-pose-idle');
+    const attack = img.cloneNode(false);
+    attack.className = 'enemy-pose-attack';
+    attack.alt = '';
+    attack.setAttribute('aria-hidden', 'true');
+    attack.style.position = 'absolute';
+    attack.style.bottom = '0';
+    // Add impact while keeping the shared foot line fixed during the pose swap.
+    attack.style.transformOrigin = '50% 94.791667%';
+    attack.style.transform = 'translateY(5.208333%) scale(1.05)';
+    attack.src = assetUrl(`assets/enemy-poses/${enemyDef.id}_attack.png`);
+    attack.addEventListener('load', () => {
+      if (img.dataset.artSource === 'enemy-poses') facing.dataset.attackReady = 'true';
+    });
+    attack.addEventListener('error', () => { delete facing.dataset.attackReady; });
+    facing.appendChild(attack);
+  }
+  el.appendChild(facing);
   return el;
 }
 
@@ -82,6 +221,15 @@ function sigilMedallion(cx, cy, t, sigil, plainR) {
     // The circle is symmetric and does not care; the GLYPH is text, and mirrored
     // text reads as a rendering fault rather than as a character facing you.
     // Reflected about its own centre, so it lands exactly where it already was.
+    //
+    // THIS COUNTER-MIRROR STILL ASSUMES ITS ANCESTOR IS MIRRORED, which the
+    // rendered path's overlay no longer has to (it sits outside the facing
+    // layer). It cannot follow: this glyph is drawn INSIDE the figure's own
+    // SVG, so it inherits whatever the facing layer does. In the
+    // character-creation figure well, which cancels the facing, that makes this
+    // glyph backwards — carded, not fixed here, because moving it out means
+    // giving four hand-authored viewBoxes a chest anchor apiece. Only the
+    // `classic` sprite style and the file:// fallback reach this path.
     `<g transform="translate(${cx * 2},0) scale(-1,1)">` +
     `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>` +
     `</g>`
@@ -149,11 +297,14 @@ const CLASS_SVG = {
     </svg>`,
 };
 
-// Rendered class sprites (tools/sprites-blender.py → assets/sprites/): one
-// transparent PNG per class × accent tint. Missing/unloadable art falls back
-// to the inline SVG silhouette, so the single-file dist and file:// play keep
-// working with zero configuration. Art credit: procedurally generated in
-// Blender by this repo (see CREDITS.md).
+// Class sprites (assets/sprites/): one transparent WebP per class × accent
+// tint. Missing/unloadable art falls back to the inline SVG silhouette, so the
+// single-file dist and file:// play keep working with zero configuration.
+//
+// Art credit: these are NO LONGER Blender renders. They are AI-generated with
+// ChatGPT Codex and cut out from the class concept art by
+// tools/concept-cutout.mjs — see the note at the top of CREDITS.md. The enemy
+// sprites in the same folder are still Blender output.
 // Derived, never restated: the tint slots ARE the customization tints, and the
 // classes with rendered art ARE the ones with a silhouette builder. Hand-listing
 // them again let the sprite lookup silently drift from the content it serves.
@@ -165,25 +316,166 @@ function renderedSpriteUrl(classId, tintId) {
   return assetUrl(`assets/sprites/${classId}_${t}.webp`);
 }
 
-// Player sprite styles: 'rendered' (Blender PNG), 'classic' (inline SVG
-// silhouette), 'glyph' (sigil-in-a-panel). Chosen per character.
-export const SPRITE_STYLES = [
-  { id: 'rendered', name: 'Rendered' },
-  { id: 'classic', name: 'Classic' },
-  { id: 'glyph', name: 'Sigil' },
-];
+// THE CHEST MEDALLION, APPLIED WHATEVER THE STYLE DRAWS.
+//
+// It is a module-level helper rather than a closure inside classSprite()
+// BECAUSE A CLOSURE IS ONLY REACHABLE FROM ONE FUNCTION, and that is exactly
+// how it went missing twice. It was inline after the painted `img` (reachable
+// from one style), then a closure over `el` (reachable from one function) —
+// and then #740/#743 gave the painted outfits their own early return, and
+// character creation began drawing `paintedPresentation()` directly. Both new
+// figure paths returned before the closure could run, so the chosen sigil was
+// invisible on the default figure AND at the surface where it is chosen. The
+// caller hands in the frame; anything that draws a figure can ask for one.
+//
+// It used to be written inline after the painted `img`, which made it the
+// ONE style that carried the player's chosen sigil: `animated` returns as
+// soon as it has a pose stage, and since #700 `animated` is the default
+// everywhere a character is made. So the sigil a player picked was invisible
+// on the default figure — not because its anchor was missing but because the
+// code path that draws it was never reached. A sigil is a fact about the
+// CHARACTER, not about which art style renders them, so it hangs off the
+// frame here and every style that shows a figure gets it.
+//
+// WHERE IT SITS IS PER CLASS AND MEASURED (src/content/classArtAnchors.js).
+// It was one shared `top:53%` for all four, which is a claim that every
+// figure keeps its chest at the same height — true of the Blender builders,
+// one rig in four palettes, and false of four separately painted figures. At
+// 53% the disc landed on the Starseer's face under the hat brim and inside
+// the Herald's hood opening. No anchor means NO OVERLAY: a default would be
+// the same shared assumption, and it would cover an unmeasured figure's face
+// in silence rather than showing up as a missing medallion.
+//
+// NOT ON THE SVG FALLBACK PATH: that path no longer carries a sigil at all.
+// `build()` is handed `null` where the chosen sigil used to go, so
+// `sigilMedallion()` falls to its plain accent circle.
+export function medallionOverlay(classId, tint, sigil) {
+  const anchor = medallionAnchor(classId);
+  if (!sigil || !anchor) return null;
+  const med = document.createElement('span');
+  // NO COUNTER-MIRROR, and its absence is the fix rather than an omission.
+  // This used to carry `scaleX(-1)` to undo the mirror it inherited from
+  // `.class-sprite` — right for the ART, wrong for a GLYPH, since mirrored
+  // text reads as a rendering fault. But it hardcoded "my parent is
+  // mirrored", and the character-creation figure well cancels that mirror,
+  // so there the counter-mirror WAS the fault it was written to prevent.
+  // The medallion sits outside the facing layer: it inherits no mirror, so
+  // it needs no undoing, on any surface.
+  //
+  // A SHARE OF THE FRAME, NOT A PIXEL COUNT. 22px in a 190px frame was 11.6%
+  // of it whatever the art did, which covered a full-body chest from collar
+  // to forearm and is why three of the four anchors were once recorded as
+  // unplaceable. 7% of the frame's height is a chest-sized jewel on these
+  // figures and stays one in any frame this is drawn in. The glyph rides the
+  // disc's own size (`cqh` against the disc as a container) so it cannot
+  // drift out of proportion with it.
+  med.style.cssText =
+    `position:absolute;left:${anchor.x}%;top:${anchor.y}%;transform:translate(-50%,-50%);`
+    + 'height:7%;aspect-ratio:1;border-radius:50%;background:#14100c;'
+    + `border:1.5px solid ${tint};box-sizing:border-box;container-type:size;`
+    + 'display:flex;align-items:center;justify-content:center;color:#e8dcc0;';
+  // The glyph is its own element so the disc can be a size container: a
+  // container's own font-size cannot be expressed in its own `cq` units.
+  const mark = document.createElement('span');
+  mark.textContent = sigil;
+  mark.style.cssText = 'font-size:62cqh;line-height:1;';
+  med.appendChild(mark);
+  return med;
+}
 
+/** A painted figure in a frame that wears the character's sigil, or null.
+ *
+ * Character creation drew `paintedPresentation()` straight into the figure
+ * well after #740/#743, and that returns a bare `<img>` — nothing an overlay
+ * can hang off, so the surface where the player PICKS a sigil was the one
+ * surface that never showed it. The frame and the medallion travel together
+ * here rather than being re-assembled per caller.
+ */
+export function paintedFigure(classId, tint, sigil, armourId = 'default', pose = 'detail') {
+  const art = paintedPresentation(classId, armourId, pose);
+  if (!art) return null;
+  const frame = document.createElement('div');
+  frame.className = 'class-sprite painted-outfit';
+  // Fills the well it is put in rather than classSprite()'s fixed 150x190:
+  // the creation well is 16rem x 20rem and scales with Text size, and the
+  // medallion is a share of whatever frame it lands in.
+  frame.style.cssText = 'width:100%;height:100%;position:relative;';
+  frame.appendChild(art);
+  return frame;
+}
+
+// Player sprite styles: 'animated' (the default pose-stage figure), 'rendered'
+// (the painted class figure, WebP), 'classic' (inline SVG silhouette), and
+// 'glyph' (sigil-in-a-panel). Chosen per character.
+// "Blender PNG" until 2026-09-03, which stopped being true when the class art
+// was replaced — the same stale description as the lobby tooltip one file over.
 /** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
-export function classSprite(classId, tint, sigil, tintId, style) {
+export function classSprite(classId, tint, sigil, tintId, style, figureId, armourId = 'default') {
   const build = CLASS_SVG[classId];
   if (!build) return null;
+  // THE SIGIL DOES NOT RIDE THE FIGURE. Owner's call, 2026-09-07: the chosen
+  // sigil belongs beside the class information in the class picker — which is
+  // where a player picks it and where it already draws — and nowhere on the
+  // character. It was briefly worn as a chest medallion on every figure path,
+  // combat included, and that is what this removes.
+  //
+  // Kept as a named no-op rather than deleted from three call sites, so the
+  // decision reads at the paths that used to carry it instead of surviving
+  // only in a commit message. `medallionOverlay()` is still exported and still
+  // measured by tools/sigil-medallion.mjs; nothing on a FIGURE calls it.
+  const applyMedallion = () => {};
+  if (style === 'animated' || style === 'rendered') {
+    const stage = style === 'animated' ? createPaintedStage(classId, armourId) : null;
+    const art = stage?.el || paintedPresentation(classId, armourId);
+    if (art) {
+      const host = document.createElement('div');
+      host.className = 'class-sprite painted-outfit' + (stage ? ' animated' : '');
+      host.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';
+      host.appendChild(art);
+      if (stage) registerStage(host, stage);
+      applyMedallion(host);
+      return host;
+    }
+  }
   const el = document.createElement('div');
   el.className = 'class-sprite';
   el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
 
+  // THE FACING LAYER, for the same reason enemySprite() has one: any orientation
+  // correction must sit on an element that carries NOTHING ELSE. It used to
+  // ride `.class-sprite` itself, which
+  // is both an animation target and the overlay's positioning parent, and it
+  // broke in both directions — measured on the board, not reasoned about:
+  //
+  //   · `.player .sprite.hitflash > :first-child` and `.wobble > :first-child`
+  //     animate `transform` on `.class-sprite`, and an animation outranks a
+  //     normal declaration, so the PLAYER FLIPPED TO FACE AWAY from the enemies
+  //     for the length of every hit and every stagger:
+  //         hitflash  matrix(-1,…) -> matrix(1,0,0,1,-12.82,0) -> matrix(1,…)
+  //         wobble    matrix(1,0,0,1,0,0) … the whole 550ms unmirrored
+  //   · `styles/kit.css` cancels the mirror in the character-creation figure
+  //     well (`.as-artwell.figure .class-sprite { transform: none }`), and the
+  //     sigil overlay below was counter-mirroring to undo a parent mirror that
+  //     was no longer there — so the builder drew the chosen sigil BACKWARDS
+  //     (measured: the medallion computed `matrix(-1,0,0,1,-11,-11)`).
+  //
+  // Now the art hangs off this layer and the sigil hangs off the frame, so the
+  // facing applies to exactly the thing that has a facing.
+  const facing = document.createElement('div');
+  facing.className = 'facing';
+  facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;';
+  el.appendChild(facing);
+
   const fallbackToSvg = () => {
-    el.innerHTML = build(tint, sigil);
-    const svg = el.querySelector('svg');
+    // `null`, NOT `sigil`, and this is the other half of taking the sigil off
+    // the character. Every SVG builder draws the value passed here through
+    // sigilMedallion(), which paints it as a glyph ON THE FIGURE'S CHEST — so
+    // the Classic sprite style, and any rendered figure that falls back to the
+    // inline SVG, kept wearing the sigil after the overlay was removed.
+    // sigilMedallion() already answers a plain accent circle for a falsy
+    // sigil, which is exactly the pre-sigil silhouette.
+    facing.innerHTML = build(tint, null);
+    const svg = facing.querySelector('svg');
     if (svg) {
       // The class SVGs hardcode a 110×140 viewBox; fill the fixed-geometry
       // container (viewBox keeps ratio) so Text size cannot resize the figure.
@@ -192,6 +484,35 @@ export function classSprite(classId, tint, sigil, tintId, style) {
     }
   };
 
+  // 'animated': the default figure, changing pose from the shipped frames.
+  // 'rendered' remains a separate painted still so an explicit choice never
+  // swaps art styles mid-swing. A class with no shipped frames falls through
+  // to the painting, so the default is never a blank figure.
+  const outfitPoseId = armourId && armourId !== 'default' ? `${classId}-${armourId}` : classId;
+  const poseId = hasPoses(outfitPoseId, tintId) ? outfitPoseId : classId;
+  if (style === 'animated' && hasPoses(poseId, tintId)) {
+    // figureId separates figures that would otherwise be the same rotation: two
+    // co-op allies of the same class and tint shared one swing counter, so each
+    // of them showed every other frame. Solo has one figure and needs no id.
+    const stage = createPoseStage(poseId, tintId, figureId || undefined);
+    if (stage) {
+      el.classList.add('animated');
+      // Inside the facing layer, like the painting: an animated figure has a
+      // facing for exactly the same reason a still one does, and hanging the
+      // stage off `.class-sprite` instead would leave it as the one style that
+      // ignores the mirror. It also keeps the stage clear of the mirror in the
+      // other direction — `.pose-layer` carries its own inline
+      // `translateX(…)` to seat the pose's rotation anchor, and that is a
+      // second transform on a second element rather than two facts fighting
+      // over one. `stageFor()` searches DOWN from the combatant's `.sprite`,
+      // so the extra layer does not hide the stage from it; the key still
+      // rides `.class-sprite.animated`, which is what that search matches.
+      facing.appendChild(stage.el);
+      registerStage(el, stage);
+      applyMedallion(el);
+      return el;
+    }
+  }
   const url = style === 'classic' ? null : renderedSpriteUrl(classId, tintId);
   if (!url) {
     fallbackToSvg();
@@ -202,21 +523,8 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   img.alt = classId;
   img.style.cssText = 'width:100%;height:100%;object-fit:contain;image-rendering:auto;';
   img.addEventListener('error', fallbackToSvg); // dist / file:// → SVG
-  el.appendChild(img);
-  // The chosen sigil rides the rendered art as a chest medallion overlay.
-  if (sigil) {
-    const med = document.createElement('span');
-    med.textContent = sigil;
-    // `scaleX(-1)` UNDOES the figure mirror this element inherits (styles/ui.css,
-    // "the figure faces the viewer"). That mirror is right for the ART and wrong
-    // for a GLYPH: a sigil is text, and mirrored text reads as a rendering fault.
-    // The medallion is centred on the chest, so flipping it back moves nothing.
-    med.style.cssText =
-      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%) scaleX(-1);` +
-      `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
-      'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
-    el.appendChild(med);
-  }
+  facing.appendChild(img);
+  applyMedallion(el);
   return el;
 }
 
@@ -241,6 +549,28 @@ export function classSprite(classId, tint, sigil, tintId, style) {
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
 export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false }) {
+  // NO PAINTED SHORT-CIRCUIT HERE, and the reason is the whole point of this
+  // function. A `return paintedPresentation(classId, armourId, 'stand')` sat on
+  // these two lines and returned a single standing frame, so the armament layers
+  // below were never built: the Armoury drew your figure without the weapon or
+  // shield you had equipped. `hand-side-probe` measured every one of the 25
+  // armaments in both hands landing at the identical centroid — 50 findings, all
+  // `drawn centre`, because there was no held piece on the figure to be drawn on
+  // a side at all.
+  //
+  // It was also unreachable in the case it was written for, and harmful in the
+  // case it did reach. The one call site left in the app, `figureFor` in
+  // screens/equipment.js, already chooses painted art itself and returns before
+  // calling here — but only when the player has NOT asked for `classic` or
+  // `glyph` and sprites are on. So the only calls that arrived here were the
+  // ones that had deliberately declined painted art, and this handed it back
+  // anyway, overriding the sprite style the player chose. It defeated
+  // `reacts === 'hands'` the same way, which sets `armourId` to `default`
+  // precisely so the held pieces show.
+  //
+  // Painted presentation belongs at the call site that wants it, next to the
+  // preference that decides it. This function composites equipment; that is the
+  // only thing anything asks it for.
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const el = document.createElement('div');
   el.className = 'equipped-figure';
@@ -261,24 +591,84 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
   return el;
 }
 
+// Equipment art has one authored frame per outfit rather than six pose renders.
+// Give it the same animation contract as a pose stage so an alternative outfit
+// does not turn the fighter back into the default armour whenever combat moves.
+// The transforms deliberately move the complete layered figure: body and held
+// items remain registered, while the silhouette still reads as guard, swing,
+// recoil, and idle at combat scale.
+function animatedEquippedFigure(classId, equip) {
+  const host = document.createElement('div');
+  host.className = 'class-sprite animated equipped-sprite';
+  host.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
+  host.dataset.pose = 'idle';
+
+  const facing = document.createElement('div');
+  facing.className = 'facing';
+  facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;';
+  facing.appendChild(equippedFigure({ classId, ...equip }));
+  host.appendChild(facing);
+
+  const attacks = ['attack1', 'attack2', 'attack3'];
+  let attack = 0;
+  let timer = null;
+  const settle = () => {
+    if (timer) clearTimeout(timer);
+    timer = null;
+    host.dataset.pose = 'idle';
+  };
+  const stage = Object.freeze({
+    el: host,
+    poses: ['idle', 'guard', ...attacks, 'hit'],
+    get pose() { return host.dataset.pose; },
+    setPose(pose) {
+      if (!this.poses.includes(pose)) return false;
+      host.dataset.pose = pose;
+      return true;
+    },
+    play(pose, ms = 260) {
+      if (document.body.classList.contains('reduced-motion')) return false;
+      if (pose === 'attack') {
+        pose = attacks[attack % attacks.length];
+        attack += 1;
+      }
+      if (!this.setPose(pose)) return false;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(settle, Math.max(60, ms));
+      return true;
+    },
+    settle,
+    warmed: [],
+  });
+  registerStage(host, stage);
+  return host;
+}
+
 /**
- * playerSprite(customization, classId, equip?) — the player's figure.
+ * playerSprite(customization, classId, armourId?) — the player's figure.
  *
- * With `equip` ({ armourId, rightId, leftId, rightMirror, leftMirror }) it composites the layered
- * equipment figure; without it, the single rendered class PNG as before.
+ * Animated style selects the equipped armour's authored pose set when one is
+ * shipped. Other styles keep using the single rendered class figure.
  */
-export function playerSprite(customization = {}, classId, equip = null) {
+// THE FIGURE YOU FIGHT AS IS THE FIGURE YOU PICKED. Until 2026-09-03 this took
+// a third argument — the equipment spec — and, whenever the player had gear and
+// the style was `rendered`, drew equippedFigure() instead: the low-poly Blender
+// body in the armour set's palette with the held weapons composited on. That
+// was the right call while the class art was ALSO Blender output. Once the
+// class figures became paintings (#590) it meant the character builder showed
+// one figure and the fight drew a different one, in a different style — and the
+// Rogue's combat body was the Reaver's rig repainted, so two classes fought as
+// the same shape. Owner's instruction: combat uses the class sprites.
+//
+// What this gives up, stated rather than hidden: the armour-set palette and the
+// held-weapon overlay no longer show on the fighter. equippedFigure() still
+// exists and the Armoury preview (screens/equipment.js) still calls it, so the
+// composite is not dead — it is just no longer the combat figure.
+export function playerSprite(customization = {}, classId, armourId = 'default') {
   const tint = tintCss(customization.tint);
-  const style = customization.spriteStyle || 'rendered';
-  if (equip && spritesEnabled && style === 'rendered' && SPRITE_CLASSES.includes(classId)) {
-    const el = document.createElement('div');
-    el.className = 'class-sprite';
-    el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';
-    el.appendChild(equippedFigure({ classId, ...equip }));
-    return el;
-  }
+  const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
-    return classSprite(classId, tint, customization.glyph, customization.tint, style);
+    return classSprite(classId, tint, customization.glyph, customization.tint, style, customization.figureId, armourId);
   }
   const el = document.createElement('div');
   el.style.cssText =

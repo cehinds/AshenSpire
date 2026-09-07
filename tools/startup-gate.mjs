@@ -125,13 +125,15 @@ if (args.includes('--selftest')) {
         file: 'src/ui/components/saveSlotSelector.js',
         find: '        onTap: () => activateSlot(slot),',
         replace: '        onTap: () => activateSlot(Number.NaN), // startup-gate selftest plant',
+        // A tap opens the decision door for the slot it read; a NaN slot opens
+        // the wrong door (no save → "empty"), which is the review check's red.
         expectRed: /RED A8\.LOAD-SLOT-RESELECT/,
       },
       {
         name: 'second activation no longer opens the load review',
         file: 'src/ui/components/saveSlotSelector.js',
-        find: '        loadReviewSlot = slot;',
-        replace: '        loadReviewSlot = null; // startup-gate selftest plant',
+        find: '    loadReviewSlot = slot;\n    render();',
+        replace: '    loadReviewSlot = null; // startup-gate selftest plant\n    render();',
         expectRed: /RED A8\.LOAD-SLOT-REVIEW/,
       },
       {
@@ -156,17 +158,23 @@ if (args.includes('--selftest')) {
         expectRed: /RED A8\.LOAD-SLOT-(?:KEY|PAD)-REVIEW/,
       },
       {
+        // THE BOX LIVES IN THE KIT (styles/kit.css) and is one length on both
+        // axes, floor included: a plant that shrinks the length AND the floor
+        // is the only plant that reaches RED A8.LOAD-SLOT-TARGETS.
         name: 'title modal Close drops below the authored tap floor',
-        file: 'styles/ui.css',
-        find: '.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: var(--tap-floor); min-height: var(--tap-floor);',
-        replace: '.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: 3rem; min-height: 3rem; /* startup-gate selftest plant */',
+        file: 'styles/kit.css',
+        find: '.as-iconbtn, .modal-iconbtn, .modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;\n  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);',
+        replace: '.as-iconbtn, .modal-iconbtn, .modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  width: 3rem; height: 3rem; flex: 0 0 auto;\n  min-width: 3rem; min-height: 3rem; /* startup-gate selftest plant */',
         expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
       },
       {
+        // Delete is an IconButton now — the same box as Close, sized by ONE
+        // token (base.css --iconbtn-size). Planting the token under the floor
+        // is what shrinks it; nothing else can.
         name: 'occupied-slot Delete loses its tap-floor height',
-        file: 'styles/ui.css',
-        find: '.title-slot-delete { align-self: center; min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.8rem; }',
-        replace: '.title-slot-delete { align-self: center; min-width: var(--tap-floor); padding-inline: 0.8rem; /* startup-gate selftest plant */ }',
+        file: 'styles/base.css',
+        find: '  --iconbtn-size: var(--tap-floor);',
+        replace: '  --iconbtn-size: 3rem; /* startup-gate selftest plant */',
         expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
       },
       {
@@ -239,9 +247,26 @@ if (args.includes('--selftest')) {
         replace: "document.body.classList.toggle('reduced-motion', false); // startup-gate selftest plant",
         expectRed: /RED A10\.REDUCED-MOTION/,
       },
+      {
+        // Escape is bound by the shared chrome now, and the plant severs it
+        // FOR THIS DOOR rather than in modalShell.js — a mutation there would
+        // take Escape off all four modals at once, which is a wider defect than
+        // the one A8 is asserting about.
+        // Settings opens through the shell now (openModal binds dismissal for
+        // every door, and Escape closes the TOPMOST aria-modal element), so the
+        // plant parks a bare aria-modal element above this one door: Settings
+        // is no longer topmost, and Escape leaves it up over the title. Still
+        // one door, still this defect only — the nested plant A8 appends later
+        // still lands on top and still closes on its own Escape.
+        name: 'Settings stops owning Escape above the expanded title',
+        file: 'src/ui/screens/settings.js',
+        find: "  done.addEventListener('click', door.close);",
+        replace: "  done.addEventListener('click', door.close);\n  document.body.appendChild(document.createElement('div')).setAttribute('aria-modal', 'true'); // startup-gate selftest plant",
+        expectRed: /RED A8\.SETTINGS-ESCAPE-PRECEDENCE/,
+      },
     ],
   });
-  if (code === 0) console.log('startup-gate-selftest: OK — 25 plants, 25 caught');
+  if (code === 0) console.log('startup-gate-selftest: OK — 26 plants, 26 caught');
   process.exit(code);
 }
 
@@ -565,6 +590,9 @@ async function assertReturnBypass() {
   await p.click('[data-title-action="new"]');
   await p.until(`!!document.querySelector('.title-menu-modal [data-title-action="modal-continue"]:not([disabled])')`, 'new-game slot selection');
   await p.click('.title-menu-modal [data-title-action="modal-continue"]');
+  // Continue opens the decision door ("Start in slot n?"); its primary starts.
+  await p.until(`!!document.querySelector('[data-title-action="review-new"]')`, 'new-game decision door');
+  await p.click('[data-title-action="review-new"]');
   await p.until(`!!document.querySelector('#cz-back')`, 'character creation');
   await p.click('#cz-back');
   await p.until(`!!document.querySelector('.title-screen,.startup-gate')`, 'returned title route');
@@ -611,6 +639,36 @@ async function assertContextualTitleBack() {
   await quit.close();
 }
 
+async function assertSettingsModalStack() {
+  const p = await page({ query: '?shot=title' });
+  await p.until("!!document.querySelector('[data-title-action=\"settings\"]')", 'expanded title before Settings');
+  await p.click('[data-title-action="settings"]');
+  await p.until("!!document.querySelector('.settings-modal')", 'Settings modal');
+
+  const semantics = await p.ev("(() => { const modal=document.querySelector('.settings-modal'); return {role:modal?.getAttribute('role')||'',ariaModal:modal?.getAttribute('aria-modal')||'',labelledBy:modal?.getAttribute('aria-labelledby')||'',activeInside:modal?.contains(document.activeElement)===true}; })()");
+  verdict(semantics.role === 'dialog' && semantics.ariaModal === 'true'
+    && semantics.labelledBy === 'settings-modal-title' && semantics.activeInside,
+  'A8.SETTINGS-MODAL-SEMANTICS',
+  'Settings identifies the active modal layer and moves focus inside it (' + JSON.stringify(semantics) + ')');
+
+  await p.ev("(() => { const nested=document.createElement('div'); nested.id='settings-nested-modal-plant'; nested.setAttribute('role','dialog'); nested.setAttribute('aria-modal','true'); document.body.appendChild(nested); const onNestedEscape=(event) => { if (event.key !== 'Escape') return; event.preventDefault(); event.stopImmediatePropagation(); nested.remove(); window.removeEventListener('keydown', onNestedEscape, true); }; window.addEventListener('keydown', onNestedEscape, true); })()");
+  const releaseNestedEscape = await p.key('Escape'); await releaseNestedEscape();
+  const stacked = await p.ev("({nested:!!document.querySelector('#settings-nested-modal-plant'),settings:!!document.querySelector('.settings-modal'),title:!!document.querySelector('.title-screen'),startup:!!document.querySelector('.startup-gate')})");
+  verdict(!stacked.nested && stacked.settings && stacked.title && !stacked.startup,
+    'A8.SETTINGS-STACK-PRECEDENCE',
+    'the first Escape closes only the nested modal and leaves Settings over the expanded title (' + JSON.stringify(stacked) + ')');
+
+  const releaseSettingsEscape = await p.key('Escape'); await releaseSettingsEscape();
+  const closed = await p.ev("({settings:!!document.querySelector('.settings-modal'),title:!!document.querySelector('.title-screen'),startup:!!document.querySelector('.startup-gate'),active:document.activeElement?.dataset?.titleAction||''})");
+  verdict(!closed.settings && closed.title && !closed.startup,
+    'A8.SETTINGS-ESCAPE-PRECEDENCE',
+    'the next Escape closes Settings without folding the title (' + JSON.stringify(closed) + ')');
+  verdict(closed.active === 'settings',
+    'A8.SETTINGS-FOCUS-RESTORE',
+    'Settings returns focus to its connected title-menu opener (' + JSON.stringify(closed) + ')');
+  await p.close();
+}
+
 async function assertLoadSlotSelection() {
   const titleTargetRects = (targetPage) => targetPage.ev(`(() => {
     const rect = (selector) => {
@@ -653,8 +711,10 @@ async function assertLoadSlotSelection() {
       continueEnabled:document.querySelector('[data-title-action="modal-continue"]')?.disabled===false};
   })()`);
   verdict(reselected.selected === '1' && reselected.focused === '1' && reselected.continueEnabled,
-    'A8.LOAD-SLOT-RESELECT', `pressing the visibly selected occupied slot is idempotent and leaves Continue enabled (${JSON.stringify(reselected)})`);
+    'A8.LOAD-SLOT-RESELECT', `the first press highlights the slot and leaves Continue enabled (${JSON.stringify(reselected)})`);
 
+  // Two taps (Constantine, 2026-09-04): the second press on the highlighted
+  // slot opens its decision door; Back and Escape return with it highlighted.
   await p.click('[data-slot-pick="1"]');
   const review = await p.ev(`(() => ({
     review:document.querySelector('.title-load-review')?.dataset.variant||'',
@@ -662,8 +722,10 @@ async function assertLoadSlotSelection() {
     load:document.querySelector('[data-title-action="review-load"]')?.textContent.trim()||'',
     back:document.querySelector('[data-title-action="review-back"]')?.textContent.trim()||''
   }))()`);
-  verdict(review.review === 'load-review' && review.heading === 'LOAD SLOT 1?' && review.load === 'LOAD SAVE' && review.back === 'BACK TO SAVES',
-    'A8.LOAD-SLOT-REVIEW', `second activation opens the selected save review with explicit Load and Back actions (${JSON.stringify(review)})`);
+  // Case-insensitive: the kit's head sets the case in the stylesheet, so the
+  // words are the acceptance, not their shouting.
+  verdict(review.review === 'load-review' && /^load slot 1\?$/i.test(review.heading) && /^load save$/i.test(review.load) && /^back to saves$/i.test(review.back),
+    'A8.LOAD-SLOT-REVIEW', `the second press opens the selected save's decision door with explicit Load and Back actions (${JSON.stringify(review)})`);
   if (CAPTURE_SHOTS) await p.screenshot('qa-load-slot-review-mobile-390x844.png');
 
   await p.click('[data-title-action="review-back"]');
@@ -702,7 +764,7 @@ async function assertLoadSlotSelection() {
     const e=document.querySelector('[data-slot-pick="1"]');
     return {title:e?.title||'', aria:e?.getAttribute('aria-label')||'', hold:e?.dataset.holdMs||'', word:e?.querySelector('.hold-hint')?.textContent||''};
   })()`);
-  verdict(hint.hold === '600' && hint.word === 'HOLD' && /Hold to load now/i.test(`${hint.title} ${hint.aria}`),
+  verdict(hint.hold === '600' && hint.word === 'HOLD' && /hold to load/i.test(`${hint.title} ${hint.aria}`),
     'A8.LOAD-SLOT-HOLD-HINT', `slot exposes the authored hold duration and visible/accessible instruction (${JSON.stringify(hint)})`);
   await held.hold('[data-slot-pick="1"]', 720, { touch: true });
   verdict(await held.ev(`!document.querySelector('.title-menu-modal') && !!document.querySelector('.mapscreen')`),
@@ -716,9 +778,12 @@ async function assertLoadSlotSelection() {
   verdict(clearsTapFloor(desktopTargets), 'A8.LOAD-SLOT-TARGETS-DESKTOP',
     `1200x730 Close and occupied-slot Delete each render at least 44x44 (${JSON.stringify(desktopTargets)})`);
   const firstKeyRelease = await keyed.key('Enter'); await firstKeyRelease();
+  // A tap asks (2026-09-04): one activation opens the decision door — no
+  // timed hold, no bypass. Escape returns to the list with the slot kept, and
+  // the next activation opens the same door pointer input opens.
   const keyedFirst = await keyed.ev(`({review:!!document.querySelector('.title-load-review'), selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null})`);
   verdict(!keyedFirst.review && keyedFirst.selected === '1', 'A8.LOAD-SLOT-KEY-FIRST',
-    `keyboard activation selects without bypassing review (${JSON.stringify(keyedFirst)})`);
+    `keyboard activation highlights without bypassing the decision door (${JSON.stringify(keyedFirst)})`);
   const secondKeyRelease = await keyed.key('Enter'); await secondKeyRelease();
   verdict(await keyed.ev(`!!document.querySelector('.title-load-review [data-title-action="review-load"]')`),
     'A8.LOAD-SLOT-KEY-REVIEW', 'a second keyboard activation opens the same review used by pointer input');
@@ -733,7 +798,7 @@ async function assertLoadSlotSelection() {
   await padded.ev(`window.__startupPad.set(0,false)`); await wait(180);
   const padFirst = await padded.ev(`({review:!!document.querySelector('.title-load-review'), selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null})`);
   verdict(!padFirst.review && padFirst.selected === '1', 'A8.LOAD-SLOT-PAD-FIRST',
-    `controller activation selects without becoming a timed hold (${JSON.stringify(padFirst)})`);
+    `controller activation highlights without becoming a timed hold (${JSON.stringify(padFirst)})`);
   await padded.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await padded.ev(`window.__startupPad.set(0,false)`); await wait(180);
   verdict(await padded.ev(`!!document.querySelector('.title-load-review [data-title-action="review-load"]')`),
@@ -790,7 +855,9 @@ async function assertShape(shape, textSize) {
   await p.until(`!!document.querySelector('.startup-gate')`, `${shape.tag} Text ${textSize}`);
   const fact = await p.ev(`(() => { const e=document.querySelector('.startup-gate'); const r=e.getBoundingClientRect();
     const critical=[document.querySelector('.startup-wordmark'),document.querySelector('.startup-prompt'),document.querySelector('[data-place="startup"]')].filter(Boolean);
-    const boxes=critical.map(x=>{const b=x.getBoundingClientRect();return [x.className||x.dataset.place,Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]});
+    const boxes=critical.map(x=>{let b=x.getBoundingClientRect();let name=x.className||x.dataset.place;
+      if(x.matches('.startup-wordmark')){const range=document.createRange();range.selectNodeContents(x);b=range.getBoundingClientRect();name+=' text';}
+      return [name,Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]});
     const centerDeltas=boxes.map(([name,left,,right])=>[name,Math.round((((left+right)/2)-(innerWidth/2))*100)/100]);
     const centered=centerDeltas.every(([,delta])=>Math.abs(delta)<=1);
     const outside=boxes.some(([,l,t,right,bottom])=>l < -1 || t < -1 || right > innerWidth+1 || bottom > innerHeight+1);
@@ -822,11 +889,12 @@ async function main() {
   await assertInterruptedPresses();
   await assertReturnBypass();
   await assertContextualTitleBack();
+  await assertSettingsModalStack();
   await assertLoadSlotSelection();
   await assertCrisisPrecedence();
   await assertReducedMotion();
   if (!SELFTEST_LANE) {
-    const shapes = [{ tag:'390x844', w:390, h:844 }, { tag:'844x344', w:844, h:344 }, { tag:'1200x730', w:1200, h:730 }];
+    const shapes = [{ tag:'390x844', w:390, h:844 }, { tag:'844x344', w:844, h:344 }, { tag:'1200x730', w:1200, h:730 }, { tag:'2550x1305', w:2550, h:1305 }];
     for (const textSize of ['M', 'XL']) for (const shape of shapes) await assertShape(shape, textSize);
   }
 

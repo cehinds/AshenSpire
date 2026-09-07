@@ -1,0 +1,72 @@
+{
+  "comment": "Canonical PropertyDefinition rows (framework contract: Canonical relational model). Family roots carry INTERNAL visibility; children carry the player-facing terms. Legacy card types (attack/skill/power/curse/status) are preserved as classification properties so import never rewrites mechanics from display text.",
+  "properties": [
+    { "id": "classification", "domain": "CLASSIFICATION", "visibility": "INTERNAL", "priority": 0 },
+    { "id": "classification.attack", "parentId": "classification", "domain": "CLASSIFICATION", "visibility": "PRIMARY", "playerTermId": "term.attack", "tooltipTermId": "term.tooltip.attack", "priority": 10 },
+    { "id": "classification.strike", "parentId": "classification", "domain": "CLASSIFICATION", "visibility": "PRIMARY", "playerTermId": "term.strike", "tooltipTermId": "term.tooltip.strike", "priority": 11 },
+    { "id": "classification.guard", "parentId": "classification", "domain": "CLASSIFICATION", "visibility": "PRIMARY", "playerTermId": "term.guard", "tooltipTermId": "term.tooltip.guard", "priority": 12 },
+    { "id": "classification.weaponArt", "parentId": "classification", "domain": "CLASSIFICATION", "visibility": "PRIMARY", "playerTermId": "term.weaponArt", "tooltipTermId": "term.tooltip.weaponArt", "priority": 13 },
+    { "id": "classification.skill", "parentId": "classification", "domain": "CLASSIFICATION", "visibility": "PRIMARY", "playerTermId": "term.skill", "tooltipTermId": "term.tooltip.skill", "priority": 14 },
+    { "id": "classification.power", "parentId": "classification", "domain": "CLASSIFICATION", "visibility": "PRIMARY", "playerTermId": "term.power", "tooltipTermId": "term.tooltip.power", "priority": 15 },
+    { "id": "classification.curse", "parentId": "classification", "domain": "CLASSIFICATION", "visibility": "PRIMARY", "playerTermId": "term.curse", "tooltipTermId": "term.tooltip.curse", "priority": 16 },
+    { "id": "classification.statusCard", "parentId": "classification", "domain": "CLASSIFICATION", "visibility": "PRIMARY", "playerTermId": "term.statusCard", "tooltipTermId": "term.tooltip.statusCard", "priority": 17 },
+
+    { "id": "damage", "domain": "DAMAGE", "visibility": "INTERNAL", "priority": 0 },
+    { "id": "damage.physical", "parentId": "damage", "domain": "DAMAGE", "visibility": "SECONDARY", "playerTermId": "term.physical", "tooltipTermId": "term.tooltip.physical", "priority": 10 },
+    { "id": "damage.magic", "parentId": "damage", "domain": "DAMAGE", "visibility": "SECONDARY", "playerTermId": "term.magic", "tooltipTermId": "term.tooltip.magic", "priority": 11 },
+    { "id": "damage.arcane", "parentId": "damage", "domain": "DAMAGE", "visibility": "SECONDARY", "playerTermId": "term.arcane", "tooltipTermId": "term.tooltip.arcane", "priority": 12 },
+    { "id": "damage.blade", "parentId": "damage", "domain": "DAMAGE", "visibility": "SECONDARY", "playerTermId": "term.blade", "tooltipTermId": "term.tooltip.blade", "priority": 13 },
+    { "id": "damage.blunt", "parentId": "damage", "domain": "DAMAGE", "visibility": "SECONDARY", "playerTermId": "term.blunt", "tooltipTermId": "term.tooltip.blunt", "priority": 14 },
+    { "id": "damage.piercing", "parentId": "damage", "domain": "DAMAGE", "visibility": "SECONDARY", "playerTermId": "term.piercing", "tooltipTermId": "term.tooltip.piercing", "priority": 15 },
+
+    { "id": "scaling", "domain": "SCALING", "visibility": "INTERNAL", "priority": 0 },
+    { "id": "scaling.strength", "parentId": "scaling", "domain": "SCALING", "visibility": "SECONDARY", "playerTermId": "term.strength", "tooltipTermId": "term.tooltip.strength", "priority": 10 },
+    { "id": "scaling.dexterity", "parentId": "scaling", "domain": "SCALING", "visibility": "SECONDARY", "playerTermId": "term.dexterity", "tooltipTermId": "term.tooltip.dexterity", "priority": 11 },
+    { "id": "scaling.constitution", "parentId": "scaling", "domain": "SCALING", "visibility": "SECONDARY", "playerTermId": "term.constitution", "tooltipTermId": "term.tooltip.constitution", "priority": 12 },
+    { "id": "scaling.intelligence", "parentId": "scaling", "domain": "SCALING", "visibility": "SECONDARY", "playerTermId": "term.intelligence", "tooltipTermId": "term.tooltip.intelligence", "priority": 13 },
+    { "id": "scaling.wisdom", "parentId": "scaling", "domain": "SCALING", "visibility": "SECONDARY", "playerTermId": "term.wisdom", "tooltipTermId": "term.tooltip.wisdom", "priority": 14 },
+
+    { "id": "cost", "domain": "COST", "visibility": "INTERNAL", "priority": 0 },
+    { "id": "cost.action", "parentId": "cost", "domain": "COST", "visibility": "PRIMARY", "playerTermId": "term.action", "tooltipTermId": "term.tooltip.action", "priority": 10, "defaultParameters": { "amount": 1 } },
+    { "id": "cost.stamina", "parentId": "cost", "domain": "COST", "visibility": "PRIMARY", "playerTermId": "term.stamina", "tooltipTermId": "term.tooltip.stamina", "priority": 11, "defaultParameters": { "amount": 1 } },
+    { "id": "cost.mana", "parentId": "cost", "domain": "COST", "visibility": "PRIMARY", "playerTermId": "term.mana", "tooltipTermId": "term.tooltip.mana", "priority": 12, "defaultParameters": { "amount": 1 } },
+    { "id": "cost.alternative", "parentId": "cost", "domain": "COST", "visibility": "PRIMARY", "playerTermId": "term.alternativeCost", "tooltipTermId": "term.tooltip.alternativeCost", "priority": 13 },
+
+    { "id": "lifecycle", "domain": "LIFECYCLE", "visibility": "INTERNAL", "priority": 0 },
+    { "id": "lifecycle.innate", "parentId": "lifecycle", "domain": "LIFECYCLE", "visibility": "PRIMARY", "playerTermId": "term.innate", "tooltipTermId": "term.tooltip.innate", "priority": 10 },
+    { "id": "lifecycle.retain", "parentId": "lifecycle", "domain": "LIFECYCLE", "visibility": "PRIMARY", "playerTermId": "term.retain", "tooltipTermId": "term.tooltip.retain", "priority": 11 },
+    { "id": "lifecycle.recall", "parentId": "lifecycle", "domain": "LIFECYCLE", "visibility": "SECONDARY", "playerTermId": "term.recall", "tooltipTermId": "term.tooltip.recall", "priority": 12 },
+    { "id": "lifecycle.recall.afterUse", "parentId": "lifecycle.recall", "domain": "LIFECYCLE", "visibility": "PRIMARY", "playerTermId": "term.recallAfterUse", "tooltipTermId": "term.tooltip.recallAfterUse", "priority": 13 },
+    { "id": "lifecycle.recall.afterTurnDraw", "parentId": "lifecycle.recall", "domain": "LIFECYCLE", "visibility": "PRIMARY", "playerTermId": "term.recallAfterTurnDraw", "tooltipTermId": "term.tooltip.recallAfterTurnDraw", "priority": 14 },
+    { "id": "lifecycle.recall.afterCardPlay", "parentId": "lifecycle.recall", "domain": "LIFECYCLE", "visibility": "PRIMARY", "playerTermId": "term.recallAfterCardPlay", "tooltipTermId": "term.tooltip.recallAfterCardPlay", "priority": 15 },
+    { "id": "lifecycle.exhaust", "parentId": "lifecycle", "domain": "LIFECYCLE", "visibility": "PRIMARY", "playerTermId": "term.exhaust", "tooltipTermId": "term.tooltip.exhaust", "priority": 16 },
+    { "id": "lifecycle.seal", "parentId": "lifecycle", "domain": "LIFECYCLE", "visibility": "PRIMARY", "playerTermId": "term.seal", "tooltipTermId": "term.tooltip.seal", "priority": 17 },
+    { "id": "lifecycle.ethereal", "parentId": "lifecycle", "domain": "LIFECYCLE", "visibility": "PRIMARY", "playerTermId": "term.ethereal", "tooltipTermId": "term.tooltip.ethereal", "priority": 18 },
+
+    { "id": "equipment", "domain": "EQUIPMENT", "visibility": "INTERNAL", "priority": 0 },
+    { "id": "equipment.bound", "parentId": "equipment", "domain": "EQUIPMENT", "visibility": "PRIMARY", "playerTermId": "term.equipmentBound", "tooltipTermId": "term.tooltip.equipmentBound", "priority": 10 },
+    { "id": "equipment.mainHand", "parentId": "equipment", "domain": "EQUIPMENT", "visibility": "SECONDARY", "playerTermId": "term.mainHand", "tooltipTermId": "term.tooltip.mainHand", "priority": 11 },
+    { "id": "equipment.offHand", "parentId": "equipment", "domain": "EQUIPMENT", "visibility": "SECONDARY", "playerTermId": "term.offHand", "tooltipTermId": "term.tooltip.offHand", "priority": 12 },
+    { "id": "equipment.twoHanded", "parentId": "equipment", "domain": "EQUIPMENT", "visibility": "SECONDARY", "playerTermId": "term.twoHanded", "tooltipTermId": "term.tooltip.twoHanded", "priority": 13 },
+    { "id": "equipment.shield", "parentId": "equipment", "domain": "EQUIPMENT", "visibility": "SECONDARY", "playerTermId": "term.shield", "tooltipTermId": "term.tooltip.shield", "priority": 14 },
+    { "id": "equipment.parryTool", "parentId": "equipment", "domain": "EQUIPMENT", "visibility": "SECONDARY", "playerTermId": "term.parryTool", "tooltipTermId": "term.tooltip.parryTool", "priority": 15 },
+
+    { "id": "utility", "domain": "ACTION_ROLE", "visibility": "INTERNAL", "priority": 0 },
+    { "id": "utility.evasion", "parentId": "utility", "domain": "ACTION_ROLE", "visibility": "SECONDARY", "playerTermId": "term.evasion", "tooltipTermId": "term.tooltip.evasion", "priority": 10 },
+    { "id": "utility.conduit", "parentId": "utility", "domain": "ACTION_ROLE", "visibility": "SECONDARY", "playerTermId": "term.conduit", "tooltipTermId": "term.tooltip.conduit", "priority": 11 },
+    { "id": "utility.manaCharge", "parentId": "utility", "domain": "ACTION_ROLE", "visibility": "SECONDARY", "playerTermId": "term.manaCharge", "tooltipTermId": "term.tooltip.manaCharge", "priority": 12 },
+
+    { "id": "targeting", "domain": "TARGETING", "visibility": "INTERNAL", "priority": 0 },
+    { "id": "targeting.self", "parentId": "targeting", "domain": "TARGETING", "visibility": "CONTEXTUAL", "playerTermId": "term.targetSelf", "tooltipTermId": "term.tooltip.targetSelf", "priority": 10 },
+    { "id": "targeting.enemy", "parentId": "targeting", "domain": "TARGETING", "visibility": "CONTEXTUAL", "playerTermId": "term.targetEnemy", "tooltipTermId": "term.tooltip.targetEnemy", "priority": 11 },
+    { "id": "targeting.allEnemies", "parentId": "targeting", "domain": "TARGETING", "visibility": "CONTEXTUAL", "playerTermId": "term.targetAllEnemies", "tooltipTermId": "term.tooltip.targetAllEnemies", "priority": 12 },
+    { "id": "targeting.randomEnemy", "parentId": "targeting", "domain": "TARGETING", "visibility": "CONTEXTUAL", "playerTermId": "term.targetRandomEnemy", "tooltipTermId": "term.tooltip.targetRandomEnemy", "priority": 13 },
+    { "id": "targeting.ally", "parentId": "targeting", "domain": "TARGETING", "visibility": "CONTEXTUAL", "playerTermId": "term.targetAlly", "tooltipTermId": "term.tooltip.targetAlly", "priority": 14 },
+
+    { "id": "internal", "domain": "INTERNAL", "visibility": "INTERNAL", "priority": 0 },
+    { "id": "internal.unplayable", "parentId": "internal", "domain": "INTERNAL", "visibility": "SECONDARY", "playerTermId": "term.unplayable", "tooltipTermId": "term.tooltip.unplayable", "priority": 10 },
+    { "id": "internal.upgraded", "parentId": "internal", "domain": "INTERNAL", "visibility": "DEBUG", "priority": 11 },
+
+    { "id": "presentation", "domain": "PRESENTATION", "visibility": "INTERNAL", "priority": 0 }
+  ]
+}

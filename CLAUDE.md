@@ -1,5 +1,10 @@
 # CLAUDE.md
 
-See [AGENTS.md](AGENTS.md) and [`.agentops/BOOTSTRAP.md`](.agentops/BOOTSTRAP.md).
-Resume: `node .agentops/tools/opsctl.mjs verify`. Load a contract only when the
-current action needs it; do not preload history or the reconstruction bundle.
+How work is branched, reviewed, and merged is in
+[CONTRIBUTING.md](CONTRIBUTING.md). Build and test commands are in
+[DEVELOPER.md](DEVELOPER.md); game mechanics are governed by [SPEC.md](SPEC.md).
+
+(`AGENTS.md` used to hold the working rules and was removed at the owner's
+request in `cef8ed00`. The coordination rules it carried — one task per branch,
+draft pull requests into `dev`, and only the owner merging to `main` — live in
+CONTRIBUTING.md under *Coordination and release boundary* and *Branch model*.)

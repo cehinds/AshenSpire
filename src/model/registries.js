@@ -7,9 +7,14 @@
 // Headless: no document/window/localStorage/timers.
 
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
+import { tagIndex } from './tags.js';
+import { itemTypeLabel } from '../content/equipment.js';
 import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
+import { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } from './itemUpgrades.js';
+import { sharedFrameworkBridge } from '../framework/bridge.js';
+import { createEntityTermOverlay } from '../framework/termOverlay.js';
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -111,17 +116,87 @@ const TYPE_SINGULAR = {
  *   registries.scripts              — frozen { name: fn }
  *   registries.contentVersion       — string
  */
+/**
+ * stampTags(bundle) -> Map of source path to a copy of that collection with
+ * every object carrying its `tags` array.
+ *
+ * This is the join, resolved eagerly, exactly once, at boot — the ORM's
+ * navigation property, made concrete. content/source/tagging.csv stays the ONLY
+ * home a tag is authored in (an object arriving with its own `tags` is refused
+ * by model/tags.js), and every object comes out of here with a real array, so a
+ * mechanic reading `obj.tags` never guards for undefined and never has to know
+ * which table the tag came from.
+ *
+ * Which collections get stamped is read from the content's own tagFamilies.csv
+ * `source` column — a family joins by adding a row there, including a nested
+ * one like `equipment.armaments`. `scopeField` supplies the second half of the
+ * parent key for families whose ids repeat (armour, per class).
+ */
+// The families whose pieces carry an item TYPE. Named here rather than derived,
+// because the four-field split below is equipment's contract with the Armoury,
+// not a property of the tag schema.
+const EQUIPMENT_ITEM_FAMILIES = new Set(['armament', 'armour']);
+
+function stampTags(bundle) {
+  const { families, index, keyOf } = tagIndex(bundle);
+  const stamped = new Map();
+  for (const spec of families.values()) {
+    // A non-string source is refused BY NAME in model/tags.js. Skipping it here
+    // rather than splitting it keeps the order of events right: the validator
+    // gets to speak, instead of boot throwing before it can.
+    if (!spec.source || typeof spec.source !== 'string') continue;
+    let node = bundle;
+    for (const part of spec.source.split('.')) node = node && typeof node === 'object' ? node[part] : undefined;
+    if (!Array.isArray(node)) continue;
+    stamped.set(spec.source, node.map((def) => {
+      if (!def) return def;
+      const scope = spec.scopeField ? (def[spec.scopeField] || '') : '';
+      const entityTags = [...(index.get(keyOf(spec.family, scope, def.id)) || [])];
+      // Equipment splits its stamped tags four ways, exactly as content's
+      // normPiece used to before the tags moved into tagging.csv: the complete
+      // authored vocabulary, the item-type half the Armoury and the smith name
+      // the piece by, and the gameplay/presentation half that stays `tags`. An
+      // item card never infers its type from `kind` or a UI call site.
+      if (!EQUIPMENT_ITEM_FAMILIES.has(spec.family)) return { ...def, tags: entityTags };
+      const itemTypeTags = entityTags.filter((tag) => itemTypeLabel(tag));
+      return {
+        ...def,
+        entityTags,
+        itemTypeTags,
+        itemTypes: itemTypeTags.map((tag) => ({ tag, label: itemTypeLabel(tag) })),
+        tags: entityTags.filter((tag) => !itemTypeLabel(tag)),
+      };
+    }));
+  }
+  return stamped;
+}
+
 export function createRegistries(contentBundle) {
   const bundle = contentBundle || {};
   const registries = {};
 
+  // The tag join, resolved once for every collection tagFamilies.csv names.
+  // Everything below reads a stamped collection where one exists, so `.tags` is
+  // present and correct on every tagged object no matter which door it came in.
+  const tagFamilies = [...(bundle.tagFamilies || [])];
+  const stamped = stampTags(bundle);
+  const collection = (source, fallback) => stamped.get(source) || fallback;
+
   for (const type of REGISTRY_TYPES) {
-    registries[type] = makeRegistry(TYPE_SINGULAR[type], bundle[type]);
+    registries[type] = makeRegistry(TYPE_SINGULAR[type], collection(type, bundle[type]));
   }
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  // Quest steps (E12): which events an Unknown node may roll only once the
+  // run's history earns them. Keyed by event id; absent means ungated.
+  registries.eventHistoryRequirements = deepFreeze({ ...(bundle.eventHistoryRequirements || {}) });
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
-  registries.characterCreation = deepFreeze({ ...(bundle.characterCreation || {}) });
+  // Keepsakes are tagged like everything else; they just live one level down.
+  const creation = { ...(bundle.characterCreation || {}) };
+  if (stamped.has('characterCreation.keepsakes')) {
+    creation.keepsakes = stamped.get('characterCreation.keepsakes');
+  }
+  registries.characterCreation = deepFreeze(creation);
   // One object, not a copied settings shadow. The run snapshots the resolved
   // result; authoring and validation still point at this exact content object.
   registries.derivedStatRules = deepFreeze(bundle.derivedStatRules || {});
@@ -137,8 +212,62 @@ export function createRegistries(contentBundle) {
   // Armaments/armour are tables, not id→def registries: pieces are looked up
   // by (slot, class) far more often than by bare id, and armour ids repeat
   // across classes on purpose. They ride along frozen, like balance.
-  registries.equipment = deepFreeze({ ...(bundle.equipment || {}) });
+  // Equipment tables are stamped the same way; each is named by its own family
+  // row (equipment.armaments, equipment.armour, ...), so nothing here lists them.
+  const equipment = { ...(bundle.equipment || {}) };
+  for (const [source, rows] of stamped) {
+    // THE WHOLE PATH, NOT THE FIRST TWO SEGMENTS. `tagFamilies.source` is a
+    // dotted path and stampTags already RESOLVES it to any depth; writing the
+    // result back with `equipment[tail] = rows` assumed depth two, so a family
+    // sourced at `equipment.extras.charms` had its rows dropped onto
+    // `equipment.extras` — replacing the object that held `charms` outright.
+    // The bundle validated, the rows were stamped, and every reader that walked
+    // the declared path (tagService.withTag among them) then found nothing.
+    // Clone down the path so siblings survive, and write at the leaf.
+    const parts = String(source).split('.');
+    if (parts[0] !== 'equipment' || parts.length < 2) continue;
+    let node = equipment;
+    for (let i = 1; i < parts.length - 1; i++) {
+      const key = parts[i];
+      node[key] = (node[key] && typeof node[key] === 'object' && !Array.isArray(node[key]))
+        ? { ...node[key] }
+        : {};
+      node = node[key];
+    }
+    node[parts[parts.length - 1]] = rows;
+  }
+  // The card-tag index equipment fit reads, folded from THIS bundle's tagging
+  // rows rather than the module-global one content/equipment.js folded at
+  // import time. A caller handing us an extended bundle (a test fixture, a
+  // mutant, a modded content set) stamps its cards from the rows it supplied,
+  // so an index built from the shipped rows would answer a different question
+  // than `card.tags` does — two answers, one question, and the fit check
+  // quietly using the stale one.
+  const cardTagging = new Map();
+  for (const row of bundle.tagging || []) {
+    if (!row || row.family !== 'card') continue;
+    const tags = cardTagging.get(row.objectId);
+    if (tags) tags.push(row.tagId);
+    else cardTagging.set(row.objectId, [row.tagId]);
+  }
+  // Derived UNCONDITIONALLY, so `equipment.cardTagging` cannot disagree with
+  // what was stamped. No tagging table at all means no index either — the
+  // missing-table guard in validateEquipment then fires, rather than the fit
+  // check quietly reading a shipped fold that no longer describes this bundle.
+  if (Array.isArray(bundle.tagging)) {
+    equipment.cardTagging = [...cardTagging].map(([cardId, tags]) => ({ cardId, tags }));
+  } else {
+    delete equipment.cardTagging;
+  }
+  registries.equipment = deepFreeze(equipment);
+  // The one tag vocabulary, plus the two tables that say who may carry it and
+  // where it is authored (content/tags.js). Rules read these, never a second
+  // hard-coded list — that is what makes a new tag a spreadsheet row.
   registries.tags = deepFreeze([...(bundle.tags || [])]);
+  registries.tagDomains = deepFreeze([...(bundle.tagDomains || [])]);
+  registries.tagFamilies = deepFreeze(tagFamilies.map((row) => ({ ...row })));
+  registries.tagFamilyDomains = deepFreeze((bundle.tagFamilyDomains || []).map((row) => ({ ...row })));
+  registries.tagging = deepFreeze((bundle.tagging || []).map((row) => ({ ...row })));
 
   // Visual scaling domains use the same derived-stat engine as run creation.
   // They are content potential (the largest legal creation allocation), not a
@@ -146,7 +275,7 @@ export function createRegistries(contentBundle) {
   const attributeIds = registries.attributes.ids();
   const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
   const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
-  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp', 'hpPerConTier'] });
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
   let hpEquipmentBonus = 0;
   for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
     for (const raw of (piece && piece.mods) || []) {
@@ -196,10 +325,22 @@ export function createRegistries(contentBundle) {
 
   // What can be earned. A table, like equipment — evaluated against saved
   // progress by model/unlocks.js, never by anything in here.
-  registries.unlocks = deepFreeze([...(bundle.unlocks || [])]);
+  registries.unlocks = deepFreeze([...collection('unlocks', bundle.unlocks || [])]);
 
   registries.scripts = Object.freeze({ ...(bundle.scripts || {}) });
   registries.contentVersion = String(bundle.version || bundle.contentVersion || '0');
+
+  // The framework bridge — the decision authority for card lifecycle
+  // vocabulary and keyword terminology (src/framework/bridge.js). It reads
+  // only canonical framework data (never this bundle), so the process-wide
+  // instance serves every registries object, and a plain property keeps it
+  // visible to fixtures that clone registries with spread.
+  registries.framework = sharedFrameworkBridge();
+
+  // Entity words (status/stance names and tooltips) resolve through a
+  // per-bundle framework TermRegistry — the same text verbatim, with the
+  // resolution authority moved to the framework (src/framework/termOverlay.js).
+  registries.frameworkTerms = createEntityTermOverlay(bundle);
 
   return Object.freeze(registries);
 }
@@ -236,11 +377,12 @@ export function passiveMult(registries, relicIds, key) {
 }
 
 /** Sum of an additive passive across owned relics (default 0). */
-export function passiveSum(registries, relicIds, key) {
+export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}) {
   knownPassive(key);
   let s = 0;
   for (const id of relicIds || []) {
-    const p = registries.relics.get(id).passives;
+    const itemRef = `relic/${id}`;
+    const p = resolveUpgradedRelic(registries, itemRef, itemUpgradeLevels[itemRef] || 0).passives;
     if (p && typeof p[key] === 'number') s += p[key];
   }
   return s;
@@ -279,8 +421,11 @@ export function resolveCard(registries, instanceOrRef) {
   const base = registries.cards.get(cardId);
   const mods = instanceOrRef.mods;
   const profileId = instanceOrRef.profileId;
+  const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
+  const sourceArmamentId = instanceOrRef.sourceArmamentId || '';
+  if (smithingLevel < 0) throw new Error(`smithingLevel must be a non-negative integer (got ${smithingLevel})`);
   const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier) return base;
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -290,7 +435,7 @@ export function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -315,6 +460,17 @@ export function resolveCard(registries, instanceOrRef) {
       ...(typeof instanceOrRef.damageSchool === 'string' ? { damageSchool: instanceOrRef.damageSchool } : {}),
       ...(Number.isInteger(instanceOrRef.exposureBuildupPerHit) ? { exposureBuildupPerHit: instanceOrRef.exposureBuildupPerHit } : {}),
     });
+  }
+  // Smithing changes are exact item/tier content. No source id means there is
+  // no authority for a tier and therefore nothing may be inferred.
+  if (smithingLevel > 0 && !sourceArmamentId) throw new Error('A Smithed card must carry sourceArmamentId');
+  for (let nextTier = 1; nextTier <= smithingLevel; nextTier += 1) {
+    result = applyItemCardUpgradeRows(
+      result,
+      instanceOrRef.equipmentRole || result.equipmentRole,
+      itemUpgradeRows(registries, `armament/${sourceArmamentId}`, nextTier),
+      registries.attributes.ids(),
+    );
   }
   cache.set(key, result);
   return result;

@@ -19,6 +19,7 @@ import {
 } from '../../model/mapknowledge.js';
 import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
+import { openModal, button } from '../kit/index.js';
 
 const UI_DEFAULTS = balance.ui;
 const EQ_DEFAULTS = balance.equipment;
@@ -147,6 +148,15 @@ const ROWS = [
   // `def` is the resolver's own const (model/mapknowledge.js) rather than a
   // second `true` typed here — the row three above learned that lesson with the
   // zoom ladder.
+  // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the
+  // shipped Shrine — Rest or Smith, and taking either leaves. ON keeps the
+  // Shrine open: Rest once, Smith while you have Stones, Level while you have
+  // cinders, and leave when you choose. Conservative default, as his own
+  // data-driven instruction for an unsettled 'maybe' asks.
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
+    note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'useRestorativeFlasksOutsideCombat', def: false, label: 'Use flasks outside combat',
+    note: 'Allow Crimson and Azure Flask charges to restore Health or Mana from the map. Their charges still refill only at a Shrine.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
   // How strongly the nodes already walked fade behind you — his clause, with
@@ -225,6 +235,13 @@ const ROWS = [
   { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
     choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
     note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. OFF keeps the direct-to-Settings route. Fresh or invalid values use MIRROR.' },
+
+  { cat: 'Display', key: 'armamentsPresentation', type: 'choice', def: 'radial',
+    choices: ['radial', 'fixed'], label: 'Combat Armaments',
+    note: 'RADIAL SHORTCUTS moves flasks and potions into the combat Armaments cluster. FIXED HUD keeps them in the top HUD.' },
+  { cat: 'Display', key: 'armamentsPhonePlacement', type: 'choice', def: 'left',
+    choices: ['left', 'center', 'right'], label: 'Phone Armaments location',
+    note: 'Geometry only: place the radial at the lower left, lower center, or lower right on narrow screens.' },
 
   { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
     resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
@@ -542,6 +559,16 @@ export function musicEnabledCondition(settings = {}) {
   return `Music on · volume ${volume}%.`;
 }
 
+export function resolveArmamentsPresentation(settings = {}) {
+  return ['radial', 'fixed'].includes(settings.armamentsPresentation)
+    ? settings.armamentsPresentation : 'radial';
+}
+
+export function resolveArmamentsPhonePlacement(settings = {}) {
+  return ['left', 'center', 'right'].includes(settings.armamentsPhonePlacement)
+    ? settings.armamentsPhonePlacement : 'left';
+}
+
 function rowNote(settings, row) {
   return typeof row.note === 'function' ? row.note(settings) : row.note;
 }
@@ -597,109 +624,75 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   const status = r.type === 'action'
     ? ` id="set-${r.key}-status" data-fullscreen-status aria-live="polite"`
     : condition;
-  const help = `<details class="set-help"><summary>Details</summary><p class="set-note"${status}>${note}</p></details>`;
+  // THE ROW IS THE KIT'S Row·setting: a LabelStack (what the setting does, and
+  // one line on how — the note is that line, always visible, never behind a
+  // disclosure) and the control in the trail. One grammar for every type.
+  const stack = (extra = '') => `<span class="as-labelstack">
+        <span class="ls-label">${r.label}</span>
+        <span class="ls-hint set-note"${status}>${note}</span>${extra}
+      </span>`;
+  const rowOpen = (extraClass = '', attrs = '') => `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}"${attrs}>`;
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
-    return `<div class="set-row set-row-wide">
-        <div><b>${r.label}</b>${help}</div>
-        <input type="text" class="set-text" spellcheck="false" data-key="${r.key}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${r.placeholder || ''}">
+    return `${rowOpen('set-row-wide')}
+        ${stack()}
+        <span class="r-trail"><input type="text" class="set-text" spellcheck="false" data-key="${r.key}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${r.placeholder || ''}"></span>
       </div>`;
   }
-  // ---- 'number': A FIELD HE TYPES INTO, WITH A SLIDER BOUND TO IT ----------
-  //
-  // Constantine, 2026-08-17: "i don't want a dial for hte level up, I want to be
-  // able to enter the value myself and maybe a slider with it that is synced
-  // with the value."
-  //
-  // ⚠ WHY THIS IS A NEW TYPE AND NOT `type: 'range'`, WHICH IS THE OBVIOUS
-  // REUSE AND IS WRONG TWICE OVER:
-  //
-  //   1. `range` IS A VOLUME SLIDER. Its markup hardcodes min="0" max="100"
-  //      step="5" — a level value of 0 is legal in it, 1 is not reachable, and
-  //      the domain belongs to the row here, not to the control.
-  //   2. THOSE ARE THE EXACT LINES AURORA'S #181 EDITS. Reusing `range` would
-  //      have meant editing the one branch another house has a reviewed diff in,
-  //      to add the attributes it needs — turning a collision Marina published as
-  //      VOID at the code level into a real one, in the same act.
-  //
-  // So this branch is a sibling, it never enters the `range` branch, and it
-  // touches neither `.set-range` nor its handler. **Marina's published
-  // conclusion still holds; her stated REASON for it (a boolean row cannot
-  // reach that code path) is no longer the reason, and that is hers to correct
-  // rather than mine to quietly inherit.**
-  //
-  // PART A ONLY, AND PART B'S ABSENCE IS A RULING. His word was "MAYBE a slider
-  // with it that is synced with the value" — a maybe. Marina held the slider
-  // behind Aurora's #181 rather than spend their thirteen reviewed lines on our
-  // not-yet-existing ones, and Part B IS the rebase-behind she published to them.
-  //
-  // I MEASURED THE COLLISION SHE DEFERRED IT ON AND IT IS NOT THERE: this row is
-  // `type: 'number'`, so it never enters the `range` branch below and never
-  // touches `.set-range` or its handler, which are precisely and only what #181
-  // edits. THE DEFERRAL IS HONOURED ANYWAY — she published an order to another
-  // house, and correcting her own sentence is hers, not something I overtake by
-  // shipping. The measurement is the relay; the order is the order.
-  //
-  // `min`/`max`/`step` are the ROW's, so the domain lives in content and this
-  // markup states no number of its own — which is also why Part B cannot drift
-  // from the field: neither control is the value, the resolved number is.
+  // ---- 'number': A FIELD HE TYPES INTO (Constantine, 2026-08-17). min/max
+  // are the ROW's, so the domain lives in content and this markup states no
+  // number of its own. The synced slider (Part B) is still held behind #181.
   if (r.type === 'number') {
     const val = resolveNumberRow(settings, r);
-    return `<div class="set-row">
-        <div><b>${r.label}</b>${help}${appliedSlot(settings, r)}</div>
-        <div class="num-wrap">
+    return `${rowOpen()}
+        ${stack(appliedSlot(settings, r))}
+        <span class="r-trail num-wrap">
           <input type="number" class="set-num" data-key="${r.key}" value="${val}"
                  min="${r.min}" max="${r.max}" step="1" inputmode="numeric"
                  aria-label="${r.label}">
-          <!-- PART B, THE SYNCED SLIDER, IS NOT HERE. See the note above this
-               branch: it is one range input plus three lines in the handler, and
-               it waits on Aurora's 181 by Marina's order. NO BACKTICKS IN THIS
-               BLOCK - it sits inside a template literal, and I closed the string
-               with a pair of them once already tonight. -->
-        </div>
+        </span>
       </div>`;
   }
   if (r.type === 'range') {
     const val = typeof settings[r.key] === 'number' ? settings[r.key] : r.def;
-    return `<div class="set-row">
-        <div><b>${r.label}</b>${help}</div>
-        <div class="range-wrap">
+    return `${rowOpen()}
+        ${stack()}
+        <span class="as-status range-val" data-for="${r.key}">${val}</span>
+        <span class="r-trail range-wrap">
           <input type="range" class="set-range" min="0" max="100" step="5" value="${val}" data-key="${r.key}">
-          <span class="range-val" data-for="${r.key}">${val}</span>
-        </div>
+        </span>
       </div>`;
   }
   if (r.type === 'button') {
-    return `<div class="set-row">
-        <div><b>${r.label}</b>${help}</div>
-        <button class="subtle" data-btn="${r.key}">${r.btn || 'Open'}</button>
+    return `${rowOpen()}
+        ${stack()}
+        <span class="r-trail"><button type="button" class="as-btn" data-btn="${r.key}">${r.btn || 'Open'}</button></span>
       </div>`;
   }
   if (r.type === 'choice') {
     const cur = r.choices.includes(settings[r.key]) ? settings[r.key] : r.def;
     const opts = r.choices
-      .map((c) => `<button class="choice${c === cur ? ' on' : ''}" data-key="${r.key}" data-val="${c}">${c.toUpperCase()}</button>`)
+      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}">${c}</button>`)
       .join('');
-    return `<div class="set-row">
-        <div><b>${r.label}</b>${help}${appliedSlot(settings, r)}</div>
-        <div class="choice-group"${r.resizesWhilePressed ? ' data-resizes-while-pressed="1"' : ''}>${opts}</div>
+    return `${rowOpen()}
+        ${stack(appliedSlot(settings, r))}
+        <span class="r-trail"><span class="as-seg choice-group"${r.resizesWhilePressed ? ' data-resizes-while-pressed="1"' : ''}>${opts}</span></span>
       </div>`;
   }
   if (r.type === 'action' && !fullscreenCapability(doc).supported) {
-    const unsupportedHelp = `<details class="set-help"><summary>Details</summary><p class="set-note">${note}</p></details>`;
-    return `<div class="set-row set-row-unavailable" data-action-row="${r.key}">
-      <div><b>${r.label}</b>${unsupportedHelp}<p class="set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, Add to Home Screen provides the closest app-like view.</p></div>
-      <button class="toggle" data-key="${r.key}" data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status" role="switch" aria-checked="false" disabled aria-disabled="true">
-        <span class="knob"></span>
-      </button>
+    return `${rowOpen('set-row-unavailable', ` data-action-row="${r.key}"`)}
+      <span class="as-labelstack">
+        <span class="ls-label">${r.label}</span>
+        <span class="ls-hint set-note">${note}</span>
+        <span class="ls-hint set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, Add to Home Screen provides the closest app-like view.</span>
+      </span>
+      <span class="r-trail"><button type="button" class="as-toggle toggle" data-key="${r.key}" data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status" role="switch" aria-checked="false" disabled aria-disabled="true"><span class="knob"></span></button></span>
     </div>`;
   }
   const on = r.type === 'action' ? isFullscreen(doc) : controlOn(settings, r);
-  return `<div class="set-row">
-      <div><b>${r.label}</b>${help}</div>
-      <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}">
-        <span class="knob"></span>
-      </button>
+  return `${rowOpen()}
+      ${stack()}
+      <span class="r-trail"><button type="button" class="as-toggle toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}"><span class="knob"></span></button></span>
     </div>`;
 }
 
@@ -1158,13 +1151,13 @@ function categoryHtml(cat, settings, saves) {
       + ' Give it a row (<code>cat:</code>) or a section, or take it out of'
       + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
   }
-  const heading = `<header class="set-section-head"><p>Settings</p><h2>${esc(categoryLabel(cat))}</h2>`
-    + `<span>${esc(categoryTip(cat))}</span></header>`;
+  const heading = `<header class="set-section-head"><span class="as-eyebrow">Settings</span><h3 class="as-title-m">${esc(categoryLabel(cat))}</h3>`
+    + `<p class="as-subtitle">${esc(categoryTip(cat))}</p></header><hr class="as-hairline">`;
   if (cat === 'Advanced') {
     const stored = settings[ADVANCED_CAT_KEY];
     const active = ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
     const tabs = ADVANCED_GROUPS.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
-      + ` type="button" role="tab" aria-selected="${group.id === active}"`
+      + ` type="button" role="tab" aria-selected="${group.id === active}" aria-pressed="${group.id === active}"`
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
     const groups = ADVANCED_GROUPS.map((group) => {
       const hidden = group.id === active ? '' : ' hidden';
@@ -1174,10 +1167,10 @@ function categoryHtml(cat, settings, saves) {
       }
       const rows = h.rows.filter((row) => (row.advancedGroup || 'Gameplay') === group.id);
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-        + `><p class="set-note set-advanced-tip">${esc(group.tip)}</p>`
+        + `><p class="as-subtitle set-advanced-tip">${esc(group.tip)}</p>`
         + `<div class="set-card-list">${rows.map((row) => settingsRowHtml(settings, row)).join('')}</div></section>`;
     }).join('');
-    return `${heading}<div class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</div>${groups}`;
+    return `${heading}<div class="as-pane-head"><span class="as-seg set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>${groups}`;
   }
   if (h.mount) return `${heading}<div class="${h.mount}"></div>`;
   return `${heading}<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
@@ -1235,13 +1228,15 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // repo. Before tonight a screen reader had no tabs on any surface here,
       // including the overlay's six — that half is still open and is not mine
       // to fix in this file.
-      const tabs = cats.map((cat) => `<button class="set-tab${cat === current ? ' on' : ''}"`
-        + ` role="tab" id="set-tab-${esc(cat)}" aria-selected="${cat === current}"`
-        + ` aria-controls="set-panel" data-member="${esc(cat)}"><span class="set-tab-face">${esc(categoryLabel(cat))}</span></button>`).join('');
-      html = `<div class="set-tabs" role="tablist" aria-label="Settings sections"`
+      // THE RAIL IS VERTICAL AT EVERY WIDTH (kit §04 NavRail): a column of
+      // destinations behind a pane separator, never a strip lying down.
+      const tabs = cats.map((cat) => `<button class="as-railitem set-tab${cat === current ? ' on' : ''}" type="button"`
+        + ` role="tab" id="set-tab-${esc(cat)}" aria-selected="${cat === current}"${cat === current ? ' aria-current="true"' : ''}`
+        + ` aria-controls="set-panel" data-member="${esc(cat)}">${esc(categoryLabel(cat))}</button>`).join('');
+      html = `<div class="as-railed set-railed"><div class="as-rail set-tabs" role="tablist" aria-label="Settings sections"`
         + ` data-surface="settingsCategory">${tabs}</div>`
-        + `<div class="set-panel" id="set-panel" role="tabpanel"`
-        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div>`;
+        + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div></div>`;
     }
   } else {
     html = ROWS.map((r) => settingsRowHtml(settings, r)).join('');
@@ -1466,6 +1461,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     container.querySelectorAll('.set-tab').forEach((b) => {
       const on = b.dataset.member === cat;
       b.classList.toggle('on', on);
+      if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
       b.setAttribute('aria-selected', String(on));
     });
     const panel = container.querySelector('.set-panel');
@@ -1530,20 +1526,21 @@ export function showSettingsNotice(msg) {
 
 export function openSettings({ meta, onChange, saves = null }) {
   const settings = meta.settings || (meta.settings = {});
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil';
-  veil.innerHTML = `
-    <div class="modal settings-modal">
-      <h2>Settings</h2>
-      <div class="set-body"></div>
-      <div class="set-actions"><button id="set-close">Done</button></div>
-    </div>`;
-  document.body.appendChild(veil);
-  renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
-
-  const close = () => veil.remove();
-  veil.addEventListener('click', (e) => {
-    if (e.target === veil) close();
+  // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
+  // this surface owns only the body, which is the NavRail + Pane it always was.
+  const done = button({ label: 'Done', weight: 'primary', id: 'set-close' });
+  const door = openModal({
+    size: 'lg',
+    className: 'settings-modal',
+    titleId: 'settings-modal-title',
+    eyebrow: 'Title',
+    title: 'Settings',
+    closeLabel: 'Close Settings',
+    bodyClassName: 'set-body',
+    body: (host) => renderSettings(host, { settings, onChange, saves }),
+    primary: done,
+    footSize: 'short',
   });
-  veil.querySelector('#set-close').addEventListener('click', close);
+  done.addEventListener('click', door.close);
+  door.veil.querySelector('.set-tab.on, #set-close')?.focus({ preventScroll: true });
 }

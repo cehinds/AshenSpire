@@ -4,7 +4,7 @@
 
 import {
   equipmentKitReceipt,
-  buildEquippedWeaponCardPlan,
+  armamentIntrinsicStatProblems,
   equipmentRequirementReceipt,
   applyEquipTransition,
   equippedIn,
@@ -12,10 +12,13 @@ import {
   parseMod,
   resolveSwapCostRule,
   runMods,
+  startingDeckPlan,
   swapCostFor,
 } from './loadout.js';
+// Deck composition goes through the framework's adopted door (owner ruling).
+import { buildEquippedWeaponCardPlan } from '../framework/deckComposition.js';
 import { passiveSum } from './registries.js';
-import { playerPoiseThresholdReceipt } from './statProjection.js';
+import { playerPoiseThresholdReceipt, playerLoadReceipt } from './statProjection.js';
 
 function pieceFor(registries, classId, pieceId, slot) {
   if (!pieceId) return null;
@@ -25,10 +28,28 @@ function pieceFor(registries, classId, pieceId, slot) {
     : (equipment.armaments || []).find((row) => row.id === pieceId) || null;
 }
 
+/**
+ * Immutable presentation receipt for authored armament facts. These numbers
+ * deliberately do not include Smithing tiers, attributes, or generated-card
+ * deltas; those remain separate receipts and gameplay authorities.
+ */
+export function armamentIntrinsicReceipt(piece) {
+  const problems = armamentIntrinsicStatProblems(piece);
+  if (problems.length) throw new Error(problems.join('; '));
+  return Object.freeze({
+    itemId: piece.id,
+    attackRating: piece.attackRating,
+    defenseRating: piece.defenseRating,
+    weight: piece.weight,
+    weaponArtManaCost: piece.weaponArtManaCost,
+    uniqueSkillStaminaCost: piece.uniqueSkillStaminaCost,
+  });
+}
+
 function requirementsFor(registries, run, pieces) {
   return pieces
     .map((piece) => {
-      const receipt = equipmentRequirementReceipt(registries, piece, run.attributes);
+      const receipt = equipmentRequirementReceipt(registries, piece, run.attributes, { itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels });
       return {
         ...receipt,
         pieceName: piece.name,
@@ -45,19 +66,71 @@ function requirementsFor(registries, run, pieces) {
     .filter((row) => row.requirements.length);
 }
 
+/**
+ * The copy count per role AS THE RUN ACTUALLY HAS IT.
+ *
+ * COUNT THE DECK. `roleCopies` is the legacy distribution and under a composed
+ * deck it is not what the run holds (bias 0.75 builds six attacks and two
+ * guards while that table still reads 4/4); a fresh plan is not what the run
+ * holds either, because a restamp PRESERVES the instances the run was born with
+ * and only re-skins them, so after a grant-bearing swap the plan and the deck
+ * disagree. The deck is the equipment card package. The receipt contract says
+ * the panel shows that package, so the panel counts it.
+ *
+ * The first version of this anchored ATTACK to the run and left guard on the
+ * plan — the same mistake one field over, found immediately. Counting roles
+ * off the deck has no per-role list to be incomplete: a role added later is
+ * counted the day it exists.
+ *
+ * The fallbacks are for a run with no deck to count — a synthetic or candidate
+ * run in a fixture. Then the composed plan, and failing that the authored
+ * table, which is the right answer whenever the composed path is off.
+ */
+function copiesByRole(registries, run) {
+  const legacy = registries.balance.equipment.roleCopies || {};
+  const deck = Array.isArray(run.deck) && run.deck.length ? run.deck : null;
+  if (deck) {
+    const counted = {};
+    for (const card of deck) {
+      if (!card || !card.equipmentRole) continue;
+      counted[card.equipmentRole] = (counted[card.equipmentRole] || 0) + 1;
+    }
+    // NOT `{ ...legacy, ...counted }`. The deck is the COMPLETE answer, so a
+    // role it does not contain has zero of that role — not "no information,
+    // ask the authored table". Merging restored `guard: 4` for a bias-1 run
+    // holding eight attacks and no guards, and would do it again the moment a
+    // player burned their last guard. This is the same absent-vs-zero mistake
+    // three earlier rounds were about, made inside the fix that closed them;
+    // returning the count alone is what makes it unwritable here.
+    return counted;
+  }
+  let plan = null;
+  try { plan = startingDeckPlan(registries, run.loadout, run.class); } catch { plan = null; }
+  if (!plan) return legacy;
+  const attack = Number.isFinite(run.equipmentAttackSlotCount)
+    ? run.equipmentAttackSlotCount
+    : plan.attackCount;
+  return { ...legacy, attack, guard: plan.guardCount };
+}
+
 function rolesFor(registries, run) {
-  const copies = registries.balance.equipment.roleCopies;
+  const copies = copiesByRole(registries, run);
+  const countOf = (role) => (copies[role] === undefined ? 0 : copies[role]);
   return equipmentKitReceipt(
     registries,
     run.loadout,
     run.class,
     run.attributes,
     run.equipmentProfileRuleSnapshot,
-  ).map((row) => ({ ...row, copies: copies[row.role] }));
+  ).map((row) => ({ ...row, copies: countOf(row.role) }));
 }
 
 function attackPackageCounts(registries, run) {
-  const plan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class);
+  // Same rule one function over: the package the player HAS is the one planned
+  // against the birth quota, not a fresh count off the current loadout.
+  const plan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class, {
+    attackSlotCount: Number.isFinite(run.equipmentAttackSlotCount) ? run.equipmentAttackSlotCount : undefined,
+  });
   const groups = new Map();
   for (const slot of plan.slots) {
     const key = `${slot.cardId}|${slot.profileId}`;
@@ -317,11 +390,19 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
   resourceChanges.push(...swapPriceChanges(registries, run, run.loadout, loadout, meta, slot.id, setIndex));
   const beforePoise = playerPoiseThresholdReceipt(registries, run);
   const afterPoise = playerPoiseThresholdReceipt(registries, comparedRun);
+  // The compared run keeps `itemUpgradeLevels` (spread from `run`), so the
+  // candidate weighs at the tier it is actually forged to — the same tier the
+  // slot summary shows (ui/screens/equipment.js) and the same `pieceWeight`
+  // rule the Armoury readout uses. Capacity cannot move in a swap (attributes
+  // and bonuses are the run's), so only load, percent and the class word can.
+  const beforeLoad = playerLoadReceipt(registries, run);
+  const afterLoad = playerLoadReceipt(registries, comparedRun);
   return {
     slotId: slot.id,
     setIndex,
     pieceId: piece && piece.id,
     pieceName: piece ? piece.name : 'Bare',
+    intrinsic: piece && piece.kind !== 'armor' ? armamentIntrinsicReceipt(piece) : null,
     requirement: piece ? requirementsFor(registries, run, [piece])[0] || {
       itemId: piece.id, pieceName: piece.name, requirements: [], failures: [], ok: true,
     } : null,
@@ -355,6 +436,20 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
       active: false,
       note: afterPoise.note,
     },
+    load: {
+      before: beforeLoad.load,
+      after: afterLoad.load,
+      capacity: afterLoad.capacity,
+      beforePercent: beforeLoad.percent,
+      afterPercent: afterLoad.percent,
+      beforeClassId: beforeLoad.classId,
+      afterClassId: afterLoad.classId,
+      beforeWord: beforeLoad.word,
+      afterWord: afterLoad.word,
+      changesClass: beforeLoad.classId !== afterLoad.classId,
+      active: false,
+      note: afterLoad.note,
+    },
   };
 }
 
@@ -378,7 +473,11 @@ export function equipmentSurfaceReceipt(registries, run, { candidate = null, met
       copies: roleCopies.signature,
     },
     requirements: requirementsFor(registries, run, equippedPieces(registries, run.loadout, run.class)),
+    intrinsicArmaments: equippedPieces(registries, run.loadout, run.class)
+      .filter((piece) => piece.kind !== 'armor')
+      .map(armamentIntrinsicReceipt),
     poise: playerPoiseThresholdReceipt(registries, run),
+    load: playerLoadReceipt(registries, run),
   };
   if (candidate) receipt.candidate = candidateReceipt(registries, run, candidate, roles, meta);
   return receipt;

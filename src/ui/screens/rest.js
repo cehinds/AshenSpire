@@ -9,22 +9,21 @@
 //   the other, so the mistake is a THUMB LANDING 14 px OFF — and the answer is
 //   the fill, inside the same gesture.
 //   SMITH CONFIRMS. Constantine asked for the upgrade preview to be
-//   confirmable. #105 shipped the preview as a HOVER tooltip, which on a phone
-//   is nothing at all, and then one tap committed a permanent upgrade. Holding
-//   the wrong card upgrades the wrong card; what the player needs is to SEE
-//   WHAT IT BECOMES and then say yes. So the confirm panel carries
-//   `upgradePreviewHtml` — the same preview, on the screen, where a finger can
-//   read it.
+//   confirmable. #105 shipped a per-card HOVER tooltip, which on a phone was
+//   nothing at all, and then one tap committed. Smithing now selects the source
+//   armament and shows every affected basic-card delta in a persistent panel;
+//   what the player needs is to SEE THE WHOLE PROMOTION and then say yes.
 //
 // Neither of those decisions is in this file. `model/secondbeat.js` holds the
 // characteristics; this screen names its actions.
 
 import { shrineHealAmount } from '../../engine/encounters.js';
-import { levelUpPlan, applyLevelUp } from '../../model/levelup.js';
+import { levelUpPlan, applyLevelUp, levelUpBudget } from '../../model/levelup.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
-import { passiveFlag, resolveCard } from '../../model/registries.js';
+import { passiveFlag } from '../../model/registries.js';
+import { commitSmithing, smithingPlan } from '../../model/smithing.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 import { sfx } from '../sfx.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { chargeFlaskDefinition, flaskChargePlan, moveFlaskCharge } from '../../model/gracerefill.js';
@@ -32,6 +31,14 @@ import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
+import { mountServiceOffer, openMountService, mountReceiptLine } from './smithServices.js';
+import { FOLD_GLYPH } from '../components/foldGlyph.js';
+// THE FOLDS' INSIDES ARE THE KIT'S (2026-09-04, the sweep): a flask row is a
+// kit Row — the flask's identity as its LabelStack, a −/count/+ Stepper of
+// tap-floor buttons trailing — the total is StatusText, the cinder preview
+// a KitLine with a StatPair and a delta. The `.flask-*` / `.level-cinder-*`
+// names stay on the kit elements because tools/flaskbox.mjs reads them.
+import { el, html, row, stepper, statusText, subtitle, statPair } from '../kit/index.js';
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
   const parsed = Number(value);
@@ -80,10 +87,27 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null }) {
+  // E13's multi-use Shrine: an action re-opens the same screen (with what was
+  // already taken recorded) instead of leaving; LEAVE is the one way out.
+  const remount = (extra = {}) => mountRest(app, {
+    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, services, ...extra,
+  });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-  const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
-  const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
+  const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  const noRest = relicNoRest || (multiUse && rested);
+  // The locked copy names the real reason: a relic that forbids rest, or a
+  // rest already taken at this Shrine under Multi-use — never a relic the
+  // player does not carry.
+  const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
+  const smith = smithingPlan(registries, run);
+  // WHICH SERVICES THIS SMITH OFFERS is the table in balance.smithing.services,
+  // resolved at the door (main.js) and handed in; a screen mounted without it
+  // — a fixture, an older caller — keeps the Shrine it always had.
+  const offered = services && Array.isArray(services.services) ? services.services : ['upgrade'];
+  const canInspectSmithing = offered.includes('upgrade') && smith.candidates.length > 0;
+  const extract = offered.includes('extract') ? mountServiceOffer(registries, run, 'extract') : null;
+  const install = offered.includes('install') ? mountServiceOffer(registries, run, 'install') : null;
   const arm = beatArmer(meta, registries);
   // `hpCharge` / `manaCharge` are GONE, and their absence is the point: this
   // screen no longer names a charge kind at all. It used to reach for exactly
@@ -101,6 +125,9 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // pricing, caps, persistence, and pool reconciliation; the screen only fixes
   // the size of this one interaction.
   const level = levelUpPlan(registries, run, { pointsPerLevel: 1 });
+  // How many levels IN A ROW the purse covers — the card offers them all at
+  // once and commits them one ladder step at a time (model/levelup.js).
+  const budget = levelUpBudget(registries, run);
   const shrinePresentation = registries.balance?.ui?.shrinePresentation || {};
   const authoredShrineLayout = shrinePresentation.optionLayout;
   const shrineLayout = authoredShrineLayout === 'grid' ? 'grid' : 'list';
@@ -109,38 +136,85 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   const foldedCardHeightViewportPct = boundedNumber(shrinePresentation.foldedCardHeightViewportPct, 10, 6, 18);
   const foldedCardMaxHeightRem = boundedNumber(shrinePresentation.foldedCardMaxHeightRem, 7, 4, 12);
 
+  // THE FLASK ROWS. One kit Row per charge kind: identity left, the stepper
+  // trailing. THE STEPPER IS ONE UNIT AND WRAPS AS ONE — on a narrow shape the
+  // whole group drops under the name (the Row's `setting` variant wraps)
+  // instead of the `+` walking off the right edge (measured 390x844 before:
+  // 2 controls outside the viewport). Every button is `aria-disabled`, never
+  // `disabled`: a disabled button fires no pointer events, so its tooltip
+  // could never say why it will not move.
+  const flaskRowsHtml = html(charge.rows.map((flaskRow) => {
+    const name = (flaskRow.def && flaskRow.def.name) || flaskRow.kind;
+    return row({
+      tag: 'div', setting: true, className: 'flask-increment-row', attrs: { dataset: { kind: flaskRow.kind } },
+      labelNode: el('span', { class: 'as-labelstack flask-increment-id', html: flaskIdentityHtml(flaskRow.def) }),
+      trail: stepper({
+        value: flaskRow.count, className: 'flask-increment-steps', valueClass: 'flask-increment-count', valueAttrs: { dataset: { kind: flaskRow.kind } },
+        dec: { label: `One fewer ${name}`, disabled: !flaskRow.canSub, className: 'flask-step', attrs: { dataset: { step: '-1', kind: flaskRow.kind, focusable: 'true' } } },
+        inc: { label: `One more ${name}`, disabled: !flaskRow.canAdd, className: 'flask-step', attrs: { dataset: { step: '1', kind: flaskRow.kind, focusable: 'true' } } },
+      }),
+    });
+  }));
+  // THE CINDER LINE: what you hold, what a level costs, and — once a point is
+  // pending — what remains, as the kit's delta.
+  const cinderLineHtml = level.capped ? '' : html(el('p', { class: 'as-kitline level-cinder-preview', dataset: { levelCinderPreview: '' } }, [
+    statPair({ key: 'You hold', value: String(level.cinders) }),
+    el('strong', { class: 'level-cinder-cost', text: `− ${level.cost} cinders` }),
+    el('span', { class: 'as-delta level-cinder-result', dataset: { levelCinderResult: '', dir: 'down' }, hidden: true }, [
+      el('span', { class: 'd-arrow', text: '→' }), el('span', { class: 'd-to', text: `${level.cinders - level.cost} remaining` }),
+    ]),
+  ]));
+
   app.innerHTML = `
     <div class="screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem">
-      <h2 style="color:var(--gold);font-size:26px">SHRINE OF EMBER</h2>
-      <p class="subtitle">THE GOLD LIGHT HOLDS, FOR NOW</p>
+      <h2>Shrine of Ember</h2>
+      <p class="subtitle">The gold light holds, for now</p>
       ${refillLineHtml(registries, refill)}
       <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
         <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
           <div class="cp-body">
             <h3>Rest</h3>
-            <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+            <p>${noRest ? noRestCopy : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
-        <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt"
-             role="button" tabindex="${upgradable.length ? '0' : '-1'}"
-             aria-disabled="${upgradable.length ? 'false' : 'true'}">
+        <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
+             role="button" tabindex="${canInspectSmithing ? '0' : '-1'}"
+             aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
           <div class="glyph">⚒</div>
           <div class="cp-body">
-            <h3>Smith</h3>
-            <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
+            <h3>Upgrade an Item</h3>
+            <p>${canInspectSmithing
+              ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
+              : 'No owned armament has an effective tier remaining.'}</p>
           </div>
         </div>
+        ${extract ? `<div class="class-pick${extract.available ? '' : ' locked'}" id="extract-opt"
+             role="button" tabindex="${extract.available ? '0' : '-1'}"
+             aria-disabled="${extract.available ? 'false' : 'true'}">
+          <div class="glyph">⚙</div>
+          <div class="cp-body">
+            <h3>Extract a Card</h3>
+            <p>${esc(extract.summary)}</p>
+          </div>
+        </div>` : ''}
+        ${install ? `<div class="class-pick${install.available ? '' : ' locked'}" id="install-opt"
+             role="button" tabindex="${install.available ? '0' : '-1'}"
+             aria-disabled="${install.available ? 'false' : 'true'}">
+          <div class="glyph">⚒</div>
+          <div class="cp-body">
+            <h3>Seat a Card</h3>
+            <p>${esc(install.summary)}</p>
+          </div>
+        </div>` : ''}
         <details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
           <summary>
-            <span class="shrine-fold-glyph">⚗</span>
-            <span class="shrine-fold-summary"><b>Reallocate Flask Charges</b><small>${charge.assigned}/${charge.capacity} assigned</small></span>
-            <span class="shrine-fold-caret" aria-hidden="true">›</span>
+            <span class="glyph shrine-fold-glyph">⚗</span>
+            <span class="ob shrine-fold-summary"><b class="on">Reallocate Flask Charges</b><small class="om">${charge.assigned}/${charge.capacity} assigned</small></span>
+            <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </summary>
           <div class="shrine-fold-content">
-          <h3>Reallocate Flask Charges</h3>
           <div class="shrine-fold-detail">
-          <div class="glyph">⚗</div>
           <div class="cp-body">
           <!-- THE PER-FLASK COUNTS LEFT THIS LINE WHEN THE ROWS GAINED THEM.
                It used to read "Fixed capacity 3: <art> 2 · <art> 1" — the same
@@ -151,29 +225,10 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
                went red on "relevant controls remain inside the viewport" and
                that is how I found it, not by looking. The capacity stays,
                because it is the one number the rows do NOT say. -->
-          <p>Fixed capacity ${charge.capacity}</p>
+          ${html(subtitle(`Fixed capacity ${charge.capacity}`))}
           <div class="flask-increment">
-            ${charge.rows.map((row) => `
-              <div class="flask-increment-row" data-kind="${esc(row.kind)}">
-                <span class="flask-increment-id">${flaskIdentityHtml(row.def)}</span>
-                <!-- THE STEPPER IS ONE UNIT AND WRAPS AS ONE. Read order is the
-                     reading order — "Crimson Flask: − 2 +" — and on a narrow
-                     shape the whole group drops to its own line under the name
-                     instead of the `+` walking off the right edge, which is
-                     what it did when the buttons were loose children of the row
-                     (measured 390x844: 2 controls outside the viewport). Law 5
-                     clause 3: a narrow shape is a different composition. -->
-                <span class="flask-increment-steps">
-                  <button type="button" class="flask-step" data-step="-1" data-kind="${esc(row.kind)}"
-                          data-focusable="true" aria-disabled="${String(!row.canSub)}"
-                          aria-label="One fewer ${esc((row.def && row.def.name) || row.kind)}">−</button>
-                  <b class="flask-increment-count" data-kind="${esc(row.kind)}">${row.count}</b>
-                  <button type="button" class="flask-step" data-step="1" data-kind="${esc(row.kind)}"
-                          data-focusable="true" aria-disabled="${String(!row.canAdd)}"
-                          aria-label="One more ${esc((row.def && row.def.name) || row.kind)}">+</button>
-                </span>
-              </div>`).join('')}
-            <p class="flask-increment-total">${charge.assigned} of ${charge.capacity} assigned</p>
+            ${flaskRowsHtml}
+            ${html(statusText(`${charge.assigned} of ${charge.capacity} assigned`, { class: 'flask-increment-total' }))}
           </div>
           </div>
           </div>
@@ -199,47 +254,44 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
              node --check exits 0 on the result because it parses the file as a
              SCRIPT, so my own "parses" check was silent on all three. The gate
              that caught this one is tools/linkcheck.mjs. -->
-        <details class="class-pick shrine-fold${level.offerable ? '' : ' locked'}" id="level-opt"${openPanel === 'level' ? ' open' : ''}
+        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
+             role="button" tabindex="0" aria-haspopup="dialog"
+             aria-disabled="${level.offerable ? 'false' : 'true'}"
              data-affordable="${level.affordable ? '1' : '0'}"
              data-blocked-by="${level.blockedBy || ''}"
-             data-cost="${level.cost}"
-             data-short="${level.short}">
-          <summary>
-            <span class="shrine-fold-glyph">✦</span>
-            <span class="shrine-fold-summary"><b>Level up</b><small>${level.capped ? 'Level cap reached' : `${level.cost} cinders · +1 point`}</small></span>
-            <span class="shrine-fold-caret" aria-hidden="true">›</span>
-          </summary>
-          <div class="shrine-fold-content">
-          <h3>Level up</h3>
-          <div class="shrine-fold-detail">
-            <div class="glyph">✦</div>
-            <div class="cp-body">
-            ${level.capped
-            ? `<p>You have taken every level this climb allows (${level.levelsTaken}).</p>`
-            : `<p class="level-cinder-preview" data-level-cinder-preview>
-                <span aria-hidden="true">✦</span>
-                <span>You hold <b>${level.cinders}</b> − <strong class="level-cinder-cost">${level.cost} cinders</strong> to level up.</span>
-                <span class="level-cinder-result" data-level-cinder-result hidden>→ <b>${level.cinders - level.cost} remaining</b></span>
-              </p>`}
-            </div>
+             data-cost="${level.cost}" data-short="${level.short}">
+          <div class="glyph">✦</div>
+          <div class="cp-body">
+            <h3>Level up</h3>
+            <p>${level.capped ? 'Level cap reached' : level.offerable ? `${budget.levels} level${budget.levels === 1 ? '' : 's'} affordable · from ${level.cost} cinders` : `${level.cost} cinders · +1 point`}</p>
           </div>
-          <div class="shrine-stat-mount"></div>
-          </div>
-        </details>
+        </div>
       </div>
+      ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
     </div>`;
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
+    ['#extract-opt', 'extract'], ['#install-opt', 'install'],
     ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
-  ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
+  ]) {
+    const element = app.querySelector(selector);
+    if (element) markUiComponent(element, UI.shrineOptionCard, variant);
+  }
+  const leave = app.querySelector('#shrine-leave');
+  if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
+      question: multiUse
+        ? `Rest here? Heal ${heal} HP and restore Mana. You stay at this Shrine and leave when you choose.`
+        : `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
+      confirmLabel: 'REST',
       onConfirm: () => {
         run.hp = Math.min(run.maxHp, run.hp + heal);
         run.mana = run.maxMana;
         sfx.play('shrine');
+        if (multiUse) { if (onLevelUp) onLevelUp(); remount({ rested: true }); return; }
         onDone(`Rested: +${heal} HP.`);
       },
     });
@@ -281,77 +333,139 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       // panel adopted from it: the counts moved, and so did which buttons are
       // legal. A control that redrew only its own number would leave the OTHER
       // row's `+` looking pressable at the moment it stopped being.
-      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+      remount({ openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
     });
   }
   // The same allocation component used by character creation, with shrine
-  // policy: existing values are immutable, one and only one plus may be chosen,
+  // policy: existing values are immutable, affordable points may be assigned,
   // and the run is not mutated until Done commits it through applyLevelUp.
   if (level.offerable) {
-    let pendingAttribute = null;
-    const mount = app.querySelector('#level-opt .shrine-stat-mount');
+    // Pending points per attribute. Up to `budget.levels` in total; each one
+    // is a level, so Done walks the ladder once per point, in order.
+    const pending = Object.fromEntries(level.attributes.map((attr) => [attr.id, 0]));
+    const pendingTotal = () => Object.values(pending).reduce((sum, n) => sum + n, 0);
+    const option = app.querySelector('#level-opt');
+    const shrineScreen = option.closest('.screen');
+    let allocation = null;
     const drawLevelCard = () => {
-      const result = app.querySelector('#level-opt [data-level-cinder-result]');
-      if (result) result.hidden = !pendingAttribute;
+      const count = pendingTotal();
+      const spend = budget.costs.slice(0, count).reduce((sum, cost) => sum + cost, 0);
       const values = Object.fromEntries(level.attributes.map((attr) => [
         attr.id,
-        run.attributes[attr.id] + (pendingAttribute === attr.id ? 1 : 0),
+        run.attributes[attr.id] + pending[attr.id],
       ]));
       const cards = new Map(attributeCardModels(registries, values, {
         equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
       }).map((card) => [card.id, card]));
-      renderStatAllocationCard(mount, {
-        title: 'ASSIGN 1 POINT',
-        remaining: pendingAttribute ? 0 : 1,
-        note: 'Choose one attribute. Existing points cannot be reduced.',
-        cancelLabel: 'Clear',
-        doneLabel: 'Level up',
-        doneDisabled: !pendingAttribute,
+      const spec = {
+        title: 'Level up',
+        modal: true,
+        remaining: budget.levels - count,
+        note: budget.levels === 1
+          ? 'Choose one attribute. Existing points cannot be reduced.'
+          : 'Each point is a level and pays the next price on the ladder. Existing points cannot be reduced.',
+        cancelLabel: 'Cancel',
+        doneLabel: count > 1 ? `Level up ×${count}` : 'Level up',
+        doneDisabled: !count,
         rows: level.attributes.map((attr) => ({
           id: attr.id,
           label: attr.label,
           shortLabel: attr.shortLabel,
           value: values[attr.id],
           card: cards.get(attr.id),
-          canDecrease: false,
-          canIncrease: !pendingAttribute,
+          canDecrease: pending[attr.id] > 0,
+          canIncrease: count < budget.levels,
         })),
-        onIncrease: (id) => { pendingAttribute = id; drawLevelCard(); },
-        onCancel: () => { pendingAttribute = null; drawLevelCard(); },
+        onIncrease: (id) => { pending[id] += 1; drawLevelCard(); },
+        onDecrease: (id) => { if (pending[id] > 0) pending[id] -= 1; drawLevelCard(); },
+        onCancel: () => allocation.close(),
+        onClose: () => {
+          allocation = null;
+          for (const id of Object.keys(pending)) pending[id] = 0;
+          shrineScreen.inert = false;
+          option.focus({ preventScroll: true });
+        },
         onDone: () => {
-          if (!pendingAttribute) return;
-          applyLevelUp(registries, run, pendingAttribute, { pointsPerLevel: 1 });
+          if (!pendingTotal()) return;
+          for (const attr of level.attributes) {
+            for (let i = 0; i < pending[attr.id]; i++) applyLevelUp(registries, run, attr.id, { pointsPerLevel: 1 });
+          }
+          allocation.close();
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
-          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: 'level' });
+          remount();
+          app.querySelector('#level-opt')?.focus({ preventScroll: true });
         },
-      });
+      };
+      if (allocation) {
+        const focused = allocation.card.querySelector('.se-step.gp-focus')
+          || (allocation.card.contains(document.activeElement) ? document.activeElement : null);
+        const statId = focused?.dataset.statId;
+        const statAction = focused?.dataset.statAction;
+        const gamepadFocused = focused?.classList.contains('gp-focus');
+        allocation.update(spec);
+        allocation.done.textContent = spec.doneLabel;
+        if (statId && statAction) {
+          const replacement = [...allocation.card.querySelectorAll('.se-step')]
+            .find((control) => control.dataset.statId === statId && control.dataset.statAction === statAction);
+          replacement?.focus();
+          if (gamepadFocused) replacement?.classList.add('gp-focus');
+        }
+      } else {
+        shrineScreen.inert = true;
+        allocation = renderStatAllocationCard(app, spec);
+        allocation.card.classList.add('level-up-modal');
+        allocation.card.querySelector('.se-pool').after(el('div', { html: cinderLineHtml }));
+        allocation.card.addEventListener('keydown', (event) => {
+          if (event.key !== 'Tab') return;
+          const controls = [...allocation.card.querySelectorAll('button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
+            .filter((control) => control.getClientRects().length);
+          const first = controls[0];
+          const last = controls.at(-1);
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault(); last?.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault(); first?.focus();
+          }
+        });
+      }
+      allocation.card.querySelector('.level-cinder-cost').textContent = `− ${spend} cinders`;
+      const result = allocation.card.querySelector('[data-level-cinder-result]');
+      result.hidden = false;
+      result.querySelector('.d-to').textContent = `${level.cinders - spend} remaining`;
     };
-    drawLevelCard();
+    const openLevel = () => { if (!allocation) { option.focus(); drawLevelCard(); } };
+    option.addEventListener('click', openLevel);
+    option.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      openLevel();
+    });
+    if (openPanel === 'level') { option.focus(); openLevel(); }
   }
-  if (upgradable.length) {
+  if (canInspectSmithing) {
     // Smith is a reversible modal transaction until its explicit Confirm.
     // Opening and selecting mutate presentation state only. Back and Escape
     // return to the Shrine with the run byte-for-byte untouched; Confirm is
-    // the one permanent upgrade and the one path that leaves the Shrine.
+    // the one item promotion and the one path that leaves the Shrine.
     const smithOption = app.querySelector('#smith-opt');
     const openSmith = () => {
-      let selectedInstanceId = null;
-      const model = () => smithSelectionModel(registries, upgradable, selectedInstanceId);
+      let selectedItemRef = null;
+      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse });
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
+        meta,
         returnFocusElement: smithOption,
-        onSelect: (instanceId) => {
-          selectedInstanceId = instanceId;
+        onSelect: (itemRef) => {
+          selectedItemRef = itemRef;
           modal.update(model());
         },
         onBack: () => {},
-        onConfirm: (instanceId) => {
-          const inst = upgradable.find((candidate) => candidate.instanceId === instanceId);
-          if (!inst) return;
-          inst.upgraded = true;
+        onConfirm: (itemRef) => {
+          const receipt = commitSmithing(registries, run, itemRef);
           sfx.play('shrine');
-          onDone(`Smithed: ${esc(resolveCard(registries, inst).name)}.`);
+          if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
+          onDone(`Upgraded ${esc(receipt.itemName || receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone.`);
         },
       });
     };
@@ -360,6 +474,34 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       openSmith();
+    });
+  }
+  // THE CARD SERVICES, the same reversible modal transaction as the upgrade:
+  // open and select are presentation state; Back and Escape return with the
+  // run untouched; Confirm is the one commit, and — like an upgrade — the one
+  // path that leaves the Shrine unless multi-use holds it open.
+  for (const [selector, offer] of [['#extract-opt', extract], ['#install-opt', install]]) {
+    const option = app.querySelector(selector);
+    if (!option || !offer || !offer.available) continue;
+    const open = () => openMountService(app, {
+      service: offer.service,
+      registries,
+      run,
+      meta,
+      returnFocusElement: option,
+      multiUse,
+      place: 'shrine',
+      onCommitted: (receipt) => {
+        sfx.play('shrine');
+        if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
+        onDone(mountReceiptLine(receipt));
+      },
+    });
+    option.addEventListener('click', open);
+    option.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      open();
     });
   }
 }

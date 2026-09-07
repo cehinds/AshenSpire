@@ -9,7 +9,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
+import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
 import { classAttributePreset, creationModeSnapshot, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
@@ -145,8 +145,19 @@ export function createRunState({
     equipmentPoolBonuses,
     equipmentPoolDeficits: { hp: 0, mana: 0, stamina: 0 },
     cinders: registries.balance.startingCinders || 0,
+    smithingStones: 0,
+    itemUpgradeLevels: {},
+    smithingRewardClaims: [],
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
+    // THE BIRTH QUOTA, WRITTEN DOWN. How many attack slots this run was composed
+    // with is a fact about the run, not something to re-derive from whatever
+    // cards happen to be in hand — four review rounds went into deriving it, and
+    // the derivation was still inert on the path that mattered, because combat's
+    // swap builds a synthetic run with `deck: []` and there was nothing to
+    // derive it from. So it is recorded here, once, and carried like the
+    // profile snapshot beside it.
+    equipmentAttackSlotCount: null, // filled in below, from the deck just built
     relics: [startingRelic.id],
     damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
@@ -157,6 +168,9 @@ export function createRunState({
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  // The quota, from the deck that was just composed — before anything else can
+  // touch it. Recorded even when it is zero, because zero is a quota.
+  run.equipmentAttackSlotCount = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
   // THE DOOR OPENS HERE. Everything below this line writes to a run that
   // already exists, and until today none of it said so. `hp`/`maxHp` above are
   // the FIRST of three writers; initializeRunDerivedStats is the second and
@@ -190,6 +204,11 @@ export function createRunState({
     preserveDeficits: false,
   });
   stampDeck(registries, run);
+  // ORDERED ONCE, HERE. stampDeck has just reconciled the package grants and
+  // weapon arts onto the deck, so this is the first moment the whole opening
+  // deck exists — and "bound cards are dealt first, in sourceOrder" is a
+  // statement about the deck a run BEGINS with, not about later arrivals.
+  orderStartingDeck(registries, run);
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
@@ -210,7 +229,7 @@ function derivedOptions(registries, extra = {}) {
     explicitOverride: statLayer(extra.explicitOverride),
     authority: 'host',
     attributeIds: registries.attributes.ids(),
-    classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+    classFields: ['maxHp', 'maxMana'],
     damageSchools: DAMAGE_SCHOOLS,
   };
 }
@@ -504,6 +523,9 @@ export const RUN_SHAPE = [
   // Optional only for the one pre-derived migration at the load door.
   { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
   { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
+  // Optional only for runs saved before the quota was written down; stampDeck
+  // falls back to counting a run's own deck for exactly those.
+  { key: 'equipmentAttackSlotCount', type: 'number', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
@@ -520,6 +542,19 @@ export const RUN_SHAPE = [
   { key: 'energyMax', type: 'number', optional: true },
   { key: 'drawPerTurn', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
+  { key: 'smithingStones', type: 'number', optional: true },
+  { key: 'itemUpgradeLevels', type: 'object', optional: true },
+  { key: 'armamentLevels', type: 'object', optional: true },
+  { key: 'smithingRewardClaims', type: 'array', optional: true },
+  { key: 'lastSmithingReceipt', type: 'object', optional: true },
+  // Card mounts (owner ruling, 2026-09-03): what a smith has done to the
+  // mounts on the run's items, the last such transaction, and a counter that
+  // keeps extracted-card instance ids unique. All optional — absent means
+  // untouched — so no migration has to invent them.
+  { key: 'itemMounts', type: 'object', optional: true },
+  { key: 'lastMountReceipt', type: 'object', optional: true },
+  { key: 'mountTransactions', type: 'number', optional: true },
+  { key: 'pendingReward', type: 'object', optional: true },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
   { key: 'damageBySchoolAdd', type: 'object' },
@@ -606,6 +641,92 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   for (const key of ['levelUps', 'levelPoints']) {
     if (run[key] !== undefined && (!Number.isInteger(run[key]) || run[key] < 0)) {
       problems.push(`${key} must be a non-negative integer`);
+    }
+  }
+  if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
+    problems.push('smithingStones must be a non-negative integer');
+  }
+  if (run.armamentLevels !== undefined && typeOk(run.armamentLevels, 'object')) {
+    for (const [pieceId, level] of Object.entries(run.armamentLevels)) {
+      if (!pieceId || !Number.isInteger(level) || level < 0) {
+        problems.push(`armamentLevels.${pieceId || '<empty>'} must be a non-negative integer`);
+      }
+    }
+  }
+  if (run.itemUpgradeLevels !== undefined && typeOk(run.itemUpgradeLevels, 'object')) {
+    for (const [itemRef, level] of Object.entries(run.itemUpgradeLevels)) {
+      if (!/^(armament\/[^/]+|armor\/[^/]+\/[^/]+|relic\/[^/]+)$/.test(itemRef)
+          || !Number.isInteger(level) || level < 0) {
+        problems.push(`itemUpgradeLevels.${itemRef || '<empty>'} must be a namespaced item ref with a non-negative integer tier`);
+      }
+    }
+  }
+  if (run.itemMounts !== undefined && typeOk(run.itemMounts, 'object')) {
+    for (const [itemRef, entries] of Object.entries(run.itemMounts)) {
+      if (!/^(armament\/[^/]+|armor\/[^/]+\/[^/]+)$/.test(itemRef)) {
+        problems.push(`itemMounts.${itemRef || '<empty>'} must be a namespaced equipment ref`);
+        continue;
+      }
+      if (!entries || typeof entries !== 'object' || Array.isArray(entries)) {
+        problems.push(`itemMounts.${itemRef} must be an object of mount entries`);
+        continue;
+      }
+      for (const [mountKey, entry] of Object.entries(entries)) {
+        const sound = mountKey && entry && typeof entry === 'object' && !Array.isArray(entry)
+          && (entry.card === null || (typeof entry.card === 'string' && entry.card))
+          && (entry.upgraded === undefined || typeof entry.upgraded === 'boolean')
+          && (entry.extractions === undefined || (Number.isInteger(entry.extractions) && entry.extractions >= 0));
+        if (!sound) problems.push(`itemMounts.${itemRef}.${mountKey || '<empty>'} must be { card: id|null, upgraded?, extractions? }`);
+      }
+    }
+  }
+  if (run.mountTransactions !== undefined && (!Number.isInteger(run.mountTransactions) || run.mountTransactions < 0)) {
+    problems.push('mountTransactions must be a non-negative integer');
+  }
+  if (run.smithingRewardClaims !== undefined && Array.isArray(run.smithingRewardClaims)) {
+    const seenClaims = new Set();
+    for (const rewardId of run.smithingRewardClaims) {
+      if (typeof rewardId !== 'string' || !rewardId || seenClaims.has(rewardId)) {
+        problems.push('smithingRewardClaims must contain unique non-empty strings');
+      }
+      seenClaims.add(rewardId);
+    }
+  }
+  if (run.pendingReward !== undefined) {
+    const pending = run.pendingReward;
+    if (!pending || Array.isArray(pending) || typeof pending !== 'object') {
+      problems.push('pendingReward must be an object when present');
+    } else {
+      if (pending.schemaVersion !== 1) problems.push('pendingReward.schemaVersion must be 1');
+      if (typeof pending.source !== 'string' || !pending.source) problems.push('pendingReward.source must be a non-empty string');
+      if (!['map', 'advanceAct'].includes(pending.after)) problems.push('pendingReward.after must be map or advanceAct');
+      if (!pending.rewards || Array.isArray(pending.rewards) || typeof pending.rewards !== 'object') {
+        problems.push('pendingReward.rewards must be an object');
+      }
+      if (!pending.states || Array.isArray(pending.states) || typeof pending.states !== 'object') {
+        problems.push('pendingReward.states must be an object');
+      } else {
+        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic'];
+        for (const [kind, state] of Object.entries(pending.states)) {
+          if (!rewardKinds.includes(kind) || !['taken', 'skipped'].includes(state)) {
+            problems.push(`pendingReward.states.${kind || '<empty>'} must be taken or skipped for a known reward kind`);
+          }
+        }
+      }
+      if (pending.chosenCardId !== null && pending.chosenCardId !== undefined
+          && (typeof pending.chosenCardId !== 'string' || !pending.chosenCardId)) {
+        problems.push('pendingReward.chosenCardId must be null or a non-empty string');
+      }
+      const cardIds = Array.isArray(pending.rewards?.cardIds) ? pending.rewards.cardIds : [];
+      if (pending.chosenCardId && !cardIds.includes(pending.chosenCardId)) {
+        problems.push('pendingReward.chosenCardId must belong to pendingReward.rewards.cardIds');
+      }
+      if (pending.states?.card === 'taken' && !pending.chosenCardId) {
+        problems.push('pendingReward card Taken state requires chosenCardId');
+      }
+      if (pending.chosenCardId && pending.states?.card !== 'taken') {
+        problems.push('pendingReward chosenCardId requires card Taken state');
+      }
     }
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
@@ -824,7 +945,7 @@ export function deserializeRun(json) {
  * a zero-threshold player has no vessel, and the HUD's refusal path renders
  * it ABSENT rather than as an empty trough.
  */
-export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {} }) {
+export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {}, itemUpgradeLevels = {} }) {
   if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
   if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
   const entity = {
@@ -844,6 +965,7 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
     statuses: {},
     stanceId: null,
     relicIds: [...relicIds],
+    itemUpgradeLevels: { ...itemUpgradeLevels },
     damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, damageBySchoolAdd[school] || 0])),
     flasks: flasks.map((f) => ({ ...f })),
     flaskCharges: flaskCharges ? { ...flaskCharges } : null,
@@ -851,6 +973,7 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
       cardsPlayedThisTurn: 0,
       cardsPlayedThisCombat: 0,
       attacksPlayedThisCombat: 0,
+      staminaSpentThisTurn: 0,
     },
     alive: true,
   };

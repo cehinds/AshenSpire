@@ -45,10 +45,13 @@ check(Array.isArray(R.equipment.cardEquipmentExceptions),
 function equipmentMutant(patch) {
   return createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, ...patch } });
 }
+// `cardTagging` is no longer among these: model/registries.js derives that index
+// from the bundle's own `tagging` rows, so deleting the equipment key is a no-op
+// — the defect became impossible to write, and the plant moved to the table it
+// is derived FROM (below) rather than being dropped.
 for (const [field, label] of [
   ['equipmentRequirements', 'requirements'],
   ['cardEquipmentExceptions', 'exact exceptions'],
-  ['cardTagging', 'card tags'],
 ]) {
   const mutant = { ...contentBundle.equipment };
   delete mutant[field];
@@ -57,6 +60,18 @@ for (const [field, label] of [
   const bootSaid = validateContent({ ...contentBundle, equipment: mutant }).errors.map((row) => `${row.path}: ${row.msg}`).join(' | ');
   check(new RegExp(field, 'i').test(bootSaid), `boot mutant: missing generated ${label} table fails closed`, bootSaid);
 }
+{
+  // Same claim, the door that now owns it: with no tagging table there is no
+  // card-tag index to build, and the fit check must fail closed rather than
+  // read a stale fold.
+  const noTagging = { ...contentBundle };
+  delete noTagging.tagging;
+  const said = Loadout.validateEquipment(createRegistries(noTagging)).join(' | ');
+  check(/cardTagging/i.test(said), 'mutant: missing generated card tags table fails closed', said);
+  const bootSaid = validateContent(noTagging).errors.map((row) => `${row.path}: ${row.msg}`).join(' | ');
+  check(/tagging/i.test(bootSaid), 'boot mutant: missing generated card tags table fails closed', bootSaid);
+}
+
 const duplicatedRequirement = [...R.equipment.equipmentRequirements, { ...R.equipment.equipmentRequirements[0] }];
 check(/duplicate.*greatsword:strength/i.test(Loadout.validateEquipment(equipmentMutant({ equipmentRequirements: duplicatedRequirement })).join(' | ')),
   'mutant: duplicate item/stat requirement fails closed');

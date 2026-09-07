@@ -14,6 +14,7 @@
 //   node tools/hybrid-input-parity.mjs --only 390x844
 //   node tools/hybrid-input-parity.mjs --screenshots
 //   node tools/hybrid-input-parity.mjs --standalone --screenshots
+//   node tools/hybrid-input-parity.mjs --self-target-only --only 320x640
 //   node tools/hybrid-input-parity.mjs --artifact-parity  # only after shared artifacts may move
 //   CHROME=/path/to/chrome node tools/hybrid-input-parity.mjs
 //
@@ -36,6 +37,7 @@ const only = argOf('--only');
 const screenshots = args.includes('--screenshots');
 const standalone = args.includes('--standalone');
 const artifactParity = args.includes('--artifact-parity');
+const selfTargetOnly = args.includes('--self-target-only');
 const evidenceDoor = standalone ? 'root standalone' : 'source';
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const canonicalLfBytes = (bytes) => {
@@ -85,9 +87,14 @@ if (args.includes('--selftest')) {
   const wantedPlant = argOf('--plant');
   const sourcePlants = [{
       name: 'contextual flask rows regress to a local 44px floor under body zoom',
-      file: 'styles/ui.css',
-      find: '  width: 100%; min-height: var(--tap-floor); height: auto;',
-      replace: '  width: 100%; min-height: 44px; height: auto; /* planted: local rather than device-pixel floor */',
+      // A flask menu row is the kit's Row now, so the floor it inherits is
+      // `.as-row`'s one declaration (styles/kit.css § LISTS) rather than a
+      // `.flask-action` rule in ui.css. The plant is the same substitution it
+      // always was — the token that scales with the UI dial swapped for a raw
+      // 44 px, which reads as a floor and is not one under body zoom.
+      file: 'styles/kit.css',
+      find: '  width: 100%; min-height: var(--tap-floor);',
+      replace: '  width: 100%; min-height: 44px; /* planted: local rather than device-pixel floor */',
       expectRed: /FAIL keyboard Crimson menu rows retain the 44 device-pixel floor/,
     }, {
       name: 'same-flask activation closes and immediately reopens its menu',
@@ -156,6 +163,12 @@ if (args.includes('--selftest')) {
       replace: '    selfArm = null; // planted: blue self-confirm arm omitted',
       expectRed: /FAIL controller self card arms the player blue and moves real focus/,
     }, {
+      name: 'controller self target is removed from unified focus',
+      file: 'src/ui/screens/combat.js',
+      find: "      box.dataset.focusable = '';",
+      replace: '      /* planted: armed player omitted from unified focus */',
+      expectRed: /FAIL controller self card arms the player blue and moves real focus/,
+    }, {
       name: 'pager activation drops the remembered card cursor',
       file: 'src/ui/screens/combat.js',
       find: "    if (at < 0 && handPageCursor) at = cards.findIndex((card) => card.dataset.instanceId === handPageCursor);",
@@ -186,8 +199,8 @@ if (args.includes('--selftest')) {
     }, {
       name: 'targeted flask use no longer moves the cursor to a legal enemy',
       file: 'src/ui/screens/combat.js',
-      find: '          if (selectedFlask != null) focusTargeting();',
-      replace: '          /* planted: targeted flask cursor handoff omitted */',
+      find: '              render(); focusTargeting();',
+      replace: '              render(); /* planted: targeted flask cursor handoff omitted */',
       expectRed: /FAIL keyboard Blight Use enters real enemy targeting/,
     }, {
       name: 'pad poller bypasses the standard navigator gamepad door',
@@ -202,6 +215,17 @@ if (args.includes('--selftest')) {
     find: lines('styles/ui.css', '.combat .topbar.combat-hud {', '  position: relative;', '  z-index: 2;', '}'),
     replace: lines('styles/ui.css', '.combat .topbar.combat-hud {', '  position: relative;', '  z-index: 0; /* planted: battlefield may cover HUD controls */', '}'),
     expectRed: /FAIL every captured interaction state keeps measured control centres hittable/,
+  }].filter((plant) => !wantedPlant || plant.name.includes(wantedPlant));
+  const focusedEvidencePlants = [{
+    name: 'focused screenshot capture overwrites manifest-bound evidence',
+    file: TOOL_PATH,
+    find: lines(TOOL_PATH,
+      "        const focused = selfTargetOnly ? '-focused' : '';",
+      '        const stem = standalone'),
+    replace: lines(TOOL_PATH,
+      "        const focused = ''; // planted: focused capture reuses manifest-bound filenames",
+      '        const stem = standalone'),
+    expectRed: /FAIL focused screenshot filename uses an isolated evidence namespace/,
   }].filter((plant) => !wantedPlant || plant.name.includes(wantedPlant));
   const packagingPlants = [{
     name: 'standalone evidence capture serializes the full inlined BODY text',
@@ -229,15 +253,18 @@ if (args.includes('--selftest')) {
     replace: "  return Buffer.from(text, 'utf8'); // planted: checkout EOL leaks into identity",
     expectRed: /canonical LF normalization is checkout-EOL invariant/,
   }].filter((plant) => !wantedPlant || plant.name.includes(wantedPlant));
-  if (wantedPlant && sourcePlants.length === 0 && geometryPlants.length === 0
+  if (wantedPlant && sourcePlants.length === 0 && geometryPlants.length === 0 && focusedEvidencePlants.length === 0
     && packagingPlants.length === 0 && artifactPlants.length === 0 && provenancePlants.length === 0) {
     console.error(`unknown --plant filter: ${wantedPlant}`);
     process.exit(2);
   }
   if (sourcePlants.length) {
+    const focusedSelfTargetPlant = wantedPlant && wantedPlant.includes('controller self');
     const sourceStatus = await doorSelftest({
       tool: 'hybrid-input-parity.mjs',
-      args: ['--only', '390x844'],
+      args: focusedSelfTargetPlant
+        ? ['--self-target-only', '--only', '390x844']
+        : ['--only', '390x844'],
       timeoutMs: 180000,
       extraCopy: ['AshenSpire.html'],
       plants: sourcePlants,
@@ -253,6 +280,17 @@ if (args.includes('--selftest')) {
       plants: geometryPlants,
     });
     if (geometryStatus) process.exit(geometryStatus);
+  }
+  if (focusedEvidencePlants.length) {
+    const focusedEvidenceStatus = await doorSelftest({
+      tool: 'hybrid-input-parity.mjs',
+      args: ['--self-target-only', '--only', '390x844', '--screenshots'],
+      timeoutMs: 180000,
+      extraCopy: ['docs', 'AshenSpire.html'],
+      includePng: true,
+      plants: focusedEvidencePlants,
+    });
+    if (focusedEvidenceStatus) process.exit(focusedEvidenceStatus);
   }
   if (packagingPlants.length) {
     const packagingStatus = await doorSelftest({
@@ -496,6 +534,27 @@ const STATE = `(() => {
   const plays = (combat && combat.eventLog || []).filter((event) => event.type === 'cardPlayed');
   const active = document.activeElement;
   const menu = document.querySelector('.flask-action-menu');
+  const targetReading = (node) => {
+    if (!node) return null;
+    const rect = node.getBoundingClientRect();
+    const style = getComputedStyle(node);
+    const visible = style.display !== 'none' && style.visibility !== 'hidden'
+      && rect.width > 0 && rect.height > 0;
+    const x = Math.max(0, Math.min(innerWidth - 1, rect.left + rect.width / 2));
+    const y = Math.max(0, Math.min(innerHeight - 1, rect.top + rect.height / 2));
+    const hit = visible ? document.elementFromPoint(x, y) : null;
+    return {
+      role: node.getAttribute('role'),
+      name: node.getAttribute('aria-label') || '',
+      visible,
+      onGlass: rect.left >= 0 && rect.top >= 0 && rect.right <= innerWidth && rect.bottom <= innerHeight,
+      centerHit: !!hit && (node === hit || node.contains(hit)),
+      cursor: node === focus,
+      active: node === active,
+    };
+  };
+  const focusReading = targetReading(focus);
+  const playerTarget = targetReading(document.querySelector('.combatant.player.armed'));
   return {
     cards,
     plays: plays.length,
@@ -512,6 +571,9 @@ const STATE = `(() => {
     playerArmed: !!document.querySelector('.combatant.player.armed'),
     aimEnemy: [...document.querySelectorAll('.combatant.enemy.aiming')].map((node) => node.dataset.eid),
     aimPlayer: !!document.querySelector('.combatant.player.aiming'),
+    focusVisible: !!focusReading?.visible,
+    focusOnGlass: !!focusReading?.onGlass,
+    playerTarget,
     focus: focus ? {
       tag: focus.tagName, id: focus.id || null, classes: focus.className,
       instanceId: focus.dataset.instanceId || null, eid: focus.dataset.eid || null,
@@ -619,6 +681,21 @@ const EVIDENCE_READING = `(() => {
 const cleanTargeting = (state) => state.selected.length === 0 && state.targetable.length === 0
   && !state.playerArmed && state.aimEnemy.length === 0 && !state.aimPlayer;
 
+function manifestBoundEvidenceSnapshot() {
+  const snapshot = {};
+  for (const name of ['hybrid-input-parity-manifest.json', 'hybrid-input-parity-root-manifest.json']) {
+    const manifestPath = join(ROOT, 'docs', 'preview', name);
+    if (!existsSync(manifestPath)) continue;
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    for (const row of [...(manifest.contactSheets || []), ...(manifest.evidence || [])]) {
+      if (!row.filename || Object.hasOwn(snapshot, row.filename)) continue;
+      const imagePath = join(ROOT, 'docs', 'preview', row.filename);
+      snapshot[row.filename] = existsSync(imagePath) ? sha256(readFileSync(imagePath)) : null;
+    }
+  }
+  return snapshot;
+}
+
 async function main() {
   if (!browserPath) throw new Error('no Chrome/Edge found; pass --browser or set CHROME');
   const served = await serve({ root: ROOT, port: 8299, open: false });
@@ -628,6 +705,7 @@ async function main() {
   let findings = 0; let checks = 0; let measured = 0;
   const evidence = [];
   const contactSheets = [];
+  const manifestBoundBefore = selfTargetOnly && screenshots ? manifestBoundEvidenceSnapshot() : null;
   const concise = args.includes('--concise');
   const check = (value, label, detail = '') => {
     checks++;
@@ -706,49 +784,78 @@ async function main() {
       };
       const card = async (pattern) => ev(`(() => { const rx=new RegExp(${JSON.stringify(pattern)},'i'); const nodes=[...document.querySelectorAll('.hand .card')]; const node=nodes.find((item)=>rx.test(item.textContent)); return node ? {index:nodes.indexOf(node),id:node.dataset.instanceId,text:(node.textContent||'').replace(/\\s+/g,' ').trim()} : null; })()`);
       const cardKey = (index) => index < 9 ? String(index + 1) : 'q';
-      const focusCard = async (instanceId, mode) => {
-        for (let i = 0; i < 28; i++) {
+      // THE WALK REMEMBERS WHERE IT HAS BEEN, and until 2026-09 it did not.
+      // The steering below is greedy: it takes the larger of dx/dy to the target
+      // and presses that arrow. The cursor it is steering (src/ui/input.js
+      // moveFocus) scores a candidate as `primary + 2 * cross`, so two chrome
+      // controls one rung apart can be each other's nearest neighbour on
+      // OPPOSITE axes — the HUD's charge flasks and its utility potions are
+      // exactly that pair, on this branch and on dev — and a greedy walk that
+      // enters the pair oscillates between them until the step budget is spent.
+      // That is not evidence the hand is unreachable: pressing the OTHER axis
+      // leaves the pair in one step, and Down from the potions reaches the
+      // enemy row (measured, both trees).
+      // WHY THIS IS A TOOL FIX AND NOT A PRODUCT ONE, with the number that
+      // settles it: on the same fixture at 1200x730 the walk reached the card in
+      // 6 presses when its first direction was Left and looped for all 28 when
+      // it was Down, and the choice between those two came down to 442 px of dy
+      // against 438 px of dx * 0.7 — four pixels of top-bar height. A green that
+      // thin measures the HUD's height, not the cursor's reach.
+      // So the walk now records the signature of every stop with the axes it has
+      // already spent there, and a repeat stop tries the perpendicular axis
+      // before it spends another step. The budget is unchanged, the assertion is
+      // unchanged, and a cursor that genuinely cannot reach the hand still
+      // exhausts both axes at every stop and reports the same finding.
+      const cursorSignature = () => ev(`(() => {
+        const c = document.querySelector('.gp-focus');
+        if (!c) return 'none';
+        const r = c.getBoundingClientRect();
+        return (c.dataset.instanceId || String(c.className)) + '@' + Math.round(r.left) + ',' + Math.round(r.top);
+      })()`);
+      const walkCursor = async ({ targetExpr, mode, ratio, steps, reached }) => {
+        const spentByStop = new Map();
+        for (let i = 0; i < steps; i++) {
           const current = await state();
-          if (current.focus && current.focus.instanceId === instanceId) return true;
-          const direction = await ev(`(() => {
-            const target=document.querySelector('.hand .card[data-instance-id="${instanceId}"]');
+          if (reached(current)) return true;
+          const axes = await ev(`(() => {
+            const target=${targetExpr};
             const cursor=document.querySelector('.gp-focus');
             if(!target)return null;
-            if(!cursor)return {button:15,key:'ArrowRight'};
+            if(!cursor)return {vertical:null,horizontal:{button:15,key:'ArrowRight'},first:'horizontal'};
             const tr=target.getBoundingClientRect(), cr=cursor.getBoundingClientRect();
             const dx=(tr.left+tr.width/2)-(cr.left+cr.width/2);
             const dy=(tr.top+tr.height/2)-(cr.top+cr.height/2);
-            if(Math.abs(dy)>Math.abs(dx)*0.7)return dy<0?{button:12,key:'ArrowUp'}:{button:13,key:'ArrowDown'};
-            return dx<0?{button:14,key:'ArrowLeft'}:{button:15,key:'ArrowRight'};
+            return {
+              vertical: dy<0?{button:12,key:'ArrowUp'}:{button:13,key:'ArrowDown'},
+              horizontal: dx<0?{button:14,key:'ArrowLeft'}:{button:15,key:'ArrowRight'},
+              first: Math.abs(dy)>Math.abs(dx)*${ratio} ? 'vertical' : 'horizontal',
+            };
           })()`);
-          if (!direction) return false;
-          if (mode === 'keyboard') await key(direction.key);
-          else await pad(direction.button);
+          if (!axes) return false;
+          const stop = await cursorSignature();
+          const spent = spentByStop.get(stop) || new Set();
+          const order = axes.first === 'vertical' ? ['vertical', 'horizontal'] : ['horizontal', 'vertical'];
+          const axis = order.find((name) => axes[name] && !spent.has(name)) || order.find((name) => axes[name]);
+          if (!axis) return false;
+          spent.add(axis);
+          spentByStop.set(stop, spent);
+          const press = axes[axis];
+          if (mode === 'keyboard') await key(press.key); else await pad(press.button);
         }
         return false;
       };
+      const focusCard = (instanceId, mode) => walkCursor({
+        targetExpr: `document.querySelector('.hand .card[data-instance-id="${instanceId}"]')`,
+        mode, ratio: 0.7, steps: 28,
+        reached: (current) => !!current.focus && current.focus.instanceId === instanceId,
+      });
       const focusCardWithPad = (instanceId) => focusCard(instanceId, 'controller');
       const focusCardWithKeys = (instanceId) => focusCard(instanceId, 'keyboard');
-      const focusClass = async (className, mode) => {
-        for (let i = 0; i < 32; i++) {
-          const current = await state();
-          if (current.focus && current.focus.classes.includes(className)) return true;
-          const direction = await ev(`(() => {
-            const target=document.querySelector('.${className}');
-            const cursor=document.querySelector('.gp-focus');
-            if(!target)return null;
-            if(!cursor)return {button:15,key:'ArrowRight'};
-            const tr=target.getBoundingClientRect(), cr=cursor.getBoundingClientRect();
-            const dx=(tr.left+tr.width/2)-(cr.left+cr.width/2);
-            const dy=(tr.top+tr.height/2)-(cr.top+cr.height/2);
-            if(Math.abs(dy)>Math.abs(dx)*0.55)return dy<0?{button:12,key:'ArrowUp'}:{button:13,key:'ArrowDown'};
-            return dx<0?{button:14,key:'ArrowLeft'}:{button:15,key:'ArrowRight'};
-          })()`);
-          if (!direction) return false;
-          if (mode === 'keyboard') await key(direction.key); else await pad(direction.button);
-        }
-        return false;
-      };
+      const focusClass = (className, mode) => walkCursor({
+        targetExpr: `document.querySelector('.${className}')`,
+        mode, ratio: 0.55, steps: 32,
+        reached: (current) => !!current.focus && current.focus.classes.includes(className),
+      });
       const focusClassWithKeys = (className) => focusClass(className, 'keyboard');
       const focusClassWithPad = (className) => focusClass(className, 'controller');
       const focusTextWithKeys = async (pattern, keyName = 'ArrowRight') => {
@@ -844,8 +951,19 @@ async function main() {
       const screenshot = async (suffix) => {
         if (!screenshots) return;
         const dir = join(ROOT, 'docs', 'preview'); mkdirSync(dir, { recursive: true });
-        const stem = standalone ? `hybrid-input-parity-root-${shape}` : `hybrid-input-parity-${shape}`;
+        const focused = selfTargetOnly ? '-focused' : '';
+        const stem = standalone
+          ? `hybrid-input-parity-root${focused}-${shape}`
+          : `hybrid-input-parity${focused}-${shape}`;
         const filename = `${stem}-${suffix}.png`;
+        if (selfTargetOnly && !filename.includes('-focused-')) {
+          check(false, 'focused screenshot filename uses an isolated evidence namespace', filename);
+          return;
+        }
+        if (selfTargetOnly && Object.hasOwn(manifestBoundBefore || {}, filename)) {
+          check(false, 'focused screenshot filename is outside manifest-bound evidence', filename);
+          return;
+        }
         const path = join(dir, filename);
         const image = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, sessionId);
         writeFileSync(path, Buffer.from(image.data, 'base64'));
@@ -917,7 +1035,54 @@ async function main() {
         return {viewport:{width:innerWidth,height:innerHeight},rects,minimumTap:controls.length?Math.min(...controls.map((row)=>Math.min(row.width,row.height))):null,onGlass,overlap};
       })()`);
 
+      const runControllerSelfTarget = async () => {
+        // A controller deliberately uses two confirms for a self card: first
+        // arm the visible player target, then commit it. Cancel must take the
+        // other branch without spending and restore the exact originating card.
+        await openCombat();
+        let self = await card('Shield Defend');
+        if (!self) throw new Error(`${shape}: Shield Defend fixture missing`);
+        let before = await state();
+        const selfReached = await focusCardWithPad(self.id);
+        check(selfReached, 'controller D-pad reaches the real self card', JSON.stringify((await state()).focus));
+        if (selfReached) await pad(0);
+        let armed = await state();
+        check(armed.playerArmed && armed.aimPlayer && !!(armed.focus && /player/.test(armed.focus.classes))
+          && armed.playerTarget?.role === 'button'
+          && /^Confirm Shield Defend on /.test(armed.playerTarget?.name || '')
+          && armed.playerTarget?.visible && armed.playerTarget?.onGlass && armed.playerTarget?.centerHit
+          && armed.playerTarget?.cursor && armed.playerTarget?.active,
+        'controller self card arms the player blue and moves real focus', JSON.stringify(armed));
+        await screenshot('controller-self');
+
+        await pad(1);
+        let after = await state();
+        check(gameplay(after) === gameplay(before) && cleanTargeting(after)
+          && after.focus?.instanceId === self.id && after.focusVisible && after.focusOnGlass,
+        'controller self Cancel spends nothing, clears targeting, and restores the exact card focus', JSON.stringify({ before, armed, after }));
+        await screenshot('controller-self-cancel-restored');
+
+        await openCombat();
+        self = await card('Shield Defend');
+        before = await state();
+        const selfConfirmReached = await focusCardWithPad(self.id);
+        if (selfConfirmReached) await pad(0);
+        armed = await state();
+        if (armed.playerArmed) await pad(0);
+        await wait(650);
+        after = await state();
+        check(oneCommit(before, after, self.id), 'controller self confirm commits exactly once', `${before.plays} -> ${after.plays}`);
+        check(selfOutcome(before, after), 'controller self outcome spends once, blocks once, and preserves enemy state', JSON.stringify({ before, after }));
+        check(cleanTargeting(after), 'controller self completion clears targeting state', JSON.stringify(after));
+      };
+
       console.log(`\n  ${shape} — ${evidenceDoor} real page input parity`);
+
+      if (selfTargetOnly) {
+        await runControllerSelfTarget();
+        await cdp.send('Target.closeTarget', { targetId });
+        continue;
+      }
 
       // Single-target mouse: trusted click arms; trusted enemy click commits.
       await openCombat();
@@ -926,8 +1091,14 @@ async function main() {
       check(sourceLayout.onGlass && !sourceLayout.overlap, 'primary controls stay on glass without paging overlap', JSON.stringify(sourceLayout));
       const axTree = await cdp.send('Accessibility.getFullAXTree', {}, sessionId);
       const axButtons = axTree.nodes.filter((node) => node.role?.value === 'button').map((node) => node.name?.value || '');
+      // THE NAME IS SENTENCE CASE, THE SHOUT IS CSS'S. The action row is a kit
+      // ButtonRow now, and the kit sets `text-transform` on the control rather
+      // than shouting inside the string, so the accessible name a screen reader
+      // speaks is "End Turn" (plus its key and HOLD trail) even where the pixels
+      // read END TURN. This assertion is about the name existing, not its case,
+      // so it matches case-insensitively and anchors on the label only.
       check(['Previous card', 'Next card'].every((name) => !axButtons.includes(name))
-        && axButtons.some((name) => /^END TURN/.test(name)),
+        && axButtons.some((name) => /^end turn\b/i.test(name.trim())),
       'five-card AX tree omits Previous/Next and retains End Turn', JSON.stringify(axButtons));
       await screenshot('ready');
       let chosen = await card('Slashing Strike');
@@ -1122,28 +1293,7 @@ async function main() {
       check(oneCommit(before, after, self.id), 'keyboard self card commits exactly once', `${before.plays} -> ${after.plays}`);
       check(selfOutcome(before, after), 'keyboard self outcome spends once, blocks once, and preserves enemy state', JSON.stringify({ before, after }));
 
-      await openCombat(); self = await card('Shield Defend'); before = await state();
-      const selfReached = await focusCardWithPad(self.id);
-      check(selfReached, 'controller D-pad reaches the real self card', JSON.stringify((await state()).focus));
-      if (selfReached) await pad(0); armed = await state();
-      check(armed.playerArmed && armed.aimPlayer && !!(armed.focus && /player/.test(armed.focus.classes)),
-        'controller self card arms the player blue and moves real focus', JSON.stringify(armed));
-      await screenshot('controller-self');
-
-      await pad(1); after = await state();
-      check(gameplay(after) === gameplay(before) && cleanTargeting(after)
-        && after.focus?.instanceId === self.id,
-      'controller self Cancel spends nothing, clears targeting, and restores the exact card focus', JSON.stringify({ before, armed, after }));
-      await screenshot('controller-self-cancel-restored');
-
-      await openCombat(); self = await card('Shield Defend'); before = await state();
-      const selfConfirmReached = await focusCardWithPad(self.id);
-      if (selfConfirmReached) await pad(0); armed = await state();
-      if (armed.playerArmed) await pad(0);
-      await wait(650); after = await state();
-      check(oneCommit(before, after, self.id), 'controller self confirm commits exactly once', `${before.plays} -> ${after.plays}`);
-      check(selfOutcome(before, after), 'controller self outcome spends once, blocks once, and preserves enemy state', JSON.stringify({ before, after }));
-      check(cleanTargeting(after), 'controller self completion clears targeting state', JSON.stringify(after));
+      await runControllerSelfTarget();
 
       // Contextual flask menus: opening and inspecting are inert, arrow/D-pad
       // navigation stays inside the menu, and Cancel returns DOM focus to the
@@ -1327,7 +1477,15 @@ async function main() {
       await cdp.send('Target.closeTarget', { targetId });
     }
     if (!measured) throw new Error(`--only ${only} matched no configured shape`);
-    if (screenshots) {
+    if (manifestBoundBefore) {
+      const changed = Object.entries(manifestBoundBefore).filter(([filename, before]) => {
+        const imagePath = join(ROOT, 'docs', 'preview', filename);
+        const after = existsSync(imagePath) ? sha256(readFileSync(imagePath)) : null;
+        return after !== before;
+      }).map(([filename]) => filename);
+      check(changed.length === 0, 'focused screenshots preserve manifest-bound evidence files', JSON.stringify(changed));
+    }
+    if (screenshots && !selfTargetOnly) {
       for (const [width, height] of SHAPES) {
         const shape = `${width}x${height}`;
         if (only && only !== shape) continue;
@@ -1395,19 +1553,21 @@ async function main() {
       }
       writeFileSync(join(ROOT, 'docs', 'preview', manifestName), manifestText);
     }
-    const dragArgs = [join(ROOT, 'tools', 'card-drag-targeting.mjs'), '--text', 'M'];
-    if (standalone) dragArgs.push('--dist');
-    if (only) dragArgs.push('--only', only);
-    const drag = spawnSync(process.execPath, dragArgs, {
-      cwd: ROOT,
-      encoding: 'utf8',
-      timeout: 600000,
-      windowsHide: true,
-    });
-    if (drag.stdout) process.stdout.write(`\n--- composed card-drag-targeting ---\n${drag.stdout}`);
-    if (drag.stderr) process.stderr.write(drag.stderr);
-    check(drag.status === 0, 'composed card-drag-targeting same-door gate remains GREEN',
-      drag.status === 0 ? 'exact pointer-drag acceptance composed' : `exit ${drag.status}; ${String(drag.error || '').trim()}`);
+    if (!selfTargetOnly) {
+      const dragArgs = [join(ROOT, 'tools', 'card-drag-targeting.mjs'), '--text', 'M'];
+      if (standalone) dragArgs.push('--dist');
+      if (only) dragArgs.push('--only', only);
+      const drag = spawnSync(process.execPath, dragArgs, {
+        cwd: ROOT,
+        encoding: 'utf8',
+        timeout: 600000,
+        windowsHide: true,
+      });
+      if (drag.stdout) process.stdout.write(`\n--- composed card-drag-targeting ---\n${drag.stdout}`);
+      if (drag.stderr) process.stderr.write(drag.stderr);
+      check(drag.status === 0, 'composed card-drag-targeting same-door gate remains GREEN',
+        drag.status === 0 ? 'exact pointer-drag acceptance composed' : `exit ${drag.status}; ${String(drag.error || '').trim()}`);
+    }
     console.log(`\n${findings ? `FAIL — ${findings} finding(s) in ${checks} checks` : `PASS — ${checks} parity checks across ${measured} viewport(s)`}`);
     process.exitCode = findings ? 1 : 0;
   } finally {

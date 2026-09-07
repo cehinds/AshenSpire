@@ -6,6 +6,11 @@ import { fileURLToPath } from 'node:url';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+// The caret is read off the one table (src/ui/components/foldGlyph.js): a
+// bottom tray opens upward and says so with ▴; this tool must not type a
+// second copy of that family (it did, as `v < ^ >`, and went red the day the
+// family changed under it).
+import { TRAY_FOLD_GLYPH } from '../src/ui/components/foldGlyph.js';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const SHOTS = process.argv.includes('--shots');
@@ -116,7 +121,7 @@ async function main() {
       const style = getComputedStyle(tray);
       return [edge, { text:fold.innerText.trim().replace(/\\s+/g, ' '), expanded:fold.getAttribute('aria-expanded'), controls:fold.getAttribute('aria-controls'), hidden:content.hidden, width:rect.width, height:rect.height, marginTop:parseFloat(style.marginTop), marginLeft:parseFloat(style.marginLeft), marginRight:parseFloat(style.marginRight) }];
     })))()`);
-    const closed = { top:'v', right:'<', bottom:'^', left:'>' };
+    const closed = Object.fromEntries(Object.entries(TRAY_FOLD_GLYPH).map(([edge, pair]) => [edge, pair.closed]));
     for (const edge of Object.keys(closed)) {
       check(before[edge].text.startsWith(closed[edge]), `${edge} closed arrow points inward (${closed[edge]})`);
       check(before[edge].expanded === 'false' && before[edge].hidden, `${edge} closed ARIA and hidden state agree`);
@@ -131,8 +136,8 @@ async function main() {
       const fold = tray.querySelector('.tray-fold');
       return [edge, { text:fold.innerText.trim().replace(/\\s+/g, ' '), expanded:fold.getAttribute('aria-expanded'), hidden:tray.querySelector('.tray-content').hidden, width:tray.getBoundingClientRect().width }];
     })))()`);
-    check(opened.right.text.startsWith('> RIGHT TRAY'), 'right open header is exactly “> RIGHT TRAY”');
-    check(opened.left.text.startsWith('< LEFT TRAY'), 'left open header is exactly “< LEFT TRAY”');
+    check(opened.right.text.startsWith(`${TRAY_FOLD_GLYPH.right.open} RIGHT TRAY`), `right open header is exactly “${TRAY_FOLD_GLYPH.right.open} RIGHT TRAY”`);
+    check(opened.left.text.startsWith(`${TRAY_FOLD_GLYPH.left.open} LEFT TRAY`), `left open header is exactly “${TRAY_FOLD_GLYPH.left.open} LEFT TRAY”`);
     check(opened.right.expanded === 'true' && !opened.right.hidden, 'right open ARIA and content state agree');
     check(opened.left.expanded === 'true' && !opened.left.hidden, 'left open ARIA and content state agree');
     check(opened.right.width > before.right.width * 2 && opened.left.width > before.left.width * 2, 'open side trays span their section width');
@@ -210,7 +215,7 @@ async function main() {
     }))()`);
     check(gallery.cards === 8, 'gallery renders all eight folded/unfolded specimens');
     check(Object.values(gallery.edges).every((states) => states.join(',') === '0,1'), 'each edge has one folded and one unfolded specimen');
-    check(gallery.rightOpen.startsWith('> RIGHT TRAY'), 'gallery preserves the open Right Tray “>” contract');
+    check(gallery.rightOpen.startsWith(`${TRAY_FOLD_GLYPH.right.open} RIGHT TRAY`), `gallery preserves the open Right Tray “${TRAY_FOLD_GLYPH.right.open}” contract`);
     check(gallery.bottomOpen.aligned && gallery.bottomOpen.compact, 'unfolded Bottom Tray is compact and anchored to the bottom edge');
     check(gallery.sortSquares.length === 4 && gallery.sortSquares.every(({ width, height }) => Math.abs(width-height)<0.5 && width>=44 && width<=45), `every tray sort control is a 44px square (${JSON.stringify(gallery.sortSquares)})`);
     if (SHOTS) {

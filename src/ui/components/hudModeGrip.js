@@ -9,6 +9,8 @@ export function wireHudModeGrip(root, { settings = {}, onSettingsChange } = {}) 
     hud.dataset.hudMode = mode;
     grip.dataset.nextMode = mode === 'compact' ? 'expanded' : 'compact';
     grip.setAttribute('aria-label', mode === 'compact' ? 'Expand run HUD' : 'Compact run HUD');
+    // The grip is a kit IconButton; its glyph says which way it folds next.
+    grip.textContent = mode === 'compact' ? '⌄' : '⌃';
     settings.runHudMode = mode;
     onSettingsChange?.({ runHudMode: mode });
     window.dispatchEvent(new CustomEvent('ashenspire:hud-mode-change', { detail: { mode } }));
