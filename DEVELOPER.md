@@ -17,6 +17,12 @@ without the new shelves retain empty shelves instead of rerolling their stock.
 Run `node --test tests/armamentTrading.test.mjs` for purchase, sale, stale quote,
 mounting and save round-trip coverage. Weapon-art packages are authored in
 `content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
+Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
+desktop and phone potion quantities, cancellation, weapon-art targeting and
+separate pile tabs. `node tools/screenreach.mjs --only 390x650` checks reachable
+controls across screens. Potion selection uses the shared flask action plan;
+only explicit Use may spend a charge. The map Quick Access faces retain real
+44px target boxes to prevent neighboring invisible hit regions overlapping.
 
 ```
 # play (no build step — any static server, or open index.html directly)

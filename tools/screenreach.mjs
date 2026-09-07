@@ -434,7 +434,7 @@ async function main() {
   // Chrome's own TMPDIR inside it, and removes it whatever happens.
   const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
     prefix: 'screenreach-', browser: browserPath,
-    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
+    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling', '--disable-background-networking', '--disable-component-update'],
     timeoutMs: 12000,
   });
   const cdp = connectCdp(wsUrl); await cdp.ready;
@@ -483,7 +483,7 @@ async function main() {
   if (shapesRun === 0) {
     console.error(`\nscreenreach: --only ${only} matched no shape. Nothing was tested, so this is unknown, not a pass.`);
     console.error(`  shapes: ${SHAPES.map((v) => `${v.w}x${v.h}`).join(', ')}`);
-    cdp.close(); await dropBrowser(); if (server) server.close();
+    await Promise.race([cdp.send('Browser.close').catch(() => {}), new Promise(done => setTimeout(done, 1200))]); cdp.close(); await dropBrowser(); if (server) server.close();
     process.exit(2);
   }
 
@@ -511,7 +511,7 @@ async function main() {
 
   console.log(`\n  ${fails.length ? `FAIL — ${fails.length}` : `screenreach: OK — ${shapesRun * SCREENS.length} checks passed`}`);
   for (const f of fails) console.log(`    - ${f}`);
-  cdp.close(); await dropBrowser(); if (server) server.close();
+  await Promise.race([cdp.send('Browser.close').catch(() => {}), new Promise(done => setTimeout(done, 1200))]); cdp.close(); await dropBrowser(); if (server) server.close();
   process.exit(fails.length ? 1 : 0);
 }
 
