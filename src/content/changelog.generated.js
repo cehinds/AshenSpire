@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-722",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Three checks that had stopped checking anything check again",
+    "detail": "Nothing a player sees changes. Two component contracts and the changelog projector had all gone red on the development branch, and none of them for a real fault: each was pinned to the exact wording of a line that a later, deliberate change had moved — a tile size retuned so the Armoury and Menu controls fill the meter stack, a call that gained an argument, a renderer that gained a plural. They now check what the lines have to mean rather than how they are spelled, which is the same repair #645 made in August. The changelog inside the game also refused one receipt that had a link buried in its prose; flattening it revealed that the link had been the only thing standing in for a missing receipt, so that one is written up properly too.",
+    "build": "0.5.5.70",
+    "pullRequest": 722,
+    "url": "https://github.com/cehinds/AshenSpire/pull/722"
+  },
+  {
     "id": "pr-717",
     "date": "2026-09-07",
     "group": "2026-09-07",
