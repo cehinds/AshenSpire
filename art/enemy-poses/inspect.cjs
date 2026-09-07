@@ -3,7 +3,7 @@ const fs=require('node:fs');
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:'msedge'});
  const page=await browser.newPage({viewport:{width:1440,height:1000}});
- await page.goto('http://127.0.0.1:4287/art/enemy-poses/index.html');
+ await page.goto((process.env.ENEMY_PREVIEW_ORIGIN || 'http://127.0.0.1:4287') + '/art/enemy-poses/index.html');
  await page.locator('article').last().waitFor();
  await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));
  const gallery=await page.evaluate(()=>({cards:document.querySelectorAll('article').length,broken:[...document.images].filter(i=>!i.naturalWidth).length}));
@@ -14,6 +14,7 @@ const fs=require('node:fs');
  await page.screenshot({path:'art/enemy-poses/preview-phone.png'});
  await page.locator('article:visible summary').click();
  await page.locator('article:visible button').click();
+ await page.waitForTimeout(220);
  const playback=await page.locator('article:visible .play').getAttribute('src');
  await page.waitForTimeout(750);
  const returned=await page.locator('article:visible .play').getAttribute('src');

@@ -374,6 +374,23 @@
 .enemy-pose-attack { visibility: hidden; }
 .enemy .sprite:is(.act-attack, .enemy-attack-pose) [data-attack-ready="true"] > .enemy-pose-idle { visibility: hidden; }
 .enemy .sprite:is(.act-attack, .enemy-attack-pose) [data-attack-ready="true"] > .enemy-pose-attack { visibility: visible; }
+/* Keep the idle drawing for anticipation and recovery. The attack drawing
+   covers the family's impact at 55%, using the actor's playback duration. */
+.enemy .sprite.enemy-attack-pose { transform-origin: 50% 100%; }
+.enemy .sprite.enemy-attack-pose [data-attack-ready="true"] > .enemy-pose-idle {
+  animation: enemy-idle-frames var(--enemy-attack-duration, 280ms) steps(1, end) both;
+}
+.enemy .sprite.enemy-attack-pose [data-attack-ready="true"] > .enemy-pose-attack {
+  animation: enemy-attack-frames var(--enemy-attack-duration, 280ms) steps(1, end) both;
+}
+@keyframes enemy-idle-frames {
+  0%, 80%, 100% { visibility: visible; }
+  25% { visibility: hidden; }
+}
+@keyframes enemy-attack-frames {
+  0%, 80%, 100% { visibility: hidden; }
+  25% { visibility: visible; }
+}
 .player .sprite.act-attack { animation: lunge-right 280ms ease-out; }
 .sprite.act-move { animation: act-step 260ms ease-out; }
 @keyframes lunge-left {

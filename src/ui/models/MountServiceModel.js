@@ -83,7 +83,7 @@ export function mountServiceModel(registries, plan, selection = {}, { multiUse =
       whereLabel: candidate.equipped ? 'worn' : 'carried',
       artAsset: candidate.itemKind === 'armor'
         ? armourMenuAsset(candidate.classId, piece.id)
-        : `assets/equipment/icon_${piece.artKey || piece.id}.webp`,
+        : `assets/equipment/icon_${piece.id}.webp`,
       rarity: piece.rarity || 'common',
       kindLabel: candidate.itemKind === 'armor' ? 'Armor' : 'Armament',
       itemTypes: freeze((piece.itemTypes || []).map((type) => freeze({ ...type }))),
