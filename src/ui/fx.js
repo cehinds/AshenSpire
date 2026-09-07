@@ -416,7 +416,7 @@ function banner(layer, text, cls = '') {
 function shake(combatEl) {
   if (!combatEl) return;
   // Honor the Screen shake setting (and reduced motion, which also drops it).
-  if (document.body.classList.contains('no-shake') || document.body.classList.contains('reduced-motion')) return;
+  if (document.body.classList.contains('no-shake') || reducedMotionRequested()) return;
   combatEl.classList.remove('shake');
   void combatEl.offsetWidth; // restart animation
   combatEl.classList.add('shake');

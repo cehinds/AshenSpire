@@ -8,6 +8,11 @@ import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/co
 import { resolveCard } from '../../model/registries.js';
 import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
+import { resolveActionAnimation } from '../../model/actionAnimation.js';
+import { enemyMoveCards } from '../../model/enemyMoveCards.js';
+import { tagService } from '../../model/tagService.js';
+import { reducedMotionRequested } from '../motion.js';
+import { stageFor } from '../services/PoseAnimator.js';
 import { attachTooltip, ensureTooltip, hideTooltip, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { relicText, renderCard } from '../components/card.js';
@@ -158,7 +163,33 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     statusInfo: (sid) => registries.frameworkTerms.withStatusWords(registries.statuses.get(sid)),
     maxActorAnimationMs: (speed) => reaverAttackTiming(speed).totalMs,
     animateActor: (beat, actorEl, speed) => {
-      if (beat.actorId !== 'player' || beat.kind !== 'attack') return null;
+      const played = beat.events.find(event => event.type === 'cardPlayed');
+      const moved = beat.events.find(event => event.type === 'enemyMoveStarted');
+      if (!played && !moved) return null;
+      // The pre-dispatch hand snapshot retains Powers removed from every pile,
+      // and the full instance carries equipment profile tags and upgrades.
+      // Resolve it before falling back to a live pile or bare legacy receipt.
+      const playedInstance = played && (disp?.hand.find((card) => card.instanceId === played.cardInstanceId)
+        || findInst(played.cardInstanceId) || { cardId: played.cardId });
+      const definition = played ? resolveCard(registries, playedInstance)
+        : registries.enemies.get(moved.enemyId)?.moves?.[moved.moveId];
+      const tags = played && definition
+        ? (definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition))
+        : definition?.tags || [];
+      const stage = stageFor(actorEl);
+      const plan = resolveActionAnimation({
+        actorId: played ? run.class : moved.enemyId,
+        actionId: played ? played.cardId : moved.moveId,
+        tags, type: played?.cardType, intent: moved?.kind,
+        availablePoses: stage?.poses || [],
+      });
+      actorEl.dataset.actionFamily = plan.family;
+      actorEl.dataset.actionMotion = plan.motion;
+      // The painted Reaver sequence remains the specialized attack renderer.
+      // Other actors use existing CSS and only sprite poses they actually ship.
+      if (beat.actorId !== 'player' || beat.kind !== 'attack' || run.class !== 'reaver') {
+        return playFamilyAnimation(actorEl, stage, plan, speed);
+      }
       const figure = figureSpec(registries, run.loadout, run.class);
       const eligible = isReaverAttackEligible({
         classId: run.class,
@@ -166,11 +197,43 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         customization: run.customization,
         spritesEnabled: spritesAreEnabled(),
       });
-      return eligible ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : null;
+      return eligible ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : playFamilyAnimation(actorEl, stage, plan, speed);
     },
   };
 
   let lastDodge = [...(combat.eventLog || [])].reverse().find((event) => event.type === 'dodgeRolled' && event.sourceId === combat.player.id) || null;
+  function playFamilyAnimation(actorEl, stage, plan, speed) {
+    const tempo = Number.isFinite(plan.tempo) ? Math.min(2, Math.max(0.25, plan.tempo)) : 1;
+    const reach = Number.isFinite(plan.reach) ? Math.min(2, Math.max(0.25, plan.reach)) : 1;
+    const direction = actorEl.closest('.enemy') ? -1 : 1;
+    const totalMs = plan.family === 'neutral' ? 0 : Math.round(speed.lungeMs * tempo);
+    const actionClass = ['slash', 'thrust', 'strike', 'projectile'].includes(plan.family) ? 'act-attack' : 'act-move';
+    const overrides = {
+      'animation-duration': totalMs + 'ms',
+      '--action-travel': `${direction * 26 * reach}px`,
+      '--action-recoil': `${-direction * 12 * reach}px`,
+      '--action-tilt': `${direction * 12 * reach}deg`,
+      '--action-windup-tilt': `${-direction * 8 * reach}deg`,
+      '--action-lift': `${-8 * reach}px`,
+    };
+    const original = Object.keys(overrides).map((name) => [name, actorEl.style.getPropertyValue(name), actorEl.style.getPropertyPriority(name)]);
+    if (totalMs) {
+      actorEl.classList.remove(actionClass);
+      void actorEl.offsetWidth;
+      for (const [name, value] of Object.entries(overrides)) actorEl.style.setProperty(name, value);
+      actorEl.classList.add(actionClass);
+      if (plan.pose) stage?.play(plan.pose, totalMs);
+    }
+    return { totalMs, impactMs: Math.round(totalMs * 0.55), cancel: () => {
+      actorEl.classList.remove(actionClass);
+      for (const [name, value, priority] of original) {
+        if (value) actorEl.style.setProperty(name, value, priority);
+        else actorEl.style.removeProperty(name);
+      }
+      stage?.settle();
+    } };
+  }
+
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
@@ -203,6 +266,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // wireCardInput is a hoisted declaration below; cards with no preview
   // (stale playback snapshot on a combat-ending play) render inert.
   const handStrip = mountHand($('.hand'), {
+    animateArrival: true,
     registries,
     wireCard: (el, entry) => { if (entry.preview) wireCardInput(el, entry.inst, entry.preview, entry.affordable); },
   });
@@ -469,6 +533,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         active: true,
       },
       skillLabel: 'Move set',
+      moveCards: enemyMoveCards(def, { enemy: entity, preview: intent, registries }),
       skills,
       statuses: statusDetails(entity),
     };
@@ -1741,10 +1806,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           renderCombatantStage();
           renderHand();
           renderControls();
+          showPileFeedback(beat.events);
         },
         onFlush: () => {
           disp = null;
           render();
+          clearCardFeedback();
+          showPileFeedback(events, false);
         },
       },
       () => {
@@ -1761,58 +1829,65 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     );
   }
 
-  // Ghost the played card flying toward its target (≤220 ms, purely cosmetic).
+  // Cosmetic animations never own combat timing or retain interactive clones.
+  const cardFlights = new Set();
+  function clearCardFeedback() {
+    for (const animation of cardFlights) animation.cancel();
+    cardFlights.clear();
+    app.querySelectorAll('.hand .card.card-drawn').forEach(el => el.classList.remove('card-drawn'));
+    $('.pile.spent')?.classList.remove('pile-received');
+  }
+  function showPileFeedback(events, animate = true) {
+    // Ordinary plays enter discard without a separate cardDiscarded receipt.
+    // Read their actual destination; Powers and victory plays must not be counted.
+    const discardIds = new Set(events.filter(event => event.type === 'cardDiscarded').map(event => event.cardInstanceId));
+    for (const event of events) {
+      if (event.type === 'cardPlayed' && combat.piles.discard.some(card => card.instanceId === event.cardInstanceId)) discardIds.add(event.cardInstanceId);
+    }
+    const discarded = discardIds.size;
+    const exhausted = events.filter(event => event.type === 'cardExhausted').length;
+    if (!discarded && !exhausted) return;
+    const pile = $('.pile.spent');
+    pile.dataset.cardOutcome = exhausted ? 'exhaust' : 'discard';
+    pile.setAttribute('aria-description', [discarded && (discarded + ' discarded'), exhausted && (exhausted + ' exhausted')].filter(Boolean).join('; '));
+    if (animate && !reducedMotionRequested()) {
+      pile.classList.remove('pile-received');
+      void pile.offsetWidth;
+      pile.classList.add('pile-received');
+    }
+  }
+  $('.pile.spent').addEventListener('animationend', event => {
+    if (event.target === event.currentTarget) event.currentTarget.classList.remove('pile-received');
+  });
+
+  // Fly only accepted plays, with one cancellable browser-owned animation.
   function flyCard(instanceId, targetId) {
+    if (reducedMotionRequested()) return;
     const cardEl = app.querySelector(`.hand .card[data-instance-id="${instanceId}"]`);
-    if (!cardEl) return;
+    if (!cardEl || typeof cardEl.animate !== 'function') return;
     const dest = (targetId && fxCtx.anchorFor(targetId)) || fxCtx.anchorFor('player');
-    // Container: THE VIEWPORT — `.card-ghost` is `position: fixed` (combat.css:364).
-    // EldenSpire#15: `from`/`to` are raw visual rects, so at 1920×1080 the ghost
-    // started 190 local px below the card it was a ghost of, entirely under the
-    // bottom edge, and flew to a point that was not the enemy.
-    //
-    // THE TRANSFORM IS THE SAME SPACE, and it is the half no instrument here can
-    // see: zoomunits.mjs reads neither `transform` nor `cssText` and says so in its
-    // own boundary block, so `dx`/`dy` below were never in the carried set and
-    // never could have been. Marina measured the mechanism — `translate(100px)`
-    // under `zoom: 1.5` moves 150 visual px — which is why the deltas convert too.
-    // Found by hand, on a screen. Not by the detector, which cannot.
-    const view = viewportLocalBox();
     const b = anchorLocalBox(VIEWPORT_ORIGIN, cardEl);
     const t = anchorLocalBox(VIEWPORT_ORIGIN, dest || cardEl);
+    const at = clampBox(b, viewportLocalBox(), { keep: 40 });
     const ghost = cardEl.cloneNode(true);
-    ghost.className = `${cardEl.className} card-ghost`;
-    // keep:40 — the start box is the card's own, already on screen, so this never
-    // fires in play; it is here so a future wrong `b` is a misplaced ghost rather
-    // than an invisible one.
-    const at = clampBox(b, view, { keep: 40 });
-    ghost.style.left = `${at.left}px`;
-    ghost.style.top = `${at.top}px`;
-    ghost.style.width = `${b.width}px`;
-    ghost.style.margin = '0';
+    ghost.className = 'card card-ghost';
+    ghost.setAttribute('aria-hidden', 'true');
+    ghost.setAttribute('inert', '');
+    ghost.removeAttribute('id');
+    ghost.removeAttribute('tabindex');
+    ghost.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+    Object.assign(ghost.style, { left: at.left + 'px', top: at.top + 'px', width: b.width + 'px', margin: '0', animation: 'none', transition: 'none' });
     document.body.appendChild(ghost);
-    requestAnimationFrame(() => {
-      // Centred on the CARD's box — the original model, kept. I tried measuring the
-      // ghost's own box here instead, since the ghost is the thing that flies, and
-      // it is worse: the clone inherits the card's class list including its entry
-      // animation, so a rect read inside this rAF catches that animation mid-frame
-      // (measured 203.59 tall against a 196 layout box — an 8.18 px offset that
-      // changes with WHEN you look). A number read off a running animation is not a
-      // measurement. The card's box holds still.
-      //
-      // What that leaves is a real ~3.5 local px approximation: the card carries
-      // `.hand .card.selected` — translateY(-56px) scale(1.32), combat.css:180 —
-      // and the ghost stops matching that selector the moment it is reparented to
-      // <body>. It is CONSTANT at every zoom, which is exactly how zoomplace.mjs
-      // separates it from the #15 defect, whose error is (1−1/z)·offset and runs
-      // from −207 to +403 local px across the dial. Cosmetic, pre-existing, and not
-      // this card's subject — named here so the next reader does not re-find it.
-      const dx = t.left + t.width / 2 - (at.left + b.width / 2);
-      const dy = t.top + t.height / 2 - (at.top + b.height / 2);
-      ghost.style.transform = `translate(${dx}px, ${dy}px) scale(0.35) rotate(6deg)`;
-      ghost.style.opacity = '0';
-    });
-    setTimeout(() => ghost.remove(), 260);
+    const dx = t.left + t.width / 2 - (at.left + b.width / 2);
+    const dy = t.top + t.height / 2 - (at.top + b.height / 2);
+    const animation = ghost.animate([
+      { transform: 'translate(0,0)', opacity: 0.85 },
+      { transform: `translate(${dx}px, ${dy}px) scale(0.35) rotate(6deg)`, opacity: 0 },
+    ], { duration: 220, easing: 'ease-out', fill: 'forwards' });
+    cardFlights.add(animation);
+    const remove = () => { ghost.remove(); cardFlights.delete(animation); };
+    animation.onfinish = remove;
+    animation.oncancel = remove;
   }
 
   function playCard(instanceId, targetId) {
@@ -1828,7 +1903,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     selfArm = null;
     clearAim();
     hideTooltip();
-    flyCard(instanceId, targetId);
     disp = takeSnapshot();
     let out;
     try {
@@ -1841,6 +1915,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return;
     }
     dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
+    flyCard(instanceId, targetId);
     sfx.play('cardPlay');
     busy = true;
     afterDispatch(out.events);

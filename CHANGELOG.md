@@ -65,6 +65,8 @@ this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-07
 
+- **More enemies, named boss routes and readable combat actions** ([#704](https://github.com/cehinds/AshenSpire/pull/704), `0.5.5.55`). Seven new regular enemies and seven new bosses bring the roster to twenty regular enemies, three elites and ten bosses. Fourteen transparent painted portraits accompany new moves and phases, while the Unity-fork artwork stays intact. Boss routes name their locations, enemy inspectors share move cards, and card actions gain actor- and tag-based motion plus draw/play/pile feedback. Reduced motion and skipped animations retain readable outcomes; unchanged co-op snapshots do not replay arrivals.
+
 - **Maps preserve distinct boss destinations** ([#689](https://github.com/cehinds/AshenSpire/pull/689), `0.5.5.52`). Acts with multiple boss encounters assign named terminal choices beyond their guaranteed rest. Each destination keeps its encounter through saves, LAN play and simulations. Compact terminal placement keeps the choices visible on phones, and co-op tooltips identify them. Invalid saved destination references are rejected at loading. Older maps retain their original boss without rerolling; single-boss acts retain their existing paths.
 
 - **The changelog keeps itself honest** ([#703](https://github.com/cehinds/AshenSpire/pull/703), `0.5.5.50`). Nothing a player sees changes. #700's receipt is written up below, and the changelog inside the game was regenerated so it carries the same entries this file does. This is the second merge running that the repository asked for its own receipt instead of waiting for someone to read the merge log and notice.
