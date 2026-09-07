@@ -2686,3 +2686,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .disc-faces > .disc-face.disc-item:has(.poker-inventory-face) { flex:1 1 260px; max-width:370px; min-width:0; }
 .poker-inventory-face > .equipment-poker-card { max-width:350px; }
 .armoury .disc-reveal:has(.poker-inventory-detail) { flex-basis:100%; min-width:0; }
+
+/* The merchant shares the same equipment canvas; prices stay outside the card. */
+.shop-armament-offer { width:min(350px,100%); min-width:0; }
+.shop-armament-offer > .as-option { display:block; width:100%; padding:8px; }
+.shop-armament-offer > .as-status { display:block; margin-top:8px; white-space:normal; }

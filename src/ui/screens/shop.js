@@ -10,13 +10,11 @@ import { isEngaged, focusFirst } from '../input.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { flaskIdentityHtml } from '../components/flask.js';
-import { isEquipmentComposedInstance, carriedIds, modEffectLines } from '../../model/loadout.js';
+import { isEquipmentComposedInstance, carriedIds } from '../../model/loadout.js';
 import { armamentPurchasePlan, armamentSalePlan, commitArmamentPurchase, commitArmamentSale } from '../../model/armamentTrading.js';
-import { inventoryItemCardModel, inventoryDetailCardModel } from '../models/ArmouryModels.js';
-import { renderInventoryItemCard, renderInventoryDetailCard } from '../components/armouryComponents.js';
 import { openModal } from '../components/modalShell.js';
 import { button, statusText, el } from '../kit/index.js';
-import { assetUrl } from '../assetmap.js';
+import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import { settingOn } from './settings.js';
@@ -380,17 +378,12 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     fold.open(openBar);
   }
 
-  function armamentRow(def) {
-    const equipped = Object.values(run.loadout?.sets || {}).some((ids) => ids.includes(def.id));
-    return { key: `armament:${def.id}`, id: def.id, name: def.name, category: def.kind === 'shield' ? 'Shield' : def.kind === 'staff' ? 'Staff' : 'Weapon', item: def, count: carriedIds(run.loadout).includes(def.id) ? 1 : 0, equippedLabels: equipped ? ['Equipped'] : [] };
-  }
-
   function armamentOffer(def, inspect, summary) {
-    const face = renderInventoryItemCard(inventoryItemCardModel(armamentRow(def)));
+    const face = renderEquipmentCard(registries, def, { interactive: false }).card;
     const card = el('button', { type: 'button', class: 'as-option noarrow hosts-face' }, face);
     card.setAttribute('aria-label', `${def.name}. ${summary}. Inspect.`);
     card.addEventListener('click', () => { card.focus({ preventScroll: true }); inspect(); });
-    return el('div', {}, [card, statusText(summary)]);
+    return el('div', { class: 'shop-armament-offer' }, [card, statusText(summary)]);
   }
 
   function inspectArmament(item, mode) {
@@ -401,13 +394,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     const confirm = button({ label, weight: 'primary', disabled: !quote.ok });
     const message = statusText(quote.reason || (mode === 'sell' ? 'Tier and mounted cards stay with this item if you reacquire it. Discovery is retained.' : 'Adds this armament to inventory. Equip it in the Armoury.'));
     message.setAttribute('role', 'status');
-    const detail = renderInventoryDetailCard(inventoryDetailCardModel({
-      row: armamentRow(def), art: { kind: 'image', value: assetUrl(`assets/equipment/icon_${def.id}.webp`) },
-      description: def.blurb || '', mods: modEffectLines(registries, def),
-      instruction: `Smithing tier ${packageInfo.tier}. Attached cards: ${packageInfo.mounts.map((mount) => mount.cardName).join(', ') || 'none'}.`,
-    }));
+    const detail = renderEquipmentInspection(registries, def);
+    const upgrades = statusText(`Smithing tier ${packageInfo.tier}. Attached cards: ${packageInfo.mounts.map((mount) => mount.cardName).join(', ') || 'none'}.`);
     const cancel = button({ label: 'Back' });
-    const shell = openModal({ title: def.name, eyebrow: mode === 'sell' ? 'Sell armament' : 'Buy armament', bodyClassName: 'as-pane', body: (host) => host.append(detail, message), secondary: [cancel], primary: confirm });
+    const shell = openModal({ title: def.name, eyebrow: mode === 'sell' ? 'Sell armament' : 'Buy armament', bodyClassName: 'as-pane', body: (host) => host.append(detail, upgrades, message), secondary: [cancel], primary: confirm });
     cancel.addEventListener('click', shell.close);
     confirm.addEventListener('click', () => {
       let receipt;
