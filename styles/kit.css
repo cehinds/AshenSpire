@@ -771,13 +771,16 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* The keyboard's Inspect action has a literal touch counterpart. This sits in
    the frame rather than its name so the full read is discoverable without a
    hover hint, and remains a 44px-class tap target through the kit IconButton. */
-.combatant .combatant-inspect-control {
-  position: absolute; top: 0; right: 0; z-index: 4;
-  border-color: color-mix(in srgb, var(--gold) 65%, transparent);
-  background: color-mix(in srgb, var(--panel) 88%, transparent);
-  color: var(--gold); font-size: 1rem;
+.combatant .sprite > button.combatant-inspect-control,
+.combatant .sprite > button.combatant-inspect-control:hover {
+  position: absolute; top: 35%; left: 50%; right: auto; z-index: 4;
+  transform: translateX(-50%);
+  border: 0; background: transparent; box-shadow: none;
+  color: var(--gold); font-size: 24px; text-shadow: 0 1px 3px #000, 0 0 5px #000;
 }
-.combatant .combatant-inspect-control:active { transform: scale(0.94); }
+.combatant .sprite > button.combatant-inspect-control:active { transform: translateX(-50%) scale(0.94); }
+.as-tip[data-tooltip-variant="combatant-context"] > .as-btn { margin-top: 8px; width: 100%; }
+.combatant .sprite > button.combatant-inspect-control:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 /* The full read, in a door: the same sections the edge tray renders. */
 .combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
 

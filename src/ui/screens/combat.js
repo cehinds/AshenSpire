@@ -13,7 +13,7 @@ import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { tagService } from '../../model/tagService.js';
 import { reducedMotionRequested } from '../motion.js';
 import { stageFor } from '../services/PoseAnimator.js';
-import { attachTooltip, ensureTooltip, hideTooltip, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
+import { attachTooltip, ensureTooltip, hideTooltip, scheduleTooltipClose, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
@@ -547,7 +547,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       + `<div class="tt-combatant-line"><b>HP</b> ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</div>`
       + `<div class="tt-combatant-line"><b>Poise</b> ${esc(poise?.value ?? '—')}/${esc(poise?.max ?? '—')}</div>`
       + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`
-      + '<div class="ti-detail">Tap <b>ⓘ</b> or press <b>I</b> for the full read.</div>';
+      + '<div class="ti-detail">Inspect for the full read · I</div>';
   }
 
   /**
@@ -558,12 +558,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
    * active effect — `combatantDetailBody`, the same sections the edge tray
    * renders, so the two can never drift.
    */
-  function openCombatantDoor(subject) {
+  function openCombatantDoor(subject, opener = document.activeElement) {
     if (!subject?.name) return;
     hideTooltip();
     openModal({
       size: 'md',
       className: 'combatant-door',
+      opener,
       eyebrow: subject.subtitle || 'Combatant',
       title: subject.name,
       closeLabel: `Close ${subject.name}`,
@@ -622,12 +623,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (role === 'enemy' && !entity.alive) return false;
     const card = renderedContentRect(box.querySelector('.combatant-card'));
     if (!card) return false;
+    const inspect = button({ label: 'Inspect', attrs: { 'aria-label': `Inspect ${combatantSubject(role, entity).name}`, 'aria-haspopup': 'dialog' } });
+    inspect.addEventListener('click', (event) => {
+      event.stopPropagation();
+      openCombatantDoor(combatantSubject(role, entity), box.querySelector('.combatant-inspect-control'));
+    });
+    inspect.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') box.querySelector('.combatant-inspect-control')?.focus({ preventScroll: true });
+    });
     showTooltipForRect(card, combatantContextTooltip(combatantSubject(role, entity)), {
       intent: 'above',
       align: 'center',
       clear: [box.querySelector('.intent'), app.querySelector('.topbar.combat-hud')],
       appearance: { variant: 'combatant-context', maxWidthRem: 21 },
-      autoHideMs: tooltipPlacement.tokens.autoFadeMs,
+      target: box,
+      action: inspect,
     });
     return true;
   }
@@ -679,7 +689,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     box.addEventListener('pointerleave', () => {
       if (selectedEnemyId === enemy.id) return;
       clearTimeout(combatantTooltipDelayTimer);
-      restoreSelectedEnemyContext(enemy.id);
+      scheduleTooltipClose(box);
     });
     box.addEventListener('gpfocus', (event) => {
       if (childAnswers(box, event)) return;
@@ -690,9 +700,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (childAnswers(box, event)) return;
       if (selectedEnemyId === enemy.id) return;
       clearTimeout(combatantTooltipDelayTimer);
-      restoreSelectedEnemyContext(enemy.id);
+      scheduleTooltipClose(box);
     });
     box.addEventListener('keydown', (event) => {
+      if (event.target !== box) return;
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       box.click();
@@ -720,7 +731,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const close = (event) => {
       if (childAnswers(box, event)) return;
       clearTimeout(combatantTooltipDelayTimer);
-      restoreSelectedEnemyContext();
+      scheduleTooltipClose(box);
     };
     box.addEventListener('pointerenter', open);
     box.addEventListener('pointerleave', close);
@@ -1165,8 +1176,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       sprite: playerSprite(run.customization || {}, run.class, figure.armourId),
       blockBadge: blockBadge(p, { tooltips: false }),
       meters: meterBars(p, { tooltips: false }),
-      trailing: [combatantInspectControl('player', p), ...trailing],
+      trailing,
     });
+    box.querySelector('.sprite').appendChild(combatantInspectControl('player', p));
     wirePlayerContext(box, p);
     // When a self/buff card is armed, the player is a confirmable target.
     // Publish that temporary target through the same unified focus door as an
@@ -1249,8 +1261,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         blockBadge: blockBadge(enemy, { tooltips: false }),
         name: nm,
         meters: meterBars(enemy, { tooltips: false }),
-        trailing: [combatantInspectControl('enemy', enemy), statusRow(enemy)],
+        trailing: [statusRow(enemy)],
       });
+      box.querySelector('.sprite').appendChild(combatantInspectControl('enemy', enemy));
       box.dataset.stature = statureFor(registries, def.id);
       if (enemy.alive) {
         wireEnemyContext(box, enemy);
