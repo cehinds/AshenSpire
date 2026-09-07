@@ -1,0 +1,124 @@
+import assert from 'node:assert/strict';
+import { contentBundle } from '../src/content/index.js';
+import { LEGACY_ACT_BOSSES } from '../src/content/mapconfig.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createRng } from '../src/engine/rng.js';
+import { generateActMap } from '../src/engine/mapgen.js';
+import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
+import { litNodes } from '../src/model/mapknowledge.js';
+import { createSession } from '../tools/session.mjs';
+import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
+import { createRunState } from '../src/model/state.js';
+
+const legacyIds = Object.values(LEGACY_ACT_BOSSES);
+const singleBundle = { ...contentBundle, encounters: contentBundle.encounters.filter((encounter) => encounter.pool !== 'boss' || legacyIds.includes(encounter.id)) };
+const single = createRegistries(singleBundle);
+const template = singleBundle.encounters.find((row) => row.id === LEGACY_ACT_BOSSES[1]);
+const additions = Array.from({ length: 8 }, (_, i) => ({ ...template, id: `branchBoss${i}`, enemies: [i % 2 ? 'blightHound' : 'graveWisp'] }));
+const expanded = createRegistries({ ...singleBundle, encounters: [...singleBundle.encounters, ...additions] });
+let passed = 0;
+function test(name, fn) { fn(); passed++; console.log(`ok ${name}`); }
+const topology = (graph) => Object.values(graph.nodes).map(({ id, floor, col, type, next }) => ({ id, floor, col, type, next }));
+
+test('a single-boss pool preserves generated geometry and map RNG', () => {
+  for (const act of [1, 2, 3]) for (let seed = 1; seed <= 20; seed++) {
+    const originalRng = createRng(seed), nextRng = createRng(seed);
+    const original = generateActMap({ config: single.mapConfig(act), rng: originalRng });
+    const next = buildActMap(single, nextRng, act);
+    assert.deepEqual(topology(next), topology(original));
+    assert.equal(nextRng.getCounters().map, originalRng.getCounters().map);
+    assert.deepEqual(next.bossIds, [original.bossId]);
+    assert.equal(bossEncounterForNode(single, next, next.bossId, act), LEGACY_ACT_BOSSES[act]);
+  }
+});
+
+test('seeded terminal choices are distinct, all reachable through the guaranteed rest, with no dead ends', () => {
+  const seen = new Set();
+  for (let seed = 1; seed <= 80; seed++) {
+    const graph = buildActMap(expanded, createRng(seed), 1, { columns: 2 });
+    assert.deepEqual(graph, buildActMap(expanded, createRng(seed), 1, { columns: 2 }));
+    assert.equal(graph.bossIds.length, 2);
+    const encounters = graph.bossIds.map((id) => bossEncounterForNode(expanded, graph, id, 1));
+    assert.equal(new Set(encounters).size, 2);
+    encounters.forEach((id) => seen.add(id));
+    const reached = new Set(), queue = [...graph.startIds];
+    while (queue.length) {
+      const id = queue.shift();
+      if (reached.has(id)) continue;
+      reached.add(id);
+      const node = graph.nodes[id];
+      assert(node, 'every edge resolves');
+      assert(node.next.length || graph.bossIds.includes(id), 'only terminal bosses end a path');
+      queue.push(...node.next);
+    }
+    assert.equal(reached.size, Object.keys(graph.nodes).length);
+    assert.equal(graph.nodes[graph.shrineId].type, 'shrine');
+    assert.deepEqual(graph.nodes[graph.shrineId].next, graph.bossIds);
+    for (const id of graph.bossIds) {
+      const parents = Object.values(graph.nodes).filter((node) => node.next.includes(id));
+      assert(parents.every((parent) => parent.id === graph.shrineId));
+      assert(graph.nodes[id].destinationLabel);
+    }
+    const visible = litNodes({ graph, run: { path: [] } });
+    assert(graph.bossIds.every((id) => visible.has(id)), 'fog reveals every terminal');
+    const restored = JSON.parse(JSON.stringify(graph));
+    assert.deepEqual(restored.bossIds.map((id) => bossEncounterForNode(expanded, restored, id, 1)), encounters);
+  }
+  assert.equal(seen.size, additions.length + 1, 'all pool members occur across seeds');
+});
+
+test('legacy unentered bosses retain explicit original act identity after pool expansion without mutation', () => {
+  for (const act of [1, 2, 3]) {
+    const graph = generateActMap({ config: single.mapConfig(act), rng: createRng(act) });
+    const before = JSON.stringify(graph);
+    assert.equal(bossEncounterForNode(expanded, graph, graph.bossId, act), LEGACY_ACT_BOSSES[act]);
+    assert.equal(JSON.stringify(graph), before);
+  }
+});
+
+test('invalid new destination identities fail instead of silently rerolling', () => {
+  const graph = buildActMap(expanded, createRng(7), 1);
+  const node = graph.nodes[graph.bossIds[0]];
+  delete node.encounterId;
+  assert.throws(() => bossEncounterForNode(expanded, graph, node.id, 1), /no valid encounter/);
+  node.encounterId = LEGACY_ACT_BOSSES[2];
+  assert.throws(() => bossEncounterForNode(expanded, graph, node.id, 1), /no valid encounter/);
+  assert.throws(() => bossEncounterForNode(expanded, graph, graph.startIds[0], 1), /not a boss/);
+});
+
+test('live LAN host enters the selected terminal encounter and transports all choices', () => {
+  const session = createSession({ registries: expanded, seedString: 'GOLDBOUGH' });
+  session.addMember({ id: 'p1', name: 'Route tester', classId: 'reaver' });
+  session.start();
+  const graph = session.session.mapGraph;
+  const id = graph.bossIds.find((id) => graph.nodes[id].encounterId !== LEGACY_ACT_BOSSES[1]);
+  const destination = graph.nodes[id];
+  const snapshot = session.snapshot();
+  assert.deepEqual(snapshot.map.bossIds, graph.bossIds);
+  assert.equal(snapshot.map.nodes.find((node) => node.id === id).destinationLabel, destination.destinationLabel);
+  session.session.reachableIds = [...graph.bossIds];
+  session.chooseNode('p1', id);
+  assert.equal(session.session.cursorId, id);
+  assert.equal(session.scene.kind, 'combat');
+  assert.deepEqual(session.live.combat.enemies.map((enemy) => enemy.enemyId), expanded.encounters.get(destination.encounterId).enemies);
+});
+
+test('real save loading preserves new and legacy topology and selected encounter without RNG changes', () => {
+  for (const legacy of [false, true]) {
+    const run = createRunState({ seed: 71, classId: 'reaver', registries: expanded });
+    run.mapGraph = legacy
+      ? generateActMap({ config: single.mapConfig(1), rng: createRng(71) })
+      : buildActMap(expanded, createRng(71), 1);
+    run.mapNodeId = legacy ? run.mapGraph.bossId : run.mapGraph.bossIds.at(-1);
+    const identity = bossEncounterForNode(expanded, run.mapGraph, run.mapNodeId, 1);
+    const original = JSON.stringify({ graph: run.mapGraph, cursor: run.mapNodeId, counters: run.streamCounters });
+    const saves = createSaveManager(createMemoryStorage());
+    saves.saveRun(run);
+    const loaded = saves.loadRun(expanded);
+    assert(loaded, 'valid route save loads through real save manager');
+    assert.equal(JSON.stringify({ graph: loaded.mapGraph, cursor: loaded.mapNodeId, counters: loaded.streamCounters }), original);
+    assert.equal(bossEncounterForNode(expanded, loaded.mapGraph, loaded.mapNodeId, 1), identity);
+  }
+});
+
+console.log(`branching bosses: ${passed} passed`);

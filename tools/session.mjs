@@ -26,7 +26,7 @@ import {
   commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan,
 } from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
-import { buildActMap } from '../src/engine/actmap.js';
+import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
@@ -405,7 +405,7 @@ export function createSession({ registries, seedString, endless = false, restore
   function advanceFromNode() {
     const node = session.mapGraph.nodes[session.cursorId];
     let next = node.next;
-    if (!next || !next.length) next = [session.mapGraph.bossId];
+    if (!next || !next.length) next = session.mapGraph.bossIds || [session.mapGraph.bossId];
     session.reachableIds = next.slice();
     session.scene = { kind: 'map' };
   }
@@ -446,7 +446,9 @@ export function createSession({ registries, seedString, endless = false, restore
   // relic, the Smithing Stone), exactly as main.js's enterCombat reads
   // `enc.pool` for the solo player; the caller's pool is only for the roll.
   function enterCombat(pool, forcedEncounterId = null) {
-    const encounterId = forcedEncounterId || rollEncounter(registries, rng, { pool, act: contentAct() });
+    const encounterId = forcedEncounterId || (pool === 'boss'
+      ? bossEncounterForNode(registries, session.mapGraph, session.cursorId, contentAct())
+      : rollEncounter(registries, rng, { pool, act: contentAct() }));
     const enc = registries.encounters.get(encounterId);
     if (forcedEncounterId) pool = enc.pool;
     const loop = loopCount();
@@ -1258,7 +1260,9 @@ export function createSession({ registries, seedString, endless = false, restore
           columns: g.columns,
           startIds: g.startIds,
           bossId: g.bossId,
-          nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })),
+          bossIds: g.bossIds,
+          nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next,
+            ...(n.type === 'boss' ? { encounterId: n.encounterId, destinationLabel: n.destinationLabel } : {}) })),
         }
       : null;
     return {

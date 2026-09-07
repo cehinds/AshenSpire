@@ -412,3 +412,25 @@ function finish(nodes, startCols, shrineId, bossId, floors, columns) {
 function clamp(v, lo, hi) {
   return v < lo ? lo : v > hi ? hi : v;
 }
+
+/** Replace only the terminal row; retain all paths and their guaranteed rest.
+ * Destinations are already selected by actmap. This geometry step has no RNG. */
+export function assignBossDestinations(map, destinations) {
+  if (!Array.isArray(destinations) || !destinations.length || destinations.length > map.columns) throw new Error('Boss destinations must fit the map columns');
+  if (new Set(destinations.map((row) => row.encounterId)).size !== destinations.length) throw new Error('Boss destinations must have unique encounter IDs');
+  const shrine = map.nodes[map.shrineId];
+  const original = map.nodes[map.bossId];
+  if (!shrine || shrine.type !== 'shrine' || !original || original.type !== 'boss') throw new Error('Map needs its pre-boss rest and terminal');
+  delete map.nodes[map.bossId];
+  const terminals = destinations.map((destination, index) => {
+    const col = destinations.length === 1 ? original.col : Math.round(index * (map.columns - 1) / (destinations.length - 1));
+    const id = `n${original.floor}_${col}`;
+    const node = { ...original, id, col, next: [], encounterId: destination.encounterId, destinationLabel: destination.label };
+    map.nodes[id] = node;
+    return id;
+  });
+  shrine.next = [...terminals];
+  map.bossIds = terminals;
+  map.bossId = terminals[0]; // compatibility alias for older read-only tools
+  return map;
+}

@@ -772,7 +772,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // this sit.
       act: {
         nodes: map.nodes, columns: map.columns, actNumber: snap.actNumber,
-        startIds: map.startIds, bossId: map.bossId,
+        startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds,
       },
       // THE VIEWER — the half that is legitimately different on every screen.
       viewer: {
