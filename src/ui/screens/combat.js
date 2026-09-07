@@ -231,6 +231,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       for (const entry of entries) {
         const item = optionCard({ name: entry.def.name, description: flaskDetailLines(entry.def, { charges: entry.options.charges }).join(' '),
           meta: entry.options.charges == null ? '1 carried potion' : entry.options.charges + ' charges', arrow: true });
+        if (entry.options.chargeKind) {
+          item.dataset.chargeKind = entry.options.chargeKind;
+          item.dataset.charges = String(entry.options.charges);
+        } else item.dataset.potionSlot = String(entry.options.slot);
         item.addEventListener('click', () => { shell.close(); openCombatFlaskMenu(opener, entry.def, entry.options); });
         host.appendChild(item);
       }

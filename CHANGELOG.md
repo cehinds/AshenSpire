@@ -66,6 +66,7 @@ this file refuses at its own start date. They live in `git log`.*
 ## 2026-09-07
 
 - **Dodge explains its outcome** ([#672](https://github.com/cehinds/AshenSpire/pull/672), `0.5.5.44`). Dodge now resolves correctly in the standalone build after removing a circular engine import that interrupted the action after payment. A resolved Dodge now leaves a result button beside the player. Open it to inspect the roll, check, difficulty and base guard; Block modifiers still determine the applied amount. Failed rolls are visible, and the explanation survives skipped or reduced animations. Armoury card scrolling also respects the in-game Reduced motion setting.
+- **Combat groups potions, piles and weapon arts into shared menus** ([#679](https://github.com/cehinds/AshenSpire/pull/679), `0.5.5.45`). Potions stays at the far right, with quantities and explicit Use actions. Discard and Exhaust share an entry but retain separate tabs and counts. Arts shows equipped cards and selects only cards currently in hand. Map Quick Access controls use full-size targets so nearby controls no longer overlap.
 
 ## 2026-09-05
 
