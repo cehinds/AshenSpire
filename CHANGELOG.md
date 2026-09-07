@@ -65,7 +65,7 @@ this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-07
 
-- **Saved boss destinations follow current content safely** ([#712](https://github.com/cehinds/AshenSpire/pull/712), `0.5.5.56`; development fix [#711](https://github.com/cehinds/AshenSpire/pull/711)). Loading validates the original boss behind legacy maps and refuses missing or invalid encounters before play. Named destinations refresh when enemies are renamed or encounter composition changes, preserving paths, selected encounters and RNG state in solo and LAN saves.
+- **Saved boss destinations follow current content safely** ([#712](https://github.com/cehinds/AshenSpire/pull/712), `0.5.5.57`). Loading validates the original boss behind legacy maps and refuses missing or invalid encounters before play. Named destinations refresh when enemies are renamed or encounter composition changes, preserving paths, selected encounters and RNG state in solo and LAN saves. This applies the development fix from PR #711.
 
 - **More enemies, named boss routes and readable combat actions** ([#704](https://github.com/cehinds/AshenSpire/pull/704), `0.5.5.55`). Seven new regular enemies and seven new bosses bring the roster to twenty regular enemies, three elites and ten bosses. Fourteen transparent painted portraits accompany new moves and phases, while the Unity-fork artwork stays intact. Boss routes name their locations, enemy inspectors share move cards, and card actions gain actor- and tag-based motion plus draw/play/pile feedback. Reduced motion and skipped animations retain readable outcomes; unchanged co-op snapshots do not replay arrivals.
 
