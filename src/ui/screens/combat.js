@@ -197,7 +197,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         customization: run.customization,
         spritesEnabled: spritesAreEnabled(),
       });
-      return eligible ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : playFamilyAnimation(actorEl, stage, plan, speed);
+      return eligible && !actorEl.querySelector('.painted-outfit') ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : playFamilyAnimation(actorEl, stage, plan, speed);
     },
   };
 
