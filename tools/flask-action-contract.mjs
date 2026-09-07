@@ -29,12 +29,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL disabled actions always carry a reason/,
       },
       {
-        name: 'the combat screen calls useFlask on selection instead of opening the shared menu',
+        name: 'combat drops the shared action availability plan',
         file: 'src/ui/screens/combat.js',
-        find: 'mountFlaskActionMenu',
-        replace: 'plantedDirectUseFlask',
-        all: true, // the token appears twice in the real file; half a plant is a false NOT-CAUGHT
-        expectRed: /FAIL one shared menu surface is used in and out of combat/,
+        find: "const action = flaskActionPlan({ context: 'combat', canUse, useReason: reason })",
+        replace: "const action = plantedActionPlan({ context: 'combat', canUse, useReason: reason })",
+        all: false,
+        expectRed: /FAIL combat and map menus share action availability/,
       },
       {
         name: 'LAN stops routing the explicit flaskIntent through the host',
@@ -81,14 +81,14 @@ if (actions?.flaskActionPlan) {
   check('selection itself is inert', false);
 }
 
-check('one shared menu surface is used in and out of combat',
-  /mountFlaskActionMenu/.test(component) && /mountFlaskActionMenu/.test(combat) && /mountFlaskActionMenu/.test(map));
+check('combat and map menus share action availability',
+  /mountFlaskActionMenu/.test(component) && /flaskActionPlan/.test(map) && /const action = flaskActionPlan\(\{ context: 'combat', canUse, useReason: reason \}\)/.test(combat) && /mountFlaskActionMenu/.test(map));
 check('menu supports focus navigation, cancel, and back without dispatch',
   /focusFirst|\.focus\(/.test(component) && /Escape|cancel/i.test(component)
     && /onCancel/.test(component) && /remove\(\)/.test(component));
 check('flask selection does not call useFlask directly',
-  /mountFlaskActionMenu/.test(combat)
-    && !/flask-slot[\s\S]{0,500}(?:onConfirm|click)[\s\S]{0,120}useFlask/.test(combat));
+  /if \(action.enabled\) arm\(use, 'useFlask', \{[\s\S]*?onConfirm: \(\) => \{[\s\S]*?else useFlask\(slot, null, chargeKind\)/.test(combat)
+    && /fold.addEventListener\('toggle', moveUse\)/.test(combat));
 check('co-op flask selection also opens the shared menu instead of sending use',
   /mountFlaskActionMenu/.test(coop) && !/coop-flask[\s\S]{0,500}send\(\{ t: 'useFlask'/.test(coop));
 check('co-op transports an explicit flask intent to host authority',

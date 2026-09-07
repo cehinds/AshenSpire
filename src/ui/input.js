@@ -43,6 +43,7 @@ import { topVeil } from './components/veil.js';
 import { PRESS_EVENT, RELEASE_EVENT } from './gesture.js';
 
 const FOCUS_SELECTOR = [
+  'summary',
   'button:not([disabled])',
   '.card',
   '.map-node.reachable',
@@ -390,7 +391,9 @@ function scopeRoot() {
 function focusables() {
   const root = scopeRoot();
   const inModal = root.classList && root.classList.contains('modal-veil');
-  return Array.from(root.querySelectorAll(FOCUS_SELECTOR)).filter(
+  const controls = Array.from(root.querySelectorAll(FOCUS_SELECTOR));
+  if (root.id === 'app') controls.push(...document.querySelectorAll('#tooltip[data-open="true"][role="dialog"] button:not([disabled])'));
+  return controls.filter(
     (el) => visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
   );
 }
@@ -690,7 +693,7 @@ function pressTarget(id) {
   if (!el || !el.isConnected) return null;
   if (!(Number(el.dataset.holdMs) > 0)) return null;
   const root = scopeRoot();
-  if (!root || !root.contains(el)) return null;
+  if (!root || (!root.contains(el) && !(root.id === 'app' && el.closest('#tooltip[data-open="true"][role="dialog"]')))) return null;
   return el;
 }
 

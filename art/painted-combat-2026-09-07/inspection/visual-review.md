@@ -24,3 +24,5 @@ The exported canvases keep a fixed scale per outfit and shared ground anchor. Th
 Reaver menu revision: inspected all four full-body stand exports against the selected sword-rest reference. Stand and detail now share that stance in each outfit; close-up portraits and combat files are unchanged. Asset validation passed (112 combat files and 208 state decodes).
 
 Reaver portrait revision: visually inspected new Base, Vigil and Oathsworn 512px transparent busts alongside the approved Warden portrait. All use an upright helmet, slight right turn, visible shoulders and chest crop. Existing source sheets preserve the earlier portraits. Exported using the repository concept-cutout pipeline; menu full-body and combat art unchanged.
+
+Game integration review: inspected character selection, combat and armory in the live game. Corrected the armory figure overflowing its art well, then verified containment. All 160 shipped images decode. In the standalone build, Slashing Strike reduced the first Blight Hound from 12 to 5 HP and the Reaver returned to idle. Build 0.5.5.87 passes all eight build-version checks and six shipped-file checks.

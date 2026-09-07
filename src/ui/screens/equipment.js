@@ -1,3 +1,5 @@
+import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
+import { paintedPresentation } from '../paintedOutfits.js';
 // src/ui/screens/equipment.js — the Armoury.
 //
 // Three views of the same loadout, because the two obvious layouts are both
@@ -28,7 +30,7 @@ import {
 import { esc, attachTooltip, hideTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
 import { armHold, holdMs, HOLD_POINTER_SLOP } from '../../framework/optionDecision.js';
 import { refuses } from '../components/refusal.js';
-import { playerSprite, equippedFigure } from '../assets.js';
+import { playerSprite, equippedFigure, spritesAreEnabled } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
 import { reducedMotionRequested } from '../motion.js';
@@ -415,6 +417,9 @@ function buildArmoury(L, ui) {
 function figureFor(registries, run, cz) {
   const el = document.createElement('div');
   el.className = 'armoury-figure';
+  const painted = spritesAreEnabled() && !['classic', 'glyph'].includes(cz?.spriteStyle)
+    ? paintedPresentation(run.class, figureSpec(registries, run.loadout, run.class).armourId, 'stand') : null;
+  if (painted) { el.classList.add('painted-armoury'); el.appendChild(painted); return el; }
   const reacts = CFG().spriteReacts;
   const spec = figureSpec(registries, run.loadout, run.class);
   if (reacts === 'none') {
@@ -434,7 +439,7 @@ function figureFor(registries, run, cz) {
  */
 function thumbSrc(piece) {
   return piece.kind === 'armor'
-    ? assetUrl(`assets/equipment/body_${piece.classId}_${piece.id}.webp`)
+    ? assetUrl(armourMenuAsset(piece.classId, piece.id))
     : assetUrl(`assets/equipment/icon_${piece.artKey || piece.id}.webp`);
 }
 

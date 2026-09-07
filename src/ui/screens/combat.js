@@ -13,7 +13,7 @@ import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { tagService } from '../../model/tagService.js';
 import { reducedMotionRequested } from '../motion.js';
 import { stageFor } from '../services/PoseAnimator.js';
-import { attachTooltip, ensureTooltip, hideTooltip, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
+import { attachTooltip, ensureTooltip, hideTooltip, scheduleTooltipClose, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
@@ -42,7 +42,7 @@ import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
-import { flaskTooltipHtml, flaskDetailLines, mountFlaskActionMenu } from '../components/flask.js';
+import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
@@ -55,7 +55,7 @@ import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
-import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, cardGrid, optionCard, prose, flavour } from '../kit/index.js';
+import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -117,16 +117,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           ${html(iconButton({ glyph: '›', label: 'Next card', className: 'hand-page hand-next', attrs: { 'data-focusable': '', hidden: '', 'aria-controls': 'combat-hand' } }))}
         </div>
         <!-- THE ACTION ROW IS A KIT ButtonRow: the Actions receipt as a StatPair,
-             Draw, a shared pile entry, Weapon Arts and Potions. End Turn is the
+             Draw, Discard with Exhaust, and Potions. End Turn is the
              primary with its Keycap and, from the second-beat
-             machinery, its HOLD hint. All six cells stay present at zero so no
+             machinery, its HOLD hint. All five cells stay present at zero so no
              control appears late or shifts the row. -->
         <div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
           ${html(statPair({ key: 'Actions', value: '', attrs: { class: 'energy-orb cell stack lg', role: 'status', 'aria-label': 'Actions remaining' } }))}
           ${html(pileButton('draw', 'Draw'))}
           ${html(button({ label: 'End Turn', weight: 'primary', className: 'end-turn wide tall' }))}
-          ${html(button({ label: 'Piles', className: 'pile spent tall' }))}
-          ${html(button({ label: 'Arts', className: 'combat-arts tall', attrs: { 'aria-label': 'Weapon Arts' } }))}
+          ${html(button({ label: 'Discard', className: 'pile spent tall' }))}
           ${html(button({ label: 'Potions', className: 'combat-potions tall' }))}
         </div>
         <!-- Context hints: the strip is mounted for its readers but stays hidden
@@ -197,7 +196,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         customization: run.customization,
         spritesEnabled: spritesAreEnabled(),
       });
-      return eligible ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : playFamilyAnimation(actorEl, stage, plan, speed);
+      return eligible && !actorEl.querySelector('.painted-outfit') ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : playFamilyAnimation(actorEl, stage, plan, speed);
     },
   };
 
@@ -267,6 +266,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // (stale playback snapshot on a combat-ending play) render inert.
   const handStrip = mountHand($('.hand'), {
     animateArrival: true,
+    fitFan: true,
     registries,
     wireCard: (el, entry) => { if (entry.preview) wireCardInput(el, entry.inst, entry.preview, entry.affordable); },
   });
@@ -285,94 +285,52 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function openPotions(shortcut = null) {
     const opener = $('.combat-potions');
     const entries = potionEntries();
-    if (shortcut != null) {
-      const entry = entries[shortcut];
-      if (entry) openCombatFlaskMenu(opener, entry.def, entry.options);
-      return;
-    }
     let shell;
     shell = openModal({ title: 'Potions', size: 'md', className: 'combat-potion-menu', opener, bodyClassName: 'as-pane', body: host => {
-      for (const entry of entries) {
-        const item = optionCard({ name: entry.def.name, description: flaskDetailLines(entry.def, { charges: entry.options.charges }).join(' '),
-          meta: entry.options.charges == null ? '1 carried potion' : entry.options.charges + ' charges', arrow: true });
-        if (entry.options.chargeKind) {
-          item.dataset.chargeKind = entry.options.chargeKind;
-          item.dataset.charges = String(entry.options.charges);
-        } else item.dataset.potionSlot = String(entry.options.slot);
-        item.addEventListener('click', () => { shell.close(); openCombatFlaskMenu(opener, entry.def, entry.options); });
-        host.appendChild(item);
-      }
+      entries.forEach((entry, index) => {
+        const { def, options } = entry;
+        const { slot = null, chargeKind = null, remaining, charges } = options;
+        const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
+        const reason = remaining <= 0 ? 'No charges remaining' : !canUse ? 'Wait for your turn' : '';
+        const action = flaskActionPlan({ context: 'combat', canUse, useReason: reason }).actions.find(row => row.id === 'use');
+        const use = button({ label: 'Use', disabled: !action.enabled, className: 'potion-use', attrs: { 'aria-label': 'Use ' + def.name } });
+        const fold = el('details', { class: 'armoury-card-row potion-fold' });
+        if (chargeKind) { fold.dataset.chargeKind = chargeKind; fold.dataset.charges = String(charges); }
+        else fold.dataset.potionSlot = String(slot);
+        const summary = optionCard({ tag: 'summary', name: def.name,
+          art: flaskPresentation(def, { showName: false }),
+          description: flaskDetailLines(def, { charges }).join(' '),
+          meta: charges == null ? '1 carried potion' : charges + ' charges', trail: [use], arrow: true });
+        const detail = detailCard({ eyebrow: 'Potion', name: def.name + ' details',
+          line: def.textTemplate || '', meta: def.targeted ? 'Choose an enemy after Use.' : 'Applies to your character.',
+          children: [flavour(charges == null ? '1 carried potion' : charges + ' charges remaining'), reason ? flavour(reason) : null] });
+        fold.append(summary, detail);
+        const moveUse = () => {
+          if (fold.open) {
+            for (const sibling of host.querySelectorAll('.potion-fold')) if (sibling !== fold) sibling.open = false;
+            detail.appendChild(use);
+          } else summary.querySelector('.r-trail').appendChild(use);
+        };
+        fold.addEventListener('toggle', moveUse);
+        use.addEventListener('click', event => { event.stopPropagation(); event.preventDefault(); });
+        if (action.enabled) arm(use, 'useFlask', {
+          ctx: { targeted: !!def.targeted },
+          question: 'Use ' + def.name + '? ' + remaining + ' remaining.', confirmLabel: 'USE',
+          onConfirm: () => {
+            // Recheck the live combat before committing a menu snapshot.
+            if (busy || combat.result || combat.phase !== 'player') return;
+            shell.close();
+            if (def.targeted) {
+              selectedFlask = slot; selected = null; selfArm = null;
+              render(); focusTargeting();
+            } else useFlask(slot, null, chargeKind);
+          },
+        });
+        host.appendChild(fold);
+        if (index === shortcut) { fold.open = true; moveUse(); }
+      });
       if (!entries.length) host.appendChild(flavour('No potions carried.'));
     } });
-  }
-
-  function openWeaponArts() {
-    const opener = $('.combat-arts');
-    const arts = run.deck.filter(inst => ['weaponArt', 'technique'].includes(inst.equipmentRole));
-    let shell;
-    shell = openModal({ title: 'Weapon Arts', size: 'xl', className: 'combat-art-menu', opener, bodyClassName: 'as-pane', body: host => {
-      host.appendChild(prose('Inspect your equipped arts. Drawn cards use the same selection and targeting rules as your hand. Learn additional arts at traders; purchases are unavailable during combat.'));
-      const grid = cardGrid([], { class: 'grid' });
-      for (const inst of arts) {
-        const wrap = document.createElement('section'); wrap.className = 'combat-art-choice';
-        const inHand = combat.piles.hand.find(card => card.instanceId === inst.instanceId);
-        let preview = null;
-        if (inHand) { try { preview = previewCard(combat, inst.instanceId); } catch {} }
-        const affordable = preview && combat.player.energy >= (preview.costIsX ? 0 : preview.cost) && combat.player.mana >= preview.manaCost && combat.player.stamina >= (preview.staminaCost || 0) && !isUnplayable(inst);
-        const allowed = !!affordable && !busy && !combat.result && combat.phase === 'player';
-        wrap.appendChild(renderCard(registries, inst, preview ? { small: true, preview } : { small: true }));
-        const reason = !inHand ? 'Not in hand' : !affordable ? 'Cannot afford or play this card' : !allowed ? 'Wait for your turn' : 'Select in hand';
-        const choose = button({ label: reason, disabled: !allowed, className: 'choose-weapon-art', attrs: { 'data-instance-id': inst.instanceId } });
-        choose.addEventListener('click', () => {
-          shell.close();
-          // Use the existing input handler, never dispatch an out-of-pile card.
-          const card = [...app.querySelectorAll('.hand .card')].find(el => el.dataset.instanceId === inst.instanceId);
-          if (card) { card.focus({ preventScroll: true }); card.click(); }
-        });
-        wrap.appendChild(choose); grid.appendChild(wrap);
-      }
-      if (!arts.length) grid.appendChild(flavour('No equipped weapon arts.'));
-      host.appendChild(grid);
-    } });
-  }
-
-  function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1, charges = null, useActionId = null } = {}) {
-    const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
-    const useReason = remaining <= 0 ? 'No charges remaining'
-      : busy ? 'Wait for the current action to finish'
-        : combat.result ? 'Combat is already over' : combat.phase !== 'player' ? 'Wait for your turn' : '';
-    const plan = flaskActionPlan({ context: 'combat', canUse, useReason });
-    mountFlaskActionMenu(anchor, {
-      def,
-      plan,
-      charges,
-      useActionId,
-      onCancel: () => {},
-      onAction: (actionId) => {
-        if (actionId !== 'use') return;
-        if (def.targeted) {
-          selectedFlask = selectedFlask === slot ? null : slot;
-          selected = null;
-          selfArm = null;
-          render();
-          if (selectedFlask != null) focusTargeting();
-        } else {
-          useFlask(slot, null, chargeKind);
-        }
-      },
-      // The menu is the selection boundary; the explicit Use row still reads
-      // the shared second-beat rule rather than inventing a screen-local rule.
-      wireAction: (row, button, invoke) => {
-        if (row.id !== 'use' || !row.enabled) return false;
-        arm(button, 'useFlask', {
-          ctx: { targeted: !!def.targeted },
-          question: `Use ${def.name}? ${remaining} charge${remaining === 1 ? '' : 's'} remaining.`,
-          confirmLabel: 'USE',
-          onConfirm: invoke,
-        });
-        return true;
-      },
-    });
   }
 
   // Entering targeting mode: move the focus cursor onto an enemy so keyboard /
@@ -547,7 +505,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       + `<div class="tt-combatant-line"><b>HP</b> ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</div>`
       + `<div class="tt-combatant-line"><b>Poise</b> ${esc(poise?.value ?? '—')}/${esc(poise?.max ?? '—')}</div>`
       + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`
-      + '<div class="ti-detail">Tap <b>ⓘ</b> or press <b>I</b> for the full read.</div>';
+      + '<div class="ti-detail">Inspect for the full read · I</div>';
   }
 
   /**
@@ -558,12 +516,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
    * active effect — `combatantDetailBody`, the same sections the edge tray
    * renders, so the two can never drift.
    */
-  function openCombatantDoor(subject) {
+  function openCombatantDoor(subject, opener = document.activeElement) {
     if (!subject?.name) return;
     hideTooltip();
     openModal({
       size: 'md',
       className: 'combatant-door',
+      opener,
       eyebrow: subject.subtitle || 'Combatant',
       title: subject.name,
       closeLabel: `Close ${subject.name}`,
@@ -572,26 +531,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       primary: button({ label: 'Close', weight: 'primary', attrs: { 'data-focusable': 'true' } }),
       footSize: 'short',
     });
-  }
-
-  // A physical keyboard has I; a touch screen needs a visible, single-tap
-  // equivalent. Keep this control separate from the combatant frame's click:
-  // that click may target a card or flask, while inspection must never spend
-  // a turn. The same door and subject feed both paths so their detail cannot
-  // drift.
-  function combatantInspectControl(role, entity) {
-    const subject = combatantSubject(role, entity);
-    const control = iconButton({
-      glyph: 'ⓘ',
-      label: `Inspect ${subject.name}`,
-      className: 'combatant-inspect-control',
-      attrs: { 'aria-haspopup': 'dialog' },
-    });
-    control.addEventListener('click', (event) => {
-      event.stopPropagation();
-      openCombatantDoor(combatantSubject(role, entity));
-    });
-    return control;
   }
 
   function renderedContentRect(el) {
@@ -622,12 +561,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (role === 'enemy' && !entity.alive) return false;
     const card = renderedContentRect(box.querySelector('.combatant-card'));
     if (!card) return false;
+    const inspect = button({ label: 'Inspect', attrs: { 'aria-label': `Inspect ${combatantSubject(role, entity).name}`, 'aria-haspopup': 'dialog' } });
+    inspect.addEventListener('click', (event) => {
+      event.stopPropagation();
+      openCombatantDoor(combatantSubject(role, entity), box);
+    });
+    inspect.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') box?.focus({ preventScroll: true });
+    });
     showTooltipForRect(card, combatantContextTooltip(combatantSubject(role, entity)), {
       intent: 'above',
       align: 'center',
       clear: [box.querySelector('.intent'), app.querySelector('.topbar.combat-hud')],
       appearance: { variant: 'combatant-context', maxWidthRem: 21 },
-      autoHideMs: tooltipPlacement.tokens.autoFadeMs,
+      target: box,
+      action: inspect,
     });
     return true;
   }
@@ -665,6 +613,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function wireEnemyContext(box, enemy) {
     ensureTooltip();
     box.classList.add('inspectable');
+    box.tabIndex = -1;
     box.dataset.focusable = '';
     box.tabIndex = -1;
     box.setAttribute('role', 'button');
@@ -679,7 +628,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     box.addEventListener('pointerleave', () => {
       if (selectedEnemyId === enemy.id) return;
       clearTimeout(combatantTooltipDelayTimer);
-      restoreSelectedEnemyContext(enemy.id);
+      scheduleTooltipClose(box, restoreSelectedEnemyContext);
     });
     box.addEventListener('gpfocus', (event) => {
       if (childAnswers(box, event)) return;
@@ -690,22 +639,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (childAnswers(box, event)) return;
       if (selectedEnemyId === enemy.id) return;
       clearTimeout(combatantTooltipDelayTimer);
-      restoreSelectedEnemyContext(enemy.id);
+      scheduleTooltipClose(box, restoreSelectedEnemyContext);
     });
     box.addEventListener('keydown', (event) => {
+      if (event.target !== box) return;
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       box.click();
     });
   }
-  // The player's half of the same door. Deliberately NOT a copy of
-  // wireEnemyContext: the player is never a context selection (nothing to
-  // restore on leave) and never a target (no role, no tabIndex, no
-  // data-focusable — the armed-card branch in renderPlayer owns those, and
-  // publishing a second, permanent focus stop would reorder the controller
-  // cursor). What is left is the glance itself: hover, the focus cursor, and
-  // on touch a tap, on the same clock the enemies use.
+  // The player remains reachable by the controller for inspection. Arming a
+  // self-target card adds confirmation semantics to that same focus stop.
   function wirePlayerContext(box, player) {
+    box.tabIndex = -1;
+    box.dataset.focusable = '';
+    box.setAttribute('aria-label', 'Player information');
     ensureTooltip();
     box.classList.add('inspectable');
     box.setAttribute('aria-describedby', 'tooltip');
@@ -720,7 +668,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const close = (event) => {
       if (childAnswers(box, event)) return;
       clearTimeout(combatantTooltipDelayTimer);
-      restoreSelectedEnemyContext();
+      scheduleTooltipClose(box, restoreSelectedEnemyContext);
     };
     box.addEventListener('pointerenter', open);
     box.addEventListener('pointerleave', close);
@@ -1165,7 +1113,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       sprite: playerSprite(run.customization || {}, run.class, figure.armourId),
       blockBadge: blockBadge(p, { tooltips: false }),
       meters: meterBars(p, { tooltips: false }),
-      trailing: [combatantInspectControl('player', p), ...trailing],
+      trailing,
     });
     wirePlayerContext(box, p);
     // When a self/buff card is armed, the player is a confirmable target.
@@ -1249,7 +1197,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         blockBadge: blockBadge(enemy, { tooltips: false }),
         name: nm,
         meters: meterBars(enemy, { tooltips: false }),
-        trailing: [combatantInspectControl('enemy', enemy), statusRow(enemy)],
+        trailing: [statusRow(enemy)],
       });
       box.dataset.stature = statureFor(registries, def.id);
       if (enemy.alive) {
@@ -1392,7 +1340,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // without any screen tracking the dressing.
     if (endTurnBeat) endTurnBeat.refresh();
     $('.pile.draw .sp-v').textContent = combat.piles.draw.length;
-    $('.pile.spent').innerHTML = '<span>Piles</span><small>D:' + combat.piles.discard.length + ' E:' + combat.piles.exhaust.length + '</small>';
+    $('.pile.spent').innerHTML = '<span>Discard ' + combat.piles.discard.length + '</span><small>Exhaust ' + combat.piles.exhaust.length + '</small>';
 
     $('.pile.draw').setAttribute('aria-label', `Draw pile, ${combat.piles.draw.length}`);
     $('.pile.spent').setAttribute('aria-label', `Discard ${combat.piles.discard.length}; Exhaust ${combat.piles.exhaust.length}. Open piles`);
@@ -1967,7 +1915,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   $('.pile.draw').addEventListener('click', showDraw);
   $('.pile.spent').addEventListener('click', showSpent);
   $('.combat-potions').addEventListener('click', () => openPotions());
-  $('.combat-arts').addEventListener('click', openWeaponArts);
 
   // THE BOTTOM ROW SAYS WHAT IT IS (Constantine, 2026-09-04: "no tool tips on
   // bottom row for end turn, draw, end turn, discard and exhaust"). Every
@@ -1982,7 +1929,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     + `<div class="ti-detail">Tap to look through it. When it empties, the discard pile is shuffled back in.</div>`);
   attachTooltip($('.pile.spent'), () => '<div class="tt-title">Discard and Exhaust</div>Separate views and counts. Discard can reshuffle; exhausted cards remain out for this fight.');
   attachTooltip($('.combat-potions'), () => '<div class="tt-title">Potions</div>Choose a healing, mana or carried potion. Only Use spends it.');
-  attachTooltip($('.combat-arts'), () => '<div class="tt-title">Weapon Arts</div>Inspect equipped techniques and weapon arts. Only cards currently in your hand can be selected.');
   attachTooltip($('.end-turn'), () => `<div class="tt-title">End Turn</div>`
     + `Hand off to the enemies, then draw a fresh hand.`
     + `<div class="ti-detail">Block expires at the start of your next turn. `
