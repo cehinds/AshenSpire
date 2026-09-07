@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-689",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Maps preserve distinct boss destinations",
+    "detail": "Acts with multiple boss encounters assign named terminal choices beyond their guaranteed rest. Each destination keeps its encounter through saves, LAN play and simulations. Compact terminal placement keeps the choices visible on phones, and co-op tooltips identify them. Invalid saved destination references are rejected at loading. Older maps retain their original boss without rerolling; single-boss acts retain their existing paths.",
+    "build": "0.5.5.52",
+    "pullRequest": 689,
+    "url": "https://github.com/cehinds/AshenSpire/pull/689"
+  },
+  {
     "id": "pr-703",
     "date": "2026-09-07",
     "group": "2026-09-07",
