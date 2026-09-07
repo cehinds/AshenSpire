@@ -32,6 +32,18 @@ test('a single-boss pool preserves generated geometry and map RNG', () => {
   }
 });
 
+test('three and four terminal choices use adjacent centered columns instead of the map edges', () => {
+  for (const count of [3, 4]) {
+    const registries = createRegistries({ ...singleBundle, encounters: [...singleBundle.encounters, ...additions.slice(0, count - 1)] });
+    const graph = buildActMap(registries, createRng(54), 1, { columns: 7 });
+    const cols = graph.bossIds.map(id => graph.nodes[id].col);
+    assert.equal(cols.length, count);
+    assert.deepEqual(cols, Array.from({ length: count }, (_, i) => Math.floor((7 - count) / 2) + i));
+    assert.equal(cols.at(-1) - cols[0], count - 1);
+    assert.deepEqual(graph.nodes[graph.shrineId].next, graph.bossIds);
+  }
+});
+
 test('seeded terminal choices are distinct, all reachable through the guaranteed rest, with no dead ends', () => {
   const seen = new Set();
   for (let seed = 1; seed <= 80; seed++) {

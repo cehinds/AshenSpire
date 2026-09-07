@@ -422,8 +422,11 @@ export function assignBossDestinations(map, destinations) {
   const original = map.nodes[map.bossId];
   if (!shrine || shrine.type !== 'shrine' || !original || original.type !== 'boss') throw new Error('Map needs its pre-boss rest and terminal');
   delete map.nodes[map.bossId];
+  // Keep terminal choices adjacent around the shrine. Spreading a small pool
+  // across the entire map width hides the outer choices on phone cameras.
+  const firstColumn = Math.floor((map.columns - destinations.length) / 2);
   const terminals = destinations.map((destination, index) => {
-    const col = destinations.length === 1 ? original.col : Math.round(index * (map.columns - 1) / (destinations.length - 1));
+    const col = destinations.length === 1 ? original.col : firstColumn + index;
     const id = `n${original.floor}_${col}`;
     const node = { ...original, id, col, next: [], encounterId: destination.encounterId, destinationLabel: destination.label };
     map.nodes[id] = node;
