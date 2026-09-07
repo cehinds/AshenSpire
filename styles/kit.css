@@ -294,7 +294,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* The settings variant: same grammar, hairline between, no hover fill — a
    settings row is read, not chosen. It may wrap its control under the label
    when the pane is narrow, and it never clips a hint. */
-.as-row.setting { padding-inline: 0; border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
+.as-row.setting { padding: var(--modal-inset, 1.4rem); border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
 .as-row.setting:hover { background: transparent; }
 .as-row.setting:last-child { border-bottom: 0; }
 .as-row.setting > .as-labelstack { flex: 1 1 18rem; }
@@ -1163,7 +1163,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* An open reveal drops UNDER the whole row: the face and the trail keep their line. */
 .as-row.setting > .as-row-fold .disc-reveal { order: 2; }
 .as-row.setting:has(> .as-row-fold) { align-items: flex-start; }
-.disc-face > .as-row { padding: 0; min-height: 0; width: 100%; gap: 0.75rem; }
+.disc-face > .as-row { width: 100%; gap: 0.75rem; }
 .disc-face > .as-row > .as-labelstack { flex: 1 1 auto; }
 .disc-face > .as-row .ls-label { color: var(--gold); font: 600 1.5rem/1.2 var(--font-display); letter-spacing: 0.03em; }
 .disc-face > .as-row .ls-hint { font-family: var(--font-body); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1213,11 +1213,19 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .as-option .od, .as-option .om, .as-face .od, .as-face .om { overflow-wrap: anywhere; }
 .as-option .ob > .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
 /* ═══ FACE HOST — an option whose whole content is one face element ════════ */
-/* The host stays bare so the face owns the padding and can paint the whole
-   card (a hold fill, a drag ghost); the face is the OptionCard's grammar. */
+/* The host stays bare so its one child owns the padding and can paint the
+   whole card (a hold fill, a drag ghost). Both supported children — Face and
+   Row — use the same balanced inset; a hosted Row must not dissolve all the
+   way to the border. */
 .as-option.hosts-face { padding: 0; }
 .as-face { display: flex; align-items: center; gap: 1.5rem; width: 100%; min-width: 0; min-height: var(--tap-floor); padding: 1.28rem 1.5rem; border-radius: inherit; text-align: left; }
+.as-option.hosts-face > .as-row { width: 100%; min-height: var(--tap-floor); padding: 1.28rem 1.5rem; }
 .as-option.compact.hosts-face > .as-face { padding: 0.75rem 1.2rem; gap: 1rem; }
+.as-option.compact.hosts-face > .as-row { min-height: 5rem; padding: 0.75rem 1.2rem; gap: 1rem; }
+/* Primary stats keep this compact face in creation, allocation, and Armoury.
+   Two text lines are reserved even when a short summary happens to fit on one,
+   so a narrow INT or CON summary cannot make one card taller than its peers. */
+.as-option.cc-primary-stat.hosts-face > .as-row { min-height: 7rem; padding: 0.75rem 1.2rem; gap: 1rem; }
 .as-face > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
 .as-face > .ob { flex: 1 1 8rem; }
 .as-face > .r-trail { flex: 0 1 auto; margin-left: auto; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0.5rem; max-width: 50%; }
@@ -1322,7 +1330,19 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 .disc-faces > .disc-face .disc-value { white-space: nowrap; }
 .disc-faces > .disc-face .disc-summary { white-space: normal; }
 .disc-faces > .disc-face[data-reveal="open"] { border-color: var(--gold); }
-.disc-face.disc-pick, .disc-face.disc-armament, .disc-face.disc-relic, .disc-face.disc-item, .disc-face.disc-power, .disc-face.disc-stat, .disc-face.disc-attribute, .disc-face.disc-section { flex: 1 1 100%; }
+/* A FULL-WIDTH FACE IS A LINE OF ITS OWN, AND THE `.disc-faces >` IS LOAD-BEARING.
+   Without it this reads `.disc-face.disc-pick` — two classes — and loses on
+   specificity to `.as-options.flow > .as-option { flex: 1 1 auto }` three rules
+   up, which is three. Measured at d51b46a, headless Chromium 1200x730: all four
+   creation sections (CLASS / CHARACTER / STARTING EQUIP / SEED) computed
+   `flex: 1 1 auto` and shared ONE line at top=77, so the one reveal — a
+   `flex: 1 1 100%` row of the same wrap — could only ever land after the whole
+   row. That is Constantine's "instead it just shows up at hte bottom", and it
+   is the SAME defect MR-287 fixed in disclosure.js, re-opened by a stylesheet:
+   the placement code was right and had nothing to place between. Scoped to the
+   child combinator the count is three either way and the later rule — this one
+   — wins, on flow hosts and column hosts alike. */
+.disc-faces > .disc-face.disc-pick, .disc-faces > .disc-face.disc-armament, .disc-faces > .disc-face.disc-relic, .disc-faces > .disc-face.disc-item, .disc-faces > .disc-face.disc-power, .disc-faces > .disc-face.disc-stat, .disc-faces > .disc-face.disc-attribute, .disc-faces > .disc-face.disc-section { flex: 1 1 100%; }
 .disc-reveal > .dc-name { font-size: 1.5rem; }
 .disc-reveal .disc-receipt { display: block; margin-top: 0.4rem; }
 /* ═══ SMITH — body E inside the shell ══════════════════════════════════════ */

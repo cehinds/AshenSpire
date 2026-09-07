@@ -2,8 +2,8 @@
 // projected by SaveSlotSelectionModel; callers only decide what a confirmed
 // exact slot means. The component never reads or mutates save storage.
 //
-// THE DOOR IS THE KIT'S. A slot is an OptionCard (glyph + name + the climb's
-// facts + a state pill), the list is `options`, the delete is the one
+// THE DOOR IS THE KIT'S. A slot is an OptionCard (the slot number + the climb's
+// name + its facts), the list is `options`, the delete is the one
 // IconButton box, the chrome is modalHead + modalFooter, and the review is
 // body C (Title·L + Ornament + DetailCard + prompt). Title's NEW GAME door is
 // built from the same builders below (`slotDoor`), so the two doors cannot
@@ -15,45 +15,99 @@ import { focusElement } from '../input.js';
 import { armHold, beatArmer } from '../../framework/optionDecision.js';
 import { hideTooltip } from './tooltip.js';
 import {
-  el, html, modalHead, modalFooter, button, iconButton, optionCard, optionRow, options, decide, detailCard, ornament, pill,
+  el, html, modalHead, modalFooter, button, iconButton, optionCard, optionRow, options, decide, detailCard, ornament,
 } from '../kit/index.js';
 
 let activeSelector = null;
 
-/** slotFacts(summary) → the one line of facts a slot card and its review share. */
-export function slotFacts(summary) {
-  return summary ? `Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP` : 'No climb saved here';
+/**
+ * slotFacts(summary, { canStart }) → the one line of facts a slot card and its
+ * review share.
+ *
+ * `canStart` is whether an empty row leads anywhere. The in-run Quick Menu opens
+ * this same list with no `onRequestNew`, and an empty slot there is a dead end —
+ * activation reaches `requestLoad`, which turns back on a slot with no save. So
+ * that door states the fact and the title's doors make the offer.
+ */
+export function slotFacts(summary, { canStart = true } = {}) {
+  if (summary) return `Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP`;
+  return canStart ? 'Start a new climb here' : 'No climb saved here';
+}
+
+/**
+ * The same facts as words. The printed line leans on `·` and `34/50`, which a
+ * screen reader either swallows or spells out; this is what it should hear.
+ */
+function slotFactsSpoken(summary, options) {
+  return summary
+    ? `Act ${summary.actNumber}, floor ${summary.floor}, ${summary.hp} of ${summary.maxHp} HP`
+    : slotFacts(null, options);
 }
 
 /**
  * slotOption({ slot, summary, selected, selectable, deletable, hint }) → the
- * OptionCard row for one save slot, with the delete box (or its spacer) so
- * every row ends on the same edge.
+ * OptionCard row for one save slot, with its delete laid over the card's own
+ * right edge when there is a save to delete.
+ *
+ * THE ROW SAYS EACH THING ONCE (Constantine, 2026-09-06). It used to say
+ * "empty" four ways — a ▢ that read as an unticked checkbox, "Empty" as the
+ * card's name, a `Slot n` chip, and an EMPTY pill — while the slot number, the
+ * only thing telling three rows apart, was the smallest text on the row. Worse,
+ * a slot with a save in it did not fit: the trailing pill squeezed the facts
+ * onto two lines and truncated itself to "REA…". So the number is now the
+ * glyph, the name is the climb (or that there is none), and the state is the
+ * line under it — `title-save-slot-state` marks that line rather than a pill
+ * repeating what it says.
+ *
+ * WHERE THE SEED WENT. Not onto the row: it made an occupied row taller than
+ * the empty ones for a string nobody chooses a slot by — the class and the
+ * act/floor/HP do that. It is on both doors that confirm a load (the title's
+ * review door, the Quick Menu's confirmation), and on the run's own header and
+ * run-info overlay once loaded. A hold-to-load passes none of those, which is
+ * what "hold to load it now" means: the shortcut is the feature, and the seed
+ * is a page-turn away on the other side of it.
  */
-export function slotOption({ slot, summary, selected = false, selectable = true, deletable = false, hint = '' }) {
+export function slotOption({ slot, summary, selected = false, selectable = true, deletable = false, canStart = true, hint = null }) {
   const card = optionCard({
-    glyph: summary ? '▣' : '▢',
-    name: summary ? summary.className : 'Empty',
-    badge: pill({ label: `Slot ${slot}`, attrs: { class: 'title-slot-tag' } }),
-    description: slotFacts(summary),
-    meta: summary ? `Seed ${summary.seedString}` : '',
-    trail: pill({ label: summary ? 'Ready' : 'Empty', on: !!summary, attrs: { class: 'title-slot-state', 'data-component': UI.titleSaveSlotState } }),
+    glyph: String(slot),
+    name: summary ? summary.className : 'Empty slot',
+    description: slotFacts(summary, { canStart }),
     selected,
     disabled: !selectable,
     arrow: false,
-    className: `title-slot-pick${summary ? ' is-filled' : ''}`,
+    className: `title-slot-pick${summary ? ' is-filled' : ' is-vacant'}`,
     attrs: {
       dataset: { slotPick: slot },
-      ...(hint ? { 'aria-label': hint.label } : {}),
+      // The number is drawn in an aria-hidden glyph, so an unlabelled row never
+      // says which slot it is. A label that only said "Slot n" was worse: it
+      // REPLACES the visible text, so a listener lost the class, the act and
+      // the floor — everything a sighted player reads before choosing. The
+      // label is built from what the row shows, plus what the row does.
+      'aria-label': [
+        `Slot ${slot}`,
+        summary ? summary.className : 'Empty slot',
+        slotFactsSpoken(summary, { canStart }),
+        hint?.action,
+      ].filter(Boolean).join('. '),
     },
   });
-  card.querySelector('.ob').classList.add('title-slot-copy');
-  card.querySelector('.ob').dataset.component = UI.titleSaveSlotCopy;
+  const copy = card.querySelector('.ob');
+  copy.classList.add('title-slot-copy');
+  copy.dataset.component = UI.titleSaveSlotCopy;
+  card.querySelector('.og').classList.add('title-slot-num');
+  // The state projection is this line: the climb's facts when there is one,
+  // the invitation to start one when there is not.
+  const state = card.querySelector('.od');
+  state.classList.add('title-slot-state');
+  state.dataset.component = UI.titleSaveSlotState;
+  // No save, no delete — and no reserved column for one either. The button is
+  // positioned over the card, so an occupied row is exactly as wide as an
+  // empty one instead of losing 4rem of its text to a spacer.
   const trailing = deletable
     ? iconButton({ glyph: '✕', label: `Delete slot ${slot}`, className: 'title-slot-delete', attrs: { dataset: { slotDelete: slot, component: UI.titleSaveSlotDelete } } })
-    : iconButton({ glyph: '✕', label: 'No save to delete', className: 'title-slot-delete', attrs: { dataset: { slotSpacer: '' }, tabindex: '-1', disabled: true, 'aria-hidden': 'true', style: { visibility: 'hidden' } } });
+    : null;
   const rowEl = optionRow(card, trailing, {
-    class: `title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}`,
+    class: `title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}${deletable ? ' has-delete' : ''}`,
     'data-component': UI.titleSaveSlot,
   });
   return rowEl;
@@ -222,16 +276,23 @@ export function openSaveSlotSelector({
     focus('[data-title-action="review-load"], [data-title-action="review-new"]');
   };
 
+  // Whether an empty row leads anywhere here. The in-run Quick Menu opens this
+  // list with no way to start a climb, and a row must not offer what its door
+  // cannot do.
+  const canStart = typeof onRequestNew === 'function';
+
   const slotRows = (selection) => selection.children
     .filter((child) => child.component === UI.titleSaveSlot)
     .map(({ properties }) => {
       const { slot, selectable, selected } = properties;
       const record = slots.find((candidate) => candidate.slot === slot);
       const summary = record?.summary || null;
-      const hint = summary
-        ? { label: `Slot ${slot}, ${summary.className}. Tap to review this save; hold to load it now.` }
-        : { label: `Slot ${slot}, empty. Tap to start a new game here.` };
-      return slotOption({ slot, summary, selected, selectable, deletable: !!(onDelete && summary), hint });
+      // Only what the row DOES — slotOption says what it holds, so the two do
+      // not have to agree about wording that is already on screen.
+      // Only what the row DOES, and only when that is not already the line it
+      // shows: an empty slot's visible "Start a new climb here" IS the action.
+      const hint = summary ? { action: 'Tap to review this save; hold to load it now' } : null;
+      return slotOption({ slot, summary, selected, selectable, deletable: !!(onDelete && summary), canStart, hint });
     });
 
   const render = () => {

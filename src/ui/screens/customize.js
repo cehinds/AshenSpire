@@ -260,7 +260,11 @@ export function mountCustomize(app, {
   }
 
   function resetAttributes() {
-    state.attributes = { ...classAttributePreset(registries, state.classId, POINTBUY) };
+    // Opening Assign Points is a refund boundary, not a return to the authored
+    // class suggestion. Every stat goes back to the mode's baseline and the
+    // complete bonus pool becomes available again (SPEC §7.2).
+    const baseline = pointbuyMode().baseline;
+    state.attributes = Object.fromEntries(orderedAttributes(registries).map((def) => [def.id, baseline]));
     previewAttributes = { ...state.attributes };
   }
 
@@ -296,7 +300,13 @@ export function mountCustomize(app, {
   }
 
   function previewRun() {
-    const attributes = state.attributeMode === POINTBUY && previewAttributes
+    // While the allocation door is open, the refunded baseline is deliberately
+    // ten points short of a legal saved run. Build the background preview from
+    // the last complete allocation (or the authored preset) until all ten have
+    // been assigned; the editor rows still read state.attributes directly.
+    const previewIsComplete = state.attributeMode === POINTBUY && previewAttributes
+      && attributeAllocationProblems(registries, state.classId, POINTBUY, previewAttributes).length === 0;
+    const attributes = previewIsComplete
       ? previewAttributes
       : classAttributePreset(registries, state.classId, state.attributeMode);
     return createRunState({
@@ -306,7 +316,7 @@ export function mountCustomize(app, {
       startingArmourId: state.startingArmourId,
       startingRelicId: state.startingRelicId,
       attributeMode: state.attributeMode,
-      ...(state.attributeMode === POINTBUY && previewAttributes ? { attributes: { ...previewAttributes } } : {}),
+      ...(previewIsComplete ? { attributes: { ...previewAttributes } } : {}),
       profileMeta: meta,
     });
   }
@@ -354,7 +364,6 @@ export function mountCustomize(app, {
       modes.appendChild(modeChoiceButton(mode, state.attributeMode === mode.id, () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
-          if (!state.attributes) resetAttributes();
           openPointBuy();
         } else {
           closePointBuy();
@@ -387,6 +396,7 @@ export function mountCustomize(app, {
 
   function openPointBuy() {
     closePointBuy({ restoreFocus: false });
+    resetAttributes();
     pointBuyReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     customizeScreen.inert = true;
     const mode = pointbuyMode();
