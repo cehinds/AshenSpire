@@ -173,11 +173,26 @@ async function main() {
       const deadline = Date.now() + 15000;
       let seen = false;
       while (Date.now() < deadline) {
-        if (await evaluate(`!!document.querySelector('.class-sprite')`).catch(() => false)) { seen = true; break; }
+        // CHARACTER CREATION IS FOUR CLOSED SECTIONS, so the figure is IN THE
+        // DOM long before it has a size: `mountCustomize` builds the whole
+        // flow as one `details` disclosure and opens `class`, and the figure
+        // well lives in `character`. Waiting on `.class-sprite` alone read a
+        // 0x0 frame — every geometry row divided by zero and came back `null`
+        // through CDP, which serialises NaN and Infinity as null and so looked
+        // like a missing measurement rather than a closed section. So the
+        // section is OPENED, the way a player opens it, and the wait is for a
+        // frame with a height rather than a frame that merely exists.
+        if (surface.shot === 'customize') {
+          await evaluate(`document.querySelector('[data-face="character"]')?.click(), 1`).catch(() => false);
+        }
+        const height = await evaluate(
+          `(document.querySelector('.class-sprite')?.getBoundingClientRect().height ?? 0)`,
+        ).catch(() => 0);
+        if (height > 1) { seen = true; break; }
         await wait(120);
       }
       const tag = surface.name.toUpperCase();
-      ok(seen, `${tag} DRAWS A FIGURE`, surface.why);
+      ok(seen, `${tag} DRAWS A FIGURE WITH A SIZE`, surface.why);
       if (!seen) continue;
       await wait(250);
       const read = await evaluate(`(${readMedallion.toString()})()`);
