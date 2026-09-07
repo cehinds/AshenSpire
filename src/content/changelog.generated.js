@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-712",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Saved boss destinations follow current content safely",
+    "detail": "Loading validates the original boss behind legacy maps and refuses missing or invalid encounters before play. Named destinations refresh when enemies are renamed or encounter composition changes, preserving paths, selected encounters and RNG state in solo and LAN saves. This applies the development fix from PR #711.",
+    "build": "0.5.5.57",
+    "pullRequest": 712,
+    "url": "https://github.com/cehinds/AshenSpire/pull/712"
+  },
+  {
     "id": "pr-704",
     "date": "2026-09-07",
     "group": "2026-09-07",
