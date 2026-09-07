@@ -27,7 +27,7 @@ import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas
 import { evaluate, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
-import { playerWeightClass } from './combat.js';
+import { playerWeightClass } from '../model/combatWeight.js';
 import { isEquipmentComposedInstance } from '../model/loadout.js';
 import { flaskSlotCap, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
