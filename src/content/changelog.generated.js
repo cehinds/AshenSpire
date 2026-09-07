@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-801",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Every weapon gets a card preview",
+    "detail": "Browse all weapons, shields and staves in a searchable gallery using the same painted poker cards as the game. Merchant offers and buy/sell inspection now share those cards while retaining prices, smithing tiers and mounted-card information. The preview test checks every armament at desktop and phone sizes and saves screenshots.",
+    "build": "0.5.5.128",
+    "pullRequest": 801,
+    "url": "https://github.com/cehinds/AshenSpire/pull/801"
+  },
+  {
     "id": "pr-793",
     "date": "2026-09-07",
     "group": "2026-09-07",
