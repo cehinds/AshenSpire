@@ -117,7 +117,29 @@ try {
   await screenshot('merchant-inspection');
   await evaluate("document.querySelector('.modal-close').click()");
   check(await evaluate('JSON.stringify(weaponPreviewRun)') === before, 'merchant close does not transact');
-  check(errors.length===0, `no browser errors: ${errors.join('; ')}`);
+  // Enter the game's real reward flow; inspecting and backing out must not collect.
+  for (const [name, width, height] of [['desktop',1280,1000],['phone',390,844]]) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor:1, mobile:name==='phone' });
+    await send('Page.navigate', { url: `http://localhost:${server.server.address().port}/index.html?shot=reward` });
+    await until("!!document.querySelector('.reward-kind[data-kind=armament]') && typeof window.__spoils==='function'", 'in-game rewards');
+    const original = await evaluate('JSON.stringify(window.__spoils())');
+    await evaluate("document.querySelector('.reward-kind[data-kind=armament]').click()");
+    await until("!!document.querySelector('[data-reward-detail=armament] .equipment-poker-card')", 'reward weapon card');
+    await until("[...document.querySelectorAll('.equipment-poker-card img')].every(i=>i.complete&&i.naturalWidth>0)", 'reward art');
+    await wait(1500); // Let the game's entry transition finish before photographing it.
+    check(await evaluate('JSON.stringify(window.__spoils())')===original, `${name}: reward inspect does not collect`);
+    check(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'), `${name}: reward fits width`);
+    await screenshot(`${name}-game-reward`);
+    await evaluate("document.querySelector('.equipment-poker-explanations summary').click()");
+    check(await evaluate("document.querySelector('.equipment-poker-explanations').open"), `${name}: in-game full text`);
+    await evaluate("document.querySelector('#reward-back').click()");
+    check(await evaluate('JSON.stringify(window.__spoils())')===original, `${name}: reward back does not collect`);
+    await evaluate("document.querySelector('.reward-kind[data-kind=armament]').click();document.querySelector('#reward-detail-take').click()");
+    check(await evaluate("document.querySelector('.reward-kind[data-kind=armament]')?.dataset.state==='taken'"), `${name}: Take collects armament`);
+  }
+  // index.html has no favicon; its browser-generated 404 is unrelated to gameplay.
+  const appErrors = errors.filter(error => !error.includes('/favicon.ico:'));
+  check(appErrors.length===0, `no browser errors: ${appErrors.join('; ')}`);
   console.log(`PASS — ${checks} checks, ${pieces.length} armaments at desktop and phone sizes${output ? `; screenshots: ${output}` : ''}`);
 } finally {
   cdp?.close();

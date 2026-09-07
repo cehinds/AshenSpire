@@ -42,6 +42,7 @@
 // Math.random — a UI pick that desyncs a seeded run is a defect.
 
 import { renderCard } from '../components/card.js';
+import { renderEquipmentInspection } from '../components/equipmentCard.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
@@ -381,15 +382,18 @@ export function mountRewards(app, {
     const isFlask = row.kind === 'flask';
     const takeButton = button({ label: `Take ${isFlask ? 'potion' : 'armament'}`, weight: 'primary', id: 'reward-detail-take' });
     const backButton = button({ label: 'Back', id: 'reward-back', className: 'subtle' });
+    const detailBody = el('div', { class: 'class-row reward-menu' });
+    const armament = !isFlask && registries.equipment.armaments.find(piece => piece.id === row.armamentId);
+    if (armament) detailBody.append(renderEquipmentInspection(registries, armament));
+    else detailBody.innerHTML = `<div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
+      <div class="glyph">${KIND_GLYPHS[row.kind]}</div>
+      <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>
+    </div>`;
     door({
       eyebrow: isFlask ? 'Inspect the potion' : 'Inspect the armament',
       title: isFlask ? 'Potion' : 'Armament',
       attrs: { dataset: { size: 'md', rewardDetail: row.kind } },
-      body: el('div', { class: 'class-row reward-menu', html: `
-        <div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
-          <div class="glyph">${KIND_GLYPHS[row.kind]}</div>
-          <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>
-        </div>` }),
+      body: detailBody,
       foot: modalFooter({ secondary: [backButton], primary: takeButton, className: 'reward-foot', size: 'medium' }),
     });
     app.querySelector('#reward-detail-take').addEventListener('click', () => take(row, row.kind));

@@ -505,6 +505,6 @@ explanation; inspection includes keyboard tooltips and a touch-readable full-tex
 disclosure. Existing equip, drag, compare and navigation behavior remains.
 
 `equipmentCard.renderEquipmentCard` and `renderEquipmentInspection` also serve
-merchant armament offers and buy/sell inspection, and the complete searchable
+merchant armament offers and buy/sell inspection, reward armament inspection, and the complete searchable
 `weapon-cards-preview.html` gallery (#799). Preview validation is
 `node tools/weapon-card-preview.mjs --shots <output-directory>`.
