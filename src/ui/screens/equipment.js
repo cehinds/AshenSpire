@@ -483,7 +483,7 @@ export function pieceChip(registries, piece, { selected }) {
     description: mods.length ? mods.join(' · ') : '—',
     body: el('span', { class: 'tags ec-tags' }, (piece.tags || []).map((t) => tagChip({ label: t }))),
     selected, arrow: false,
-    className: `equip-chip compact rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`,
+    className: `equip-chip ${piece.kind === 'armor' ? 'as-card equipment-armor-card' : 'compact'} rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`,
   });
   card.querySelector('.on').classList.add('ec-name');
   card.querySelector('.od').classList.add('ec-mods');
