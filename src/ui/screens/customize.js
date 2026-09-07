@@ -510,7 +510,7 @@ export function mountCustomize(app, {
     classBox.dataset.view = state.classChoiceView;
     const cards = registries.classes.all().map((cls) => classChoiceCard(cls, {
       selected: cls.id === state.classId,
-      visual: spritesAreEnabled() ? paintedPresentation(cls.id, 'default', 'portrait') || classGlyph(cls.id) : classGlyph(cls.id),
+      visual: classGlyph(cls.id),
       onChoose: () => {
         if (state.classId === cls.id) return;
         state.classId = cls.id; resetClassChoices();
@@ -735,7 +735,7 @@ export function mountCustomize(app, {
     let specimenClassId = state.classId;
     const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => classChoiceCard(cls, {
       selected: cls.id === specimenClassId,
-      visual: spritesAreEnabled() ? paintedPresentation(cls.id, 'default', 'portrait') || classGlyph(cls.id) : classGlyph(cls.id),
+      visual: classGlyph(cls.id),
       onChoose: () => { specimenClassId = cls.id; drawClassChoices(); },
     })));
     drawClassChoices();

@@ -15,7 +15,7 @@ export function paintedPresentation(classId, armourId = 'default', pose = 'stand
   img.src = assetUrl(art.menu[pose]);
   img.alt = `${classId} ${armourId || 'default'}`;
   img.className = 'painted-presentation';
-  img.style.cssText = 'width:100%;height:100%;object-fit:contain;';
+  img.style.cssText = `display:block;width:100%;height:100%;object-fit:contain;object-position:center ${pose === 'portrait' ? 'bottom' : 'center'};`;
   return img;
 }
 

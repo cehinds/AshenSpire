@@ -65,6 +65,8 @@ this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-07
 
+- **Character artwork uses the right pose on each screen** ([#743](https://github.com/cehinds/AshenSpire/pull/743), `0.5.5.92`). Class selection uses bottom-aligned close-up portraits and restores the colored class icons beside descriptions. Character customization uses detail poses. Armor choices, armory figures, smithing and mounting use the full-body menu pose for every outfit.
+
 - **Painted outfits now appear throughout the game** ([#740](https://github.com/cehinds/AshenSpire/pull/740), `0.5.5.87`). All sixteen outfits have matching character-selection portraits, menu figures, armory previews and compact combat animations. Reaver uses the reviewed sword-rest stance and advance, overhead windup, cleave and recovery sequence. Classic and Sigil remain available. Painted weapons are part of the artwork; equipment icons and stats still describe the actual loadout.
 - **Reaver artwork follows the selected poses** ([#735](https://github.com/cehinds/AshenSpire/pull/735), `0.5.5.78`). All four Reaver outfits share the approved sword-rest menu and idle stance, the three selected attack poses and matching chest-up portraits. Earlier source sheets remain available in the art collection. This receipt records the artwork revision; game integration follows in #740.
 
