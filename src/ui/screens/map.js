@@ -180,7 +180,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // The legend belongs to the corner it opens from — the ? in the zoom bar — so
   // it is mounted with the board's chrome, not on the HUD.
   const board = mountMapBoard(app.querySelector('.mapscreen'), {
-    act: { nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId },
+    act: { nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds },
     showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,
@@ -396,6 +396,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
 
 function nodeTooltip(type, node, revealed) {
   let t = `<div class="tt-title">Floor ${node.floor}</div>${nodeBlurb(type)}`;
+  if (type === 'boss' && node.destinationLabel) t += `<br><strong>${esc(node.destinationLabel)}</strong>`;
   if (revealed) t += '<br><i>Revealed by the Sealstone Key.</i>';
   return t;
 }
