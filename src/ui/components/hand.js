@@ -48,6 +48,7 @@
 // if a live toggle ever ships, callers must re-mount (or this must re-derive)
 // on flip; the same warning rides handAxis.js.
 
+import { reducedMotionRequested } from '../motion.js';
 import { renderCard } from './card.js';
 import { armInspect } from '../../framework/optionDecision.js';
 import { stickTooltip } from './tooltip.js';
@@ -61,7 +62,7 @@ import { keycap, pill } from '../kit/index.js';
 // asserting a property nobody writes.
 export const FAN_LIFT_PROP = '--fan-lift';
 
-export function mountHand(handEl, { registries, wireCard = null }) {
+export function mountHand(handEl, { registries, wireCard = null, animateArrival = false }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
   // value here would silently turn the gesture off.
@@ -72,6 +73,8 @@ export function mountHand(handEl, { registries, wireCard = null }) {
   // DOM stays byte-identical across the collapse.
   applyHandExemption(handEl);
 
+  // Snapshot clients remount this strip; arrivals are opt-in for persistent mounts.
+  let previousCards = new Set();
   let handEls = []; // the rendered cards, in hand order (filled by render)
   let handFan = []; // each card's shipped fan transform, same index
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
@@ -129,6 +132,8 @@ export function mountHand(handEl, { registries, wireCard = null }) {
   }
 
   function render({ cards = [], emptyHtml = null }) {
+    const drawn = new Set(cards.filter(entry => !previousCards.has(entry.inst.instanceId)).map(entry => entry.inst.instanceId));
+    previousCards = new Set(cards.map(entry => entry.inst.instanceId));
     handEl.innerHTML = '';
     handEls = [];
     handFan = [];
@@ -177,6 +182,12 @@ export function mountHand(handEl, { registries, wireCard = null }) {
       const mid = (n - 1) / 2;
       el.style.transform = `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
       el.style.zIndex = i;
+      if (animateArrival && drawn.has(entry.inst.instanceId) && !reducedMotionRequested()) {
+        el.classList.add('card-drawn');
+        el.addEventListener('animationend', event => {
+          if (event.target === el) el.classList.remove('card-drawn');
+        });
+      }
       if (entry.selected) el.classList.add('selected');
       // The spelled-out unavailability reason is VIEWER data (co-op supplies
       // it; solo's player reads live previews and the hint bar instead). When

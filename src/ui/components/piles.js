@@ -55,3 +55,37 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
   done.addEventListener('click', shell.close);
   return shell.veil;
 }
+
+/** One entry, two distinct piles. Viewing never moves or merges any cards. */
+export function openSpentPileModal(registries, piles, opener = document.activeElement) {
+  let active = 'discard';
+  const labels = { discard: 'Discard', exhaust: 'Exhaust' };
+  const paint = () => {
+    const cards = piles[active] || [];
+    const grid = cardGrid(cards.map(inst => renderCard(registries, inst, { small: true })), { class: 'grid' });
+    if (!cards.length) grid.appendChild(flavour('Empty.', { class: 'pile-empty' }));
+    shell.body.replaceChildren(grid);
+    shell.body.setAttribute('aria-labelledby', 'spent-tab-' + active);
+    for (const tab of shell.head.querySelectorAll('[role=tab]')) {
+      const selected = tab.dataset.modalTab === active;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    }
+  };
+  const shell = openModal({ title: 'Discard and Exhaust', size: 'xl', className: 'pile-modal spent-pile-modal',
+    showMenuButton: false, opener,
+    tabs: Object.keys(labels).map(id => ({ id, label: labels[id] + ' (' + (piles[id]?.length || 0) + ')', selected: id === active })),
+    onTab: id => { active = id; paint(); }, bodyClassName: 'pile-body',
+  });
+  shell.body.id = 'spent-pile-panel'; shell.body.setAttribute('role', 'tabpanel');
+  for (const tab of shell.head.querySelectorAll('[role=tab]')) {
+    tab.id = 'spent-tab-' + tab.dataset.modalTab; tab.setAttribute('aria-controls', shell.body.id);
+    tab.addEventListener('keydown', event => {
+      if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+      event.preventDefault(); event.stopPropagation();
+      active = event.key === 'Home' ? 'discard' : event.key === 'End' ? 'exhaust' : active === 'discard' ? 'exhaust' : 'discard';
+      paint(); shell.head.querySelector('[data-modal-tab=' + active + ']').focus();
+    });
+  }
+  paint(); return shell;
+}

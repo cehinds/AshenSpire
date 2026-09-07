@@ -185,6 +185,79 @@ function tipHtml(entry) {
 const MOUNTS = new WeakMap();
 
 /**
+ * Render one independent entry with the platform's fold structure.
+ *
+ * A primary stat owns its own inspector; it is not a choice sharing one
+ * movable inspector with its peers. Keeping summary and DetailCard together
+ * under `<details>` gives those cards the same structure as Armoury card rows,
+ * while returning the regular disclosure controller keeps open-state policy in
+ * callers rather than growing a second behavior implementation.
+ */
+function mountDetailsDisclosure(host, rows) {
+  if (rows.length !== 1 || rows[0].disclosure !== 'face') {
+    throw new Error('details disclosure structure requires exactly one face entry');
+  }
+  const entry = rows[0];
+  host.replaceChildren();
+
+  const card = document.createElement('details');
+  card.className = `disc-fold-row disc-${entry.kind}`;
+  card.dataset.reveal = 'closed';
+
+  const summary = document.createElement('summary');
+  summary.className = `as-option noarrow disc-face disc-${entry.kind}${entry.face?.node ? ' hosts-face' : ''}${entry.face?.compact ? ' compact' : ''}`;
+  summary.dataset.face = entry.key;
+  summary.dataset.disclosure = entry.disclosure;
+  summary.dataset.reveal = 'closed';
+  summary.setAttribute('aria-expanded', 'false');
+  if (entry.face?.node) summary.appendChild(entry.face.node);
+  else summary.innerHTML = faceHtml(entry);
+
+  const panel = detailCard({ attrs: { class: 'disc-reveal', hidden: true } });
+  if (entry.reveal?.node) panel.appendChild(entry.reveal.node);
+  else panel.innerHTML = `<div class="disc-words">${revealHtml(entry)}</div>`;
+  card.append(summary, panel);
+  host.appendChild(card);
+
+  let openKey = null;
+  function close() {
+    openKey = null;
+    card.open = false;
+    card.dataset.reveal = 'closed';
+    summary.dataset.reveal = 'closed';
+    summary.setAttribute('aria-expanded', 'false');
+    summary.classList.remove('is-selected');
+    panel.hidden = true;
+    panel.removeAttribute('data-reveal-for');
+  }
+  function open(key) {
+    if (key !== entry.key) return;
+    openKey = key;
+    card.open = true;
+    card.dataset.reveal = 'open';
+    summary.dataset.reveal = 'open';
+    summary.setAttribute('aria-expanded', 'true');
+    summary.classList.add('is-selected');
+    panel.hidden = false;
+    panel.dataset.revealFor = key;
+  }
+  function setValue(key, value) {
+    if (key !== entry.key || entry.face?.node) return;
+    entry.face.value = value;
+    summary.innerHTML = faceHtml(entry);
+  }
+
+  summary.addEventListener('click', (event) => {
+    event.preventDefault();
+    hideTooltip();
+    if (openKey === entry.key) close(); else open(entry.key);
+  });
+  if (tipHtml(entry)) attachTooltip(summary, () => tipHtml(entry));
+
+  return { open, close, setValue, reflow() {}, get openKey() { return openKey; } };
+}
+
+/**
  * mountDisclosure(host, entries, { moreLabel, armFace? })
  *   → { open(key), close(), setValue(key, value), openKey }
  *
@@ -196,8 +269,11 @@ const MOUNTS = new WeakMap();
  * adopted into the panel at mount and the panel starts `hidden`, so the
  * arrival screen is short and one tap opens it. Default folded — his word.
  */
-export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = null, layout = 'flow' } = {}) {
+export function mountDisclosure(host, entries, {
+  moreLabel = 'more', armFace = null, layout = 'flow', structure = 'shared',
+} = {}) {
   const rows = [...(entries || [])];
+  if (structure === 'details') return mountDetailsDisclosure(host, rows);
   const faces = rows.filter((entry) => entry.disclosure === 'face');
   const behind = rows.filter((entry) => entry.disclosure !== 'face');
   // The panel is a CHILD of `.disc-faces`, not its sibling: it is a full-width

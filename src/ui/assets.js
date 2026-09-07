@@ -6,6 +6,7 @@
 // with a CREDITS.md row — no game-code changes.
 
 import { balance } from '../content/balance.js';
+import { PAINTED_ENEMIES, EXPANSION_ENEMIES } from '../content/enemyArt.js';
 import { medallionPct } from '../content/classArtAnchors.js';
 import { DEFAULT_SPRITE_STYLE, SPRITE_STYLES } from '../model/spriteStyle.js';
 import { assetUrl } from './assetmap.js';
@@ -76,6 +77,10 @@ export function spriteMirror(artFaces, side = 'enemy') {
  * placeholder, so content can ship art-less.
  */
 export function enemySprite(enemyDef) {
+  const unity = PAINTED_ENEMIES.includes(enemyDef.id);
+  const expansion = EXPANSION_ENEMIES.includes(enemyDef.id);
+  const painted = unity || expansion;
+  const artFaces = painted ? 'left' : enemyDef.artFaces;
   const tier = SIZE_TIERS[enemyDef.size || 'medium'];
   const tint = enemyDef.tint || 'var(--line-soft)';
   const el = document.createElement('div');
@@ -127,16 +132,34 @@ export function enemySprite(enemyDef) {
   // the player layer carries no such marker precisely because it has no
   // per-asset answer to record.
   facing.className = 'facing';
-  facing.dataset.facing = spriteMirror(enemyDef.artFaces) ? 'mirrored' : 'as-drawn';
+  facing.dataset.facing = spriteMirror(artFaces) ? 'mirrored' : 'as-drawn';
   facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;'
     + 'justify-content:center;'
-    + (spriteMirror(enemyDef.artFaces) ? 'transform:scaleX(-1);' : '');
+    + (spriteMirror(artFaces) ? 'transform:scaleX(-1);' : '');
   const img = document.createElement('img');
-  img.src = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
+  const original = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
+  img.src = unity ? assetUrl(`assets/enemies-unity/painted_${enemyDef.id}.png`)
+    : expansion ? assetUrl(`assets/enemies-expansion/${enemyDef.id}.png`) : original;
   img.alt = enemyDef.name || enemyDef.id;
   img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
     `filter:drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
-  img.addEventListener('error', placeholder);
+  if (painted) {
+    img.dataset.artSource = unity ? 'unity' : 'expansion';
+    // Align the common foot line without cropping or stretching the frame.
+    img.style.width = 'auto';
+    img.style.height = '100%';
+    img.style.maxWidth = 'none';
+    img.style.transform = 'translateY(5.208333%)';
+  }
+  img.addEventListener('error', () => {
+    if (img.dataset.artSource) {
+      delete img.dataset.artSource;
+      img.style.width = '100%'; img.style.height = '100%'; img.style.maxWidth = ''; img.style.transform = '';
+      facing.dataset.facing = spriteMirror(enemyDef.artFaces) ? 'mirrored' : 'as-drawn';
+      facing.style.transform = spriteMirror(enemyDef.artFaces) ? 'scaleX(-1)' : '';
+      img.src = original;
+    } else placeholder();
+  });
   facing.appendChild(img);
   el.appendChild(facing);
   return el;

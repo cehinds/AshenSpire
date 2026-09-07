@@ -16,6 +16,8 @@ import { passiveMult, passiveFlag } from '../model/registries.js';
 import { relicInRewardPool } from '../model/schemas.js';
 import { eventChoiceRequirementMet, EVENT_CHOICE_HISTORY_KIND } from '../model/quests.js';
 import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
+import { eligibleWeaponArts } from '../model/armamentTrading.js';
+import { carriedIds } from '../model/loadout.js';
 
 // ---------------------------------------------------------------------------
 // Encounters
@@ -217,7 +219,23 @@ export function buildShopStock(registries, rng, run) {
   }
 
   const removeCost = bal.removeBase + bal.removeStep * (run.removesPurchased || 0);
-  return { cards, relics, flasks, removeCost };
+  const owned = new Set(carriedIds(run.loadout));
+  const armamentPool = (registries.equipment.armaments || [])
+    .filter((piece) => !owned.has(piece.id) && bal.armamentCost?.[piece.rarity]);
+  const armaments = [];
+  for (let i = 0; i < (bal.armamentStock || 0) && armamentPool.length; i++) {
+    const piece = rng.pick('shop', armamentPool);
+    armamentPool.splice(armamentPool.indexOf(piece), 1);
+    armaments.push({ id: piece.id, cost: rng.int('shop', ...bal.armamentCost[piece.rarity]) });
+  }
+  const artPool = eligibleWeaponArts(registries);
+  const weaponArts = [];
+  for (let i = 0; i < (bal.weaponArtStock || 0) && artPool.length; i++) {
+    const id = rng.pick('shop', artPool);
+    artPool.splice(artPool.indexOf(id), 1);
+    weaponArts.push({ id, cost: rng.int('shop', ...bal.weaponArtCost) });
+  }
+  return { cards, relics, flasks, armaments, weaponArts, removeCost };
 }
 
 // Shop card pool = the class pool + neutral colorless cards (StS-faithful:
@@ -225,9 +243,10 @@ export function buildShopStock(registries, rng, run) {
 // The status/curse colorless are rarity 'special' and excluded here.
 const SHOP_RARITIES = ['common', 'uncommon', 'rare'];
 function rollShopCards(registries, rng, classId, count) {
+  const artIds = new Set(eligibleWeaponArts(registries));
   const colorless = registries.cards
     .all()
-    .filter((c) => c.class === 'colorless' && SHOP_RARITIES.includes(c.rarity))
+    .filter((c) => c.class === 'colorless' && SHOP_RARITIES.includes(c.rarity) && !artIds.has(c.id))
     .map((c) => c.id);
   const pool = [...registries.classes.get(classId).cardPool, ...colorless];
   const out = [];
