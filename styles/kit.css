@@ -2444,3 +2444,17 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .combatant-inspector-body .as-eyebrow { font-size: max(1rem, calc(12px / var(--ui-zoom, 1))); }
 
 :is(.modal, .as-tip) .as-statrow .sr-hint { font-size: inherit; line-height: 1.45; overflow-wrap: anywhere; }
+
+/* Readable HUD ink without scaling the surrounding layout or hit targets. */
+.shared-hud .hud-info-row .ck { font-size: max(0.93rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.302rem; letter-spacing: 0; }
+.shared-hud .hud-info-row .cv { font-size: max(1.42rem, calc(13px / var(--ui-zoom, 1))); line-height: 1; }
+.shared-hud .resplate .m-label { font-size: max(1.05rem, calc(11px / var(--ui-zoom, 1))); }
+.shared-hud .resplate .m-value { font-size: max(1.15rem, calc(11px / var(--ui-zoom, 1))); }
+.shared-hud .hud-actions .as-iconbtn { font-size: max(1.8rem, calc(18px / var(--ui-zoom, 1))); }
+#tooltip[data-tooltip-variant='combatant-context'] { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.1; }
+#tooltip[data-tooltip-variant='combatant-context'] .tt-title { font-size: inherit; line-height: 1.1; }
+#tooltip[data-tooltip-variant='combatant-context'] .tt-combatant-line { font-size: inherit; }
+#tooltip[data-tooltip-variant='combatant-context'] .ti-detail { font-size: max(1.28rem, calc(12px / var(--ui-zoom, 1))); line-height: 1.2; margin-top: 0.3rem; padding-top: 0.3rem; }
+#tooltip[data-tooltip-variant='combatant-context'] > .as-btn { font-size: max(1.2rem, calc(13px / var(--ui-zoom, 1))); line-height: 1.15; }
+.combatant .intent.as-pill.lg { font-size: max(1.2rem, calc(14px / var(--ui-zoom, 1))); line-height: 1; padding-block: 0.2rem; letter-spacing: 0; }
+.combatant .intent.as-pill.lg .as-glyph { font-size: inherit; }
