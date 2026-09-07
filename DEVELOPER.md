@@ -9,6 +9,54 @@ For how work is branched, reviewed, and merged, see the
 
 ## Run & test
 
+Boss destinations are assigned when an act map is created. `bossIds` lists the
+terminal nodes, each carrying its saved `encounterId`; `bossId` remains a
+compatibility alias. Resolve the chosen terminal through
+`bossEncounterForNode()` in solo, LAN and simulations. Legacy maps without this
+metadata resolve their original act boss without consuming RNG. Run
+`node tests/branchingBosses.test.mjs` for topology, deterministic selection,
+LAN choice and real save-manager round trips.
+Loading validates explicit and legacy boss references before accepting a save.
+Existing destination labels refresh from current content without changing the
+saved graph's paths, encounter identities, selection or RNG counters. Run
+`node --test tests/legacyBossReferences.test.mjs tests/bossDestinationLabels.test.mjs`
+for content-update regressions in solo and LAN restoration.
+Enemy expansion checks: `node tests/expandedRoster.test.mjs` covers all 46 new
+moves, phases, seeded encounter reachability and ten named boss locations.
+`node tests/branchingBosses.test.mjs` covers map and save compatibility.
+`node tools/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
+using trusted desktop and phone inputs, including OS and in-game Reduced motion.
+Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
+existing weighted move selector; rendering never chooses or rerolls an intent.
+Attack motion uses the actor/action, tag, intent and neutral precedence in
+`src/content/actionAnimations.js`. Keep those mappings separate from mechanics.
+
+Painted enemy art is selected in `src/content/enemyArt.js` and rendered through
+the shared `enemySprite()` asset function. The twelve PNGs in
+`assets/enemies-unity/` are unchanged imports from the Unity fork; retain their
+384px square canvas and common foot anchor when replacing them. Keep the
+original sprite files as fallback assets. See CREDITS.md and the extraction
+manifest beside the images for provenance.
+The fourteen new frames in `assets/enemies-expansion/` use the same canvas,
+left-facing orientation and foot anchor (192, 364). They are transparent idle
+paintings; runtime motion supplies their action feedback, not authored attack
+strips. Preserve both imported Unity art and the original fallback assets.
+
+Armament trading uses `src/model/armamentTrading.js` for inert quotes and atomic
+commits. Stored ownership, equipped sets, capacity, currency and stock revisions
+are rechecked at commit. Selling retains upgrades, mount history and permanent
+discovery; it removes only card instances granted by the sold item. Legacy shops
+without the new shelves retain empty shelves instead of rerolling their stock.
+Run `node --test tests/armamentTrading.test.mjs` for purchase, sale, stale quote,
+mounting and save round-trip coverage. Weapon-art packages are authored in
+`content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
+Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
+desktop and phone potion quantities, cancellation, weapon-art targeting and
+separate pile tabs. `node tools/screenreach.mjs --only 390x650` checks reachable
+controls across screens. Potion selection uses the shared flask action plan;
+only explicit Use may spend a charge. The map Quick Access faces retain real
+44px target boxes to prevent neighboring invisible hit regions overlapping.
+
 ```
 # play (no build step — any static server, or open index.html directly)
 npx serve .            # then http://localhost:3000
@@ -95,6 +143,40 @@ see. **Whether this should instead be a real YAML parse is an open dependency
 question for Constantine** (this tree has no dependencies, and `linkcheck.mjs`
 enforces that by refusing bare specifiers); the refusal is what makes the gap
 loud in the meantime.
+
+## Receipts: nothing is promoted without one (`tools/receipts.mjs`)
+
+Every merged pull request must be named by an entry in
+[CHANGELOG.md](CHANGELOG.md) before that work is promoted from `dev` to `test`.
+The changelog you can read inside the game is a projection of that file (#189),
+so a merge with no receipt is missing for a **player**, not only for the
+repository.
+
+```
+node tools/receipts.mjs --check              # origin/test..HEAD — the promotion
+node tools/receipts.mjs --check --since dev  # any other range
+node tools/receipts.mjs --selftest           # the known-bad corpus
+```
+
+`.github/workflows/receipts.yml` runs both on every push to `dev`. It is bounded
+at the promotion target on purpose: the question is never "does every merge in
+history have a receipt" — the changelog's own header records which stretch is
+deliberately unreconstructed — but "is *this* promotion complete", asked while
+the answer can still be acted on. It does not run on pull requests, where the
+answer would be about merges the author did not make.
+
+The tool checks **coverage**, not truth: whether an entry exists naming each
+merged pull request. Whether the prose is accurate is not machine-checkable, and
+whether the ordinal on it is the one committed at that merge belongs to
+`tools/about-changelog.mjs`, which owns the file's shape. If CHANGELOG.md ever
+yields no pull-request references at all, that is this tool's own syntax having
+moved out from under it, and it exits **2 (harness could not run)** rather than
+reporting every merge as unreceipted.
+
+Writing one is in the file's own header: a receipt for already-landed work names
+the ordinal **as committed at that merge**; a receipt shipping in its own pull
+request is written one ahead, then `node tools/about-changelog.mjs --write` and a
+rebuild converge the box to the receipt.
 
 ## The four layers (dependencies point down only)
 
@@ -476,3 +558,9 @@ zero crashes, and the Herald completes full 3-act runs even naively.
 4. **Goreblood** freezes Poise thresholds as well as Bleed (the
    `meterMaxGrowthDisabled` flag is global by design — strictly a buff; the
    card text says so honestly).
+
+## Dodge outcome presentation
+
+The engine emits dodgeRolled once per resolved roll. The combat screen retains its last player receipt before animation playback, so skipping playback cannot discard the explanation. The shared dodgeReceipt formatter labels temporaryGuard as base guard; ordinary blockGained events remain responsible for the applied Block amount. The persistent result uses the standard modal shell and focus return; a live region announces new outcomes.
+
+Regression coverage: node tests/framework.test.mjs checks weight-class costs, deterministic outcomes, atomic resource refusal, stale activation and ordinary Block absorption. Browser evidence must additionally exercise the result modal, keyboard focus and normal/reduced-motion playback on desktop and phones.

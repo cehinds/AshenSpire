@@ -8,6 +8,8 @@ import { sfx } from './sfx.js';
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn } from './services/PoseAnimator.js';
+import { reducedMotionRequested } from './motion.js';
+import { dodgeReceipt } from './components/dodgeReceipt.js';
 
 const STEP_MS = 80;
 
@@ -414,7 +416,7 @@ function banner(layer, text, cls = '') {
 function shake(combatEl) {
   if (!combatEl) return;
   // Honor the Screen shake setting (and reduced motion, which also drops it).
-  if (document.body.classList.contains('no-shake') || document.body.classList.contains('reduced-motion')) return;
+  if (document.body.classList.contains('no-shake') || reducedMotionRequested()) return;
   combatEl.classList.remove('shake');
   void combatEl.offsetWidth; // restart animation
   combatEl.classList.add('shake');
@@ -544,14 +546,6 @@ function groupBeats(events) {
 // Debug lifecycle counters (window.__fx) — cheap, used to diagnose stuck-busy
 // reports: every timeline must end in exactly one finish (done/watchdog/flush).
 const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
-
-function reducedMotionRequested() {
-  const appSetting = typeof document !== 'undefined'
-    && document.body.classList.contains('reduced-motion');
-  const operatingSystem = typeof matchMedia === 'function'
-    && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  return appSetting || operatingSystem;
-}
 
 export function playTimeline(events, ctx, done) {
   const speed = ANIM_SPEEDS[animSpeed];
@@ -743,6 +737,9 @@ export function playTimeline(events, ctx, done) {
 
 function visualFor(e, beatKind) {
   switch (e.type) {
+    case 'dodgeRolled':
+      // The following blockGained event owns the numeric gain.
+      return (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.sourceId), dodgeReceipt(e).outcome, 'small');
     case 'damageDealt':
       // One event owns both visible channels: unsigned guard consumed, then
       // only the HP residual as damage. Paired results sit side-by-side without

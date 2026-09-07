@@ -8,4 +8,9 @@ export const act3Encounters = [
   { id: 'a3_ashChoir', enemies: ['ashRevenant', 'valkyrieShade'], weight: 20, pool: 'normal', act: 3, floorBand: { min: 1, max: 4 }, targetBand: { min: 13, max: 17 } },
   { id: 'a3_eliteWyrmLord', enemies: ['wyrmLord'], weight: 1, pool: 'elite', act: 3, floorBand: { min: 5, max: 5 }, targetBand: { min: 18, max: 19 } },
   { id: 'a3_bossRotValkyrie', enemies: ['blightedValkyrie'], weight: 1, pool: 'boss', act: 3, floorBand: { min: 6, max: 6 }, targetBand: { min: 19, max: 20 } },
+  {"id":"a3_cinderNest","enemies":["cinderMantis"],"weight":15,"pool":"normal","act":3,"floorBand":{"min":1,"max":4},"targetBand":{"min":14,"max":17}},
+  {"id":"a3_eclipseChapel","enemies":["eclipseCantor"],"weight":15,"pool":"normal","act":3,"floorBand":{"min":2,"max":4},"targetBand":{"min":14,"max":17}},
+  {"id":"a3_bossFurnaceSaint","enemies":["furnaceSaint"],"weight":1,"pool":"boss","act":3,"floorBand":{"min":6,"max":6},"targetBand":{"min":19,"max":20}},
+  {"id":"a3_bossHollowAstronomer","enemies":["hollowAstronomer"],"weight":1,"pool":"boss","act":3,"floorBand":{"min":6,"max":6},"targetBand":{"min":19,"max":20}},
+  {"id":"a3_bossAshheartDragon","enemies":["ashheartDragon"],"weight":1,"pool":"boss","act":3,"floorBand":{"min":6,"max":6},"targetBand":{"min":19,"max":20}},
 ];

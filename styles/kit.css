@@ -99,8 +99,8 @@ button.danger:hover, .as-btn.danger:hover { background: rgba(212, 98, 46, 0.08);
 button.primary.danger, .as-btn.primary.danger { background: rgba(212, 98, 46, 0.14); border-color: var(--danger); color: var(--parchment); }
 button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212, 98, 46, 0.24); }
 
-/* IconButton — ONE box for every header action, close included. A LENGTH, not
-   a floor: --iconbtn-size (base.css), the same on every component. */
+/* IconButton — ONE tap-safe box for every header action, close included. A
+   LENGTH, not a floor: --iconbtn-size (base.css), the same on every component. */
 .as-iconbtn, .modal-iconbtn, .modal-close {
   display: inline-flex; align-items: center; justify-content: center;
   width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
@@ -116,6 +116,18 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 }
 .as-iconbtn:hover, .modal-iconbtn:hover, .modal-close:hover,
 .as-iconbtn:focus-visible, .modal-iconbtn:focus-visible, .modal-close:focus-visible { border-color: var(--gold); color: var(--gold); outline: none; background: var(--panel); }
+
+/* Close keeps the full accessible hit target above, while its visible square
+   is 75% of that target. Every modal inherits the same smaller corner mark. */
+.modal-close { position: relative; background: transparent; border-color: transparent; }
+.modal-close > .modal-close-face {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 75%; height: 75%; pointer-events: none;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2);
+}
+.modal-close:hover, .modal-close:focus-visible { background: transparent; border-color: transparent; }
+.modal-close:hover > .modal-close-face, .modal-close:focus-visible > .modal-close-face { border-color: var(--gold); }
+.modal-close:focus-visible > .modal-close-face { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
 
 /* ButtonRow — a grid of EQUAL tracks; the row is min(box, n × step). */
 .as-btnrow, .modal-btnrow {
@@ -282,7 +294,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* The settings variant: same grammar, hairline between, no hover fill — a
    settings row is read, not chosen. It may wrap its control under the label
    when the pane is narrow, and it never clips a hint. */
-.as-row.setting { padding-inline: 0; border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
+.as-row.setting { padding: var(--modal-inset, 1.4rem); border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
 .as-row.setting:hover { background: transparent; }
 .as-row.setting:last-child { border-bottom: 0; }
 .as-row.setting > .as-labelstack { flex: 1 1 18rem; }
@@ -756,6 +768,16 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .combatant .nm-inspect { cursor: help; min-height: var(--tap-floor); display: flex; flex-direction: column; justify-content: center; }
 .combatant .nm-inspect:hover .ls-label, .combatant .nm-inspect:focus-visible .ls-label { color: var(--gold); }
 .combatant .nm-inspect:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1); }
+/* The keyboard's Inspect action has a literal touch counterpart. This sits in
+   the frame rather than its name so the full read is discoverable without a
+   hover hint, and remains a 44px-class tap target through the kit IconButton. */
+.combatant .combatant-inspect-control {
+  position: absolute; top: 0; right: 0; z-index: 4;
+  border-color: color-mix(in srgb, var(--gold) 65%, transparent);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  color: var(--gold); font-size: 1rem;
+}
+.combatant .combatant-inspect-control:active { transform: scale(0.94); }
 /* The full read, in a door: the same sections the edge tray renders. */
 .combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
 
@@ -938,7 +960,14 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .armoury-character-stats { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; min-height: 0; overflow: auto; }
 /* An attribute face and a power face are label + value, one per line. */
 .armoury-character-stats .disc-faces > .disc-face .on { font: 500 1.41rem/1.3 var(--font-body); letter-spacing: 0; color: var(--parchment); }
-.armoury-character-stats .disc-faces > .disc-face .od { font-size: 1.2rem; }
+.armoury-character-stats .disc-faces > .disc-face .od {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 1.2rem;
+}
+.armoury-character-stats .disc-faces > .disc-face > .r-trail,
+.armoury-character-stats .disc-faces > .disc-face > .r-trail > .as-status {
+  flex: 0 0 auto; min-width: 2ch; white-space: nowrap;
+}
 /* THE POSITIONS: one OptionCard per position; the occupied one opens its
    DetailCard under itself. */
 .equip-slots.as-options { gap: 0.75rem; }
@@ -954,6 +983,7 @@ details.armoury-position-card > .as-detailcard { border-radius: 0 0 var(--r-3) v
 .armoury-position-grid-group { display: grid; gap: 0.6rem; min-width: 0; }
 .armoury-position-grid-tiles > .as-options.grid { --opt-min: 9rem; gap: 0.6rem; }
 .armoury-position-grid-card { flex-direction: column; text-align: center; padding: 0.9rem 0.6rem; gap: 0.5rem; }
+.armoury-position-grid-card.is-empty { grid-column: 1 / -1; width: 100%; }
 .armoury-position-grid-card > .ob { align-items: center; }
 .armoury-position-grid-card .on { font-size: 1.3rem; }
 .armoury-position-grid-detail { margin-top: 0.4rem; }
@@ -1047,6 +1077,21 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-menu { max-width: none; width: 100%; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
+.reward-door .reward-row .card.reward-selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold), 0 10px 30px rgba(var(--accent-rgb), 0.28);
+  transform: translateY(-8px) scale(1.06);
+}
+.reward-door .reward-confirm:not(:disabled) {
+  background: color-mix(in srgb, var(--green) 22%, var(--panel));
+  border-color: var(--green);
+  color: var(--parchment);
+}
+.reward-door .reward-confirm:not(:disabled):hover,
+.reward-door .reward-confirm:not(:disabled):focus-visible {
+  background: color-mix(in srgb, var(--green) 34%, var(--panel));
+  border-color: var(--green);
+}
 
 /* ═══ PAGE DOOR — a door that stands on the page, edge to edge ═══════════ */
 /* A PAGE DOOR wears the door's box without the veil (as the event does), in
@@ -1137,12 +1182,30 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* A disclosure host in a settings row dissolves: its face and its reveal
    become the row's own wrap items, so the reveal drops under the whole row
    (trail included) with the row's own gap — the D26 mechanism, unchanged. */
-.as-row.setting > .as-row-fold, .as-row.setting > .as-row-fold > .disc-faces { display: contents; }
+.as-row.setting > .as-row-fold, .as-row.setting > .as-row-fold > .disc-faces,
+.as-row.setting > .as-row-fold > .disc-fold-row { display: contents; }
 .as-row.setting > .as-row-fold .disc-face { flex: 1 1 16rem; min-width: 0; }
 .as-row-fold > .disc-faces > .disc-face { flex: 1 1 100%; }
+.as-row-fold > .disc-fold-row > .disc-face { width: 100%; }
 /* An open reveal drops UNDER the whole row: the face and the trail keep their line. */
 .as-row.setting > .as-row-fold .disc-reveal { order: 2; }
 .as-row.setting:has(> .as-row-fold) { align-items: flex-start; }
+
+/* Attribute allocation is a two-column setting line: the complete stat face
+   owns the flexible column and the stepper owns the fixed column. The reveal
+   alone may take a second line. Its equal inset is intentional — a setting
+   surface must not shave the horizontal padding off the shared Row. */
+.as-row.setting.se-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  padding: 0.7rem;
+}
+.as-row.setting.se-row > .r-trail { grid-column: 2; margin-left: 0; }
+.as-row.setting.se-row > .disc-reveal { grid-column: 1 / -1; }
+.as-row.setting.se-row .disc-face { width: 100%; }
+.as-row.setting.se-row .disc-face > .as-row { flex-wrap: nowrap; }
 .disc-face > .as-row { padding: 0; min-height: 0; width: 100%; gap: 0.75rem; }
 .disc-face > .as-row > .as-labelstack { flex: 1 1 auto; }
 .disc-face > .as-row .ls-label { color: var(--gold); font: 600 1.5rem/1.2 var(--font-display); letter-spacing: 0.03em; }
@@ -1193,11 +1256,19 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .as-option .od, .as-option .om, .as-face .od, .as-face .om { overflow-wrap: anywhere; }
 .as-option .ob > .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
 /* ═══ FACE HOST — an option whose whole content is one face element ════════ */
-/* The host stays bare so the face owns the padding and can paint the whole
-   card (a hold fill, a drag ghost); the face is the OptionCard's grammar. */
+/* The host stays bare so its one child owns the padding and can paint the
+   whole card (a hold fill, a drag ghost). Both supported children — Face and
+   Row — use the same balanced inset; a hosted Row must not dissolve all the
+   way to the border. */
 .as-option.hosts-face { padding: 0; }
 .as-face { display: flex; align-items: center; gap: 1.5rem; width: 100%; min-width: 0; min-height: var(--tap-floor); padding: 1.28rem 1.5rem; border-radius: inherit; text-align: left; }
+.as-option.hosts-face > .as-row { width: 100%; min-height: var(--tap-floor); padding: 1.28rem 1.5rem; }
 .as-option.compact.hosts-face > .as-face { padding: 0.75rem 1.2rem; gap: 1rem; }
+.as-option.compact.hosts-face > .as-row { min-height: 5rem; padding: 0.75rem 1.2rem; gap: 1rem; }
+/* Primary stats keep this compact face in creation, allocation, and Armoury.
+   Two text lines are reserved even when a short summary happens to fit on one,
+   so a narrow INT or CON summary cannot make one card taller than its peers. */
+.as-option.cc-primary-stat.hosts-face > .as-row { min-height: 7rem; padding: 0.75rem 1.2rem; gap: 1rem; }
 .as-face > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
 .as-face > .ob { flex: 1 1 8rem; }
 .as-face > .r-trail { flex: 0 1 auto; margin-left: auto; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0.5rem; max-width: 50%; }
@@ -1234,6 +1305,18 @@ details.as-detailcard[open] > summary { border-bottom: 1px solid var(--line); ma
 .as-glyph.caret { display: inline-block; transition: transform 140ms; }
 details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { .as-glyph.caret { transition: none; } }
+/* Armoury information folds share one non-shrinking, single-line header. */
+.armoury-character-stats > details.character-info-card { flex: 0 0 auto; width: 100%; min-width: 0; }
+details.character-info-card > summary > .character-info-head {
+  height: var(--tap-floor); min-height: var(--tap-floor); flex-wrap: nowrap;
+}
+details.character-info-card > summary > .character-info-head > .character-info-label {
+  flex: 0 1 auto; min-width: 0; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+details.character-info-card > summary > .character-info-head > .as-status {
+  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+details.character-info-card > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* ═══ STEPPER — a −/count/+ unit of two tap-floor buttons ═════════════════ */
 .as-stepper { display: inline-flex; align-items: center; gap: 0.75rem; flex: 0 0 auto; }
 .as-stepper > .as-btn { width: var(--tap-floor); min-width: var(--tap-floor); padding: 0; font-size: 1.8rem; line-height: 1; }
@@ -1302,7 +1385,44 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 .disc-faces > .disc-face .disc-value { white-space: nowrap; }
 .disc-faces > .disc-face .disc-summary { white-space: normal; }
 .disc-faces > .disc-face[data-reveal="open"] { border-color: var(--gold); }
-.disc-face.disc-pick, .disc-face.disc-armament, .disc-face.disc-relic, .disc-face.disc-item, .disc-face.disc-power, .disc-face.disc-stat, .disc-face.disc-attribute, .disc-face.disc-section { flex: 1 1 100%; }
+/* A self-contained fold keeps its face and reveal as siblings inside one
+   semantic card, matching the Armoury's card-row grammar. */
+details.disc-fold-row { min-width: 0; }
+details.disc-fold-row > summary { list-style: none; }
+details.disc-fold-row > summary::-webkit-details-marker { display: none; }
+details.disc-fold-row[open] > summary { border-radius: var(--r-3) var(--r-3) 0 0; border-color: var(--gold); }
+details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3); border-top: 0; }
+/* ASSIGN POINTS IS NARROWER THAN THE COLUMN THE RULE ABOVE WAS WRITTEN FOR.
+   `white-space: normal` lets a summary read in full where there is room, which
+   is right in Character Creation. Inside the Assign Points overlay there is not
+   room: Intelligence's hint — the longest of the five — wraps to a second line,
+   which takes its inner row from 29.41px to 43.44px and its card from the 44px
+   tap floor the other four sit exactly on to 45.44px. Five cards, four at 44
+   and one at 45.44, is no longer the one compact family this surface promises,
+   and tools/uniform-stat-foldouts.mjs has been red on dev for it since #647.
+   Measured in headless Chromium at 390x844.
+
+   The compact face row already ellipsises by default (`.disc-face > .as-row
+   .ls-hint`, above); this restores that default on the one surface too narrow
+   to honour the wrap, which is what `.armoury-character-stats` does for the
+   same content. Scoped to the overlay on purpose — Character Creation is wide
+   enough to wrap without overflowing, and keeps the full sentence. */
+.cc-stat-overlay .disc-faces > .disc-face .disc-summary {
+  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* A FULL-WIDTH FACE IS A LINE OF ITS OWN, AND THE `.disc-faces >` IS LOAD-BEARING.
+   Without it this reads `.disc-face.disc-pick` — two classes — and loses on
+   specificity to `.as-options.flow > .as-option { flex: 1 1 auto }` three rules
+   up, which is three. Measured at d51b46a, headless Chromium 1200x730: all four
+   creation sections (CLASS / CHARACTER / STARTING EQUIP / SEED) computed
+   `flex: 1 1 auto` and shared ONE line at top=77, so the one reveal — a
+   `flex: 1 1 100%` row of the same wrap — could only ever land after the whole
+   row. That is Constantine's "instead it just shows up at hte bottom", and it
+   is the SAME defect MR-287 fixed in disclosure.js, re-opened by a stylesheet:
+   the placement code was right and had nothing to place between. Scoped to the
+   child combinator the count is three either way and the later rule — this one
+   — wins, on flow hosts and column hosts alike. */
+.disc-faces > .disc-face.disc-pick, .disc-faces > .disc-face.disc-armament, .disc-faces > .disc-face.disc-relic, .disc-faces > .disc-face.disc-item, .disc-faces > .disc-face.disc-power, .disc-faces > .disc-face.disc-stat, .disc-faces > .disc-face.disc-attribute, .disc-faces > .disc-face.disc-section { flex: 1 1 100%; }
 .disc-reveal > .dc-name { font-size: 1.5rem; }
 .disc-reveal .disc-receipt { display: block; margin-top: 0.4rem; }
 /* ═══ SMITH — body E inside the shell ══════════════════════════════════════ */
@@ -1404,7 +1524,7 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
    grid's last row, and the ash is the gate's ambience (the title's embers). */
 .startup-gate {
   position: relative; isolation: isolate;
-  display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center;
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center;
   gap: 1.2rem; padding: 2.4rem; min-height: 100%; overflow: hidden; cursor: pointer;
   background:
     linear-gradient(180deg, rgba(11, 9, 6, 0.34), rgba(9, 7, 5, 0.96)),
@@ -1417,7 +1537,11 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 .startup-gate.is-revealing { opacity: 0; pointer-events: none; }
 .reduced-motion .startup-gate { transition-duration: 140ms; transition-timing-function: linear; }
 .startup-gate > .as-titlemenu { position: relative; z-index: 1; align-self: center; animation: startupMarkIn 520ms ease-out both; }
-.startup-gate > .as-titlemenu .tm-name { text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38); }
+.startup-gate > .as-titlemenu .tm-name {
+  font-size: clamp(3.2rem, 12cqi, 5.4rem);
+  text-indent: 0;
+  text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38);
+}
 .startup-gate > .as-titlemenu .tm-sub { margin-top: 0.75rem; }
 .startup-gate > .as-titlemenu > .as-ornament { margin-top: 1.5rem; }
 .startup-gate > .as-titlemenu .tm-foot { margin-top: 3rem; color: var(--parchment); opacity: 0.82; white-space: normal; animation: startupPromptPulse 1.8s ease-in-out infinite alternate; }
@@ -1675,6 +1799,10 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 /* A stack of meters, one under the other, tight. */
 .as-meters { display: flex; flex-direction: column; gap: 0.3rem; width: 100%; min-width: 0; }
 .as-meters.tight { gap: 2px; }
+/* Main Vitals use the shared screen-pixel token. Dividing by the page zoom
+   makes the authored 3px separation land as 3px on glass at every UI scale;
+   model strips retain the kit's tighter local stack. */
+.resbars[data-surface="main"] { gap: calc(var(--hud-resource-row-gap-px) / var(--ui-zoom, 1)); }
 
 /* ═══ SLOT — a square control that holds one thing: art, a count, a key ═══ */
 /* Flasks, relics, quick items. The box is the IconButton's (a control) or `sm`
@@ -1783,12 +1911,21 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .as-cluster.wrap { flex-wrap: wrap; }
 .as-cluster.stack { flex-direction: column; align-items: stretch; }
 .as-cluster.end { margin-left: auto; }
-/* QUICK ACCESS stays a 2 × 2 square, but its tiles are smaller than the global
-   IconButton. The transparent ::after keeps the authored tap floor around each
-   visible 32px square; the 12px gaps keep those hit regions from overlapping. */
-.shared-hud { --hud-quick-tile-size: 3.2rem; --hud-belt-tile-face-size: 2.8rem; }
+/* QUICK ACCESS now carries only Armoury and Menu — Crimson and Azure moved
+   into the potion belt — so the two remaining controls take the full
+   meter-stack height instead of staying a compact 2 x 2 square. The max()
+   keeps the guarantee that a face never falls below the authored tap floor,
+   and the transparent ::after still carries that floor around each face.
+   hud-quick-compact.mjs, which measures this edge against the SP row, is
+   ALREADY red on dev (15 findings) before this change; it reads 12 with this
+   change and 12 with the old 1.8rem face, so the size is not what breaks it. */
+.shared-hud {
+  --hud-quick-tile-size: max(2.8rem, var(--tap-floor));
+  --hud-quick-tile-gap: 0.45rem;
+  --hud-belt-tile-face-size: 2.8rem;
+}
 .shared-hud .hud-control-grid,
-.shared-hud .hud-control-grid > .as-cluster { gap: 1.2rem; }
+.shared-hud .hud-control-grid > .as-cluster { gap: var(--hud-quick-tile-gap); }
 .shared-hud .hud-control-grid :is(.as-iconbtn, .as-slot) {
   position: relative;
   width: var(--hud-quick-tile-size); height: var(--hud-quick-tile-size);
@@ -1865,12 +2002,20 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 /* ═══ HOLD — the second beat on a control ══════════════════════════════════ */
 /* `.beat-hold` is written by the machinery (components/holdconfirm.js) on any
    control the second-beat table arms; `--hold` is 0..1 per frame. The fill is a
-   BACKGROUND (paints under a bare text node), never eased (an abort must read
-   instantly), and it survives reduced-motion because it is state, not motion.
+   high-contrast light/dark stripe instead of an accent wash: accent-filled
+   primary buttons already look lit, so another gold layer disappears on them.
+   Alternating luminance stays legible on both primary and plain controls. It
+   is a BACKGROUND (paints under a bare text node), never eased (an abort must
+   read instantly), and it survives reduced-motion because it is state, not motion.
    `.hold-hint` is the word beside the label; it leaves an icon-sized control
    and leaves the control a focus cursor is on (a pad confirms in one press). */
-.beat-hold, .beat-hold:hover, .beat-hold:focus, .beat-hold:active {
-  background-image: linear-gradient(to right, rgba(var(--accent-rgb), 0.30) 0 100%);
+.beat-hold, button.beat-hold, .as-btn.beat-hold,
+button.beat-hold:hover, .as-btn.beat-hold:hover,
+button.beat-hold:focus, .as-btn.beat-hold:focus,
+button.beat-hold:active, .as-btn.beat-hold:active {
+  background-image: repeating-linear-gradient(135deg,
+    rgba(255, 255, 255, 0.52) 0 8px,
+    rgba(0, 0, 0, 0.58) 8px 16px);
   background-repeat: no-repeat;
   background-size: calc(var(--hold, 0) * 100%) 100%;
   transition-property: border-color, color, transform;
@@ -2188,3 +2333,7 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
   .as-seg button + button { border-left: 0; }
   .as-seg button { border: 1px solid var(--line-soft); margin: -1px 0 0 -1px; }
 }
+
+/* Move-set articles describe intent; they do not open or select an action. */
+article.enemy-move-card.as-option { cursor: default; }
+article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--line); }

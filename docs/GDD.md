@@ -9,6 +9,12 @@
 
 ## 0. Purpose and authority
 
+The September encounter expansion adds seven regular enemies and seven bosses
+to the existing roster, with multiple named terminal destinations per act.
+The [roster checklist](ENEMY-ROSTER.md) records the current content and verification
+scope. Enemy moves retain seeded weighted selection; their new cards explain
+the live intent, base values and phase requirements without changing selection.
+
 This document defines the intended player experience, visual language, interface behavior, and rebuild boundaries for Ashen Spire. It reconciles the original GDD with the current `dev` product, current character-creation and equipment behavior, the reusable component model, and the new rebuild direction.
 
 When sources disagree, use this precedence:

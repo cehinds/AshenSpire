@@ -37,7 +37,7 @@ single place that constructs it.
 | `armoury.hybridPaneSplitter` | Hybrid Character/Armaments divider | `.armoury-hybrid-splitter` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.equipmentPositionCard` | One complete card for every visible equipment position | `.armoury-position-card` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.occupiedPositionCard` | Occupied position with compact summary and expandable details | `.armoury-position-card.is-occupied` | `src/ui/screens/equipment.js` + `styles/ui.css` |
-| `armoury.emptyPositionCard` | Unlocked empty position and item drop target | `.armoury-position-card.is-empty` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.emptyPositionCard` | Unlocked empty position/drop target, ordered after filled and locked positions | `.armoury-position-card.is-empty` | `src/ui/screens/equipment.js` + `styles/kit.css` |
 | `armoury.lockedPositionCard` | Next locked position with its authored refusal | `.armoury-position-card.is-locked` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.positionLabelPane` | Authored position name and short code | `.armoury-position-label-pane` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.positionSpritePane` | Item or position-state art | `.armoury-position-sprite-pane` | `src/ui/screens/equipment.js` + `styles/ui.css` |
@@ -49,7 +49,7 @@ single place that constructs it.
 | `armoury.armamentGridGroup` | One procedural equipment group in Grid mode | `.armoury-position-grid-group` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.positionGridCard` | Compact position code, sprite, and item-name tile | `.armoury-position-grid-card` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.occupiedPositionGridCard` | Occupied grid tile | `.armoury-position-grid-card.is-occupied` | `src/ui/screens/equipment.js` |
-| `armoury.emptyPositionGridCard` | Empty grid tile/drop target | `.armoury-position-grid-card.is-empty` | `src/ui/screens/equipment.js` |
+| `armoury.emptyPositionGridCard` | Full-width empty bottom row/drop target | `.armoury-position-grid-card.is-empty` | `src/ui/screens/equipment.js` + `styles/kit.css` |
 | `armoury.lockedPositionGridCard` | Locked grid tile | `.armoury-position-grid-card.is-locked` | `src/ui/screens/equipment.js` |
 | `armoury.armamentGridDetails` | Shared selected-position Details area | `.armoury-position-grid-detail` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.inventoryCard` | One authoritative carried-item Inventory panel | `.armoury-inventory` | `src/ui/screens/equipment.js` |

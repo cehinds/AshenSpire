@@ -1600,7 +1600,7 @@ async function selftest() {
     },
     {
       name: 'missing title Settings route', file: 'src/ui/screens/title.js',
-      find: 'id="settings"', replace: 'id="settings-missing"', expect: 'title Settings control is unreachable',
+      find: "entry('Settings', 'settings', { id: 'settings' })", replace: "entry('Settings', 'settings', { id: 'settings-missing' })", expect: 'title Settings control is unreachable',
     },
     {
       name: 'missing About mount', file: 'src/ui/screens/settings.js',
@@ -1617,7 +1617,7 @@ async function selftest() {
       // `.set-actions` div. Same plant, same assertion: sever Done's click and
       // the door stops returning to the title.
       name: 'broken Done navigation', file: 'src/ui/screens/settings.js',
-      find: "  done.addEventListener('click', close);",
+      find: "  done.addEventListener('click', door.close);",
       replace: "  done.addEventListener('click', () => {});",
       expect: 'Done did not return to title',
     },

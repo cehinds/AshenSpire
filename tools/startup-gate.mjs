@@ -855,7 +855,9 @@ async function assertShape(shape, textSize) {
   await p.until(`!!document.querySelector('.startup-gate')`, `${shape.tag} Text ${textSize}`);
   const fact = await p.ev(`(() => { const e=document.querySelector('.startup-gate'); const r=e.getBoundingClientRect();
     const critical=[document.querySelector('.startup-wordmark'),document.querySelector('.startup-prompt'),document.querySelector('[data-place="startup"]')].filter(Boolean);
-    const boxes=critical.map(x=>{const b=x.getBoundingClientRect();return [x.className||x.dataset.place,Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]});
+    const boxes=critical.map(x=>{let b=x.getBoundingClientRect();let name=x.className||x.dataset.place;
+      if(x.matches('.startup-wordmark')){const range=document.createRange();range.selectNodeContents(x);b=range.getBoundingClientRect();name+=' text';}
+      return [name,Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]});
     const centerDeltas=boxes.map(([name,left,,right])=>[name,Math.round((((left+right)/2)-(innerWidth/2))*100)/100]);
     const centered=centerDeltas.every(([,delta])=>Math.abs(delta)<=1);
     const outside=boxes.some(([,l,t,right,bottom])=>l < -1 || t < -1 || right > innerWidth+1 || bottom > innerHeight+1);
@@ -892,7 +894,7 @@ async function main() {
   await assertCrisisPrecedence();
   await assertReducedMotion();
   if (!SELFTEST_LANE) {
-    const shapes = [{ tag:'390x844', w:390, h:844 }, { tag:'844x344', w:844, h:344 }, { tag:'1200x730', w:1200, h:730 }];
+    const shapes = [{ tag:'390x844', w:390, h:844 }, { tag:'844x344', w:844, h:344 }, { tag:'1200x730', w:1200, h:730 }, { tag:'2550x1305', w:2550, h:1305 }];
     for (const textSize of ['M', 'XL']) for (const shape of shapes) await assertShape(shape, textSize);
   }
 
