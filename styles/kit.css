@@ -1312,16 +1312,21 @@ details.as-detailcard[open] > summary { border-bottom: 1px solid var(--line); ma
 .as-glyph.caret { display: inline-block; transition: transform 140ms; }
 details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { .as-glyph.caret { transition: none; } }
-/* Armoury information folds share one non-shrinking, single-line header. */
+/* Armoury information folds grow with their labels and summaries. */
 .armoury-character-stats > details.character-info-card { flex: 0 0 auto; width: 100%; min-width: 0; }
 details.character-info-card > summary > .character-info-head {
-  height: var(--tap-floor); min-height: var(--tap-floor); flex-wrap: nowrap;
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  height: auto; min-height: var(--tap-floor); gap: 0.3rem 0.75rem;
+  padding-block: 0.7rem; white-space: normal;
 }
 details.character-info-card > summary > .character-info-head > .character-info-label {
-  flex: 0 1 auto; min-width: 0; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  grid-column: 2; min-width: 0; max-width: 100%; font-size: max(1.35rem, calc(15px / var(--ui-zoom, 1)));
+  white-space: normal; overflow-wrap: anywhere; overflow: visible;
 }
 details.character-info-card > summary > .character-info-head > .as-status {
-  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  grid-column: 2; min-width: 0; margin-left: 0; text-align: left;
+  font-size: max(1.2rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.45;
+  white-space: normal; overflow-wrap: anywhere; overflow: visible;
 }
 details.character-info-card > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* ═══ STEPPER — a −/count/+ unit of two tap-floor buttons ═════════════════ */
