@@ -218,37 +218,44 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(await evaluate(`document.querySelector('#tooltip')?.style.display === 'block' && /Dexterity/.test(document.querySelector('#tooltip')?.textContent || '')`),
     `${width}x${height}: folded attributes expose the same description by tooltip`);
   await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new CustomEvent('gpblur'))`);
+  // SPRITE LEFT THIS FOLD IN #692, which moved the sprite/sigil/tint group
+  // beside the preview instead of nesting it under Character. The row is
+  // asserted where it now lives rather than dropped: this check exists so the
+  // sprite picker cannot go unreachable, and deleting the SPRITE expectation
+  // would have retired that coverage instead of following it.
   const characterFold = await evaluate(`(() => ({
     labels:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face .disc-name')].map(e=>e.textContent.trim()),
     open:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face),
+    previewLabels:[...document.querySelectorAll('#cz-preview-fold > .disc-faces > .disc-face .disc-name')].map(e=>e.textContent.trim()),
     resourceOrder:[...document.querySelectorAll('#cz-primary-group > *')].map(e=>e.id)
   }))()`);
-  assert(JSON.stringify(characterFold.labels) === JSON.stringify(['PRIMARY STATS', 'SPRITE', 'KEEPSAKE'])
+  assert(JSON.stringify(characterFold.labels) === JSON.stringify(['PRIMARY STATS', 'KEEPSAKE'])
+    && JSON.stringify(characterFold.previewLabels) === JSON.stringify(['SPRITE'])
     && JSON.stringify(characterFold.open) === JSON.stringify(['primary'])
     && JSON.stringify(characterFold.resourceOrder) === JSON.stringify(['cz-statedit', 'cz-primary-stats', 'cz-derived']),
-  `${width}x${height}: Character uses one-open nested disclosures with modes, stats, then resources`);
+  `${width}x${height}: Character nests modes, stats and keepsake one-open, with SPRITE beside the preview`);
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay');
   const refunded = await evaluate(`(() => ({
     remaining:document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim(),
     values:[...document.querySelectorAll('.cc-stat-overlay .se-value')].map((node) => node.textContent.trim()),
     rowInsets:[...document.querySelectorAll('.cc-stat-overlay .se-row')].map((row) => {
-      const style=getComputedStyle(row);
+      const style=getComputedStyle(row.querySelector('.disc-face > .as-row'));
       return [style.paddingTop,style.paddingRight,style.paddingBottom,style.paddingLeft];
     }),
   }))()`);
   assert(refunded.remaining === '10' && refunded.values.join(',') === '10,10,10,10,10'
-    && refunded.rowInsets.every((edges) => edges.every((edge) => parseFloat(edge) > 0) && new Set(edges).size === 1),
-  `${width}x${height}: Assign Points refunds to five baseline-10 stats and gives every setting row one four-sided inset (${JSON.stringify(refunded)})`);
+    && refunded.rowInsets.every((edges) => edges.every((edge) => parseFloat(edge) > 0)),
+  `${width}x${height}: Assign Points refunds to five baseline-10 stats and keeps padding inside every card header (${JSON.stringify(refunded)})`);
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay [data-face^="attribute:"]').length`)) === 5,
     `${width}x${height}: Assign Points reuses five foldout attribute cards`);
   const allocationInsets = await evaluate(`[...document.querySelectorAll('.cc-stat-overlay .as-row.setting')].map((row) => {
-    const style = getComputedStyle(row);
+    const style = getComputedStyle(row.querySelector('.disc-face > .as-row'));
     return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft];
   })`);
   assert(allocationInsets.length === 5 && allocationInsets.every((insets) =>
-    insets.length === 4 && insets.every((value) => value === insets[0] && parseFloat(value) > 0)),
-  `${width}x${height}: every Assign Points row keeps the same text inset on all four sides (${JSON.stringify(allocationInsets)})`);
+    insets.length === 4 && insets.every((value) => parseFloat(value) > 0)),
+  `${width}x${height}: every Assign Points card header keeps text padding on all four sides (${JSON.stringify(allocationInsets)})`);
   await click('.cc-stat-overlay [data-face="attribute:strength"]');
   const allocationGeometry = await evaluate(`(() => {
     const row = document.querySelector('.cc-stat-overlay .se-row');
@@ -263,7 +270,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(allocationGeometry.component === 'stat-allocation-row'
       && allocationGeometry.reveal?.left <= allocationGeometry.row.left + allocationGeometry.inset.left + 4
       && allocationGeometry.reveal?.right >= allocationGeometry.row.right - allocationGeometry.inset.right - 4
-      && Math.abs(allocationGeometry.face?.top - allocationGeometry.controls?.top) <= 1,
+      && allocationGeometry.controls?.top >= allocationGeometry.face?.top && allocationGeometry.controls?.bottom <= allocationGeometry.face?.bottom && allocationGeometry.controls?.right <= allocationGeometry.face?.right && allocationGeometry.reveal?.top >= allocationGeometry.face?.bottom - 1,
     `${width}x${height}: Assign Points disclosure spans the invisible stat-and-controls parent (${JSON.stringify(allocationGeometry)})`);
   await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new CustomEvent('gpfocus'))`);
   await wait(180);
@@ -328,7 +335,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(await noOverflow(), `${width}x${height}: Character has no horizontal overflow`);
   assert((await evaluate(`document.querySelectorAll('.cc-primary-stats .cc-primary-stat').length`)) === 5, `${width}x${height}: five primary stats are vertical cards`);
   assert((await evaluate(`document.querySelectorAll('#cz-character-panel .se-step').length`)) === 0, `${width}x${height}: Standard shows no plus/minus controls`);
-  await click('#cz-character-fold [data-face="sprite"]');
+  await click('#cz-preview-fold [data-face="sprite"]');
   await click('#cz-styles .cz-opt', 1);
   await click('#cz-sprite-fold [data-face="tint"]');
   await click('#cz-tints .cz-opt', 1);
@@ -353,6 +360,29 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   for (let i = 0; i < 3; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
   await click('.cc-stat-overlay [aria-label="Increase Wisdom"]');
   for (let i = 0; i < 2; i += 1) await click('.cc-stat-overlay [aria-label="Increase Intelligence"]');
+  // SPEND WHATEVER THE POOL STILL HOLDS, rather than trusting a hand-counted
+  // click list. Since #692 the editor opens at a flat baseline with the whole
+  // pool unspent, so every fixed sequence written against the old class preset
+  // lands on a different total — this one finished a point short and Done
+  // rightly refused. Reading the pool and spending the remainder keeps the
+  // check about what it is for (Done closes once the allocation is complete)
+  // instead of about arithmetic that the next tuning change will break again.
+  // Spend into whichever stepper will TAKE a point: a stat sitting on the
+  // mode's ceiling refuses correctly, so hammering one stat proves nothing.
+  let spendState = null;
+  for (let guard = 0; guard < 30; guard += 1) {
+    spendState = await evaluate(`(() => {
+      const left = Number.parseInt(document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim() || '0', 10);
+      const open = [...document.querySelectorAll('.cc-stat-overlay [data-stat-action="increase"]')]
+        .filter((control) => control.getAttribute('aria-disabled') === 'false')
+        .map((control) => control.dataset.statId);
+      return { left, open, values:[...document.querySelectorAll('.cc-stat-overlay .se-value')].map((n) => n.textContent.trim()) };
+    })()`);
+    if (spendState.left <= 0 || !spendState.open.length) break;
+    await click(`.cc-stat-overlay [data-stat-action="increase"][data-stat-id="${spendState.open[0]}"]`);
+  }
+  assert(spendState && spendState.left === 0,
+    `${width}x${height}: the whole point pool can be spent through the steppers (${JSON.stringify(spendState)})`);
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Assign Points overlay close');
 

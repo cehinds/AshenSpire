@@ -15,6 +15,7 @@ const labels = {idle:'Combat idle', guard:'Guard', attack1:'Anticipation', attac
 for (const cls of classes) {
   const rows = outfits.filter(o => o.id.split('-')[0] === cls);
   const sources = library.filter(s => s.classId === cls);
+  const poseLabels = cls === 'reaver' ? {...labels, idle:'Idle · Sword rest', attack1:'Attack 1 · Low advance', attack2:'Attack 2 · Overhead windup', attack3:'Attack 3 · Downward cleave'} : labels;
   const html = `<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -26,7 +27,7 @@ for (const cls of classes) {
 <nav class="class-nav" aria-label="Character classes">${classes.map(c => `<a href="${c}.html"${c === cls ? ' aria-current="page"' : ''}>${title(c)}</a>`).join('')}</nav>
 <header><h1>${title(cls)} — complete collection</h1><p>All four outfits on one page. Each includes menu and detail poses, a close-up portrait, and the compact combat set. Earlier pose sheets are preserved below.</p><p class="hint">Art preview · not installed in the game. Select any image to inspect it at full size.</p></header>
 <nav class="outfit-nav" aria-label="Outfits on this page">${rows.map(o => `<a href="#${esc(o.id)}">${esc(o.name)}</a>`).join('')}<a href="#sources">Earlier pose sheets</a></nav>
-<main>${rows.map(o => `<section class="outfit" id="${esc(o.id)}"><h2>${esc(o.name)}</h2><h3>Character menu &amp; details</h3><div class="presentation">${figure(o.menu.portrait, 'Close-up portrait')}${figure(o.menu.stand, 'Menu pose')}${figure(o.menu.detail, 'Detail pose')}</div><h3>Right-facing combat poses</h3><div class="combat">${o.frames.map(f => figure(f.file, labels[f.pose] || f.pose)).join('')}</div></section>`).join('\n')}
+<main>${rows.map(o => `<section class="outfit" id="${esc(o.id)}"><h2>${esc(o.name)}</h2><h3>Character menu &amp; details</h3><div class="presentation">${figure(o.menu.portrait, 'Close-up portrait')}${figure(o.menu.stand, 'Menu pose')}${figure(o.menu.detail, 'Detail pose')}</div><h3>${cls === 'reaver' ? 'Combat poses · right-facing attacks' : 'Right-facing combat poses'}</h3><div class="combat">${o.frames.map(f => figure(f.file, poseLabels[f.pose] || f.pose)).join('')}</div></section>`).join('\n')}
 <section class="source-section" id="sources"><h2>Earlier poses &amp; source sheets</h2><p>All ${sources.length} ${title(cls)} source sheets are collected here, including the approved poses outside the small combat set.</p><div class="sources">${sources.map(s => figure(s.file, s.title)).join('')}</div></section></main>
 <footer><a href="index.html">Animation player and comparison tools</a></footer>
 </body></html>\n`;

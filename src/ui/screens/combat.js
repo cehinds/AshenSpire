@@ -196,7 +196,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         customization: run.customization,
         spritesEnabled: spritesAreEnabled(),
       });
-      return eligible ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : playFamilyAnimation(actorEl, stage, plan, speed);
+      return eligible && !actorEl.querySelector('.painted-outfit') ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : playFamilyAnimation(actorEl, stage, plan, speed);
     },
   };
 
@@ -648,15 +648,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       box.click();
     });
   }
-  // The player's half of the same door. Deliberately NOT a copy of
-  // wireEnemyContext: the player is never a context selection (nothing to
-  // restore on leave) and never a target (no role, no tabIndex, no
-  // data-focusable — the armed-card branch in renderPlayer owns those, and
-  // publishing a second, permanent focus stop would reorder the controller
-  // cursor). What is left is the glance itself: hover, the focus cursor, and
-  // on touch a tap, on the same clock the enemies use.
+  // The player remains reachable by the controller for inspection. Arming a
+  // self-target card adds confirmation semantics to that same focus stop.
   function wirePlayerContext(box, player) {
     box.tabIndex = -1;
+    box.dataset.focusable = '';
+    box.setAttribute('aria-label', 'Player information');
     ensureTooltip();
     box.classList.add('inspectable');
     box.setAttribute('aria-describedby', 'tooltip');

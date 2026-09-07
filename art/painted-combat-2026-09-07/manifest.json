@@ -530,13 +530,13 @@
       "frames": [
         {
           "pose": "idle",
-          "sourcePose": "guard",
-          "sourceSheet": "combat-sheets/reaver-facing-corrections.png",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/reaver.png",
           "file": "combat/reaver/idle.png",
           "box": {
-            "x0": 187,
-            "x1": 566,
-            "y0": 261,
+            "x0": 221,
+            "x1": 417,
+            "y0": 260,
             "y1": 600
           },
           "anchor": [
@@ -563,12 +563,12 @@
         {
           "pose": "attack1",
           "sourcePose": "attack1",
-          "sourceSheet": "menu-sheets/reaver.png",
+          "sourceSheet": "combat-sheets/reaver-selected-attacks.png",
           "file": "combat/reaver/attack1.png",
           "box": {
-            "x0": 166,
-            "x1": 433,
-            "y0": 241,
+            "x0": 197,
+            "x1": 516,
+            "y0": 343,
             "y1": 600
           },
           "anchor": [
@@ -579,12 +579,12 @@
         {
           "pose": "attack2",
           "sourcePose": "attack2",
-          "sourceSheet": "menu-sheets/reaver.png",
+          "sourceSheet": "combat-sheets/reaver-selected-attacks.png",
           "file": "combat/reaver/attack2.png",
           "box": {
-            "x0": 189,
-            "x1": 585,
-            "y0": 325,
+            "x0": 146,
+            "x1": 453,
+            "y0": 240,
             "y1": 600
           },
           "anchor": [
@@ -595,12 +595,12 @@
         {
           "pose": "attack3",
           "sourcePose": "attack3",
-          "sourceSheet": "menu-sheets/reaver.png",
+          "sourceSheet": "combat-sheets/reaver-selected-attacks.png",
           "file": "combat/reaver/attack3.png",
           "box": {
-            "x0": 123,
-            "x1": 478,
-            "y0": 325,
+            "x0": 62,
+            "x1": 477,
+            "y0": 361,
             "y1": 600
           },
           "anchor": [
@@ -659,12 +659,12 @@
       "frames": [
         {
           "pose": "idle",
-          "sourcePose": "guard",
-          "sourceSheet": "combat-sheets/reaver-facing-corrections.png",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/reaver-vigil.png",
           "file": "combat/reaver-vigil/idle.png",
           "box": {
-            "x0": 175,
-            "x1": 558,
+            "x0": 196,
+            "x1": 422,
             "y0": 260,
             "y1": 600
           },
@@ -692,13 +692,13 @@
         {
           "pose": "attack1",
           "sourcePose": "attack1",
-          "sourceSheet": "menu-sheets/reaver-vigil.png",
+          "sourceSheet": "combat-sheets/reaver-vigil-selected-attacks.png",
           "file": "combat/reaver-vigil/attack1.png",
           "box": {
-            "x0": 165,
-            "x1": 452,
-            "y0": 248,
-            "y1": 600
+            "x0": 151,
+            "x1": 512,
+            "y0": 350,
+            "y1": 601
           },
           "anchor": [
             320,
@@ -708,13 +708,13 @@
         {
           "pose": "attack2",
           "sourcePose": "attack2",
-          "sourceSheet": "menu-sheets/reaver-vigil.png",
+          "sourceSheet": "combat-sheets/reaver-vigil-selected-attacks.png",
           "file": "combat/reaver-vigil/attack2.png",
           "box": {
-            "x0": 192,
-            "x1": 599,
-            "y0": 349,
-            "y1": 600
+            "x0": 162,
+            "x1": 472,
+            "y0": 248,
+            "y1": 601
           },
           "anchor": [
             320,
@@ -724,13 +724,13 @@
         {
           "pose": "attack3",
           "sourcePose": "attack3",
-          "sourceSheet": "menu-sheets/reaver-vigil.png",
+          "sourceSheet": "combat-sheets/reaver-vigil-selected-attacks.png",
           "file": "combat/reaver-vigil/attack3.png",
           "box": {
-            "x0": 136,
-            "x1": 456,
-            "y0": 317,
-            "y1": 600
+            "x0": 89,
+            "x1": 498,
+            "y0": 361,
+            "y1": 601
           },
           "anchor": [
             320,
@@ -788,14 +788,14 @@
       "frames": [
         {
           "pose": "idle",
-          "sourcePose": "guard",
-          "sourceSheet": "combat-sheets/reaver-facing-corrections.png",
+          "sourcePose": "swordRest",
+          "sourceSheet": "sheets/reaver-oathsworn.png",
           "file": "combat/reaver-oathsworn/idle.png",
           "box": {
-            "x0": 192,
-            "x1": 553,
+            "x0": 222,
+            "x1": 408,
             "y0": 261,
-            "y1": 600
+            "y1": 601
           },
           "anchor": [
             320,
@@ -821,12 +821,12 @@
         {
           "pose": "attack1",
           "sourcePose": "attack1",
-          "sourceSheet": "menu-sheets/reaver-oathsworn.png",
+          "sourceSheet": "combat-sheets/reaver-oathsworn-selected-attacks.png",
           "file": "combat/reaver-oathsworn/attack1.png",
           "box": {
-            "x0": 185,
-            "x1": 448,
-            "y0": 261,
+            "x0": 184,
+            "x1": 509,
+            "y0": 369,
             "y1": 600
           },
           "anchor": [
@@ -837,12 +837,12 @@
         {
           "pose": "attack2",
           "sourcePose": "attack2",
-          "sourceSheet": "menu-sheets/reaver-oathsworn.png",
+          "sourceSheet": "combat-sheets/reaver-oathsworn-selected-attacks.png",
           "file": "combat/reaver-oathsworn/attack2.png",
           "box": {
-            "x0": 193,
-            "x1": 604,
-            "y0": 321,
+            "x0": 163,
+            "x1": 452,
+            "y0": 261,
             "y1": 600
           },
           "anchor": [
@@ -853,12 +853,12 @@
         {
           "pose": "attack3",
           "sourcePose": "attack3",
-          "sourceSheet": "menu-sheets/reaver-oathsworn.png",
+          "sourceSheet": "combat-sheets/reaver-oathsworn-selected-attacks.png",
           "file": "combat/reaver-oathsworn/attack3.png",
           "box": {
-            "x0": 183,
-            "x1": 542,
-            "y0": 320,
+            "x0": 125,
+            "x1": 455,
+            "y0": 382,
             "y1": 600
           },
           "anchor": [
@@ -917,14 +917,14 @@
       "frames": [
         {
           "pose": "idle",
-          "sourcePose": "guard",
-          "sourceSheet": "combat-sheets/reaver-facing-corrections.png",
+          "sourcePose": "stand",
+          "sourceSheet": "menu-sheets/reaver-warden.png",
           "file": "combat/reaver-warden/idle.png",
           "box": {
-            "x0": 193,
-            "x1": 546,
-            "y0": 261,
-            "y1": 601
+            "x0": 206,
+            "x1": 414,
+            "y0": 260,
+            "y1": 600
           },
           "anchor": [
             320,
@@ -950,12 +950,12 @@
         {
           "pose": "attack1",
           "sourcePose": "attack1",
-          "sourceSheet": "menu-sheets/reaver-warden.png",
+          "sourceSheet": "combat-sheets/reaver-warden-selected-attacks.png",
           "file": "combat/reaver-warden/attack1.png",
           "box": {
-            "x0": 200,
-            "x1": 451,
-            "y0": 269,
+            "x0": 194,
+            "x1": 520,
+            "y0": 358,
             "y1": 600
           },
           "anchor": [
@@ -966,12 +966,12 @@
         {
           "pose": "attack2",
           "sourcePose": "attack2",
-          "sourceSheet": "menu-sheets/reaver-warden.png",
+          "sourceSheet": "combat-sheets/reaver-warden-selected-attacks.png",
           "file": "combat/reaver-warden/attack2.png",
           "box": {
-            "x0": 202,
-            "x1": 595,
-            "y0": 327,
+            "x0": 162,
+            "x1": 460,
+            "y0": 269,
             "y1": 600
           },
           "anchor": [
@@ -982,12 +982,12 @@
         {
           "pose": "attack3",
           "sourcePose": "attack3",
-          "sourceSheet": "menu-sheets/reaver-warden.png",
+          "sourceSheet": "combat-sheets/reaver-warden-selected-attacks.png",
           "file": "combat/reaver-warden/attack3.png",
           "box": {
-            "x0": 148,
-            "x1": 473,
-            "y0": 330,
+            "x0": 120,
+            "x1": 468,
+            "y0": 391,
             "y1": 600
           },
           "anchor": [

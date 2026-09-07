@@ -3,14 +3,54 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-743",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Character artwork uses the right pose on each screen",
+    "detail": "Class selection uses bottom-aligned close-up portraits and restores the colored class icons beside descriptions. Character customization uses detail poses. Armor choices, armory figures, smithing and mounting use the full-body menu pose for every outfit.",
+    "build": "0.5.5.92",
+    "pullRequest": 743,
+    "url": "https://github.com/cehinds/AshenSpire/pull/743"
+  },
+  {
+    "id": "pr-740",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Painted outfits now appear throughout the game",
+    "detail": "All sixteen outfits have matching character-selection portraits, menu figures, armory previews and compact combat animations. Reaver uses the reviewed sword-rest stance and advance, overhead windup, cleave and recovery sequence. Classic and Sigil remain available. Painted weapons are part of the artwork; equipment icons and stats still describe the actual loadout.",
+    "build": "0.5.5.87",
+    "pullRequest": 740,
+    "url": "https://github.com/cehinds/AshenSpire/pull/740"
+  },
+  {
+    "id": "pr-735",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Reaver artwork follows the selected poses",
+    "detail": "All four Reaver outfits share the approved sword-rest menu and idle stance, the three selected attack poses and matching chest-up portraits. Earlier source sheets remain available in the art collection. This receipt records the artwork revision; game integration follows in #740.",
+    "build": "0.5.5.78",
+    "pullRequest": 735,
+    "url": "https://github.com/cehinds/AshenSpire/pull/735"
+  },
+  {
     "id": "pr-720",
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "A readable combat fan and compact inspection",
-    "detail": "Narrower, shorter cards retain their text size. Five to seven cards fan above the five-slot HUD with exposed costs along their left edges and a clear vertical gap. Hover or select a card to read its face. Inspect lives only in the hover panel as a compact, full-width action; sprite icons and the full-height character outline are removed. Panels stay open while entered, and closing inspection restores focus. Flask inspection effect text and charge counts retain readable minimum sizes when the game scales down. Potion rows include their artwork and unfold inline using the Armoury detail-card style; Use moves into the expanded card, and selecting a potion never consumes it. Selected enemy details return after transient character previews close.",
-    "build": "0.5.5.79",
+    "detail": "Narrower, shorter cards retain their text size. Five to seven cards fan above the five-slot HUD with exposed costs along their left edges and a clear vertical gap. Hover or select a card to read its face. Inspect lives only in the hover panel as a compact, full-width action; sprite icons and the full-height character outline are removed. Panels stay open while entered, and closing inspection restores focus. Flask inspection effect text and charge counts retain readable minimum sizes when the game scales down. Potion rows include their artwork and unfold inline using the Armoury detail-card style; Use moves into the expanded card, and selecting a potion never consumes it. Selected enemy details return after transient character previews close. Hand resizing defers layout writes to the next frame and skips unchanged measurements to prevent resize-observer feedback. Character creation uses attached foldout cards with readable text, folded equipment summaries and contained sprite previews. Combat cards are slightly larger; Actions and Potions are equal circles matching the End Turn height. Enemies anchor toward the right and combatants compensate for reduced UI scale within their available space. The hand and bottom controls sit higher; Armoury and Menu align with the vitals.",
+    "build": "0.5.5.82",
     "pullRequest": 720,
     "url": "https://github.com/cehinds/AshenSpire/pull/720"
+  },
+  {
+    "id": "pr-733",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Cracked Tear makes your flasks stronger on the map too",
+    "detail": "The relic promises every flask is half again as strong, and in a fight it was — but a flask drunk on the map quietly restored its plain amount, so the Azure gave one Mana where it owed two and the Crimson healed fifteen where it owed twenty-three. The map now scales the same way combat already did, rounded up, and a run carrying no such relic restores exactly what it did before. Found by an automated review of the promotion rather than by playing, which is worth saying: the amounts were plausible on their own and only wrong next to the promise.",
+    "build": "0.5.5.76",
+    "pullRequest": 733,
+    "url": "https://github.com/cehinds/AshenSpire/pull/733"
   },
   {
     "id": "pr-728",
