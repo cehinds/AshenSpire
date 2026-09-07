@@ -1,4 +1,6 @@
 import { paintedOutfit } from '../model/paintedOutfitArt.js';
+import { auraFilter, POWER_FRAMES } from './combatAura.js';
+import { COMBAT_SEQUENCES } from '../model/combatAnimation.js';
 
 import { assetUrl } from './assetmap.js';
 import { reducedMotionRequested } from './motion.js';
@@ -39,28 +41,36 @@ export function createPaintedStage(classId, armourId = 'default') {
   el.appendChild(layer);
   const warmed = Object.values(art.frames).map(frame => { const image = new Image(); image.src = assetUrl(frame.file); return image; });
   let current = 'idle';
+  let resting = 'idle';
   let timers = [];
+  let resources = [], active = false;
   const clear = () => { timers.forEach(clearTimeout); timers = []; };
   const setPose = pose => {
-    if (!art.frames[pose]) return false;
+    const frame = art.frames[pose] || (Object.hasOwn(POWER_FRAMES, pose) ? art.frames.idle : null);
+    if (!frame) return false;
     current = pose;
     el.dataset.pose = pose;
-    img.src = assetUrl(art.frames[pose].file);
+    img.src = assetUrl(frame.file);
+    img.style.filter = auraFilter(pose, resting, resources, active);
+    el.dataset.aura = active ? resources.join(' ') : ['guard','shieldGuard','parry'].includes(resting) ? 'guard' : '';
     return true;
   };
-  const settle = () => { clear(); setPose('idle'); };
+  const sequenceFor = pose => (Object.hasOwn(COMBAT_SEQUENCES, pose) ? COMBAT_SEQUENCES[pose] : [pose]).filter(p => Object.hasOwn(art.frames, p) || Object.hasOwn(POWER_FRAMES, p));
+  const restingPose = () => sequenceFor(resting).at(-1) || (resting === 'shieldGuard' || resting === 'parry' ? 'guard' : 'idle');
+  const settle = () => { clear(); active = false; resources = []; setPose(restingPose()); };
+  const setRestPose = pose => { resting = pose || 'idle'; el.dataset.rest = resting; settle(); };
   settle();
-  return Object.freeze({ el, poses: Object.keys(art.frames), get pose() { return current; }, setPose, settle, warmed,
-    play(pose, ms = 260) {
+  return Object.freeze({ el, poses: [...Object.keys(art.frames), ...Object.keys(POWER_FRAMES)], get pose() { return current; }, get rest() { return resting; }, setPose, setRestPose, settle, warmed, dispose: clear,
+    play(pose, ms = 260, aura = []) {
       if (reducedMotionRequested()) { settle(); return false; }
-      if (pose !== 'attack' && !art.frames[pose]) return false;
+      const sequence = sequenceFor(/^attack[1-4]$/.test(pose) ? 'attack' : pose);
+      if (!sequence.length) return false;
       clear();
+      active = true;
+      resources = aura;
       const duration = Math.max(60, ms);
-      if (pose === 'attack' || /^attack[1-4]$/.test(pose)) {
-        const sequence = ['attack1', 'attack2', 'attack3', 'attack4'];
-        setPose(sequence[0]);
-        sequence.slice(1).forEach((p, i) => timers.push(setTimeout(() => setPose(p), duration * [0.28, 0.55, 0.8][i])));
-      } else setPose(pose);
+      setPose(sequence[0]);
+      sequence.slice(1).forEach((p, i) => timers.push(setTimeout(() => setPose(p), duration * (sequence.length === 4 ? [0.28, 0.55, 0.8][i] : (i + 1) / sequence.length))));
       timers.push(setTimeout(settle, duration));
       return true;
     },
