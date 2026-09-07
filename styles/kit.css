@@ -2386,3 +2386,17 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   font-size: max(1.8rem, calc(20px / var(--ui-zoom, 1))); white-space: normal;
 }
 .flask-inspect-done { font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); }
+
+/* Preview wells keep a card silhouette; figure width derives from both available axes. */
+.customize .cc-preview-side { min-height: 0; align-items: center; justify-content: flex-start; }
+.customize .cc-preview-side > .cz-portrait {
+  flex: none; width: min(100%, 30rem); height: auto; min-height: 0;
+  aspect-ratio: 3 / 4; border: 1px solid var(--line); border-radius: var(--r-3);
+}
+.customize .cc-preview-fold { width: 100%; }
+.armoury-sprite-pane.as-artwell { container-type: size; overflow: hidden; }
+.armoury-sprite-pane .armoury-figure,
+.armoury[data-responsive="phone"] .armoury-sprite-pane .armoury-figure {
+  width: min(78cqw, calc(82cqh * 150 / 190), 22rem);
+  height: auto; aspect-ratio: 150 / 190; max-width: none; max-height: none;
+}
