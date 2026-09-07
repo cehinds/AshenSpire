@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-743",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Character artwork uses the right pose on each screen",
+    "detail": "Class selection uses bottom-aligned close-up portraits and restores the colored class icons beside descriptions. Character customization uses detail poses. Armor choices, armory figures, smithing and mounting use the full-body menu pose for every outfit.",
+    "build": "0.5.5.92",
+    "pullRequest": 743,
+    "url": "https://github.com/cehinds/AshenSpire/pull/743"
+  },
+  {
     "id": "pr-740",
     "date": "2026-09-07",
     "group": "2026-09-07",

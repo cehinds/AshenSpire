@@ -477,6 +477,8 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
 export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false }) {
+  const painted = paintedPresentation(classId, armourId, 'stand');
+  if (painted) return painted;
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const el = document.createElement('div');
   el.className = 'equipped-figure';

@@ -1,3 +1,4 @@
+import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 // A DOM-free read model for the smith's two card services — extract and
 // install — in the shape the Smith upgrade model already has: the screen
 // hands it a plan (model/cardExtraction.js) and a selection, and every
@@ -81,7 +82,7 @@ export function mountServiceModel(registries, plan, selection = {}, { multiUse =
       equipped: candidate.equipped,
       whereLabel: candidate.equipped ? 'worn' : 'carried',
       artAsset: candidate.itemKind === 'armor'
-        ? `assets/equipment/body_${candidate.classId}_${piece.artKey || piece.id}.webp`
+        ? armourMenuAsset(candidate.classId, piece.id)
         : `assets/equipment/icon_${piece.artKey || piece.id}.webp`,
       rarity: piece.rarity || 'common',
       kindLabel: candidate.itemKind === 'armor' ? 'Armor' : 'Armament',
