@@ -86,13 +86,23 @@ function connect(wsUrl) {
 function readMedallion() {
   const host = document.querySelector('.class-sprite');
   if (!host) return { host: false };
+  // TWO WAYS A SIGIL REACHES A FIGURE, and this tool used to see only one.
+  // The overlay is a direct-child <span>. The classic SVG silhouette draws it
+  // as <text> INSIDE the <svg>, via sigilMedallion() — so while the absence
+  // check read `:scope > span` alone it reported a clean figure on the Classic
+  // style and on any rendered figure that fell back to the inline SVG, with
+  // the sigil plainly on the chest. A gate that passes on the exact condition
+  // it forbids is worse than no gate. Codex caught it on #764; this is the
+  // repair.
   const disc = host.querySelector(':scope > span');
+  const svgSigil = host.querySelector('svg text');
   const hostBox = host.getBoundingClientRect();
   if (!disc) {
     return {
       host: true,
       style: host.classList.contains('animated') ? 'animated' : 'still',
       disc: false,
+      svgSigil: svgSigil ? svgSigil.textContent.trim() : null,
       // What the frame DID draw, so a red says which path ran.
       drew: [...host.querySelectorAll('*')].slice(0, 4).map((node) => `${node.tagName.toLowerCase()}.${node.className}`),
     };
@@ -210,11 +220,14 @@ async function main() {
       // that wants a gate just as much. `anchor` stays read from
       // classArtAnchors.js so a stray overlay is reported against the place it
       // would have landed.
-      ok(!read.disc, `${tag} NO SIGIL ON THE FIGURE`,
+      ok(!read.disc && !read.svgSigil, `${tag} NO SIGIL ON THE FIGURE`,
         read.disc
           ? `an overlay is drawn on the ${read.style} style at x${read.centreX} y${read.centreY}`
             + ` (the anchor is x${anchor.x} y${anchor.y}) — the sigil belongs in the class picker, not on the character`
-          : `clean on the ${read.style} style; the frame drew ${JSON.stringify(read.drew)}`);
+          : read.svgSigil
+            ? `the classic SVG silhouette draws '${read.svgSigil}' on the chest through sigilMedallion()`
+              + ` — build() is still being handed the chosen sigil`
+            : `clean on the ${read.style} style; the frame drew ${JSON.stringify(read.drew)}`);
     }
   } finally {
     cdp.close();
