@@ -454,6 +454,59 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
   return el;
 }
 
+// Equipment art has one authored frame per outfit rather than six pose renders.
+// Give it the same animation contract as a pose stage so an alternative outfit
+// does not turn the fighter back into the default armour whenever combat moves.
+// The transforms deliberately move the complete layered figure: body and held
+// items remain registered, while the silhouette still reads as guard, swing,
+// recoil, and idle at combat scale.
+function animatedEquippedFigure(classId, equip) {
+  const host = document.createElement('div');
+  host.className = 'class-sprite animated equipped-sprite';
+  host.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
+  host.dataset.pose = 'idle';
+
+  const facing = document.createElement('div');
+  facing.className = 'facing';
+  facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;';
+  facing.appendChild(equippedFigure({ classId, ...equip }));
+  host.appendChild(facing);
+
+  const attacks = ['attack1', 'attack2', 'attack3'];
+  let attack = 0;
+  let timer = null;
+  const settle = () => {
+    if (timer) clearTimeout(timer);
+    timer = null;
+    host.dataset.pose = 'idle';
+  };
+  const stage = Object.freeze({
+    el: host,
+    poses: ['idle', 'guard', ...attacks, 'hit'],
+    get pose() { return host.dataset.pose; },
+    setPose(pose) {
+      if (!this.poses.includes(pose)) return false;
+      host.dataset.pose = pose;
+      return true;
+    },
+    play(pose, ms = 260) {
+      if (document.body.classList.contains('reduced-motion')) return false;
+      if (pose === 'attack') {
+        pose = attacks[attack % attacks.length];
+        attack += 1;
+      }
+      if (!this.setPose(pose)) return false;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(settle, Math.max(60, ms));
+      return true;
+    },
+    settle,
+    warmed: [],
+  });
+  registerStage(host, stage);
+  return host;
+}
+
 /**
  * playerSprite(customization, classId, armourId?) — the player's figure.
  *
