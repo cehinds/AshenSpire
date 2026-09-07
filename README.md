@@ -11,6 +11,10 @@ A roguelike deckbuilder for the browser — single-player, with optional LAN co-
 
 ## Play a build
 
+The combat action row keeps Potions at the far right. Piles opens separate
+Discard and Exhaust tabs with their own counts. Arts shows equipped weapon arts
+and techniques, with selection available when the card is in your hand.
+
 **[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)** — the stable
 build from `main`. **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** — the builds
 index: the current `dev`, `test`, `release` and `main` builds, each playable at its own address.

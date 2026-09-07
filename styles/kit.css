@@ -1836,10 +1836,10 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .as-cluster.stack { flex-direction: column; align-items: stretch; }
 .as-cluster.end { margin-left: auto; }
 /* QUICK ACCESS stays a compact 2 × 2 square whose lower edge meets the SP row.
-   The visible faces and their gap share one local scale; the transparent
+   Quick Access reserves each full tap box so neighboring hit regions cannot overlap. The transparent
    ::after continues to carry the authored tap floor around each small face. */
 .shared-hud {
-  --hud-quick-tile-size: 1.8rem;
+  --hud-quick-tile-size: max(1.8rem, var(--tap-floor));
   --hud-quick-tile-gap: 0.45rem;
   --hud-belt-tile-face-size: 2.8rem;
 }
