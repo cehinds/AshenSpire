@@ -192,7 +192,7 @@
 /* The row's tallest cell and the deepest fanned card need a real separation
    band. These measured reservations keep that band intact in the portrait
    884x1326 matrix and in the compressed short-wide composition below. */
-/* 6.4rem -> 7.2rem (#679). That PR grew the row from four cells to six AND gave
+/* 6.4rem -> 7.6rem (#679). That PR grew the row from four cells to six AND gave
    every cell a 44px tap floor, so the tallest cell got taller — but this token,
    which the comment above calls a MEASURED reservation for exactly that cell
    plus the deepest fanned card, was not re-measured with it. The band went
@@ -201,8 +201,14 @@
    constant in px across text sizes, which is the signature of the absolute
    44px floor rather than anything that scales with text.
    Re-measured here rather than reverting the row: six cells and a 44px tap
-   target are both deliberate, so the reservation follows the row. */
-.combat { --action-row-drop: 7.2rem; }
+   target are both deliberate, so the reservation follows the row.
+   7.6rem, not the 7.2rem that merely clears: 7.2 leaves 2.94/3.70/5.24 px at
+   1200x730 S/M/XL, which is thinner than the band this token exists to hold and
+   is exactly how much slack #679 needed to break it. 7.6 measures 6.53/7.70/
+   10.04 px there and still costs nothing above: hintstrip H5 reports 0 px of
+   column overflow at every wide cell, so the extra reservation is absorbed by
+   the column rather than pushing the row toward the viewport edge. */
+.combat { --action-row-drop: 7.6rem; }
 .hand-area {
   height: 23rem; flex-shrink: 0; position: relative;
   display: flex; align-items: flex-end; justify-content: center;
