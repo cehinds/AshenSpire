@@ -95,7 +95,7 @@ player-facing changes. The current Smith modal write-up is
 **[CHANGELOG.md](CHANGELOG.md)** — what changed, newest first, each entry
 naming the pull request that landed it and the build number it shipped in.
 
-**[Working rules](AGENTS.md)** — how contributors and AI agents work here:
+**[Working rules](CONTRIBUTING.md)** — how contributors and AI agents work here:
 one task per branch, draft pull requests into `dev`, and only the owner merges
 to `main`.
 
@@ -144,12 +144,18 @@ build changes; the visible build stamp ties each image to the tree that drew it.
 |---|---|---|
 | [![Current development title screen](docs/preview/title.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development act map](docs/preview/map.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development combat](docs/preview/combat.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) |
 
-Armoury reference captures: [Character](docs/preview/armoury-1191-character-desktop.png),
-[Inventory](docs/preview/armoury-1191-inventory-desktop.png),
-[Hybrid](docs/preview/armoury-1191-hybrid-desktop.png),
-[whole-card hold progress](docs/preview/armoury-1191-hold-progress-desktop.png),
-[comparison tooltip](docs/preview/armoury-1191-comparison-tooltip-desktop.png), and
-[390×844 phone](docs/preview/armoury-1191-phone.png).
+The Armoury has dedicated Character, Equipment, Inventory and Cards tabs. Stats
+live in Character alongside the figure. Cards displays the complete deck as large,
+separate card faces. Choose Change on equipped gear to browse compatible inventory
+items; Show all items clears the filter. Each tab uses one natural page scroll.
+
+Armoury previews: [Equipment](docs/preview/armoury-simple-equipment-1440.png),
+[Character](docs/preview/armoury-simple-character-1440.png),
+[Inventory](docs/preview/armoury-simple-inventory-1440.png),
+[Cards](docs/preview/armoury-simple-cards-1440.png), and
+[phone cards](docs/preview/armoury-simple-cards-390.png).
+The [menu control audit](docs/preview/menu-control-audit.md) records tested routes
+and remaining coverage limits.
 
 The in-game changelog is checked through the real title → Settings → Changelog route
 by `node tools/about-changelog.mjs`.

@@ -10,7 +10,8 @@
 
 ## Coordination and release boundary
 
-How work is branched, reviewed, and merged is in [AGENTS.md](AGENTS.md).
+How work is branched, reviewed, and merged is the [Branch model](#branch-model)
+below.
 Review or approval may permit integration to `dev`; only the owner merges to
 `main`, creates a release tag, or publishes a release.
 

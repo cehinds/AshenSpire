@@ -25,9 +25,8 @@ let activeSelector = null;
  * review share.
  *
  * `canStart` is whether an empty row leads anywhere. The in-run Quick Menu opens
- * this same list with no `onRequestNew`, and an empty slot there is a dead end —
- * activation reaches `requestLoad`, which turns back on a slot with no save. So
- * that door states the fact and the title's doors make the offer.
+ * this same list with no `onRequestNew`, so empty rows are disabled and
+ * describe why. The title's doors can offer a new climb instead.
  */
 export function slotFacts(summary, { canStart = true } = {}) {
   if (summary) return `Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP`;
@@ -221,7 +220,8 @@ export function openSaveSlotSelector({
   const veil = document.createElement('div');
   veil.className = 'modal-veil title-modal-veil';
   veil.dataset.titleModalScrim = '';
-  let selectedSlot = saveSlotSelectionModel(slots, { kind: 'load' }).properties.selectedSlot;
+  const canStart = typeof onRequestNew === 'function';
+  let selectedSlot = saveSlotSelectionModel(slots, { kind: 'load', allowEmpty: canStart }).properties.selectedSlot;
   let activatedLoadSlot = null;
   let loadReviewSlot = null;
   let closed = false;
@@ -232,7 +232,7 @@ export function openSaveSlotSelector({
     for (const cleanup of holdCleanups.splice(0)) cleanup();
   };
 
-  const model = () => saveSlotSelectionModel(slots, { kind: 'load', selectedSlot });
+  const model = () => saveSlotSelectionModel(slots, { kind: 'load', selectedSlot, allowEmpty: canStart });
   const selectedButton = () => veil.querySelector(`[data-slot-pick="${selectedSlot}"]`);
   const focus = (selector = '.title-slot-pick:not([disabled]), .title-modal-back') => {
     const control = veil.querySelector(selector);
@@ -279,8 +279,6 @@ export function openSaveSlotSelector({
   // Whether an empty row leads anywhere here. The in-run Quick Menu opens this
   // list with no way to start a climb, and a row must not offer what its door
   // cannot do.
-  const canStart = typeof onRequestNew === 'function';
-
   const slotRows = (selection) => selection.children
     .filter((child) => child.component === UI.titleSaveSlot)
     .map(({ properties }) => {
@@ -388,6 +386,7 @@ export function openSaveSlotSelector({
 
   const activateSlot = (slot) => {
     hideTooltip();
+    if (!canStart && !slots.find((record) => record.slot === slot)?.summary) return;
     // TWO TAPS (Constantine, 2026-09-04): the first highlights the slot, the
     // second on the highlighted slot opens its decision door (Continue opens
     // it too). Back returns to the list with the slot still highlighted, so

@@ -1,26 +1,36 @@
 // Ship the reviewed artwork without recoloring outfit identities.
 // Requires sharp (npm package); source artwork remains in art/.
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PAINTED_OUTFITS } from '../src/content/paintedOutfits.js';
 const require = createRequire(import.meta.url);
-const sharp = require('sharp');
+let sharp;
+try { sharp = require('sharp'); } catch { sharp = require('../build/animation-tools/node_modules/sharp'); }
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const source = 'art/painted-combat-2026-09-07';
 const manifest = JSON.parse(readFileSync(resolve(root, source, 'manifest.json')));
+const techniqueManifest=resolve(root,source,'animation-groups/frames.json');
+const techniques=existsSync(techniqueManifest)?JSON.parse(readFileSync(techniqueManifest)).frames:[];
 const outfits = {};
+const techniquesOnly=process.argv.includes('--techniques-only');
 for (const outfit of manifest.outfits) {
   const dir = `assets/painted-outfits/${outfit.id}`;
   mkdirSync(resolve(root, dir), { recursive: true });
-  const frames = {};
-  for (const frame of outfit.frames) {
+  const frames = techniquesOnly ? { ...PAINTED_OUTFITS[outfit.id].frames } : {};
+  for (const frame of techniquesOnly ? [] : outfit.frames) {
     const file = `${dir}/${frame.pose}.webp`;
     await sharp(resolve(root, source, frame.file)).webp({ quality: 88, alphaQuality: 100 }).toFile(resolve(root, file));
     frames[frame.pose] = { file, box: frame.box };
   }
-  const menu = {};
-  for (const [pose, input] of Object.entries(outfit.menu)) {
+  for (const frame of techniques.filter(frame => frame.id === outfit.id)) {
+    const file = `${dir}/${frame.pose}.webp`;
+    await sharp(resolve(root,source,'animation-groups',frame.file)).webp({quality:88,alphaQuality:100}).toFile(resolve(root,file));
+    frames[frame.pose]={file,box:frame.box};
+  }
+  const menu = techniquesOnly ? { ...PAINTED_OUTFITS[outfit.id].menu } : {};
+  for (const [pose, input] of Object.entries(techniquesOnly ? {} : outfit.menu)) {
     const file = `${dir}/${pose === 'stand' ? 'menu' : pose}.webp`;
     await sharp(resolve(root, source, input)).webp({ quality: 90, alphaQuality: 100 }).toFile(resolve(root, file));
     menu[pose] = file;

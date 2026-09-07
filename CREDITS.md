@@ -15,9 +15,17 @@ These are static frames; existing combat effects provide their movement.
 
 ## Painted player outfits
 
+Combat technique artwork in `art/painted-combat-2026-09-07/animation-groups/`
+was generated with built-in OpenAI imagegen from the existing project-owned
+painted references for all sixteen outfits. The 144 shield-guard, parry and
+shield-bash frame slots (143 distinct images) ship in `assets/painted-outfits/`.
+Source sheets, exact prompts, preserved approved frames and the Starseer
+recovery reuse are documented in that folder. These are project-owned
+AI-generated assets; no third-party asset license is claimed.
+
 | Assets | Source | Rights |
 |---|---|---|
-| assets/painted-outfits: 16 outfits, 112 combat frames, 32 menu/detail images and 16 portraits | Project-owned artwork generated with OpenAI image generation and reviewed in PRs #728 and #735; originals and generation records in art/painted-combat-2026-09-07 | Project-owned AI-generated assets; no third-party asset license claimed |
+| assets/painted-outfits: 16 outfits, 256 combat frame slots, 32 menu/detail images and 16 portraits | Project-owned artwork generated with OpenAI image generation and reviewed in PRs #728 and #735; originals and generation records in art/painted-combat-2026-09-07 | Project-owned AI-generated assets; no third-party asset license claimed |
 
 Runtime WebP exports are reproducible with tools/painted-outfits-ship.mjs (requires the sharp package). Outfit colors are retained without tint recoloring. Combat uses compact keyframe sequences, with weapons authored into the images.
 

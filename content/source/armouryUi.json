@@ -66,8 +66,9 @@
     },
     "viewModes": {
       "grid": { "label": "Character", "pane": "character", "character": "expanded", "armaments": "folded", "inventory": "folded", "cards": "expanded" },
-      "rack": { "label": "Inventory", "pane": "inventory", "character": "folded", "armaments": "expanded", "inventory": "expanded", "cards": "folded" },
-      "hybrid": { "label": "Hybrid", "pane": "both", "character": "folded", "armaments": "expanded", "inventory": "folded", "cards": "folded" }
+      "rack": { "label": "Equipment", "pane": "inventory", "character": "folded", "armaments": "expanded", "inventory": "expanded", "cards": "folded" },
+      "hybrid": { "label": "Inventory", "pane": "inventory", "character": "folded", "armaments": "expanded", "inventory": "expanded", "cards": "folded" },
+      "cards": { "label": "Cards", "pane": "inventory", "character": "folded", "armaments": "folded", "inventory": "folded", "cards": "expanded" }
     },
     "responsive": {
       "breakpoint": 760,

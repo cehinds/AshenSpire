@@ -64,6 +64,87 @@ export const PAINTED_OUTFITS = {
           "y0": 324,
           "y1": 601
         }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/rogue/shieldGuard1.webp",
+        "box": {
+          "x0": 226,
+          "x1": 448,
+          "y0": 322,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/rogue/shieldGuard2.webp",
+        "box": {
+          "x0": 224,
+          "x1": 428,
+          "y0": 331,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/rogue/shieldGuard3.webp",
+        "box": {
+          "x0": 223,
+          "x1": 429,
+          "y0": 342,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/rogue/parry1.webp",
+        "box": {
+          "x0": 226,
+          "x1": 422,
+          "y0": 323,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/rogue/parry2.webp",
+        "box": {
+          "x0": 226,
+          "x1": 519,
+          "y0": 323,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/rogue/parry3.webp",
+        "box": {
+          "x0": 228,
+          "x1": 422,
+          "y0": 322,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/rogue/shieldBash1.webp",
+        "box": {
+          "x0": 222,
+          "x1": 438,
+          "y0": 315,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/rogue/shieldBash2.webp",
+        "box": {
+          "x0": 209,
+          "x1": 489,
+          "y0": 339,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/rogue/shieldBash3.webp",
+        "box": {
+          "x0": 226,
+          "x1": 425,
+          "y0": 320,
+          "y1": 600
+        }
       }
     },
     "menu": {
@@ -135,6 +216,87 @@ export const PAINTED_OUTFITS = {
           "x1": 477,
           "y0": 259,
           "y1": 601
+        }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/rogue-nightveil/shieldGuard1.webp",
+        "box": {
+          "x0": 223,
+          "x1": 450,
+          "y0": 287,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/rogue-nightveil/shieldGuard2.webp",
+        "box": {
+          "x0": 226,
+          "x1": 445,
+          "y0": 294,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/rogue-nightveil/shieldGuard3.webp",
+        "box": {
+          "x0": 226,
+          "x1": 438,
+          "y0": 291,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/rogue-nightveil/parry1.webp",
+        "box": {
+          "x0": 226,
+          "x1": 438,
+          "y0": 290,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/rogue-nightveil/parry2.webp",
+        "box": {
+          "x0": 225,
+          "x1": 554,
+          "y0": 291,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/rogue-nightveil/parry3.webp",
+        "box": {
+          "x0": 226,
+          "x1": 438,
+          "y0": 291,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/rogue-nightveil/shieldBash1.webp",
+        "box": {
+          "x0": 220,
+          "x1": 440,
+          "y0": 296,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/rogue-nightveil/shieldBash2.webp",
+        "box": {
+          "x0": 193,
+          "x1": 541,
+          "y0": 308,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/rogue-nightveil/shieldBash3.webp",
+        "box": {
+          "x0": 224,
+          "x1": 437,
+          "y0": 288,
+          "y1": 600
         }
       }
     },
@@ -208,6 +370,87 @@ export const PAINTED_OUTFITS = {
           "y0": 325,
           "y1": 601
         }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/rogue-duelist/shieldGuard1.webp",
+        "box": {
+          "x0": 222,
+          "x1": 459,
+          "y0": 329,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/rogue-duelist/shieldGuard2.webp",
+        "box": {
+          "x0": 222,
+          "x1": 453,
+          "y0": 343,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/rogue-duelist/shieldGuard3.webp",
+        "box": {
+          "x0": 219,
+          "x1": 456,
+          "y0": 338,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/rogue-duelist/parry1.webp",
+        "box": {
+          "x0": 219,
+          "x1": 429,
+          "y0": 316,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/rogue-duelist/parry2.webp",
+        "box": {
+          "x0": 217,
+          "x1": 553,
+          "y0": 333,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/rogue-duelist/parry3.webp",
+        "box": {
+          "x0": 221,
+          "x1": 431,
+          "y0": 323,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/rogue-duelist/shieldBash1.webp",
+        "box": {
+          "x0": 219,
+          "x1": 446,
+          "y0": 322,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/rogue-duelist/shieldBash2.webp",
+        "box": {
+          "x0": 215,
+          "x1": 521,
+          "y0": 334,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/rogue-duelist/shieldBash3.webp",
+        "box": {
+          "x0": 219,
+          "x1": 436,
+          "y0": 325,
+          "y1": 600
+        }
       }
     },
     "menu": {
@@ -278,6 +521,87 @@ export const PAINTED_OUTFITS = {
           "x0": 185,
           "x1": 463,
           "y0": 295,
+          "y1": 600
+        }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/rogue-shadow/shieldGuard1.webp",
+        "box": {
+          "x0": 187,
+          "x1": 438,
+          "y0": 302,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/rogue-shadow/shieldGuard2.webp",
+        "box": {
+          "x0": 202,
+          "x1": 441,
+          "y0": 302,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/rogue-shadow/shieldGuard3.webp",
+        "box": {
+          "x0": 199,
+          "x1": 444,
+          "y0": 303,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/rogue-shadow/parry1.webp",
+        "box": {
+          "x0": 211,
+          "x1": 439,
+          "y0": 305,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/rogue-shadow/parry2.webp",
+        "box": {
+          "x0": 200,
+          "x1": 528,
+          "y0": 320,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/rogue-shadow/parry3.webp",
+        "box": {
+          "x0": 212,
+          "x1": 437,
+          "y0": 306,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/rogue-shadow/shieldBash1.webp",
+        "box": {
+          "x0": 208,
+          "x1": 453,
+          "y0": 324,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/rogue-shadow/shieldBash2.webp",
+        "box": {
+          "x0": 208,
+          "x1": 521,
+          "y0": 325,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/rogue-shadow/shieldBash3.webp",
+        "box": {
+          "x0": 207,
+          "x1": 437,
+          "y0": 309,
           "y1": 600
         }
       }
@@ -352,6 +676,87 @@ export const PAINTED_OUTFITS = {
           "y0": 252,
           "y1": 600
         }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/reaver/shieldGuard1.webp",
+        "box": {
+          "x0": 161,
+          "x1": 486,
+          "y0": 241,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/reaver/shieldGuard2.webp",
+        "box": {
+          "x0": 147,
+          "x1": 464,
+          "y0": 304,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/reaver/shieldGuard3.webp",
+        "box": {
+          "x0": 173,
+          "x1": 474,
+          "y0": 269,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/reaver/parry1.webp",
+        "box": {
+          "x0": 152,
+          "x1": 447,
+          "y0": 260,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/reaver/parry2.webp",
+        "box": {
+          "x0": 130,
+          "x1": 573,
+          "y0": 280,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/reaver/parry3.webp",
+        "box": {
+          "x0": 159,
+          "x1": 467,
+          "y0": 267,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/reaver/shieldBash1.webp",
+        "box": {
+          "x0": 177,
+          "x1": 487,
+          "y0": 265,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/reaver/shieldBash2.webp",
+        "box": {
+          "x0": 175,
+          "x1": 591,
+          "y0": 296,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/reaver/shieldBash3.webp",
+        "box": {
+          "x0": 198,
+          "x1": 452,
+          "y0": 270,
+          "y1": 600
+        }
       }
     },
     "menu": {
@@ -422,6 +827,87 @@ export const PAINTED_OUTFITS = {
           "x0": 173,
           "x1": 520,
           "y0": 250,
+          "y1": 600
+        }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/reaver-vigil/shieldGuard1.webp",
+        "box": {
+          "x0": 177,
+          "x1": 474,
+          "y0": 257,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/reaver-vigil/shieldGuard2.webp",
+        "box": {
+          "x0": 174,
+          "x1": 471,
+          "y0": 269,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/reaver-vigil/shieldGuard3.webp",
+        "box": {
+          "x0": 178,
+          "x1": 448,
+          "y0": 259,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/reaver-vigil/parry1.webp",
+        "box": {
+          "x0": 178,
+          "x1": 469,
+          "y0": 260,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/reaver-vigil/parry2.webp",
+        "box": {
+          "x0": 169,
+          "x1": 564,
+          "y0": 277,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/reaver-vigil/parry3.webp",
+        "box": {
+          "x0": 183,
+          "x1": 448,
+          "y0": 260,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/reaver-vigil/shieldBash1.webp",
+        "box": {
+          "x0": 189,
+          "x1": 510,
+          "y0": 256,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/reaver-vigil/shieldBash2.webp",
+        "box": {
+          "x0": 147,
+          "x1": 537,
+          "y0": 274,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/reaver-vigil/shieldBash3.webp",
+        "box": {
+          "x0": 178,
+          "x1": 474,
+          "y0": 252,
           "y1": 600
         }
       }
@@ -496,6 +982,87 @@ export const PAINTED_OUTFITS = {
           "y0": 264,
           "y1": 600
         }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/reaver-oathsworn/shieldGuard1.webp",
+        "box": {
+          "x0": 202,
+          "x1": 475,
+          "y0": 250,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/reaver-oathsworn/shieldGuard2.webp",
+        "box": {
+          "x0": 204,
+          "x1": 443,
+          "y0": 272,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/reaver-oathsworn/shieldGuard3.webp",
+        "box": {
+          "x0": 217,
+          "x1": 430,
+          "y0": 256,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/reaver-oathsworn/parry1.webp",
+        "box": {
+          "x0": 221,
+          "x1": 431,
+          "y0": 260,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/reaver-oathsworn/parry2.webp",
+        "box": {
+          "x0": 207,
+          "x1": 518,
+          "y0": 266,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/reaver-oathsworn/parry3.webp",
+        "box": {
+          "x0": 224,
+          "x1": 425,
+          "y0": 263,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/reaver-oathsworn/shieldBash1.webp",
+        "box": {
+          "x0": 201,
+          "x1": 460,
+          "y0": 274,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/reaver-oathsworn/shieldBash2.webp",
+        "box": {
+          "x0": 176,
+          "x1": 527,
+          "y0": 292,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/reaver-oathsworn/shieldBash3.webp",
+        "box": {
+          "x0": 214,
+          "x1": 448,
+          "y0": 271,
+          "y1": 600
+        }
       }
     },
     "menu": {
@@ -568,6 +1135,87 @@ export const PAINTED_OUTFITS = {
           "y0": 253,
           "y1": 601
         }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/reaver-warden/shieldGuard1.webp",
+        "box": {
+          "x0": 181,
+          "x1": 468,
+          "y0": 258,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/reaver-warden/shieldGuard2.webp",
+        "box": {
+          "x0": 181,
+          "x1": 480,
+          "y0": 277,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/reaver-warden/shieldGuard3.webp",
+        "box": {
+          "x0": 201,
+          "x1": 465,
+          "y0": 265,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/reaver-warden/parry1.webp",
+        "box": {
+          "x0": 198,
+          "x1": 455,
+          "y0": 260,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/reaver-warden/parry2.webp",
+        "box": {
+          "x0": 189,
+          "x1": 559,
+          "y0": 272,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/reaver-warden/parry3.webp",
+        "box": {
+          "x0": 208,
+          "x1": 439,
+          "y0": 261,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/reaver-warden/shieldBash1.webp",
+        "box": {
+          "x0": 199,
+          "x1": 474,
+          "y0": 271,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/reaver-warden/shieldBash2.webp",
+        "box": {
+          "x0": 187,
+          "x1": 561,
+          "y0": 287,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/reaver-warden/shieldBash3.webp",
+        "box": {
+          "x0": 203,
+          "x1": 462,
+          "y0": 268,
+          "y1": 600
+        }
       }
     },
     "menu": {
@@ -581,9 +1229,9 @@ export const PAINTED_OUTFITS = {
       "idle": {
         "file": "assets/painted-outfits/starseer/idle.webp",
         "box": {
-          "x0": 217,
-          "x1": 455,
-          "y0": 318,
+          "x0": 239,
+          "x1": 422,
+          "y0": 260,
           "y1": 601
         }
       },
@@ -640,6 +1288,87 @@ export const PAINTED_OUTFITS = {
           "y0": 349,
           "y1": 601
         }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/starseer/shieldGuard1.webp",
+        "box": {
+          "x0": 221,
+          "x1": 452,
+          "y0": 321,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/starseer/shieldGuard2.webp",
+        "box": {
+          "x0": 222,
+          "x1": 456,
+          "y0": 328,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/starseer/shieldGuard3.webp",
+        "box": {
+          "x0": 223,
+          "x1": 459,
+          "y0": 335,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/starseer/parry1.webp",
+        "box": {
+          "x0": 229,
+          "x1": 445,
+          "y0": 317,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/starseer/parry2.webp",
+        "box": {
+          "x0": 218,
+          "x1": 472,
+          "y0": 330,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/starseer/parry3.webp",
+        "box": {
+          "x0": 228,
+          "x1": 453,
+          "y0": 333,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/starseer/shieldBash1.webp",
+        "box": {
+          "x0": 216,
+          "x1": 489,
+          "y0": 332,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/starseer/shieldBash2.webp",
+        "box": {
+          "x0": 197,
+          "x1": 536,
+          "y0": 304,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/starseer/shieldBash3.webp",
+        "box": {
+          "x0": 223,
+          "x1": 459,
+          "y0": 335,
+          "y1": 600
+        }
       }
     },
     "menu": {
@@ -653,9 +1382,9 @@ export const PAINTED_OUTFITS = {
       "idle": {
         "file": "assets/painted-outfits/starseer-eclipse/idle.webp",
         "box": {
-          "x0": 197,
-          "x1": 451,
-          "y0": 301,
+          "x0": 201,
+          "x1": 458,
+          "y0": 260,
           "y1": 600
         }
       },
@@ -712,6 +1441,87 @@ export const PAINTED_OUTFITS = {
           "y0": 324,
           "y1": 600
         }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/starseer-eclipse/shieldGuard1.webp",
+        "box": {
+          "x0": 194,
+          "x1": 461,
+          "y0": 293,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/starseer-eclipse/shieldGuard2.webp",
+        "box": {
+          "x0": 201,
+          "x1": 459,
+          "y0": 304,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/starseer-eclipse/shieldGuard3.webp",
+        "box": {
+          "x0": 202,
+          "x1": 454,
+          "y0": 308,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/starseer-eclipse/parry1.webp",
+        "box": {
+          "x0": 206,
+          "x1": 456,
+          "y0": 301,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/starseer-eclipse/parry2.webp",
+        "box": {
+          "x0": 204,
+          "x1": 511,
+          "y0": 314,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/starseer-eclipse/parry3.webp",
+        "box": {
+          "x0": 214,
+          "x1": 438,
+          "y0": 309,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/starseer-eclipse/shieldBash1.webp",
+        "box": {
+          "x0": 201,
+          "x1": 448,
+          "y0": 293,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/starseer-eclipse/shieldBash2.webp",
+        "box": {
+          "x0": 194,
+          "x1": 541,
+          "y0": 297,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/starseer-eclipse/shieldBash3.webp",
+        "box": {
+          "x0": 205,
+          "x1": 451,
+          "y0": 306,
+          "y1": 600
+        }
       }
     },
     "menu": {
@@ -725,9 +1535,9 @@ export const PAINTED_OUTFITS = {
       "idle": {
         "file": "assets/painted-outfits/starseer-starlit/idle.webp",
         "box": {
-          "x0": 196,
-          "x1": 499,
-          "y0": 299,
+          "x0": 193,
+          "x1": 449,
+          "y0": 261,
           "y1": 601
         }
       },
@@ -784,6 +1594,87 @@ export const PAINTED_OUTFITS = {
           "y0": 318,
           "y1": 601
         }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/starseer-starlit/shieldGuard1.webp",
+        "box": {
+          "x0": 202,
+          "x1": 507,
+          "y0": 290,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/starseer-starlit/shieldGuard2.webp",
+        "box": {
+          "x0": 199,
+          "x1": 528,
+          "y0": 301,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/starseer-starlit/shieldGuard3.webp",
+        "box": {
+          "x0": 205,
+          "x1": 511,
+          "y0": 312,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/starseer-starlit/parry1.webp",
+        "box": {
+          "x0": 205,
+          "x1": 510,
+          "y0": 298,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/starseer-starlit/parry2.webp",
+        "box": {
+          "x0": 200,
+          "x1": 538,
+          "y0": 306,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/starseer-starlit/parry3.webp",
+        "box": {
+          "x0": 210,
+          "x1": 493,
+          "y0": 300,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/starseer-starlit/shieldBash1.webp",
+        "box": {
+          "x0": 152,
+          "x1": 444,
+          "y0": 304,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/starseer-starlit/shieldBash2.webp",
+        "box": {
+          "x0": 193,
+          "x1": 548,
+          "y0": 312,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/starseer-starlit/shieldBash3.webp",
+        "box": {
+          "x0": 203,
+          "x1": 519,
+          "y0": 290,
+          "y1": 600
+        }
       }
     },
     "menu": {
@@ -797,9 +1688,9 @@ export const PAINTED_OUTFITS = {
       "idle": {
         "file": "assets/painted-outfits/starseer-astral/idle.webp",
         "box": {
-          "x0": 207,
-          "x1": 489,
-          "y0": 299,
+          "x0": 199,
+          "x1": 453,
+          "y0": 260,
           "y1": 600
         }
       },
@@ -854,6 +1745,87 @@ export const PAINTED_OUTFITS = {
           "x0": 163,
           "x1": 480,
           "y0": 296,
+          "y1": 600
+        }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/starseer-astral/shieldGuard1.webp",
+        "box": {
+          "x0": 197,
+          "x1": 502,
+          "y0": 278,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/starseer-astral/shieldGuard2.webp",
+        "box": {
+          "x0": 194,
+          "x1": 504,
+          "y0": 309,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/starseer-astral/shieldGuard3.webp",
+        "box": {
+          "x0": 202,
+          "x1": 499,
+          "y0": 302,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/starseer-astral/parry1.webp",
+        "box": {
+          "x0": 208,
+          "x1": 487,
+          "y0": 299,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/starseer-astral/parry2.webp",
+        "box": {
+          "x0": 207,
+          "x1": 533,
+          "y0": 314,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/starseer-astral/parry3.webp",
+        "box": {
+          "x0": 213,
+          "x1": 485,
+          "y0": 298,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/starseer-astral/shieldBash1.webp",
+        "box": {
+          "x0": 201,
+          "x1": 457,
+          "y0": 310,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/starseer-astral/shieldBash2.webp",
+        "box": {
+          "x0": 183,
+          "x1": 505,
+          "y0": 320,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/starseer-astral/shieldBash3.webp",
+        "box": {
+          "x0": 206,
+          "x1": 490,
+          "y0": 304,
           "y1": 600
         }
       }
@@ -928,6 +1900,87 @@ export const PAINTED_OUTFITS = {
           "y0": 310,
           "y1": 600
         }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/herald/shieldGuard1.webp",
+        "box": {
+          "x0": 232,
+          "x1": 418,
+          "y0": 251,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/herald/shieldGuard2.webp",
+        "box": {
+          "x0": 216,
+          "x1": 430,
+          "y0": 264,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/herald/shieldGuard3.webp",
+        "box": {
+          "x0": 230,
+          "x1": 421,
+          "y0": 252,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/herald/parry1.webp",
+        "box": {
+          "x0": 229,
+          "x1": 419,
+          "y0": 260,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/herald/parry2.webp",
+        "box": {
+          "x0": 210,
+          "x1": 536,
+          "y0": 280,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/herald/parry3.webp",
+        "box": {
+          "x0": 239,
+          "x1": 410,
+          "y0": 259,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/herald/shieldBash1.webp",
+        "box": {
+          "x0": 213,
+          "x1": 432,
+          "y0": 276,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/herald/shieldBash2.webp",
+        "box": {
+          "x0": 197,
+          "x1": 517,
+          "y0": 294,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/herald/shieldBash3.webp",
+        "box": {
+          "x0": 231,
+          "x1": 418,
+          "y0": 264,
+          "y1": 600
+        }
       }
     },
     "menu": {
@@ -998,6 +2051,87 @@ export const PAINTED_OUTFITS = {
           "x0": 211,
           "x1": 429,
           "y0": 291,
+          "y1": 600
+        }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/herald-ossuary/shieldGuard1.webp",
+        "box": {
+          "x0": 209,
+          "x1": 463,
+          "y0": 250,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/herald-ossuary/shieldGuard2.webp",
+        "box": {
+          "x0": 208,
+          "x1": 437,
+          "y0": 263,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/herald-ossuary/shieldGuard3.webp",
+        "box": {
+          "x0": 218,
+          "x1": 424,
+          "y0": 261,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/herald-ossuary/parry1.webp",
+        "box": {
+          "x0": 218,
+          "x1": 422,
+          "y0": 260,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/herald-ossuary/parry2.webp",
+        "box": {
+          "x0": 205,
+          "x1": 553,
+          "y0": 275,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/herald-ossuary/parry3.webp",
+        "box": {
+          "x0": 224,
+          "x1": 415,
+          "y0": 263,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/herald-ossuary/shieldBash1.webp",
+        "box": {
+          "x0": 207,
+          "x1": 428,
+          "y0": 284,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/herald-ossuary/shieldBash2.webp",
+        "box": {
+          "x0": 198,
+          "x1": 538,
+          "y0": 288,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/herald-ossuary/shieldBash3.webp",
+        "box": {
+          "x0": 221,
+          "x1": 417,
+          "y0": 281,
           "y1": 600
         }
       }
@@ -1072,6 +2206,87 @@ export const PAINTED_OUTFITS = {
           "y0": 303,
           "y1": 601
         }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/herald-emberhabit/shieldGuard1.webp",
+        "box": {
+          "x0": 205,
+          "x1": 440,
+          "y0": 248,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/herald-emberhabit/shieldGuard2.webp",
+        "box": {
+          "x0": 201,
+          "x1": 444,
+          "y0": 271,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/herald-emberhabit/shieldGuard3.webp",
+        "box": {
+          "x0": 206,
+          "x1": 442,
+          "y0": 272,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/herald-emberhabit/parry1.webp",
+        "box": {
+          "x0": 213,
+          "x1": 427,
+          "y0": 260,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/herald-emberhabit/parry2.webp",
+        "box": {
+          "x0": 204,
+          "x1": 552,
+          "y0": 270,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/herald-emberhabit/parry3.webp",
+        "box": {
+          "x0": 214,
+          "x1": 427,
+          "y0": 262,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/herald-emberhabit/shieldBash1.webp",
+        "box": {
+          "x0": 211,
+          "x1": 441,
+          "y0": 267,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/herald-emberhabit/shieldBash2.webp",
+        "box": {
+          "x0": 200,
+          "x1": 532,
+          "y0": 291,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/herald-emberhabit/shieldBash3.webp",
+        "box": {
+          "x0": 211,
+          "x1": 433,
+          "y0": 266,
+          "y1": 600
+        }
       }
     },
     "menu": {
@@ -1143,6 +2358,87 @@ export const PAINTED_OUTFITS = {
           "x1": 416,
           "y0": 330,
           "y1": 601
+        }
+      },
+      "shieldGuard1": {
+        "file": "assets/painted-outfits/herald-pilgrim/shieldGuard1.webp",
+        "box": {
+          "x0": 214,
+          "x1": 436,
+          "y0": 246,
+          "y1": 600
+        }
+      },
+      "shieldGuard2": {
+        "file": "assets/painted-outfits/herald-pilgrim/shieldGuard2.webp",
+        "box": {
+          "x0": 214,
+          "x1": 441,
+          "y0": 262,
+          "y1": 600
+        }
+      },
+      "shieldGuard3": {
+        "file": "assets/painted-outfits/herald-pilgrim/shieldGuard3.webp",
+        "box": {
+          "x0": 215,
+          "x1": 439,
+          "y0": 269,
+          "y1": 600
+        }
+      },
+      "parry1": {
+        "file": "assets/painted-outfits/herald-pilgrim/parry1.webp",
+        "box": {
+          "x0": 218,
+          "x1": 433,
+          "y0": 260,
+          "y1": 600
+        }
+      },
+      "parry2": {
+        "file": "assets/painted-outfits/herald-pilgrim/parry2.webp",
+        "box": {
+          "x0": 219,
+          "x1": 520,
+          "y0": 268,
+          "y1": 600
+        }
+      },
+      "parry3": {
+        "file": "assets/painted-outfits/herald-pilgrim/parry3.webp",
+        "box": {
+          "x0": 224,
+          "x1": 420,
+          "y0": 265,
+          "y1": 600
+        }
+      },
+      "shieldBash1": {
+        "file": "assets/painted-outfits/herald-pilgrim/shieldBash1.webp",
+        "box": {
+          "x0": 212,
+          "x1": 435,
+          "y0": 272,
+          "y1": 600
+        }
+      },
+      "shieldBash2": {
+        "file": "assets/painted-outfits/herald-pilgrim/shieldBash2.webp",
+        "box": {
+          "x0": 189,
+          "x1": 500,
+          "y0": 297,
+          "y1": 600
+        }
+      },
+      "shieldBash3": {
+        "file": "assets/painted-outfits/herald-pilgrim/shieldBash3.webp",
+        "box": {
+          "x0": 222,
+          "x1": 426,
+          "y0": 277,
+          "y1": 600
         }
       }
     },
