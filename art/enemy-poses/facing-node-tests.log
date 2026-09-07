@@ -110,7 +110,7 @@ PASS  38. clampBox keeps a box inside its named container — 7/7 cases. (arithm
 PASS  39. the surface check still catches its own known-bad corpus — 14/14 planted breakages went red and the tree came back clean.
 PASS  40. every declared navigable surface has a handler — 5 navigable sets, 21 members, 0 declared with no handler. (`node tools/surfaces.mjs` for the sets, `--selftest` for the reds)
 PASS  41. the screen census still catches its own known-bad corpus — 11/11 planted edits went red and the tree came back clean.
-PASS  42. every screen in the tree is mountable, and the census can still read it — 22 screen modules at 6025ef49-dirty, 17 reachable by an instrument, 5 by nothing, 0 findings. (`node tools/screen-census.mjs` for the checklist itself)
+PASS  42. every screen in the tree is mountable, and the census can still read it — 22 screen modules at 1e310273-dirty, 17 reachable by an instrument, 5 by nothing, 0 findings. (`node tools/screen-census.mjs` for the checklist itself)
 PASS  43. the card-text mark check still catches its own known-bad corpus — corpus held — known-bad recall 3/3, known-good cleared 4/4; mark vocabulary kw st-bleed val up down.
 PASS  44. every card-text mark rule reaches both places card text is drawn — clean — all 9 card-text mark selector(s) reach both drawing sites; SELECTORS ONLY, no pixel was compared. (`node tools/markhome.mjs` for the ledger)
 PASS  45. the link check still catches its own known-bad corpus — 5/5 planted breakages went red, and the clean tree came back with 0.

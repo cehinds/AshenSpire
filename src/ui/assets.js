@@ -173,6 +173,9 @@ export function enemySprite(enemyDef) {
     attack.setAttribute('aria-hidden', 'true');
     attack.style.position = 'absolute';
     attack.style.bottom = '0';
+    // Add impact while keeping the shared foot line fixed during the pose swap.
+    attack.style.transformOrigin = '50% 94.791667%';
+    attack.style.transform = 'translateY(5.208333%) scale(1.05)';
     attack.src = assetUrl(`assets/enemy-poses/${enemyDef.id}_attack.png`);
     attack.addEventListener('load', () => {
       if (img.dataset.artSource === 'enemy-poses') facing.dataset.attackReady = 'true';
