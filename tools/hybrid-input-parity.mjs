@@ -199,8 +199,8 @@ if (args.includes('--selftest')) {
     }, {
       name: 'targeted flask use no longer moves the cursor to a legal enemy',
       file: 'src/ui/screens/combat.js',
-      find: '          if (selectedFlask != null) focusTargeting();',
-      replace: '          /* planted: targeted flask cursor handoff omitted */',
+      find: '              render(); focusTargeting();',
+      replace: '              render(); /* planted: targeted flask cursor handoff omitted */',
       expectRed: /FAIL keyboard Blight Use enters real enemy targeting/,
     }, {
       name: 'pad poller bypasses the standard navigator gamepad door',
