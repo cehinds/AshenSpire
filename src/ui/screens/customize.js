@@ -101,7 +101,6 @@ export function mountCustomize(app, {
     }
   }
 
-  let previewAttributes = null;
   let pointBuy = null;
   let pointBuyReturnFocus = null;
   let pointBuyKeydown = null;
@@ -269,7 +268,6 @@ export function mountCustomize(app, {
     // complete bonus pool becomes available again (SPEC 7.2). The helper is
     // #692's; this branch computed the same thing inline before it existed.
     state.attributes = baselineAttributeAllocation(registries, POINTBUY);
-    previewAttributes = { ...state.attributes };
   }
 
   function resetClassChoices() {
@@ -307,10 +305,12 @@ export function mountCustomize(app, {
     // A baseline point-buy draft intentionally totals less than the finished
     // allocation. Do not send that provisional draft through createRunState's
     // final-allocation validator; the modal renders the draft directly until
-    // all points have been assigned.
-    const hasCompletePointBuy = state.attributeMode === POINTBUY && previewAttributes && remainingPoints() === 0;
+    // all points have been assigned. Equipment requirements must not select a
+    // stale draft: previewCompatibleHands handles incompatible weapons.
+    const hasCompletePointBuy = state.attributeMode === POINTBUY && state.attributes
+      && attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes).length === 0;
     const attributes = hasCompletePointBuy
-      ? previewAttributes
+      ? state.attributes
       : classAttributePreset(registries, state.classId, state.attributeMode);
     return createRunState({
       seed: 0, classId: state.classId, registries,
@@ -319,7 +319,7 @@ export function mountCustomize(app, {
       startingArmourId: state.startingArmourId,
       startingRelicId: state.startingRelicId,
       attributeMode: state.attributeMode,
-      ...(hasCompletePointBuy ? { attributes: { ...previewAttributes } } : {}),
+      ...(hasCompletePointBuy ? { attributes: { ...state.attributes } } : {}),
       profileMeta: meta,
     });
   }
@@ -374,7 +374,6 @@ export function mountCustomize(app, {
           openPointBuy();
         } else {
           closePointBuy();
-          previewAttributes = null;
         }
         renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
       }));
@@ -447,7 +446,6 @@ export function mountCustomize(app, {
         : current > mode.minimum;
       if (!allowed) return;
       state.attributes[id] += delta;
-      if (!statsProblem()) previewAttributes = { ...state.attributes };
       // The pressed stepper keeps the cursor across the redraw.
       const overlay = allocation.card;
       const focusedStep = overlay.querySelector('.se-step.gp-focus')
@@ -486,13 +484,11 @@ export function mountCustomize(app, {
         teardownPointBuy();
         if (outcome === 'reopen') return;
         if (outcome === 'done') {
-          previewAttributes = { ...state.attributes };
           renderCharacterPreview();
           if (restore) focusElement(statBox.querySelector('.se-mode.chosen'));
           return;
         }
         state.attributeMode = STANDARD;
-        previewAttributes = null;
         renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
         if (restore) {
           const standard = statBox.querySelector('.se-mode.chosen');
