@@ -20,6 +20,16 @@
       },
       {
         "family": "spell",
+        "visible": "hidden",
+        "idle": "visible"
+      },
+      {
+        "family": "spell",
+        "visible": "visible",
+        "idle": "hidden"
+      },
+      {
+        "family": "spell",
         "visible": "visible",
         "idle": "hidden"
       },
@@ -541,11 +551,6 @@
         "family": "thrust",
         "visible": "visible",
         "idle": "hidden"
-      },
-      {
-        "family": "thrust",
-        "visible": "hidden",
-        "idle": "visible"
       },
       {
         "family": "thrust",

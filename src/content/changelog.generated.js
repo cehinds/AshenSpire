@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-771",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Two receipts, named in the same pass that writes them",
+    "detail": "Nothing a player sees changes. The classic-figure sigil fix (#769) and the enemy-sprite background note (#767) had merged with no receipt in this file, so the changelog inside the game did not carry them and the gate that checks this before a promotion was red. Both are written up below at the build standing at their own merge, and this receipt names its own pull request in the same commit — the habit that stops a receipts pass owing a receipt of its own.",
+    "build": "0.5.5.112",
+    "pullRequest": 771,
+    "url": "https://github.com/cehinds/AshenSpire/pull/771"
+  },
+  {
+    "id": "pr-769",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The sigil comes off the classic figure too",
+    "detail": "Taking the sigil off the character in #764 removed the overlay but missed the other way it reached the figure: the Classic sprite style, and any figure that falls back to the inline drawing, still had the chosen sigil painted onto the chest as part of the silhouette itself. It now draws the plain accent it wore before sigils existed. The check that guards this could not have caught it — it looked only for the overlay, so it would have called a figure clean while the sigil sat on its chest — and it now reads both ways a sigil can arrive.",
+    "build": "0.5.5.111",
+    "pullRequest": 769,
+    "url": "https://github.com/cehinds/AshenSpire/pull/769"
+  },
+  {
+    "id": "pr-767",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The enemy sprite background exception is written down",
+    "detail": "Nothing a player sees changes. The source backgrounds behind the enemy sprites follow a rule the tooling did not state anywhere, so the exception is recorded where the next person cutting a sprite will find it.",
+    "build": "0.5.5.110",
+    "pullRequest": 767,
+    "url": "https://github.com/cehinds/AshenSpire/pull/767"
+  },
+  {
     "id": "pr-764",
     "date": "2026-09-07",
     "group": "2026-09-07",
