@@ -1,16 +1,4 @@
 {
-  "reaver": {
-    "mirror": [
-      "attack1"
-    ],
-    "note": "Overhead source pose was oriented left; mirrored for right-facing combat."
-  },
-  "reaver-oathsworn": {
-    "mirror": [
-      "attack1"
-    ],
-    "note": "Overhead source pose was oriented left; mirrored for right-facing combat."
-  },
   "starseer": {
     "mapping": {
       "idle": "guard"
@@ -34,5 +22,48 @@
       "idle": "guard"
     },
     "note": "Frontal standing artwork stays in menu. Combat holds the right-facing guarded pose."
+  },
+  "reaver": {
+    "mapping": {
+      "idle": "stand"
+    },
+    "note": "Owner-selected upright sword-rest idle. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave from selected strip.",
+    "menuMapping": {
+      "stand": "stand",
+      "detail": "stand"
+    },
+    "portraitSource": "portrait-sources/reaver.png"
+  },
+  "reaver-vigil": {
+    "mapping": {
+      "idle": "stand"
+    },
+    "note": "Owner-selected upright sword-rest idle. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave from selected strip.",
+    "menuMapping": {
+      "stand": "stand",
+      "detail": "stand"
+    },
+    "portraitSource": "portrait-sources/reaver-vigil.png"
+  },
+  "reaver-oathsworn": {
+    "mapping": {
+      "idle": "swordRest"
+    },
+    "note": "Use the hands-on-sword rest from the first cell of the retained expanded sheet for idle; the menu stand holds its sword to the side. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave.",
+    "menuMapping": {
+      "stand": "swordRest",
+      "detail": "swordRest"
+    },
+    "portraitSource": "portrait-sources/reaver-oathsworn.png"
+  },
+  "reaver-warden": {
+    "mapping": {
+      "idle": "stand"
+    },
+    "note": "Owner-selected upright sword-rest idle. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave from selected strip.",
+    "menuMapping": {
+      "stand": "stand",
+      "detail": "stand"
+    }
   }
 }
