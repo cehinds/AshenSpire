@@ -510,3 +510,9 @@ zero crashes, and the Herald completes full 3-act runs even naively.
 4. **Goreblood** freezes Poise thresholds as well as Bleed (the
    `meterMaxGrowthDisabled` flag is global by design — strictly a buff; the
    card text says so honestly).
+
+## Dodge outcome presentation
+
+The engine emits dodgeRolled once per resolved roll. The combat screen retains its last player receipt before animation playback, so skipping playback cannot discard the explanation. The shared dodgeReceipt formatter labels temporaryGuard as base guard; ordinary blockGained events remain responsible for the applied Block amount. The persistent result uses the standard modal shell and focus return; a live region announces new outcomes.
+
+Regression coverage: node tests/framework.test.mjs checks weight-class costs, deterministic outcomes, atomic resource refusal, stale activation and ordinary Block absorption. Browser evidence must additionally exercise the result modal, keyboard focus and normal/reduced-motion playback on desktop and phones.

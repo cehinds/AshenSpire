@@ -31,6 +31,7 @@ import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
+import { reducedMotionRequested } from '../motion.js';
 import { statProjection, pieceWeight } from '../../model/statProjection.js';
 import { resolveUpgradedEquipment } from '../../model/itemUpgrades.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
@@ -1523,7 +1524,7 @@ export function mountEquipment(host, {
         const tall = rect.height > bottom - top;
         if (tall && Math.abs(rect.top - top) <= 2) return;
         const target = tall ? head : card;
-        const behavior = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
+        const behavior = reducedMotionRequested() ? 'instant' : 'smooth';
         try {
           target.scrollIntoView({ block: tall ? 'start' : 'nearest', inline: 'nearest', behavior });
         } catch {

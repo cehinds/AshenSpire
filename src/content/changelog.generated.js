@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-672",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Dodge explains its outcome",
+    "detail": "Dodge now resolves correctly in the standalone build after removing a circular engine import that interrupted the action after payment. A resolved Dodge now leaves a result button beside the player. Open it to inspect the roll, check, difficulty and base guard; Block modifiers still determine the applied amount. Failed rolls are visible, and the explanation survives skipped or reduced animations. Armoury card scrolling also respects the in-game Reduced motion setting.",
+    "build": "0.5.5.44",
+    "pullRequest": 672,
+    "url": "https://github.com/cehinds/AshenSpire/pull/672"
+  },
+  {
     "id": "pr-657",
     "date": "2026-09-05",
     "group": "2026-09-05",
