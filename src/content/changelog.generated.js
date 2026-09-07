@@ -3,134 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-722",
-    "date": "2026-09-07",
-    "group": "2026-09-07",
-    "summary": "Three checks that had stopped checking anything check again",
-    "detail": "Nothing a player sees changes. Two component contracts and the changelog projector had all gone red on the development branch, and none of them for a real fault: each was pinned to the exact wording of a line that a later, deliberate change had moved — a tile size retuned so the Armoury and Menu controls fill the meter stack, a call that gained an argument, a renderer that gained a plural. They now check what the lines have to mean rather than how they are spelled, which is the same repair #645 made in August. The changelog inside the game also refused one receipt that had a link buried in its prose; flattening it revealed that the link had been the only thing standing in for a missing receipt, so that one is written up properly too.",
-    "build": "0.5.5.70",
-    "pullRequest": 722,
-    "url": "https://github.com/cehinds/AshenSpire/pull/722"
-  },
-  {
-    "id": "pr-717",
-    "date": "2026-09-07",
-    "group": "2026-09-07",
-    "summary": "The receipt #714 was owed",
-    "detail": "Nothing a player sees changes. #714 wrote up the eight merges that had no entry here and, being a pull request itself, owed one in turn; this is that one. It is written up separately because until now it was only ever named inside another receipt's prose, which reads as a citation but is not an entry of its own.",
-    "build": "0.5.5.66",
-    "pullRequest": 717,
-    "url": "https://github.com/cehinds/AshenSpire/pull/717"
-  },
-  {
-    "id": "pr-718",
-    "date": "2026-09-07",
-    "group": "2026-09-07",
-    "summary": "The receipt chain closes on itself",
-    "detail": "Nothing a player sees changes. Splitting the receipts backfill across two pull requests bought a regress: #714 wrote the eight that were owed and then owed one itself, #717 wrote #714's and then owed one itself. This receipt names its own pull request and records #717 in the same line, which is the only way the loop ends — a receipt cannot name a number that does not exist until the pull request is opened, so the pull request goes first and the receipt follows. That pass landed at 0.5.5.66 and carried no player-visible change; nor does this. The lesson is written down rather than repeated: a receipts pass names itself in the same commit that writes the others.",
-    "build": "0.5.5.67",
-    "pullRequest": 718,
-    "url": "https://github.com/cehinds/AshenSpire/pull/718"
-  },
-  {
-    "id": "pr-714",
-    "date": "2026-09-07",
-    "group": "2026-09-07",
-    "summary": "Eight merges get the receipts they owed",
-    "detail": "Nothing a player sees changes. Eight pull requests had landed on dev with no receipt in this file — #686, #690, #692, #694, #697, #698, #706 and #713 — so the changelog you can read inside the game carried none of them, and the gate that checks this before a promotion was red. All eight are written up below at the build standing at their own merge, and the projection was regenerated so both now say the same thing. Two of them state something a summary would have rounded off: #698's records that none of its own code was applied, because the game already solved what it set out to solve and solved it with painted frames rather than a transform; and #713's records the defect its repaired gate found — hand cards overlapping Draw and End Turn at 1200x730 — which is still open. This receipt names its own pull request, which is only possible because the pull request was opened before the receipt was written.",
-    "build": "0.5.5.66",
-    "pullRequest": 714,
-    "url": "https://github.com/cehinds/AshenSpire/pull/714"
-  },
-  {
-    "id": "pr-698",
-    "date": "2026-09-07",
-    "group": "2026-09-07",
-    "summary": "The armour you wear keeps its own painted figure in a fight",
-    "detail": "Nothing a player sees changes, and that is the point. This pull request set out to stop an alternative armour set being erased from the animated combat figure — a real gap — but the game had already closed it by better means: each set draws its own authored pose sheet, one of the twelve shipped as 561 painted frames, rather than the class default. The change offered instead was a CSS animation over the layered equipment composite, with no art behind it, so none of it was applied; taking it would have swapped painted frames for a transform. The one thing the shipped path still gives up is stated in the code rather than hidden: the armour-set palette and the held weapon do not ride on the fighter.",
-    "build": "0.5.5.64",
-    "pullRequest": 698,
-    "url": "https://github.com/cehinds/AshenSpire/pull/698"
-  },
-  {
-    "id": "pr-694",
-    "date": "2026-09-07",
-    "group": "2026-09-07",
-    "summary": "Assign Points refunds to a baseline, and its rows keep one even inset",
-    "detail": "Opening Assign Points returns every stat to the mode's baseline and hands the whole bonus pool back, instead of resuming the allocation you left; the ten points are yours to spend again from a neutral start. The save-slot chooser is rebuilt on the shared kit, and a setting row now carries the same padding on all four sides rather than shaving the horizontal edge. The check that measures those rows is now part of the foldout gate, beside the one that proves each stat's detail stays attached to its own card.",
-    "build": "0.5.5.63",
-    "pullRequest": 694,
-    "url": "https://github.com/cehinds/AshenSpire/pull/694"
-  },
-  {
-    "id": "pr-713",
-    "date": "2026-09-07",
-    "group": "2026-09-07",
-    "summary": "The bottom row's six controls are checked by what they are, not by name",
-    "detail": "Nothing a player sees changes here, but something a player can see is now known to be wrong. #679 merged the two spent piles into one and added Arts and Potions; the gate that guards the combat action row still listed the old names, so the two new controls were invisible to it and the row could grow without the gate noticing. Controls are now identified by what they are rather than by a whitelist. The working gate immediately found a real defect: hand cards overlap Draw and End Turn at 1200x730 at every text size. That is recorded, not fixed here.",
-    "build": "0.5.5.63",
-    "pullRequest": 713,
-    "url": "https://github.com/cehinds/AshenSpire/pull/713"
-  },
-  {
-    "id": "pr-697",
-    "date": "2026-09-07",
-    "group": "2026-09-07",
-    "summary": "Assign Points starts from the baseline, and setting rows share one inset",
-    "detail": "Reopening Assign Points seats every attribute at the mode's baseline rather than resuming a half-spent allocation, and the shared setting row keeps one equal inset on all four sides — a surface does not get to shave a side off it.",
-    "build": "0.5.5.61",
-    "pullRequest": 697,
-    "url": "https://github.com/cehinds/AshenSpire/pull/697"
-  },
-  {
-    "id": "pr-706",
-    "date": "2026-09-07",
-    "group": "2026-09-07",
-    "summary": "A disabled potion slot is disabled, not merely labelled so",
-    "detail": "Nothing a player sees changes. The kit now records why an empty potion control is natively disabled instead of only carrying aria-disabled: the announcement alone tells a screen reader the control is unavailable while still letting the cursor, the keyboard and a programmatic click select it. Native disabling is what actually keeps an empty slot out of reach.",
-    "build": "0.5.5.59",
-    "pullRequest": 706,
-    "url": "https://github.com/cehinds/AshenSpire/pull/706"
-  },
-  {
-    "id": "pr-692",
-    "date": "2026-09-07",
-    "group": "2026-09-07",
-    "summary": "Character creation opens on a neutral allocation",
-    "detail": "Point-buy character creation now seats every attribute at the mode's baseline as its starting position, and the preview beside the panel is built from the last complete allocation until all ten points are spent — so a half-finished draft is never sent through the validator that only a finished one can pass. The creation preview's padding and margins were tidied at the same time.",
-    "build": "0.5.5.58",
-    "pullRequest": 692,
-    "url": "https://github.com/cehinds/AshenSpire/pull/692"
-  },
-  {
-    "id": "pr-690",
-    "date": "2026-09-07",
-    "group": "2026-09-07",
-    "summary": "Every primary stat is its own card, and it keeps its own explanation",
-    "detail": "The five primary stats are drawn as self-contained cards whose summary and detail are one piece, matching the grammar the Armoury's card rows already use — so a stat's explanation opens under that stat rather than in a panel shared with its neighbours, and only one is open at a time. The gate for this grew assertions that each detail stays attached to its own card, and the Intelligence row inside Assign Points no longer wraps to a second line and stands 1.44px taller than the other four, which had kept that gate red since #647.",
-    "build": "0.5.5.57",
-    "pullRequest": 690,
-    "url": "https://github.com/cehinds/AshenSpire/pull/690"
-  },
-  {
-    "id": "pr-686",
-    "date": "2026-09-07",
-    "group": "2026-09-07",
-    "summary": "Crimson and Azure can be drunk outside a fight, if you ask for it",
-    "detail": "A new Settings switch, off by default, lets the healing and mana flasks be used on the map instead of only in combat; with it off they say so rather than silently refusing. Both now sit in the potion belt beside the carried flasks rather than in their own corner of Quick Access, which leaves Armoury and Menu the only two controls there and lets them take the full height of the meter stack beside them.",
-    "build": "0.5.5.56",
-    "pullRequest": 686,
-    "url": "https://github.com/cehinds/AshenSpire/pull/686"
-  },
-  {
-    "id": "pr-711",
+    "id": "pr-712",
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Saved boss destinations follow current content safely",
-    "detail": "Loading validates the original boss behind legacy maps and refuses missing or invalid encounters before play. Named destinations refresh when enemies are renamed or encounter composition changes, preserving paths, selected encounters and RNG state in solo and LAN saves.",
-    "build": "0.5.5.60",
-    "pullRequest": 711,
-    "url": "https://github.com/cehinds/AshenSpire/pull/711"
+    "detail": "Loading validates the original boss behind legacy maps and refuses missing or invalid encounters before play. Named destinations refresh when enemies are renamed or encounter composition changes, preserving paths, selected encounters and RNG state in solo and LAN saves. This applies the development fix from PR #711.",
+    "build": "0.5.5.57",
+    "pullRequest": 712,
+    "url": "https://github.com/cehinds/AshenSpire/pull/712"
   },
   {
     "id": "pr-704",
@@ -231,16 +111,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.5.5.46",
     "pullRequest": 679,
     "url": "https://github.com/cehinds/AshenSpire/pull/679"
-  },
-  {
-    "id": "pr-664",
-    "date": "2026-09-06",
-    "group": "2026-09-06",
-    "summary": "Assign Points starts with ten points to spend, and text keeps its inset",
-    "detail": "Opening or reopening Assign Points now refunds every attribute to 10 and puts all 10 points back in the pool, rather than reopening on the class's already-spent suggestion. The five stat cards and shared setting rows use balanced padding on every side, including narrow phone layouts, so labels and summaries no longer run against their component or modal edges. The character-creation browser check follows the current two-step New flow, verifies the refund on first open and reopen, measures all four row insets, assigns a complete legal allocation, and repeats the flow at desktop and phone sizes.",
-    "build": "0.5.5.40",
-    "pullRequest": 664,
-    "url": "https://github.com/cehinds/AshenSpire/pull/664"
   },
   {
     "id": "pr-657",
