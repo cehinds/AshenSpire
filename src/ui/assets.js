@@ -7,7 +7,7 @@
 
 import { balance } from '../content/balance.js';
 import { PAINTED_ENEMIES, EXPANSION_ENEMIES } from '../content/enemyArt.js';
-import { medallionPct } from '../content/classArtAnchors.js';
+import { medallionAnchor } from '../content/classArtAnchors.js';
 import { DEFAULT_SPRITE_STYLE, SPRITE_STYLES } from '../model/spriteStyle.js';
 import { assetUrl } from './assetmap.js';
 import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
@@ -332,6 +332,62 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;';
   el.appendChild(facing);
 
+  // THE CHEST MEDALLION, APPLIED WHATEVER THE STYLE DRAWS.
+  //
+  // It used to be written inline after the painted `img`, which made it the
+  // ONE style that carried the player's chosen sigil: `animated` returns as
+  // soon as it has a pose stage, and since #700 `animated` is the default
+  // everywhere a character is made. So the sigil a player picked was invisible
+  // on the default figure — not because its anchor was missing but because the
+  // code path that draws it was never reached. A sigil is a fact about the
+  // CHARACTER, not about which art style renders them, so it hangs off the
+  // frame here and every style that shows a figure gets it.
+  //
+  // WHERE IT SITS IS PER CLASS AND MEASURED (src/content/classArtAnchors.js).
+  // It was one shared `top:53%` for all four, which is a claim that every
+  // figure keeps its chest at the same height — true of the Blender builders,
+  // one rig in four palettes, and false of four separately painted figures. At
+  // 53% the disc landed on the Starseer's face under the hat brim and inside
+  // the Herald's hood opening. No anchor means NO OVERLAY: a default would be
+  // the same shared assumption, and it would cover an unmeasured figure's face
+  // in silence rather than showing up as a missing medallion.
+  //
+  // NOT ON THE SVG FALLBACK PATH, deliberately: `build(tint, sigil)` draws the
+  // sigil inside the silhouette itself, so adding this would be two sigils.
+  const applyMedallion = () => {
+    const anchor = medallionAnchor(classId);
+    if (!sigil || !anchor) return;
+    const med = document.createElement('span');
+    // NO COUNTER-MIRROR, and its absence is the fix rather than an omission.
+    // This used to carry `scaleX(-1)` to undo the mirror it inherited from
+    // `.class-sprite` — right for the ART, wrong for a GLYPH, since mirrored
+    // text reads as a rendering fault. But it hardcoded "my parent is
+    // mirrored", and the character-creation figure well cancels that mirror,
+    // so there the counter-mirror WAS the fault it was written to prevent.
+    // The medallion sits outside the facing layer: it inherits no mirror, so
+    // it needs no undoing, on any surface.
+    //
+    // A SHARE OF THE FRAME, NOT A PIXEL COUNT. 22px in a 190px frame was 11.6%
+    // of it whatever the art did, which covered a full-body chest from collar
+    // to forearm and is why three of the four anchors were once recorded as
+    // unplaceable. 7% of the frame's height is a chest-sized jewel on these
+    // figures and stays one in any frame this is drawn in. The glyph rides the
+    // disc's own size (`cqh` against the disc as a container) so it cannot
+    // drift out of proportion with it.
+    med.style.cssText =
+      `position:absolute;left:${anchor.x}%;top:${anchor.y}%;transform:translate(-50%,-50%);`
+      + 'height:7%;aspect-ratio:1;border-radius:50%;background:#14100c;'
+      + `border:1.5px solid ${tint};box-sizing:border-box;container-type:size;`
+      + 'display:flex;align-items:center;justify-content:center;color:#e8dcc0;';
+    // The glyph is its own element so the disc can be a size container: a
+    // container's own font-size cannot be expressed in its own `cq` units.
+    const mark = document.createElement('span');
+    mark.textContent = sigil;
+    mark.style.cssText = 'font-size:62cqh;line-height:1;';
+    med.appendChild(mark);
+    el.appendChild(med);
+  };
+
   const fallbackToSvg = () => {
     facing.innerHTML = build(tint, sigil);
     const svg = facing.querySelector('svg');
@@ -368,6 +424,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
       // rides `.class-sprite.animated`, which is what that search matches.
       facing.appendChild(stage.el);
       registerStage(el, stage);
+      applyMedallion();
       return el;
     }
   }
@@ -382,34 +439,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   img.style.cssText = 'width:100%;height:100%;object-fit:contain;image-rendering:auto;';
   img.addEventListener('error', fallbackToSvg); // dist / file:// → SVG
   facing.appendChild(img);
-  // The chosen sigil rides the rendered art as a chest medallion overlay.
-  //
-  // WHERE IT SITS IS PER CLASS AND MEASURED (src/content/classArtAnchors.js).
-  // This was one shared `top:53%` for all four, which is a claim that every
-  // figure keeps its chest at the same height — true of the Blender builders,
-  // one rig in four palettes, and false of four separately painted figures. At
-  // 53% the disc landed on the Starseer's face under the hat brim and inside
-  // the Herald's hood opening. No anchor means NO OVERLAY: a default would be
-  // the same shared assumption, and it would cover an unmeasured figure's face
-  // in silence rather than showing up as a missing medallion.
-  const medTop = medallionPct(classId);
-  if (sigil && medTop != null) {
-    const med = document.createElement('span');
-    med.textContent = sigil;
-    // NO COUNTER-MIRROR, and its absence is the fix rather than an omission.
-    // This used to carry `scaleX(-1)` to undo the mirror it inherited from
-    // `.class-sprite` — right for the ART, wrong for a GLYPH, since mirrored
-    // text reads as a rendering fault. But it hardcoded "my parent is
-    // mirrored", and the character-creation figure well cancels that mirror,
-    // so there the counter-mirror WAS the fault it was written to prevent.
-    // The medallion now sits outside the facing layer: it inherits no mirror,
-    // so it needs no undoing, on any surface.
-    med.style.cssText =
-      `position:absolute;left:50%;top:${medTop}%;transform:translate(-50%,-50%);` +
-      `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
-      'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
-    el.appendChild(med);
-  }
+  applyMedallion();
   return el;
 }
 

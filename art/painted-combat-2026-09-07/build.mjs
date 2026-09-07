@@ -2,7 +2,7 @@ import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
-import {decodePng,encodePng,contentBox,resample} from '../../tools/concept-cutout.mjs';
+import {decodePng,encodePng,contentBox,resample,cutout} from '../../tools/concept-cutout.mjs';
 const here=dirname(fileURLToPath(import.meta.url)), repo=join(here,'../..');
 const jobs=JSON.parse(readFileSync(join(here,'requirements.json'),'utf8')).outfits;
 const poses=['stand','guard','attack1','attack2','attack3','attack4','hit','detail','portrait'];
@@ -31,6 +31,26 @@ for(const job of jobs){
  const mf=JSON.parse(readFileSync(join(cut,'lowpoly-renders.manifest.json'),'utf8'));
  const raw=Object.fromEntries(mf.renders.map(r=>[r.pose,{...r,sourceSheet:'menu-sheets/'+job.id+'.png',img:decodePng(readFileSync(join(cut,r.file)))}]));
  if(reavers.includes(job.id)){
+  const attackDir=join(here,'cut-selected-attacks',job.id);
+  mkdirSync(attackDir,{recursive:true});
+  const attackSheet='combat-sheets/'+job.id+'-selected-attacks.png';
+  execFileSync(process.execPath,['tools/painted-poses.mjs','--sheet',join(here,attackSheet),'--class',job.id,'--out',attackDir,'--poses','attack1,attack2,attack3','--grid','1x3','--canvas','1000x1000','--grounded'],{cwd:repo,stdio:'pipe'});
+  const attacks=JSON.parse(readFileSync(join(attackDir,'lowpoly-renders.manifest.json'),'utf8')).renders;
+  const overhead=attacks.find(r=>r.pose==='attack2');
+  const overheadBox=contentBox(decodePng(readFileSync(join(attackDir,overhead.file))));
+  const oldOverheadBox=contentBox(raw.attack1.img);
+  const attackScale=(oldOverheadBox.y1-oldOverheadBox.y0+1)/(overheadBox.y1-overheadBox.y0+1);
+  for(const r of attacks)raw[r.pose]={...r,sourceScale:attackScale,sourceSheet:attackSheet,img:decodePng(readFileSync(join(attackDir,r.file)))};
+  if(job.id==='reaver-oathsworn'){
+   const restDir=join(here,'cut-selected-attacks','oathsworn-rest');
+   mkdirSync(restDir,{recursive:true});
+   const restSheet='sheets/reaver-oathsworn.png';
+   const restPoses=['swordRest',...Array.from({length:11},(_,i)=>'study'+i)].join(',');
+   execFileSync(process.execPath,['tools/painted-poses.mjs','--sheet',join(here,restSheet),'--class',job.id,'--out',restDir,'--poses',restPoses,'--grid','3x4','--canvas','1000x1000','--grounded'],{cwd:repo,stdio:'pipe'});
+   const r=JSON.parse(readFileSync(join(restDir,'lowpoly-renders.manifest.json'),'utf8')).renders.find(r=>r.pose==='swordRest');
+   const img=decodePng(readFileSync(join(restDir,r.file))),b=contentBox(img),old=contentBox(raw.stand.img);
+   raw.swordRest={...r,img,sourceSheet:restSheet,sourceScale:(old.y1-old.y0+1)/(b.y1-b.y0+1)};
+  }
   const target=contentBox(raw.stand.img),guard=correctionFrames.find(r=>r.pose===job.id+'-guard');
   const guardImg=decodePng(readFileSync(join(corrections,guard.file))),reference=contentBox(guardImg);
   const sourceScale=(target.y1-target.y0+1)/(reference.y1-reference.y0+1);
@@ -69,9 +89,14 @@ for(const job of jobs){
   const box=contentBox({width:640,height:640,bpp:4,px});
   frames.push({pose:r.pose,sourcePose:r.from,sourceSheet:r.sourceSheet,file,box,anchor:[320,600]});
  }
+ if(choices[job.id]?.portraitSource){
+  const sourceSheet=choices[job.id].portraitSource;
+  raw.portrait={sourceSheet,img:{...cutout(decodePng(readFileSync(join(here,sourceSheet)))),bpp:4}};
+ }
  const menu=join(here,'menu',job.id);mkdirSync(menu,{recursive:true});
  for(const p of ['stand','detail','portrait']){
-  const img=raw[p].img,b=contentBox(img),bw=b.x1-b.x0+1,bh=b.y1-b.y0+1;
+  const from=choices[job.id]?.menuMapping?.[p]||p;
+  const img=raw[from].img,b=contentBox(img),bw=b.x1-b.x0+1,bh=b.y1-b.y0+1;
   const cw=p==='portrait'?512:640,ch=p==='portrait'?512:800,pad=16;
   const s=Math.min((cw-pad*2)/bw,(ch-pad*2)/bh),w=Math.round(bw*s),h=Math.round(bh*s);
   const small=resample(img,b.x0,b.y0,bw,bh,w,h),px=Buffer.alloc(cw*ch*4);
