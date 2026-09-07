@@ -1,0 +1,41 @@
+const {chromium}=require('playwright');
+const fs=require('node:fs');
+(async()=>{
+ const browser=await chromium.launch({headless:true,channel:'msedge'});
+ const page=await browser.newPage({viewport:{width:1440,height:1000}});
+ await page.goto('http://127.0.0.1:4287/art/enemy-poses/index.html');
+ await page.locator('article').last().waitFor();
+ await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));
+ const gallery=await page.evaluate(()=>({cards:document.querySelectorAll('article').length,broken:[...document.images].filter(i=>!i.naturalWidth).length}));
+ await page.screenshot({path:'art/enemy-poses/preview-desktop.png',fullPage:true});
+ await page.setViewportSize({width:390,height:844});
+ const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
+ await page.locator('input').fill('husk');
+ await page.screenshot({path:'art/enemy-poses/preview-phone.png'});
+ await page.locator('article:visible summary').click();
+ await page.locator('article:visible button').click();
+ const playback=await page.locator('article:visible .play').getAttribute('src');
+ await page.waitForTimeout(750);
+ const returned=await page.locator('article:visible .play').getAttribute('src');
+ await page.setViewportSize({width:1440,height:1000});
+ await page.evaluate(async()=>{
+  const base=document.createElement('base');base.href='/';document.head.append(base);
+  const {enemySprite}=await import('/src/ui/assets.js');
+  const roster=await (await fetch('/assets/enemy-poses/manifest.json')).json();
+  document.body.innerHTML='<main id="test"></main>';
+  const css=document.createElement('link');css.rel='stylesheet';css.href='/styles/combat.css';document.head.append(css);
+  for(const e of roster.entries){const host=document.createElement('div');host.className='enemy';host.style.display='inline-block';const sprite=document.createElement('div');sprite.className='sprite';sprite.append(enemySprite({...e,size:'medium'}));host.append(sprite);document.querySelector('#test').append(host);}
+  await Promise.all([...document.images].map(i=>i.decode()));
+ });
+ await page.waitForTimeout(200);
+ const idle=await page.evaluate(()=>[...document.querySelectorAll('.enemy-pose-attack')].every(e=>getComputedStyle(e).visibility==='hidden'));
+ await page.evaluate(()=>document.querySelectorAll('.sprite').forEach(e=>e.classList.add('act-attack')));
+ const attacks=await page.evaluate(()=>({ready:document.querySelectorAll('[data-attack-ready="true"]').length,visible:[...document.querySelectorAll('.enemy-pose-attack')].every(e=>getComputedStyle(e).visibility==='visible'),idleHidden:[...document.querySelectorAll('.enemy-pose-idle')].every(e=>getComputedStyle(e).visibility==='hidden')}));
+ await page.screenshot({path:'art/enemy-poses/preview-combat.png',fullPage:true});
+ await page.evaluate(()=>document.querySelectorAll('.sprite').forEach(e=>e.classList.remove('act-attack')));
+ const restored=await page.evaluate(()=>[...document.querySelectorAll('.enemy-pose-idle')].every(e=>getComputedStyle(e).visibility==='visible'));
+ const result={gallery,phoneOverflow:overflow,playback,returned,idle,attacks,restored};
+ fs.writeFileSync('art/enemy-poses/inspection.json',JSON.stringify(result,null,2)+'\n');console.log(result);
+ await browser.close();
+ if(gallery.cards!==33||gallery.broken||overflow||!idle||!attacks.visible||!attacks.idleHidden||attacks.ready!==33||!restored||!playback.endsWith('_attack.png')||!returned.endsWith('_idle.png'))process.exitCode=1;
+})().catch(e=>{console.error(e);process.exitCode=1});

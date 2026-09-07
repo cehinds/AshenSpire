@@ -371,6 +371,9 @@
 /* ---------- paced playback: one actor at a time (SPEC §7.4) ---------- */
 /* Attack lunge: enemies step left toward the player, the player steps right. */
 .enemy .sprite.act-attack { animation: lunge-left 280ms ease-out; }
+.enemy-pose-attack { visibility: hidden; }
+.enemy .sprite.act-attack [data-attack-ready="true"] > .enemy-pose-idle { visibility: hidden; }
+.enemy .sprite.act-attack [data-attack-ready="true"] > .enemy-pose-attack { visibility: visible; }
 .player .sprite.act-attack { animation: lunge-right 280ms ease-out; }
 .sprite.act-move { animation: act-step 260ms ease-out; }
 @keyframes lunge-left {
@@ -895,3 +898,69 @@
 @media (prefers-reduced-motion: reduce) {
   .hand .card.card-drawn, .combat .pile.spent.pile-received { animation: none; }
 }
+
+/* Readable cards and controls occupy separate flow rows. */
+:root .combat:not(.coop) > .hand-area {
+ height: auto; margin-bottom: 0; display: grid;
+ grid-template-areas: "hand" "actions"; grid-template-columns: minmax(0, 1fr);
+ gap: clamp(28px, 4vh, 48px); padding: 0 12px max(24px, var(--safe-bottom-local));
+}
+:root .combat:not(.coop) .hand-overlay { width: 100%; height: auto; grid-area: hand; }
+:root .combat:not(.coop) .hand {
+ height: auto; justify-content: safe center; align-items: end;
+ padding: 64px 24px 24px; gap: 0; overflow-x: auto; scrollbar-width: thin;
+}
+:root .combat:not(.coop) .hand .card {
+ --card-w: max(178px, calc(178px / var(--ui-zoom, 1))); --card-name-h: max(32px, calc(32px / var(--ui-zoom, 1))); --card-art-h: max(70px, calc(70px / var(--ui-zoom, 1)));
+ --card-band-h: max(22px, calc(22px / var(--ui-zoom, 1))); --card-row: max(22px, calc(22px / var(--ui-zoom, 1))); --card-pad: max(8px, calc(8px / var(--ui-zoom, 1))); --card-gap: max(5px, calc(5px / var(--ui-zoom, 1)));
+ margin: 0; touch-action: pan-x;
+}
+:root:not([data-composition='short-wide']) .combat:not(.coop) .hand .card .cname { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); }
+:root:not([data-composition='short-wide']) .combat:not(.coop) .hand .card .ctext { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); line-height: max(22px, calc(22px / var(--ui-zoom, 1))); }
+:root .combat:not(.coop) > .hand-area > .combat-action-row {
+ position: relative; inset: auto; grid-area: actions; width: 100%;
+  --combat-control-size: max(64px, calc(64px / var(--ui-zoom, 1)));
+ grid-template-columns: var(--combat-control-size) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr) var(--combat-control-size); align-items: center; gap: 6px;
+}
+:root .combat:not(.coop) .combat-action-row > :is(.end-turn, .energy-orb, .combat-potions) { height: var(--combat-control-size); min-height: var(--combat-control-size); box-sizing: border-box; }
+:root .combat:not(.coop) .combat-action-row > :is(.energy-orb, .combat-potions) { width: var(--combat-control-size); min-width: 0; border-radius: 50%; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+:root .combat:not(.coop) .combat-action-row > .combat-potions { font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
+:root .combat:not(.coop) .combat-action-row .spent { display: flex; flex-direction: column; justify-content: center; }
+
+/* Focus the figure, never paint the full-height combatant layout box. */
+.combat:not(.coop) .combatant { border: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; }
+.combat .combatant:focus-visible .sprite { filter: drop-shadow(0 0 3px var(--gold)); }
+:root .combat:not(.coop) .hand .card:hover,
+:root .combat:not(.coop) .hand .card.selected { transform: translateY(-28px) !important; z-index: 50 !important; }
+:root .combat:not(.coop) .hand .card .mana-cost { right: auto; left: -0.7rem; top: 2.4rem; }
+:root .combat:not(.coop) .hand .card .stamina-cost { right: auto; left: -0.7rem; top: 5rem; }
+
+@media (max-width: 480px) {
+  :root .combat:not(.coop) .hand { padding-inline: 16px; }
+  :root .combat:not(.coop) .hand .card { --card-w: calc(146.5px / var(--ui-zoom, 1)); }
+}
+
+/* Give the enemy group the right edge; stage fitting reserves each fighter's cell. */
+:root .combat:not(.coop) .field { padding-inline: 12px; gap: 12px; }
+:root .combat:not(.coop) .player-zone { width: 28%; flex: 0 0 28%; }
+:root .combat:not(.coop) .enemy-row { justify-content: flex-end; min-width: 0; gap: 16px; }
+:root .combat:not(.coop) .enemy-row > .combatant { flex: 0 1 42%; min-width: 0; }
+:root .combat:not(.coop) .combatant-card { width: max-content; }
+:root .combat:not(.coop) .combatant .sprite { flex: 0 0 auto; min-width: max-content; overflow: visible; }
+
+/* A hand card has one portrait profile; viewport changes never resize one axis alone. */
+:root .combat:not(.coop) .hand .card {
+  height: calc(var(--card-w) * 1.4); aspect-ratio: 5 / 7;
+  --card-art-h: calc(var(--card-w) * 0.30);
+  --card-name-h: calc(var(--card-w) * 0.18);
+}
+:root .combat:not(.coop) .hand .card .art { overflow: hidden; }
+:root .combat:not(.coop) .hand .card .art img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Increase the reading inside the existing five fixed HUD tracks. */
+:root .combat:not(.coop) .combat-action-row .sp-k { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.1; letter-spacing: 0; }
+:root .combat:not(.coop) .combat-action-row .sp-v { font-size: max(1.5rem, calc(17px / var(--ui-zoom, 1))); line-height: 1.1; }
+:root .combat:not(.coop) .combat-action-row > :is(.end-turn, .combat-potions) { font-size: max(1.38rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.1; }
+:root .combat:not(.coop) .combat-action-row .spent { padding-inline: 2px; font-size: max(1.1rem, calc(11px / var(--ui-zoom, 1))); line-height: 1.15; }
+:root .combat:not(.coop) .combat-action-row .spent small { font-size: inherit; }
+:root .combat:not(.coop) .combat-action-row :is(.hold-hint, .et-key) { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1; }

@@ -13,6 +13,14 @@ Its extraction manifest is retained as `assets/enemies-unity/provenance.json`.
 Frames share a 384 × 384 canvas, a (192, 364) foot anchor and left-facing art.
 These are static frames; existing combat effects provide their movement.
 
+## Painted player outfits
+
+| Assets | Source | Rights |
+|---|---|---|
+| assets/painted-outfits: 16 outfits, 112 combat frames, 32 menu/detail images and 16 portraits | Project-owned artwork generated with OpenAI image generation and reviewed in PRs #728 and #735; originals and generation records in art/painted-combat-2026-09-07 | Project-owned AI-generated assets; no third-party asset license claimed |
+
+Runtime WebP exports are reproducible with tools/painted-outfits-ship.mjs (requires the sharp package). Outfit colors are retained without tint recoloring. Combat uses compact keyframe sequences, with weapons authored into the images.
+
 ## Planned sources
 
 - [game-icons.net](https://game-icons.net) — CC BY 3.0 — card art, relic/status/intent icons
@@ -64,6 +72,8 @@ row in the table below — no game-code changes.
 > until then.
 
 ## Code
+
+Enemy pose additions (2026-09-07): seven painted replacement idle sprites and 33 attack sprites in `assets/enemy-poses/` were generated with built-in image_gen using this project's existing enemy artwork as identity references. The remaining 26 idle frames are unchanged copies of their existing credited sources. Source sheets, prompts and processing records are retained in `art/enemy-poses/`.
 
 The fourteen expansion portraits in `assets/enemies-expansion/` were generated for AshenSpire with ChatGPT Codex in September 2026, following the project's Unity-fork painted style. They are project-generated artwork, offered under CC0 like the existing generated game assets. Each transparent idle frame is normalized to 384 × 384 with foot anchor (192, 364); combat movement is supplied by the runtime. The twelve imported Unity portraits remain byte-identical to their credited source.
 

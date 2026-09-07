@@ -1,3 +1,4 @@
+import { paintedPresentation } from '../paintedOutfits.js';
 // Character creation: four progressive sections backed by validated content.
 //
 // ON THE KIT. The screen is a page door (§05 without the veil): the head
@@ -328,7 +329,7 @@ export function mountCustomize(app, {
     portrait.style.borderColor = tintCss(state.tint);
     portrait.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
     const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
-      ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, state.spriteStyle)
+      ? (state.spriteStyle === 'classic' ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'classic') : paintedPresentation(state.classId, state.startingArmourId, 'detail'))
       : null;
     portrait.replaceChildren(sprite || state.glyph);
 
@@ -348,7 +349,7 @@ export function mountCustomize(app, {
     const run = previewRun();
     const projection = statProjection(registries, run);
     const sprite = spritesAreEnabled()
-      ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered')
+      ? paintedPresentation(state.classId, state.startingArmourId, 'portrait')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
     const previewPane = classPreviewPane({
@@ -423,6 +424,28 @@ export function mountCustomize(app, {
     let refreshDone = () => {};
     const door = { outcome: null, restoreFocus: true, close: () => {} };
     const step = (id, delta) => {
+      // ENFORCE THE BOUND WHERE THE CHANGE HAPPENS, not only on the control.
+      // This mutated on trust: the stepper's own listener checks `allowed`,
+      // but that is a closure captured when the control was drawn, so any
+      // activation that reaches this function with a stale or bypassed control
+      // moved the stat anyway. Measured, not theorised — the creation gate's
+      // own click sequence drove the pool to **-1** (STR 15, DEX 16 out of a
+      // 60-point total), after which Done refused with "1 stat point over the
+      // pool" and a player would have had to work out for themselves which
+      // stat to put back. The row model already computes whether a stat may
+      // move; the same predicate is read here rather than restated, so the
+      // control and the mutation cannot disagree.
+      // The same predicate `rowsNow()` gives the controls, computed directly:
+      // reading it through `rowsNow()` drags in `previewRun()` on every press,
+      // and that round trip made a legitimate press do nothing at all — the
+      // pool sat at 1 with four steppers reporting themselves enabled and no
+      // click able to spend it. Cheap, and it cannot disagree with the row
+      // model while both read `mode` and `remainingPoints()`.
+      const current = state.attributes[id];
+      const allowed = delta > 0
+        ? current < mode.maximum && remainingPoints() > 0
+        : current > mode.minimum;
+      if (!allowed) return;
       state.attributes[id] += delta;
       if (!statsProblem()) previewAttributes = { ...state.attributes };
       // The pressed stepper keeps the cursor across the redraw.
@@ -584,21 +607,26 @@ export function mountCustomize(app, {
       key: section.id, kind: 'pick', disclosure: 'face',
       face: { node: equipmentFaces.get(section.id).node },
       reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
-    })));
+    })), { structure: 'details' });
     refreshEquipmentFaces = () => {
       for (const section of equipmentSectionViews) equipmentFaces.get(section.id).setValue(equipmentValue(section));
     };
     const openId = equipmentSectionViews.some((section) => section.id === preferredOpenId)
       ? preferredOpenId
       : equipmentSectionViews[0]?.id;
-    if (openId) equipmentFold.open(openId);
+    if (preferredOpenId && openId) equipmentFold.open(openId);
 
     const surface = equipmentSurfaceReceipt(registries, previewRun());
-    $('#cz-equipment-receipts').innerHTML = '<section class="equip-role-receipts"><b>Starting equipment card packages</b>'
+    const receiptBody = el('div', { class: 'as-stack' });
+    receiptBody.innerHTML = '<section class="equip-role-receipts"><b>Starting equipment card packages</b>'
       + renderRoleCopies(surface)
       + '</section>'
       + renderEquipmentRequirements(surface.requirements)
       + renderPlayerPoise(surface.poise);
+    mountDisclosure($('#cz-equipment-receipts'), [{ key: 'equipment-summary', kind: 'pick', disclosure: 'face',
+      face: { label: 'Equipment summary', value: 'Cards, requirements and poise' },
+      reveal: { node: receiptBody },
+    }], { structure: 'details' });
   }
 
   function advanceEquipment(sectionId) {
@@ -620,7 +648,7 @@ export function mountCustomize(app, {
     key: row.key, kind: 'pick', disclosure: 'face',
     face: { label: row.label, value: row.value() },
     reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
+  })), { structure: 'details' });
   refreshSpriteFaces = () => {
     for (const row of spriteRows) spriteFold.setValue(row.key, row.value());
   };
@@ -637,7 +665,7 @@ export function mountCustomize(app, {
     key: row.key, kind: 'pick', disclosure: 'face',
     face: { label: row.label, value: row.value() },
     reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
+  })), { structure: 'details' });
   markUiComponent($('#cz-character-fold'), UI.characterDisclosure);
   refreshCharacterFaces = () => {
     for (const row of characterRows) characterFold.setValue(row.key, row.value());
@@ -646,13 +674,13 @@ export function mountCustomize(app, {
     key: 'sprite', kind: 'pick', disclosure: 'face',
     face: { label: 'SPRITE', value: selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle },
     reveal: { node: $('#cz-sprite-group'), sense: 'Edit sprite.' },
-  }]);
+  }], { structure: 'details' });
   const refreshPreviewFace = () => previewFold.setValue(
     'sprite', selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle,
   );
   const refreshExistingCharacterFaces = refreshCharacterFaces;
   refreshCharacterFaces = () => { refreshExistingCharacterFaces(); refreshPreviewFace(); };
-  characterFold.open('primary');
+  // Character choices stay folded until requested.
 
   const equipmentValue = (section) => {
     if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
@@ -736,7 +764,7 @@ export function mountCustomize(app, {
     const previewRelic = registries.relics.get(state.startingRelicId);
     const classPreviewHost = classPreviewPane({
       cls: registries.classes.get(state.classId),
-      sprite: classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered'),
+      sprite: paintedPresentation(state.classId, state.startingArmourId, 'portrait'),
       resources: classResourceGrid(specimenProjection.derived.slice(0, 5)),
       relic: previewRelic,
       relicDescription: relicText(previewRelic, registries),
@@ -818,7 +846,7 @@ export function mountCustomize(app, {
       key: row.key, kind: 'pick', disclosure: 'face',
       face: { label: row.label, value: row.value() },
       reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-    })));
+    })), { structure: 'details' });
     refreshSectionFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
     fold.open('class');
   }

@@ -254,27 +254,18 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
              node --check exits 0 on the result because it parses the file as a
              SCRIPT, so my own "parses" check was silent on all three. The gate
              that caught this one is tools/linkcheck.mjs. -->
-        <details class="class-pick shrine-fold${level.offerable ? '' : ' locked'}" id="level-opt"${openPanel === 'level' ? ' open' : ''}
+        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
+             role="button" tabindex="0" aria-haspopup="dialog"
+             aria-disabled="${level.offerable ? 'false' : 'true'}"
              data-affordable="${level.affordable ? '1' : '0'}"
              data-blocked-by="${level.blockedBy || ''}"
-             data-cost="${level.cost}"
-             data-short="${level.short}">
-          <summary>
-            <span class="glyph shrine-fold-glyph">✦</span>
-            <span class="ob shrine-fold-summary"><b class="on">Level up</b><small class="om">${level.capped ? 'Level cap reached' : level.offerable ? `${budget.levels} level${budget.levels === 1 ? '' : 's'} affordable · from ${level.cost} cinders` : `${level.cost} cinders · +1 point`}</small></span>
-            <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
-          </summary>
-          <div class="shrine-fold-content">
-          <div class="shrine-fold-detail">
-            <div class="cp-body">
-            ${level.capped
-            ? html(subtitle(`You have taken every level this climb allows (${level.levelsTaken}).`))
-            : cinderLineHtml}
-            </div>
+             data-cost="${level.cost}" data-short="${level.short}">
+          <div class="glyph">✦</div>
+          <div class="cp-body">
+            <h3>Level up</h3>
+            <p>${level.capped ? 'Level cap reached' : level.offerable ? `${budget.levels} level${budget.levels === 1 ? '' : 's'} affordable · from ${level.cost} cinders` : `${level.cost} cinders · +1 point`}</p>
           </div>
-          <div class="shrine-stat-mount"></div>
-          </div>
-        </details>
+        </div>
       </div>
       ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
     </div>`;
@@ -346,24 +337,19 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     });
   }
   // The same allocation component used by character creation, with shrine
-  // policy: existing values are immutable, one and only one plus may be chosen,
+  // policy: existing values are immutable, affordable points may be assigned,
   // and the run is not mutated until Done commits it through applyLevelUp.
   if (level.offerable) {
     // Pending points per attribute. Up to `budget.levels` in total; each one
     // is a level, so Done walks the ladder once per point, in order.
     const pending = Object.fromEntries(level.attributes.map((attr) => [attr.id, 0]));
     const pendingTotal = () => Object.values(pending).reduce((sum, n) => sum + n, 0);
-    const mount = app.querySelector('#level-opt .shrine-stat-mount');
+    const option = app.querySelector('#level-opt');
+    const shrineScreen = option.closest('.screen');
+    let allocation = null;
     const drawLevelCard = () => {
       const count = pendingTotal();
       const spend = budget.costs.slice(0, count).reduce((sum, cost) => sum + cost, 0);
-      const result = app.querySelector('#level-opt [data-level-cinder-result]');
-      if (result) {
-        result.hidden = !count;
-        result.replaceChildren(el('span', { class: 'd-arrow', text: '→' }), el('span', { class: 'd-to', text: `${level.cinders - spend} remaining` }));
-      }
-      const costLabel = app.querySelector('#level-opt .level-cinder-cost');
-      if (costLabel) costLabel.textContent = `− ${count ? spend : level.cost} cinders`;
       const values = Object.fromEntries(level.attributes.map((attr) => [
         attr.id,
         run.attributes[attr.id] + pending[attr.id],
@@ -371,13 +357,14 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       const cards = new Map(attributeCardModels(registries, values, {
         equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
       }).map((card) => [card.id, card]));
-      renderStatAllocationCard(mount, {
-        title: budget.levels === 1 ? 'ASSIGN 1 POINT' : `ASSIGN UP TO ${budget.levels} POINTS`,
+      const spec = {
+        title: 'Level up',
+        modal: true,
         remaining: budget.levels - count,
         note: budget.levels === 1
           ? 'Choose one attribute. Existing points cannot be reduced.'
           : 'Each point is a level and pays the next price on the ladder. Existing points cannot be reduced.',
-        cancelLabel: 'Clear',
+        cancelLabel: 'Cancel',
         doneLabel: count > 1 ? `Level up ×${count}` : 'Level up',
         doneDisabled: !count,
         rows: level.attributes.map((attr) => ({
@@ -391,19 +378,70 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         })),
         onIncrease: (id) => { pending[id] += 1; drawLevelCard(); },
         onDecrease: (id) => { if (pending[id] > 0) pending[id] -= 1; drawLevelCard(); },
-        onCancel: () => { for (const id of Object.keys(pending)) pending[id] = 0; drawLevelCard(); },
+        onCancel: () => allocation.close(),
+        onClose: () => {
+          allocation = null;
+          for (const id of Object.keys(pending)) pending[id] = 0;
+          shrineScreen.inert = false;
+          option.focus({ preventScroll: true });
+        },
         onDone: () => {
           if (!pendingTotal()) return;
           for (const attr of level.attributes) {
             for (let i = 0; i < pending[attr.id]; i++) applyLevelUp(registries, run, attr.id, { pointsPerLevel: 1 });
           }
+          allocation.close();
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
-          remount({ openPanel: 'level' });
+          remount();
+          app.querySelector('#level-opt')?.focus({ preventScroll: true });
         },
-      });
+      };
+      if (allocation) {
+        const focused = allocation.card.querySelector('.se-step.gp-focus')
+          || (allocation.card.contains(document.activeElement) ? document.activeElement : null);
+        const statId = focused?.dataset.statId;
+        const statAction = focused?.dataset.statAction;
+        const gamepadFocused = focused?.classList.contains('gp-focus');
+        allocation.update(spec);
+        allocation.done.textContent = spec.doneLabel;
+        if (statId && statAction) {
+          const replacement = [...allocation.card.querySelectorAll('.se-step')]
+            .find((control) => control.dataset.statId === statId && control.dataset.statAction === statAction);
+          replacement?.focus();
+          if (gamepadFocused) replacement?.classList.add('gp-focus');
+        }
+      } else {
+        shrineScreen.inert = true;
+        allocation = renderStatAllocationCard(app, spec);
+        allocation.card.classList.add('level-up-modal');
+        allocation.card.querySelector('.se-pool').after(el('div', { html: cinderLineHtml }));
+        allocation.card.addEventListener('keydown', (event) => {
+          if (event.key !== 'Tab') return;
+          const controls = [...allocation.card.querySelectorAll('button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
+            .filter((control) => control.getClientRects().length);
+          const first = controls[0];
+          const last = controls.at(-1);
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault(); last?.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault(); first?.focus();
+          }
+        });
+      }
+      allocation.card.querySelector('.level-cinder-cost').textContent = `− ${spend} cinders`;
+      const result = allocation.card.querySelector('[data-level-cinder-result]');
+      result.hidden = false;
+      result.querySelector('.d-to').textContent = `${level.cinders - spend} remaining`;
     };
-    drawLevelCard();
+    const openLevel = () => { if (!allocation) { option.focus(); drawLevelCard(); } };
+    option.addEventListener('click', openLevel);
+    option.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      openLevel();
+    });
+    if (openPanel === 'level') { option.focus(); openLevel(); }
   }
   if (canInspectSmithing) {
     // Smith is a reversible modal transaction until its explicit Confirm.

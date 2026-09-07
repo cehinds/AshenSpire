@@ -768,16 +768,10 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .combatant .nm-inspect { cursor: help; min-height: var(--tap-floor); display: flex; flex-direction: column; justify-content: center; }
 .combatant .nm-inspect:hover .ls-label, .combatant .nm-inspect:focus-visible .ls-label { color: var(--gold); }
 .combatant .nm-inspect:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1); }
-/* The keyboard's Inspect action has a literal touch counterpart. This sits in
-   the frame rather than its name so the full read is discoverable without a
-   hover hint, and remains a 44px-class tap target through the kit IconButton. */
-.combatant .combatant-inspect-control {
-  position: absolute; top: 0; right: 0; z-index: 4;
-  border-color: color-mix(in srgb, var(--gold) 65%, transparent);
-  background: color-mix(in srgb, var(--panel) 88%, transparent);
-  color: var(--gold); font-size: 1rem;
+.as-tip[data-tooltip-variant="combatant-context"] > .as-btn {
+  display: flex; width: 100%; min-height: 0; padding: 3px 8px;
+  margin-top: 6px; font-size: 0.85em; line-height: 1.3;
 }
-.combatant .combatant-inspect-control:active { transform: scale(0.94); }
 /* The full read, in a door: the same sections the edge tray renders. */
 .combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
 
@@ -1387,6 +1381,36 @@ details.disc-fold-row > summary { list-style: none; }
 details.disc-fold-row > summary::-webkit-details-marker { display: none; }
 details.disc-fold-row[open] > summary { border-radius: var(--r-3) var(--r-3) 0 0; border-color: var(--gold); }
 details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3); border-top: 0; }
+
+/* Creation uses the same attached OptionCard / DetailCard fold as the Armoury.
+   Physical text floors preserve readability when the game canvas scales down. */
+.customize .cz-disc { display: flex; flex-direction: column; gap: 8px; }
+.customize .disc-fold-row > summary { min-height: calc(44px / var(--ui-zoom, 1)); }
+.customize .disc-fold-row > summary::after { content: '›'; position: static; flex: 0 0 auto; margin-left: 8px; }
+.customize .disc-fold-row[open] > summary::after { transform: rotate(90deg); }
+.customize :is(.disc-name, .on, .dc-name, .ls-label, .as-title-s, input, button) {
+  font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); line-height: 1.4;
+}
+.customize :is(.od, .ls-hint, .as-status, .disc-value, .as-flavor, .as-prose, .dc-meta, .dc-lines, .equip-role-receipts, .cc-equip-group) {
+  font-size: max(1.2rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5;
+}
+.customize .cc-equip-group :is(small, span, p, b, i) { font-size: inherit; }
+.customize .cc-equip-group .as-statrow { flex-wrap: wrap; }
+.customize .cc-equip-group :is(.sr-name, .as-statpair) { white-space: normal; }
+.customize .cc-equip-group .sr-vals { flex: 1 1 100%; text-align: left; justify-content: flex-start; }
+.customize .cc-equip-group .sp-k { letter-spacing: normal; text-transform: none; }
+.customize .as-pane-head { flex-wrap: wrap; }
+.customize .as-pane-head > .r-trail { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
+.customize .disc-face :is(.ob, .r-trail) { min-width: 0; }
+.customize .disc-face :is(.disc-name, .on, .ls-label) { white-space: normal; overflow: visible; text-overflow: clip; }
+.customize .disc-face .r-trail { flex-shrink: 1; overflow-wrap: anywhere; }
+.customize .cc-primary-stat .disc-summary { white-space: normal; }
+.customize .cc-preview-side > .cz-portrait { position: relative; overflow: hidden; width: 100%; height: auto; min-height: 24rem; border: 0; }
+@media (max-width: 900px) {
+  .customize .cc-character-grid { grid-template-columns: minmax(0, 1fr); }
+  .customize .cc-preview-side { min-height: 0; }
+  .customize .cc-preview-side > .cz-portrait { flex: none; height: 24rem; }
+}
 /* ASSIGN POINTS IS NARROWER THAN THE COLUMN THE RULE ABOVE WAS WRITTEN FOR.
    `white-space: normal` lets a summary read in full where there is room, which
    is right in Character Creation. Inside the Assign Points overlay there is not
@@ -1845,7 +1869,8 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
    them straddling the gap between the ⚒ ☰ row and the flasks below, aligned to
    neither. Cross-axis only: the row's height is the cluster's either way, so
    this moves no other row and the map and combat HUDs stay the same height. */
-.hud-resource-row > .hud-vitals-panel { align-self: flex-start; }
+.hud-resource-row { align-items: flex-end; }
+.hud-resource-row > .hud-vitals-panel { align-self: flex-end; }
 .as-band-row > .grow { flex: 1 1 auto; min-width: 0; }
 .as-band-row.split { justify-content: space-between; }
 .as-band-row.end { justify-content: flex-end; }
@@ -2332,3 +2357,104 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 /* Move-set articles describe intent; they do not open or select an action. */
 article.enemy-move-card.as-option { cursor: default; }
 article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--line); }
+
+/* Painted full-body previews stay inside the armory art well. */
+.armoury-sprite-pane:has(.painted-armoury) { position: relative; }
+.armoury-sprite-pane .armoury-figure.painted-armoury { position: absolute; inset: 9%; width: 82%; height: 82%; max-width: none; max-height: none; aspect-ratio: auto; }
+/* Potion disclosures use the same joined OptionCard/DetailCard as Armoury. */
+.combat-potion-menu .potion-fold { margin-bottom: 6px; }
+.combat-potion-menu .potion-fold > summary { cursor: pointer; }
+.combat-potion-menu .potion-fold .flask-identity { flex: 0 0 44px; }
+.combat-potion-menu .potion-fold .flask-art { width: 40px; height: 40px; }
+.combat-potion-menu .potion-fold .potion-use { flex-shrink: 0; min-height: 36px; }
+.combat-potion-menu .potion-fold[open] > summary { border-color: var(--gold); }
+.combat-potion-menu .potion-fold[open] > summary::after { transform: rotate(90deg); }
+.combat-potion-menu .potion-fold > .as-detailcard .potion-use { margin-top: 8px; align-self: flex-end; }
+
+/* Inspection copy stays readable even when the surrounding game scales down. */
+.flask-inspect-lines .as-prose,
+.combat-potion-menu .potion-fold > .as-detailcard .dc-line {
+  font-size: max(1.6rem, calc(18px / var(--ui-zoom, 1))); line-height: 1.5;
+}
+.flask-inspect-lines .as-prose + .as-prose,
+.combat-potion-menu .potion-fold > .as-detailcard .as-flavor,
+.combat-potion-menu .potion-fold > .as-detailcard .dc-meta {
+  font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); line-height: 1.45; color: var(--parchment);
+}
+.flask-inspect-modal .modal-head-id h2,
+.combat-potion-menu .potion-fold > .as-detailcard .dc-name {
+  font-size: max(1.8rem, calc(20px / var(--ui-zoom, 1))); white-space: normal;
+}
+.flask-inspect-done { font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); }
+
+/* Preview wells keep a card silhouette; figure width derives from both available axes. */
+.customize .cc-preview-side { min-height: 0; align-items: center; justify-content: flex-start; }
+.customize .cc-preview-side > .cz-portrait {
+  flex: none; width: min(100%, 30rem); height: auto; min-height: 0;
+  aspect-ratio: 3 / 4; border: 1px solid var(--line); border-radius: var(--r-3);
+}
+.customize .cc-preview-fold { width: 100%; }
+.armoury-sprite-pane.as-artwell { container-type: size; overflow: hidden; }
+.armoury-sprite-pane .armoury-figure,
+.armoury[data-responsive="phone"] .armoury-sprite-pane .armoury-figure {
+  width: min(78cqw, calc(82cqh * 150 / 190), 22rem);
+  height: auto; aspect-ratio: 150 / 190; max-width: none; max-height: none;
+}
+
+/* Pile readers use physical-size floors, independent of the scaled game canvas. */
+.pile-body .as-cardgrid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(150px / var(--ui-zoom, 1))), 1fr));
+  gap: calc(18px / var(--ui-zoom, 1)); padding: calc(8px / var(--ui-zoom, 1)); justify-items: center;
+}
+.pile-body .card {
+  --card-w: calc(220px / var(--ui-zoom, 1));
+  width: 100%; max-width: var(--card-w); height: auto; aspect-ratio: 5 / 7;
+  --card-name-h: calc(32px / var(--ui-zoom, 1)); --card-art-h: calc(52px / var(--ui-zoom, 1));
+  --card-band-h: calc(20px / var(--ui-zoom, 1)); --card-gap: calc(5px / var(--ui-zoom, 1)); --card-pad: calc(8px / var(--ui-zoom, 1));
+  margin: 0; transform: none;
+}
+.pile-body .card :is(.cname, .ctext) { font-size: calc(15px / var(--ui-zoom, 1)); line-height: 1.35; }
+.pile-body .card .art { overflow: hidden; }
+.pile-body .card .art img { width: 100%; height: 100%; object-fit: contain; }
+.pile-body .card .ctag { font-size: calc(10px / var(--ui-zoom, 1)); }
+.pile-body .card .cost { font-size: calc(14px / var(--ui-zoom, 1)); width: calc(24px / var(--ui-zoom, 1)); height: calc(24px / var(--ui-zoom, 1)); }
+.modal:has(.pile-body) .modal-tab { font-size: calc(15px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); }
+
+/* Read-only detail rows: let names claim 10–30%, then wrap the explanation. */
+:is(.modal, .as-tip) div.as-row:has(> .r-label):has(> .as-status),
+.combatant-inspector-row {
+  align-items: flex-start; white-space: normal; gap: 0.75rem;
+  font-size: max(1.47rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.45;
+}
+:is(.modal, .as-tip) div.as-row:has(> .as-status) > .r-label,
+.combatant-inspector-row:has(> .as-status) > .r-label {
+  flex: 0 0 auto; width: max-content; min-width: 10%; max-width: 30%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+:is(.modal, .as-tip) div.as-row:has(> .r-label) > .as-status,
+.combatant-inspector-row > .as-status {
+  flex: 1 1 0; min-width: 0; margin-left: 0; font-size: inherit; line-height: inherit;
+  white-space: normal; overflow-wrap: anywhere; overflow: visible; text-overflow: clip; text-align: left;
+}
+:is(.modal, .as-tip) .as-statrow { align-items: flex-start; font-size: max(1.4rem, calc(15px / var(--ui-zoom, 1))); }
+:is(.modal, .as-tip) .as-statrow > .sr-id { flex: 0 0 auto; width: max-content; min-width: 10%; max-width: 30%; }
+:is(.modal, .as-tip) .as-statrow .sr-name { font-size: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:is(.modal, .as-tip) .as-statrow > .sr-vals { flex: 1 1 0; min-width: 0; margin-left: 0; justify-content: flex-start; text-align: left; }
+:is(.modal, .as-tip) .as-statrow .sr-vals :is(.as-statpair, .sp-k, .sp-v) { white-space: normal; overflow-wrap: anywhere; font-size: inherit; }
+.combatant-inspector-body .as-eyebrow { font-size: max(1rem, calc(12px / var(--ui-zoom, 1))); }
+
+:is(.modal, .as-tip) .as-statrow .sr-hint { font-size: inherit; line-height: 1.45; overflow-wrap: anywhere; }
+
+/* Readable HUD ink without scaling the surrounding layout or hit targets. */
+.shared-hud .hud-info-row .ck { font-size: max(0.93rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.302rem; letter-spacing: 0; }
+.shared-hud .hud-info-row .cv { font-size: max(1.42rem, calc(13px / var(--ui-zoom, 1))); line-height: 1; }
+.shared-hud .resplate .m-label { font-size: max(1.05rem, calc(11px / var(--ui-zoom, 1))); }
+.shared-hud .resplate .m-value { font-size: max(1.15rem, calc(11px / var(--ui-zoom, 1))); }
+.shared-hud .hud-actions .as-iconbtn { font-size: max(1.8rem, calc(18px / var(--ui-zoom, 1))); }
+#tooltip[data-tooltip-variant='combatant-context'] { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.1; }
+#tooltip[data-tooltip-variant='combatant-context'] .tt-title { font-size: inherit; line-height: 1.1; }
+#tooltip[data-tooltip-variant='combatant-context'] .tt-combatant-line { font-size: inherit; }
+#tooltip[data-tooltip-variant='combatant-context'] .ti-detail { font-size: max(1.28rem, calc(12px / var(--ui-zoom, 1))); line-height: 1.2; margin-top: 0.3rem; padding-top: 0.3rem; }
+#tooltip[data-tooltip-variant='combatant-context'] > .as-btn { font-size: max(1.2rem, calc(13px / var(--ui-zoom, 1))); line-height: 1.15; }
+.combatant .intent.as-pill.lg { font-size: max(1.2rem, calc(14px / var(--ui-zoom, 1))); line-height: 1; padding-block: 0.2rem; letter-spacing: 0; }
+.combatant .intent.as-pill.lg .as-glyph { font-size: inherit; }
