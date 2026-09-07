@@ -3,11 +3,21 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-717",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The receipt #714 was owed",
+    "detail": "Nothing a player sees changes. #714 wrote up the eight merges that had no entry here and, being a pull request itself, owed one in turn; this is that one. It is written up separately because until now it was only ever named inside another receipt's prose, which reads as a citation but is not an entry of its own.",
+    "build": "0.5.5.66",
+    "pullRequest": 717,
+    "url": "https://github.com/cehinds/AshenSpire/pull/717"
+  },
+  {
     "id": "pr-718",
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The receipt chain closes on itself",
-    "detail": "Nothing a player sees changes. Splitting the receipts backfill across two pull requests bought a regress: #714 wrote the eight that were owed and then owed one itself, #717 wrote #714's and then owed one itself. This receipt names its own pull request and records #717 in the same line, which is the only way the loop ends — a receipt cannot name a number that does not exist until the pull request is opened, so the pull request goes first and the receipt follows. #717 landed at 0.5.5.66 and carried no player-visible change; nor does this. The lesson is written down rather than repeated: a receipts pass names itself in the same commit that writes the others.",
+    "detail": "Nothing a player sees changes. Splitting the receipts backfill across two pull requests bought a regress: #714 wrote the eight that were owed and then owed one itself, #717 wrote #714's and then owed one itself. This receipt names its own pull request and records #717 in the same line, which is the only way the loop ends — a receipt cannot name a number that does not exist until the pull request is opened, so the pull request goes first and the receipt follows. That pass landed at 0.5.5.66 and carried no player-visible change; nor does this. The lesson is written down rather than repeated: a receipts pass names itself in the same commit that writes the others.",
     "build": "0.5.5.67",
     "pullRequest": 718,
     "url": "https://github.com/cehinds/AshenSpire/pull/718"
