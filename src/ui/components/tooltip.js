@@ -61,6 +61,8 @@ function panel(level) {
     // The panel is part of the target while open: entering it cancels the
     // close, leaving it schedules one, and a term inside it may open level 2.
     el.addEventListener('pointerenter', () => { clearTimeout(closeTimer); clearTimeout(dwellTimer); });
+    el.addEventListener('focusin', clearTimers);
+    el.addEventListener('focusout', (ev) => { if (!el.contains(ev.relatedTarget)) scheduleClose(); });
     el.addEventListener('pointerleave', (ev) => {
       if (panels.some((p) => p && p !== el && p.contains(ev.relatedTarget))) return;
       if (state[0].target && state[0].target.contains?.(ev.relatedTarget)) return;
@@ -102,9 +104,11 @@ function clearTimers() {
 function scheduleClose() {
   if (stuck) return;
   clearTimeout(closeTimer);
-  closeTimer = setTimeout(() => hideTooltip(), TOOLTIP_TIMING.close);
+  closeTimer = setTimeout(() => {
+    if (!panels.some((p) => p?.contains(document.activeElement))) hideTooltip();
+  }, TOOLTIP_TIMING.close);
   clearTimeout(dwellTimer);
-  dwellTimer = setTimeout(() => hideTooltip(), TOOLTIP_TIMING.dwell);
+  dwellTimer = setTimeout(() => { if (!panels.some((p) => p?.contains(document.activeElement))) hideTooltip(); }, TOOLTIP_TIMING.dwell);
 }
 function scheduleAutoHide(autoHideMs) {
   if (!(autoHideMs > 0)) return;
@@ -196,7 +200,7 @@ function watchScene() {
   sceneWatch.observe(document.documentElement, { childList: true, subtree: true });
 }
 
-function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0, align = 'start', level = 0, target = null) {
+function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0, align = 'start', level = 0, target = null, action = null) {
   if (!html) return false;
   // `anchor` is a rect; `target` is the element it was measured from (null
   // for a caller-owned rect — then there is no surface to watch).
@@ -205,6 +209,11 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
   clearTimers();
   const t = level === 0 ? ensure() : panel(1);
   t.innerHTML = html;
+  t.setAttribute('role', action ? 'dialog' : 'tooltip');
+  if (action) {
+    t.setAttribute('aria-label', action.getAttribute('aria-label') || action.textContent);
+    t.appendChild(action);
+  } else t.removeAttribute('aria-label');
   t.style.removeProperty('width');
   t.style.removeProperty('max-width');
   t.style.removeProperty('max-height');
@@ -327,9 +336,13 @@ export function showTooltipFor(el, html, { intent = 'beside', align = 'start', c
   return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs, align, 0, el);
 }
 /** Show the shared tooltip against a caller-owned measured subject rectangle. */
-export function showTooltipForRect(anchor, html, { intent = 'beside', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
+export function showTooltipForRect(anchor, html, { intent = 'beside', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0, target = null, action = null } = {}) {
   if (!anchor) return false;
-  return showWith(html, anchor, clear, intent, appearance, placementModel, autoHideMs, align);
+  return showWith(html, anchor, clear, intent, appearance, placementModel, autoHideMs, align, 0, target, action);
+}
+/** Give a measured subject the same pointer-to-panel grace as attached hints. */
+export function scheduleTooltipClose(target) {
+  if (state[0].target === target) scheduleClose();
 }
 /**
  * stickTooltip(el) → boolean — keep the tooltip that is on screen NOW until
