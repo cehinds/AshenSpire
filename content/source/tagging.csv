@@ -121,6 +121,11 @@ card,,crimsonCleave,blood
 card,,shieldBash,guard
 card,,shieldBash,blade
 card,,quickstep,flourish
+card,,katanaDrawCut,blade
+card,,katanaDrawCut,flourish
+card,,katanaDrawCut,extractable
+card,,greatswordSunderingHew,blade
+card,,greatswordSunderingHew,extractable
 card,,guardCounter,guard
 card,,guardCounter,flourish
 card,,ironResolve,guard

@@ -762,17 +762,21 @@ function grantFixtureRegistries(packagesById) {
   return createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, armaments } });
 }
 
-test('grantedCards + weaponArtDefaults: dormant on every shipped armament', () => {
+test('two non-starter armaments carry unique arts; the baseline starter deck remains unchanged', () => {
   const { WeaponCardPackageModel } = compositionDoor;
+  const expected = { katana: ['katanaDrawCut'], greatsword: ['greatswordSunderingHew'] };
+  const seen = [];
   for (const piece of contentBundle.equipment.armaments) {
     const pkg = WeaponCardPackageModel.fromPiece(LEGACY_REG, piece);
     if (pkg) {
       eq(pkg.grantedCards.length, 0, `${piece.id} grants nothing`);
-      eq(pkg.weaponArtDefaults.length, 0, `${piece.id} installs no arts`);
+      eq([...pkg.weaponArtDefaults], expected[piece.id] || [], `${piece.id} installs only its authored art`);
+      seen.push(...pkg.weaponArtDefaults);
     }
   }
-  // And no shipped run composes any: a fresh reaver deck has no granted or
-  // weapon-art instances.
+  eq(seen.length, 2, 'two live source arts');
+  eq(new Set(seen).size, 2, 'distinct identities');
+  // The baseline Reaver sword/shield kit still receives no additional art.
   const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
   eq(run.deck.filter((c) => c.equipmentRole === 'granted' || c.equipmentRole === 'weaponArt').length, 0, 'no shipped grants compose');
 });

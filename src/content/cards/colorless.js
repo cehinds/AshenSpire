@@ -8,6 +8,22 @@
 // (rollShopCards in engine/encounters.js appends them to every class's stock).
 
 export const colorlessCards = [
+  // Weapon arts are ordinary loose cards when purchased. Their source items
+  // lend mounted copies; the smith uses the existing extractable tag rules.
+  {
+    id: 'katanaDrawCut', name: 'Draw Cut', class: 'colorless', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'attack',
+    keywords: [], icon: '⚔',
+    effects: [{ op: 'damage', target: 'enemy', amount: 9 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 }],
+    textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 12 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 }] },
+  },
+  {
+    id: 'greatswordSunderingHew', name: 'Sundering Hew', class: 'colorless', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'attack',
+    keywords: [], icon: '⚒',
+    effects: [{ op: 'damage', target: 'enemy', amount: 16 }, { op: 'poiseDamage', target: 'enemy', amount: 3 }],
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 20 }, { op: 'poiseDamage', target: 'enemy', amount: 4 }] },
+  },
   // ---- Neutral playable colorless (Merchant stock, SPEC §1) ------------------
   {
     id: 'honedEdge', name: 'Honed Edge', class: 'colorless', rarity: 'common', cost: 1, type: 'skill',

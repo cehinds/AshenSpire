@@ -66,6 +66,7 @@ this file refuses at its own start date. They live in `git log`.*
 ## 2026-09-07
 
 - **Dodge explains its outcome** ([#672](https://github.com/cehinds/AshenSpire/pull/672), `0.5.5.44`). Dodge now resolves correctly in the standalone build after removing a circular engine import that interrupted the action after payment. A resolved Dodge now leaves a result button beside the player. Open it to inspect the roll, check, difficulty and base guard; Block modifiers still determine the applied amount. Failed rolls are visible, and the explanation survives skipped or reduced animations. Armoury card scrolling also respects the in-game Reduced motion setting.
+- **Traders buy and sell armaments and stock weapon arts** ([#676](https://github.com/cehinds/AshenSpire/pull/676), `0.5.5.45`). Inspect equipment before buying, sell unequipped items from storage, and buy Draw Cut or Sundering Hew for the existing mounting system. Equipped items explain their sale restriction. Cancelled or stale quotes spend nothing; upgrades, mount history and discoveries survive a sale and reacquisition.
 
 ## 2026-09-05
 

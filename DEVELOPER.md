@@ -9,6 +9,15 @@ For how work is branched, reviewed, and merged, see the
 
 ## Run & test
 
+Armament trading uses `src/model/armamentTrading.js` for inert quotes and atomic
+commits. Stored ownership, equipped sets, capacity, currency and stock revisions
+are rechecked at commit. Selling retains upgrades, mount history and permanent
+discovery; it removes only card instances granted by the sold item. Legacy shops
+without the new shelves retain empty shelves instead of rerolling their stock.
+Run `node --test tests/armamentTrading.test.mjs` for purchase, sale, stale quote,
+mounting and save round-trip coverage. Weapon-art packages are authored in
+`content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
+
 ```
 # play (no build step — any static server, or open index.html directly)
 npx serve .            # then http://localhost:3000
