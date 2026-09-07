@@ -229,8 +229,21 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   `${width}x${height}: Character uses one-open nested disclosures with modes, stats, then resources`);
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay');
+  const freshAllocation = await evaluate(`(() => ({
+    remaining: document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent,
+    values: [...document.querySelectorAll('.cc-stat-overlay .se-value')].map((node) => node.textContent),
+  }))()`);
+  assert(freshAllocation.remaining === '10' && freshAllocation.values.every((value) => value === '10'),
+    `${width}x${height}: Assign Points refunds the complete pool and starts every attribute at baseline (${JSON.stringify(freshAllocation)})`);
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay [data-face^="attribute:"]').length`)) === 5,
     `${width}x${height}: Assign Points reuses five foldout attribute cards`);
+  const allocationInsets = await evaluate(`[...document.querySelectorAll('.cc-stat-overlay .as-row.setting')].map((row) => {
+    const style = getComputedStyle(row);
+    return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft];
+  })`);
+  assert(allocationInsets.length === 5 && allocationInsets.every((insets) =>
+    insets.length === 4 && insets.every((value) => value === insets[0] && parseFloat(value) > 0)),
+  `${width}x${height}: every Assign Points row keeps the same text inset on all four sides (${JSON.stringify(allocationInsets)})`);
   await click('.cc-stat-overlay [data-face="attribute:strength"]');
   const allocationGeometry = await evaluate(`(() => {
     const row = document.querySelector('.cc-stat-overlay .se-row');
@@ -260,10 +273,9 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points reopen');
   assert(await evaluate(`(() => { const modal=document.querySelector('.cc-stat-overlay'); const buttons=[...modal.querySelectorAll('button')]; buttons.at(-1).focus(); buttons.at(-1).dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true})); return document.activeElement===buttons[0]; })()`), `${width}x${height}: Assign Points traps forward Tab focus inside the dialog`);
-  for (let i = 0; i < 3; i += 1) {
-    await click('.cc-stat-overlay [aria-label="Decrease Strength"]');
-    await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
-  }
+  await click('.cc-stat-overlay [aria-label="Increase Strength"]');
+  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
+  for (let i = 0; i < 4; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay close');
   await open('equipment');
@@ -285,11 +297,12 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     const tip = document.querySelector('#tooltip');
     return { open: !!done, disabled: done?.getAttribute('aria-disabled'), refusal: done?.dataset.refusal || '', tip: tip?.textContent || '', shown: tip?.style.display };
   })()`);
-  assert(modalRefusal.open && modalRefusal.disabled === 'true' && /Greatsword needs strength 12.*have 11/.test(modalRefusal.refusal)
-    && modalRefusal.shown === 'block' && /Greatsword needs strength 12.*have 11/.test(modalRefusal.tip),
-  `${width}x${height}: Assign Points Done explains the current equipment refusal`);
-  await click('.cc-stat-overlay [aria-label="Decrease Dexterity"]');
-  await click('.cc-stat-overlay [aria-label="Increase Strength"]');
+  assert(modalRefusal.open && modalRefusal.disabled === 'true' && /10 stat points still to assign/.test(modalRefusal.refusal)
+    && modalRefusal.shown === 'block' && /10 stat points still to assign/.test(modalRefusal.tip),
+  `${width}x${height}: reopened Assign Points explains that its refunded pool must be assigned`);
+  for (let i = 0; i < 2; i += 1) await click('.cc-stat-overlay [aria-label="Increase Strength"]');
+  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
+  for (let i = 0; i < 3; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver correction overlay close');
   assert((await evaluate(`document.querySelector('#cz-start').hasAttribute('aria-disabled')`)) === false, `${width}x${height}: correcting stats clears the equipment refusal`);
@@ -318,6 +331,8 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Assign Points overlay');
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay .se-step').length`)) === 10, `${width}x${height}: Assign Points reuses five plus/minus rows in an overlay`);
+  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Strength"]');
+  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
   await evaluate(`(() => { document.querySelectorAll('.gp-focus').forEach(e => e.classList.remove('gp-focus')); const e=document.querySelector('.cc-stat-overlay [aria-label="Decrease Dexterity"]'); e.focus(); e.classList.add('gp-focus'); e.click(); })()`);
   assert(await evaluate(`document.activeElement?.getAttribute('aria-label') === 'Decrease Dexterity' && document.querySelector('.cc-stat-overlay .gp-focus')?.getAttribute('aria-label') === 'Decrease Dexterity'`), `${width}x${height}: redraw preserves keyboard and gamepad focus on the decremented stat`);
   await evaluate(`(() => { const e=document.querySelector('.cc-stat-overlay [aria-label="Increase Dexterity"]'); document.querySelectorAll('.gp-focus').forEach(x => x.classList.remove('gp-focus')); e.focus(); e.classList.add('gp-focus'); e.click(); })()`);

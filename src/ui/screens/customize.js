@@ -362,6 +362,9 @@ export function mountCustomize(app, {
       modes.appendChild(modeChoiceButton(mode, state.attributeMode === mode.id, () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
+          // Entering Assign Points is an explicit fresh allocation. Return the
+          // entire authored pool instead of reopening the class-biased preset
+          // (or a previous edit) with points already spent.
           resetAttributes();
           openPointBuy();
         } else {
