@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "A readable combat fan and compact inspection",
-    "detail": "Narrower, shorter cards retain their text size. Five to seven cards fan above the five-slot HUD with exposed costs along their left edges and a clear vertical gap. Hover or select a card to read its face. Inspect lives only in the hover panel as a compact, full-width action; sprite icons and the full-height character outline are removed. Panels stay open while entered, and closing inspection restores focus. Potion rows include their artwork and unfold inline using the Armoury detail-card style; Use moves into the expanded card, and selecting a potion never consumes it. Selected enemy details return after transient character previews close.",
-    "build": "0.5.5.76",
+    "detail": "Narrower, shorter cards retain their text size. Five to seven cards fan above the five-slot HUD with exposed costs along their left edges and a clear vertical gap. Hover or select a card to read its face. Inspect lives only in the hover panel as a compact, full-width action; sprite icons and the full-height character outline are removed. Panels stay open while entered, and closing inspection restores focus. Flask inspection effect text and charge counts retain readable minimum sizes when the game scales down. Potion rows include their artwork and unfold inline using the Armoury detail-card style; Use moves into the expanded card, and selecting a potion never consumes it. Selected enemy details return after transient character previews close.",
+    "build": "0.5.5.77",
     "pullRequest": 720,
     "url": "https://github.com/cehinds/AshenSpire/pull/720"
   },

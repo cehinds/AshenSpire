@@ -2341,3 +2341,19 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .combat-potion-menu .potion-fold[open] > summary { border-color: var(--gold); }
 .combat-potion-menu .potion-fold[open] > summary::after { transform: rotate(90deg); }
 .combat-potion-menu .potion-fold > .as-detailcard .potion-use { margin-top: 8px; align-self: flex-end; }
+
+/* Inspection copy stays readable even when the surrounding game scales down. */
+.flask-inspect-lines .as-prose,
+.combat-potion-menu .potion-fold > .as-detailcard .dc-line {
+  font-size: max(1.6rem, calc(18px / var(--ui-zoom, 1))); line-height: 1.5;
+}
+.flask-inspect-lines .as-prose + .as-prose,
+.combat-potion-menu .potion-fold > .as-detailcard .as-flavor,
+.combat-potion-menu .potion-fold > .as-detailcard .dc-meta {
+  font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); line-height: 1.45; color: var(--parchment);
+}
+.flask-inspect-modal .modal-head-id h2,
+.combat-potion-menu .potion-fold > .as-detailcard .dc-name {
+  font-size: max(1.8rem, calc(20px / var(--ui-zoom, 1))); white-space: normal;
+}
+.flask-inspect-done { font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); }
