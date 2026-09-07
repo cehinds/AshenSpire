@@ -892,7 +892,7 @@
  padding: 64px 24px 16px; gap: 0; overflow-x: auto; scrollbar-width: thin;
 }
 :root .combat:not(.coop) .hand .card {
- --card-w: max(180px, calc(180px / var(--ui-zoom, 1))); --card-name-h: max(32px, calc(32px / var(--ui-zoom, 1))); --card-art-h: max(64px, calc(64px / var(--ui-zoom, 1)));
+ --card-w: max(162px, calc(162px / var(--ui-zoom, 1))); --card-name-h: max(32px, calc(32px / var(--ui-zoom, 1))); --card-art-h: max(64px, calc(64px / var(--ui-zoom, 1)));
  --card-band-h: max(22px, calc(22px / var(--ui-zoom, 1))); --card-row: max(22px, calc(22px / var(--ui-zoom, 1))); --card-pad: max(8px, calc(8px / var(--ui-zoom, 1))); --card-gap: max(5px, calc(5px / var(--ui-zoom, 1)));
  margin: 0; touch-action: pan-x;
 }
@@ -915,5 +915,5 @@
 
 @media (max-width: 480px) {
   :root .combat:not(.coop) .hand { padding-inline: 16px; }
-  :root .combat:not(.coop) .hand .card { --card-w: calc(148px / var(--ui-zoom, 1)); }
+  :root .combat:not(.coop) .hand .card { --card-w: calc(133.2px / var(--ui-zoom, 1)); }
 }

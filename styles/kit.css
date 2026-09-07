@@ -769,7 +769,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .combatant .nm-inspect:hover .ls-label, .combatant .nm-inspect:focus-visible .ls-label { color: var(--gold); }
 .combatant .nm-inspect:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1); }
 .as-tip[data-tooltip-variant="combatant-context"] > .as-btn {
-  display: inline-flex; width: auto; min-height: 0; padding: 3px 8px;
+  display: flex; width: 100%; min-height: 0; padding: 3px 8px;
   margin-top: 6px; font-size: 0.85em; line-height: 1.3;
 }
 /* The full read, in a door: the same sections the edge tray renders. */

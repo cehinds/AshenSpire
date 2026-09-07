@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "A readable combat fan and compact inspection",
-    "detail": "Slightly narrower, shorter cards retain their text size. Five to seven cards fan above the five-slot HUD with exposed costs along their left edges and a clear vertical gap. Hover or select a card to read its face. Inspect lives only in the hover panel as a compact action; sprite icons and the full-height character outline are removed. Panels stay open while entered, and closing inspection restores focus.",
-    "build": "0.5.5.73",
+    "detail": "Narrower, shorter cards retain their text size. Five to seven cards fan above the five-slot HUD with exposed costs along their left edges and a clear vertical gap. Hover or select a card to read its face. Inspect lives only in the hover panel as a compact, full-width action; sprite icons and the full-height character outline are removed. Panels stay open while entered, and closing inspection restores focus.",
+    "build": "0.5.5.74",
     "pullRequest": 720,
     "url": "https://github.com/cehinds/AshenSpire/pull/720"
   },
