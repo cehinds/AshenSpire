@@ -188,7 +188,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         el('span', { class: 'smith-item-type-row' }, types),
         el('span', { class: 'smith-weapon-tags' }, item.tags.map((tag) => el('em', { class: 'as-tag', text: tag }))),
       ],
-      className: `smith-candidate-card smith-weapon-card rarity-${item.rarity}${item.selected ? ' selected' : ''}`,
+      className: `as-card smith-candidate-card smith-weapon-card rarity-${item.rarity}${item.selected ? ' selected' : ''}`,
       attrs: { role: 'option', 'aria-selected': String(item.selected), dataset: { itemRef: item.itemRef, ...(item.armamentId ? { armamentId: item.armamentId } : {}) } },
     });
     card.dataset.itemRef = item.itemRef;
