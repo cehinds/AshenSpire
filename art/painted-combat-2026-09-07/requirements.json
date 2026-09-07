@@ -1,0 +1,75 @@
+{
+  "menu": "Preserve every previously shown pose as an artwork library. Standing and detail poses may face the viewer. One matching close-up portrait per outfit.",
+  "combat": "Only seven frames per outfit: idle, guard, attack1, attack2, attack3, attack4, hit. All face screen right. Portraits and front-facing menu art excluded. Inspect extracted frames and playback.",
+  "outfits": [
+    {
+      "id": "rogue",
+      "name": "Rogue · Base"
+    },
+    {
+      "id": "rogue-nightveil",
+      "name": "Nightveil Coat"
+    },
+    {
+      "id": "rogue-duelist",
+      "name": "Duelist Jerkin"
+    },
+    {
+      "id": "rogue-shadow",
+      "name": "Shadow Mantle"
+    },
+    {
+      "id": "reaver",
+      "name": "Reaver · Base"
+    },
+    {
+      "id": "reaver-vigil",
+      "name": "Ashen Vigil"
+    },
+    {
+      "id": "reaver-oathsworn",
+      "name": "Gilded Oathsworn"
+    },
+    {
+      "id": "reaver-warden",
+      "name": "Warden Mail"
+    },
+    {
+      "id": "starseer",
+      "name": "Starseer · Base"
+    },
+    {
+      "id": "starseer-eclipse",
+      "name": "Eclipse Habit"
+    },
+    {
+      "id": "starseer-starlit",
+      "name": "Starlit Silks"
+    },
+    {
+      "id": "starseer-astral",
+      "name": "Astral Vestment"
+    },
+    {
+      "id": "herald",
+      "name": "Herald · Base"
+    },
+    {
+      "id": "herald-ossuary",
+      "name": "Ossuary Weave"
+    },
+    {
+      "id": "herald-emberhabit",
+      "name": "Emberlight Habit"
+    },
+    {
+      "id": "herald-pilgrim",
+      "name": "Pilgrim Wrap"
+    }
+  ],
+  "approvedPoseRefs": [
+    "Nightveil and Shadow 3x3 sheets",
+    "Reaver sword-rest, overhead, lunge, thrust and downward cleave"
+  ],
+  "status": "Asset preview prepared and inspected; not installed in game"
+}
