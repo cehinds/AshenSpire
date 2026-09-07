@@ -225,10 +225,10 @@ if (process.argv.includes('--selftest')) {
         // THE SAME CONTROL GOES QUIET WITHOUT display:none. visibility:hidden
         // keeps the pile's box and class; only "rendered" as the player sees it
         // can tell. Red by name on H3, like the display:none plant.
-        name: 'a stylesheet makes the DISCARD pile visibility:hidden and the row still measures five boxes',
+        name: 'a stylesheet makes the shared SPENT pile visibility:hidden and the row still measures six boxes',
         edits: [{
           file: 'styles/combat.css',
-          append: '.combat-action-row > .pile.discard { visibility: hidden; }',
+          append: '.combat-action-row > .pile.spent { visibility: hidden; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -236,10 +236,10 @@ if (process.argv.includes('--selftest')) {
         // THE THIRD WAY A CONTROL GOES QUIET: opacity:0 keeps display,
         // visibility and geometry. Only the ancestor-walking opacity read in
         // rendered() can tell. Red by name on H3.
-        name: 'a stylesheet makes the DISCARD pile opacity:0 and the row still measures five boxes',
+        name: 'a stylesheet makes the shared SPENT pile opacity:0 and the row still measures six boxes',
         edits: [{
           file: 'styles/combat.css',
-          append: '.combat-action-row > .pile.discard { opacity: 0; }',
+          append: '.combat-action-row > .pile.spent { opacity: 0; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
