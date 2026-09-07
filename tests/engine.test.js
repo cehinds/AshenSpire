@@ -54,7 +54,7 @@ import {
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statProjection.js';
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
-import { attributeAllocationProblems, classAttributePreset, allocationTotal, defaultCreationModeId } from '../src/model/attributes.js';
+import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
@@ -7272,6 +7272,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(std.bonusPool, 5, 'standard pool unchanged');
     eq(std.minimum, 10, 'standard floor unchanged');
     eq(allocationTotal(REG, 'pointbuy'), 60, 'pointbuy fixed total = 5x10 baseline + the 10-point pool');
+    const freshEditor = baselineAttributeAllocation(REG, 'pointbuy');
+    eq(Object.values(freshEditor).join(','), '10,10,10,10,10', 'pointbuy editor opens every authored stat at the mode baseline');
+    eq(allocationTotal(REG, 'pointbuy') - Object.values(freshEditor).reduce((sum, value) => sum + value, 0), 10,
+      'pointbuy editor opens with all 10 bonus points available');
 
     // The allocation gate, both edges at every boundary his sentence names.
     const legal = { strength: 15, dexterity: 8, constitution: 15, wisdom: 12, intelligence: 10 };
