@@ -16,6 +16,11 @@ compatibility alias. Resolve the chosen terminal through
 metadata resolve their original act boss without consuming RNG. Run
 `node tests/branchingBosses.test.mjs` for topology, deterministic selection,
 LAN choice and real save-manager round trips.
+Loading validates explicit and legacy boss references before accepting a save.
+Existing destination labels refresh from current content without changing the
+saved graph's paths, encounter identities, selection or RNG counters. Run
+`node --test tests/legacyBossReferences.test.mjs tests/bossDestinationLabels.test.mjs`
+for content-update regressions in solo and LAN restoration.
 Enemy expansion checks: `node tests/expandedRoster.test.mjs` covers all 46 new
 moves, phases, seeded encounter reachability and ten named boss locations.
 `node tests/branchingBosses.test.mjs` covers map and save compatibility.
