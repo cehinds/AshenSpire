@@ -2,7 +2,7 @@
 
 A roguelike deckbuilder for the browser — single-player, with optional LAN co-op. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**. Built with vanilla ES-module JavaScript, HTML, and CSS — no framework, no build step.
 
-> **Status: feature-complete core loop.** Four classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
+> **Core loop:** Four classes, three acts, 20 regular enemies, three elites and ten bosses, with seeded encounters and resumable runs. See [DEVELOPER.md](DEVELOPER.md) to run and extend it, and the [enemy roster](docs/ENEMY-ROSTER.md) for moves and destinations.
 
 > **README content updated:** 2026-09-05T15:10:06-08:00 (Alaska)
 > **Updated by:** Claude Code, on the owner's instruction — the feature list described only the four painted class figures, and equipping armour now changes the animated figure you fight as
@@ -10,6 +10,11 @@ A roguelike deckbuilder for the browser — single-player, with optional LAN co-
 > **Scope:** README content-currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
 
 ## Play a build
+
+Act maps offer distinct named boss destinations beyond the guaranteed rest.
+Enemy inspectors show each move's damage, effects, windup and phase unlocks.
+Card arrivals and actions have feedback that respects Reduced motion; the Piles
+control retains the latest discard or exhaust outcome after animations are skipped.
 
 Twelve enemies now use the painted sprites from the Unity fork, including the
 Wandering Soldier, Blight Hound, Fell Warden, Stitched King and Wyrm Lord.

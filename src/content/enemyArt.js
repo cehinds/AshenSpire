@@ -5,3 +5,10 @@ export const PAINTED_ENEMIES = Object.freeze([
   'courtDuelist', 'courtSurgeon', 'gildedKnight', 'stitchedKing',
   'graveWisp', 'wyrmAspirant', 'valkyrieShade', 'wyrmLord',
 ]);
+
+// Expansion portraits share the Unity frames' size, facing and foot anchor.
+export const EXPANSION_ENEMIES = Object.freeze([
+  'lanternMoth', 'briarHermit', 'chainScavenger', 'bellKeeper', 'thornMatriarch',
+  'mirrorScribe', 'stitchCrab', 'glassRegent', 'marrowOrganist',
+  'cinderMantis', 'eclipseCantor', 'furnaceSaint', 'hollowAstronomer', 'ashheartDragon',
+]);

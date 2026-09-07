@@ -2295,3 +2295,7 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
   .as-seg button + button { border-left: 0; }
   .as-seg button { border: 1px solid var(--line-soft); margin: -1px 0 0 -1px; }
 }
+
+/* Move-set articles describe intent; they do not open or select an action. */
+article.enemy-move-card.as-option { cursor: default; }
+article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--line); }
