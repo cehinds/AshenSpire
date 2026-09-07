@@ -1,0 +1,27 @@
+  PASS  [A ONE HOME] src/buildversion.js holds all four placeholders; the digest, the ordinal, the build date and the run path are injected, never committed
+  PASS  [B NO SECOND COPY] no second home for the release under index.html, styles, src, assets: no file re-types '0.5.5' outside src/content/index.js (arm 1), and no other site declares a version at all (arm 2, which never compares the value to the release, so it does not go quiet when the value drifts). 0 prose mentions in comments, which assert nothing and are not copies.
+  PASS  [C TWO CONSUMERS] title and the startup gate each derive directly; the run HUD carries no stamp
+  PASS  [D CONTAINMENT] every stylesheet, css asset and bundled module resolves inside index.html, styles, src, assets
+  PASS  [E SHIPPED STAMP] build/AshenSpire.html carries SOURCE '97d389ed2a', which is this tree's digest, and names its run path 'standalone file'
+  PASS  [F ORDINAL ON THE BOX] build/AshenSpire.html carries ORDINAL '79' and BUILT '2026-09-07', which are buildordinal.json's, counted under release '0.5.5'
+  PASS  [G ORDINAL BELONGS TO THIS TREE] buildordinal.json records digest '97d389ed2a', which is this tree's — the ordinal was computed for this source
+  PASS  [H ORDINAL INCREASES] build/AshenSpire.html is unchanged between fbf0325 and HEAD — no build shipped, so no ordinal was owed (n/a, stated)
+
+buildversion: OK — 8 checks passed
+
+BOUNDARY — what a green here does NOT mean:
+  · nothing about INK. This reads source and one literal in the bundle; whether
+    the stamp is drawn, or drawn where an eye lands, is tools/buildstamp-shot.mjs.
+  · nothing about dist/. verify-shipped check B owns dist == build; one home each.
+  · check E is ONE LITERAL, not the artifact. A bundle that agrees on the version
+    and differs everywhere else passes it — that is tools/rebuild-matches.mjs,
+    which is generative and which this deliberately does not restate.
+  · the release NUMBER is not judged here, only its singleness. Choosing it is a
+    Tier-2 call (SOP 1); SOP 5 automates the checking, never the choosing.
+  · row B sweeps INPUT_ROOTS ONLY, so a second copy of the release living in
+    tools/ is invisible to it — tools/launch.mjs carried exactly that for as long
+    as the launcher has existed. Widening is not free: swept over tools/*.mjs the
+    arm-2 patterns return 6 hits, all false positives, and six of those mute a row.
+  · row B has one hole it cannot close: a copy that has BOTH drifted AND sits at
+    an unnamed site — a bare `0.4.x` inside a template with no version key on it.
+    Arm 1 misses it (value differs), arm 2 misses it (no site declares it).

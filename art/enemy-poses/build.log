@@ -1,0 +1,47 @@
+launch: compiling authored content…
+content-build: OK
+SFX_FAMILY_IDS [procBurst, beat, holdTick, holdCommit, rewardTake] — sfx authority: 20 caller id(s), 23 recipe row(s), 0 defect(s)
+  armouryUi.json   → src/content/generated/armouryUi.js  (2 rows)
+  basicCardProfiles.csv → src/content/generated/basicCardProfiles.js  (16 rows)
+  cardEquipmentExceptions.csv → src/content/generated/cardEquipmentExceptions.js  (1 rows)
+  cardExposure.csv → src/content/generated/cardExposure.js  (81 rows)
+  characterCreation.json → src/content/generated/characterCreation.js  (6 rows)
+  equipMods.csv    → src/content/generated/equipMods.js  (18 rows)
+  equipSlots.csv   → src/content/generated/equipSlots.js  (4 rows)
+  equipTargets.csv → src/content/generated/equipTargets.js  (6 rows)
+  equipmentGrants.csv → src/content/generated/equipmentGrants.js  (0 rows)
+  equipmentRequirements.csv → src/content/generated/equipmentRequirements.js  (4 rows)
+  itemUpgradeChanges.csv → src/content/generated/itemUpgradeChanges.js  (137 rows)
+  outfits.csv      → src/content/generated/outfits.js  (16 rows)
+  startingKits.csv → src/content/generated/startingKits.js  (8 rows)
+  tagDomains.csv   → src/content/generated/tagDomains.js  (6 rows)
+  tagFamilies.csv  → src/content/generated/tagFamilies.js  (16 rows)
+  tagFamilyDomains.csv → src/content/generated/tagFamilyDomains.js  (20 rows)
+  tagging.csv      → src/content/generated/tagging.js  (299 rows)
+  tags.csv         → src/content/generated/tags.js  (33 rows)
+  unlocks.csv      → src/content/generated/unlocks.js  (18 rows)
+  weaponCardPackages.json → src/content/generated/weaponCardPackages.js  (2 rows)
+  weapons.csv      → src/content/generated/weapons.js  (25 rows)
+launch: building the standalone bundle…
+bundle: build ordinal → 95 (the source moved; buildordinal.json rewritten)
+bundle.mjs: OK
+  entry            : src/main.js
+  build version    : 4f749e1f6c (derived from this source; node tools/buildversion.mjs --which 4f749e1f6c)
+  modules bundled  : 252
+  stylesheets      : 5 (styles/base.css, styles/ui.css, styles/combat.css, styles/map.css, styles/kit.css)
+  css assets inlined: 5 (18 KiB raw)
+  art inlined      : 979 files (32034 KiB raw)
+  skipped (no MIME): 22 — assets/classes/AS-HD-040-RECONCILIATION-PACKET.md, assets/classes/CROP-SIZE-STATE-RECEIPT.md, assets/classes/LOOK-REFERENCE-ROGUE.md, assets/classes/SILHOUETTE-SUCCESSOR-CONTRACT.md …
+  literal refs     : all resolve
+  output           : build/AshenSpire.html
+  output size      : 47865645 bytes (46743.8 KiB)
+BOUNDARY: every module was COMPILED, never RUN. A file that parses and throws
+          on load builds clean here — that is node tests/run-node.mjs and the
+          browser. Strictness and the module signature are asserted through
+          node's parser and node's vm, so no browser has seen this bundle.
+          Only LITERAL asset paths were resolved; paths built at runtime
+          (`assets/x_${id}.webp`) are unchecked here — Vira audits those
+          against the CSVs. dist/ is not this tool's to check: that is
+          node tools/verify-shipped.mjs. Nothing above says the game plays.
+launch: current build refreshed → AshenSpire.html + dist/AshenSpire.html + dist/AshenSpire-0.5.5.95.html
+launch: OK — 3/3 current-build aliases refreshed.
