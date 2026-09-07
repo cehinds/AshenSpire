@@ -3,6 +3,53 @@
 Issue #785. This isolated preview demonstrates reusable equipment attachment on
 Reaver and Starseer. It does not replace live combat or change equipment rules.
 
+## Current review status: animation rejected, source mapping added
+
+Open `joint-reference-preview.html` for the correction reference. Ten original
+painted frames have manually inspected source-space shoulder, elbow, wrist,
+pelvis, hip, knee and ankle landmarks in `source-joints.mjs`. Hollow markers and
+dashed bones identify estimates obscured by armor or cloth. All overlays use the
+same source-image transform; they are not independently fitted thumbnails.
+
+The study plays guard, attack1, attack2, attack3, attack4, then guard, at normal or
+quarter speed. This is held-keyframe playback, not generated in-between art.
+The equipment prototype also now starts and closes its attacks in guard and has
+a quarter-speed control. Neither preview changes the shipped combat runtime.
+
+The source review can overlay the earlier rig and show arm landmark error. Its
+comparison uses a guard-derived scale and aligns the pelvis per pose; the arms
+are never fitted independently. This exposes differences in limb proportions
+and elbow placement that a zero hand-target error does not detect.
+
+Visual comparison: https://esotericsoftware.com/spine-demos#Skins (Swing Sword).
+Use its connected shoulders, weapon contact and body follow-through as motion
+references; AshenSpire's original painted poses remain the art reference. The
+companion frame-based demo shows the hybrid attachment approach:
+https://esotericsoftware.com/spine-demos#Spine-with-frame-based-animation.
+
+Inspection found the overhead far elbow folds inward toward the head, while
+the source bends it outward. A constant IK bend sign and generic shoulders
+cannot reproduce all of these projected poses. The arm's depth and perspective
+change across the source sequence. The existing assembly also draws the far
+upper arm a second time over the overhead torso. These remain reasons to reject
+the assembled animation; a passing reach test is not a visual pass. Use the new
+source maps to author the arm perspective and depth changes before producing
+more in-between frames. Do not silently replace this with a pole-sign switch:
+that can snap the elbow to the other side mid-animation.
+
+Reviewed the ten source overlays, the equipment guard/overhead/recovery poses,
+quarter-speed attack playback without effects, and the online sword demo.
+Artifacts: `inspection/source-maps/all-joints.png` and `comparison.png`.
+Automated checks separately cover source bounds, guard closure for every
+loadout, both playback speeds, overlay controls and a 390px viewport:
+
+    node --test art/equipment-rig/source-joints.test.mjs
+    node art/equipment-rig/source-review-check.mjs
+
+The animation is not marked ready. The owner requested no merge, and PR #789
+remains closed. The earlier prototype documentation below describes its
+implementation, not visual acceptance.
+
 Run from the repository root:
 
     node art/equipment-rig/serve.mjs 4291

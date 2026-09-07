@@ -20,9 +20,9 @@ async function showReferences(){if(!textures)return;const version=++referenceVer
 function choose(){stop();$('action').value=SETUPS[select.value].action;$('time').value=0;draw();showReferences().catch(report)}
 select.onchange=choose;
 $('action').oninput=()=>{stop();draw();showReferences().catch(report)};
-for(const id of ['time','debug','effects'])$(id).addEventListener('input',()=>{stop();draw()});
+for(const id of ['time','debug','effects','rigSpeed'])$(id).addEventListener('input',()=>{stop();draw()});
 $('reaverPreset').onclick=()=>{select.value='greatsword';choose()};$('casterPreset').onclick=()=>{select.value='focus';choose()};
-$('play').onclick=()=>{if(playing){stop();return}playing=true;$('play').textContent='Pause';const start=performance.now(),duration=2200;const tick=now=>{$('time').value=Math.min(100,(now-start)/duration*100);draw();if(now-start<duration)request=requestAnimationFrame(tick);else stop()};request=requestAnimationFrame(tick)};
+$('play').onclick=()=>{if(playing){stop();return}playing=true;$('play').textContent='Pause';const start=performance.now(),duration=2200/Number($('rigSpeed').value);const tick=now=>{$('time').value=Math.min(100,(now-start)/duration*100);draw();if(now-start<duration)request=requestAnimationFrame(tick);else stop()};request=requestAnimationFrame(tick)};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});
 function report(e){$('error').textContent='The prototype assets could not load: '+e.message;console.error(e)}
 try{textures=await loadTextures();draw();await showReferences();window.rigPreview={render:(id,setup,action,t,opts)=>render($(id),textures,id,setup,action,t,opts),ready:true}}catch(e){report(e)}
