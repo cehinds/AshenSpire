@@ -1,0 +1,16 @@
+{
+  "gallery": {
+    "cards": 33,
+    "broken": 0
+  },
+  "phoneOverflow": false,
+  "playback": "../../assets/enemy-poses/huskBrute_attack.png",
+  "returned": "../../assets/enemy-poses/huskBrute_idle.png",
+  "idle": true,
+  "attacks": {
+    "ready": 33,
+    "visible": true,
+    "idleHidden": true
+  },
+  "restored": true
+}
