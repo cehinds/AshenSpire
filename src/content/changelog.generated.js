@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-728",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Every class gets one page showing all of its painted outfits",
+    "detail": "The painted character artwork for all sixteen outfits is preserved, and each class now has a single review page carrying its four outfits, the menu and detail poses, the matching close-up portraits, the compact combat poses and the earlier source sheets kept alongside them. The Reaver and the Duelist were facing the wrong way when inspected; both are corrected, and the frontal presentation art is kept separate from the combat art rather than standing in for it. This is an artwork and preview package: it does not replace the runtime assets, and it does not put the new portraits into character creation or the Armoury.",
+    "build": "0.5.5.73",
+    "pullRequest": 728,
+    "url": "https://github.com/cehinds/AshenSpire/pull/728"
+  },
+  {
     "id": "pr-726",
     "date": "2026-09-07",
     "group": "2026-09-07",
