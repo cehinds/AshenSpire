@@ -173,40 +173,48 @@ async function main() {
       const deadline = Date.now() + 15000;
       let seen = false;
       while (Date.now() < deadline) {
-        if (await evaluate(`!!document.querySelector('.class-sprite')`).catch(() => false)) { seen = true; break; }
+        // CHARACTER CREATION IS FOUR CLOSED SECTIONS, so the figure is IN THE
+        // DOM long before it has a size: `mountCustomize` builds the whole
+        // flow as one `details` disclosure and opens `class`, and the figure
+        // well lives in `character`. Waiting on `.class-sprite` alone read a
+        // 0x0 frame — every geometry row divided by zero and came back `null`
+        // through CDP, which serialises NaN and Infinity as null and so looked
+        // like a missing measurement rather than a closed section. So the
+        // section is OPENED, the way a player opens it, and the wait is for a
+        // frame with a height rather than a frame that merely exists.
+        if (surface.shot === 'customize') {
+          await evaluate(`document.querySelector('[data-face="character"]')?.click(), 1`).catch(() => false);
+        }
+        const height = await evaluate(
+          `(document.querySelector('.class-sprite')?.getBoundingClientRect().height ?? 0)`,
+        ).catch(() => 0);
+        if (height > 1) { seen = true; break; }
         await wait(120);
       }
       const tag = surface.name.toUpperCase();
-      ok(seen, `${tag} DRAWS A FIGURE`, surface.why);
+      ok(seen, `${tag} DRAWS A FIGURE WITH A SIZE`, surface.why);
       if (!seen) continue;
       await wait(250);
       const read = await evaluate(`(${readMedallion.toString()})()`);
       const anchor = anchors[surface.cls];
 
-      ok(read.disc, `${tag} SIGIL IS DRAWN`,
-        read.disc ? `on the ${read.style} style` : `no overlay on the ${read.style} style — the frame drew ${JSON.stringify(read.drew)}`);
-      if (!read.disc) continue;
-
-      ok(Math.abs(read.discPctOfFrame - DISC_PCT) <= 0.2 && Math.abs(read.squarePx) <= 0.5 && read.round === '50%',
-        `${tag} DISC IS A ROUND SHARE OF THE FRAME`,
-        `${read.discPctOfFrame}% of ${read.hostH}px (want ${DISC_PCT}%), square within ${read.squarePx}px, radius ${read.round}`);
-
-      // 0.6 of a percent, not 1: at a 150px frame one percent is 1.5px, and a
-      // whole-percent tolerance let the Rogue's x49 pass a hardcoded x50. The
-      // reads come back exact, so the tight band costs nothing and makes every
-      // off-centre class discriminate rather than only the Starseer.
-      ok(Math.abs(read.centreX - anchor.x) <= 0.6 && Math.abs(read.centreY - anchor.y) <= 0.6,
-        `${tag} DISC SITS ON THE MEASURED ANCHOR`,
-        `drawn x${read.centreX} y${read.centreY}, measured x${anchor.x} y${anchor.y}`);
-
-      ok(read.glyph && read.glyphPctOfDisc != null && Math.abs(read.glyphPctOfDisc - GLYPH_CQH) <= 3,
-        `${tag} GLYPH SCALES WITH THE DISC`,
-        `'${read.glyph}' at ${read.glyphPctOfDisc}% of the disc (want ${GLYPH_CQH}%)`);
-
-      // `none` or an identity matrix both mean unmirrored; a negative x scale
-      // is the defect (mirrored text reads as a rendering fault).
-      const mirrored = /matrix\(\s*-/.test(read.discTransform || '');
-      ok(!mirrored, `${tag} GLYPH IS NOT MIRRORED`, `transform ${read.discTransform}`);
+      // THE CONTRACT INVERTED, 2026-09-07, on the owner's call. This tool was
+      // written because a chosen sigil appeared NOWHERE on the figure, and it
+      // asserted the medallion was present, round, on the measured anchor,
+      // scaled and unmirrored. The sigil is no longer meant to ride the figure
+      // at all: it belongs beside the class information in the class picker,
+      // which is where a player chooses it. So the rows below assert its
+      // ABSENCE from the figure. The tool is re-pointed rather than deleted —
+      // the failure it was built to catch (a sigil silently drawn nowhere) has
+      // simply become a sigil silently drawn SOMEWHERE it should not be, and
+      // that wants a gate just as much. `anchor` stays read from
+      // classArtAnchors.js so a stray overlay is reported against the place it
+      // would have landed.
+      ok(!read.disc, `${tag} NO SIGIL ON THE FIGURE`,
+        read.disc
+          ? `an overlay is drawn on the ${read.style} style at x${read.centreX} y${read.centreY}`
+            + ` (the anchor is x${anchor.x} y${anchor.y}) — the sigil belongs in the class picker, not on the character`
+          : `clean on the ${read.style} style; the frame drew ${JSON.stringify(read.drew)}`);
     }
   } finally {
     cdp.close();
