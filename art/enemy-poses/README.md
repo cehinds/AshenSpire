@@ -12,6 +12,10 @@ The combat renderer preloads the attack frame and displays it during the existin
 
 ## Validation
 
+Enemy attacks now keep the idle frame for the first 25% of their action, show the attack frame through the 55% impact, and recover to idle at 80%. The sequence uses each action's duration and existing slash, thrust, strike, projectile or spell motion. Cancelling playback removes the sequence immediately. Reduced-motion settings retain the frame sequence while suppressing actor movement. Gallery playback demonstrates the same phases over 650ms.
+
+`animation-check.cjs` verifies all 33 enemies at three durations, including the three pose phases, reduced motion and cancellation. Browser scripts accept `ENEMY_PREVIEW_ORIGIN` to target a separate local preview server.
+
 `inspect.cjs` uses Playwright with installed Edge against a local server on port 4287. It verifies all 33 gallery cards decode, phone width does not overflow, playback returns to idle, and all 33 real enemy-renderer instances switch to attack and restore idle. Results are in `inspection.json`; screenshots show the gallery and renderer fixture. The fixture exercises actual enemySprite code and combat CSS, not an entire gameplay encounter.
 
 The initial Wandering Soldier source contains a checkerboard, removed by the repository's existing extraction process. An image_gen background-removal retry was rejected because it returned scenery. No rejected art is used by the game. Original high-resolution source edges are retained in the source sheets; the export pipeline adds transparent frame padding.

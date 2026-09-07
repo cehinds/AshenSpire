@@ -9,7 +9,7 @@ const assert=require('node:assert/strict');
   for(const file of ['index.html','AshenSpire.html'])for(const width of [1440,390]){
    const page=await browser.newPage({viewport:{width,height:width===390?844:1000}});
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
-   await page.goto(`http://127.0.0.1:4287/${file}?shot=combat`);
+   await page.goto(`${process.env.ENEMY_PREVIEW_ORIGIN || 'http://127.0.0.1:4287'}/${file}?shot=combat`);
    await page.locator('.end-turn').waitFor();
    await page.evaluate(()=>{
     const c=window.__combat;c.player.hp=1000;c.player.maxHp=1000;
@@ -17,12 +17,13 @@ const assert=require('node:assert/strict');
     c.enemies[0].pendingMove={moveId:'funeralChord',resolveOnTurn:0};
     c.enemies[0].intent={kind:'attack',moveId:'funeralChord',damage:28};
     window.poseSamples=[];
-    window.poseObserver=new MutationObserver(()=>{
+    const samplePoses=()=>{
      document.querySelectorAll('.enemy .sprite').forEach(e=>{
       if(e.classList.contains('enemy-attack-pose'))window.poseSamples.push({family:e.dataset.actionFamily,visible:getComputedStyle(e.querySelector('.enemy-pose-attack')).visibility,idle:getComputedStyle(e.querySelector('.enemy-pose-idle')).visibility});
      });
-    });
-    window.poseObserver.observe(document.body,{attributes:true,subtree:true,attributeFilter:['class']});
+     window.poseRaf=requestAnimationFrame(samplePoses);
+    };
+    window.poseRaf=requestAnimationFrame(samplePoses);
    });
    await page.locator('.end-turn').hover();await page.mouse.down();await page.waitForTimeout(1000);await page.mouse.up();
    await page.waitForFunction(()=>window.__combat.turn>=2&&window.__combat.phase==='player');

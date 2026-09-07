@@ -581,9 +581,9 @@ export const PAINTED_OUTFITS = {
       "idle": {
         "file": "assets/painted-outfits/starseer/idle.webp",
         "box": {
-          "x0": 217,
-          "x1": 455,
-          "y0": 318,
+          "x0": 239,
+          "x1": 422,
+          "y0": 260,
           "y1": 601
         }
       },
@@ -653,9 +653,9 @@ export const PAINTED_OUTFITS = {
       "idle": {
         "file": "assets/painted-outfits/starseer-eclipse/idle.webp",
         "box": {
-          "x0": 197,
-          "x1": 451,
-          "y0": 301,
+          "x0": 201,
+          "x1": 458,
+          "y0": 260,
           "y1": 600
         }
       },
@@ -725,9 +725,9 @@ export const PAINTED_OUTFITS = {
       "idle": {
         "file": "assets/painted-outfits/starseer-starlit/idle.webp",
         "box": {
-          "x0": 196,
-          "x1": 499,
-          "y0": 299,
+          "x0": 193,
+          "x1": 449,
+          "y0": 261,
           "y1": 601
         }
       },
@@ -797,9 +797,9 @@ export const PAINTED_OUTFITS = {
       "idle": {
         "file": "assets/painted-outfits/starseer-astral/idle.webp",
         "box": {
-          "x0": 207,
-          "x1": 489,
-          "y0": 299,
+          "x0": 199,
+          "x1": 453,
+          "y0": 260,
           "y1": 600
         }
       },

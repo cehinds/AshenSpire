@@ -2518,3 +2518,43 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 #tooltip[data-tooltip-variant='combatant-context'] > .as-btn { font-size: max(1.2rem, calc(13px / var(--ui-zoom, 1))); line-height: 1.15; }
 .combatant .intent.as-pill.lg { font-size: max(1.2rem, calc(14px / var(--ui-zoom, 1))); line-height: 1; padding-block: 0.2rem; letter-spacing: 0; }
 .combatant .intent.as-pill.lg .as-glyph { font-size: inherit; }
+
+/* Painted equipment: keep the silhouette legible in both collection and detail. */
+.inventory-face .inventory-item-art,
+.equip-chip > .as-artwell,
+.es-cell > .as-artwell {
+  background: radial-gradient(ellipse at 50% 35%, #373025, #18130f 76%);
+  border-color: var(--line-soft);
+  box-shadow: inset 0 0 20px #0005;
+  overflow: hidden;
+}
+.inventory-item-art img, .equip-chip > .as-artwell img, .es-cell > .as-artwell img { padding: .35rem; }
+.inventory-face { gap: 1rem; }
+.inventory-face > .r-trail { flex-wrap: wrap; justify-content: flex-end; gap: .4rem; }
+.inventory-detail {
+  padding: 1.4rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  background: linear-gradient(140deg, #241c16, #17120f);
+}
+.inventory-detail > .inventory-model {
+  width: clamp(8.4rem, 16vw, 14rem); height: auto; aspect-ratio: 1;
+  padding: .7rem; background: radial-gradient(ellipse at 50% 35%, #403527, #18130f 76%);
+}
+.inventory-information { min-width: 0; }
+.inventory-information > .inventory-kind { margin-block: .45rem 1rem; }
+.inventory-tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; }
+@media (max-width: 600px) {
+  .inventory-face { gap: .65rem; flex-wrap: wrap; }
+  .inventory-face > .inventory-item-art { width: 3.6rem; height: 3.6rem; }
+  .inventory-face > .r-trail { width: 100%; justify-content: flex-start; }
+  .inventory-detail { grid-template-columns: minmax(0, 1fr); padding: 1rem; }
+  .inventory-detail > .inventory-model { width: min(100%, 13rem); justify-self: center; }
+}
+/* Let item names keep their space when ownership badges wrap. */
+.inventory-face.as-face { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; }
+.inventory-face.as-face > .inventory-item-art { grid-column: 1; grid-row: 1 / span 2; }
+.inventory-face.as-face > .ob { grid-column: 2; grid-row: 1; }
+.inventory-face.as-face > .r-trail { grid-column: 2; grid-row: 2; justify-content: flex-start; width: auto; margin-left: 0; }
+.inventory-face .inventory-name { white-space: normal; overflow-wrap: anywhere; }
+.inventory-face .on { white-space: normal; overflow: visible; text-overflow: clip; }
