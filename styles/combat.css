@@ -375,6 +375,54 @@
 .reduced-motion .sprite.act-attack,
 .reduced-motion .sprite.act-move { animation: none; }
 
+/* Action families move existing sprites; they do not require new pose art.
+   Signed distances come from the actor's bounded reach and facing direction. */
+.sprite.act-attack[data-action-motion="sweep"] { animation-name: family-slash; }
+.sprite.act-attack[data-action-motion="lunge"] { animation-name: family-thrust; }
+.sprite.act-attack[data-action-motion="impact"] { animation-name: family-strike; }
+.sprite.act-attack[data-action-motion="release"] { animation-name: family-projectile; }
+.sprite.act-move[data-action-motion="cast"] { animation-name: family-spell; }
+.sprite.act-move[data-action-motion="brace"] { animation-name: family-guard; }
+.sprite.act-move[data-action-motion="sidestep"] { animation-name: family-dodge; }
+@keyframes family-slash {
+  0%, 100% { transform: none; filter: none; }
+  22% { transform: translateX(var(--action-recoil, -12px)) rotate(var(--action-windup-tilt, -8deg)); }
+  55% { transform: translate(var(--action-travel, 26px), var(--action-lift, -8px)) rotate(var(--action-tilt, 12deg)); filter: brightness(1.25); }
+}
+@keyframes family-thrust {
+  0%, 100% { transform: none; filter: none; }
+  30% { transform: translateX(var(--action-recoil, -12px)); }
+  55%, 65% { transform: translateX(var(--action-travel, 26px)); filter: brightness(1.25); }
+}
+@keyframes family-strike {
+  0%, 100% { transform: none; filter: none; }
+  30% { transform: translateY(var(--action-lift, -8px)) rotate(var(--action-windup-tilt, -8deg)); }
+  55% { transform: translateY(7px) scaleY(0.96); filter: brightness(1.4); }
+}
+@keyframes family-projectile {
+  0%, 100% { transform: none; filter: none; }
+  40% { transform: none; filter: brightness(1.25); }
+  55% { transform: translateX(var(--action-recoil, -12px)) rotate(var(--action-windup-tilt, -8deg)); }
+}
+@keyframes family-spell {
+  0%, 100% { filter: none; }
+  55% { filter: brightness(1.4) drop-shadow(0 0 10px var(--gold)); }
+}
+@keyframes family-guard {
+  0%, 100% { filter: none; }
+  35%, 70% { filter: brightness(1.2) drop-shadow(0 0 5px var(--parchment)); }
+}
+@keyframes family-dodge {
+  0%, 100% { transform: none; opacity: 1; }
+  40%, 60% { transform: translate(var(--action-recoil, -12px), var(--action-lift, -8px)); opacity: 0.65; }
+}
+.reduced-motion .sprite[data-action-motion].act-attack,
+.reduced-motion .sprite[data-action-motion].act-move { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .sprite[data-action-motion].act-attack,
+  .sprite[data-action-motion].act-move { animation: none; }
+}
+
 /* ---------- ability / relic / status fx ---------- */
 /* Hit reaction: the victim flashes AND recoils away from the blow — enemies are
    knocked right (struck from the player's side), the player left. A heavy hit
@@ -817,4 +865,17 @@
 @media (max-width: 480px) {
   .combat > .hand-area > .combat-action-row { inset-inline: 8px; gap: 4px; }
   .combat-action-row > button { padding-inline: 2px; font-size: 1.1rem; }
+}
+
+/* Finite feedback uses opacity/light, preserving the hand fan and hit boxes. */
+.hand .card.card-drawn { animation: card-arrive 240ms ease-out; }
+@keyframes card-arrive { from { opacity: 0.35; filter: brightness(1.6); } to { opacity: 1; filter: none; } }
+.combat .pile.spent.pile-received { animation: pile-receive 320ms ease-out; }
+@keyframes pile-receive { 35% { box-shadow: inset 0 0 16px var(--gold); } }
+.combat .pile.spent[data-card-outcome="exhaust"] { border-bottom-color: var(--ember); }
+.combat .pile.spent[data-card-outcome="discard"] { border-bottom-color: var(--gold); }
+.reduced-motion .hand .card.card-drawn,
+.reduced-motion .combat .pile.spent.pile-received { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .hand .card.card-drawn, .combat .pile.spent.pile-received { animation: none; }
 }

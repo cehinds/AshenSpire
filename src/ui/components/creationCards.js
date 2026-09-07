@@ -44,10 +44,11 @@ function segmentButton({ label, ariaLabel, selected, className, dataset, onChoos
 
 /**
  * The attribute face: a compact Row (short label + summary + current value)
- * inside the D26 fold face, so the reveal (long name, sense, derived lines)
- * opens under it by the one fold renderer. The short label is deliberate: it
- * keeps Character Creation and allocation rows the same shape as the Armoury's
- * Attributes card instead of growing a second, wider primary-stat treatment.
+ * inside a semantic details/summary fold, so the reveal (long name, sense,
+ * derived lines) remains structurally attached to its own face. The short
+ * label is deliberate: it keeps Character Creation and allocation rows the
+ * same shape as the Armoury's Attributes card instead of growing a second,
+ * wider primary-stat treatment.
  * `.disc-summary` rides on the hint for the instruments that read the folded
  * summary.
  */
@@ -61,7 +62,7 @@ function renderPrimaryStatCard(input, peers = null) {
   });
   face.querySelector('.ls-hint')?.classList.add('disc-summary');
   const model = { ...input, face: { ...input.face, node: face } };
-  const fold = mountDisclosure(host, [model]);
+  const fold = mountDisclosure(host, [model], { structure: 'details' });
   const control = host.querySelector('.disc-face');
   control?.classList.add('cc-primary-stat');
   if (peers && control) {

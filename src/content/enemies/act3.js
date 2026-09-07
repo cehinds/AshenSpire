@@ -171,4 +171,312 @@ export const act3Enemies = [
       },
     ],
   },
+
+  // Expanded destinations: authored weighted moves use the existing phase and delay engine.
+  {
+    "id": "cinderMantis",
+    "name": "Cinder Mantis",
+    "size": "medium",
+    "hp": [
+      36,
+      40
+    ],
+    "poiseMax": 11,
+    "levelProfile": {
+      "min": 14,
+      "max": 17
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "scythePair": {
+        "intent": "attack",
+        "damage": 5,
+        "weight": 55,
+        "hits": 2
+      },
+      "emberPounce": {
+        "intent": "attack",
+        "damage": 18,
+        "weight": 30,
+        "maxConsecutive": 1,
+        "delay": {
+          "turns": 1,
+          "whileCharging": {
+            "block": 2
+          }
+        }
+      },
+      "foldedBlades": {
+        "intent": "block",
+        "block": 8,
+        "weight": 15,
+        "maxConsecutive": 1
+      }
+    }
+  },
+  {
+    "id": "eclipseCantor",
+    "name": "Eclipse Cantor",
+    "size": "medium",
+    "hp": [
+      30,
+      34
+    ],
+    "poiseMax": 7,
+    "levelProfile": {
+      "min": 14,
+      "max": 17
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "darkHymn": {
+        "intent": "debuff",
+        "weight": 30,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "insanity",
+            "stacks": 3
+          }
+        ]
+      },
+      "lunarRay": {
+        "intent": "attack",
+        "damage": 11,
+        "weight": 50
+      },
+      "fadingEcho": {
+        "intent": "attack",
+        "damage": 6,
+        "weight": 20,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "addCard",
+            "card": "dazed",
+            "pile": "discard"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "furnaceSaint",
+    "name": "The Furnace Saint",
+    "size": "large",
+    "hp": [
+      260,
+      260
+    ],
+    "poiseMax": 40,
+    "levelProfile": {
+      "min": 19,
+      "max": 20
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "openFurnace": {
+        "intent": "attack",
+        "damage": 32,
+        "weight": 30,
+        "maxConsecutive": 1,
+        "delay": {
+          "turns": 1,
+          "whileCharging": {
+            "block": 10
+          }
+        }
+      },
+      "censerSweep": {
+        "intent": "attack",
+        "damage": 22,
+        "weight": 45,
+        "maxConsecutive": 2
+      },
+      "coolingAsh": {
+        "intent": "block",
+        "block": 14,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "openFurnace",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 50,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hollowAstronomer",
+    "name": "The Hollow Astronomer",
+    "size": "large",
+    "hp": [
+      225,
+      225
+    ],
+    "poiseMax": 25,
+    "levelProfile": {
+      "min": 19,
+      "max": 20
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "starChart": {
+        "intent": "debuff",
+        "weight": 20,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "addCard",
+            "card": "dazed",
+            "pile": "discard"
+          }
+        ]
+      },
+      "orbitalShards": {
+        "intent": "attack",
+        "damage": 8,
+        "weight": 45,
+        "hits": 4,
+        "maxConsecutive": 2
+      },
+      "totalEclipse": {
+        "intent": "attack",
+        "damage": 30,
+        "weight": 35,
+        "maxConsecutive": 1,
+        "delay": {
+          "turns": 1,
+          "whileCharging": {
+            "block": 6
+          }
+        },
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "insanity",
+            "stacks": 3
+          }
+        ]
+      },
+      "fallingHeavens": {
+        "intent": "attack",
+        "damage": 10,
+        "weight": 30,
+        "hits": 3,
+        "locked": true,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "starChart",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 40,
+        "do": [],
+        "unlockMoves": [
+          "fallingHeavens"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ashheartDragon",
+    "name": "The Ashheart Dragon",
+    "size": "large",
+    "hp": [
+      245,
+      245
+    ],
+    "poiseMax": 34,
+    "levelProfile": {
+      "min": 19,
+      "max": 20
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "obsidianClaws": {
+        "intent": "attack",
+        "damage": 12,
+        "weight": 45,
+        "hits": 2,
+        "maxConsecutive": 2
+      },
+      "tailBastion": {
+        "intent": "block",
+        "block": 12,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "heartRumble": {
+        "intent": "buff",
+        "weight": 15,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 1
+          }
+        ]
+      },
+      "ashBreath": {
+        "intent": "attack",
+        "damage": 9,
+        "weight": 35,
+        "maxConsecutive": 1,
+        "delay": {
+          "turns": 1,
+          "whileCharging": {
+            "block": 5
+          }
+        },
+        "hits": 4,
+        "locked": true
+      }
+    },
+    "firstMove": "obsidianClaws",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 60,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          }
+        ],
+        "unlockMoves": [
+          "ashBreath"
+        ]
+      }
+    ]
+  },
 ];

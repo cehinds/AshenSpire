@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-704",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "More enemies, named boss routes and readable combat actions",
+    "detail": "Seven new regular enemies and seven new bosses bring the roster to twenty regular enemies, three elites and ten bosses. Fourteen transparent painted portraits accompany new moves and phases, while the Unity-fork artwork stays intact. Boss routes name their locations, enemy inspectors share move cards, and card actions gain actor- and tag-based motion plus draw/play/pile feedback. Reduced motion and skipped animations retain readable outcomes; unchanged co-op snapshots do not replay arrivals.",
+    "build": "0.5.5.55",
+    "pullRequest": 704,
+    "url": "https://github.com/cehinds/AshenSpire/pull/704"
+  },
+  {
+    "id": "pr-689",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Maps preserve distinct boss destinations",
+    "detail": "Acts with multiple boss encounters assign named terminal choices beyond their guaranteed rest. Each destination keeps its encounter through saves, LAN play and simulations. Compact terminal placement keeps the choices visible on phones, and co-op tooltips identify them. Invalid saved destination references are rejected at loading. Older maps retain their original boss without rerolling; single-boss acts retain their existing paths.",
+    "build": "0.5.5.52",
+    "pullRequest": 689,
+    "url": "https://github.com/cehinds/AshenSpire/pull/689"
+  },
+  {
+    "id": "pr-703",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The changelog keeps itself honest",
+    "detail": "Nothing a player sees changes. #700's receipt is written up below, and the changelog inside the game was regenerated so it carries the same entries this file does. This is the second merge running that the repository asked for its own receipt instead of waiting for someone to read the merge log and notice.",
+    "build": "0.5.5.50",
+    "pullRequest": 703,
+    "url": "https://github.com/cehinds/AshenSpire/pull/703"
+  },
+  {
+    "id": "pr-700",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Animated is the figure you get, everywhere a figure is made",
+    "detail": "The animated pose sheets are now the default sprite style at every place a character is created rather than only at character creation: a co-op seat you add locally, a LAN lobby with no remembered choice, and the fallback any surface reaches when a saved profile carries no style. A save that recorded Rendered, Classic or Sigil still keeps it, and a class with no shipped frames still falls through to its painting, so the choice is never a blank figure.",
+    "build": "0.5.5.48",
+    "pullRequest": 700,
+    "url": "https://github.com/cehinds/AshenSpire/pull/700"
+  },
+  {
     "id": "pr-701",
     "date": "2026-09-07",
     "group": "2026-09-07",
