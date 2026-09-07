@@ -39,7 +39,7 @@ import {
   decodePng, encodePng, cutout, contentBox, tintOutfit, withRim, resample,
   TINTS, OUT_W, OUT_H,
 } from './concept-cutout.mjs';
-import { medallionPct, medallionDeclared } from '../src/content/classArtAnchors.js';
+import { medallionAnchor, medallionDeclared } from '../src/content/classArtAnchors.js';
 
 const args = process.argv.slice(2);
 const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
@@ -317,7 +317,7 @@ if (ship) {
           content_box_px: { w: dw, h: dh },
           placed_at_px: { x: ox, y: oy },
           baseline: `bottom-aligned, ${MARGIN_BOTTOM * 100}% margin; shared scale across the shipped set`,
-          medallion_center_pct: medallionPct(cls),
+          medallion_center_pct: medallionAnchor(cls),
         },
         runtime_budget: 'embedded base64 in the single-file build; WebP chosen over PNG for that reason',
         fallback_id: `CLASS_SVG.${cls} — inline SVG silhouette in src/ui/assets.js`,
@@ -334,7 +334,10 @@ if (ship) {
   console.log(`\nSHIPPED ${rows.length} class(es) x 5 tints to ${outDir}`);
   console.log(`shared scale ${scale.toFixed(4)} from tallest ${tallest}px, widest ${widest}px`);
   console.log('medallion anchors used: ' + rows
-    .map(({ cls }) => `${cls} ${medallionPct(cls) == null ? 'none (measured unplaceable)' : `${medallionPct(cls)}%`}`)
+    .map(({ cls }) => {
+      const a = medallionAnchor(cls);
+      return `${cls} ${a == null ? 'none (no anchor)' : `x${a.x}% y${a.y}%`}`;
+    })
     .join(', '));
   process.exit(0);
 }
