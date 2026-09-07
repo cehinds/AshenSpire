@@ -194,6 +194,27 @@ const MOUNTS = new WeakMap();
  * callers rather than growing a second behavior implementation.
  */
 function mountDetailsDisclosure(host, rows) {
+  if (rows.length > 1) {
+    host.replaceChildren();
+    const members = new Map();
+    const close = () => { for (const member of members.values()) member.close(); };
+    const open = key => {
+      if (!members.has(key)) return;
+      close();
+      members.get(key).open(key);
+    };
+    for (const entry of rows) {
+      const child = document.createElement('div');
+      host.appendChild(child);
+      const member = mountDetailsDisclosure(child, [entry]);
+      members.set(entry.key, member);
+      child.querySelector('summary').addEventListener('click', () => {
+        if (member.openKey) for (const [key, peer] of members) if (key !== entry.key) peer.close();
+      });
+    }
+    return { open, close, setValue(key, value) { members.get(key)?.setValue(key, value); },
+      reflow() {}, get openKey() { return [...members.values()].find(member => member.openKey)?.openKey || null; } };
+  }
   if (rows.length !== 1 || rows[0].disclosure !== 'face') {
     throw new Error('details disclosure structure requires exactly one face entry');
   }

@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-740",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Painted outfits now appear throughout the game",
+    "detail": "All sixteen outfits have matching character-selection portraits, menu figures, armory previews and compact combat animations. Reaver uses the reviewed sword-rest stance and advance, overhead windup, cleave and recovery sequence. Classic and Sigil remain available. Painted weapons are part of the artwork; equipment icons and stats still describe the actual loadout.",
+    "build": "0.5.5.87",
+    "pullRequest": 740,
+    "url": "https://github.com/cehinds/AshenSpire/pull/740"
+  },
+  {
+    "id": "pr-735",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Reaver artwork follows the selected poses",
+    "detail": "All four Reaver outfits share the approved sword-rest menu and idle stance, the three selected attack poses and matching chest-up portraits. Earlier source sheets remain available in the art collection. This receipt records the artwork revision; game integration follows in #740.",
+    "build": "0.5.5.78",
+    "pullRequest": 735,
+    "url": "https://github.com/cehinds/AshenSpire/pull/735"
+  },
+  {
+    "id": "pr-720",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "A readable combat fan and compact inspection",
+    "detail": "Narrower, shorter cards retain their text size. Five to seven cards fan above the five-slot HUD with exposed costs along their left edges and a clear vertical gap. Hover or select a card to read its face. Inspect lives only in the hover panel as a compact, full-width action; sprite icons and the full-height character outline are removed. Panels stay open while entered, and closing inspection restores focus. Flask inspection effect text and charge counts retain readable minimum sizes when the game scales down. Potion rows include their artwork and unfold inline using the Armoury detail-card style; Use moves into the expanded card, and selecting a potion never consumes it. Selected enemy details return after transient character previews close. Hand resizing defers layout writes to the next frame and skips unchanged measurements to prevent resize-observer feedback. Character creation uses attached foldout cards with readable text, folded equipment summaries and contained sprite previews. Combat cards are slightly larger; Actions and Potions are equal circles matching the End Turn height. Enemies anchor toward the right and combatants compensate for reduced UI scale within their available space. The hand and bottom controls sit higher; Armoury and Menu align with the vitals.",
+    "build": "0.5.5.82",
+    "pullRequest": 720,
+    "url": "https://github.com/cehinds/AshenSpire/pull/720"
+  },
+  {
     "id": "pr-733",
     "date": "2026-09-07",
     "group": "2026-09-07",

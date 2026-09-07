@@ -1,3 +1,4 @@
+import { paintedPresentation } from '../paintedOutfits.js';
 // Character creation: four progressive sections backed by validated content.
 //
 // ON THE KIT. The screen is a page door (§05 without the veil): the head
@@ -328,7 +329,7 @@ export function mountCustomize(app, {
     portrait.style.borderColor = tintCss(state.tint);
     portrait.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
     const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
-      ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, state.spriteStyle)
+      ? (state.spriteStyle === 'classic' ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'classic') : paintedPresentation(state.classId, state.startingArmourId, 'stand'))
       : null;
     portrait.replaceChildren(sprite || state.glyph);
 
@@ -348,7 +349,7 @@ export function mountCustomize(app, {
     const run = previewRun();
     const projection = statProjection(registries, run);
     const sprite = spritesAreEnabled()
-      ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered')
+      ? paintedPresentation(state.classId, state.startingArmourId, 'portrait')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
     const previewPane = classPreviewPane({
@@ -531,7 +532,7 @@ export function mountCustomize(app, {
     classBox.dataset.view = state.classChoiceView;
     const cards = registries.classes.all().map((cls) => classChoiceCard(cls, {
       selected: cls.id === state.classId,
-      visual: classGlyph(cls.id),
+      visual: spritesAreEnabled() ? paintedPresentation(cls.id, 'default', 'portrait') || classGlyph(cls.id) : classGlyph(cls.id),
       onChoose: () => {
         if (state.classId === cls.id) return;
         state.classId = cls.id; resetClassChoices();
@@ -606,21 +607,26 @@ export function mountCustomize(app, {
       key: section.id, kind: 'pick', disclosure: 'face',
       face: { node: equipmentFaces.get(section.id).node },
       reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
-    })));
+    })), { structure: 'details' });
     refreshEquipmentFaces = () => {
       for (const section of equipmentSectionViews) equipmentFaces.get(section.id).setValue(equipmentValue(section));
     };
     const openId = equipmentSectionViews.some((section) => section.id === preferredOpenId)
       ? preferredOpenId
       : equipmentSectionViews[0]?.id;
-    if (openId) equipmentFold.open(openId);
+    if (preferredOpenId && openId) equipmentFold.open(openId);
 
     const surface = equipmentSurfaceReceipt(registries, previewRun());
-    $('#cz-equipment-receipts').innerHTML = '<section class="equip-role-receipts"><b>Starting equipment card packages</b>'
+    const receiptBody = el('div', { class: 'as-stack' });
+    receiptBody.innerHTML = '<section class="equip-role-receipts"><b>Starting equipment card packages</b>'
       + renderRoleCopies(surface)
       + '</section>'
       + renderEquipmentRequirements(surface.requirements)
       + renderPlayerPoise(surface.poise);
+    mountDisclosure($('#cz-equipment-receipts'), [{ key: 'equipment-summary', kind: 'pick', disclosure: 'face',
+      face: { label: 'Equipment summary', value: 'Cards, requirements and poise' },
+      reveal: { node: receiptBody },
+    }], { structure: 'details' });
   }
 
   function advanceEquipment(sectionId) {
@@ -642,7 +648,7 @@ export function mountCustomize(app, {
     key: row.key, kind: 'pick', disclosure: 'face',
     face: { label: row.label, value: row.value() },
     reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
+  })), { structure: 'details' });
   refreshSpriteFaces = () => {
     for (const row of spriteRows) spriteFold.setValue(row.key, row.value());
   };
@@ -659,7 +665,7 @@ export function mountCustomize(app, {
     key: row.key, kind: 'pick', disclosure: 'face',
     face: { label: row.label, value: row.value() },
     reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
+  })), { structure: 'details' });
   markUiComponent($('#cz-character-fold'), UI.characterDisclosure);
   refreshCharacterFaces = () => {
     for (const row of characterRows) characterFold.setValue(row.key, row.value());
@@ -668,13 +674,13 @@ export function mountCustomize(app, {
     key: 'sprite', kind: 'pick', disclosure: 'face',
     face: { label: 'SPRITE', value: selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle },
     reveal: { node: $('#cz-sprite-group'), sense: 'Edit sprite.' },
-  }]);
+  }], { structure: 'details' });
   const refreshPreviewFace = () => previewFold.setValue(
     'sprite', selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle,
   );
   const refreshExistingCharacterFaces = refreshCharacterFaces;
   refreshCharacterFaces = () => { refreshExistingCharacterFaces(); refreshPreviewFace(); };
-  characterFold.open('primary');
+  // Character choices stay folded until requested.
 
   const equipmentValue = (section) => {
     if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
@@ -751,14 +757,14 @@ export function mountCustomize(app, {
     let specimenClassId = state.classId;
     const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => classChoiceCard(cls, {
       selected: cls.id === specimenClassId,
-      visual: classGlyph(cls.id),
+      visual: spritesAreEnabled() ? paintedPresentation(cls.id, 'default', 'portrait') || classGlyph(cls.id) : classGlyph(cls.id),
       onChoose: () => { specimenClassId = cls.id; drawClassChoices(); },
     })));
     drawClassChoices();
     const previewRelic = registries.relics.get(state.startingRelicId);
     const classPreviewHost = classPreviewPane({
       cls: registries.classes.get(state.classId),
-      sprite: classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered'),
+      sprite: paintedPresentation(state.classId, state.startingArmourId, 'portrait'),
       resources: classResourceGrid(specimenProjection.derived.slice(0, 5)),
       relic: previewRelic,
       relicDescription: relicText(previewRelic, registries),
@@ -840,7 +846,7 @@ export function mountCustomize(app, {
       key: row.key, kind: 'pick', disclosure: 'face',
       face: { label: row.label, value: row.value() },
       reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-    })));
+    })), { structure: 'details' });
     refreshSectionFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
     fold.open('class');
   }
