@@ -32,7 +32,7 @@ function measureFrame(frame, intentGapPx, centerHeightRatio) {
   // Only the card beneath it scales; the two still move as one centered unit.
   const centeredHeight = availableHeight * centerHeightRatio;
   const fits = Math.max(0.01, Math.min(
-    frame.closest('.combat:not(.coop)') ? Math.min(1.6, Math.max(1, 1 / uiZoom)) : 1,
+    frame.closest('.combat:not(.coop)') ? Math.max(1, 1 / uiZoom) : 1,
     Math.max(0, centeredHeight - leadingHeight - gap) / Math.max(1, naturalCardHeight),
     availableWidth / Math.max(1, naturalCardWidth),
   ));

@@ -30,6 +30,9 @@ Selecting or expanding a potion never consumes it. Weapon arts play from the han
 Character creation uses attached foldout cards for its sections and choices.
 Stats, keepsakes, sprite options and equipment summaries start folded; opening
 a choice closes its siblings. Text retains readable minimum sizes on phones.
+Combat cards and character previews keep consistent portrait proportions; Armoury
+figures scale uniformly to fit their available space. Pile viewers use larger,
+non-overlapping cards with readable text on phones and scroll when needed.
 
 **[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)** — the stable
 build from `main`. **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** — the builds

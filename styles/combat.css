@@ -905,7 +905,7 @@
 :root .combat:not(.coop) .hand-overlay { width: 100%; height: auto; grid-area: hand; }
 :root .combat:not(.coop) .hand {
  height: auto; justify-content: safe center; align-items: end;
- padding: 64px 24px 16px; gap: 0; overflow-x: auto; scrollbar-width: thin;
+ padding: 64px 24px 24px; gap: 0; overflow-x: auto; scrollbar-width: thin;
 }
 :root .combat:not(.coop) .hand .card {
  --card-w: max(178px, calc(178px / var(--ui-zoom, 1))); --card-name-h: max(32px, calc(32px / var(--ui-zoom, 1))); --card-art-h: max(70px, calc(70px / var(--ui-zoom, 1)));
@@ -944,3 +944,20 @@
 :root .combat:not(.coop) .enemy-row > .combatant { flex: 0 1 42%; min-width: 0; }
 :root .combat:not(.coop) .combatant-card { width: max-content; }
 :root .combat:not(.coop) .combatant .sprite { flex: 0 0 auto; min-width: max-content; overflow: visible; }
+
+/* A hand card has one portrait profile; viewport changes never resize one axis alone. */
+:root .combat:not(.coop) .hand .card {
+  height: calc(var(--card-w) * 1.4); aspect-ratio: 5 / 7;
+  --card-art-h: calc(var(--card-w) * 0.30);
+  --card-name-h: calc(var(--card-w) * 0.18);
+}
+:root .combat:not(.coop) .hand .card .art { overflow: hidden; }
+:root .combat:not(.coop) .hand .card .art img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Increase the reading inside the existing five fixed HUD tracks. */
+:root .combat:not(.coop) .combat-action-row .sp-k { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.1; letter-spacing: 0; }
+:root .combat:not(.coop) .combat-action-row .sp-v { font-size: max(1.5rem, calc(17px / var(--ui-zoom, 1))); line-height: 1.1; }
+:root .combat:not(.coop) .combat-action-row > :is(.end-turn, .combat-potions) { font-size: max(1.38rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.1; }
+:root .combat:not(.coop) .combat-action-row .spent { padding-inline: 2px; font-size: max(1.1rem, calc(11px / var(--ui-zoom, 1))); line-height: 1.15; }
+:root .combat:not(.coop) .combat-action-row .spent small { font-size: inherit; }
+:root .combat:not(.coop) .combat-action-row :is(.hold-hint, .et-key) { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1; }

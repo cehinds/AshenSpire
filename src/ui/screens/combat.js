@@ -454,7 +454,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return {
         role: 'player',
         name: (run.customization?.name || classDef.name).toUpperCase(),
-        subtitle: `${classDef.name} · Level ${run.level}`,
+        subtitle: `${classDef.name} · Level ${run.level ?? 1}`,
         resources: [
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },
