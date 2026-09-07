@@ -896,8 +896,8 @@
  --card-band-h: max(22px, calc(22px / var(--ui-zoom, 1))); --card-row: max(22px, calc(22px / var(--ui-zoom, 1))); --card-pad: max(10px, calc(10px / var(--ui-zoom, 1))); --card-gap: max(6px, calc(6px / var(--ui-zoom, 1)));
  margin: 0 !important; transform: none !important; touch-action: pan-x;
 }
-:root .combat:not(.coop) .hand .card .cname { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); }
-:root .combat:not(.coop) .hand .card .ctext { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); line-height: max(22px, calc(22px / var(--ui-zoom, 1))); }
+:root:not([data-composition='short-wide']) .combat:not(.coop) .hand .card .cname { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); }
+:root:not([data-composition='short-wide']) .combat:not(.coop) .hand .card .ctext { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); line-height: max(22px, calc(22px / var(--ui-zoom, 1))); }
 :root .combat:not(.coop) > .hand-area > .combat-action-row {
  position: relative; inset: auto; grid-area: actions; width: 100%;
  grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr; align-items: center; gap: 6px;
