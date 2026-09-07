@@ -557,6 +557,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       className: 'combatant-inspect-control',
       attrs: { 'aria-haspopup': 'dialog' },
     });
+    // The sprite's interactive context owns this hint; avoid a second title tooltip.
+    control.removeAttribute('title');
     control.addEventListener('click', (event) => {
       event.stopPropagation();
       openCombatantDoor(combatantSubject(role, entity));
