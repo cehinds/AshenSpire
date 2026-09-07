@@ -1,0 +1,18 @@
+[
+  {
+    "weaponId": "katana",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": ["katanaDrawCut"]
+    }
+  },
+  {
+    "weaponId": "greatsword",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": ["greatswordSunderingHew"]
+    }
+  }
+]
