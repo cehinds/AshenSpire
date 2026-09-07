@@ -1,4 +1,5 @@
-import { paintedPresentation, paintedPortraitUrl } from '../paintedOutfits.js';
+import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
+import { paintedPresentation } from '../paintedOutfits.js';
 // src/ui/screens/equipment.js — the Armoury.
 //
 // Three views of the same loadout, because the two obvious layouts are both
@@ -417,7 +418,7 @@ function figureFor(registries, run, cz) {
   const el = document.createElement('div');
   el.className = 'armoury-figure';
   const painted = spritesAreEnabled() && !['classic', 'glyph'].includes(cz?.spriteStyle)
-    ? paintedPresentation(run.class, figureSpec(registries, run.loadout, run.class).armourId, 'detail') : null;
+    ? paintedPresentation(run.class, figureSpec(registries, run.loadout, run.class).armourId, 'stand') : null;
   if (painted) { el.classList.add('painted-armoury'); el.appendChild(painted); return el; }
   const reacts = CFG().spriteReacts;
   const spec = figureSpec(registries, run.loadout, run.class);
@@ -438,7 +439,7 @@ function figureFor(registries, run, cz) {
  */
 function thumbSrc(piece) {
   return piece.kind === 'armor'
-    ? paintedPortraitUrl(piece.classId, piece.id) || assetUrl(`assets/equipment/body_${piece.classId}_${piece.id}.webp`)
+    ? assetUrl(armourMenuAsset(piece.classId, piece.id))
     : assetUrl(`assets/equipment/icon_${piece.artKey || piece.id}.webp`);
 }
 

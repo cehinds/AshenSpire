@@ -329,7 +329,7 @@ export function mountCustomize(app, {
     portrait.style.borderColor = tintCss(state.tint);
     portrait.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
     const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
-      ? (state.spriteStyle === 'classic' ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'classic') : paintedPresentation(state.classId, state.startingArmourId, 'stand'))
+      ? (state.spriteStyle === 'classic' ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'classic') : paintedPresentation(state.classId, state.startingArmourId, 'detail'))
       : null;
     portrait.replaceChildren(sprite || state.glyph);
 
@@ -510,7 +510,7 @@ export function mountCustomize(app, {
     classBox.dataset.view = state.classChoiceView;
     const cards = registries.classes.all().map((cls) => classChoiceCard(cls, {
       selected: cls.id === state.classId,
-      visual: spritesAreEnabled() ? paintedPresentation(cls.id, 'default', 'portrait') || classGlyph(cls.id) : classGlyph(cls.id),
+      visual: classGlyph(cls.id),
       onChoose: () => {
         if (state.classId === cls.id) return;
         state.classId = cls.id; resetClassChoices();
@@ -735,7 +735,7 @@ export function mountCustomize(app, {
     let specimenClassId = state.classId;
     const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => classChoiceCard(cls, {
       selected: cls.id === specimenClassId,
-      visual: spritesAreEnabled() ? paintedPresentation(cls.id, 'default', 'portrait') || classGlyph(cls.id) : classGlyph(cls.id),
+      visual: classGlyph(cls.id),
       onChoose: () => { specimenClassId = cls.id; drawClassChoices(); },
     })));
     drawClassChoices();
