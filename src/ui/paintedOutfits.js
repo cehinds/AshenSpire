@@ -1,11 +1,7 @@
-import { PAINTED_OUTFITS } from '../content/paintedOutfits.js';
+import { paintedOutfit } from '../model/paintedOutfitArt.js';
+
 import { assetUrl } from './assetmap.js';
 import { reducedMotionRequested } from './motion.js';
-
-export function paintedOutfit(classId, armourId = 'default') {
-  const id = !armourId || armourId === 'default' ? classId : `${classId}-${armourId}`;
-  return PAINTED_OUTFITS[id] || PAINTED_OUTFITS[classId] || null;
-}
 
 export function paintedPortraitUrl(classId, armourId = 'default') {
   const art = paintedOutfit(classId, armourId);

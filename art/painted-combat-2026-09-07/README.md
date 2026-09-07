@@ -59,4 +59,6 @@ Reaver full-body menu and detail images use the same approved upright, hands-on-
 
 Reaver close-up portraits follow the selected Warden bust pose: upright helmet angled slightly right, both shoulders visible, chest-up crop. Three replacement portrait sources are retained in portrait-sources; Warden retains the approved original.
 
-Game integration: tools/painted-outfits-ship.mjs exports the approved assets to assets/painted-outfits and generates src/content/paintedOutfits.js. Class selection uses portraits, character customization uses detail images, and the armory uses menu stand images and portrait thumbnails. Animated combat uses the seven authored states. Run tools/painted-outfits-check.mjs against the game server on port 4277 to verify all 160 image decodes, playback and screen integration.
+Game integration: tools/painted-outfits-ship.mjs exports the approved assets to assets/painted-outfits and generates src/content/paintedOutfits.js. Class selection uses portraits, character customization uses detail images, and the armory uses menu stand images and menu-pose armor thumbnails. Animated combat uses the seven authored states. Run tools/painted-outfits-check.mjs against the game server on port 4277 to verify all 160 image decodes, playback and screen integration.
+
+Armor item art uses src/model/paintedOutfitArt.js on character-creation cards, armory equipment/details, smithing and mounting screens. All sixteen existing outfits resolve to their full-body menu pose; class-selection portraits and character-customization detail poses remain separate.
