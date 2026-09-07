@@ -229,7 +229,6 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   `${width}x${height}: Character uses one-open nested disclosures with modes, stats, then resources`);
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay');
-<<<<<<< HEAD
   const refunded = await evaluate(`(() => ({
     remaining:document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim(),
     values:[...document.querySelectorAll('.cc-stat-overlay .se-value')].map((node) => node.textContent.trim()),
@@ -241,14 +240,6 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(refunded.remaining === '10' && refunded.values.join(',') === '10,10,10,10,10'
     && refunded.rowInsets.every((edges) => edges.every((edge) => parseFloat(edge) > 0) && new Set(edges).size === 1),
   `${width}x${height}: Assign Points refunds to five baseline-10 stats and gives every setting row one four-sided inset (${JSON.stringify(refunded)})`);
-=======
-  const freshAllocation = await evaluate(`(() => ({
-    remaining: document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent,
-    values: [...document.querySelectorAll('.cc-stat-overlay .se-value')].map((node) => node.textContent),
-  }))()`);
-  assert(freshAllocation.remaining === '10' && freshAllocation.values.every((value) => value === '10'),
-    `${width}x${height}: Assign Points refunds the complete pool and starts every attribute at baseline (${JSON.stringify(freshAllocation)})`);
->>>>>>> origin/dev
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay [data-face^="attribute:"]').length`)) === 5,
     `${width}x${height}: Assign Points reuses five foldout attribute cards`);
   const allocationInsets = await evaluate(`[...document.querySelectorAll('.cc-stat-overlay .as-row.setting')].map((row) => {
@@ -292,13 +283,8 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     `${width}x${height}: reopening Assign Points refunds the complete allocation again`);
   assert(await evaluate(`(() => { const modal=document.querySelector('.cc-stat-overlay'); const buttons=[...modal.querySelectorAll('button')]; buttons.at(-1).focus(); buttons.at(-1).dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true})); return document.activeElement===buttons[0]; })()`), `${width}x${height}: Assign Points traps forward Tab focus inside the dialog`);
   await click('.cc-stat-overlay [aria-label="Increase Strength"]');
-<<<<<<< HEAD
-  for (let i = 0; i < 4; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
-  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
-=======
   for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
   for (let i = 0; i < 4; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
->>>>>>> origin/dev
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay close');
   await open('equipment');
@@ -324,17 +310,10 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   })()`);
   assert(modalRefusal.open && modalRefusal.disabled === 'true' && /10 stat points still to assign/.test(modalRefusal.refusal)
     && modalRefusal.shown === 'block' && /10 stat points still to assign/.test(modalRefusal.tip),
-<<<<<<< HEAD
-  `${width}x${height}: reopened Assign Points explains that the refunded pool must be assigned`);
-  for (let i = 0; i < 2; i += 1) await click('.cc-stat-overlay [aria-label="Increase Strength"]');
-  for (let i = 0; i < 3; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
-  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
-=======
   `${width}x${height}: reopened Assign Points explains that its refunded pool must be assigned`);
   for (let i = 0; i < 2; i += 1) await click('.cc-stat-overlay [aria-label="Increase Strength"]');
   for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
   for (let i = 0; i < 3; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
->>>>>>> origin/dev
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver correction overlay close');
   assert((await evaluate(`document.querySelector('#cz-start').hasAttribute('aria-disabled')`)) === false, `${width}x${height}: correcting stats clears the equipment refusal`);
