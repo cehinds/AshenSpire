@@ -20,7 +20,7 @@ import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_S
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
-import { buildActMap } from './engine/actmap.js';
+import { buildActMap, bossEncounterForNode } from './engine/actmap.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
 import {
   rollEncounter,
@@ -1324,6 +1324,13 @@ function collectArmament(id, source) {
   // the depth behind that face — same array, its own answer.
   const stored = addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
   if (!stored) return false; // the bag refused: nothing entered storage, so nothing is found — meta stays clean
+  recordCollectedArmament(id, source);
+  return true;
+}
+
+// Called only after collection or a committed trader purchase stored the item.
+function recordCollectedArmament(id, source) {
+  if (!carriedIds(run.loadout).includes(id)) return;
   if ((registries.balance.equipment.drops || {}).permanentOnFind) {
     const meta = saves.loadMeta();
     if (!(meta.found || []).includes(id)) {
@@ -1543,7 +1550,9 @@ function combatMods(pool) {
 function startFight(pool, nodeId) {
   // "Elite Gauntlet" chaos rule promotes ordinary monster nodes to elites.
   if (pool === 'normal' && run.custom && activeMods(run.custom).allElite) pool = 'elite';
-  const encounterId = rollEncounter(registries, rng, { pool, act: contentAct(), exclude: run.lastEncounters });
+  const encounterId = pool === 'boss'
+    ? bossEncounterForNode(registries, run.mapGraph, nodeId, contentAct())
+    : rollEncounter(registries, rng, { pool, act: contentAct(), exclude: run.lastEncounters });
   if (pool === 'normal') {
     run.lastEncounters.push(encounterId);
     if (run.lastEncounters.length > 2) run.lastEncounters.shift();
@@ -1881,6 +1890,7 @@ function showShop() {
     run,
     meta: saves.loadMeta(),
     onChanged: () => persist(),
+    onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
     onLeave: () => {
       run.shopStock = null;
       persist();
@@ -2082,7 +2092,9 @@ function coopMapShot(steps = 0) {
     // (tools/session.mjs) — the client just never drew it.
     cursorId,
     reachableIds,
-    map: { floors: g.floors, columns: g.columns, startIds: g.startIds, bossId: g.bossId, nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })) },
+    map: { floors: g.floors, columns: g.columns, startIds: g.startIds, bossId: g.bossId, bossIds: g.bossIds,
+      nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next,
+        ...(n.type === 'boss' ? { encounterId: n.encounterId, destinationLabel: n.destinationLabel } : {}) })) },
     party: [
       { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, catchupQueue: [] },
       { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, catchupQueue: [] },

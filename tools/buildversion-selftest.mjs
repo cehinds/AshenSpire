@@ -406,6 +406,18 @@ function ordinalHistory() {
     git(dir, 'init', '-q', '-b', 'main');
     git(dir, 'config', 'user.email', 'selftest@family.local');
     git(dir, 'config', 'user.name', 'selftest');
+    // NO BACKGROUND WRITER IN A TREE WE ARE ABOUT TO DELETE. `git commit` can
+    // fire `gc --auto`, which detaches and keeps writing into `.git` after the
+    // commit returns — so the recursive remove below races a live process and
+    // dies ENOTEMPTY. That is what broke the ubuntu runner while macOS and
+    // Windows passed: same race, different timing.
+    // Disabled rather than waited out. removeTempTree already retries for the
+    // filesystem-settling case the comment at its definition describes; adding
+    // more retries here would only widen the window against a writer that is
+    // still running. Removing the writer ends it.
+    git(dir, 'config', 'gc.auto', '0');
+    git(dir, 'config', 'gc.autoDetach', 'false');
+    git(dir, 'config', 'maintenance.auto', 'false');
     if (first) {
       const p = resolve(dir, ORDINAL_HOME);
       writeFileSync(p, `${JSON.stringify(first(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');

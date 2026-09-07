@@ -204,7 +204,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const reachable = viewer.reachable instanceof Set ? viewer.reachable : new Set(viewer.reachable || []);
   const traveled = viewer.traveled instanceof Set ? viewer.traveled : new Set(viewer.path || []);
   const current = viewer.current || null;
-  const map = { nodes: byId, startIds: act.startIds || [], bossId: act.bossId };
+  const map = { nodes: byId, startIds: act.startIds || [], bossId: act.bossId, bossIds: act.bossIds };
   const run = { mapNodeId: current, path: viewer.path || [] };
   const app = host;
   const reveal = !!viewer.reveal;
@@ -215,7 +215,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const mode = viewer.mode || (viewer.meta ? resolveMapMode(viewer.meta) : MAP_MODE_DEFAULT);
   const fog = mode === 'fog';
   const know = mapKnowledge({
-    graph: { nodes: byId, startIds: act.startIds, bossId: act.bossId },
+    graph: map,
     run: { path: viewer.path || [], mapNodeId: current },
     mode,
     reveal,
@@ -241,7 +241,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     ? !!viewer.shrineGlow
     : resolveShrineGlow(viewer.meta);
   const lane = glowOn
-    ? shrineLane({ graph: { nodes: byId, startIds: act.startIds, bossId: act.bossId }, run })
+    ? shrineLane({ graph: map, run })
     : [];
   const laneNodes = new Set(lane.filter(isDrawn));
   const laneEdge = new Set();
@@ -392,6 +392,12 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // a fogged player must not have: only DRAWN nodes get an element, and the id
     // is a floor and a column, never a type.
     el.dataset.node = n.id;
+    if (shownType === 'boss' && n.destinationLabel) {
+      el.setAttribute('aria-label', `Boss: ${n.destinationLabel}`);
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      title.textContent = n.destinationLabel;
+      el.appendChild(title);
+    }
     // THE RADIUS IS SOLVED FROM THE TAP FLOOR (model/mapview.js), and it is the
     // node's own in every mode and on every screen: fog changes WHICH nodes are
     // drawn and never HOW BIG one is, and neither does having a partner.
@@ -401,7 +407,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // the geometry rather than left to re-derive it — a second copy of `y()` is
     // how this whole file came to be needed.
     const mark = viewer.mark ? viewer.mark(n, { x: x(n.col), y: y(n.floor), r }) : '';
-    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>${mark || ''}`;
+    el.insertAdjacentHTML('beforeend', `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>${mark || ''}`);
     if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));
     if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }));
     g.appendChild(el);
@@ -718,10 +724,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // The far end of the climb, and only if it is PAINTED — `isDrawn` is the same
     // predicate the node loop, the edges and the look-ahead use, so the camera
     // can never frame a node nobody drew.
-    const end = nodes.find((n) => n.type === 'boss' && isDrawn(n.id));
-    if (!end) return { aim: doors, end: null };
-    const endBox = framingBox([end], height);
-    const ends = framingBox([...doorNodes, end], height);
+    const terminals = nodes.filter((n) => n.type === 'boss' && isDrawn(n.id));
+    if (!terminals.length) return { aim: doors, end: null };
+    const endBox = framingBox(terminals, height);
+    const ends = framingBox([...doorNodes, ...terminals], height);
     const fits = (b) => b.w * zoom <= scroll.clientWidth && b.h * zoom <= scroll.clientHeight;
     // THE MARGIN IS WHAT THE HALO PAINTS, NOT WHAT IT MEASURES, and my first
     // draft got that wrong in a way only a machine caught: I padded by HALO_PAD

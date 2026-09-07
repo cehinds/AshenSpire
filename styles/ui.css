@@ -764,10 +764,18 @@ button.ev-choice {
 /* The legacy viewer-facing figure and the Armoury's generated equipment figure
    keep their handedness correction. Combat is different: its painted figures
    and pose frames are already authored facing right, into the battlefield, so
-   the combat player cancels this mirror immediately below. */
+   the combat player cancels this mirror immediately below.
+
+   `.class-sprite .equipped-figure { transform: none; }` USED TO SIT HERE and is
+   deleted. It existed to cancel an ANCESTOR mirror back when `.class-sprite`
+   itself carried one and combat nested `.equipped-figure` inside it. Neither
+   half is true now: #590 made the class figures paintings, so `equippedFigure()`
+   has one call site left — the Armoury preview, which mounts it into
+   `.armoury-figure`, never inside `.class-sprite` — and #618 moved the mirror
+   onto `.class-sprite > .facing`. The rule matched nothing, and a reader would
+   reasonably have believed the nested case still existed. */
 .class-sprite > .facing,
 .equipped-figure { transform: scaleX(-1); }
-.class-sprite .equipped-figure { transform: none; }
 .combatant.player .class-sprite > .facing { transform: none; }
 
 button.armoury-position-card { display: grid; grid-template-columns: var(--armoury-position-label-width) var(--armoury-position-sprite-width) minmax(0, 1fr); padding: 0; text-align: left; }

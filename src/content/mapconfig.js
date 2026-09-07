@@ -169,3 +169,9 @@ export const mapConfigs = {
   2: { ...ACT_SHAPE },
   3: { ...ACT_SHAPE },
 };
+
+// Saves written before terminal encounter IDs existed must keep their original
+// act boss even after the live pool grows. This migration lookup never rolls.
+export const LEGACY_ACT_BOSSES = Object.freeze({
+  1: 'bossOmen', 2: 'a2_bossStitchedKing', 3: 'a3_bossRotValkyrie',
+});
