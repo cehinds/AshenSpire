@@ -333,8 +333,8 @@ export function findings(r) {
       || /\btrayModel\s*\(/.test(r.armouryModels)
       || !/const regionModels = regions\.map\([\s\S]*return item;/.test(r.armouryModels)
       || !/renderArmouryPanel\([\s\S]*markUiComponent\(wrap\.querySelector\('\.armoury-inventory'\)/.test(r.armouryComponents)
-      || !/renderTray\(trayModel\(/.test(r.equipment)
-      || !/renderTray\([\s\S]*renderContent:/.test(r.equipment)
+      || !/el\('details', \{ class: 'armoury-section armoury-disclosure'/.test(r.equipment)
+      || !/section\.addEventListener\('toggle'/.test(r.equipment)
       // THE EDGE TABLE MOVED, AND THE ASSERTION FOLLOWED IT RATHER THAN BEING
       // DROPPED. What C15 has always guarded is that a tray's mark is EDGE-AWARE
       // and frozen — four edges, each with a closed and an open answer — not
@@ -373,17 +373,11 @@ export function findings(r) {
       || !/"snapRatios": \[0\.3, 0\.4, 0\.5, 0\.6, 0\.7, 0\.8, 0\.9\]/.test(r.armouryUiSource)
       || /meta\.settings\.armouryTrayHeights/.test(r.equipment)
       || !/resetArmouryTraySession/.test(r.equipment)
-      // 2026-09-04 (the sweep): a tray's share is a share of the DOOR'S BODY,
-      // never of the glass — `vh` below the zoomed <body> is the law this file
-      // is named for. The remembered height is a percentage of the host the
-      // screen measures (`hostHeight`), and an arrival without one hugs its
-      // content under the kit's compact cap instead of claiming a share.
-      || !/const hostHeight = \(\) => Math\.max\(1, wrap\.querySelector\('\.armoury-shell-body'\)\?\.clientHeight \|\| 1\)/.test(r.equipment)
-      || !/style\.minHeight = `\$\{layout\.trays\.multipleExpandedMinimumRatio \* 100\}%`/.test(r.equipment)
-      || !/style\.height = `\$\{savedRatio \* 100\}%`/.test(r.equipment)
+      // Armoury now uses natural-height native disclosures, not resizable trays.
+      || /armoury-(?:hybrid-)?pane-splitter/.test(r.armouryComponents)
       || /\d\s*}?vh`/.test(r.equipment)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.trayModels)) {
-    bad.push('C15 folding regions no longer use the shared edge-aware Tray model and renderer');
+    bad.push('C15 shared trays or natural-height Armoury disclosures lost their component contract');
   }
   const creationExports = [
     'primaryStatCard', 'resourceStrip', 'viewModeToggle', 'booleanSettingToggle',
@@ -515,7 +509,7 @@ function selftest() {
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
-    ['hand-roll an Armoury tray', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('renderTray(', 'renderLegacyRegion(') })],
+    ['remove native Armoury disclosure', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace("el('details', { class: 'armoury-section armoury-disclosure'", "el('div', { class: 'armoury-section armoury-disclosure'") })],
     ['remove class resource renderer', 'C16 ', (r) => ({ ...r, creationCards: r.creationCards.replace('export function classResourceGrid', 'function classResourceGrid') })],
     ['remove co-op quick settings', 'C17 ', (r) => ({ ...r, coop: r.coop.replace('wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });', '') })],
     ['detach startup from its component model', 'C18 ', (r) => ({ ...r, startupGateModel: r.startupGateModel.replace('export function startupGateModel', 'function startupGateModel') })],
