@@ -79,7 +79,7 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
     const artAsset = itemKind === 'armor'
       ? armourMenuAsset(candidate.classId, piece.id)
       : itemKind === 'armament'
-        ? `assets/equipment/icon_${piece.artKey || piece.id}.webp`
+        ? `assets/equipment/icon_${piece.id}.webp`
         : null;
     const itemTypes = (piece.itemTypes || []).map((type) => freeze({ ...type }));
     return freeze({
