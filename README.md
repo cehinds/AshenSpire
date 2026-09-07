@@ -261,3 +261,9 @@ Flow: `feature/* → dev → release → main`. See [CONTRIBUTING.md](CONTRIBUTI
 ## Legal
 
 Code is MIT ([LICENSE](LICENSE)). This is a fan-inspired original work: it contains **no** FromSoftware assets, music, or proper nouns, and is not affiliated with or endorsed by FromSoftware or Bandai Namco. All art assets are CC0/CC-BY/OFL and attributed in [CREDITS.md](CREDITS.md).
+
+## Dodge feedback and motion
+
+After a Dodge roll, select **Dodge succeeded** or **Dodge failed** beside your character to inspect the last result. The explanation shows the roll, check, difficulty and base guard. Dodge grants Block on success; it does not guarantee avoiding the next attack. Block modifiers and retention effects still apply.
+
+Armoury card scrolling honors both the in-game Reduced motion setting and your operating system preference.
