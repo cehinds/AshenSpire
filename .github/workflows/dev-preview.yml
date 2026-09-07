@@ -110,3 +110,68 @@ jobs:
           name: dev-preview-${{ github.sha }}
           path: preview/
           retention-days: 14
+
+  # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
+  #
+  # PROPOSED, not adopted — this job is the subject of its own pull request and
+  # is here to be measured and accepted or rejected, not to be assumed.
+  #
+  # The gap it closes was paid for on 2026-09-07. #720 landed a reachability
+  # regression on `dev`: at a Safari-like 390x650 phone, four combat hand cards
+  # cover one another. `screenreach` catches it in 32 seconds — but `screenreach`
+  # runs only in ci.yml, which is `workflow_dispatch` only, and the job above
+  # runs no browser at all. So #720 merged green, promoted to `test` green, and
+  # the regression was invisible at every gate it met. It surfaced two hours and
+  # two promotions later, on a hand-dispatched matrix opened for a RELEASE — the
+  # last place a defect should first be seen rather than the first.
+  #
+  # WHY THE GATES AND NOT THEIR SELFTESTS. Each of these tools has a `--selftest`
+  # arm that plants known-bads and requires the named red. Those arms are what
+  # prove the gate can fail, and they are also almost all of the cost: in ci.yml
+  # run 321 the four gates below took 79s between them, while the plant arms in
+  # the same job took over 19 minutes — `startup-gate --selftest` alone ran 14m43s
+  # for its eighteen plants. Proving a gate can fail is a property of the gate,
+  # which changes when the gate changes; measuring the tree is a property of the
+  # commit. So the plant arms stay in the dispatched matrix where their cost is
+  # deliberate, and the measurements move here where the regressions are.
+  #
+  # THIS IS NOT A SUBSTITUTE FOR THE MATRIX. Linux only, one runner, no Windows
+  # (2x) and no macOS (10x); it proves nothing about cross-platform behaviour or
+  # about the gates' own ability to fail. It is the cheapest thing that would
+  # have caught #720 on the day it landed.
+  #
+  # COST: one ubuntu-latest runner, roughly 2 minutes, per push to `dev` and per
+  # pull request targeting it — measured from run 321's own step timings:
+  #   hand-side-probe            9s
+  #   shotguard-probe           26s
+  #   startup-gate              72s
+  #   screenreach --only         32s
+  # plus checkout and node setup. Against that: #720's regression sat undetected
+  # across two promotions and cost three dispatched 3-OS matrices to find.
+  browser-gates:
+    name: the reachability gates a phone would fail
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Which browser will be used
+        run: |
+          for p in /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser; do
+            [ -x "$p" ] && echo "found: $p" && "$p" --version
+          done
+          echo "(the probes exit 2 if none exists — unknown, which blocks)"
+
+      - name: Hand-side placement reaches the correct rendered side
+        run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs
+
+      - name: Storage gate holds, and a normal boot still saves
+        run: node tools/verdict.mjs -- node tools/shotguard-probe.mjs
+
+      - name: Cold boot owns and consumes the first input before Title exists
+        run: node tools/verdict.mjs -- node tools/startup-gate.mjs
+
+      - name: Every control a phone must reach is reachable at 390x650
+        run: node tools/verdict.mjs -- node tools/screenreach.mjs --only 390x650
