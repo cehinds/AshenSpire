@@ -1,0 +1,217 @@
+[
+  {
+    "title": "herald-emberhabit · reference-library",
+    "classId": "herald",
+    "file": "reference-library/herald-emberhabit.png"
+  },
+  {
+    "title": "herald-ossuary · reference-library",
+    "classId": "herald",
+    "file": "reference-library/herald-ossuary.png"
+  },
+  {
+    "title": "herald-pilgrim · reference-library",
+    "classId": "herald",
+    "file": "reference-library/herald-pilgrim.png"
+  },
+  {
+    "title": "herald · reference-library",
+    "classId": "herald",
+    "file": "reference-library/herald.png"
+  },
+  {
+    "title": "reaver-oathsworn · reference-library",
+    "classId": "reaver",
+    "file": "reference-library/reaver-oathsworn.png"
+  },
+  {
+    "title": "reaver-vigil · reference-library",
+    "classId": "reaver",
+    "file": "reference-library/reaver-vigil.png"
+  },
+  {
+    "title": "reaver-warden · reference-library",
+    "classId": "reaver",
+    "file": "reference-library/reaver-warden.png"
+  },
+  {
+    "title": "reaver · reference-library",
+    "classId": "reaver",
+    "file": "reference-library/reaver.png"
+  },
+  {
+    "title": "rogue-duelist · reference-library",
+    "classId": "rogue",
+    "file": "reference-library/rogue-duelist.png"
+  },
+  {
+    "title": "rogue-nightveil-slash-study · reference-library",
+    "classId": "rogue",
+    "file": "reference-library/rogue-nightveil-slash-study.png"
+  },
+  {
+    "title": "rogue-nightveil · reference-library",
+    "classId": "rogue",
+    "file": "reference-library/rogue-nightveil.png"
+  },
+  {
+    "title": "rogue-shadow · reference-library",
+    "classId": "rogue",
+    "file": "reference-library/rogue-shadow.png"
+  },
+  {
+    "title": "rogue · reference-library",
+    "classId": "rogue",
+    "file": "reference-library/rogue.png"
+  },
+  {
+    "title": "starseer-astral · reference-library",
+    "classId": "starseer",
+    "file": "reference-library/starseer-astral.png"
+  },
+  {
+    "title": "starseer-eclipse · reference-library",
+    "classId": "starseer",
+    "file": "reference-library/starseer-eclipse.png"
+  },
+  {
+    "title": "starseer-starlit · reference-library",
+    "classId": "starseer",
+    "file": "reference-library/starseer-starlit.png"
+  },
+  {
+    "title": "starseer · reference-library",
+    "classId": "starseer",
+    "file": "reference-library/starseer.png"
+  },
+  {
+    "title": "reaver-oathsworn · sheets",
+    "classId": "reaver",
+    "file": "sheets/reaver-oathsworn.png"
+  },
+  {
+    "title": "reaver-vigil · sheets",
+    "classId": "reaver",
+    "file": "sheets/reaver-vigil.png"
+  },
+  {
+    "title": "reaver-warden · sheets",
+    "classId": "reaver",
+    "file": "sheets/reaver-warden.png"
+  },
+  {
+    "title": "reaver · sheets",
+    "classId": "reaver",
+    "file": "sheets/reaver.png"
+  },
+  {
+    "title": "rogue-duelist · sheets",
+    "classId": "rogue",
+    "file": "sheets/rogue-duelist.png"
+  },
+  {
+    "title": "rogue-nightveil · sheets",
+    "classId": "rogue",
+    "file": "sheets/rogue-nightveil.png"
+  },
+  {
+    "title": "rogue-shadow · sheets",
+    "classId": "rogue",
+    "file": "sheets/rogue-shadow.png"
+  },
+  {
+    "title": "rogue · sheets",
+    "classId": "rogue",
+    "file": "sheets/rogue.png"
+  },
+  {
+    "title": "herald-emberhabit · menu-sheets",
+    "classId": "herald",
+    "file": "menu-sheets/herald-emberhabit.png"
+  },
+  {
+    "title": "herald-ossuary · menu-sheets",
+    "classId": "herald",
+    "file": "menu-sheets/herald-ossuary.png"
+  },
+  {
+    "title": "herald-pilgrim · menu-sheets",
+    "classId": "herald",
+    "file": "menu-sheets/herald-pilgrim.png"
+  },
+  {
+    "title": "herald · menu-sheets",
+    "classId": "herald",
+    "file": "menu-sheets/herald.png"
+  },
+  {
+    "title": "reaver-oathsworn · menu-sheets",
+    "classId": "reaver",
+    "file": "menu-sheets/reaver-oathsworn.png"
+  },
+  {
+    "title": "reaver-vigil · menu-sheets",
+    "classId": "reaver",
+    "file": "menu-sheets/reaver-vigil.png"
+  },
+  {
+    "title": "reaver-warden · menu-sheets",
+    "classId": "reaver",
+    "file": "menu-sheets/reaver-warden.png"
+  },
+  {
+    "title": "reaver · menu-sheets",
+    "classId": "reaver",
+    "file": "menu-sheets/reaver.png"
+  },
+  {
+    "title": "rogue-duelist · menu-sheets",
+    "classId": "rogue",
+    "file": "menu-sheets/rogue-duelist.png"
+  },
+  {
+    "title": "rogue-nightveil · menu-sheets",
+    "classId": "rogue",
+    "file": "menu-sheets/rogue-nightveil.png"
+  },
+  {
+    "title": "rogue-shadow · menu-sheets",
+    "classId": "rogue",
+    "file": "menu-sheets/rogue-shadow.png"
+  },
+  {
+    "title": "rogue · menu-sheets",
+    "classId": "rogue",
+    "file": "menu-sheets/rogue.png"
+  },
+  {
+    "title": "starseer-astral · menu-sheets",
+    "classId": "starseer",
+    "file": "menu-sheets/starseer-astral.png"
+  },
+  {
+    "title": "starseer-eclipse · menu-sheets",
+    "classId": "starseer",
+    "file": "menu-sheets/starseer-eclipse.png"
+  },
+  {
+    "title": "starseer-starlit · menu-sheets",
+    "classId": "starseer",
+    "file": "menu-sheets/starseer-starlit.png"
+  },
+  {
+    "title": "starseer · menu-sheets",
+    "classId": "starseer",
+    "file": "menu-sheets/starseer.png"
+  },
+  {
+    "title": "Reaver right-facing guard and recoil corrections",
+    "file": "combat-sheets/reaver-facing-corrections.png",
+    "classId": "reaver"
+  },
+  {
+    "title": "Duelist right-facing combat corrections",
+    "file": "combat-sheets/rogue-duelist-facing-corrections.png",
+    "classId": "rogue"
+  }
+]

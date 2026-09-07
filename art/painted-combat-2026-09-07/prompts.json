@@ -1,0 +1,130 @@
+{
+  "generator": "Built-in image_gen",
+  "layout": {
+    "columns": 4,
+    "rows": 3
+  },
+  "common": "Painted faceted dark fantasy GAME SPRITE ANIMATION asset, not a poster. Generate one cohesive high-resolution 4 COLUMN by 3 ROW sheet of EXACTLY TWELVE equal cells, reading order left to right top to bottom. Entire sheet made in one pass for identity consistency. Use supplied references for costume and brushwork. Same ONE character in every cell. Locked orthographic three-quarter camera, faces SCREEN RIGHT in every frame; no camera rotation, mirroring, scene or perspective shifts. Same exact head/body proportions, helmet or hood geometry, weapon dimensions, hands, costume layers, palette, lighting, and pixel scale throughout. Shared ground line and stable scale; dynamic grounded lunges, torso bends and weight shifts are allowed and REQUIRED when present in approved pose reference. Preserve head size as body lowers, never shrink crouches. Weapons point toward screen-right targets. NEVER independently zoom a pose to fill its cell. Each full figure incl weapons, hat, halo, cloak stays comfortably inside cell with 15 percent empty margin on all sides. Genuine transparent background, no checkerboard drawing, no floor shadows, no labels, no borders, no scenery, no separate flying effects.\nCell 1 ready combat idle; cell 2 same idle with slight breathing; cell 3 defensive guard; cell 4 same guard bracing; cell 5 attack anticipation; cells 6,7,8 sequential early swing/cast, extension, contact; cell 9 follow-through; cell 10 recover toward the EXACT cell1 stance; cell11 small backwards hit flinch still facing right; cell12 regaining ready stance. Cells5-10 must depict SIX chronological stages of the SAME single coherent action, with anatomically continuous arms and believable weapon path. Retain character identity even in flinch; no jumping or spins. More angular PAINTED material facets like reference, not polygon outlines or generic 3D.",
+  "jobs": [
+    {
+      "id": "rogue",
+      "name": "Rogue · Base",
+      "ref": "D:/repos/AshenSpire/docs/art-evidence/2026-09-04/pose-sheets/rogue.png",
+      "look": "Base Rogue, dark olive-black hooded leather, short ragged cloak, bronze fastenings, two short steel daggers. Use the reference's character identity.",
+      "move": "Use APPROVED ROGUE POSES from second reference: upright daggers-down rest, compact dagger guard, dynamic crouched rightward lunge, extended forward slash, strong sweeping diagonal double-dagger strike, low follow-through, backward hit recoil. Keep their energetic silhouettes, add coherent transitions; do not replace them with stationary arm gestures. Twin Fang: compact crossing dagger cut. Right blade cuts diagonally down-right, left blade follows up-right; both return to chest guard.",
+      "poseRef": "C:/Users/suprbludude/.codex/generated_images/01a07c87-be91-79b2-b4ef-79b1e77165a8/exec-a8f46c28-159b-4226-99d0-83c6f2524111.png"
+    },
+    {
+      "id": "rogue-nightveil",
+      "name": "Nightveil Coat",
+      "ref": "C:/Users/suprbludude/Downloads/exec-09b6f4b1-5be1-400d-a418-ad6dfcbc280f.png",
+      "look": "ONLY LEFT teal Nightveil rogue, dark teal layered long coat, hood, black leather shoulder scales, bronze buckles, two identical short steel daggers.",
+      "move": "Use APPROVED ROGUE POSES from second reference: upright daggers-down rest, compact dagger guard, dynamic crouched rightward lunge, extended forward slash, strong sweeping diagonal double-dagger strike, low follow-through, backward hit recoil. Keep their energetic silhouettes, add coherent transitions; do not replace them with stationary arm gestures. Veil Cut: controlled single right-hand horizontal slash, left dagger guards chest, coat follows the turn, recover smoothly.",
+      "poseRef": "C:/Users/suprbludude/.codex/generated_images/01a07c87-be91-79b2-b4ef-79b1e77165a8/exec-a8f46c28-159b-4226-99d0-83c6f2524111.png"
+    },
+    {
+      "id": "rogue-duelist",
+      "name": "Duelist Jerkin",
+      "ref": "C:/Users/suprbludude/Downloads/exec-09b6f4b1-5be1-400d-a418-ad6dfcbc280f.png",
+      "look": "ONLY CENTER slate blue Duelist rogue, fitted slate leather jerkin, short split coat tails, hood, two identical short steel daggers.",
+      "move": "Use APPROVED ROGUE POSES from second reference: upright daggers-down rest, compact dagger guard, dynamic crouched rightward lunge, extended forward slash, strong sweeping diagonal double-dagger strike, low follow-through, backward hit recoil. Keep their energetic silhouettes, add coherent transitions; do not replace them with stationary arm gestures. Needle Riposte: left dagger parries inward then right dagger makes a precise forward thrust and retracts, planted feet.",
+      "poseRef": "C:/Users/suprbludude/.codex/generated_images/01a07c87-be91-79b2-b4ef-79b1e77165a8/exec-a8f46c28-159b-4226-99d0-83c6f2524111.png"
+    },
+    {
+      "id": "rogue-shadow",
+      "name": "Shadow Mantle",
+      "ref": "C:/Users/suprbludude/Downloads/exec-09b6f4b1-5be1-400d-a418-ad6dfcbc280f.png",
+      "look": "ONLY RIGHT violet-black Shadow rogue, featherlike pointed mantle, void hood, two short violet steel daggers.",
+      "move": "Use APPROVED ROGUE POSES from second reference: upright daggers-down rest, compact dagger guard, dynamic crouched rightward lunge, extended forward slash, strong sweeping diagonal double-dagger strike, low follow-through, backward hit recoil. Keep their energetic silhouettes, add coherent transitions; do not replace them with stationary arm gestures. Shade Reap: low crouched right blade rising slash followed by left blade horizontal return, no spin or change of facing.",
+      "poseRef": "C:/Users/suprbludude/.codex/generated_images/01a07c87-be91-79b2-b4ef-79b1e77165a8/exec-a8f46c28-159b-4226-99d0-83c6f2524111.png"
+    },
+    {
+      "id": "reaver",
+      "name": "Reaver · Base",
+      "ref": "D:/repos/AshenSpire/docs/art-evidence/2026-09-04/pose-sheets/reaver.png",
+      "look": "Base Reaver enclosed steel helmet, broad black steel plate with muted brass trim, burgundy cape, one two-handed steel greatsword.",
+      "move": "Use APPROVED REAVER POSES from second reference: upright sword-point-down ceremonial rest, guarded two-handed sword lift, grounded low advancing attack, strong overhead two-handed windup, forward thrust, heavy downward cleave with knees bent and cape trailing, recoil. Add coherent transitions around these exact energetic silhouettes. Iron Cleave: sword rises from chest guard above right shoulder then delivers one forceful diagonal descending cut, controlled recovery.",
+      "poseRef": "C:/Users/suprbludude/.codex/generated_images/01a07c87-be91-79b2-b4ef-79b1e77165a8/exec-5def832c-9991-4624-ad07-03857f46b71a.png"
+    },
+    {
+      "id": "reaver-vigil",
+      "name": "Ashen Vigil",
+      "ref": "C:/Users/suprbludude/Downloads/exec-88bf8d42-b16b-4251-a41f-fa88f5d8e222.png",
+      "look": "ONLY LEFT Ashen Vigil knight, blackened layered plate, ragged black cape, enclosed helmet, greatsword.",
+      "move": "Use APPROVED REAVER POSES from second reference: upright sword-point-down ceremonial rest, guarded two-handed sword lift, grounded low advancing attack, strong overhead two-handed windup, forward thrust, heavy downward cleave with knees bent and cape trailing, recoil. Add coherent transitions around these exact energetic silhouettes. Ash Sweep: low greatsword backswing then horizontal waist-high sweep toward screen right and slow measured return.",
+      "poseRef": "C:/Users/suprbludude/.codex/generated_images/01a07c87-be91-79b2-b4ef-79b1e77165a8/exec-5def832c-9991-4624-ad07-03857f46b71a.png"
+    },
+    {
+      "id": "reaver-oathsworn",
+      "name": "Gilded Oathsworn",
+      "ref": "C:/Users/suprbludude/Downloads/exec-88bf8d42-b16b-4251-a41f-fa88f5d8e222.png",
+      "look": "ONLY CENTER Gilded Oathsworn knight, gold plate and gold enclosed helmet, burgundy cape, steel greatsword with gold hilt.",
+      "move": "Use APPROVED REAVER POSES from second reference: upright sword-point-down ceremonial rest, guarded two-handed sword lift, grounded low advancing attack, strong overhead two-handed windup, forward thrust, heavy downward cleave with knees bent and cape trailing, recoil. Add coherent transitions around these exact energetic silhouettes. Oathfall: deliberate high two-handed overhead windup then straight downward execution cut in front of body, recover to high guard.",
+      "poseRef": "C:/Users/suprbludude/.codex/generated_images/01a07c87-be91-79b2-b4ef-79b1e77165a8/exec-5def832c-9991-4624-ad07-03857f46b71a.png"
+    },
+    {
+      "id": "reaver-warden",
+      "name": "Warden Mail",
+      "ref": "C:/Users/suprbludude/Downloads/exec-88bf8d42-b16b-4251-a41f-fa88f5d8e222.png",
+      "look": "ONLY RIGHT Warden knight, blue steel plate over visible chainmail, navy cape, enclosed helmet, steel greatsword.",
+      "move": "Use APPROVED REAVER POSES from second reference: upright sword-point-down ceremonial rest, guarded two-handed sword lift, grounded low advancing attack, strong overhead two-handed windup, forward thrust, heavy downward cleave with knees bent and cape trailing, recoil. Add coherent transitions around these exact energetic silhouettes. Gatebreaker: compact guarded parry then two-handed greatsword forward thrust toward screen right, retract along same line.",
+      "poseRef": "C:/Users/suprbludude/.codex/generated_images/01a07c87-be91-79b2-b4ef-79b1e77165a8/exec-5def832c-9991-4624-ad07-03857f46b71a.png"
+    },
+    {
+      "id": "starseer",
+      "name": "Starseer · Base",
+      "ref": "D:/repos/AshenSpire/docs/art-evidence/2026-09-04/pose-sheets/starseer.png",
+      "look": "Base Starseer, black plum layered pointed robes and crooked wide-brim hat, void face, small brass star brooch, one bronze star-tipped staff.",
+      "move": "Star Lance: staff draws back diagonally then extends toward screen right, small violet point of light at tip, retract to upright idle."
+    },
+    {
+      "id": "starseer-eclipse",
+      "name": "Eclipse Habit",
+      "ref": "C:/Users/suprbludude/Downloads/exec-c391eced-03a6-40b8-b36c-e1cae3f74507.png",
+      "look": "ONLY LEFT Eclipse mage, dark violet black pointed robes, crescent brooch, crooked wide-brim hat, star staff, void face.",
+      "move": "Crescent Draw: staff traces compact crescent from waist to shoulder then releases forward with small violet tip glow, smooth recovery."
+    },
+    {
+      "id": "starseer-starlit",
+      "name": "Starlit Silks",
+      "ref": "C:/Users/suprbludude/Downloads/exec-c391eced-03a6-40b8-b36c-e1cae3f74507.png",
+      "look": "ONLY CENTER Starlit mage, blue silver pointed silks with fine gold constellations, crooked hat, star staff, void face.",
+      "move": "Constellation Needle: upright staff lowers to chest level, careful aiming gesture, narrow precise forward staff pulse with pale blue tip glow, retract."
+    },
+    {
+      "id": "starseer-astral",
+      "name": "Astral Vestment",
+      "ref": "C:/Users/suprbludude/Downloads/exec-c391eced-03a6-40b8-b36c-e1cae3f74507.png",
+      "look": "ONLY RIGHT Astral mage, rich plum magenta robe layers and gold celestial embroidery, crooked hat, star staff, void face.",
+      "move": "Astral Arc: raise staff in short overhead arc, lower forward to release a small magenta tip flare, recover upright. Feet remain grounded."
+    },
+    {
+      "id": "herald",
+      "name": "Herald · Base",
+      "ref": "D:/repos/AshenSpire/docs/art-evidence/2026-09-04/pose-sheets/herald.png",
+      "look": "Base Herald, ochre brown faceted robes, void hood, circular brass halo fixed behind head, long prayer beads, empty hands.",
+      "move": "Benediction: open right palm draws inward to heart then presses forward toward screen right with a small warm gold palm glow, return."
+    },
+    {
+      "id": "herald-ossuary",
+      "name": "Ossuary Weave",
+      "ref": "C:/Users/suprbludude/Downloads/exec-9cc9e2a9-9310-4669-b168-6c25eca848fd.png",
+      "look": "ONLY LEFT Ossuary cleric, charcoal bone trimmed robes, bone charms and prayer beads, void hood and brass halo.",
+      "move": "Grave Seal: both empty hands gather near sternum then right palm stamps downward-forward, small ivory palm glow, slowly reopen guard."
+    },
+    {
+      "id": "herald-emberhabit",
+      "name": "Emberlight Habit",
+      "ref": "C:/Users/suprbludude/Downloads/exec-9cc9e2a9-9310-4669-b168-6c25eca848fd.png",
+      "look": "ONLY CENTER Emberlight cleric, burnt orange copper robes, ember lanterns and prayer beads, void hood, copper halo.",
+      "move": "Ember Offering: both palms cup a small ember at waist, right hand unfolds in ascending forward release with tiny orange glow, return."
+    },
+    {
+      "id": "herald-pilgrim",
+      "name": "Pilgrim Wrap",
+      "ref": "C:/Users/suprbludude/Downloads/exec-9cc9e2a9-9310-4669-b168-6c25eca848fd.png",
+      "look": "ONLY RIGHT Pilgrim cleric, olive weathered robes and wraps, rope belt, brass charms and prayer beads, void hood and brass halo.",
+      "move": "Wayfarer Ward: left palm holds defensive guard, right hand makes a compact circular blessing then extends outward, muted warm glow, return."
+    }
+  ]
+}

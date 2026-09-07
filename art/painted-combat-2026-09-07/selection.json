@@ -1,0 +1,38 @@
+{
+  "reaver": {
+    "mirror": [
+      "attack1"
+    ],
+    "note": "Overhead source pose was oriented left; mirrored for right-facing combat."
+  },
+  "reaver-oathsworn": {
+    "mirror": [
+      "attack1"
+    ],
+    "note": "Overhead source pose was oriented left; mirrored for right-facing combat."
+  },
+  "starseer": {
+    "mapping": {
+      "idle": "guard"
+    },
+    "note": "Frontal standing artwork stays in menu. Combat holds the right-facing guarded pose."
+  },
+  "starseer-eclipse": {
+    "mapping": {
+      "idle": "guard"
+    },
+    "note": "Frontal standing artwork stays in menu. Combat holds the right-facing guarded pose."
+  },
+  "starseer-starlit": {
+    "mapping": {
+      "idle": "guard"
+    },
+    "note": "Frontal standing artwork stays in menu. Combat holds the right-facing guarded pose."
+  },
+  "starseer-astral": {
+    "mapping": {
+      "idle": "guard"
+    },
+    "note": "Frontal standing artwork stays in menu. Combat holds the right-facing guarded pose."
+  }
+}
