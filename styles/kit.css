@@ -2400,3 +2400,22 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   width: min(78cqw, calc(82cqh * 150 / 190), 22rem);
   height: auto; aspect-ratio: 150 / 190; max-width: none; max-height: none;
 }
+
+/* Pile readers use physical-size floors, independent of the scaled game canvas. */
+.pile-body .as-cardgrid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(150px / var(--ui-zoom, 1))), 1fr));
+  gap: calc(18px / var(--ui-zoom, 1)); padding: calc(8px / var(--ui-zoom, 1)); justify-items: center;
+}
+.pile-body .card {
+  --card-w: calc(220px / var(--ui-zoom, 1));
+  width: 100%; max-width: var(--card-w); height: auto; aspect-ratio: 5 / 7;
+  --card-name-h: calc(32px / var(--ui-zoom, 1)); --card-art-h: calc(52px / var(--ui-zoom, 1));
+  --card-band-h: calc(20px / var(--ui-zoom, 1)); --card-gap: calc(5px / var(--ui-zoom, 1)); --card-pad: calc(8px / var(--ui-zoom, 1));
+  margin: 0; transform: none;
+}
+.pile-body .card :is(.cname, .ctext) { font-size: calc(15px / var(--ui-zoom, 1)); line-height: 1.35; }
+.pile-body .card .art { overflow: hidden; }
+.pile-body .card .art img { width: 100%; height: 100%; object-fit: contain; }
+.pile-body .card .ctag { font-size: calc(10px / var(--ui-zoom, 1)); }
+.pile-body .card .cost { font-size: calc(14px / var(--ui-zoom, 1)); width: calc(24px / var(--ui-zoom, 1)); height: calc(24px / var(--ui-zoom, 1)); }
+.modal:has(.pile-body) .modal-tab { font-size: calc(15px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); }

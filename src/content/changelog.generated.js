@@ -37,8 +37,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Cards and figures keep their proportions",
-    "detail": "Combat cards retain a 5:7 profile across screen widths, character preview cards keep a 3:4 silhouette, and Armoury sprites fit both available dimensions without stretching. Card artwork stays contained and the fan reserves clearance for larger text.",
-    "build": "0.5.5.86",
+    "detail": "Combat cards retain a 5:7 profile across screen widths, character preview cards keep a 3:4 silhouette, and Armoury sprites fit both available dimensions without stretching. Card artwork stays contained and the fan reserves clearance for larger text. Pile viewers use larger cards with readable text and spaced rows on phones; combatant scaling is bounded by available space rather than an extra zoom cap.",
+    "build": "0.5.5.87",
     "pullRequest": 741,
     "url": "https://github.com/cehinds/AshenSpire/pull/741"
   },
