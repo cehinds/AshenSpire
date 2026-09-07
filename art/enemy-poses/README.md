@@ -14,4 +14,8 @@ The combat renderer preloads the attack frame and displays it during the existin
 
 The initial Wandering Soldier source contains a checkerboard, removed by the repository's existing extraction process. An image_gen background-removal retry was rejected because it returned scenery. No rejected art is used by the game. Original high-resolution source edges are retained in the source sheets; the export pipeline adds transparent frame padding.
 
-Repository build and check logs are stored beside this file. No publishing, branch push, issue creation, or pull-request creation has been performed.
+Repository build and check logs are stored beside this file. The initial package was merged into dev in PR #753 and promoted to test in PR #747.
+
+## Live combat follow-up
+
+`game-check.cjs` exercises a real enemy turn in the memory-only `?shot=combat` route, with a deterministic due Marrow Organist spell attack. It checks spell and melee attack visibility, idle restoration, image loading, and embedded standalone assets on desktop and phone. Results are in `game-checks.json`. Damage-driven enemy pose selection is independent of the action's motion family, so a spell keeps its casting motion while displaying its attack drawing. Buffs and defensive moves do not receive this additional attack state.

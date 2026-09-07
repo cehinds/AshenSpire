@@ -187,7 +187,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // The painted Reaver sequence remains the specialized attack renderer.
       // Other actors use existing CSS and only sprite poses they actually ship.
       if (beat.actorId !== 'player' || beat.kind !== 'attack' || run.class !== 'reaver') {
-        return playFamilyAnimation(actorEl, stage, plan, speed);
+        return playFamilyAnimation(actorEl, stage, plan, speed, beat.actorId !== 'player' && beat.kind === 'attack');
       }
       const figure = figureSpec(registries, run.loadout, run.class);
       const eligible = isReaverAttackEligible({
@@ -201,7 +201,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   };
 
   let lastDodge = [...(combat.eventLog || [])].reverse().find((event) => event.type === 'dodgeRolled' && event.sourceId === combat.player.id) || null;
-  function playFamilyAnimation(actorEl, stage, plan, speed) {
+  function playFamilyAnimation(actorEl, stage, plan, speed, enemyAttack = false) {
     const tempo = Number.isFinite(plan.tempo) ? Math.min(2, Math.max(0.25, plan.tempo)) : 1;
     const reach = Number.isFinite(plan.reach) ? Math.min(2, Math.max(0.25, plan.reach)) : 1;
     const direction = actorEl.closest('.enemy') ? -1 : 1;
@@ -221,10 +221,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       void actorEl.offsetWidth;
       for (const [name, value] of Object.entries(overrides)) actorEl.style.setProperty(name, value);
       actorEl.classList.add(actionClass);
+      // A damaging spell still needs its enemy attack drawing; its motion
+      // family remains a cast rather than being changed into a melee lunge.
+      if (enemyAttack) actorEl.classList.add('enemy-attack-pose');
       if (plan.pose) stage?.play(plan.pose, totalMs);
     }
     return { totalMs, impactMs: Math.round(totalMs * 0.55), cancel: () => {
       actorEl.classList.remove(actionClass);
+      if (enemyAttack) actorEl.classList.remove('enemy-attack-pose');
       for (const [name, value, priority] of original) {
         if (value) actorEl.style.setProperty(name, value, priority);
         else actorEl.style.removeProperty(name);
