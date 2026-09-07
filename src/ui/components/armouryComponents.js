@@ -43,10 +43,8 @@ export function renderArmouryPanel(model, wrap) {
       <div class="armoury-subject armoury-content">
         <div class="armoury-body">
           <div class="armoury-left"></div>
-          <div class="armoury-hybrid-splitter as-splitter" data-component="armoury.hybridPaneSplitter" role="separator" aria-label="Resize Character and Armaments panes" aria-orientation="vertical" tabindex="0"></div>
           <div class="armoury-right"></div>
         </div>
-        <div class="armoury-pane-splitter as-splitter" data-component="armoury.paneSplitter" role="separator" aria-label="Resize Armaments and Inventory panes" aria-orientation="vertical" tabindex="0"></div>
         <section class="armoury-inventory"></section>
       </div>
       <div class="armoury-trays">
@@ -94,8 +92,6 @@ export function renderArmouryPanel(model, wrap) {
     inventory: wrap.querySelector('.armoury-inventory'),
     strip: wrap.querySelector('.armoury-strip'),
     statsTray: wrap.querySelector('.armoury-stats-tray'),
-    paneSplitter: wrap.querySelector('.armoury-pane-splitter'),
-    hybridSplitter: wrap.querySelector('.armoury-hybrid-splitter'),
     trays: wrap.querySelector('.armoury-trays'),
     close: wrap.querySelector('.armoury-close'),
     viewButtons: [...wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')],
