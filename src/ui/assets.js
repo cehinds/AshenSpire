@@ -431,11 +431,65 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
   return el;
 }
 
+// Equipment art has one authored frame per outfit rather than six pose renders.
+// Give it the same animation contract as a pose stage so an alternative outfit
+// does not turn the fighter back into the default armour whenever combat moves.
+// The transforms deliberately move the complete layered figure: body and held
+// items remain registered, while the silhouette still reads as guard, swing,
+// recoil, and idle at combat scale.
+function animatedEquippedFigure(classId, equip) {
+  const host = document.createElement('div');
+  host.className = 'class-sprite animated equipped-sprite';
+  host.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
+  host.dataset.pose = 'idle';
+
+  const facing = document.createElement('div');
+  facing.className = 'facing';
+  facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;';
+  facing.appendChild(equippedFigure({ classId, ...equip }));
+  host.appendChild(facing);
+
+  const attacks = ['attack1', 'attack2', 'attack3'];
+  let attack = 0;
+  let timer = null;
+  const settle = () => {
+    if (timer) clearTimeout(timer);
+    timer = null;
+    host.dataset.pose = 'idle';
+  };
+  const stage = Object.freeze({
+    el: host,
+    poses: ['idle', 'guard', ...attacks, 'hit'],
+    get pose() { return host.dataset.pose; },
+    setPose(pose) {
+      if (!this.poses.includes(pose)) return false;
+      host.dataset.pose = pose;
+      return true;
+    },
+    play(pose, ms = 260) {
+      if (document.body.classList.contains('reduced-motion')) return false;
+      if (pose === 'attack') {
+        pose = attacks[attack % attacks.length];
+        attack += 1;
+      }
+      if (!this.setPose(pose)) return false;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(settle, Math.max(60, ms));
+      return true;
+    },
+    settle,
+    warmed: [],
+  });
+  registerStage(host, stage);
+  return host;
+}
+
 /**
  * playerSprite(customization, classId, equip?) — the player's figure.
  *
- * With `equip` ({ armourId, rightId, leftId, rightMirror, leftMirror }) it composites the layered
- * equipment figure; without it, the single rendered class PNG as before.
+ * With `equip` ({ armourId, rightId, leftId, rightMirror, leftMirror }), the
+ * animated style uses the layered equipment figure for alternative armour;
+ * without it, the single rendered class PNG behaves as before.
  */
 // THE FIGURE YOU FIGHT AS IS THE FIGURE YOU PICKED. Until 2026-09-03 this took
 // a third argument — the equipment spec — and, whenever the player had gear and
@@ -447,14 +501,20 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
 // Rogue's combat body was the Reaver's rig repainted, so two classes fought as
 // the same shape. Owner's instruction: combat uses the class sprites.
 //
-// What this gives up, stated rather than hidden: the armour-set palette and the
-// held-weapon overlay no longer show on the fighter. equippedFigure() still
-// exists and the Armoury preview (screens/equipment.js) still calls it, so the
-// composite is not dead — it is just no longer the combat figure.
-export function playerSprite(customization = {}, classId) {
+// The rendered painting still does not repaint around equipment. The animated
+// style now has a deliberate exception: an alternative set uses its authored
+// equipment figure and the pose-compatible stage above, so choosing animation
+// no longer erases the armour choice in combat.
+export function playerSprite(customization = {}, classId, equip = null) {
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || 'rendered';
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
+    // Alternative armour is already authored in the equipment motif. Keep it
+    // visible through every combat beat instead of swapping to the class's
+    // default pose sheet. Default armour retains the richer jointed frames.
+    if (style === 'animated' && equip?.armourId && equip.armourId !== 'default') {
+      return animatedEquippedFigure(classId, equip);
+    }
     return classSprite(classId, tint, customization.glyph, customization.tint, style);
   }
   const el = document.createElement('div');
