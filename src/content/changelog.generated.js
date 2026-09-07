@@ -3,6 +3,86 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-703",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The changelog keeps itself honest",
+    "detail": "Nothing a player sees changes. #700's receipt is written up below, and the changelog inside the game was regenerated so it carries the same entries this file does. This is the second merge running that the repository asked for its own receipt instead of waiting for someone to read the merge log and notice.",
+    "build": "0.5.5.50",
+    "pullRequest": 703,
+    "url": "https://github.com/cehinds/AshenSpire/pull/703"
+  },
+  {
+    "id": "pr-700",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Animated is the figure you get, everywhere a figure is made",
+    "detail": "The animated pose sheets are now the default sprite style at every place a character is created rather than only at character creation: a co-op seat you add locally, a LAN lobby with no remembered choice, and the fallback any surface reaches when a saved profile carries no style. A save that recorded Rendered, Classic or Sigil still keeps it, and a class with no shipped frames still falls through to its painting, so the choice is never a blank figure.",
+    "build": "0.5.5.48",
+    "pullRequest": 700,
+    "url": "https://github.com/cehinds/AshenSpire/pull/700"
+  },
+  {
+    "id": "pr-701",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The receipts catch up, and the gate that asks for them did the asking",
+    "detail": "Nothing a player sees changes. #695 landed without an entry here, and for the first time nobody had to notice: the check added in #652 went red on the development branch the moment it merged, naming the pull request it wanted. Both receipts are written up and the changelog inside the game was regenerated from this file so it carries them too.",
+    "build": "0.5.5.49",
+    "pullRequest": 701,
+    "url": "https://github.com/cehinds/AshenSpire/pull/701"
+  },
+  {
+    "id": "pr-695",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The five stat rows in Assign Points line up again",
+    "detail": "On a phone, the Intelligence row in Assign Points stood a hair taller than the other four: its hint — the longest of the five — ran onto a second line in an overlay narrower than the column that hint was written for. The five now read as one block again, the long hint trailing off with an ellipsis the way the same rows already do in the Armoury. Character Creation is untouched and still shows the sentence in full, because there is room for it there. This also clears a check that had been failing on the development branch since it was written, and which two later changes inherited without anyone finding out why.",
+    "build": "0.5.5.48",
+    "pullRequest": 695,
+    "url": "https://github.com/cehinds/AshenSpire/pull/695"
+  },
+  {
+    "id": "pr-683",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Twelve enemies gain their painted Unity-fork sprites",
+    "detail": "Combat reuses the existing transparent artwork with consistent foot alignment and left-facing figures. Other enemies retain their current art, and a failed painted-image load falls back to the original sprite.",
+    "build": "0.5.5.47",
+    "pullRequest": 683,
+    "url": "https://github.com/cehinds/AshenSpire/pull/683"
+  },
+  {
+    "id": "pr-672",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Dodge explains its outcome",
+    "detail": "Dodge now resolves correctly in the standalone build after removing a circular engine import that interrupted the action after payment. A resolved Dodge now leaves a result button beside the player. Open it to inspect the roll, check, difficulty and base guard; Block modifiers still determine the applied amount. Failed rolls are visible, and the explanation survives skipped or reduced animations. Armoury card scrolling also respects the in-game Reduced motion setting.",
+    "build": "0.5.5.44",
+    "pullRequest": 672,
+    "url": "https://github.com/cehinds/AshenSpire/pull/672"
+  },
+  {
+    "id": "pr-676",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Traders buy and sell armaments and stock weapon arts",
+    "detail": "Inspect equipment before buying, sell unequipped items from storage, and buy Draw Cut or Sundering Hew for the existing mounting system. Equipped items explain their sale restriction. Cancelled or stale quotes spend nothing; upgrades, mount history and discoveries survive a sale and reacquisition.",
+    "build": "0.5.5.45",
+    "pullRequest": 676,
+    "url": "https://github.com/cehinds/AshenSpire/pull/676"
+  },
+  {
+    "id": "pr-679",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Combat groups potions, piles and weapon arts into shared menus",
+    "detail": "Potions stays at the far right, with quantities and explicit Use actions. Discard and Exhaust share an entry but retain separate tabs and counts. Arts shows equipped cards and selects only cards currently in hand. Map Quick Access controls use full-size targets so nearby controls no longer overlap.",
+    "build": "0.5.5.46",
+    "pullRequest": 679,
+    "url": "https://github.com/cehinds/AshenSpire/pull/679"
+  },
+  {
     "id": "pr-657",
     "date": "2026-09-05",
     "group": "2026-09-05",

@@ -1324,6 +1324,13 @@ function collectArmament(id, source) {
   // the depth behind that face — same array, its own answer.
   const stored = addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
   if (!stored) return false; // the bag refused: nothing entered storage, so nothing is found — meta stays clean
+  recordCollectedArmament(id, source);
+  return true;
+}
+
+// Called only after collection or a committed trader purchase stored the item.
+function recordCollectedArmament(id, source) {
+  if (!carriedIds(run.loadout).includes(id)) return;
   if ((registries.balance.equipment.drops || {}).permanentOnFind) {
     const meta = saves.loadMeta();
     if (!(meta.found || []).includes(id)) {
@@ -1881,6 +1888,7 @@ function showShop() {
     run,
     meta: saves.loadMeta(),
     onChanged: () => persist(),
+    onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
     onLeave: () => {
       run.shopStock = null;
       persist();

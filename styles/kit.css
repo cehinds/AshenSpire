@@ -1254,6 +1254,18 @@ details.as-detailcard[open] > summary { border-bottom: 1px solid var(--line); ma
 .as-glyph.caret { display: inline-block; transition: transform 140ms; }
 details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { .as-glyph.caret { transition: none; } }
+/* Armoury information folds share one non-shrinking, single-line header. */
+.armoury-character-stats > details.character-info-card { flex: 0 0 auto; width: 100%; min-width: 0; }
+details.character-info-card > summary > .character-info-head {
+  height: var(--tap-floor); min-height: var(--tap-floor); flex-wrap: nowrap;
+}
+details.character-info-card > summary > .character-info-head > .character-info-label {
+  flex: 0 1 auto; min-width: 0; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+details.character-info-card > summary > .character-info-head > .as-status {
+  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+details.character-info-card > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* ═══ STEPPER — a −/count/+ unit of two tap-floor buttons ═════════════════ */
 .as-stepper { display: inline-flex; align-items: center; gap: 0.75rem; flex: 0 0 auto; }
 .as-stepper > .as-btn { width: var(--tap-floor); min-width: var(--tap-floor); padding: 0; font-size: 1.8rem; line-height: 1; }
@@ -1322,6 +1334,24 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 .disc-faces > .disc-face .disc-value { white-space: nowrap; }
 .disc-faces > .disc-face .disc-summary { white-space: normal; }
 .disc-faces > .disc-face[data-reveal="open"] { border-color: var(--gold); }
+/* ASSIGN POINTS IS NARROWER THAN THE COLUMN THE RULE ABOVE WAS WRITTEN FOR.
+   `white-space: normal` lets a summary read in full where there is room, which
+   is right in Character Creation. Inside the Assign Points overlay there is not
+   room: Intelligence's hint — the longest of the five — wraps to a second line,
+   which takes its inner row from 29.41px to 43.44px and its card from the 44px
+   tap floor the other four sit exactly on to 45.44px. Five cards, four at 44
+   and one at 45.44, is no longer the one compact family this surface promises,
+   and tools/uniform-stat-foldouts.mjs has been red on dev for it since #647.
+   Measured in headless Chromium at 390x844.
+
+   The compact face row already ellipsises by default (`.disc-face > .as-row
+   .ls-hint`, above); this restores that default on the one surface too narrow
+   to honour the wrap, which is what `.armoury-character-stats` does for the
+   same content. Scoped to the overlay on purpose — Character Creation is wide
+   enough to wrap without overflowing, and keeps the full sentence. */
+.cc-stat-overlay .disc-faces > .disc-face .disc-summary {
+  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 /* A FULL-WIDTH FACE IS A LINE OF ITS OWN, AND THE `.disc-faces >` IS LOAD-BEARING.
    Without it this reads `.disc-face.disc-pick` — two classes — and loses on
    specificity to `.as-options.flow > .as-option { flex: 1 1 auto }` three rules
@@ -1436,7 +1466,7 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
    grid's last row, and the ash is the gate's ambience (the title's embers). */
 .startup-gate {
   position: relative; isolation: isolate;
-  display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center;
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center;
   gap: 1.2rem; padding: 2.4rem; min-height: 100%; overflow: hidden; cursor: pointer;
   background:
     linear-gradient(180deg, rgba(11, 9, 6, 0.34), rgba(9, 7, 5, 0.96)),
@@ -1449,7 +1479,11 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 .startup-gate.is-revealing { opacity: 0; pointer-events: none; }
 .reduced-motion .startup-gate { transition-duration: 140ms; transition-timing-function: linear; }
 .startup-gate > .as-titlemenu { position: relative; z-index: 1; align-self: center; animation: startupMarkIn 520ms ease-out both; }
-.startup-gate > .as-titlemenu .tm-name { text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38); }
+.startup-gate > .as-titlemenu .tm-name {
+  font-size: clamp(3.2rem, 12cqi, 5.4rem);
+  text-indent: 0;
+  text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38);
+}
 .startup-gate > .as-titlemenu .tm-sub { margin-top: 0.75rem; }
 .startup-gate > .as-titlemenu > .as-ornament { margin-top: 1.5rem; }
 .startup-gate > .as-titlemenu .tm-foot { margin-top: 3rem; color: var(--parchment); opacity: 0.82; white-space: normal; animation: startupPromptPulse 1.8s ease-in-out infinite alternate; }
@@ -1820,10 +1854,10 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .as-cluster.stack { flex-direction: column; align-items: stretch; }
 .as-cluster.end { margin-left: auto; }
 /* QUICK ACCESS stays a compact 2 × 2 square whose lower edge meets the SP row.
-   The visible faces and their gap share one local scale; the transparent
+   Quick Access reserves each full tap box so neighboring hit regions cannot overlap. The transparent
    ::after continues to carry the authored tap floor around each small face. */
 .shared-hud {
-  --hud-quick-tile-size: 1.8rem;
+  --hud-quick-tile-size: max(1.8rem, var(--tap-floor));
   --hud-quick-tile-gap: 0.45rem;
   --hud-belt-tile-face-size: 2.8rem;
 }
