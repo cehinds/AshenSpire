@@ -495,8 +495,28 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
 export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false }) {
-  const painted = paintedPresentation(classId, armourId, 'stand');
-  if (painted) return painted;
+  // NO PAINTED SHORT-CIRCUIT HERE, and the reason is the whole point of this
+  // function. A `return paintedPresentation(classId, armourId, 'stand')` sat on
+  // these two lines and returned a single standing frame, so the armament layers
+  // below were never built: the Armoury drew your figure without the weapon or
+  // shield you had equipped. `hand-side-probe` measured every one of the 25
+  // armaments in both hands landing at the identical centroid — 50 findings, all
+  // `drawn centre`, because there was no held piece on the figure to be drawn on
+  // a side at all.
+  //
+  // It was also unreachable in the case it was written for, and harmful in the
+  // case it did reach. The one call site left in the app, `figureFor` in
+  // screens/equipment.js, already chooses painted art itself and returns before
+  // calling here — but only when the player has NOT asked for `classic` or
+  // `glyph` and sprites are on. So the only calls that arrived here were the
+  // ones that had deliberately declined painted art, and this handed it back
+  // anyway, overriding the sprite style the player chose. It defeated
+  // `reacts === 'hands'` the same way, which sets `armourId` to `default`
+  // precisely so the held pieces show.
+  //
+  // Painted presentation belongs at the call site that wants it, next to the
+  // preference that decides it. This function composites equipment; that is the
+  // only thing anything asks it for.
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const el = document.createElement('div');
   el.className = 'equipped-figure';
