@@ -7,6 +7,7 @@
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { resolveCard } from '../../model/registries.js';
 import { openPileModal } from '../components/piles.js';
+import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { attachTooltip, ensureTooltip, hideTooltip, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { relicText } from '../components/card.js';
@@ -95,6 +96,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>
+        <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>
         <div class="enemy-row"></div>
       </div>
       <div class="hand-area">
@@ -167,6 +169,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     },
   };
 
+  let lastDodge = [...(combat.eventLog || [])].reverse().find((event) => event.type === 'dodgeRolled' && event.sourceId === combat.player.id) || null;
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
@@ -1032,6 +1035,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       trailing.push(chip);
     }
     trailing.push(statusRow(p));
+    if (lastDodge) {
+      const receipt = dodgeReceipt(lastDodge);
+      const outcome = button({ label: receipt.outcome, className: 'dodge-receipt', attrs: {
+        'data-focusable': 'true', 'aria-label': receipt.outcome + '. View last Dodge result',
+      } });
+      outcome.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openModal({ title: 'Last Dodge result', size: 'sm', opener: outcome, bodyClassName: 'as-pane', body: (host) => {
+          const text = document.createElement('p');
+          text.className = 'as-prose';
+          text.textContent = receipt.detail;
+          host.appendChild(text);
+        } });
+      });
+      trailing.push(outcome);
+    }
     const box = combatantFrame({
       role: 'player',
       entityId: 'player',
@@ -1661,6 +1680,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // it (and fires onEnd on victory/defeat). A render throw here once froze
     // the game permanently on the killing blow.
     try {
+      // Skipping or reducing motion must never erase the last result.
+      const rolled = [...events].reverse().find((event) => event.type === 'dodgeRolled' && event.sourceId === combat.player.id);
+      if (rolled) {
+        lastDodge = rolled;
+        $('.dodge-announcement').textContent = dodgeReceipt(rolled).detail;
+      }
       recentArcaneEvents = events.filter((event) => (
         event.type === 'arcaneExposureChanged' || event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak'
       ));
