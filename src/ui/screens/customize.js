@@ -71,7 +71,7 @@ export function mountCustomize(app, {
     name: 'Forsaken',
     glyph: PORTRAIT_GLYPHS[0],
     tint: PORTRAIT_TINTS[0].id,
-    spriteStyle: 'rendered',
+    spriteStyle: 'animated',
     keepsakeId: registries.characterCreation.keepsakes[0].id,
     startingKitId: null,
     startingHands: { leftHand: null, rightHand: null },

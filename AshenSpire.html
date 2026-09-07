@@ -52809,7 +52809,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '03e96c7195';
+const SOURCE = '5bda6c3b38';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -52843,7 +52843,7 @@ const SOURCE = '03e96c7195';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '13';
+const ORDINAL = '14';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58719,7 +58719,7 @@ function mountCustomize(app, {
     name: 'Forsaken',
     glyph: PORTRAIT_GLYPHS[0],
     tint: PORTRAIT_TINTS[0].id,
-    spriteStyle: 'rendered',
+    spriteStyle: 'animated',
     keepsakeId: registries.characterCreation.keepsakes[0].id,
     startingKitId: null,
     startingHands: { leftHand: null, rightHand: null },
@@ -59821,11 +59821,10 @@ function classSprite(classId, tint, sigil, tintId, style) {
   };
 
   // 'animated': the figure that changes pose when it swings, from the shipped
-  // pose frames. It is a separate style rather than the default because the
-  // 'rendered' figure is a painting and these frames are modelled — mixing the
-  // two inside one animation would swap art styles mid-swing. A class with no
-  // shipped frames falls through to the painting, so the choice is never a
-  // blank figure.
+  // pose frames. The rendered figure is a painting and these frames are
+  // modelled, so mixing the two inside one animation would swap art styles
+  // mid-swing. A class with no shipped frames falls through to the painting,
+  // so the choice is never a blank figure.
   if (style === 'animated' && hasPoses(classId, tintId)) {
     const stage = createPoseStage(classId, tintId);
     if (stage) {
@@ -59950,7 +59949,7 @@ function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = fals
 // composite is not dead — it is just no longer the combat figure.
 function playerSprite(customization = {}, classId) {
   const tint = tintCss(customization.tint);
-  const style = customization.spriteStyle || 'rendered';
+  const style = customization.spriteStyle || 'animated';
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
     return classSprite(classId, tint, customization.glyph, customization.tint, style);
   }
@@ -71474,7 +71473,7 @@ function preloadReaverAttackFrames() {
 }
 
 function isReaverAttackEligible({ classId, figure, customization, spritesEnabled }) {
-  const style = (customization && customization.spriteStyle) || 'rendered';
+  const style = (customization && customization.spriteStyle) || 'animated';
   return spritesEnabled === true
     && classId === 'reaver'
     && style === 'rendered'
@@ -76954,7 +76953,7 @@ function mountLobby(app, { registries, meta = {}, defaultSeedString, onBack, onS
     startingKitId: null,
     discoveredArmaments: [...new Set(meta.discoveredArmaments || [])],
     tint: localStorage.getItem(TINT_KEY) || 'gold',
-    spriteStyle: localStorage.getItem('sote_lan_style') || 'rendered',
+    spriteStyle: localStorage.getItem('sote_lan_style') || 'animated',
     ready: false,
     seedString: defaultSeedString,
     players: [],
@@ -77275,7 +77274,7 @@ function mountLobby(app, { registries, meta = {}, defaultSeedString, onBack, onS
       if (state.players.length >= 4 || state.locals.length >= 3) return;
       const n = state.locals.length + 2;
       const classId = classList[(n - 1) % classList.length].id;
-      state.locals.push({ name: `Player ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: 'rendered' });
+      state.locals.push({ name: `Player ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: 'animated' });
       renderLocals(); sendLocals();
     });
     leaveBtn.addEventListener('click', () => back());

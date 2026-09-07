@@ -60,7 +60,7 @@ export function preloadReaverAttackFrames() {
 }
 
 export function isReaverAttackEligible({ classId, figure, customization, spritesEnabled }) {
-  const style = (customization && customization.spriteStyle) || 'rendered';
+  const style = (customization && customization.spriteStyle) || 'animated';
   return spritesEnabled === true
     && classId === 'reaver'
     && style === 'rendered'

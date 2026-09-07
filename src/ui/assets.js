@@ -324,11 +324,10 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   };
 
   // 'animated': the figure that changes pose when it swings, from the shipped
-  // pose frames. It is a separate style rather than the default because the
-  // 'rendered' figure is a painting and these frames are modelled — mixing the
-  // two inside one animation would swap art styles mid-swing. A class with no
-  // shipped frames falls through to the painting, so the choice is never a
-  // blank figure.
+  // pose frames. The rendered figure is a painting and these frames are
+  // modelled, so mixing the two inside one animation would swap art styles
+  // mid-swing. A class with no shipped frames falls through to the painting,
+  // so the choice is never a blank figure.
   if (style === 'animated' && hasPoses(classId, tintId)) {
     const stage = createPoseStage(classId, tintId);
     if (stage) {
@@ -453,7 +452,7 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
 // composite is not dead — it is just no longer the combat figure.
 export function playerSprite(customization = {}, classId) {
   const tint = tintCss(customization.tint);
-  const style = customization.spriteStyle || 'rendered';
+  const style = customization.spriteStyle || 'animated';
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
     return classSprite(classId, tint, customization.glyph, customization.tint, style);
   }

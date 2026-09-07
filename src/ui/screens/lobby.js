@@ -46,7 +46,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
     startingKitId: null,
     discoveredArmaments: [...new Set(meta.discoveredArmaments || [])],
     tint: localStorage.getItem(TINT_KEY) || 'gold',
-    spriteStyle: localStorage.getItem('sote_lan_style') || 'rendered',
+    spriteStyle: localStorage.getItem('sote_lan_style') || 'animated',
     ready: false,
     seedString: defaultSeedString,
     players: [],
@@ -367,7 +367,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       if (state.players.length >= 4 || state.locals.length >= 3) return;
       const n = state.locals.length + 2;
       const classId = classList[(n - 1) % classList.length].id;
-      state.locals.push({ name: `Player ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: 'rendered' });
+      state.locals.push({ name: `Player ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: 'animated' });
       renderLocals(); sendLocals();
     });
     leaveBtn.addEventListener('click', () => back());
