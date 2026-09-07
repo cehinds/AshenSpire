@@ -192,7 +192,17 @@
 /* The row's tallest cell and the deepest fanned card need a real separation
    band. These measured reservations keep that band intact in the portrait
    884x1326 matrix and in the compressed short-wide composition below. */
-.combat { --action-row-drop: 6.4rem; }
+/* 6.4rem -> 7.2rem (#679). That PR grew the row from four cells to six AND gave
+   every cell a 44px tap floor, so the tallest cell got taller — but this token,
+   which the comment above calls a MEASURED reservation for exactly that cell
+   plus the deepest fanned card, was not re-measured with it. The band went
+   ~4.3px short and the hand's lowest cards came to rest ON the Draw and End Turn
+   buttons at 1200x730, every text size (hintstrip H1). The overlap is near
+   constant in px across text sizes, which is the signature of the absolute
+   44px floor rather than anything that scales with text.
+   Re-measured here rather than reverting the row: six cells and a 44px tap
+   target are both deliberate, so the reservation follows the row. */
+.combat { --action-row-drop: 7.2rem; }
 .hand-area {
   height: 23rem; flex-shrink: 0; position: relative;
   display: flex; align-items: flex-end; justify-content: center;
