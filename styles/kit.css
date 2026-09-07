@@ -1874,7 +1874,8 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
    them straddling the gap between the ⚒ ☰ row and the flasks below, aligned to
    neither. Cross-axis only: the row's height is the cluster's either way, so
    this moves no other row and the map and combat HUDs stay the same height. */
-.hud-resource-row > .hud-vitals-panel { align-self: flex-start; }
+.hud-resource-row { align-items: flex-end; }
+.hud-resource-row > .hud-vitals-panel { align-self: flex-end; }
 .as-band-row > .grow { flex: 1 1 auto; min-width: 0; }
 .as-band-row.split { justify-content: space-between; }
 .as-band-row.end { justify-content: flex-end; }

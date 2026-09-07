@@ -884,7 +884,7 @@
 :root .combat:not(.coop) > .hand-area {
  height: auto; margin-bottom: 0; display: grid;
  grid-template-areas: "hand" "actions"; grid-template-columns: minmax(0, 1fr);
- gap: clamp(32px, 6vh, 64px); padding: 0 12px max(12px, var(--safe-bottom-local));
+ gap: clamp(28px, 4vh, 48px); padding: 0 12px max(24px, var(--safe-bottom-local));
 }
 :root .combat:not(.coop) .hand-overlay { width: 100%; height: auto; grid-area: hand; }
 :root .combat:not(.coop) .hand {
@@ -920,3 +920,11 @@
   :root .combat:not(.coop) .hand { padding-inline: 16px; }
   :root .combat:not(.coop) .hand .card { --card-w: calc(146.5px / var(--ui-zoom, 1)); }
 }
+
+/* Give the enemy group the right edge; stage fitting reserves each fighter's cell. */
+:root .combat:not(.coop) .field { padding-inline: 12px; gap: 12px; }
+:root .combat:not(.coop) .player-zone { width: 28%; flex: 0 0 28%; }
+:root .combat:not(.coop) .enemy-row { justify-content: flex-end; min-width: 0; gap: 16px; }
+:root .combat:not(.coop) .enemy-row > .combatant { flex: 0 1 42%; min-width: 0; }
+:root .combat:not(.coop) .combatant-card { width: max-content; }
+:root .combat:not(.coop) .combatant .sprite { flex: 0 0 auto; min-width: max-content; overflow: visible; }
