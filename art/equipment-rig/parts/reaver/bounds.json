@@ -1,0 +1,74 @@
+{
+  "head": {
+    "left": 104,
+    "top": 99,
+    "width": 205,
+    "height": 250
+  },
+  "torso": {
+    "left": 451,
+    "top": 100,
+    "width": 197,
+    "height": 250
+  },
+  "hip": {
+    "left": 754,
+    "top": 50,
+    "width": 274,
+    "height": 312
+  },
+  "cloak": {
+    "left": 1076,
+    "top": 40,
+    "width": 255,
+    "height": 322
+  },
+  "nearUpper": {
+    "left": 164,
+    "top": 426,
+    "width": 128,
+    "height": 244
+  },
+  "nearFore": {
+    "left": 490,
+    "top": 457,
+    "width": 101,
+    "height": 194
+  },
+  "nearClosed": {
+    "left": 754,
+    "top": 362,
+    "width": 191,
+    "height": 286
+  },
+  "nearOpen": {
+    "left": 1098,
+    "top": 362,
+    "width": 202,
+    "height": 313
+  },
+  "farUpper": {
+    "left": 149,
+    "top": 737,
+    "width": 127,
+    "height": 245
+  },
+  "farFore": {
+    "left": 483,
+    "top": 767,
+    "width": 101,
+    "height": 197
+  },
+  "farClosed": {
+    "left": 795,
+    "top": 763,
+    "width": 134,
+    "height": 199
+  },
+  "farOpen": {
+    "left": 1091,
+    "top": 765,
+    "width": 160,
+    "height": 225
+  }
+}

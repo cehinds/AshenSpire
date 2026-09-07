@@ -1,0 +1,14 @@
+{
+  "setups": 8,
+  "classes": 2,
+  "phasesPerSetup": 4,
+  "visualFrames": 24,
+  "clippedFrames": 0,
+  "browserErrors": [],
+  "viewports": [
+    1280,
+    390
+  ],
+  "playback": "completed",
+  "tooling": "Edge via Playwright"
+}
