@@ -1,3 +1,4 @@
+import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // src/ui/screens/equipment.js — the Armoury.
@@ -445,26 +446,25 @@ function pieceArt(piece, fallback = '⚔') {
 
 /** The kit picker's chip (creation's starting kit): an OptionCard — art, name, mods, tags. `.ec-*` are the hooks the tools read. */
 export function pieceChip(registries, piece, { selected }) {
-  const mods = modSummary(registries, piece);
-  const card = optionCard({
-    art: pieceArt(piece),
-    name: piece.name,
-    description: mods.length ? mods.join(' · ') : '—',
-    body: el('span', { class: 'tags ec-tags' }, (piece.tags || []).map((t) => tagChip({ label: t }))),
-    selected, arrow: false,
-    className: `equip-chip ${piece.kind === 'armor' ? 'as-card equipment-armor-card' : 'compact'} rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`,
-  });
-  card.querySelector('.on').classList.add('ec-name');
-  card.querySelector('.od').classList.add('ec-mods');
+  const card = optionCard({ name: piece.name, selected, arrow: false,
+    className: `equip-chip poker-equipment-choice rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}` });
+  card.replaceChildren(renderEquipmentCard(registries, piece, { interactive: false }).card);
+  card.setAttribute('aria-label', piece.name);
   return card;
 }
 
-function inventoryFace(row, {
+function inventoryFace(registries, row, {
   selected = false, draggable = false, actionLabel = '', classModel = null,
 } = {}) {
   const el = renderInventoryItemCard(inventoryItemCardModel(row, {
     selected, draggable, classModel,
   }));
+  if (['armor', 'weapon', 'shield', 'staff'].includes(row.item.kind)) {
+    const trail = el.querySelector('.r-trail');
+    el.replaceChildren(renderEquipmentCard(registries, row.item, { interactive: false }).card);
+    if (trail) el.append(trail);
+    el.classList.add('poker-inventory-face');
+  }
   // While a position is selected the face says what the tap will do — a StatePill, lit.
   if (actionLabel) el.querySelector('.r-trail').appendChild(pill({ label: actionLabel, on: true, attrs: { class: 'inventory-inline-action' } }));
   return el;
@@ -496,6 +496,14 @@ function inventoryReveal(registries, row, {
     comparisonHtml: comparisonPresentation === 'inline' ? comparisonHtml : '',
     action,
   });
+  if (['armor', 'weapon', 'shield', 'staff'].includes(item.kind)) {
+    el.classList.add('poker-inventory-detail');
+    el.querySelector('.inventory-model')?.remove();
+    const info = el.querySelector('.inventory-information');
+    // Keep the comparison, equip action and instruction in their original container.
+    for (const child of [...info.children]) if (!child.matches('.inventory-instruction, [data-ui-component], .ep-equip, .inventory-card-action-label') && child !== action) child.remove();
+    el.prepend(renderEquipmentInspection(registries, item));
+  }
   el.dataset.inventoryItem = row.key;
   // When the global hold-confirm dial is off, the explicit action button owns
   // the immediate equipment change and the card keeps a short, read-only hold
@@ -1214,7 +1222,7 @@ export function mountEquipment(host, {
           ? 'Unequip'
           : `${target.kind === 'move' ? 'Move' : 'Equip'} to ${target.slot.label}`)
         : '';
-      const face = inventoryFace(row, {
+      const face = inventoryFace(registries, row, {
         draggable,
         actionLabel: selectedSlot ? actionLabel : '',
         classModel: inventoryItemClass,
@@ -1702,7 +1710,7 @@ export function mountEquipment(host, {
     const card = detailCard({
       eyebrow: slot.label, name: `${item.name} details`,
       attrs: { class: 'armoury-position-detail', dataset: { component: 'armoury.armamentItemCard' } },
-      children: detail,
+      children: [renderEquipmentInspection(registries, item), detail],
     });
     attachTooltip(card, () => `<div class="tt-title">${esc(`${slot.label}: ${item.name}`)}</div><p>${esc(summaryItem.bonus)} · ${esc(summaryItem.weight)}</p>`);
     return card;

@@ -5,6 +5,7 @@
 // glyph + name). Swapping in real art later = mapping an id to a URL here,
 // with a CREDITS.md row — no game-code changes.
 
+import { armourMenuAsset } from '../model/paintedOutfitArt.js';
 import { balance } from '../content/balance.js';
 import { PAINTED_ENEMIES, EXPANSION_ENEMIES, ENEMY_POSES } from '../content/enemyArt.js';
 import { medallionAnchor } from '../content/classArtAnchors.js';
@@ -694,4 +695,11 @@ export function setClassGlyphs(classes) {
 }
 export function classGlyph(classId) {
   return classGlyphs[classId] || '❖';
+}
+
+/* Inventory artwork uses item identity, never the character rig's artKey. */
+export function equipmentCardArt(piece) {
+  return assetUrl(piece.kind === 'armor'
+    ? armourMenuAsset(piece.classId, piece.id)
+    : `assets/equipment/icon_${piece.id}.webp`);
 }
