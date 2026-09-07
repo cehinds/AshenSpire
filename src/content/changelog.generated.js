@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-683",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Twelve enemies gain their painted Unity-fork sprites",
+    "detail": "Combat reuses the existing transparent artwork with consistent foot alignment and left-facing figures. Other enemies retain their current art, and a failed painted-image load falls back to the original sprite.",
+    "build": "0.5.5.47",
+    "pullRequest": 683,
+    "url": "https://github.com/cehinds/AshenSpire/pull/683"
+  },
+  {
     "id": "pr-672",
     "date": "2026-09-07",
     "group": "2026-09-07",

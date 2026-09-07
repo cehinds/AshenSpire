@@ -9,6 +9,13 @@ For how work is branched, reviewed, and merged, see the
 
 ## Run & test
 
+Painted enemy art is selected in `src/content/enemyArt.js` and rendered through
+the shared `enemySprite()` asset function. The twelve PNGs in
+`assets/enemies-unity/` are unchanged imports from the Unity fork; retain their
+384px square canvas and common foot anchor when replacing them. Keep the
+original sprite files as fallback assets. See CREDITS.md and the extraction
+manifest beside the images for provenance.
+
 Armament trading uses `src/model/armamentTrading.js` for inert quotes and atomic
 commits. Stored ownership, equipped sets, capacity, currency and stock revisions
 are rechecked at commit. Selling retains upgrades, mount history and permanent
