@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-790",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Tooltips prefer above without covering controls in short windows",
+    "detail": "Shared tooltips first try above their target, retain sideways placement when a landscape window lacks vertical room, and fall below when needed. Authored top and side placement bands remain effective.",
+    "build": "0.5.5.127",
+    "pullRequest": 790,
+    "url": "https://github.com/cehinds/AshenSpire/pull/790"
+  },
+  {
     "id": "pr-793",
     "date": "2026-09-07",
     "group": "2026-09-07",
