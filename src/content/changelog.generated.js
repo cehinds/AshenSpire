@@ -23,6 +23,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/676"
   },
   {
+    "id": "pr-679",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Combat groups potions, piles and weapon arts into shared menus",
+    "detail": "Potions stays at the far right, with quantities and explicit Use actions. Discard and Exhaust share an entry but retain separate tabs and counts. Arts shows equipped cards and selects only cards currently in hand. Map Quick Access controls use full-size targets so nearby controls no longer overlap.",
+    "build": "0.5.5.46",
+    "pullRequest": 679,
+    "url": "https://github.com/cehinds/AshenSpire/pull/679"
+  },
+  {
     "id": "pr-657",
     "date": "2026-09-05",
     "group": "2026-09-05",
