@@ -23,10 +23,10 @@ SFX_FAMILY_IDS [procBurst, beat, holdTick, holdCommit, rewardTake] — sfx autho
   weaponCardPackages.json → src/content/generated/weaponCardPackages.js  (2 rows)
   weapons.csv      → src/content/generated/weapons.js  (25 rows)
 launch: building the standalone bundle…
-bundle: build ordinal → 95 (the source moved; buildordinal.json rewritten)
+bundle: build ordinal → 102 (the source moved; buildordinal.json rewritten)
 bundle.mjs: OK
   entry            : src/main.js
-  build version    : 4f749e1f6c (derived from this source; node tools/buildversion.mjs --which 4f749e1f6c)
+  build version    : c60a48b98a (derived from this source; node tools/buildversion.mjs --which c60a48b98a)
   modules bundled  : 252
   stylesheets      : 5 (styles/base.css, styles/ui.css, styles/combat.css, styles/map.css, styles/kit.css)
   css assets inlined: 5 (18 KiB raw)
@@ -34,7 +34,7 @@ bundle.mjs: OK
   skipped (no MIME): 22 — assets/classes/AS-HD-040-RECONCILIATION-PACKET.md, assets/classes/CROP-SIZE-STATE-RECEIPT.md, assets/classes/LOOK-REFERENCE-ROGUE.md, assets/classes/SILHOUETTE-SUCCESSOR-CONTRACT.md …
   literal refs     : all resolve
   output           : build/AshenSpire.html
-  output size      : 47865645 bytes (46743.8 KiB)
+  output size      : 47876167 bytes (46754.1 KiB)
 BOUNDARY: every module was COMPILED, never RUN. A file that parses and throws
           on load builds clean here — that is node tests/run-node.mjs and the
           browser. Strictness and the module signature are asserted through
@@ -43,5 +43,5 @@ BOUNDARY: every module was COMPILED, never RUN. A file that parses and throws
           (`assets/x_${id}.webp`) are unchecked here — Vira audits those
           against the CSVs. dist/ is not this tool's to check: that is
           node tools/verify-shipped.mjs. Nothing above says the game plays.
-launch: current build refreshed → AshenSpire.html + dist/AshenSpire.html + dist/AshenSpire-0.5.5.95.html
+launch: current build refreshed → AshenSpire.html + dist/AshenSpire.html + dist/AshenSpire-0.5.5.102.html
 launch: OK — 3/3 current-build aliases refreshed.
