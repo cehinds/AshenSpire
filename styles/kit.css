@@ -2358,6 +2358,9 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 article.enemy-move-card.as-option { cursor: default; }
 article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--line); }
 
+/* Painted full-body previews stay inside the armory art well. */
+.armoury-sprite-pane:has(.painted-armoury) { position: relative; }
+.armoury-sprite-pane .armoury-figure.painted-armoury { position: absolute; inset: 9%; width: 82%; height: 82%; max-width: none; max-height: none; aspect-ratio: auto; }
 /* Potion disclosures use the same joined OptionCard/DetailCard as Armoury. */
 .combat-potion-menu .potion-fold { margin-bottom: 6px; }
 .combat-potion-menu .potion-fold > summary { cursor: pointer; }

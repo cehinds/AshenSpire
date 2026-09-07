@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-740",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Painted outfits now appear throughout the game",
+    "detail": "All sixteen outfits have matching character-selection portraits, menu figures, armory previews and compact combat animations. Reaver uses the reviewed sword-rest stance and advance, overhead windup, cleave and recovery sequence. Classic and Sigil remain available. Painted weapons are part of the artwork; equipment icons and stats still describe the actual loadout.",
+    "build": "0.5.5.87",
+    "pullRequest": 740,
+    "url": "https://github.com/cehinds/AshenSpire/pull/740"
+  },
+  {
+    "id": "pr-735",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Reaver artwork follows the selected poses",
+    "detail": "All four Reaver outfits share the approved sword-rest menu and idle stance, the three selected attack poses and matching chest-up portraits. Earlier source sheets remain available in the art collection. This receipt records the artwork revision; game integration follows in #740.",
+    "build": "0.5.5.78",
+    "pullRequest": 735,
+    "url": "https://github.com/cehinds/AshenSpire/pull/735"
+  },
+  {
     "id": "pr-720",
     "date": "2026-09-07",
     "group": "2026-09-07",
