@@ -62,7 +62,7 @@ import { keycap, pill } from '../kit/index.js';
 // asserting a property nobody writes.
 export const FAN_LIFT_PROP = '--fan-lift';
 
-export function mountHand(handEl, { registries, wireCard = null, animateArrival = false }) {
+export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
   // value here would silently turn the gesture off.
@@ -76,10 +76,29 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   // Snapshot clients remount this strip; arrivals are opt-in for persistent mounts.
   let previousCards = new Set();
   let handEls = []; // the rendered cards, in hand order (filled by render)
+  let fanMeasurement = null;
   let handFan = []; // each card's shipped fan transform, same index
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
 
   function applyHandLayout() {
+    if (fitFan) {
+      const cards = handEls.filter(el => el.parentNode === handEl);
+      if (!cards.length || !handEl.isConnected) return;
+      const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+      const cs = getComputedStyle(handEl);
+      const available = handEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const width = cards[0].offsetWidth;
+      const measurement = [available, width, zoom, cards.length].join(':');
+      if (measurement === fanMeasurement) return;
+      fanMeasurement = measurement;
+      const shown = Math.min(cards.length, 7);
+      const step = shown > 1 ? Math.max(28 / zoom, Math.min(width + 12, (available - width) / (shown - 1))) : width;
+      cards.forEach((el, i) => {
+        el.style.marginLeft = i ? (step - width) + 'px' : '0px';
+        el.style.transform = handFan[i];
+      });
+      return;
+    }
     if (handLayoutWord() !== 'overlap') return;
     if (!handEl.isConnected) return;
     const els = handEls.filter((el) => el.parentNode === handEl);
@@ -123,10 +142,21 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   // replaced (co-op re-mounts per snapshot; solo replaces the screen wholesale).
   let ro = null;
   let mo = null;
-  if (typeof ResizeObserver !== 'undefined' && handLayoutWord() === 'overlap') {
+  let layoutFrame = 0;
+  const scheduleHandLayout = () => {
+    if (layoutFrame) return;
+    // ResizeObserver delivers during layout. Defer writes to the next frame
+    // so changing the fan cannot resize another observed box in that delivery.
+    layoutFrame = requestAnimationFrame(() => {
+      layoutFrame = 0;
+      if (!handEl.isConnected) { ro?.disconnect(); mo?.disconnect(); return; }
+      applyHandLayout();
+    });
+  };
+  if (typeof ResizeObserver !== 'undefined' && (fitFan || handLayoutWord() === 'overlap')) {
     const alive = () => document.body.contains(handEl);
-    ro = new ResizeObserver(() => { if (alive()) applyHandLayout(); else ro.disconnect(); });
-    mo = new MutationObserver(() => { if (alive()) applyHandLayout(); else mo.disconnect(); });
+    ro = new ResizeObserver(() => { if (alive()) scheduleHandLayout(); else ro.disconnect(); });
+    mo = new MutationObserver(() => { if (alive()) scheduleHandLayout(); else mo.disconnect(); });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout'] });
     ro.observe(handEl);
   }
@@ -134,6 +164,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   function render({ cards = [], emptyHtml = null }) {
     const drawn = new Set(cards.filter(entry => !previousCards.has(entry.inst.instanceId)).map(entry => entry.inst.instanceId));
     previousCards = new Set(cards.map(entry => entry.inst.instanceId));
+    fanMeasurement = null;
     handEl.innerHTML = '';
     handEls = [];
     handFan = [];
@@ -219,7 +250,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // in 'paging' the loop above was the whole render, unchanged.
     handEls = [...handEl.children];
     handFan = handEls.map((el) => el.style.transform);
-    if (ro && handLayoutWord() === 'overlap') {
+    if (ro && (fitFan || handLayoutWord() === 'overlap')) {
       ro.disconnect();
       ro.observe(handEl);
       handEls.forEach((el) => ro.observe(el));
@@ -228,6 +259,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   }
 
   function teardown() {
+    cancelAnimationFrame(layoutFrame);
+    layoutFrame = 0;
     if (ro) ro.disconnect();
     if (mo) mo.disconnect();
   }

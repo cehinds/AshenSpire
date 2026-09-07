@@ -768,16 +768,10 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .combatant .nm-inspect { cursor: help; min-height: var(--tap-floor); display: flex; flex-direction: column; justify-content: center; }
 .combatant .nm-inspect:hover .ls-label, .combatant .nm-inspect:focus-visible .ls-label { color: var(--gold); }
 .combatant .nm-inspect:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1); }
-/* The keyboard's Inspect action has a literal touch counterpart. This sits in
-   the frame rather than its name so the full read is discoverable without a
-   hover hint, and remains a 44px-class tap target through the kit IconButton. */
-.combatant .combatant-inspect-control {
-  position: absolute; top: 0; right: 0; z-index: 4;
-  border-color: color-mix(in srgb, var(--gold) 65%, transparent);
-  background: color-mix(in srgb, var(--panel) 88%, transparent);
-  color: var(--gold); font-size: 1rem;
+.as-tip[data-tooltip-variant="combatant-context"] > .as-btn {
+  display: flex; width: 100%; min-height: 0; padding: 3px 8px;
+  margin-top: 6px; font-size: 0.85em; line-height: 1.3;
 }
-.combatant .combatant-inspect-control:active { transform: scale(0.94); }
 /* The full read, in a door: the same sections the edge tray renders. */
 .combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
 
@@ -1387,6 +1381,36 @@ details.disc-fold-row > summary { list-style: none; }
 details.disc-fold-row > summary::-webkit-details-marker { display: none; }
 details.disc-fold-row[open] > summary { border-radius: var(--r-3) var(--r-3) 0 0; border-color: var(--gold); }
 details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3); border-top: 0; }
+
+/* Creation uses the same attached OptionCard / DetailCard fold as the Armoury.
+   Physical text floors preserve readability when the game canvas scales down. */
+.customize .cz-disc { display: flex; flex-direction: column; gap: 8px; }
+.customize .disc-fold-row > summary { min-height: calc(44px / var(--ui-zoom, 1)); }
+.customize .disc-fold-row > summary::after { content: '›'; position: static; flex: 0 0 auto; margin-left: 8px; }
+.customize .disc-fold-row[open] > summary::after { transform: rotate(90deg); }
+.customize :is(.disc-name, .on, .dc-name, .ls-label, .as-title-s, input, button) {
+  font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); line-height: 1.4;
+}
+.customize :is(.od, .ls-hint, .as-status, .disc-value, .as-flavor, .as-prose, .dc-meta, .dc-lines, .equip-role-receipts, .cc-equip-group) {
+  font-size: max(1.2rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5;
+}
+.customize .cc-equip-group :is(small, span, p, b, i) { font-size: inherit; }
+.customize .cc-equip-group .as-statrow { flex-wrap: wrap; }
+.customize .cc-equip-group :is(.sr-name, .as-statpair) { white-space: normal; }
+.customize .cc-equip-group .sr-vals { flex: 1 1 100%; text-align: left; justify-content: flex-start; }
+.customize .cc-equip-group .sp-k { letter-spacing: normal; text-transform: none; }
+.customize .as-pane-head { flex-wrap: wrap; }
+.customize .as-pane-head > .r-trail { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
+.customize .disc-face :is(.ob, .r-trail) { min-width: 0; }
+.customize .disc-face :is(.disc-name, .on, .ls-label) { white-space: normal; overflow: visible; text-overflow: clip; }
+.customize .disc-face .r-trail { flex-shrink: 1; overflow-wrap: anywhere; }
+.customize .cc-primary-stat .disc-summary { white-space: normal; }
+.customize .cc-preview-side > .cz-portrait { position: relative; overflow: hidden; width: 100%; height: auto; min-height: 24rem; border: 0; }
+@media (max-width: 900px) {
+  .customize .cc-character-grid { grid-template-columns: minmax(0, 1fr); }
+  .customize .cc-preview-side { min-height: 0; }
+  .customize .cc-preview-side > .cz-portrait { flex: none; height: 24rem; }
+}
 /* ASSIGN POINTS IS NARROWER THAN THE COLUMN THE RULE ABOVE WAS WRITTEN FOR.
    `white-space: normal` lets a summary read in full where there is room, which
    is right in Character Creation. Inside the Assign Points overlay there is not
@@ -1845,7 +1869,8 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
    them straddling the gap between the ⚒ ☰ row and the flasks below, aligned to
    neither. Cross-axis only: the row's height is the cluster's either way, so
    this moves no other row and the map and combat HUDs stay the same height. */
-.hud-resource-row > .hud-vitals-panel { align-self: flex-start; }
+.hud-resource-row { align-items: flex-end; }
+.hud-resource-row > .hud-vitals-panel { align-self: flex-end; }
 .as-band-row > .grow { flex: 1 1 auto; min-width: 0; }
 .as-band-row.split { justify-content: space-between; }
 .as-band-row.end { justify-content: flex-end; }
@@ -2332,3 +2357,29 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 /* Move-set articles describe intent; they do not open or select an action. */
 article.enemy-move-card.as-option { cursor: default; }
 article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--line); }
+
+/* Potion disclosures use the same joined OptionCard/DetailCard as Armoury. */
+.combat-potion-menu .potion-fold { margin-bottom: 6px; }
+.combat-potion-menu .potion-fold > summary { cursor: pointer; }
+.combat-potion-menu .potion-fold .flask-identity { flex: 0 0 44px; }
+.combat-potion-menu .potion-fold .flask-art { width: 40px; height: 40px; }
+.combat-potion-menu .potion-fold .potion-use { flex-shrink: 0; min-height: 36px; }
+.combat-potion-menu .potion-fold[open] > summary { border-color: var(--gold); }
+.combat-potion-menu .potion-fold[open] > summary::after { transform: rotate(90deg); }
+.combat-potion-menu .potion-fold > .as-detailcard .potion-use { margin-top: 8px; align-self: flex-end; }
+
+/* Inspection copy stays readable even when the surrounding game scales down. */
+.flask-inspect-lines .as-prose,
+.combat-potion-menu .potion-fold > .as-detailcard .dc-line {
+  font-size: max(1.6rem, calc(18px / var(--ui-zoom, 1))); line-height: 1.5;
+}
+.flask-inspect-lines .as-prose + .as-prose,
+.combat-potion-menu .potion-fold > .as-detailcard .as-flavor,
+.combat-potion-menu .potion-fold > .as-detailcard .dc-meta {
+  font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); line-height: 1.45; color: var(--parchment);
+}
+.flask-inspect-modal .modal-head-id h2,
+.combat-potion-menu .potion-fold > .as-detailcard .dc-name {
+  font-size: max(1.8rem, calc(20px / var(--ui-zoom, 1))); white-space: normal;
+}
+.flask-inspect-done { font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); }
