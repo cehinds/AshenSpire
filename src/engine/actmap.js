@@ -25,7 +25,7 @@ import { generateActMap, assignBossDestinations } from './mapgen.js';
 import { resolveUnknownNode } from './encounters.js';
 import { applyRunShape } from '../model/floorplan.js';
 import { MAP_SHAPE_LIMITS, LEGACY_ACT_BOSSES } from '../content/mapconfig.js';
-import { BOSS_LOCATIONS } from '../content/bossDestinations.js';
+import { bossDestinationLabel } from '../model/bossDestinationLabels.js';
 
 /**
  * buildActMap(registries, rng, act, mapShape, { history }) → mapGraph
@@ -75,7 +75,7 @@ export function buildActMap(registries, rng, act, mapShape = null, { history = [
   const selected = pool.length > map.columns ? rng.shuffle('map', pool).slice(0, map.columns) : pool;
   return assignBossDestinations(map, selected.map((encounter) => ({
     encounterId: encounter.id,
-    label: [BOSS_LOCATIONS[encounter.id], encounter.enemies.map((id) => registries.enemies.get(id).name).join(' & ')].filter(Boolean).join(' · '),
+    label: bossDestinationLabel(registries, encounter.id),
   })));
 }
 

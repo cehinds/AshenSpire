@@ -28,6 +28,7 @@ import {
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { assertSavedBossReferences } from '../src/model/mapReferences.js';
+import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
@@ -111,6 +112,7 @@ export function createSession({ registries, seedString, endless = false, restore
   if (restore) {
     const mapAct = endless ? ((restore.actNumber - 1) % LAST_ACT) + 1 : restore.actNumber;
     assertSavedBossReferences(registries, restore.mapGraph, mapAct);
+    restore = { ...restore, mapGraph: refreshBossDestinationLabels(registries, restore.mapGraph, mapAct) };
   }
   const seed = restore ? (restore.seed >>> 0) : seedOf(seedString);
   const rng = createRng(seed, restore ? restore.rng : {}); // shared: map gen, encounter rolls
