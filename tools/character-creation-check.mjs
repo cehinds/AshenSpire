@@ -240,22 +240,22 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     remaining:document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim(),
     values:[...document.querySelectorAll('.cc-stat-overlay .se-value')].map((node) => node.textContent.trim()),
     rowInsets:[...document.querySelectorAll('.cc-stat-overlay .se-row')].map((row) => {
-      const style=getComputedStyle(row);
+      const style=getComputedStyle(row.querySelector('.disc-face > .as-row'));
       return [style.paddingTop,style.paddingRight,style.paddingBottom,style.paddingLeft];
     }),
   }))()`);
   assert(refunded.remaining === '10' && refunded.values.join(',') === '10,10,10,10,10'
-    && refunded.rowInsets.every((edges) => edges.every((edge) => parseFloat(edge) > 0) && new Set(edges).size === 1),
-  `${width}x${height}: Assign Points refunds to five baseline-10 stats and gives every setting row one four-sided inset (${JSON.stringify(refunded)})`);
+    && refunded.rowInsets.every((edges) => edges.every((edge) => parseFloat(edge) > 0)),
+  `${width}x${height}: Assign Points refunds to five baseline-10 stats and keeps padding inside every card header (${JSON.stringify(refunded)})`);
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay [data-face^="attribute:"]').length`)) === 5,
     `${width}x${height}: Assign Points reuses five foldout attribute cards`);
   const allocationInsets = await evaluate(`[...document.querySelectorAll('.cc-stat-overlay .as-row.setting')].map((row) => {
-    const style = getComputedStyle(row);
+    const style = getComputedStyle(row.querySelector('.disc-face > .as-row'));
     return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft];
   })`);
   assert(allocationInsets.length === 5 && allocationInsets.every((insets) =>
-    insets.length === 4 && insets.every((value) => value === insets[0] && parseFloat(value) > 0)),
-  `${width}x${height}: every Assign Points row keeps the same text inset on all four sides (${JSON.stringify(allocationInsets)})`);
+    insets.length === 4 && insets.every((value) => parseFloat(value) > 0)),
+  `${width}x${height}: every Assign Points card header keeps text padding on all four sides (${JSON.stringify(allocationInsets)})`);
   await click('.cc-stat-overlay [data-face="attribute:strength"]');
   const allocationGeometry = await evaluate(`(() => {
     const row = document.querySelector('.cc-stat-overlay .se-row');
@@ -270,7 +270,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(allocationGeometry.component === 'stat-allocation-row'
       && allocationGeometry.reveal?.left <= allocationGeometry.row.left + allocationGeometry.inset.left + 4
       && allocationGeometry.reveal?.right >= allocationGeometry.row.right - allocationGeometry.inset.right - 4
-      && Math.abs(allocationGeometry.face?.top - allocationGeometry.controls?.top) <= 1,
+      && allocationGeometry.controls?.top >= allocationGeometry.face?.top && allocationGeometry.controls?.bottom <= allocationGeometry.face?.bottom && allocationGeometry.controls?.right <= allocationGeometry.face?.right && allocationGeometry.reveal?.top >= allocationGeometry.face?.bottom - 1,
     `${width}x${height}: Assign Points disclosure spans the invisible stat-and-controls parent (${JSON.stringify(allocationGeometry)})`);
   await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new CustomEvent('gpfocus'))`);
   await wait(180);

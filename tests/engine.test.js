@@ -7613,7 +7613,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(constitution.reveal.lines.some((line) => /^HP \+2 every 1 point$/.test(line))
       && constitution.reveal.lines.some((line) => /^Stamina \+1 every 5 points$/.test(line)),
     'multiple mechanical benefits are projected as separate bullets');
-    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical attacks +1 every 1 point'),
+    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical AR +1 every 1 point'),
       'the active run profile projects Strength attack scaling without copied UI prose');
 
     const changed = {
