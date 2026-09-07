@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-792",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The receipts catch up on three merges",
+    "detail": "Nothing a player sees changes. The painted armaments (#778), the Star Seer's standing idle (#780) and the Armoury heading fix (#768) had all landed without an entry here, so the changelog inside the game did not carry them either. Each is written up at the build ordinal standing at its own merge, and the projection was regenerated from this file so both now say the same thing. The gate added in #652 is what named the three, rather than someone reading the merge log.",
+    "build": "0.5.5.119",
+    "pullRequest": 792,
+    "url": "https://github.com/cehinds/AshenSpire/pull/792"
+  },
+  {
+    "id": "pr-768",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The Armoury's card headings stay inside their own borders",
+    "detail": "On a narrow screen the Equipment cards summary could spill below the bordered heading it belongs to: the shared read-only row style let the text wrap while the heading itself kept a fixed height, so the words went outside the box. Those headings now put the label above the summary and grow to hold both, and the read-only rule no longer applies to them. Text keeps a 15px floor. The narrow Hybrid equipment pane has a separate clipping problem of its own, which this does not touch.",
+    "build": "0.5.5.118",
+    "pullRequest": 768,
+    "url": "https://github.com/cehinds/AshenSpire/pull/768"
+  },
+  {
+    "id": "pr-780",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The Star Seer stands with the staff",
+    "detail": "The Star Seer's resting pose in combat is the standing staff figure rather than the previous idle, across the base class and all three of its armour sets.",
+    "build": "0.5.5.117",
+    "pullRequest": 780,
+    "url": "https://github.com/cehinds/AshenSpire/pull/780"
+  },
+  {
+    "id": "pr-778",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "All twenty-five armaments are painted",
+    "detail": "Every weapon and shield in the game now has its own painted item art, and the Armoury cards that show them were refreshed to suit: the silhouette reads against the well it sits in, in the inventory list and in the opened detail alike. Reference sheets for the set are kept beside the art. The single-file download grows, because these are inlined into it like every other asset.",
+    "build": "0.5.5.116",
+    "pullRequest": 778,
+    "url": "https://github.com/cehinds/AshenSpire/pull/778"
+  },
+  {
     "id": "pr-771",
     "date": "2026-09-07",
     "group": "2026-09-07",
