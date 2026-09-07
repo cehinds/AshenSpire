@@ -44,6 +44,8 @@ import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
+import { useRunChargeFlask } from '../../engine/actions.js';
+import { settingOn } from './settings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { el as kitEl, slot, popover, row, html } from '../kit/index.js';
 
@@ -212,7 +214,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
 
   const flaskArt = (def) => kitEl('span', { class: 'sl-art', 'aria-hidden': 'true', html: flaskIdentityHtml(def, { showName: false }) });
-  const chargeWrap = app.querySelector('.hud-charge-flasks');
+  const flaskWrap = app.querySelector('.hud-potions');
   for (const kind of CHARGE_FLASK_KINDS) {
     const def = chargeFlaskDefinition(registries, kind);
     if (!def) continue;
@@ -223,19 +225,27 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     el.querySelector('.sl-count').classList.add('flask-charge-count');
     attachTooltip(el, () => flaskTooltipHtml(def, { charges: current }));
     el.addEventListener('click', () => {
+      const canUse = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat') && current > 0;
       const plan = flaskActionPlan({
         context: 'run',
-        canUse: false,
-        useReason: 'Healing and mana flasks can only be used in combat',
+        canUse,
+        useReason: current <= 0 ? 'No charges remain' : 'Enable “Use flasks outside combat” in Settings',
         canDrop: false,
         dropReason: 'Charge flasks stay with the run',
       });
-      mountFlaskActionMenu(el, { def, plan, charges: current, onCancel: () => {}, onAction: () => {} });
+      mountFlaskActionMenu(el, {
+        def, plan, charges: current, onCancel: () => {},
+        onAction: (actionId) => {
+          if (actionId !== 'use' || !canUse) return;
+          useRunChargeFlask({ run, registries, rng: null, kind });
+          onSave?.();
+          mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls });
+        },
+      });
     });
-    chargeWrap.appendChild(el);
+    flaskWrap.appendChild(el);
   }
 
-  const flaskWrap = app.querySelector('.hud-potions');
   for (const f of run.flasks) {
     const def = registries.flasks.get(f.flaskId);
     // The shared HUD lives inside CHROME, so `.flask-slot` is the deliberate
@@ -260,13 +270,13 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           const at = run.flasks.indexOf(f);
           if (at >= 0) run.flasks.splice(at, 1);
           el.remove();
-          flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = flaskWrap.children.length ? 'true' : 'false';
+          flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = run.flasks.length ? 'true' : 'false';
         },
       });
     });
     flaskWrap.appendChild(el);
   }
-  flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = flaskWrap.children.length ? 'true' : 'false';
+  flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = run.flasks.length ? 'true' : 'false';
 
   const armouryBtn = app.querySelector('#open-armoury');
   if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());

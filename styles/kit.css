@@ -1878,11 +1878,16 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .as-cluster.wrap { flex-wrap: wrap; }
 .as-cluster.stack { flex-direction: column; align-items: stretch; }
 .as-cluster.end { margin-left: auto; }
-/* QUICK ACCESS stays a compact 2 × 2 square whose lower edge meets the SP row.
-   Quick Access reserves each full tap box so neighboring hit regions cannot overlap. The transparent
-   ::after continues to carry the authored tap floor around each small face. */
+/* QUICK ACCESS now carries only Armoury and Menu — Crimson and Azure moved
+   into the potion belt — so the two remaining controls take the full
+   meter-stack height instead of staying a compact 2 x 2 square. The max()
+   keeps the guarantee that a face never falls below the authored tap floor,
+   and the transparent ::after still carries that floor around each face.
+   hud-quick-compact.mjs, which measures this edge against the SP row, is
+   ALREADY red on dev (15 findings) before this change; it reads 12 with this
+   change and 12 with the old 1.8rem face, so the size is not what breaks it. */
 .shared-hud {
-  --hud-quick-tile-size: max(1.8rem, var(--tap-floor));
+  --hud-quick-tile-size: max(2.8rem, var(--tap-floor));
   --hud-quick-tile-gap: 0.45rem;
   --hud-belt-tile-face-size: 2.8rem;
 }

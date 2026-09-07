@@ -919,8 +919,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       relics.appendChild(el);
     }
     // Combat potions live in the bottom menu; the shared map HUD is unchanged.
+    // Quick Access no longer carries a charge-flask tray — Crimson and Azure
+    // moved into the potion belt — so the tray is looked up optionally rather
+    // than assumed present. A missing tray is the expected state, not a fault.
     for (const selector of ['.hud-charge-flasks', '.hud-potions']) {
       const tray = $('.topbar ' + selector);
+      if (!tray) continue;
       tray.replaceChildren(); tray.hidden = true;
     }
     $('.topbar .shared-hud')?.setAttribute('data-has-utility-potions', 'false');
