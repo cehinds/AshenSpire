@@ -1708,7 +1708,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(rollEncounter(REG, r, { pool: 'normal', act: 3 }).startsWith('a3_'), 'act 3 pool only');
       assert(!rollEncounter(REG, r, { pool: 'normal', act: 1 }).startsWith('a2_'), 'act 1 pool untouched');
     }
-    eq(rollEncounter(REG, createRng(1), { pool: 'boss', act: 3 }), 'a3_bossRotValkyrie', 'act 3 boss');
+    const act3Boss = REG.encounters.get(rollEncounter(REG, createRng(1), { pool: 'boss', act: 3 }));
+    eq(act3Boss.act, 3, 'boss stays in act 3');
+    eq(act3Boss.pool, 'boss', 'boss pool only');
 
     // Blighted Valkyrie: heals 2 whenever SHE lands a hit (persistent phase trigger);
     // her thrust also Bleeds the PLAYER (entity-agnostic status model).

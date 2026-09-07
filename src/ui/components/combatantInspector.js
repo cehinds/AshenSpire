@@ -13,6 +13,7 @@
 import { childModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { renderTray } from './trayComponents.js';
+import { renderEnemyMoveCards } from './enemyMoveCards.js';
 import { el, eyebrow, titleS, hairline, labelStack, meter, meters, row, statusText } from '../kit/index.js';
 
 function resourceMeters(resources) {
@@ -57,7 +58,7 @@ export function combatantDetailBody(subject, { heading = true } = {}) {
       resourceMeters(subject.resources),
     ]),
     ...(subject.intent ? [section('Current intent', [subject.intent], 'No current intent.')] : []),
-    section(subject.skillLabel || 'Skills', subject.skills, 'No active skills.'),
+    subject.moveCards ? renderEnemyMoveCards(subject.moveCards) : section(subject.skillLabel || 'Skills', subject.skills, 'No active skills.'),
     section('Active effects', subject.statuses, 'No active effects.'),
   ];
 }

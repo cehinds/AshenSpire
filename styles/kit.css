@@ -768,6 +768,16 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .combatant .nm-inspect { cursor: help; min-height: var(--tap-floor); display: flex; flex-direction: column; justify-content: center; }
 .combatant .nm-inspect:hover .ls-label, .combatant .nm-inspect:focus-visible .ls-label { color: var(--gold); }
 .combatant .nm-inspect:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1); }
+/* The keyboard's Inspect action has a literal touch counterpart. This sits in
+   the frame rather than its name so the full read is discoverable without a
+   hover hint, and remains a 44px-class tap target through the kit IconButton. */
+.combatant .combatant-inspect-control {
+  position: absolute; top: 0; right: 0; z-index: 4;
+  border-color: color-mix(in srgb, var(--gold) 65%, transparent);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  color: var(--gold); font-size: 1rem;
+}
+.combatant .combatant-inspect-control:active { transform: scale(0.94); }
 /* The full read, in a door: the same sections the edge tray renders. */
 .combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
 
@@ -2290,3 +2300,7 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
   .as-seg button + button { border-left: 0; }
   .as-seg button { border: 1px solid var(--line-soft); margin: -1px 0 0 -1px; }
 }
+
+/* Move-set articles describe intent; they do not open or select an action. */
+article.enemy-move-card.as-option { cursor: default; }
+article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--line); }

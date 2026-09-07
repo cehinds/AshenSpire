@@ -16,6 +16,15 @@ compatibility alias. Resolve the chosen terminal through
 metadata resolve their original act boss without consuming RNG. Run
 `node tests/branchingBosses.test.mjs` for topology, deterministic selection,
 LAN choice and real save-manager round trips.
+Enemy expansion checks: `node tests/expandedRoster.test.mjs` covers all 46 new
+moves, phases, seeded encounter reachability and ten named boss locations.
+`node tests/branchingBosses.test.mjs` covers map and save compatibility.
+`node tools/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
+using trusted desktop and phone inputs, including OS and in-game Reduced motion.
+Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
+existing weighted move selector; rendering never chooses or rerolls an intent.
+Attack motion uses the actor/action, tag, intent and neutral precedence in
+`src/content/actionAnimations.js`. Keep those mappings separate from mechanics.
 
 Painted enemy art is selected in `src/content/enemyArt.js` and rendered through
 the shared `enemySprite()` asset function. The twelve PNGs in
@@ -23,6 +32,10 @@ the shared `enemySprite()` asset function. The twelve PNGs in
 384px square canvas and common foot anchor when replacing them. Keep the
 original sprite files as fallback assets. See CREDITS.md and the extraction
 manifest beside the images for provenance.
+The fourteen new frames in `assets/enemies-expansion/` use the same canvas,
+left-facing orientation and foot anchor (192, 364). They are transparent idle
+paintings; runtime motion supplies their action feedback, not authored attack
+strips. Preserve both imported Unity art and the original fallback assets.
 
 Armament trading uses `src/model/armamentTrading.js` for inert quotes and atomic
 commits. Stored ownership, equipped sets, capacity, currency and stock revisions

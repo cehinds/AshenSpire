@@ -1699,5 +1699,101 @@ export const tagging = [
     "scope": "",
     "objectId": "staffTechnique",
     "tagId": "ritual"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "lanternMoth",
+    "tagId": "beast"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "briarHermit",
+    "tagId": "humanoid"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "chainScavenger",
+    "tagId": "humanoid"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "bellKeeper",
+    "tagId": "construct"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "thornMatriarch",
+    "tagId": "spirit"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "mirrorScribe",
+    "tagId": "humanoid"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "stitchCrab",
+    "tagId": "beast"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "stitchCrab",
+    "tagId": "undead"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "glassRegent",
+    "tagId": "construct"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "marrowOrganist",
+    "tagId": "undead"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "cinderMantis",
+    "tagId": "beast"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "eclipseCantor",
+    "tagId": "spirit"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "furnaceSaint",
+    "tagId": "construct"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "hollowAstronomer",
+    "tagId": "humanoid"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "hollowAstronomer",
+    "tagId": "undead"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "ashheartDragon",
+    "tagId": "beast"
   }
 ];
