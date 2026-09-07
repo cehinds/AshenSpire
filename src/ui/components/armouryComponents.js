@@ -1,3 +1,4 @@
+import { assetUrl } from '../assetmap.js';
 // src/ui/components/armouryComponents.js — the Armoury's renderers, on the kit.
 //
 // The shell is the kit's door (modalHead tabs, the close IconButton, the body
@@ -113,6 +114,9 @@ export function renderInventoryItemCard(model) {
       : `Equipped: ${row.equippedLabels.join(' / ')}`)
     : '';
   const element = face({
+    art: row.artAsset
+      ? fallbackOnError(artWell({ src: assetUrl(row.artAsset), alt: '', small: true, attrs: { class: 'inventory-item-art' } }), row.icon)
+      : artWell({ glyph: row.icon || '◆', small: true, attrs: { class: 'inventory-item-art' } }),
     nameNode: el('span', { class: 'on' }, el('span', { class: 'inventory-name ec-name', text: row.name })),
     trail: [
       tagChip({ label: row.category, attrs: { class: 'inventory-category' } }),

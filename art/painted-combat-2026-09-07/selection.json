@@ -1,27 +1,27 @@
 {
   "starseer": {
     "mapping": {
-      "idle": "guard"
+      "idle": "stand"
     },
-    "note": "Frontal standing artwork stays in menu. Combat holds the right-facing guarded pose."
+    "note": "Owner-selected upright staff-in-hand stance for idle, matching the supplied standing-pose reference. Guard and attacks keep their combat poses."
   },
   "starseer-eclipse": {
     "mapping": {
-      "idle": "guard"
+      "idle": "stand"
     },
-    "note": "Frontal standing artwork stays in menu. Combat holds the right-facing guarded pose."
+    "note": "Owner-selected upright staff-in-hand stance for idle, matching the supplied standing-pose reference. Guard and attacks keep their combat poses."
   },
   "starseer-starlit": {
     "mapping": {
-      "idle": "guard"
+      "idle": "stand"
     },
-    "note": "Frontal standing artwork stays in menu. Combat holds the right-facing guarded pose."
+    "note": "Owner-selected upright staff-in-hand stance for idle, matching the supplied standing-pose reference. Guard and attacks keep their combat poses."
   },
   "starseer-astral": {
     "mapping": {
-      "idle": "guard"
+      "idle": "stand"
     },
-    "note": "Frontal standing artwork stays in menu. Combat holds the right-facing guarded pose."
+    "note": "Owner-selected upright staff-in-hand stance for idle, matching the supplied standing-pose reference. Guard and attacks keep their combat poses."
   },
   "reaver": {
     "mapping": {

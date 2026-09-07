@@ -136,7 +136,7 @@ const LAYOUTS = {
 };
 
 const ARMOURY_DESTINATIONS = Object.freeze({
-  cards: Object.freeze({ view: 'grid', region: 'cards' }),
+  cards: Object.freeze({ view: 'cards', region: null }),
   equipment: Object.freeze({ view: 'rack', region: null }),
   character: Object.freeze({ view: 'grid', region: null }),
 });
@@ -409,7 +409,7 @@ function figureFor(registries, run, cz) {
 function thumbSrc(piece) {
   return piece.kind === 'armor'
     ? assetUrl(armourMenuAsset(piece.classId, piece.id))
-    : assetUrl(`assets/equipment/icon_${piece.artKey || piece.id}.webp`);
+    : assetUrl(`assets/equipment/icon_${piece.id}.webp`);
 }
 
 /** A piece's mods, written the way a player reads them. */
@@ -731,7 +731,7 @@ export function mountEquipment(host, {
   const overlayPanelModel = armouryPanelModel({
     view,
     views: viewIds(),
-    viewLabels: Object.fromEntries(Object.entries(layout.viewModes).map(([id, mode]) => [id, ({ character: 'Character', inventory: 'Equipment', both: 'Overview' })[mode.pane] || id])),
+    viewLabels: Object.fromEntries(Object.entries(layout.viewModes).map(([id, mode]) => [id, mode.label || id])),
     layout: viewLayout(view),
     subject: 'slots',
   });
@@ -815,10 +815,12 @@ export function mountEquipment(host, {
   };
   const openInventoryForSelection = (slotId, setIndex) => {
     picking = { slotId, setIndex };
+    view = 'hybrid';
     folded.set('inventory', false);
   };
   const clearInventorySelection = () => {
     picking = null;
+    view = 'rack';
     // A replacement flow always gives the equipment pane back after commit,
     // even in the Inventory view whose arrival preset normally opens this
     // tray. Leaving it expanded redraws a fresh actionable row underneath the
@@ -1322,71 +1324,15 @@ export function mountEquipment(host, {
     return box;
   }
 
-  /** The equipment-derived cards this loadout produces right now. */
+  /** The complete deck, using the same card faces as combat and piles. */
   function cardStrip() {
-    const box = options([], { class: 'equip-cards armoury-card-list', dataset: { component: 'armoury.cardList', cardView } });
-    const gridColumns = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
-      ? layout.responsive.phone.cardsGridColumns
-      : layout.cards.gridColumns;
-    box.style.setProperty('--armoury-card-grid-columns', String(gridColumns));
-    const groups = new Map();
+    const gallery = el('div', { class: 'armoury-card-gallery', 'aria-label': 'Your deck' });
     for (const inst of run.deck || []) {
-      // This tray is the equipment-card surface. Class/signature cards do not
-      // belong here; they have no armament source to inspect or compare.
-      if (!inst.equipmentRole) continue;
-      const key = inst.equipmentRole === 'attack'
-        ? `${inst.equipmentRole}|${inst.cardId}|${inst.profileId}`
-        : inst.equipmentRole;
-      const group = groups.get(key) || { inst, count: 0 };
-      group.count += 1;
-      groups.set(key, group);
+      const card = renderCard(registries, inst, {});
+      gallery.appendChild(card);
     }
-    for (const { inst, count: copyCount } of groups.values()) {
-      const rendered = renderCard(registries, inst, {});
-      const def = resolveCard(registries, inst);
-      const art = rendered.querySelector('.art')?.textContent || '❖';
-      const type = rendered.querySelector('.ctype')?.textContent || def.type;
-      const cost = rendered.querySelector('.cost')?.textContent || String(def.cost);
-      const mana = rendered.querySelector('.mana-cost');
-      const tags = rendered.querySelector('.ctags');
-      const text = rendered.querySelector('.ctext');
-      const fullText = text ? text.textContent.trim() : '';
-      const combatText = fullText.match(/^.*?[.!?](?:\s|$)/)?.[0].trim() || fullText;
-
-      // A CARD ROW is an OptionCard (glyph, name, type · cost, tags, the copy
-      // count as a StatePill) that opens a DetailCard: the art in an ArtWell
-      // beside the combat line, the full text and the flavour.
-      const tagList = tags ? [...tags.querySelectorAll('.ctag')].map((tag) => tag.textContent.trim()) : [];
-      const costLine = `${type} · ◆ ${cost}${mana ? ` · ${mana.textContent.trim()}` : ''}`;
-      const row = el('details', { class: 'armoury-card-row', dataset: { cardRow: '1', component: 'armoury.cardRow' } });
-      const summary = optionCard({
-        tag: 'summary', glyph: art, name: def.name, meta: costLine,
-        body: tagList.length ? el('span', { class: 'tags' }, tagList.map((tag) => tagChip({ label: tag }))) : null,
-        trail: pill({ label: `x${copyCount}`, attrs: { class: 'armoury-card-row-count role-copy-count' } }),
-        arrow: false, className: 'armoury-card-row-summary compact',
-      });
-      summary.querySelector('.on').replaceChildren(el('strong', { class: 'armoury-card-row-name', text: def.name }));
-      attachTooltip(summary, () => `<div class="tt-title">${esc(def.name)}</div><p>Tap to expand the card details.</p>`);
-
-      const detailsPane = el('div', { class: 'armoury-card-details-pane' }, [
-        eyebrow('Combat data'),
-        prose(combatText || 'No combat data authored.', { class: 'armoury-card-combat' }),
-      ]);
-      if (text) {
-        const textClone = text.cloneNode(true);
-        textClone.className = 'as-prose armoury-card-detail-text';
-        detailsPane.appendChild(textClone);
-      }
-      if (def.flavor) detailsPane.appendChild(flavour(def.flavor));
-      const detail = detailCard({
-        eyebrow: costLine, name: def.name,
-        children: el('div', { class: 'armoury-card-row-detail' }, [artWell({ glyph: art }), detailsPane]),
-      });
-      row.append(summary, detail);
-      box.appendChild(row);
-    }
-    if (!groups.size) box.appendChild(flavour('No equipment cards are active.', { class: 'ep-hint' }));
-    return box;
+    if (!gallery.children.length) gallery.appendChild(prose('Your deck is empty.'));
+    return gallery;
   }
 
   function equipmentReceiptPanel(surface) {
@@ -1790,36 +1736,6 @@ export function mountEquipment(host, {
     draw();
   }
 
-  function regionTray(r) {
-    const source = wrap.querySelector(r.sel);
-    if (!source) return null;
-    const count = r.count(source);
-    const section = el('details', { class: 'armoury-section armoury-disclosure', dataset: { region: r.id, role: 'context' } });
-    section.classList.add(...source.classList);
-    section.open = folded.get(r.id) !== true;
-    const head = el('summary', { class: 'armoury-section-head', dataset: { fold: r.id } }, [titleS(r.id === 'inventory' ? 'Your inventory' : r.label), count == null ? null : pill({ label: String(count) })]);
-    const content = el('div', { class: 'armoury-section-content' });
-    while (source.firstChild) content.appendChild(source.firstChild);
-    if (r.id === 'cards') {
-      const toggle = button({ label: cardView === 'list' ? 'Grid view' : 'List view', className: 'armoury-card-view-toggle' });
-      toggle.addEventListener('click', () => { cardView = cardView === 'list' ? 'grid' : 'list'; draw(); wrap.querySelector('.armoury-strip .armoury-card-view-toggle')?.focus({ preventScroll: true }); });
-      content.prepend(toggle);
-      section.dataset.cardView = cardView;
-    }
-    section.append(head, content);
-    section.addEventListener('toggle', () => {
-      if (!section.isConnected) return;
-      folded.set(r.id, !section.open);
-      armouryTraySession.folded.set(r.id, !section.open);
-    });
-    source.replaceWith(section);
-    return section;
-  }
-
-  function mountRegionTrays() {
-    for (const region of contextRegions()) regionTray(region);
-  }
-
   /**
    * Every region says what it is, and every CONTEXT region gets its control.
    *
@@ -1856,7 +1772,7 @@ export function mountEquipment(host, {
     const panelModel = armouryPanelModel({
       view,
       views: viewIds(),
-      viewLabels: Object.fromEntries(Object.entries(layout.viewModes).map(([id, mode]) => [id, ({ character: 'Character', inventory: 'Equipment', both: 'Overview' })[mode.pane] || id])),
+      viewLabels: Object.fromEntries(Object.entries(layout.viewModes).map(([id, mode]) => [id, mode.label || id])),
       layout: L,
       subject: 'slots',
       picking: !!picking,
@@ -1875,6 +1791,7 @@ export function mountEquipment(host, {
     const panel = rendered.panel;
     panel.dataset.viewMode = viewMode().label;
     panel.dataset.pane = viewMode().pane;
+    panel.dataset.page = view;
     panel.dataset.characterState = viewMode().character;
     panel.dataset.composition = 'character-equipment';
     panel.dataset.responsive = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
@@ -1908,7 +1825,7 @@ export function mountEquipment(host, {
     // ONE of them — which is how a legal combination of the other reached a
     // branch that ignored it (Vira, gate of 5c49fed).
     const build = L && LAYOUTS[L.cell];
-    if (build) {
+    if (build && view !== 'hybrid' && view !== 'cards') {
       build(L, {
         left, right, blocks,
         layout,
@@ -1932,19 +1849,23 @@ export function mountEquipment(host, {
         figure: () => figureFor(registries, run, cz),
         character: () => characterPanel(),
       });
-    } else {
+    } else if (!build) {
       console.error(`[content] the armoury view ${JSON.stringify(view)} has no layout`
         + ` — its row must ask for a combination the screen has: ${viewCellsSay()}`
         + ' in src/content/balance.js. This line is the defect, not a fallback.');
       right.appendChild(blocker(`The "${view}" view is declared but has no layout. Pick another view above.`, { attrs: { class: 'armoury-notice' } }));
     }
     const inventory = wrap.querySelector('.armoury-inventory');
-    if (inventory) inventory.appendChild(inventoryBlock());
-    wrap.querySelector('.armoury-strip').appendChild(cardStrip());
-    const statsTray = wrap.querySelector('.armoury-stats-tray');
-    if (viewMode().pane === 'inventory') statsTray.appendChild(statsComparison());
-    else statsTray.remove();
-    mountRegionTrays();
+    const cards = wrap.querySelector('.armoury-strip');
+    wrap.querySelector('.armoury-stats-tray').remove();
+    if (view === 'hybrid') {
+      wrap.querySelector('.armoury-body').remove();
+      inventory.append(titleS('Your inventory'), prose('Select an item to see its details and available actions.'), inventoryBlock());
+    } else inventory.remove();
+    if (view === 'cards') {
+      wrap.querySelector('.armoury-content').remove();
+      cards.append(titleS(`Cards · ${(run.deck || []).length}`), prose('Your complete deck, including class and equipment cards.'), cardStrip());
+    } else cards.parentElement.remove();
 
     const applyPaneDensity = () => {
       const equipmentPane = panel.querySelector('.armoury-equipment');

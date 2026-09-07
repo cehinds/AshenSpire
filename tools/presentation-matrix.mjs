@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // Final phone presentation contract: source/dist x Grace/creation/Armoury x 320/390.
-// This is deliberately an observed-red tool on the Viki-only branch: Grace is
-// present, while starting-kit and equipment-role receipts arrive with Rune's
-// union. It captures every cell even when assertions fail so the red is visible.
+// Use --surface armoury for the dedicated-tab contract. The default keeps all
+// three surfaces and captures failed cells so older fixture drift stays visible.
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
@@ -27,7 +26,10 @@ const SHAPES = [
   { tag: '390x844', width: 390, height: 844 },
 ];
 const TREES = ['source', 'dist'];
-const SURFACES = ['grace', 'creation', 'armoury'];
+const ALL_SURFACES = ['grace', 'creation', 'armoury'];
+const requestedSurface = arg('--surface', 'all');
+if (requestedSurface !== 'all' && !ALL_SURFACES.includes(requestedSurface)) throw new Error(`Unknown surface: ${requestedSurface}`);
+const SURFACES = requestedSurface === 'all' ? ALL_SURFACES : [requestedSurface];
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 
 function connect(wsUrl) {
@@ -136,22 +138,21 @@ function contract(surface, reading) {
     need(reading.signatureRows === 1, 'creation: the fourth row is the fixed class signature');
     need(reading.rolesVisible === true, 'creation: all four role rows are visible in the detail evidence');
   } else if (surface === 'armoury') {
-    need(reading.view === 'hybrid', 'armoury: Hybrid view is selected');
-    need((reading.derived || []).join('|') === 'HP|Mana|Stamina|Actions / turn|Draw / turn and opening hand',
-      'armoury: canonical five derived receipts render in order');
+    need(reading.view === 'hybrid', 'armoury: Inventory tab is selected');
+    need(reading.attributeCount === 5, 'armoury: Character contains all five primary attribute cards');
     need((reading.roles || []).join('|') === 'attack|guard|technique',
       'armoury: Attack, Guard and Technique share one equipment receipt panel');
     need(reading.hasReceiptMath === true, 'armoury: role receipts show base, tier, rarity and total');
-    need(reading.cardsRegionOpen === true, 'armoury: canonical Cards receipt region is visibly open');
-    need(reading.cardCount === 4, 'armoury: Cards region truthfully counts four card types');
-    need(reading.candidateOpen === true, 'armoury: a candidate before/after comparison is visibly open');
-    need(reading.candidateRoles >= 1, 'armoury: candidate comparison exposes before/after card numbers');
-    need(reading.hasRequirements && reading.hasPoise && reading.hasEffects && reading.hasResources,
-      'armoury: candidate comparison exposes requirements, poise, effects and resource changes');
+    need(reading.cardsRegionOpen === true, 'armoury: Cards tab exposes a portrait card gallery');
+    need(reading.cardCount > 0 && reading.cardCount === reading.expectedCardCount, 'armoury: Cards tab count matches the complete deck heading');
+    need(reading.candidateOpen === true, 'armoury: an Inventory item disclosure is open');
+    need(reading.candidateRoles >= 1, 'armoury: expanded inventory item exposes information');
+    need(reading.hasModel && reading.hasAction,
+      'armoury: expanded inventory item exposes its model and equipment action');
     need(reading.candidateProofVisible === true,
-      'armoury: candidate identity, before/after, requirements, effects, resources and poise are visible');
+      'armoury: Inventory disclosure is reachable without horizontal clipping');
     need(reading.primaryProofVisible === true,
-      'armoury: role math, requirements and poise are visible in the primary evidence');
+      'armoury: Character equipment role math is reachable without horizontal clipping');
   }
   return failures;
 }
@@ -165,9 +166,9 @@ function proveMutants() {
     derived: ['HP', 'Mana', 'Stamina', 'Actions / turn', 'Draw / turn and opening hand'], roleRows: 4,
     equipmentReceiptRows: 3, signatureRows: 1, hasReceiptMath: true, rolesVisible: true };
   const armoury = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
-    view: 'hybrid', derived: [...creation.derived], roles: ['attack', 'guard', 'technique'], hasReceiptMath: true,
-    cardsRegionOpen: true, cardCount: 4, candidateOpen: true, candidateRoles: 3,
-    hasRequirements: true, hasPoise: true, hasEffects: true, hasResources: true,
+    view: 'hybrid', attributeCount: 5, roles: ['attack', 'guard', 'technique'], hasReceiptMath: true,
+    cardsRegionOpen: true, cardCount: 4, expectedCardCount: 4, candidateOpen: true, candidateRoles: 3,
+    hasModel: true, hasAction: true,
     candidateProofVisible: true, primaryProofVisible: true };
   const plants = [
     ['missing landmark', 'grace', grace, (x) => { x.mounted = false; }],
@@ -180,7 +181,7 @@ function proveMutants() {
     ['missing role receipt', 'creation', creation, (x) => { x.roleRows = 3; }],
     ['signature mistaken for scaling math', 'creation', creation, (x) => { x.signatureRows = 0; x.equipmentReceiptRows = 4; }],
     ['role rows below crop', 'creation', creation, (x) => { x.rolesVisible = false; }],
-    ['duplicate derived math', 'armoury', armoury, (x) => { x.derived[3] = 'Energy'; }],
+    ['missing primary attribute', 'armoury', armoury, (x) => { x.attributeCount = 4; }],
     ['missing equipment role', 'armoury', armoury, (x) => { x.roles.pop(); }],
     ['false cards count', 'armoury', armoury, (x) => { x.cardCount = 0; }],
     ['hidden candidate receipt', 'armoury', armoury, (x) => { x.candidateOpen = false; }],
@@ -236,26 +237,20 @@ const READERS = {
       rolesVisible:roleBoxes.length===4&&roleBoxes.every((x)=>x.left>=0&&x.right<=innerWidth&&x.top>=0&&x.bottom<=innerHeight) };
   })()`,
   armoury: `(() => {
-    const n=(value)=>Math.round(value*100)/100;
     const viewButtons=[...document.querySelectorAll('[data-surface="armouryView"] [data-member]')];
-    const boxes=viewButtons.map((x)=>x.getBoundingClientRect());
-    const derived=[...document.querySelectorAll('.statproj-derived [data-stat] > b')].map((x)=>x.textContent.trim());
-    const roles=[...document.querySelectorAll('.equip-role-receipts [data-role]')].map((x)=>x.dataset.role);
-    const receiptText=[...document.querySelectorAll('.equip-role-receipts [data-role]')].map((x)=>x.textContent);
-    const cards=document.querySelector('[data-region="cards"]');
-    const comparison=document.querySelector('.equip-candidate-comparison[open]');
-    const visible=(x)=>{const b=x?.getBoundingClientRect();return !!b&&b.left>=0&&b.right<=innerWidth&&b.top>=0&&b.bottom<=innerHeight;};
-    const proof=comparison?[comparison.querySelector('summary'),comparison.querySelector('.equip-card-changes'),comparison.querySelector('.equipment-requirements'),...comparison.querySelectorAll('section')]:[];
-    return { mounted: !!document.querySelector('.armoury-stats'), horizontalOverflow: Math.max(0,document.documentElement.scrollWidth-innerWidth),
-      minControl: boxes.length?n(Math.min(...boxes.map((x)=>Math.min(x.width,x.height)))):0,
-      controlsOutside: boxes.filter((x)=>x.left<0||x.right>innerWidth||x.top<0||x.bottom>innerHeight).length,
-      view: document.querySelector('.armoury')?.dataset.view || '', derived, roles,
-      hasReceiptMath: receiptText.length===3 && receiptText.every((x)=>/base/i.test(x)&&/tier/i.test(x)&&/rarity/i.test(x)&&/=/.test(x)),
-      cardsRegionOpen:cards?.dataset.collapsed==='0', cardCount:Number(cards?.querySelector('.rf-count')?.textContent.match(/\\d+/)?.[0]),
-      candidateOpen:!!comparison, candidateRoles:comparison?.querySelectorAll('.equip-card-changes [data-role]').length||0,
-      hasRequirements:!!comparison?.querySelector('.equipment-requirements'), hasPoise:!!comparison?.querySelector('.player-poise-receipt'),
-      hasEffects:/Explicit added effects/.test(comparison?.textContent||''), hasResources:/Resource changes/.test(comparison?.textContent||''),
-      candidateProofVisible:proof.length>=5&&proof.every(visible) };
+    const boxes=viewButtons.map(x=>x.getBoundingClientRect());
+    const panel=document.querySelector('.armoury');
+    const reveal=document.querySelector('.armoury-inventory .disc-reveal:not([hidden])');
+    const rect=reveal?.getBoundingClientRect();
+    return { ...window.__armouryEvidence,
+      mounted:!!panel, horizontalOverflow:Math.max(0,document.documentElement.scrollWidth-innerWidth,panel.scrollWidth-panel.clientWidth),
+      minControl:boxes.length?Math.round(Math.min(...boxes.map(x=>Math.min(x.width,x.height)))*100)/100:0,
+      controlsOutside:boxes.filter(x=>x.left<0||x.right>innerWidth||x.top<0||x.bottom>innerHeight).length,
+      view:panel.dataset.view,
+      candidateOpen:!!reveal,candidateRoles:reveal?.querySelectorAll('.inventory-information').length||0,
+      hasModel:!!reveal?.querySelector('.inventory-model'),hasAction:!!reveal?.querySelector('[data-act]'),
+      candidateProofVisible:!!rect&&rect.width>0&&rect.left>=0&&rect.right<=innerWidth,
+    };
   })()`,
 };
 
@@ -299,20 +294,27 @@ async function pose(b, base, surface) {
     await b.evaluate('document.querySelector("#combat-armoury").click(); true');
     await b.until('!!document.querySelector(".armoury")', 'Armoury');
     await b.evaluate(`(() => {
-      const button=document.querySelector('[data-surface="armouryView"] [data-member="hybrid"]'); if(button) button.click();
-      const fold=document.querySelector('.region-fold[data-fold="cards"]'); if(fold && fold.getAttribute('aria-expanded')==='false') fold.click();
-      const slot=document.querySelector('.equip-slot .es-cell.on')||document.querySelector('.equip-slot .es-cell'); if(slot) slot.click();
+      const tab=id=>document.querySelector('[data-surface="armouryView"] [data-member="'+id+'"]').click();
+      tab('grid');
+      const attributeCount=document.querySelectorAll('.character-attributes .cc-attribute-card').length;
+      const roles=[...document.querySelectorAll('.equip-role-receipts [data-role]')].map(x=>x.dataset.role);
+      const receipts=[...document.querySelectorAll('.equip-role-receipts [data-role]')].map(x=>x.textContent);
+      const receipt=document.querySelector('.equipmentReceiptsCard');
+      if(receipt) receipt.open=true;
+      window.__armouryEvidence={attributeCount,roles,
+        hasReceiptMath:receipts.length===3&&receipts.every(x=>/base/i.test(x)&&/tier/i.test(x)&&/rarity/i.test(x)&&/=/.test(x))};
+      tab('cards');
+      const cards=[...document.querySelectorAll('.armoury-card-gallery > .card')];
+      window.__armouryEvidence.cardCount=cards.length;
+      window.__armouryEvidence.expectedCardCount=Number(document.querySelector('.armoury-strip .as-title')?.textContent.match(/\\d+/)?.[0]||document.querySelector('.armoury-strip')?.textContent.match(/Cards[^0-9]*(\\d+)/)?.[1]||0);
+      window.__armouryEvidence.cardsRegionOpen=cards.length>0&&cards.every(x=>{const r=x.getBoundingClientRect();return r.width>0&&Math.abs(r.width/r.height-5/7)<0.03;});
+      tab('hybrid');
+      const face=document.querySelector('.armoury-inventory .disc-face');
+      if(face){const r=face.getBoundingClientRect();for(const type of ['pointerdown','pointerup','click']) face.dispatchEvent(new (type==='click'?MouseEvent:PointerEvent)(type,{bubbles:true,cancelable:true,pointerId:779,pointerType:'mouse',button:0,detail:1,clientX:r.left+r.width/2,clientY:r.top+r.height/2}));}
+      document.querySelector('.armoury-inventory .disc-reveal:not([hidden])')?.scrollIntoView({block:'center'});
       return true;
     })()`);
-    await b.until('document.querySelector("[data-region=cards]")?.dataset.collapsed==="0"', 'open Cards receipts');
-    await b.until('!!document.querySelector(".equip-candidate-comparison")', 'candidate comparison');
-    await b.evaluate(`(() => {
-      const comparison=document.querySelector('.equip-candidate-comparison'); comparison.open=true;
-      const pane=comparison.closest('.armoury-right');
-      if(pane) pane.scrollIntoView({block:'start'});
-      comparison.scrollIntoView({block:'center'});
-      return true;
-    })()`);
+    await b.until('!!document.querySelector(".armoury-inventory .disc-reveal:not([hidden])")', 'Inventory disclosure');
   }
   await wait(180);
 }
@@ -347,11 +349,13 @@ async function main() {
               await b.evaluate(`document.querySelector('#cz-kits')?.scrollIntoView({block:'start'}); true`);
             } else {
               reading.primaryProofVisible = await b.evaluate(`(() => {
-                const cards=document.querySelector('[data-region="cards"]');
-                const roles=cards?.querySelector('.equip-role-receipts');
-                if(cards&&roles){cards.scrollTop=Math.max(0,roles.offsetTop-cards.offsetTop-4);cards.scrollIntoView({block:'end'});}
-                const visible=(x)=>{const b=x?.getBoundingClientRect();return !!b&&b.left>=0&&b.right<=innerWidth&&b.top>=0&&b.bottom<=innerHeight;};
-                return !!roles&&[...roles.querySelectorAll('[data-role]'),roles.querySelector('.equipment-requirements'),roles.querySelector('.player-poise-receipt')].every(visible);
+                document.querySelector('[data-surface="armouryView"] [data-member="grid"]').click();
+                const receipt=document.querySelector('.equipmentReceiptsCard');
+                if(receipt) receipt.open=true;
+                const roles=receipt?.querySelector('.equip-role-receipts');
+                roles?.scrollIntoView({block:'center'});
+                const visible=x=>{const b=x?.getBoundingClientRect();return !!b&&b.width>0&&b.left>=0&&b.right<=innerWidth;};
+                return !!roles&&[...roles.querySelectorAll('[data-role]')].every(visible);
               })()`);
             }
             await wait(100);
@@ -383,7 +387,7 @@ async function main() {
   }
   const red = rows.filter((row) => row.failures.length);
   writeFileSync(resolve(OUT, 'presentation-matrix.json'), JSON.stringify(rows, null, 2));
-  console.log(`\npresentation-matrix: ${rows.length - red.length}/12 green, ${red.length}/12 red; 20/20 screenshots written (12 primary + 8 detail)`);
+  console.log(`\npresentation-matrix: ${rows.length - red.length}/${rows.length} green, ${red.length}/${rows.length} red; ${rows.length + rows.filter(row => row.detailShot).length} screenshots written`);
   console.log('BOUNDARY: headless Chrome stills at two phone shapes. This checks DOM truth, geometry, and source/dist parity; it does not certify touch feel, animation, or desktop.');
   process.exit(red.length ? 1 : 0);
 }

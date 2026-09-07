@@ -402,7 +402,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     const message = statusText(quote.reason || (mode === 'sell' ? 'Tier and mounted cards stay with this item if you reacquire it. Discovery is retained.' : 'Adds this armament to inventory. Equip it in the Armoury.'));
     message.setAttribute('role', 'status');
     const detail = renderInventoryDetailCard(inventoryDetailCardModel({
-      row: armamentRow(def), art: { kind: 'image', value: assetUrl(`assets/equipment/icon_${def.artKey || def.id}.webp`) },
+      row: armamentRow(def), art: { kind: 'image', value: assetUrl(`assets/equipment/icon_${def.id}.webp`) },
       description: def.blurb || '', mods: modEffectLines(registries, def),
       instruction: `Smithing tier ${packageInfo.tier}. Attached cards: ${packageInfo.mounts.map((mount) => mount.cardName).join(', ') || 'none'}.`,
     }));

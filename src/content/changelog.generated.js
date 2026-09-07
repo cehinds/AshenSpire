@@ -3,12 +3,72 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-793",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Painted techniques, and a glow that follows the figure",
+    "detail": "Combat techniques get their own painted art, and the aura a fighter wears is drawn to the shape of the figure rather than to a box around it, so a lit effect follows the silhouette it belongs to.",
+    "build": "0.5.5.119",
+    "pullRequest": 793,
+    "url": "https://github.com/cehinds/AshenSpire/pull/793"
+  },
+  {
+    "id": "pr-791",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "What the combat animations and auras are supposed to do, written down",
+    "detail": "Nothing a player sees changes. The approved behaviour for the combat animation path and for the auras that ride on it is recorded, so the next change to either has something to be measured against instead of being read back out of the code.",
+    "build": "0.5.5.118",
+    "pullRequest": 791,
+    "url": "https://github.com/cehinds/AshenSpire/pull/791"
+  },
+  {
+    "id": "pr-792",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The receipts catch up on three merges",
+    "detail": "Nothing a player sees changes. The painted armaments (#778), the Star Seer's standing idle (#780) and the Armoury heading fix (#768) had all landed without an entry here, so the changelog inside the game did not carry them either. Each is written up at the build ordinal standing at its own merge, and the projection was regenerated from this file so both now say the same thing. The gate added in #652 is what named the three, rather than someone reading the merge log.",
+    "build": "0.5.5.124",
+    "pullRequest": 792,
+    "url": "https://github.com/cehinds/AshenSpire/pull/792"
+  },
+  {
+    "id": "pr-768",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The Armoury's card headings stay inside their own borders",
+    "detail": "On a narrow screen the Equipment cards summary could spill below the bordered heading it belongs to: the shared read-only row style let the text wrap while the heading itself kept a fixed height, so the words went outside the box. Those headings now put the label above the summary and grow to hold both, and the read-only rule no longer applies to them. Text keeps a 15px floor. The narrow Hybrid equipment pane has a separate clipping problem of its own, which this does not touch.",
+    "build": "0.5.5.118",
+    "pullRequest": 768,
+    "url": "https://github.com/cehinds/AshenSpire/pull/768"
+  },
+  {
+    "id": "pr-780",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The Star Seer stands with the staff",
+    "detail": "The Star Seer's resting pose in combat is the standing staff figure rather than the previous idle, across the base class and all three of its armour sets.",
+    "build": "0.5.5.117",
+    "pullRequest": 780,
+    "url": "https://github.com/cehinds/AshenSpire/pull/780"
+  },
+  {
+    "id": "pr-778",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "All twenty-five armaments are painted",
+    "detail": "Every weapon and shield in the game now has its own painted item art, and the Armoury cards that show them were refreshed to suit: the silhouette reads against the well it sits in, in the inventory list and in the opened detail alike. Reference sheets for the set are kept beside the art. The single-file download grows, because these are inlined into it like every other asset.",
+    "build": "0.5.5.116",
+    "pullRequest": 778,
+    "url": "https://github.com/cehinds/AshenSpire/pull/778"
+  },
+  {
     "id": "pr-779",
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Armoury navigation is simpler and menu cancellation is reliable",
-    "detail": "Equipment, Character and Overview use one scrolling page with readable gear cards and ordinary foldouts. Change shows compatible inventory choices with a clear way to show all items again. Resizing no longer closes the item being read. In-run Load explains unavailable empty slots; Smith cancellation closes only the topmost dialog and supports clicking its backdrop.",
-    "build": "0.5.5.115",
+    "detail": "Character, Equipment, Inventory and Cards have dedicated tabs instead of supporting trays. Stats stay with Character; the complete deck uses large, separate card faces that remain readable on phones. Change shows compatible inventory choices with a clear way to show all items again. Resizing no longer closes the item being read. In-run Load explains unavailable empty slots; Smith cancellation closes only the topmost dialog and supports clicking its backdrop.",
+    "build": "0.5.5.120",
     "pullRequest": 779,
     "url": "https://github.com/cehinds/AshenSpire/pull/779"
   },

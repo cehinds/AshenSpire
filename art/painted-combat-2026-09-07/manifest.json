@@ -1046,13 +1046,13 @@
       "frames": [
         {
           "pose": "idle",
-          "sourcePose": "guard",
+          "sourcePose": "stand",
           "sourceSheet": "menu-sheets/starseer.png",
           "file": "combat/starseer/idle.png",
           "box": {
-            "x0": 217,
-            "x1": 455,
-            "y0": 318,
+            "x0": 239,
+            "x1": 422,
+            "y0": 260,
             "y1": 601
           },
           "anchor": [
@@ -1175,13 +1175,13 @@
       "frames": [
         {
           "pose": "idle",
-          "sourcePose": "guard",
+          "sourcePose": "stand",
           "sourceSheet": "menu-sheets/starseer-eclipse.png",
           "file": "combat/starseer-eclipse/idle.png",
           "box": {
-            "x0": 197,
-            "x1": 451,
-            "y0": 301,
+            "x0": 201,
+            "x1": 458,
+            "y0": 260,
             "y1": 600
           },
           "anchor": [
@@ -1304,13 +1304,13 @@
       "frames": [
         {
           "pose": "idle",
-          "sourcePose": "guard",
+          "sourcePose": "stand",
           "sourceSheet": "menu-sheets/starseer-starlit.png",
           "file": "combat/starseer-starlit/idle.png",
           "box": {
-            "x0": 196,
-            "x1": 499,
-            "y0": 299,
+            "x0": 193,
+            "x1": 449,
+            "y0": 261,
             "y1": 601
           },
           "anchor": [
@@ -1433,13 +1433,13 @@
       "frames": [
         {
           "pose": "idle",
-          "sourcePose": "guard",
+          "sourcePose": "stand",
           "sourceSheet": "menu-sheets/starseer-astral.png",
           "file": "combat/starseer-astral/idle.png",
           "box": {
-            "x0": 207,
-            "x1": 489,
-            "y0": 299,
+            "x0": 199,
+            "x1": 453,
+            "y0": 260,
             "y1": 600
           },
           "anchor": [
