@@ -1143,7 +1143,8 @@ export const balance = {
     views: [
       { id: 'grid', figure: true, slots: 'flank' },
       { id: 'rack', figure: false, slots: 'list' },
-      { id: 'hybrid', figure: true, slots: 'list' },
+      { id: 'hybrid', figure: false, slots: 'list' },
+      { id: 'cards', figure: false, slots: 'list' },
     ],
     // WHICH PANE IS THE SUBJECT. One field, and it is the whole of "collapsible"
     // (#90). Constantine: *"I still want the armoury card list to be collapsable
