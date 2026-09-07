@@ -84,12 +84,11 @@ if (process.argv.includes('--selftest')) {
         // answering the hit-test in a node's place.
         name: 'the zoom stack floats over the map canvas again (the #21-shaped covered node)',
         file: 'styles/map.css',
-        // It floats over the TOP band, where the map's own controls actually
-        // sit at this shape — the bottom band is a pannable canvas whose nodes
-        // are mostly SCROLLED OUT, which this tool correctly does not count, so
-        // a bottom-floating plant reproduces nothing. Measured, not assumed:
-        // bottom => 0 COVERED, top => 3 COVERED.
-        append: '.map-zoom { position: fixed; left: 0; right: 0; top: 0; height: 14vh; z-index: 60; }',
+        // Cover the top half and explicitly restore hit interception. The old
+        // 14vh plant only reported the unrelated Quick Access overlap; after
+        // fixing that overlap it caught nothing. Keep this mutation focused
+        // on the zoom strip intercepting otherwise reachable map controls.
+        append: '.map-zoom { position: fixed !important; left: 0 !important; right: 0 !important; top: 0 !important; bottom: auto !important; height: 50vh !important; pointer-events: auto !important; z-index: 9999 !important; }',
         // `map` by name, because the boss screen legitimately reports 10
         // COVERED by design (its splash) — a bare `N COVERED` regex matches
         // that expected line and would have called a green run a catch.
@@ -434,7 +433,7 @@ async function main() {
   // Chrome's own TMPDIR inside it, and removes it whatever happens.
   const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
     prefix: 'screenreach-', browser: browserPath,
-    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
+    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling', '--disable-background-networking', '--disable-component-update'],
     timeoutMs: 12000,
   });
   const cdp = connectCdp(wsUrl); await cdp.ready;
@@ -483,7 +482,7 @@ async function main() {
   if (shapesRun === 0) {
     console.error(`\nscreenreach: --only ${only} matched no shape. Nothing was tested, so this is unknown, not a pass.`);
     console.error(`  shapes: ${SHAPES.map((v) => `${v.w}x${v.h}`).join(', ')}`);
-    cdp.close(); await dropBrowser(); if (server) server.close();
+    await Promise.race([cdp.send('Browser.close').catch(() => {}), new Promise(done => setTimeout(done, 1200))]); cdp.close(); await dropBrowser(); if (server) server.close();
     process.exit(2);
   }
 
@@ -511,7 +510,7 @@ async function main() {
 
   console.log(`\n  ${fails.length ? `FAIL — ${fails.length}` : `screenreach: OK — ${shapesRun * SCREENS.length} checks passed`}`);
   for (const f of fails) console.log(`    - ${f}`);
-  cdp.close(); await dropBrowser(); if (server) server.close();
+  await Promise.race([cdp.send('Browser.close').catch(() => {}), new Promise(done => setTimeout(done, 1200))]); cdp.close(); await dropBrowser(); if (server) server.close();
   process.exit(fails.length ? 1 : 0);
 }
 

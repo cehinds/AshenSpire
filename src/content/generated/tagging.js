@@ -545,6 +545,36 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "extractable"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "greatswordSunderingHew",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "greatswordSunderingHew",
+    "tagId": "extractable"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "guardCounter",
     "tagId": "guard"
   },

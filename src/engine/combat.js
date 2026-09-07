@@ -20,8 +20,10 @@ import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } from '../model/state.js';
-import { playerPoiseThresholdReceipt, playerLoadReceipt } from '../model/statProjection.js';
-import { canSwap, cycleSet, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
+import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
+import { playerWeightClass } from '../model/combatWeight.js';
+export { playerWeightClass };
+import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
@@ -123,8 +125,8 @@ export function createCombat({
       itemUpgradeLevels: player.itemUpgradeLevels || {},
     }),
     enemies: [],
-    // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
-    // still swapped when the fight ends.
+    // The SAME object the run holds, not a copy: equipment changed mid-fight is
+    // still changed when the fight ends.
     loadout: player.loadout || null,
     attributes: player.attributes ? { ...player.attributes } : null,
     swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
@@ -543,6 +545,9 @@ export function dispatch(combat, intent) {
       case 'swapArmament':
         doSwapArmament(combat, intent);
         break;
+      case 'changeEquipment':
+        doChangeEquipment(combat, intent);
+        break;
       default:
         throw new Error(`Unknown combat intent '${intent.type}'`);
     }
@@ -677,33 +682,107 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   if (cfg.swapEndsTurn) doEndTurn(combat);
 }
 
-function needsEnemyTarget(def) {
-  return (def.effects || []).some((eff) => eff.target === 'enemy');
+/**
+ * Replace, move, or unequip one carried item during the player's turn.
+ *
+ * This is a combat intent rather than a UI-side loadout edit because equipment
+ * changes can rewrite live card piles, resource vessels, Poise, Energy, and the
+ * persisted combat snapshot. The existing swap price is reused so switching a
+ * prepared set and re-arming one position remain one predictable action economy.
+ */
+function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
+  if (combat.phase !== 'player') throw new Error('Equipment can only be changed on your turn');
+  const cfg = combat.registries.balance.equipment || {};
+  if (!cfg.enabled) throw new Error('Equipment is disabled');
+  if (!combat.loadout) throw new Error('This combat has no loadout');
+
+  const allowed = canEquip(combat.registries, slotId, { inCombat: true });
+  if (!allowed.ok) throw new Error(allowed.reason);
+
+  const p = combat.player;
+  const owned = ownership(combat.registries, { meta: {}, loadout: combat.loadout });
+  const equipContext = {
+    inCombat: true,
+    attributes: combat.attributes,
+    itemUpgradeLevels: combat.itemUpgradeLevels,
+    armamentLevels: combat.armamentLevels,
+    classId: p.classId,
+  };
+
+  // Validate and price the requested destination before touching combat state.
+  // Category pricing follows the item being equipped, so the preview loadout is
+  // the exact input swapCostFor needs for this action.
+  const previewLoadout = structuredClone(combat.loadout);
+  if (!equipPiece(combat.registries, previewLoadout, slotId, setIndex, pieceId, owned, equipContext)) {
+    throw new Error('That equipment change is not available');
+  }
+  const price = swapCostFor(combat.registries, {
+    rule: combat.swapCostRule,
+    loadout: previewLoadout,
+    classId: p.classId,
+    slotId,
+    setIndex,
+    relicDelta: passiveSum(combat.registries, p.relicIds, 'swapCostDelta'),
+  });
+  if (cfg.swapCostKind === 'allowance') {
+    if ((combat.swapsLeft || 0) < 1) throw new Error('No equipment changes left this turn');
+  } else if (p.energy < price.cost) {
+    throw new Error(`Changing equipment costs ${price.cost} Energy`);
+  }
+
+  const poolBefore = runMods(combat.registries, combat.loadout, p.classId);
+  let changeEvent = null;
+  if (!equipPiece(combat.registries, combat.loadout, slotId, setIndex, pieceId, owned, {
+    ...equipContext,
+    onEquipmentChanged: (event) => { changeEvent = event; },
+  })) {
+    throw new Error('That equipment change is no longer available');
+  }
+  const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
+  combat.equipmentChanged = true;
+  const currentFor = { maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' };
+  for (const maxField of EQUIPMENT_POOL_FIELDS) {
+    const currentField = currentFor[maxField];
+    const floor = maxField === 'maxHp' ? 1 : 0;
+    const nextMax = Math.max(floor, p[maxField] + poolAfter[maxField] - poolBefore[maxField]);
+    combat.equipmentPoolDeficits[currentField] = moveEquipmentPool(
+      p, maxField, nextMax, combat.equipmentPoolDeficits[currentField],
+    );
+  }
+
+  if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
+  else p.energy -= price.cost;
+
+  const run = {
+    deck: [],
+    loadout: combat.loadout,
+    class: p.classId,
+    attributes: combat.attributes,
+    itemUpgradeLevels: combat.itemUpgradeLevels,
+    equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
+    equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
+    itemMounts: combat.itemMounts,
+  };
+  reconcileGrantedCardsInCombat(combat.registries, run, combat.piles);
+  for (const pile of [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust]) {
+    stampDeck(combat.registries, run, pile);
+  }
+  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
+    loadout: combat.loadout,
+    relics: p.relicIds || [],
+    class: p.classId,
+    itemUpgradeLevels: combat.itemUpgradeLevels || {},
+  }).value);
+
+  if (changeEvent) combat.emit('equipmentChanged', changeEvent);
+  combat.emit('equipmentRearmed', {
+    slotId, setIndex, pieceId, cost: price.cost, rule: price.ruleId,
+  });
+  if (cfg.swapEndsTurn) doEndTurn(combat);
 }
 
-/**
- * The Weight Class the player fights in — derived, never stored: the loadout
- * this fight holds (the SAME object the run holds, so a mid-fight swap moves
- * it) and the run attributes, decided by the framework (bridge.weightClass
- * over playerLoadReceipt). A fixture with no loadout or attributes carries no
- * load and stands Light, the contract's zero-load class.
- */
-export function playerWeightClass(combat) {
-  const registries = combat.registries;
-  if (combat.loadout && combat.attributes) {
-    const receipt = playerLoadReceipt(registries, {
-      loadout: combat.loadout, attributes: combat.attributes, class: combat.player.classId,
-      itemUpgradeLevels: combat.itemUpgradeLevels || {},
-    });
-    return registries.framework.weightClass({
-      attributes: combat.attributes,
-      weights: { mainHandWeight: receipt.hands, offHandWeight: 0, armorWeight: receipt.armour, otherCountedWeight: 0 },
-    });
-  }
-  return registries.framework.weightClass({
-    attributes: { constitution: 10, strength: 10, ...(combat.attributes || {}) },
-    weights: { mainHandWeight: 0, offHandWeight: 0, armorWeight: 0, otherCountedWeight: 0 },
-  });
+function needsEnemyTarget(def) {
+  return (def.effects || []).some((eff) => eff.target === 'enemy');
 }
 
 // Effective numeric cost after relic passives (powerCostReduction, min 0).

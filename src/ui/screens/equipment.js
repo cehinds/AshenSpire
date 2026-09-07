@@ -25,12 +25,13 @@ import { renderCard, relicText } from '../components/card.js';
 import {
   renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies,
 } from '../components/equipmentReceipts.js';
-import { esc, attachTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
+import { esc, attachTooltip, hideTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
 import { armHold, holdMs, HOLD_POINTER_SLOP } from '../../framework/optionDecision.js';
 import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
+import { reducedMotionRequested } from '../motion.js';
 import { statProjection, pieceWeight } from '../../model/statProjection.js';
 import { resolveUpgradedEquipment } from '../../model/itemUpgrades.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
@@ -39,7 +40,7 @@ import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import {
   equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
-  orderArmourySlots,
+  orderArmouryPositions, orderArmourySlots,
 } from '../../model/armouryLayout.js';
 import {
   armouryOverlayModel, armouryPanelModel, equipmentSetCellModel, equipmentSlotModel,
@@ -342,7 +343,9 @@ function buildArmoury(L, ui) {
   const ordered = orderArmourySlots(ui.blocks.map((block) => block.slot), ui.layout);
   const positionsBySlot = ordered.map((slot) => ({
     slot,
-    positions: ui.positions(slot).filter((position) => position.modelState !== 'hidden'),
+    positions: orderArmouryPositions(
+      ui.positions(slot).filter((position) => position.modelState !== 'hidden'),
+    ),
   }));
   const itemCount = positionsBySlot.reduce((sum, row) => (
     sum + row.positions.filter((position) => position.state === 'occupied').length
@@ -412,14 +415,14 @@ function figureFor(registries, run, cz) {
   const el = document.createElement('div');
   el.className = 'armoury-figure';
   const reacts = CFG().spriteReacts;
+  const spec = figureSpec(registries, run.loadout, run.class);
   if (reacts === 'none') {
-    el.appendChild(playerSprite(cz, run.class));
+    el.appendChild(playerSprite(cz, run.class, spec.armourId));
     return el;
   }
-  const spec = figureSpec(registries, run.loadout, run.class);
   if (reacts === 'hands') spec.armourId = 'default';
   const fig = equippedFigure({ classId: run.class, ...spec });
-  el.appendChild(fig || playerSprite(cz, run.class));
+  el.appendChild(fig || playerSprite(cz, run.class, spec.armourId));
   return el;
 }
 
@@ -519,7 +522,15 @@ function inventoryReveal(registries, row, {
     action,
   });
   el.dataset.inventoryItem = row.key;
-  const cardOwnsAction = classModel?.holdAction === true && Boolean(onClassAction);
+  // When the global hold-confirm dial is off, the explicit action button owns
+  // the immediate equipment change and the card keeps a short, read-only hold
+  // for comparison. A zero-duration action must never erase the only comparison
+  // path or turn a compare gesture into an equip.
+  const cardOwnsAction = classModel?.holdAction === true && holdDuration > 0 && Boolean(onClassAction);
+  let comparisonPreviewTimer = null;
+  let comparisonPreviewOpen = false;
+  let startComparisonPreview = null;
+  let endComparisonPreview = null;
   if (comparison) {
     el.dataset.component = 'armoury.comparisonTooltipAnchor';
     el.tabIndex = 0;
@@ -531,29 +542,49 @@ function inventoryReveal(registries, row, {
       : '';
     el.setAttribute('aria-label', comparisonPresentation === 'inline'
       ? `Compare ${item.name}. Comparison shown in this card.${actionInstruction}`
-      : `Compare ${item.name}. Hover or focus this card to show comparison.${actionInstruction}`);
+      : `Compare ${item.name}. Press and hold this card to preview comparison.${actionInstruction}`);
     const clear = el.closest('.disc-faces') || el.parentElement;
     const appearance = {
       variant: 'equipment-comparison',
       widthRem: comparisonConfig?.tooltipWidthRem,
       maxHeightRatio: comparisonConfig?.tooltipMaxHeightRatio,
     };
-    if (comparisonPresentation === 'tooltip') attachTooltip(el, () => comparisonHtml, {
-      intent: 'above',
-      clear,
-      delayMs: comparisonConfig?.hoverDelayMs,
-      appearance,
-    });
+    if (comparisonPresentation === 'tooltip') {
+      el.dataset.comparisonTrigger = 'hold';
+      el.dataset.comparisonPreview = 'idle';
+      el.dataset.focusable = 'true';
+      if (!cardOwnsAction) el.setAttribute('role', 'group');
+    }
     if (comparisonPresentation === 'tooltip' && !cardOwnsAction) {
       const disarm = armHold(el, {
-        ms: holdDuration,
+        ms: comparisonConfig?.holdPreviewDelayMs ?? 160,
         id: 'compareEquipment',
         onConfirm: () => {
           showTooltipFor(el, comparisonHtml, { intent: 'above', clear, appearance });
           stickTooltip(el);
+          el.dataset.comparisonPreview = 'open';
         },
       });
       if (registerHold) registerHold(disarm);
+    }
+    if (comparisonPresentation === 'tooltip' && cardOwnsAction) {
+      startComparisonPreview = () => {
+        clearTimeout(comparisonPreviewTimer);
+        comparisonPreviewOpen = false;
+        el.dataset.comparisonPreview = 'pending';
+        comparisonPreviewTimer = setTimeout(() => {
+          comparisonPreviewTimer = null;
+          comparisonPreviewOpen = showTooltipFor(el, comparisonHtml, { intent: 'above', clear, appearance });
+          el.dataset.comparisonPreview = comparisonPreviewOpen ? 'open' : 'idle';
+        }, comparisonConfig?.holdPreviewDelayMs ?? 160);
+      };
+      endComparisonPreview = () => {
+        clearTimeout(comparisonPreviewTimer);
+        comparisonPreviewTimer = null;
+        if (comparisonPreviewOpen) hideTooltip();
+        comparisonPreviewOpen = false;
+        el.dataset.comparisonPreview = 'idle';
+      };
     }
   }
   if (cardOwnsAction) {
@@ -566,6 +597,8 @@ function inventoryReveal(registries, row, {
       ms: holdDuration,
       id: 'equipInventory',
       onConfirm: onClassAction,
+      onHoldStart: startComparisonPreview,
+      onHoldEnd: endComparisonPreview,
       feedbackHosts: () => {
         const reveal = el.closest('.disc-reveal');
         const faces = el.closest('.disc-faces');
@@ -582,12 +615,12 @@ function inventoryReveal(registries, row, {
 /**
  * mountEquipment(host, opts) → { close() }
  *
- *   inCombat  seals storage and honours each slot's swap rule
- *   onSwap    called with (slotId, setIndex) instead of mutating, so combat can
- *             route the change through the engine intent that charges for it
+ *   inCombat  applies the authored combat-change rule and each slot's swap rule
+ *   onSwap    routes active-set changes through the priced combat intent
+ *   onEquip   routes item replacement/move/unequip through the priced combat intent
  */
 export function mountEquipment(host, {
-  registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquipmentChanged,
+  registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
 }) {
   const destinationPlan = destination ? armouryDestinationPlan(destination) : null;
   if (destination && !destinationPlan) {
@@ -605,13 +638,12 @@ export function mountEquipment(host, {
   // behaviour to change here — only the silence to close.
   //
   // IT FAILS LOUD AND CLOSED, in that order. A mount that cannot say whether a
-  // fight is on is sealed: a visibly inert picker with a named cause on the
-  // console beats a picker that quietly lets you re-arm. Law 1 clause 5 —
+  // fight is on gets a visibly inert picker with a named cause. Law 1 clause 5 —
   // bad input fails by name, and the name here is the caller.
   if (typeof inCombatArg !== 'boolean') {
     console.error(
       `mountEquipment(): no boolean \`inCombat\` — got ${JSON.stringify(inCombatArg)}.`
-      + ' Sealing the picker. This line is the defect, not the seal.'
+      + ' Disabling its actions. This line is the defect, not the refusal.'
     );
   }
   // ONE NAME IN THE BODY. The argument is validated once, here, and everything
@@ -842,6 +874,23 @@ export function mountEquipment(host, {
   /** One mutation path for the shared Inventory buttons, holds, and drag/drop. */
   function applyEquipmentChange(slotId, setIndex, pieceId, actionLabel) {
     const hadSelection = !!picking;
+    if (inCombat) {
+      if (typeof onEquip !== 'function') {
+        notice = 'Combat equipment changes are unavailable on this screen.';
+        draw();
+        return false;
+      }
+      const refused = onEquip(slotId, setIndex, pieceId);
+      if (refused) {
+        notice = refused;
+        draw();
+        return false;
+      }
+      if (hadSelection) clearInventorySelection();
+      sfx.play('cardPlay');
+      commit(hadSelection ? foldSettings() : null);
+      return true;
+    }
     const changed = equipPiece(
       registries, run.loadout, slotId, setIndex, pieceId, owned(),
       { inCombat, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels, classId: run.class, onEquipmentChanged: captureEquipmentChanged }
@@ -1078,9 +1127,10 @@ export function mountEquipment(host, {
     const inventoryItemClass = layout.cardClasses.inventoryItem;
     const faceActions = new Map();
     const draggableRows = new Map();
-    // In combat the inventory stays readable, but every equipment action is
-    // sealed. Keep that refusal on the action itself so opening an equipped
-    // item explains why it cannot move instead of trying to bind a live act.
+    // An action can still be unavailable because its destination is locked,
+    // its requirements fail, or a combat mount omitted the engine callback.
+    // Keep that refusal on the action itself so the card explains why it cannot
+    // move instead of binding a dead act.
     const sealChip = (element, reason) => {
       element.classList.add('locked');
       refuses(element, () => reason);
@@ -1450,6 +1500,38 @@ export function mountEquipment(host, {
     const projection = statProjection(registries, run);
     const surface = equipmentSurfaceReceipt(registries, run);
     const expanded = viewMode().character === 'expanded';
+    const informationCards = [];
+    const initiallyOpen = expanded ? 'attributesCard' : null;
+    let revealFrame = 0;
+
+    function revealInformationCard(card, head) {
+      cancelAnimationFrame(revealFrame);
+      revealFrame = requestAnimationFrame(() => {
+        if (!card.isConnected || !card.open) return;
+        // Focus must not scroll before closing the old card has settled layout.
+        if (document.activeElement !== head) head.focus({ preventScroll: true });
+        let top = 0;
+        let bottom = window.innerHeight;
+        for (let parent = card.parentElement; parent; parent = parent.parentElement) {
+          if (!/(auto|scroll|hidden|clip)/.test(getComputedStyle(parent).overflowY)) continue;
+          const rect = parent.getBoundingClientRect();
+          top = Math.max(top, rect.top);
+          bottom = Math.min(bottom, rect.bottom);
+        }
+        const rect = card.getBoundingClientRect();
+        if (bottom <= top || (rect.top >= top && rect.bottom <= bottom)) return;
+        // A tall card cannot fit: keep its header reachable, not its bottom.
+        const tall = rect.height > bottom - top;
+        if (tall && Math.abs(rect.top - top) <= 2) return;
+        const target = tall ? head : card;
+        const behavior = reducedMotionRequested() ? 'instant' : 'smooth';
+        try {
+          target.scrollIntoView({ block: tall ? 'start' : 'nearest', inline: 'nearest', behavior });
+        } catch {
+          target.scrollIntoView(tall);
+        }
+      });
+    }
 
     // AN INFORMATION CARD is a fold-open DetailCard: its head a Row (caret
     // Glyph, the label as Title·S, the one-line summary as StatusText), its
@@ -1462,7 +1544,32 @@ export function mountEquipment(host, {
       }));
       head.querySelector('.as-glyph').classList.add('caret');
       const card = detailCard({ tag: 'details', attrs: { class: `character-info-card ${id}`, dataset: { component: `armoury.${id}` } }, children: [head, body] });
-      card.open = expanded;
+      card.open = id === initiallyOpen;
+      head.setAttribute('aria-expanded', card.open ? 'true' : 'false');
+      const entry = { card, setOpen(open) {
+        card.open = open;
+        head.setAttribute('aria-expanded', String(open));
+      } };
+      informationCards.push(entry);
+      function activate(open) {
+        cancelAnimationFrame(revealFrame);
+        for (const peer of informationCards) {
+          if (peer === entry) peer.setOpen(open);
+          else if (open && peer.card.open) peer.setOpen(false);
+        }
+        if (open) revealInformationCard(card, head);
+      }
+      // Keyboard activation of a native summary also produces click. Update
+      // siblings and ARIA together, before the asynchronous toggle events.
+      head.addEventListener('click', (event) => {
+        event.preventDefault();
+        activate(!card.open);
+      });
+      card.addEventListener('toggle', (event) => {
+        if (event.target !== card) return;
+        // Ignore initial/handled/coalesced events; support external .open writes.
+        if (head.getAttribute('aria-expanded') !== String(card.open)) activate(card.open);
+      });
       attachTooltip(head, () => `<div class="tt-title">${esc(label)}</div><p>${esc(card.open ? `Fold ${label}.` : `Expand ${label} for its full calculation and details.`)}</p>`);
       return card;
     }

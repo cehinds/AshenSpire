@@ -545,7 +545,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.dataset.seat = p.id;
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle }, m.classId));
+      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId));
       const bb = blockBadge(p.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       // THE SEAT LINE: the tinted name (the identity span hudbars reads,
@@ -772,7 +772,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // this sit.
       act: {
         nodes: map.nodes, columns: map.columns, actNumber: snap.actNumber,
-        startIds: map.startIds, bossId: map.bossId,
+        startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds,
       },
       // THE VIEWER — the half that is legitimately different on every screen.
       viewer: {
@@ -804,7 +804,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           return `<text class="vote-pips" x="${geom.x}" y="${geom.y - geom.r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)">${glyphs}</text>`;
         },
         tooltip: (n, { shownType, reachable }) =>
-          `<div class="tt-title">${esc(nodeName(shownType))}</div>${nodeBlurb(shownType)}${reachable ? '<br>Click to vote for this path.' : ''}`,
+          `<div class="tt-title">${esc(nodeName(shownType))}</div>${nodeBlurb(shownType)}`
+            + (shownType === 'boss' && n.destinationLabel ? `<br><strong>${esc(n.destinationLabel)}</strong>` : '')
+            + (reachable ? '<br>Click to vote for this path.' : ''),
         onPick: (id) => send({ t: 'chooseNode', nodeId: id }),
       },
     });

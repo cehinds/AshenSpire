@@ -39,7 +39,7 @@ const DEFAULTS = Object.freeze({
   },
   cards: { defaultView: 'list', gridColumns: 4 },
   comparison: {
-    presentation: 'tooltip', hoverDelayMs: 550, tooltipWidthRem: 52, tooltipMaxHeightRatio: 0.8,
+    presentation: 'tooltip', holdPreviewDelayMs: 160, tooltipWidthRem: 52, tooltipMaxHeightRatio: 0.8,
   },
   cardClasses: { inventoryItem: { holdAction: false } },
   viewModes: {
@@ -150,9 +150,9 @@ export function normalizeArmouryLayout(source = {}) {
   if (!['tooltip', 'inline'].includes(comparison.presentation)) {
     throw new Error('armouryUi.layout.comparison.presentation must be tooltip or inline');
   }
-  if (!Number.isInteger(Number(comparison.hoverDelayMs)) || Number(comparison.hoverDelayMs) < 0
-    || Number(comparison.hoverDelayMs) > 600000) {
-    throw new Error('armouryUi.layout.comparison.hoverDelayMs must be an integer from 0 to 600000');
+  if (!Number.isInteger(Number(comparison.holdPreviewDelayMs)) || Number(comparison.holdPreviewDelayMs) < 0
+    || Number(comparison.holdPreviewDelayMs) > 600000) {
+    throw new Error('armouryUi.layout.comparison.holdPreviewDelayMs must be an integer from 0 to 600000');
   }
   positive(Number(comparison.tooltipWidthRem), 'comparison.tooltipWidthRem');
   ratio(Number(comparison.tooltipMaxHeightRatio), 'comparison.tooltipMaxHeightRatio');
@@ -219,7 +219,7 @@ export function normalizeArmouryLayout(source = {}) {
     cards: Object.freeze({ defaultView: String(cards.defaultView), gridColumns: Number(cards.gridColumns) }),
     comparison: Object.freeze({
       presentation: String(comparison.presentation),
-      hoverDelayMs: Number(comparison.hoverDelayMs),
+      holdPreviewDelayMs: Number(comparison.holdPreviewDelayMs),
       tooltipWidthRem: Number(comparison.tooltipWidthRem),
       tooltipMaxHeightRatio: Number(comparison.tooltipMaxHeightRatio),
     }),
@@ -301,6 +301,18 @@ export function orderArmourySlots(slots, layout) {
     const bi = order.has(b.id) ? order.get(b.id) : Number.MAX_SAFE_INTEGER;
     return ai - bi || (a.order || 0) - (b.order || 0) || String(a.id).localeCompare(String(b.id));
   });
+}
+
+/**
+ * Keep authored position order within each state while moving every available
+ * empty position behind occupied and locked positions. The ordering is derived
+ * from live state, so equipping or unequipping redraws the empty row in its
+ * correct place without storing a second order.
+ */
+export function orderArmouryPositions(positions) {
+  return [...(positions || [])].sort((a, b) => (
+    Number(a?.state === 'empty') - Number(b?.state === 'empty')
+  ));
 }
 
 const positionText = (template, fallback, index) => String(template || fallback)

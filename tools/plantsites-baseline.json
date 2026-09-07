@@ -2,16 +2,6 @@
   "note": "Known-drifted plant sites (the #498 backlog), sites the static scan cannot read, and a per-tool count+digest over EVERY readable site. plantsites.mjs --check fails on any difference from the live tree, in either direction — regenerate with --write-baseline only alongside the change that explains it.",
   "drifted": [
     {
-      "tool": "tools/about-changelog.mjs",
-      "target": "src/ui/screens/title.js",
-      "id": "32ec77c8477b6c85"
-    },
-    {
-      "tool": "tools/about-changelog.mjs",
-      "target": "src/ui/screens/settings.js",
-      "id": "a4b9117dca401cd5"
-    },
-    {
       "tool": "tools/armoury-picked-up.mjs",
       "target": "src/ui/screens/equipment.js",
       "id": "0afb5288f599e996"
@@ -77,19 +67,9 @@
       "id": "9fb86f9153777bc0"
     },
     {
-      "tool": "tools/displayfirst.mjs",
-      "target": "src/ui/screens/settings.js",
-      "id": "8ca41891dcb1ae85"
-    },
-    {
       "tool": "tools/menufit.mjs",
       "target": "styles/ui.css",
       "id": "7b52b505469be5a0"
-    },
-    {
-      "tool": "tools/music-toggle-parity.mjs",
-      "target": "src/ui/components/menuComponents.js",
-      "id": "1bd723d53273b515"
     },
     {
       "tool": "tools/placement.mjs",
@@ -146,7 +126,7 @@
   "sites": {
     "tools/about-changelog.mjs": {
       "count": 52,
-      "digest": "b96046e966deac53"
+      "digest": "2b16dd47741b60e8"
     },
     "tools/armoury-picked-up.mjs": {
       "count": 14,
@@ -186,7 +166,7 @@
     },
     "tools/displayfirst.mjs": {
       "count": 4,
-      "digest": "772580a9e82225aa"
+      "digest": "6bbfdd0e052593bc"
     },
     "tools/equipment-surface-receipts.mjs": {
       "count": 3,
@@ -225,8 +205,8 @@
       "digest": "24624c63c8967959"
     },
     "tools/hand-side-probe.mjs": {
-      "count": 5,
-      "digest": "6e4b0b0ed61d0e1b"
+      "count": 4,
+      "digest": "202b7aeba2b2cf9e"
     },
     "tools/hintstrip.mjs": {
       "count": 16,
@@ -237,8 +217,8 @@
       "digest": "e7ab8b142a458ba6"
     },
     "tools/hudparity.mjs": {
-      "count": 14,
-      "digest": "706fcfc75096746d"
+      "count": 18,
+      "digest": "ed51eea7692ad338"
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
@@ -250,7 +230,7 @@
     },
     "tools/music-toggle-parity.mjs": {
       "count": 16,
-      "digest": "e9a3c3a74f96341f"
+      "digest": "c0d1ae6ea2a4ac5c"
     },
     "tools/onefold.mjs": {
       "count": 1,

@@ -6,12 +6,20 @@
 
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { resolveCard } from '../../model/registries.js';
-import { openPileModal } from '../components/piles.js';
+import { dodgeReceipt } from '../components/dodgeReceipt.js';
+import { openPileModal, openSpentPileModal } from '../components/piles.js';
 import { attachTooltip, ensureTooltip, hideTooltip, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
-import { relicText } from '../components/card.js';
-import { enemySprite, playerSprite } from '../assets.js';
+import { relicText, renderCard } from '../components/card.js';
+import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { figureSpec } from '../../model/loadout.js';
+import {
+  isReaverAttackEligible,
+  playReaverAttack,
+  preloadReaverAttackFrames,
+  reaverAttackTiming,
+} from '../reaverAttack.js';
 import { intentBadge, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
@@ -29,7 +37,7 @@ import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
-import { flaskIdentityHtml, flaskTooltipHtml, mountFlaskActionMenu } from '../components/flask.js';
+import { flaskTooltipHtml, flaskDetailLines, mountFlaskActionMenu } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
@@ -42,7 +50,7 @@ import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
-import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal } from '../kit/index.js';
+import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, cardGrid, optionCard, prose, flavour } from '../kit/index.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -75,6 +83,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         floor: run.floor,
         floorTotal: run.mapGraph?.floors ?? null,
         seed: run.seedString,
+        identity: { className: registries.classes.get(run.class).name },
         controls: {
           armouryId: 'combat-armoury',
           menuId: 'combat-menu',
@@ -87,6 +96,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>
+        <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>
         <div class="enemy-row"></div>
       </div>
       <div class="hand-area">
@@ -102,16 +112,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           ${html(iconButton({ glyph: '›', label: 'Next card', className: 'hand-page hand-next', attrs: { 'data-focusable': '', hidden: '', 'aria-controls': 'combat-hand' } }))}
         </div>
         <!-- THE ACTION ROW IS A KIT ButtonRow: the Actions receipt as a StatPair,
-             the three piles as buttons carrying a StatPair each, End Turn the
-             primary at twice the width with its Keycap and, from the second-beat
-             machinery, its HOLD hint. Exhaust stays present at zero so no
+             Draw, a shared pile entry, Weapon Arts and Potions. End Turn is the
+             primary with its Keycap and, from the second-beat
+             machinery, its HOLD hint. All six cells stay present at zero so no
              control appears late or shifts the row. -->
         <div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
           ${html(statPair({ key: 'Actions', value: '', attrs: { class: 'energy-orb cell stack lg', role: 'status', 'aria-label': 'Actions remaining' } }))}
           ${html(pileButton('draw', 'Draw'))}
           ${html(button({ label: 'End Turn', weight: 'primary', className: 'end-turn wide tall' }))}
-          ${html(pileButton('discard', 'Discard'))}
-          ${html(pileButton('exhaust', 'Exhausted'))}
+          ${html(button({ label: 'Piles', className: 'pile spent tall' }))}
+          ${html(button({ label: 'Arts', className: 'combat-arts tall', attrs: { 'aria-label': 'Weapon Arts' } }))}
+          ${html(button({ label: 'Potions', className: 'combat-potions tall' }))}
         </div>
         <!-- Context hints: the strip is mounted for its readers but stays hidden
              on this screen — the action row carries every key it would name. -->
@@ -145,8 +156,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // this accessor — one home, the status def itself, with the WORDS
     // resolved through the framework term overlay.
     statusInfo: (sid) => registries.frameworkTerms.withStatusWords(registries.statuses.get(sid)),
+    maxActorAnimationMs: (speed) => reaverAttackTiming(speed).totalMs,
+    animateActor: (beat, actorEl, speed) => {
+      if (beat.actorId !== 'player' || beat.kind !== 'attack') return null;
+      const figure = figureSpec(registries, run.loadout, run.class);
+      const eligible = isReaverAttackEligible({
+        classId: run.class,
+        figure,
+        customization: run.customization,
+        spritesEnabled: spritesAreEnabled(),
+      });
+      return eligible ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : null;
+    },
   };
 
+  let lastDodge = [...(combat.eventLog || [])].reverse().find((event) => event.type === 'dodgeRolled' && event.sourceId === combat.player.id) || null;
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
@@ -182,6 +206,71 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     registries,
     wireCard: (el, entry) => { if (entry.preview) wireCardInput(el, entry.inst, entry.preview, entry.affordable); },
   });
+
+  function potionEntries() {
+    const p = combat.player;
+    return [
+      ...CHARGE_FLASK_KINDS.map((kind, index) => {
+        const charges = p.flaskCharges?.[kind + 'Current'] || 0;
+        return { def: chargeFlaskDefinition(registries, kind), options: { chargeKind: kind, remaining: charges, charges, useActionId: 'flask' + (index + 1) } };
+      }),
+      ...p.flasks.map((item, slot) => ({ def: registries.flasks.get(item.flaskId), options: { slot, remaining: 1, useActionId: slot === 0 ? 'flask3' : null } })),
+    ];
+  }
+
+  function openPotions(shortcut = null) {
+    const opener = $('.combat-potions');
+    const entries = potionEntries();
+    if (shortcut != null) {
+      const entry = entries[shortcut];
+      if (entry) openCombatFlaskMenu(opener, entry.def, entry.options);
+      return;
+    }
+    let shell;
+    shell = openModal({ title: 'Potions', size: 'md', className: 'combat-potion-menu', opener, bodyClassName: 'as-pane', body: host => {
+      for (const entry of entries) {
+        const item = optionCard({ name: entry.def.name, description: flaskDetailLines(entry.def, { charges: entry.options.charges }).join(' '),
+          meta: entry.options.charges == null ? '1 carried potion' : entry.options.charges + ' charges', arrow: true });
+        if (entry.options.chargeKind) {
+          item.dataset.chargeKind = entry.options.chargeKind;
+          item.dataset.charges = String(entry.options.charges);
+        } else item.dataset.potionSlot = String(entry.options.slot);
+        item.addEventListener('click', () => { shell.close(); openCombatFlaskMenu(opener, entry.def, entry.options); });
+        host.appendChild(item);
+      }
+      if (!entries.length) host.appendChild(flavour('No potions carried.'));
+    } });
+  }
+
+  function openWeaponArts() {
+    const opener = $('.combat-arts');
+    const arts = run.deck.filter(inst => ['weaponArt', 'technique'].includes(inst.equipmentRole));
+    let shell;
+    shell = openModal({ title: 'Weapon Arts', size: 'xl', className: 'combat-art-menu', opener, bodyClassName: 'as-pane', body: host => {
+      host.appendChild(prose('Inspect your equipped arts. Drawn cards use the same selection and targeting rules as your hand. Learn additional arts at traders; purchases are unavailable during combat.'));
+      const grid = cardGrid([], { class: 'grid' });
+      for (const inst of arts) {
+        const wrap = document.createElement('section'); wrap.className = 'combat-art-choice';
+        const inHand = combat.piles.hand.find(card => card.instanceId === inst.instanceId);
+        let preview = null;
+        if (inHand) { try { preview = previewCard(combat, inst.instanceId); } catch {} }
+        const affordable = preview && combat.player.energy >= (preview.costIsX ? 0 : preview.cost) && combat.player.mana >= preview.manaCost && combat.player.stamina >= (preview.staminaCost || 0) && !isUnplayable(inst);
+        const allowed = !!affordable && !busy && !combat.result && combat.phase === 'player';
+        wrap.appendChild(renderCard(registries, inst, preview ? { small: true, preview } : { small: true }));
+        const reason = !inHand ? 'Not in hand' : !affordable ? 'Cannot afford or play this card' : !allowed ? 'Wait for your turn' : 'Select in hand';
+        const choose = button({ label: reason, disabled: !allowed, className: 'choose-weapon-art', attrs: { 'data-instance-id': inst.instanceId } });
+        choose.addEventListener('click', () => {
+          shell.close();
+          // Use the existing input handler, never dispatch an out-of-pile card.
+          const card = [...app.querySelectorAll('.hand .card')].find(el => el.dataset.instanceId === inst.instanceId);
+          if (card) { card.focus({ preventScroll: true }); card.click(); }
+        });
+        wrap.appendChild(choose); grid.appendChild(wrap);
+      }
+      if (!arts.length) grid.appendChild(flavour('No equipped weapon arts.'));
+      host.appendChild(grid);
+    } });
+  }
 
   function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1, charges = null, useActionId = null } = {}) {
     const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
@@ -741,6 +830,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
   if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
     window.__renderCombatForShot = render;
+    window.__combatRunForShot = run;
   }
 
   function renderTopbar() {
@@ -763,61 +853,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
       relics.appendChild(el);
     }
-    // Flask selection is inert. Every slot opens one shared action plan; only
-    // its explicit Use row may spend a charge or enter targeting mode.
-    const chargeFlasks = $('.topbar .hud-charge-flasks');
-    const potions = $('.topbar .hud-potions');
-    chargeFlasks.innerHTML = '';
-    potions.innerHTML = '';
-    // THE KEYCAP IS DERIVED, NEVER TYPED: the live binding and the connected
-    // device, so a rebind moves the cap with the key and a pad shows its glyph.
-    const flaskHotkey = (hotkeySlot) => {
-      if (hotkeySlot >= 3) return '';
-      const id = `flask${hotkeySlot + 1}`;
-      return hasGamepad() ? padLabel(id) || keyLabel(id) : keyLabel(id);
-    };
-    const appendFlaskHotkey = (el, hotkeySlot) => {
-      if (hotkeySlot >= 3) return;
-      el.dataset.flaskHotkeySlot = String(hotkeySlot);
-      el.querySelector('.sl-key')?.classList.add('flask-key');
-    };
-    const flaskArt = (def) => el('span', { class: 'sl-art', 'aria-hidden': 'true', html: flaskIdentityHtml(def, { showName: false }) });
-    for (const [hotkeySlot, kind] of CHARGE_FLASK_KINDS.entries()) {
-      const def = chargeFlaskDefinition(registries, kind);
-      const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
-      // The charge flask is a kit Slot: art, its count as a round StatePill,
-      // its key as a Keycap — one box, at the IconButton's size.
-      const el = slot({
-        art: flaskArt(def), count: current, key: flaskHotkey(hotkeySlot), label: def.name,
-        disabled: current <= 0, className: 'relic flask-slot flask-charge',
-      });
-      markUiComponent(el, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
-      el.querySelector('.sl-count').classList.add('flask-charge-count');
-      appendFlaskHotkey(el, hotkeySlot);
-      attachTooltip(el, () => flaskTooltipHtml(def, { charges: current }));
-      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current, charges: current, useActionId: hotkeySlot < 3 ? `flask${hotkeySlot + 1}` : null }));
-      chargeFlasks.appendChild(el);
+    // Combat potions live in the bottom menu; the shared map HUD is unchanged.
+    for (const selector of ['.hud-charge-flasks', '.hud-potions']) {
+      const tray = $('.topbar ' + selector);
+      tray.replaceChildren(); tray.hidden = true;
     }
-    p.flasks.forEach((f, slotIndex) => {
-      const def = registries.flasks.get(f.flaskId);
-      // Health and Mana own the first two HUD flask shortcuts. The first
-      // carried potion receives the third; every remaining potion stays
-      // reachable through ordinary spatial focus.
-      const el = slot({
-        art: flaskArt(def), key: flaskHotkey(CHARGE_FLASK_KINDS.length + slotIndex), label: def.name,
-        selected: selectedFlask === slotIndex, className: 'relic flask-slot', attrs: { dataset: { flaskSlot: String(slotIndex) } },
-      });
-      markUiComponent(el, UI.potionControl);
-      appendFlaskHotkey(el, CHARGE_FLASK_KINDS.length + slotIndex);
-      // THE LABEL READS THE BEAT, IT DOES NOT RESTATE IT. `data-beat` is written
-      // by the machinery from the table, so the sentence a player reads and the
-      // gesture the button actually wants cannot drift — and the icon is far too
-      // small for the HOLD word the event bars carry (hidden by the kit).
-      attachTooltip(el, () => flaskTooltipHtml(def, { hint: 'Open actions to Use or Inspect.' }));
-      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot: slotIndex, useActionId: (CHARGE_FLASK_KINDS.length + slotIndex) < 3 ? `flask${CHARGE_FLASK_KINDS.length + slotIndex + 1}` : null }));
-      potions.appendChild(el);
-    });
-    potions.closest('.shared-hud').dataset.hasUtilityPotions = potions.children.length ? 'true' : 'false';
+    $('.topbar .shared-hud')?.setAttribute('data-has-utility-potions', 'false');
   }
 
   // #61 M4 — ONE meter grammar for every threshold-proc row, data-driven so a
@@ -1012,6 +1053,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const zone = $('.player-zone');
     zone.innerHTML = '';
     const p = combat.player;
+    const figure = figureSpec(registries, run.loadout, run.class);
+    if (isReaverAttackEligible({
+      classId: run.class,
+      figure,
+      customization: run.customization,
+      spritesEnabled: spritesAreEnabled(),
+    })) preloadReaverAttackFrames();
     const trailing = [];
     if (p.stanceId) {
       const st = registries.frameworkTerms.withStanceWords(registries.stances.get(p.stanceId));
@@ -1025,11 +1073,27 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       trailing.push(chip);
     }
     trailing.push(statusRow(p));
+    if (lastDodge) {
+      const receipt = dodgeReceipt(lastDodge);
+      const outcome = button({ label: receipt.outcome, className: 'dodge-receipt', attrs: {
+        'data-focusable': 'true', 'aria-label': receipt.outcome + '. View last Dodge result',
+      } });
+      outcome.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openModal({ title: 'Last Dodge result', size: 'sm', opener: outcome, bodyClassName: 'as-pane', body: (host) => {
+          const text = document.createElement('p');
+          text.className = 'as-prose';
+          text.textContent = receipt.detail;
+          host.appendChild(text);
+        } });
+      });
+      trailing.push(outcome);
+    }
     const box = combatantFrame({
       role: 'player',
       entityId: 'player',
       classNames: selfArm ? ['armed'] : [],
-      sprite: playerSprite(run.customization || {}, run.class),
+      sprite: playerSprite(run.customization || {}, run.class, figure.armourId),
       blockBadge: blockBadge(p, { tooltips: false }),
       meters: meterBars(p, { tooltips: false }),
       trailing: [combatantInspectControl('player', p), ...trailing],
@@ -1259,11 +1323,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // without any screen tracking the dressing.
     if (endTurnBeat) endTurnBeat.refresh();
     $('.pile.draw .sp-v').textContent = combat.piles.draw.length;
-    $('.pile.discard .sp-v').textContent = combat.piles.discard.length;
-    $('.pile.exhaust .sp-v').textContent = combat.piles.exhaust.length;
+    $('.pile.spent').innerHTML = '<span>Piles</span><small>D:' + combat.piles.discard.length + ' E:' + combat.piles.exhaust.length + '</small>';
+
     $('.pile.draw').setAttribute('aria-label', `Draw pile, ${combat.piles.draw.length}`);
-    $('.pile.discard').setAttribute('aria-label', `Discard pile, ${combat.piles.discard.length}`);
-    $('.pile.exhaust').setAttribute('aria-label', `Exhausted pile, ${combat.piles.exhaust.length}`);
+    $('.pile.spent').setAttribute('aria-label', `Discard ${combat.piles.discard.length}; Exhaust ${combat.piles.exhaust.length}. Open piles`);
+
   }
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
@@ -1569,13 +1633,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return;
     }
 
-    // Flask keys activate the corresponding visible Quick Access control; they
+    // Flask keys open the corresponding potion action menu; they
     // never auto-use.
     for (let slot = 0; slot < 3; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
-        const slotEl = $(`.flask-slot[data-flask-hotkey-slot="${slot}"]`);
-        if (slotEl) slotEl.click();
+        openPotions(slot);
         return;
       }
     }
@@ -1654,6 +1717,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // it (and fires onEnd on victory/defeat). A render throw here once froze
     // the game permanently on the killing blow.
     try {
+      // Skipping or reducing motion must never erase the last result.
+      const rolled = [...events].reverse().find((event) => event.type === 'dodgeRolled' && event.sourceId === combat.player.id);
+      if (rolled) {
+        lastDodge = rolled;
+        $('.dodge-announcement').textContent = dodgeReceipt(rolled).detail;
+      }
       recentArcaneEvents = events.filter((event) => (
         event.type === 'arcaneExposureChanged' || event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak'
       ));
@@ -1814,11 +1883,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   endTurnBeat.refresh();
 
   const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
-  const showDiscard = () => openPileModal(registries, 'Discard pile', combat.piles.discard);
-  const showExhaust = () => openPileModal(registries, 'Exhausted pile', combat.piles.exhaust);
+  const showSpent = () => openSpentPileModal(registries, combat.piles, $('.pile.spent'));
+
   $('.pile.draw').addEventListener('click', showDraw);
-  $('.pile.discard').addEventListener('click', showDiscard);
-  $('.pile.exhaust').addEventListener('click', showExhaust);
+  $('.pile.spent').addEventListener('click', showSpent);
+  $('.combat-potions').addEventListener('click', () => openPotions());
+  $('.combat-arts').addEventListener('click', openWeaponArts);
+
   // THE BOTTOM ROW SAYS WHAT IT IS (Constantine, 2026-09-04: "no tool tips on
   // bottom row for end turn, draw, end turn, discard and exhaust"). Every
   // other control on this screen carries a tooltip; the five that decide a
@@ -1830,12 +1901,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   attachTooltip($('.pile.draw'), () => `<div class="tt-title">Draw pile</div>`
     + `${combat.piles.draw.length} card${combat.piles.draw.length === 1 ? '' : 's'} left to draw.`
     + `<div class="ti-detail">Tap to look through it. When it empties, the discard pile is shuffled back in.</div>`);
-  attachTooltip($('.pile.discard'), () => `<div class="tt-title">Discard pile</div>`
-    + `${combat.piles.discard.length} card${combat.piles.discard.length === 1 ? '' : 's'} played or dropped.`
-    + `<div class="ti-detail">Tap to look through it. It returns to the draw pile when that runs out.</div>`);
-  attachTooltip($('.pile.exhaust'), () => `<div class="tt-title">Exhausted</div>`
-    + `${combat.piles.exhaust.length} card${combat.piles.exhaust.length === 1 ? '' : 's'} gone for this fight.`
-    + `<div class="ti-detail">Tap to look through it. Exhausted cards do not come back until the fight ends.</div>`);
+  attachTooltip($('.pile.spent'), () => '<div class="tt-title">Discard and Exhaust</div>Separate views and counts. Discard can reshuffle; exhausted cards remain out for this fight.');
+  attachTooltip($('.combat-potions'), () => '<div class="tt-title">Potions</div>Choose a healing, mana or carried potion. Only Use spends it.');
+  attachTooltip($('.combat-arts'), () => '<div class="tt-title">Weapon Arts</div>Inspect equipped techniques and weapon arts. Only cards currently in your hand can be selected.');
   attachTooltip($('.end-turn'), () => `<div class="tt-title">End Turn</div>`
     + `Hand off to the enemies, then draw a fresh hand.`
     + `<div class="ti-detail">Block expires at the start of your next turn. `
@@ -1881,9 +1949,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         : 'Everywhere you can go from here.')}`);
   }
 
-  // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
-  // storage seal themselves, and picking another hand set routes through the
-  // engine intent that charges for it instead of mutating the loadout here.
+  // The Armoury mid-fight is the SAME panel, told it is in combat. Both active
+  // set switches and item replacement route through engine intents so Energy,
+  // live card piles, resources, Poise, and the combat snapshot stay atomic.
   function openCombatArmoury(request = '') {
     if (!registries.balance.equipment.enabled) return;
     const equipView = typeof request === 'string' ? request : '';
@@ -1906,6 +1974,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         panel.redraw();
         render();
         afterDispatch(out.events);
+      },
+      onEquip: (slotId, setIndex, pieceId) => {
+        let out;
+        try {
+          out = dispatch(combat, { type: 'changeEquipment', slotId, setIndex, pieceId });
+        } catch (e) {
+          dlog('equip', e.message);
+          return e.message;
+        }
+        render();
+        afterDispatch(out.events);
+        return '';
       },
     });
   }

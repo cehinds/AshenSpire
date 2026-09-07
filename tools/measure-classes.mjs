@@ -67,7 +67,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent } from '../src/engine/combat.js';
 import { emitEvent } from '../src/engine/triggers.js';
-import { buildActMap } from '../src/engine/actmap.js';
+import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { hasStatus } from '../src/engine/statuses.js';
 import { executeRunEffects } from '../src/engine/actions.js';
@@ -781,7 +781,8 @@ function simulateRun(classId, seed, policy = POLICY) {
 
       if (kind === 'monster' || kind === 'fight' || kind === 'elite' || kind === 'boss') {
         const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
-        const encId = rollEncounter(REG, rng, { pool, act });
+        const encId = pool === 'boss' ? bossEncounterForNode(REG, map, pick.id, act)
+          : rollEncounter(REG, rng, { pool, act });
         const hpIn = run.hp;
         if (botFight(run, rng, encId, stats, pickRandom, policy) !== 'victory') {
           result.deaths = `${pool}:${encId}`;
@@ -811,7 +812,7 @@ function simulateRun(classId, seed, policy = POLICY) {
       } // merchant: skip
 
       nextIds = map.nodes[currentId].next;
-      if (!nextIds || !nextIds.length) nextIds = [map.bossId];
+      if (!nextIds || !nextIds.length) nextIds = map.bossIds || [map.bossId];
     }
     run.hp = run.maxHp;
   }

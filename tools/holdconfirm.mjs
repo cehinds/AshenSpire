@@ -768,7 +768,10 @@ async function main() {
       return { bg: cs.backgroundImage, beforeContent: bef.content, beforePos: bef.position };
     })()`);
     ok(`the fill is a background, not an overlay`,
-      !paint.error && /gradient/.test(paint.bg) && (paint.beforeContent === 'none' || paint.beforeContent === 'normal'),
+      !paint.error && /repeating-linear-gradient/.test(paint.bg)
+        && /rgba\(255, 255, 255, 0\.52\)/.test(paint.bg)
+        && /rgba\(0, 0, 0, 0\.58\)/.test(paint.bg)
+        && (paint.beforeContent === 'none' || paint.beforeContent === 'normal'),
       `background-image=${paint.bg ? 'gradient' : 'none'}, ::before content=${paint.beforeContent}`);
 
     // ---- 6b. THE FILL IS STILL THERE WITH A POINTER ON IT, AND IT IS THE

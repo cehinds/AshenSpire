@@ -302,7 +302,8 @@ Two closed vocabularies, both in `balance.equipment`, both derived rather than a
 
 | Question | Word | Chain |
 |---|---|---|
-| what does a mid-fight set-swap cost | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** `base: 'category'` prices by the DRAWN piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`; `base: 'default'` is `swapCost` for everything. `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods. The truth function is `swapCostFor()` in `model/loadout.js` and it returns the whole derivation; `engine/combat.js` charges it and the `armamentSwapped` event carries the number. |
+| what does a mid-fight equipment action cost | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** Both prepared-set swaps and item replace/move/unequip actions use this price. `base: 'category'` prices by the destination piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`; `base: 'default'` is `swapCost` for everything. `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods. The truth function is `swapCostFor()` in `model/loadout.js`; `engine/combat.js` charges it and emits `armamentSwapped` or `equipmentRearmed` with the number. |
+| may carried equipment change during combat | `allowChangesInCombat` | When true, the player-turn Armoury may replace, move, or unequip carried gear through the `changeEquipment` combat intent. The engine applies the price, updates resource maxima and Poise, reconciles equipment-granted cards, restamps every live pile, and persists the same loadout object. False closes both UI and mutation paths. |
 | which pieces need no finding | `basicTag` | A piece carrying that tag answers the **found** gate for free (`ownership()`). It has no opinion about the **earned** gate; a row carrying both is refused by name. `persistence` remains the only scope word — profile-wide (`both`, the shipped default) vs this-run-only (`perRun`). |
 
 **A weapon's category is its tags** — `heavy`, `flourish` — never a `swapCost` column, because a
@@ -1015,21 +1016,28 @@ keeps the same state and focus contract without meaningful animation.
   from the same immutable slot records and Behavior Models: selected styling, `aria-pressed`,
   the selected-focus restoration target, primary-action availability, and the load/create
   command payload all resolve to one slot. Save data and callbacks remain screen inputs rather
-  than being owned by these presentation components.
+  than being owned by these presentation components. Every modal close control paints a square
+  at 75% of its shared icon-button box while retaining the full authored tap target for pointer,
+  touch, keyboard, and controller input.
 - **Character Creation components.** The reusable creation family is `character-disclosure`,
   `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
   `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`,
   `mode-choice`, `sprite-choice`, `tint-choice`, `sigil-choice`, `keepsake-choice`,
   `equipment-choice-card`, and `relic-choice-card`. `class-preview-pane` composes
   `class-resource-grid`; `character-disclosure` composes the stat, appearance, and keepsake
-  choices. `primary-stat-card` is one shared attribute model and disclosure renderer across
+  choices. A new character defaults to the Animated sprite style while preserving any explicit
+  style stored on an existing character or LAN player. `primary-stat-card` is one shared
+  attribute model and disclosure renderer across
   Character Creation, Shrine point assignment, and the Armoury: its folded face carries the
   short label, one-line summary, and current value; its reveal and focus/hover tooltip carry the
   authored description plus benefits derived from stat rules and equipment gates. Art and copy
   arrive through content/asset inputs, while screens own mutable selection state and callbacks.
   In Assign Points surfaces, `stat-allocation-row` is the invisible composition parent for the
   attribute face, current value, decrement/increment controls, and a reveal that spans the whole
-  row instead of inheriting the face column width.
+  row instead of inheriting the face column width. Opening or reopening Assign Points is a refund
+  boundary: every authored attribute returns to the mode baseline before the modal opens, making
+  the full bonus pool available instead of resuming an earlier allocation. Shared setting rows
+  keep one equal positive inset on all four sides; a surface does not remove individual sides.
 - **Shrine components.** `shrine-option-card` is the shared folded option footprint for Rest,
   Smith, Flask Allocation, and Level Up. Its viewport-relative width and height are data-owned by
   `balance.ui.shrinePresentation`; expanding a disclosure adds its content below the uniform face.
@@ -1111,7 +1119,9 @@ keeps the same state and focus contract without meaningful animation.
   storage behavior, and order; `content/source/unlocks.csv` supplies any additional position rungs;
   and `armouryUi.layout.equipment.slotOrder` supplies preferred group order without defining the
   set of slots. The Armoury iterates every authored position in vertical list or configured grid
-  form and renders its locked, empty, or occupied state. Adding an authored position or slot group
+  form and renders its locked, empty, or occupied state. Empty positions follow the occupied and
+  locked positions automatically; in Grid form each empty position spans the full group width so
+  the available drop target reads as a bottom row rather than a missing item tile. Adding an authored position or slot group
   must not require a branch in the screen. Item kind determines eligibility only: the selected
   hand equipment position owns the character-sprite socket, so placing a shield in a right-hand
   position renders it in the right hand and placing a sword in a left-hand position renders it in
@@ -1134,11 +1144,14 @@ keeps the same state and focus contract without meaningful animation.
 
   Equipment comparison is information, not confirmation. The data-owned
   `armouryUi.layout.comparison.presentation` is `tooltip` or `inline`. Tooltip mode presents the
-  full comparison after the configured `hoverDelayMs` on pointer hover, or after the shared focus
-  delay on keyboard/gamepad focus, above its card when space permits, using `tooltipWidthRem` and `tooltipMaxHeightRatio` to remain readable and
-  viewport-safe; inline mode embeds the same information in the expanded card. Comparison must
-  not borrow the action's hold gesture: an action-owning card holds to equip or unequip, while
-  hover/focus remains the comparison path. The primary combat-power term shown to players is
+  full comparison after the configured `holdPreviewDelayMs` on a sustained pointer, keyboard, or
+  gamepad press, above its card when space permits, using `tooltipWidthRem` and
+  `tooltipMaxHeightRatio` to remain readable and viewport-safe; pointer hover and focus alone do
+  not reveal it. Inline mode embeds the same information in the expanded card. When the card also
+  owns a timed Equip/Move/Unequip action, the comparison preview observes that same hold lifecycle
+  and closes on release, cancellation, or commit without adding a competing gesture. When global
+  hold-confirm is off, the explicit action button owns the immediate change and the card retains a
+  read-only hold-to-compare gesture. The primary combat-power term shown to players is
   **Magic**. The existing combat-card id `potency` and role `technique` remain compatibility keys;
   **Potency** means a modifier to Magic damage, never the primary Magic value or its visible label.
 
@@ -1171,7 +1184,7 @@ keeps the same state and focus contract without meaningful animation.
   line beneath the character name. Neither screen hand-writes a second HUD.
 - **Primary and inventory geometry.** `vitals-panel` is one outer card containing the unchanged
   HP/MP/SP stack. `quick-access-panel` is one outer square containing a 2×2 grid: Armoury/Menu,
-  then HP/Mana flasks. Its visible tiles are 30–32 px inside at least 44 px accessible hit areas.
+  then HP/Mana flasks. Its visible tiles are 18 px inside at least 44 px accessible hit areas.
   The two panels have equal outer height and the flask row aligns with the bottom of SP within
   one CSS pixel. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
   Access on the same row. Utility potions form one right-anchored horizontal tray that grows or
@@ -1214,9 +1227,10 @@ keeps the same state and focus contract without meaningful animation.
 - Ordinary interactive elements expose their concise tooltip within 150 ms of
   hover: cards (with nested keyword tooltips), statuses (name, current math),
   intents (exact damage after modifiers), relics, flasks, and map nodes.
-  Deliberate reading surfaces may author a longer validated delay; the Armoury
-  equipment-comparison tooltip currently uses `armouryUi.layout.comparison.hoverDelayMs`
-  (`550` ms) and remains immediately reachable through keyboard/gamepad focus.
+  Deliberate reading surfaces may require a validated sustained hold instead;
+  the Armoury equipment-comparison tooltip uses
+  `armouryUi.layout.comparison.holdPreviewDelayMs` (`160` ms) and does not open
+  from hover or focus alone.
 
 ### 7.4 Feedback & animation rules
 
@@ -1356,3 +1370,53 @@ Build: fx pass (floating numbers, shake, transitions), run-history screen, keybo
 Still non-goals: accounts, monetization, localization (strings live in content files, so l10n is possible later), a mod loader, Steam-style achievements, and bundled audio asset files (the score and SFX are synthesized at runtime — §7.4; the manifests accept real files).
 
 Three things this list once excluded have since shipped and are no longer non-goals: **multiplayer** (Forsaken Together LAN co-op — `docs/MULTIPLAYER.md`, `src/net/lan.js`, served by the launcher's own Node server; the feature hides itself when no launcher is behind the page, so a `file://`-opened dist stays single-player), a **narrow/mobile layout** (`data-layout`, `balance.ui.uiScale`), and **audio** (§7.4).
+
+## 12. Planned game expansion — proposed mechanics and acceptance
+
+**Status: planned, not shipped.** This section defines the proposed expansion requested in September 2026. It does not assert that the interfaces, content, migrations, or checks below already exist. Existing mechanics remain authoritative until their implementation is delivered and verified. Each implementation PR must identify the requirements it completes and any remaining limitations.
+
+### 12.1 Dodge and action feedback
+
+Preserve the existing player Dodge Roll rule: roll the framework die on the deterministic `misc` stream; compare Dexterity and Weight Class against the framework difficulty; on success grant the framework's temporary guard through ordinary Block. Dodge is not guaranteed avoidance, invulnerability, or cancellation of an enemy's next attack. Pure Dodge retains the live Weight Class action and stamina costs; compound cards retain their authored cost rules.
+
+Every resolved `dodgeRolled` receipt must visibly and accessibly report success or failure, the check and difficulty, and the resulting guard. A failed roll must not look like an ignored input. Cost previews, disabled reasons, tooltips, and playback must agree with the engine. Verify Light, Medium, and Heavy costs; sufficient and insufficient resources; success and failure; repeated plays; and ordinary Block/status interactions without introducing a second damage rule.
+
+### 12.2 Trader armaments, weapon arts, and transactions
+
+**Default assumption for the ambiguous purchase request:** weapon arts are purchased from traders, while the bottom combat HUD exposes owned, currently available arts. Combat does not gain a new purchasing economy. A later owner decision to allow purchases during combat requires an explicit mechanics amendment.
+
+Trader stock includes data-priced armaments and eligible weapon-art cards. Roll stock deterministically once per visit and persist it; reloading must not reroll shelves or restore sold stock. Bought armaments enter the existing run inventory and discovery path only after successful collection. Reject an armament already carried or equipped, a full inventory, insufficient cinders, and stale stock. Prices and sale fractions belong to balance data rather than screen literals.
+
+Purchased weapon arts use the existing loose-card and compatible item-mount model. They do not create a parallel unlock inventory, install themselves automatically, or bypass extraction/seating rules. The combat HUD uses the existing card identity, availability, targeting, and payment rules: opening an art preview is not a play, and a card outside its playable state cannot be activated through the HUD.
+
+Armament sales are limited to stored, unequipped armaments. Equipped items explain that they must first be unequipped; selling never silently changes an active or inactive equipment set. Permanent profile discovery survives a sale. Smithing tiers and installed mount records remain bound to the same armament identity in the run ledger; they are neither deleted nor converted into extra loose cards, and grant no usable cards while that armament is no longer owned. Reacquiring that identity restores its recorded package through existing reconciliation. The sale preview discloses the tier, attached cards, and value before commitment. Buying and selling must not duplicate upgrades, mounts, cards, or ownership, or produce a profitable immediate buy/sell loop.
+
+A transaction validates current stock, ownership, capacity, and funds at commitment, then applies the complete change once. Refusal leaves cinders, stock, inventory, card mounts, and discovery unchanged. Verify repeated/stale activation, full inventory, equipped duplicates, upgraded/mounted armaments, save/reload, and reacquisition. Older shop saves without the new shelves load as empty new shelves for that already-open visit; migration does not consume randomness or reroll existing stock.
+
+### 12.3 Combat HUD, piles, and potions
+
+Replace separate discard and exhaust buttons with one entry showing both counts and a shared modal with separately labelled Discard and Exhausted views. This is a presentation change only: cards retain their original zones, exhaustion rules, and reshuffle eligibility. Preserve keyboard/touch access, focus return, empty states, and draw-pile order concealment.
+
+Place the potion collection entry in the far-right bottom combat HUD slot. Its menu exposes health charges, mana charges, stamina potions, and other carried utility potions through the existing action plan. Selection and inspection are inert; only an explicit enabled Use action spends a charge or starts targeting. Cancellation spends nothing. Show quantity, effect, resource capacity, and the reason an action is unavailable.
+
+Health/mana refillable charges and utility-potion inventory remain separate state domains with their existing capacities and refill rules. The shared menu must not turn stamina potions into a third refillable charge pool or silently expand inventory. Preserve existing resource shortcuts and prevent a newly opened modal from accidentally consuming a potion with its opening key. Verify zero quantities, full resources under existing use rules, targeted-potion cancellation, action playback, turn restrictions, and save/resume.
+
+### 12.4 Branching destinations and roster
+
+New maps support multiple terminal boss destinations within an act, with distinct legal routes through locations, fights, events, rewards, and traders. Node identity determines its authored destination and boss encounter; entering a terminal does not substitute a single global boss for every route. Completing the chosen terminal advances or completes the run once under the existing act rules; a player need not clear every alternative terminal.
+
+Every offered path must reach a valid destination without unintended dead ends, unreachable rewards, or repeatable completion rewards. Preserve an accessible pre-boss rest on every terminal route. Persist generated topology, destination identity, and encounter selection. Legacy saves keep their existing topology and chosen boss behavior: an unentered legacy boss node without a stored boss identity maps explicitly to the original boss for that saved act, with no RNG draw during loading or migration. Loading must not regenerate a map, move the player, consume new RNG draws, or reinterpret an in-progress encounter; existing combat snapshots remain unchanged. Validate connectivity, pre-boss rest access, and deterministic reloads over a seed corpus and play through distinct terminal routes.
+
+The release target is **20 unique regular enemies and 10 unique bosses**. Elites do not count toward either total. Existing qualifying enemies may count; recolors and numerical variants alone do not. Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite, and appropriate animations. Each boss additionally has a signature encounter mechanic; phases are optional where they improve that mechanic.
+
+Enemy card movesets are a limited presentation and authoring extension over the existing seeded weighted move selector. Preserve repeat history, current intent, phase transitions, repeat limits, and delayed-action state. Issues #239/#241 describe related proposed action planning and persistence work, not an already shipped plan cursor. A later switch to ordered plans requires its own verified mechanics change. Do not introduce a separate parallel move picker or reroll an intent when rendering a card or loading a save.
+
+All counted entries must be reachable through normal progression and distributed across suitable locations and difficulty. Maintain a roster checklist covering identity, location, encounter, moveset, sprite, animations, rewards, and verification. Test every moveset and boss encounter, including relevant Dodge, status, potion, weapon-art, victory/defeat, and save/resume interactions. Demonstrate shared foundations with two regular enemies and one boss before expanding the full roster.
+
+### 12.5 Shared presentation and animation rules
+
+Use shared components for armament/card faces, enemy frames, related modals, tabs, counts, costs, and tooltips. Uniform layout does not erase card categories or enemy silhouettes. Folded character-information cards share one full-width header geometry; only one opens at a time, siblings close without duplicate toggle work, and focus/reveal keep the selected header visible without unnecessary scroll jumps.
+
+Drive attack animation selection from data using this precedence: an explicit actor-and-action override (player character plus card ID, or enemy identity plus move ID), then the first matching action tag in one documented ordered tag table for that actor, then the card-type family for player cards or the authored intent family for enemy moves, then a neutral fallback. Multi-tag cards and enemy moves select one primary action animation deterministically; additional effect cues may accompany it without replaying the action. Families include slash, thrust, strike, projectile, spell, guard, and dodge, with character-specific sprites where authored. Missing assets fall back safely rather than blocking resolution.
+
+Animate draw, selection, targeting, play, resolution, discard, exhaust, idle, attack, hit, and defeat as appropriate. Engine outcomes remain authoritative; skipping, interrupting, or disabling animations cannot alter state or strand input. Reduced-motion mode replaces travel/shake/repeated motion with brief static or opacity feedback while retaining outcome information. Provide readable non-color cues, focus-visible controls, viewport-contained tooltips, and desktop/phone mouse, keyboard, and touch behavior. Validate timing, event-handler cleanup, and multi-enemy performance in actual browser playtests.

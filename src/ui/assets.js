@@ -6,9 +6,13 @@
 // with a CREDITS.md row — no game-code changes.
 
 import { balance } from '../content/balance.js';
+import { PAINTED_ENEMIES } from '../content/enemyArt.js';
 import { medallionPct } from '../content/classArtAnchors.js';
+import { DEFAULT_SPRITE_STYLE, SPRITE_STYLES } from '../model/spriteStyle.js';
 import { assetUrl } from './assetmap.js';
 import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
+
+export { DEFAULT_SPRITE_STYLE, SPRITE_STYLES };
 
 // Sprite size tiers (the display dimensions each enemy def's `size` selects) are
 // data — content/balance.js → ui.spriteTiers. Sizes are generous on purpose: the
@@ -55,11 +59,10 @@ const SIDE_FACES = Object.freeze({ player: 'right', enemy: 'left' });
 /**
  * spriteMirror(artFaces, side) — does this asset need flipping on this side?
  *
- * `side` defaults to 'enemy' because every caller today is an enemy sprite; the
- * player's figure is front-facing art whose mirror is one blanket CSS rule with
- * its own removal condition (styles/ui.css, "the figure faces the viewer").
- * Naming the side rather than assuming it is what keeps that rule honest the
- * day a player figure is drawn in profile.
+ * `side` defaults to 'enemy' because every caller today is an enemy sprite.
+ * Player combat paintings and pose frames are already authored facing right and
+ * the combat surface keeps them as drawn. Naming the side keeps this helper
+ * ready for a future profile asset.
  */
 export function spriteMirror(artFaces, side = 'enemy') {
   if (artFaces === 'front' || artFaces == null) return false;
@@ -74,6 +77,8 @@ export function spriteMirror(artFaces, side = 'enemy') {
  * placeholder, so content can ship art-less.
  */
 export function enemySprite(enemyDef) {
+  const painted = PAINTED_ENEMIES.includes(enemyDef.id);
+  const artFaces = painted ? 'left' : enemyDef.artFaces;
   const tier = SIZE_TIERS[enemyDef.size || 'medium'];
   const tint = enemyDef.tint || 'var(--line-soft)';
   const el = document.createElement('div');
@@ -125,16 +130,33 @@ export function enemySprite(enemyDef) {
   // the player layer carries no such marker precisely because it has no
   // per-asset answer to record.
   facing.className = 'facing';
-  facing.dataset.facing = spriteMirror(enemyDef.artFaces) ? 'mirrored' : 'as-drawn';
+  facing.dataset.facing = spriteMirror(artFaces) ? 'mirrored' : 'as-drawn';
   facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;'
     + 'justify-content:center;'
-    + (spriteMirror(enemyDef.artFaces) ? 'transform:scaleX(-1);' : '');
+    + (spriteMirror(artFaces) ? 'transform:scaleX(-1);' : '');
   const img = document.createElement('img');
-  img.src = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
+  const original = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
+  img.src = painted ? assetUrl(`assets/enemies-unity/painted_${enemyDef.id}.png`) : original;
   img.alt = enemyDef.name || enemyDef.id;
   img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
     `filter:drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
-  img.addEventListener('error', placeholder);
+  if (painted) {
+    img.dataset.artSource = 'unity';
+    // Align the common foot line without cropping or stretching the frame.
+    img.style.width = 'auto';
+    img.style.height = '100%';
+    img.style.maxWidth = 'none';
+    img.style.transform = 'translateY(5.208333%)';
+  }
+  img.addEventListener('error', () => {
+    if (img.dataset.artSource === 'unity') {
+      delete img.dataset.artSource;
+      img.style.width = '100%'; img.style.height = '100%'; img.style.maxWidth = ''; img.style.transform = '';
+      facing.dataset.facing = spriteMirror(enemyDef.artFaces) ? 'mirrored' : 'as-drawn';
+      facing.style.transform = spriteMirror(enemyDef.artFaces) ? 'scaleX(-1)' : '';
+      img.src = original;
+    } else placeholder();
+  });
   facing.appendChild(img);
   el.appendChild(facing);
   return el;
@@ -269,28 +291,22 @@ function renderedSpriteUrl(classId, tintId) {
   return assetUrl(`assets/sprites/${classId}_${t}.webp`);
 }
 
-// Player sprite styles: 'rendered' (the painted class figure, WebP), 'classic'
-// (inline SVG silhouette), 'glyph' (sigil-in-a-panel). Chosen per character.
+// Player sprite styles: 'animated' (the default pose-stage figure), 'rendered'
+// (the painted class figure, WebP), 'classic' (inline SVG silhouette), and
+// 'glyph' (sigil-in-a-panel). Chosen per character.
 // "Blender PNG" until 2026-09-03, which stopped being true when the class art
 // was replaced — the same stale description as the lobby tooltip one file over.
-export const SPRITE_STYLES = [
-  { id: 'rendered', name: 'Rendered' },
-  { id: 'animated', name: 'Animated' },
-  { id: 'classic', name: 'Classic' },
-  { id: 'glyph', name: 'Sigil' },
-];
-
 /** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
-export function classSprite(classId, tint, sigil, tintId, style) {
+export function classSprite(classId, tint, sigil, tintId, style, figureId, armourId = 'default') {
   const build = CLASS_SVG[classId];
   if (!build) return null;
   const el = document.createElement('div');
   el.className = 'class-sprite';
   el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
 
-  // THE FACING LAYER, for the same reason enemySprite() has one: the mirror
-  // (`styles/ui.css`, "the figure faces the viewer") must sit on an element
-  // that carries NOTHING ELSE. It used to ride `.class-sprite` itself, which
+  // THE FACING LAYER, for the same reason enemySprite() has one: any orientation
+  // correction must sit on an element that carries NOTHING ELSE. It used to
+  // ride `.class-sprite` itself, which
   // is both an animation target and the overlay's positioning parent, and it
   // broke in both directions — measured on the board, not reasoned about:
   //
@@ -324,14 +340,17 @@ export function classSprite(classId, tint, sigil, tintId, style) {
     }
   };
 
-  // 'animated': the figure that changes pose when it swings, from the shipped
-  // pose frames. It is a separate style rather than the default because the
-  // 'rendered' figure is a painting and these frames are modelled — mixing the
-  // two inside one animation would swap art styles mid-swing. A class with no
-  // shipped frames falls through to the painting, so the choice is never a
-  // blank figure.
-  if (style === 'animated' && hasPoses(classId, tintId)) {
-    const stage = createPoseStage(classId, tintId);
+  // 'animated': the default figure, changing pose from the shipped frames.
+  // 'rendered' remains a separate painted still so an explicit choice never
+  // swaps art styles mid-swing. A class with no shipped frames falls through
+  // to the painting, so the default is never a blank figure.
+  const outfitPoseId = armourId && armourId !== 'default' ? `${classId}-${armourId}` : classId;
+  const poseId = hasPoses(outfitPoseId, tintId) ? outfitPoseId : classId;
+  if (style === 'animated' && hasPoses(poseId, tintId)) {
+    // figureId separates figures that would otherwise be the same rotation: two
+    // co-op allies of the same class and tint shared one swing counter, so each
+    // of them showed every other frame. Solo has one figure and needs no id.
+    const stage = createPoseStage(poseId, tintId, figureId || undefined);
     if (stage) {
       el.classList.add('animated');
       // Inside the facing layer, like the painting: an animated figure has a
@@ -433,10 +452,10 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
 }
 
 /**
- * playerSprite(customization, classId, equip?) — the player's figure.
+ * playerSprite(customization, classId, armourId?) — the player's figure.
  *
- * With `equip` ({ armourId, rightId, leftId, rightMirror, leftMirror }) it composites the layered
- * equipment figure; without it, the single rendered class PNG as before.
+ * Animated style selects the equipped armour's authored pose set when one is
+ * shipped. Other styles keep using the single rendered class figure.
  */
 // THE FIGURE YOU FIGHT AS IS THE FIGURE YOU PICKED. Until 2026-09-03 this took
 // a third argument — the equipment spec — and, whenever the player had gear and
@@ -452,11 +471,11 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
 // held-weapon overlay no longer show on the fighter. equippedFigure() still
 // exists and the Armoury preview (screens/equipment.js) still calls it, so the
 // composite is not dead — it is just no longer the combat figure.
-export function playerSprite(customization = {}, classId) {
+export function playerSprite(customization = {}, classId, armourId = 'default') {
   const tint = tintCss(customization.tint);
-  const style = customization.spriteStyle || 'rendered';
+  const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
-    return classSprite(classId, tint, customization.glyph, customization.tint, style);
+    return classSprite(classId, tint, customization.glyph, customization.tint, style, customization.figureId, armourId);
   }
   const el = document.createElement('div');
   el.style.cssText =
