@@ -3,6 +3,86 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-698",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The armour you wear keeps its own painted figure in a fight",
+    "detail": "Nothing a player sees changes, and that is the point. This pull request set out to stop an alternative armour set being erased from the animated combat figure — a real gap — but the game had already closed it by better means: each set draws its own authored pose sheet, one of the twelve shipped as 561 painted frames, rather than the class default. The change offered instead was a CSS animation over the layered equipment composite, with no art behind it, so none of it was applied; taking it would have swapped painted frames for a transform. The one thing the shipped path still gives up is stated in the code rather than hidden: the armour-set palette and the held weapon do not ride on the fighter.",
+    "build": "0.5.5.64",
+    "pullRequest": 698,
+    "url": "https://github.com/cehinds/AshenSpire/pull/698"
+  },
+  {
+    "id": "pr-694",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Assign Points refunds to a baseline, and its rows keep one even inset",
+    "detail": "Opening Assign Points returns every stat to the mode's baseline and hands the whole bonus pool back, instead of resuming the allocation you left; the ten points are yours to spend again from a neutral start. The save-slot chooser is rebuilt on the shared kit, and a setting row now carries the same padding on all four sides rather than shaving the horizontal edge. The check that measures those rows is now part of the foldout gate, beside the one that proves each stat's detail stays attached to its own card.",
+    "build": "0.5.5.63",
+    "pullRequest": 694,
+    "url": "https://github.com/cehinds/AshenSpire/pull/694"
+  },
+  {
+    "id": "pr-713",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "The bottom row's six controls are checked by what they are, not by name",
+    "detail": "Nothing a player sees changes here, but something a player can see is now known to be wrong. #679 merged the two spent piles into one and added Arts and Potions; the gate that guards the combat action row still listed the old names, so the two new controls were invisible to it and the row could grow without the gate noticing. Controls are now identified by what they are rather than by a whitelist. The working gate immediately found a real defect: hand cards overlap Draw and End Turn at 1200x730 at every text size. That is recorded, not fixed here.",
+    "build": "0.5.5.63",
+    "pullRequest": 713,
+    "url": "https://github.com/cehinds/AshenSpire/pull/713"
+  },
+  {
+    "id": "pr-697",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Assign Points starts from the baseline, and setting rows share one inset",
+    "detail": "Reopening Assign Points seats every attribute at the mode's baseline rather than resuming a half-spent allocation, and the shared setting row keeps one equal inset on all four sides — a surface does not get to shave a side off it.",
+    "build": "0.5.5.61",
+    "pullRequest": 697,
+    "url": "https://github.com/cehinds/AshenSpire/pull/697"
+  },
+  {
+    "id": "pr-706",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "A disabled potion slot is disabled, not merely labelled so",
+    "detail": "Nothing a player sees changes. The kit now records why an empty potion control is natively disabled instead of only carrying aria-disabled: the announcement alone tells a screen reader the control is unavailable while still letting the cursor, the keyboard and a programmatic click select it. Native disabling is what actually keeps an empty slot out of reach.",
+    "build": "0.5.5.59",
+    "pullRequest": 706,
+    "url": "https://github.com/cehinds/AshenSpire/pull/706"
+  },
+  {
+    "id": "pr-692",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Character creation opens on a neutral allocation",
+    "detail": "Point-buy character creation now seats every attribute at the mode's baseline as its starting position, and the preview beside the panel is built from the last complete allocation until all ten points are spent — so a half-finished draft is never sent through the validator that only a finished one can pass. The creation preview's padding and margins were tidied at the same time.",
+    "build": "0.5.5.58",
+    "pullRequest": 692,
+    "url": "https://github.com/cehinds/AshenSpire/pull/692"
+  },
+  {
+    "id": "pr-690",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Every primary stat is its own card, and it keeps its own explanation",
+    "detail": "The five primary stats are drawn as self-contained cards whose summary and detail are one piece, matching the grammar the Armoury's card rows already use — so a stat's explanation opens under that stat rather than in a panel shared with its neighbours, and only one is open at a time. The gate for this grew assertions that each detail stays attached to its own card, and the Intelligence row inside Assign Points no longer wraps to a second line and stands 1.44px taller than the other four, which had kept that gate red since #647.",
+    "build": "0.5.5.57",
+    "pullRequest": 690,
+    "url": "https://github.com/cehinds/AshenSpire/pull/690"
+  },
+  {
+    "id": "pr-686",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Crimson and Azure can be drunk outside a fight, if you ask for it",
+    "detail": "A new Settings switch, off by default, lets the healing and mana flasks be used on the map instead of only in combat; with it off they say so rather than silently refusing. Both now sit in the potion belt beside the carried flasks rather than in their own corner of Quick Access, which leaves Armoury and Menu the only two controls there and lets them take the full height of the meter stack beside them.",
+    "build": "0.5.5.56",
+    "pullRequest": 686,
+    "url": "https://github.com/cehinds/AshenSpire/pull/686"
+  },
+  {
     "id": "pr-711",
     "date": "2026-09-07",
     "group": "2026-09-07",
