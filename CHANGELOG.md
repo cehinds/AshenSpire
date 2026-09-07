@@ -64,6 +64,8 @@ landed a change, and inventing one to fit these would be the reconstruction
 this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-07
+- **The sigil comes off the classic figure too** ([#769](https://github.com/cehinds/AshenSpire/pull/769), `0.5.5.111`). Taking the sigil off the character in #764 removed the overlay but missed the other way it reached the figure: the Classic sprite style, and any figure that falls back to the inline drawing, still had the chosen sigil painted onto the chest as part of the silhouette itself. It now draws the plain accent it wore before sigils existed. The check that guards this could not have caught it — it looked only for the overlay, so it would have called a figure clean while the sigil sat on its chest — and it now reads both ways a sigil can arrive.
+- **The enemy sprite background exception is written down** ([#767](https://github.com/cehinds/AshenSpire/pull/767), `0.5.5.110`). Nothing a player sees changes. The source backgrounds behind the enemy sprites follow a rule the tooling did not state anywhere, so the exception is recorded where the next person cutting a sprite will find it.
 - **Sigils stay beside class information** ([#764](https://github.com/cehinds/AshenSpire/pull/764), `0.5.5.109`). Painted character figures no longer carry the sigil overlay added in the earlier build. The sigil remains in the class picker.
 - **Enemy attacks face the target and have more impact** ([#758](https://github.com/cehinds/AshenSpire/pull/758), `0.5.5.110`). The Stitched King now looks toward the player during his attack. Enemy attack frames are five percent larger than idle frames while keeping their shared foot line fixed.
 
