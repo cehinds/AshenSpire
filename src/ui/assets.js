@@ -397,8 +397,6 @@ export function paintedFigure(classId, tint, sigil, armourId = 'default', pose =
   // medallion is a share of whatever frame it lands in.
   frame.style.cssText = 'width:100%;height:100%;position:relative;';
   frame.appendChild(art);
-  const med = medallionOverlay(classId, tint, sigil);
-  if (med) frame.appendChild(med);
   return frame;
 }
 
@@ -411,12 +409,17 @@ export function paintedFigure(classId, tint, sigil, armourId = 'default', pose =
 export function classSprite(classId, tint, sigil, tintId, style, figureId, armourId = 'default') {
   const build = CLASS_SVG[classId];
   if (!build) return null;
-  // Hands the frame in: the painted branch below has its own frame, and every
-  // later path draws into `el`. Whichever frame is returned wears the sigil.
-  const applyMedallion = (frame) => {
-    const med = medallionOverlay(classId, tint, sigil);
-    if (med) frame.appendChild(med);
-  };
+  // THE SIGIL DOES NOT RIDE THE FIGURE. Owner's call, 2026-09-07: the chosen
+  // sigil belongs beside the class information in the class picker — which is
+  // where a player picks it and where it already draws — and nowhere on the
+  // character. It was briefly worn as a chest medallion on every figure path,
+  // combat included, and that is what this removes.
+  //
+  // Kept as a named no-op rather than deleted from three call sites, so the
+  // decision reads at the paths that used to carry it instead of surviving
+  // only in a commit message. `medallionOverlay()` is still exported and still
+  // measured by tools/sigil-medallion.mjs; nothing on a FIGURE calls it.
+  const applyMedallion = () => {};
   if (style === 'animated' || style === 'rendered') {
     const stage = style === 'animated' ? createPaintedStage(classId, armourId) : null;
     const art = stage?.el || paintedPresentation(classId, armourId);
