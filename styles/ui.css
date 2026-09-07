@@ -401,6 +401,38 @@
 .disc-reveal .cz-opts { flex-wrap: wrap; row-gap: 0.8rem; }
 .disc-reveal .class-row { flex-wrap: wrap; row-gap: 1.2rem; }
 
+/* The preview is one full pane: the art consumes its available area and the
+   data-driven SPRITE disclosure is anchored at the bottom of that same pane. */
+.cc-character-grid { min-width: 0; align-items: stretch; }
+.cc-character-grid .cc-stats-side { padding: 1.4rem; }
+.cc-preview-side { display: flex; flex-direction: column; min-height: 34rem; }
+.cc-preview-side > .cz-portrait {
+  flex: 1 1 auto;
+  width: 100%;
+  height: auto;
+  min-height: 28rem;
+  border-width: 0 0 1px;
+}
+.cc-preview-fold { flex: 0 0 auto; }
+#cz-sprite-group > #cz-styles { width: 100%; }
+
+/* Primary-stat faces are generated from attribute card models. Their compact
+   label, summary, and value share one padded line regardless of content. */
+.cc-primary-stat > .as-row.face-lite { padding: 0.75rem 1rem; flex-wrap: nowrap; }
+.cc-primary-stat > .as-row.face-lite > .as-labelstack {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.8rem;
+  min-width: 0;
+}
+.cc-primary-stat .disc-summary { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+@media (max-width: 30rem) {
+  .cc-preview-side { min-height: 28rem; }
+  .cc-preview-side > .cz-portrait { min-height: 22rem; }
+}
+
 /* EldenSpire#26 — the value the UI-size control actually applied. Muted like a
    note when the request was granted; accented when the fit had to hold it back,
    because "you asked for XL and this window gets 1.00x" is the sentence that
