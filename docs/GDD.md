@@ -818,3 +818,8 @@ Until these choices are made, choose reversible interfaces and avoid framework-s
 ## Appendix B — source basis
 
 This revision was reconciled against the current AshenSpire README, CHANGELOG, SPEC, rebuild PROMPT, DEVELOPER guide, CREDITS ledger, original GDD, component catalog, component-model architecture, folding-tray contract, current class/attribute/equipment source, and the available AshenSpire task history as of 2026-08-23.
+
+Equipment presentation (#784) follows the approved poker-card design: painted art,
+5:7 proportions, gold-bordered dark panels and canonical base facts. The full-text
+inspector explains stats, tags, bonuses, requirements and flavor, with keyboard
+and touch access. See SPEC.md and docs/component-catalog.html for the shared renderer.
