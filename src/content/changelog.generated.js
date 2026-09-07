@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-757",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Your figure holds the weapon and shield you gave it again",
+    "detail": "In the Armoury the figure had stopped showing the armament in its hands: the function that stacks the held pieces over the body returned a single standing frame before it built any of them, so nothing was held. It was found by the release promotion's own browser gate rather than by playing, and the shape of the finding is worth recording — all twenty-five armaments, in both hands, measured at the identical position. Fifty readings that agree to the pixel are not a weapon on the wrong side; they are no weapon at all. The short-circuit was also unreachable in the case it was written for and wrong in the case it did reach: the Armoury already chooses the painted standing pose itself, and only calls this when sprites are off or you have asked for the classic or glyph style, so the one thing it did was overrule the style you chose. The painted preview is untouched.",
+    "build": "0.5.5.103",
+    "pullRequest": 757,
+    "url": "https://github.com/cehinds/AshenSpire/pull/757"
+  },
+  {
     "id": "pr-749",
     "date": "2026-09-07",
     "group": "2026-09-07",
