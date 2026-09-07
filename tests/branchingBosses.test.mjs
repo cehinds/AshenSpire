@@ -6,7 +6,7 @@ import { createRng } from '../src/engine/rng.js';
 import { generateActMap } from '../src/engine/mapgen.js';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { litNodes } from '../src/model/mapknowledge.js';
-import { createSession } from '../tools/session.mjs';
+import { createSession, restoreSession } from '../tools/session.mjs';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { createRunState } from '../src/model/state.js';
 
@@ -130,6 +130,42 @@ test('real save loading preserves new and legacy topology and selected encounter
     assert(loaded, 'valid route save loads through real save manager');
     assert.equal(JSON.stringify({ graph: loaded.mapGraph, cursor: loaded.mapNodeId, counters: loaded.streamCounters }), original);
     assert.equal(bossEncounterForNode(expanded, loaded.mapGraph, loaded.mapNodeId, 1), identity);
+  }
+});
+
+test('solo load archives invalid persisted boss IDs even without a content-version change', () => {
+  for (const invalid of ['removedBoss', 'loneSoldier', LEGACY_ACT_BOSSES[2], undefined]) {
+    const run = createRunState({ seed: 79, classId: 'reaver', registries: expanded });
+    run.mapGraph = buildActMap(expanded, createRng(79), 1);
+    const id = run.mapGraph.bossIds.at(-1);
+    if (invalid === undefined) delete run.mapGraph.nodes[id].encounterId;
+    else run.mapGraph.nodes[id].encounterId = invalid;
+    const graph = JSON.stringify(run.mapGraph);
+    const saves = createSaveManager(createMemoryStorage()); saves.saveRun(run);
+    assert.equal(saves.loadRun(expanded), null);
+    const status = saves.runStatus(); assert.equal(status.state, 'archived');
+    assert.match(status.reason, /Saved boss destination.*invalid encounter/);
+    assert.equal(JSON.stringify(JSON.parse(saves.getArchive(status.archiveId).save).mapGraph), graph);
+  }
+});
+
+test('LAN restore refuses dangling, wrong-pool, wrong-act and missing new boss IDs without altering saved data', () => {
+  const host = createSession({ registries: expanded, seedString: 'GOLDBOUGH' });
+  host.addMember({ id: 'p1', name: 'Route tester', classId: 'reaver' }); host.start();
+  for (const invalid of ['removedBoss', 'loneSoldier', LEGACY_ACT_BOSSES[2], undefined]) {
+    const saved = structuredClone(host.serialize()); const id = saved.mapGraph.bossIds.at(-1);
+    if (invalid === undefined) delete saved.mapGraph.nodes[id].encounterId;
+    else saved.mapGraph.nodes[id].encounterId = invalid;
+    const before = JSON.stringify(saved);
+    assert.throws(() => restoreSession(expanded, saved), /Saved boss destination.*invalid encounter/);
+    assert.equal(JSON.stringify(saved), before);
+  }
+  for (const legacy of [false, true]) {
+    const saved = structuredClone(host.serialize());
+    if (legacy) saved.mapGraph = generateActMap({ config: single.mapConfig(1), rng: createRng(91) });
+    const before = JSON.stringify({ graph: saved.mapGraph, rng: saved.rng });
+    const restored = restoreSession(expanded, saved).serialize();
+    assert.equal(JSON.stringify({ graph: restored.mapGraph, rng: restored.rng }), before);
   }
 });
 

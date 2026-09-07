@@ -27,6 +27,7 @@ import {
 } from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
+import { assertSavedBossReferences } from '../src/model/mapReferences.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
@@ -107,6 +108,10 @@ export function restoreSession(registries, data) {
 
 export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {} }) {
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
+  if (restore) {
+    const mapAct = endless ? ((restore.actNumber - 1) % LAST_ACT) + 1 : restore.actNumber;
+    assertSavedBossReferences(registries, restore.mapGraph, mapAct);
+  }
   const seed = restore ? (restore.seed >>> 0) : seedOf(seedString);
   const rng = createRng(seed, restore ? restore.rng : {}); // shared: map gen, encounter rolls
   const members = new Map(); // id → member
