@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/672"
   },
   {
+    "id": "pr-676",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Traders buy and sell armaments and stock weapon arts",
+    "detail": "Inspect equipment before buying, sell unequipped items from storage, and buy Draw Cut or Sundering Hew for the existing mounting system. Equipped items explain their sale restriction. Cancelled or stale quotes spend nothing; upgrades, mount history and discoveries survive a sale and reacquisition.",
+    "build": "0.5.5.45",
+    "pullRequest": 676,
+    "url": "https://github.com/cehinds/AshenSpire/pull/676"
+  },
+  {
     "id": "pr-657",
     "date": "2026-09-05",
     "group": "2026-09-05",

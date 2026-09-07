@@ -3,6 +3,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
+import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { buildShopStock } from '../src/engine/encounters.js';
 import { carriedIds } from '../src/model/loadout.js';
 import { installPlan, extractionPlan, commitExtraction, commitInstall } from '../src/model/cardExtraction.js';
@@ -133,6 +134,28 @@ test('both shipped weapon arts are stocked and purchased cards can be seated thr
     assert(!run.deck.some((card) => card.instanceId === receipt.instance.instanceId), 'seating consumes purchased loose copy');
     assert(run.deck.some((card) => card.instanceId === extracted.instanceId), 'previously extracted copy stays owned');
   }
+});
+
+test('real save manager retains a sold mounted package and exact remaining shop stock', () => {
+  const run = fixture();
+  run.loadout.storage.push('katana');
+  const item = extractionPlan(registries, run).candidates.find((row) => row.itemRef === 'armament/katana');
+  const mount = item.mounts.find((row) => row.cardId === 'katanaDrawCut');
+  const extracted = commitExtraction(registries, run, item.itemRef, mount.mountKey, undefined, { free: true });
+  const offer = run.shopStock.weaponArts.find((row) => row.id === 'katanaDrawCut');
+  const purchase = commitArmamentPurchase(registries, run, armamentPurchasePlan(registries, run, offer, 'weaponArt'));
+  commitInstall(registries, run, item.itemRef, mount.mountKey, purchase.instance.instanceId, undefined, { free: true });
+  run.itemUpgradeLevels[item.itemRef] = 1;
+  commitArmamentSale(registries, run, armamentSalePlan(registries, run, 'katana'));
+  const saved = JSON.stringify({ stock: run.shopStock, mounts: run.itemMounts, tiers: run.itemUpgradeLevels, cinders: run.cinders, counters: run.streamCounters });
+  const saves = createSaveManager(createMemoryStorage());
+  saves.saveRun(run);
+  const loaded = saves.loadRun(registries);
+  assert(loaded, 'sold-item ledgers pass the real load validation');
+  assert.equal(JSON.stringify({ stock: loaded.shopStock, mounts: loaded.itemMounts, tiers: loaded.itemUpgradeLevels, cinders: loaded.cinders, counters: loaded.streamCounters }), saved);
+  assert(!carriedIds(loaded.loadout).includes('katana'));
+  assert(loaded.deck.some((card) => card.instanceId === extracted.instanceId));
+  assert(!loaded.deck.some((card) => card.grantedBy === 'katana'));
 });
 
 console.log(`armament trading: ${passed} passed`);

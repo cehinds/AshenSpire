@@ -11,6 +11,11 @@ A roguelike deckbuilder for the browser — single-player, with optional LAN co-
 
 ## Play a build
 
+Traders now offer armaments and mountable weapon arts alongside their usual stock.
+Inspect an item before buying, or sell an unequipped armament from storage.
+Equipped items explain why they cannot be sold. Weapon arts are bought at traders
+and installed through the Armoury's existing card-mounting controls.
+
 **[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)** — the stable
 build from `main`. **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** — the builds
 index: the current `dev`, `test`, `release` and `main` builds, each playable at its own address.
