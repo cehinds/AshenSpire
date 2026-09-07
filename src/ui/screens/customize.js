@@ -585,21 +585,26 @@ export function mountCustomize(app, {
       key: section.id, kind: 'pick', disclosure: 'face',
       face: { node: equipmentFaces.get(section.id).node },
       reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
-    })));
+    })), { structure: 'details' });
     refreshEquipmentFaces = () => {
       for (const section of equipmentSectionViews) equipmentFaces.get(section.id).setValue(equipmentValue(section));
     };
     const openId = equipmentSectionViews.some((section) => section.id === preferredOpenId)
       ? preferredOpenId
       : equipmentSectionViews[0]?.id;
-    if (openId) equipmentFold.open(openId);
+    if (preferredOpenId && openId) equipmentFold.open(openId);
 
     const surface = equipmentSurfaceReceipt(registries, previewRun());
-    $('#cz-equipment-receipts').innerHTML = '<section class="equip-role-receipts"><b>Starting equipment card packages</b>'
+    const receiptBody = el('div', { class: 'as-stack' });
+    receiptBody.innerHTML = '<section class="equip-role-receipts"><b>Starting equipment card packages</b>'
       + renderRoleCopies(surface)
       + '</section>'
       + renderEquipmentRequirements(surface.requirements)
       + renderPlayerPoise(surface.poise);
+    mountDisclosure($('#cz-equipment-receipts'), [{ key: 'equipment-summary', kind: 'pick', disclosure: 'face',
+      face: { label: 'Equipment summary', value: 'Cards, requirements and poise' },
+      reveal: { node: receiptBody },
+    }], { structure: 'details' });
   }
 
   function advanceEquipment(sectionId) {
@@ -621,7 +626,7 @@ export function mountCustomize(app, {
     key: row.key, kind: 'pick', disclosure: 'face',
     face: { label: row.label, value: row.value() },
     reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
+  })), { structure: 'details' });
   refreshSpriteFaces = () => {
     for (const row of spriteRows) spriteFold.setValue(row.key, row.value());
   };
@@ -638,7 +643,7 @@ export function mountCustomize(app, {
     key: row.key, kind: 'pick', disclosure: 'face',
     face: { label: row.label, value: row.value() },
     reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
+  })), { structure: 'details' });
   markUiComponent($('#cz-character-fold'), UI.characterDisclosure);
   refreshCharacterFaces = () => {
     for (const row of characterRows) characterFold.setValue(row.key, row.value());
@@ -647,13 +652,13 @@ export function mountCustomize(app, {
     key: 'sprite', kind: 'pick', disclosure: 'face',
     face: { label: 'SPRITE', value: selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle },
     reveal: { node: $('#cz-sprite-group'), sense: 'Edit sprite.' },
-  }]);
+  }], { structure: 'details' });
   const refreshPreviewFace = () => previewFold.setValue(
     'sprite', selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle,
   );
   const refreshExistingCharacterFaces = refreshCharacterFaces;
   refreshCharacterFaces = () => { refreshExistingCharacterFaces(); refreshPreviewFace(); };
-  characterFold.open('primary');
+  // Character choices stay folded until requested.
 
   const equipmentValue = (section) => {
     if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
@@ -819,7 +824,7 @@ export function mountCustomize(app, {
       key: row.key, kind: 'pick', disclosure: 'face',
       face: { label: row.label, value: row.value() },
       reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-    })));
+    })), { structure: 'details' });
     refreshSectionFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
     fold.open('class');
   }

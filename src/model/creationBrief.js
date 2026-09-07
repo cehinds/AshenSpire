@@ -146,7 +146,7 @@ function equipmentScalingLines(registries, attributeId, profiles) {
     const school = source.damageSchool || profile.damageSchool;
     const label = role === 'guard'
       ? 'Guard'
-      : `${school && school !== 'physical' ? `${school[0].toUpperCase()}${school.slice(1)} ` : 'Physical '}attacks`;
+      : `${school && school !== 'physical' ? `${school[0].toUpperCase()}${school.slice(1)} ` : 'Physical '}AR`;
     lines.add(`${label} +${profile.gainPerTier} every ${profile.pointsPerTier} ${profile.pointsPerTier === 1 ? 'point' : 'points'}`);
   }
   return [...lines];
@@ -202,7 +202,7 @@ export function attributeCardModels(registries, attributes, { projection = null,
     // attack scaling, not a derived stat) still has a fact to state — read from
     // its own authored line rather than left to flavour.
     // Two equipped profiles can scale off one attribute at DIFFERENT rates and
-    // carry the same label ("Physical attacks" for a sword and a staff), so the
+    // carry the same label ("Physical AR" for a sword and a staff), so the
     // face states each label once, at its most frequent gain — the fold below
     // still lists every rate, which is where a player compares them.
     const scalingFacts = faceFacts.length ? [] : [...scaling
