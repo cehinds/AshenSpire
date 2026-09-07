@@ -32,6 +32,10 @@ the shared `enemySprite()` asset function. The twelve PNGs in
 384px square canvas and common foot anchor when replacing them. Keep the
 original sprite files as fallback assets. See CREDITS.md and the extraction
 manifest beside the images for provenance.
+The fourteen new frames in `assets/enemies-expansion/` use the same canvas,
+left-facing orientation and foot anchor (192, 364). They are transparent idle
+paintings; runtime motion supplies their action feedback, not authored attack
+strips. Preserve both imported Unity art and the original fallback assets.
 
 Armament trading uses `src/model/armamentTrading.js` for inert quotes and atomic
 commits. Stored ownership, equipped sets, capacity, currency and stock revisions

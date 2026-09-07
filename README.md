@@ -4,10 +4,8 @@ A roguelike deckbuilder for the browser — single-player, with optional LAN co-
 
 > **Core loop:** Four classes, three acts, 20 regular enemies, three elites and ten bosses, with seeded encounters and resumable runs. See [DEVELOPER.md](DEVELOPER.md) to run and extend it, and the [enemy roster](docs/ENEMY-ROSTER.md) for moves and destinations.
 
-> **README content updated:** 2026-09-05T15:10:06-08:00 (Alaska)
-> **Updated by:** Claude Code, on the owner's instruction — the feature list described only the four painted class figures, and equipping armour now changes the animated figure you fight as
-> **Source change:** #648, which gave each of the twelve alternative armour sets its own painted figure in combat and in the Armoury, with the class figure as the fallback, and added a fourth attack frame
-> **Scope:** README content-currentness only; not QA, merge, deployment, playability, release, publication, or approval status.
+Feature descriptions include the September 7 enemy and combat expansion. See
+[CHANGELOG.md](CHANGELOG.md) for the corresponding PRs and development builds.
 
 ## Play a build
 
