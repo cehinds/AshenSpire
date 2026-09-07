@@ -270,7 +270,7 @@ export function placeAnchored(el, anchor, {
     const right = { left: a.left + a.width + gap, top: slideY };
     const left = { left: a.left - b.width - gap, top: slideY };
     const candidates = intent === 'under' ? [under]
-      : intent === 'above' ? [above, aboveLeft, aboveRight, under]
+      : intent === 'above' ? [above, aboveLeft, aboveRight, right, left, under]
         : intent === 'left' ? [left, right, under, above]
           : intent === 'right' ? [right, left, under, above] : [
       right,
