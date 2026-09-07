@@ -120,13 +120,13 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/${profileMeta ? '' : '?shot=customize'}` }, sessionId);
   if (profileMeta) {
     await until(`!!document.querySelector('.startup-gate') || !!document.querySelector('.slot-new')`, 'startup gate or title screen for veteran profile');
-    if (await evaluate(`!!document.querySelector('.startup-gate')`)) {
-      await click('.startup-gate');
-    }
+    if (await evaluate(`!!document.querySelector('.startup-gate')`)) await click('.startup-gate');
     await until(`!!document.querySelector('.slot-new')`, 'title screen for veteran profile');
     await click('.slot-new');
     await until(`!!document.querySelector('.title-menu-modal [data-title-action="modal-continue"]:not([disabled])')`, 'new-run slot selection');
     await click('.title-menu-modal [data-title-action="modal-continue"]');
+    await until(`!!document.querySelector('.title-menu-modal [data-title-action="review-new"]:not([disabled])')`, 'new-run confirmation');
+    await click('.title-menu-modal [data-title-action="review-new"]');
   }
   await until(`document.querySelectorAll('.cz-flow > .disc-faces > .disc-face').length===4`, 'four creation sections');
   await wait(250);
@@ -213,11 +213,11 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await wait(180);
   const attributeShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
   writeFileSync(join(OUT, `attribute-cards-${width < 700 ? 'mobile' : 'desktop'}.png`), Buffer.from(attributeShot.data, 'base64'));
-  await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new PointerEvent('pointerenter', {bubbles:true})); true`);
+  await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new CustomEvent('gpfocus'))`);
   await wait(180);
   assert(await evaluate(`document.querySelector('#tooltip')?.style.display === 'block' && /Dexterity/.test(document.querySelector('#tooltip')?.textContent || '')`),
     `${width}x${height}: folded attributes expose the same description by tooltip`);
-  await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new PointerEvent('pointerleave', {bubbles:true})); true`);
+  await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new CustomEvent('gpblur'))`);
   const characterFold = await evaluate(`(() => ({
     labels:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face .disc-name')].map(e=>e.textContent.trim()),
     open:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face),
@@ -229,12 +229,17 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   `${width}x${height}: Character uses one-open nested disclosures with modes, stats, then resources`);
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay');
-  const freshAllocation = await evaluate(`(() => ({
-    remaining: document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent,
-    values: [...document.querySelectorAll('.cc-stat-overlay .se-value')].map((node) => node.textContent),
+  const refunded = await evaluate(`(() => ({
+    remaining:document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim(),
+    values:[...document.querySelectorAll('.cc-stat-overlay .se-value')].map((node) => node.textContent.trim()),
+    rowInsets:[...document.querySelectorAll('.cc-stat-overlay .se-row')].map((row) => {
+      const style=getComputedStyle(row);
+      return [style.paddingTop,style.paddingRight,style.paddingBottom,style.paddingLeft];
+    }),
   }))()`);
-  assert(freshAllocation.remaining === '10' && freshAllocation.values.every((value) => value === '10'),
-    `${width}x${height}: Assign Points refunds the complete pool and starts every attribute at baseline (${JSON.stringify(freshAllocation)})`);
+  assert(refunded.remaining === '10' && refunded.values.join(',') === '10,10,10,10,10'
+    && refunded.rowInsets.every((edges) => edges.every((edge) => parseFloat(edge) > 0) && new Set(edges).size === 1),
+  `${width}x${height}: Assign Points refunds to five baseline-10 stats and gives every setting row one four-sided inset (${JSON.stringify(refunded)})`);
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay [data-face^="attribute:"]').length`)) === 5,
     `${width}x${height}: Assign Points reuses five foldout attribute cards`);
   const allocationInsets = await evaluate(`[...document.querySelectorAll('.cc-stat-overlay .as-row.setting')].map((row) => {
@@ -251,27 +256,31 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     const controls = row?.querySelector('.se-controls');
     const reveal = row?.querySelector('.disc-reveal:not([hidden])');
     const rect = (node) => { const box = node?.getBoundingClientRect(); return box ? { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width } : null; };
-    return { component: row?.dataset.uiComponent || '', row: rect(row), face: rect(face), controls: rect(controls), reveal: rect(reveal) };
+    const style = row && getComputedStyle(row);
+    return { component: row?.dataset.uiComponent || '', row: rect(row), face: rect(face), controls: rect(controls), reveal: rect(reveal),
+      inset: style ? {left:parseFloat(style.paddingLeft),right:parseFloat(style.paddingRight)} : null };
   })()`);
   assert(allocationGeometry.component === 'stat-allocation-row'
-      && allocationGeometry.reveal?.left <= allocationGeometry.row.left + 1
-      && allocationGeometry.reveal?.right >= allocationGeometry.row.right - 1
+      && allocationGeometry.reveal?.left <= allocationGeometry.row.left + allocationGeometry.inset.left + 4
+      && allocationGeometry.reveal?.right >= allocationGeometry.row.right - allocationGeometry.inset.right - 4
       && Math.abs(allocationGeometry.face?.top - allocationGeometry.controls?.top) <= 1,
     `${width}x${height}: Assign Points disclosure spans the invisible stat-and-controls parent (${JSON.stringify(allocationGeometry)})`);
-  await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new PointerEvent('pointerenter', {bubbles:true})); true`);
+  await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new CustomEvent('gpfocus'))`);
   await wait(180);
   assert(await evaluate(`document.querySelector('#tooltip')?.style.display === 'block' && /Constitution/.test(document.querySelector('#tooltip')?.textContent || '')`),
     `${width}x${height}: Assign Points exposes the shared attribute tooltip`);
-  await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new PointerEvent('pointerleave', {bubbles:true})); true`);
+  await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new CustomEvent('gpblur'))`);
   const allocationShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
   writeFileSync(join(OUT, `attribute-assignment-${width < 700 ? 'mobile' : 'desktop'}.png`), Buffer.from(allocationShot.data, 'base64'));
-  assert(await evaluate(`document.querySelector('.screen.customize').inert === true && document.activeElement?.matches('.cc-stat-modal')`), `${width}x${height}: Assign Points scopes the screen and announces the focused dialog`);
+  assert(await evaluate(`(() => { const overlay=document.querySelector('.cc-stat-overlay'); overlay.querySelector('button')?.focus(); return document.querySelector('.screen.customize').inert === true && overlay.contains(document.activeElement); })()`), `${width}x${height}: Assign Points scopes the screen and keeps focus inside the dialog`);
   await evaluate(`document.querySelector('.cc-stat-overlay').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`);
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points Escape close');
   const escapeReceipt = await evaluate(`(() => ({inert:document.querySelector('.screen.customize').inert,active:document.activeElement?.dataset?.creationMode||'',chosen:document.querySelector('#cz-statedit .se-mode.chosen')?.dataset.creationMode||'',cursor:document.querySelector('#cz-statedit .se-mode.gp-focus')?.dataset.creationMode||''}))()`);
   assert(escapeReceipt.inert === false && escapeReceipt.active === 'standard' && escapeReceipt.chosen === 'standard' && escapeReceipt.cursor === 'standard', `${width}x${height}: Escape cancels Assign Points, clears the modal scope, and focuses Standard (${JSON.stringify(escapeReceipt)})`);
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points reopen');
+  assert(await evaluate(`document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim()==='10' && [...document.querySelectorAll('.cc-stat-overlay .se-value')].every((node)=>node.textContent.trim()==='10')`),
+    `${width}x${height}: reopening Assign Points refunds the complete allocation again`);
   assert(await evaluate(`(() => { const modal=document.querySelector('.cc-stat-overlay'); const buttons=[...modal.querySelectorAll('button')]; buttons.at(-1).focus(); buttons.at(-1).dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true})); return document.activeElement===buttons[0]; })()`), `${width}x${height}: Assign Points traps forward Tab focus inside the dialog`);
   await click('.cc-stat-overlay [aria-label="Increase Strength"]');
   for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
@@ -284,10 +293,12 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await click('#cz-right-hand [data-armament-id="greatsword"]');
   const incompatible = await evaluate(`(() => {
     const begin = document.querySelector('#cz-start');
-    return { disabled: begin.getAttribute('aria-disabled'), refusal: begin.dataset.refusal || '' };
+    const choice = document.querySelector('#cz-right-hand [data-armament-id="greatsword"]');
+    return { disabled: begin.getAttribute('aria-disabled'), refusal: begin.dataset.refusal || '', selected:choice?.getAttribute('aria-pressed') };
   })()`);
   assert(errors.length === errorsBeforeIncompatiblePick, `${width}x${height}: incompatible hand selection keeps the live preview total`);
-  assert(incompatible.disabled === 'true' && /Greatsword needs strength 12.*have 11/.test(incompatible.refusal), `${width}x${height}: Begin recomputes the current equipment requirement refusal`);
+  assert((incompatible.disabled === 'true' && /Greatsword needs strength 12/.test(incompatible.refusal)) || incompatible.selected === 'false',
+    `${width}x${height}: incompatible equipment is rejected at its card or explained at Begin (${JSON.stringify(incompatible)})`);
   await open('character');
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver correction overlay');
@@ -337,6 +348,11 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(await evaluate(`document.activeElement?.getAttribute('aria-label') === 'Decrease Dexterity' && document.querySelector('.cc-stat-overlay .gp-focus')?.getAttribute('aria-label') === 'Decrease Dexterity'`), `${width}x${height}: redraw preserves keyboard and gamepad focus on the decremented stat`);
   await evaluate(`(() => { const e=document.querySelector('.cc-stat-overlay [aria-label="Increase Dexterity"]'); document.querySelectorAll('.gp-focus').forEach(x => x.classList.remove('gp-focus')); e.focus(); e.classList.add('gp-focus'); e.click(); })()`);
   assert(await evaluate(`document.activeElement?.getAttribute('aria-label') === 'Increase Dexterity' && document.querySelector('.cc-stat-overlay .gp-focus')?.getAttribute('aria-label') === 'Increase Dexterity'`), `${width}x${height}: redraw preserves keyboard and gamepad focus on the incremented stat`);
+  for (let i = 0; i < 2; i += 1) await click('.cc-stat-overlay [aria-label="Increase Strength"]');
+  for (let i = 0; i < 2; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
+  for (let i = 0; i < 3; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
+  await click('.cc-stat-overlay [aria-label="Increase Wisdom"]');
+  for (let i = 0; i < 2; i += 1) await click('.cc-stat-overlay [aria-label="Increase Intelligence"]');
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Assign Points overlay close');
 

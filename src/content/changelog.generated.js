@@ -113,6 +113,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/679"
   },
   {
+    "id": "pr-664",
+    "date": "2026-09-06",
+    "group": "2026-09-06",
+    "summary": "Assign Points starts with ten points to spend, and text keeps its inset",
+    "detail": "Opening or reopening Assign Points now refunds every attribute to 10 and puts all 10 points back in the pool, rather than reopening on the class's already-spent suggestion. The five stat cards and shared setting rows use balanced padding on every side, including narrow phone layouts, so labels and summaries no longer run against their component or modal edges. The character-creation browser check follows the current two-step New flow, verifies the refund on first open and reopen, measures all four row insets, assigns a complete legal allocation, and repeats the flow at desktop and phone sizes.",
+    "build": "0.5.5.40",
+    "pullRequest": 664,
+    "url": "https://github.com/cehinds/AshenSpire/pull/664"
+  },
+  {
     "id": "pr-657",
     "date": "2026-09-05",
     "group": "2026-09-05",

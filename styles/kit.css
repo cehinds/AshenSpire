@@ -294,7 +294,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* The settings variant: same grammar, hairline between, no hover fill — a
    settings row is read, not chosen. It may wrap its control under the label
    when the pane is narrow, and it never clips a hint. */
-.as-row.setting { padding: 0.7rem; border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
+.as-row.setting { padding: var(--modal-inset, 1.4rem); border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
 .as-row.setting:hover { background: transparent; }
 .as-row.setting:last-child { border-bottom: 0; }
 .as-row.setting > .as-labelstack { flex: 1 1 18rem; }
@@ -1256,11 +1256,19 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .as-option .od, .as-option .om, .as-face .od, .as-face .om { overflow-wrap: anywhere; }
 .as-option .ob > .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
 /* ═══ FACE HOST — an option whose whole content is one face element ════════ */
-/* The host stays bare so the face owns the padding and can paint the whole
-   card (a hold fill, a drag ghost); the face is the OptionCard's grammar. */
+/* The host stays bare so its one child owns the padding and can paint the
+   whole card (a hold fill, a drag ghost). Both supported children — Face and
+   Row — use the same balanced inset; a hosted Row must not dissolve all the
+   way to the border. */
 .as-option.hosts-face { padding: 0; }
 .as-face { display: flex; align-items: center; gap: 1.5rem; width: 100%; min-width: 0; min-height: var(--tap-floor); padding: 1.28rem 1.5rem; border-radius: inherit; text-align: left; }
+.as-option.hosts-face > .as-row { width: 100%; min-height: var(--tap-floor); padding: 1.28rem 1.5rem; }
 .as-option.compact.hosts-face > .as-face { padding: 0.75rem 1.2rem; gap: 1rem; }
+.as-option.compact.hosts-face > .as-row { min-height: 5rem; padding: 0.75rem 1.2rem; gap: 1rem; }
+/* Primary stats keep this compact face in creation, allocation, and Armoury.
+   Two text lines are reserved even when a short summary happens to fit on one,
+   so a narrow INT or CON summary cannot make one card taller than its peers. */
+.as-option.cc-primary-stat.hosts-face > .as-row { min-height: 7rem; padding: 0.75rem 1.2rem; gap: 1rem; }
 .as-face > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
 .as-face > .ob { flex: 1 1 8rem; }
 .as-face > .r-trail { flex: 0 1 auto; margin-left: auto; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0.5rem; max-width: 50%; }

@@ -263,6 +263,10 @@ export function mountCustomize(app, {
   }
 
   function resetAttributes() {
+    // Opening Assign Points is a refund boundary, not a return to the authored
+    // class suggestion. Every stat goes back to the mode's baseline and the
+    // complete bonus pool becomes available again (SPEC 7.2). The helper is
+    // #692's; this branch computed the same thing inline before it existed.
     state.attributes = baselineAttributeAllocation(registries, POINTBUY);
     previewAttributes = { ...state.attributes };
   }
@@ -398,6 +402,7 @@ export function mountCustomize(app, {
 
   function openPointBuy() {
     closePointBuy({ restoreFocus: false });
+    resetAttributes();
     pointBuyReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     customizeScreen.inert = true;
     const mode = pointbuyMode();
