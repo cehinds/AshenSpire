@@ -4,6 +4,15 @@ Every third-party asset shipped in this repository is listed here with its sourc
 
 Allowed licenses: CC0, CC BY 3.0/4.0 (with attribution), SIL OFL (fonts).
 
+## Painted enemy sprites from the Unity fork
+
+`assets/enemies-unity/painted_*.png` contains twelve unchanged project-owned,
+AI-generated enemy frames from [AshenSpire-Unity](https://github.com/cehinds/AshenSpire-Unity/tree/130d7c5/Unity/Assets/AshenSpire/Resources/Art).
+The Unity fork generated the artwork with the built-in image-generation tool.
+Its extraction manifest is retained as `assets/enemies-unity/provenance.json`.
+Frames share a 384 × 384 canvas, a (192, 364) foot anchor and left-facing art.
+These are static frames; existing combat effects provide their movement.
+
 ## Planned sources
 
 - [game-icons.net](https://game-icons.net) — CC BY 3.0 — card art, relic/status/intent icons
