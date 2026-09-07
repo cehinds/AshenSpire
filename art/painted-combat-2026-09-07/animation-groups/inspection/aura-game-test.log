@@ -1,0 +1,7 @@
+{
+  gameplay: {
+    guard: 'held',
+    bashFrames: [ 'shieldGuard3', 'shieldBash1', 'shieldBash2', 'shieldBash3' ]
+  }
+}
+{ outfits: 16, decoded: 304, playback: 'passed' }
