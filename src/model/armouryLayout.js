@@ -303,6 +303,18 @@ export function orderArmourySlots(slots, layout) {
   });
 }
 
+/**
+ * Keep authored position order within each state while moving every available
+ * empty position behind occupied and locked positions. The ordering is derived
+ * from live state, so equipping or unequipping redraws the empty row in its
+ * correct place without storing a second order.
+ */
+export function orderArmouryPositions(positions) {
+  return [...(positions || [])].sort((a, b) => (
+    Number(a?.state === 'empty') - Number(b?.state === 'empty')
+  ));
+}
+
 const positionText = (template, fallback, index) => String(template || fallback)
   .replaceAll('{n}', String(index + 1));
 

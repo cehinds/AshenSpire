@@ -20,7 +20,9 @@ import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } from '../model/state.js';
-import { playerPoiseThresholdReceipt, playerLoadReceipt } from '../model/statProjection.js';
+import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
+import { playerWeightClass } from '../model/combatWeight.js';
+export { playerWeightClass };
 import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
@@ -781,31 +783,6 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
 
 function needsEnemyTarget(def) {
   return (def.effects || []).some((eff) => eff.target === 'enemy');
-}
-
-/**
- * The Weight Class the player fights in — derived, never stored: the loadout
- * this fight holds (the SAME object the run holds, so a mid-fight swap moves
- * it) and the run attributes, decided by the framework (bridge.weightClass
- * over playerLoadReceipt). A fixture with no loadout or attributes carries no
- * load and stands Light, the contract's zero-load class.
- */
-export function playerWeightClass(combat) {
-  const registries = combat.registries;
-  if (combat.loadout && combat.attributes) {
-    const receipt = playerLoadReceipt(registries, {
-      loadout: combat.loadout, attributes: combat.attributes, class: combat.player.classId,
-      itemUpgradeLevels: combat.itemUpgradeLevels || {},
-    });
-    return registries.framework.weightClass({
-      attributes: combat.attributes,
-      weights: { mainHandWeight: receipt.hands, offHandWeight: 0, armorWeight: receipt.armour, otherCountedWeight: 0 },
-    });
-  }
-  return registries.framework.weightClass({
-    attributes: { constitution: 10, strength: 10, ...(combat.attributes || {}) },
-    weights: { mainHandWeight: 0, offHandWeight: 0, armorWeight: 0, otherCountedWeight: 0 },
-  });
 }
 
 // Effective numeric cost after relic passives (powerCostReduction, min 0).

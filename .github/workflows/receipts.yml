@@ -1,0 +1,60 @@
+name: receipts
+
+# EVERY MERGED PULL REQUEST HAS A RECEIPT BEFORE IT IS PROMOTED.
+#
+# Nine pull requests landed on `dev` unreceipted before this existed — #629,
+# #631, #635, #637, #640, #645, #648, #649, #650. None of them broke anything,
+# which is precisely why the gap kept reopening: an unreceipted merge is green,
+# ships, and reads as finished. Each was found later by a person reading the
+# merge log against CHANGELOG.md, and two separate pull requests (#633, #641)
+# were spent going back for them.
+#
+# The in-game changelog is a projection of that file, so a missing receipt is
+# missing for a PLAYER, not only for the repository.
+#
+# WHY THIS IS A JOB OF ITS OWN rather than a step in dev-preview.yml: the check
+# reads merge history, so it needs the full log AND the promotion target ref.
+# dev-preview's job is deliberately a shallow, sub-second, no-browser lane and
+# putting a `fetch-depth: 0` on it would tax every pull request for a check that
+# only means something on `dev`.
+#
+# It runs on push to `dev` only. On a pull request the answer would be about
+# merges the author did not make, and a gate that goes red at somebody else for
+# work they cannot see is a gate people learn to ignore.
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+concurrency:
+  group: receipts-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  receipts:
+    runs-on: ubuntu-latest
+    steps:
+      # Full history: the check walks `origin/test..HEAD` for merge subjects.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # The promotion target is the bound. Without it the tool falls back to a
+      # fixed window and SAYS SO rather than quietly widening to all of history,
+      # but the bounded answer is the one worth having, so fetch the ref.
+      - name: Fetch the promotion target so the range is the real one
+        run: git fetch --no-tags origin test:refs/remotes/origin/test || echo "no test branch yet; the tool will say so"
+
+      - name: The corpus still catches its own known-bads
+        run: node tools/verdict.mjs -- node tools/receipts.mjs --selftest
+
+      - name: Every pull request merged since the last promotion has a receipt
+        run: node tools/verdict.mjs -- node tools/receipts.mjs --check

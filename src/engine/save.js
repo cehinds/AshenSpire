@@ -37,6 +37,8 @@ import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
 import { openLedger, closeLedger, note, readLedger } from '../model/healLedger.js';
 import { combatSnapshotReferenceProblems } from '../model/combatSnapshot.js';
+import { assertSavedBossReferences } from '../model/mapReferences.js';
+import { activeMods, endlessActInfo } from '../content/customMods.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -510,6 +512,8 @@ export function createSaveManager(storage) {
       let run;
       try {
         run = deserializeRun(json);
+        const mapAct = run.custom && activeMods(run.custom).endless ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
+        assertSavedBossReferences(registries, run.mapGraph, mapAct);
         const snapshotReferenceProblems = combatSnapshotReferenceProblems(run.combatEntered?.snapshot, registries);
         if (snapshotReferenceProblems.length) {
           throw new Error(`Malformed combat snapshot references: ${snapshotReferenceProblems.join('; ')}`);

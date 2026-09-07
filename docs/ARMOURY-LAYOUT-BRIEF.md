@@ -38,8 +38,10 @@ cards fold automatically where the authored view asks for folded state.
 ## Armaments List
 
 List mode is a flat procedural list: one horizontal card for every visible
-occupied, empty, or locked equipment position. Position labels, codes, group
-order, slot count, unlock state, and item assignment come from data.
+occupied, empty, or locked equipment position. Empty positions are placed after
+occupied and locked positions automatically while preserving authored order
+within each state. Position labels, codes, group order, slot count, unlock
+state, and item assignment come from data.
 
 ```text
 ┌──────────┬──────────────┬────────────────────────────────────┐

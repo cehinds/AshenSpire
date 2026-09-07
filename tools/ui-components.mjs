@@ -248,8 +248,9 @@ export function findings(r) {
       || /from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.startupGate + r.startupGateModel)) {
     bad.push('C18 startup/title compositions lost a stable subcomponent, immutable gate model, or shared build stamp');
   }
-  if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.58,[\s\S]*primaryRowGapPx:\s*4,[\s\S]*controlGapPx:\s*0,[\s\S]*resourceRowGapPx:\s*2,[\s\S]*panelPadPx:\s*0,[\s\S]*mobilePanelPadPx:\s*0,[\s\S]*mobileControlGapPx:\s*1,[\s\S]*mobileOuterPadPx:\s*4,[\s\S]*mobileRowGapPx:\s*3,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
+  if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.58,[\s\S]*primaryRowGapPx:\s*4,[\s\S]*controlGapPx:\s*0,[\s\S]*resourceRowGapPx:\s*3,[\s\S]*panelPadPx:\s*0,[\s\S]*mobilePanelPadPx:\s*0,[\s\S]*mobileControlGapPx:\s*1,[\s\S]*mobileOuterPadPx:\s*4,[\s\S]*mobileRowGapPx:\s*3,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
       || !/hudQuickSettings:\s*\{[\s\S]*places:\s*\['title', 'map', 'combat'\],[\s\S]*edgeGapPx:\s*4,[\s\S]*stackGapPx:\s*0,[\s\S]*cardSizePx:\s*40,[\s\S]*glyphSizePx:\s*28,[\s\S]*stateDotPx:\s*6,[\s\S]*activeTintPct:\s*14,[\s\S]*showCardBackground:\s*true,[\s\S]*showLabels:\s*false,[\s\S]*\}/.test(r.balance)
+      || !/\.resbars\[data-surface="main"\]\s*\{[^}]*gap:\s*calc\(var\(--hud-resource-row-gap-px\)\s*\/\s*var\(--ui-zoom, 1\)\);/.test(r.kit)
       || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-panel-pad-px', '--hud-mobile-panel-pad-px', '--hud-mobile-control-gap-px', '--hud-mobile-outer-pad-px', '--hud-mobile-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width', '--hud-quick-edge-gap', '--hud-quick-stack-gap', '--hud-quick-card-size', '--hud-quick-glyph-size', '--hud-quick-state-dot', '--hud-quick-active-tint'].every((name) => r.main.includes(`'${name}'`))
       || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'panelPadPx', 'mobilePanelPadPx', 'mobileControlGapPx', 'mobileOuterPadPx', 'mobileRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'cardSizePx', 'glyphSizePx', 'stateDotPx', 'activeTintPct', 'showCardBackground', 'showLabels'].every((name) => r.validate.includes(name))) {
     bad.push('C11 HUD presentation defaults are no longer data-owned, projected, and validated');
@@ -263,7 +264,8 @@ export function findings(r) {
       || !/class: 'as-chip hud-cinders'/.test(r.hud)
       || !/class="hud-control-grid as-cluster stack"/.test(r.hud)
       || !/class="hud-resource-row as-band-row"/.test(r.hud)
-      || !/\.shared-hud \{ --hud-quick-tile-size: 3\.2rem; --hud-belt-tile-face-size: 2\.8rem; \}/.test(r.kit)
+      || !/--hud-quick-tile-size:\s*1\.8rem;/.test(r.kit)
+      || !/--hud-quick-tile-gap:\s*0\.45rem;/.test(r.kit)
       || !/\.shared-hud \.hud-control-grid :is\(\.as-iconbtn, \.as-slot\) \{[\s\S]*?width: var\(--hud-quick-tile-size\); height: var\(--hud-quick-tile-size\);/.test(r.kit)
       || !/\.shared-hud \.hud-bottom \{[\s\S]*?position: absolute;[\s\S]*?top: calc\(100% \+ 0\.4rem\);[\s\S]*?left: 1\.6rem; right: 1\.6rem;/.test(r.kit)
       || !/\.shared-hud \.hud-bottom \.as-slot \{[\s\S]*?width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
@@ -482,7 +484,7 @@ function selftest() {
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("childModel(model, UI.metadataField, 'floor')", "childModel(model, UI.metadataField, 'seed')") })],
-    ['restore oversized Quick Access tiles', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('--hud-quick-tile-size: 3.2rem', '--hud-quick-tile-size: var(--iconbtn-size)') })],
+    ['restore oversized Quick Access tiles', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('--hud-quick-tile-size: 1.8rem', '--hud-quick-tile-size: var(--iconbtn-size)') })],
     ['put Relics and potions back inside the HUD flow', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: absolute;\n  z-index: 85;', 'position: static;\n  z-index: auto;') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
     // The other half of the same rung: a phone that drops the chip's VALUE

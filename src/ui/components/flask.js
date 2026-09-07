@@ -239,6 +239,9 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, useAct
         dataset: { flaskAction: row.id, focusable: 'true' },
       },
     });
+    // Keep unavailable actions focusable so their refusal can be read.
+    // kit Row clears aria-disabled when its native disabled option is false.
+    button.setAttribute('aria-disabled', String(!row.enabled));
     // THE KEYCAP IS DERIVED, NEVER TYPED (above). `actionLabel` reads the live
     // binding and the connected device, so a rebind moves the glyph with the
     // key and a pad shows its own button — the same rule the HUD's flask

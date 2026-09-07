@@ -71,6 +71,21 @@ jobs:
       - name: The file a player is handed matches the tree that claims it
         run: node tools/verify-shipped.mjs
 
+      # Same budget as the gates above: a pure read, no execution, no browser,
+      # well under a second, on the runner this job already pays for. It walks
+      # every in-tree module regardless of who imports it, so a rename that
+      # leaves one dangling import is red here rather than at runtime.
+      #
+      # NOT HERE, and the reason is measured rather than assumed: the check that
+      # the in-game changelog matches CHANGELOG.md (tools/about-changelog.mjs
+      # --check) would be the natural companion, and I put it here first. It
+      # SERVES THE TREE AND DRIVES A BROWSER — it exits 127 with no Chrome on
+      # PATH, and it took this job red doing exactly that. It stays in ci.yml,
+      # under the verdict door, where a browser exists. This lane's rule is not
+      # "cheap-looking"; it is no browser, and that tool needs one.
+      - name: Every named import in the tree resolves against a real export
+        run: node tools/linkcheck.mjs --check
+
       - name: Collect the playable build
         run: |
           set -euo pipefail

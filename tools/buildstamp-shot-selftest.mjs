@@ -46,50 +46,32 @@ const edit = (root, rel, fn) => {
   writeFileSync(p, fn(readFileSync(p, 'utf8')), 'utf8');
 };
 
-const OWNER_PLACEMENT = '    ${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}';
-const COMBAT_REMOVAL = "    ${model.properties.place === 'combat' ? '' : buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}";
-
-function sourceFindingsFrom(owner, combat) {
+const TITLE_IMPORT = "import { buildStampHtml } from '../components/buildstamp.js';";
+const TITLE_PLACEMENT = "${buildStampHtml('title')}";
+function sourceFindingsFrom(title) {
   const findings = [];
-  if (!/^import \{ buildStampHtml \} from '\.\/buildstamp\.js';$/m.test(owner)
-      || !owner.split(/\r?\n/).includes(OWNER_PLACEMENT)) {
-    findings.push('owner-placement: hudmeta does not unconditionally emit the split build stamp');
-  }
-  if (!/^import \{ hudShellHtml \} from '\.\.\/components\/hudmeta\.js';$/m.test(combat)
-      || !/^import \{ runHudViewModel \} from '\.\.\/viewModels\/RunHudViewModel\.js';$/m.test(combat)
-      || !/\$\{hudShellHtml\(runHudViewModel\(\{/.test(combat)) {
-    findings.push('combat-consumer: combat does not import and mount hudShellHtml');
-  }
+  if (!title.includes(TITLE_IMPORT)) findings.push('title-import: title does not import the shared build stamp');
+  if (!title.includes(TITLE_PLACEMENT)) findings.push('title-placement: title does not emit the shared build stamp');
   return findings;
 }
-
 function sourceFindings(root) {
-  return sourceFindingsFrom(
-    readFileSync(resolve(root, 'src/ui/components/hudmeta.js'), 'utf8'),
-    readFileSync(resolve(root, 'src/ui/screens/combat.js'), 'utf8'),
-  );
+  return sourceFindingsFrom(readFileSync(resolve(root, 'src/ui/screens/title.js'), 'utf8'));
 }
-
 export function sourceSelftest() {
-  const owner = readFileSync(resolve(REPO_ROOT, 'src/ui/components/hudmeta.js'), 'utf8');
-  const combat = readFileSync(resolve(REPO_ROOT, 'src/ui/screens/combat.js'), 'utf8');
+  const title = readFileSync(resolve(REPO_ROOT, 'src/ui/screens/title.js'), 'utf8');
   const cases = [
-    ['clean shared owner + combat consumer', [], owner, combat],
-    ['combat-visible placement removed at shared owner', ['owner-placement'], owner.replace(OWNER_PLACEMENT, COMBAT_REMOVAL), combat],
-    ['combat stops mounting the shared owner', ['combat-consumer'], owner, combat.replace("import { hudShellHtml } from '../components/hudmeta.js';", '')],
+    ['clean title consumer', [], title],
+    ['title placement removed', ['title-placement'], title.replace(TITLE_PLACEMENT, '')],
+    ['title stops importing the shared stamp', ['title-import'], title.replace(TITLE_IMPORT, '')],
   ];
   let failures = 0;
-  for (const [name, expected, ownerText, combatText] of cases) {
-    const findings = sourceFindingsFrom(ownerText, combatText);
+  for (const [name, expected, titleText] of cases) {
+    const findings = sourceFindingsFrom(titleText);
     const exact = findings.length === expected.length && expected.every((code) => findings.some((finding) => finding.startsWith(code)));
-    if (!exact) {
-      failures++;
-      console.log(`  FAIL ${name}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(findings)}`);
-    } else console.log(`  ${expected.length ? 'RED ' : 'PASS'} ${name}${findings.length ? ` — ${findings.join('; ')}` : ''}`);
+    if (!exact) failures++;
+    console.log((exact ? 'PASS ' : 'FAIL ') + name + ': ' + findings.join('; '));
   }
-  console.log(failures
-    ? `buildstamp-shot --source-selftest: RED — ${failures}/${cases.length} cases failed`
-    : `buildstamp-shot --source-selftest: OK — ${cases.length}/${cases.length} clean/plant cases discriminated`);
+  console.log('buildstamp-shot --source-selftest: ' + (failures ? 'RED' : 'OK') + ' — ' + failures + ' failures across ' + cases.length + ' cases');
   return failures ? 1 : 0;
 }
 
@@ -124,10 +106,13 @@ const PLANTS = [
     plant: (root) => css(root, '.build-stamp { position: absolute; left: -9999px; }'),
   },
   {
-    name: 'the combat placement deleted outright',
-    expect: /combat @ .*: no \[data-role/i,
-    expectSource: 'owner-placement',
-    plant: (root) => edit(root, 'src/ui/components/hudmeta.js', (t) => t.replace(OWNER_PLACEMENT, COMBAT_REMOVAL)),
+    name: 'the required title placement deleted outright',
+    expect: /title @ .*: no \[data-role/i,
+    expectSource: 'title-placement',
+    plant: (root) => edit(root, 'src/ui/screens/title.js', (t) => {
+      if (!t.includes(TITLE_PLACEMENT)) throw new Error('title placement plant anchor drifted');
+      return t.replace(TITLE_PLACEMENT, '');
+    }),
   },
   {
     name: 'the stamp TYPES a version instead of deriving one',
