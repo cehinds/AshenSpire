@@ -180,7 +180,7 @@ function cell(piece, { state, hint, gate }, modFields) {
       dataset: { member: piece.id, rarity: piece.rarity || 'common', state },
     },
   });
-  const art = artWell({ src: assetUrl(`assets/equipment/icon_${piece.artKey || piece.id}.webp`), alt: '', small: true });
+  const art = artWell({ src: assetUrl(`assets/equipment/icon_${piece.id}.webp`), alt: '', small: true });
   art.querySelector('img').addEventListener('error', (e) => e.target.remove());
   card.insertBefore(art, card.firstChild);
 

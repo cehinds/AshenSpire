@@ -29,7 +29,7 @@ id,name,kind,hand,rarity,geom,scale,metal,accent,attackProfile,guardProfile,tech
 straightSword,Straight Sword,weapon,either,common,sword,1.00,B8B0A0,C9A227,bladeAttack,weaponGuard,weaponTechnique,,,Honest steel. It asks nothing clever of you.,10,,5,5,2,5,0,0
 greatsword,Greatsword,weapon,either,uncommon,colossal,1.00,B8B0A0,C9A227,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+4|strike.cost=+1|strike.poise=+3,,"Slow, and it does not care.",7,,8,9,2,8,0,0
 dagger,Dagger,weapon,either,common,dagger,1.00,C0B8A6,C9A227,daggerPierceAttack,weaponGuard,weaponTechnique,strike.hits=2,,Two cuts where one would do.,10,,3,3,2,3,0,0
-shortbow,Shortbow,weapon,either,common,dagger,1.00,C0B8A6,C9A227,bowPierceAttack,weaponGuard,bowTechnique,,,A compact bow represented by a generic armament silhouette in this slice.,10,dagger,2,4,2,2,0,0
+shortbow,Shortbow,weapon,either,common,dagger,1.00,C0B8A6,C9A227,bowPierceAttack,weaponGuard,bowTechnique,,,A compact ash-wood bow bound for a quick draw.,10,dagger,2,4,2,2,0,0
 katana,Katana,weapon,either,uncommon,curved,1.00,C6BEAC,C9502E,bladeAttack,weaponGuard,weaponTechnique,strike.damage=-1|strike.bleed=+2,,"A long curve, and a long grudge.",7,,5,4,2,5,0,0
 halberd,Halberd,weapon,either,uncommon,polearm,1.00,A8A090,C9A227,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+3|strike.cost=+1|strike.poise=+4,,Reach enough to keep the dead at arm's length.,7,,7,8,2,7,0,0
 warhammer,Warhammer,weapon,either,uncommon,hammer,1.00,8E8678,C9A227,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+2|strike.poise=+6,,Poise is a fiction. This is the argument.,7,,9,7,2,9,0,0
