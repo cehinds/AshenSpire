@@ -892,7 +892,7 @@
  padding: 64px 24px 16px; gap: 0; overflow-x: auto; scrollbar-width: thin;
 }
 :root .combat:not(.coop) .hand .card {
- --card-w: max(162px, calc(162px / var(--ui-zoom, 1))); --card-name-h: max(32px, calc(32px / var(--ui-zoom, 1))); --card-art-h: max(64px, calc(64px / var(--ui-zoom, 1)));
+ --card-w: max(178px, calc(178px / var(--ui-zoom, 1))); --card-name-h: max(32px, calc(32px / var(--ui-zoom, 1))); --card-art-h: max(70px, calc(70px / var(--ui-zoom, 1)));
  --card-band-h: max(22px, calc(22px / var(--ui-zoom, 1))); --card-row: max(22px, calc(22px / var(--ui-zoom, 1))); --card-pad: max(8px, calc(8px / var(--ui-zoom, 1))); --card-gap: max(5px, calc(5px / var(--ui-zoom, 1)));
  margin: 0; touch-action: pan-x;
 }
@@ -900,9 +900,12 @@
 :root:not([data-composition='short-wide']) .combat:not(.coop) .hand .card .ctext { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); line-height: max(22px, calc(22px / var(--ui-zoom, 1))); }
 :root .combat:not(.coop) > .hand-area > .combat-action-row {
  position: relative; inset: auto; grid-area: actions; width: 100%;
- grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr; align-items: center; gap: 6px;
+  --combat-control-size: max(64px, calc(64px / var(--ui-zoom, 1)));
+ grid-template-columns: var(--combat-control-size) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr) var(--combat-control-size); align-items: center; gap: 6px;
 }
-:root .combat:not(.coop) .combat-action-row > .end-turn { min-height: 58px; }
+:root .combat:not(.coop) .combat-action-row > :is(.end-turn, .energy-orb, .combat-potions) { height: var(--combat-control-size); min-height: var(--combat-control-size); box-sizing: border-box; }
+:root .combat:not(.coop) .combat-action-row > :is(.energy-orb, .combat-potions) { width: var(--combat-control-size); min-width: 0; border-radius: 50%; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+:root .combat:not(.coop) .combat-action-row > .combat-potions { font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
 :root .combat:not(.coop) .combat-action-row .spent { display: flex; flex-direction: column; justify-content: center; }
 
 /* Focus the figure, never paint the full-height combatant layout box. */
@@ -915,5 +918,5 @@
 
 @media (max-width: 480px) {
   :root .combat:not(.coop) .hand { padding-inline: 16px; }
-  :root .combat:not(.coop) .hand .card { --card-w: calc(133.2px / var(--ui-zoom, 1)); }
+  :root .combat:not(.coop) .hand .card { --card-w: calc(146.5px / var(--ui-zoom, 1)); }
 }
