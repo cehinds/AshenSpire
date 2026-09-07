@@ -983,3 +983,8 @@
 :root .combat:not(.coop) .combat-action-row .spent { padding-inline: 2px; font-size: max(1.1rem, calc(11px / var(--ui-zoom, 1))); line-height: 1.15; }
 :root .combat:not(.coop) .combat-action-row .spent small { font-size: inherit; }
 :root .combat:not(.coop) .combat-action-row :is(.hold-hint, .et-key) { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1; }
+
+/* Painted frames own their alpha-shaped glow; do not add the generic gold or
+   white cast halo around their parent (which also contains HUD elements). */
+.sprite.act-move[data-action-motion="cast"]:has(.painted-stage),
+.sprite.act-move[data-action-motion="brace"]:has(.painted-stage) { animation-name: none; }
