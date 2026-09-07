@@ -55,7 +55,7 @@ import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
-import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, cardGrid, optionCard, prose, flavour } from '../kit/index.js';
+import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, optionCard, flavour } from '../kit/index.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -117,16 +117,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           ${html(iconButton({ glyph: '›', label: 'Next card', className: 'hand-page hand-next', attrs: { 'data-focusable': '', hidden: '', 'aria-controls': 'combat-hand' } }))}
         </div>
         <!-- THE ACTION ROW IS A KIT ButtonRow: the Actions receipt as a StatPair,
-             Draw, a shared pile entry, Weapon Arts and Potions. End Turn is the
+             Draw, Discard with Exhaust, and Potions. End Turn is the
              primary with its Keycap and, from the second-beat
-             machinery, its HOLD hint. All six cells stay present at zero so no
+             machinery, its HOLD hint. All five cells stay present at zero so no
              control appears late or shifts the row. -->
         <div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
           ${html(statPair({ key: 'Actions', value: '', attrs: { class: 'energy-orb cell stack lg', role: 'status', 'aria-label': 'Actions remaining' } }))}
           ${html(pileButton('draw', 'Draw'))}
           ${html(button({ label: 'End Turn', weight: 'primary', className: 'end-turn wide tall' }))}
-          ${html(button({ label: 'Piles', className: 'pile spent tall' }))}
-          ${html(button({ label: 'Arts', className: 'combat-arts tall', attrs: { 'aria-label': 'Weapon Arts' } }))}
+          ${html(button({ label: 'Discard', className: 'pile spent tall' }))}
           ${html(button({ label: 'Potions', className: 'combat-potions tall' }))}
         </div>
         <!-- Context hints: the strip is mounted for its readers but stays hidden
@@ -303,36 +302,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         host.appendChild(item);
       }
       if (!entries.length) host.appendChild(flavour('No potions carried.'));
-    } });
-  }
-
-  function openWeaponArts() {
-    const opener = $('.combat-arts');
-    const arts = run.deck.filter(inst => ['weaponArt', 'technique'].includes(inst.equipmentRole));
-    let shell;
-    shell = openModal({ title: 'Weapon Arts', size: 'xl', className: 'combat-art-menu', opener, bodyClassName: 'as-pane', body: host => {
-      host.appendChild(prose('Inspect your equipped arts. Drawn cards use the same selection and targeting rules as your hand. Learn additional arts at traders; purchases are unavailable during combat.'));
-      const grid = cardGrid([], { class: 'grid' });
-      for (const inst of arts) {
-        const wrap = document.createElement('section'); wrap.className = 'combat-art-choice';
-        const inHand = combat.piles.hand.find(card => card.instanceId === inst.instanceId);
-        let preview = null;
-        if (inHand) { try { preview = previewCard(combat, inst.instanceId); } catch {} }
-        const affordable = preview && combat.player.energy >= (preview.costIsX ? 0 : preview.cost) && combat.player.mana >= preview.manaCost && combat.player.stamina >= (preview.staminaCost || 0) && !isUnplayable(inst);
-        const allowed = !!affordable && !busy && !combat.result && combat.phase === 'player';
-        wrap.appendChild(renderCard(registries, inst, preview ? { small: true, preview } : { small: true }));
-        const reason = !inHand ? 'Not in hand' : !affordable ? 'Cannot afford or play this card' : !allowed ? 'Wait for your turn' : 'Select in hand';
-        const choose = button({ label: reason, disabled: !allowed, className: 'choose-weapon-art', attrs: { 'data-instance-id': inst.instanceId } });
-        choose.addEventListener('click', () => {
-          shell.close();
-          // Use the existing input handler, never dispatch an out-of-pile card.
-          const card = [...app.querySelectorAll('.hand .card')].find(el => el.dataset.instanceId === inst.instanceId);
-          if (card) { card.focus({ preventScroll: true }); card.click(); }
-        });
-        wrap.appendChild(choose); grid.appendChild(wrap);
-      }
-      if (!arts.length) grid.appendChild(flavour('No equipped weapon arts.'));
-      host.appendChild(grid);
     } });
   }
 
@@ -1392,7 +1361,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // without any screen tracking the dressing.
     if (endTurnBeat) endTurnBeat.refresh();
     $('.pile.draw .sp-v').textContent = combat.piles.draw.length;
-    $('.pile.spent').innerHTML = '<span>Piles</span><small>D:' + combat.piles.discard.length + ' E:' + combat.piles.exhaust.length + '</small>';
+    $('.pile.spent').innerHTML = '<span>Discard ' + combat.piles.discard.length + '</span><small>Exhaust ' + combat.piles.exhaust.length + '</small>';
 
     $('.pile.draw').setAttribute('aria-label', `Draw pile, ${combat.piles.draw.length}`);
     $('.pile.spent').setAttribute('aria-label', `Discard ${combat.piles.discard.length}; Exhaust ${combat.piles.exhaust.length}. Open piles`);
@@ -1967,7 +1936,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   $('.pile.draw').addEventListener('click', showDraw);
   $('.pile.spent').addEventListener('click', showSpent);
   $('.combat-potions').addEventListener('click', () => openPotions());
-  $('.combat-arts').addEventListener('click', openWeaponArts);
 
   // THE BOTTOM ROW SAYS WHAT IT IS (Constantine, 2026-09-04: "no tool tips on
   // bottom row for end turn, draw, end turn, discard and exhaust"). Every
@@ -1982,7 +1950,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     + `<div class="ti-detail">Tap to look through it. When it empties, the discard pile is shuffled back in.</div>`);
   attachTooltip($('.pile.spent'), () => '<div class="tt-title">Discard and Exhaust</div>Separate views and counts. Discard can reshuffle; exhausted cards remain out for this fight.');
   attachTooltip($('.combat-potions'), () => '<div class="tt-title">Potions</div>Choose a healing, mana or carried potion. Only Use spends it.');
-  attachTooltip($('.combat-arts'), () => '<div class="tt-title">Weapon Arts</div>Inspect equipped techniques and weapon arts. Only cards currently in your hand can be selected.');
   attachTooltip($('.end-turn'), () => `<div class="tt-title">End Turn</div>`
     + `Hand off to the enemies, then draw a fresh hand.`
     + `<div class="ti-detail">Block expires at the start of your next turn. `

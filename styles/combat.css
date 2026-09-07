@@ -879,3 +879,28 @@
 @media (prefers-reduced-motion: reduce) {
   .hand .card.card-drawn, .combat .pile.spent.pile-received { animation: none; }
 }
+
+/* Readable cards and controls occupy separate flow rows. */
+:root .combat:not(.coop) > .hand-area {
+ height: auto; margin-bottom: 0; display: grid;
+ grid-template-areas: "hand" "actions"; grid-template-columns: minmax(0, 1fr);
+ gap: clamp(16px, 3vh, 32px); padding: 0 12px max(12px, var(--safe-bottom-local));
+}
+:root .combat:not(.coop) .hand-overlay { width: 100%; height: auto; grid-area: hand; }
+:root .combat:not(.coop) .hand {
+ height: auto; justify-content: safe center; align-items: end;
+ padding: 20px 16px 8px; gap: 20px; overflow-x: auto; scrollbar-width: thin;
+}
+:root .combat:not(.coop) .hand .card {
+ --card-w: max(200px, calc(200px / var(--ui-zoom, 1))); --card-name-h: max(32px, calc(32px / var(--ui-zoom, 1))); --card-art-h: max(76px, calc(76px / var(--ui-zoom, 1)));
+ --card-band-h: max(22px, calc(22px / var(--ui-zoom, 1))); --card-row: max(22px, calc(22px / var(--ui-zoom, 1))); --card-pad: max(10px, calc(10px / var(--ui-zoom, 1))); --card-gap: max(6px, calc(6px / var(--ui-zoom, 1)));
+ margin: 0 !important; transform: none !important; touch-action: pan-x;
+}
+:root .combat:not(.coop) .hand .card .cname { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); }
+:root .combat:not(.coop) .hand .card .ctext { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); line-height: max(22px, calc(22px / var(--ui-zoom, 1))); }
+:root .combat:not(.coop) > .hand-area > .combat-action-row {
+ position: relative; inset: auto; grid-area: actions; width: 100%;
+ grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr; align-items: center; gap: 6px;
+}
+:root .combat:not(.coop) .combat-action-row > .end-turn { min-height: 58px; }
+:root .combat:not(.coop) .combat-action-row .spent { display: flex; flex-direction: column; justify-content: center; }
