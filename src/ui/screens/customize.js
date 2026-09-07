@@ -307,18 +307,52 @@ export function mountCustomize(app, {
     // allocation. Do not send that provisional draft through createRunState's
     // final-allocation validator; the modal renders the draft directly until
     // all points have been assigned.
-    const hasCompletePointBuy = state.attributeMode === POINTBUY && previewAttributes && remainingPoints() === 0;
+    // COMPLETENESS IS JUDGED ON THE OBJECT THIS ACTUALLY SENDS. It used to ask
+    // `remainingPoints() === 0`, which reads `state.attributes`, and then send
+    // `previewAttributes` — a different object. `step()` only syncs the second
+    // when `statsProblem()` is clear, so an allocation that is complete but
+    // still fails an equipment requirement left `previewAttributes` behind at
+    // the refunded baseline while the test said "complete". createRunState then
+    // got a 50-point allocation declared as pointbuy and raised
+    //   "attributes: total 50 must equal 60 for mode 'pointbuy'"
+    // uncaught, from `rowsNow()`, AFTER `step()` had mutated the allocation —
+    // so the display never repainted and `refreshDone()` never ran. The pool
+    // read 1 while the real allocation was complete, four "+" controls looked
+    // available, and every further press threw again. One object, one test.
+    const draft = previewAttributes || state.attributes;
+    const draftTotal = draft ? Object.values(draft).reduce((sum, value) => sum + value, 0) : null;
+    const hasCompletePointBuy = state.attributeMode === POINTBUY && !!draft
+      && draftTotal === allocationTotal(registries, POINTBUY);
+    // AN INCOMPLETE POINT-BUY DRAFT HAS NO VALID RUN STATE AT ALL, and asking
+    // for one threw on every keypress. Withholding the draft was not enough:
+    // `attributeMode: 'pointbuy'` with no attributes makes createRunState
+    // derive the mode's own preset, which is the flat baseline — total 50
+    // against the 60 that mode requires — so it raised
+    //   "attributes: total 50 must equal 60 for mode 'pointbuy'"
+    // uncaught, from inside `rowsNow()`, AFTER `step()` had already mutated
+    // the allocation. The display never repainted and `refreshDone()` never
+    // ran, so the overlay's numbers sat behind the model: the pool read 1
+    // while the allocation was actually complete, four "+" controls looked
+    // available, and every further press threw again. Measured, not inferred.
+    //
+    // While the draft is incomplete the preview runs under STANDARD instead,
+    // whose preset is valid by construction. The preview exists to feed
+    // equipment-profile hints and derived-stat rows, so approximating an
+    // unfinished point-buy with the standard allocation is a smaller lie than
+    // a screen that disagrees with itself — and it is stated here rather than
+    // left for the next reader to measure.
+    const previewMode = hasCompletePointBuy ? state.attributeMode : STANDARD;
     const attributes = hasCompletePointBuy
-      ? previewAttributes
-      : classAttributePreset(registries, state.classId, state.attributeMode);
+      ? draft
+      : classAttributePreset(registries, state.classId, previewMode);
     return createRunState({
       seed: 0, classId: state.classId, registries,
       startingKitId: state.startingKitId,
       startingHands: previewCompatibleHands(registries, state.startingHands, attributes),
       startingArmourId: state.startingArmourId,
       startingRelicId: state.startingRelicId,
-      attributeMode: state.attributeMode,
-      ...(hasCompletePointBuy ? { attributes: { ...previewAttributes } } : {}),
+      attributeMode: previewMode,
+      ...(hasCompletePointBuy ? { attributes: { ...draft } } : {}),
       profileMeta: meta,
     });
   }

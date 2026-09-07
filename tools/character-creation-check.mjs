@@ -349,8 +349,29 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Assign Points overlay');
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay .se-step').length`)) === 10, `${width}x${height}: Assign Points reuses five plus/minus rows in an overlay`);
-  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Strength"]');
-  for (let i = 0; i < 5; i += 1) await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
+  // SPEND THE POOL EVENLY, LOWEST FIRST, rather than piling it into two stats.
+  // The old fixed 5-into-STR / 5-into-DEX pair was written against the class
+  // preset; since #692 the editor opens at a flat baseline, so that pair spends
+  // the whole pool on two stats and leaves the rest at 10 — and this class's
+  // Ash Staff needs intelligence 12, so Done then refuses ("Ash Staff needs
+  // intelligence 12 — you have 10") and the overlay never closes. Spreading
+  // the ten points is both what a player completing a valid character does and
+  // independent of which class or requirement the fixture happens to carry.
+  for (let guard = 0; guard < 40; guard += 1) {
+    const next = await evaluate(`(() => {
+      const left = Number.parseInt(document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim() || '0', 10);
+      const open = [...document.querySelectorAll('.cc-stat-overlay [data-stat-action="increase"]')]
+        .filter((control) => control.getAttribute('aria-disabled') === 'false')
+        .map((control) => ({
+          id: control.dataset.statId,
+          value: Number.parseInt(control.closest('.se-controls')?.querySelector('.se-value')?.textContent.trim() || '0', 10),
+        }))
+        .sort((a, b) => a.value - b.value);
+      return { left, pick: open[0]?.id || null };
+    })()`);
+    if (next.left <= 0 || !next.pick) break;
+    await click(`.cc-stat-overlay [data-stat-action="increase"][data-stat-id="${next.pick}"]`);
+  }
   await evaluate(`(() => { document.querySelectorAll('.gp-focus').forEach(e => e.classList.remove('gp-focus')); const e=document.querySelector('.cc-stat-overlay [aria-label="Decrease Dexterity"]'); e.focus(); e.classList.add('gp-focus'); e.click(); })()`);
   assert(await evaluate(`document.activeElement?.getAttribute('aria-label') === 'Decrease Dexterity' && document.querySelector('.cc-stat-overlay .gp-focus')?.getAttribute('aria-label') === 'Decrease Dexterity'`), `${width}x${height}: redraw preserves keyboard and gamepad focus on the decremented stat`);
   await evaluate(`(() => { const e=document.querySelector('.cc-stat-overlay [aria-label="Increase Dexterity"]'); document.querySelectorAll('.gp-focus').forEach(x => x.classList.remove('gp-focus')); e.focus(); e.classList.add('gp-focus'); e.click(); })()`);
