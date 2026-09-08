@@ -446,11 +446,18 @@ function pieceArt(piece, fallback = '⚔') {
 }
 
 /** The kit picker's chip (creation's starting kit): an OptionCard — art, name, mods, tags. `.ec-*` are the hooks the tools read. */
-export function pieceChip(registries, piece, { selected }) {
-  const card = optionCard({ name: piece.name, selected, arrow: false,
-    className: `equip-chip poker-equipment-choice rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}` });
-  card.replaceChildren(renderEquipmentCard(registries, piece, { interactive: false }).card);
-  card.setAttribute('aria-label', piece.name);
+export function pieceChip(registries, piece, { selected, kind = null }) {
+  const card = document.createElement('div');
+  card.className = 'equip-chip poker-equipment-choice' + (selected ? ' on' : '');
+  const face = (kind ? renderCollectibleCard(registries, piece, kind, { interactive: false }) : renderEquipmentCard(registries, piece, { interactive: false })).card;
+  face.tabIndex = 0;
+  face.setAttribute('role', 'group');
+  const choose = document.createElement('button');
+  choose.type = 'button';
+  choose.className = 'equipment-choose';
+  choose.textContent = selected ? 'Selected' : 'Choose ' + piece.name;
+  choose.setAttribute('aria-pressed', String(selected));
+  card.append(face, choose);
   return card;
 }
 
@@ -1348,7 +1355,7 @@ export function mountEquipment(host, {
   function cardStrip() {
     const gallery = el('div', { class: 'armoury-card-gallery', 'aria-label': 'Your deck' });
     for (const inst of run.deck || []) {
-      const card = renderCard(registries, inst, {});
+      const card = renderCard(registries, inst, { inspectReadOnly: true });
       gallery.appendChild(card);
     }
     if (!gallery.children.length) gallery.appendChild(prose('Your deck is empty.'));

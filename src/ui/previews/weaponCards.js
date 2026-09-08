@@ -1,6 +1,6 @@
 import { contentBundle } from '../../content/index.js';
 import { createRegistries } from '../../model/registries.js';
-import { renderEquipmentInspection } from '../components/equipmentCard.js';
+import { renderEquipmentCard } from '../components/equipmentCard.js';
 import { openModal } from '../components/modalShell.js';
 import { button } from '../kit/index.js';
 import { hideTooltip } from '../components/tooltip.js';
@@ -29,15 +29,7 @@ function draw() {
     const article = document.createElement('article');
     article.dataset.weaponId = piece.id;
     article.setAttribute('aria-label', piece.name);
-    article.append(renderEquipmentInspection(registries, piece));
-    const inspect = button({ label: 'Enlarge card', className: 'weapon-enlarge' });
-    inspect.setAttribute('aria-label', `Enlarge ${piece.name}`);
-    inspect.onclick = () => {
-      hideTooltip();
-      openModal({ title: piece.name, eyebrow: 'Equipment inspection', size: 'md',
-        body: host => host.append(renderEquipmentInspection(registries, piece)) });
-    };
-    article.append(inspect);
+    article.append(renderEquipmentCard(registries, piece).card);
     return article;
   });
   gallery.replaceChildren(...articles);
