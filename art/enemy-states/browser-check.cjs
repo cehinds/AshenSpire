@@ -41,6 +41,14 @@ const {mkdirSync}=require('node:fs');
    assert.equal(actual,pose,'damage receipt selects guarded or unguarded reaction');
   }
   assert.deepEqual(errors,[]);
+  for(const cause of ['proc:bleed','effect']){
+   assert.equal(await page.evaluate(async cause=>{
+    const {animateEvents}=await import('/src/ui/fx.js');
+    const anchor=document.querySelectorAll('.enemy .sprite')[1];window.stages[1].settle();
+    animateEvents([{type:'hpLost',targetId:'victim',amount:5,cause}],{layer:document.body,combatEl:document.body,anchorFor:()=>anchor});
+    return anchor.querySelector('.enemy-pose-stage').dataset.pose;
+   },cause),'hurt',cause+' reaction');
+  }
   console.log('PASS: all 33 stages and 231 pose swaps, stacked auras, expiry, cancellation, reduced motion and missing-frame fallback');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

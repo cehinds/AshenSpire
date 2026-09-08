@@ -785,11 +785,17 @@ function visualFor(e, beatKind) {
       if (typeof e.cause === 'string' && e.cause.startsWith('proc:')) {
         return (ctx) => {
           const info = ctx.statusInfo && ctx.statusInfo(e.cause.slice(5));
+          const anchor = ctx.anchorFor(e.targetId);
+          if (e.amount > 0 && anchor?.closest('.enemy')) playPoseOn(anchor, 'hit', 300);
           floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} -${e.amount}`, 'burst', info && info.tint);
         };
       }
       return e.cause === 'effect'
-        ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, 'burst')
+        ? (ctx) => {
+            const anchor = ctx.anchorFor(e.targetId);
+            if (e.amount > 0 && anchor?.closest('.enemy')) playPoseOn(anchor, 'hit', 300);
+            floatNum(ctx.layer, anchor, `-${e.amount}`, 'burst');
+          }
         : null; // attack damage already shown by damageDealt
     case 'healed':
       return e.amount > 0
