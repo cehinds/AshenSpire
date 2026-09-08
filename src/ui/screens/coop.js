@@ -567,7 +567,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId));
-      stageFor(sprite)?.setRestPose?.(combatRests.get(p.id) || 'idle');
+      stageFor(sprite)?.setRestPose?.(!p.alive || p.hp <= 0 ? 'defeated' : combatRests.get(p.id) || 'idle');
       const bb = blockBadge(p.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       // THE SEAT LINE: the tinted name (the identity span hudbars reads,
@@ -615,7 +615,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (!dead) box.appendChild(intentEl(e.intent));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(enemySprite(def));
+      sprite.appendChild(enemySprite(def, e));
       const bb = blockBadge(e.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = def.name; box.appendChild(nm);

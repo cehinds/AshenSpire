@@ -1198,7 +1198,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       else showCombatantContext(box, 'player', p);
     });
     zone.appendChild(box);
-    stageFor(box)?.setRestPose?.(playerRest);
+    stageFor(box)?.setRestPose?.(dv(p).hp <= 0 || dv(p).alive === false ? 'defeated' : playerRest);
   }
 
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's

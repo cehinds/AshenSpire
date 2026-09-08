@@ -1,3 +1,4 @@
+import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { paintedOutfit } from '../model/paintedOutfitArt.js';
 import { auraFilter, POWER_FRAMES } from './combatAura.js';
 import { COMBAT_SEQUENCES } from '../model/combatAnimation.js';
@@ -39,6 +40,12 @@ export function createPaintedStage(classId, armourId = 'default') {
   img.style.cssText = 'inset:0;width:100%;height:100%;';
   layer.appendChild(img);
   el.appendChild(layer);
+  const downArt = DEFEATED_ART[el.dataset.poseClass] || DEFEATED_ART[classId];
+  const down = document.createElement('img');
+  down.className = 'defeated-frame'; down.alt = '';
+  down.style.cssText = `position:absolute;left:50%;bottom:0;height:${100 * (downArt?.scale || 1)}%;width:auto;max-width:none;transform:translate(-50%,5.208333%);visibility:hidden;pointer-events:none;`;
+  if (downArt) down.src = assetUrl(downArt.file);
+  el.appendChild(down);
   const warmed = Object.values(art.frames).map(frame => { const image = new Image(); image.src = assetUrl(frame.file); return image; });
   let current = 'idle';
   let resting = 'idle';
@@ -46,6 +53,11 @@ export function createPaintedStage(classId, armourId = 'default') {
   let resources = [], active = false;
   const clear = () => { timers.forEach(clearTimeout); timers = []; };
   const setPose = pose => {
+    if (pose === 'defeated' && downArt) {
+      current = pose; el.dataset.pose = pose; el.dataset.aura = '';
+      layer.style.visibility = 'hidden'; down.style.visibility = 'visible'; return true;
+    }
+    layer.style.visibility = ''; down.style.visibility = 'hidden';
     const frame = art.frames[pose] || (Object.hasOwn(POWER_FRAMES, pose) ? art.frames.idle : null);
     if (!frame) return false;
     current = pose;
@@ -56,12 +68,14 @@ export function createPaintedStage(classId, armourId = 'default') {
     return true;
   };
   const sequenceFor = pose => (Object.hasOwn(COMBAT_SEQUENCES, pose) ? COMBAT_SEQUENCES[pose] : [pose]).filter(p => Object.hasOwn(art.frames, p) || Object.hasOwn(POWER_FRAMES, p));
-  const restingPose = () => sequenceFor(resting).at(-1) || (resting === 'shieldGuard' || resting === 'parry' ? 'guard' : 'idle');
+  const restingPose = () => resting === 'defeated' ? 'defeated' : sequenceFor(resting).at(-1) || (resting === 'shieldGuard' || resting === 'parry' ? 'guard' : 'idle');
   const settle = () => { clear(); active = false; resources = []; setPose(restingPose()); };
   const setRestPose = pose => { resting = pose || 'idle'; el.dataset.rest = resting; settle(); };
   settle();
-  return Object.freeze({ el, poses: [...Object.keys(art.frames), ...Object.keys(POWER_FRAMES)], get pose() { return current; }, get rest() { return resting; }, setPose, setRestPose, settle, warmed, dispose: clear,
+  return Object.freeze({ el, poses: ['defeated', ...Object.keys(art.frames), ...Object.keys(POWER_FRAMES)], get pose() { return current; }, get rest() { return resting; }, setPose, setRestPose, settle, warmed, dispose: clear,
     play(pose, ms = 260, aura = []) {
+      if (pose === 'defeated') { setRestPose('defeated'); return true; }
+      if (resting === 'defeated') return false;
       if (reducedMotionRequested()) { settle(); return false; }
       const sequence = sequenceFor(/^attack[1-4]$/.test(pose) ? 'attack' : pose);
       if (!sequence.length) return false;

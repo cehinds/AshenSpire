@@ -15,6 +15,7 @@ const themes = {
 const ENEMY_AURA_COLORS = Object.freeze({ strength: '#efbb4e', defense: '#67b5ff', healing: '#79e89d', blood: '#ee6473', frost: '#a3edff', arcane: '#b393ff', nature: '#a3cd59', fire: '#ff9454', evasion: '#d6e8f2' });
 const themeByStatus = new Map(Object.entries(themes).flatMap(([theme, ids]) => ids.map(id => [id, theme])));
 export function enemyPresentation(entity = {}) {
+  if (entity.alive === false || entity.hp === 0) return { rest: 'defeated', buffs: [], auraThemes: [] };
   const active = Object.entries(entity.statuses || {}).filter(([, value]) => !value.meter && Number(value.stacks) > 0).map(([id]) => id);
   const buffs = active.filter(id => themeByStatus.has(id));
   const auraThemes = [...new Set(buffs.map(id => themeByStatus.get(id)))];

@@ -428,7 +428,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   // measured by tools/sigil-medallion.mjs; nothing on a FIGURE calls it.
   const applyMedallion = () => {};
   if (style === 'animated' || style === 'rendered') {
-    const stage = style === 'animated' ? createPaintedStage(classId, armourId) : null;
+    const stage = createPaintedStage(classId, armourId);
     const art = stage?.el || paintedPresentation(classId, armourId);
     if (art) {
       const host = document.createElement('div');
