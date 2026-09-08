@@ -103,7 +103,8 @@ export function initAudio(settings = {}) {
   // title screen is tapped before any hold exists, so that window is normally
   // already closed — `?shot=` boots are where it is not.
   function resume() {
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state === 'suspended' || ctx.state === 'interrupted') ctx.resume().catch(() => {});
+    if (state.mediaEl?.paused && state.musicEnabled && !state.muted) state.mediaEl.play()?.catch(() => {});
   }
   ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach((ev) =>
     addEventListener(ev, resume, { once: false, capture: true })
@@ -646,8 +647,9 @@ export function initAudio(settings = {}) {
     if (sfxVolume != null) state.sfxVol = clampVol(sfxVolume, state.sfxVol);
     if (muteAudio != null) state.muted = !!muteAudio;
     applyGains();
+    resume();
     if (state.muted || !state.musicEnabled) stopMusic(0.3);
-    else if (state.context && (!wasMusicEnabled || musicVolume != null || muteAudio != null)) {
+    else if (state.context && (!wasMusicEnabled || muteAudio != null)) {
       const c = state.context;
       state.context = null;
       music(c);

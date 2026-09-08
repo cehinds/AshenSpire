@@ -31,6 +31,7 @@ import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
   selectStartingHand,
 } from '../../model/characterCreation.js';
+import { renderEquipmentInspection } from '../components/equipmentCard.js';
 import { pieceChip } from './equipment.js';
 import { relicText } from '../components/card.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
@@ -595,6 +596,12 @@ export function mountCustomize(app, {
           renderEquipment(section.id); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(section.id);
         });
         box.appendChild(chipButton);
+        if (selected) {
+          const details = renderEquipmentInspection(registries, piece, { interactive: false }).querySelector('.equipment-poker-explanations');
+          details.open = true;
+          details.querySelector('summary').textContent = piece.name + ' — full equipment details';
+          node.appendChild(details);
+        }
       }
     }
 

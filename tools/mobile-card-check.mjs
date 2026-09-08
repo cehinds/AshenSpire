@@ -1,0 +1,108 @@
+#!/usr/bin/env node
+// Touch regression checks for selection, confirmation, cancellation and detail text.
+// node tools/mobile-card-check.mjs [--shots absolute-output-directory]
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { launchBrowser } from './browser.mjs';
+import { serve } from './serve.mjs';
+
+
+const root = fileURLToPath(new URL('..', import.meta.url));
+
+const shotsArg = process.argv.indexOf('--shots');
+const output = shotsArg < 0 ? null : resolve(process.argv[shotsArg + 1] || (() => { throw Error('--shots needs an output directory'); })());
+if (output) mkdirSync(output, { recursive: true });
+const wait = ms => new Promise(done => setTimeout(done, ms));
+let checks = 0;
+const check = (ok, message) => { assert.ok(ok, message); checks++; };
+const errors = [];
+function connect(url) {
+  const socket = new WebSocket(url), pending = new Map(); let next = 1;
+  socket.addEventListener('message', event => {
+    const message = JSON.parse(event.data);
+    if (message.method === 'Runtime.exceptionThrown') errors.push(message.params.exceptionDetails.text);
+    if (message.method === 'Log.entryAdded' && message.params.entry.level === 'error') errors.push(`${message.params.entry.url || ""}: ${message.params.entry.text}`);
+    const request = pending.get(message.id); if (!request) return;
+    pending.delete(message.id);
+    if (message.error) request.reject(Error(message.error.message)); else request.resolve(message.result);
+  });
+  return { ready: new Promise((ok, fail) => { socket.onopen = ok; socket.onerror = fail; }),
+    send(method, params = {}, sessionId) { const id = next++; return new Promise((resolve, reject) => { pending.set(id, { resolve, reject }); socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); },
+    close() { socket.close(); } };
+}
+const server = await serve({ root, port: 0, open: false });
+let browser, cdp;
+try {
+  browser = await launchBrowser({ prefix: 'wpncards-', timeoutMs: 20000 });
+  cdp = connect(browser.wsUrl); await cdp.ready;
+  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+  const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+  const send = (method, params = {}) => cdp.send(method, params, sessionId);
+  await send('Page.enable'); await send('Runtime.enable'); await send('Log.enable');
+  const evaluate = async expression => {
+    const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    if (result.exceptionDetails) throw Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text);
+    return result.result.value;
+  };
+  const until = async (expression, label) => {
+    for (let attempt = 0; attempt < 150; attempt++) { if (await evaluate(expression)) return; await wait(100); }
+    throw Error(`Timed out: ${label}`);
+  };
+  const screenshot = async (name, selector = null) => {
+    if (!output) return;
+    const clip = selector ? await evaluate(`(()=>{const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return {x:r.x+scrollX,y:r.y+scrollY,width:r.width,height:r.height,scale:1}})()`) : undefined;
+    const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: !!clip, ...(clip ? { clip } : {}) });
+    writeFileSync(resolve(output, `${name}.png`), Buffer.from(shot.data, 'base64'));
+  };
+  const url = `http://localhost:${server.server.address().port}/?shot=combat&shotSeed=ART1&shotHand=7`;
+  const touch = async (type,x,y) => send('Input.dispatchTouchEvent',{type,touchPoints:type==='touchEnd'||type==='touchCancel'?[]:[{x,y,id:1}]});
+  const tap = async (x,y) => {await touch('touchStart',x,y);await touch('touchEnd',x,y);};
+  const box = selector => evaluate(`document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().toJSON()`);
+  const load = async () => {await send('Page.navigate',{url});await until("document.querySelectorAll('.hand .card').length===7",'hand');await wait(500);};
+  for(const [width,height] of [[320,568],[375,667],[1440,900]]) {
+    await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<500});
+    await send('Emulation.setTouchEmulationEnabled',{enabled:true});
+    await load();
+    const selector='.hand .card:nth-child(4)', before=await box(selector);
+    await evaluate(`window.testCard=document.querySelector('${selector}')`);
+    await tap(before.x+12,before.y+70);
+    check(await evaluate("testCard.isConnected && testCard.classList.contains('selected') && document.querySelectorAll('.hand .card').length===7"),'first tap selects without replacing or playing');
+    const selected=await box(selector);
+    check(Math.abs(selected.x-before.x)<2&&Math.abs(selected.y-before.y)<2,'selected card stays in fan position');
+    check(await evaluate("!!document.querySelector('.player.skill-selected')"),'skill highlights player');
+    await screenshot(`selected-${width}`);
+    await tap(selected.x+30,selected.y+75);await wait(70);
+    check(await evaluate("document.querySelectorAll('.hand .card').length===7"),'single additional tap does not play');
+    await wait(450);
+    await tap(selected.x+30,selected.y+75);
+    await tap(selected.x+30,selected.y+75);
+    await until("document.querySelectorAll('.hand .card').length===6",'double tap plays once');await wait(500);
+    check(await evaluate("document.querySelectorAll('.hand .card').length===6"),'no duplicate play');
+    await load();
+    const hold=await box(selector);
+    const ms=await evaluate(`Number(document.querySelector('${selector}').dataset.holdMs)`);
+    check(ms>0,'uses configured shared hold');
+    await touch('touchStart',hold.x+12,hold.y+70);await wait(ms+120);
+    await touch('touchEnd',hold.x+12,hold.y+70);
+    await until("document.querySelectorAll('.hand .card').length===6",'hold plays once');
+    await load();
+    const drag=await box(selector),x=drag.x+12,y=drag.y+70;
+    await touch('touchStart',x,y);await touch('touchMove',x+20,y-20);await wait(50);
+    const ghost=await box('.card-drag-ghost');
+    check(Math.abs(ghost.x-(drag.x+20))<3 && Math.abs(ghost.y-(drag.y-20))<3,'drag preserves grab offset');
+    await touch('touchCancel',x,y);await wait(100);
+    check(await evaluate("document.querySelectorAll('.hand .card').length===7 && !document.querySelector('.card-drag-ghost')"),'cancelled drag costs nothing and removes ghost');
+    await tap(x,y);await tap(width-3,Math.max(120,drag.y-25));
+    check(await evaluate("!document.querySelector('.hand .card.selected')"),'empty field cancels');
+    console.log(`PASS touch interactions ${width}x${height}`);
+  }
+  // Full text is tested through the shared modal shell with a deliberately long title.
+  await evaluate(`(async()=>{const {openModal}=await import('/src/ui/kit/index.js');openModal({title:'The exceptionally long quest title beyond the old ellipsis limit — reclaim the lantern at the distant sanctuary',body:'Details'});})()`);
+  check(await evaluate("(()=>{const e=document.querySelector('.modal-head-id h2');return e && getComputedStyle(e).whiteSpace!=='nowrap' && e.scrollWidth<=e.clientWidth+1})()"),'full modal title wraps without clipping');
+  check(errors.filter(e=>!e.includes('favicon')&&!e.includes('/assets/sfx/')).length===0,`no runtime errors: ${errors.join('; ')}`);
+  console.log(`PASS — ${checks} mobile interaction checks`);
+} finally {
+  cdp?.close();server.server.close();await browser?.close();
+}

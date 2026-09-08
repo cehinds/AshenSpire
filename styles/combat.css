@@ -1016,3 +1016,10 @@
    white cast halo around their parent (which also contains HUD elements). */
 .sprite.act-move[data-action-motion="cast"]:has(.painted-stage),
 .sprite.act-move[data-action-motion="brace"]:has(.painted-stage) { animation-name: none; }
+
+/* Selection reveals the same card without rebuilding or relocating the fan. */
+:root .combat:not(.coop) .hand .card.selected { transform: var(--card-fan-transform) !important; z-index: 100 !important; }
+:root .combat:not(.coop) .hand:has(.selected) .card:not(.selected):hover { transform: var(--card-fan-transform) !important; z-index: auto !important; }
+.combat .hand .card.drag-source { opacity: .2; }
+.combat .combatant.player.skill-selected .sprite { filter: drop-shadow(0 0 .6rem var(--gold)); }
+.combat .hand .card { touch-action: none; }
