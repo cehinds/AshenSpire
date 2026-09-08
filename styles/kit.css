@@ -2650,7 +2650,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury[data-responsive='phone'] .armoury-head [role='tablist'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; }
 .armoury[data-responsive='phone'] .armoury-head .modal-tab { min-width: 0; padding-inline: .5rem; }
 /* Approved 350 × 490 poker canvas. Every measurement scales together. */
-.equipment-poker-card { display:block; position:relative; width:100%; max-width:490px; aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
+.equipment-poker-card { display:block; position:relative; width:100%; max-width:392px; aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
 .equipment-poker-card .epc-frame { box-sizing:border-box; display:grid; grid-template-rows:25px minmax(0,1fr) 25px 39px 19px 82px 36px 13px; position:absolute; inset:0 auto auto 0; width:350px; height:490px; padding:18px; gap:5px; border:1px solid var(--accent); border-radius:13px; transform-origin:top left; transform:scale(var(--card-scale,1)); box-shadow:0 9px 26px #0006,inset 0 0 0 4px #17120e,inset 0 0 0 5px #695334; background:linear-gradient(125deg,#302319,#19150f 45%,#251d15); font:13px/1.35 Arial,sans-serif; }
 .epc-frame > * { min-width:0; min-height:0; box-sizing:border-box; }
 .epc-name { display:flex; justify-content:space-between; gap:8px; align-items:center; font:600 20px/1.12 Georgia,serif; color:#f0dfaf; }
@@ -2680,9 +2680,41 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .inventory-face.poker-inventory-face > .r-trail { justify-content:flex-start; margin-top:10px; }
 .inventory-detail.poker-inventory-detail { display:flex; flex-direction:column; align-items:stretch; min-width:0; }
 .equip-chip.poker-equipment-choice { display:block; width:100%; padding:6px; }
-.equip-chip.poker-equipment-choice > .equipment-poker-card { max-width:350px; }
+.equip-chip.poker-equipment-choice > .equipment-poker-card { max-width:280px; }
 /* Cards share the existing disclosure navigation and reveal placement. */
 .armoury .disc-faces:has(.poker-inventory-face) { display:flex; flex-flow:row wrap; align-items:flex-start; }
 .armoury .disc-faces > .disc-face.disc-item:has(.poker-inventory-face) { flex:1 1 260px; max-width:370px; min-width:0; }
-.poker-inventory-face > .equipment-poker-card { max-width:350px; }
+.poker-inventory-face > .equipment-poker-card { max-width:280px; }
 .armoury .disc-reveal:has(.poker-inventory-detail) { flex-basis:100%; min-width:0; }
+
+/* The merchant shares the same equipment canvas; prices stay outside the card. */
+.shop-armament-offer { width:min(280px,100%); min-width:0; }
+.shop-armament-offer > .as-option { display:block; width:100%; padding:8px; }
+.shop-armament-offer > .as-status { display:block; margin-top:8px; white-space:normal; }
+
+/* One fixed grid track size prevents the last row from stretching its cards. */
+.armoury .disc-faces:has(.poker-inventory-face),
+.cc-card-selectors:has(.poker-equipment-choice),
+#shop-armaments, #shop-relics, #shop-flasks {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(0,280px));
+  justify-content:center; align-items:start; gap:16px;
+}
+.armoury .disc-faces > .disc-face.disc-item:has(.poker-inventory-face) { width:100%; max-width:none; min-width:0; }
+.armoury .disc-reveal:has(.poker-inventory-detail) { grid-column:1 / -1; }
+.equipment-poker-inspection > .equipment-poker-card { width:80%; }
+.poker-inventory-detail .equipment-poker-inspection > .equipment-poker-card { max-width:280px; }
+.epc-art-glyph { font-size:90px; filter:drop-shadow(0 5px 10px #0008); }
+.collectible-poker-card .epc-frame { grid-template-rows:45px minmax(0,1fr) 25px 39px 19px 100px 36px 13px; }
+.shop-collectible-offer { display:flex; flex-direction:column; width:100%; min-width:0; padding:8px; }
+.shop-collectible-offer > .equipment-poker-card { width:100%; }
+.shop-collectible-offer > .cp-body { width:100%; margin-top:8px; }
+.beat-hold[data-hold='holding'] .equipment-poker-card::after {
+  content:''; position:absolute; inset:0; z-index:5; pointer-events:none; border-radius:12px;
+  background:linear-gradient(90deg,#e8bc4b55,#f6d46f88);
+  clip-path:inset(0 calc((1 - var(--hold,0)) * 100%) 0 0);
+  box-shadow:inset 0 0 0 3px #f6d46f;
+}
+@media(max-width:360px) {
+  .armoury .disc-faces:has(.poker-inventory-face), .cc-card-selectors:has(.poker-equipment-choice),
+  #shop-armaments, #shop-relics, #shop-flasks { grid-template-columns:minmax(0,280px); }
+}

@@ -1,4 +1,5 @@
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
+import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // src/ui/screens/equipment.js — the Armoury.
@@ -459,9 +460,11 @@ function inventoryFace(registries, row, {
   const el = renderInventoryItemCard(inventoryItemCardModel(row, {
     selected, draggable, classModel,
   }));
-  if (['armor', 'weapon', 'shield', 'staff'].includes(row.item.kind)) {
+  if (['armor', 'weapon', 'shield', 'staff'].includes(row.item.kind) || ['Potion', 'Relic'].includes(row.category)) {
     const trail = el.querySelector('.r-trail');
-    el.replaceChildren(renderEquipmentCard(registries, row.item, { interactive: false }).card);
+    el.replaceChildren((['Potion', 'Relic'].includes(row.category)
+      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false })
+      : renderEquipmentCard(registries, row.item, { interactive: false })).card);
     if (trail) el.append(trail);
     el.classList.add('poker-inventory-face');
   }
@@ -496,13 +499,15 @@ function inventoryReveal(registries, row, {
     comparisonHtml: comparisonPresentation === 'inline' ? comparisonHtml : '',
     action,
   });
-  if (['armor', 'weapon', 'shield', 'staff'].includes(item.kind)) {
+  if (['armor', 'weapon', 'shield', 'staff'].includes(item.kind) || ['Potion', 'Relic'].includes(row.category)) {
     el.classList.add('poker-inventory-detail');
     el.querySelector('.inventory-model')?.remove();
     const info = el.querySelector('.inventory-information');
     // Keep the comparison, equip action and instruction in their original container.
     for (const child of [...info.children]) if (!child.matches('.inventory-instruction, [data-ui-component], .ep-equip, .inventory-card-action-label') && child !== action) child.remove();
-    el.prepend(renderEquipmentInspection(registries, item));
+    el.prepend(['Potion', 'Relic'].includes(row.category)
+      ? renderCollectibleInspection(registries, item, row.category, { interactive: false })
+      : renderEquipmentInspection(registries, item, { interactive: false }));
   }
   el.dataset.inventoryItem = row.key;
   // When the global hold-confirm dial is off, the explicit action button owns
