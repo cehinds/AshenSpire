@@ -179,6 +179,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Current builds use the 0.6.x.x release series
+        run: node tools/release-series.mjs
+      - name: Release series gate rejects older and malformed versions
+        run: node tools/release-series.mjs --selftest
+
       - name: Assemble the site from git history — every listed build proven byte-identical
         run: node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "${{ inputs.keep || '10' }}"
       - name: The generator's own drift plant is still caught
