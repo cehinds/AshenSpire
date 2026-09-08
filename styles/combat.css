@@ -957,20 +957,23 @@
 }
 
 /* Give the enemy group the right edge; stage fitting reserves each fighter's cell. */
-:root .combat:not(.coop) .field { padding-inline: 12px; gap: 12px; }
-:root .combat:not(.coop) .player-zone { width: 28%; flex: 0 0 28%; }
-:root .combat:not(.coop) .enemy-row { justify-content: flex-end; min-width: 0; gap: 16px; }
-:root .combat:not(.coop) .enemy-row > .combatant { flex: 0 1 42%; min-width: 0; }
+:root .combat:not(.coop) .field { padding-inline: 8px; gap: 6px; }
+:root .combat:not(.coop) .player-zone { width: 28%; flex: 0 0 28%; min-width:0; }
+:root .combat:not(.coop) .enemy-row { justify-content: center; min-width: 0; gap: 6px; }
+:root .combat:not(.coop) .enemy-row > .combatant { flex: 1 1 0; min-width: 0; max-width:calc(180px / var(--ui-zoom,1)); }
 :root .combat:not(.coop) .combatant-card { width: max-content; }
 :root .combat:not(.coop) .combatant .sprite { flex: 0 0 auto; min-width: max-content; overflow: visible; }
 
-/* Preserve the reference-size figures in a crowded phone battle. The stage
-   scrolls sideways instead of shrinking every actor to fit one tiny row. */
+/* Normal encounters fit the viewport. Only four or more enemies may scroll. */
 @media(max-width:640px) {
-  :root .combat:not(.coop) .field { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
-  :root .combat:not(.coop) .player-zone { min-width:calc(150px / var(--ui-zoom,1)); }
-  :root .combat:not(.coop) .enemy-row { flex:0 0 auto; width:max-content; min-width:max-content; justify-content:flex-start; }
-  :root .combat:not(.coop) .enemy-row > .combatant { min-width:calc(132px / var(--ui-zoom,1)); flex-shrink:0; }
+  :root .combat:not(.coop) .combatant-card { width:80px; }
+  :root .combat:not(.coop) .combatant .meters { width:80px; }
+  :root .combat:not(.coop) .combatant .sprite { width:80px; min-width:0; }
+  :root .combat:not(.coop) .combatant .sprite > :first-child { flex-shrink:0; }
+  :root .combat:not(.coop) .field:not(:has(.enemy-row > .combatant:nth-child(4))) { overflow-x:clip; }
+  :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
+  :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) .enemy-row { flex:0 0 auto; min-width:max-content; }
+  :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) .enemy-row > .combatant { min-width:calc(86px / var(--ui-zoom,1)); }
 }
 
 /* A hand card has one portrait profile; viewport changes never resize one axis alone. */
