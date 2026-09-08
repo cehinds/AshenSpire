@@ -86,6 +86,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     });
     card.classList.add('inspection-selected');
     card.setAttribute('aria-current', 'true');
+    card.dispatchEvent(new CustomEvent('cardinspectionselect', { bubbles: true }));
   };
   card.addEventListener('cardholdstart', select);
   for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
@@ -101,7 +102,6 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   card.addEventListener('click', event => {
     if (event.target === info) return;
     select();
-    card.dispatchEvent(new CustomEvent('cardinspectionselect', { bubbles: true }));
     if (touch) {
       touchTaps = touchedIdentity === identity ? touchTaps + 1 : 1;
       touchedIdentity = identity;

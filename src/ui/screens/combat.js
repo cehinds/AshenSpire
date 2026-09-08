@@ -380,33 +380,46 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     renderTargetSilhouette(combatantEl, kind);
   }
 
-  // The single prospective target right now: an armed self-card → the player
-  // (blue); an enemy-targeting card → the hovered or focused enemy (red).
-  function currentAim() {
-    if (selfArm) {
-      const p = $('.combatant.player');
-      return p ? { el: p, kind: 'self' } : null;
+  // Selection previews every legal target without spending or auto-arming.
+  function currentAims() {
+    const cardId = $('.hand .card.inspection-selected')?.dataset.instanceId || selected || selfArm;
+    const inst = cardId && combat.piles.hand.find(card => card.instanceId === cardId);
+    if (inst) {
+      if (!inspectionPlayAction(cardId).enabled) return [];
+      const def = resolveCard(registries, inst);
+      const hostile = (def.effects || []).some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target));
+      if (hostile) return combat.enemies.filter(enemy => enemy.alive).map(enemy => ({
+        el: combatEl.querySelector(`.combatant.enemy[data-eid="${CSS.escape(enemy.id)}"]`), kind: 'enemy',
+      })).filter(target => target.el);
+      const legal = friendlyTargetPlan(def, combat.player.id, [
+        { id: combat.player.id, alive: combat.player.alive, connected: true },
+      ]).legalIds;
+      const player = $('.combatant.player');
+      return player && legal.includes(combat.player.id) ? [{ el: player, kind: 'self' }] : [];
     }
-    if (selected || selectedFlask != null) {
+    if (selectedFlask != null) {
       const el = $('.combatant.enemy.hover-target') || $('.combatant.enemy.gp-focus');
-      return el ? { el, kind: 'enemy' } : null;
+      return el ? [{ el, kind: 'enemy' }] : [];
     }
-    return null;
+    return [];
   }
 
   function refreshAim() {
-    // Drag targeting owns the same red silhouettes while a pointer is down.
-    // The class observer below also sees those class changes; yielding here
-    // prevents click/focus targeting from erasing a proximity highlight on the
-    // next task turn. One visual, two mutually exclusive input owners.
     if (combatEl.classList.contains('drag-targeting')) return;
-    const want = currentAim();
-    const cur = $('.combatant.aiming');
-    if ((want && cur === want.el && cur.querySelector('.aim-silho')) || (!want && !cur)) return;
+    const want = currentAims();
+    const current = [...combatEl.querySelectorAll('.combatant.aiming')];
+    if (current.length === want.length && want.every(target => current.includes(target.el)
+      && target.el.classList.contains(`aim-${target.kind}`) && target.el.querySelector('.aim-silho'))) return;
     clearAim();
-    if (want) setAim(want.el, want.kind);
+    want.forEach(target => setAim(target.el, target.kind));
   }
-
+  combatEl.addEventListener('cardinspectionselect', event => {
+    const id = event.target.closest('.hand .card')?.dataset.instanceId;
+    if (id && id !== selected && id !== selfArm) {
+      selected = null; selectedFlask = null; selfArm = null;
+    }
+    refreshAim();
+  });
   // Arm a self/buff card: highlight the player blue and wait for a second
   // Confirm (keyboard/gamepad). Mouse plays such cards on the first click.
   function armSelf(instanceId) {
@@ -1652,6 +1665,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
 
     if (ev.key === 'Escape') {
+      combatEl.querySelectorAll('.hand .card.inspection-selected').forEach(card => {
+        card.classList.remove('inspection-selected', 'inspection-info-visible');
+        card.removeAttribute('aria-current');
+      });
+      refreshAim();
       if (selected || selectedFlask != null || selfArm) {
         const cancelledSelf = selfArm;
         selected = null;
