@@ -252,6 +252,11 @@ jobs:
         # other leg of this gate green.
         run: node tools/verdict.mjs -- node tools/dirorder.mjs --mutate
 
+      - name: Current builds use the 0.6.x.x release series
+        run: node tools/release-series.mjs
+      - name: Release series gate rejects older and malformed versions
+        run: node tools/release-series.mjs --selftest
+
       - name: One version, derived — SOP 5's detector, which this file said was missing
         # Requirement 3's named gap, closed. The header above used to say "SOP 5's
         # one-version-derived check … NOTHING STOPS a second copy being born, and I
