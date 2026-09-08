@@ -57,7 +57,7 @@
 
 import { attachTooltip } from './tooltip.js';
 import { html, iconButton } from '../kit/index.js';
-import { regionForRun } from '../../model/environmentArt.js';
+import { worldMapForRun } from '../../model/environmentArt.js';
 import { mapTerrainHtml } from './environmentArt.js';
 import { nodeIcon, actTitle, parchmentClass } from '../uiContent.js';
 import { trackGesture } from '../gesture.js';
@@ -272,9 +272,9 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
 
   // Terrain uses the same discovered nodes as the navigation layer. The saved
   // path makes the reveal persistent, including previously visible branches.
-  const region = regionForRun(act);
+  const world = worldMapForRun(act);
   const groundSvg = mapTerrainHtml({
-    region, width, height, fog,
+    world, width, height, fog,
     points: nodes.filter(n => isDrawn(n.id)).map(n => ({ id: n.id, x: x(n.col), y: y(n.floor) })),
   });
 
@@ -414,7 +414,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // THE SCREEN SAYS WHAT IT DREW — a fog that cannot report its own census
   // cannot be caught covering the wrong thing. The count is the DOM's, counted
   // while appending, never re-derived from the ladder it is meant to check.
-  scroll.dataset.region = region.id;
+  scroll.dataset.world = world.id;
   scroll.dataset.mapPlate = 'loading';
   const terrain = scroll.querySelector('.terrain-detail');
   terrain.addEventListener('load', () => { scroll.dataset.mapPlate = 'ok'; });

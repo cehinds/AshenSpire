@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
-import { ENVIRONMENTS, ENVIRONMENT_ATLAS_SIZE } from '../src/content/environments.js';
+import { ENVIRONMENTS, MEGA_MAPS, ENVIRONMENT_ATLAS_SIZE } from '../src/content/environments.js';
 const require = createRequire(import.meta.url);
 const sharp = require('sharp');
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -17,4 +17,8 @@ for (const region of ENVIRONMENTS) {
   await sharp(board).webp({ quality: 88 }).toFile(path(region.atlas));
   await sharp(path(`art/environments/maps/${region.id}.png`)).webp({ quality: 84 }).toFile(path(region.map));
   console.log(`${region.id}: four combat paintings and one map`);
+}
+for (const world of MEGA_MAPS) {
+  await sharp(path(`art/environments/worlds/${world.id}.png`)).webp({ quality: 88 }).toFile(path(world.map));
+  console.log(`${world.id}: all five biomes in one world`);
 }

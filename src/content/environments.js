@@ -29,3 +29,11 @@ export const ENVIRONMENTS = Object.freeze([
 export const ENVIRONMENT_ATLAS_SIZE = Object.freeze([1536, 1024]);
 // SVG-space distance, independent of text zoom and viewport pixels.
 export const MAP_TERRAIN_REVEAL_RADIUS = 74;
+
+// Each world painting contains all five biomes. These are visual layouts;
+// biome junctions and enemy selection remain future gameplay work.
+export const MEGA_MAPS = Object.freeze([
+  ['the-fractured-realm', 'The Fractured Realm'],
+  ['the-shattered-gulf', 'The Shattered Gulf'],
+  ['the-fivefold-frontier', 'The Fivefold Frontier'],
+].map(([id, name]) => Object.freeze({ id, name, map: `assets/environments/${id}-world.webp` })));

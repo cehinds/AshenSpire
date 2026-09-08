@@ -1,4 +1,4 @@
-import { ENVIRONMENTS } from '../content/environments.js';
+import { ENVIRONMENTS, MEGA_MAPS } from '../content/environments.js';
 
 // Decorative choices never consume the engine's RNG or add save fields.
 function hash(text) {
@@ -17,4 +17,9 @@ export function combatEnvironment(run = {}) {
   const floor = Math.max(0, Math.trunc(Number(run.floor) || 0));
   const index = (hash(`${run.seedString ?? ''}:scenery`) + floor) % region.scenes.length;
   return { region, scene: region.scenes[index] };
+}
+
+// One coherent world per seed, including across act changes and reloads.
+export function worldMapForRun({ seedString = '' } = {}) {
+  return MEGA_MAPS[hash(`${seedString}:world`) % MEGA_MAPS.length];
 }

@@ -16,11 +16,11 @@ let nextMapId = 0;
 
 // The map's existing knowledge set owns the reveal. This adds no travel rules
 // and no persistence beyond the run.path already saved by the engine.
-export function mapTerrainHtml({ region, width, height, points, fog }) {
+export function mapTerrainHtml({ world, width, height, points, fog }) {
   const id = `terrain-${++nextMapId}`;
   const circles = points.map(({ id: node, x, y }) =>
     `<circle data-terrain-node="${node}" cx="${x}" cy="${y}" r="${MAP_TERRAIN_REVEAL_RADIUS}" fill="url(#${id}-light)"/>`).join('');
-  return `<g class="map-terrain" data-region="${region.id}" aria-hidden="true" pointer-events="none">
+  return `<g class="map-terrain" data-world="${world.id}" aria-hidden="true" pointer-events="none">
     <defs>
       <filter id="${id}-paper" x="0" y="0" width="100%" height="100%">
         <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="3" seed="7"/>
@@ -32,6 +32,6 @@ export function mapTerrainHtml({ region, width, height, points, fog }) {
       <mask id="${id}-reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="${width}" height="${height}" style="mask-type:alpha">${circles}</mask>
     </defs>
     <g class="map-fog-ground"><rect class="terrain-paper" width="${width}" height="${height}" filter="url(#${id}-paper)"/></g>
-    <image class="terrain-detail" href="${assetUrl(region.map)}" width="${width}" height="${height}" preserveAspectRatio="none"${fog ? ` mask="url(#${id}-reveal)"` : ''}/>
+    <image class="terrain-detail" href="${assetUrl(world.map)}" width="${width}" height="${height}" preserveAspectRatio="none"${fog ? ` mask="url(#${id}-reveal)"` : ''}/>
   </g>`;
 }
