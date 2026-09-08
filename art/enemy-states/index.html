@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<base href="/"><title>AshenSpire · Enemy combat states</title>
+<link rel="stylesheet" href="styles/combat.css">
+<style>
+*{box-sizing:border-box}body{margin:0;padding:24px;background:#171512;color:#eee4d1;font:16px system-ui}header{max-width:1000px;margin:auto auto 30px}h1,h2{font-family:Georgia;color:#e5c984}h1{font-size:36px}a{color:#dfb966}input,select,button{font:inherit;padding:9px;border:1px solid #79603d;border-radius:6px;background:#302a21;color:inherit}header input{width:100%;margin-top:12px}main{display:grid;gap:24px}article{padding:20px;background:#201c18;border:1px solid #4e4030;border-radius:12px}article[hidden]{display:none}.poses{display:grid;grid-template-columns:repeat(9,minmax(110px,1fr));overflow:auto;gap:8px}figure{margin:0;text-align:center}.still{aspect-ratio:1;height:auto;position:relative;display:flex;justify-content:center;align-items:flex-end;background:radial-gradient(ellipse,#42392a,#171510 72%);overflow:hidden}.still img{height:100%;max-width:none;position:absolute;bottom:0;transform:translateY(5.208333%)}figcaption{padding:12px 0;color:#c6b99f;font-size:14px}.demo{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin:24px 0 0}.demo .sprite{margin:24px 60px}.controls{display:flex;flex-wrap:wrap;gap:8px;max-width:650px}.controls label{display:flex;gap:8px;align-items:center}.source{display:block;margin-top:20px}summary{cursor:pointer;color:#dfb966}@media(max-width:600px){body{padding:12px}.poses{grid-template-columns:repeat(3,minmax(80px,1fr))}.still{height:auto}.demo .sprite{margin:24px auto}}
+</style>
+<header><h1>Enemy combat states</h1><p>33 enemies · seven new poses each, alongside the approved idle and attack. Buff auras follow active effects.</p><a href="art/enemy-poses/index.html">Original idle and attack gallery</a><input id="search" aria-label="Find enemy" placeholder="Find an enemy…"></header><main></main>
+<script type="module">
+import {enemySprite} from './src/ui/assets.js';
+import {stageFor} from './src/ui/services/PoseAnimator.js';
+import {ENEMY_STATE_POSES} from './src/ui/enemyStates.js';
+import {ENEMY_STATE_SCALE} from './src/content/enemyStateArt.js';
+const {entries}=await(await fetch('assets/enemy-poses/manifest.json')).json();
+const labels={idle:'Idle',attack:'Attack',buff:'Buffing',wounded:'Wounded',afflicted:'Negative status',projectile:'Projectile',guard:'Guard',guardHit:'Guarded impact',hurt:'Getting hurt'};
+for(const enemy of entries){
+ const article=document.createElement('article');article.dataset.name=enemy.name.toLowerCase();article.dataset.enemy=enemy.id;
+ const title=document.createElement('h2');title.textContent=enemy.name;article.append(title);
+ const poses=document.createElement('div');poses.className='poses';
+ for(const pose of ['idle','attack',...ENEMY_STATE_POSES]){
+  const figure=document.createElement('figure'),box=document.createElement('div'),img=document.createElement('img'),caption=document.createElement('figcaption');box.className='still';
+  img.src=`assets/${['idle','attack'].includes(pose)?'enemy-poses':'enemy-states'}/${enemy.id}_${pose}.png`;img.alt=`${enemy.name}: ${labels[pose]}`;img.loading='lazy';img.style.height=`${100*(['idle','attack'].includes(pose)?pose==='attack'?1.05:1:ENEMY_STATE_SCALE[enemy.id]*(pose==='projectile'?1.05:1))/Math.max(1.05,ENEMY_STATE_SCALE[enemy.id]*1.05)}%`;
+  box.append(img);caption.textContent=labels[pose];figure.append(box,caption);poses.append(figure);
+ }
+ article.append(poses);
+ const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Play poses and preview buff auras';details.append(summary);
+ details.addEventListener('toggle',()=>{if(!details.open||details.dataset.built)return;details.dataset.built='true';
+  const demo=document.createElement('div');demo.className='demo enemy';const sprite=document.createElement('div');sprite.className='sprite';sprite.append(enemySprite({...enemy,size:'medium'}));demo.append(sprite);const stage=stageFor(sprite),controls=document.createElement('div');controls.className='controls';
+  for(const pose of ENEMY_STATE_POSES){const button=document.createElement('button');button.textContent=labels[pose];button.onclick=()=>stage.play(pose,1000);controls.append(button);}
+  const statuses={};for(const [id,name] of [['strength','Strength'],['dexterity','Defense'],['regen','Regeneration'],['bleedResist','Blood resistance'],['frostResist','Frost resistance'],['insanityResist','Arcane resistance'],['thornHalo','Thorns'],['emberTide','Ember tide'],['afterimage','Afterimage']]){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.dataset.buff=id;input.onchange=()=>{statuses[id]={stacks:input.checked?1:0};stage.setState({hp:100,maxHp:100,statuses});};label.append(input,document.createTextNode(name));controls.append(label);}
+  demo.append(controls);details.append(demo);
+ });article.append(details);
+ const source=document.createElement('a');source.className='source';source.href=`art/enemy-states/sheets/${enemy.id}.png`;source.textContent='Full-resolution source sheet';article.append(source);document.querySelector('main').append(article);
+}
+document.querySelector('#search').oninput=e=>{for(const article of document.querySelectorAll('article'))article.hidden=!article.dataset.name.includes(e.target.value.toLowerCase());};
+</script></html>

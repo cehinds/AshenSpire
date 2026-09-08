@@ -81,6 +81,8 @@ row in the table below — no game-code changes.
 
 ## Code
 
+Enemy combat states (2026-09-08): 231 additional pose sprites in `assets/enemy-states/` were generated with built-in image_gen from the project's approved enemy idle sprites. Source sheets and generation records are retained in `art/enemy-states/`. Buff auras are runtime silhouette effects.
+
 Enemy pose additions (2026-09-07): seven painted replacement idle sprites and 33 attack sprites in `assets/enemy-poses/` were generated with built-in image_gen using this project's existing enemy artwork as identity references. The remaining 26 idle frames are unchanged copies of their existing credited sources. Source sheets, prompts and processing records are retained in `art/enemy-poses/`.
 
 The fourteen expansion portraits in `assets/enemies-expansion/` were generated for AshenSpire with ChatGPT Codex in September 2026, following the project's Unity-fork painted style. They are project-generated artwork, offered under CC0 like the existing generated game assets. Each transparent idle frame is normalized to 384 × 384 with foot anchor (192, 364); combat movement is supplied by the runtime. The twelve imported Unity portraits remain byte-identical to their credited source.

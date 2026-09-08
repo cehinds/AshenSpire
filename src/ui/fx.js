@@ -749,6 +749,7 @@ function visualFor(e, beatKind) {
         const anchor = ctx.anchorFor(e.targetId);
         const paired = !!(parts.guard && parts.damage);
         if (parts.guard) {
+          if (!parts.damage && anchor?.closest('.enemy')) playPoseOn(anchor, 'guardHit', 220);
           sfx.play('block');
           spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
           floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,

@@ -375,6 +375,7 @@
 /* Attack lunge: enemies step left toward the player, the player steps right. */
 .enemy .sprite.act-attack { animation: lunge-left 280ms ease-out; }
 .enemy-pose-attack { visibility: hidden; }
+.facing[data-state-active="true"] > :is(.enemy-pose-idle, .enemy-pose-attack) { visibility: hidden !important; }
 .enemy .sprite:is(.act-attack, .enemy-attack-pose) [data-attack-ready="true"] > .enemy-pose-idle { visibility: hidden; }
 .enemy .sprite:is(.act-attack, .enemy-attack-pose) [data-attack-ready="true"] > .enemy-pose-attack { visibility: visible; }
 /* Keep the idle drawing for anticipation and recovery. The attack drawing
