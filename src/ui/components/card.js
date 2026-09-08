@@ -97,7 +97,7 @@ export function renderCard(registries, ref, opts = {}) {
   // type band), and one shared row budget below the band that tags and text
   // divide. `as-card` is the recipe; the old class names stay as the hooks
   // every tool and screen reads.
-  el.className = `card as-card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
+  el.className = `card as-card playing-poker-card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
   // Type presentation is data (balance.ui.cardTypes): corner radii carry the
   // type (attack squarest → power roundest) and each type owns its banner
   // colour. Renaming a label here never touches engine logic.

@@ -510,3 +510,4 @@ merchant armament offers and buy/sell inspection, reward armament inspection, an
 `node tools/weapon-card-preview.mjs --shots <output-directory>`.
 
 Item cards: equipmentCard.js owns the uniformly scaled poker canvas. collectibleCard.js composes authored potion/relic effects into that frame for Inventory, merchant shelves, and potion reward inspection. Listing tracks are fixed at 280px; reveals span the grid. Delegated hold feedback paints above card art and inspection gestures reach the existing hold owner. Full-text disclosure remains independent of equip gestures.
+Playing cards: card.renderCard now adds playing-poker-card. The brown-and-gold inset frame, art well and subdued type band match equipment cards. Combat dimensions, resource badges, live values, tag fitting and selected/unaffordable states retain their existing contracts. Validation: tools/card-feedback.mjs covers desktop/phone input and reduced motion; --shots also records the initial hand.

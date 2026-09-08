@@ -2692,6 +2692,36 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .shop-armament-offer > .as-option { display:block; width:100%; padding:8px; }
 .shop-armament-offer > .as-status { display:block; margin-top:8px; white-space:normal; }
 
+/* Playing cards share the equipment motif without changing the hand's geometry. */
+.card.playing-poker-card {
+  --playing-frame:#b39760;
+  background:linear-gradient(125deg,#302319,#19150f 45%,#251d15);
+  border-color:var(--playing-frame);
+  box-shadow:0 6px 18px #0006,inset 0 0 0 3px #17120e,inset 0 0 0 4px #695334;
+  color:#eee3ca;
+}
+.playing-poker-card.rarity-uncommon { --playing-frame:#87b5d0; }
+.playing-poker-card.rarity-rare { --playing-frame:#e0bd68; }
+.playing-poker-card.rarity-special { --playing-frame:#b78ec9; }
+.card.playing-poker-card .cname { color:#f0dfaf; font-family:Georgia,serif; text-align:left; padding-inline:3px; }
+.card.playing-poker-card.upgraded .cname { color:var(--green); }
+.card.playing-poker-card .art {
+  background:radial-gradient(ellipse at 50% 40%,#403322,#18140f 75%);
+  border-color:#665238; box-shadow:inset 0 0 8px #0005;
+}
+.card.playing-poker-card .ctype {
+  color:color-mix(in srgb,var(--card-type-color,#d0ac5d) 40%,#f0dfaf);
+  background:color-mix(in srgb,var(--card-type-color,#d0ac5d) 13%,#1c1813);
+  border-block:1px solid #665238; letter-spacing:.12em;
+}
+.card.playing-poker-card .ctags { justify-content:flex-start; }
+.card.playing-poker-card .ctag { border-radius:3px; background:#221b14; }
+.card.playing-poker-card .ctext { text-align:left; color:#e5dccb; }
+.card.playing-poker-card .cost { background:#211a12; border-color:#d0ac5d; color:#f0dfaf; box-shadow:0 2px 5px #0008,inset 0 0 0 2px #17120e; }
+.card.playing-poker-card:is(.selected,[data-selected='true'],:focus-visible) {
+  border-color:#f2d87e; box-shadow:0 0 0 2px #d0ac5d,0 0 18px #d0ac5d66,inset 0 0 0 3px #17120e,inset 0 0 0 4px #b39760;
+}
+
 /* One fixed grid track size prevents the last row from stretching its cards. */
 .armoury .disc-faces:has(.poker-inventory-face),
 .cc-card-selectors:has(.poker-equipment-choice),
