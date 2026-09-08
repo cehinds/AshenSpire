@@ -120,7 +120,7 @@ export function scanPlantSites(root = ROOT) {
     s.id = createHash('sha256').update(`${s.tool}\0${s.target}\0${s.find}`).digest('hex').slice(0, 16);
     const targetPath = resolve(root, s.target);
     s.state = !existsSync(targetPath) ? 'missing-target'
-      : readFileSync(targetPath, 'utf8').includes(s.find) ? 'resolves' : 'drifted';
+      : readFileSync(targetPath, 'utf8').replace(/\r\n/g, '\n').includes(s.find.replace(/\r\n/g, '\n')) ? 'resolves' : 'drifted';
   }
   return { sites, unreadable };
 }

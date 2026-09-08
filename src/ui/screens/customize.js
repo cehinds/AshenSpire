@@ -1,4 +1,4 @@
-import { renderCollectibleCard } from '../components/collectibleCard.js';
+import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // Character creation: four progressive sections backed by validated content.
@@ -609,7 +609,10 @@ export function mountCustomize(app, {
         });
         box.appendChild(chipButton);
         if (selected) {
-          const details = renderEquipmentInspection(registries, piece, { interactive: false }).querySelector('.equipment-poker-explanations');
+          const inspection = section.kind === 'relic'
+            ? renderCollectibleInspection(registries, piece, 'Relic', { interactive: false })
+            : renderEquipmentInspection(registries, piece, { interactive: false });
+          const details = inspection.querySelector('.equipment-poker-explanations');
           const heading = document.createElement('h3');
           heading.textContent = piece.name + ' — full equipment details';
           details.prepend(heading);
