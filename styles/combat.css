@@ -1048,3 +1048,8 @@
   background: repeating-linear-gradient(135deg, #ffe3a0 0 8px, #917025 8px 16px);
   transform: scaleX(var(--hold, 0)); transform-origin: left;
 }
+
+/* A horizontal body needs room to the right of the leftmost solo player. */
+@media (max-width: 600px) {
+  .combat:not(.coop) .player .defeated-frame { left: 100% !important; }
+}
