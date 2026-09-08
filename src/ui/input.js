@@ -840,6 +840,9 @@ function onKeydown(ev) {
     return;
   }
   if (!enabled) return;
+  // The focused information button owns native Enter/Space activation. The
+  // game cursor may still point at its host card, whose action must stay inert.
+  if (ev.target?.closest?.('.card-info-button')) return;
   const tag = (ev.target && ev.target.tagName) || '';
   const typing = tag === 'INPUT' || tag === 'TEXTAREA';
   const cur = current();

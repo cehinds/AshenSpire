@@ -45,7 +45,7 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
     body: (host) => {
       // The body is the kit's CardGrid: the same faces the fan draws, wrapped,
       // at one gap. An empty pile says so in Flavour rather than drawing air.
-      const grid = cardGrid(list.map((inst) => renderCard(registries, inst, { small: true })), { class: 'grid' });
+      const grid = cardGrid(list.map((inst) => renderCard(registries, inst, { small: true, inspectReadOnly: true })), { class: 'grid' });
       if (!list.length) grid.appendChild(flavour('Empty.', { class: 'pile-empty' }));
       host.appendChild(grid);
     },
@@ -62,7 +62,7 @@ export function openSpentPileModal(registries, piles, opener = document.activeEl
   const labels = { discard: 'Discard', exhaust: 'Exhaust' };
   const paint = () => {
     const cards = piles[active] || [];
-    const grid = cardGrid(cards.map(inst => renderCard(registries, inst, { small: true })), { class: 'grid' });
+    const grid = cardGrid(cards.map(inst => renderCard(registries, inst, { small: true, inspectReadOnly: true })), { class: 'grid' });
     if (!cards.length) grid.appendChild(flavour('Empty.', { class: 'pile-empty' }));
     shell.body.replaceChildren(grid);
     shell.body.setAttribute('aria-labelledby', 'spent-tab-' + active);

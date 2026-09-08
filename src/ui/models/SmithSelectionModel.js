@@ -86,6 +86,7 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       itemRef,
       itemKind,
       itemId,
+      classId: candidate.classId || null,
       armamentId: candidate.armamentId || null,
       name: candidate.itemName || candidate.armamentName,
       selected: itemRef === selectedItemRef || candidate.armamentId === selectedItemRef,
