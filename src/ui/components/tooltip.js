@@ -402,7 +402,11 @@ function wireTitles() {
     if (!el || panels.some((p) => p && p.contains(el))) return;
     // A title INSIDE an attached target (a card's cost badge) is that target's
     // business — it must not open a second, competing tooltip over the first.
-    if (el.closest('[data-tip-attached]') && el.closest('[data-tip-attached]') !== el) return;
+    const owner = el.closest('[data-tip-attached]');
+    if (owner && owner !== el) {
+      el.removeAttribute('title');
+      return;
+    }
     adoptTitle(el);
     if (!el.dataset.tip || el.dataset.tip === 'off' || el.dataset.tipAdopted === 'true') return;
     el.dataset.tipAdopted = 'true';
