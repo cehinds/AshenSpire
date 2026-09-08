@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-809",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Card-driven information and starting equipment selection",
+    "detail": "Weapon faces retain their 5:7 shape with a 60:40 artwork-to-information split. Smaller cards sit beside complete readable details; touch and keyboard information access stays separate from buying, equipping, upgrading and playing. Starting Equipment previews selected details and commits the loadout only through Choose.",
+    "build": "0.5.5.137",
+    "pullRequest": 809,
+    "url": "https://github.com/cehinds/AshenSpire/pull/809"
+  },
+  {
     "id": "pr-811",
     "date": "2026-09-08",
     "group": "2026-09-08",

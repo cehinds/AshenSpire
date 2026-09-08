@@ -1,3 +1,5 @@
+import { renderCollectibleCard } from '../components/collectibleCard.js';
+import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // Character creation: four progressive sections backed by validated content.
 //
@@ -568,28 +570,38 @@ export function mountCustomize(app, {
       const box = options([], { id: boxId, class: 'cc-card-selectors cc-choice-collection', dataset: { view: state.equipmentChoiceView } });
       const node = el('section', { class: 'cc-equip-group', dataset: { equipmentSection: section.id } }, box);
       equipmentNodes.set(section.id, node);
+      const detailPane = el('div', { class: 'cc-equipment-details card-inspection-details', 'aria-live': 'polite' });
+      node.append(detailPane);
+      const showDetails = piece => {
+        detailPane.replaceChildren(equipmentDetails((section.kind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { interactive: false, inspection: false }) : renderEquipmentCard(registries, piece, { interactive: false, inspection: false })).explanations));
+      };
 
       for (const piece of section.choices) {
-        if (section.kind === 'relic') {
-          box.appendChild(relicChoiceButton(piece, relicText(piece, registries), piece.id === state.startingRelicId, () => {
-            state.startingRelicId = piece.id;
-            renderEquipment(section.id); renderCharacterPreview(); refreshFaces(); advanceEquipment(section.id);
-          }));
-          continue;
-        }
-        const selected = section.kind === 'armour'
+        const selected = section.kind === 'relic' ? piece.id === state.startingRelicId : section.kind === 'armour'
           ? piece.id === state.startingArmourId
           : section.kind === 'hand'
             ? state.startingHands[section.slot] === piece.id
             : state.startingSlotChoices[section.id] === piece.id;
-        const chipButton = pieceChip(registries, piece, { selected });
+        const chipButton = pieceChip(registries, piece, { selected, kind: section.kind === 'relic' ? 'Relic' : null });
+        if (selected) showDetails(piece);
+        const previewChoice = () => {
+          showDetails(piece);
+          box.querySelectorAll('.inspection-selected').forEach(card => card.classList.remove('inspection-selected'));
+          chipButton.querySelector('.equipment-poker-card').classList.add('inspection-selected');
+        };
+        chipButton.querySelector('.equipment-poker-card').addEventListener('cardinspectionselect', previewChoice);
+        chipButton.querySelector('.equipment-poker-card').addEventListener('keydown', event => {
+          if (event.target.classList.contains('equipment-poker-card') && ['Enter', ' '].includes(event.key)) {
+            event.preventDefault(); previewChoice();
+          }
+        });
         markUiComponent(chipButton, UI.equipmentChoiceCard, section.id);
         if (section.kind === 'armour') chipButton.dataset.startingArmourId = piece.id;
         else if (section.kind === 'hand') { chipButton.dataset.hand = section.slot; chipButton.dataset.armamentId = piece.id; }
         else chipButton.dataset.startingSlotItemId = piece.id;
-        chipButton.setAttribute('aria-pressed', selected ? 'true' : 'false');
-        chipButton.addEventListener('click', () => {
-          if (section.kind === 'armour') state.startingArmourId = piece.id;
+        chipButton.querySelector('.equipment-choose').addEventListener('click', () => {
+          if (section.kind === 'relic') state.startingRelicId = piece.id;
+          else if (section.kind === 'armour') state.startingArmourId = piece.id;
           else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
           else state.startingSlotChoices[section.id] = piece.id;
           renderEquipment(section.id); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(section.id);
@@ -791,7 +803,6 @@ export function mountCustomize(app, {
     let specimenArmourId = specimenArmours[0].id;
     const drawArmourChoices = () => armourSpecimen.replaceChildren(...specimenArmours.map((piece) => {
       const chipButton = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
-      chipButton.setAttribute('aria-pressed', piece.id === specimenArmourId ? 'true' : 'false');
       markUiComponent(chipButton, UI.equipmentChoiceCard, 'armour');
       chipButton.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
       return chipButton;

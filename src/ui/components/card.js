@@ -1,3 +1,4 @@
+import { bindCardInspection, openCardInspection } from './cardInspection.js';
 // src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
 //
 // All numbers shown come from the engine: in combat, previewCard tokens
@@ -179,6 +180,15 @@ export function renderCard(registries, ref, opts = {}) {
     attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts)));
   }
   if (opts.small) el.dataset.small = 'true';
+  if (opts.inspection !== false) bindCardInspection(el, { title: def.name, readOnly: opts.inspectReadOnly === true,
+    touchSelectionSafe: Boolean(opts.preview?.needsTarget),
+    open: opener => {
+      const details = document.createElement('div');
+      const liveCosts = opts.preview ? { variable: !!opts.preview.costIsX, action: opts.preview.cost, mana: opts.preview.manaCost, stamina: opts.preview.staminaCost } : null;
+      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts);
+      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false });
+      return openCardInspection({ title: def.name, card: face, details, opener });
+    } });
   return el;
 }
 
