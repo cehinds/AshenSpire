@@ -564,3 +564,15 @@ zero crashes, and the Herald completes full 3-act runs even naively.
 The engine emits dodgeRolled once per resolved roll. The combat screen retains its last player receipt before animation playback, so skipping playback cannot discard the explanation. The shared dodgeReceipt formatter labels temporaryGuard as base guard; ordinary blockGained events remain responsible for the applied Block amount. The persistent result uses the standard modal shell and focus return; a live region announces new outcomes.
 
 Regression coverage: node tests/framework.test.mjs checks weight-class costs, deterministic outcomes, atomic resource refusal, stale activation and ordinary Block absorption. Browser evidence must additionally exercise the result modal, keyboard focus and normal/reduced-motion playback on desktop and phones.
+
+### Every-weapon card preview
+Open `weapon-cards-preview.html` through the local server to browse every canonical
+armament using the production card renderer. Search by name, type or tag; enlarge
+any card or open its full explanations. Merchant offers and buy/sell inspectors
+reuse this card while preserving the live quote, smithing tier and mounted cards.
+
+Run `node tools/weapon-card-preview.mjs --shots <output-directory>` to check every
+armament at 1280x1000 and 390x844, capture every card and grouped gallery screenshots,
+and verify keyboard tooltips, full details, filtering and read-only merchant
+inspection. Uses `tools/browser.mjs`; set `CHROME` when automatic discovery does
+not locate your Chromium browser. `--shots` is optional for test-only runs.

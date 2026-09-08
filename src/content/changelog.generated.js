@@ -3,12 +3,32 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-801",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Every weapon gets a card preview",
+    "detail": "Browse all weapons, shields and staves in a searchable gallery using the same painted poker cards as the game. Reward inspection, merchant offers and buy/sell inspection now share those cards while retaining prices, smithing tiers and mounted-card information. Cards are 20% smaller and arranged in uniform grids. Hold progress remains visible over artwork. Potion and relic cards share the frame in Inventory and merchant shelves, with potion reward inspection included. Preview tests cover every armament and collectible plus hold cancellation and completion.",
+    "build": "0.5.5.128",
+    "pullRequest": 801,
+    "url": "https://github.com/cehinds/AshenSpire/pull/801"
+  },
+  {
+    "id": "pr-790",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Tooltips prefer above without covering controls in short windows",
+    "detail": "Shared tooltips first try above their target, retain sideways placement when a landscape window lacks vertical room, and fall below when needed. Authored top and side placement bands remain effective.",
+    "build": "0.5.5.127",
+    "pullRequest": 790,
+    "url": "https://github.com/cehinds/AshenSpire/pull/790"
+  },
+  {
     "id": "pr-793",
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Painted techniques, and a glow that follows the figure",
     "detail": "Combat techniques get their own painted art, and the aura a fighter wears is drawn to the shape of the figure rather than to a box around it, so a lit effect follows the silhouette it belongs to.",
-    "build": "0.5.5.119",
+    "build": "0.5.5.125",
     "pullRequest": 793,
     "url": "https://github.com/cehinds/AshenSpire/pull/793"
   },
@@ -71,6 +91,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.5.5.120",
     "pullRequest": 779,
     "url": "https://github.com/cehinds/AshenSpire/pull/779"
+  },
+  {
+    "id": "pr-787",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Equipment as painted poker cards",
+    "detail": "Inventory and equipment inspection use the approved gold-bordered 5:7 design, with canonical item facts and painted artwork. Hover or focus a field for its explanation, or read all details on touch. Long text remains available without stretching the card. Equip, compare and combat equipment behavior are preserved.",
+    "build": "0.5.5.125",
+    "pullRequest": 787,
+    "url": "https://github.com/cehinds/AshenSpire/pull/787"
   },
   {
     "id": "pr-771",

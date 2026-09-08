@@ -497,3 +497,16 @@ The three columns negotiate inside one grid. `cinders-counter` stays centered;
 `build-metadata-trail` is capped and progressively hides Source, Seed, then
 Build. `metadataShowTotals` is false by default, so only current Act/Floor are
 shown.
+
+Equipment cards (#784): Inventory, starting equipment choices and equipped-item
+inspection reuse `equipmentCardModel` and `equipmentCard.js`. The approved 5:7
+painted card scales one 350 by 490 canvas. Each meaningful field has an authored
+explanation; inspection includes keyboard tooltips and a touch-readable full-text
+disclosure. Existing equip, drag, compare and navigation behavior remains.
+
+`equipmentCard.renderEquipmentCard` and `renderEquipmentInspection` also serve
+merchant armament offers and buy/sell inspection, reward armament inspection, and the complete searchable
+`weapon-cards-preview.html` gallery (#799). Preview validation is
+`node tools/weapon-card-preview.mjs --shots <output-directory>`.
+
+Item cards: equipmentCard.js owns the uniformly scaled poker canvas. collectibleCard.js composes authored potion/relic effects into that frame for Inventory, merchant shelves, and potion reward inspection. Listing tracks are fixed at 280px; reveals span the grid. Delegated hold feedback paints above card art and inspection gestures reach the existing hold owner. Full-text disclosure remains independent of equip gestures.

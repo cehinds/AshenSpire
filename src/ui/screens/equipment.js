@@ -1,3 +1,5 @@
+import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
+import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // src/ui/screens/equipment.js — the Armoury.
@@ -445,26 +447,27 @@ function pieceArt(piece, fallback = '⚔') {
 
 /** The kit picker's chip (creation's starting kit): an OptionCard — art, name, mods, tags. `.ec-*` are the hooks the tools read. */
 export function pieceChip(registries, piece, { selected }) {
-  const mods = modSummary(registries, piece);
-  const card = optionCard({
-    art: pieceArt(piece),
-    name: piece.name,
-    description: mods.length ? mods.join(' · ') : '—',
-    body: el('span', { class: 'tags ec-tags' }, (piece.tags || []).map((t) => tagChip({ label: t }))),
-    selected, arrow: false,
-    className: `equip-chip ${piece.kind === 'armor' ? 'as-card equipment-armor-card' : 'compact'} rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`,
-  });
-  card.querySelector('.on').classList.add('ec-name');
-  card.querySelector('.od').classList.add('ec-mods');
+  const card = optionCard({ name: piece.name, selected, arrow: false,
+    className: `equip-chip poker-equipment-choice rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}` });
+  card.replaceChildren(renderEquipmentCard(registries, piece, { interactive: false }).card);
+  card.setAttribute('aria-label', piece.name);
   return card;
 }
 
-function inventoryFace(row, {
+function inventoryFace(registries, row, {
   selected = false, draggable = false, actionLabel = '', classModel = null,
 } = {}) {
   const el = renderInventoryItemCard(inventoryItemCardModel(row, {
     selected, draggable, classModel,
   }));
+  if (['armor', 'weapon', 'shield', 'staff'].includes(row.item.kind) || ['Potion', 'Relic'].includes(row.category)) {
+    const trail = el.querySelector('.r-trail');
+    el.replaceChildren((['Potion', 'Relic'].includes(row.category)
+      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false })
+      : renderEquipmentCard(registries, row.item, { interactive: false })).card);
+    if (trail) el.append(trail);
+    el.classList.add('poker-inventory-face');
+  }
   // While a position is selected the face says what the tap will do — a StatePill, lit.
   if (actionLabel) el.querySelector('.r-trail').appendChild(pill({ label: actionLabel, on: true, attrs: { class: 'inventory-inline-action' } }));
   return el;
@@ -496,6 +499,16 @@ function inventoryReveal(registries, row, {
     comparisonHtml: comparisonPresentation === 'inline' ? comparisonHtml : '',
     action,
   });
+  if (['armor', 'weapon', 'shield', 'staff'].includes(item.kind) || ['Potion', 'Relic'].includes(row.category)) {
+    el.classList.add('poker-inventory-detail');
+    el.querySelector('.inventory-model')?.remove();
+    const info = el.querySelector('.inventory-information');
+    // Keep the comparison, equip action and instruction in their original container.
+    for (const child of [...info.children]) if (!child.matches('.inventory-instruction, [data-ui-component], .ep-equip, .inventory-card-action-label') && child !== action) child.remove();
+    el.prepend(['Potion', 'Relic'].includes(row.category)
+      ? renderCollectibleInspection(registries, item, row.category, { interactive: false })
+      : renderEquipmentInspection(registries, item, { interactive: false }));
+  }
   el.dataset.inventoryItem = row.key;
   // When the global hold-confirm dial is off, the explicit action button owns
   // the immediate equipment change and the card keeps a short, read-only hold
@@ -696,7 +709,13 @@ export function mountEquipment(host, {
   let armamentGridSelection = null;
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
+  // ONE HOME for the breakpoint question. `draw()` stamps it onto
+  // `panel.dataset.responsive` and the pane observer below asks it again to tell
+  // a real breakpoint crossing from a height-only resize; a second copy of the
+  // comparison is how those two answers would drift.
+  const responsiveMode = () => typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint ? 'phone' : 'desktop';
   let paneObserver = null;
+  let paneFrame = 0;
   let inventoryDisclosure = null;
   let holdDisarms = [];
   const clearHoldDisarms = () => {
@@ -747,6 +766,7 @@ export function mountEquipment(host, {
   const close = () => {
     document.removeEventListener('keydown', onKey);
     if (paneObserver) paneObserver.disconnect();
+    cancelAnimationFrame(paneFrame);
     clearHoldDisarms();
     wrap.remove();
     if (onClose) onClose();
@@ -1207,7 +1227,7 @@ export function mountEquipment(host, {
           ? 'Unequip'
           : `${target.kind === 'move' ? 'Move' : 'Equip'} to ${target.slot.label}`)
         : '';
-      const face = inventoryFace(row, {
+      const face = inventoryFace(registries, row, {
         draggable,
         actionLabel: selectedSlot ? actionLabel : '',
         classModel: inventoryItemClass,
@@ -1695,7 +1715,7 @@ export function mountEquipment(host, {
     const card = detailCard({
       eyebrow: slot.label, name: `${item.name} details`,
       attrs: { class: 'armoury-position-detail', dataset: { component: 'armoury.armamentItemCard' } },
-      children: detail,
+      children: [renderEquipmentInspection(registries, item), detail],
     });
     attachTooltip(card, () => `<div class="tt-title">${esc(`${slot.label}: ${item.name}`)}</div><p>${esc(summaryItem.bonus)} · ${esc(summaryItem.weight)}</p>`);
     return card;
@@ -1763,6 +1783,7 @@ export function mountEquipment(host, {
   function draw() {
     const previousScroll = wrap.querySelector('.armoury-shell-body')?.scrollTop || 0;
     if (paneObserver) paneObserver.disconnect();
+    cancelAnimationFrame(paneFrame);
     clearHoldDisarms();
     // The layout is READ off the row, never inferred from the id. `data-surface`
     // / `data-member` are the house convention for a navigable set (#78): the
@@ -1794,8 +1815,7 @@ export function mountEquipment(host, {
     panel.dataset.page = view;
     panel.dataset.characterState = viewMode().character;
     panel.dataset.composition = 'character-equipment';
-    panel.dataset.responsive = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
-      ? 'phone' : 'desktop';
+    panel.dataset.responsive = responsiveMode();
     const left = wrap.querySelector('.armoury-left');
     const right = wrap.querySelector('.armoury-right');
     const blocks = eq.slots
@@ -1867,20 +1887,33 @@ export function mountEquipment(host, {
       cards.append(titleS(`Cards · ${(run.deck || []).length}`), prose('Your complete deck, including class and equipment cards.'), cardStrip());
     } else cards.parentElement.remove();
 
+    let lastPaneWidths = null;
     const applyPaneDensity = () => {
       const equipmentPane = panel.querySelector('.armoury-equipment');
       const inventoryPane = panel.querySelector('.armoury-inventory');
       if (!equipmentPane) return;
       const equipmentWidth = equipmentPane.getBoundingClientRect().width;
       const inventoryWidth = inventoryPane ? inventoryPane.getBoundingClientRect().width : 0;
+      const widths = [equipmentWidth, inventoryWidth, panel.dataset.responsive];
+      if (lastPaneWidths && Math.abs(widths[0] - lastPaneWidths[0]) < 1
+        && Math.abs(widths[1] - lastPaneWidths[1]) < 1 && widths[2] === lastPaneWidths[2]) return;
+      lastPaneWidths = widths;
       panel.dataset.armamentDensity = equipmentWidth < layout.inventorySplit.foldGroupsBelowPx
         ? 'minimal' : equipmentWidth < layout.inventorySplit.compactItemsBelowPx ? 'compact' : 'comfortable';
       panel.dataset.inventoryDensity = viewMode().pane === 'inventory' && inventoryWidth < layout.inventorySplit.compactItemsBelowPx ? 'compact' : 'comfortable';
-
     };
 
     if (typeof ResizeObserver !== 'undefined') {
-      paneObserver = new ResizeObserver(applyPaneDensity);
+      // Density writes can change observed geometry. Run them outside the
+      // observer delivery, and ignore height-only changes when a fold opens.
+      paneObserver = new ResizeObserver(() => {
+        cancelAnimationFrame(paneFrame);
+        paneFrame = requestAnimationFrame(() => {
+          if (!panel.isConnected) return;
+          if (panel.dataset.responsive !== responsiveMode()) draw();
+          else applyPaneDensity();
+        });
+      });
       const content = panel.querySelector('.armoury-content');
       if (content) paneObserver.observe(content);
       const equipment = panel.querySelector('.armoury-equipment');

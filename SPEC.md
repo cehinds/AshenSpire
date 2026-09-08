@@ -1431,3 +1431,21 @@ Use shared components for armament/card faces, enemy frames, related modals, tab
 Player combat animations use three presentation groups: attack-type cards attack; Powers play three silhouette-glow phases over combat idle; skills with guard/block tags defend; other skills cast using combat idle. With a physical shield equipped, Shield Bash, shield-profile attacks and shield-tagged attacks use shield bash. Shield-tagged defensive cards and the shieldGuard equipment profile use shield guard, or parry when a Parrying Dagger is equipped. Guard skills and Powers replace the visual resting stance until that character's next turn begins. Temporary attacks, casts and hit reactions return to the resting stance; skipping and reduced motion preserve the same result. During every action frame, paid stamina, mana and HP use green, blue and red silhouette auras respectively (combined payments retain each color). Guarded resting stances use a faded blue outline. Keep this visual state separate from mechanical stances and outside rebuilt DOM nodes. These player rules were approved by the owner after the Reaver/Starseer animation study. Enemy animation selection retains this precedence: explicit actor-and-action override, then the first matching tag in the ordered table, then authored intent, then neutral fallback. Multi-tag cards and enemy moves select one primary action animation deterministically; additional effect cues may accompany it without replaying the action. Families include slash, thrust, strike, projectile, spell, guard, and dodge, with character-specific sprites where authored. Missing assets fall back safely rather than blocking resolution.
 
 Animate draw, selection, targeting, play, resolution, discard, exhaust, idle, attack, hit, and defeat as appropriate. Engine outcomes remain authoritative; skipping, interrupting, or disabling animations cannot alter state or strand input. Reduced-motion mode replaces travel/shake/repeated motion with brief static or opacity feedback while retaining outcome information. Provide readable non-color cues, focus-visible controls, viewport-contained tooltips, and desktop/phone mouse, keyboard, and touch behavior. Validate timing, event-handler cleanup, and multi-enemy performance in actual browser playtests.
+
+### Approved poker equipment cards (#784)
+Equipment selection and inspection use the approved `item-cards-preview.html` design:
+a single 350 by 490 canvas scales uniformly at 5:7. Painted armament art is keyed by
+item id; armor uses its painted menu pose. `equipmentCardModel` reads canonical base
+facts, tags, requirements and modifier vocabulary. Live comparison, upgrades and
+Equip/Move/Unequip remain separate existing receipts/actions. Inspection provides
+hover and keyboard explanations plus a normal full-text disclosure for touch and
+long content. Overfull regions explicitly direct the reader to details instead of
+clipping text. Player Poise is described as display-only, without changing mechanics.
+
+The all-armament gallery at `weapon-cards-preview.html` renders every registered
+weapon, shield and staff through the same equipment inspection component, with
+search, type filtering and enlarged inspection. Merchant offers and buy/sell
+inspection also use that component; prices, smithing tiers, mounted cards and
+transaction rules remain live receipts outside the base-value card (#799).
+
+Item card presentation: weapon, potion and relic inventory faces share a 5:7 canvas. Standard listing cards use a 280px track (20% smaller than 350px), arranged in a responsive grid with no last-row stretching. Hold progress overlays the face; the existing hold duration and commit/cancel rules are unchanged. Potion and relic cards display authored effects, with full-text inspection.

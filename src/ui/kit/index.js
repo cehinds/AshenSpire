@@ -223,7 +223,7 @@ export function optionCard({ glyph: g = '', art = null, name = '', badge = null,
   }, [
     art || (g ? el('span', { class: 'og', 'aria-hidden': 'true', text: g }) : null),
     el('span', { class: 'ob' }, [
-      name ? el('span', { class: 'on' }, [name, badge]) : null,
+      name ? el('span', { class: 'on' }, [el('span', { class: 'as-label-text', title: typeof name === 'string' ? name : null }, name), badge]) : null,
       description ? el('span', { class: 'od', text: description }) : null,
       meta ? el('span', { class: 'om', text: meta }) : null,
       body,
@@ -248,7 +248,7 @@ export function face({ name = '', nameNode = null, badge = null, description = '
   return el(tag, { ...attrs, class: cls('as-face', className) }, [
     art,
     el('span', { class: 'ob' }, [
-      nameNode || (name ? el('span', { class: 'on' }, [name, badge]) : null),
+      nameNode || (name ? el('span', { class: 'on' }, [el('span', { class: 'as-label-text', title: typeof name === 'string' ? name : null }, name), badge]) : null),
       description ? el('span', { class: 'od', text: description }) : null,
       meta ? el('span', { class: 'om', text: meta }) : null,
       body,
