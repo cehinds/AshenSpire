@@ -1,3 +1,4 @@
+import {tracedSceneFor} from './traced-motion.mjs';
 import {RIGS,WEAPONS,SETUPS} from './catalog.mjs';
 import {solveArm,weaponPoint,sampleMotion,rotate,add,clamp,LIMITS} from './kinematics.mjs';
 const names=['head','torso','cloak','nearUpper','nearFore','nearClosed','nearOpen','farUpper','farFore','farClosed','farOpen','pelvis','nearThigh','nearShin','nearBoot','frontSkirt','farThigh','farShin','farBoot','torsoCrouch','torsoOverhead','cloakAction','backSkirt'];
@@ -47,8 +48,8 @@ export function sceneFor(classId,setupId,action,t){
  const handNear=hand(right,pose.angle),handFar=hand(left,two?pose.angle:offAngle);
  return {rig,setup,item,pose,right,left,offTarget,shift:pose.lean,action,t,offAngle,nearLeg,farLeg,nearAnkle:front.ankle,farAnkle:rear.ankle,handNear,handFar,body,referenceError:Math.hypot(right.wrist[0]-pose.wrist[0],right.wrist[1]-pose.wrist[1])};
 }
-export function render(canvas,textures,classId,setupId,action,t,{debug=false,effects=true}={}){
- const ctx=canvas.getContext('2d'),s=sceneFor(classId,setupId,action,t),{rig,setup,item,pose,right,left,body}=s;
+export function render(canvas,textures,classId,setupId,action,t,{debug=false,effects=true,guided=true}={}){
+ const ctx=canvas.getContext('2d'),s=guided?tracedSceneFor(classId,setupId,action,t):sceneFor(classId,setupId,action,t),{rig,setup,item,pose,right,left,body}=s;
  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,600,600);ctx.translate(42,85);ctx.scale(.74,.74);
  const image=(name,x,y,w,h,rotation=0,alpha=1)=>{if(alpha<.001)return;ctx.save();ctx.globalAlpha=alpha;ctx.translate(x,y);ctx.rotate(rotation);ctx.drawImage(textures[classId+'/'+name],-w/2,-h/2,w,h);ctx.restore()};
  const limb=(name,a,b,width)=>{const len=Math.hypot(b[0]-a[0],b[1]-a[1]);image(name,(a[0]+b[0])/2,(a[1]+b[1])/2,width,len+17,Math.atan2(b[1]-a[1],b[0]-a[0])-Math.PI/2)};
@@ -72,9 +73,9 @@ export function render(canvas,textures,classId,setupId,action,t,{debug=false,eff
  image('torso',...body([0,-75]),...rig.torsoSize,pose.spine*Math.PI/180,1);
  image('torsoCrouch',...body([0,-75]),...rig.torsoSize,pose.spine*Math.PI/180,crouch);
  image('torsoOverhead',...body([0,-75]),...rig.torsoSize,pose.spine*Math.PI/180,overhead);
- if(overhead>.15){limb('farUpper',left.shoulder,left.elbow,rig.armWidth*.9);limb('farFore',left.elbow,left.wrist,rig.foreWidth*.9);}
+ // Far arm is drawn once, behind the torso. Its traced elbow clears the head.
  if(setup.off==='kiteShield'){limb('farFore',left.elbow,left.wrist,rig.foreWidth*.9);weapon(setup.off,left.wrist,s.offAngle);}
- image('head',...body([5,-172]),...rig.headSize,pose.spine*Math.PI/180*.7);
+ image('head',...(s.head||body([5,-172])),...rig.headSize,pose.spine*Math.PI/180*.7);
  limb('nearUpper',right.shoulder,right.elbow,rig.armWidth);limb('nearFore',right.elbow,right.wrist,rig.foreWidth);
  weapon(setup.main,right.wrist,pose.angle);
  if(setup.grip==='two')hand('farClosed',left,s.handFar.angle);

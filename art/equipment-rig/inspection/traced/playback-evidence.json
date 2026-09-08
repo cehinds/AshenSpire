@@ -1,0 +1,98 @@
+[
+  {
+    "cls": "reaver",
+    "speed": "1",
+    "requested": 22,
+    "observed": 22
+  },
+  {
+    "cls": "reaver",
+    "speed": "1",
+    "requested": 35,
+    "observed": 35
+  },
+  {
+    "cls": "reaver",
+    "speed": "1",
+    "requested": 46,
+    "observed": 46
+  },
+  {
+    "cls": "reaver",
+    "speed": "1",
+    "requested": 69,
+    "observed": 69
+  },
+  {
+    "cls": "reaver",
+    "speed": "0.25",
+    "requested": 22,
+    "observed": 22
+  },
+  {
+    "cls": "reaver",
+    "speed": "0.25",
+    "requested": 35,
+    "observed": 35
+  },
+  {
+    "cls": "reaver",
+    "speed": "0.25",
+    "requested": 46,
+    "observed": 46
+  },
+  {
+    "cls": "reaver",
+    "speed": "0.25",
+    "requested": 69,
+    "observed": 69
+  },
+  {
+    "cls": "starseer",
+    "speed": "1",
+    "requested": 22,
+    "observed": 22
+  },
+  {
+    "cls": "starseer",
+    "speed": "1",
+    "requested": 35,
+    "observed": 35
+  },
+  {
+    "cls": "starseer",
+    "speed": "1",
+    "requested": 46,
+    "observed": 46
+  },
+  {
+    "cls": "starseer",
+    "speed": "1",
+    "requested": 69,
+    "observed": 69
+  },
+  {
+    "cls": "starseer",
+    "speed": "0.25",
+    "requested": 22,
+    "observed": 22
+  },
+  {
+    "cls": "starseer",
+    "speed": "0.25",
+    "requested": 35,
+    "observed": 35
+  },
+  {
+    "cls": "starseer",
+    "speed": "0.25",
+    "requested": 46,
+    "observed": 46
+  },
+  {
+    "cls": "starseer",
+    "speed": "0.25",
+    "requested": 69,
+    "observed": 69
+  }
+]

@@ -3,7 +3,50 @@
 Issue #785. This isolated preview demonstrates reusable equipment attachment on
 Reaver and Starseer. It does not replace live combat or change equipment rules.
 
-## Current review status: animation rejected, source mapping added
+## Revised animation preview
+
+`equipment-rig-preview.html?v=traced-motion` now defaults to the revised motion.
+The Motion selector retains the previous planar animation for comparison.
+`traced-motion.mjs` uses the source keyframes for primary shoulder, elbow and
+wrist placement. Rotations and relative elbow flexion interpolate together;
+interpolating endpoint chords collapsed limbs, and independently interpolating
+absolute forearm angles folded them backward. Both failures were found and
+corrected during this revision.
+
+Projected upper/lower lengths follow the artwork's perspective. They are not
+claimed to be fixed anatomical bone lengths. Elbow flexion stays within ±165°
+in the projection; the two-handed support arm uses fixed 78/74 lengths and
+8–165° flexion. Its shoulder width is calibrated to the segmented torso, and
+the shared hilt stays in its reachable range. This constrained support arm is
+not an exact trace of the source's partly obscured joints. No item-specific
+animation frames were added. Shields use the same bounded support-arm solve.
+
+The far arm now draws once behind the torso, the head follows the shoulder
+line, moving feet lift, and both guard feet retain their positions as the knees
+bend. The sword follows a deliberate forward overhead sweep; shortest-angle
+interpolation incorrectly sent it backward through the legs. All actions return
+to the same guarded endpoint.
+
+Reviewed normal and quarter-speed Reaver attack and Starseer cast playback,
+including the 35% transition and overhead pose without effects. The revised
+elbows no longer collapse or fold across the face in those reviewed sequences.
+The comparison is in `inspection/traced/overhead-before-after.png` (previous on
+the left), with actual playback captures and phase records beside it. This is
+still a preview: painted part seams, cloth deformation and hand perspectives
+need further art polish before production integration. Nothing is merged.
+
+    node --test art/equipment-rig/kinematics.test.mjs art/equipment-rig/hybrid.test.mjs art/equipment-rig/source-joints.test.mjs art/equipment-rig/traced-motion.test.mjs
+    node art/equipment-rig/playtest.mjs
+    node art/equipment-rig/traced-review-check.mjs
+
+Thirteen focused tests pass, including a new 28,848-sample check for collapsed
+arms, elbow folds, discontinuities, support-hand contact and guarded closure.
+The primary arm meets the traced one-handed/casting keys exactly. Browser checks
+cover eight loadouts, previous/revised switching, both playback speeds, effects,
+joint overlays, and desktop/mobile layouts. Tests are separate from the visual
+review described above.
+
+## Previous review: animation rejected, source mapping added
 
 Open `joint-reference-preview.html` for the correction reference. Ten original
 painted frames have manually inspected source-space shoulder, elbow, wrist,
