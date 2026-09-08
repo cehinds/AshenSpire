@@ -1,3 +1,4 @@
+import { bindCardInspection } from '../components/cardInspection.js';
 // The wandering merchant. Stock is rolled once, saved with the run, and read
 // through shared disclosure shelves. Armament inspection uses the Armoury
 // card components; transactions revalidate through armamentTrading.js.
@@ -380,10 +381,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
   }
 
   function armamentOffer(def, inspect, summary) {
-    const face = renderEquipmentCard(registries, def, { interactive: false }).card;
-    const card = el('button', { type: 'button', class: 'as-option noarrow hosts-face' }, face);
+    const face = renderEquipmentCard(registries, def, { interactive: false, inspection: false }).card;
+    const card = el('div', { class: 'as-option noarrow hosts-face shop-inspect-card' }, face);
     card.setAttribute('aria-label', `${def.name}. ${summary}. Inspect.`);
-    card.addEventListener('click', () => { card.focus({ preventScroll: true }); inspect(); });
+    bindCardInspection(card, { title: def.name, readOnly: true, open: () => { card.focus({ preventScroll: true }); inspect(); } });
     return el('div', { class: 'shop-armament-offer' }, [card, statusText(summary)]);
   }
 

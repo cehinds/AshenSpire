@@ -1,3 +1,4 @@
+import { bindCardInspection, cardInspectionLayout, openCardInspection } from './cardInspection.js';
 import { equipmentCardModel } from '../../model/equipmentCard.js';
 import { equipmentCardArt } from '../assets.js';
 import { attachTooltip, esc, hideTooltip, showTooltipFor } from './tooltip.js';
@@ -8,15 +9,7 @@ function canvasElement() {
     connectedCallback() {
       this.observer = new ResizeObserver(entries => {
         this.style.setProperty('--card-scale', entries[0].contentRect.width / 350);
-        if (!entries[0].contentRect.width) return;
-        // Full text remains in the inspector. Never clip or distort the canvas.
-        for (const [selector, label] of [['.epc-name', 'Item name'], ['.epc-type', 'Item type'], ['.epc-tags', 'Tags'], ['.epc-effects', 'Bonuses'], ['.epc-flavor', 'Flavor'], ['.epc-footer', 'Requirements and rarity']]) {
-          const region = this.querySelector(selector);
-          if (region && (region.scrollHeight > region.clientHeight + 2 || region.scrollWidth > region.clientWidth + 2)) {
-            region.textContent = `${label} · Read details`;
-            region.dataset.overflowSummary = 'true';
-          }
-        }
+
       });
       this.observer.observe(this);
     }
@@ -25,7 +18,7 @@ function canvasElement() {
   return document.createElement('as-equipment-card');
 }
 
-export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null } = {}) {
+export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true } = {}) {
   const model = presentation || equipmentCardModel(registries, piece);
   const card = canvasElement();
   card.className = 'equipment-poker-card';
@@ -52,27 +45,35 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     card.querySelectorAll('[data-card-tip]').forEach(target => {
       const { label, explanation } = explanations[Number(target.dataset.cardTip)];
       const html = () => `<div class="tt-title">${esc(label)}</div><p>${esc(explanation)}</p>`;
-      attachTooltip(target, html, { expand: true, expandTitle: label });
+      attachTooltip(target, html);
+      target.title = `${label}: ${explanation}`;
       if (!interactive) return;
       target.addEventListener('focus', () => showTooltipFor(target, html()));
       target.addEventListener('blur', hideTooltip);
-      target.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); target.click(); } });
+
     });
     // Keep explanation gestures out of the containing equipment hold action.
     if (interactive) for (const type of ['pointerdown', 'touchstart', 'click', 'keydown']) card.addEventListener(type, event => event.stopPropagation());
   }
+  if (inspection) bindCardInspection(card, { title: model.name, readOnly: interactive,
+    open: opener => {
+      const face = renderEquipmentCard(registries, piece, { interactive: false, presentation, inspection: false }).card;
+      return openCardInspection({ title: model.name, card: face, details: equipmentDetails(explanations), opener });
+    } });
   return { card, explanations, model };
 }
 
-/** Always available full text: no tooltip gesture or small type required. */
-export function renderEquipmentInspection(registries, piece, options = {}) {
-  const { card, explanations } = renderEquipmentCard(registries, piece, options);
-  const wrap = document.createElement('section');
-  wrap.className = 'equipment-poker-inspection';
-  const details = document.createElement('details');
+/** Full explanations remain readable, even when the compact face truncates. */
+export function equipmentDetails(explanations) {
+  const details = document.createElement('div');
   details.className = 'equipment-poker-explanations';
-  details.innerHTML = `<summary>Read all details and explanations</summary><dl>${explanations.map(e => `<dt>${esc(e.label)}</dt><dd>${esc(e.explanation)}</dd>`).join('')}</dl>`;
-  for (const type of ['pointerdown', 'touchstart', 'click', 'keydown']) details.addEventListener(type, event => event.stopPropagation());
-  wrap.append(card, details);
+  details.innerHTML = '<dl>' + explanations.map(e => '<dt>' + esc(e.label) + '</dt><dd>' + esc(e.explanation) + '</dd>').join('') + '</dl>';
+  return details;
+}
+
+export function renderEquipmentInspection(registries, piece, options = {}) {
+  const { card, explanations } = renderEquipmentCard(registries, piece, { ...options, inspection: false });
+  const wrap = cardInspectionLayout(card, equipmentDetails(explanations));
+  wrap.classList.add('equipment-poker-inspection');
   return wrap;
 }
