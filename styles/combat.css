@@ -966,11 +966,14 @@
 
 /* Normal encounters fit the viewport. Only four or more enemies may scroll. */
 @media(max-width:640px) {
+  /* The shared fitter still owns the row. Art may cross adjacent cells a
+     little; scale only the figures so meters, labels and intent stay readable. */
+  :root .combat:not(.coop) .combatant .sprite { scale:0.9; transform-origin:bottom center; }
   :root .combat:not(.coop) .combatant-card { width:80px; }
   :root .combat:not(.coop) .combatant .meters { width:80px; }
   :root .combat:not(.coop) .combatant .sprite { width:80px; min-width:0; }
   :root .combat:not(.coop) .combatant .sprite > :first-child { flex-shrink:0; }
-  :root .combat:not(.coop) .field:not(:has(.enemy-row > .combatant:nth-child(4))) { overflow-x:clip; }
+  :root .combat:not(.coop) .field:not(:has(.enemy-row > .combatant:nth-child(4))) { overflow-x:clip; overflow-clip-margin:4px; }
   :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
   :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) .enemy-row { flex:0 0 auto; min-width:max-content; }
   :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) .enemy-row > .combatant { min-width:calc(86px / var(--ui-zoom,1)); }

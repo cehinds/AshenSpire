@@ -164,7 +164,7 @@ for (const width of (args.includes('--width') ? [Number(args[args.indexOf('--wid
       })()`);
       check(geometry.widths.every(w=>w>=149.5&&w<=180.5),shape.name+': readable 150–180px card range',geometry);
       check(geometry.stacks.every(r=>r.bottom<=geometry.handTop-8),shape.name+': combatants leave clear space above the hand',geometry);
-      check(geometry.playerHeight>=175,shape.name+': player sprite retains reference minimum height',geometry);
+      check(geometry.playerHeight>=(width<=640?157.5:175),shape.name+': player sprite retains responsive reference minimum height',geometry);
       check(geometry.handOverflow<=1&&geometry.fieldOverflow<=1,shape.name+': five cards and three enemies fit without horizontal scroll',geometry);
       console.log('GEOMETRY '+shape.name+' '+JSON.stringify(geometry));
       const shot=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false},page.sessionId);
