@@ -1,3 +1,6 @@
+import { bindCardInspection, openCardInspection } from './cardInspection.js';
+import { renderEquipmentCard, equipmentDetails } from './equipmentCard.js';
+import { renderCollectibleCard } from './collectibleCard.js';
 // Dedicated Smith selection/review overlay. The component owns dialog
 // semantics, focus containment and rendering; the screen owns run mutation.
 //
@@ -204,6 +207,16 @@ export function mountSmithUpgradeModal(host, initialModel, {
       + `<div>${item.requirements.length ? item.requirements.map((row) => `${esc(row.label)} ${row.currentRequired} → ${row.nextRequired}; you have ${row.actual == null ? '?' : row.actual}`).join('<br>') : 'No attribute requirement.'}</div>`);
     card.tabIndex = item.selected || (!model.properties.selected && cardsHost.childElementCount === 0) ? 0 : -1;
     markUiComponent(card, UI.smithCandidateCard, item.selected ? 'selected' : 'available');
+    const piece = item.itemKind === 'relic' ? registries.relics.get(item.itemId)
+      : item.itemKind === 'armor' ? registries.equipment.armour.find(piece => piece.id === item.itemId && piece.classId === item.classId)
+        : registries.equipment.armaments.find(piece => piece.id === item.itemId);
+    if (piece) bindCardInspection(card, { title: item.name, open: opener => {
+      const rendered = item.itemKind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { inspection: false, interactive: false })
+        : renderEquipmentCard(registries, piece, { inspection: false, interactive: false });
+      const details = equipmentDetails(rendered.explanations);
+      details.prepend(prose('Smithing tier ' + item.currentLevel + ' → ' + item.nextLevel + '. Cost: ' + item.cost + ' Smithing Stone. Select the item in the Smith to review its exact upgrade changes.'));
+      return openCardInspection({ title: item.name, card: rendered.card, details, opener });
+    } });
     const choose = () => onSelect(item.itemRef);
     card.addEventListener('click', choose);
     card.addEventListener('keydown', (event) => {
@@ -277,7 +290,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     if (selected) {
       selected.affectedRows.forEach((row, index) => {
         const slot = previewHost.querySelector(`[data-smith-card-row="${index}"]`);
-        if (slot && row.reference) slot.appendChild(renderCard(registries, row.reference, { small: true, tooltip: false }));
+        if (slot && row.reference) slot.appendChild(renderCard(registries, row.reference, { small: true, tooltip: false, inspectReadOnly: true }));
       });
       previewHost.querySelectorAll('.smith-requirement').forEach((element) => attachTooltip(element, () => {
         const row = selected.requirements.find((entry) => element.textContent.includes(entry.label));

@@ -2748,3 +2748,64 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   .armoury .disc-faces:has(.poker-inventory-face), .cc-card-selectors:has(.poker-equipment-choice),
   #shop-armaments, #shop-relics, #shop-flasks { grid-template-columns:minmax(0,280px); }
 }
+/* Shared inspection: 270px artwork + 180px information within the 450px face. */
+.equipment-poker-card .epc-frame,
+.collectible-poker-card .epc-frame { padding:19px; gap:3px; grid-template-rows:270px 22px 34px 20px 48px 22px 16px; }
+.epc-frame > .epc-name { position:absolute; z-index:1; top:26px; left:27px; right:27px; height:29px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:#211a12dd; padding:3px 6px; }
+.epc-name > span { display:none; }
+.epc-art img { padding:35px 8px 8px; }
+.epc-frame > :is(.epc-type,.epc-flavor), .epc-bonus, .epc-footer > span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.epc-frame > .epc-tags { flex-wrap:nowrap; overflow:hidden; }
+.epc-frame > .epc-effects { overflow:hidden; }
+.epc-heading { margin-bottom:2px; }
+.epc-flavor { padding-top:3px; }
+.card-inspection-layout { display:grid; grid-template-columns:minmax(0,220px) minmax(0,1fr); align-items:start; gap:24px; min-width:0; width:100%; padding:16px; box-sizing:border-box; }
+.card-inspection-art { min-width:0; width:100%; }
+.card-inspection-art > .equipment-poker-card { width:100%; max-width:220px; }
+.card-inspection-details { min-width:0; max-width:65ch; font:16px/1.55 Arial,sans-serif; overflow-wrap:anywhere; }
+.card-inspection-details dl { margin:0; }
+.card-inspection-details dt:first-child { margin-top:0; }
+.card-inspection-modal .modal-body { overflow:auto; overscroll-behavior:contain; }
+.equipment-poker-explanations { margin-top:0; }
+.card-info-button { position:absolute; z-index:8; top:6px; right:6px; width:44px; height:44px; min-width:44px; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px Georgia,serif; cursor:pointer; touch-action:manipulation; }
+.inspection-selected { outline:3px solid #e0bd68; outline-offset:3px; border-radius:12px; }
+.card-info-button:focus-visible { outline:3px solid #fff0bd; outline-offset:2px; }
+@media (pointer:coarse) {
+  .card-info-button { visibility:hidden; pointer-events:none; }
+  .inspection-info-visible > .card-info-button, .card-inspection-target:focus-visible > .card-info-button, .card-inspection-target:has(:focus-visible) > .card-info-button, .card-info-button:focus-visible { visibility:visible; pointer-events:auto; }
+}
+@media (max-width:600px) {
+  .card-inspection-layout { grid-template-columns:minmax(0,1fr); padding:12px; gap:20px; }
+  .card-inspection-art { max-width:220px; margin-inline:auto; }
+}
+.cc-equip-group[data-equipment-section] { display:grid; grid-template-columns:minmax(220px, .85fr) minmax(0,1.15fr); gap:24px; align-items:start; }
+.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { grid-template-columns:repeat(auto-fit,minmax(180px,220px)); gap:16px; }
+.cc-equipment-details { padding:16px; border:1px solid #74603c; border-radius:8px; min-width:0; }
+@media (max-width:700px) { .cc-equip-group[data-equipment-section] { grid-template-columns:minmax(0,1fr); } }
+
+.card-inspection-art > .card { width:220px; height:308px; min-width:0; max-width:100%; margin:0 auto; transform:none; }
+.card-inspection-art > .card .ctext { overflow:hidden; text-overflow:ellipsis; }
+
+.equipment-choose { width:100%; margin-top:10px; min-height:44px; }
+.poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
+
+.shop-inspect-card { position:relative; }
+.equipment-poker-card .epc-frame, .collectible-poker-card .epc-frame { grid-template-rows:270px 24px 46px 20px 38px 18px 16px; }
+.epc-type { font-size:14px; padding:2px; letter-spacing:.04em; }
+.epc-facts { padding:2px 0; }
+.epc-fact { font-size:14px; }
+.epc-fact strong { font-size:22px; }
+.epc-tag { font-size:14px; padding:1px 4px; letter-spacing:0; }
+.epc-effects { font-size:14px; line-height:1.2; padding:1px 0; }
+.epc-heading { font-size:12px; letter-spacing:.03em; }
+.epc-flavor { font-size:14px; line-height:1.1; padding-top:0; }
+.epc-footer { font-size:13px; letter-spacing:0; }
+.card-inspection-modal.modal[data-size='lg'] { height:auto; max-height:90%; }
+.equipment-poker-card, .card.playing-poker-card, .shop-inspect-card { -webkit-user-select:none; user-select:none; }
+.card-inspection-details { font-size:max(16px, calc(16px / var(--ui-zoom, 1))); }
+.epc-effects { position:relative; }
+.epc-bonus + .epc-bonus { display:none; }
+.epc-effects:has(.epc-bonus + .epc-bonus) .epc-bonus { padding-right:16px; }
+.epc-effects:has(.epc-bonus + .epc-bonus)::after { content:'…'; position:absolute; right:0; bottom:0; }
+.epc-frame > .epc-tags { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.epc-tag { display:inline-block; margin-right:3px; }

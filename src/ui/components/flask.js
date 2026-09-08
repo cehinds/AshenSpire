@@ -1,3 +1,4 @@
+import { renderCollectibleInspection } from './collectibleCard.js';
 import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
 import { openModal } from './modalShell.js';
@@ -101,14 +102,13 @@ export function openFlaskInspectModal({ def, charges = null, opener = document.a
     className: 'flask-inspect-modal',
     eyebrow: 'Flask',
     title: def.name,
-    bodyClassName: 'as-detailbody flask-inspect-body',
+    bodyClassName: 'flask-inspect-body',
     // BODY B (the kit's detail body): the art in an ArtWell beside the lines,
     // so the door's height is the art's and two flasks are the same door.
     body: (host) => {
-      host.replaceChildren(
-        artWell({ attrs: { class: 'flask-inspect-art', html: flaskIdentityHtml(def, { showName: false }) } }),
-        el('div', { class: 'lines flask-inspect-lines' }, lines.map((line) => prose(line))),
-      );
+      const inspection = renderCollectibleInspection(null, def, 'Potion', { interactive: false });
+      inspection.querySelector('.card-inspection-details').prepend(el('div', { class: 'flask-inspect-lines' }, lines.map(line => prose(line))));
+      host.replaceChildren(inspection);
     },
     primary: done,
     footSize: 'short',
