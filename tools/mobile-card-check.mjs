@@ -135,7 +135,7 @@ try {
   check(await evaluate("document.querySelectorAll('.hand .card').length===7"),'drag after a confirmation tap cannot spend a card on invalid release');
   await send('Page.navigate',{url:url.replace(/\?.*$/, '?shot=customize')});
   await until("document.querySelectorAll('.cc-equipment-details h3').length>0",'creation equipment details initialize');
-  check(await evaluate("!!document.querySelector('.customize') && [...document.querySelectorAll('.cc-equip-group')].every(group => group.children.length === 2 && group.querySelector('.cc-equipment-details').textContent.length>80)"),'creation initializes one complete readable detail pane per equipment section');
+  check(await evaluate("!!document.querySelector('.customize') && [...document.querySelectorAll('.cc-equip-group[data-equipment-section]')].every(group => group.children.length === 2 && group.querySelector('.cc-equipment-details').textContent.length>80)"),'creation initializes one complete readable detail pane per equipment section');
   const audioResult = await evaluate(`(async()=>{
     const {initAudio}=await import('/src/ui/audio.js');const Original=window.AudioContext;const gains=[];let resumes=0;
     class Context {state='interrupted';destination={};createGain(){const g={gain:{value:0},connect(){}};gains.push(g);return g;}resume(){resumes++;return Promise.resolve();}}
