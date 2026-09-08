@@ -73,11 +73,13 @@ try {
     check(Math.abs(selected.x-before.x)<2&&Math.abs(selected.y-before.y)<2,'selected card stays in fan position');
     check(await evaluate("!!document.querySelector('.player.skill-selected')"),'skill highlights player');
     await screenshot(`selected-${width}`);
-    await tap(selected.x+30,selected.y+75);await wait(70);
+    await tap(selected.x+30,selected.y+75);
     check(await evaluate("document.querySelectorAll('.hand .card').length===7"),'single additional tap does not play');
-    await wait(450);
-    await tap(selected.x+30,selected.y+75);
-    await tap(selected.x+30,selected.y+75);
+    await load();
+    const fresh = await box(selector);
+    await tap(fresh.x+12,fresh.y+70);
+    await tap(fresh.x+30,fresh.y+75);
+    await tap(fresh.x+30,fresh.y+75);
     await until("document.querySelectorAll('.hand .card').length===6",'double tap plays once');await wait(500);
     check(await evaluate("document.querySelectorAll('.hand .card').length===6"),'no duplicate play');
     await load();
@@ -132,8 +134,8 @@ try {
   await touch('touchMove',700,880);await touch('touchEnd',700,880);await wait(450);
   check(await evaluate("document.querySelectorAll('.hand .card').length===7"),'drag after a confirmation tap cannot spend a card on invalid release');
   await send('Page.navigate',{url:url.replace(/\?.*$/, '?shot=customize')});
-  await until("document.querySelectorAll('.equipment-poker-explanations h3').length>0",'creation equipment details initialize');
-  check(await evaluate("!!document.querySelector('.customize') && document.querySelector('.equipment-poker-explanations').textContent.length>80"),'creation initializes complete readable details');
+  await until("document.querySelectorAll('.cc-equipment-details h3').length>0",'creation equipment details initialize');
+  check(await evaluate("!!document.querySelector('.customize') && [...document.querySelectorAll('.cc-equip-group')].every(group => group.children.length === 2 && group.querySelector('.cc-equipment-details').textContent.length>80)"),'creation initializes one complete readable detail pane per equipment section');
   const audioResult = await evaluate(`(async()=>{
     const {initAudio}=await import('/src/ui/audio.js');const Original=window.AudioContext;const gains=[];let resumes=0;
     class Context {state='interrupted';destination={};createGain(){const g={gain:{value:0},connect(){}};gains.push(g);return g;}resume(){resumes++;return Promise.resolve();}}

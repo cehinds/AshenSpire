@@ -1,4 +1,4 @@
-import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
+import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // Character creation: four progressive sections backed by validated content.
@@ -33,7 +33,6 @@ import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
   selectStartingHand,
 } from '../../model/characterCreation.js';
-import { renderEquipmentInspection } from '../components/equipmentCard.js';
 import { pieceChip } from './equipment.js';
 import { relicText } from '../components/card.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
@@ -575,6 +574,9 @@ export function mountCustomize(app, {
       node.append(detailPane);
       const showDetails = piece => {
         detailPane.replaceChildren(equipmentDetails((section.kind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { interactive: false, inspection: false }) : renderEquipmentCard(registries, piece, { interactive: false, inspection: false })).explanations));
+        const heading = document.createElement('h3');
+        heading.textContent = piece.name + ' — full equipment details';
+        detailPane.prepend(heading);
       };
 
       for (const piece of section.choices) {
@@ -608,16 +610,6 @@ export function mountCustomize(app, {
           renderEquipment(section.id); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(section.id);
         });
         box.appendChild(chipButton);
-        if (selected) {
-          const inspection = section.kind === 'relic'
-            ? renderCollectibleInspection(registries, piece, 'Relic', { interactive: false })
-            : renderEquipmentInspection(registries, piece, { interactive: false });
-          const details = inspection.querySelector('.equipment-poker-explanations');
-          const heading = document.createElement('h3');
-          heading.textContent = piece.name + ' — full equipment details';
-          details.prepend(heading);
-          node.appendChild(details);
-        }
       }
     }
 

@@ -187,7 +187,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     handEl.style.setProperty(FAN_LIFT_PROP, `${((n - 1) / 2) * 6}px`);
     cards.forEach((entry, i) => {
       const el = renderCard(registries, entry.inst,
-        entry.preview ? { preview: entry.preview, affordable: entry.affordable } : { affordable: entry.affordable });
+        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true });
       const spread = Math.min(6, n) * 1.2;
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
       // CENTRE. Same arc, same step, same look — translated so the LOWEST card

@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-08",
     "summary": "Mobile cards select before playing, and detail names stay readable",
     "detail": "Keep the selected card in its fan position; confirm with the shared hold, a double-tap after selection, or a valid target tap/drop. Preserve the drag grip and cancel invalid drops. Show item-specific creation details and full modal titles, center title ornaments, track the visible viewport, and recover interrupted audio without restarting music on volume changes.",
-    "build": "0.6.0.7",
+    "build": "0.6.0.9",
     "pullRequest": 819,
     "url": "https://github.com/cehinds/AshenSpire/pull/819"
   },
