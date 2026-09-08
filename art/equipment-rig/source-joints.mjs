@@ -1,3 +1,4 @@
+import {TRANSITION_JOINTS,TRANSITION_SEQUENCE} from './transition-joints.mjs';
 // Manually inspected landmarks on the shipped 640×640 artwork. These are 2D
 // projected joint centers, not anatomical measurements or a fixed-length rig.
 // Near/far means camera depth, never screen-left/screen-right.
@@ -29,12 +30,15 @@ export const SOURCE_SEQUENCE=[
  {t:.86,pose:'attack4',label:'Follow-through'},
  {t:1,pose:'guard',label:'Return to guard'},
 ];
+for(const cls of Object.keys(SOURCE_JOINTS))Object.assign(SOURCE_JOINTS[cls],TRANSITION_JOINTS[cls]);
+export const REVIEW_SEQUENCE=[...SOURCE_SEQUENCE,...TRANSITION_SEQUENCE].sort((a,b)=>a.t-b.t);
+export function sourceAsset(classId,pose){return pose.startsWith('between')?`art/equipment-rig/transitions/${classId}/${pose}.png`:`assets/painted-outfits/${classId}/${pose}.webp`;}
 export const CHAINS=[
  ['nearShoulder','nearElbow','nearWrist'],['farShoulder','farElbow','farWrist'],
  ['nearHip','nearKnee','nearAnkle'],['farHip','farKnee','farAnkle'],
  ['nearShoulder','farShoulder'],['nearShoulder','pelvis'],['pelvis','nearHip'],['pelvis','farHip'],
 ];
-export function sourceFrame(classId,t){
- const key=SOURCE_SEQUENCE.findLast(k=>k.t<=Math.max(0,Math.min(1,t)));
+export function sourceFrame(classId,t,{intermediates=true}={}){
+ const key=(intermediates?REVIEW_SEQUENCE:SOURCE_SEQUENCE).findLast(k=>k.t<=Math.max(0,Math.min(1,t)));
  return {...key,...SOURCE_JOINTS[classId][key.pose]};
 }

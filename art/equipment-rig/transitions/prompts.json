@@ -1,0 +1,37 @@
+{
+  "tool": "built-in image_gen",
+  "useCase": "stylized-concept",
+  "reaver": {
+    "prompt": "Use case: stylized-concept. Asset: five intermediate animation reference sprites in ONE horizontal strip, exactly five equal-width cells, no labels. Input images are chronological approved original keys: guard, low anticipation, overhead windup, downward cleave, follow-through. Create ONLY five NEW in-between poses, not copies of these keys. Same Reaver in ALL cells: blackened steel angular layered plate, brass edge accents, closed dark visor, torn burgundy cape, ONE broad straight silver greatsword with brass crossguard held by BOTH gauntlets on one continuous hilt. Exact same body proportions, armor, sword length, right-facing three-quarter camera and floor baseline in all cells. Full figure with space around feet/blade, transparent alpha background, no scenery or checkerboard, no glow or motion effects. Painted detailed dark fantasy style matching references. Left to right: 1 guarded lowering anticipation, knees begin bending, sword drops diagonally toward lower left while hilt stays in front of waist; 2 lifting from low anticipation toward overhead, torso rises, elbows bent, BOTH hands raised together just in front of face/chest, sword points upper-left, no arm stretching sideways; 3 first half of forward overhead cleave, BOTH hands in front of forehead, bent elbows angled outward, sword travels above head toward upper-right, torso begins forward lean; 4 after low cleave, both hands begin drawing hilt back toward lower ribs, blade still points down-right, knees start recovery; 5 late recovery almost guarded, both hands held at waist, blade diagonally up-right, torso upright, cape settling, wide stable stance. Purpose: believable movement breakdowns between existing keyframes, coherent weight shift through hips/knees and clean connected shoulder-elbow-wrist anatomy. Never add extra hands, limbs, blades, or change facing. Whole consistent strip at once.",
+    "retries": [
+      {
+        "reason": "Rejected center blade pointing backward.",
+        "prompt": "Edit this five-cell Reaver transition sprite strip. Preserve cells 1, 2, 4, 5 exactly, same armor, body proportions, camera, painted finish. Fix ONLY pose 3 (center cell): this is AFTER the overhead windup, the start of a forward downward cleave toward the RIGHT. Both hands stay connected on ONE hilt in front of forehead, elbows outward and bent. The sword BLADE extends diagonally UPPER-RIGHT from the hands, NOT lower-left. The sword POMMEL sits lower-left of hands. Let shoulders tilt forward a little. Do not add a second sword or disconnected hands. Keep complete figure and sword inside its center cell. Replace the checkerboard background throughout with genuinely transparent alpha; no solid white, no gray checks. Exact same five cells, shared baseline, no labels or effects."
+      },
+      {
+        "reason": "Rejected crossed lift forearms before tracing the revised lift.",
+        "prompt": "Edit this five-pose Reaver animation strip. Preserve poses 1, 3, 4, 5 exactly. Change ONLY second pose to a clear rising lift between low-held sword and overhead windup. Crucial anatomy: uncross BOTH forearms. Camera-near shoulder on the LEFT of torso connects to elbow OUTWARD LEFT at shoulder height, then the forearm points diagonally UP-RIGHT into the near hand just left of the face. The camera-far shoulder on the RIGHT connects to an elbow OUTWARD RIGHT, then forearm angles UP-LEFT into the other hand. Both gauntlets close around the SAME hilt near brow level, adjacent hands, no extra limbs. Blade points upper-left from hilt, clear of head. No elbow hangs down toward waist; no arm crosses the chest. Keep identical armor, cape, greatsword length, grounded feet, scale, lighting, cell placement and right-facing three-quarter camera. No labels, no effects. Transparent alpha background."
+      }
+    ],
+    "selected": "masters/reaver.png",
+    "sourceKeys": [
+      "guard",
+      "attack1",
+      "attack2",
+      "attack3",
+      "attack4"
+    ]
+  },
+  "starseer": {
+    "prompt": "Use case: stylized-concept. Asset: five intermediate animation reference sprites in ONE horizontal strip, exactly five equal-width cells, no labels. Input images are chronological approved original keys: guard, gather, extend, release, follow-through. Create ONLY five NEW in-between poses. Same Starseer in ALL cells: black-purple layered robes, broad pointed bent wizard hat, completely shadowed face, brass small trim, purple-black ragged cape, same slim humanoid proportions and ONE thin staff with bronze star finial. Same right-facing three-quarter camera, body scale and floor baseline in all cells. Full figure with space around feet/staff. Genuine transparent alpha background, no checkerboard, scenery, glow or motion effects. Detailed painted dark fantasy sprite style matching references. Left to right: 1 guard-to-gather, right-facing stance widens slightly, staff-holding near hand rises from chest toward near shoulder with bent elbow, star finial tilts upper-left but remains beside hat, far free hand opens forward at ribs; 2 gather-to-extension, staff-holding near elbow remains bent in front of ribs, hand moving forward just beyond face, star finial points diagonally upper-right, far palm opens near sternum, torso rotates forward, NO arm extending backward or far left; 3 extension-to-release, staff nearly horizontal right at chest, near elbow still softly bent, free hand braces beneath near forearm without gripping, front knee sinks, rear heel slightly raised; 4 release-to-follow-through, staff still horizontal right but near elbow begins drawing backward toward ribs, chest begins lifting, feet remain wide grounded, cape lags left; 5 late recovery returning to guard, staff tilts diagonal up-right, near hand back at chest, far hand near upper staff, knees begin straightening, cape settles. Purpose: readable connecting poses with clean anatomical shoulder-elbow-wrist chains, coherent weight transfer and consistent weapon grip, not five copies. No extra hands, limbs, staffs or changed camera.",
+    "selected": "masters/starseer.png",
+    "sourceKeys": [
+      "guard",
+      "attack1",
+      "attack2",
+      "attack3",
+      "attack4"
+    ]
+  },
+  "normalization": "Opaque neutral matte returned; edge-connected removal then shared strip scale and floor registration. Original source sprites are not modified."
+}

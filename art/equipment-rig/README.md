@@ -3,6 +3,56 @@
 Issue #785. This isolated preview demonstrates reusable equipment attachment on
 Reaver and Starseer. It does not replace live combat or change equipment rules.
 
+## Intermediate painted reference studies
+
+`joint-reference-preview.html?v=transitions` now contains five new painted
+breakdown poses per class, between every pair of the original keys. The review
+holds 11 timeline entries: guard, five new transitions alternating with the four
+original attacks, then the same original guard. All 20 unique poses have direct
+source-space joint overlays; the original artwork and original maps are intact.
+New references are labeled separately from approved original keys.
+
+The new phases are 11%, 34%, 57.5%, 77.5% and 93%. They cover lowering/gather,
+lift/forward turn, drive/aim, recoil and settling into guard. One five-pose strip
+was generated per class using the built-in image generator and the five original
+images as references. The Reaver strip was revised twice: a backward-pointing
+cleave blade and crossed lift arms were rejected before tracing. These are new
+painted studies, not screenshots or samples of the procedural interpolator.
+
+`transitions/masters/` preserves the selected strips; `transitions/prompts.json`
+records the prompts and rejected directions. `transitions/<class>/between*.png`
+contains normalized 640px references. Each class uses one strip-wide scale and
+floor registration. The generator returned an opaque neutral matte despite the
+alpha request. Normalization removes edge-connected matte and large enclosed
+white islands; small metal highlights are retained. Fine edge contamination and
+perspective differences remain art-polish limitations, not production assets.
+
+`transition-joints.mjs` records 14 landmarks on each new image, including both
+shoulders, elbows, wrists, hips, knees, ankles, pelvis and weapon tip. Dashed
+bones and hollow markers identify obscured estimates. The new artwork is traced
+independently; it is not fitted to the current animated skeleton.
+
+Only five of the ten studies drive the rig at present: Reaver lowering and
+settling, plus Starseer aim, follow-through and settling. The other studies stay
+visible and say **Reference only**. Feeding their projected elbow-side changes
+directly into the existing planar support solve caused rapid arm sweeps; direct
+Cartesian interpolation instead collapsed arms. Those integrations were rejected
+without relaxing the existing tests. Heavy two-handed casting retains its prior
+keys because the new casting studies do not yet support that arm constraint.
+This is partial guide integration, not completed animation reconstruction.
+
+Normal and quarter-speed source and rig playback were inspected without effects.
+The maps make the intended lift and forward direction clearer, and the five
+supported guides preserve guarded closure and equipment contact. The assembled
+puppet still has visibly weak shoulder/cloth joins and weight transfer. It is
+still an unmerged feedback preview and is not visually approved for production.
+The current online motion comparison remains Spine's Skins sword demo linked
+below. Captures and observed playback phases are in `inspection/transitions/`.
+
+    node art/equipment-rig/transitions/normalize.mjs
+    node --test art/equipment-rig/kinematics.test.mjs art/equipment-rig/hybrid.test.mjs art/equipment-rig/source-joints.test.mjs art/equipment-rig/traced-motion.test.mjs art/equipment-rig/transition-joints.test.mjs
+    node art/equipment-rig/transition-review-check.mjs
+
 ## Revised animation preview
 
 `equipment-rig-preview.html?v=traced-motion` now defaults to the revised motion.

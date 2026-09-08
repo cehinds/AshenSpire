@@ -1,4 +1,5 @@
-import {SOURCE_JOINTS,SOURCE_SEQUENCE} from './source-joints.mjs';
+import {SOURCE_JOINTS,SOURCE_SEQUENCE,REVIEW_SEQUENCE} from './source-joints.mjs';
+import {SUPPORTED_TRANSITIONS} from './transition-joints.mjs';
 import {RIGS,SETUPS,WEAPONS} from './catalog.mjs';
 import {weaponPoint,rotate,add,clamp,wrapAngle,solveArm} from './kinematics.mjs';
 const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
@@ -14,10 +15,15 @@ function curve(keys,t,read){
 }
 export function tracedKeys(classId,action,family){
  const reference=action==='guard'?classId:action==='cast'||family==='focus'?'starseer':'reaver';
- const steps=SOURCE_SEQUENCE.map((key,i)=>{
+ // Keep depth-changing breakdowns reviewable without forcing them through a
+ // planar solver that produces a sharp elbow sweep. Heavy two-hand casting
+ // also retains the previous keys until its support arm can follow this art.
+ const sequence=action==='guard'||action==='cast'&&family==='heavy'?SOURCE_SEQUENCE:REVIEW_SEQUENCE.filter(k=>!k.pose.startsWith('between')||SUPPORTED_TRANSITIONS[reference].includes(k.pose));
+ const roots=new Map(SOURCE_SEQUENCE.map((key,i)=>[key.t,[300,318,308,335,318,300][i]]));
+ const steps=sequence.map((key,i)=>{
   const pose=action==='guard'?'guard':key.pose,source=SOURCE_JOINTS[reference][pose].joints,scale=1.5;
   const floor=Math.max(source.nearAnkle[1],source.farAnkle[1]);
-  const root=[([300,318,308,335,318,300][i]),520-(floor-source.pelvis[1])*scale];
+  const root=[key.rootX??roots.get(key.t),520-(floor-source.pelvis[1])*scale];
   if(action==='guard'){root[0]=[300,293,287,308,304,300][i];root[1]+=[0,13,22,11,4,0][i];}
   const joints=Object.fromEntries(Object.entries(source).map(([name,p])=>[name,add(root,[(p[0]-source.pelvis[0])*scale,(p[1]-source.pelvis[1])*scale])]));
   if(action==='guard')for(const prefix of ['near','far']){joints[prefix+'Ankle'][1]-=[0,13,22,11,4,0][i];joints[prefix+'Ankle'][0]-=root[0]-300;}
@@ -28,7 +34,7 @@ export function tracedKeys(classId,action,family){
   let a=angle(k.joints.nearWrist,k.joints.weaponTip);
   // A heavy overhead cleave deliberately sweeps more than half a circle. The
   // shortest-angle route would send the sword backward through the legs.
-  if(reference==='reaver'&&action!=='guard')a=i===1?a:a+360;
+  if(reference==='reaver'&&action!=='guard')a=k.t===.11||k.t===.22?a:a+360;
   else if(previous!==undefined)a=previous+wrapAngle(a-previous);
   k.angle=a;previous=a;
  }

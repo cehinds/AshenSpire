@@ -1,0 +1,122 @@
+[
+  {
+    "cls": "reaver",
+    "speed": "1",
+    "requested": 11,
+    "observed": 11
+  },
+  {
+    "cls": "reaver",
+    "speed": "1",
+    "requested": 34,
+    "observed": 34
+  },
+  {
+    "cls": "reaver",
+    "speed": "1",
+    "requested": 57.49999999999999,
+    "observed": 58
+  },
+  {
+    "cls": "reaver",
+    "speed": "1",
+    "requested": 77.5,
+    "observed": 78
+  },
+  {
+    "cls": "reaver",
+    "speed": "1",
+    "requested": 93,
+    "observed": 93
+  },
+  {
+    "cls": "reaver",
+    "speed": "0.25",
+    "requested": 11,
+    "observed": 11
+  },
+  {
+    "cls": "reaver",
+    "speed": "0.25",
+    "requested": 34,
+    "observed": 34
+  },
+  {
+    "cls": "reaver",
+    "speed": "0.25",
+    "requested": 57.49999999999999,
+    "observed": 58
+  },
+  {
+    "cls": "reaver",
+    "speed": "0.25",
+    "requested": 77.5,
+    "observed": 78
+  },
+  {
+    "cls": "reaver",
+    "speed": "0.25",
+    "requested": 93,
+    "observed": 93
+  },
+  {
+    "cls": "starseer",
+    "speed": "1",
+    "requested": 11,
+    "observed": 11
+  },
+  {
+    "cls": "starseer",
+    "speed": "1",
+    "requested": 34,
+    "observed": 34
+  },
+  {
+    "cls": "starseer",
+    "speed": "1",
+    "requested": 57.49999999999999,
+    "observed": 58
+  },
+  {
+    "cls": "starseer",
+    "speed": "1",
+    "requested": 77.5,
+    "observed": 80
+  },
+  {
+    "cls": "starseer",
+    "speed": "1",
+    "requested": 93,
+    "observed": 93
+  },
+  {
+    "cls": "starseer",
+    "speed": "0.25",
+    "requested": 11,
+    "observed": 11
+  },
+  {
+    "cls": "starseer",
+    "speed": "0.25",
+    "requested": 34,
+    "observed": 34
+  },
+  {
+    "cls": "starseer",
+    "speed": "0.25",
+    "requested": 57.49999999999999,
+    "observed": 58
+  },
+  {
+    "cls": "starseer",
+    "speed": "0.25",
+    "requested": 77.5,
+    "observed": 78
+  },
+  {
+    "cls": "starseer",
+    "speed": "0.25",
+    "requested": 93,
+    "observed": 93
+  }
+]
