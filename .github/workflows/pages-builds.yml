@@ -179,11 +179,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Current builds use the 0.6.x.x release series
-        run: node tools/release-series.mjs
-      - name: Release series gate rejects older and malformed versions
-        run: node tools/release-series.mjs --selftest
-
+      # NO RELEASE-SERIES GATE HERE, and its absence is the point. This workflow
+      # runs on pushes to dev, test, release AND main, and it assembles a site
+      # out of all four branches' histories — series deliberately mixed, which
+      # is why `tools/release-series.mjs` opens by saying archived downloads
+      # keep their original versions. Asserting one series in this job asserts
+      # it against every branch the job runs on: measured 2026-09-08, test,
+      # release and main all read `Expected release 0.6.x, received 0.5.5` and
+      # exit 1, which would have taken the ASSEMBLE step down on three of the
+      # four — the step that produces the artifact a publication needs. The
+      # gate belongs where current builds are made: dev-preview runs it on
+      # every push to dev and every PR into dev, and ci.yml on dispatch.
       - name: Assemble the site from git history — every listed build proven byte-identical
         run: node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "${{ inputs.keep || '10' }}"
       - name: The generator's own drift plant is still caught
