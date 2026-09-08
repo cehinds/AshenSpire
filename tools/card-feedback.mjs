@@ -140,7 +140,7 @@ async function trustedClick(page, shape, selector) {
 }
 
 try {
-for (const width of [1440,390,588,775,1095,1920,844]) for (const mode of (width===1440||width===390 ? ['normal','os','app'] : ['normal'])) {
+for (const width of (args.includes('--width') ? [Number(args[args.indexOf('--width')+1])] : [1440,350,390,588,775,1095,1920,844])) for (const mode of (args.includes('--width') ? ['normal'] : width===1440||width===390 ? ['normal','os','app'] : ['normal'])) {
   const shape={width,height:width===844?390:width===1440?900:844,mobile:width<500,name:width+' '+mode};
   let page; diagnostics.length=0;
   try {
@@ -158,11 +158,14 @@ for (const width of [1440,390,588,775,1095,1920,844]) for (const mode of (width=
         const handTop=Math.min(...cards.map(card=>card.getBoundingClientRect().top));
         const stacks=[...document.querySelectorAll('.combatant-stack')].map(el=>{const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right}});
         const playerHeight=document.querySelector('.player .sprite').getBoundingClientRect().height;
-        return {widths,handTop,stacks,playerHeight,spriteZoom:getComputedStyle(document.querySelector('.field')).getPropertyValue('--stage-sprite-zoom')};
+        const hand=document.querySelector('.hand'), field=document.querySelector('.field');
+        field.scrollLeft=10000; const fieldOverflow=field.scrollLeft; field.scrollLeft=0;
+        return {widths,handTop,stacks,playerHeight,handOverflow:hand.scrollWidth-hand.clientWidth,fieldOverflow,spriteZoom:getComputedStyle(field).getPropertyValue('--stage-sprite-zoom')};
       })()`);
       check(geometry.widths.every(w=>w>=149.5&&w<=180.5),shape.name+': readable 150–180px card range',geometry);
       check(geometry.stacks.every(r=>r.bottom<=geometry.handTop-8),shape.name+': combatants leave clear space above the hand',geometry);
       check(geometry.playerHeight>=175,shape.name+': player sprite retains reference minimum height',geometry);
+      check(geometry.handOverflow<=1&&geometry.fieldOverflow<=1,shape.name+': five cards and three enemies fit without horizontal scroll',geometry);
       console.log('GEOMETRY '+shape.name+' '+JSON.stringify(geometry));
       const shot=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false},page.sessionId);
       writeFileSync(join(OUT,'playing-hand-'+shape.width+'-'+DOOR+'.png'),Buffer.from(shot.data,'base64'));
@@ -184,6 +187,13 @@ for (const width of [1440,390,588,775,1095,1920,844]) for (const mode of (width=
         await cdp.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
         await cdp.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
       }
+    }
+    if (OUT && mode==='normal') {
+      await page.evaluate(`(()=>{const c=window.__combat;const template=c.piles.hand[0];c.piles.hand=Array.from({length:7},(_,i)=>({...template,instanceId:'qa-seven-'+i}));window.__renderCombatForShot()})()`);
+      await wait(500);
+      check(await page.evaluate(`(()=>{const hand=document.querySelector('.hand');return hand.scrollWidth<=hand.clientWidth+1&&hand.querySelectorAll('.card').length===7})()`),shape.name+': seven readable cards fit without horizontal scrolling');
+      const sevenShot=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false},page.sessionId);
+      writeFileSync(join(OUT,'seven-hand-'+shape.width+'-'+DOOR+'.png'),Buffer.from(sevenShot.data,'base64'));
     }
     const entry=await page.evaluate(`(() => {
       document.body.classList.toggle('reduced-motion', ${mode==='app'});
