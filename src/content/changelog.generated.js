@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-08",
     "summary": "The README and the changelog stop burying what a reader came for",
     "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
-    "build": "0.6.0.3",
+    "build": "0.6.0.10",
     "pullRequest": 820,
     "url": "https://github.com/cehinds/AshenSpire/pull/820"
+  },
+  {
+    "id": "pr-819",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Mobile cards select before playing, and detail names stay readable",
+    "detail": "Keep the selected card in its fan position; confirm with the shared hold, a double-tap after selection, or a valid target tap/drop. Preserve the drag grip and cancel invalid drops. Show item-specific creation details and full modal titles, center title ornaments, track the visible viewport, and recover interrupted audio without restarting music on volume changes.",
+    "build": "0.6.0.9",
+    "pullRequest": 819,
+    "url": "https://github.com/cehinds/AshenSpire/pull/819"
   },
   {
     "id": "pr-815",

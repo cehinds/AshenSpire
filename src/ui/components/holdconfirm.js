@@ -469,7 +469,7 @@ export function armHold(btn, {
   };
 
   const onKeyEsc = (ev) => { if (ev.key === 'Escape' && armed) stop('idle'); };
-  const onCardDragStart = () => { if (armed) stop('idle'); };
+  const onCardDragStart = () => { movedThisPress = true; if (armed) stop('idle'); };
   const onContextMenu = (ev) => {
     if (armed || offPointerPress) ev.preventDefault();
   };

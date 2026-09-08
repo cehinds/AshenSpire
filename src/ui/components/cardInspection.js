@@ -34,7 +34,7 @@ export function openCardInspection({ title, card, details, opener }) {
 }
 
 /** Information owns only its own button; action/hold/drag handlers stay on hosts. */
-export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false }) {
+export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false, actionOwnsTouch = false }) {
   card.style.userSelect = 'none';
   card.classList.add('card-inspection-target');
   if (!card.hasAttribute('tabindex')) card.tabIndex = 0;
@@ -83,7 +83,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
       if (touchTaps >= 2) {
         card.classList.add('inspection-info-visible');
       }
-      if (touchTaps === 2 || (touchTaps === 1 && !touchSelectionSafe)) {
+      if (!actionOwnsTouch && (touchTaps === 2 || (touchTaps === 1 && !touchSelectionSafe))) {
         // Selection/information taps cannot reach buy, equip or play handlers.
         event.preventDefault(); event.stopImmediatePropagation();
       }

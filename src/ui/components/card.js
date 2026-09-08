@@ -182,6 +182,7 @@ export function renderCard(registries, ref, opts = {}) {
   if (opts.small) el.dataset.small = 'true';
   if (opts.inspection !== false) bindCardInspection(el, { title: def.name, readOnly: opts.inspectReadOnly === true,
     touchSelectionSafe: Boolean(opts.preview?.needsTarget),
+    actionOwnsTouch: opts.actionOwnsTouch === true,
     open: opener => {
       const details = document.createElement('div');
       const liveCosts = opts.preview ? { variable: !!opts.preview.costIsX, action: opts.preview.cost, mana: opts.preview.manaCost, stamina: opts.preview.staminaCost } : null;
