@@ -42,7 +42,7 @@ import { trackGesture } from '../gesture.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
-import { beatArmer } from '../../framework/optionDecision.js';
+import { beatArmer, armHold } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
@@ -292,7 +292,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     animateArrival: true,
     fitFan: true,
     registries,
-    wireCard: (el, entry) => { if (entry.preview) wireCardInput(el, entry.inst, entry.preview, entry.affordable); },
+    wireCard: (el, entry) => entry.preview ? wireCardInput(el, entry.inst, entry.preview, entry.affordable) : null,
   });
 
   function potionEntries() {
@@ -1272,10 +1272,32 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }
         const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
-        return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm };
+        return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm,
+          inspectionAction: () => inspectionPlayAction(inst.instanceId) };
       }),
     });
     syncHandPager(handList);
+  }
+
+  function inspectionPlayAction(instanceId) {
+    const unavailable = reason => ({ enabled: false, reason });
+    if (!combatEl.isConnected) return unavailable('This combat is no longer active.');
+    if (combat.result) return unavailable('Combat has ended.');
+    if (busy || combat.phase !== 'player') return unavailable('Wait for your turn.');
+    const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
+    if (!inst) return unavailable('This card is no longer in your hand.');
+    if (isUnplayable(inst)) return unavailable('This card cannot be played.');
+    const pv = previewCard(combat, instanceId);
+    if (combat.player.energy < (pv.costIsX ? 0 : pv.cost) || combat.player.mana < pv.manaCost || combat.player.stamina < (pv.staminaCost || 0)) {
+      return unavailable('Not enough resources to play this card.');
+    }
+    return { enabled: true, needsTarget: pv.needsTarget, play: () => {
+      if (!inspectionPlayAction(instanceId).enabled) return;
+      if (pv.needsTarget) {
+        selected = instanceId; selectedFlask = null; selfArm = null;
+        render(); focusTargeting();
+      } else playCard(instanceId, null);
+    } };
   }
 
   // Paging exists only when it adds reach. The controls stay mounted so their
@@ -1375,9 +1397,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
   function wireCardInput(el, inst, pv, affordable) {
+    const releaseHold = armHold(el, {
+      ms: () => inspectionPlayAction(inst.instanceId).enabled ? (Number(registries.balance.ui.inspectHold?.ms) || 500) : 0,
+      onHoldStart: () => { hideTooltip(); el.dispatchEvent(new CustomEvent('cardholdstart')); },
+      onConfirm: () => { const action = inspectionPlayAction(inst.instanceId); if (action.enabled) action.play(); },
+      onTap: () => { el.classList.add('inspection-selected'); },
+    });
     let dragGhost = null;
     let dragging = false;
-    let suppressClick = false; // a finished drag must not double-fire as a click
     let startX = 0;
     let startY = 0;
     const dragTargetMode = pv.values.some((value) => value.target === 'allEnemies')
@@ -1502,6 +1529,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // event and proceeds here, whichever handler ran first.
         if (el.dataset.inspect === 'open') return;
         if (!dragging && Math.hypot(mv.clientX - startX, mv.clientY - startY) > 12) {
+          el.dispatchEvent(new CustomEvent('carddragstart'));
           dragging = true;
           hideTooltip();
           dragGhost = el.cloneNode(true);
@@ -1555,7 +1583,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // gesture the fix exists to make safe). elementFromPoint on a
           // cancel would aim the card at wherever the finger happened to die.
           if (cancelled) return;
-          suppressClick = true; // whatever happens next, this drag is not a click
           const under = document.elementFromPoint(up.clientX, up.clientY);
           const inField = !!(under && under.closest && under.closest('.field'));
           if (dragTargetMode === 'single') {
@@ -1568,28 +1595,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       });
     });
 
-    el.addEventListener('click', (ev) => {
-      if (suppressClick) {
-        suppressClick = false;
-        return;
-      }
-      if (busy || !affordable || dragging) return;
-      if (pv.needsTarget) {
-        selected = selected === inst.instanceId ? null : inst.instanceId;
-        selfArm = null;
-        render();
-        if (selected) focusTargeting();
-      } else if (ev.isTrusted || dragTargetMode === 'all') {
-        // Controller Confirm is a synthetic click, but an all-enemy attack has
-        // no second target to confirm. Do not misclassify it as a self/buff
-        // card; self/buff controller clicks still take the blue path below.
-        // Real mouse click on a self/buff card → play immediately.
-        playCard(inst.instanceId, null);
-      } else {
-        // Synthetic click from keyboard/gamepad Confirm → arm the blue confirm.
-        armSelf(inst.instanceId);
-      }
-    });
+    return releaseHold;
   }
 
   // Cancel targeting with right-click / Esc.

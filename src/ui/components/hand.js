@@ -78,6 +78,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   let handEls = []; // the rendered cards, in hand order (filled by render)
   let fanMeasurement = null;
   let handFan = []; // each card's shipped fan transform, same index
+  let releaseCardInputs = [];
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
 
   function applyHandLayout() {
@@ -169,6 +170,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   }
 
   function render({ cards = [], emptyHtml = null }) {
+    releaseCardInputs.splice(0).forEach(release => release());
     const drawn = new Set(cards.filter(entry => !previousCards.has(entry.inst.instanceId)).map(entry => entry.inst.instanceId));
     previousCards = new Set(cards.map(entry => entry.inst.instanceId));
     fanMeasurement = null;
@@ -187,7 +189,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     handEl.style.setProperty(FAN_LIFT_PROP, `${((n - 1) / 2) * 6}px`);
     cards.forEach((entry, i) => {
       const el = renderCard(registries, entry.inst,
-        entry.preview ? { preview: entry.preview, affordable: entry.affordable } : { affordable: entry.affordable });
+        entry.preview ? { preview: entry.preview, affordable: entry.affordable, inspectionAction: entry.inspectionAction } : { affordable: entry.affordable, inspectionAction: entry.inspectionAction });
       const spread = Math.min(6, n) * 1.2;
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
       // CENTRE. Same arc, same step, same look — translated so the LOWEST card
@@ -248,8 +250,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // E8, and it is the one line of his ask that lives outside tooltip.js:
       // the zoom used to HIDE the tooltip here. Now the completed hold KEEPS
       // it — same moment, opposite verb — and tooltip.js owns what ends it.
-      armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
-      if (wireCard) wireCard(el, entry, i);
+      if (!entry.inspectionAction) armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
+      const releaseInput = wireCard?.(el, entry, i);
+      if (typeof releaseInput === 'function') releaseCardInputs.push(releaseInput);
       handEl.appendChild(el);
     });
     // The overlap arm: record what this render made, then reconcile. Inert —
@@ -266,6 +269,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   }
 
   function teardown() {
+    releaseCardInputs.splice(0).forEach(release => release());
     cancelAnimationFrame(layoutFrame);
     layoutFrame = 0;
     if (ro) ro.disconnect();
