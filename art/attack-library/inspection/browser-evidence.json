@@ -1,0 +1,297 @@
+{
+  "errors": [],
+  "overflow": false,
+  "evidence": [
+    {
+      "label": "Sword + shield",
+      "disabled": false,
+      "state": {
+        "classId": "reaver",
+        "frame": 0,
+        "playing": false,
+        "resolved": {
+          "allowed": true,
+          "classId": "reaver",
+          "outfit": "reaver",
+          "clip": "shield",
+          "primary": "straightSword",
+          "secondary": "kiteShield",
+          "frames": 7,
+          "tags": [
+            "attack",
+            "blade",
+            "offhand:shield",
+            "shield",
+            "class:reaver",
+            "outfit:reaver"
+          ],
+          "action": "attack"
+        },
+        "available": true,
+        "sequenceId": "reaver/shield"
+      },
+      "speed1": 3,
+      "speed0.25": 3
+    },
+    {
+      "label": "Twin blades",
+      "disabled": false,
+      "state": {
+        "classId": "reaver",
+        "frame": 0,
+        "playing": false,
+        "resolved": {
+          "allowed": true,
+          "classId": "reaver",
+          "outfit": "reaver",
+          "clip": "twin",
+          "primary": "straightSword",
+          "secondary": "katana",
+          "frames": 7,
+          "tags": [
+            "attack",
+            "blade",
+            "offhand:blade",
+            "twin-attack",
+            "class:reaver",
+            "outfit:reaver"
+          ],
+          "action": "attack"
+        },
+        "available": true,
+        "sequenceId": "reaver/twin"
+      },
+      "speed1": 4,
+      "speed0.25": 3
+    },
+    {
+      "label": "Greatsword",
+      "disabled": false,
+      "state": {
+        "classId": "reaver",
+        "frame": 0,
+        "playing": false,
+        "resolved": {
+          "allowed": true,
+          "classId": "reaver",
+          "outfit": "reaver",
+          "clip": "two-hand",
+          "primary": "greatsword",
+          "secondary": null,
+          "frames": 7,
+          "tags": [
+            "attack",
+            "two-hand",
+            "offhand:empty",
+            "two-hand",
+            "class:reaver",
+            "outfit:reaver"
+          ],
+          "action": "attack"
+        },
+        "available": true,
+        "sequenceId": "reaver/two-hand"
+      },
+      "speed1": 3,
+      "speed0.25": 3
+    },
+    {
+      "label": "Staff cast",
+      "disabled": false,
+      "state": {
+        "classId": "starseer",
+        "frame": 0,
+        "playing": false,
+        "resolved": {
+          "allowed": true,
+          "classId": "starseer",
+          "outfit": "starseer",
+          "clip": "focus",
+          "primary": "starstoneStaff",
+          "secondary": null,
+          "frames": 7,
+          "tags": [
+            "focus",
+            "offhand:empty",
+            "focus",
+            "class:starseer",
+            "outfit:starseer",
+            "cast",
+            "free"
+          ],
+          "action": "cast",
+          "overlay": null
+        },
+        "available": true,
+        "sequenceId": "starseer/focus"
+      },
+      "speed1": 3,
+      "speed0.25": 3
+    },
+    {
+      "label": "Two-hand cast",
+      "disabled": false,
+      "state": {
+        "classId": "starseer",
+        "frame": 0,
+        "playing": false,
+        "resolved": {
+          "allowed": true,
+          "classId": "starseer",
+          "outfit": "starseer",
+          "clip": "cast-two-hand",
+          "primary": "starstoneStaff",
+          "secondary": null,
+          "frames": 7,
+          "tags": [
+            "focus",
+            "offhand:empty",
+            "two-hand",
+            "class:starseer",
+            "outfit:starseer",
+            "cast",
+            "two-hand"
+          ],
+          "action": "cast",
+          "overlay": null
+        },
+        "available": true,
+        "sequenceId": "starseer/cast-two-hand"
+      },
+      "speed1": 3,
+      "speed0.25": 3
+    },
+    {
+      "label": "Shield impact",
+      "disabled": false,
+      "state": {
+        "classId": "reaver",
+        "frame": 0,
+        "playing": false,
+        "resolved": {
+          "allowed": true,
+          "classId": "reaver",
+          "outfit": "reaver",
+          "clip": "block-shield",
+          "primary": "straightSword",
+          "secondary": "kiteShield",
+          "frames": 7,
+          "tags": [
+            "blade",
+            "offhand:shield",
+            "shield",
+            "class:reaver",
+            "outfit:reaver",
+            "block",
+            "occupied"
+          ],
+          "action": "block",
+          "overlay": null
+        },
+        "available": true,
+        "sequenceId": "reaver/block-shield"
+      },
+      "speed1": 3,
+      "speed0.25": 3
+    },
+    {
+      "label": "Dodge",
+      "disabled": false,
+      "state": {
+        "classId": "rogue",
+        "frame": 0,
+        "playing": false,
+        "resolved": {
+          "allowed": true,
+          "classId": "rogue",
+          "outfit": "rogue",
+          "clip": "dodge-free",
+          "primary": "dagger",
+          "secondary": null,
+          "frames": 7,
+          "tags": [
+            "dagger",
+            "offhand:empty",
+            "empty",
+            "class:rogue",
+            "outfit:rogue",
+            "dodge",
+            "free"
+          ],
+          "action": "dodge",
+          "overlay": null
+        },
+        "available": true,
+        "sequenceId": "rogue/dodge-free"
+      },
+      "speed1": 3,
+      "speed0.25": 3
+    },
+    {
+      "label": "Buff",
+      "disabled": false,
+      "state": {
+        "classId": "herald",
+        "frame": 0,
+        "playing": false,
+        "resolved": {
+          "allowed": true,
+          "classId": "herald",
+          "outfit": "herald",
+          "clip": "buff-free",
+          "primary": "boneSceptre",
+          "secondary": null,
+          "frames": 7,
+          "tags": [
+            "focus",
+            "offhand:empty",
+            "focus",
+            "class:herald",
+            "outfit:herald",
+            "buff",
+            "free"
+          ],
+          "action": "buff",
+          "overlay": "buff"
+        },
+        "available": true,
+        "sequenceId": "herald/buff-free"
+      },
+      "speed1": 3,
+      "speed0.25": 3
+    },
+    {
+      "label": "Hurt",
+      "disabled": false,
+      "state": {
+        "classId": "reaver",
+        "frame": 0,
+        "playing": false,
+        "resolved": {
+          "allowed": true,
+          "classId": "reaver",
+          "outfit": "reaver",
+          "clip": "hurt-free",
+          "primary": "straightSword",
+          "secondary": null,
+          "frames": 7,
+          "tags": [
+            "blade",
+            "offhand:empty",
+            "empty",
+            "class:reaver",
+            "outfit:reaver",
+            "hurt",
+            "free"
+          ],
+          "action": "hurt",
+          "overlay": null
+        },
+        "available": true,
+        "sequenceId": "reaver/hurt-free"
+      },
+      "speed1": 3,
+      "speed0.25": 3
+    }
+  ]
+}
