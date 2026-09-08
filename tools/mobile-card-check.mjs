@@ -86,7 +86,10 @@ try {
     const hold=await box(selector);
     const ms=await evaluate(`Number(document.querySelector('${selector}').dataset.holdMs)`);
     check(ms>0,'uses configured shared hold');
-    await touch('touchStart',hold.x+12,hold.y+70);await wait(ms+120);
+    await touch('touchStart',hold.x+12,hold.y+70);await wait(ms / 3);
+    check(await evaluate(`(()=>{const c=document.querySelector('${selector}'),p=c.querySelector('.card-hold-progress');return c.dataset.hold==='holding' && Number(c.dataset.holdProgress)>0 && getComputedStyle(p).display==='block' && p.getBoundingClientRect().height>=5;})()`),'hold progress is visible above the card face');
+    await screenshot(`hold-progress-${width}`);
+    await wait(ms+120);
     await touch('touchEnd',hold.x+12,hold.y+70);
     await until("document.querySelectorAll('.hand .card').length===6",'hold plays once');
     await load();
@@ -96,6 +99,7 @@ try {
     check(Math.abs(ghost.x-(drag.x+20))<3 && Math.abs(ghost.y-(drag.y-20))<3,'drag preserves grab offset');
     await touch('touchCancel',x,y);await wait(100);
     check(await evaluate("document.querySelectorAll('.hand .card').length===7 && !document.querySelector('.card-drag-ghost')"),'cancelled drag costs nothing and removes ghost');
+    check(await evaluate("[...document.querySelectorAll('.card-hold-progress')].every(p=>getComputedStyle(p).display==='none')"),'cancel clears every hold progress strip');
     await tap(x,y);await tap(width-3,Math.max(120,drag.y-25));
     check(await evaluate("!document.querySelector('.hand .card.selected')"),'empty field cancels');
     await evaluate(`(async()=>{const {openModal}=await import('/src/ui/kit/index.js');openModal({title:'The exceptionally long quest title beyond the old ellipsis limit — reclaim the lantern at the distant sanctuary',body:document.createTextNode('Details')});})()`);
