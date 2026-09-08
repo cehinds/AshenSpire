@@ -68,6 +68,21 @@
 .as-detailbody, .as-detailbody .lines { min-width: 0; }
 .as-btnrow > *, .as-row > *, .as-option > *, .as-statrow > *, .as-pane-head > * { min-width: 0; }
 
+/* Text in a flex heading needs its own shrinking box: ellipsis cannot paint
+   on an anonymous flex text item. Badges and controls keep their own space. */
+.as-label-text { display: block; flex: 0 1 auto; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.as-option .on, .as-face .on { min-width: 0; max-width: 100%; }
+.as-option .on > :not(.as-label-text), .as-face .on > :not(.as-label-text) { flex: 0 0 auto; max-width: 100%; }
+.as-option, .as-face, .as-detailcard, .as-optionrow, .as-options, .as-statpair, .as-kitline .ki { min-width: 0; max-width: 100%; }
+.as-option .ob, .as-face .ob, .as-option .ob > *, .as-face .ob > *, .as-detailcard > * { min-width: 0; max-width: 100%; }
+.as-option .od, .as-option .om, .as-face .od, .as-face .om,
+.as-detailcard, .as-prose, .as-subtitle, .as-flavor, .as-labelstack .ls-hint,
+.as-statrow .sr-hint, .as-blocker { overflow-wrap: anywhere; }
+.as-detailcard .dc-name { white-space: normal; }
+.as-row > .r-trail, .as-option > .r-trail { min-width: 0; max-width: 50%; flex-wrap: wrap; }
+.as-row > .r-trail > *, .as-option > .r-trail > * { min-width: 0; max-width: 100%; }
+button, .as-btn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
 /* ═══ CONTROL ATOMS ═════════════════════════════════════════════════════════ */
 /* Button — three weights, no fourth. The base `button` element IS the kit's
    secondary button, so a screen that writes <button> gets the kit for free
@@ -282,7 +297,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 }
 .as-row:hover, .as-row:focus-visible { background: var(--panel); border-color: transparent; outline: none; box-shadow: none; }
 .as-row:focus-visible { box-shadow: inset 0 0 0 1px var(--gold); }
-.as-row > .r-label { flex: 0 0 auto; }
+.as-row > .r-label { flex: 0 1 auto; }
 .as-row > .as-status, .as-row > .r-trail { margin-left: auto; }
 .as-row > .as-status + .r-trail { margin-left: 0; }
 .as-row > .as-status { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -478,7 +493,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 
 /* TitleMenu — the one menu with no panel around it. */
 .as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
-.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1 var(--font-display); font-size: clamp(3.2rem, 13.5cqi, 5.4rem); letter-spacing: var(--track); text-indent: var(--track); color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
 .as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
 .as-titlemenu li + li { border-top: 1px solid var(--rule); }
@@ -695,7 +710,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .card .cname, .as-card .cd-name {
   --track: 0.02em;
   flex: 0 0 var(--card-name-h); height: var(--card-name-h);
-  display: grid; place-items: center;
+  display: block; align-content: center; text-overflow: ellipsis;
   font: 600 1.2rem/1.15 var(--font-display); letter-spacing: var(--track); text-indent: var(--track);
   text-align: center; white-space: nowrap; overflow: hidden; min-width: 0;
 }
@@ -1224,7 +1239,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* `.as-options` is the column. `grid` is as many columns as fit (`--opt-min`
    the floor); `flow` is a wrapping row of self-sized cards where `wide` takes
    its line; `tight` closes the gap for a dense list. */
-.as-options.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--opt-min, 16rem), 1fr)); gap: 1.05rem; }
+.as-options.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--opt-min, 22rem)), 1fr)); gap: 1.05rem; }
 .as-options.grid > .as-option { width: auto; }
 .as-options.flow { flex-direction: row; flex-wrap: wrap; align-items: stretch; gap: 0.6rem; }
 .as-options.flow > .as-option { width: auto; flex: 1 1 auto; }
@@ -1617,7 +1632,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .reduced-motion .startup-gate { transition-duration: 140ms; transition-timing-function: linear; }
 .startup-gate > .as-titlemenu { position: relative; z-index: 1; align-self: center; animation: startupMarkIn 520ms ease-out both; }
 .startup-gate > .as-titlemenu .tm-name {
-  font-size: clamp(3.2rem, 12cqi, 5.4rem);
+  font-size: min(12cqi, 5.4rem);
   text-indent: 0;
   text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38);
 }
@@ -1804,7 +1819,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .as-option[data-rarity="rare"]:not(.is-selected) { border-left: 3px solid var(--gold); }
 .as-option[data-rarity="uncommon"]:not(.is-selected) { border-left: 3px solid var(--frost); }
 /* A grid of OptionCards: the compendium's constant grid. */
-.as-options.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); align-content: start; }
+.as-options.grid { align-content: start; }
 .as-options.grid > .as-option { width: auto; }
 /* The kit's danger tint (the kit page's rgba(212, 98, 46)); nothing in
    base.css named it, so every `.danger` weight read an unset variable. */
@@ -2558,6 +2573,14 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .inventory-face.as-face > .r-trail { grid-column: 2; grid-row: 2; justify-content: flex-start; width: auto; margin-left: 0; }
 .inventory-face .inventory-name { white-space: normal; overflow-wrap: anywhere; }
 .inventory-face .on { white-space: normal; overflow: visible; text-overflow: clip; }
+/* Compact inventory panes must yield before their text loses its padding. */
+.armoury .as-statrow { flex-wrap: wrap; gap: 0.4rem 1rem; }
+.armoury .as-statrow .sr-id { flex: 1 1 10rem; width: auto; max-width: 100%; }
+.armoury .as-statrow .sr-vals { flex: 1 1 8rem; min-width: 0; max-width: 100%; }
+.armoury .as-statpair { flex-wrap: wrap; }
+.armoury .as-statpair .sp-k, .armoury .as-statpair .sp-v { max-width: 100%; }
+.armoury-position-grid-card > .ob { width: 100%; }
+.armoury-stats-summary { grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
 
 /* Armoury: one scrolling page, with natural-height equipment and disclosures. */
 .armoury > .modal-body.armoury-shell-body { overflow-y: auto; overflow-x: hidden; padding: max(1.2rem, calc(12px / var(--ui-zoom, 1))); gap: 1.4rem; }
@@ -2627,7 +2650,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury[data-responsive='phone'] .armoury-head [role='tablist'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; }
 .armoury[data-responsive='phone'] .armoury-head .modal-tab { min-width: 0; padding-inline: .5rem; }
 /* Approved 350 × 490 poker canvas. Every measurement scales together. */
-.equipment-poker-card { display:block; position:relative; width:100%; max-width:490px; aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
+.equipment-poker-card { display:block; position:relative; width:100%; max-width:392px; aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
 .equipment-poker-card .epc-frame { box-sizing:border-box; display:grid; grid-template-rows:25px minmax(0,1fr) 25px 39px 19px 82px 36px 13px; position:absolute; inset:0 auto auto 0; width:350px; height:490px; padding:18px; gap:5px; border:1px solid var(--accent); border-radius:13px; transform-origin:top left; transform:scale(var(--card-scale,1)); box-shadow:0 9px 26px #0006,inset 0 0 0 4px #17120e,inset 0 0 0 5px #695334; background:linear-gradient(125deg,#302319,#19150f 45%,#251d15); font:13px/1.35 Arial,sans-serif; }
 .epc-frame > * { min-width:0; min-height:0; box-sizing:border-box; }
 .epc-name { display:flex; justify-content:space-between; gap:8px; align-items:center; font:600 20px/1.12 Georgia,serif; color:#f0dfaf; }
@@ -2657,9 +2680,41 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .inventory-face.poker-inventory-face > .r-trail { justify-content:flex-start; margin-top:10px; }
 .inventory-detail.poker-inventory-detail { display:flex; flex-direction:column; align-items:stretch; min-width:0; }
 .equip-chip.poker-equipment-choice { display:block; width:100%; padding:6px; }
-.equip-chip.poker-equipment-choice > .equipment-poker-card { max-width:350px; }
+.equip-chip.poker-equipment-choice > .equipment-poker-card { max-width:280px; }
 /* Cards share the existing disclosure navigation and reveal placement. */
 .armoury .disc-faces:has(.poker-inventory-face) { display:flex; flex-flow:row wrap; align-items:flex-start; }
 .armoury .disc-faces > .disc-face.disc-item:has(.poker-inventory-face) { flex:1 1 260px; max-width:370px; min-width:0; }
-.poker-inventory-face > .equipment-poker-card { max-width:350px; }
+.poker-inventory-face > .equipment-poker-card { max-width:280px; }
 .armoury .disc-reveal:has(.poker-inventory-detail) { flex-basis:100%; min-width:0; }
+
+/* The merchant shares the same equipment canvas; prices stay outside the card. */
+.shop-armament-offer { width:min(280px,100%); min-width:0; }
+.shop-armament-offer > .as-option { display:block; width:100%; padding:8px; }
+.shop-armament-offer > .as-status { display:block; margin-top:8px; white-space:normal; }
+
+/* One fixed grid track size prevents the last row from stretching its cards. */
+.armoury .disc-faces:has(.poker-inventory-face),
+.cc-card-selectors:has(.poker-equipment-choice),
+#shop-armaments, #shop-relics, #shop-flasks {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(0,280px));
+  justify-content:center; align-items:start; gap:16px;
+}
+.armoury .disc-faces > .disc-face.disc-item:has(.poker-inventory-face) { width:100%; max-width:none; min-width:0; }
+.armoury .disc-reveal:has(.poker-inventory-detail) { grid-column:1 / -1; }
+.equipment-poker-inspection > .equipment-poker-card { width:80%; }
+.poker-inventory-detail .equipment-poker-inspection > .equipment-poker-card { max-width:280px; }
+.epc-art-glyph { font-size:90px; filter:drop-shadow(0 5px 10px #0008); }
+.collectible-poker-card .epc-frame { grid-template-rows:45px minmax(0,1fr) 25px 39px 19px 100px 36px 13px; }
+.shop-collectible-offer { display:flex; flex-direction:column; width:100%; min-width:0; padding:8px; }
+.shop-collectible-offer > .equipment-poker-card { width:100%; }
+.shop-collectible-offer > .cp-body { width:100%; margin-top:8px; }
+.beat-hold[data-hold='holding'] .equipment-poker-card::after {
+  content:''; position:absolute; inset:0; z-index:5; pointer-events:none; border-radius:12px;
+  background:linear-gradient(90deg,#e8bc4b55,#f6d46f88);
+  clip-path:inset(0 calc((1 - var(--hold,0)) * 100%) 0 0);
+  box-shadow:inset 0 0 0 3px #f6d46f;
+}
+@media(max-width:360px) {
+  .armoury .disc-faces:has(.poker-inventory-face), .cc-card-selectors:has(.poker-equipment-choice),
+  #shop-armaments, #shop-relics, #shop-flasks { grid-template-columns:minmax(0,280px); }
+}

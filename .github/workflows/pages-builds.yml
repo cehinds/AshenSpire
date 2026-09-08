@@ -31,9 +31,13 @@
 # deployment → Source: "GitHub Actions"; until then the deploy step fails with GitHub's
 # own message and the legacy `main:/` source keeps serving.
 #
-# COST: one assemble run per push to any of the four branches, cancelled if a newer push
-# lands. The site is rebuilt from git history each time (deterministic; nothing
-# accumulates).
+# COST: one assemble run per push to any of the four branches. A run that has
+# STARTED is never cancelled — see the concurrency block for why a guess about
+# who publishes cost a publication — so a burst of pushes serialises rather than
+# killing whatever is mid-flight. A newer arrival does still supersede an older
+# QUEUED run, which costs nothing: the site is rebuilt from git history each
+# time (deterministic; nothing accumulates), so the newest assembly already
+# carries every build a superseded one would have published.
 name: pages-builds
 
 on:
@@ -50,26 +54,55 @@ on:
 
 concurrency:
   group: pages-builds
-  # A RUN THAT WILL NOT PUBLISH MUST NEVER CANCEL ONE THAT WILL.
+  # NO RUN CANCELS ANOTHER, BECAUSE "WILL THIS RUN PUBLISH?" CANNOT BE ANSWERED HERE.
   #
   # One group keeps publications serialised, which is right — two deploys to the
-  # same Pages environment must not race. But `cancel-in-progress: true` applied
-  # to every run, and once #632 let dev/test/release publish on push, that became
-  # a way to lose a publication silently: a push to main assembles and stops by
-  # design, and while it did so it cancelled any in-flight dev/test/release run —
-  # including one already inside `actions/deploy-pages`. The replacement main run
-  # then skips deploy, so the development build stayed unpublished until somebody
-  # happened to push to a development branch again. Nothing reported it, because
-  # a cancelled run is not a failed one.
+  # same Pages environment must not race. Cancellation is the part that kept
+  # losing them.
   #
-  # So the flag is now the same question the deploy job asks: will THIS run
-  # publish? A publishing run may still cancel its predecessor — newest wins, and
-  # the newer publication supersedes the older one anyway. A non-publishing run
-  # waits its turn instead. It must stay in step with the deploy guard below;
-  # the two are the same condition written once each.
-  cancel-in-progress: >-
-    ${{ (github.event_name == 'push' && contains(fromJSON('["dev","test","release"]'), github.ref_name))
-    || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
+  # The first version cancelled every run, so a push to main — which assembles
+  # and stops by design — killed in-flight dev/test/release runs, including ones
+  # already inside `actions/deploy-pages`. The fix for that made the flag ask the
+  # same question as the deploy guard: will THIS run publish? A publishing run
+  # could still cancel its predecessor, on the reasoning that the newer
+  # publication supersedes the older one anyway.
+  #
+  # That reasoning holds only if the canceller really does publish, and the
+  # expression could only GUESS: it read "a push to dev, test or release
+  # publishes" off the deploy guard. Measured on 2026-09-07, that premise was
+  # false for two of the three. Deployments from `test` and `release` are
+  # refused by the `github-pages` environment's branch rule, so their runs die
+  # at the environment gate in one second with no steps and no log — 8 of 8,
+  # against 9 of 9 successes from `dev`. They were nonetheless counted as
+  # publishers and allowed to cancel, and they did: run 213 (test, which cannot
+  # publish) cancelled run 212 (dev `c71fdecb`, which would have published
+  # 0.5.5.125), leaving the site at 0.5.5.119 — six builds behind. Exactly the
+  # rule at the top of this comment, broken by a guess about who publishes.
+  #
+  # A workflow cannot read the environment's branch rule, so it cannot answer
+  # that question correctly — and a guess costs a silent lost publication, which
+  # is the one failure this group exists to prevent. So nothing cancels.
+  #
+  # WHAT `false` ACTUALLY BUYS, measured on the first burst after it landed
+  # (23:21–23:23 UTC, 2026-09-07): a run that has STARTED is never killed. Run
+  # 215 was mid-flight while three later arrivals came in — 216 (#783's merge),
+  # 217 (a publish dispatch) and 218 (#788's merge) — and it kept running.
+  # Under the old flag any one of them would have ended it, possibly inside
+  # `actions/deploy-pages`.
+  #
+  # WHAT IT DOES NOT BUY, and the earlier wording here claimed otherwise: it is
+  # NOT "every run publishes in turn". A concurrency group holds ONE queued run,
+  # so a newer arrival still supersedes an older PENDING one — 216 and 217 were
+  # both cancelled while queued, and only 218 waited for 215. That costs nothing
+  # here, because the site is reassembled from git history on every run: the
+  # newest assembly already carries every build the superseded ones would have
+  # published. The guarantee is "the newest publication always lands and no
+  # in-flight one is lost", not "each one lands".
+  #
+  # The cost is named rather than discovered: a burst of pushes serialises
+  # instead of collapsing, so the last one waits out the one ahead of it.
+  # Wall-clock, not correctness.
+  cancel-in-progress: false
 
 # The workflow as a whole holds nothing but read: the Pages and OIDC grants are the
 # deploy job's alone (below), never the push-triggered assemble job's.
