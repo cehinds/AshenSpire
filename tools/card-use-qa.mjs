@@ -70,7 +70,7 @@ for(const phone of [false,true]) {
  await page.waitForTimeout(600);check(await plays('qa-hold')===0,name+' cancelled hold does not play');
  await down();await page.waitForTimeout(800);await up();await page.waitForTimeout(1700);
  check(await plays('qa-hold')===1,name+' completed hold plays exactly once');
- await fixture('block','qa-drag');const dragCard=await select();const r=await dragCard.boundingBox();const field=await page.locator('.field').boundingBox();
+ await fixture('block','qa-drag');const dragCard=await select();const r=await dragCard.boundingBox();const field=await page.locator('.combatant.player .sprite').boundingBox();
  const from={x:r.x+r.width/2,y:r.y+r.height*.55},to={x:field.x+field.width*.45,y:field.y+field.height*.5};
  if(phone){await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[from]});for(let i=1;i<=8;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:from.x+(to.x-from.x)*i/8,y:from.y+(to.y-from.y)*i/8}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
  else{await page.mouse.move(from.x,from.y);await page.mouse.down();await page.mouse.move(to.x,to.y,{steps:8});await page.mouse.up();}

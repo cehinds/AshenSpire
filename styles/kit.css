@@ -2820,3 +2820,14 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-effects:has(.epc-bonus + .epc-bonus)::after { content:'…'; position:absolute; right:0; bottom:0; }
 .epc-frame > .epc-tags { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .epc-tag { display:inline-block; margin-right:3px; }
+/* Detail surfaces disclose the complete label, even when compact faces truncate. */
+.modal-head-id h2, .as-head-id h2, .as-tip .tt-title {
+  font-size: clamp(calc(16px / var(--ui-zoom, 1)), 2rem, calc(22px / var(--ui-zoom, 1))); white-space: normal; overflow: visible;
+  text-overflow: clip; overflow-wrap: anywhere; line-height: 1.3; max-height: none;
+}
+.as-ornament::before, .as-ornament::after { flex: 1 1 0; min-width: 0; }
+.title-screen .as-titlemenu { margin-inline: auto; text-align: center; }
+.title-screen .as-ornament { width: 100%; justify-content: center; margin-inline: auto; }
+.set-range { touch-action: pan-x; min-height: var(--tap-floor); }
+.cz-stage .equipment-poker-explanations { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5; }
+.cz-stage .equipment-poker-explanations :is(dt, dd) { white-space: normal; overflow-wrap: anywhere; }

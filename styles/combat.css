@@ -949,7 +949,7 @@
 :root .combat:not(.coop) .hand .card:hover,
 :root .combat:not(.coop) .hand .card.inspection-selected,
 :root .combat:not(.coop) .hand .card.selected { transform: translateY(-28px) !important; z-index: 50 !important; }
-:root .combat:not(.coop) .hand:has(.card.inspection-selected, .card.selected) { padding-top:calc(84px / var(--ui-zoom,1)); }
+:root .combat:not(.coop) .hand { padding-top:calc(84px / var(--ui-zoom,1)); }
 .hand .card.beat-hold[data-hold='holding']::after { content:''; position:absolute; inset:0; z-index:6; pointer-events:none; border-radius:inherit; background:linear-gradient(0deg,rgba(72,166,98,.42),rgba(121,204,132,.22)); clip-path:inset(calc((1 - var(--hold,0)) * 100%) 0 0 0); }
 .hand .card > .hold-hint { position:absolute; bottom:10px; left:0; right:0; margin:0; text-align:center; pointer-events:none; }
 :root .combat:not(.coop) .hand .card .mana-cost { right: auto; left: -0.7rem; top: 2.4rem; }
@@ -1023,3 +1023,10 @@
    white cast halo around their parent (which also contains HUD elements). */
 .sprite.act-move[data-action-motion="cast"]:has(.painted-stage),
 .sprite.act-move[data-action-motion="brace"]:has(.painted-stage) { animation-name: none; }
+
+/* Selection reveals the same card without rebuilding or relocating the fan. */
+:root .combat:not(.coop) .hand .card.selected { transform: var(--card-fan-transform) !important; z-index: 100 !important; }
+:root .combat:not(.coop) .hand:has(.selected) .card:not(.selected):hover { transform: var(--card-fan-transform) !important; z-index: auto !important; }
+.combat .hand .card.drag-source { opacity: .2; }
+.combat .combatant.player.skill-selected .sprite { filter: drop-shadow(0 0 .6rem var(--gold)); }
+.combat .hand .card { touch-action: none; }
