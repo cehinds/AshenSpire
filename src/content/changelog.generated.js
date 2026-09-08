@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-811",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Compact encounters without horizontal scrollbars",
+    "detail": "Up to three enemies fit beside the player in tighter columns. Hands of up to seven cards overlap to fit the viewport while retaining readable 150–180px faces and hold-to-inspect behavior.",
+    "build": "0.5.5.134",
+    "pullRequest": 811,
+    "url": "https://github.com/cehinds/AshenSpire/pull/811"
+  },
+  {
+    "id": "pr-808",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Readable cards and larger combatants",
+    "detail": "Playing cards stay between 150 and 180 viewport pixels wide with readable body text. Sprites grow into available battlefield space and stand closer to the hand while preserving HUD and intent clearance. Crowded phone battlefields scroll sideways and short screens scroll vertically. Holding a card still opens inspection without playing it.",
+    "build": "0.5.5.131",
+    "pullRequest": 808,
+    "url": "https://github.com/cehinds/AshenSpire/pull/808"
+  },
+  {
     "id": "pr-806",
     "date": "2026-09-07",
     "group": "2026-09-07",
