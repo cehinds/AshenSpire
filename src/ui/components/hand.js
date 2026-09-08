@@ -85,9 +85,13 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const cards = handEls.filter(el => el.parentNode === handEl);
       if (!cards.length || !handEl.isConnected) return;
       const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+      // Reference-approved physical size range. Grow the fan by overlap, never
+      // by shrinking a card's type below its readable minimum.
+      const cardWidth = Math.max(150, Math.min(180, 150 + (window.innerWidth - 480) / 16));
+      handEl.style.setProperty('--hand-card-zoom', String(cardWidth / (178 * zoom)));
       const cs = getComputedStyle(handEl);
       const available = handEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      const width = cards[0].offsetWidth;
+      const width = cards[0].offsetWidth * (parseFloat(getComputedStyle(cards[0]).zoom) || 1);
       const measurement = [available, width, zoom, cards.length].join(':');
       if (measurement === fanMeasurement) return;
       fanMeasurement = measurement;

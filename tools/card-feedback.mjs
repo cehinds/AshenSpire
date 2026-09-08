@@ -140,8 +140,8 @@ async function trustedClick(page, shape, selector) {
 }
 
 try {
-for (const width of [1440,390]) for (const mode of ['normal','os','app']) {
-  const shape={width,height:width===1440?900:844,mobile:width<500,name:width+' '+mode};
+for (const width of [1440,390,588,775,1095,1920,844]) for (const mode of (width===1440||width===390 ? ['normal','os','app'] : ['normal'])) {
+  const shape={width,height:width===844?390:width===1440?900:844,mobile:width<500,name:width+' '+mode};
   let page; diagnostics.length=0;
   try {
     page=await openTarget(shape);
@@ -151,8 +151,39 @@ for (const width of [1440,390]) for (const mode of ['normal','os','app']) {
     if (OUT && mode === 'normal') {
       await wait(1600);
       check(await page.evaluate("[...document.querySelectorAll('.hand .card')].every(card=>card.classList.contains('playing-poker-card'))"),shape.name+': shared playing-card motif');
+      const geometry=await page.evaluate(`(()=>{
+        const cards=[...document.querySelectorAll('.hand .card')];
+        const zoom=parseFloat(getComputedStyle(document.body).zoom)||1;
+        const widths=cards.map(card=>card.offsetWidth*(parseFloat(getComputedStyle(card).zoom)||1)*zoom);
+        const handTop=Math.min(...cards.map(card=>card.getBoundingClientRect().top));
+        const stacks=[...document.querySelectorAll('.combatant-stack')].map(el=>{const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right}});
+        const playerHeight=document.querySelector('.player .sprite').getBoundingClientRect().height;
+        return {widths,handTop,stacks,playerHeight,spriteZoom:getComputedStyle(document.querySelector('.field')).getPropertyValue('--stage-sprite-zoom')};
+      })()`);
+      check(geometry.widths.every(w=>w>=149.5&&w<=180.5),shape.name+': readable 150–180px card range',geometry);
+      check(geometry.stacks.every(r=>r.bottom<=geometry.handTop-8),shape.name+': combatants leave clear space above the hand',geometry);
+      check(geometry.playerHeight>=175,shape.name+': player sprite retains reference minimum height',geometry);
+      console.log('GEOMETRY '+shape.name+' '+JSON.stringify(geometry));
       const shot=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false},page.sessionId);
       writeFileSync(join(OUT,'playing-hand-'+shape.width+'-'+DOOR+'.png'),Buffer.from(shot.data,'base64'));
+      if (width===1440||width===390) {
+        const beforeInspect=await page.evaluate('JSON.stringify(window.__combat.piles.hand)');
+        const point=await page.evaluate(`(()=>{const card=[...document.querySelectorAll('.hand .card')].at(-1);card.scrollIntoView({block:'center',inline:'center'});const r=card.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`);
+        if (shape.mobile) await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...point,id:1}]},page.sessionId);
+        else {
+          await cdp.send('Input.dispatchMouseEvent',{type:'mouseMoved',...point},page.sessionId);
+          await cdp.send('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1},page.sessionId);
+        }
+        await wait(650);
+        check(await page.evaluate("(()=>{const tip=document.querySelector('#tooltip');const r=tip?.getBoundingClientRect();return tip?.dataset.stuck==='true'&&r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1})()"),shape.name+': hold opens readable inspection inside viewport');
+        if (shape.mobile) await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]},page.sessionId);
+        else await cdp.send('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1},page.sessionId);
+        check(await page.evaluate('JSON.stringify(window.__combat.piles.hand)')===beforeInspect,shape.name+': inspection does not play the card');
+        const inspectShot=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false},page.sessionId);
+        writeFileSync(join(OUT,'playing-inspect-'+shape.width+'-'+DOOR+'.png'),Buffer.from(inspectShot.data,'base64'));
+        await cdp.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
+        await cdp.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
+      }
     }
     const entry=await page.evaluate(`(() => {
       document.body.classList.toggle('reduced-motion', ${mode==='app'});
