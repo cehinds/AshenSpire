@@ -63,6 +63,9 @@ gaps. All three are player-visible. A receipt here names the pull request that
 landed a change, and inventing one to fit these would be the reconstruction
 this file refuses at its own start date. They live in `git log`.*
 
+## 2026-09-08
+- **Compact encounters without horizontal scrollbars** ([#811](https://github.com/cehinds/AshenSpire/pull/811), `0.5.5.134`). Up to three enemies fit beside the player in tighter columns. Hands of up to seven cards overlap to fit the viewport while retaining readable 150–180px faces and hold-to-inspect behavior.
+
 ## 2026-09-07
 - **Readable cards and larger combatants** ([#808](https://github.com/cehinds/AshenSpire/pull/808), `0.5.5.131`). Playing cards stay between 150 and 180 viewport pixels wide with readable body text. Sprites grow into available battlefield space and stand closer to the hand while preserving HUD and intent clearance. Crowded phone battlefields scroll sideways and short screens scroll vertically. Holding a card still opens inspection without playing it.
 - **Playing cards share the item-card motif** ([#806](https://github.com/cehinds/AshenSpire/pull/806), `0.5.5.129`). Combat, reward and deck cards gain warm brown backing, an inset gold frame, framed art and matching type bands. Costs, live card text, hand layout and play interactions retain their existing behavior.

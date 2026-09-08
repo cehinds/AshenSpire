@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-811",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Compact encounters without horizontal scrollbars",
+    "detail": "Up to three enemies fit beside the player in tighter columns. Hands of up to seven cards overlap to fit the viewport while retaining readable 150–180px faces and hold-to-inspect behavior.",
+    "build": "0.5.5.134",
+    "pullRequest": 811,
+    "url": "https://github.com/cehinds/AshenSpire/pull/811"
+  },
+  {
     "id": "pr-808",
     "date": "2026-09-07",
     "group": "2026-09-07",
