@@ -684,7 +684,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
       <span class="as-labelstack">
         <span class="ls-label">${r.label}</span>
         <span class="ls-hint set-note">${note}</span>
-        <span class="ls-hint set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, Add to Home Screen provides the closest app-like view.</span>
+        <span class="ls-hint set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, use Safari’s Share menu → Add to Home Screen, then launch the saved game icon.</span>
       </span>
       <span class="r-trail"><button type="button" class="as-toggle toggle" data-key="${r.key}" data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status" role="switch" aria-checked="false" disabled aria-disabled="true"><span class="knob"></span></button></span>
     </div>`;
@@ -1122,7 +1122,7 @@ export async function toggleFullscreen(doc = globalThis.document) {
     return {
       ok: false,
       reason: 'refused',
-      message: 'The browser refused fullscreen. Try again from its own page menu.',
+      message: 'The browser refused fullscreen. Try Safari’s Share menu → Add to Home Screen, then launch the saved game icon.',
       error: error && error.message ? error.message : String(error || 'Fullscreen request refused.'),
     };
   }
@@ -1346,13 +1346,15 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('.set-range').forEach((slider) => {
-    slider.addEventListener('input', () => {
+    const updateVolume = () => {
       const val = Number(slider.value);
       const out = container.querySelector(`.range-val[data-for="${slider.dataset.key}"]`);
       if (out) out.textContent = val;
       settings[slider.dataset.key] = val;
       onChange({ [slider.dataset.key]: val });
-    });
+    };
+    slider.addEventListener('input', updateVolume);
+    slider.addEventListener('change', updateVolume);
   });
 
   container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
