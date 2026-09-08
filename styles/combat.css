@@ -175,8 +175,7 @@
 .combatant.player.armed { cursor: pointer; }
 
 .enemy .sprite { cursor: pointer; }
-.enemy.targetable .sprite { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: var(--r-3); }
-.enemy.hover-target .sprite { outline-style: solid; }
+.enemy.targetable .sprite, .enemy.hover-target .sprite { outline: none; }
 
 /* ---------- hand + controls ---------- */
 /* #295 — `--action-row-drop` IS THE ONE HOME FOR HOW FAR THE ACTION ROW HANGS

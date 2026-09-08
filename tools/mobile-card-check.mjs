@@ -83,6 +83,14 @@ try {
     await until("document.querySelectorAll('.hand .card').length===6",'double tap plays once');await wait(500);
     check(await evaluate("document.querySelectorAll('.hand .card').length===6"),'no duplicate play');
     await load();
+    const hostile=await box('.hand .card:first-child');
+    await tap(hostile.x+12,hostile.y+70);
+    await until("[...document.querySelectorAll('.enemy:not(.dead)')].every(e=>e.querySelectorAll('.aim-silho').length===1)",'enemy selection silhouettes');
+    check(await evaluate("[...document.querySelectorAll('.enemy:not(.dead)')].every(e=>e.classList.contains('aim-enemy') && getComputedStyle(e.querySelector('.sprite')).outlineStyle==='none')"),'hostile selection glows on each enemy without rectangular outlines');
+    await screenshot(`enemy-glow-${width}`);
+    await tap(width-3,Math.max(120,hostile.y-25));
+    await until("!document.querySelector('.enemy .aim-silho')",'enemy glow clears after cancellation');checks++;
+    await load();
     const hold=await box(selector);
     const ms=await evaluate(`Number(document.querySelector('${selector}').dataset.holdMs)`);
     check(ms>0,'uses configured shared hold');
