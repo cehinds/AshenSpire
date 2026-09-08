@@ -947,7 +947,11 @@
 .combat:not(.coop) .combatant { border: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; }
 .combat .combatant:focus-visible .sprite { filter: drop-shadow(0 0 3px var(--gold)); }
 :root .combat:not(.coop) .hand .card:hover,
+:root .combat:not(.coop) .hand .card.inspection-selected,
 :root .combat:not(.coop) .hand .card.selected { transform: translateY(-28px) !important; z-index: 50 !important; }
+:root .combat:not(.coop) .hand { padding-top:calc(84px / var(--ui-zoom,1)); }
+.hand .card.beat-hold[data-hold='holding']::after { content:''; position:absolute; inset:0; z-index:6; pointer-events:none; border-radius:inherit; background:linear-gradient(0deg,rgba(72,166,98,.42),rgba(121,204,132,.22)); clip-path:inset(calc((1 - var(--hold,0)) * 100%) 0 0 0); }
+.hand .card > .hold-hint { position:absolute; bottom:10px; left:0; right:0; margin:0; text-align:center; pointer-events:none; }
 :root .combat:not(.coop) .hand .card .mana-cost { right: auto; left: -0.7rem; top: 2.4rem; }
 :root .combat:not(.coop) .hand .card .stamina-cost { right: auto; left: -0.7rem; top: 5rem; }
 
@@ -966,11 +970,14 @@
 
 /* Normal encounters fit the viewport. Only four or more enemies may scroll. */
 @media(max-width:640px) {
+  /* The shared fitter still owns the row. Art may cross adjacent cells a
+     little; scale only the figures so meters, labels and intent stay readable. */
+  :root .combat:not(.coop) .combatant .sprite { scale:0.9; transform-origin:bottom center; }
   :root .combat:not(.coop) .combatant-card { width:80px; }
   :root .combat:not(.coop) .combatant .meters { width:80px; }
   :root .combat:not(.coop) .combatant .sprite { width:80px; min-width:0; }
   :root .combat:not(.coop) .combatant .sprite > :first-child { flex-shrink:0; }
-  :root .combat:not(.coop) .field:not(:has(.enemy-row > .combatant:nth-child(4))) { overflow-x:clip; }
+  :root .combat:not(.coop) .field:not(:has(.enemy-row > .combatant:nth-child(4))) { overflow-x:clip; overflow-clip-margin:4px; }
   :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
   :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) .enemy-row { flex:0 0 auto; min-width:max-content; }
   :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) .enemy-row > .combatant { min-width:calc(86px / var(--ui-zoom,1)); }
