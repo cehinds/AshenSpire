@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-08",
     "summary": "The README and the changelog stop burying what a reader came for",
     "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
-    "build": "0.6.0.2",
+    "build": "0.6.0.3",
     "pullRequest": 820,
     "url": "https://github.com/cehinds/AshenSpire/pull/820"
+  },
+  {
+    "id": "pr-815",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Development builds move to the 0.6 series",
+    "detail": "Nothing a player sees changes. The candidate the CI and Pages builds carry advances from 0.5.5 to 0.6.0, so the build ordinal restarts at zero the way the versioning rule says it does — a dev badge reading 2 beside a main badge reading in the thousands is that restart, not a regression. A new gate refuses any current build whose stamp is not 0.6.x.<ordinal> and whose committed metadata disagrees with the source, and it is kept out of the Pages builds workflow, which rebuilds archived branches that legitimately still carry their own older series.",
+    "build": "0.6.0.1",
+    "pullRequest": 815,
+    "url": "https://github.com/cehinds/AshenSpire/pull/815"
   },
   {
     "id": "pr-809",
