@@ -640,6 +640,7 @@ export function initAudio(settings = {}) {
   // ---- settings applied live ----------------------------------------------
   function setVolumes({ musicEnabled, musicVolume, sfxVolume, muteAudio } = {}) {
     const wasMusicEnabled = state.musicEnabled;
+    const wasMuted = state.muted;
     if (musicEnabled != null) state.musicEnabled = typeof musicEnabled === 'boolean'
       ? musicEnabled
       : AUDIO_DEFAULTS.musicEnabled !== false;
@@ -649,7 +650,7 @@ export function initAudio(settings = {}) {
     applyGains();
     resume();
     if (state.muted || !state.musicEnabled) stopMusic(0.3);
-    else if (state.context && (!wasMusicEnabled || muteAudio != null)) {
+    else if (state.context && (!wasMusicEnabled || wasMuted !== state.muted)) {
       const c = state.context;
       state.context = null;
       music(c);

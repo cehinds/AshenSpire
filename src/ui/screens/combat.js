@@ -1395,7 +1395,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     let dragging = false;
     let startX = 0;
     let startY = 0;
-    let gripX = 0, gripY = 0, ghostWidth = 0, ghostHeight = 0;
+    let gripX = 0;
+    let gripY = 0;
+    let ghostWidth = 0;
+    let ghostHeight = 0;
     let lastConfirmTap = 0;
     let selectedThisPress = false;
     const dragTargetMode = pv.values.some((value) => value.target === 'allEnemies')
@@ -1507,8 +1510,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       startX = ev.clientX;
       startY = ev.clientY;
       const cardBox = el.getBoundingClientRect();
-      gripX = startX - cardBox.left;
-      gripY = startY - cardBox.top;
+      const localCard = anchorLocalBox(VIEWPORT_ORIGIN, el);
+      const localPointer = anchorLocalBox(VIEWPORT_ORIGIN, { left: startX, top: startY, width: 0, height: 0 });
+      gripX = localPointer.left - localCard.left;
+      gripY = localPointer.top - localCard.top;
       ghostWidth = cardBox.width;
       ghostHeight = ghostWidth * el.offsetHeight / el.offsetWidth;
       // The lifecycle lives in trackGesture (src/ui/gesture.js — #22): capture
@@ -1558,7 +1563,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // keep:40, not the whole box — a card dragged to the edge of the screen
           // SHOULD hang over it, the way it does in the hand. What must never
           // happen is the ghost leaving entirely, which is what it did at 1.48.
-          const p = clampBox({ left: at.left - gripX / (parseFloat(getComputedStyle(document.body).zoom) || 1), top: at.top - gripY / (parseFloat(getComputedStyle(document.body).zoom) || 1), width: g.width, height: g.height }, view, { keep: 40 });
+          const p = clampBox({ left: at.left - gripX, top: at.top - gripY, width: g.width, height: g.height }, view, { keep: 40 });
           dragGhost.style.left = `${p.left}px`;
           dragGhost.style.top = `${p.top}px`;
           updateDropTarget(mv.clientX, mv.clientY);
@@ -1599,7 +1604,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const select = () => {
       lastConfirmTap = 0;
       selectedFlask = null;
-      if (pv.needsTarget) { selected = inst.instanceId; selfArm = null; syncCardSelection(); }
+      if (pv.needsTarget || dragTargetMode === 'all') { selected = inst.instanceId; selfArm = null; syncCardSelection(); }
       else armSelf(inst.instanceId);
     };
     const confirm = () => {
@@ -1611,11 +1616,20 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const target = $('.enemy.hover-target') || $('.enemy.gp-focus');
         if (target) playCard(inst.instanceId, target.dataset.eid);
         else if (enemies.length === 1) playCard(inst.instanceId, enemies[0].id);
-        else focusTargeting();
+        else { focusTargeting(); showTooltipFor(el, '<p>Choose a highlighted enemy to play this card.</p>'); }
       }
     };
     const tap = () => {
-      if (busy || !affordable || dragging) return;
+      if (busy || dragging) return;
+      if (!affordable) {
+        const reasons = [];
+        if (isUnplayable(inst)) reasons.push('This card cannot be played.');
+        if (combat.player.energy < (pv.costIsX ? 0 : pv.cost)) reasons.push('Not enough actions.');
+        if (combat.player.mana < pv.manaCost) reasons.push('Not enough mana.');
+        if (combat.player.stamina < (pv.staminaCost || 0)) reasons.push('Not enough stamina.');
+        showTooltipFor(el, '<p>' + reasons.join(' ') + '</p>');
+        return;
+      }
       if (selectedThisPress) { selectedThisPress = false; return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       const now = performance.now();
@@ -1623,9 +1637,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       else lastConfirmTap = now;
     };
     armHold(el, {
-      ms: () => holdMs(meta.settings || {}, registries.balance.ui.holdConfirm),
+      ms: () => affordable ? holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) : 0,
       onHoldStart: () => { selectedThisPress = selected !== inst.instanceId && selfArm !== inst.instanceId; if (!busy && affordable && selectedThisPress) select(); },
-      onTap: tap, tapOnEarlyRelease: true, pointerOnly: true,
+      onTap: tap, tapOnEarlyRelease: true,
       onConfirm: () => holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0 ? confirm() : tap(),
     });
   }

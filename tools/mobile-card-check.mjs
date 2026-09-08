@@ -96,11 +96,29 @@ try {
     check(await evaluate("document.querySelectorAll('.hand .card').length===7 && !document.querySelector('.card-drag-ghost')"),'cancelled drag costs nothing and removes ghost');
     await tap(x,y);await tap(width-3,Math.max(120,drag.y-25));
     check(await evaluate("!document.querySelector('.hand .card.selected')"),'empty field cancels');
+    await evaluate(`(async()=>{const {openModal}=await import('/src/ui/kit/index.js');openModal({title:'The exceptionally long quest title beyond the old ellipsis limit — reclaim the lantern at the distant sanctuary',body:document.createTextNode('Details')});})()`);
+    check(await evaluate("(()=>{const e=document.querySelector('.modal-head-id h2');return e && getComputedStyle(e).whiteSpace!=='nowrap' && e.scrollWidth<=e.clientWidth+1})()"),'full modal title fits at '+width);
+    await screenshot('detail-title-'+width);
     console.log(`PASS touch interactions ${width}x${height}`);
   }
-  // Full text is tested through the shared modal shell with a deliberately long title.
-  await evaluate(`(async()=>{const {openModal}=await import('/src/ui/kit/index.js');openModal({title:'The exceptionally long quest title beyond the old ellipsis limit — reclaim the lantern at the distant sanctuary',body:'Details'});})()`);
-  check(await evaluate("(()=>{const e=document.querySelector('.modal-head-id h2');return e && getComputedStyle(e).whiteSpace!=='nowrap' && e.scrollWidth<=e.clientWidth+1})()"),'full modal title wraps without clipping');
+  await load();
+  const attack=await box('.hand .card:first-child');
+  await tap(attack.x+12,attack.y+70);
+  const enemy=await box('.combatant.enemy .sprite');
+  await tap(enemy.x+enemy.width/2,enemy.y+enemy.height/2);
+  await until("document.querySelectorAll('.hand .card').length===6",'tap enemy confirms attack');checks++;
+  await load();
+  const invalid=await box('.hand .card:nth-child(4)');
+  await touch('touchStart',invalid.x+12,invalid.y+70);
+  await touch('touchMove',700,880);await touch('touchEnd',700,880);await wait(200);
+  check(await evaluate("document.querySelectorAll('.hand .card').length===7"),'invalid released drop spends no card');
+  const audioResult = await evaluate(`(async()=>{
+    const {initAudio}=await import('/src/ui/audio.js');const Original=window.AudioContext;const gains=[];let resumes=0;
+    class Context {state='interrupted';destination={};createGain(){const g={gain:{value:0},connect(){}};gains.push(g);return g;}resume(){resumes++;return Promise.resolve();}}
+    try {window.AudioContext=Context;const audio=initAudio();audio.setVolumes({musicVolume:25,sfxVolume:50,muteAudio:false});return {music:gains[1].gain.value,sfx:gains[2].gain.value,resumes};}
+    finally {window.AudioContext=Original;}
+  })()`);
+  check(audioResult.music===.25 && audioResult.sfx===.5 && audioResult.resumes>0,'volume gain and interrupted audio recovery');
   check(errors.filter(e=>!e.includes('favicon')&&!e.includes('/assets/sfx/')).length===0,`no runtime errors: ${errors.join('; ')}`);
   console.log(`PASS — ${checks} mobile interaction checks`);
 } finally {
