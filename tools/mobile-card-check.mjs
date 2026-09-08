@@ -112,6 +112,28 @@ try {
   await touch('touchStart',invalid.x+12,invalid.y+70);
   await touch('touchMove',700,880);await touch('touchEnd',700,880);await wait(200);
   check(await evaluate("document.querySelectorAll('.hand .card').length===7"),'invalid released drop spends no card');
+  const key = async (type, value, code) => send('Input.dispatchKeyEvent', { type, key: value, code });
+  await load();
+  await evaluate("(async()=>{const {focusElement}=await import('/src/ui/input.js');focusElement(document.querySelector('.hand .card'));window.keyboardChosen=__combat.piles.hand[3].instanceId;})()");
+  await key('keyDown','4','Digit4');await key('keyUp','4','Digit4');
+  check(await evaluate("document.querySelector('.hand .card.selected')?.dataset.instanceId===keyboardChosen && document.querySelector('.hand .card.gp-focus')?.dataset.instanceId===keyboardChosen"),'positional key moves selection and confirmation focus together');
+  const keyHold=await evaluate("Number(document.querySelector('.hand .card.selected').dataset.holdMs)");
+  await key('keyDown','Enter','Enter');await wait(keyHold+150);await key('keyUp','Enter','Enter');
+  await until("!__combat.piles.hand.some(c=>c.instanceId===keyboardChosen)",'keyboard hold plays chosen card');checks++;
+  await load();
+  await evaluate("(()=>{const id=__combat.piles.hand[3].instanceId;__combat.piles.hand[3]={instanceId:id,cardId:'blindingSand',upgraded:false};__renderCombatForShot();})()");
+  await key('keyDown','4','Digit4');await key('keyUp','4','Digit4');
+  check(await evaluate("!!document.querySelector('.hand .card:nth-child(4).selected.gp-focus') && !document.querySelector('.player.armed') && document.querySelectorAll('.enemy.targetable').length===__combat.enemies.filter(e=>e.alive).length"),'all-enemy hotkey selects hostile targets rather than arming self');
+  await load();
+  const pending=await box('.hand .card:nth-child(4)');
+  await tap(pending.x+12,pending.y+70);
+  await tap(pending.x+12,pending.y+70);
+  await touch('touchStart',pending.x+12,pending.y+70);
+  await touch('touchMove',700,880);await touch('touchEnd',700,880);await wait(450);
+  check(await evaluate("document.querySelectorAll('.hand .card').length===7"),'drag after a confirmation tap cannot spend a card on invalid release');
+  await send('Page.navigate',{url:url.replace(/\?.*$/, '?shot=customize')});
+  await until("document.querySelectorAll('.equipment-poker-explanations h3').length>0",'creation equipment details initialize');
+  check(await evaluate("!!document.querySelector('.customize') && document.querySelector('.equipment-poker-explanations').textContent.length>80"),'creation initializes complete readable details');
   const audioResult = await evaluate(`(async()=>{
     const {initAudio}=await import('/src/ui/audio.js');const Original=window.AudioContext;const gains=[];let resumes=0;
     class Context {state='interrupted';destination={};createGain(){const g={gain:{value:0},connect(){}};gains.push(g);return g;}resume(){resumes++;return Promise.resolve();}}

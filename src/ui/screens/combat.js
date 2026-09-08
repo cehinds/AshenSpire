@@ -1531,6 +1531,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (el.dataset.inspect === 'open') return;
         if (!dragging && Math.hypot(mv.clientX - startX, mv.clientY - startY) > 12) {
           dragging = true;
+          lastConfirmTap = 0;
           el.dispatchEvent(new Event('carddragstart'));
           el.classList.add('drag-source');
           hideTooltip();
@@ -1763,8 +1764,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const pv = previewCard(combat, inst.instanceId);
       const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
       if (!affordable) return;
-      if (pv.needsTarget) { selected = inst.instanceId; selfArm = null; selectedFlask = null; syncCardSelection(); }
+      const hostile = pv.needsTarget || pv.values.some(value => value.target === 'allEnemies');
+      if (hostile) { selected = inst.instanceId; selfArm = null; selectedFlask = null; syncCardSelection(); }
       else armSelf(inst.instanceId);
+      const chosenCard = combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(inst.instanceId)}"]`);
+      if (chosenCard) focusElement(chosenCard);
     }
   };
   addEventListener('keydown', keyHandler);

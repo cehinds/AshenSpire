@@ -610,8 +610,9 @@ export function mountCustomize(app, {
         box.appendChild(chipButton);
         if (selected) {
           const details = renderEquipmentInspection(registries, piece, { interactive: false }).querySelector('.equipment-poker-explanations');
-          details.open = true;
-          details.querySelector('summary').textContent = piece.name + ' — full equipment details';
+          const heading = document.createElement('h3');
+          heading.textContent = piece.name + ' — full equipment details';
+          details.prepend(heading);
           node.appendChild(details);
         }
       }
