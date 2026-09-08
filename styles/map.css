@@ -44,6 +44,24 @@
 .mapscreen .map-canvas { display: flex; justify-content: center; min-width: min-content; min-height: min-content; }
 .mapscreen svg { display: block; }
 
+/* Cartography stays in graph coordinates while the camera moves above it.
+   Only the paper extends into the camera's margins. Nodes retain their own
+   opaque plates and hit targets over both light parchment and dark terrain. */
+.map-terrain .map-fog-ground .terrain-paper { fill: #c4af85; }
+.map-terrain .terrain-detail { opacity: 0.9; }
+.mapscreen .map-scroll:has(.map-terrain) { background: #c4af85; }
+.mapscreen svg:has(.map-terrain) .map-act-title {
+  fill: #392613; stroke: #d8c49a; stroke-width: 2; paint-order: stroke;
+}
+.mapscreen svg:has(.map-terrain) .map-edge {
+  stroke: #775125; stroke-opacity: 1; filter: drop-shadow(0 1px 1px #e2c994);
+}
+.mapscreen svg:has(.map-terrain) .map-edge.traveled { stroke: #b27c1f; }
+.mapscreen svg:has(.map-terrain) .map-edge.shrine-lane { stroke: #dec46e; }
+.mapscreen.map-fog .map-frame:has(.map-terrain) .map-vignette {
+  background: radial-gradient(ellipse at center, transparent 65%, rgba(45, 30, 13, 0.2));
+}
+
 /* THE MAP'S HINT BAR JOINS THE FLOW, and only the map's.
    .hint-bar (styles/ui.css) is `position: fixed` to the bottom of the VIEWPORT
    and centred. That was invisible while the map's bottom edge belonged to a
@@ -171,25 +189,9 @@
   filter: drop-shadow(0 0 5px var(--gold));
 }
 
-/* ---------------------------- fog of war (Settings → Display · Map reveal) ---
-   Everything here is inert unless .mapscreen carries .map-fog, so `path` mode is
-   byte-for-byte the screen that shipped.
-
-   NOTHING IN THIS BLOCK HIDES A NODE. A node the fog covers is never appended to
-   the DOM at all (src/ui/screens/map.js) — a `display:none` fog is one devtools
-   toggle away from being no fog, and the point of the mode is that the player
-   does not know what is out there.
-
-   THE GROUND IS A PLACEHOLDER, AND THIS IS WHERE THAT IS SAID.
-   Constantine asked for "vague map art similar to Elden Ring's undiscovered
-   map." What is below is NOT that: it is a flat parchment wash, one tone per
-   act, standing in until FREJA authors the three plates
-   (assets/map/parchment_act1..3.webp — the <image> above this layer binds them
-   by name, and resolves to nothing while they are absent). Generated art was
-   refused on Law 0: derived from the graph, it would move the day `floors` or
-   `columns` is turned to shorten a run.
-   `px` and not `rem` throughout: these are SVG-space geometry inside a canvas
-   that is scaled by the zoom ladder, not text (Law 2 rule 3, Law 4 clause 3). */
+/* Fog controls node knowledge; regional terrain uses the same discovered set.
+   These fallback washes also support the legacy parchment loader. SVG geometry
+   follows the board zoom, while detailed terrain remains anchored to the graph. */
 .map-fog-ground rect {
   fill: var(--fog-parchment, #17130d);
 }

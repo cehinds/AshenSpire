@@ -39,6 +39,15 @@
   background: linear-gradient(to bottom, rgba(13, 11, 8, 0.30) 0%, rgba(13, 11, 8, 0.10) 38%, rgba(13, 11, 8, 0.82) 100%);
 }
 
+/* Approved environment paintings are selected with an SVG atlas viewBox. */
+.environment-backdrop { opacity: 1; overflow: hidden; background: #17130f; }
+.environment-backdrop > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.environment-backdrop::after { display: none; }
+.environment-backdrop::before {
+  z-index: 1;
+  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.4), rgba(13, 11, 8, 0.2) 35%, rgba(13, 11, 8, 0.85) 100%);
+}
+
 /* ---------- battlefield ---------- */
 /* The combatants sit ON the backdrop, so the field is a positioned layer above
    it and the rows are pulled up out of the old dead space at the top. */

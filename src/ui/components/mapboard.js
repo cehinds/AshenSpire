@@ -57,8 +57,9 @@
 
 import { attachTooltip } from './tooltip.js';
 import { html, iconButton } from '../kit/index.js';
-import { assetUrl } from '../assetmap.js';
-import { nodeIcon, actTitle, parchmentAsset, parchmentClass } from '../uiContent.js';
+import { regionForRun } from '../../model/environmentArt.js';
+import { mapTerrainHtml } from './environmentArt.js';
+import { nodeIcon, actTitle, parchmentClass } from '../uiContent.js';
 import { trackGesture } from '../gesture.js';
 import {
   mapKnowledge, nodeReading, resolveMapMode, resolveShrineGlow, shrineLane,
@@ -269,16 +270,13 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     }
   }
 
-  // ---- the undiscovered ground -------------------------------------------
-  //
-  // THE PLATE IS NOT IN THIS MARKUP, AND THAT IS A BUG FIX, NOT A STYLE. With
-  // the three plates absent — the state this ships in — headless Chromium
-  // painted its own missing-image graphic across the whole canvas and the map
-  // was drawn on top of it. Every check still passed. So the plate is ATTACHED
-  // ON A SUCCESSFUL LOAD and never before (`attachParchment`).
-  const groundSvg = fog
-    ? `<g class="map-fog-ground" aria-hidden="true"><rect x="0" y="0" width="${width}" height="${height}"/></g>`
-    : '';
+  // Terrain uses the same discovered nodes as the navigation layer. The saved
+  // path makes the reveal persistent, including previously visible branches.
+  const region = regionForRun(act);
+  const groundSvg = mapTerrainHtml({
+    region, width, height, fog,
+    points: nodes.filter(n => isDrawn(n.id)).map(n => ({ id: n.id, x: x(n.col), y: y(n.floor) })),
+  });
 
   // The per-act parchment tone rides the SCROLLPORT, not the <g> inside the SVG:
   // a custom property inherits DOWN, and both the ground rect and the
@@ -416,7 +414,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // THE SCREEN SAYS WHAT IT DREW — a fog that cannot report its own census
   // cannot be caught covering the wrong thing. The count is the DOM's, counted
   // while appending, never re-derived from the ladder it is meant to check.
-  if (fog) attachParchment(scroll.querySelector('.map-fog-ground'), assetUrl(parchmentAsset(act.actNumber)), width, height);
+  scroll.dataset.region = region.id;
+  scroll.dataset.mapPlate = 'loading';
+  const terrain = scroll.querySelector('.terrain-detail');
+  terrain.addEventListener('load', () => { scroll.dataset.mapPlate = 'ok'; });
+  terrain.addEventListener('error', () => { scroll.dataset.mapPlate = 'missing'; });
   scroll.dataset.nodesDrawn = String(drawnCount);
   scroll.dataset.nodesTotal = String(nodes.length);
   scroll.dataset.nodesHidden = String(know.counts.hidden);

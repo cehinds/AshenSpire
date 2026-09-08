@@ -46,12 +46,13 @@ import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
-import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
+import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
+import { combatBackdropHtml } from '../components/environmentArt.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskIdentityHtml, flaskTooltipHtml, mountFlaskActionMenu } from '../components/flask.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -520,7 +521,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             <button class="subtle coop-leave" id="coop-leave">Leave</button>
           </div>
         </header>
-        <div class="${backdropClass(snap.actNumber)}"></div>
+        ${combatBackdropHtml(snap)}
         <div class="field">
           <div class="player-zone"></div>
           <div class="enemy-row"></div>
@@ -797,7 +798,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // warns by name for an older host, because a silent fallback is what let
       // this sit.
       act: {
-        nodes: map.nodes, columns: map.columns, actNumber: snap.actNumber,
+        seedString: snap.seedString, nodes: map.nodes, columns: map.columns, actNumber: snap.actNumber,
         startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds,
       },
       // THE VIEWER — the half that is legitimately different on every screen.

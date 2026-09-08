@@ -1,3 +1,4 @@
+import { combatBackdropHtml } from '../components/environmentArt.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
 // docs/mockups/combat-screen.svg)
 //
@@ -27,7 +28,7 @@ import {
   preloadReaverAttackFrames,
   reaverAttackTiming,
 } from '../reaverAttack.js';
-import { intentBadge, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
+import { intentBadge, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -101,7 +102,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // state. `presentation` went with the fullscreen/music pair.
         quickSettings: { settings: meta.settings || {} },
       }))}
-      <div class="${backdropClass(run.actNumber)}"></div>
+      ${combatBackdropHtml(run)}
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>
         <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>
