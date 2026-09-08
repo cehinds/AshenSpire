@@ -36,6 +36,16 @@ export function openCardInspection({ title, card, details, opener }) {
 /** Information owns only its own button; action/hold/drag handlers stay on hosts. */
 export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false }) {
   card.style.userSelect = 'none';
+  card.classList.add('card-inspection-target');
+  if (!card.hasAttribute('tabindex')) card.tabIndex = 0;
+  // Keep the button visible while keyboard focus moves from the card to it.
+  // A touch focus alone must still wait for the second selection tap.
+  card.addEventListener('focusin', () => {
+    if (card.matches(':focus-visible')) card.classList.add('inspection-info-visible');
+  });
+  card.addEventListener('keydown', event => {
+    if (event.key === 'Tab') card.classList.add('inspection-info-visible');
+  });
   const info = document.createElement('button');
   info.type = 'button';
   info.className = 'card-info-button';

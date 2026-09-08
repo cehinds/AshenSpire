@@ -2771,8 +2771,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .inspection-selected { outline:3px solid #e0bd68; outline-offset:3px; border-radius:12px; }
 .card-info-button:focus-visible { outline:3px solid #fff0bd; outline-offset:2px; }
 @media (pointer:coarse) {
-  .card-info-button { opacity:0; pointer-events:none; }
-  .inspection-info-visible > .card-info-button, .equipment-poker-card:focus-visible > .card-info-button, .card-info-button:focus-visible { opacity:1; pointer-events:auto; }
+  .card-info-button { visibility:hidden; pointer-events:none; }
+  .inspection-info-visible > .card-info-button, .card-inspection-target:focus-visible > .card-info-button, .card-inspection-target:has(:focus-visible) > .card-info-button, .card-info-button:focus-visible { visibility:visible; pointer-events:auto; }
 }
 @media (max-width:600px) {
   .card-inspection-layout { grid-template-columns:minmax(0,1fr); padding:12px; gap:20px; }

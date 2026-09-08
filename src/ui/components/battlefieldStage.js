@@ -1,6 +1,8 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 let releaseActiveStage = null;
+const FLOOR_GAP_PX = 8;
+const MAX_SPRITE_ZOOM = 2.25;
 
 /**
  * measureFrame → what this frame WOULD need, and what it naturally is. The
@@ -27,7 +29,9 @@ function measureFrame(frame, intentGapPx, centerHeightRatio) {
   const naturalCardHeight = card.offsetHeight;
   // Animated pose sheets include transparent overflow outside the authored
   // sprite box. Measuring that overflow makes idle poses change the fit.
-  const naturalCardWidth = card.offsetWidth;
+  const sprite = card.querySelector(':scope > .sprite');
+  const spriteZoom = sprite ? Number.parseFloat(getComputedStyle(sprite).zoom) || 1 : 1;
+  const naturalCardWidth = Math.max(card.offsetWidth, (sprite?.offsetWidth || 0) * spriteZoom);
   // Intent is critical combat information, so it keeps its authored size.
   // Only the card beneath it scales; the two still move as one centered unit.
   const centeredHeight = availableHeight * centerHeightRatio;
@@ -36,7 +40,8 @@ function measureFrame(frame, intentGapPx, centerHeightRatio) {
     Math.max(0, centeredHeight - leadingHeight - gap) / Math.max(1, naturalCardHeight),
     availableWidth / Math.max(1, naturalCardWidth),
   ));
-  return { stack, frame, leadingHeight, gap, naturalCardHeight, fits };
+  return { stack, frame, leadingHeight, gap, naturalCardHeight, fits, sprite, uiZoom,
+    availableHeight, availableWidth, spriteHeight: sprite?.offsetHeight || 0, spriteWidth: sprite?.offsetWidth || 0 };
 }
 
 /** applyFrame → the stage's ONE scale, so every card renders the same box. */
@@ -47,6 +52,11 @@ function applyFrame(measure, scale) {
   stack.style.setProperty('--combatant-stack-height', `${visualHeight}px`);
   stack.style.setProperty('--combatant-card-offset', `${cardOffset}px`);
   stack.style.setProperty('--combatant-card-scale', String(scale));
+  // Stand on a shared floor near the hand, instead of centering small figures
+  // in a tall empty corridor. The fitting pass has already reserved intent/HUD.
+  const floorGap = FLOOR_GAP_PX / measure.uiZoom;
+  const center = Math.max(visualHeight / 2, measure.availableHeight - floorGap - visualHeight / 2);
+  stack.style.setProperty('--combatant-stage-center', `${center}px`);
   frame.dataset.combatantScale = scale.toFixed(4);
 }
 
@@ -74,7 +84,24 @@ export function wireBattlefieldStage(field, model) {
       // scale any of them needs. Uniform boxes, and nobody overflows its cell.
       // Stature still differentiates an elite or a boss — that multiplier is
       // on the sprite inside the card (kit.css COMBATANT), not on the card.
-      const measures = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')]
+      const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
+      field.style.setProperty('--stage-sprite-zoom', '1');
+      const baseline = frames
+        .map((frame) => measureFrame(frame, model.tokens.intentGapPx, model.tokens.centerHeightRatio))
+        .filter(Boolean);
+      const room = baseline.map(m => {
+        const displayScale = Math.max(1, 1 / m.uiZoom);
+        const fixedHeight = m.naturalCardHeight - m.spriteHeight;
+        return Math.min(
+          m.availableWidth / (Math.max(1, m.spriteWidth) * displayScale),
+          ((m.availableHeight - m.leadingHeight - m.gap - FLOOR_GAP_PX / m.uiZoom) / displayScale - fixedHeight) / Math.max(1, m.spriteHeight),
+        );
+      });
+      // Fill the spare space up to the presentation cap. On crowded stages
+      // the common fitter remains the authority preventing overlapping cells.
+      const spriteZoom = Math.max(1, Math.min(MAX_SPRITE_ZOOM, ...room));
+      field.style.setProperty('--stage-sprite-zoom', String(spriteZoom));
+      const measures = frames
         .map((frame) => measureFrame(frame, model.tokens.intentGapPx, model.tokens.centerHeightRatio))
         .filter(Boolean);
       if (!measures.length) return;

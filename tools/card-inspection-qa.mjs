@@ -179,6 +179,8 @@ try {
       const model={...equipmentCardModel(r,piece),name:'Long weapon name '.repeat(10),flavor:'Complete explanation remains accessible. '.repeat(80)};
       document.querySelector('#app').replaceChildren(renderEquipmentCard(r,piece,{presentation:model}).card);
     });
+    await page.locator('#app > .equipment-poker-card').focus();
+    await page.keyboard.press('Tab');
     await page.locator('#app > .equipment-poker-card .card-info-button').focus();
     await page.keyboard.press('Enter');
     check((await page.locator('.card-inspection-details').innerText()).includes('Complete explanation remains accessible.'), 'long text preserved');
