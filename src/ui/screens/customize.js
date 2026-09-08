@@ -574,6 +574,9 @@ export function mountCustomize(app, {
       node.append(detailPane);
       const showDetails = piece => {
         detailPane.replaceChildren(equipmentDetails((section.kind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { interactive: false, inspection: false }) : renderEquipmentCard(registries, piece, { interactive: false, inspection: false })).explanations));
+        const heading = document.createElement('h3');
+        heading.textContent = piece.name + ' — full equipment details';
+        detailPane.prepend(heading);
       };
 
       for (const piece of section.choices) {

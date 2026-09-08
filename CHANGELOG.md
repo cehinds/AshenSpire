@@ -64,6 +64,8 @@ landed a change, and inventing one to fit these would be the reconstruction
 this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-08
+
+- **Mobile cards select before playing, and detail names stay readable** ([#819](https://github.com/cehinds/AshenSpire/pull/819), `0.6.0.9`). Keep the selected card in its fan position; confirm with the shared hold, a double-tap after selection, or a valid target tap/drop. Preserve the drag grip and cancel invalid drops. Show item-specific creation details and full modal titles, center title ornaments, track the visible viewport, and recover interrupted audio without restarting music on volume changes.
 - **Card-driven information and starting equipment selection** ([#809](https://github.com/cehinds/AshenSpire/pull/809), `0.5.5.137`). Weapon faces retain their 5:7 shape with a 60:40 artwork-to-information split. Smaller cards sit beside complete readable details; touch and keyboard information access stays separate from buying, equipping, upgrading and playing. Starting Equipment previews selected details and commits the loadout only through Choose.
 - **Compact encounters without horizontal scrollbars** ([#811](https://github.com/cehinds/AshenSpire/pull/811), `0.5.5.134`). Up to three enemies fit beside the player in tighter columns. Hands of up to seven cards overlap to fit the viewport while retaining readable 150–180px faces and hold-to-inspect behavior.
 

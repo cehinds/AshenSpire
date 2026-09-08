@@ -21,7 +21,7 @@ function tintedClone(spriteWrap, color) {
       if (stroke && stroke !== 'none') node.setAttribute('stroke', color);
     });
   } else if (clone.style) {
-    clone.style.background = color;
+    clone.style.background = clone.matches?.('img, canvas') || clone.querySelector?.('img, canvas') ? 'transparent' : color;
     clone.style.borderColor = color;
     clone.style.color = 'transparent';
     clone.style.boxShadow = 'none';

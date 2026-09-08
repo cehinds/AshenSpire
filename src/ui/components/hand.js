@@ -62,7 +62,7 @@ import { keycap, pill } from '../kit/index.js';
 // asserting a property nobody writes.
 export const FAN_LIFT_PROP = '--fan-lift';
 
-export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false }) {
+export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false, inspectHold = true }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
   // value here would silently turn the gesture off.
@@ -187,7 +187,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     handEl.style.setProperty(FAN_LIFT_PROP, `${((n - 1) / 2) * 6}px`);
     cards.forEach((entry, i) => {
       const el = renderCard(registries, entry.inst,
-        entry.preview ? { preview: entry.preview, affordable: entry.affordable } : { affordable: entry.affordable });
+        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true });
       const spread = Math.min(6, n) * 1.2;
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
       // CENTRE. Same arc, same step, same look — translated so the LOWEST card
@@ -219,6 +219,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // is meant to feature. A number that is only right for today's hand size.
       const mid = (n - 1) / 2;
       el.style.transform = `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
+      el.style.setProperty('--card-fan-transform', el.style.transform);
       el.style.zIndex = i;
       if (animateArrival && drawn.has(entry.inst.instanceId) && !reducedMotionRequested()) {
         el.classList.add('card-drawn');
@@ -248,7 +249,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // E8, and it is the one line of his ask that lives outside tooltip.js:
       // the zoom used to HIDE the tooltip here. Now the completed hold KEEPS
       // it — same moment, opposite verb — and tooltip.js owns what ends it.
-      armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
+      if (inspectHold) armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
       if (wireCard) wireCard(el, entry, i);
       handEl.appendChild(el);
     });

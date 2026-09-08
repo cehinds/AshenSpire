@@ -198,7 +198,7 @@
     },
     "tools/gesture-cancel.mjs": {
       "count": 2,
-      "digest": "fb32ee2d1b7b81fb"
+      "digest": "6d9bdbd6b5dc8b74"
     },
     "tools/hand-pager-threshold.mjs": {
       "count": 7,
@@ -222,7 +222,7 @@
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
-      "digest": "1fe823c12bc6ee11"
+      "digest": "10e6feb0b8f14205"
     },
     "tools/menufit.mjs": {
       "count": 1,
@@ -230,7 +230,7 @@
     },
     "tools/music-toggle-parity.mjs": {
       "count": 16,
-      "digest": "c0d1ae6ea2a4ac5c"
+      "digest": "990e7219ffdc5e43"
     },
     "tools/onefold.mjs": {
       "count": 1,

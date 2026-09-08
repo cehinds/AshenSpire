@@ -141,8 +141,8 @@ if (args.includes('--selftest')) {
     }, {
       name: 'all-enemy controller Confirm is restored to the false self-target arm',
       file: 'src/ui/screens/combat.js',
-      find: "      } else if (ev.isTrusted || dragTargetMode === 'all') {",
-      replace: '      } else if (ev.isTrusted) {',
+      find: "      if (pv.needsTarget || dragTargetMode === 'all') { selected = inst.instanceId; selfArm = null; syncCardSelection(); }",
+      replace: '      if (pv.needsTarget) { selected = inst.instanceId; selfArm = null; syncCardSelection(); }',
       expectRed: /FAIL controller multi-target Confirm commits once without a false self target/,
     }, {
       name: 'keyboard Escape leaves the selected card armed',
@@ -159,7 +159,7 @@ if (args.includes('--selftest')) {
     }, {
       name: 'controller self card no longer arms the player confirmation',
       file: 'src/ui/screens/combat.js',
-      find: '    selfArm = selfArm === instanceId ? null : instanceId;',
+      find: '    selfArm = instanceId;',
       replace: '    selfArm = null; // planted: blue self-confirm arm omitted',
       expectRed: /FAIL controller self card arms the player blue and moves real focus/,
     }, {
@@ -237,8 +237,8 @@ if (args.includes('--selftest')) {
   const artifactPlants = [{
     name: 'standalone artifact reopens the old controller multi false-self behavior',
     file: 'AshenSpire.html',
-    find: "      } else if (ev.isTrusted || dragTargetMode === 'all') {",
-    replace: '      } else if (ev.isTrusted) { /* planted only in selected standalone artifact */',
+    find: "      if (pv.needsTarget || dragTargetMode === 'all') { selected = inst.instanceId; selfArm = null; syncCardSelection(); }",
+    replace: '      if (pv.needsTarget) { selected = inst.instanceId; selfArm = null; syncCardSelection(); } /* planted only in selected standalone artifact */',
     expectRed: /FAIL controller multi-target Confirm commits once without a false self target/,
   }].filter((plant) => !wantedPlant || plant.name.includes(wantedPlant));
   const provenancePlants = [{

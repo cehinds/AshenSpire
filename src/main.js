@@ -474,7 +474,10 @@ function resolveLayout(uiScale, vw, vh) {
 }
 
 function applyUiScale(settings) {
-  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale);
+  const viewport = window.visualViewport;
+  const visibleHeight = viewport && viewport.scale === 1 ? viewport.height : window.innerHeight;
+  document.documentElement.style.setProperty('--visible-height', visibleHeight + 'px');
+  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale, window.innerWidth, visibleHeight);
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
@@ -569,6 +572,10 @@ function reflexAutoScale() {
 }
 if (typeof window !== 'undefined') {
   window.addEventListener('resize', () => {
+    clearTimeout(uiResizeTimer);
+    uiResizeTimer = setTimeout(reflexAutoScale, 150);
+  });
+  window.visualViewport?.addEventListener('resize', () => {
     clearTimeout(uiResizeTimer);
     uiResizeTimer = setTimeout(reflexAutoScale, 150);
   });

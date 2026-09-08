@@ -308,6 +308,21 @@ const PROBE = `(() => {
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     const hit = (x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight) ? document.elementFromPoint(x, y) : null;
     if (hit && (hit === c || c.contains(hit))) continue;
+    // A fan intentionally covers card centers. Require an exposed 24px square
+    // on the actual card, and only permit another hand card to cover its center.
+    if (c.matches('.hand .card') && hit?.closest('.hand .card')) {
+      const owns = (px, py) => {
+        const top = document.elementFromPoint(px, py);
+        return top && (top === c || c.contains(top));
+      };
+      let reachable = false;
+      for (let py = Math.max(12, r.top + 12); py <= Math.min(innerHeight - 12, r.bottom - 12) && !reachable; py += 8) {
+        for (let px = Math.max(12, r.left + 12); px <= Math.min(innerWidth - 12, r.right - 12); px += 8) {
+          if ([[0,0],[-12,-12],[12,-12],[-12,12],[12,12]].every(([dx,dy]) => owns(px + dx, py + dy))) { reachable = true; break; }
+        }
+      }
+      if (reachable) continue;
+    }
     // Inside its own scrollport, or scrolled past the edge of it?
     const sp = scrollport(c);
     const box = sp ? sp.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
