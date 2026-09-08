@@ -9,13 +9,41 @@
 # the whole `main` tree is the base of the artifact and the only replaced file is
 # the root index.html (main's own is kept at /index-game.html).
 #
-# PUBLICATION IS SPLIT BY BRANCH (owner's ruling, 2026-09-05). A push to dev, test
-# or release ASSEMBLES, proves and then PUBLISHES the site. A push to main assembles
-# and proves it and stops: main is published only by the owner's own dispatch whose
-# `publish` input spells PUBLISH (github.actor AND github.triggering_actor are both
-# checked against github.repository_owner, so neither a write collaborator's dispatch
-# nor their re-run of the owner's dispatch deploys). That dispatch publishes any
-# branch; the automatic path is the three development branches only.
+# PUBLICATION IS SPLIT BY BRANCH (owner's ruling, 2026-09-05). A push to dev
+# ASSEMBLES, proves and then PUBLISHES the site. A push to test, release or main
+# assembles and proves it and stops: those are published only by the owner's own
+# dispatch whose `publish` input spells PUBLISH (github.actor AND
+# github.triggering_actor are both checked against github.repository_owner, so
+# neither a write collaborator's dispatch nor their re-run of the owner's dispatch
+# deploys). The automatic path is `dev` alone.
+#
+# WHY `dev` ALONE, WHEN THE RULING SAID DEV, TEST AND RELEASE. Because the other two
+# CANNOT publish, and asking them to was turning finished work red. The `github-pages`
+# environment carries a deployment-branch rule and it admits `dev` and `main` only. A
+# workflow cannot read that rule, so the guard listed all three development branches
+# and every test/release run walked into the gate and failed there in about two
+# seconds with no steps and no log. The annotation is GitHub's, not ours:
+#
+#   Branch "release" is not allowed to deploy to github-pages due to environment
+#   protection rules.
+#
+# Measured 2026-09-07 on release `fb299d90` (run 209, the release PR #795): assemble
+# green in 97s, deploy red at the gate, the release PR carrying a red check with
+# nothing wrong with the release. The day's deployment statuses say the same for
+# every branch — dev and main reach `success`, test and release go `waiting` →
+# `failure`.
+#
+# NOTHING IS LOST BY NOT TRYING. The site is reassembled from git history on every
+# run and `tools/pages-site.mjs` walks dev, test, release and main whatever branch
+# the run is on, so a dev publication already carries the test and release sections
+# at their newest commits. What those two lose is only the ability to TRIGGER a
+# publication — not their place in the published site.
+#
+# TO GIVE THEM THAT BACK, THE ENVIRONMENT HAS TO ADMIT THEM FIRST: Settings →
+# Environments → github-pages → Deployment branches, add `test` and `release`, THEN
+# add them back to the deploy guard and to PUBLISH_REQUESTED below. Adding them here
+# alone reinstates exactly the failure above. The owner's dispatch still publishes
+# any branch the environment admits, main included.
 #
 # The assemble job still holds no Pages WRITE or OIDC credential (contents: read and
 # pages: read only — configure-pages needs to read the site's configuration); the
@@ -23,10 +51,10 @@
 # environment, which can additionally carry required reviewers. What changed is which
 # events may REACH that job, not which job holds the credential.
 #
-# The cost is named rather than discovered: publishing on a push to those three
-# branches is a standing delegation to every future push on them. It was accepted
-# because the alternative was measured — the site sat three days and 52 green
-# assemble runs behind the game while every one skipped the deploy job.
+# The cost is named rather than discovered: publishing on a push to `dev` is a
+# standing delegation to every future push on it. It was accepted because the
+# alternative was measured — the site sat three days and 52 green assemble runs
+# behind the game while every one skipped the deploy job.
 # ONE-TIME OWNER ACTION before the first deploy: Settings → Pages → Build and
 # deployment → Source: "GitHub Actions"; until then the deploy step fails with GitHub's
 # own message and the legacy `main:/` source keeps serving.
@@ -192,7 +220,10 @@ jobs:
           # decides whether the summary says "published" or "not published", so a
           # flag narrower than the guard prints "not published" on a run that
           # publishes — the exact silence (#553) this step was added to end.
-          PUBLISH_REQUESTED: ${{ (github.event_name == 'push' && contains(fromJSON('["dev","test","release"]'), github.ref_name)) || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
+          # `dev` alone on the push path, because the github-pages environment admits
+          # `dev` and `main` only and a run that cannot publish must not claim it
+          # will — see the header.
+          PUBLISH_REQUESTED: ${{ (github.event_name == 'push' && github.ref_name == 'dev') || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
         run: |
           set -u
           {
@@ -251,28 +282,47 @@ jobs:
           if [ "$PUBLISH_REQUESTED" != "true" ]; then
             {
               echo
-              echo "Publishing is a Gate F action and the owner's alone, per individual act."
-              echo "To publish this assembly, the repository owner dispatches this workflow"
-              echo "with \`publish\` = \`PUBLISH\`; no push can do it and no standing setting"
-              echo "may stand in for that decision."
+              echo "This branch does not publish on a push — only \`dev\` does. To publish this"
+              echo "assembly, the repository owner dispatches this workflow with"
+              echo "\`publish\` = \`PUBLISH\`; a collaborator's dispatch does not, and no standing"
+              echo "setting may stand in for that decision."
+              echo
+              echo "Nothing is stale because of this. The site is reassembled from git history"
+              echo "every run, across dev, test, release and main, so this commit is already in"
+              echo "the next publication from \`dev\` whether or not this run publishes."
+              if [ "$GITHUB_REF_NAME" = "test" ] || [ "$GITHUB_REF_NAME" = "release" ]; then
+                echo
+                echo "\`$GITHUB_REF_NAME\` additionally **cannot** deploy: the \`github-pages\`"
+                echo "environment's deployment-branch rule admits \`dev\` and \`main\` only, so a"
+                echo "dispatch from here would be refused at the environment gate. See the"
+                echo "header of \`.github/workflows/pages-builds.yml\` for what to change first."
+              fi
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
   deploy:
     needs: assemble
-    # TWO WAYS TO PUBLISH, AND `main` HAS ONLY THE SECOND.
+    # TWO WAYS TO PUBLISH, AND ONLY `dev` HAS THE FIRST.
     #
-    # Owner's ruling, 2026-09-05: dev, test and release republish on their own;
+    # Owner's ruling, 2026-09-05: the development branches republish on their own;
     # main needs the owner's say-so. This reverses the earlier refusal to
     # automate publication at all — that refusal was paid for on 2026-09-02..05,
     # when the site sat three days and 52 green assemble runs behind the game
-    # while every one of them skipped this job. Automatic publication for the
-    # three development branches is the deliberate cost of that.
+    # while every one of them skipped this job. Automatic publication on `dev` is
+    # the deliberate cost of that.
     #
-    # 1. A PUSH to dev, test or release publishes. This IS a standing delegation
-    #    to every future push on those three branches: whoever can push them can
-    #    reach this job's Pages credential. That is accepted for the branches
-    #    that only ever serve development builds, and refused for main.
+    # 1. A PUSH to dev publishes. This IS a standing delegation to every future
+    #    push on that branch: whoever can push it can reach this job's Pages
+    #    credential. That is accepted for the branch that only ever serves
+    #    development builds, and refused for main.
+    #
+    #    `test` and `release` were on this line until 2026-09-07 and could never
+    #    honour it: the github-pages environment's deployment-branch rule admits
+    #    `dev` and `main` only, so their runs died AT THIS JOB'S ENVIRONMENT GATE
+    #    in about two seconds — no steps, no log, a red check on work that was
+    #    fine (release `fb299d90`, run 209, PR #795). A guard cannot read that
+    #    rule, so it has to agree with it by hand; the header says what to change,
+    #    and in which order, to put them back.
     #
     # 2. THE OWNER'S OWN DISPATCH publishes any branch, main included. Never a
     #    write collaborator's dispatch (anyone with write may run a workflow, so
@@ -284,7 +334,7 @@ jobs:
     # one is assembled with main's tree as its base, so any publication carries
     # whatever main holds at that moment. A push to main never publishes itself —
     # that is the guarantee — but main's content does reach the site on the next
-    # dev/test/release publication after it lands. Closing that would mean
+    # dev publication after it lands. Closing that would mean
     # pinning the site's main section to the last approved publication, which is
     # a change to how the site is assembled rather than to who may publish it.
     # Merging to main is already owner-only, so what reaches main is the owner's
@@ -292,7 +342,7 @@ jobs:
     if: >-
       (
         github.event_name == 'push'
-        && contains(fromJSON('["dev","test","release"]'), github.ref_name)
+        && github.ref_name == 'dev'
       ) || (
         github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH'
         && github.actor == github.repository_owner
