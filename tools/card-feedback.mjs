@@ -148,6 +148,12 @@ for (const width of [1440,390]) for (const mode of ['normal','os','app']) {
     await cdp.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:mode==='os'?'reduce':'no-preference'}]},page.sessionId);
     await cdp.send('Page.navigate',{url:server.url+(STANDALONE?'AshenSpire.html':'')+'?shot=combat'},page.sessionId);
     await page.until('!!window.__combat && !!window.__renderCombatForShot','combat fixture');
+    if (OUT && mode === 'normal') {
+      await wait(1600);
+      check(await page.evaluate("[...document.querySelectorAll('.hand .card')].every(card=>card.classList.contains('playing-poker-card'))"),shape.name+': shared playing-card motif');
+      const shot=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false},page.sessionId);
+      writeFileSync(join(OUT,'playing-hand-'+shape.width+'-'+DOOR+'.png'),Buffer.from(shot.data,'base64'));
+    }
     const entry=await page.evaluate(`(() => {
       document.body.classList.toggle('reduced-motion', ${mode==='app'});
       const c=window.__combat;

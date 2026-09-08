@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-806",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Playing cards share the item-card motif",
+    "detail": "Combat, reward and deck cards gain warm brown backing, an inset gold frame, framed art and matching type bands. Costs, live card text, hand layout and play interactions retain their existing behavior.",
+    "build": "0.5.5.129",
+    "pullRequest": 806,
+    "url": "https://github.com/cehinds/AshenSpire/pull/806"
+  },
+  {
     "id": "pr-801",
     "date": "2026-09-07",
     "group": "2026-09-07",
