@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-822",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Smaller combatants on mobile",
+    "detail": "Combatant artwork is 10% smaller on mobile, with slight enemy artwork overlap allowed. Names, health bars, intent indicators and readable card sizes retain their existing layout.",
+    "build": "0.6.0.2",
+    "pullRequest": 822,
+    "url": "https://github.com/cehinds/AshenSpire/pull/822"
+  },
+  {
     "id": "pr-809",
     "date": "2026-09-08",
     "group": "2026-09-08",
