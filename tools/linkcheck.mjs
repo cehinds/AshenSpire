@@ -67,12 +67,13 @@ if (!vm.SourceTextModule) {
   // died of "Reached heap limit" (#498, run 296). The room is granted here, in
   // the one place the child starts, so no caller has to remember it either.
   const heap = process.argv.includes('--selftest') ? ['--max-old-space-size=4096'] : [];
-  const r = spawnSync(process.execPath, ['--experimental-vm-modules', ...heap, fileURLToPath(import.meta.url), ...process.argv.slice(2)],
+  const r = spawnSync(process.execPath, ['--experimental-vm-modules', '--expose-gc', ...heap, fileURLToPath(import.meta.url), ...process.argv.slice(2)],
     { stdio: 'inherit' });
   process.exit(r.status == null ? 2 : r.status);
 }
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = process.argv.find(arg=>arg.startsWith('--root='))?.slice(7) || resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const batchStart=Number(process.argv.find(arg=>arg.startsWith('--batch-start='))?.split('=')[1]);
 const RAW = process.argv.includes('--raw');
 const SELFTEST = process.argv.includes('--selftest');
 
@@ -162,7 +163,19 @@ async function checkTree(root) {
   const files = all.filter((f) => !SKIP_PATHS.some((p) => relative(root, f).includes(p)));
   const skipped = all.length - files.length;
   const broken = [];
-  for (const f of files) {
+  // SourceTextModule graphs can retain native VM state even after GC. Bound
+  // their lifetime with subprocess batches, so self-test copies cannot exhaust
+  // the runner while preserving the same complete walk and every failure plant.
+  if(!Number.isFinite(batchStart)){
+    for(let i=0;i<files.length;i+=64){
+      const child=spawnSync(process.execPath,['--experimental-vm-modules',fileURLToPath(import.meta.url),'--root='+root,'--batch-start='+i],{encoding:'utf8',maxBuffer:16*1024*1024});
+      const line=(child.stdout||'').match(/^BATCH_RESULT: (.+)$/m);
+      if(child.status!==0||!line)throw Error(`linkcheck batch ${i} failed: ${child.stderr||child.stdout||child.status}`);
+      broken.push(...JSON.parse(line[1]).broken);
+    }
+    return {total:files.length,skipped,broken};
+  }
+  for (const f of files.slice(batchStart,batchStart+64)) {
     const err = await linkGraph(f, root);
     if (err) broken.push({ file: relative(root, f).split(sep).join('/'), err });
   }
@@ -260,6 +273,9 @@ function copyTree() {
 }
 
 console.log(`linkcheck: every named import in the tree, resolved against a real export.\n`);
+if(Number.isFinite(batchStart)){
+ console.log('BATCH_RESULT: '+JSON.stringify(await checkTree(ROOT)));process.exit(0);
+}
 
 if (SELFTEST) {
   // UNTESTABLE IS NOT MISS. If the tree ALREADY carries a broken import, a

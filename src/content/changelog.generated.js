@@ -4,20 +4,40 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-820",
-    "date": "2026-09-08",
-    "group": "2026-09-08",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
     "summary": "The README and the changelog stop burying what a reader came for",
     "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
-    "build": "0.6.0.16",
+    "build": "0.6.0.25",
     "pullRequest": 820,
     "url": "https://github.com/cehinds/AshenSpire/pull/820"
   },
   {
+    "id": "pr-841",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat animation changes appear in the in-game changelog",
+    "detail": "Record the combat effects and enemy animation deliveries at their original build numbers and refresh the changelog shown in About.",
+    "build": "0.6.0.21",
+    "pullRequest": 841,
+    "url": "https://github.com/cehinds/AshenSpire/pull/841"
+  },
+  {
+    "id": "pr-835",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat effects follow the card and its payment",
+    "detail": "Play 56 six-frame effect sets for attacks, projectiles, guards, wards, barriers, stances and status reactions in solo and co-op. Low-action moves use subtle mundane effects; larger action payments use stronger mundane effects, while mana or stamina spending enables fantastical variants. Preserve character auras and honor Reduce flashes.",
+    "build": "0.6.0.20",
+    "pullRequest": 835,
+    "url": "https://github.com/cehinds/AshenSpire/pull/835"
+  },
+  {
     "id": "pr-833",
-    "date": "2026-09-08",
-    "group": "2026-09-08",
-    "summary": "Enemies show what is happening to them",
-    "detail": "Enemies get combat states of their own: a buff wears an aura drawn to the figure, a hit plays a hurt reaction, and a defeated enemy falls to its own pose rather than simply vanishing. Painted state and defeated art ships for the roster with its manifests and generation records beside it, and a missing pose falls back to the enemy's existing artwork rather than leaving a gap. Co-op replays the same states from the shared snapshot.",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combatants show hurt, guard and defeat",
+    "detail": "Painted enemies show hurt, guarded and buff poses, including co-op actions and guarded impacts. Direct damage and status bursts show hurt feedback, and defeated player artwork stays within narrow combat screens.",
     "build": "0.6.0.15",
     "pullRequest": 833,
     "url": "https://github.com/cehinds/AshenSpire/pull/833"

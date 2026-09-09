@@ -6,6 +6,14 @@ Select any component card there to open its detail drawer. The dedicated
 [`tray-gallery.html`](./tray-gallery.html) shows all eight top/right/bottom/left
 folded and unfolded Tray states using the production renderer.
 
+The [combat sprite catalog](../art/combat-effects-2026-09-07/sprite-catalog.html)
+shows all 56 six-frame sets. `combatEffectPlan` resolves presentation tag
+combinations; `playCombatEffectPlan` renders the shared solo/co-op cast and
+target sequence. `combatEffectForEvent` owns status and defensive reactions.
+These transient overlays use the existing FX layer and introduce no new HUD
+component IDs. The adjacent card preview names the matched rule and equipment
+profile; the catalog provides visual miniatures for every exported set.
+
 Use the catalog's **Grid / List** switch to choose card tiles or a compact
 vertical list. In Grid view, use the **− / reset / +** controls, Ctrl/Command +
 mouse wheel, or a trackpad pinch to change card size and the number of visible
@@ -92,7 +100,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Player combatant card. |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
-| `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` | Combat cards | Rendered player or enemy figure. |
+| `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` + `paintedOutfits.js` | Solo and co-op combat cards | Rendered player or enemy figure. Player rest resolves stance, readiness, guard, then idle through `combatPose.js`; Prepared, Starstone Charge and Blood Rite have authored outfit poses and persistent glows. [Interactive miniature](../art/readiness-poses/preview.html). |
 | `combatant-nameplate` | `combatantFrame` child | `combatantFrame.js` | Combat cards | Combatant name label. |
 | `intent-indicator` | semantic component | `combat.js` + `uiContent.js` | Enemy cards | Telegraphed enemy action and amount. |
 | `block-badge` | semantic component | `combat.js` | Combat cards | Current Guard/Block over the sprite. |

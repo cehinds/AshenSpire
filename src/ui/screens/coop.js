@@ -1,3 +1,7 @@
+import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt } from '../../model/combatEffectEvents.js';
+import { combatEffectAngle } from '../combatEffectDirection.js';
+import { combatEffectPlan, combatEffectTags, combatEffectTargetIds } from '../../model/combatEffects.js';
+import { playCombatEffect, playCombatEffectPlan, clearCombatEffects } from '../combatEffectSprites.js';
 // src/ui/screens/coop.js — Forsaken Together thin client (LAN co-op).
 //
 // Server-authoritative renderer: the launcher owns the run (tools/session.mjs)
@@ -40,6 +44,7 @@ import { playPoseOn, stageFor } from '../services/PoseAnimator.js';
 import { resourceAura } from '../combatAura.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
+import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../../model/combatPose.js';
 import { equippedPieces, figureSpec } from '../../model/loadout.js';
 import { tagService } from '../../model/tagService.js';
 import { renderCard } from '../components/card.js';
@@ -89,14 +94,27 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let armedFriendlyCard = null; // friendly-targeted card instanceId awaiting a legal seat
   let prevCombat = null; // last combat scene, for snapshot-diff FX
   const combatRests = new Map();
+  const readinessOrders = new Map();
+  let poseReactions = new Map();
   let animationReceiptSeq = 0;
   let pendingAnimations = new Map();
+  const barrierVisuals = new Map();
+  let effectEvents = [];
   function prepareCombatAnimations(scene) {
     pendingAnimations = new Map();
+    poseReactions = new Map();
     const seq = Number(scene.receiptSeq) || 0;
     if (seq <= animationReceiptSeq) return;
     animationReceiptSeq = seq;
+    effectEvents = decorateCombatEffects((scene.events || []).map(combatEffectReceipt), registries, barrierVisuals);
     for (const event of scene.events || []) {
+      if (event.targetId) {
+        const targetId = event.targetId === 'player' ? event.playerId : event.targetId;
+        const targeted = { ...event, targetId };
+        readinessOrders.set(targetId, readinessAfterEvent(readinessOrders.get(targetId) || [], targeted, targetId));
+        const reaction = bloodRiteReaction(scene.players.find(p => p.id === targetId), targeted, targetId);
+        if (reaction) poseReactions.set(targetId, [...(poseReactions.get(targetId) || []), reaction]);
+      }
       const ownerId = event.playerId;
       if (!ownerId) continue;
       const member = snap.party.find(member => member.id === ownerId);
@@ -107,6 +125,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         plan = resolveCombatAnimation({ ...definition, cardTags: tags, sourceArmamentId: event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId));
         const hpSpent = (scene.events || []).filter(e => e.type === 'hpLost' && e.targetId === ownerId && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
         plan.aura = resourceAura(definition, { ...event, hpSpent });
+        plan.spriteEffect=combatEffectPlan({...definition,cardTags:combatEffectTags(registries,definition)},event);plan.targetId=event.targetId;plan.effectEvents=effectEvents;
         pendingAnimations.set(ownerId, plan);
       }
       combatRests.set(ownerId, combatRestAfterEvent(combatRests.get(ownerId) || 'idle', event, ownerId, plan));
@@ -346,6 +365,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function teardown() {
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
+    clearCombatEffects(app.querySelector('.fx-layer'));
     releaseFlaskKeyClaim();
     removeEventListener('keydown', flaskKeyHandler, true);
     removeEventListener('keydown', keyHandler);
@@ -394,9 +414,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function render() {
     if (!snap) return;
+    clearCombatEffects(app.querySelector('.fx-layer'));
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
-    else { combatRests.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); }
+    else { combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
@@ -568,7 +589,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId));
-      stageFor(sprite)?.setRestPose?.(!p.alive || p.hp <= 0 ? 'defeated' : combatRests.get(p.id) || 'idle');
+      stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)));
+      for (const reaction of poseReactions.get(p.id) || []) stageFor(sprite)?.react?.(reaction);
       const bb = blockBadge(p.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       // THE SEAT LINE: the tinted name (the identity span hudbars reads,
@@ -741,6 +763,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     for (const [ownerId, plan] of pendingAnimations) {
       const stage = stageFor(app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`));
+      const layer=app.querySelector('.fx-layer'),anchor=app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`),target=plan.targetId&&app.querySelector(`[data-eid="${CSS.escape(String(plan.targetId))}"]`);
+      const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,ownerId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
+      if(layer&&anchor)playCombatEffectPlan(layer,anchorLocalBox(layer,anchor),plan.spriteEffect,{targets:effectTargets.map(el=>anchorLocalBox(layer,el)),duration:260});
       stage?.play(stage.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle', 420, plan.aura);
     }
     spawnCombatFx(sc, prevCombat);
@@ -1282,6 +1307,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // receiptSeq, not local object identity, owns whether these receipts are new.
     const receiptSeq = Number(now.receiptSeq) || 0;
     const hasNewReceipts = receiptSeq > lastReceiptSeq;
+    if(hasNewReceipts)for(const event of effectEvents){
+      const effect=combatEffectForEvent(event);if(!effect)continue;
+      const id=CSS.escape(String(effect.targetId));
+      const anchor=app.querySelector('[data-eid="'+id+'"] .sprite')||app.querySelector('[data-eid="'+id+'"]')||app.querySelector('[data-seat="'+id+'"] .sprite');
+      if(anchor)playCombatEffect(layer,anchorLocalBox(layer,anchor),effect.kind,{size:190});
+    }
     const receipts = (hasNewReceipts ? (now.events || []) : [])
       .filter((ev) => ev.type === 'damageDealt' || ev.type === 'healed' || (ev.type === 'hpLost' && ev.cause !== 'attack'))
       .map((ev) => {
@@ -1299,6 +1330,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         const amount = Math.max(0, Number(ev.amount) || 0);
         if (!amount) continue;
         receiptHealByTarget.set(targetKey, (receiptHealByTarget.get(targetKey) || 0) + amount);
+        const healingAnchor=app.querySelector(sel);if(healingAnchor)playCombatEffect(layer,anchorLocalBox(layer,healingAnchor),'heal');
         put(sel, 'float-num heal', `+${amount}`, 0.35, 0, receiptRow);
       } else if (ev.type === 'hpLost') {
         const amount = Math.max(0, Number(ev.amount) || 0);
