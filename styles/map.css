@@ -250,13 +250,9 @@
 .atlas-scrollport { width:100%; max-height:calc(100vh - 205px); min-height:320px; overflow:auto; border:1px solid #8a744d; background:#9d8051; box-shadow:0 10px 45px #0006; }
 .atlas-world { position:relative; width:calc(100% * var(--atlas-zoom)); min-width:600px; aspect-ratio:1; isolation:isolate; }
 .atlas-terrain { display:block; position:absolute; inset:0; width:100%; height:100%; }
-.atlas-unmapped { opacity:.18; }
 .atlas-roads path { stroke:#322a1c; stroke-width:3.5; fill:none; stroke-dasharray:4 4; }
 .atlas-roads .traveled { stroke:#e9c477; stroke-width:4; stroke-dasharray:none; }
 .atlas-node { position:absolute; z-index:2; transform:translate(-50%,-50%); width:44px; height:44px; padding:0; background:none; border:0; cursor:pointer; display:grid; place-items:center; }
-.atlas-node-ring { width:23px; height:23px; border:2px solid #ac9669; border-radius:50%; display:grid; place-items:center; background:#201c16; color:#d4bd88; box-shadow:0 2px 5px #0009; font-size:13px; position:relative; z-index:2; }
-.atlas-node.reachable .atlas-node-ring { border-color:#ffe6a3; box-shadow:0 0 0 4px #332817,0 0 15px #ffc95077; }
-.atlas-node.current .atlas-node-ring { color:#18150f; background:#e7c578; border-color:#fff0bc; }
 .atlas-node:focus-visible { outline:3px solid #fff2b5; outline-offset:3px; border-radius:50%; }
 .atlas-landmark { position:absolute; width:110px; height:110px; bottom:19px; left:50%; transform:translateX(-50%); transform-origin:50% 95%; transition:transform 180ms ease; pointer-events:none; filter:drop-shadow(0 5px 5px #18100a99); }
 .atlas-landmark img,.atlas-landmark svg { width:100%; height:100%; object-fit:contain; }
@@ -324,21 +320,91 @@
 dialog.atlas-dialog.modal-veil[open] { display:block; padding:0; background:#1b1813; }
 .atlas-node,.atlas-local-point { overflow:visible; }
 .atlas-node-label,.atlas-local-point small { pointer-events:none; }
-.world-atlas-screen .atlas-roads path { stroke:#edd19a; stroke-width:3; stroke-dasharray:5 5; filter:drop-shadow(0 1px 2px #000); }
-.world-atlas-screen .atlas-roads .traveled { stroke:#ffde84; stroke-width:4; stroke-dasharray:none; }
+
+/* Local maps keep controls and information outside the gesture viewport. */
+dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; width:min(1080px,calc((100vw - 24px) / var(--ui-zoom,1))); height:min(860px,calc((100dvh - 24px) / var(--ui-zoom,1))); max-height:calc((100dvh - 24px) / var(--ui-zoom,1)); overflow:hidden; }
+.atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { flex:none; }
+.atlas-dialog:has(.atlas-local-port) .atlas-location-body { flex:1; min-height:0; }
+.atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { display:flex; flex-direction:column; gap:8px; min-height:0; }
+.atlas-local-tools,.atlas-local-zoom-tools,.atlas-local-pan-tools { display:flex; align-items:center; gap:5px; }
+.atlas-local-tools { justify-content:space-between; flex-wrap:wrap; }
+.atlas-local-tools .as-btn { min-width:max(36px,var(--tap-floor)); min-height:max(36px,var(--tap-floor)); padding:6px 10px; }
+.atlas-local-zoom-tools output { min-width:45px; text-align:center; font-size:13px; }
+.atlas-local-help { margin:0; font-size:12px; line-height:1.4; color:#c2b38e; }
+.atlas-local-port { position:relative; flex:1; min-height:170px; overflow:clip; background:#8b7d61; touch-action:none; overscroll-behavior:contain; cursor:grab; isolation:isolate; }
+.atlas-local-port:focus-visible { outline:2px solid #f6d37c; outline-offset:2px; }
+.atlas-local-port[data-dragging] { cursor:grabbing; user-select:none; }
+.atlas-local-map { position:absolute; aspect-ratio:auto; }
+.atlas-local-map>svg { position:absolute; width:100%; height:100%; pointer-events:none; }
+.atlas-local-point { touch-action:none; width:max(44px,var(--tap-floor)); height:max(44px,var(--tap-floor)); }
+.atlas-local-point>span { width:34px; height:34px; box-shadow:0 2px 5px #000b; }
+.atlas-local-point small { max-width:115px; white-space:normal; width:max-content; text-align:center; font-size:12px; line-height:1.2; border:1px solid #8c7041; }
+.atlas-local-port[data-labels=selected] .atlas-local-point:not([aria-pressed=true]):not(:focus):not(:hover) small { display:none; }
+.atlas-local-point[aria-pressed=true] { z-index:3; }
+.atlas-local-point:hover,.atlas-local-point:focus-visible { z-index:4; }
+.atlas-local-picker-label { display:flex; align-items:center; gap:12px; font-size:13px; }
+.atlas-local-picker-label select { flex:1; min-width:0; min-height:max(44px,var(--tap-floor)); color:#f3dfb7; border:1px solid #947548; background:#211b14; padding:8px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-location-detail { overflow:auto; overscroll-behavior:contain; padding:22px; }
+.atlas-service-benefits h4 { margin:22px 0 10px; color:#f1d18b; }
+.atlas-service-benefits .atlas-service-benefit,.atlas-service-benefit { color:#f2dfb6; font-size:16px; }
+.atlas-service-benefits ul { padding-left:20px; font-size:14px; line-height:1.6; }
+.atlas-service-benefits li+li { margin-top:9px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-location-detail:has(.atlas-detail-scroll) { display:flex; flex-direction:column; overflow:hidden; }
+.atlas-detail-scroll { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; }
+.atlas-detail-actions { flex:none; padding-top:8px; }
+.atlas-detail-actions .as-btn { margin-top:0; background:#302514; }
+@media(max-width:700px) {
+  dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((100dvh - 16px) / var(--ui-zoom,1)); }
+  .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-rows:minmax(0,1.2fr) minmax(0,.8fr); }
+  .atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { padding:10px 12px; }
+  .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { padding:8px; gap:5px; }
+  .atlas-dialog:has(.atlas-local-port) .atlas-location-detail { padding:12px 18px; border-top:1px solid #655034; }
+  .atlas-local-help { font-size:max(10px,calc(11px / var(--ui-zoom,1))); }
+  .atlas-local-tools { gap:3px; }
+  .atlas-local-tools .as-btn { padding:4px; }
+  .atlas-local-zoom-tools,.atlas-local-pan-tools { gap:2px; }
+  .atlas-local-zoom-tools output { min-width:38px; }
+}
+@media(max-height:500px) and (min-width:701px) {
+  .atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { padding:6px 12px; }
+  .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { padding:6px; gap:3px; }
+  .atlas-local-help { display:none; }
+  .atlas-local-port { min-height:80px; }
+}
+.world-atlas-screen .atlas-roads path { stroke:#775125; stroke-width:3; stroke-dasharray:none; filter:none; }
+.world-atlas-screen .atlas-roads .traveled { stroke:#b27c1f; stroke-width:4; }
 @media(min-width:1000px) { .atlas-layout { grid-template-columns:minmax(0,min(100%,calc(100vh - 240px))) 270px; justify-content:center; } }
 
 /* Keep map navigation clear of the combat inventory strip, including its hit targets. */
 .mapscreen .shared-hud .hud-bottom { display:none; }
 
 /* Atlas profiles use the same compact circular node vocabulary as traditional runs. */
-.atlas-node .atlas-node-ring { width:30px; height:30px; font-size:17px; box-shadow:none; border-color:var(--map-structure,#806b49); }
-.atlas-node.reachable .atlas-node-ring { border-color:var(--gold); background:#312619; }
-.atlas-node.visited .atlas-node-ring { border-color:#c3953c; }
-.atlas-node.current .atlas-node-ring { outline:2px solid #ffe4a3; outline-offset:3px; }
 .atlas-node-label { top:40px; max-width:130px; white-space:normal; text-align:center; pointer-events:none; }
 @media (max-width:600px) {
  .atlas-node-label { display:none; }
  .atlas-scrollport { box-shadow:none; }
  .atlas-world { min-width:0; }
 }
+
+/* All run modes use the traditional map's vector discs and close-up scale. */
+.atlas-scrollport { background:#c4af85; }
+.atlas-node { width:calc(var(--atlas-node-size) * var(--atlas-face-scale,1)); height:calc(var(--atlas-node-size) * var(--atlas-face-scale,1)); min-width:44px; min-height:44px; }
+.atlas-node-face { display:block; width:100%; height:100%; overflow:visible; pointer-events:none; }
+.atlas-node-label { top:calc(100% + 8px); }
+.atlas-world { min-width:0; }
+.atlas-roads path { stroke:#806b49; stroke-width:3; stroke-dasharray:none; }
+.atlas-roads .traveled { stroke:#b89030; stroke-width:4; }
+.atlas-compass,.atlas-map-caption { pointer-events:none; }
+
+/* Engraved fog and outlined vector roads stay readable at every detail tier. */
+.map-detail-surface, .map-detail-tiles { pointer-events:none; }
+.mapscreen .map-route-outline, .world-atlas-screen .atlas-roads .map-route-outline {
+  stroke:#29251a; stroke-width:var(--map-route-outline-width,6px); stroke-linecap:round; stroke-dasharray:none; fill:none; opacity:.95;
+}
+.mapscreen svg:has(.map-terrain) .map-edge, .world-atlas-screen .atlas-roads path:not(.map-route-outline) {
+  stroke:#c9b987; stroke-width:var(--map-route-width,3px); stroke-opacity:1; stroke-linecap:round;
+}
+.mapscreen svg:has(.map-terrain) .map-edge.traveled, .world-atlas-screen .atlas-roads .traveled { stroke:#ead090; }
+.mapscreen svg:has(.map-terrain) .map-edge.shrine-lane, .world-atlas-screen .atlas-roads .available { stroke:#ffe39a; stroke-width:3.5px; }
+.mapscreen .map-scroll:has(.map-terrain), .atlas-scrollport, .atlas-world { background:#8b7d61; }
+.map-terrain .terrain-detail { opacity:1; }

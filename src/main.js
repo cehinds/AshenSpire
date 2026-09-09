@@ -1454,7 +1454,12 @@ function remountMapIfShowing(changed) {
 function showMap() {
   audio.music('map');
   if (run.journey) return mountWorldAtlas(app, {
-    run, onTravel: enterWorldNode, onAction: worldLocationAction, onSave: persist,
+    run, registries,
+    serviceContext: {
+      healMult: run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1,
+      refillCounts: resolveGraceRefill(saves.loadMeta().settings || {}).counts,
+    },
+    onTravel: enterWorldNode, onAction: worldLocationAction, onSave: persist,
     onMenu: showOverlay, onArmoury: showArmoury,
     onQuit: () => { persist(); showCollapsedTitle(); },
     inspectNodeId: run.journey.inspectNodeId || null,
