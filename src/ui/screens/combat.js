@@ -202,6 +202,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (grouped.rest) stage?.setRestPose?.(grouped.rest);
         actorEl.dataset.actionGroup = grouped.group;
       }
+      if (moved && stage?.enemy) {
+        const pose = moved.kind === 'attack' ? (['projectile', 'spell'].includes(plan.family) ? 'projectile' : 'attack')
+          : moved.kind === 'block' || plan.family === 'guard' ? 'guard' : 'buff';
+        plan = { ...plan, pose };
+      }
       actorEl.dataset.actionFamily = plan.family;
       actorEl.dataset.actionMotion = plan.motion;
       // The painted Reaver sequence remains the specialized attack renderer.
@@ -1193,7 +1198,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       else showCombatantContext(box, 'player', p);
     });
     zone.appendChild(box);
-    stageFor(box)?.setRestPose?.(playerRest);
+    stageFor(box)?.setRestPose?.(dv(p).hp <= 0 || dv(p).alive === false ? 'defeated' : playerRest);
   }
 
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
@@ -1250,7 +1255,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         entityId: enemy.id,
         classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : '', selectedEnemyId === enemy.id ? 'context-selected' : ''],
         leading,
-        sprite: enemySprite(def),
+        sprite: enemySprite(def, { ...dv(enemy), maxHp: enemy.maxHp }),
         blockBadge: blockBadge(enemy, { tooltips: false }),
         name: nm,
         meters: meterBars(enemy, { tooltips: false }),
