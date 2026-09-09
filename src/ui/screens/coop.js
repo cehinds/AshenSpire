@@ -1253,8 +1253,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const recoil = (sel, heavy) => {
       const box = app.querySelector(sel);
       if (!box) return;
-      box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
-      playPoseOn(box, 'hit', heavy ? 380 : 220);
+      const duration = heavy ? 380 : 220;
+      box.style.setProperty('--hurt-duration', `${duration}ms`);
+      box.classList.remove('hitflash', 'hit-heavy', 'hit');
+      void box.offsetWidth;
+      if (!document.body.classList.contains('reduce-flashes')) box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
+      playPoseOn(box, 'hit', duration);
     };
     // Authoritative receipts own hit floats. Snapshot deltas remain the home
     // for healing, guard gain and legacy non-attack HP changes only.

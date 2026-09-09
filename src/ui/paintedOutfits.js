@@ -24,7 +24,32 @@ export function paintedPresentation(classId, armourId = 'default', pose = 'stand
 
 // The reviewed frames share a 640px canvas, center 320 and floor 600.
 // Fit the idle body to the stage; every other pose keeps that exact scale.
-export function createPaintedStage(classId, armourId = 'default') {
+export function createPaintedStage(classId, armourId = 'default', { still = false } = {}) {
+  if (still) {
+    const presentation = paintedPresentation(classId, armourId);
+    const defeated = createPaintedStage(classId, armourId);
+    if (!presentation || !defeated) return null;
+    const el = document.createElement('div');
+    el.className = 'pose-stage rendered-stage';
+    defeated.el.style.position = 'absolute'; defeated.el.style.inset = '0';
+    el.append(presentation, defeated.el);
+    let resting = 'idle';
+    const settle = () => {
+      const down = resting === 'defeated';
+      presentation.style.visibility = down ? 'hidden' : 'visible';
+      defeated.el.style.visibility = down ? 'visible' : 'hidden';
+      defeated.setRestPose(down ? 'defeated' : 'idle');
+      // Child frames set their own visibility, so hide the whole inactive stage.
+      defeated.el.hidden = !down;
+      el.dataset.pose = resting;
+    };
+    const setRestPose = pose => { resting = pose === 'defeated' ? pose : 'idle'; settle(); };
+    settle();
+    return Object.freeze({ el, poses: ['idle', 'defeated'], get pose() { return resting; },
+      setRestPose, settle, dispose: defeated.dispose,
+      play(pose) { if (pose !== 'defeated') return false; setRestPose(pose); return true; },
+    });
+  }
   const art = paintedOutfit(classId, armourId);
   if (!art) return null;
   const el = document.createElement('div');
