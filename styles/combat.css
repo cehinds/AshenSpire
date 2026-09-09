@@ -40,12 +40,26 @@
 }
 
 /* Approved environment paintings are selected with an SVG atlas viewBox. */
-.environment-backdrop { opacity: 1; overflow: hidden; background: #17130f; }
+.environment-backdrop { opacity: 1; overflow: hidden; background: #17130f; bottom: auto; height: var(--environment-height, 65%); }
 .environment-backdrop > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .environment-backdrop::after { display: none; }
 .environment-backdrop::before {
   z-index: 1;
-  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.4), rgba(13, 11, 8, 0.2) 35%, rgba(13, 11, 8, 0.85) 100%);
+  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.22), rgba(13, 11, 8, 0.06) 40%, rgba(13, 11, 8, 0.22) 90%, #17130f 100%);
+}
+
+/* A pale alpha-shaped edge plus dark separation reads on snow and charcoal.
+   Keep this on the art host, so frame-level target glows and pose auras compose. */
+.combat .combatant .sprite {
+  --combatant-edge: drop-shadow(0.7px 0 0 #f4e6c4) drop-shadow(-0.7px 0 0 #f4e6c4)
+    drop-shadow(0 0.7px 0 #f4e6c4) drop-shadow(0 -0.7px 0 #f4e6c4)
+    drop-shadow(0 0 2px #100e0c);
+}
+.combat .combatant .pose-frame, .combat .combatant .defeated-frame { filter: var(--combatant-edge); }
+.combat .combatant .sprite::before {
+  content: ''; position: absolute; bottom: -3px; left: 12%; right: 12%;
+  height: 12px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(ellipse, rgba(10, 8, 6, .7), rgba(10, 8, 6, .28) 45%, transparent 72%);
 }
 
 /* ---------- battlefield ---------- */

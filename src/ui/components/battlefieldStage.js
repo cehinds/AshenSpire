@@ -41,11 +41,11 @@ function measureFrame(frame, intentGapPx, centerHeightRatio) {
     availableWidth / Math.max(1, naturalCardWidth),
   ));
   return { stack, frame, leadingHeight, gap, naturalCardHeight, fits, sprite, uiZoom,
-    availableHeight, availableWidth, spriteHeight: sprite?.offsetHeight || 0, spriteWidth: sprite?.offsetWidth || 0 };
+    availableHeight, availableWidth, spriteZoom, spriteHeight: sprite?.offsetHeight || 0, spriteWidth: sprite?.offsetWidth || 0 };
 }
 
 /** applyFrame → the stage's ONE scale, so every card renders the same box. */
-function applyFrame(measure, scale) {
+function applyFrame(measure, scale, groundY) {
   const { stack, frame, leadingHeight, gap, naturalCardHeight } = measure;
   const cardOffset = leadingHeight + gap;
   const visualHeight = cardOffset + (naturalCardHeight * scale);
@@ -54,8 +54,8 @@ function applyFrame(measure, scale) {
   stack.style.setProperty('--combatant-card-scale', String(scale));
   // Stand on a shared floor near the hand, instead of centering small figures
   // in a tall empty corridor. The fitting pass has already reserved intent/HUD.
-  const floorGap = FLOOR_GAP_PX / measure.uiZoom;
-  const center = Math.max(visualHeight / 2, measure.availableHeight - floorGap - visualHeight / 2);
+  const localGround = groundY - frame.getBoundingClientRect().top / measure.uiZoom;
+  const center = localGround - cardOffset - measure.spriteHeight * measure.spriteZoom * scale + visualHeight / 2;
   stack.style.setProperty('--combatant-stage-center', `${center}px`);
   frame.dataset.combatantScale = scale.toFixed(4);
 }
@@ -105,8 +105,24 @@ export function wireBattlefieldStage(field, model) {
         .map((frame) => measureFrame(frame, model.tokens.intentGapPx, model.tokens.centerHeightRatio))
         .filter(Boolean);
       if (!measures.length) return;
-      const scale = measures.reduce((least, m) => Math.min(least, m.fits), Infinity);
-      for (const measure of measures) applyFrame(measure, scale);
+      const belowFeet = Math.max(...measures.map(m => m.naturalCardHeight - m.spriteHeight * m.spriteZoom));
+      const scale = measures.reduce((least, m) => Math.min(least, m.fits,
+        (m.availableHeight * model.tokens.centerHeightRatio - m.leadingHeight - m.gap - FLOOR_GAP_PX / m.uiZoom)
+          / Math.max(1, m.spriteHeight * m.spriteZoom + belowFeet)), Infinity);
+      // Reserve the tallest information strip, then align sprite foot anchors
+      // instead of card bottoms (enemy names must not lift their feet).
+      const groundY = Math.min(...measures.map(m =>
+        m.frame.getBoundingClientRect().top / m.uiZoom + m.availableHeight - FLOOR_GAP_PX / m.uiZoom
+          - (m.naturalCardHeight - m.spriteHeight * m.spriteZoom) * scale));
+      for (const measure of measures) applyFrame(measure, scale, groundY);
+      const combat = field.closest('.combat');
+      if (combat) {
+        const rect = combat.getBoundingClientRect();
+        const zoom = measures[0].uiZoom;
+        // The painting belongs to the battlefield, not the tall hand below it.
+        combat.style.setProperty('--environment-height', `${(field.getBoundingClientRect().bottom - rect.top) / zoom}px`);
+        field.dataset.groundY = String(groundY * zoom);
+      }
     });
   };
   const resizeObserver = new ResizeObserver(refresh);

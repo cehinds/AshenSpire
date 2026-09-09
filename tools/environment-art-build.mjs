@@ -11,7 +11,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const path = p => join(root, p);
 mkdirSync(path('assets/environments/'), { recursive: true });
 for (const region of ENVIRONMENTS) {
-  const board = path(`art/environments/${region.id}.png`);
+  const board = path(`art/environments/combat-fields/${region.id}.png`);
   const size = await sharp(board).metadata();
   if (size.width !== ENVIRONMENT_ATLAS_SIZE[0] || size.height !== ENVIRONMENT_ATLAS_SIZE[1]) throw Error(`Unexpected atlas size: ${region.id}`);
   await sharp(board).webp({ quality: 80, effort: 6 }).toFile(path(region.atlas));

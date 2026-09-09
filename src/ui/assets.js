@@ -148,7 +148,7 @@ export function enemySprite(enemyDef, entity = {}) {
     : expansion ? assetUrl(`assets/enemies-expansion/${enemyDef.id}.png`) : original;
   img.alt = enemyDef.name || enemyDef.id;
   img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
-    `filter:drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
+    `filter:var(--combatant-edge, blur(0px)) drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
   if (painted) {
     img.dataset.artSource = posed ? 'enemy-poses' : unity ? 'unity' : 'expansion';
     // Align the common foot line without cropping or stretching the frame.

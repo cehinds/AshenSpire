@@ -5,9 +5,17 @@ import { ENVIRONMENT_ATLAS_SIZE, MAP_TERRAIN_REVEAL_RADIUS } from '../../content
 export function combatBackdropHtml(run) {
   const { region, scene } = combatEnvironment(run);
   const [width, height] = ENVIRONMENT_ATLAS_SIZE;
-  return `<div class="backdrop environment-backdrop" data-region="${region.id}" data-scene="${scene.id}" aria-hidden="true">
-    <svg viewBox="${scene.box.join(' ')}" preserveAspectRatio="xMidYMid slice" focusable="false">
-      <image href="${assetUrl(region.atlas)}" width="${width}" height="${height}"/>
+  const [x, y, w, h] = scene.box;
+  const split = h * scene.floorStart;
+  const horizon = 100 * (1 - scene.fieldRatio);
+  const plate = `<image href="${assetUrl(region.atlas)}" width="${width}" height="${height}"/>`;
+  // Frame architecture and terrain independently: the full scene width stays
+  // visible and the authored ground always occupies 60% of the battle view.
+  // Both viewports meet at the same source row, without repeating the texture.
+  return `<div class="backdrop environment-backdrop" data-region="${region.id}" data-scene="${scene.id}" data-field-ratio="${scene.fieldRatio}" aria-hidden="true">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
+      <svg width="100" height="${horizon}" viewBox="${x} ${y} ${w} ${split}" preserveAspectRatio="none" overflow="hidden">${plate}</svg>
+      <svg class="environment-floor" y="${horizon}" width="100" height="${100 - horizon}" viewBox="${x} ${y + split} ${w} ${h - split}" preserveAspectRatio="none" overflow="hidden">${plate}</svg>
     </svg>
   </div>`;
 }
