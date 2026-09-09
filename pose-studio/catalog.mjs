@@ -11,3 +11,11 @@ export const registry=createRegistries(contentBundle);
 export const cards=registry.cards.all().filter(c=>['attack','skill','power'].includes(c.type)).sort((a,b)=>a.name.localeCompare(b.name));
 export function cardContext(id,payment={}){const card=resolveCard(registry,{cardId:id}),tags=combatEffectTags(registry,card);return {card,context:{provider:'ashenspire',kind:'card',objectId:id,event:'actionResolved',tags,...payment},plan:combatEffectPlan({...card,cardTags:tags},payment)};}
 export const labels={...EXTRA_EFFECTS};
+// Starting attachment suggestions; authors can move or change every anchor.
+export const effectAnchors=Object.fromEntries(Object.entries({
+ feet:['airWake','heelScuff','dustStep','teleportResidue'],
+ shield:['shieldScrape','shieldBash','wardCatch','spellAbsorb','physicalGuard','parry','guardPulse'],
+ torso:['armorDeflection','barrierCrack','barrierMend','bleedTick','frostShed','poisonSeep','staggerRecover','arcaneWard','magicGuard','barrier','ward','heal'],
+ hand:['palmGather','homingTurn','tetherStrand','focusMotes','starbolt','emberbolt','shadowbolt','sacredbolt'],
+ ground:['sigilTrace'],target:['bluntCompression','piercingEntry','projectileDissipate','chainJunction']
+}).flatMap(([anchor,ids])=>ids.map(id=>[id,anchor])));

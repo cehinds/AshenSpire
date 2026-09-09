@@ -13,6 +13,11 @@ and relationship view. Its stage and library provide live visual miniatures
 of all 80 effect sets. The shared `presentationSequence` model owns project
 validation and matching; the optional gameplay adapter preserves existing FX.
 See [launch, package and integration instructions](../pose-studio/README.md).
+The authoring flow uses template starts, immediate effect previews, a direct
+card connection action, progressive disclosure for precise controls, and native
+tool dialogs at narrow widths. The dialogs reuse the same library/inspector DOM
+and return keyboard focus on close. `pose-studio/tests/usability.mjs` covers this
+workflow at desktop and phone sizes; no game presentation rules are replaced.
 
 The [combat sprite catalog](../art/combat-effects-2026-09-07/sprite-catalog.html)
 shows all 56 six-frame sets. `combatEffectPlan` resolves presentation tag
