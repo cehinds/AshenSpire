@@ -65,6 +65,8 @@ this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-09
 
+- **Readiness poses ease in and out** ([#852](https://github.com/cehinds/AshenSpire/pull/852), `0.6.0.28`). Prepared, Starstone Charge and Herald Blood Rite use softer breathing glows and authored intermediate sprites for all twelve outfits. Entry, exit and action return crossfade smoothly; combat redraws preserve their timing, while reduced-motion and still-sprite modes resolve immediately.
+
 - **Readiness pose delivery appears in About** ([#849](https://github.com/cehinds/AshenSpire/pull/849), `0.6.0.26`). Record the original readiness-pose delivery and refresh the in-game changelog.
 
 - **Readiness poses show when the next move is primed** ([#846](https://github.com/cehinds/AshenSpire/pull/846), `0.6.0.24`). Prepared, Starstone Charge and Herald Blood Rite have authored poses across twelve outfits, persistent glows, and correct return behavior after actions. Solo and co-op preserve status ownership and keep extended figures within narrow combat screens.

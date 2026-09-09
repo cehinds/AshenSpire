@@ -109,3 +109,11 @@ First-party source sheets: `art/readiness-poses/sources/`; transparent shipped
 frames: `assets/readiness-poses/`. No external game artwork. Original procedural
 diamond, constellation, and halo glows are authored in `paintedOutfits.js`.
 Source: this repository; dedicated CC0-1.0 by the project for these new assets.
+
+## Readiness transition sprites (2026-09-08)
+
+Twelve additional project-owned CC0-1.0 pose illustrations created with the
+built-in OpenAI imagegen tool from the readiness outfit references. First-party
+sources: `art/readiness-poses/sources/*-transition.png`; exact prompts:
+`art/readiness-poses/transition-generation.json`. Exported to transparent WebP
+through `tools/readiness-poses-ship.mjs`.
