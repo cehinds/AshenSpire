@@ -105,6 +105,11 @@ jobs:
           cp AshenSpire.html preview/index.html
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
           cp -r src preview/src
+          cp world-atlas-preview.html preview/
+          cp -r styles preview/styles
+          cp -r assets/environments preview/assets/
+          mkdir -p preview/docs/preview
+          cp -r docs/preview/world-atlas preview/docs/preview/
           cp -r assets/combat-effects assets/painted-outfits preview/assets/
           cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html preview/art/combat-effects-2026-09-07/
           cp -r art/combat-effects-2026-09-07/inspection preview/art/combat-effects-2026-09-07/inspection

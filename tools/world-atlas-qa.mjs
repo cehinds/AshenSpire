@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
 const base = process.env.ATLAS_QA_URL || "http://localhost:8210";
+const gameEntry = process.env.ATLAS_QA_ENTRY || '/';
 const out = resolve(process.env.ATLAS_QA_OUT || "docs/preview/world-atlas");
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({
@@ -22,7 +23,7 @@ const shot = async (name) => {
   await page.screenshot({ path: resolve(out, name + ".png"), fullPage: false });
 };
 const atlas = async () => {
-  await page.goto(base + "/?shot=atlas");
+  await page.goto(base + gameEntry + "?shot=atlas");
   await page.locator(".world-atlas-screen").waitFor();
   await page.waitForTimeout(350);
 };
@@ -37,6 +38,13 @@ try {
     initial.activeNodeIds.length === 20,
     "Real game generates 20 active nodes",
   );
+  await page.locator('[data-atlas-quit]').click();
+  await page.keyboard.press('Enter');
+  await page.locator('.slot-continue').waitFor();
+  await page.locator('.slot-continue').click();
+  await page.locator('.world-atlas-screen').waitFor();
+  check(JSON.stringify(await page.evaluate(() => window.__worldJourney())) === JSON.stringify(initial), 'Save, quit and Continue preserve the manifest');
+  if (gameEntry.includes('.html')) check(await page.locator('.atlas-terrain image').evaluateAll(es => es.every(e => e.getAttribute('href').startsWith('data:'))), 'Standalone world artwork is embedded');
   await shot("01-world-desktop");
   await page.locator(".atlas-core.current").hover();
   await shot("02-landmark-hover");
