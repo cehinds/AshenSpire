@@ -6,11 +6,21 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-878",
     "date": "2026-09-09",
     "group": "2026-09-09",
-    "summary": "Clearer, closer maps with detail on demand",
-    "detail": "Use consistent large nodes in every run mode, load native detail tiles only for the visible area, retain a small offline fallback, and add an extra manual zoom step. Trace routes with bright outlined ink over engraved unexplored parchment; preserve discovery and travel rules.",
-    "build": "0.6.0.70",
+    "summary": "Clearer maps and interactive local locations",
+    "detail": "Use consistent large nodes in every run mode, load native detail tiles only for the visible area, retain a small offline fallback, and add an extra manual zoom step. Trace routes with bright outlined ink over engraved unexplored parchment; preserve discovery and travel rules. Pan and zoom local maps with mouse, touch, or keyboard; center selected sites and read actual service benefits before acting.",
+    "build": "0.6.0.71",
     "pullRequest": 878,
     "url": "https://github.com/cehinds/AshenSpire/pull/878"
+  },
+  {
+    "id": "pr-888",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Inspect every active combat ability",
+    "detail": "Click or tap stance and Evade badges to read their effects alongside all active statuses. Evade follows the shared hover timing and explains its charges and expiry. Expand individual explanations with mouse, touch, or keyboard while keeping selected cards safe from accidental play.",
+    "build": "0.6.0.69",
+    "pullRequest": 888,
+    "url": "https://github.com/cehinds/AshenSpire/pull/888"
   },
   {
     "id": "pr-876",

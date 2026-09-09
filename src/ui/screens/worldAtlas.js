@@ -1,3 +1,5 @@
+import { mountLocalMapCamera } from '../components/localMapCamera.js';
+import { localServiceModel } from '../models/LocalServiceModel.js';
 import { mountMapDetail } from '../components/mapDetail.js';
 import { mapFogDefs } from '../components/mapFog.js';
 import { MAP_PRESENTATION, MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
@@ -26,6 +28,8 @@ export function mountWorldAtlas(
   app,
   {
     run,
+    registries,
+    serviceContext = {},
     onTravel,
     onAction,
     onSave,
@@ -163,7 +167,9 @@ export function mountWorldAtlas(
     dialog.innerHTML = `<div class="atlas-dialog-head"><div><span class="atlas-eyebrow">${esc(a.regions[a.regionOf(id)].displayName)}</span><h2 id="atlas-location-title">${esc(n.displayName)}</h2></div>${button("Close", 'data-atlas-close aria-label="Close location"')}</div><div class="atlas-location-body"><div class="atlas-local-wrap">${local ? localMapHtml(local) : `<div class="atlas-location-illustration">${coreArt(id)}</div>`}</div><section class="atlas-location-detail" aria-live="polite"></section></div><footer class="atlas-dialog-foot"><span>${here ? "You are here" : reachable.has(id) ? "A connected road leads here" : "Explore connecting roads to reach this place"}</span>${button(here ? "Return to world" : `Travel to ${n.displayName}`, `data-atlas-travel ${!here && !reachable.has(id) ? "disabled" : ""}`)}</footer>`;
     document.body.append(dialog);
     dialog.showModal();
+    let disposeLocal = () => {};
     const close = () => {
+      disposeLocal();
       dialog.close();
       dialog.remove();
       returnFocus?.focus();
@@ -177,9 +183,7 @@ export function mountWorldAtlas(
       close();
       if (!here) onTravel(id);
     };
-    dialog
-      .querySelectorAll("[data-local-point]")
-      .forEach((b) => (b.onclick = () => detail(b.dataset.localPoint)));
+
     dialog.querySelector(".atlas-location-detail").innerHTML =
       `<h3>${esc(n.displayName)}</h3><p>${esc(n.description)}</p><p>${local ? "Select a marked place to see its services, quests, or destination." : "Travel is separate from inspection."}</p>${!local && here && !done.has(id) ? button("Explore this place", "data-atlas-explore") : ""}`;
     const explore = dialog.querySelector("[data-atlas-explore]");
@@ -188,6 +192,15 @@ export function mountWorldAtlas(
         close();
         onAction({ kind: "explore", ownerId: id });
       };
+    if (local) {
+      j.view.localMaps ||= {};
+      disposeLocal = mountLocalMapCamera(dialog.querySelector('.atlas-local-wrap'), {
+        mapId: local.mapId, source: a.assets[a.maps[local.mapId].artAssetId].uri,
+        points: a.localPoints[local.mapId] || [], saved: j.view.localMaps[local.mapId],
+        onSelect: detail,
+        onSave: view => { j.view.localMaps[local.mapId] = view; onSave?.(); },
+      });
+    }
     function detail(pointId) {
       const point = a.nodes[pointId],
         services = a.nodeServices[pointId] || [],
@@ -203,19 +216,22 @@ export function mountWorldAtlas(
             String(b.dataset.localPoint === pointId),
           ),
         );
-      let html = `<span class="atlas-eyebrow">${esc(a.data.node_types.find((t) => t.nodeTypeId === point.nodeTypeId)?.displayName || "Location")}</span><h3>${esc(point.displayName)}</h3><p>${esc(point.description)}</p>${!here ? '<p class="atlas-action-note">Travel here to use these services.</p>' : ""}`;
+      let html = `<span class="atlas-eyebrow">${esc(a.data.node_types.find((t) => t.nodeTypeId === point.nodeTypeId)?.displayName || "Location")}</span><h3>${esc(point.displayName)}</h3>${services.length ? "" : `<p>${esc(point.description)}</p>`}${!here ? '<p class="atlas-action-note">Travel here to use these services.</p>' : ""}`;
       for (const s of services) {
         const def = a.services[s.serviceId],
           used = j.serviceStates[pointId]?.used;
+        const preview = localServiceModel({ handlerId: a.serviceTypes[def.serviceTypeId].handlerId,
+          registries, run, state: j.serviceStates[pointId], ...serviceContext });
+        html += `<div class="atlas-service-benefits">${def.displayName === point.displayName ? "" : `<h4>${esc(def.displayName)}</h4>`}<p class="atlas-service-benefit">${esc(preview.benefit)}</p><ul>${preview.facts.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`;
         html += button(
-          used ? "Already visited" : def.displayName,
+          used ? "Visit used" : preview.action,
           `data-local-service="${esc(s.serviceId)}" ${!here || used ? "disabled" : ""}`,
         );
       }
       for (const q of quests) {
         const def = a.quests[q.questId],
           action = questAction(j, q.questId);
-        html += `<h4>${esc(def.displayName)}</h4><p>${esc(def.description)}</p>${button(action.label, `data-local-quest="${esc(q.questId)}" ${!here || !action.allowed ? "disabled" : ""}`)}`;
+        html += `<h4>${esc(def.displayName)}</h4><p>${esc(def.description)}</p><p class="atlas-service-benefit">Reward: ${def.rewardCinders} cinders. Objective: ${esc(a.nodes[def.objectiveNodeId]?.displayName || "Explore the marked road")}.</p>${button(action.label, `data-local-quest="${esc(q.questId)}" ${!here || !action.allowed ? "disabled" : ""}`)}`;
       }
       if (gate) {
         const available = reachable.has(gate.destinationNodeId);
@@ -289,10 +305,12 @@ export function mountWorldAtlas(
 function localMapHtml(local) {
   const map = ATLAS.maps[local.mapId],
     points = ATLAS.localPoints[local.mapId] || [];
-  return `<div class="atlas-local-map"><img src="${esc(uri(map.artAssetId))}" alt="Map of ${esc(map.displayName)}"/>${points
+  return `<div class="atlas-local-tools"><div class="atlas-local-zoom-tools">${button('−','data-local-zoom="out" aria-label="Zoom local map out"')}<output data-local-zoom-value aria-label="Map zoom">150%</output>${button('+','data-local-zoom="in" aria-label="Zoom local map in"')}${button('Fit','data-local-zoom="fit"')}</div><div class="atlas-local-pan-tools">${[['left','←'],['up','↑'],['down','↓'],['right','→']].map(([dir,label])=>button(label,`data-local-pan="${dir}" aria-label="Pan map ${dir}"`)).join('')}</div></div>
+  <p class="atlas-local-help">Drag to explore · scroll or pinch to zoom · focus map for + / − and arrow keys</p>
+  <div class="atlas-local-port" tabindex="0" role="group" aria-label="${esc(map.displayName)} interactive map"><div class="atlas-local-map"><svg viewBox="0 0 1000 1000" aria-hidden="true"><g class="map-detail-surface"><image href="${esc(uri(map.artAssetId))}" width="1000" height="1000" preserveAspectRatio="none"/></g></svg>${points
     .map((p) => {
       const n = ATLAS.nodes[p.nodeId];
-      return `<button type="button" data-local-point="${esc(p.nodeId)}" aria-pressed="false" class="atlas-local-point" style="left:${pct(p.x)};top:${pct(p.y)}"><span>${nodeIcon(traditionalType(n.nodeTypeId))}</span><small>${esc(n.displayName)}</small></button>`;
+      return `<button type="button" data-local-point="${esc(p.nodeId)}" aria-label="Inspect ${esc(n.displayName)}" aria-pressed="false" class="atlas-local-point" style="left:${pct(p.x)};top:${pct(p.y)}"><span>${nodeIcon(traditionalType(n.nodeTypeId))}</span><small>${esc(n.displayName)}</small></button>`;
     })
-    .join("")}</div>`;
+    .join("")}</div></div><label class="atlas-local-picker-label">Locations <select data-local-picker><option value="">Choose a place…</option>${points.map(p=>`<option value="${esc(p.nodeId)}">${esc(ATLAS.nodes[p.nodeId].displayName)}</option>`).join('')}</select></label>`;
 }

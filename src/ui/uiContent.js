@@ -28,6 +28,10 @@ export function statusTooltipText(def) {
   if (def.resists) sub('resists.percent', def.resists.percent);
   if (def.taggedVulnerability) sub('tv.pct', Math.round((def.taggedVulnerability.mult - 1) * 100));
   if (def.decay && typeof def.decay === 'object') sub('decay.duration', def.decay.duration);
+  for (const [i, effect] of (def.onEnter || []).entries()) sub(`onEnter.${i}.amount`, effect.amount);
+  for (const [i, hook] of (def.hooks || []).entries()) {
+    for (const [j, effect] of (hook.do || []).entries()) sub(`hooks.${i}.do.${j}.amount`, effect.amount);
+  }
   return t;
 }
 

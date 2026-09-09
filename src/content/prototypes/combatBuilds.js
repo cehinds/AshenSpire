@@ -70,8 +70,8 @@ export function prototypeBundle(pressure = 1) {
     enemies: [...contentBundle.enemies, ...Object.entries(prototypeScenarios).map(([id, s]) => enemy(id, s))],
     statuses: [...contentBundle.statuses, { id: 'prototypeClotted', name: 'Bleed Resistance', stackMode: 'unique', decay: { duration: 99 }, resists: { status: 'bleed', percent: 50 } }],
     stances: [...contentBundle.stances,
-      { id: 'prototypeGuardStance', name: 'Measured Guard', onEnter: [{ op: 'block', target: 'self', amount: 3 }], hooks: [{ on: 'ownerTurnStart', do: [{ op: 'block', target: 'self', amount: 2 }] }] },
-      { id: 'prototypeFocusStance', name: 'Astral Focus', onEnter: [{ op: 'block', target: 'self', amount: 3 }], hooks: [{ on: 'ownerTurnStart', do: [{ op: 'block', target: 'self', amount: 2 }] }] }],
+      { id: 'prototypeGuardStance', name: 'Measured Guard', tooltip: 'Gain {onEnter.0.amount} Block when entering. Gain {hooks.0.do.0.amount} Block at the start of each of your turns.', onEnter: [{ op: 'block', target: 'self', amount: 3 }], hooks: [{ on: 'ownerTurnStart', do: [{ op: 'block', target: 'self', amount: 2 }] }] },
+      { id: 'prototypeFocusStance', name: 'Astral Focus', tooltip: 'Gain {onEnter.0.amount} Block when entering. Gain {hooks.0.do.0.amount} Block at the start of each of your turns.', onEnter: [{ op: 'block', target: 'self', amount: 3 }], hooks: [{ on: 'ownerTurnStart', do: [{ op: 'block', target: 'self', amount: 2 }] }] }],
   };
 }
 export function prototypeRegistries(pressure = 1) {
