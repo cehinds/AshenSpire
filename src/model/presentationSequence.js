@@ -37,10 +37,11 @@ export function resolveBindings(project,context){
 }
 const finite=(v,min,max)=>typeof v==='number'&&Number.isFinite(v)&&v>=min&&v<=max;
 const string=(v,max=160)=>typeof v==='string'&&v.length<=max;
+const identifier=v=>string(v)&&/^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(v);
 export function validate(project,catalog=null){
  const errors=[];
  if(!project||project.schemaVersion!==VERSION)return ['Unsupported project version'];
- if(!string(project.id)||!project.id||!string(project.name)||!project.name)errors.push('Project needs an ID and name');
+ if(!identifier(project.id)||!string(project.name)||!project.name)errors.push('Project needs a safe ID and name');
  if(!finite(project.duration,100,30000))errors.push('Sequence duration must be 100–30000 ms');
  if(!Array.isArray(project.poses)||project.poses.length<5||project.poses.length>7||project.poses.some(p=>!string(p)))errors.push('Choose five to seven pose frames');
  if(!string(project.actor)||catalog&&!catalog.actors.includes(project.actor))errors.push('Unknown character');
@@ -48,7 +49,7 @@ export function validate(project,catalog=null){
  if(!Array.isArray(project.clips)||project.clips.length>100)return [...errors,'Too many effects (maximum 100)'];
  const ids=new Set();
  for(const c of project.clips){
-  if(!c||!string(c.id)||ids.has(c.id)){errors.push('Effect IDs must be unique');continue;}ids.add(c.id);
+  if(!c||!identifier(c.id)||ids.has(c.id)){errors.push('Effect IDs must be safe and unique');continue;}ids.add(c.id);
   if(!string(c.effect)||catalog&&!catalog.effects.includes(c.effect))errors.push(`Missing effect: ${c.effect}`);
   if(!Object.hasOwn(CUES,c.cue)||!Object.hasOwn(ANCHORS,c.anchor))errors.push(`Unknown cue or anchor: ${c.id}`);
   if(!finite(c.offset,-30000,30000)||!finite(c.duration,60,30000)||!finite(c.x,-1000,1000)||!finite(c.y,-600,600)||!finite(c.size,20,800)||!finite(c.opacity,0,1)||!finite(c.rotation,-360,360))errors.push(`Invalid effect dimensions/timing: ${c.id}`);
@@ -57,7 +58,7 @@ export function validate(project,catalog=null){
  if(!Array.isArray(project.bindings)||project.bindings.length>100)return [...errors,'Invalid bindings'];
  ids.clear();
  for(const b of project.bindings){
-  if(!b||!string(b.id)||ids.has(b.id)){errors.push('Binding IDs must be unique');continue;}ids.add(b.id);
+  if(!b||!identifier(b.id)||ids.has(b.id)){errors.push('Binding IDs must be safe and unique');continue;}ids.add(b.id);
   if(!['all','any','none'].every(k=>Array.isArray(b[k])&&b[k].length<=40&&b[k].every(t=>string(t,80))))errors.push(`Invalid tags: ${b.id}`);
   if(!['provider','kind','objectId','event','name'].every(k=>string(b[k]))||!b.provider||!b.kind||!b.event||typeof b.enabled!=='boolean'||!finite(b.priority,-999,999))errors.push(`Invalid binding: ${b.id}`);
   if(!['any','mana','stamina','resource','mundane','highAction'].includes(b.resource))errors.push(`Invalid payment: ${b.id}`);

@@ -19,9 +19,13 @@ export function playPresentationSequence(layer,from,context,{targets=[],duration
  const original=stage?.querySelector('.pose-frame'),sameActor=stage?.dataset.poseClass===project.actor;
  let poseOverlay=null,oldVisibility='',raf=0,stopped=false;
  if(original&&sameActor){actors.get(original)?.();oldVisibility=original.style.visibility;poseOverlay=original.cloneNode();poseOverlay.classList.add('studio-pose-frame');original.parentElement.append(poseOverlay);original.style.visibility='hidden';}
+ // A sibling of the stock overlay shares its local coordinates but sits below
+ // the battlefield (z=1), above its backdrop (z=0, earlier in document order).
+ let behindLayer=null;
+ const effectLayer=clip=>{if(clip.layer==='front')return layer;if(!behindLayer){behindLayer=document.createElement('div');behindLayer.className='studio-behind-layer';behindLayer.style.cssText='position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;';layer.parentElement.append(behindLayer);}return behindLayer;};
  const nodes=new Map(),started=performance.now(),ms=Math.max(96,Math.min(5000,duration));
  const url=path=>project.assets[path]||assetUrl(path);
- const stop=()=>{if(stopped)return;stopped=true;cancelAnimationFrame(raf);for(const img of nodes.values())img.remove();poseOverlay?.remove();if(original&&actors.get(original)===stop){original.style.visibility=oldVisibility;actors.delete(original);}onStop();};
+ const stop=()=>{if(stopped)return;stopped=true;cancelAnimationFrame(raf);for(const img of nodes.values())img.remove();behindLayer?.remove();poseOverlay?.remove();if(original&&actors.get(original)===stop){original.style.visibility=oldVisibility;actors.delete(original);}onStop();};
  if(poseOverlay)actors.set(original,stop);
  const render=now=>{
   if(stopped)return;const time=(now-started)/ms*project.duration;if(time>=project.duration){stop();return;}
@@ -31,7 +35,7 @@ export function playPresentationSequence(layer,from,context,{targets=[],duration
    // Target anchors/travel only appear for actual recipients from the caller.
    const recipients=clip.anchor==='target'||clip.travel?targets:[null];
    for(let i=0;i<recipients.length;i++){
-    const key=clip.id+':'+i;live.add(key);let img=nodes.get(key);if(!img){img=document.createElement('img');img.className='studio-combat-effect';img.alt='';img.setAttribute('aria-hidden','true');img.style.cssText='position:absolute;pointer-events:none;object-fit:contain;';nodes.set(key,img);layer.append(img);}
+    const key=clip.id+':'+i;live.add(key);let img=nodes.get(key);if(!img){img=document.createElement('img');img.className='studio-combat-effect';img.alt='';img.setAttribute('aria-hidden','true');img.style.cssText='position:absolute;pointer-events:none;object-fit:contain;';nodes.set(key,img);effectLayer(clip).append(img);}
     img.src=url(frames[clip.effect][clip.frame]);img.dataset.effect=clip.effect;
     const target=recipients[i],sx=from.width/230,sy=from.height/350;
     let x=from.left+from.width/2+(clip.x-ANCHORS.torso[0])*1000*sx,y=from.top+from.height*.5+(clip.y-ANCHORS.torso[1])*600*sy;

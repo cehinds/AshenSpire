@@ -79,7 +79,9 @@ const SELFTEST = process.argv.includes('--selftest');
 
 // The walk IS the denominator. Exclusions are named with reasons, because an
 // omission is not an answer.
-const ROOTS = ['src', 'tools', 'tests'];
+// The standalone studio is authored source too. Capture tooling imports its
+// server, so both the live census and isolated failure-plant copies need it.
+const ROOTS = ['src', 'tools', 'tests', 'pose-studio'];
 const SKIP_DIRS = new Set([
   'node_modules',   // none in this tree, and not ours to link
   'build',          // generated bundle — linking a 2 MB single file says nothing

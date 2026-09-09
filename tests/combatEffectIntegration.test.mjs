@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
 import {createRegistries,resolveCard} from '../src/model/registries.js';
 import {combatEffectPlan,combatEffectTags,combatEffectTargetIds} from '../src/model/combatEffects.js';
-import {decorateCombatEffects,combatEffectForEvent,combatEffectReceipt} from '../src/model/combatEffectEvents.js';
+import {decorateCombatEffects,combatEffectForEvent,combatEffectReceipt,presentationTargetIds} from '../src/model/combatEffectEvents.js';
 import {createSession} from '../tools/session.mjs';
 import {COMBAT_EFFECT_ART} from '../src/content/combatEffectArt.js';
 import {COMBAT_EFFECT_RULES} from '../src/content/combatEffectRules.js';
@@ -47,11 +47,27 @@ test('real co-op receipts retain the casting seat and a different friendly recip
  assert.deepEqual(combatEffectTargetIds(plan('gorefireSlash'),hit,'p2'),['e1']);
  assert.deepEqual(combatEffectTargetIds(plan('gorefireSlash'),hit,'p1'),[]);
  assert.ok(host.combatPlay('p2','fx-ally','p1').ok);
- const guard=host.snapshot().scene.events.map(combatEffectReceipt).find(e=>e.type==='blockGained');
+ const guardEvents=host.snapshot().scene.events;
+ const guard=guardEvents.map(combatEffectReceipt).find(e=>e.type==='blockGained');
  assert.equal(guard.targetId,'p1');assert.ok(guard.amount>0);
+ assert.deepEqual(combatEffectTargetIds(plan('rallyingBanner'),guardEvents.map(combatEffectReceipt),'p2'),[]);
+ assert.deepEqual(presentationTargetIds(guardEvents,'p2','rallyingBanner'),['p1']);
+ assert.deepEqual(presentationTargetIds(guardEvents,'p1','rallyingBanner'),[]);
  assert.ok(host.combatPlay('p2','fx-status','p1').ok);
  const buffs=host.snapshot().scene.events.map(combatEffectReceipt).filter(e=>e.type==='statusApplied'&&e.status==='strength');
  assert.deepEqual(buffs.map(e=>[e.sourceId,e.targetId,e.stacks]),[['p2','p1',2],['p2','p2',1]]);
+});
+test('authored recipients require positive outcomes in the matching card receipt segment',()=>{
+ const events=[{type:'healed',targetId:'outside',amount:3},{type:'cardPlayed',playerId:'p2',cardId:'ward'},
+  {type:'healed',playerId:'p1',targetId:'player',amount:3},{type:'blockGained',targetPlayerId:'p1',targetId:'player',amount:4},
+  {type:'statusApplied',sourcePlayerId:'p2',sourceId:'player',targetId:'e1',stacks:1},
+  {type:'damageDealt',sourceId:'e1',targetId:'p2',amount:3},{type:'healed',targetId:'fullHp',amount:0},
+  {type:'blockGained',targetId:'capped',amount:0},{type:'statusApplied',targetId:'resisted',stacks:0},
+  {type:'hpLost',targetId:'p2',amount:3,cause:'payment'},
+  {type:'cardPlayed',playerId:'p1',cardId:'other'},{type:'healed',targetId:'later',amount:3}];
+ assert.deepEqual(presentationTargetIds(events,'p2','ward'),['p1','e1']);
+ assert.deepEqual(presentationTargetIds(events,'p2','missing'),[]);
+ assert.deepEqual(presentationTargetIds([...events,{type:'cardPlayed',playerId:'p2',cardId:'ward'},{type:'blockGained',targetId:'latest',amount:1},{type:'enemyMoveStarted'},{type:'healed',targetId:'enemy',amount:1}],'p2','ward'),['latest']);
 });
 test('presentation associations do not change materialized combat card or equipment tags',()=>{
  const b={...contentBundle};
