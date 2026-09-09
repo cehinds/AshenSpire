@@ -175,7 +175,8 @@
 .combatant.player.armed { cursor: pointer; }
 
 .enemy .sprite { cursor: pointer; }
-.enemy.targetable .sprite, .enemy.hover-target .sprite { outline: none; }
+.enemy.targetable .sprite { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: var(--r-3); }
+.enemy.hover-target .sprite { outline-style: solid; }
 
 /* ---------- hand + controls ---------- */
 /* #295 — `--action-row-drop` IS THE ONE HOME FOR HOW FAR THE ACTION ROW HANGS
@@ -1030,8 +1031,7 @@
 .combat .combatant.player.skill-selected .sprite { filter: drop-shadow(0 0 .6rem var(--gold)); }
 .combat .hand .card { touch-action: none; }
 
-/* Above the opaque card face, driven by the shared hold's actual progress.
-   No easing: release/cancel clears immediately, including reduced motion. */
+/* Progress sits above the opaque face and uses the shared hold timer. */
 .combat .hand .card > .card-hold-progress {
   display: none; position: absolute; left: 6px; right: 6px; bottom: 6px;
   height: max(6px, calc(6px / var(--ui-zoom, 1)));
