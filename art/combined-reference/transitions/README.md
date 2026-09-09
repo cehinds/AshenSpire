@@ -2,6 +2,8 @@
 
 Local reference preview: `/transition-reference-preview.html`. Experimental work stays unmerged.
 
+Greatsword playback now follows the requested original sprite numbers: **1 → 3 → 2 → 6 → 5 → 4 → 6 → 7 → 1**. This is nine playback steps using seven existing drawings. The original thumbnail numbers are retained; stepping, playback and the previous-frame overlay follow the new order. Append `?class=reaver&play=1` to start playback on opening the preview.
+
 Six sequences cover the four existing class references plus Reaver sword/shield and Herald staff/free-hand casting. Each has seven drawings (42 exports total): guard, windup, bridge into contact, contact, bridge out of contact, follow-through and recovery. The last frame returns to guard. Three bridges per sequence keep the total within the requested five-to-seven-frame range; this is not three inserted frames per gap. Hit and menu idle are excluded.
 
 The source artwork already contains each weapon. Reaver was generated from its original combined sheet; the other sequences use four-pose guides in `keys/` to exclude unrelated hurt and menu poses. Original combined references remain unchanged one directory above. `sources.json` records prompts, selected image files, source-slot ordering and manually estimated front-foot registration. The recovery edits replace abrupt Rogue/Reaver returns, the shield correction removes an erroneous double-ended sword, and the Starseer correction puts its staff above the casting axis before contact. Some generated source sheets contain an unused eighth drawing; only seven selected frames are exported.

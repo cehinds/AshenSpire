@@ -1,0 +1,1915 @@
+{
+  "version": 1,
+  "poses": [
+    {
+      "id": "reference:reaver:pose-01",
+      "label": "Reaver · Greatsword · 1 Guard",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver/0.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver:pose-02",
+      "label": "Reaver · Greatsword · 2 Windup",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver/1.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver:pose-03",
+      "label": "Reaver · Greatsword · 3 Into contact",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver/2.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver:pose-04",
+      "label": "Reaver · Greatsword · 4 Contact",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver/3.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver:pose-05",
+      "label": "Reaver · Greatsword · 5 Out of contact",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver/4.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver:pose-06",
+      "label": "Reaver · Greatsword · 6 Follow-through",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver/5.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver:pose-07",
+      "label": "Reaver · Greatsword · 7 Recovery",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver/6.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:rogue:pose-01",
+      "label": "Rogue · Twin daggers · 1 Guard",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/rogue/0.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:rogue:pose-02",
+      "label": "Rogue · Twin daggers · 2 Windup",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/rogue/1.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:rogue:pose-03",
+      "label": "Rogue · Twin daggers · 3 Into contact",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/rogue/2.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:rogue:pose-04",
+      "label": "Rogue · Twin daggers · 4 Contact",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/rogue/3.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:rogue:pose-05",
+      "label": "Rogue · Twin daggers · 5 Out of contact",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/rogue/4.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:rogue:pose-06",
+      "label": "Rogue · Twin daggers · 6 Follow-through",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/rogue/5.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:rogue:pose-07",
+      "label": "Rogue · Twin daggers · 7 Recovery",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/rogue/6.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:starseer:pose-01",
+      "label": "Starseer · Staff · 1 Guard",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/starseer/0.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:starseer:pose-02",
+      "label": "Starseer · Staff · 2 Windup",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/starseer/1.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:starseer:pose-03",
+      "label": "Starseer · Staff · 3 Into contact",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/starseer/2.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:starseer:pose-04",
+      "label": "Starseer · Staff · 4 Contact",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/starseer/3.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:starseer:pose-05",
+      "label": "Starseer · Staff · 5 Out of contact",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/starseer/4.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:starseer:pose-06",
+      "label": "Starseer · Staff · 6 Follow-through",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/starseer/5.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:starseer:pose-07",
+      "label": "Starseer · Staff · 7 Recovery",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/starseer/6.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald:pose-01",
+      "label": "Herald · Empty hands · 1 Guard",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald/0.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald:pose-02",
+      "label": "Herald · Empty hands · 2 Windup",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald/1.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald:pose-03",
+      "label": "Herald · Empty hands · 3 Into contact",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald/2.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald:pose-04",
+      "label": "Herald · Empty hands · 4 Contact",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald/3.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald:pose-05",
+      "label": "Herald · Empty hands · 5 Out of contact",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald/4.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald:pose-06",
+      "label": "Herald · Empty hands · 6 Follow-through",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald/5.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald:pose-07",
+      "label": "Herald · Empty hands · 7 Recovery",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald/6.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver-shield:pose-01",
+      "label": "Reaver · Sword and shield · 1 Guard",
+      "classId": "reaver",
+      "outfit": "reaver-shield",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver-shield/0.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver-shield:pose-02",
+      "label": "Reaver · Sword and shield · 2 Windup",
+      "classId": "reaver",
+      "outfit": "reaver-shield",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver-shield/1.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver-shield:pose-03",
+      "label": "Reaver · Sword and shield · 3 Into contact",
+      "classId": "reaver",
+      "outfit": "reaver-shield",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver-shield/2.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver-shield:pose-04",
+      "label": "Reaver · Sword and shield · 4 Contact",
+      "classId": "reaver",
+      "outfit": "reaver-shield",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver-shield/3.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver-shield:pose-05",
+      "label": "Reaver · Sword and shield · 5 Out of contact",
+      "classId": "reaver",
+      "outfit": "reaver-shield",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver-shield/4.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver-shield:pose-06",
+      "label": "Reaver · Sword and shield · 6 Follow-through",
+      "classId": "reaver",
+      "outfit": "reaver-shield",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver-shield/5.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:reaver-shield:pose-07",
+      "label": "Reaver · Sword and shield · 7 Recovery",
+      "classId": "reaver",
+      "outfit": "reaver-shield",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/reaver-shield/6.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald-staff:pose-01",
+      "label": "Herald · Staff and casting hand · 1 Guard",
+      "classId": "herald",
+      "outfit": "herald-staff",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald-staff/0.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald-staff:pose-02",
+      "label": "Herald · Staff and casting hand · 2 Windup",
+      "classId": "herald",
+      "outfit": "herald-staff",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald-staff/1.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald-staff:pose-03",
+      "label": "Herald · Staff and casting hand · 3 Into contact",
+      "classId": "herald",
+      "outfit": "herald-staff",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald-staff/2.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald-staff:pose-04",
+      "label": "Herald · Staff and casting hand · 4 Contact",
+      "classId": "herald",
+      "outfit": "herald-staff",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald-staff/3.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald-staff:pose-05",
+      "label": "Herald · Staff and casting hand · 5 Out of contact",
+      "classId": "herald",
+      "outfit": "herald-staff",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald-staff/4.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald-staff:pose-06",
+      "label": "Herald · Staff and casting hand · 6 Follow-through",
+      "classId": "herald",
+      "outfit": "herald-staff",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald-staff/5.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "reference:herald-staff:pose-07",
+      "label": "Herald · Staff and casting hand · 7 Recovery",
+      "classId": "herald",
+      "outfit": "herald-staff",
+      "kind": "reference",
+      "src": "art/combined-reference/transitions/frames/herald-staff/6.png",
+      "width": 600,
+      "height": 560,
+      "pivot": {
+        "x": 330,
+        "y": 490
+      },
+      "scale": 1
+    },
+    {
+      "id": "painted:herald:attack1",
+      "label": "herald · attack1",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald/attack1.webp"
+    },
+    {
+      "id": "painted:herald:attack2",
+      "label": "herald · attack2",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald/attack2.webp"
+    },
+    {
+      "id": "painted:herald:attack3",
+      "label": "herald · attack3",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald/attack3.webp"
+    },
+    {
+      "id": "painted:herald:attack4",
+      "label": "herald · attack4",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald/attack4.webp"
+    },
+    {
+      "id": "painted:herald:detail",
+      "label": "herald · detail",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "menu",
+      "src": "assets/painted-outfits/herald/detail.webp"
+    },
+    {
+      "id": "painted:herald:guard",
+      "label": "herald · guard",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald/guard.webp"
+    },
+    {
+      "id": "painted:herald:hit",
+      "label": "herald · hit",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald/hit.webp"
+    },
+    {
+      "id": "painted:herald:idle",
+      "label": "herald · idle",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald/idle.webp"
+    },
+    {
+      "id": "painted:herald:menu",
+      "label": "herald · menu",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "menu",
+      "src": "assets/painted-outfits/herald/menu.webp"
+    },
+    {
+      "id": "painted:herald:portrait",
+      "label": "herald · portrait",
+      "classId": "herald",
+      "outfit": "herald",
+      "kind": "menu",
+      "src": "assets/painted-outfits/herald/portrait.webp"
+    },
+    {
+      "id": "painted:herald-emberhabit:attack1",
+      "label": "herald-emberhabit · attack1",
+      "classId": "herald",
+      "outfit": "herald-emberhabit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-emberhabit/attack1.webp"
+    },
+    {
+      "id": "painted:herald-emberhabit:attack2",
+      "label": "herald-emberhabit · attack2",
+      "classId": "herald",
+      "outfit": "herald-emberhabit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-emberhabit/attack2.webp"
+    },
+    {
+      "id": "painted:herald-emberhabit:attack3",
+      "label": "herald-emberhabit · attack3",
+      "classId": "herald",
+      "outfit": "herald-emberhabit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-emberhabit/attack3.webp"
+    },
+    {
+      "id": "painted:herald-emberhabit:attack4",
+      "label": "herald-emberhabit · attack4",
+      "classId": "herald",
+      "outfit": "herald-emberhabit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-emberhabit/attack4.webp"
+    },
+    {
+      "id": "painted:herald-emberhabit:detail",
+      "label": "herald-emberhabit · detail",
+      "classId": "herald",
+      "outfit": "herald-emberhabit",
+      "kind": "menu",
+      "src": "assets/painted-outfits/herald-emberhabit/detail.webp"
+    },
+    {
+      "id": "painted:herald-emberhabit:guard",
+      "label": "herald-emberhabit · guard",
+      "classId": "herald",
+      "outfit": "herald-emberhabit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-emberhabit/guard.webp"
+    },
+    {
+      "id": "painted:herald-emberhabit:hit",
+      "label": "herald-emberhabit · hit",
+      "classId": "herald",
+      "outfit": "herald-emberhabit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-emberhabit/hit.webp"
+    },
+    {
+      "id": "painted:herald-emberhabit:idle",
+      "label": "herald-emberhabit · idle",
+      "classId": "herald",
+      "outfit": "herald-emberhabit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-emberhabit/idle.webp"
+    },
+    {
+      "id": "painted:herald-emberhabit:menu",
+      "label": "herald-emberhabit · menu",
+      "classId": "herald",
+      "outfit": "herald-emberhabit",
+      "kind": "menu",
+      "src": "assets/painted-outfits/herald-emberhabit/menu.webp"
+    },
+    {
+      "id": "painted:herald-emberhabit:portrait",
+      "label": "herald-emberhabit · portrait",
+      "classId": "herald",
+      "outfit": "herald-emberhabit",
+      "kind": "menu",
+      "src": "assets/painted-outfits/herald-emberhabit/portrait.webp"
+    },
+    {
+      "id": "painted:herald-ossuary:attack1",
+      "label": "herald-ossuary · attack1",
+      "classId": "herald",
+      "outfit": "herald-ossuary",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-ossuary/attack1.webp"
+    },
+    {
+      "id": "painted:herald-ossuary:attack2",
+      "label": "herald-ossuary · attack2",
+      "classId": "herald",
+      "outfit": "herald-ossuary",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-ossuary/attack2.webp"
+    },
+    {
+      "id": "painted:herald-ossuary:attack3",
+      "label": "herald-ossuary · attack3",
+      "classId": "herald",
+      "outfit": "herald-ossuary",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-ossuary/attack3.webp"
+    },
+    {
+      "id": "painted:herald-ossuary:attack4",
+      "label": "herald-ossuary · attack4",
+      "classId": "herald",
+      "outfit": "herald-ossuary",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-ossuary/attack4.webp"
+    },
+    {
+      "id": "painted:herald-ossuary:detail",
+      "label": "herald-ossuary · detail",
+      "classId": "herald",
+      "outfit": "herald-ossuary",
+      "kind": "menu",
+      "src": "assets/painted-outfits/herald-ossuary/detail.webp"
+    },
+    {
+      "id": "painted:herald-ossuary:guard",
+      "label": "herald-ossuary · guard",
+      "classId": "herald",
+      "outfit": "herald-ossuary",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-ossuary/guard.webp"
+    },
+    {
+      "id": "painted:herald-ossuary:hit",
+      "label": "herald-ossuary · hit",
+      "classId": "herald",
+      "outfit": "herald-ossuary",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-ossuary/hit.webp"
+    },
+    {
+      "id": "painted:herald-ossuary:idle",
+      "label": "herald-ossuary · idle",
+      "classId": "herald",
+      "outfit": "herald-ossuary",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-ossuary/idle.webp"
+    },
+    {
+      "id": "painted:herald-ossuary:menu",
+      "label": "herald-ossuary · menu",
+      "classId": "herald",
+      "outfit": "herald-ossuary",
+      "kind": "menu",
+      "src": "assets/painted-outfits/herald-ossuary/menu.webp"
+    },
+    {
+      "id": "painted:herald-ossuary:portrait",
+      "label": "herald-ossuary · portrait",
+      "classId": "herald",
+      "outfit": "herald-ossuary",
+      "kind": "menu",
+      "src": "assets/painted-outfits/herald-ossuary/portrait.webp"
+    },
+    {
+      "id": "painted:herald-pilgrim:attack1",
+      "label": "herald-pilgrim · attack1",
+      "classId": "herald",
+      "outfit": "herald-pilgrim",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-pilgrim/attack1.webp"
+    },
+    {
+      "id": "painted:herald-pilgrim:attack2",
+      "label": "herald-pilgrim · attack2",
+      "classId": "herald",
+      "outfit": "herald-pilgrim",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-pilgrim/attack2.webp"
+    },
+    {
+      "id": "painted:herald-pilgrim:attack3",
+      "label": "herald-pilgrim · attack3",
+      "classId": "herald",
+      "outfit": "herald-pilgrim",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-pilgrim/attack3.webp"
+    },
+    {
+      "id": "painted:herald-pilgrim:attack4",
+      "label": "herald-pilgrim · attack4",
+      "classId": "herald",
+      "outfit": "herald-pilgrim",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-pilgrim/attack4.webp"
+    },
+    {
+      "id": "painted:herald-pilgrim:detail",
+      "label": "herald-pilgrim · detail",
+      "classId": "herald",
+      "outfit": "herald-pilgrim",
+      "kind": "menu",
+      "src": "assets/painted-outfits/herald-pilgrim/detail.webp"
+    },
+    {
+      "id": "painted:herald-pilgrim:guard",
+      "label": "herald-pilgrim · guard",
+      "classId": "herald",
+      "outfit": "herald-pilgrim",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-pilgrim/guard.webp"
+    },
+    {
+      "id": "painted:herald-pilgrim:hit",
+      "label": "herald-pilgrim · hit",
+      "classId": "herald",
+      "outfit": "herald-pilgrim",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-pilgrim/hit.webp"
+    },
+    {
+      "id": "painted:herald-pilgrim:idle",
+      "label": "herald-pilgrim · idle",
+      "classId": "herald",
+      "outfit": "herald-pilgrim",
+      "kind": "painted",
+      "src": "assets/painted-outfits/herald-pilgrim/idle.webp"
+    },
+    {
+      "id": "painted:herald-pilgrim:menu",
+      "label": "herald-pilgrim · menu",
+      "classId": "herald",
+      "outfit": "herald-pilgrim",
+      "kind": "menu",
+      "src": "assets/painted-outfits/herald-pilgrim/menu.webp"
+    },
+    {
+      "id": "painted:herald-pilgrim:portrait",
+      "label": "herald-pilgrim · portrait",
+      "classId": "herald",
+      "outfit": "herald-pilgrim",
+      "kind": "menu",
+      "src": "assets/painted-outfits/herald-pilgrim/portrait.webp"
+    },
+    {
+      "id": "painted:reaver:attack1",
+      "label": "reaver · attack1",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver/attack1.webp"
+    },
+    {
+      "id": "painted:reaver:attack2",
+      "label": "reaver · attack2",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver/attack2.webp"
+    },
+    {
+      "id": "painted:reaver:attack3",
+      "label": "reaver · attack3",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver/attack3.webp"
+    },
+    {
+      "id": "painted:reaver:attack4",
+      "label": "reaver · attack4",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver/attack4.webp"
+    },
+    {
+      "id": "painted:reaver:detail",
+      "label": "reaver · detail",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "menu",
+      "src": "assets/painted-outfits/reaver/detail.webp"
+    },
+    {
+      "id": "painted:reaver:guard",
+      "label": "reaver · guard",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver/guard.webp"
+    },
+    {
+      "id": "painted:reaver:hit",
+      "label": "reaver · hit",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver/hit.webp"
+    },
+    {
+      "id": "painted:reaver:idle",
+      "label": "reaver · idle",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver/idle.webp"
+    },
+    {
+      "id": "painted:reaver:menu",
+      "label": "reaver · menu",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "menu",
+      "src": "assets/painted-outfits/reaver/menu.webp"
+    },
+    {
+      "id": "painted:reaver:portrait",
+      "label": "reaver · portrait",
+      "classId": "reaver",
+      "outfit": "reaver",
+      "kind": "menu",
+      "src": "assets/painted-outfits/reaver/portrait.webp"
+    },
+    {
+      "id": "painted:reaver-oathsworn:attack1",
+      "label": "reaver-oathsworn · attack1",
+      "classId": "reaver",
+      "outfit": "reaver-oathsworn",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-oathsworn/attack1.webp"
+    },
+    {
+      "id": "painted:reaver-oathsworn:attack2",
+      "label": "reaver-oathsworn · attack2",
+      "classId": "reaver",
+      "outfit": "reaver-oathsworn",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-oathsworn/attack2.webp"
+    },
+    {
+      "id": "painted:reaver-oathsworn:attack3",
+      "label": "reaver-oathsworn · attack3",
+      "classId": "reaver",
+      "outfit": "reaver-oathsworn",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-oathsworn/attack3.webp"
+    },
+    {
+      "id": "painted:reaver-oathsworn:attack4",
+      "label": "reaver-oathsworn · attack4",
+      "classId": "reaver",
+      "outfit": "reaver-oathsworn",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-oathsworn/attack4.webp"
+    },
+    {
+      "id": "painted:reaver-oathsworn:detail",
+      "label": "reaver-oathsworn · detail",
+      "classId": "reaver",
+      "outfit": "reaver-oathsworn",
+      "kind": "menu",
+      "src": "assets/painted-outfits/reaver-oathsworn/detail.webp"
+    },
+    {
+      "id": "painted:reaver-oathsworn:guard",
+      "label": "reaver-oathsworn · guard",
+      "classId": "reaver",
+      "outfit": "reaver-oathsworn",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-oathsworn/guard.webp"
+    },
+    {
+      "id": "painted:reaver-oathsworn:hit",
+      "label": "reaver-oathsworn · hit",
+      "classId": "reaver",
+      "outfit": "reaver-oathsworn",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-oathsworn/hit.webp"
+    },
+    {
+      "id": "painted:reaver-oathsworn:idle",
+      "label": "reaver-oathsworn · idle",
+      "classId": "reaver",
+      "outfit": "reaver-oathsworn",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-oathsworn/idle.webp"
+    },
+    {
+      "id": "painted:reaver-oathsworn:menu",
+      "label": "reaver-oathsworn · menu",
+      "classId": "reaver",
+      "outfit": "reaver-oathsworn",
+      "kind": "menu",
+      "src": "assets/painted-outfits/reaver-oathsworn/menu.webp"
+    },
+    {
+      "id": "painted:reaver-oathsworn:portrait",
+      "label": "reaver-oathsworn · portrait",
+      "classId": "reaver",
+      "outfit": "reaver-oathsworn",
+      "kind": "menu",
+      "src": "assets/painted-outfits/reaver-oathsworn/portrait.webp"
+    },
+    {
+      "id": "painted:reaver-vigil:attack1",
+      "label": "reaver-vigil · attack1",
+      "classId": "reaver",
+      "outfit": "reaver-vigil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-vigil/attack1.webp"
+    },
+    {
+      "id": "painted:reaver-vigil:attack2",
+      "label": "reaver-vigil · attack2",
+      "classId": "reaver",
+      "outfit": "reaver-vigil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-vigil/attack2.webp"
+    },
+    {
+      "id": "painted:reaver-vigil:attack3",
+      "label": "reaver-vigil · attack3",
+      "classId": "reaver",
+      "outfit": "reaver-vigil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-vigil/attack3.webp"
+    },
+    {
+      "id": "painted:reaver-vigil:attack4",
+      "label": "reaver-vigil · attack4",
+      "classId": "reaver",
+      "outfit": "reaver-vigil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-vigil/attack4.webp"
+    },
+    {
+      "id": "painted:reaver-vigil:detail",
+      "label": "reaver-vigil · detail",
+      "classId": "reaver",
+      "outfit": "reaver-vigil",
+      "kind": "menu",
+      "src": "assets/painted-outfits/reaver-vigil/detail.webp"
+    },
+    {
+      "id": "painted:reaver-vigil:guard",
+      "label": "reaver-vigil · guard",
+      "classId": "reaver",
+      "outfit": "reaver-vigil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-vigil/guard.webp"
+    },
+    {
+      "id": "painted:reaver-vigil:hit",
+      "label": "reaver-vigil · hit",
+      "classId": "reaver",
+      "outfit": "reaver-vigil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-vigil/hit.webp"
+    },
+    {
+      "id": "painted:reaver-vigil:idle",
+      "label": "reaver-vigil · idle",
+      "classId": "reaver",
+      "outfit": "reaver-vigil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-vigil/idle.webp"
+    },
+    {
+      "id": "painted:reaver-vigil:menu",
+      "label": "reaver-vigil · menu",
+      "classId": "reaver",
+      "outfit": "reaver-vigil",
+      "kind": "menu",
+      "src": "assets/painted-outfits/reaver-vigil/menu.webp"
+    },
+    {
+      "id": "painted:reaver-vigil:portrait",
+      "label": "reaver-vigil · portrait",
+      "classId": "reaver",
+      "outfit": "reaver-vigil",
+      "kind": "menu",
+      "src": "assets/painted-outfits/reaver-vigil/portrait.webp"
+    },
+    {
+      "id": "painted:reaver-warden:attack1",
+      "label": "reaver-warden · attack1",
+      "classId": "reaver",
+      "outfit": "reaver-warden",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-warden/attack1.webp"
+    },
+    {
+      "id": "painted:reaver-warden:attack2",
+      "label": "reaver-warden · attack2",
+      "classId": "reaver",
+      "outfit": "reaver-warden",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-warden/attack2.webp"
+    },
+    {
+      "id": "painted:reaver-warden:attack3",
+      "label": "reaver-warden · attack3",
+      "classId": "reaver",
+      "outfit": "reaver-warden",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-warden/attack3.webp"
+    },
+    {
+      "id": "painted:reaver-warden:attack4",
+      "label": "reaver-warden · attack4",
+      "classId": "reaver",
+      "outfit": "reaver-warden",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-warden/attack4.webp"
+    },
+    {
+      "id": "painted:reaver-warden:detail",
+      "label": "reaver-warden · detail",
+      "classId": "reaver",
+      "outfit": "reaver-warden",
+      "kind": "menu",
+      "src": "assets/painted-outfits/reaver-warden/detail.webp"
+    },
+    {
+      "id": "painted:reaver-warden:guard",
+      "label": "reaver-warden · guard",
+      "classId": "reaver",
+      "outfit": "reaver-warden",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-warden/guard.webp"
+    },
+    {
+      "id": "painted:reaver-warden:hit",
+      "label": "reaver-warden · hit",
+      "classId": "reaver",
+      "outfit": "reaver-warden",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-warden/hit.webp"
+    },
+    {
+      "id": "painted:reaver-warden:idle",
+      "label": "reaver-warden · idle",
+      "classId": "reaver",
+      "outfit": "reaver-warden",
+      "kind": "painted",
+      "src": "assets/painted-outfits/reaver-warden/idle.webp"
+    },
+    {
+      "id": "painted:reaver-warden:menu",
+      "label": "reaver-warden · menu",
+      "classId": "reaver",
+      "outfit": "reaver-warden",
+      "kind": "menu",
+      "src": "assets/painted-outfits/reaver-warden/menu.webp"
+    },
+    {
+      "id": "painted:reaver-warden:portrait",
+      "label": "reaver-warden · portrait",
+      "classId": "reaver",
+      "outfit": "reaver-warden",
+      "kind": "menu",
+      "src": "assets/painted-outfits/reaver-warden/portrait.webp"
+    },
+    {
+      "id": "painted:rogue:attack1",
+      "label": "rogue · attack1",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue/attack1.webp"
+    },
+    {
+      "id": "painted:rogue:attack2",
+      "label": "rogue · attack2",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue/attack2.webp"
+    },
+    {
+      "id": "painted:rogue:attack3",
+      "label": "rogue · attack3",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue/attack3.webp"
+    },
+    {
+      "id": "painted:rogue:attack4",
+      "label": "rogue · attack4",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue/attack4.webp"
+    },
+    {
+      "id": "painted:rogue:detail",
+      "label": "rogue · detail",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "menu",
+      "src": "assets/painted-outfits/rogue/detail.webp"
+    },
+    {
+      "id": "painted:rogue:guard",
+      "label": "rogue · guard",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue/guard.webp"
+    },
+    {
+      "id": "painted:rogue:hit",
+      "label": "rogue · hit",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue/hit.webp"
+    },
+    {
+      "id": "painted:rogue:idle",
+      "label": "rogue · idle",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue/idle.webp"
+    },
+    {
+      "id": "painted:rogue:menu",
+      "label": "rogue · menu",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "menu",
+      "src": "assets/painted-outfits/rogue/menu.webp"
+    },
+    {
+      "id": "painted:rogue:portrait",
+      "label": "rogue · portrait",
+      "classId": "rogue",
+      "outfit": "rogue",
+      "kind": "menu",
+      "src": "assets/painted-outfits/rogue/portrait.webp"
+    },
+    {
+      "id": "painted:rogue-duelist:attack1",
+      "label": "rogue-duelist · attack1",
+      "classId": "rogue",
+      "outfit": "rogue-duelist",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-duelist/attack1.webp"
+    },
+    {
+      "id": "painted:rogue-duelist:attack2",
+      "label": "rogue-duelist · attack2",
+      "classId": "rogue",
+      "outfit": "rogue-duelist",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-duelist/attack2.webp"
+    },
+    {
+      "id": "painted:rogue-duelist:attack3",
+      "label": "rogue-duelist · attack3",
+      "classId": "rogue",
+      "outfit": "rogue-duelist",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-duelist/attack3.webp"
+    },
+    {
+      "id": "painted:rogue-duelist:attack4",
+      "label": "rogue-duelist · attack4",
+      "classId": "rogue",
+      "outfit": "rogue-duelist",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-duelist/attack4.webp"
+    },
+    {
+      "id": "painted:rogue-duelist:detail",
+      "label": "rogue-duelist · detail",
+      "classId": "rogue",
+      "outfit": "rogue-duelist",
+      "kind": "menu",
+      "src": "assets/painted-outfits/rogue-duelist/detail.webp"
+    },
+    {
+      "id": "painted:rogue-duelist:guard",
+      "label": "rogue-duelist · guard",
+      "classId": "rogue",
+      "outfit": "rogue-duelist",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-duelist/guard.webp"
+    },
+    {
+      "id": "painted:rogue-duelist:hit",
+      "label": "rogue-duelist · hit",
+      "classId": "rogue",
+      "outfit": "rogue-duelist",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-duelist/hit.webp"
+    },
+    {
+      "id": "painted:rogue-duelist:idle",
+      "label": "rogue-duelist · idle",
+      "classId": "rogue",
+      "outfit": "rogue-duelist",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-duelist/idle.webp"
+    },
+    {
+      "id": "painted:rogue-duelist:menu",
+      "label": "rogue-duelist · menu",
+      "classId": "rogue",
+      "outfit": "rogue-duelist",
+      "kind": "menu",
+      "src": "assets/painted-outfits/rogue-duelist/menu.webp"
+    },
+    {
+      "id": "painted:rogue-duelist:portrait",
+      "label": "rogue-duelist · portrait",
+      "classId": "rogue",
+      "outfit": "rogue-duelist",
+      "kind": "menu",
+      "src": "assets/painted-outfits/rogue-duelist/portrait.webp"
+    },
+    {
+      "id": "painted:rogue-nightveil:attack1",
+      "label": "rogue-nightveil · attack1",
+      "classId": "rogue",
+      "outfit": "rogue-nightveil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-nightveil/attack1.webp"
+    },
+    {
+      "id": "painted:rogue-nightveil:attack2",
+      "label": "rogue-nightveil · attack2",
+      "classId": "rogue",
+      "outfit": "rogue-nightveil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-nightveil/attack2.webp"
+    },
+    {
+      "id": "painted:rogue-nightveil:attack3",
+      "label": "rogue-nightveil · attack3",
+      "classId": "rogue",
+      "outfit": "rogue-nightveil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-nightveil/attack3.webp"
+    },
+    {
+      "id": "painted:rogue-nightveil:attack4",
+      "label": "rogue-nightveil · attack4",
+      "classId": "rogue",
+      "outfit": "rogue-nightveil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-nightveil/attack4.webp"
+    },
+    {
+      "id": "painted:rogue-nightveil:detail",
+      "label": "rogue-nightveil · detail",
+      "classId": "rogue",
+      "outfit": "rogue-nightveil",
+      "kind": "menu",
+      "src": "assets/painted-outfits/rogue-nightveil/detail.webp"
+    },
+    {
+      "id": "painted:rogue-nightveil:guard",
+      "label": "rogue-nightveil · guard",
+      "classId": "rogue",
+      "outfit": "rogue-nightveil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-nightveil/guard.webp"
+    },
+    {
+      "id": "painted:rogue-nightveil:hit",
+      "label": "rogue-nightveil · hit",
+      "classId": "rogue",
+      "outfit": "rogue-nightveil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-nightveil/hit.webp"
+    },
+    {
+      "id": "painted:rogue-nightveil:idle",
+      "label": "rogue-nightveil · idle",
+      "classId": "rogue",
+      "outfit": "rogue-nightveil",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-nightveil/idle.webp"
+    },
+    {
+      "id": "painted:rogue-nightveil:menu",
+      "label": "rogue-nightveil · menu",
+      "classId": "rogue",
+      "outfit": "rogue-nightveil",
+      "kind": "menu",
+      "src": "assets/painted-outfits/rogue-nightveil/menu.webp"
+    },
+    {
+      "id": "painted:rogue-nightveil:portrait",
+      "label": "rogue-nightveil · portrait",
+      "classId": "rogue",
+      "outfit": "rogue-nightveil",
+      "kind": "menu",
+      "src": "assets/painted-outfits/rogue-nightveil/portrait.webp"
+    },
+    {
+      "id": "painted:rogue-shadow:attack1",
+      "label": "rogue-shadow · attack1",
+      "classId": "rogue",
+      "outfit": "rogue-shadow",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-shadow/attack1.webp"
+    },
+    {
+      "id": "painted:rogue-shadow:attack2",
+      "label": "rogue-shadow · attack2",
+      "classId": "rogue",
+      "outfit": "rogue-shadow",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-shadow/attack2.webp"
+    },
+    {
+      "id": "painted:rogue-shadow:attack3",
+      "label": "rogue-shadow · attack3",
+      "classId": "rogue",
+      "outfit": "rogue-shadow",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-shadow/attack3.webp"
+    },
+    {
+      "id": "painted:rogue-shadow:attack4",
+      "label": "rogue-shadow · attack4",
+      "classId": "rogue",
+      "outfit": "rogue-shadow",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-shadow/attack4.webp"
+    },
+    {
+      "id": "painted:rogue-shadow:detail",
+      "label": "rogue-shadow · detail",
+      "classId": "rogue",
+      "outfit": "rogue-shadow",
+      "kind": "menu",
+      "src": "assets/painted-outfits/rogue-shadow/detail.webp"
+    },
+    {
+      "id": "painted:rogue-shadow:guard",
+      "label": "rogue-shadow · guard",
+      "classId": "rogue",
+      "outfit": "rogue-shadow",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-shadow/guard.webp"
+    },
+    {
+      "id": "painted:rogue-shadow:hit",
+      "label": "rogue-shadow · hit",
+      "classId": "rogue",
+      "outfit": "rogue-shadow",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-shadow/hit.webp"
+    },
+    {
+      "id": "painted:rogue-shadow:idle",
+      "label": "rogue-shadow · idle",
+      "classId": "rogue",
+      "outfit": "rogue-shadow",
+      "kind": "painted",
+      "src": "assets/painted-outfits/rogue-shadow/idle.webp"
+    },
+    {
+      "id": "painted:rogue-shadow:menu",
+      "label": "rogue-shadow · menu",
+      "classId": "rogue",
+      "outfit": "rogue-shadow",
+      "kind": "menu",
+      "src": "assets/painted-outfits/rogue-shadow/menu.webp"
+    },
+    {
+      "id": "painted:rogue-shadow:portrait",
+      "label": "rogue-shadow · portrait",
+      "classId": "rogue",
+      "outfit": "rogue-shadow",
+      "kind": "menu",
+      "src": "assets/painted-outfits/rogue-shadow/portrait.webp"
+    },
+    {
+      "id": "painted:starseer:attack1",
+      "label": "starseer · attack1",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer/attack1.webp"
+    },
+    {
+      "id": "painted:starseer:attack2",
+      "label": "starseer · attack2",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer/attack2.webp"
+    },
+    {
+      "id": "painted:starseer:attack3",
+      "label": "starseer · attack3",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer/attack3.webp"
+    },
+    {
+      "id": "painted:starseer:attack4",
+      "label": "starseer · attack4",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer/attack4.webp"
+    },
+    {
+      "id": "painted:starseer:detail",
+      "label": "starseer · detail",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "menu",
+      "src": "assets/painted-outfits/starseer/detail.webp"
+    },
+    {
+      "id": "painted:starseer:guard",
+      "label": "starseer · guard",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer/guard.webp"
+    },
+    {
+      "id": "painted:starseer:hit",
+      "label": "starseer · hit",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer/hit.webp"
+    },
+    {
+      "id": "painted:starseer:idle",
+      "label": "starseer · idle",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer/idle.webp"
+    },
+    {
+      "id": "painted:starseer:menu",
+      "label": "starseer · menu",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "menu",
+      "src": "assets/painted-outfits/starseer/menu.webp"
+    },
+    {
+      "id": "painted:starseer:portrait",
+      "label": "starseer · portrait",
+      "classId": "starseer",
+      "outfit": "starseer",
+      "kind": "menu",
+      "src": "assets/painted-outfits/starseer/portrait.webp"
+    },
+    {
+      "id": "painted:starseer-astral:attack1",
+      "label": "starseer-astral · attack1",
+      "classId": "starseer",
+      "outfit": "starseer-astral",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-astral/attack1.webp"
+    },
+    {
+      "id": "painted:starseer-astral:attack2",
+      "label": "starseer-astral · attack2",
+      "classId": "starseer",
+      "outfit": "starseer-astral",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-astral/attack2.webp"
+    },
+    {
+      "id": "painted:starseer-astral:attack3",
+      "label": "starseer-astral · attack3",
+      "classId": "starseer",
+      "outfit": "starseer-astral",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-astral/attack3.webp"
+    },
+    {
+      "id": "painted:starseer-astral:attack4",
+      "label": "starseer-astral · attack4",
+      "classId": "starseer",
+      "outfit": "starseer-astral",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-astral/attack4.webp"
+    },
+    {
+      "id": "painted:starseer-astral:detail",
+      "label": "starseer-astral · detail",
+      "classId": "starseer",
+      "outfit": "starseer-astral",
+      "kind": "menu",
+      "src": "assets/painted-outfits/starseer-astral/detail.webp"
+    },
+    {
+      "id": "painted:starseer-astral:guard",
+      "label": "starseer-astral · guard",
+      "classId": "starseer",
+      "outfit": "starseer-astral",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-astral/guard.webp"
+    },
+    {
+      "id": "painted:starseer-astral:hit",
+      "label": "starseer-astral · hit",
+      "classId": "starseer",
+      "outfit": "starseer-astral",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-astral/hit.webp"
+    },
+    {
+      "id": "painted:starseer-astral:idle",
+      "label": "starseer-astral · idle",
+      "classId": "starseer",
+      "outfit": "starseer-astral",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-astral/idle.webp"
+    },
+    {
+      "id": "painted:starseer-astral:menu",
+      "label": "starseer-astral · menu",
+      "classId": "starseer",
+      "outfit": "starseer-astral",
+      "kind": "menu",
+      "src": "assets/painted-outfits/starseer-astral/menu.webp"
+    },
+    {
+      "id": "painted:starseer-astral:portrait",
+      "label": "starseer-astral · portrait",
+      "classId": "starseer",
+      "outfit": "starseer-astral",
+      "kind": "menu",
+      "src": "assets/painted-outfits/starseer-astral/portrait.webp"
+    },
+    {
+      "id": "painted:starseer-eclipse:attack1",
+      "label": "starseer-eclipse · attack1",
+      "classId": "starseer",
+      "outfit": "starseer-eclipse",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-eclipse/attack1.webp"
+    },
+    {
+      "id": "painted:starseer-eclipse:attack2",
+      "label": "starseer-eclipse · attack2",
+      "classId": "starseer",
+      "outfit": "starseer-eclipse",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-eclipse/attack2.webp"
+    },
+    {
+      "id": "painted:starseer-eclipse:attack3",
+      "label": "starseer-eclipse · attack3",
+      "classId": "starseer",
+      "outfit": "starseer-eclipse",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-eclipse/attack3.webp"
+    },
+    {
+      "id": "painted:starseer-eclipse:attack4",
+      "label": "starseer-eclipse · attack4",
+      "classId": "starseer",
+      "outfit": "starseer-eclipse",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-eclipse/attack4.webp"
+    },
+    {
+      "id": "painted:starseer-eclipse:detail",
+      "label": "starseer-eclipse · detail",
+      "classId": "starseer",
+      "outfit": "starseer-eclipse",
+      "kind": "menu",
+      "src": "assets/painted-outfits/starseer-eclipse/detail.webp"
+    },
+    {
+      "id": "painted:starseer-eclipse:guard",
+      "label": "starseer-eclipse · guard",
+      "classId": "starseer",
+      "outfit": "starseer-eclipse",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-eclipse/guard.webp"
+    },
+    {
+      "id": "painted:starseer-eclipse:hit",
+      "label": "starseer-eclipse · hit",
+      "classId": "starseer",
+      "outfit": "starseer-eclipse",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-eclipse/hit.webp"
+    },
+    {
+      "id": "painted:starseer-eclipse:idle",
+      "label": "starseer-eclipse · idle",
+      "classId": "starseer",
+      "outfit": "starseer-eclipse",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-eclipse/idle.webp"
+    },
+    {
+      "id": "painted:starseer-eclipse:menu",
+      "label": "starseer-eclipse · menu",
+      "classId": "starseer",
+      "outfit": "starseer-eclipse",
+      "kind": "menu",
+      "src": "assets/painted-outfits/starseer-eclipse/menu.webp"
+    },
+    {
+      "id": "painted:starseer-eclipse:portrait",
+      "label": "starseer-eclipse · portrait",
+      "classId": "starseer",
+      "outfit": "starseer-eclipse",
+      "kind": "menu",
+      "src": "assets/painted-outfits/starseer-eclipse/portrait.webp"
+    },
+    {
+      "id": "painted:starseer-starlit:attack1",
+      "label": "starseer-starlit · attack1",
+      "classId": "starseer",
+      "outfit": "starseer-starlit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-starlit/attack1.webp"
+    },
+    {
+      "id": "painted:starseer-starlit:attack2",
+      "label": "starseer-starlit · attack2",
+      "classId": "starseer",
+      "outfit": "starseer-starlit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-starlit/attack2.webp"
+    },
+    {
+      "id": "painted:starseer-starlit:attack3",
+      "label": "starseer-starlit · attack3",
+      "classId": "starseer",
+      "outfit": "starseer-starlit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-starlit/attack3.webp"
+    },
+    {
+      "id": "painted:starseer-starlit:attack4",
+      "label": "starseer-starlit · attack4",
+      "classId": "starseer",
+      "outfit": "starseer-starlit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-starlit/attack4.webp"
+    },
+    {
+      "id": "painted:starseer-starlit:detail",
+      "label": "starseer-starlit · detail",
+      "classId": "starseer",
+      "outfit": "starseer-starlit",
+      "kind": "menu",
+      "src": "assets/painted-outfits/starseer-starlit/detail.webp"
+    },
+    {
+      "id": "painted:starseer-starlit:guard",
+      "label": "starseer-starlit · guard",
+      "classId": "starseer",
+      "outfit": "starseer-starlit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-starlit/guard.webp"
+    },
+    {
+      "id": "painted:starseer-starlit:hit",
+      "label": "starseer-starlit · hit",
+      "classId": "starseer",
+      "outfit": "starseer-starlit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-starlit/hit.webp"
+    },
+    {
+      "id": "painted:starseer-starlit:idle",
+      "label": "starseer-starlit · idle",
+      "classId": "starseer",
+      "outfit": "starseer-starlit",
+      "kind": "painted",
+      "src": "assets/painted-outfits/starseer-starlit/idle.webp"
+    },
+    {
+      "id": "painted:starseer-starlit:menu",
+      "label": "starseer-starlit · menu",
+      "classId": "starseer",
+      "outfit": "starseer-starlit",
+      "kind": "menu",
+      "src": "assets/painted-outfits/starseer-starlit/menu.webp"
+    },
+    {
+      "id": "painted:starseer-starlit:portrait",
+      "label": "starseer-starlit · portrait",
+      "classId": "starseer",
+      "outfit": "starseer-starlit",
+      "kind": "menu",
+      "src": "assets/painted-outfits/starseer-starlit/portrait.webp"
+    }
+  ]
+}

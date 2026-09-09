@@ -1,0 +1,4 @@
+const db=new Promise((resolve,reject)=>{const req=indexedDB.open('ashenspire-pose-editor',1);req.onupgradeneeded=()=>req.result.createObjectStore('records');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
+export async function read(key){const d=await db;return new Promise((resolve,reject)=>{const r=d.transaction('records').objectStore('records').get(key);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+export async function write(key,value){const d=await db;return new Promise((resolve,reject)=>{const t=d.transaction('records','readwrite');t.objectStore('records').put(value,key);t.oncomplete=resolve;t.onerror=()=>reject(t.error);t.onabort=()=>reject(t.error)})}
+export async function list(){const d=await db;return new Promise((resolve,reject)=>{const r=d.transaction('records').objectStore('records').getAllKeys();r.onsuccess=()=>resolve(r.result.filter(k=>k.startsWith('saved:')));r.onerror=()=>reject(r.error)})}
