@@ -167,7 +167,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   const bornWith = Number.isFinite(snapshot.equipmentAttackSlotCount)
     ? snapshot.equipmentAttackSlotCount
     : (Number.isFinite(run.equipmentAttackSlotCount) ? run.equipmentAttackSlotCount : undefined);
-  const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId, { attackSlotCount: bornWith });
+  const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId, { attackSlotCount: bornWith, removedAttackSlotIds: snapshot.removedAttackSlotIds ?? run.removedAttackSlotIds });
   // Full-pile order is the one legacy assignment door: draw, hand, discard,
   // exhaust. No card moves; missing ids bind once to attack:0..N-1. Applying
   // even when zero attacks were recognized keeps the authored count fail closed.
@@ -180,6 +180,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
     equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
     equipmentAttackSlotCount: bornWith,
+    removedAttackSlotIds: snapshot.removedAttackSlotIds ?? run.removedAttackSlotIds,
     itemMounts,
     deck: cards,
   }, cards, {

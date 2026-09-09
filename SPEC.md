@@ -14,6 +14,23 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 Numbers in this spec are the **initial balance targets**. They will move during the M3 balance pass, but the *structures* (formulas, orderings, state shapes) are contractual.
 
+### Combat and equipment revision: implementation contract
+
+[Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) is the normative
+contract for the next combat ruleset: categorized tags, typed damage and defenses,
+weapon impact, deterministic Evade, trigger/stacking semantics, and the three-build
+prototype gate before equipment and class-card expansion. It also specifies the
+accepted stance, grip, affinity, armor, rune, loot, and empty-hand creation work.
+
+This is a specification change, not a claim that those mechanics are shipped.
+Existing runs use their supported ruleset until an explicit migration is implemented.
+For the new ruleset, the linked contract supersedes the conflicting parts of
+sections 3.3-3.7 (schemas/effects/triggers), 3.8 (equipment and rewards), 3.12 (saves),
+4.1-4.5 (combat), 5.1-5.4 (content), 6 (reward generation), and 7.4 (stance animation).
+Those sections continue to describe legacy behavior during migration. New code
+must not silently combine legacy dodge, idle-only recovery, armor-weight coupling,
+or card-only poise with the replacement rules.
+
 ---
 
 ## 1. Product overview
@@ -340,7 +357,14 @@ the loadout, and refuses nothing.
 smaller deck; more, a larger one. There is no re-minting of base cards mid-run and no
 attempt to hold a total. What DOES hold mid-run is the attack count: a swap re-skins the
 attack slots the run was born with (`equipmentAttackSlotCount`, recorded at creation and
-read, never re-derived), so equipment never changes how many attacks you hold.
+read, never re-derived), minus permanently removed slots. `removedAttackSlotIds`
+records unique stable `attack:N` ids from that birth allocation; absent means none.
+Merchant and event removal may remove run-owned basic attacks, including their
+current weapon-derived faces. Removal retires that slot for the run without
+renumbering survivors. Equipment swaps, combat setup, save/load and mid-combat
+restamping use the same surviving slot plan and never restore a removed copy.
+Item-owned grants remain ineligible for permanent deck removal. The merchant
+revalidates the selected instance, funds and nonempty-deck guard before charging.
 
 **Every card has an owner: the run, or one item.** Run-owned cards are the run's for good —
 the base strikes and defends (gear only re-skins them), the class signature, global grants,
@@ -1225,7 +1249,24 @@ keeps the same state and focus contract without meaningful animation.
 
 ### 7.3 Input
 
-- **Both** targeting modes: (a) drag card onto a target/board, (b) click card → targeting arrow → click target. Esc/right-click cancels. Non-targeted cards: drag anywhere above the hand or click-then-click the board.
+- **Card selection and information stay separate from play.** Preserve the current
+  focused card, selection glow, revealed information button and legal-target
+  highlights. Information opens details without playing. Existing tap, hold,
+  keyboard, controller and direct-target drag confirmation remain available.
+- **Touch flick to play.** An upward or upward-diagonal single-touch flick from a
+  playable hand card can play on release without reaching a combatant. A profile
+  setting enables it (default on); Touch flick distance accepts 32–160 CSS pixels
+  (default 64), with synchronized slider, numeric entry, reset and a harmless
+  practice area. This distance is net upward displacement in viewport CSS pixels,
+  independent of artwork/UI scale and of the existing 12-pixel drag-start slop.
+  Flick recognition also requires upward-dominant movement and at least 300 CSS
+  pixels/second recent upward velocity, authored separately from the player setting.
+  The preview selects the nearest legal target to the finger; release uses that
+  same resolver and revalidates playability. Self cards select the player and
+  all-enemy cards select their legal group. Equal-distance ties are deterministic.
+  Returning below threshold, downward release, an information-button gesture,
+  pointer cancellation, capture loss, blur or a blocking modal cannot flick-play.
+  No qualifying gesture can commit twice. Disabling flicks preserves direct drops.
 - Full playability with mouse only. Keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
 - **Controls rebind capture owns its armed keydown.** `rebind-capture-service`
   ignores lone modifiers. Escape cancels an armed keyboard capture, restores the
@@ -1456,3 +1497,64 @@ Mobile combat art: at widths up to 640px, figures render at 90% of their fitted 
 Combat card actions: selection reveals a circular Information button centered above the highlighted card. The information modal places the card beside readable details and exposes a green Play card action, or a disabled gray action with a visible reason. Stationary holds show shared progress and use the card on completion; early release cancels, and targeted cards enter the existing targeting flow. The floating information button replaces hold-to-zoom inspection for the solo combat hand.
 
 Selected combat cards preview legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes retain transparent backgrounds so glow follows artwork rather than its rectangular canvas.
+
+## World Journey: authored atlas and seeded routes
+
+World Journey is a selectable run mode alongside the existing Classic Climb.
+It uses a fixed square world painting spanning five biomes. Geography and landmark
+positions are authored content; a seed selects an active connected route through
+that geography. The initial content revision has 200 candidate world nodes and a
+profile targeting 20 active nodes. Local points do not consume the world budget.
+
+Every valid journey includes three ordered anchor roles: starting city, major
+city, and final legacy dungeon. Profiles pin IDs or filter eligible candidates.
+Only the selected anchors are guaranteed. Other landmarks and regions vary per
+run; visiting every region is optional. The main route and alternatives have
+separate configurable limits. Alternatives reconnect toward the final dungeon.
+A generator must reject impossible profiles with an actionable reason; it cannot
+silently remove anchors, ignore exclusions, or change the budget. Cross-region
+junctions are authored edges. Generation is deterministic by seed, profile version,
+and content revision. Saved manifests retain chosen node and edge IDs, encounter
+outcomes and content revision, rather than regenerating when resumed.
+
+World nodes use stable IDs. Inspecting a node never travels. Travel requires a
+currently available connection and any authored conditions. Completion, discovery,
+service claims and quest state belong to the run, not the content tables. World
+terrain starts as indistinct parchment and reveals around discovered nodes.
+Undiscovered nodes do not expose names, local maps, services or boss identities.
+Inactive content remains unavailable for that run. Completed encounters cannot be
+farmed by revisiting; eligible services retain stock and one-time claims.
+
+Major landmarks render as separate illustrated overlays with hover and keyboard
+focus enlargement. Selecting one opens a single location dialog, with an interior
+map and a detail pane for the selected fixed local point. On narrow screens the
+pane follows the map. Cities have fixed service and quest sites; dungeons have
+fixed entrance, junction, objective and boss sites. Availability can vary without
+moving a site. Travel/Enter and service actions are explicit, separate from
+inspection. Escape closes the dialog and restores focus. Touch does not require
+hover. Region, location and node bindings select appropriate combat scenery.
+
+Encounter resolution is explicit node encounter, then node enemy-pool override,
+then region default. A final dungeon requires an explicit boss encounter and never
+falls back to a random ordinary enemy. Encounters reference the existing enemy
+registry by enemy ID. Service and quest handlers use validated named operations.
+Gate conditions reference obtainable objectives; mandatory routes must remain
+solvable. The final selected dungeon boss ends World Journey in victory, without
+creating a second procedural act. Classic runs retain their existing progression.
+
+Authoritative content is in third normal form. Maps, regions, nodes, placements,
+edges, assets, enemies, encounters, pools, services, quests and profiles have stable
+primary keys. Many-to-many relationships use junction tables. Local region IDs
+are derived through their owning world location; node rows do not copy map or
+region labels. Handler bindings belong to service types, not repeated placements.
+CSV and JSON imports use the same relational table contract as the database and
+reject duplicate keys, invalid references and unsupported rules atomically.
+Runtime indexes, joined view models and immutable run manifests are derived read
+models; they are not competing authoring sources. Content revisions identify the
+exact rules used by a run. A revision mismatch must be explained instead of
+silently regenerating the route.
+
+The shared generator and manifest contract are suitable for host-authoritative
+co-op. A client must never independently reroll a party route or gain travel
+permission by opening a location dialog. Classic co-op remains supported while
+World Journey uses only explicitly implemented host actions.

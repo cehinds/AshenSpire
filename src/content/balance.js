@@ -287,6 +287,7 @@ export const balance = {
   // slider can't drift apart — they previously lived in two files and silently
   // disagreed.
   ui: {
+    touchFlick: { enabled: true, distance: { min: 32, max: 160, def: 64 }, minVelocity: 300, velocityWindowMs: 120 },
     // HUD resource bars, per surface (content/resources.js holds the rows).
     //
     // `scaleByMax` is HIS RULE — "the size of that bar should scale depending on

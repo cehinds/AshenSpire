@@ -17,6 +17,7 @@ export function serializeCombatSnapshot(combat) {
     version: COMBAT_SNAPSHOT_VERSION,
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
+    removedAttackSlotIds: combat.removedAttackSlotIds,
     itemUpgradeLevels: combat.itemUpgradeLevels,
     itemMounts: combat.itemMounts,
     equipmentPoolDeficits: combat.equipmentPoolDeficits,
@@ -52,13 +53,14 @@ export function serializeCombatSnapshot(combat) {
  * non-idempotent for a current one, which tools/weapon-card-packages.mjs is
  * right to assert against: a load must not rewrite a snapshot it understands.
  */
-export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount }) {
+export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds }) {
   assertCombatSnapshot(snapshot);
   const saved = structuredClone(snapshot);
   const combat = {
     registries,
     rng,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
+    removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
     equipmentAttackSlotCount: Number.isFinite(saved.equipmentAttackSlotCount)
       ? saved.equipmentAttackSlotCount
       : (Number.isFinite(fallbackAttackSlotCount) ? fallbackAttackSlotCount : undefined),
