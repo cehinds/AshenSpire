@@ -125,9 +125,20 @@ export function renderCard(registries, ref, opts = {}) {
   // changed a card's tags changed what combat did with them and not what the
   // card showed, which is the chip strip lying about the run being played.
   const service = tagService(registries);
-  const tags = def.cardTags && def.cardTags.length
+  const liveTagRows = (opts.preview?.values || []).filter((row) => Array.isArray(row.tags));
+  const inheritedBy = new Map();
+  for (const row of liveTagRows) for (const id of row.inheritedTags || []) {
+    const sources = inheritedBy.get(id) || new Set(); sources.add(row.sourceName); inheritedBy.set(id, sources);
+  }
+  const resolvedTags = liveTagRows.length
+    ? service.resolve([...new Set(liveTagRows.flatMap((row) => row.tags))])
+    : def.cardTags && def.cardTags.length
     ? service.resolve(def.cardTags)
     : service.tagsOf('card', def);
+  // Keep legacy schools for compatibility, but do not print Blood/Heavy twice
+  // when the categorized theme/technique is the same visible word.
+  const categorizedLabels = new Set(resolvedTags.filter((tag) => ['theme', 'technique'].includes(tag.domain)).map((tag) => tag.label.toLowerCase()));
+  const tags = resolvedTags.filter((tag) => tag.domain !== 'card' || !categorizedLabels.has(tag.label.toLowerCase()));
   el.dataset.tagRows = tags.length ? '1' : '0';
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
@@ -151,7 +162,7 @@ export function renderCard(registries, ref, opts = {}) {
     // render nothing here, so the layout is unchanged for them.
     (tags.length
       ? `<div class="cd-body"><div class="ctags cd-tags">${tags
-          .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb)}">${esc(t.glyph)} ${esc(t.label)}</span>`)
+          .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb + (inheritedBy.has(t.id) ? ` Granted by ${[...inheritedBy.get(t.id)].join(', ')}.` : ''))}">${esc(t.glyph)} ${esc(t.label)}</span>`)
           .join('')}</div>`
       : '<div class="cd-body">') +
     `<div class="ctext cd-text">${fillTemplate(def, tokens, base)}</div></div>`;

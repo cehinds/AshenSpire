@@ -4,7 +4,8 @@ import { validateCombatRules, validateCombatProfile, validateAttack, allocateInt
 import { evaluate } from '../model/formulas.js';
 import { createRng } from './rng.js';
 import * as S from '../framework/statusSemantics.js';
-import { equipmentRoleSource } from '../model/loadout.js';
+import { equippedIn, slotHand } from '../model/loadout.js';
+import { attackDescriptor, resolvedAttackTags } from '../model/attackTags.js';
 
 export function rulesFingerprint(rules) {
   let hash = 2166136261;
@@ -33,7 +34,13 @@ export function validateFoundationSnapshot(saved) {
   for (const value of Object.values(saved.counts || {})) if (!Number.isInteger(value) || value < 0) throw new Error('Invalid saved trigger count');
 }
 
-export function cardActions(ctx, def, source, target, card, meta) {
+export function cardSourceSnapshots(ctx, def, source, card) {
+  if (!ctx.foundation) return null;
+  return new Map((def.effects || []).filter((effect) => effect.op === 'damage')
+    .map((effect) => [effect, foundationCarrier(ctx, source, card, effect.attack)]));
+}
+
+export function cardActions(ctx, def, source, target, card, meta, sourceSnapshots = null) {
   if (!ctx.foundation) return (def.effects || []).map((effect) => ({ effect, source, owner: source, target, card, meta }));
   if (card.attack) validateAttack(card.attack, ctx.foundation.rules);
   const formulaContext = { entities: { self: source, owner: source, player: ctx.player, target, enemy: target, allEnemies: ctx.enemies.filter((e) => e.alive) }, energySpent: meta.energySpent, cardsPlayedThisTurn: meta.ordinalThisTurn };
@@ -42,13 +49,16 @@ export function cardActions(ctx, def, source, target, card, meta) {
     if (effect.attack) validateAttack(effect.attack, ctx.foundation.rules);
     const repeats = Math.max(0, Math.floor(evaluate(effect.repeat ?? 1, formulaContext)));
     if (repeats > ctx.foundation.rules.triggers.maxEvents) throw new Error('effect repeat exceeds action bound');
-    for (let r = 0; r < repeats; r++) rows.push({ effect: { ...effect, repeat: 1 }, hits: effect.op === 'damage' ? Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulaContext))) : 0 });
+    for (let r = 0; r < repeats; r++) rows.push({ effect: { ...effect, repeat: 1 }, snapshot: sourceSnapshots?.get(effect), hits: effect.op === 'damage' ? Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulaContext))) : 0 });
   }
   const total = rows.reduce((sum, row) => sum + row.hits, 0);
   if (!Number.isFinite(total) || total > ctx.foundation.rules.triggers.maxEvents) throw new Error('resolved hits exceed action bound');
   let offset = 0;
-  return rows.map(({ effect, hits }) => {
-    const action = { effect, source, owner: source, target, card, meta: { ...meta, foundationHitCount: total, foundationHitOffset: offset } };
+  return rows.map(({ effect, hits, snapshot }) => {
+    // Live plays supply snapshots captured before payment. Standalone callers
+    // capture here; later hits keep that source if a trigger changes equipment.
+    const carrier = hits > 0 ? snapshot || foundationCarrier(ctx, source, card, effect.attack) : card;
+    const action = { effect, source, owner: source, target, card: carrier, meta: { ...meta, foundationHitCount: total, foundationHitOffset: offset } };
     offset += hits; return action;
   });
 }
@@ -62,31 +72,58 @@ export function foundationProfile(ctx, entity) {
 }
 
 export function foundationSource(ctx, entity, carrier = null) {
+  if (carrier?.resolvedSource) return carrier.resolvedSource;
   const state = ctx.foundation;
   const profile = foundationProfile(ctx, entity);
-  if (carrier?.attack?.source === 'unarmed') return state.rules.fallbackSource;
-  const hand = carrier?.attack?.hand || carrier?.sourceHand || profile.defaultSource || 'mainHand';
-  const authored = profile.sources?.[hand];
-  if (authored) return authored;
-  if (entity === ctx.player && ctx.loadout) {
-    const resolved = equipmentRoleSource(ctx.registries, ctx.loadout, entity.classId, 'attack');
-    if (resolved.piece) {
-      const piece = resolved.piece;
-      const magical = carrier?.attack?.source === 'spell';
-      return { ...state.rules.fallbackSource, id: piece.id, weight: piece.weight,
-        family: magical ? 'focus' : 'blade', damageType: magical ? 'arcane' : 'slashing' };
-    }
+  const attack = attackDescriptor(carrier || {});
+  if (attack.source === 'unarmed') return { ...state.rules.fallbackSource, sourceType: 'unarmed' };
+  const kind = attack.source || 'weapon';
+  const canonicalHand = (hand) => ({ right: 'mainHand', left: 'offHand' }[hand] || hand);
+  const explicitHand = canonicalHand(attack.hand || carrier?.sourceHand);
+  const hands = explicitHand ? [explicitHand] : [...new Set([profile.defaultSource || 'mainHand', 'mainHand', 'offHand'])];
+  const compatible = (source) => source && (source.sourceType || (source.family === 'focus' ? 'spell' : 'weapon')) === kind;
+  // Supplied profiles are a complete source snapshot (including old saves).
+  // A missing focus must never borrow a physical weapon's properties.
+  if (profile.sources) {
+    for (const hand of hands) if (compatible(profile.sources[hand])) return { ...profile.sources[hand], sourceType: kind, hand };
+    if (kind === 'spell' || explicitHand) throw new Error(`No ${kind} source for ${foundationActorId(ctx, entity)}${explicitHand ? ` in ${explicitHand}` : ''}`);
+    return { ...state.rules.fallbackSource, sourceType: 'unarmed' };
   }
-  return state.rules.fallbackSource;
+  if (entity === ctx.player && ctx.loadout) {
+    for (const hand of hands) {
+      const slot = ctx.registries.equipment.slots.find((row) => slotHand(row) === (hand === 'mainHand' ? 'right' : 'left'));
+      const piece = slot && equippedIn(ctx.registries, ctx.loadout, entity.classId, slot.id);
+      if (!piece) continue;
+      const identity = attackDescriptor(piece);
+      if (identity.source !== kind) continue;
+      const family = state.rules.equipmentSources?.itemFamilies?.[piece.id] || state.rules.equipmentSources?.profileFamilies?.[piece.attackProfile];
+      if (!family || !identity.damageType) throw new Error(`Missing attack source mapping for '${piece.id}'`);
+      return { id: `armament/${piece.id}/${hand}`, itemId: piece.id, name: piece.name, hand, sourceType: kind,
+        weight: piece.weight, grip: 'oneHand', family, damageType: identity.damageType, tags: [...piece.tags], buildup: [] };
+    }
+    if (kind === 'spell') throw new Error(`No spell source for ${foundationActorId(ctx, entity)}`);
+    if (explicitHand) return { ...state.rules.fallbackSource, sourceType: 'unarmed', hand: explicitHand };
+  }
+  if (kind === 'spell') throw new Error(`No spell source for ${foundationActorId(ctx, entity)}`);
+  return { ...state.rules.fallbackSource, sourceType: 'unarmed' };
+}
+
+export function foundationCarrier(ctx, entity, carrier = {}, effectAttack = null) {
+  const attack = attackDescriptor({ ...carrier, attack: effectAttack || carrier.attack });
+  validateAttack(attack, ctx.foundation.rules);
+  const source = structuredClone(foundationSource(ctx, entity, { ...carrier, attack }));
+  if (source.sourceType === 'unarmed') attack.source = 'unarmed';
+  const tags = resolvedAttackTags(carrier.tags || [], source, attack, ctx.foundation.rules.damageTypes);
+  return { ...carrier, attack, tags, resolvedSource: source };
 }
 
 export function foundationDamage(ctx, source, target, base, carrier = null, attackTags = []) {
   const rules = ctx.foundation.rules;
   const weapon = foundationSource(ctx, source, carrier);
-  const attack = carrier?.attack || {};
+  const attack = attackDescriptor(carrier || {});
   const defense = foundationProfile(ctx, target);
   const weights = attack.components || [{ type: attack.damageType || weapon.damageType, weight: 1 }];
-  attackTags = [...new Set([...attackTags, ...(weapon.tags || []), ...weights.map((c) => rules.damageTypes[c.type].tag), `source:${attack.source || 'weapon'}`])];
+  attackTags = resolvedAttackTags(attackTags, weapon, attack, rules.damageTypes);
   const totalWeight = weights.reduce((sum, c) => sum + c.weight, 0);
   if (!(totalWeight > 0)) throw new Error('attack components need positive weight');
   const attackerMultiplier = source ? S.getMult(ctx, source, 'damageDealtMult') : 1;
@@ -107,7 +144,7 @@ export function foundationDamage(ctx, source, target, base, carrier = null, atta
     resistances: groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}), immunities: defense.immunities || [], multiplier,
     flatBonus: (source ? S.getAdd(ctx, source, 'attackDamageAdd') : 0) + (source?.damageBySchoolAdd?.[carrier?.damageSchool] || 0),
   });
-  return { components, amount: components.reduce((sum, c) => sum + c.amount, 0), source: weapon };
+  return { components, amount: components.reduce((sum, c) => sum + c.amount, 0), source: weapon, tags: attackTags };
 }
 
 export function foundationImpact(ctx, action, hits) {

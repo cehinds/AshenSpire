@@ -68,11 +68,30 @@ try {
     const foundation = createFoundation(combatRules, { player: { weightClass: 'light' } });
     await evaluate(`(()=>{const c=window.__combat;c.foundation=${JSON.stringify(foundation)};c.piles.hand=[{instanceId:'foundation-dodge',cardId:'dodgeRoll',upgraded:false}];c.player.stamina=10;c.player.maxStamina=10;c.player.energy=3;window.__renderCombatForShot();})()`);
     await wait(500);
-    // Current card input selects first, then confirms a double tap.
-    for (let i = 0; i < 3 && !(await evaluate('window.__combat.player.evade===1')); i++) await click('.hand [data-card-id="dodgeRoll"]');
+    // Shared card input selects, then confirms on the highlighted target.
+    await click('.hand [data-card-id="dodgeRoll"]');
+    await click('.combatant.player');
     for (let i = 0; i < 50 && !(await evaluate('window.__combat.player.evade===1')); i++) await wait(100);
     const receipt = await evaluate('({evade:window.__combat.player.evade, stamina:window.__combat.player.stamina, energy:window.__combat.player.energy, hand:window.__combat.piles.hand, events:window.__combat.eventLog.slice(-8),errors:document.querySelector(".toast")?.textContent})');
     check(receipt.evade === 1 && receipt.stamina === 9 && receipt.energy === 3, `${shape.name}: bundled new-rules Dodge executes atomically through real input: ${JSON.stringify(receipt)}`);
+    await wait(900);
+    // Real bundled renderer and input, with controlled equipment to expose
+    // inheritance. This fixture does not claim campaign or loot balance.
+    const tagFoundation = createFoundation(combatRules, { player: { weightClass: 'light' } });
+    await evaluate(`(()=>{const c=window.__combat;c.foundation=${JSON.stringify(tagFoundation)};c.loadout={sets:{rightHand:['katana'],leftHand:['ashStaff'],armor:['default']},active:{rightHand:0,leftHand:0,armor:0}};c.piles.hand=[{instanceId:'tag-weapon',cardId:'sunderplate',upgraded:false},{instanceId:'tag-spell',cardId:'starstonePebble',upgraded:false}];c.player.energy=20;c.player.mana=20;c.player.maxMana=20;c.player.stamina=20;c.player.maxStamina=20;window.__renderCombatForShot();})()`);
+    await wait(700);
+    const tags = await evaluate(`(()=>{const weapon=document.querySelector('.hand [data-card-id=sunderplate]');const spell=document.querySelector('.hand [data-card-id=starstonePebble]');return {weapon:[...weapon.querySelectorAll('.ctag')].map(x=>({text:x.textContent,tip:x.dataset.tip})),spell:[...spell.querySelectorAll('.ctag')].map(x=>x.textContent),overflow:document.documentElement.scrollWidth>innerWidth};})()`);
+    check(tags.weapon.some(t=>t.text.includes('Blood')&&t.tip.includes('Granted by Katana')), `${shape.name}: weapon card explains the inherited Blood source`);
+    check(tags.weapon.filter(t=>t.text.includes('Blood')).length===1, `${shape.name}: legacy and categorized Blood do not duplicate chips`);
+    check(!tags.spell.some(t=>t.includes('Blood')), `${shape.name}: spell chips exclude the other hand's Blood theme`);
+    check(!tags.overflow, `${shape.name}: categorized card tags fit viewport`);
+    await click('.hand [data-card-id="starstonePebble"]');
+    await click('.combatant.enemy');
+    for (let i=0;i<70 && !(await evaluate('window.__combat.eventLog.some(e=>e.type==="damageDealt"&&e.sourceInstanceId==="armament/ashStaff/offHand")'));i++) await wait(100);
+    check(await evaluate('window.__combat.eventLog.some(e=>e.type==="damageDealt"&&e.sourceInstanceId==="armament/ashStaff/offHand"&&e.tags.includes("source:spell")&&!e.tags.includes("theme:blood"))'), `${shape.name}: real pointer play uses only the offhand focus`);
+    await wait(900);
+    const tagShot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
+    writeFileSync(resolve(out, `${shape.name}-tag-sources.png`), Buffer.from(tagShot.data, 'base64'));
     await send('Target.closeTarget', { targetId });
   }
   check(errors.length === 0, `no browser exceptions: ${errors.join('; ')}`);

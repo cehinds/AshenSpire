@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "Clearer, closer maps with detail on demand",
     "detail": "Use consistent large nodes in every run mode, load native detail tiles only for the visible area, retain a small offline fallback, and add an extra manual zoom step. Trace routes with bright outlined ink over engraved unexplored parchment; preserve discovery and travel rules.",
-    "build": "0.6.0.69",
+    "build": "0.6.0.70",
     "pullRequest": 878,
     "url": "https://github.com/cehinds/AshenSpire/pull/878"
+  },
+  {
+    "id": "pr-876",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat workshop cards inherit tags from their weapon or focus",
+    "detail": "Show categorized attack tags and explain which equipment grants them. Weapon techniques use their selected weapon; spells use their own focus. Swaps refresh previews, and each played attack keeps its source through all hits. The new combat rules remain experimental and opt-in.",
+    "build": "0.6.0.67",
+    "pullRequest": 876,
+    "url": "https://github.com/cehinds/AshenSpire/pull/876"
   },
   {
     "id": "pr-882",
