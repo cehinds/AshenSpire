@@ -3,9 +3,11 @@ import { reducedMotionRequested } from './motion.js';
 import { combatEffectAngle, combatEffectOrientation } from './combatEffectDirection.js';
 import { combatEffectPresentation } from '../content/combatEffectPresentation.js';
 import {playPresentationSequence} from './presentationSequence.js';
+import {combatEffectAttachment} from '../content/combatEffectAnchors.js';
+import {playCombatantEffectLayers,combatantEmissionBox} from './combatantEffectLayers.js';
 const active=new WeakMap();
 // Shared solo/co-op sequence: one cast, then one release per actual recipient.
-export function playCombatEffectPlan(layer,from,plan,{targets=[],authoredTargets=[],duration=260,size=160}={}){
+export function playCombatEffectPlan(layer,from,plan,{targets=[],authoredTargets=[],duration=260,size=160,actor=null,localBox=null}={}){
  if(!plan||!layer||!from)return ()=>{};
  size*=plan.sizeScale??1;
  const set=active.get(layer)||new Set();active.set(layer,set);
@@ -13,11 +15,24 @@ export function playCombatEffectPlan(layer,from,plan,{targets=[],authoredTargets
  if(studioStop)set.add(studioStop);
  const stops=studioStop?[studioStop]:[];
  const targetLocal=plan.at==='target';
- if(plan.cast)stops.push(playCombatEffect(layer,from,plan.cast,{duration:110,size:size*.7}));
- const delay=plan.cast?65:targetLocal?Math.round(duration*.25):0;
+ const anchor=combatEffectAttachment(plan);
+ const emission=()=>actor&&localBox?combatantEmissionBox(actor,'hand',localBox,layer)||from:from;
+ const attached=(kind,options)=>{
+  const stop=playCombatantEffectLayers(actor,kind,{...options,onStop:()=>set.delete(stop)});
+  if(stop){set.add(stop);stops.push(stop);}return stop;
+ };
+ // Painted attacks extend the casting point after 28% of their pose sequence.
+ // Resolve the moving source at release, rather than firing from the wind-up.
+ const delay=plan.projectile?Math.round(duration*.3):plan.cast?65:targetLocal?Math.round(duration*.25):0;
+ const castDuration=plan.projectile?Math.max(110,delay):110;
+ if(plan.cast&&!attached(plan.cast,{anchor:anchor||'hand',duration:castDuration,scale:plan.sizeScale??1}))stops.push(playCombatEffect(layer,emission,plan.cast,{duration:castDuration,size:size*.7}));
  const recipients=targetLocal?targets:[from];
+ const wrapped=anchor&&recipients.length&&attached(plan.kind,{anchor,delay,duration:Math.max(96,duration-delay),scale:plan.sizeScale??1});
  for(const target of recipients){
-  stops.push(playCombatEffect(layer,plan.projectile?from:target,plan.kind,{to:plan.projectile?target:null,direction:targetLocal?combatEffectAngle(from,target):'auto',delay,duration:Math.max(96,duration-delay),size,impactKind:plan.impactKind}));
+  // Weapon trails belong to the caster; confirmed recipients keep a small hit
+  // response. Debuffs and other target-local effects retain their own placement.
+  if(wrapped){stops.push(playCombatEffect(layer,target,plan.impactKind||'impact',{delay:Math.round(duration*.55),duration:120,size:size*.55}));continue;}
+  stops.push(playCombatEffect(layer,plan.projectile?emission:target,plan.kind,{to:plan.projectile?target:null,direction:targetLocal&&!plan.projectile?combatEffectAngle(from,target):'auto',delay,duration:Math.max(96,duration-delay),size,impactKind:plan.impactKind}));
  }
  return ()=>stops.forEach(stop=>stop());
 }
@@ -32,6 +47,8 @@ export function playCombatEffect(layer,from,kind,{to=null,direction='auto',durat
    const ticket=setTimeout(()=>{set.delete(stop);child=playCombatEffect(layer,from,kind,{to,direction,duration,size,impactKind});},delay);
    set.add(stop);return stop;
  }
+ if(typeof from==='function')from=from();
+ if(!from)return ()=>{};
  const frames=combatEffectFrames(kind);if(!frames.length)return ()=>{};
  const presentation=combatEffectPresentation(kind);size*=presentation.sizeScale;
  frames.forEach(src=>{const warm=new Image();warm.src=src;});

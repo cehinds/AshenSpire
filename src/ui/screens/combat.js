@@ -4,6 +4,7 @@ import { combatEffectAngle } from '../combatEffectDirection.js';
 import { combatEffectPlan, combatEffectTags, combatEffectTargetIds } from '../../model/combatEffects.js';
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
+import { playCardEffectLayers } from '../cardEffectLayers.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
 // docs/mockups/combat-screen.svg)
 //
@@ -247,7 +248,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const target = plan.targetId && fxCtx.anchorFor(plan.targetId);
     const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,combat.player.id).map(id=>fxCtx.anchorFor(id)).filter(Boolean).map(anchor=>anchorLocalBox(fxCtx.layer,anchor));
     const authoredTargets=presentationTargetIds(plan.effectEvents,combat.player.id,plan.spriteEffect?.bindingContext.objectId).map(id=>fxCtx.anchorFor(id)).filter(Boolean).map(anchor=>anchorLocalBox(fxCtx.layer,anchor));
-    const cancelEffect=playCombatEffectPlan(fxCtx.layer,anchorLocalBox(fxCtx.layer,actorEl),plan.spriteEffect,{targets:effectTargets,authoredTargets,duration:Math.max(180,totalMs),size:180});
+    const cancelEffect=playCombatEffectPlan(fxCtx.layer,anchorLocalBox(fxCtx.layer,actorEl),plan.spriteEffect,{targets:effectTargets,authoredTargets,duration:Math.max(180,totalMs),size:180,actor:actorEl,localBox:anchorLocalBox});
     const actionClass = ['slash', 'thrust', 'strike', 'projectile'].includes(plan.family) ? 'act-attack' : 'act-move';
     const overrides = {
       'animation-duration': totalMs + 'ms',
@@ -1929,8 +1930,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   });
 
   // Fly only accepted plays, with one cancellable browser-owned animation.
-  function flyCard(instanceId, targetId) {
-    if (reducedMotionRequested()) return;
+  function flyCard(instanceId, targetId, events) {
+    if (readSettings().showPlayedCard !== true || reducedMotionRequested()) return;
     const cardEl = app.querySelector(`.hand .card[data-instance-id="${instanceId}"]`);
     if (!cardEl || typeof cardEl.animate !== 'function') return;
     const dest = (targetId && fxCtx.anchorFor(targetId)) || fxCtx.anchorFor('player');
@@ -1938,22 +1939,29 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const t = anchorLocalBox(VIEWPORT_ORIGIN, dest || cardEl);
     const at = clampBox(b, viewportLocalBox(), { keep: 40 });
     const ghost = cardEl.cloneNode(true);
-    ghost.className = 'card card-ghost';
+    ghost.classList.add('card-ghost');
     ghost.setAttribute('aria-hidden', 'true');
     ghost.setAttribute('inert', '');
     ghost.removeAttribute('id');
     ghost.removeAttribute('tabindex');
     ghost.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-    Object.assign(ghost.style, { left: at.left + 'px', top: at.top + 'px', width: b.width + 'px', margin: '0', animation: 'none', transition: 'none' });
-    document.body.appendChild(ghost);
+    const flight=document.createElement('div');flight.className='card-flight';flight.setAttribute('aria-hidden','true');flight.setAttribute('inert','');
+    Object.assign(flight.style,{position:'fixed',left:at.left+'px',top:at.top+'px',width:b.width+'px',height:b.height+'px',zIndex:'700',isolation:'isolate',pointerEvents:'none'});
+    Object.assign(ghost.style, { position:'relative',left:'0',top:'0',width:'100%',height:'100%',zIndex:'1',margin:'0',animation:'none',transition:'none',transform:'none' });
+    flight.append(ghost);document.body.appendChild(flight);
+    const receipt=events?.find(e=>e.type==='cardPlayed'&&e.cardInstanceId===instanceId);
+    const instance=disp?.hand.find(c=>c.instanceId===instanceId);
+    const definition=instance&&resolveCard(registries,instance);
+    const effect=receipt&&definition&&combatEffectPlan({...definition,cardTags:combatEffectTags(registries,definition)},receipt);
+    const stopLayers=playCardEffectLayers(flight,effect?.kind,{duration:220});
     const dx = t.left + t.width / 2 - (at.left + b.width / 2);
     const dy = t.top + t.height / 2 - (at.top + b.height / 2);
-    const animation = ghost.animate([
+    const animation = flight.animate([
       { transform: 'translate(0,0)', opacity: 0.85 },
       { transform: `translate(${dx}px, ${dy}px) scale(0.35) rotate(6deg)`, opacity: 0 },
     ], { duration: 220, easing: 'ease-out', fill: 'forwards' });
     cardFlights.add(animation);
-    const remove = () => { ghost.remove(); cardFlights.delete(animation); };
+    const remove = () => { stopLayers();flight.remove();cardFlights.delete(animation); };
     animation.onfinish = remove;
     animation.oncancel = remove;
   }
@@ -1983,7 +1991,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return;
     }
     dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
-    flyCard(instanceId, targetId);
+    flyCard(instanceId, targetId, out.events);
     sfx.play('cardPlay');
     busy = true;
     afterDispatch(out.events);

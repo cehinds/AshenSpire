@@ -64,6 +64,7 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
   const layer = document.createElement('div');
   layer.className = 'pose-layer';
   layer.style.cssText = `height:${640 / height * 100}%;aspect-ratio:1;top:${100 - 600 / height * 100}%;transform:translateX(-50%);`;
+  layer.style.isolation = 'isolate';
   const img = document.createElement('img');
   img.className = 'pose-frame';
   img.alt = classId;
