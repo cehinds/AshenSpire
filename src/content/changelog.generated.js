@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-885",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Choose a hand and see its starting cards",
+    "detail": "Offer Empty Hand in both slots, preview each hand's starting combat cards in a compact grid, and continue explicitly to the next setup section. Focused equipment lifts gently and reveals its action, with reduced-motion support. Larger equipment choices sit in two columns beside their details, with Continue at bottom-right; titles fit vertically, and clipped flavor uses an ellipsis while remaining readable in inspection.",
+    "build": "0.6.0.73",
+    "pullRequest": 885,
+    "url": "https://github.com/cehinds/AshenSpire/pull/885"
+  },
+  {
     "id": "pr-888",
     "date": "2026-09-09",
     "group": "2026-09-09",

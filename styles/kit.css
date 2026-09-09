@@ -2758,7 +2758,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* Shared inspection: 270px artwork + 180px information within the 450px face. */
 .equipment-poker-card .epc-frame,
 .collectible-poker-card .epc-frame { padding:var(--epc-pad,19px); gap:var(--epc-gap,3px); }
-.epc-frame > .epc-name { position:absolute; z-index:1; top:26px; left:27px; right:27px; height:29px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:#211a12dd; padding:3px 6px; }
+.epc-frame > .epc-name { position:absolute; z-index:1; top:26px; left:27px; right:27px; min-height:29px; height:auto; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:#211a12dd; padding:3px 6px; }
 .epc-name > span { display:none; }
 .epc-art img { padding:35px 8px 8px; }
 .epc-frame > :is(.epc-type,.epc-flavor), .epc-footer > span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
@@ -2847,6 +2847,45 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 }
 .equipment-choose { width:100%; margin-top:10px; min-height:44px; }
 .poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
+
+/* Creation keeps card nodes in place so focus can lift and settle smoothly. */
+.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { padding:20px 6px 14px; gap:32px 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
+.cc-card-selectors .poker-equipment-choice { min-width:0; max-width:220px; width:100%; justify-self:center; }
+.cc-card-selectors .equipment-poker-card { position:relative; z-index:1; transform-origin:center bottom; transition:transform 180ms ease-out, box-shadow 180ms ease-out; }
+.cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-6px) scale(1.05); z-index:3; box-shadow:0 12px 26px #0008,0 0 18px #d0ac5d55; border-radius:12px; }
+.cc-card-selectors .equipment-choose { white-space:normal; overflow-wrap:anywhere; line-height:1.3; padding:8px; }
+/* Retain the action slot so browsing does not move the next row under a pointer. */
+.cc-card-selectors .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
+.cc-card-selectors .poker-equipment-choice:not(.choice-focused) .card-info-button { visibility:hidden; pointer-events:none; }
+.cc-equipment-details { max-width:none; }
+.cc-equipment-details h3 { margin:0 0 8px; }
+.cc-choice-context, .cc-package-context { color:var(--muted); font-size:14px; line-height:1.4; margin:0 0 12px; }
+.cc-equipment-continue { grid-column:2; grid-row:2; justify-self:end; align-self:end; min-height:44px; max-width:100%; white-space:normal; }
+.cc-starting-package { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
+.cc-starting-package h4 { margin:0 0 8px; color:var(--gold); font-size:18px; }
+.cc-starting-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px 9px; }
+.cc-starting-card { min-width:0; display:flex; flex-direction:column; align-items:center; gap:6px; padding-top:42px; }
+.cc-card-quantity { font-size:13px; color:var(--gold); align-self:start; }
+.cc-starting-card > .card { width:100%; max-width:150px; height:auto; aspect-ratio:5/7; min-width:0; margin:0; transform:none; }
+.equipment-poker-card[data-item='empty-hand'] .epc-art-glyph { font-size:92px; line-height:1; color:var(--gold); }
+.cc-starting-card .card-info-button { top:-44px; }
+.inspection-lore { margin-top:12px; color:var(--muted); font-size:14px; }
+.inspection-lore summary { cursor:pointer; }
+.inspection-lore p { font-style:italic; margin:8px 0 0; }
+.equipment-poker-card .epc-frame > .epc-flavor { display:block; box-sizing:border-box; min-width:0; min-height:0; max-height:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:calc(var(--epc-flavor-row,14px) - 2px); line-height:1; padding-top:0; }
+@media(max-width:700px) {
+  .cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { grid-row:auto; }
+  .cc-equipment-continue { grid-column:1; grid-row:auto; width:100%; }
+  .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-4px) scale(1.03); }
+  .cc-starting-card-grid { gap:9px 6px; }
+  .cc-starting-card > .card { max-width:150px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .cc-card-selectors .equipment-poker-card { transition:none; }
+  .cc-card-selectors .choice-focused .equipment-poker-card { transform:none; }
+}
+.reduced-motion .cc-card-selectors .equipment-poker-card { transition:none; }
+.reduced-motion .cc-card-selectors .choice-focused .equipment-poker-card { transform:none; }
 
 .shop-inspect-card { position:relative; }
 /* Face rows come from balance.ui.equipmentCard via the card's own custom
