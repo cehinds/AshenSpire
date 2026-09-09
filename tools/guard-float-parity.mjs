@@ -36,7 +36,7 @@ function sourceContract(tree) {
     /guard: blocked > 0 \? \{ text: String\(blocked\), cls: 'blk small' \}/.test(tree.fx),
     /damage: residual > 0 \? \{ text: `-\$\{residual\}`/.test(tree.fx),
     /\(type === 'damageDealt' \|\| type === 'hpLost' \|\| type === 'healed'\) && payload\.targetId === 'player'[\s\S]{0,160}playerId: payload\.playerId \?\? combat\.playerKey/.test(tree.session),
-    /ctx\.playerIdForEntity\(target\)/.test(tree.actions),
+    /const playerId = target\.kind === 'player' && typeof ctx\.playerIdForEntity === 'function'\s*\? ctx\.playerIdForEntity\(target\)/.test(tree.actions),
     /for \(const \[id, P\] of C\.players\) if \(P\.entity === entity\) return id;/.test(tree.engineCoop),
     /\.filter\(\(e\) => \[[^\]]*'damageDealt'/.test(tree.session),
     /e\.type === 'hpLost' && e\.cause !== 'attack'/.test(tree.session),
@@ -91,7 +91,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     ['coop-loses-healed-player-owner', 'tools/session.mjs', "(type === 'damageDealt' || type === 'hpLost' || type === 'healed')", "(type === 'damageDealt' || type === 'hpLost')"],
     ['coop-duplicates-heal-remainder', 'src/ui/screens/coop.js', 'heal - (receiptHealByTarget.get(`player:${p.id}`) || 0)', 'heal'],
     ['coop-heal-overwrites-resolved-recipient', 'tools/session.mjs', 'playerId: payload.playerId ?? combat.playerKey', 'playerId: combat.playerKey'],
-    ['coop-heal-drops-recipient-resolution', 'src/engine/actions.js', 'ctx.playerIdForEntity(target)', 'null'],
+    ['coop-heal-drops-recipient-resolution', 'src/engine/actions.js', '? ctx.playerIdForEntity(target)', '? null'],
     ['coop-heal-maps-active-instead-of-target', 'src/engine/coopCombat.js', 'if (P.entity === entity) return id;', 'if (id === C.playerKey) return id;'],
   ];
   const sourceStatus = await doorSelftest({
@@ -860,7 +860,7 @@ const plants = [
   ['coop-loses-healed-player-owner', 'session', "(type === 'damageDealt' || type === 'hpLost' || type === 'healed')", "(type === 'damageDealt' || type === 'hpLost')"],
   ['coop-duplicates-heal-remainder', 'coop', 'heal - (receiptHealByTarget.get(`player:${p.id}`) || 0)', 'heal'],
   ['coop-heal-overwrites-resolved-recipient', 'session', 'playerId: payload.playerId ?? combat.playerKey', 'playerId: combat.playerKey'],
-  ['coop-heal-drops-recipient-resolution', 'actions', 'ctx.playerIdForEntity(target)', 'null'],
+  ['coop-heal-drops-recipient-resolution', 'actions', '? ctx.playerIdForEntity(target)', '? null'],
   ['coop-heal-maps-active-instead-of-target', 'engineCoop', 'if (P.entity === entity) return id;', 'if (id === C.playerKey) return id;'],
 ];
 for (const [name, file, find, replacement] of plants) {
