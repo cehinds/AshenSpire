@@ -1678,6 +1678,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     registries,
     run,
     combat,
+    getSettings: () => activeSettings,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
     meta: activeMeta,

@@ -70,7 +70,7 @@ function pileButton(kind, label) {
   return node;
 }
 
-export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
+export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {}, getSettings = null }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -1545,7 +1545,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (busy || !affordable || ev.button !== 0) return;
       startX = ev.clientX;
       startY = ev.clientY;
-      dragConfig = cardDragConfig(meta.settings || {}, registries.balance.ui.cardDrag);
+      dragConfig = cardDragConfig(getSettings ? getSettings() : meta.settings || {}, registries.balance.ui.cardDrag);
       dragSamples = [{ x: startX, y: startY, time: ev.timeStamp }];
       dragPeakUp = 0;
       const cardBox = el.getBoundingClientRect();

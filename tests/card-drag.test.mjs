@@ -56,10 +56,11 @@ export function runCardDragTests() {
       card.box = {left:180,top:600,width:140,height:196}; card.offsetWidth=140; card.offsetHeight=196;
       const enemy = document.createElement('div'); enemy.className='enemy'; enemy.dataset.eid='enemy-1'; enemy.box={left:80,top:100,width:100,height:150}; combatEl.append(enemy);
       document.elementFromPoint = () => card; // release never overlaps a target
-      const meta={settings:{holdConfirm}}, plays=[], previews=[];
+      let liveSettings = {holdConfirm};
+      const meta={settings:liveSettings}, plays=[], previews=[];
       const bind = {
         app, combatEl, meta, combat:{player:{id:'player',alive:true},enemies:[{id:'enemy-1',alive:true}]},
-        registries:{balance}, cardDragConfig,cardDragVelocity,cardDragPlan,
+        registries:{balance}, cardDragConfig,cardDragVelocity,cardDragPlan, getSettings:()=>liveSettings,
         resolveCard:()=>({}),friendlyTargetPlan:()=>({legalIds:[]}),friendlyTargetMode:()=> 'none',
         trackGesture,armHold,holdMs,HOLD_POINTER_SLOP,
         hideTooltip(){}, clearAim(){}, clearTargetSilhouettes(){},
@@ -90,9 +91,9 @@ export function runCardDragTests() {
       check(plays.length,1,'foreign pointer cannot own gesture');
       move(600,700); move(638,710); end('pointerup',638,720);
       check(plays.length,1,'return-to-hand cancels');
-      meta.settings.cardFlick=false;
+      liveSettings = {...liveSettings,cardFlick:false};
       begin(800); move(626,830); end('pointerup',626,840);
-      check(plays.length,1,'live flick setting is read at next press');
+      check(plays.length,1,'replacement profile settings are read at next press');
       begin(1000); move(602,1200); end('pointerup',602,1210);
       check(plays.length,2,'slow drag still works with flick disabled');
       begin(1300); move(600,1500); window.dispatchEvent(new dom.Event('blur'));
