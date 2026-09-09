@@ -6,11 +6,31 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-859",
     "date": "2026-09-09",
     "group": "2026-09-09",
-    "summary": "Card removal and flick controls appear in About",
-    "detail": "Add the delivery entries to the in-game changelog before promoting the build to test.",
-    "build": "0.6.0.36",
+    "summary": "Recent deliveries appear in About",
+    "detail": "Add the card removal, touch flick, Pose Studio usability and combat specification entries to the in-game changelog before promoting the build to test.",
+    "build": "0.6.0.37",
     "pullRequest": 859,
     "url": "https://github.com/cehinds/AshenSpire/pull/859"
+  },
+  {
+    "id": "pr-844",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat foundations have an explicit specification",
+    "detail": "Document equipment-based attacks, typed damage, defenses, impact, Evade, trigger ownership and prototype acceptance examples. This specification does not change gameplay or balance.",
+    "build": "0.6.0.35",
+    "pullRequest": 844,
+    "url": "https://github.com/cehinds/AshenSpire/pull/844"
+  },
+  {
+    "id": "pr-857",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Pose Studio makes authoring controls easier to find",
+    "detail": "Start from visible templates, animate before connecting a card, and open editing panels without long scrolling on phones. Preserve field focus, select overlapping effect tracks, and distinguish project downloads from local combat previews.",
+    "build": "0.6.0.35",
+    "pullRequest": 857,
+    "url": "https://github.com/cehinds/AshenSpire/pull/857"
   },
   {
     "id": "pr-856",
