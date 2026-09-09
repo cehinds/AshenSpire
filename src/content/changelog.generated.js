@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-878",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Clearer, closer maps with detail on demand",
+    "detail": "Use consistent large nodes in every run mode, load native detail tiles only for the visible area, retain a small offline fallback, and add an extra manual zoom step. Trace routes with bright outlined ink over engraved unexplored parchment; preserve discovery and travel rules.",
+    "build": "0.6.0.69",
+    "pullRequest": 878,
+    "url": "https://github.com/cehinds/AshenSpire/pull/878"
+  },
+  {
     "id": "pr-882",
     "date": "2026-09-09",
     "group": "2026-09-09",

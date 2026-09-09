@@ -344,3 +344,16 @@ dialog.atlas-dialog.modal-veil[open] { display:block; padding:0; background:#1b1
 .atlas-roads path { stroke:#806b49; stroke-width:3; stroke-dasharray:none; }
 .atlas-roads .traveled { stroke:#b89030; stroke-width:4; }
 .atlas-compass,.atlas-map-caption { pointer-events:none; }
+
+/* Engraved fog and outlined vector roads stay readable at every detail tier. */
+.map-detail-surface, .map-detail-tiles { pointer-events:none; }
+.mapscreen .map-route-outline, .world-atlas-screen .atlas-roads .map-route-outline {
+  stroke:#29251a; stroke-width:var(--map-route-outline-width,6px); stroke-linecap:round; stroke-dasharray:none; fill:none; opacity:.95;
+}
+.mapscreen svg:has(.map-terrain) .map-edge, .world-atlas-screen .atlas-roads path:not(.map-route-outline) {
+  stroke:#c9b987; stroke-width:var(--map-route-width,3px); stroke-opacity:1; stroke-linecap:round;
+}
+.mapscreen svg:has(.map-terrain) .map-edge.traveled, .world-atlas-screen .atlas-roads .traveled { stroke:#ead090; }
+.mapscreen svg:has(.map-terrain) .map-edge.shrine-lane, .world-atlas-screen .atlas-roads .available { stroke:#ffe39a; stroke-width:3.5px; }
+.mapscreen .map-scroll:has(.map-terrain), .atlas-scrollport, .atlas-world { background:#8b7d61; }
+.map-terrain .terrain-detail { opacity:1; }

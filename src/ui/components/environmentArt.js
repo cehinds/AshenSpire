@@ -1,3 +1,4 @@
+import { mapFogDefs } from './mapFog.js';
 import { assetUrl } from '../assetmap.js';
 import { combatEnvironment } from '../../model/environmentArt.js';
 import { ENVIRONMENTS, ENVIRONMENT_ATLAS_SIZE, MAP_TERRAIN_REVEAL_RADIUS } from '../../content/environments.js';
@@ -54,11 +55,11 @@ export function mapTerrainHtml({ world, width, height, points, fog }) {
   const circles = points.map(({ id: node, x, y }) =>
     `<circle data-terrain-node="${node}" cx="${x}" cy="${y}" r="${MAP_TERRAIN_REVEAL_RADIUS}" fill="url(#${id}-light)"/>`).join('');
   return `<g class="map-terrain" data-world="${world.id}" aria-hidden="true" pointer-events="none">
-    <defs>
+    <defs>${mapFogDefs(id)}
       <radialGradient id="${id}-light"><stop offset="0.56" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></radialGradient>
       <mask id="${id}-reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="${width}" height="${height}" style="mask-type:alpha">${circles}</mask>
     </defs>
-    <g class="map-fog-ground"><rect class="terrain-paper" width="${width}" height="${height}"/></g>
-    <image class="terrain-detail" href="${assetUrl(world.map)}" width="${width}" height="${height}" preserveAspectRatio="none"${fog ? ` mask="url(#${id}-reveal)"` : ''}/>
+    <g class="map-fog-ground"><rect class="terrain-paper" style="fill:url(#${id}-paper)" width="${width}" height="${height}"/></g>
+    <g class="map-detail-surface"${fog ? ` mask="url(#${id}-reveal)"` : ''}><image class="terrain-detail" href="${assetUrl(world.map)}" width="${width}" height="${height}" preserveAspectRatio="none"/></g>
   </g>`;
 }

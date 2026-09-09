@@ -1,3 +1,6 @@
+import { mountMapDetail } from '../components/mapDetail.js';
+import { mapFogDefs } from '../components/mapFog.js';
+import { MAP_PRESENTATION, MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
 import {
   ATLAS,
   journeyEdges,
@@ -9,7 +12,7 @@ import { esc } from "../components/tooltip.js";
 import { assetUrl } from "../assetmap.js";
 import { nodeIcon } from '../uiContent.js';
 import { mapNodeInk } from '../components/mapNodeInk.js';
-import { nodeRadius, ZOOM_MAX } from '../../model/mapview.js';
+import { nodeRadius } from '../../model/mapview.js';
 import { MAP_TERRAIN_REVEAL_RADIUS } from '../../content/environments.js';
 import { atlasFocusCamera } from '../models/AtlasCameraModel.js';
 // World-specific places project onto the established run-node vocabulary.
@@ -58,13 +61,13 @@ export function mountWorldAtlas(
   };
   app.innerHTML = `<section class="mapscreen world-atlas-screen"><header class="atlas-header"><div><span class="atlas-eyebrow">WORLD JOURNEY · ${esc(p.displayName)}</span><h1>${esc(map.displayName)}</h1></div><div class="atlas-header-actions"><span class="atlas-vitals">${run.hp} / ${run.maxHp} HP · ${run.cinders} cinders</span>${button("Armoury", "data-atlas-armoury")}${button("Menu", "data-atlas-menu")}${button("Save & quit", "data-atlas-quit")}</div></header>
  <div class="atlas-layout"><div class="atlas-map-column"><div class="atlas-map-tools"><span>At <strong>${esc(current.displayName)}</strong></span><div>${button("−", 'data-atlas-zoom="-1" aria-label="Zoom out"')}${button("Fit", 'data-atlas-zoom="0"')}${button("You", 'data-atlas-center')}${button("+", 'data-atlas-zoom="1" aria-label="Zoom in"')}</div></div>
- <div class="atlas-scrollport" tabindex="0" aria-label="World map; scroll to explore"><div class="atlas-world" style="--atlas-zoom:${j.view?.zoom || 1}"><svg class="atlas-terrain" viewBox="0 0 1000 1000" aria-hidden="true"><defs><radialGradient id="atlas-reveal"><stop offset="60%" stop-color="white"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient><mask id="atlas-fog" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" style="mask-type:alpha">${[...known].map((id) => `<circle cx="${pos[id].x * 1000}" cy="${pos[id].y * 1000}" r="${p.revealRadius * 1000}" fill="url(#atlas-reveal)"/>`).join("")}</mask></defs>
- <rect width="1000" height="1000" fill="#c4af85"/><image href="${esc(art)}" width="1000" height="1000" ${authoring ? "" : 'mask="url(#atlas-fog)"'}/>
+ <div class="atlas-scrollport" tabindex="0" aria-label="World map; scroll to explore"><div class="atlas-world" style="--atlas-zoom:${j.view?.zoom || 1}"><svg class="atlas-terrain" viewBox="0 0 1000 1000" aria-hidden="true"><defs>${mapFogDefs('atlas')}<radialGradient id="atlas-reveal"><stop offset="60%" stop-color="white"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient><mask id="atlas-fog" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" style="mask-type:alpha">${[...known].map((id) => `<circle cx="${pos[id].x * 1000}" cy="${pos[id].y * 1000}" r="${p.revealRadius * 1000}" fill="url(#atlas-reveal)"/>`).join("")}</mask></defs>
+ <rect width="1000" height="1000" fill="url(#atlas-paper)"/><g class="map-detail-surface" ${authoring ? "" : 'mask="url(#atlas-fog)"'}><image href="${esc(art)}" width="1000" height="1000" preserveAspectRatio="none"/></g>
  <g class="atlas-roads">${journeyEdges(j)
    .filter((e) => known.has(e.fromNodeId) && known.has(e.toNodeId))
    .map(
      (e) =>
-       `<path vector-effect="non-scaling-stroke" d="M${pos[e.fromNodeId].x * 1000} ${pos[e.fromNodeId].y * 1000} L${pos[e.toNodeId].x * 1000} ${pos[e.toNodeId].y * 1000}" class="${done.has(e.fromNodeId) && done.has(e.toNodeId) ? "traveled" : ""}"/>`,
+       `<path class="map-route-outline" vector-effect="non-scaling-stroke" d="M${pos[e.fromNodeId].x * 1000} ${pos[e.fromNodeId].y * 1000} L${pos[e.toNodeId].x * 1000} ${pos[e.toNodeId].y * 1000}"/><path vector-effect="non-scaling-stroke" d="M${pos[e.fromNodeId].x * 1000} ${pos[e.fromNodeId].y * 1000} L${pos[e.toNodeId].x * 1000} ${pos[e.toNodeId].y * 1000}" class="${done.has(e.fromNodeId) && done.has(e.toNodeId) ? "traveled" : ""} ${[e.fromNodeId,e.toNodeId].includes(j.currentNodeId) && (reachable.has(e.fromNodeId)||reachable.has(e.toNodeId)) ? "available" : ""}"/>`,
    )
    .join(
      "",
@@ -74,7 +77,7 @@ export function mountWorldAtlas(
    .map((id) => {
      const n = a.nodes[id],
        core = !!a.localByOwner[id], type = traditionalType(n.nodeTypeId), radius = nodeRadius(type);
-     return `<button type="button" class="atlas-node map-node ${type} ${type === "event" ? "revealed" : ""} ${core ? "atlas-core" : ""} ${reachable.has(id) ? "reachable" : ""} ${done.has(id) ? "completed visited" : ""} ${id === j.currentNodeId ? "current" : ""}" style="left:${pct(pos[id].x)};top:${pct(pos[id].y)};--atlas-node-size:${radius * 2 * ZOOM_MAX}px" data-atlas-node="${esc(id)}" aria-label="${esc(n.displayName)}${id === j.currentNodeId ? ", current location" : reachable.has(id) ? ", road available" : ""}"><svg class="atlas-node-face" viewBox="${-radius} ${-radius} ${radius * 2} ${radius * 2}" aria-hidden="true">${mapNodeInk({type, radius, reachable:reachable.has(id)})}</svg>${core ? `<span class="atlas-node-label">${esc(n.displayName)}</span>` : ""}</button>`;
+     return `<button type="button" class="atlas-node map-node ${type} ${type === "event" ? "revealed" : ""} ${core ? "atlas-core" : ""} ${reachable.has(id) ? "reachable" : ""} ${done.has(id) ? "completed visited" : ""} ${id === j.currentNodeId ? "current" : ""}" style="left:${pct(pos[id].x)};top:${pct(pos[id].y)};--atlas-node-size:${radius * 2 * MAP_CLOSE_NODE_SCALE}px" data-atlas-node="${esc(id)}" aria-label="${esc(n.displayName)}${id === j.currentNodeId ? ", current location" : reachable.has(id) ? ", road available" : ""}"><svg class="atlas-node-face" viewBox="${-radius} ${-radius} ${radius * 2} ${radius * 2}" aria-hidden="true">${mapNodeInk({type, radius, reachable:reachable.has(id)})}</svg>${core ? `<span class="atlas-node-label">${esc(n.displayName)}</span>` : ""}</button>`;
    })
    .join("")}
  <span class="atlas-map-caption">THE FRACTURED REALM<br><small>Beyond the roads, the land remains uncharted</small></span></div></div><div class="atlas-legend"><span>◉ You are here</span><span>◌ Road available</span><span>Gold ring: visited</span><span>Inspect before traveling</span></div></div>
@@ -105,6 +108,7 @@ export function mountWorldAtlas(
   app.querySelector("[data-atlas-inspect-current]").onclick = (e) =>
     inspect(j.currentNodeId, e.currentTarget);
   const port = app.querySelector('.atlas-scrollport'), world = app.querySelector('.atlas-world');
+  mountMapDetail(port, world.querySelector('.map-detail-surface'), map && a.assets[map.artAssetId].uri);
   const focusPoints = [j.currentNodeId, ...reachable].filter((id, i, ids) => known.has(id) && ids.indexOf(id) === i).map(id => pos[id]);
   let cameraFrame = 0;
   // Clip fog composition to the viewport, even when the world is zoomed close.
@@ -126,7 +130,7 @@ export function mountWorldAtlas(
     world.style.setProperty('--atlas-face-scale', String(Math.max(.52, Math.min(2, (j.view.zoom || 1) / close.zoom))));
     // Match the traditional map's visible reveal halo at close zoom. This only
     // frames terrain; the discovered-node set and travel permissions are intact.
-    const revealRadius = Math.min(p.revealRadius * 1000, MAP_TERRAIN_REVEAL_RADIUS * ZOOM_MAX * 1000 / world.offsetWidth);
+    const revealRadius = Math.min(p.revealRadius * 1000, MAP_TERRAIN_REVEAL_RADIUS * MAP_CLOSE_NODE_SCALE * 1000 / world.offsetWidth);
     for (const circle of world.querySelectorAll('#atlas-fog circle')) circle.setAttribute('r', String(revealRadius));
     const target = automatic ? close : pos[j.currentNodeId];
     port.scrollLeft = target.x * world.offsetWidth - port.clientWidth / 2;
@@ -145,7 +149,7 @@ export function mountWorldAtlas(
   app.querySelector('[data-atlas-center]').onclick = () => { j.view.cameraMode = 'close'; center(); onSave?.(); };
   app.querySelectorAll('[data-atlas-zoom]').forEach(b => b.onclick = () => {
     j.view.cameraMode = 'manual';
-    j.view.zoom = b.dataset.atlasZoom === '0' ? 1 : Math.max(1, Math.min(32, (j.view.zoom || 1) * (Number(b.dataset.atlasZoom) > 0 ? 1.25 : .8)));
+    j.view.zoom = b.dataset.atlasZoom === '0' ? 1 : Math.max(1, Math.min(MAP_PRESENTATION.atlasZoomMax, (j.view.zoom || 1) * (Number(b.dataset.atlasZoom) > 0 ? 1.25 : .8)));
     center(); onSave?.();
   });
   function inspect(id, returnFocus) {
