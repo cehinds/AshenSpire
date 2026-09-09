@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "The README and the changelog stop burying what a reader came for",
     "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
-    "build": "0.6.0.39",
+    "build": "0.6.0.40",
     "pullRequest": 820,
     "url": "https://github.com/cehinds/AshenSpire/pull/820"
   },
@@ -31,6 +31,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.37",
     "pullRequest": 859,
     "url": "https://github.com/cehinds/AshenSpire/pull/859"
+  },
+  {
+    "id": "pr-810",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "The screenreach step leaves the dev preview job",
+    "detail": "Nothing a player sees changes, and no gate loses coverage: tools/screenreach.mjs still runs in ci.yml exactly as before. What is withdrawn is the step added to dev-preview hours earlier by the same pass, which had been red on every push to dev and every pull request into it while the rest of that job was green. The measurement behind the withdrawal is that the tool calls a control covered when its geometric centre is hit-tested to something else, and the combat hand is a fan whose cards overlap on purpose — about a third of each card stayed reachable — while the creation view toggle is a header straddling a scroll clip that scrollIntoView reaches. Teaching the gate to judge a usable region rather than one pixel is left as its own change.",
+    "build": "0.6.0.37",
+    "pullRequest": 810,
+    "url": "https://github.com/cehinds/AshenSpire/pull/810"
   },
   {
     "id": "pr-857",
@@ -61,6 +71,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.35",
     "pullRequest": 844,
     "url": "https://github.com/cehinds/AshenSpire/pull/844"
+  },
+  {
+    "id": "pr-839",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "The World Journey atlas is specified",
+    "detail": "Nothing a player sees changes yet. A selectable run mode beside the Classic Climb is written down in the spec: one authored square world across five biomes, where the geography and the landmarks are content and a seed picks a connected route through them. Every journey pins a starting city, a major city and a final legacy dungeon; everything else varies, generation is deterministic by seed, profile and content revision, and a saved journey keeps the node and edge IDs it chose rather than regenerating on resume. Undiscovered ground stays indistinct parchment, inspecting a node never travels, and a completed encounter cannot be farmed by walking back to it.",
+    "build": "0.6.0.35",
+    "pullRequest": 839,
+    "url": "https://github.com/cehinds/AshenSpire/pull/839"
   },
   {
     "id": "pr-855",
