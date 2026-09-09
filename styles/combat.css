@@ -40,7 +40,7 @@
 }
 
 /* Approved environment paintings are selected with an SVG atlas viewBox. */
-.environment-backdrop { opacity: 1; overflow: hidden; background: #17130f; bottom: auto; height: var(--environment-height, 65%); }
+.environment-backdrop { opacity: 1; overflow: hidden; background: #17130f; top: var(--environment-top, 0); bottom: auto; height: var(--environment-height, 65%); }
 .environment-backdrop > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .environment-backdrop::after { display: none; }
 .environment-backdrop::before {

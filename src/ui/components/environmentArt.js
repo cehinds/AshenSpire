@@ -1,9 +1,14 @@
 import { assetUrl } from '../assetmap.js';
 import { combatEnvironment } from '../../model/environmentArt.js';
-import { ENVIRONMENT_ATLAS_SIZE, MAP_TERRAIN_REVEAL_RADIUS } from '../../content/environments.js';
+import { ENVIRONMENTS, ENVIRONMENT_ATLAS_SIZE, MAP_TERRAIN_REVEAL_RADIUS } from '../../content/environments.js';
 
-export function combatBackdropHtml(run) {
-  const { region, scene } = combatEnvironment(run);
+export function combatBackdropHtml(run, previewSceneId = null) {
+  let { region, scene } = combatEnvironment(run);
+  if (previewSceneId) {
+    region = ENVIRONMENTS.find(r => r.scenes.some(s => s.id === previewSceneId));
+    if (!region) throw Error(`Unknown combat preview scene: ${previewSceneId}`);
+    scene = region.scenes.find(s => s.id === previewSceneId);
+  }
   const [width, height] = ENVIRONMENT_ATLAS_SIZE;
   const [x, y, w, h] = scene.box;
   const split = h * scene.floorStart;

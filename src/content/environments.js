@@ -1,5 +1,5 @@
-// Approved environment boards. Rectangles select only artwork, excluding labels
-// and borders; the original paintings remain intact in each shipped atlas.
+// Four edge-to-edge combat paintings per atlas. The original concept boards
+// remain in art/environments; floorStart is measured on the combat-fields art.
 const region = (id, name, names, floorStarts) => Object.freeze({
   id, name, atlas: `assets/environments/${id}-combat.webp`,
   map: `assets/environments/${id}-map.webp`,

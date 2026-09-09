@@ -120,19 +120,30 @@ export function wireBattlefieldStage(field, model) {
         const rect = combat.getBoundingClientRect();
         const zoom = measures[0].uiZoom;
         // The painting belongs to the battlefield, not the tall hand below it.
-        combat.style.setProperty('--environment-height', `${(field.getBoundingClientRect().bottom - rect.top) / zoom}px`);
+        const fieldRect = field.getBoundingClientRect();
+        combat.style.setProperty('--environment-top', `${(fieldRect.top - rect.top) / zoom}px`);
+        combat.style.setProperty('--environment-height', `${fieldRect.height / zoom}px`);
         field.dataset.groundY = String(groundY * zoom);
       }
     });
   };
   const resizeObserver = new ResizeObserver(refresh);
   resizeObserver.observe(field);
+  // CSS zoom can move the rendered floor without changing the observed
+  // element's unzoomed content box. Refit after responsive UI settings settle.
+  const layoutObserver = new MutationObserver(refresh);
+  layoutObserver.observe(document.documentElement, {
+    attributes: true, attributeFilter: ['style', 'data-layout', 'data-short', 'data-composition'],
+  });
+  window.addEventListener('resize', refresh);
   const detachObserver = new MutationObserver(() => {
     if (!field.isConnected) release();
   });
   const release = () => {
     cancelAnimationFrame(frameRequest);
     resizeObserver.disconnect();
+    layoutObserver.disconnect();
+    window.removeEventListener('resize', refresh);
     detachObserver.disconnect();
     if (releaseActiveStage === release) releaseActiveStage = null;
   };

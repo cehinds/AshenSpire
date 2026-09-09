@@ -1,8 +1,23 @@
 # Regional environment art
 
-Five approved boards supply twenty combat paintings. The source PNGs are kept
-intact; `src/content/environments.js` records the artwork rectangles, and the
-runtime uses SVG viewBoxes to display them without board labels or borders.
+Five original concept boards remain intact here. Their twenty combat locations
+have been recomposed in `combat-fields/` as four equal, edge-to-edge paintings
+per atlas, with wide clear floors and distant landmarks. These new sheets supply
+the runtime combat textures; the region and scene IDs remain stable.
+
+`src/content/environments.js` records each artwork rectangle and its measured
+`floorStart` (the fraction of source height where clear ground begins). The
+renderer maps that boundary to 40% of the battle view, reserving `fieldRatio: 0.6`
+for the floor at every viewport size. Two continuous SVG viewports retain the
+full scene width and adjust the vertical framing of architecture and ground
+separately. The painting fits the actual battlefield, excluding the HUD and hand.
+The shared stage aligns sprite foot anchors, reserves the tallest information
+strip, and keeps intent/HUD clearance. Contrast edges follow image alpha before
+soft shadows and compose with readiness auras and target effects.
+
+Review all scenes with `node tools/combat-ground-qa.mjs` (Playwright/Edge), serving
+the standalone game on port 8210. It checks 20 scenes at four viewport sizes,
+authored foot anchors, the 60% floor, overflow and embedded art, plus reduced motion.
 
 `worlds/` contains three connected mega maps, each combining all five biomes.
 See [world-maps.md](world-maps.md) for their layouts and future junction design.

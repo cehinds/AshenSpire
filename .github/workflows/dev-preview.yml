@@ -95,12 +95,15 @@ jobs:
         run: node tools/linkcheck.mjs --check
 
       - name: Combat effect tags, outcomes, and character outlines
-        run: node --test tests/combatEffects.test.mjs tests/combatEffectIntegration.test.mjs tests/combatAnimation.test.mjs tests/combatAura.test.mjs
+        run: node --test tests/combatEffects.test.mjs tests/combatEffectIntegration.test.mjs tests/combatAnimation.test.mjs tests/combatAura.test.mjs tests/combatPose.test.mjs
 
       - name: Collect the playable build
         run: |
           set -euo pipefail
           mkdir -p preview
+          node tools/readiness-preview-build.mjs preview
+          mkdir -p preview/art/readiness-poses
+          cp -r art/readiness-poses/inspection preview/art/readiness-poses/inspection
           cp AshenSpire.html preview/AshenSpire.html
           cp AshenSpire.html preview/index.html
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
@@ -110,6 +113,7 @@ jobs:
           cp -r assets/environments preview/assets/
           mkdir -p preview/docs/preview
           cp -r docs/preview/world-atlas preview/docs/preview/
+          cp -r docs/preview/combat-ground preview/docs/preview/
           cp -r assets/combat-effects assets/painted-outfits preview/assets/
           cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html preview/art/combat-effects-2026-09-07/
           cp -r art/combat-effects-2026-09-07/inspection preview/art/combat-effects-2026-09-07/inspection
@@ -120,6 +124,8 @@ jobs:
             echo "built:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo
             echo "Open AshenSpire.html locally to play this exact commit."
+            echo "Open Combat-pose-preview.html for the offline readiness outfit gallery."
+            echo "Open docs/preview/combat-ground/index.html for all 20 combat fields and phone screenshots."
             echo "Open art/combat-effects-2026-09-07/sprite-catalog.html for all 56 six-frame sets."
             echo "For the interactive card preview, serve this folder over HTTP and open"
             echo "art/combat-effects-2026-09-07/index.html?integrated=1."
