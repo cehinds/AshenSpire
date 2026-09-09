@@ -1,0 +1,14 @@
+[
+  {
+    "id": "reaver-shield",
+    "prompt": "Use this seven-pose combined black humanoid sheet as the base for a NEW equipment variation: ONE-HANDED STRAIGHT SWORD in main hand, ROUND SHIELD strapped to off forearm. Preserve the generic black humanoid, light outlines, flat charcoal background, four-columns two-rows layout with7figures and blank8, source stance directions, legs, torso weight transfer. Redraw arms naturally so main hand holds ONE shorter straight sword and offhand supports ONE round black shield held protectively in front. The sword is DRAWN into each complete silhouette, never a separate guide. Whole sword, pommel, grip, blade straight and collinear. Guard sword up-right, preparation sword low behind, overhead windup, down-right strike past shield edge, extended followthrough, hurt brace, relaxed armed idle. Shield never intersects the sword hand. Two arms attached naturally to shoulders, fingers wrap grip. All seven figures same proportions, shield diameter and sword length. NO anchors, no dots, no colored lines or effects. Celllabels remain1.guard2.attack1 3.attack2 4.attack3 5.attack4 6.hit 7.idle."
+  },
+  {
+    "id": "herald-staff",
+    "prompt": "Use this seven-pose combined black humanoid EMPTY HAND caster sheet as base for a NEW equipped variation. Add ONE straight black STAFF held in the REAR hand, leaving the forward open palm for casting. Preserve all seven body poses, leg positions and forward casting arm gestures. Redraw rear hand and forearm only as needed to grip an upright or slightly tilted staff behind the body clear of casting arm. Staff must be DRAWN as part of the combined black figure, rigid perfectly straight shaft from bottom to top, small plain round knob tip. Fingers visibly wrap staff. Preserve generic smooth black silhouette with light gray contour lines, flat charcoal background, fourcolumns tworows7figures plusblank8, pose labels. Keep consistent staff length acrossframes. No armor, costume, effects, anchor dots, colored lines or legend."
+  },
+  {
+    "id": "herald-staff-correction",
+    "prompt": "Correct ONLY cell6, the lower-row second cell labeled hit, in this seven-pose humanoid staff sheet. It currently wrongly has THREE arms/hands. Remove the extra arm and open hand touching the chest. Keep exactly TWO arms: one rear arm naturally connected to the left shoulder and ending in the fist gripping the straight staff on the screen-left side; the other arm naturally connected to the right shoulder and bent toward the abdomen with the existing empty hand. Redraw plain black chest with smooth light contour where the extra chest arm was removed. Exactly two shoulders, two upper arms, two elbows, two forearms and two hands in this figure. Keep its head, torso lean, legs and staff. Preserve all other six poses, labels, grid, flat charcoal background and black silhouette/light outline style pixel-faithfully. NO anchor dots or new marks."
+  }
+]
