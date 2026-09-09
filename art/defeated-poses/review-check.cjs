@@ -41,7 +41,23 @@ const assert = require('node:assert/strict');
   },amount);
   assert.deepEqual(result,{duration:`${amount>=12?380:220}ms`,flash:true,css:amount>=12?'0.38s':'0.22s'});
  }
+ await page.evaluate(() => {
+  const snapshot=structuredClone(__coopSnapshot);
+  snapshot.scene.receiptSeq++;
+  snapshot.scene.events=[{type:'damageDealt',targetId:'e2',amount:5,blocked:5}];
+  __reviewStub._h.onMessage({t:'state',snapshot});
+ });
+ await page.waitForFunction(()=>document.querySelector('[data-eid="e2"] .enemy-pose-stage')?.dataset.pose==='guardHit');
+ for(const [kind,enemyId,moveId,pose] of [['attack','fellWarden','hammerToss','projectile'],['buff','wanderingSoldier','warcry','buff'],['debuff','graveWisp','hex','buff'],['block','blightHound','guard','guard'],['attack','blightHound','bite','attack']]) {
+  await page.evaluate(({kind,enemyId,moveId})=>{
+   const snapshot=structuredClone(__coopSnapshot);snapshot.scene.turn++;snapshot.scene.receiptSeq++;
+   snapshot.scene.events=[{type:'enemyMoveStarted',sourceId:'e2',enemyId,moveId,kind}];
+   __reviewStub._h.onMessage({t:'state',snapshot});
+  },{kind,enemyId,moveId});
+  await page.waitForFunction(pose=>pose==='attack' ? getComputedStyle(document.querySelector('[data-eid="e2"] .enemy-pose-attack')).visibility==='visible' : document.querySelector('[data-eid="e2"] .enemy-pose-stage')?.dataset.pose===pose,pose);
+  await page.waitForTimeout(650);
+ }
+ console.log('PASS: co-op guarded impacts and projectile, buff, debuff, guard and melee actions.');
  console.log('PASS: all 16 Rendered outfits retain static artwork, defeat and revive; actual co-op heavy/light receipts synchronize CSS flash duration.');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
-

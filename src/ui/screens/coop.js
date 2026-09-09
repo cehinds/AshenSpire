@@ -38,6 +38,7 @@
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { playPoseOn, stageFor } from '../services/PoseAnimator.js';
 import { resourceAura } from '../combatAura.js';
+import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
 import { equippedPieces, figureSpec } from '../../model/loadout.js';
 import { tagService } from '../../model/tagService.js';
@@ -1138,6 +1139,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       for (const mv of moves) {
         const box = app.querySelector(`[data-eid="${mv.sourceId}"]`);
         if (box && !box.classList.contains('dead')) {
+          const stage = stageFor(box);
+          const enemyId = mv.enemyId || prevCombat.enemies.find(enemy => enemy.id === mv.sourceId)?.enemyId;
+          const definition = registries.enemies.get(enemyId)?.moves?.[mv.moveId];
+          const plan = resolveActionAnimation({ actorId: enemyId, actionId: mv.moveId,
+            tags: definition?.tags || [], intent: mv.kind, availablePoses: stage?.poses || [] });
+          const pose = mv.kind === 'attack' ? (['projectile', 'spell'].includes(plan.family) ? 'projectile' : 'attack')
+            : mv.kind === 'block' || plan.family === 'guard' ? 'guard' : 'buff';
+          stage?.play(pose, 400);
+          if (pose === 'attack') {
+            const sprite = box.querySelector('.sprite');
+            sprite?.classList.add('enemy-attack-pose');
+            setTimeout(() => sprite?.classList.remove('enemy-attack-pose'), 400);
+          }
           box.classList.add('acting');
           setTimeout(() => box.classList.remove('acting'), 420);
         }
@@ -1298,6 +1312,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         receiptLossByTarget.set(targetKey, (receiptLossByTarget.get(targetKey) || 0) + parts.residual);
         const paired = !!(parts.guard && parts.damage);
         if (parts.guard) put(sel, `float-num ${parts.guard.cls}`, parts.guard.text, 0.35, paired ? -26 : 0, receiptRow);
+        if (parts.guard && !parts.damage && targetKey.startsWith('enemy:')) {
+          playPoseOn(app.querySelector(sel), 'guardHit', 220);
+        }
         if (parts.damage) {
           put(sel, `float-num ${parts.damage.cls}`, parts.damage.text, 0.35, paired ? 26 : 0, receiptRow);
           recoil(`${sel} .sprite`, parts.residual >= 12);
