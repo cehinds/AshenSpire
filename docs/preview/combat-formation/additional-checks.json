@@ -1,0 +1,9 @@
+{
+  "passed": [
+    "Six enemy nameplates can be pointed at",
+    "Defeat retains formation",
+    "Co-op keyboard and pointer blocked during enemy playback",
+    "Atlas starts at 2.5x; Fit and You work"
+  ],
+  "errors": []
+}

@@ -21,9 +21,13 @@ of all 80 effect sets. The shared `presentationSequence` model owns project
 validation and matching; the optional gameplay adapter preserves existing FX.
 See [launch, package and integration instructions](../pose-studio/README.md).
 The authoring flow uses template starts, immediate effect previews, a direct
-card connection action, progressive disclosure for precise controls, and native
-tool dialogs at narrow widths. The dialogs reuse the same library/inspector DOM
-and return keyboard focus on close. `pose-studio/tests/usability.mjs` covers this
+card connection action, progressive disclosure for precise controls, and
+an inline effect tray at narrow widths. The preview has visible size, hide,
+duplicate and remove controls, corner resize handles and independent view zoom.
+Each effect has a six-frame strip with move/trim handles and a removal button.
+The tray and inspector reuse the original DOM and restore focus on close.
+`pose-studio/tests/direct-editing.mjs` checks pointer/touch manipulation;
+`pose-studio/tests/usability.mjs` covers this
 workflow at desktop and phone sizes; no game presentation rules are replaced.
 
 The [combat sprite catalog](../art/combat-effects-2026-09-07/sprite-catalog.html)
@@ -116,7 +120,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `relic-slot` | `componentModel` semantic ID | Item view | Map + Combat | Individual relic tile. |
 | `potion-tray` | `itemTrayModel` | Belt view | Map + Combat | Utility potion tray, right anchored. |
 | `potion-control` | `componentModel` semantic ID | Item view | Inventory | Individual utility potion control. |
-| `battlefield-stage` | `battlefieldStageModel` | `battlefieldStage.js` + `combat.js` | Combat | Data-driven protected corridor that centers combatants between the HUD and hand. |
+| `battlefield-stage` | `battlefieldStageModel` | `battlefieldStage.js` + `combat.js` | Combat | Fixed 10/45/30/15 tracks; shared formation slots for solo and party combat, with grounded art, uniform nameplates and shallow overflow rows. |
 | `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Player combatant card. |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
@@ -133,7 +137,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `damage-feedback` | semantic component | `fx.js` | Combat feedback | One hit receipt containing Guard and HP channels. |
 | `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |
 | `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
-| `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Player card hand. |
+| `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Fixed 5:7 faces fan by overlap and remain visible, inert and dim during enemy turns. |
 | `combat-action-rail` | `componentModel` | `combat.js` | Combat | Edge-anchored Actions and Exhaust around a tight Draw / End Turn / Discard cluster. |
 | `kit.pageDoor` | `pageDoor(spec)` | `kit/index.js` pageDoor | Every screen that asks something | The one door-opener: head with eyebrow, title and a single close control, a body the surface owns, and a foot on the button ladder. Four named widths (sm, md, lg, xl) or full; Escape, veil click and focus return are bound here once. |
 | `kit.optionCard` | `optionCard(spec)` | `kit/index.js` optionCard | Every list of ways on | One choosable way on — glyph or art, name, description, optional badge, meta and trail — carrying its own selected and disabled states. |
@@ -546,3 +550,11 @@ Mobile combat art: at widths up to 640px, figures render at 90% of their fitted 
 Combat card actions: selection reveals a circular Information button centered above the highlighted card. The information modal places the card beside readable details and exposes a green Play card action, or a disabled gray action with a visible reason. Stationary holds show shared progress and use the card on completion; early release cancels, and targeted cards enter the existing targeting flow. The floating information button replaces hold-to-zoom inspection for the solo combat hand.
 
 Selected combat cards preview legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes retain transparent backgrounds so glow follows artwork rather than its rectangular canvas.
+
+World Journey (`src/ui/screens/worldAtlas.js`) composes fixed map terrain, discovery
+masks, inspectable landmark overlays, the route journal, and one native location
+dialog. Local points select a detail pane instead of opening nested dialogs. The
+same renderer serves `world-atlas-preview.html`; its authoring controls and ID
+selector are isolated from the game. Actual service dispatch reuses the existing
+merchant, smith upgrade, and grace screens. See `docs/WORLD-ATLAS.md` for the
+normalized content contract and `tools/world-atlas-qa.mjs` for browser checks.
