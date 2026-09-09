@@ -42,6 +42,20 @@ function section(title, rows, empty) {
   ]);
 }
 
+function abilitySection(abilities) {
+  const list = el('details', { class: 'combatant-inspector-section combatant-abilities', open: true }, [
+    el('summary', { class: 'as-eyebrow', text: `Active skills & stance (${abilities.length})` }), hairline(),
+  ]);
+  for (const ability of abilities) list.append(el('details', {
+    class: 'combatant-ability', open: true, dataset: { abilityId: ability.id, abilityKind: ability.kind },
+  }, [
+    el('summary', { text: ability.name }),
+    el('p', { class: 'as-prose', text: ability.detail }),
+  ]));
+  if (!abilities.length) list.append(statusText('No active skills or effects.'));
+  return list;
+}
+
 /**
  * combatantDetailBody(subject) → THE FULL READ, as kit pieces. One home for
  * it: the edge tray renders this, and so does the door the combatant's
@@ -64,8 +78,8 @@ export function combatantDetailBody(subject, { heading = true } = {}) {
       resourceMeters(subject.resources),
     ]),
     ...(subject.intent && !subject.moveCards?.some(card => card.active) ? [section('Current intent', [subject.intent], 'No current intent.')] : []),
-    subject.moveCards ? renderEnemyMoveCards(subject.moveCards) : section(subject.skillLabel || 'Skills', subject.skills, 'No active skills.'),
-    ...((subject.statuses || []).length ? [effects] : []),
+    subject.abilities ? abilitySection(subject.abilities) : subject.moveCards ? renderEnemyMoveCards(subject.moveCards) : section(subject.skillLabel || 'Skills', subject.skills, 'No active skills.'),
+    ...(!subject.abilities && (subject.statuses || []).length ? [effects] : []),
   ].map(decorateKeywords);
 }
 

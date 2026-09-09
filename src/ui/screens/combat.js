@@ -23,6 +23,7 @@ import { reducedMotionRequested } from '../motion.js';
 import { stageFor } from '../services/PoseAnimator.js';
 import { attachTooltip, ensureTooltip, hideTooltip, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
+import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
@@ -526,10 +527,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const v = dv(entity);
     if (role === 'player') {
       const classDef = registries.classes.get(run.class);
-      const stance = entity.stanceId ? registries.frameworkTerms.withStanceWords(registries.stances.get(entity.stanceId)) : null;
-      const skills = [];
-      if (stance) skills.push({ name: stance.name, detail: stance.tooltip || 'Current stance.', active: true });
-      skills.push({ name: classDef.name, detail: classDef.description || 'Current combat role.', active: true });
+      const abilities = activeCombatAbilities(registries, { ...v, stanceId: entity.stanceId, evade: entity.evade }, Boolean(combat.foundation));
       return {
         role: 'player',
         name: (run.customization?.name || classDef.name).toUpperCase(),
@@ -541,8 +539,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           { label: 'Block', value: v.block || 0 },
         ],
         skillLabel: 'Active skills & stance',
-        skills,
-        statuses: statusDetails(entity),
+        abilities,
+        skills: abilities,
+        statuses: abilities.filter(row => row.kind !== 'stance'),
       };
     }
 
@@ -1078,6 +1077,27 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return b;
   }
 
+  function bindAbilityBadge(chip, entity, abilityId) {
+    const ability = () => activeCombatAbilities(registries, entity, Boolean(combat.foundation)).find(row => row.id === abilityId);
+    chip.classList.add('combat-ability-badge');
+    chip.tabIndex = 0;
+    chip.setAttribute('role', 'button');
+    chip.setAttribute('data-focusable', 'true');
+    chip.setAttribute('aria-haspopup', 'dialog');
+    chip.setAttribute('aria-label', `Inspect active skills and effects: ${ability()?.name || chip.textContent}`);
+    attachTooltip(chip, () => {
+      const row = ability();
+      return row ? `<div class="tt-title">${esc(row.name)}</div><p>${esc(row.detail)}</p><p>Click or tap to inspect all active skills and effects.</p>` : '';
+    }, { intent: 'above', align: 'center' });
+    const inspect = event => {
+      if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) return;
+      event.preventDefault(); event.stopPropagation();
+      openCombatantDoor(combatantSubject('player', entity), chip);
+    };
+    chip.addEventListener('click', inspect);
+    chip.addEventListener('keydown', inspect);
+  }
+
   function renderPlayer() {
     const zone = $('.player-zone');
     const posePresentation = stageFor(zone)?.presentation;
@@ -1101,10 +1121,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         attrs: { class: `stance-chip lg ${p.stanceId}`, dataset: { tone: p.stanceId === 'bulwark' ? 'frost' : 'ember' } },
       });
       if (st.icon) chip.prepend(glyph(st.icon, { class: 'ic' }));
+      bindAbilityBadge(chip, p, p.stanceId);
       trailing.push(chip);
     }
     trailing.push(statusRow(p));
-    if (combat.foundation && p.evade > 0) trailing.push(pill({ label: `Evade ${p.evade}`, attrs: { class: 'foundation-evade', 'aria-label': `Evade active: prevents the next ${p.evade} incoming hit${p.evade === 1 ? '' : 's'} this turn` } }));
+    if (combat.foundation && p.evade > 0) {
+      const chip = pill({ label: `Evade ${p.evade}`, attrs: { class: 'foundation-evade' } });
+      bindAbilityBadge(chip, p, 'evade');
+      trailing.push(chip);
+    }
     if (lastDodge) {
       const receipt = dodgeReceipt(lastDodge);
       const outcome = button({ label: receipt.outcome, className: 'dodge-receipt', attrs: {
