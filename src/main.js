@@ -10,6 +10,7 @@
 import { contentBundle } from './content/index.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
+import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
 import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
 import { grantSmithingReward, smithingPlan, commitSmithing } from './model/smithing.js';
@@ -130,6 +131,7 @@ if (!validation.ok) {
 }
 
 const registries = createRegistries(contentBundle);
+configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
 // Dev screenshot hook (?shot=…). Read HERE, above pickStorage(), because storage

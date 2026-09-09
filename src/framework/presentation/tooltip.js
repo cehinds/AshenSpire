@@ -86,7 +86,7 @@ export function compileTooltip(registries, compiled) {
 
 /** Explicit per-input open/dismiss/focus-return rules (framework contract). */
 export const TOOLTIP_INPUT_RULES = Object.freeze({
-  pointer: { open: 'hover 300ms or focus', dismiss: 'pointer leaves owner and tooltip, or Escape', focusReturn: 'owner keeps focus' },
+  pointer: { open: 'continuous hover 500ms; each new target waits again', dismiss: '500ms after leaving owner and tooltip, or Escape', focusReturn: 'owner keeps focus' },
   touch: { open: 'long-press 350ms', dismiss: 'release outside, tap elsewhere, or Close', focusReturn: 'owner regains focus' },
   keyboard: { open: 'focus + tooltip key', dismiss: 'Escape or focus moves', focusReturn: 'focus never leaves owner' },
   controller: { open: 'focus + inspect button', dismiss: 'back button or focus moves', focusReturn: 'focus never leaves owner' },

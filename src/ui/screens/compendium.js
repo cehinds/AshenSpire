@@ -163,7 +163,7 @@ function sections(rows) {
   return order.map((kind) => ({ kind, label: armamentKindLabel(kind), rows: by.get(kind) }));
 }
 
-function cell(piece, { state, hint, gate }, modFields) {
+function cell(piece, { state, hint, gate }, modFields, tags = []) {
   const held = state === 'held';
   const named = held || state === 'listed';
   // A held piece is announced by name; a withheld one is announced as what it
@@ -188,9 +188,11 @@ function cell(piece, { state, hint, gate }, modFields) {
     if (held) {
       const mods = modSummary(modFields, piece);
       return `<b>${esc(piece.name)}</b><br>${esc(piece.rarity)} · ${esc(piece.hand)} hand`
-        + ((piece.tags || []).length ? `<br>${(piece.tags || []).map(esc).join(' · ')}` : '')
-        + (mods.length ? `<br>${mods.map(esc).join(' · ')}` : '')
-        + (piece.blurb ? `<br><i>${esc(piece.blurb)}</i>` : '');
+        + (mods.length ? `<p>${mods.map(esc).join(' · ')}</p>` : '')
+        + ((piece.tags || []).length ? `<div class="inspection-tags">${piece.tags.map(id => {
+          const tag = tags.find(row => row.id === id);
+          return `<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag?.blurb || id)}">${esc(tag?.label || id)}</span>`;
+        }).join('')}</div>` : '');
     }
     // WITHHELD, and the tooltip is held to the same line the picture is. It says
     // the rarity and the hand — which the edge and the section already say, so
@@ -273,7 +275,7 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
     grid.innerHTML = '';
     if (!sec) return;
     head.append(titleS(sec.label, { tag: 'h3' }), statusText(`${sec.have} of ${sec.mine.length} held`));
-    for (const { piece, r } of sec.mine) grid.appendChild(cell(piece, r, eq.modFields));
+    for (const { piece, r } of sec.mine) grid.appendChild(cell(piece, r, eq.modFields, registries.tags));
   }
   render();
 
