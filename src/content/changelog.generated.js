@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-882",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat effects follow the caster",
+    "detail": "Wrap softer weapon and shield effects behind and in front of each pose, and release projectiles from the hand or staff. Keep resource auras and target impacts. Add a saved, default-off played-card animation option and an outfit/layer preview.",
+    "build": "0.6.0.66",
+    "pullRequest": 882,
+    "url": "https://github.com/cehinds/AshenSpire/pull/882"
+  },
+  {
     "id": "pr-880",
     "date": "2026-09-09",
     "group": "2026-09-09",

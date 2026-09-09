@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-09
 
+- **Combat effects follow the caster** ([#882](https://github.com/cehinds/AshenSpire/pull/882), `0.6.0.66`). Wrap softer weapon and shield effects behind and in front of each pose, and release projectiles from the hand or staff. Keep resource auras and target impacts. Add a saved, default-off played-card animation option and an outfit/layer preview.
+
 - **Clearer card inspection and predictable tooltips** ([#880](https://github.com/cehinds/AshenSpire/pull/880), `0.6.0.65`). Keep gameplay effects visible once, move supporting classifications beneath cards as tags, and explain keywords on demand. Hover explanations open, switch and close after half a second across cards, equipment, combatants and status effects; touch and keyboard inspection remain available.
 - **Combat vitality stays steady and mobile maps load less artwork** ([#874](https://github.com/cehinds/AshenSpire/pull/874), `0.6.0.61`). Prevent stretched health bars at turn changes, reserve an inspectable status row beneath vitality, shrink map textures, reuse traditional node symbols in World Journey and Long Expedition, and show selected reward cards in green. Connected return travel and reward save recovery remain available.
 - **Sharper card effect art** ([#872](https://github.com/cehinds/AshenSpire/pull/872), `0.6.0.60`). Refresh six-frame blade slashes, physical shield impacts, Starstone bolts and blood slashes in combat and Pose Studio. Keep existing card tags, resource variants and auras, and add an interactive before/after gallery.
