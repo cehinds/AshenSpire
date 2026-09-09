@@ -1,5 +1,6 @@
 import { openModal } from './modalShell.js';
 import { hideTooltip } from './tooltip.js';
+import { decorateKeywords } from './tooltipGlossary.js';
 
 // Logical identity survives a host re-render after its first selection tap.
 let touchedIdentity = null;
@@ -12,7 +13,10 @@ export function cardInspectionLayout(card, details) {
   const art = document.createElement('div');
   art.className = 'card-inspection-art';
   art.append(card);
+  const tags = details.querySelector('.inspection-tags');
+  if (tags) art.append(tags);
   details.classList.add('card-inspection-details');
+  decorateKeywords(details);
   body.append(art, details);
   return body;
 }
