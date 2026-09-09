@@ -32,7 +32,7 @@ export function playPresentationSequence(layer,from,context,{targets=[],duration
  const render=now=>{
   if(stopped)return;const time=(now-started)/ms*project.duration;if(time>=project.duration){stop();return;}
   const view=sample(project,time),live=new Set();
-  if(poseOverlay){const pose=view.pose,src=project.assets['pose:'+pose]||url(PAINTED_OUTFITS[project.actor].frames[pose]?.file||PAINTED_OUTFITS[project.actor].frames.idle.file);if(poseOverlay.getAttribute('src')!==src)poseOverlay.src=src;}
+  if(poseOverlay){poseOverlay.dataset.pose=view.pose;const pose=view.pose,src=project.assets['pose:'+pose]||url(PAINTED_OUTFITS[project.actor].frames[pose]?.file||PAINTED_OUTFITS[project.actor].frames.idle.file);if(poseOverlay.getAttribute('src')!==src)poseOverlay.src=src;}
   for(const clip of view.effects){
    // Target anchors/travel only appear for actual recipients from the caller.
    const recipients=clip.anchor==='target'||clip.travel?targets:[null];
