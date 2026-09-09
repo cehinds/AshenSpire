@@ -81,6 +81,8 @@ row in the table below — no game-code changes.
 
 ## Code
 
+Enemy combat states (2026-09-08): 231 additional pose sprites in `assets/enemy-states/` were generated with built-in image_gen from the project's approved enemy idle sprites. Source sheets and generation records are retained in `art/enemy-states/`. Buff auras are runtime silhouette effects.
+
 Enemy pose additions (2026-09-07): seven painted replacement idle sprites and 33 attack sprites in `assets/enemy-poses/` were generated with built-in image_gen using this project's existing enemy artwork as identity references. The remaining 26 idle frames are unchanged copies of their existing credited sources. Source sheets, prompts and processing records are retained in `art/enemy-poses/`.
 
 The fourteen expansion portraits in `assets/enemies-expansion/` were generated for AshenSpire with ChatGPT Codex in September 2026, following the project's Unity-fork painted style. They are project-generated artwork, offered under CC0 like the existing generated game assets. Each transparent idle frame is normalized to 384 × 384 with foot anchor (192, 364); combat movement is supplied by the runtime. The twelve imported Unity portraits remain byte-identical to their credited source.
@@ -92,3 +94,9 @@ The fourteen expansion portraits in `assets/enemies-expansion/` were generated f
 ## Non-affiliation
 
 AshenSpire is an original fan-inspired work. It contains no assets, music, text, or proper nouns from Elden Ring, and is not affiliated with, endorsed by, or sponsored by FromSoftware Inc. or Bandai Namco Entertainment. Elden Ring is a trademark of its respective owners.
+
+## Painted combat effect sprites
+
+| Assets | Source | Rights |
+|---|---|---|
+| assets/combat-effects: 336 transparent frames (56 six-frame effects) for projectiles, guards, barriers, stances, auras, afflictions, healing, impact, melee trails and authored card schools | Project-generated with built-in OpenAI imagegen; six-frame source sheets and exact prompts in art/combat-effects-2026-09-07/six-frame-generation.json, guard-status-generation.json and integration-generation.json; exported by tools/combat-effects-ship.mjs | Project-owned AI-generated artwork, CC0 |

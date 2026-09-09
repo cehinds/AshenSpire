@@ -6,6 +6,14 @@ Select any component card there to open its detail drawer. The dedicated
 [`tray-gallery.html`](./tray-gallery.html) shows all eight top/right/bottom/left
 folded and unfolded Tray states using the production renderer.
 
+The [combat sprite catalog](../art/combat-effects-2026-09-07/sprite-catalog.html)
+shows all 56 six-frame sets. `combatEffectPlan` resolves presentation tag
+combinations; `playCombatEffectPlan` renders the shared solo/co-op cast and
+target sequence. `combatEffectForEvent` owns status and defensive reactions.
+These transient overlays use the existing FX layer and introduce no new HUD
+component IDs. The adjacent card preview names the matched rule and equipment
+profile; the catalog provides visual miniatures for every exported set.
+
 Use the catalog's **Grid / List** switch to choose card tiles or a compact
 vertical list. In Grid view, use the **− / reset / +** controls, Ctrl/Command +
 mouse wheel, or a trackpad pinch to change card size and the number of visible

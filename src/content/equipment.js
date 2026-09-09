@@ -28,7 +28,7 @@ import { equipmentRequirements } from './generated/equipmentRequirements.js';
 import { itemUpgradeChanges } from './generated/itemUpgradeChanges.js';
 import { cardEquipmentExceptions } from './generated/cardEquipmentExceptions.js';
 import { equipmentGrants } from './generated/equipmentGrants.js';
-import { TAGGING } from './tags.js';
+import { TAGGING, tagsInDomain } from './tags.js';
 import { armouryUi } from './generated/armouryUi.js';
 
 /** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
@@ -168,8 +168,9 @@ export const CARD_EQUIPMENT_EXCEPTIONS = cardEquipmentExceptions.map((row) => ({
  */
 export const CARD_EQUIPMENT_TAGGING = (() => {
   const byCard = new Map();
+  const presentation=new Set(tagsInDomain('presentation').map(tag=>tag.id));
   for (const row of TAGGING) {
-    if (row.family !== 'card') continue;
+    if (row.family !== 'card' || presentation.has(row.tagId)) continue;
     const tags = byCard.get(row.objectId);
     if (tags) tags.push(row.tagId);
     else byCard.set(row.objectId, [row.tagId]);
