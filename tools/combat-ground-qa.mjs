@@ -12,7 +12,7 @@ const regions = ['ashen-crown', 'hollow-weald', 'pale-marches', 'cinder-reach', 
 async function settle(page) {
   await page.waitForFunction(() => {
     const field = document.querySelector('.field');
-    return Number(field?.dataset.groundY) > 0 && [...document.querySelectorAll('.enemy-pose-idle,.painted-stage .pose-frame')].every(i => i.complete && i.naturalWidth);
+    return Number(field?.dataset.groundY) > 0 && [...document.querySelectorAll('.enemy-pose-idle,.painted-stage .pose-frame:not(.pose-previous)')].every(i => i.complete && i.naturalWidth);
   });
   await page.waitForTimeout(500);
   await page.waitForFunction(() => {
@@ -62,7 +62,7 @@ async function check(page) {
 }
 async function scene(page, region, floor) {
   // Select the painting at combat mount, where normal encounters select it.
-  await page.goto(`${base}?shot=combat&shotScene=${region}-${floor + 1}`);
+  await page.goto(`${base}?shot=combat&shotScene=${region}-${floor + 1}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.locator('.enemy-pose-idle').first().waitFor();
   await settle(page);
   const actual = await page.locator('.environment-backdrop').getAttribute('data-scene');
@@ -76,6 +76,7 @@ async function shot(page, name, fieldOnly = false) {
 try {
   const runs = await Promise.allSettled([{ width: 1440, height: 1080 }, { width: 794, height: 893 }, { width: 390, height: 844 }, { width: 844, height: 390 }].map(async size => {
     const page = await browser.newPage({ viewport: size });
+    page.setDefaultTimeout(60000);
     page.on('pageerror', e => errors.push(e.message));
     for (const region of regions) for (let floor = 0; floor < 4; floor++) {
       await scene(page, region, floor);

@@ -169,7 +169,12 @@
 .combatant .sprite { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
 /* Bring the figures forward without enlarging their names or resource bars.
    The stage still fits the complete stack inside its safe battlefield area. */
-.combat .combatant-card > .sprite { zoom:var(--stage-sprite-zoom,1); }
+.combat .combatant-card > .sprite {
+  zoom:var(--stage-sprite-zoom,1);
+  /* Fitting reads zoom synchronously. The global reduced-motion rule gives
+     every property a tiny transition; even that interpolates these measures. */
+  transition-property: none !important;
+}
 /* The under-model strip. Its bars are the SAME component as the main HUD's —
    the old .hpbar/.poisebar pair here was two more homes for one grammar, and
    they are gone rather than kept in parallel (Law 0 clause 4). What survives is
