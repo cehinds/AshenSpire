@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-09
 
+- **Close combat inspections from their footer** ([#893](https://github.com/cehinds/AshenSpire/pull/893), `0.6.0.74`). The Close button now dismisses player and enemy inspections with mouse, touch, or keyboard and restores focus through the shared modal behavior.
+
 - **Choose a hand and see its starting cards** ([#885](https://github.com/cehinds/AshenSpire/pull/885), `0.6.0.73`). Offer Empty Hand in both slots, preview each hand's starting combat cards in a compact grid, and continue explicitly to the next setup section. Focused equipment lifts gently and reveals its action, with reduced-motion support. Larger equipment choices sit in two columns beside their details, with Continue at bottom-right; titles fit vertically, and clipped flavor uses an ellipsis while remaining readable in inspection.
 
 
