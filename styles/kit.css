@@ -2209,6 +2209,12 @@ body.pad-mode .as-keycap.float { display: none; }
 .combatant-inspector-summary { display: grid; gap: 0.55rem; }
 .combatant-inspector-resources { gap: 0.45rem; }
 .combatant-inspector-section { margin-top: 0.7rem; }
+.combatant-abilities > summary, .combatant-ability > summary { cursor: pointer; padding-block: 0.4rem; }
+.combatant-abilities > summary { display: list-item; list-style-position: inside; }
+.combatant-ability { border-bottom: 1px solid var(--line); padding-block: 0.25rem; }
+.combatant-ability > summary { color: var(--gold); font-weight: 600; }
+.combatant-ability > .as-prose { margin: 0.2rem 0 0.65rem; }
+.combatant-abilities summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .combatant-inspector-section > .as-hairline { margin: 0.35rem 0 0.2rem; }
 .combatant-inspector-row { padding-inline: 0; white-space: normal; align-items: flex-start; }
 .combatant-inspector-row > .r-label { flex: 0 1 auto; }
