@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-841",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat animation changes appear in the in-game changelog",
+    "detail": "Record the combat effects and enemy animation deliveries at their original build numbers and refresh the changelog shown in About.",
+    "build": "0.6.0.21",
+    "pullRequest": 841,
+    "url": "https://github.com/cehinds/AshenSpire/pull/841"
+  },
+  {
+    "id": "pr-835",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat effects follow the card and its payment",
+    "detail": "Play 56 six-frame effect sets for attacks, projectiles, guards, wards, barriers, stances and status reactions in solo and co-op. Low-action moves use subtle mundane effects; larger action payments use stronger mundane effects, while mana or stamina spending enables fantastical variants. Preserve character auras and honor Reduce flashes.",
+    "build": "0.6.0.20",
+    "pullRequest": 835,
+    "url": "https://github.com/cehinds/AshenSpire/pull/835"
+  },
+  {
+    "id": "pr-833",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combatants show hurt, guard and defeat",
+    "detail": "Painted enemies show hurt, guarded and buff poses, including co-op actions and guarded impacts. Direct damage and status bursts show hurt feedback, and defeated player artwork stays within narrow combat screens.",
+    "build": "0.6.0.15",
+    "pullRequest": 833,
+    "url": "https://github.com/cehinds/AshenSpire/pull/833"
+  },
+  {
     "id": "pr-822",
     "date": "2026-09-08",
     "group": "2026-09-08",
