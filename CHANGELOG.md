@@ -65,6 +65,8 @@ this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-09
 
+- **Readiness pose delivery appears in About** ([#849](https://github.com/cehinds/AshenSpire/pull/849), `0.6.0.26`). Record the original readiness-pose delivery and refresh the in-game changelog.
+
 - **Readiness poses show when the next move is primed** ([#846](https://github.com/cehinds/AshenSpire/pull/846), `0.6.0.24`). Prepared, Starstone Charge and Herald Blood Rite have authored poses across twelve outfits, persistent glows, and correct return behavior after actions. Solo and co-op preserve status ownership and keep extended figures within narrow combat screens.
 
 - **Combat animation changes appear in the in-game changelog** ([#841](https://github.com/cehinds/AshenSpire/pull/841), `0.6.0.21`). Record the combat effects and enemy animation deliveries at their original build numbers and refresh the changelog shown in About.

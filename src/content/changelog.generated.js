@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-849",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Readiness pose delivery appears in About",
+    "detail": "Record the original readiness-pose delivery and refresh the in-game changelog.",
+    "build": "0.6.0.26",
+    "pullRequest": 849,
+    "url": "https://github.com/cehinds/AshenSpire/pull/849"
+  },
+  {
     "id": "pr-846",
     "date": "2026-09-09",
     "group": "2026-09-09",
