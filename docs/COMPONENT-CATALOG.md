@@ -1,5 +1,10 @@
 # AshenSpire component catalog
 
+All run maps share the vector face in `mapNodeInk.js`: opaque dark discs, readable
+glyphs, a pale current-node marker and reachable halos. `mapview.js` owns the
+node radii; `AtlasCameraModel.js` frames a journey junction using that same close-up
+scale. World map fog compositing is bounded to the visible viewport.
+
 Card flick controls: Accessibility offers Card flick to play and a 32–160 CSS-pixel
 distance setting (64 default), synchronized numeric field/slider, Reset, and a
 harmless practice surface. `TouchFlickModel.js` resolves distance, recent speed and

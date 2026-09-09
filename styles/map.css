@@ -250,13 +250,9 @@
 .atlas-scrollport { width:100%; max-height:calc(100vh - 205px); min-height:320px; overflow:auto; border:1px solid #8a744d; background:#9d8051; box-shadow:0 10px 45px #0006; }
 .atlas-world { position:relative; width:calc(100% * var(--atlas-zoom)); min-width:600px; aspect-ratio:1; isolation:isolate; }
 .atlas-terrain { display:block; position:absolute; inset:0; width:100%; height:100%; }
-.atlas-unmapped { opacity:.18; }
 .atlas-roads path { stroke:#322a1c; stroke-width:3.5; fill:none; stroke-dasharray:4 4; }
 .atlas-roads .traveled { stroke:#e9c477; stroke-width:4; stroke-dasharray:none; }
 .atlas-node { position:absolute; z-index:2; transform:translate(-50%,-50%); width:44px; height:44px; padding:0; background:none; border:0; cursor:pointer; display:grid; place-items:center; }
-.atlas-node-ring { width:23px; height:23px; border:2px solid #ac9669; border-radius:50%; display:grid; place-items:center; background:#201c16; color:#d4bd88; box-shadow:0 2px 5px #0009; font-size:13px; position:relative; z-index:2; }
-.atlas-node.reachable .atlas-node-ring { border-color:#ffe6a3; box-shadow:0 0 0 4px #332817,0 0 15px #ffc95077; }
-.atlas-node.current .atlas-node-ring { color:#18150f; background:#e7c578; border-color:#fff0bc; }
 .atlas-node:focus-visible { outline:3px solid #fff2b5; outline-offset:3px; border-radius:50%; }
 .atlas-landmark { position:absolute; width:110px; height:110px; bottom:19px; left:50%; transform:translateX(-50%); transform-origin:50% 95%; transition:transform 180ms ease; pointer-events:none; filter:drop-shadow(0 5px 5px #18100a99); }
 .atlas-landmark img,.atlas-landmark svg { width:100%; height:100%; object-fit:contain; }
@@ -324,21 +320,27 @@
 dialog.atlas-dialog.modal-veil[open] { display:block; padding:0; background:#1b1813; }
 .atlas-node,.atlas-local-point { overflow:visible; }
 .atlas-node-label,.atlas-local-point small { pointer-events:none; }
-.world-atlas-screen .atlas-roads path { stroke:#edd19a; stroke-width:3; stroke-dasharray:5 5; filter:drop-shadow(0 1px 2px #000); }
-.world-atlas-screen .atlas-roads .traveled { stroke:#ffde84; stroke-width:4; stroke-dasharray:none; }
+.world-atlas-screen .atlas-roads path { stroke:#775125; stroke-width:3; stroke-dasharray:none; filter:none; }
+.world-atlas-screen .atlas-roads .traveled { stroke:#b27c1f; stroke-width:4; }
 @media(min-width:1000px) { .atlas-layout { grid-template-columns:minmax(0,min(100%,calc(100vh - 240px))) 270px; justify-content:center; } }
 
 /* Keep map navigation clear of the combat inventory strip, including its hit targets. */
 .mapscreen .shared-hud .hud-bottom { display:none; }
 
 /* Atlas profiles use the same compact circular node vocabulary as traditional runs. */
-.atlas-node .atlas-node-ring { width:30px; height:30px; font-size:17px; box-shadow:none; border-color:var(--map-structure,#806b49); }
-.atlas-node.reachable .atlas-node-ring { border-color:var(--gold); background:#312619; }
-.atlas-node.visited .atlas-node-ring { border-color:#c3953c; }
-.atlas-node.current .atlas-node-ring { outline:2px solid #ffe4a3; outline-offset:3px; }
 .atlas-node-label { top:40px; max-width:130px; white-space:normal; text-align:center; pointer-events:none; }
 @media (max-width:600px) {
  .atlas-node-label { display:none; }
  .atlas-scrollport { box-shadow:none; }
  .atlas-world { min-width:0; }
 }
+
+/* All run modes use the traditional map's vector discs and close-up scale. */
+.atlas-scrollport { background:#c4af85; }
+.atlas-node { width:calc(var(--atlas-node-size) * var(--atlas-face-scale,1)); height:calc(var(--atlas-node-size) * var(--atlas-face-scale,1)); min-width:44px; min-height:44px; }
+.atlas-node-face { display:block; width:100%; height:100%; overflow:visible; pointer-events:none; }
+.atlas-node-label { top:calc(100% + 8px); }
+.atlas-world { min-width:0; }
+.atlas-roads path { stroke:#806b49; stroke-width:3; stroke-dasharray:none; }
+.atlas-roads .traveled { stroke:#b89030; stroke-width:4; }
+.atlas-compass,.atlas-map-caption { pointer-events:none; }

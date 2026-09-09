@@ -59,7 +59,8 @@ import { attachTooltip } from './tooltip.js';
 import { html, iconButton } from '../kit/index.js';
 import { worldMapForRun } from '../../model/environmentArt.js';
 import { mapTerrainHtml } from './environmentArt.js';
-import { nodeIcon, actTitle, parchmentClass } from '../uiContent.js';
+import { mapNodeInk } from './mapNodeInk.js';
+import { actTitle, parchmentClass } from '../uiContent.js';
 import { trackGesture } from '../gesture.js';
 import {
   mapKnowledge, nodeReading, resolveMapMode, resolveShrineGlow, shrineLane,
@@ -400,12 +401,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // node's own in every mode and on every screen: fog changes WHICH nodes are
     // drawn and never HOW BIG one is, and neither does having a partner.
     const r = nodeRadius(n.type);
-    const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
     // The per-viewer mark rides LAST so it draws over the node, and it is given
     // the geometry rather than left to re-derive it — a second copy of `y()` is
     // how this whole file came to be needed.
     const mark = viewer.mark ? viewer.mark(n, { x: x(n.col), y: y(n.floor), r }) : '';
-    el.insertAdjacentHTML('beforeend', `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>${mark || ''}`);
+    el.insertAdjacentHTML('beforeend', `${mapNodeInk({ type: shownType, x: x(n.col), y: y(n.floor), radius: r, reachable: isReachable })}${mark || ''}`);
     if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));
     if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }));
     g.appendChild(el);
