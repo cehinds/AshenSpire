@@ -10,6 +10,10 @@ const browser = await chromium.launch({headless:true, ...(process.env.QA_BROWSER
 const checks=[], errors=[];
 function check(ok,label){assert.ok(ok,label);checks.push(label);}
 const snapshot = async(page,name)=>{await page.mouse.move(0,0);await page.waitForTimeout(550);await page.screenshot({path:join(out,`${name}.png`)});};
+async function chooseItem(choice) {
+  await choice.locator('.equipment-poker-card').click();
+  await choice.locator('.equipment-choose').click();
+}
 async function open(page,cls='reaver') {
   await page.goto(`${base}/index.html?shot=customize&shotClass=${cls}`,{waitUntil:'domcontentloaded'});
   await page.locator('[data-face=equipment]').click();await page.locator('[data-face=rightHand]').click();
@@ -27,6 +31,10 @@ try {
         check(ids.includes('empty-hand'),`${name}/${cls}/${slot} offers Empty Hand`);
         for(const id of ids) {
           const choice=panel.locator(`[data-armament-id=${id}]`);
+          await choice.locator('.equipment-poker-card').click();
+          check(await panel.locator('.equipment-choose:visible').count()===1,`${name}/${cls}/${slot}/${id}: only focused choice exposes an action`);
+          check(await choice.locator('.equipment-choose').isVisible(),`${name}/${cls}/${slot}/${id}: browsing reveals Choose before equipping`);
+          check(await choice.locator('.epc-name').evaluate(e=>e.scrollHeight<=e.clientHeight+1),`${name}/${cls}/${slot}/${id}: title is not vertically clipped`);
           await choice.locator('.equipment-choose').click();
           check(await panel.locator('.poker-equipment-choice.on').count()===1,`${name}/${cls}/${slot}/${id}: one selected choice`);
           check(await panel.locator('.cc-equipment-details').getAttribute('data-preview-item')===id,`${name}/${cls}/${slot}/${id}: matching details`);
@@ -34,7 +42,7 @@ try {
           check(await panel.isVisible(),`${name}/${cls}/${slot}/${id}: waits for Continue`);
           check(await panel.evaluate(el=>el.scrollWidth<=el.clientWidth+1),`${name}/${cls}/${slot}/${id}: contained panel`);
         }
-        await panel.locator('[data-armament-id=empty-hand] .equipment-choose').click();
+        await chooseItem(panel.locator('[data-armament-id=empty-hand]'));
       }
       check((await page.locator('[data-face=rightHand]').innerText()).includes('Empty Hand')&&(await page.locator('[data-face=leftHand]').innerText()).includes('Empty Hand'),`${name}/${cls}: both hands remain empty`);
       check(await page.locator('[data-equipment-section=leftHand] .cc-starting-card').count()>=3,`${name}/${cls}: unarmed attack, guard and technique shown`);
@@ -43,7 +51,7 @@ try {
     const main=page.locator('[data-equipment-section=rightHand]');
     const sword=main.locator('[data-armament-id=straightSword] .equipment-poker-card');
     await sword.evaluate(el=>el.dataset.retained='yes');
-    await main.locator('[data-armament-id=greatsword] .equipment-choose').click();
+    await chooseItem(main.locator('[data-armament-id=greatsword]'));
     await page.waitForTimeout(230);
     check(await sword.getAttribute('data-retained')==='yes',`${name}: selection retains existing DOM nodes`);
     check(await sword.evaluate(el=>getComputedStyle(el).transform)==='none',`${name}: previous card settles`);
@@ -56,10 +64,10 @@ try {
     check(await page.locator('[data-equipment-section=leftHand]').isVisible(),`${name}: Continue opens Off Hand`);
     if(name==='desktop')await snapshot(page,'continue-off-hand');
     const off=page.locator('[data-equipment-section=leftHand]');
-    await off.locator('[data-armament-id=greatsword] .equipment-choose').click();
+    await chooseItem(off.locator('[data-armament-id=greatsword]'));
     check((await page.locator('[data-face=rightHand]').innerText()).includes('Empty Hand'),`${name}: moving the weapon empties its previous hand`);
     if(name==='desktop')await snapshot(page,'weapon-hand-transfer');
-    await off.locator('[data-armament-id=empty-hand] .equipment-choose').click();
+    await chooseItem(off.locator('[data-armament-id=empty-hand]'));
     await off.locator('.cc-equipment-details').evaluate(el=>el.scrollIntoView({block:'start'}));await snapshot(page,`${name}-unarmed-cards`);
     const grid=off.locator('.cc-starting-card-grid');
     // Add a fourth representative card only to measure four-card capacity; no game state changes.
@@ -87,7 +95,7 @@ try {
   check((await page.locator('.card-inspection-modal .inspection-lore p').innerText()).includes('Honest steel'),'inspection preserves complete flavor');
   await page.keyboard.press('Escape');
   await page.emulateMedia({reducedMotion:'reduce'});
-  await page.locator('[data-hand=rightHand][data-armament-id=greatsword] .equipment-choose').click();
+  await chooseItem(page.locator('[data-hand=rightHand][data-armament-id=greatsword]'));
   check(await page.locator('[data-hand=rightHand].choice-focused .equipment-poker-card').evaluate(e=>getComputedStyle(e).transform)==='none','OS reduced motion suppresses movement');
   await page.emulateMedia({reducedMotion:'no-preference'});await page.evaluate(()=>document.body.classList.add('reduced-motion'));
   check(await page.locator('[data-hand=rightHand].choice-focused .equipment-poker-card').evaluate(e=>getComputedStyle(e).transform==='none'&&parseFloat(getComputedStyle(e).transitionDuration)<0.001),'game reduced motion suppresses animation');

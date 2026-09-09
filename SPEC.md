@@ -1063,6 +1063,8 @@ keeps the same state and focus contract without meaningful animation.
   a compact two-column grid of its starting combat cards, with quantities derived from
   the current loadout. Choosing updates existing cards in place; the focused card lifts
   and enlarges over 180 ms (less movement on phones; no movement with reduced motion).
+  Only the focused candidate exposes Choose/Selected and Information controls. Compact
+  choice grids add columns when space permits; title strips grow to fit their text.
   Continue names the next equipment section. Automatic advancement remains optional and
   defaults off. Flavor occupies one line with an ellipsis on overflow, and its complete
   text remains available through inspection. These are presentation rules; starting-deck
