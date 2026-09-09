@@ -1258,3 +1258,12 @@
  :root .combat[data-layout='formation'] .combat-action-row .combat-potions { font-size:calc(10px / var(--ui-zoom,1)); }
  :root .combat[data-layout='formation'] .combat-action-row .energy-orb .sp-k { font-size:calc(7px / var(--ui-zoom,1)); }
 }
+
+/* A fixed-height StatPair must share the buttons' center, not stretch to the
+   taller controls band. Flexible pile columns keep the five controls in one row. */
+:root .combat[data-layout='formation'] > .hand-area > .combat-action-row > * {
+  align-self:center; min-width:0; grid-row:1;
+}
+:root .combat[data-layout='formation'] .combat-action-row > .pile {
+  width:100%; max-width:100%; box-sizing:border-box;
+}
