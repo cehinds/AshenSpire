@@ -1485,7 +1485,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     let selectedThisPress = false;
     let flickStart = null;
     let flickPoints = [];
-    let touchDrag = false;
     const flickRules = registries.balance.ui.touchFlick;
     const dragTargetMode = pv.values.some((value) => value.target === 'allEnemies')
       ? 'all' : pv.needsTarget ? 'single' : 'none';
@@ -1567,7 +1566,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!el.isConnected || veilIsOpen() || document.querySelector('.card-inspection-modal')
           || !inspectionPlayAction(inst.instanceId).enabled) return { legal: false, enemies: [] };
       const point = touchPoint(event);
-      const verdict = touchDrag && flickStart
+      const verdict = flickStart
         ? flickVerdict(flickStart, point, flickPoints, readSettings(), flickRules) : null;
       const flick = !!verdict?.distanceMet && (!release || verdict.qualifies);
       const under = document.elementFromPoint(point.x, point.y);
@@ -1596,7 +1595,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
     el.addEventListener('pointerdown', (ev) => {
       if (busy || !affordable || ev.button !== 0 || ev.isPrimary === false || ev.target.closest('.card-info-button') || veilIsOpen()) return;
-      touchDrag = ev.pointerType === 'touch';
+      // Mouse, trackpad, pen and touch share the practice area's recognizer.
       flickStart = touchPoint(ev);
       flickPoints = [flickStart];
       startX = ev.clientX;
