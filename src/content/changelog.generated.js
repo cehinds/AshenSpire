@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-826",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Narrow menus stay readable and dialogs support keyboard navigation",
+    "detail": "Bound text scaling, wrap descriptions, keep settings categories reachable, and support arrow-key tabs with contained and restored dialog focus.",
+    "build": "0.6.0.55",
+    "pullRequest": 826,
+    "url": "https://github.com/cehinds/AshenSpire/pull/826"
+  },
+  {
     "id": "pr-836",
     "date": "2026-09-09",
     "group": "2026-09-09",

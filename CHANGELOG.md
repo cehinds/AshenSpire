@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-09
 
+- **Narrow menus stay readable and dialogs support keyboard navigation** ([#826](https://github.com/cehinds/AshenSpire/pull/826), `0.6.0.55`). Bound text scaling, wrap descriptions, keep settings categories reachable, and support arrow-key tabs with contained and restored dialog focus.
+
 - **Reward cards select once and save safely** ([#836](https://github.com/cehinds/AshenSpire/pull/836), `0.6.0.54`). One press selects a card, Confirm collects it, and Back keeps the selection. Failed card saves restore the deck and allow retry without duplicates. Current combat flick controls are preserved.
 
 - **Combat controls stay in one row and maps show a cleaner HUD** ([#867](https://github.com/cehinds/AshenSpire/pull/867), `0.6.0.51`). Center Actions, Draw, End Turn, Discard/Exhaust and Potions together, with flexible pile widths. Hide the potion and relic strip on maps in both HUD modes while retaining combat inventory controls.
