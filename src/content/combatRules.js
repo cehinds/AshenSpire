@@ -23,6 +23,12 @@ export const combatRules = {
     minimum: 1, protectionTurns: 1,
   },
   fallbackSource: { id: 'unarmed', family: 'natural', weight: 1, grip: 'oneHand', damageType: 'blunt', tags: [], buildup: [] },
+  // Weight stays on the equipped item; these rows only declare impact family.
+  // Grip and item-instance upgrades are handled by the subsequent equipment slice.
+  equipmentSources: {
+    profileFamilies: { bladeAttack: 'blade', daggerPierceAttack: 'blade', bowPierceAttack: 'bow', shieldAttack: 'hammer', staffMagicAttack: 'focus', sceptreArcaneAttack: 'focus' },
+    itemFamilies: { warhammer: 'hammer' },
+  },
   dodge: { stamina: { light: 1, medium: 2, heavy: 3 }, actions: 0, charges: 1, usesPerTurn: 1 },
   recovery: { staminaPerTurn: 1, manaPerTurn: 0 },
   triggers: { maxEvents: 2048, maxDepth: 16, limitPerAction: 32, chance: 1, rollScope: 'play' },

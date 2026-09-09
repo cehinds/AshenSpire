@@ -133,11 +133,12 @@ export function attackTagsFor(action, effect, registries) {
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (!target || !target.alive) return 0;
   if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
-  const dmg = computeAttackDamage(ctx, source, target, base, attackTags, carrier);
+  const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, base, carrier, attackTags || []) : null;
+  const dmg = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier);
   const blocked = Math.min(target.block, dmg);
   target.block -= blocked;
   const hpLoss = dmg - blocked;
-  const components = ctx.foundation ? F.foundationDamage(ctx, source, target, base, carrier, attackTags || []).components : null;
+  const components = receipt?.components;
   const hpShares = components && dmg > 0 ? allocateInteger(hpLoss, components.map((c) => c.amount)) : [];
   if (hpLoss > 0) target.hp -= hpLoss;
   ctx.emit('damageDealt', {
@@ -147,7 +148,8 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
     amount: dmg,
     blocked,
     blockRemaining: target.block,
-    ...(components ? { components, hpComponents: components.map((c, i) => ({ type: c.type, amount: hpShares[i] || 0 })), sourceInstanceId: F.foundationSource(ctx, source, carrier).id } : {}),
+    ...(components ? { components, hpComponents: components.map((c, i) => ({ type: c.type, amount: hpShares[i] || 0 })), sourceInstanceId: F.foundationSource(ctx, source, carrier).id,
+      tags: receipt.tags } : {}),
     isAttack: true,
   });
   if (hpLoss > 0) {
@@ -500,7 +502,9 @@ function runOpcode(ctx, action, eff) {
             const resistedImpact = Math.floor((impact[h] || 0) * (1 - (F.foundationProfile(ctx, t).impactResistance || 0)));
             dealPoiseDamage(ctx, t, resistedImpact);
             if (t.kind === 'enemy') ctx.emit('impactDealt', { sourceId: action.source?.id, targetId: t.id, amount: resistedImpact });
-            const weaponBuildup = carrier?.attack?.source === 'spell' ? [] : F.foundationSource(ctx, action.source, carrier).buildup || [];
+            // Only the resolved source contributes contact buildup. A focus
+            // can own effects too; the other hand's sword is never consulted.
+            const weaponBuildup = F.foundationSource(ctx, action.source, carrier).buildup || [];
             for (const buildup of [...weaponBuildup, ...(carrier?.attack?.buildup || [])]) statuses.applyStatus(ctx, t, buildup.status, buildup.amount, action.source);
           }
         }

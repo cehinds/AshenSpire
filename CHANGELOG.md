@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-09
 
+- **Combat workshop cards inherit tags from their weapon or focus** ([#876](https://github.com/cehinds/AshenSpire/pull/876), `0.6.0.67`). Show categorized attack tags and explain which equipment grants them. Weapon techniques use their selected weapon; spells use their own focus. Swaps refresh previews, and each played attack keeps its source through all hits. The new combat rules remain experimental and opt-in.
+
 - **Combat effects follow the caster** ([#882](https://github.com/cehinds/AshenSpire/pull/882), `0.6.0.66`). Wrap softer weapon and shield effects behind and in front of each pose, and release projectiles from the hand or staff. Keep resource auras and target impacts. Add a saved, default-off played-card animation option and an outfit/layer preview.
 
 - **Clearer card inspection and predictable tooltips** ([#880](https://github.com/cehinds/AshenSpire/pull/880), `0.6.0.65`). Keep gameplay effects visible once, move supporting classifications beneath cards as tags, and explain keywords on demand. Hover explanations open, switch and close after half a second across cards, equipment, combatants and status effects; touch and keyboard inspection remain available.

@@ -1907,7 +1907,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(row.scope === '', `card rows carry no scope ('${row.objectId}')`);
     }
     // The lookups the UI and any future synergy predicate depend on.
-    eq(tagsFor('gorefireSlash').length, 3, 'gorefireSlash carries three tags');
+    eq(tagsFor('gorefireSlash').map((tag) => tag.id).join('|'), 'blade|blood|gorefire|source:weapon|delivery:melee|theme:blood', 'Gorefire Slash separates legacy school, source, delivery and theme');
     eq(tagsFor('strike')[0].label, 'Blade', 'strike resolves to the Blade tag');
     eq(tagsFor('nonexistentCard').length, 0, 'an untagged card resolves to no tags');
     assert(Array.isArray(tagIdsFor('strike')), 'tag ids always come back as an array');
@@ -1970,11 +1970,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Registries resolve the join onto the object, so a mechanic reads
     // obj.tags whatever table the row was authored in.
     eq(REG.classes.get('reaver').tags.join('|'), 'blade|guard|blood', 'the Reaver carries its class tags');
-    eq(REG.cards.get('strike').tags.join('|'), 'blade', 'a card carries its tags on the def');
+    eq(REG.cards.get('strike').tags.join('|'), 'blade|source:weapon|delivery:melee', 'a card carries its tags on the def');
     eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged', 'the table resolves by family and id');
-    eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade', 'tagIdsOf resolves an unscoped family');
+    eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade|source:weapon|delivery:melee', 'tagIdsOf resolves an unscoped family');
     eq(tagIdsOf('armament', REG.equipment.armaments.find((a) => a.id === 'straightSword')).join('|'),
-      'item:blade|blade|basic', 'tagIdsOf resolves an armament, item type included');
+      'item:blade|blade|basic|source:weapon|delivery:melee|damage:slashing', 'tagIdsOf resolves an armament, item type included');
     eq(tagIdsOf('class', { id: 'nobody' }).length, 0, 'an untagged object resolves to no tags');
 
     // SCOPE: outfit ids repeat per class, so the parent key is (classId, id).
@@ -2005,7 +2005,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const svc = tagService(REG);
     eq(svc, tagService(REG), 'the service is memoised per registries');
 
-    eq(svc.idsOf('card', { id: 'strike' }).join('|'), 'blade', 'ids by family and id');
+    eq(svc.idsOf('card', { id: 'strike' }).join('|'), 'blade|source:weapon|delivery:melee', 'ids by family and id');
     eq(svc.tagsOf('card', { id: 'strike' })[0].label, 'Blade', 'resolved to registry rows');
     assert(svc.has('card', { id: 'strike' }, 'blade'), 'has() is true for a carried tag');
     assert(!svc.has('card', { id: 'strike' }, 'venom'), 'has() is false for one it does not carry');
@@ -2016,7 +2016,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(svc.idsOf('armour', armour).join('|'), 'item:armor|starstone', 'a scoped object resolves by (classId, id)');
 
     // The junction is the authority: a doctored copy cannot answer for content.
-    eq(svc.idsOf('card', { id: 'strike', tags: ['venom'] }).join('|'), 'blade',
+    eq(svc.idsOf('card', { id: 'strike', tags: ['venom'] }).join('|'), 'blade|source:weapon|delivery:melee',
       'a hand-edited tags field does not override the rows');
 
     // Reverse lookup hands back objects, not ids.
