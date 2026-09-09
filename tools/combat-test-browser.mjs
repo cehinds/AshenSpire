@@ -68,9 +68,58 @@ try {
       await until('window.__combat.player.evade===1 && !document.querySelector(".end-turn").disabled'); await wait(500);
       check(await evaluate('!!document.querySelector(".foundation-evade")'), `${shape.name}/${build}: Evade visible in real HUD`);
       check(await evaluate('document.documentElement.scrollWidth<=innerWidth'), `${shape.name}/${build}: battlefield fits viewport`);
+      if (build === 'heavy') {
+        const tipOpen = 'document.querySelector("#tooltip")?.dataset.open==="true"';
+        if (!shape.mobile) {
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 3, y: 3 }, sessionId); await wait(650);
+          const point = await evaluate(`(()=>{const el=document.querySelector('.foundation-evade');const b=el.getBoundingClientRect();window.__abilityHoverStart=0;window.__abilityHoverDelay=0;el.addEventListener('pointerenter',()=>{window.__abilityHoverStart=performance.now();},{once:true});const observer=new MutationObserver(()=>{const tip=document.querySelector('#tooltip');if(tip?.dataset.open==='true'&&tip.textContent.includes('charge')){window.__abilityHoverDelay=performance.now()-window.__abilityHoverStart;observer.disconnect();}});observer.observe(document.body,{subtree:true,attributes:true,childList:true});return{x:b.x+b.width/2,y:b.y+b.height/2};})()`);
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point }, sessionId);
+          await until(`${tipOpen} && document.querySelector('#tooltip').textContent.includes('dodgeable attack hit')`);
+          check(await evaluate('window.__abilityHoverDelay>=450'), 'desktop: Evade uses the shared half-second hover delay');
+          check(await evaluate('document.querySelector("#tooltip").textContent.includes("start of your next turn")'), 'desktop: Evade explains consumption and expiry');
+          await capture('evade-tooltip');
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 3, y: 3 }, sessionId); await wait(650);
+          check(!(await evaluate(tipOpen)), 'desktop: Evade tooltip closes after leaving');
+        }
+        await evaluate('window.__combat.player.statuses.strength={stacks:2};window.__renderCombatForShot()');
+        await click('[data-card-id="prototypeGuard"]');
+        const beforeInspect = await evaluate('JSON.stringify({energy:window.__combat.player.energy,stamina:window.__combat.player.stamina,evade:window.__combat.player.evade,hand:window.__combat.piles.hand})');
+        await click('.foundation-evade'); await until('!!document.querySelector(".combatant-abilities")');
+        check(await evaluate('document.querySelectorAll(".combatant-ability").length===3'), `${shape.name}: badge opens all active abilities and effects`);
+        check(await evaluate('document.querySelector("[data-ability-id=prototypeGuardStance]").textContent.includes("Gain 3 Block when entering. Gain 2 Block")'), `${shape.name}: stance explains its actual mechanics`);
+        check(await evaluate('document.querySelector("[data-ability-id=evade]").textContent.includes("Unused charges expire") && document.querySelector("[data-ability-id=strength]").textContent.includes("2")'), `${shape.name}: Evade and live status stacks are inspectable`);
+        check(!(await evaluate('document.querySelector(".combatant-abilities > summary .tooltip-keyword")')), `${shape.name}: section heading is a disclosure rather than an accidental glossary link`);
+        await capture('active-abilities');
+        await click('.combatant-abilities > summary');
+        check(!(await evaluate('document.querySelector(".combatant-abilities").open')), `${shape.name}: active skills heading collapses the list`);
+        await click('.combatant-abilities > summary');
+        await click('[data-ability-id=evade] > summary');
+        check(!(await evaluate('document.querySelector("[data-ability-id=evade]").open')), `${shape.name}: an ability supports detail disclosure`);
+        await click('[data-ability-id=evade] > summary');
+        await click('.combatant-door .modal-close'); await until('!document.querySelector(".combatant-door")');
+        await click('.stance-chip'); await until('!!document.querySelector(".combatant-abilities")');
+        check(await evaluate('document.querySelectorAll(".combatant-ability").length===3'), `${shape.name}: stance badge also opens the complete list`);
+        await click('.combatant-door .modal-close'); await until('!document.querySelector(".combatant-door")');
+        check(await evaluate('JSON.stringify({energy:window.__combat.player.energy,stamina:window.__combat.player.stamina,evade:window.__combat.player.evade,hand:window.__combat.piles.hand})') === beforeInspect, `${shape.name}: inspection never plays the armed self-target card`);
+        if (!shape.mobile) {
+          await evaluate('document.querySelector(".foundation-evade").focus()');
+          await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 }, sessionId);
+          await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 }, sessionId);
+          await until('!!document.querySelector(".combatant-abilities")');
+          check(true, 'desktop: keyboard activates badge inspection');
+          await click('.combatant-door .modal-close'); await until('!document.querySelector(".combatant-door")');
+        }
+        await evaluate('delete window.__combat.player.statuses.strength;window.__renderCombatForShot()');
+      }
       await capture(build);
       await click('.end-turn'); await until('window.__combat.turn===3 && !document.querySelector(".end-turn").disabled');
       check(await evaluate('window.__combat.eventLog.some(e=>e.type==="attackEvaded")'), `${shape.name}/${build}: incoming hit consumes Evade`);
+      if (build === 'heavy') {
+        check(!(await evaluate('document.querySelector(".foundation-evade")')), `${shape.name}: spent Evade badge disappears`);
+        await click('.stance-chip'); await until('!!document.querySelector(".combatant-abilities")');
+        check(!(await evaluate('document.querySelector("[data-ability-id=evade], [data-ability-id=strength]")')), `${shape.name}: inspector removes consumed and expired effects`);
+        await click('.combatant-door .modal-close'); await until('!document.querySelector(".combatant-door")');
+      }
       check(await evaluate('JSON.stringify({...localStorage})') === storage, `${shape.name}/${build}: durable storage unchanged`);
       // Exercise actual victory/continuation controls with a near-death enemy
       // fixture. Combat and damage still commit through the normal hand input.

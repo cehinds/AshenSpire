@@ -41,7 +41,7 @@ export function configureTooltipGlossary(registries) {
       const nodes = [];
       while (walker.nextNode()) nodes.push(walker.currentNode);
       for (const node of nodes) {
-        if (node.parentElement.closest('[data-tip], [data-tip-attached], button, a, input, textarea, script, style, .tt-title, .epc-name, .cname, h1, h2, h3')) continue;
+        if (node.parentElement.closest('[data-tip], [data-tip-attached], button, summary, a, input, textarea, script, style, .tt-title, .epc-name, .cname, h1, h2, h3')) continue;
         const text = node.textContent;
         pattern.lastIndex = 0;
         const matches = [...text.matchAll(pattern)];
