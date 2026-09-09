@@ -5,6 +5,7 @@ import {PRESENTATION_POSES as PAINTED_OUTFITS} from '../model/presentationPoseCa
 import {assetUrl} from './assetmap.js';
 import {combatEffectFrames} from './assets.js';
 import {reducedMotionRequested} from './motion.js';
+import {combatEffectOpacity} from '../content/combatEffectPresentation.js';
 const frames={...COMBAT_EFFECT_ART,...POSE_EFFECT_ART},actors=new WeakMap();
 const catalog={effects:Object.keys(frames),actors:Object.keys(PAINTED_OUTFITS),poses:id=>Object.keys(PAINTED_OUTFITS[id]?.frames||{})};
 let cachedText,cachedProject;
@@ -41,7 +42,7 @@ export function playPresentationSequence(layer,from,context,{targets=[],duration
     const target=recipients[i],sx=from.width/230,sy=from.height/350;
     let x=from.left+from.width/2+(clip.x-ANCHORS.torso[0])*1000*sx,y=from.top+from.height*.5+(clip.y-ANCHORS.torso[1])*600*sy;
     if(target){const tx=target.left+target.width/2,ty=target.top+target.height/2;if(clip.travel){const anchor=project.anchors[clip.anchor]||ANCHORS.hand,authored=project.clips.find(c=>c.id===clip.id);const ox=from.left+from.width/2+(anchor[0]-.3)*1000*sx+authored.x*sx,oy=from.top+from.height/2+(anchor[1]-.55)*600*sy+authored.y*sy;const ex=tx+(project.anchors.target[0]-ANCHORS.target[0])*1000*sx,ey=ty+(project.anchors.target[1]-ANCHORS.target[1])*600*sy;x=ox+(ex-ox)*clip.progress;y=oy+(ey-oy)*clip.progress;}else{x=tx+(clip.x-ANCHORS.target[0])*1000*sx;y=ty+(clip.y-ANCHORS.target[1])*600*sy;}}
-    const size=clip.size*sx;Object.assign(img.style,{left:x-size/2+'px',top:y-size/2+'px',width:size+'px',height:size+'px',opacity:String(clip.opacity),transform:`rotate(${clip.rotation}deg)`,zIndex:clip.layer==='behind'?'0':'5'});
+    const size=clip.size*sx;Object.assign(img.style,{left:x-size/2+'px',top:y-size/2+'px',width:size+'px',height:size+'px',opacity:String(clip.opacity*combatEffectOpacity(clip.effect)),transform:`rotate(${clip.rotation}deg)`,zIndex:clip.layer==='behind'?'0':'5'});
    }
   }
   for(const [key,img]of nodes)if(!live.has(key)){img.remove();nodes.delete(key);}raf=requestAnimationFrame(render);
