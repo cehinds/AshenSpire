@@ -14,6 +14,9 @@ const jobs=[
  ['stances',['bulwarkStance','duelistStance','channelStance','berserkStance']],
  ['auras',['bloodAura','frostAura','poisonAura','sacredAura']],
  ['afflictions',['bloodLoss','frostbite','poisoned','staggerBreak']],
+ ['debuffs',['insanity','crimsonBlight','weak','vulnerable']],
+ ['reactions',['frail','dodge','riposte','resist']],
+ ['protection',['barrierHit','barrierBreak','strength','dexterity']],
 ];
 const manifest={},audit={};mkdirSync('assets/combat-effects',{recursive:true});
 // Find the quietest gutter near each expected grid boundary. Generated sheets

@@ -351,5 +351,101 @@ export const COMBAT_EFFECT_ART = {
     "assets/combat-effects/staggerBreak4.webp",
     "assets/combat-effects/staggerBreak5.webp",
     "assets/combat-effects/staggerBreak6.webp"
+  ],
+  "insanity": [
+    "assets/combat-effects/insanity1.webp",
+    "assets/combat-effects/insanity2.webp",
+    "assets/combat-effects/insanity3.webp",
+    "assets/combat-effects/insanity4.webp",
+    "assets/combat-effects/insanity5.webp",
+    "assets/combat-effects/insanity6.webp"
+  ],
+  "crimsonBlight": [
+    "assets/combat-effects/crimsonBlight1.webp",
+    "assets/combat-effects/crimsonBlight2.webp",
+    "assets/combat-effects/crimsonBlight3.webp",
+    "assets/combat-effects/crimsonBlight4.webp",
+    "assets/combat-effects/crimsonBlight5.webp",
+    "assets/combat-effects/crimsonBlight6.webp"
+  ],
+  "weak": [
+    "assets/combat-effects/weak1.webp",
+    "assets/combat-effects/weak2.webp",
+    "assets/combat-effects/weak3.webp",
+    "assets/combat-effects/weak4.webp",
+    "assets/combat-effects/weak5.webp",
+    "assets/combat-effects/weak6.webp"
+  ],
+  "vulnerable": [
+    "assets/combat-effects/vulnerable1.webp",
+    "assets/combat-effects/vulnerable2.webp",
+    "assets/combat-effects/vulnerable3.webp",
+    "assets/combat-effects/vulnerable4.webp",
+    "assets/combat-effects/vulnerable5.webp",
+    "assets/combat-effects/vulnerable6.webp"
+  ],
+  "frail": [
+    "assets/combat-effects/frail1.webp",
+    "assets/combat-effects/frail2.webp",
+    "assets/combat-effects/frail3.webp",
+    "assets/combat-effects/frail4.webp",
+    "assets/combat-effects/frail5.webp",
+    "assets/combat-effects/frail6.webp"
+  ],
+  "dodge": [
+    "assets/combat-effects/dodge1.webp",
+    "assets/combat-effects/dodge2.webp",
+    "assets/combat-effects/dodge3.webp",
+    "assets/combat-effects/dodge4.webp",
+    "assets/combat-effects/dodge5.webp",
+    "assets/combat-effects/dodge6.webp"
+  ],
+  "riposte": [
+    "assets/combat-effects/riposte1.webp",
+    "assets/combat-effects/riposte2.webp",
+    "assets/combat-effects/riposte3.webp",
+    "assets/combat-effects/riposte4.webp",
+    "assets/combat-effects/riposte5.webp",
+    "assets/combat-effects/riposte6.webp"
+  ],
+  "resist": [
+    "assets/combat-effects/resist1.webp",
+    "assets/combat-effects/resist2.webp",
+    "assets/combat-effects/resist3.webp",
+    "assets/combat-effects/resist4.webp",
+    "assets/combat-effects/resist5.webp",
+    "assets/combat-effects/resist6.webp"
+  ],
+  "barrierHit": [
+    "assets/combat-effects/barrierHit1.webp",
+    "assets/combat-effects/barrierHit2.webp",
+    "assets/combat-effects/barrierHit3.webp",
+    "assets/combat-effects/barrierHit4.webp",
+    "assets/combat-effects/barrierHit5.webp",
+    "assets/combat-effects/barrierHit6.webp"
+  ],
+  "barrierBreak": [
+    "assets/combat-effects/barrierBreak1.webp",
+    "assets/combat-effects/barrierBreak2.webp",
+    "assets/combat-effects/barrierBreak3.webp",
+    "assets/combat-effects/barrierBreak4.webp",
+    "assets/combat-effects/barrierBreak5.webp",
+    "assets/combat-effects/barrierBreak6.webp"
+  ],
+  "strength": [
+    "assets/combat-effects/strength1.webp",
+    "assets/combat-effects/strength2.webp",
+    "assets/combat-effects/strength3.webp",
+    "assets/combat-effects/strength4.webp",
+    "assets/combat-effects/strength5.webp",
+    "assets/combat-effects/strength6.webp"
+  ],
+  "dexterity": [
+    "assets/combat-effects/dexterity1.webp",
+    "assets/combat-effects/dexterity2.webp",
+    "assets/combat-effects/dexterity3.webp",
+    "assets/combat-effects/dexterity4.webp",
+    "assets/combat-effects/dexterity5.webp",
+    "assets/combat-effects/dexterity6.webp"
   ]
 };

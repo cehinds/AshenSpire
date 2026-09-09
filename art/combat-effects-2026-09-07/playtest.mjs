@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser, resolveBrowser } from '../../tools/browser.mjs';
 const here=dirname(fileURLToPath(import.meta.url));
-const out=join(here,'inspection');mkdirSync(out,{recursive:true});
+const out=join(here,'inspection',process.argv.includes('--delivery')?'delivery':'');mkdirSync(out,{recursive:true});
 const browser=await launchBrowser({prefix:'animation-review-',browser:resolveBrowser(['C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe']),timeoutMs:20000});
 const ws=new WebSocket(browser.wsUrl), pending=new Map(),errors=[];let serial=0;
 ws.addEventListener('message',event=>{const msg=JSON.parse(event.data);if(msg.method==='Runtime.exceptionThrown')errors.push(msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text);if(msg.id){const pair=pending.get(msg.id);pending.delete(msg.id);msg.error?pair.reject(msg.error):pair.resolve(msg.result);}});
@@ -46,12 +46,12 @@ const statusPlayback=await ev(`(async()=>{
  const layer=document.querySelector('#layer'),anchor=document.querySelector('#target'),events=[],reg=createRegistries(contentBundle);
  const entity={id:'victim',kind:'player',alive:true,maxHp:100,hp:100,statuses:{}};
  const ctx={registries:reg,emit:(type,payload)=>events.push({type,...payload}),enqueue:()=>{}};
- applyStatus(ctx,entity,'bleed',7);applyStatus(ctx,entity,'frost',10);applyStatus(ctx,entity,'venom',2);
+ applyStatus(ctx,entity,'bleed',7);applyStatus(ctx,entity,'frost',10);applyStatus(ctx,entity,'venom',2);applyStatus(ctx,entity,'insanity',14);for(const status of ['crimsonBlight','weak','vulnerable','frail','strength','dexterity'])applyStatus(ctx,entity,status,1);
  const seen=new Set(),poll=setInterval(()=>layer.querySelectorAll('.painted-combat-effect').forEach(e=>seen.add(e.dataset.effect)),4);
- await new Promise(done=>animateEvents([...events,{type:'enemyStaggered',targetId:'victim'}],{layer,anchorFor:()=>anchor,combatEl:document.querySelector('#stage')},done));
+ await new Promise(done=>animateEvents([...events,{type:'enemyStaggered',targetId:'victim'},{type:'dodgeRolled',sourceId:'victim',success:true},{type:'procResisted',targetId:'victim',blocked:2},{type:'damageDealt',targetId:'victim',amount:1,blocked:1,blockRemaining:2,barrierVisual:true},{type:'damageDealt',targetId:'victim',amount:2,blocked:2,blockRemaining:0,barrierVisual:true}],{layer,anchorFor:()=>anchor,combatEl:document.querySelector('#stage')},done));
  await new Promise(r=>setTimeout(r,300));clearInterval(poll);clearCombatEffects(layer);return {seen:[...seen],remaining:layer.querySelectorAll('.painted-combat-effect').length};
 })()`);
-for(const kind of ['bloodAura','bloodLoss','frostAura','frostbite','poisoned','staggerBreak'])assert.ok(statusPlayback.seen.includes(kind),JSON.stringify(statusPlayback));
+for(const kind of ['bloodAura','bloodLoss','frostAura','frostbite','poisoned','staggerBreak','insanity','crimsonBlight','weak','vulnerable','frail','strength','dexterity','dodge','resist','barrierHit','barrierBreak'])assert.ok(statusPlayback.seen.includes(kind),JSON.stringify(statusPlayback));
 assert.equal(statusPlayback.remaining,0);writeFileSync(join(out,'status-playback.json'),JSON.stringify(statusPlayback,null,2));
 for(const direction of ['left','up']){
  await ev(`document.querySelector('#direction').value='${direction}';document.querySelector('#direction').dispatchEvent(new Event('change'));document.querySelector('[data-effect="starbolt"]').click()`);await wait(300);
@@ -66,12 +66,17 @@ const gameplay=await ev(`(async()=>{const c=window.__combat;window.__combatRunFo
 const expansion=await ev(`(async()=>{
  const c=window.__combat,seen=new Set();c.player.energy=99;c.player.stamina=99;c.player.mana=99;
  const poll=setInterval(()=>document.querySelectorAll('.painted-combat-effect').forEach(e=>seen.add(e.dataset.effect)),4);
- for(const [id,cardId,profileId,targeted]of [['shield-check','strike','shieldAttack',true],['parry-check','defend','weaponGuard',false],['bind-check','disorient',null,true],['soft-guard-check','evasiveGuard','unarmedGuard',false],['step-check','quickstep',null,false],['arcane-guard-check','defend','sceptreGuard',false],['magic-guard-check','defend','staffGuard',false],['barrier-check','crystalBarrier',null,false]]){
+ for(const [id,cardId,profileId,targeted]of [['shield-check','strike','shieldAttack',true],['parry-check','defend','weaponGuard',false],['bind-check','disorient',null,true],['soft-guard-check','evasiveGuard','unarmedGuard',false],['step-check','quickstep',null,false],['arcane-guard-check','defend','sceptreGuard',false],['magic-guard-check','defend','staffGuard',false],['barrier-check','crystalBarrier',null,false],['named-bash-check','shieldBash',null,true],['riposte-check','riposte',null,true]]){
   c.piles.hand.push({instanceId:id,cardId,...(profileId?{profileId}:{}),upgraded:false});window.__renderCombatForShot();
   document.querySelector('[data-instance-id="'+id+'"]').click();if(targeted)document.querySelector('.enemy:not(.dead)').click();else document.querySelector('.combatant.player').click();await new Promise(r=>setTimeout(r,1400));
  }
  clearInterval(poll);return [...seen];
 })()`);
-for(const kind of ['shieldBash','parry','bind','guardPulse','dustStep','arcaneWard','magicGuard','barrier'])assert.ok(expansion.includes(kind),JSON.stringify(expansion));
+for(const kind of ['shieldBash','parry','bind','guardPulse','dustStep','arcaneWard','magicGuard','barrier','riposte'])assert.ok(expansion.includes(kind),JSON.stringify(expansion));
 assert.deepEqual(errors,[]);writeFileSync(join(out,'expansion-gameplay.json'),JSON.stringify({expansion,errors},null,2));
+for(const [name,width,height,mobile] of [['integrated-game-desktop',1180,900,false],['integrated-game-phone',390,844,true]]){
+ await call('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile});await wait(150);
+ assert.ok(await ev('document.documentElement.scrollWidth<=innerWidth'),name+' overflow');
+ const shot=await call('Page.captureScreenshot',{format:'png'});writeFileSync(join(out,name+'.png'),Buffer.from(shot.data,'base64'));
+}
 }finally{ws.close();await browser.close();}

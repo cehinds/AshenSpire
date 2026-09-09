@@ -3,6 +3,19 @@ import { reducedMotionRequested } from './motion.js';
 import { combatEffectAngle, combatEffectOrientation } from './combatEffectDirection.js';
 import { combatEffectPresentation } from '../content/combatEffectPresentation.js';
 const active=new WeakMap();
+// Shared solo/co-op sequence: one cast, then one release per actual recipient.
+export function playCombatEffectPlan(layer,from,plan,{targets=[],duration=260,size=160}={}){
+ if(!plan)return ()=>{};
+ const stops=[];
+ const targetLocal=plan.at==='target';
+ if(plan.cast)stops.push(playCombatEffect(layer,from,plan.cast,{duration:110,size:size*.7}));
+ const delay=plan.cast?65:targetLocal?Math.round(duration*.25):0;
+ const recipients=targetLocal?targets:[from];
+ for(const target of recipients){
+  stops.push(playCombatEffect(layer,plan.projectile?from:target,plan.kind,{to:plan.projectile?target:null,direction:targetLocal?combatEffectAngle(from,target):'auto',delay,duration:Math.max(96,duration-delay),size}));
+ }
+ return ()=>stops.forEach(stop=>stop());
+}
 export function clearCombatEffects(layer){for(const stop of [...(active.get(layer)||[])])stop();}
 // Caller supplies boxes in layer-local coordinates, using the shared geometry
 // helper. All six frames retain one center anchor and common canvas scale.

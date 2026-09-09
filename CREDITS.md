@@ -99,4 +99,4 @@ AshenSpire is an original fan-inspired work. It contains no assets, music, text,
 
 | Assets | Source | Rights |
 |---|---|---|
-| assets/combat-effects: 264 transparent frames (44 six-frame effects) for projectiles, guards, barriers, stances, auras, afflictions, healing, impact, melee trails and authored card schools | Project-generated with built-in OpenAI imagegen; six-frame source sheets and exact prompts in art/combat-effects-2026-09-07/six-frame-generation.json and guard-status-generation.json; exported by tools/combat-effects-ship.mjs | Project-owned AI-generated artwork, CC0 |
+| assets/combat-effects: 336 transparent frames (56 six-frame effects) for projectiles, guards, barriers, stances, auras, afflictions, healing, impact, melee trails and authored card schools | Project-generated with built-in OpenAI imagegen; six-frame source sheets and exact prompts in art/combat-effects-2026-09-07/six-frame-generation.json, guard-status-generation.json and integration-generation.json; exported by tools/combat-effects-ship.mjs | Project-owned AI-generated artwork, CC0 |

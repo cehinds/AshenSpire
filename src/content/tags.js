@@ -127,7 +127,7 @@ export function scopeOf(family, object) {
  * scopeField; every other family keys on the id alone.
  */
 export function objectTagIds(family, objectId, scope = '') {
-  return BY_OBJECT.get(key(family, scope, objectId)) || [];
+  return (BY_OBJECT.get(key(family, scope, objectId)) || []).filter(id=>BY_ID.get(id)?.domain!=='presentation');
 }
 
 /**

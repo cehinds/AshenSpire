@@ -1,0 +1,2465 @@
+[
+  {
+    "type": "attack",
+    "tags": [
+      "fx:arcane",
+      "fx:blight",
+      "fx:ritual"
+    ],
+    "profile": "sceptreArcaneAttack",
+    "plan": {
+      "kind": "arcaneBurst",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "arcane-strike",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "arcane",
+        "blight",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Arcane Strike",
+      "Arcane Strike +"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "slash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-blade",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Strike",
+      "Strike+",
+      "Twinblade Flurry",
+      "Twinblade Flurry+",
+      "Executioner",
+      "Executioner+",
+      "Stitched Arms",
+      "Stitched Arms+",
+      "Ruinous Blow",
+      "Ruinous Blow+",
+      "Flame to Blade",
+      "Flame to Blade+",
+      "Poise Breaker",
+      "Poise Breaker+",
+      "Sundering Hew",
+      "Sundering Hew+",
+      "Bashing Blow",
+      "Bashing Blow+",
+      "Sweeping Blow",
+      "Sweeping Blow+",
+      "Colossus Smash",
+      "Colossus Smash+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "crossSlash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-double",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Bloodhunter's Strike",
+      "Bloodhunter's Strike+",
+      "Blood Tithe",
+      "Blood Tithe+",
+      "Twin Fang",
+      "Twin Fang+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade"
+    ],
+    "profile": "bladeAttack",
+    "plan": {
+      "kind": "slash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-blade",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Slashing Strike",
+      "Slashing Strike +"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:blood"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bloodSlash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "blood-blade",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "blood"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Crimson Cleave",
+      "Crimson Cleave+",
+      "Serrated Blade",
+      "Serrated Blade+",
+      "Rend",
+      "Rend+",
+      "Goreslash",
+      "Goreslash+",
+      "Sunderplate",
+      "Sunderplate+",
+      "Serrated Shiv",
+      "Serrated Shiv+",
+      "Garrote",
+      "Garrote+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:blood",
+      "fx:flourish"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bloodSlash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "blood-blade",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "blood",
+        "flourish"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Draw Cut",
+      "Draw Cut+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:blood",
+      "fx:gorefire"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bloodSlash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "blood-blade",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "blood",
+        "gorefire"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Gorefire Slash",
+      "Gorefire Slash+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:blood",
+      "fx:pierce"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bloodSlash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "blood-blade",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "blood",
+        "pierce"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Impale",
+      "Impale+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:flourish"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "whirlwind",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-flourish",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "flourish"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Shiv",
+      "Shiv+",
+      "Quick Cut",
+      "Quick Cut+",
+      "Blade Dance",
+      "Blade Dance+",
+      "Thousand Cuts",
+      "Thousand Cuts+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:flourish"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "crossSlash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-double",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "flourish"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Twin Prick",
+      "Twin Prick+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:guard",
+      "fx:shield"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "shieldBash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "shield-attack",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "guard",
+        "shield"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Shield Bash",
+      "Shield Bash+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "slash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-blade",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "guile"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Ambush",
+      "Ambush+",
+      "Hamstring",
+      "Hamstring+",
+      "Low Blow",
+      "Low Blow+",
+      "Cheap Shot",
+      "Cheap Shot+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:heavy"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "slash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-blade",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "heavy"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Cleaving Blow",
+      "Cleaving Blow+",
+      "Stomp",
+      "Stomp+",
+      "Kick Off",
+      "Kick Off+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:precision"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "thrust",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-thrust",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "precision"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Coup de Grace",
+      "Coup de Grace+",
+      "Assassinate",
+      "Assassinate+",
+      "Deathblow",
+      "Deathblow+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "crossSlash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-double",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Star Slicer",
+      "Star Slicer+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "slash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-blade",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Moonrend Cut",
+      "Moonrend Cut+",
+      "Astral Cleave",
+      "Astral Cleave+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blight",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "blight",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "blight-release",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blight",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Blight Touch",
+      "Blight Touch+",
+      "Plague Bearer",
+      "Plague Bearer+",
+      "Scourge",
+      "Scourge+",
+      "Withering Touch",
+      "Withering Touch+",
+      "Blightward Lash",
+      "Blightward Lash+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:flourish",
+      "fx:guard",
+      "fx:riposte"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "riposte",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "counter-strike",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "flourish",
+        "guard",
+        "riposte"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Guard Counter",
+      "Guard Counter+",
+      "Riposte",
+      "Riposte+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:flourish",
+      "fx:pierce"
+    ],
+    "profile": "daggerPierceAttack",
+    "plan": {
+      "kind": "whirlwind",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-flourish",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "flourish",
+        "pierce"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Piercing Flurry",
+      "Piercing Flurry +"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:frost",
+      "fx:ranged",
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "starbolt",
+      "projectile": true,
+      "at": "target",
+      "ruleId": "starstone-projectile",
+      "phase": "release",
+      "cast": "focusMotes",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "frost",
+        "ranged",
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Frost Nova",
+      "Frost Nova+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:guard",
+      "fx:ranged",
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "starbolt",
+      "projectile": true,
+      "at": "target",
+      "ruleId": "starstone-projectile",
+      "phase": "release",
+      "cast": "focusMotes",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "guard",
+        "ranged",
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Starblade Phalanx",
+      "Starblade Phalanx+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:guard",
+      "fx:shield"
+    ],
+    "profile": "shieldAttack",
+    "plan": {
+      "kind": "shieldBash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "shield-attack",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "guard",
+        "shield"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Shield Strike",
+      "Shield Strike +"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "heavyImpact",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-impact",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "guile"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Sap",
+      "Sap+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:heal",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "lifeDrain",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "life-drain",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "heal",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Sacred Harvest",
+      "Sacred Harvest+",
+      "Crimson Rite",
+      "Crimson Rite+",
+      "Blood Harvest",
+      "Blood Harvest+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:heavy",
+      "fx:ranged",
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "starbolt",
+      "projectile": true,
+      "at": "target",
+      "ruleId": "starstone-projectile",
+      "phase": "release",
+      "cast": "focusMotes",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "heavy",
+        "ranged",
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Meteorite",
+      "Meteorite+",
+      "Meteor Swarm",
+      "Meteor Swarm+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:pierce",
+      "fx:precision",
+      "fx:ranged"
+    ],
+    "profile": "bowPierceAttack",
+    "plan": {
+      "kind": "thrust",
+      "projectile": true,
+      "at": "target",
+      "ruleId": "physical-thrust",
+      "phase": "release",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "pierce",
+        "precision",
+        "ranged"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Piercing Shot",
+      "Piercing Shot +"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:pierce",
+      "fx:ranged"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "thrust",
+      "projectile": true,
+      "at": "target",
+      "ruleId": "physical-thrust",
+      "phase": "release",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "pierce",
+        "ranged"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Ricochet",
+      "Ricochet+",
+      "Fan of Knives",
+      "Fan of Knives+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:pierce",
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "thrust",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-thrust",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "pierce",
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Starstone Kris",
+      "Starstone Kris+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:ranged",
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "starbolt",
+      "projectile": true,
+      "at": "target",
+      "ruleId": "starstone-projectile",
+      "phase": "release",
+      "cast": "focusMotes",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "ranged",
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Starstone Pebble",
+      "Starstone Pebble+",
+      "Comet Fragment",
+      "Comet Fragment+",
+      "Star Shower",
+      "Star Shower+",
+      "Starlance",
+      "Starlance+",
+      "Starstone Arc",
+      "Starstone Arc+",
+      "Radiant Spray",
+      "Radiant Spray+",
+      "Supernova",
+      "Supernova+",
+      "Starfall Beam",
+      "Starfall Beam+",
+      "Starcaller",
+      "Starcaller+",
+      "Shooting Shard",
+      "Shooting Shard+",
+      "Celestial Lance",
+      "Celestial Lance+",
+      "Star Spark",
+      "Star Spark+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "ritual",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "ritual-release",
+      "phase": "impact",
+      "cast": "focusMotes",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Flagellation",
+      "Flagellation+",
+      "Grave Offering",
+      "Grave Offering+",
+      "Cull the Weak",
+      "Cull the Weak+",
+      "Exsanguinate",
+      "Exsanguinate+",
+      "Blight Nova",
+      "Blight Nova+",
+      "Pain Offering",
+      "Pain Offering+",
+      "Desperate Rite",
+      "Desperate Rite+",
+      "Blood Offering",
+      "Blood Offering+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:starstone"
+    ],
+    "profile": "staffMagicAttack",
+    "plan": {
+      "kind": "heavyImpact",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-impact",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Staff Magic Strike",
+      "Staff Magic Strike +"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:utility"
+    ],
+    "profile": "unarmedAttack",
+    "plan": {
+      "kind": "heavyImpact",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-impact",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "damageDealt",
+      "tags": [
+        "utility"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Unarmed Strike",
+      "Unarmed Strike +"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [
+      "fx:blood"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bloodAura",
+      "projectile": false,
+      "ruleId": "power-blood",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "blood"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Goreblood",
+      "Goreblood+"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [
+      "fx:flourish",
+      "fx:oath"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "sacredAura",
+      "projectile": false,
+      "ruleId": "power-oath",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "flourish",
+        "oath"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Afterimage",
+      "Afterimage+",
+      "Deadly Tempo",
+      "Deadly Tempo+"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [
+      "fx:guile",
+      "fx:oath"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "sacredAura",
+      "projectile": false,
+      "ruleId": "power-oath",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "guile",
+        "oath"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Opportunist",
+      "Opportunist+"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [
+      "fx:oath",
+      "fx:venom"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "poisonAura",
+      "projectile": false,
+      "ruleId": "power-venom",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "oath",
+        "venom"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Envenom",
+      "Envenom+"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "ritual",
+      "projectile": false,
+      "ruleId": "power-ritual",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Thorn Halo",
+      "Thorn Halo+",
+      "Communion",
+      "Communion+",
+      "Stigmata",
+      "Stigmata+",
+      "Life Tithe",
+      "Life Tithe+",
+      "Zealotry",
+      "Zealotry+",
+      "Ember Tide",
+      "Ember Tide+",
+      "Harbinger of Blight",
+      "Harbinger of Blight+"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "focusMotes",
+      "projectile": false,
+      "ruleId": "power-focus",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Stargazer",
+      "Stargazer+",
+      "Astral Armor",
+      "Astral Armor+",
+      "Azure Coil",
+      "Azure Coil+",
+      "Constellation",
+      "Constellation+",
+      "Waxing Moon",
+      "Waxing Moon+",
+      "Moonlit Shield",
+      "Moonlit Shield+",
+      "Astromancer",
+      "Astromancer+"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [
+      "fx:utility"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "focusMotes",
+      "projectile": false,
+      "ruleId": "power-focus",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "utility"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Rallying Standard",
+      "Rallying Standard+",
+      "Unbreakable",
+      "Unbreakable+",
+      "Sanguine Pact",
+      "Sanguine Pact+",
+      "Iron Vow",
+      "Iron Vow+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:arcane",
+      "fx:barrier",
+      "fx:guard",
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "barrier",
+      "projectile": false,
+      "ruleId": "barrier",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "arcane",
+        "barrier",
+        "guard",
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Umbral Ward",
+      "Umbral Ward+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:arcane",
+      "fx:bind",
+      "fx:guard",
+      "fx:starstone",
+      "fx:ward"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "arcaneWard",
+      "projectile": false,
+      "ruleId": "arcane-ward",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "arcane",
+        "bind",
+        "guard",
+        "starstone",
+        "ward"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Starstone Ward",
+      "Starstone Ward+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:arcane",
+      "fx:guard",
+      "fx:ritual",
+      "fx:ward"
+    ],
+    "profile": "sceptreGuard",
+    "plan": {
+      "kind": "arcaneWard",
+      "projectile": false,
+      "ruleId": "arcane-ward",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "arcane",
+        "guard",
+        "ritual",
+        "ward"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Ritual Ward",
+      "Ritual Ward +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:ash",
+      "fx:bind",
+      "fx:guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bind",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "binding",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "ash",
+        "bind",
+        "guile"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Pocket Sand",
+      "Pocket Sand+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:ash",
+      "fx:guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false,
+      "ruleId": "footwork",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "ash",
+        "guile"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Smoke Pellet",
+      "Smoke Pellet+",
+      "Vanish",
+      "Vanish+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:ash",
+      "fx:guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "ash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "ash-application",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "ash",
+        "guile"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Smoke Bomb",
+      "Smoke Bomb+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:barrier",
+      "fx:guard",
+      "fx:magic",
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "barrier",
+      "projectile": false,
+      "ruleId": "barrier",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "barrier",
+        "guard",
+        "magic",
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Crystal Barrier",
+      "Crystal Barrier+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:bind"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bind",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "binding",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "bind"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Hex",
+      "Hex+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:bind",
+      "fx:blade",
+      "fx:precision"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bind",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "binding",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "bind",
+        "blade",
+        "precision"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Execution Window",
+      "Execution Window+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:bind",
+      "fx:guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bind",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "binding",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "bind",
+        "guile"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Disorient",
+      "Disorient+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:bind",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bind",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "binding",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "bind",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Litany",
+      "Litany+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:blade",
+      "fx:blood"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bloodSlash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "blood-application",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "blade",
+        "blood"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Bloodletter",
+      "Bloodletter+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:blade",
+      "fx:flourish"
+    ],
+    "profile": "weaponTechnique",
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false,
+      "ruleId": "footwork",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "blade",
+        "flourish"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Weapon Technique",
+      "Weapon Technique +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:blight",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "blight",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "blight-application",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "blight",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Contagion",
+      "Contagion+",
+      "Blight Bloom",
+      "Blight Bloom+",
+      "Plague of Butterflies",
+      "Plague of Butterflies+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:blood"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bloodSlash",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "blood-application",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "blood"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Hemorrhage",
+      "Hemorrhage+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:blood",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "focusMotes",
+      "projectile": false,
+      "ruleId": "magic-utility",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "blood",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Blood Pact",
+      "Blood Pact+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:bulwark",
+      "fx:guard"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "ward",
+      "projectile": false,
+      "ruleId": "bulwark-guard",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "bulwark",
+        "guard"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Bracing Stance",
+      "Bracing Stance+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:bulwark",
+      "fx:guard",
+      "fx:oath"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "ward",
+      "projectile": false,
+      "ruleId": "bulwark-guard",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "bulwark",
+        "guard",
+        "oath"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Enter: Bulwark",
+      "Enter: Bulwark+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:dodge"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false,
+      "ruleId": "dodge",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "dodge"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Evasive Guard",
+      "Evasive Guard+",
+      "Dodge Roll",
+      "Dodge Roll+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:dodge",
+      "fx:flourish"
+    ],
+    "profile": "unarmedTechnique",
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false,
+      "ruleId": "dodge",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "dodge",
+        "flourish"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Dodge Roll",
+      "Dodge Roll +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:flourish"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false,
+      "ruleId": "footwork",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "flourish"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Quickstep",
+      "Quickstep+",
+      "Acrobatics",
+      "Acrobatics+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:flourish",
+      "fx:guard"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "physicalGuard",
+      "projectile": false,
+      "ruleId": "physical-guard",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "flourish",
+        "guard"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Backstep",
+      "Backstep+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:flourish",
+      "fx:guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false,
+      "ruleId": "footwork",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "flourish",
+        "guile"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Shadowstep",
+      "Shadowstep+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:frost",
+      "fx:guard",
+      "fx:starstone",
+      "fx:ward"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "frostAura",
+      "projectile": false,
+      "ruleId": "frost-ward",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "frost",
+        "guard",
+        "starstone",
+        "ward"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Frost Veil",
+      "Frost Veil+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:gorefire",
+      "fx:oath"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "gorefire",
+      "projectile": false,
+      "ruleId": "gorefire-stance-cast",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "gorefire",
+        "oath"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Enter: Gorefire",
+      "Enter: Gorefire+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:guard"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "physicalGuard",
+      "projectile": false,
+      "ruleId": "physical-guard",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "guard"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Defend",
+      "Defend+",
+      "Footwork",
+      "Footwork+",
+      "Iron Resolve",
+      "Iron Resolve+",
+      "Shieldwall",
+      "Shieldwall+",
+      "Warding Lunge",
+      "Warding Lunge+",
+      "Last Stand",
+      "Last Stand+",
+      "Rondel Parry",
+      "Rondel Parry+",
+      "Iron Skin",
+      "Iron Skin+",
+      "Quick Guard",
+      "Quick Guard+",
+      "Rallying Banner",
+      "Rallying Banner+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:guard"
+    ],
+    "profile": "unarmedGuard",
+    "plan": {
+      "kind": "guardPulse",
+      "projectile": false,
+      "ruleId": "unarmed-guard",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "guard"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Evasive Guard",
+      "Evasive Guard +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:guard"
+    ],
+    "profile": "weaponGuard",
+    "plan": {
+      "kind": "parry",
+      "projectile": false,
+      "ruleId": "weapon-parry",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "guard"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Weapon Guard",
+      "Weapon Guard +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:guard",
+      "fx:guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "physicalGuard",
+      "projectile": false,
+      "ruleId": "physical-guard",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "guard",
+        "guile"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Smoke Veil",
+      "Smoke Veil+",
+      "Misdirect",
+      "Misdirect+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:guard",
+      "fx:heal",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "arcaneWard",
+      "projectile": false,
+      "ruleId": "arcane-guard",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "guard",
+        "heal",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Penance",
+      "Penance+",
+      "Last Mercy",
+      "Last Mercy+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:guard",
+      "fx:magic",
+      "fx:starstone",
+      "fx:ward"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "magicGuard",
+      "projectile": false,
+      "ruleId": "magic-ward",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "guard",
+        "magic",
+        "starstone",
+        "ward"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Warding Star",
+      "Warding Star+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:guard",
+      "fx:magic",
+      "fx:starstone",
+      "fx:ward"
+    ],
+    "profile": "staffGuard",
+    "plan": {
+      "kind": "magicGuard",
+      "projectile": false,
+      "ruleId": "magic-ward",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "guard",
+        "magic",
+        "starstone",
+        "ward"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Arcane Ward",
+      "Arcane Ward +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:guard",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "arcaneWard",
+      "projectile": false,
+      "ruleId": "arcane-guard",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "guard",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Bloodletting",
+      "Bloodletting+",
+      "Blightward",
+      "Blightward+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:guard",
+      "fx:shield"
+    ],
+    "profile": "shieldGuard",
+    "plan": {
+      "kind": "physicalGuard",
+      "projectile": false,
+      "ruleId": "physical-guard",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "guard",
+        "shield"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Shield Defend",
+      "Shield Defend +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:guard",
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "magicGuard",
+      "projectile": false,
+      "ruleId": "magic-guard",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "guard",
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Astral Insight",
+      "Astral Insight+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false,
+      "ruleId": "footwork",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "guile"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Feint",
+      "Feint+",
+      "Pilfer",
+      "Pilfer+",
+      "Setup",
+      "Setup+",
+      "Perfect Heist",
+      "Perfect Heist+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:heal"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "cleanse",
+      "projectile": false,
+      "ruleId": "healing-cast",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "heal"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "War Surgeon",
+      "War Surgeon+",
+      "Field Dressing",
+      "Field Dressing+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:heal"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "steelGlint",
+      "projectile": false,
+      "ruleId": "quiet-utility",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "heal"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Shared Flame",
+      "Shared Flame+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:heal",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "cleanse",
+      "projectile": false,
+      "ruleId": "healing-cast",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "heal",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Urgent Heal",
+      "Urgent Heal+",
+      "Transfusion",
+      "Transfusion+",
+      "Reclamation",
+      "Reclamation+",
+      "Second Bloom",
+      "Second Bloom+",
+      "Last Rites",
+      "Last Rites+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:oath",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "focusMotes",
+      "projectile": false,
+      "ruleId": "magic-utility",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "oath",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Gilded Oath",
+      "Gilded Oath+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:oath",
+      "fx:venom"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "venom",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "venom-application",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "oath",
+        "venom"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Venomcoat",
+      "Venomcoat+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:precision",
+      "fx:ranged"
+    ],
+    "profile": "bowTechnique",
+    "plan": {
+      "kind": "steelGlint",
+      "projectile": false,
+      "ruleId": "weapon-utility",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "precision",
+        "ranged"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Steady Aim",
+      "Steady Aim +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:ranged",
+      "fx:venom"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "venom",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "venom-application",
+      "phase": "impact",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "ranged",
+        "venom"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Toxic Volley",
+      "Toxic Volley+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "focusMotes",
+      "projectile": false,
+      "ruleId": "magic-utility",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Martyr's Blood",
+      "Martyr's Blood+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:ritual"
+    ],
+    "profile": "staffTechnique",
+    "plan": {
+      "kind": "focusMotes",
+      "projectile": false,
+      "ruleId": "magic-utility",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Staff Channel",
+      "Staff Channel +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "focusMotes",
+      "projectile": false,
+      "ruleId": "magic-utility",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Scholar's Insight",
+      "Scholar's Insight+",
+      "Twinkling",
+      "Twinkling+",
+      "Lucidity",
+      "Lucidity+",
+      "Time Dilation",
+      "Time Dilation+",
+      "Star Path",
+      "Star Path+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "focusMotes",
+      "projectile": false,
+      "ruleId": "hostile-magic-cast",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Gravity Well",
+      "Gravity Well+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:utility"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "steelGlint",
+      "projectile": false,
+      "ruleId": "quiet-utility",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "utility"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Warcry",
+      "Warcry+",
+      "Warrior's Vow",
+      "Warrior's Vow+",
+      "Honed Edge",
+      "Honed Edge+",
+      "Transmute",
+      "Transmute+",
+      "Master of Strategy",
+      "Master of Strategy+",
+      "Oath of Ash",
+      "Oath of Ash+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:utility"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "steelGlint",
+      "projectile": false,
+      "ruleId": "hostile-utility-cast",
+      "phase": "cast",
+      "cast": null,
+      "targetEvent": "statusApplied",
+      "tags": [
+        "utility"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Blinding Sand",
+      "Blinding Sand+",
+      "Hamstring",
+      "Hamstring+",
+      "Enfeeble",
+      "Enfeeble+"
+    ]
+  }
+]

@@ -135,10 +135,12 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   const hpLoss = dmg - blocked;
   if (hpLoss > 0) target.hp -= hpLoss;
   ctx.emit('damageDealt', {
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {}),
     sourceId: source ? source.id : null,
     targetId: target.id,
     amount: dmg,
     blocked,
+    blockRemaining: target.block,
     isAttack: true,
   });
   if (hpLoss > 0) {
@@ -203,7 +205,7 @@ export function gainBlock(ctx, entity, base) {
     amt = Math.max(0, cap - entity.block);
   }
   entity.block += amt;
-  ctx.emit('blockGained', { targetId: entity.id, amount: amt });
+  ctx.emit('blockGained', { targetId: entity.id, amount: amt, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
   return amt;
 }
 
@@ -499,6 +501,7 @@ function runOpcode(ctx, action, eff) {
       const stance = playerWeightClass(ctx);
       const receipt = ctx.registries.framework.dodgeRoll({ roll, dexterity, weightClass: stance.weightClass });
       ctx.emit('dodgeRolled', {
+        ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(p) } : {}),
         sourceId: p.id, roll, check: receipt.check, difficulty: receipt.difficulty,
         success: receipt.success, temporaryGuard: receipt.temporaryGuard, weightClass: stance.weightClass.id,
       });

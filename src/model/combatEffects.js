@@ -1,35 +1,27 @@
-import { CARD_EFFECT_TAGS } from '../content/combatEffectStyles.js';
-import { CARD_DEFENSE_EFFECTS } from '../content/combatDefenseEffects.js';
-const classBolts = { reaver:'emberbolt', rogue:'shadowbolt', herald:'sacredbolt', starseer:'starbolt' };
+import {COMBAT_EFFECT_RULES} from '../content/combatEffectRules.js';
+import {tagService} from './tagService.js';
 
-// Effects follow resolved authored card tags; resource outlines remain separate.
-export function combatEffectFor(card = {}, classId = 'starseer') {
-  const tags = new Set((card.cardTags || card.tags || []).map(t => typeof t === 'string' ? t : t.id));
-  const style = CARD_EFFECT_TAGS.find(([tag]) => tags.has(tag));
-  if (card.type === 'power') return { kind:tags.has('venom')?'poisonAura':tags.has('blood')?'bloodAura':tags.has('oath')?'sacredAura':style?.[1] || (classId === 'reaver' ? 'gorefire' : classBolts[classId] || 'ritual'), projectile:false };
-  if(card.type==='skill' && Object.hasOwn(CARD_DEFENSE_EFFECTS,card.id))return {kind:CARD_DEFENSE_EFFECTS[card.id],projectile:false};
-  if (card.type === 'skill' && (tags.has('guard') || tags.has('block') || ['shieldGuard','weaponGuard','unarmedGuard','sceptreGuard','staffGuard'].includes(card.equipmentProfileId))) {
-    const profile=card.equipmentProfileId;
-    const kind=profile==='weaponGuard'?'parry':profile==='unarmedGuard'?'guardPulse':profile==='sceptreGuard'?'arcaneWard':profile==='staffGuard'?'magicGuard':tags.has('starstone')||tags.has('ritual')?'arcaneWard':card.manaCost>0?'magicGuard':'physicalGuard';
-    return {kind,projectile:false};
-  }
-  const damaging = (card.effects || []).some(e => e.op === 'damage' && ['enemy','allEnemies','randomEnemy'].includes(e.target));
-  if (!damaging) {
-    if (card.type === 'skill' && (card.effects || []).some(e => e.op === 'applyStatus' && e.target === 'enemy' && ['weak','vulnerable'].includes(e.status))) return {kind:'bind',projectile:false,at:'target'};
-    if (card.type === 'skill' && (tags.has('oath') || classId === 'herald') && (card.effects || []).some(e => e.op === 'heal' && e.target === 'self')) return {kind:'cleanse',projectile:false};
-    const hostile = (card.effects || []).some(e => ['enemy','allEnemies','randomEnemy'].includes(e.target));
-    if(card.type === 'skill' && !hostile){
-      if(tags.has('flourish') || tags.has('guile'))return {kind:'dustStep',projectile:false};
-      if(['blade','pierce','precision'].some(tag=>tags.has(tag)))return {kind:'steelGlint',projectile:false};
-      if(tags.has('starstone') || tags.has('ritual'))return {kind:'focusMotes',projectile:false};
-    }
-    return style && card.type === 'skill' ? { kind:style[1], projectile:false, ...(hostile ? { at:'target' } : {}) } : null;
-  }
-  const melee = !tags.has('ranged') && (['blade','pierce','heavy','precision','flourish','blood'].some(tag => tags.has(tag)) || card.equipmentProfileId === 'shieldAttack');
-  let kind = card.equipmentProfileId === 'shieldAttack' ? 'shieldBash' : style?.[1] || (card.manaCost > 0 || tags.has('ranged') ? classBolts[classId] || 'starbolt' : 'heavyImpact');
-  if (card.equipmentProfileId === 'sceptreArcaneAttack') kind = 'arcaneBurst';
-  else if ((card.effects || []).some(e => e.op === 'heal' && e.target === 'self')) kind = 'lifeDrain';
-  else if (['slash','whirlwind','thrust'].includes(kind) && !tags.has('ranged') && ((card.effects || []).some(e => e.op === 'damage' && e.target === 'enemy' && !e.if && e.hits === 2) || (card.effects || []).filter(e => e.op === 'damage' && e.target === 'enemy' && !e.if).length > 1)) kind = 'crossSlash';
-  const projectile = !melee && (kind.endsWith('bolt') || tags.has('ranged'));
-  return { kind, projectile, ...(!projectile ? { at:'target' } : {}) };
+// Profile visuals replace the base card's visuals; neither enters damage tags.
+export function combatEffectTags(registries,card){
+ const service=tagService(registries);
+ const visual=card.equipmentProfileId?service.presentationIdsOf('basicCardProfile',{id:card.equipmentProfileId}):service.presentationIdsOf('card',card);
+ return visual.length?visual:(card.cardTags?.length?card.cardTags:service.idsOf('card',card));
+}
+export function combatEffectPlan(card={}){
+ const tags=new Set((card.cardTags||card.tags||[]).map(t=>(typeof t==='string'?t:t.id).replace(/^fx:/,'')));
+ const effects=card.effects||[],hostile=e=>['enemy','allEnemies','randomEnemy'].includes(e.target);
+ const hits=effects.filter(e=>e.op==='damage'&&hostile(e));
+ const facts={type:card.type,profile:card.equipmentProfileId,damaging:hits.length>0,ranged:tags.has('ranged'),hostile:effects.some(hostile),selfHeal:effects.some(e=>e.op==='heal'&&e.target==='self'),multiHit:hits.filter(e=>!e.if).length>1||hits.some(e=>!e.if&&e.hits===2),enemyDebuff:effects.some(e=>e.op==='applyStatus'&&hostile(e)&&['weak','vulnerable'].includes(e.status))};
+ const match=r=>(!r.all||r.all.every(t=>tags.has(t)))&&(!r.any||r.any.some(t=>tags.has(t)))&&(!r.none||r.none.every(t=>!tags.has(t)))&&Object.entries(r.when||{}).every(([k,v])=>facts[k]===v);
+ const rule=COMBAT_EFFECT_RULES.find(match);if(!rule)return null;
+ const projectile=facts.damaging&&facts.ranged;
+ return {kind:rule.kind,projectile,...(rule.at?{at:rule.at}:{}),ruleId:rule.id,phase:projectile?'release':rule.at==='target'?'impact':'cast',cast:rule.cast||null,targetEvent:facts.damaging?'damageDealt':'statusApplied',tags:[...tags].sort()};
+}
+export function combatEffectFor(card={}){
+ const p=combatEffectPlan(card);return p?{kind:p.kind,projectile:p.projectile,...(p.at?{at:p.at}:{})}:null;
+}
+// Actual outcomes own target effects, including each confirmed AoE victim.
+export function combatEffectTargetIds(plan,events=[],ownerId=null){
+ if(!plan||plan.at!=='target')return [];
+ return [...new Set(events.filter(e=>e.type===plan.targetEvent&&e.targetId&&(!ownerId||(e.sourceId===ownerId&&e.targetId!==ownerId))&&(e.type==='damageDealt'?e.amount>0:e.stacks>0)).map(e=>e.targetId))];
 }

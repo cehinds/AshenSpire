@@ -1,15 +1,15 @@
 # Painted combat effect sprites
 
-44 effects, each with six distinct painted animation frames: 264 transparent
+56 effects, each with six distinct painted animation frames: 336 transparent
 256x256 WebP files in assets/combat-effects. All effects support right, left,
-up and down (176 animation variants / 1056 directional frame presentations).
+up and down (224 animation variants / 1344 directional frame presentations).
 The six phases are ignition, gather, release, peak, dispersal and remnants.
 
 The current source sheets are projectiles-six.png, effects-six.png,
 melee-six.png, styles-six.png, martial-six.png, mystic-six.png, subtle-six.png,
-defenses-six.png, stances-six.png, auras-six.png and afflictions-six.png.
+defenses-six.png, stances-six.png, auras-six.png, afflictions-six.png, debuffs-six.png, reactions-six.png and protection-six.png.
 They were generated with built-in OpenAI imagegen; exact prompts are saved in
-six-frame-generation.json and guard-status-generation.json. Earlier three-frame source sheets remain as history;
+six-frame-generation.json, guard-status-generation.json and integration-generation.json. Earlier three-frame source sheets remain as history;
 the shipped asset manifest contains only six-frame sequences. Frames are new
 painted artwork, not repeated images or CSS-only interpolation.
 
@@ -26,14 +26,14 @@ six frames, direction selection, game-card selection and reduced-motion controls
 Frame strips use six columns on desktop and three columns on phones.
 
 Runtime routes through src/ui/assets.js and src/ui/combatEffectSprites.js.
-Resolved card tags select the effect through src/content/combatEffectStyles.js
-and src/model/combatEffects.js. Schools precede physical form tags. Blood + Blade
+Resolved card tags select the effect through src/content/combatEffectRules.js
+and src/model/combatEffects.js. Specific combinations precede broad forms. Only damaging ranged actions travel. Blood + Blade
 uses blood slash; Blood Powers use a blood aura, other Ritual Powers a sigil. Starstone and Gorefire
 projectiles, Oath sparks, Blade slashes, Pierce thrusts and Heavy impacts remain.
 Shield attacks use shield bash; weapon guards use parry sparks. Flourish attacks
 use whirlwind and two-hit physical attacks use cross slash. Sceptre Arcane
 Strike uses arcane burst; damage plus self-healing casts use life drain.
-Herald healing casts use cleansing light while actual healing receipts show
+Tagged healing casts use cleansing light while actual healing receipts show
 healing motes. Single-target Weak/Vulnerable skills use binding chains.
 
 The new subtle set contains steelGlint, dustStep, focusMotes and guardPulse.
@@ -54,7 +54,7 @@ the approved character outline colors are unchanged.
 
 Validation: tests/combatEffects.test.mjs covers six distinct files per effect,
 card routing, subtle presentation, co-op stance ownership and aim geometry.
-playtest.mjs decodes all 264 frames, checks every phase and all 176 directional
+playtest.mjs decodes all 336 frames, checks every phase and all 224 directional
 variants, cancellation, reduced motion, desktop/phone layout, and actual spell,
 melee, shield, parry, binding and subtle card plays in the standalone game.
 Evidence is saved under inspection/; current contact sheets use *-six-contact.png.
@@ -72,3 +72,33 @@ for existing mechanics, not new statuses or stance mechanics.
 Open index.html?guards=1 to start with Arcane Ward. Browser checks also exercise
 engine-generated bleed/frost/venom events, stagger cleanup, and actual arcane
 guard, magic guard and barrier card plays.
+
+Presentation tags live in the existing tag database under the presentation domain.
+combatEffectTags reads them explicitly; ordinary tag lookups, materialized damage
+tags and equipment-fit indexes exclude them. No combat identity was added or
+removed. The migration tool records the initial authoring decisions; subsequent
+assignments should be edited in tagging.csv, not inferred at runtime.
+
+index.html?integrated=1 shows matched rule IDs and cast/release sequences.
+sprite-catalog.html displays all 56 sets; integrated-tag-mappings.html lists
+current assignments. current-tag-mappings.html is the retained BEFORE snapshot.
+
+New reaction sets: insanity, Crimson Blight, Weak, Vulnerable, Frail, dodge,
+riposte, resistance, barrier hit/break, Strength and Dexterity. Applications
+require positive stacks; procs and successful dodge/resistance use real receipts.
+Defense reactions remember the successfully cast guard type, expire when its
+Block is depleted or the turn resets, and reset between co-op encounters.
+
+Target effects require confirmed recipients and cover all actual AoE targets.
+The shared playCombatEffectPlan coordinates caster effects and directional releases.
+
+Co-op receipts include sourcePlayerId/targetPlayerId at actual resolution. The
+presentation adapter maps the engine's shared `player` id to the correct seat,
+including a different ally receiving Block or status stacks. Real two-client
+evidence is under inspection/coop. Run the focused check with:
+
+    node tools/guard-float-parity.mjs --browser --standalone --lobby-door --case full --effects --shots art/combat-effects-2026-09-07/inspection/coop
+
+The lobby route is explicit because the current dev title menu omits its LAN
+entry. This check uses real sockets and combat, but does not prove that entry
+is reachable through the title menu.
