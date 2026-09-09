@@ -26,7 +26,10 @@ test('action-only magic motifs use mundane variants; paid activations retain fan
 test('cost variants retain auras, defensive identities and actual X spending',()=>{
  for(const id of ['crystalBarrier','starstoneWard','frostVeil','goreblood']){
   const card=resolveCard(reg,{cardId:id}),tagged={...card,cardTags:combatEffectTags(reg,card)};
-  assert.deepEqual(combatEffectPlan(tagged,{energySpent:0,manaSpent:0,staminaSpent:0}),combatEffectPlan(tagged,{energySpent:3,manaSpent:3,staminaSpent:3}),id);
+  const {bindingContext:free,...freeVisual}=combatEffectPlan(tagged,{energySpent:0,manaSpent:0,staminaSpent:0});
+  const {bindingContext:paid,...paidVisual}=combatEffectPlan(tagged,{energySpent:3,manaSpent:3,staminaSpent:3});
+  assert.deepEqual(freeVisual,paidVisual,id);
+  assert.equal(free.manaSpent,0);assert.equal(paid.manaSpent,3);
  }
  const x={type:'attack',cost:'X',cardTags:['blade'],effects:[{op:'damage',target:'enemy'}]};
  assert.equal(combatEffectPlan(x,{energySpent:1}).activation,'mundaneLow');

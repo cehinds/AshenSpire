@@ -35,7 +35,7 @@ export function combatEffectPlan(card={},receipt){
  const rule=COMBAT_EFFECT_RULES.find(match);if(!rule)return null;
  const variant=activationVariant(card,receipt,rule,facts,tags);
  const projectile=facts.damaging&&facts.ranged;
- return {...variant,projectile,...(rule.at?{at:rule.at}:{}),ruleId:rule.id,phase:projectile?'release':rule.at==='target'?'impact':'cast',targetEvent:facts.damaging?'damageDealt':'statusApplied',tags:[...tags].sort()};
+ return {...variant,projectile,...(rule.at?{at:rule.at}:{}),ruleId:rule.id,phase:projectile?'release':rule.at==='target'?'impact':'cast',targetEvent:facts.damaging?'damageDealt':'statusApplied',tags:[...tags].sort(),bindingContext:{provider:'ashenspire',kind:'card',objectId:card.id||'',event:'actionResolved',tags:[...tags].sort(),energySpent:receipt?.energySpent??card.cost,manaSpent:receipt?.manaSpent??card.manaCost,staminaSpent:receipt?.staminaSpent??card.staminaCost}};
 }
 export function combatEffectFor(card={}){
  const p=combatEffectPlan(card);return p?{kind:p.kind,projectile:p.projectile,...(p.at?{at:p.at}:{})}:null;
@@ -45,3 +45,4 @@ export function combatEffectTargetIds(plan,events=[],ownerId=null){
  if(!plan||plan.at!=='target')return [];
  return [...new Set(events.filter(e=>e.type===plan.targetEvent&&e.targetId&&(!ownerId||(e.sourceId===ownerId&&e.targetId!==ownerId))&&(e.type==='damageDealt'?e.amount>0:e.stacks>0)).map(e=>e.targetId))];
 }
+

@@ -2,12 +2,13 @@ import { combatEffectFrames } from './assets.js';
 import { reducedMotionRequested } from './motion.js';
 import { combatEffectAngle, combatEffectOrientation } from './combatEffectDirection.js';
 import { combatEffectPresentation } from '../content/combatEffectPresentation.js';
+import {playPresentationSequence} from './presentationSequence.js';
 const active=new WeakMap();
 // Shared solo/co-op sequence: one cast, then one release per actual recipient.
 export function playCombatEffectPlan(layer,from,plan,{targets=[],duration=260,size=160}={}){
  if(!plan)return ()=>{};
  size*=plan.sizeScale??1;
- const stops=[];
+ const stops=[playPresentationSequence(layer,from,plan.bindingContext,{targets,duration})];
  const targetLocal=plan.at==='target';
  if(plan.cast)stops.push(playCombatEffect(layer,from,plan.cast,{duration:110,size:size*.7}));
  const delay=plan.cast?65:targetLocal?Math.round(duration*.25):0;
