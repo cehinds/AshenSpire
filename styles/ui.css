@@ -857,9 +857,10 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    between two lines of one logo is what reads as "the logo is off centre"
    (Constantine, 2026-09-03) — neither line looks wrong alone.
 
-   ONE MECHANISM, ONE MAGNITUDE: declare the tracking once as `--track`, use it
-   for `letter-spacing`, and indent by the SAME token. A rule that is centred
-   and tracked and does not do this is the bug this block exists to prevent. */
+   Declare the tracking once as `--track` and indent by the SAME token when
+   the line has room. The kit's full-width TitleMenu name instead shifts by
+   half its tracking: an indent there exceeds the nowrap line's available
+   width, causing the browser to stop centering it. */
 
 
 .armoury-smithing-receipt {
