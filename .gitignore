@@ -17,6 +17,7 @@ scratch/
 
 # Regenerable tool output — tools/character-creation-check.mjs default OUT dir
 outputs/
+dist/map-detail/
 artifacts/combat-foundations/
 
 # tools/component-refs.mjs writes ~21MB of component reference crops here, from

@@ -31,7 +31,7 @@ jobs:
           node-version: '22.14.0'
 
       - name: Combat formations and painted ground
-        run: node --test tests/combat-formation.test.mjs tests/environment-art.test.mjs
+        run: node --test tests/combat-formation.test.mjs tests/environment-art.test.mjs tests/map-detail.test.mjs tests/map-presentation.test.mjs tests/local-map.test.mjs
 
       - name: World Journey normalized data and seeded routes
         run: node tests/world-atlas.test.mjs
@@ -112,6 +112,7 @@ jobs:
           cp -r art/readiness-poses/inspection preview/art/readiness-poses/inspection
           cp AshenSpire.html preview/AshenSpire.html
           cp AshenSpire.html preview/index.html
+          if [ -d map-detail ]; then cp -R map-detail preview/map-detail; fi
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
           cp -r src preview/src
           cp world-atlas-preview.html preview/
