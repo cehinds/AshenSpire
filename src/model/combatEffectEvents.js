@@ -9,6 +9,22 @@ export function combatEffectReceipt(event){
  return {...event,sourceId:event.sourcePlayerId||event.sourceId,targetId:event.targetPlayerId||(event.targetId==='player'&&event.playerId)||event.targetId};
 }
 
+// Authored target/travel clips follow confirmed outcomes of the latest matching
+// card, independently of where the stock artwork plays. Block/heal receipts
+// omit source IDs, so only accept them inside that card's receipt segment.
+export function presentationTargetIds(events=[],ownerId,cardId){
+ const receipts=events.map(combatEffectReceipt);
+ const start=receipts.findLastIndex(e=>e.type==='cardPlayed'&&(e.playerId||e.sourceId||'player')===ownerId&&e.cardId===cardId);
+ if(start<0)return [];
+ const targets=new Set();
+ for(const e of receipts.slice(start+1)){
+  if(['cardPlayed','playerTurnStart','playerTurnEnd','enemyTurnStart','enemyTurnEnd','enemyMoveStarted'].includes(e.type))break;
+  if(!e.targetId||e.sourceId&&e.sourceId!==ownerId)continue;
+  if((['damageDealt','blockGained','healed'].includes(e.type)&&e.amount>0)||(e.type==='statusApplied'&&e.stacks>0))targets.add(e.targetId);
+ }
+ return [...targets];
+}
+
 // Receipt-driven overlays: attempted/resisted buildup and paired HP receipts
 // do not create a second proc burst. No state or combat mechanics are changed.
 export function combatEffectForEvent(event={}){

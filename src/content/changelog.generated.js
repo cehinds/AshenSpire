@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "The README and the changelog stop burying what a reader came for",
     "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
-    "build": "0.6.0.29",
+    "build": "0.6.0.34",
     "pullRequest": 820,
     "url": "https://github.com/cehinds/AshenSpire/pull/820"
+  },
+  {
+    "id": "pr-847",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Compose poses and effects in a visual studio",
+    "detail": "Drag effects onto pose cues, adjust anchors and layered tracks, test card/tag/payment bindings, and save portable projects. Preview optional authored sequences in combat while preserving existing effects and auras. Add 24 six-frame sets for movement, contact, casting, defense and status feedback.",
+    "build": "0.6.0.33",
+    "pullRequest": 847,
+    "url": "https://github.com/cehinds/AshenSpire/pull/847"
   },
   {
     "id": "pr-852",
