@@ -2037,7 +2037,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Vocabulary questions.
     eq(svc.inDomain('creature').map((t) => t.id).join('|'), 'beast|humanoid|undead|construct|spirit',
       'inDomain lists one domain');
-    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType', 'a family may carry several domains');
+    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType|attackSource|delivery|damageType|technique|theme', 'armaments allow categorized combat tags alongside legacy tags');
     assert(svc.allowedFor('enemy').every((t) => t.domain === 'creature'), 'allowedFor is domain-filtered');
     assert(svc.allowedFor('enemy').length > 0, 'allowedFor is non-empty for a live family');
     eq(svc.tag('blade').label, 'Blade', 'tag() resolves one row');
@@ -2563,18 +2563,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // ---- 26n. the tenth round: what stored state obliges ---------------------
-  test('26n. a generated slot is not removable, and the quota survives save and load', () => {
-    // THE COST OF STORING A FACT is that everything which could contradict it
-    // now has to be reconciled with it. Both findings here are consequences of
-    // round eight persisting the birth quota, and both are fair.
-
-    // The merchant's burn and the removeCardFromDeck opcode already refused
-    // package outputs, in both cases for the SAME stated reason: "the next
-    // authoritative reconcile would recreate the same deterministic id, so a
-    // removal here could never persist". A generated attack slot has exactly
-    // that property and was never excluded — burning one re-minted it, so the
-    // merchant charged cinders for nothing. Persisting the quota turned that
-    // silent no-op into a throw, which is how it was noticed at all.
+  test('26n. basic attack removal retires a slot and the birth quota survives save and load', () => {
     const run = createRunState({ seed: 1, classId: 'reaver', registries: REG });
     const composed = run.deck.filter(isEquipmentComposedInstance);
     assert(composed.length === 4 && composed.every((c) => c.equipmentAttackSlotId),
@@ -2584,10 +2573,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const before = run.deck.length;
     executeRunEffects({ run, registries: REG, rng: { float: () => 0 } },
       [{ op: 'removeCardFromDeck', card: 'strike' }]);
-    eq(run.deck.length, before, 'the opcode does not remove a card the next restamp would re-mint');
-    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 4, 'the slots are intact');
+    eq(run.deck.length, before - 1, 'the opcode removes one run-owned basic attack');
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 3, 'one slot is retired');
     stampDeck(REG, run); // threw "attack instance count 3 does not match authored 4" before
-    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 4, 'and the restamp agrees with the quota');
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 3, 'restamping preserves the removal');
 
     // A random removal still has real candidates — this closes a door on cards
     // equipment owns, it does not close the mechanic.
@@ -2630,14 +2619,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE JOIN IS THE AUTHORITY, OR THE TABLE IS DECORATION. tagFamilyDomains
     // declares which domains the `effect` family may carry; the validator had
     // the answer hard-coded, so editing that row changed the table and nothing
-    // else. Today the row says `card` and the derived answer is identical —
-    // which is the point: same behaviour, actually derived.
+    // else. Effects now allow the legacy card domain plus categorized combat
+    // domains; changing the junction must still change validation.
     const kw = contentBundle.keywords.map((k) => k.id);
-    eq(tagIdsAllowedFor(contentBundle, 'effect').join('|'), tagIdsInDomain(contentBundle, 'card').join('|'),
-      'the derived effect vocabulary matches the card domain the row names');
+    const effectDomains = ['card', 'attackSource', 'delivery', 'damageType', 'technique', 'theme'];
+    eq(tagIdsAllowedFor(contentBundle, 'effect').join('|'), effectDomains.flatMap((domain) => tagIdsInDomain(contentBundle, domain)).join('|'),
+      'the derived effect vocabulary includes every approved combat category');
     const repaired = JSON.parse(JSON.stringify(contentBundle));
-    repaired.tagFamilyDomains = repaired.tagFamilyDomains
-      .map((r) => (r.family === 'effect' ? { ...r, domain: 'item' } : r));
+    repaired.tagFamilyDomains = [...repaired.tagFamilyDomains.filter((r) => r.family !== 'effect'), { family: 'effect', domain: 'item' }];
     const effectSaid = validateContent(repaired).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
     assert(/unknown effect tag 'blight'/.test(effectSaid),
       `re-pairing the effect family now actually re-scopes effect tags — said ${JSON.stringify(effectSaid.slice(0, 200))}`);

@@ -4,18 +4,20 @@ Run `node pose-studio/server.mjs`, then open http://127.0.0.1:4318/pose-studio/i
 
 ## Authoring
 
-- Choose an outfit and five, six or seven poses. PNG/WebP pose imports are supported.
+- Start in **Animate**: open **Start with a template**, choose an outfit and five, six or seven poses. PNG/WebP pose imports are supported. Templates replace the current sequence; Undo restores it.
 - Drag any of 80 effects onto the stage, a pose frame or named cue. Click a library tile as a keyboard-friendly alternative.
-- Select a timeline clip to edit its cue, offset, duration, anchor, position, scale, rotation, opacity, layer or target travel. Move it on stage, nudge with arrow keys, or move it across timeline tracks.
+- **Add effect** opens the library on phones; **Edit effect** opens the selected effect's controls. Done or Escape closes the panel and returns focus. A new effect is selected and shown immediately, with suggested attachments such as feet for a heel scuff and shield for a ward catch.
+- Select a timeline clip to edit its attachment, starting moment, size, opacity, layer or target travel. **Timing & precise position** reveals offset, duration, coordinates and rotation. Changing the starting moment resets its offset. Move it on stage, nudge with arrow keys, or move it across timeline tracks.
 - Drag an anchor handle to adjust attachments. Use separate clips for layered effects; aura and behind/front tracks remain independent.
 - Scrub or play with looping/speed controls. Reduced motion holds an effect frame; Reduce flashes suppresses effects while retaining the character outline preview.
 - Bind the sequence to a provider/object kind/ID, resolved event and all/any/excluded tags. Payment filters use actual paid resources. Exact object rules outrank general rules; equal-priority matches are blocked and explained.
-- Use **Bindings & test** to inspect a real card's tags and existing cost variant. **Relationships** shows the same binding records, with links back to editing.
-- Drafts autosave in this browser origin. Undo/redo covers project edits. **Save package** downloads JSON with referenced sprite images; **Open project** validates it before replacing the draft.
+- In **Connect**, choose a real card and select **Connect this card**. This updates the selected rule without replacing your animation. **Tag combinations & advanced rules** exposes custom providers and tag conditions. Payment inputs explain matches and enable **Preview matched animation** only for a matching rule. Preset replacement is a separate, clearly labeled action.
+- **Connections** shows the same binding records, with links back to editing. Preview facing/aura are display aids; in-game auras continue to follow gameplay rules.
+- Drafts autosave in this browser origin. Undo/redo covers project edits. **Download project** saves JSON with referenced sprite images; **Open project** validates it before replacing the draft.
 
 ## Game and editor integration
 
-**Try bindings in game** stores an optional local presentation project on this origin and opens the rebuilt game. Matching card activations add authored effects and, when the actor matches, temporarily overlay the authored pose strip. Existing effects and auras remain. Target-attached visuals require recipients supplied by the confirmed-outcome caller. Clear the override with **Clear game override**. The override is per browser profile/origin and does not change game content or other players' preferences.
+**Preview in game** stores an optional local presentation project on this origin and opens the rebuilt game. Matching card activations add authored effects and, when the actor matches, temporarily overlay the authored pose strip. Existing effects and auras remain. Target-attached visuals require recipients supplied by the confirmed-outcome caller. Clear the override with **Clear game preview**. The override is per browser profile/origin and does not change game content or other players' preferences.
 
 The original editor's name/location was not supplied. The active standalone editor can integrate this workspace by importing `pose-studio/plugin.json` in Plugins; its preview scanner discovers `art/pose-studio/index.html`. No unfinished files in the separate editor checkout are overwritten.
 

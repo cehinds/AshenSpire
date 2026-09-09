@@ -32,6 +32,7 @@ import { chargeFlaskId } from '../model/gracerefill.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 
 import * as A from './actions.js';
+import * as F from './combatRules.js';
 import { playerWeightClass } from './combat.js';
 import * as S from '../framework/statusSemantics.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
@@ -52,9 +53,10 @@ export function coopHpMult(headcount, factor = 0.6) {
  *   players = [{ id, classId, maxHp, hp, deck, relicIds, flasks }]
  * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom).
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyStatuses = [] }) {
+export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {} }) {
   const bal = registries.balance || {};
   const C = {
+    foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
     rng,
     turn: 0,
@@ -79,6 +81,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
     _enemyStatuses: enemyStatuses,
   };
   C.emit = (type, payload) => emitEvent(C, type, payload);
+  C._emitEvent = emitEvent;
   C.enqueue = (action) => C.queue.push(action);
   C.nextInstanceId = () => `gen${++C._idCounter}`;
   // Player combat entities intentionally share the engine id `player`. Events
@@ -146,6 +149,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
   const deck = (p.deck || []).map((c) => ({
     instanceId: c.instanceId,
     cardId: c.cardId,
+    ...(c.sourceHand ? { sourceHand: c.sourceHand } : {}),
     upgraded: !!c.upgraded,
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}), // equipment numbers
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
@@ -291,6 +295,7 @@ function startPlayerPhase(C) {
   for (const P of livingPlayers(C)) {
     setActive(C, P);
     const e = P.entity;
+    F.startFoundationTurn(C, e);
     P.ended = false;
     e.counters.cardsPlayedThisTurn = 0;
     // A turn's Stamina spend belongs to that turn alone. A seat that spent
@@ -310,6 +315,7 @@ function startPlayerPhase(C) {
 }
 
 export function playCard(C, playerId, cardInstanceId, targetId) {
+  if (C.foundation && !C._foundationTransaction) return F.foundationTransaction(C, (candidate) => playCard(candidate, playerId, cardInstanceId, targetId));
   if (C.result) throw new Error('Combat is over');
   if (C.phase !== 'player') throw new Error('Not the player phase');
   const P = C.players.get(playerId);
@@ -331,10 +337,10 @@ function needsEnemyTarget(def) {
 function effectiveCost(C, def) {
   if (def.cost === 'X') return 'X';
   // Same framework cost authority as the solo engine (hand parity).
-  return C.registries.framework.costProfile(def, {
+  return F.foundationCosts(C, def, playerWeightClass(C).weightClass, C.registries.framework.costProfile(def, {
     powerCostReduction: passiveSum(C.registries, C.player.relicIds, 'powerCostReduction', C.player.itemUpgradeLevels || {}),
     weightClass: playerWeightClass(C).weightClass,
-  }).action;
+  })).action;
 }
 
 function doPlayCard(C, { cardInstanceId, targetId }) {
@@ -344,11 +350,12 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   const inst = C.piles.hand[idx];
   const def = resolveCard(C.registries, inst);
   const kws = def.keywords || [];
+  F.assertFoundationPlayable(C, def);
   if (C.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(C, def);
-  const pools = C.registries.framework.costProfile(def, { weightClass: playerWeightClass(C).weightClass });
+  const pools = F.foundationCosts(C, def, playerWeightClass(C).weightClass, C.registries.framework.costProfile(def, { weightClass: playerWeightClass(C).weightClass }));
   const manaCost = pools.mana;
   const staminaCost = pools.stamina;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
@@ -401,12 +408,12 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   if (def.type === 'attack') { p.counters.attacksPlayedThisCombat += 1; meta.attackOrdinal = p.counters.attacksPlayedThisCombat; }
   const cardRef = {
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-    type: def.type, tags: def.cardTags,
+    type: def.type, tags: def.cardTags, attack: def.attack, sourceHand: inst.sourceHand,
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
   };
 
-  for (const eff of def.effects || []) C.enqueue({ effect: eff, source: p, owner: p, target, card: cardRef, meta });
+  for (const action of F.cardActions(C, def, p, target, cardRef, meta)) C.enqueue(action);
   C.emit('cardPlayed', {
     playerId: C.playerKey, profileId: inst.profileId, upgraded: inst.upgraded, sourceArmamentId: inst.sourceArmamentId,
     cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: def.type,
@@ -433,6 +440,7 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
 // targetId may be an enemy id (offensive flask) OR another player's member id
 // (StS2 throw-to-ally: a self-beneficial flask lands on a chosen ally instead).
 export function useFlask(C, playerId, slot, targetId, chargeKind = null) {
+  if (C.foundation && !C._foundationTransaction) return F.foundationTransaction(C, (candidate) => useFlask(candidate, playerId, slot, targetId, chargeKind));
   if (C.result) throw new Error('Combat is over');
   if (C.phase !== 'player') throw new Error('Not the player phase');
   const P = C.players.get(playerId);
@@ -478,6 +486,7 @@ export function useFlask(C, playerId, slot, targetId, chargeKind = null) {
 }
 
 export function endTurn(C, playerId) {
+  if (C.foundation && !C._foundationTransaction) return F.foundationTransaction(C, (candidate) => endTurn(candidate, playerId));
   if (C.result) throw new Error('Combat is over');
   if (C.phase !== 'player') throw new Error('Not the player phase');
   const P = C.players.get(playerId);
@@ -498,7 +507,7 @@ function endOnePlayerTurn(C, P) {
   // Stamina (framework contract: Mana and Stamina), per seat: an idle turn
   // recovers, a spending turn does not — the same rule and door as the solo
   // engine's end of turn, on this player's own pool and counter.
-  if (Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
+  if (!C.foundation && Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
     const next = C.registries.framework.staminaTurnEnd({
       currentStamina: p.stamina, maxStamina: p.maxStamina, staminaSpentThisTurn: p.counters.staminaSpentThisTurn || 0,
     });
@@ -511,7 +520,8 @@ function endOnePlayerTurn(C, P) {
   p.counters.staminaSpentThisTurn = 0;
   const keep = [], toDiscard = [], toExhaust = [];
   for (const card of C.piles.hand) {
-    const fate = C.registries.framework.endTurnFate(resolveCard(C.registries, card));
+    const def = resolveCard(C.registries, card);
+    const fate = C.foundation && def.effects.some((e) => e.op === 'dodgeRoll') ? 'keep' : C.registries.framework.endTurnFate(def);
     if (fate === 'keep') keep.push(card);
     else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);

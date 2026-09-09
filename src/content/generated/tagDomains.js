@@ -36,5 +36,30 @@ export const tagDomains = [
     "id": "presentation",
     "label": "Combat presentation",
     "blurb": "Sprite selection only; never damage or resistance identity."
+  },
+  {
+    "id": "attackSource",
+    "label": "Attack source",
+    "blurb": "Source profile supplying an attack; separate from damage type."
+  },
+  {
+    "id": "delivery",
+    "label": "Delivery",
+    "blurb": "How a direct attack reaches its targets."
+  },
+  {
+    "id": "damageType",
+    "label": "Damage type",
+    "blurb": "Identity of a typed HP damage component."
+  },
+  {
+    "id": "technique",
+    "label": "Technique",
+    "blurb": "Conditions for explicit technique bonuses."
+  },
+  {
+    "id": "theme",
+    "label": "Theme",
+    "blurb": "Build synergies; tags alone grant no effects."
   }
 ];

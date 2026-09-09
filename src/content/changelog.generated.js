@@ -8,9 +8,69 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "The README and the changelog stop burying what a reader came for",
     "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
-    "build": "0.6.0.34",
+    "build": "0.6.0.39",
     "pullRequest": 820,
     "url": "https://github.com/cehinds/AshenSpire/pull/820"
+  },
+  {
+    "id": "pr-850",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat foundations have a playable test workshop",
+    "detail": "Play the real game battlefield or the standalone workshop with heavy physical, fast Bleed and rare-mana builds with configurable damage, armor, weapon impact and retained deterministic Dodge. The workshop is experimental; existing runs keep their current rules.",
+    "build": "0.6.0.38",
+    "pullRequest": 850,
+    "url": "https://github.com/cehinds/AshenSpire/pull/850"
+  },
+  {
+    "id": "pr-859",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Recent deliveries appear in About",
+    "detail": "Add the card removal, touch flick, Pose Studio usability and combat specification entries to the in-game changelog before promoting the build to test.",
+    "build": "0.6.0.37",
+    "pullRequest": 859,
+    "url": "https://github.com/cehinds/AshenSpire/pull/859"
+  },
+  {
+    "id": "pr-857",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Pose Studio makes authoring controls easier to find",
+    "detail": "Start from visible templates, animate before connecting a card, and open editing panels without long scrolling on phones. Preserve field focus, select overlapping effect tracks, and distinguish project downloads from local combat previews.",
+    "build": "0.6.0.35",
+    "pullRequest": 857,
+    "url": "https://github.com/cehinds/AshenSpire/pull/857"
+  },
+  {
+    "id": "pr-856",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Remove basic Strikes and flick cards toward a target",
+    "detail": "Basic attack cards appear in removal choices and stay removed through equipment changes and saved fights. Touch flicks choose the nearest valid target while preserving card selection, Information and target highlights. Adjust flick distance in Accessibility and try the practice area.",
+    "build": "0.6.0.35",
+    "pullRequest": 856,
+    "url": "https://github.com/cehinds/AshenSpire/pull/856"
+  },
+  {
+    "id": "pr-844",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat foundations have an explicit specification",
+    "detail": "Document equipment-based attacks, typed damage, defenses, impact, Evade, trigger ownership and prototype acceptance examples. This specification does not change gameplay or balance.",
+    "build": "0.6.0.35",
+    "pullRequest": 844,
+    "url": "https://github.com/cehinds/AshenSpire/pull/844"
+  },
+  {
+    "id": "pr-855",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Record basic-card removal and touch flick rules",
+    "detail": "Specify permanent removal of individual basic attack slots, configurable touch flick distance, and nearest-valid-target selection with cancellation safeguards.",
+    "build": "0.6.0.33",
+    "pullRequest": 855,
+    "url": "https://github.com/cehinds/AshenSpire/pull/855"
   },
   {
     "id": "pr-847",

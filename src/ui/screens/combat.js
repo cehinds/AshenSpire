@@ -1,3 +1,4 @@
+import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
 import { combatEffectPlan, combatEffectTags, combatEffectTargetIds } from '../../model/combatEffects.js';
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
@@ -9,6 +10,7 @@ import { playCombatEffectPlan } from '../combatEffectSprites.js';
 // number displayed comes from previewCard / previewIntent — no math here.
 
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
+import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
 import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
@@ -74,7 +76,7 @@ function pileButton(kind, label) {
   return node;
 }
 
-export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
+export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -1168,6 +1170,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       trailing.push(chip);
     }
     trailing.push(statusRow(p));
+    if (combat.foundation && p.evade > 0) trailing.push(pill({ label: `Evade ${p.evade}`, attrs: { class: 'foundation-evade', 'aria-label': `Evade active: prevents the next ${p.evade} incoming hit${p.evade === 1 ? '' : 's'} this turn` } }));
     if (lastDodge) {
       const receipt = dodgeReceipt(lastDodge);
       const outcome = button({ label: receipt.outcome, className: 'dodge-receipt', attrs: {
@@ -1272,7 +1275,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         entityId: enemy.id,
         classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : '', selectedEnemyId === enemy.id ? 'context-selected' : ''],
         leading,
-        sprite: enemySprite(def, { ...dv(enemy), maxHp: enemy.maxHp }),
+        sprite: enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp }),
         blockBadge: blockBadge(enemy, { tooltips: false }),
         name: nm,
         meters: meterBars(enemy, { tooltips: false }),
@@ -1339,7 +1342,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (busy || combat.phase !== 'player') return unavailable('Wait for your turn.');
     const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
     if (!inst) return unavailable('This card is no longer in your hand.');
-    if (isUnplayable(inst)) return unavailable('This card cannot be played.');
+    const reason = unplayableReason(inst);
+    if (reason) return unavailable(reason);
     const pv = previewCard(combat, instanceId);
     if (combat.player.energy < (pv.costIsX ? 0 : pv.cost) || combat.player.mana < pv.manaCost || combat.player.stamina < (pv.staminaCost || 0)) {
       return unavailable('Not enough resources to play this card.');
@@ -1403,14 +1407,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     cards[next].scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
   }
 
-  function isUnplayable(inst) {
-    return registries.framework.isUnplayable(resolveCard(registries, inst));
+  function unplayableReason(inst) {
+    const def = resolveCard(registries, inst);
+    if (registries.framework.isUnplayable(def)) return 'This card cannot be played.';
+    try { assertFoundationPlayable(combat, def); } catch (error) { return error.message; }
+    return '';
   }
+  function isUnplayable(inst) { return !!unplayableReason(inst); }
 
   /** The pulse reports that the player still has an affordable play. */
   function endTurnHasPlayable() {
     const anyPlayable = combat.piles.hand.some((inst) => {
-      if (registries.framework.isUnplayable(resolveCard(registries, inst))) return false;
+      if (isUnplayable(inst)) return false;
       // The live preview — class-priced dodge costs, Power reductions — the
       // same numbers the badge shows and the engine charges, in all three
       // pools. A card the preview cannot resolve is not a playable card.
@@ -1460,6 +1468,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     let ghostHeight = 0;
     let lastConfirmTap = 0;
     let selectedThisPress = false;
+    let flickStart = null;
+    let flickPoints = [];
+    let touchDrag = false;
+    const flickRules = registries.balance.ui.touchFlick;
     const dragTargetMode = pv.values.some((value) => value.target === 'allEnemies')
       ? 'all' : pv.needsTarget ? 'single' : 'none';
     // A card whose only legal target is the player has ONE destination, so the
@@ -1485,11 +1497,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
     const livingEnemyEls = () => [...app.querySelectorAll('.enemy:not(.dead)')];
 
-    const nearestEnemy = (x, y) => livingEnemyEls().reduce((best, enemy) => {
-      const r = enemy.getBoundingClientRect();
-      const distance = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
-      return !best || distance < best.distance ? { enemy, distance } : best;
-    }, null)?.enemy || null;
+    const nearestEnemy = (x, y) => nearestFlickTarget(livingEnemyEls()
+      .filter(enemy => combat.enemies.some(entity => entity.id === enemy.dataset.eid && entity.alive))
+      .map(enemy => {
+        const r = enemy.getBoundingClientRect();
+        return { id: enemy.dataset.eid, x: r.left + r.width / 2, y: r.top + r.height / 2, enemy };
+      }), { x, y })?.enemy || null;
 
     const showDragAims = (enemies) => {
       const wanted = new Set(enemies);
@@ -1534,38 +1547,43 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       combatEl.classList.add('drag-targeting');
     };
 
-    const updateDropTarget = (x, y) => {
-      if (!dragGhost) return;
-      const under = document.elementFromPoint(x, y);
-      const inField = !!(under && under.closest && under.closest('.field'));
-      let legal = !!under?.closest?.('.combatant.player');
+    // Preview and commit share target selection; only release requires flick speed.
+    const dropPlan = (event, release = false) => {
+      if (!el.isConnected || veilIsOpen() || document.querySelector('.card-inspection-modal')
+          || !inspectionPlayAction(inst.instanceId).enabled) return { legal: false, enemies: [] };
+      const point = touchPoint(event);
+      const verdict = touchDrag && flickStart
+        ? flickVerdict(flickStart, point, flickPoints, readSettings(), flickRules) : null;
+      const flick = !!verdict?.distanceMet && (!release || verdict.qualifies);
+      const under = document.elementFromPoint(point.x, point.y);
+      const directEnemy = under?.closest?.('.enemy:not(.dead)');
       if (dragTargetMode === 'single') {
-        const nearest = under?.closest?.('.enemy:not(.dead)') || null;
-        showDragAims(nearest ? [nearest] : []);
-        legal = !!nearest;
-      } else if (dragTargetMode === 'all') {
-        const enemies = under?.closest?.('.enemy:not(.dead)') ? livingEnemyEls() : [];
-        showDragAims(enemies);
-        legal = enemies.length > 0;
-      } else {
-        showDragAims([]);
+        const enemy = flick ? nearestEnemy(point.x, point.y) : directEnemy;
+        return { legal: !!enemy, enemies: enemy ? [enemy] : [], targetId: enemy?.dataset.eid, flick };
       }
-      // An ADDITION on top of the enemy silence above, never a branch around it:
-      // `showDragAims([])` is the one line that keeps a non-enemy drag from
-      // painting enemy silhouettes, and it has to keep running for a self-only
-      // card. 9 shipped cards reach that `else` with no self effect either
-      // (enterGorefire, enterBulwark, warriorsVow, transmute, masterOfStrategy
-      // and the four curses), so it is live code, not a fallback.
-      if (selfOnlyTarget) showSelfAim(legal);
-      const state = legal ? 'legal' : 'illegal';
+      if (dragTargetMode === 'all') {
+        const enemies = flick || directEnemy ? livingEnemyEls() : [];
+        return { legal: enemies.length > 0, enemies, flick };
+      }
+      return { legal: flick || !!under?.closest?.('.combatant.player'), enemies: [], flick };
+    };
+    const updateDropTarget = event => {
+      if (!dragGhost) return;
+      const plan = dropPlan(event);
+      showDragAims(plan.enemies);
+      if (selfOnlyTarget) showSelfAim(plan.legal);
+      const state = plan.legal ? 'legal' : 'illegal';
       combatEl.dataset.dropState = state;
       dragGhost.dataset.dropState = state;
       const verdict = dragGhost.querySelector('.drop-verdict');
-      if (verdict) verdict.textContent = legal ? 'DROP' : 'NO TARGET';
+      if (verdict) verdict.textContent = plan.legal ? (plan.flick ? 'FLICK TO PLAY' : 'DROP') : 'NO TARGET';
     };
 
     el.addEventListener('pointerdown', (ev) => {
-      if (busy || !affordable || ev.button !== 0) return;
+      if (busy || !affordable || ev.button !== 0 || ev.isPrimary === false || ev.target.closest('.card-info-button') || veilIsOpen()) return;
+      touchDrag = ev.pointerType === 'touch';
+      flickStart = touchPoint(ev);
+      flickPoints = [flickStart];
       startX = ev.clientX;
       startY = ev.clientY;
       const cardBox = el.getBoundingClientRect();
@@ -1581,6 +1599,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // onUp — is the one that played a cancelled drag's card on the next tap
       // (Vira's misplay: discard 0->1 from a tap on a DIFFERENT pointerId).
       const onMove = (mv) => {
+        recordFlickPoint(flickPoints, touchPoint(mv), flickRules);
         // An OPEN inspect owns this press: a finger drifting while reading an
         // expanded card must not start a drag whose release over the field
         // would PLAY a no-target card — a read must never be able to become a
@@ -1596,6 +1615,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           hideTooltip();
           dragGhost = el.cloneNode(true);
           dragGhost.classList.add('card-drag-ghost');
+          dragGhost.querySelector('.card-info-button')?.remove();
           dragGhost.setAttribute('aria-hidden', 'true');
           const verdict = document.createElement('span');
           verdict.className = 'drop-verdict';
@@ -1626,7 +1646,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           const p = clampBox({ left: at.left - gripX, top: at.top - gripY, width: g.width, height: g.height }, view, { keep: 40 });
           dragGhost.style.left = `${p.left}px`;
           dragGhost.style.top = `${p.top}px`;
-          updateDropTarget(mv.clientX, mv.clientY);
+          updateDropTarget(mv);
         }
       };
       trackGesture(ev, {
@@ -1649,14 +1669,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // cancel would aim the card at wherever the finger happened to die.
           if (cancelled) return;
           // armHold consumes the trailing click of a moved press.
-          const under = document.elementFromPoint(up.clientX, up.clientY);
-          const inField = !!(under && under.closest && under.closest('.field'));
-          if (dragTargetMode === 'single') {
-            const enemyBox = under?.closest?.('.enemy:not(.dead)') || null;
-            if (enemyBox) playCard(inst.instanceId, enemyBox.dataset.eid);
-          } else if (dragTargetMode === 'all' ? under?.closest?.('.enemy:not(.dead)') : under?.closest?.('.combatant.player')) {
-            playCard(inst.instanceId, null);
-          }
+          const plan = dropPlan(up, true);
+          if (plan.legal) playCard(inst.instanceId, plan.targetId || null);
         },
       });
     });
@@ -1683,11 +1697,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (busy || dragging) return;
       if (!affordable) {
         const reasons = [];
-        if (isUnplayable(inst)) reasons.push('This card cannot be played.');
+        const reason = unplayableReason(inst);
+        if (reason) reasons.push(reason);
         if (combat.player.energy < (pv.costIsX ? 0 : pv.cost)) reasons.push('Not enough actions.');
         if (combat.player.mana < pv.manaCost) reasons.push('Not enough mana.');
         if (combat.player.stamina < (pv.staminaCost || 0)) reasons.push('Not enough stamina.');
-        showTooltipFor(el, '<p>' + reasons.join(' ') + '</p>');
+        showTooltipFor(el, '<p>' + esc(reasons.join(' ')) + '</p>');
         return;
       }
       if (selectedThisPress) { selectedThisPress = false; return; }
@@ -2131,9 +2146,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // MENU table. Armoury is the canonical equipment name in every context.
   {
     const row = (MENU.combat || []).find((r) => r.act === 'armoury');
-    if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
+    if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(onArmoury ? 'View this test build’s fixed weapon, defense, and resource rules.' : row.tip)}`);
     attachTooltip(menuBtn, () =>
-      `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
+      `<div class="tt-title">Menu</div>${esc(onArmoury ? 'Test build details and return to build selection.' : quickNavMode() === 'off'
         ? 'Armoury, settings, controls and saving.'
         : 'Everywhere you can go from here.')}`);
   }
@@ -2142,6 +2157,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // set switches and item replacement route through engine intents so Energy,
   // live card piles, resources, Poise, and the combat snapshot stay atomic.
   function openCombatArmoury(request = '') {
+    if (onArmoury) return onArmoury();
     if (!registries.balance.equipment.enabled) return;
     const equipView = typeof request === 'string' ? request : '';
     const destination = request && typeof request === 'object' ? request.destination || '' : '';
