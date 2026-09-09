@@ -69,7 +69,7 @@ export function mountMountServiceModal(host, initialModel, {
             <h3 id="mount-candidate-title">Choose an item</h3>
             <span data-mount-count></span>
           </div>
-          <div class="smith-card-list" role="listbox" aria-label="Items with a mount to work on"></div>
+          <div class="smith-card-list as-options grid" role="listbox" aria-label="Items with a mount to work on"></div>
         </section>
         <section class="smith-preview-region" aria-live="polite" aria-label="Selected item's mounts"></section>`;
     },
@@ -137,7 +137,7 @@ export function mountMountServiceModal(host, initialModel, {
     count.textContent = `${p.purseLabel} · ${p.candidates.length} eligible`;
     for (const item of p.candidates) {
       const card = document.createElement('div');
-      card.className = `smith-candidate-card smith-weapon-card rarity-${item.rarity}`;
+      card.className = `as-card smith-candidate-card smith-weapon-card rarity-${item.rarity}`;
       card.classList.toggle('selected', item.selected);
       card.setAttribute('role', 'option');
       card.setAttribute('aria-selected', String(item.selected));
@@ -148,7 +148,7 @@ export function mountMountServiceModal(host, initialModel, {
       card.innerHTML = `
         <span class="smith-weapon-count" aria-label="${esc(item.whereLabel)}">${item.equipped ? '⚔' : '▣'}</span>
         <strong class="smith-weapon-name">${esc(item.name)}</strong>
-        <span class="smith-weapon-art"><img src="${esc(assetUrl(item.artAsset))}" alt=""></span>
+        <span class="as-artwell smith-weapon-art"><img src="${esc(assetUrl(item.artAsset))}" alt=""></span>
         <span class="smith-item-type-row">${typeHtml}</span>
         <span class="smith-weapon-tags"><em>${esc(item.whereLabel)}</em><em>${item.mounts.length} mount${item.mounts.length === 1 ? '' : 's'}</em></span>`;
       const art = card.querySelector('.smith-weapon-art img');

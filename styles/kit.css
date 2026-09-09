@@ -2961,3 +2961,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .mount-row.card-inspection-target > .card-info-button {
   top: 50%; right: 8px; left: auto; transform: translateY(-50%);
 }
+/* Focusing a selected card must retain its inspection gutter in scrollports. */
+.card-inspection-target { scroll-margin-top: 64px; }
+@media (max-width: 720px) {
+  .mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 42%) minmax(0, 1fr); }
+}
