@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-876",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat workshop cards inherit tags from their weapon or focus",
+    "detail": "Show categorized attack tags and explain which equipment grants them. Weapon techniques use their selected weapon; spells use their own focus. Swaps refresh previews, and each played attack keeps its source through all hits. The new combat rules remain experimental and opt-in.",
+    "build": "0.6.0.66",
+    "pullRequest": 876,
+    "url": "https://github.com/cehinds/AshenSpire/pull/876"
+  },
+  {
     "id": "pr-880",
     "date": "2026-09-09",
     "group": "2026-09-09",
