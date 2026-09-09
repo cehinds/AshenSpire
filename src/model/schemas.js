@@ -52,6 +52,7 @@ export const COMBAT_OPCODES = Object.freeze([
   'addCard',
   'gainEnergy',
   'restoreMana',
+  'restoreStamina',
   'loseHp',
   'heal',
   'shuffleDiscardIntoDraw',
@@ -88,6 +89,7 @@ export const TARGETS = Object.freeze([
 
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
+  'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',
   'combatStart',
   'combatEnd',
   'playerTurnStart',
@@ -156,6 +158,7 @@ export const PREDICATES = Object.freeze([
   'everyNthCardThisCombat',
   'random',
   'eventIsAttack',
+  'hpDamagePositive',
   'eventSourceIsOwner',
   'eventTargetIsOwner',
   'eventStatusIs',
@@ -348,7 +351,7 @@ export const EFFECT_SPECS = Object.freeze({
   // `tags` scopes the hit for tag-scoped vulnerability (frost/insanity
   // exposure): values must exist in the card-tag registry (one vocabulary,
   // two carriers — card chips for display, effect tags for combat).
-  damage: { allowed: ['hits', 'tags'], required: ['amount'], refs: {} },
+  damage: { allowed: ['hits', 'tags', 'attack'], required: ['amount'], refs: {} },
   block: { allowed: [], required: ['amount'], refs: {} },
   // The dodge roll (framework contract: Weight Class and Dodge Roll): a
   // target and nothing else — the check, the die and the guard are the
@@ -361,6 +364,7 @@ export const EFFECT_SPECS = Object.freeze({
   exhaust: { allowed: ['random'], required: [], refs: {} },
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
+  restoreStamina: { allowed: [], required: ['amount'], refs: {} },
   restoreMana: { allowed: [], required: ['amount'], refs: {} },
   loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
@@ -587,6 +591,7 @@ export const SCHEMAS = Object.freeze({
     manaCost: opt(int),
     staminaCost: opt(int),
     type: en(...CARD_TYPES),
+    attack: opt(any),
     damageSchool: opt(en(...DAMAGE_SCHOOLS)),
     exposureBuildupPerHit: opt(int),
     keywords: arr(ref('keywords')),
@@ -640,6 +645,8 @@ export const SCHEMAS = Object.freeze({
     icon: opt(str),
     tint: opt(str), // status-pip accent CSS color (display; proc bars tint from this too)
     stackMode: en(...STACK_MODES),
+    stacking: opt(obj({ mode: en('add', 'refresh', 'replace', 'strongest', 'independent', 'unique'), cap: int,
+      duration: opt(int), clock: opt(en('ownerTurnStart', 'ownerTurnEnd')), refresh: opt(bool) })),
     decay: union(en('none', 'perTurnEnd', 'onConsume'), obj({ duration: int })),
     instancePresentation: opt(obj({
       valueToken: en(...STATUS_VALUE_TOKENS),

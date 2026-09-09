@@ -24,3 +24,9 @@ itemType,Item type,"What a piece of equipment IS, as the Armoury and the smith n
 grantSource,Grant source,"Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these — the `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry."
 # Combat presentation
 presentation,Combat presentation,"Sprite selection only; never damage or resistance identity."
+
+attackSource,Attack source,"Source profile supplying an attack; separate from damage type."
+delivery,Delivery,"How a direct attack reaches its targets."
+damageType,Damage type,"Identity of a typed HP damage component."
+technique,Technique,"Conditions for explicit technique bonuses."
+theme,Theme,"Build synergies; tags alone grant no effects."

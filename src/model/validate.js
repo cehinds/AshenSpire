@@ -12,6 +12,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { resolveFloorPlan } from './floorplan.js';
+import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
 import { viewRefusals, geometryRefusals } from './mapview.js';
 import { graceRefillRefusals } from './gracerefill.js';
@@ -65,6 +66,7 @@ export const TOKENIZABLE_OPS = Object.freeze([
   'draw',
   'gainEnergy',
   'restoreMana',
+  'restoreStamina',
   'addCinders',
   'loseMaxHpPct',
 ]);
@@ -81,6 +83,7 @@ export const REQUIRED_TOKEN_OPS = Object.freeze([
   'draw',
   'gainEnergy',
   'restoreMana',
+  'restoreStamina',
 ]);
 
 const KNOWN_BUNDLE_KEYS = new Set([
@@ -343,9 +346,22 @@ function collectContentProblems(bundle, errors = []) {
     });
   }
 
+  // Explicit applications have their own cap and duration; meters keep their
+  // threshold semantics instead of mixing two independent stacking models.
+  for (const status of Array.isArray(b.statuses) ? b.statuses : []) {
+    const rule = status?.stacking;
+    if (!rule) continue;
+    if (status.meter || status.proc) err(`statuses.${status.id}.stacking`, 'explicit application stacking cannot replace a buildup meter');
+    if (!Number.isInteger(rule.cap) || rule.cap < 1) err(`statuses.${status.id}.stacking.cap`, 'must be a positive integer');
+    if (rule.duration !== undefined && (!Number.isInteger(rule.duration) || rule.duration < 1)) err(`statuses.${status.id}.stacking.duration`, 'must be a positive integer');
+  }
+
   // Secondary costs are semantic bounds, not merely integer shapes. A negative
   // cost would mint the resource when a card is played.
   for (const card of Array.isArray(b.cards) ? b.cards : []) {
+    if (card?.attack !== undefined) {
+      try { validateAttack(card.attack); } catch (e) { err(`cards.${card.id}.attack`, e.message); }
+    }
     if (card && card.manaCost != null && Number.isInteger(card.manaCost) && card.manaCost < 0) {
       err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
     }
@@ -1634,6 +1650,9 @@ export function validateEffects(effects, path, vctx) {
       err(p, `Effect must be an object, got ${describe(eff)}`);
       return;
     }
+    if (eff.attack !== undefined) {
+      try { validateAttack(eff.attack); } catch (e) { err(`${p}.attack`, e.message); }
+    }
     // Budgeted escape hatch: { script: 'name', ...args } (SPEC §3.1(6)).
     if (typeof eff.script === 'string') {
       if (!vctx.ids.scripts.has(eff.script)) err(`${p}.script`, `Dangling reference: unknown script '${eff.script}'`);
@@ -1703,7 +1722,7 @@ export function validateEffects(effects, path, vctx) {
   });
 }
 
-const TRIGGER_FIELDS = new Set(['on', 'if', 'do', 'once', 'limitPerTurn']);
+const TRIGGER_FIELDS = new Set(['on', 'if', 'do', 'once', 'limitPerTurn', 'chance', 'rollScope', 'limitPerAction', 'priority', 'allowSecondary']);
 
 export function validateTriggers(triggers, path, vctx) {
   const { err } = vctx;
@@ -1725,6 +1744,11 @@ export function validateTriggers(triggers, path, vctx) {
     }
     if (trig.if !== undefined) validatePredicate(trig.if, `${p}.if`, vctx);
     if (trig.once !== undefined && typeof trig.once !== 'boolean') err(`${p}.once`, 'once must be boolean');
+    if (trig.chance !== undefined && (!Number.isFinite(trig.chance) || trig.chance < 0 || trig.chance > 1)) err(`${p}.chance`, 'chance must be between 0 and 1');
+    if (trig.rollScope !== undefined && !['play', 'target', 'hit'].includes(trig.rollScope)) err(`${p}.rollScope`, 'invalid roll scope');
+    if (trig.limitPerAction !== undefined && (!Number.isInteger(trig.limitPerAction) || trig.limitPerAction < 1)) err(`${p}.limitPerAction`, 'must be positive integer');
+    if (trig.priority !== undefined && !Number.isInteger(trig.priority)) err(`${p}.priority`, 'must be integer');
+    if (trig.allowSecondary !== undefined && typeof trig.allowSecondary !== 'boolean') err(`${p}.allowSecondary`, 'must be boolean');
     if (trig.limitPerTurn !== undefined && !Number.isInteger(trig.limitPerTurn)) {
       err(`${p}.limitPerTurn`, 'limitPerTurn must be an integer');
     }
@@ -1743,6 +1767,7 @@ const PREDICATE_FIELDS = {
   everyNthCardThisCombat: ['n'],
   random: ['pct'],
   eventIsAttack: [],
+  hpDamagePositive: [],
   eventSourceIsOwner: [],
   eventTargetIsOwner: [],
   eventStatusIs: ['status'],

@@ -2037,7 +2037,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Vocabulary questions.
     eq(svc.inDomain('creature').map((t) => t.id).join('|'), 'beast|humanoid|undead|construct|spirit',
       'inDomain lists one domain');
-    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType', 'a family may carry several domains');
+    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType|attackSource|delivery|damageType|technique|theme', 'armaments allow categorized combat tags alongside legacy tags');
     assert(svc.allowedFor('enemy').every((t) => t.domain === 'creature'), 'allowedFor is domain-filtered');
     assert(svc.allowedFor('enemy').length > 0, 'allowedFor is non-empty for a live family');
     eq(svc.tag('blade').label, 'Blade', 'tag() resolves one row');
@@ -2619,14 +2619,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE JOIN IS THE AUTHORITY, OR THE TABLE IS DECORATION. tagFamilyDomains
     // declares which domains the `effect` family may carry; the validator had
     // the answer hard-coded, so editing that row changed the table and nothing
-    // else. Today the row says `card` and the derived answer is identical —
-    // which is the point: same behaviour, actually derived.
+    // else. Effects now allow the legacy card domain plus categorized combat
+    // domains; changing the junction must still change validation.
     const kw = contentBundle.keywords.map((k) => k.id);
-    eq(tagIdsAllowedFor(contentBundle, 'effect').join('|'), tagIdsInDomain(contentBundle, 'card').join('|'),
-      'the derived effect vocabulary matches the card domain the row names');
+    const effectDomains = ['card', 'attackSource', 'delivery', 'damageType', 'technique', 'theme'];
+    eq(tagIdsAllowedFor(contentBundle, 'effect').join('|'), effectDomains.flatMap((domain) => tagIdsInDomain(contentBundle, domain)).join('|'),
+      'the derived effect vocabulary includes every approved combat category');
     const repaired = JSON.parse(JSON.stringify(contentBundle));
-    repaired.tagFamilyDomains = repaired.tagFamilyDomains
-      .map((r) => (r.family === 'effect' ? { ...r, domain: 'item' } : r));
+    repaired.tagFamilyDomains = [...repaired.tagFamilyDomains.filter((r) => r.family !== 'effect'), { family: 'effect', domain: 'item' }];
     const effectSaid = validateContent(repaired).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
     assert(/unknown effect tag 'blight'/.test(effectSaid),
       `re-pairing the effect family now actually re-scopes effect tags — said ${JSON.stringify(effectSaid.slice(0, 200))}`);

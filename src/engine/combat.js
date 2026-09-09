@@ -14,6 +14,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import * as A from './actions.js';
+import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
@@ -55,7 +56,7 @@ export function createCombat({
   // default, so every existing caller — and every test — keeps the price it
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
-  swapCostRule = null,
+  swapCostRule = null, ruleset = null, combatProfiles = {},
 }) {
   const bal = registries.balance || {};
   // Run creation owns derived Mana. Older headless fixtures without a Mana
@@ -80,6 +81,7 @@ export function createCombat({
       ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId, itemUpgradeLevels: player.itemUpgradeLevels || {} }).value
       : 0);
   const combat = {
+    foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
     equipmentProfileRuleSnapshot,
     // Carried from the run so a mid-combat swap can restamp against the quota
@@ -254,6 +256,7 @@ function startPlayerTurn(combat) {
   combat.turn += 1;
   combat.phase = 'player';
   const p = combat.player;
+  F.startFoundationTurn(combat, p);
   p.counters.cardsPlayedThisTurn = 0;
   const eqcfg = combat.registries.balance.equipment || {};
   combat.swapsLeft = eqcfg.swapCostKind === 'allowance' ? eqcfg.swapAllowancePerTurn || 0 : 0;
@@ -293,7 +296,7 @@ function endPlayerTurn(combat) {
 
   // …then stamina (framework contract: Mana and Stamina): an idle turn recovers,
   // a spending turn does not — the framework decides, this engine moves the pool.
-  if (Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
+  if (!combat.foundation && Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
     const next = combat.registries.framework.staminaTurnEnd({
       currentStamina: p.stamina, maxStamina: p.maxStamina, staminaSpentThisTurn: p.counters.staminaSpentThisTurn || 0,
     });
@@ -313,7 +316,7 @@ function endPlayerTurn(combat) {
   const toExhaust = [];
   for (const card of combat.piles.hand) {
     const def = resolveCard(combat.registries, card);
-    const fate = combat.registries.framework.endTurnFate(def);
+    const fate = combat.foundation && def.effects.some((e) => e.op === 'dodgeRoll') ? 'keep' : combat.registries.framework.endTurnFate(def);
     if (fate === 'keep') keep.push(card);
     else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);
@@ -530,6 +533,7 @@ function buildIntent(move, moveId) {
  * The action queue drains fully before this returns (SPEC §3.9).
  */
 export function dispatch(combat, intent) {
+  if (combat.foundation && !combat._foundationTransaction) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent));
   if (combat.result) throw new Error('Combat is over');
   combat._buffer = [];
   try {
@@ -795,10 +799,10 @@ function effectiveCost(combat, def) {
   // The cost profile is the framework's call; this engine supplies the live
   // relic reduction and the framework applies it only where the card's
   // classification permits (Powers).
-  return combat.registries.framework.costProfile(def, {
+  return F.foundationCosts(combat, def, playerWeightClass(combat).weightClass, combat.registries.framework.costProfile(def, {
     powerCostReduction: passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction', combat.itemUpgradeLevels || {}),
     weightClass: playerWeightClass(combat).weightClass,
-  }).action;
+  })).action;
 }
 
 function doPlayCard(combat, { cardInstanceId, targetId }) {
@@ -809,12 +813,13 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   const inst = combat.piles.hand[idx];
   const def = resolveCard(combat.registries, inst);
   const kws = def.keywords || [];
+  F.assertFoundationPlayable(combat, def);
 
   if (combat.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(combat, def);
-  const pools = combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass });
+  const pools = F.foundationCosts(combat, def, playerWeightClass(combat).weightClass, combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass }));
   const manaCost = pools.mana;
   const staminaCost = pools.stamina;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
@@ -859,16 +864,14 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   }
   const cardRef = {
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-    type: def.type, tags: def.cardTags,
+    type: def.type, tags: def.cardTags, attack: def.attack, sourceHand: inst.sourceHand,
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
   };
 
   // Enqueue the card's own effects first, then announce the play — triggers
   // reacting to cardPlayed enqueue after the card's effects (FIFO).
-  for (const eff of def.effects || []) {
-    combat.enqueue({ effect: eff, source: p, owner: p, target, card: cardRef, meta });
-  }
+  for (const action of F.cardActions(combat, def, p, target, cardRef, meta)) combat.enqueue(action);
   combat.emit('cardPlayed', {
     cardInstanceId: inst.instanceId,
     cardId: inst.cardId,
@@ -980,7 +983,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
     card: {
       instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-      type: def.type, tags: def.cardTags,
+      type: def.type, tags: def.cardTags, attack: def.attack, sourceHand: inst.sourceHand,
       damageSchool: inst.damageSchool ?? def.damageSchool,
       exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
     },
@@ -1000,13 +1003,14 @@ export function previewCard(combat, cardInstanceId, targetId) {
     switch (eff.op) {
       case 'damage': {
         const attackTags = A.attackTagsFor(action, eff, combat.registries);
+        const carrier = combat.foundation && eff.attack ? { ...action.card, attack: eff.attack } : action.card;
         const base = evalPreview(combat, action, eff.amount, primary);
-        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags, action.card);
+        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags, carrier);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         for (const e of living) {
           const b = evalPreview(combat, action, eff.amount, e);
-          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, attackTags, action.card);
+          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, attackTags, carrier);
         }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent
@@ -1038,6 +1042,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
       case 'draw':
       case 'gainEnergy':
       case 'restoreMana':
+      case 'restoreStamina':
       case 'poiseDamage':
       case 'addCinders': {
         entry.value = evalPreview(combat, action, eff.amount != null ? eff.amount : 1, primary);
@@ -1072,7 +1077,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     costIsX: isX,
     manaCost: def.manaCost || 0,
     // The stamina badge in a fight is the class-priced one for the pure dodge.
-    staminaCost: combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass }).stamina,
+    staminaCost: F.foundationCosts(combat, def, playerWeightClass(combat).weightClass, combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass })).stamina,
     needsTarget: needsEnemyTarget(def),
     values,
     tokens,

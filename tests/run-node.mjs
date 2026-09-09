@@ -865,6 +865,17 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   else zoomPassed++;
 }
 
+{
+  const { execFileSync } = await import('node:child_process');
+  try {
+    execFileSync(process.execPath, ['--test', 'tests/combat-foundations.test.mjs'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  combat foundations: engine, co-op, save, preview and trigger regression suite');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  combat foundations: ${error.stdout || error.message}`);
+    zoomExtra++;
+  }
+}
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
 console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
 console.log('          check over coordinate spaces — they prove a transform has two');
