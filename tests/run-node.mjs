@@ -995,4 +995,10 @@ try {
   zoomExtra++;
   console.error('FAIL Starting equipment previews:', error);
 }
+try {
+  await import('./armament-combat-kits.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Armament combat kits:', error);
+}
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

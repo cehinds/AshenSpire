@@ -130,6 +130,7 @@ jobs:
           cp -r src preview/src
           cp world-atlas-preview.html preview/
           cp equipment-selection-preview.html preview/
+          cp armament-kits-preview.html preview/
           cp tools/serve-preview.mjs preview/serve-preview.mjs
           cp -r styles preview/styles
           cp -r assets/environments preview/assets/
