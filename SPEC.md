@@ -1253,15 +1253,18 @@ keeps the same state and focus contract without meaningful animation.
   focused card, selection glow, revealed information button and legal-target
   highlights. Information opens details without playing. Existing tap, hold,
   keyboard, controller and direct-target drag confirmation remain available.
-- **Touch flick to play.** An upward or upward-diagonal single-touch flick from a
+- **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a
   playable hand card can play on release without reaching a combatant. A profile
-  setting enables it (default on); Touch flick distance accepts 32–160 CSS pixels
+  setting enables it (default on); Card flick distance accepts 32–160 CSS pixels
   (default 64), with synchronized slider, numeric entry, reset and a harmless
   practice area. This distance is net upward displacement in viewport CSS pixels,
   independent of artwork/UI scale and of the existing 12-pixel drag-start slop.
   Flick recognition also requires upward-dominant movement and at least 300 CSS
   pixels/second recent upward velocity, authored separately from the player setting.
-  The preview selects the nearest legal target to the finger; release uses that
+  Touch, mouse, trackpad dragging and pen use the same recognizer and settings;
+  the practice area accepts exactly the same inputs as combat. Existing saved
+  `touchFlickPlay` and `touchFlickDistance` values retain their meaning.
+  The preview selects the nearest legal target to the pointer; release uses that
   same resolver and revalidates playability. Self cards select the player and
   all-enemy cards select their legal group. Equal-distance ties are deterministic.
   Returning below threshold, downward release, an information-button gesture,

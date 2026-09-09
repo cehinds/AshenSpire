@@ -211,7 +211,7 @@
 </aside>
 <script>
 const V = {
-  touchFlick:'<div class="mini mini-stack"><div class="mini-label">TOUCH FLICK DISTANCE</div><div class="mini-btn">64 px · Reset</div><div style="width:150px;border-top:3px solid var(--gold);margin:10px"></div><div class="mini-panel" style="height:65px">↑ Practice flick</div><div class="mini-label">Selection + Information stay separate</div></div>',
+  touchFlick:'<div class="mini mini-stack"><div class="mini-label">CARD FLICK DISTANCE</div><div class="mini-btn">64 px · Reset</div><div style="width:150px;border-top:3px solid var(--gold);margin:10px"></div><div class="mini-panel" style="height:65px">↑ Practice flick</div><div class="mini-label">Selection + Information stay separate</div></div>',
   kitPageDoor:'<div class="mini mini-stack" style="width:100%"><div class="mini-header"><b>EYEBROW</b><span>✕</span></div><div class="mini-title">Page door</div><div class="mini-label">sm · md · lg · xl, or full</div><div class="mini-btnrow"><div class="mini-btn">Back</div><div class="mini-btn on">Confirm</div></div></div>',
   kitOptionCard:'<div class="mini mini-stack" style="width:100%"><div class="mini-row"><span class="coin">◆</span><div><div class="mini-title">Option name</div><div class="mini-label">what taking it does</div></div></div><div class="mini-label">selected · disabled · with trail</div></div>',
   kitDetailCard:'<div class="mini mini-stack" style="width:100%"><div class="mini-label">EYEBROW</div><div class="mini-title">Subject</div><div class="mini-label">one line about it</div><div class="mini-label">meta</div></div>',
@@ -358,7 +358,7 @@ const V = {
   relicChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>GOLDEN SPROUT</b><br><span class="mini-label">Heal 3 HP at combat start.</span></div></div>'
 };
 const SEMANTIC_COMPONENTS = [
- ['touch-flick-practice','TouchFlickModel','settingsRowHtml + mountFlickPractice','menu','Accessibility settings + combat hand','Configurable 32–160 CSS-pixel upward flick distance, synchronized field and slider, Reset and harmless practice. Nearest legal target on release; selection and Information stay separate.','touchFlick'],
+ ['touch-flick-practice','TouchFlickModel','settingsRowHtml + mountFlickPractice','menu','Accessibility settings + combat hand','Configurable 32–160 CSS-pixel upward flick distance, synchronized field and slider, Reset and harmless practice. Touch, mouse, trackpad and pen share nearest legal target selection on release; selection and Information stay separate.','touchFlick'],
  ['startup-gate','startupGateModel','startupGate.mountStartupGate','screen','Cold boot','Input-gated wordmark, deterministic ash, family prompt, and shared build receipt. Title is not mounted behind it.','startupGate'],
  ['startup-ash-field','startupGateModel.properties.particles','startupGate.mountStartupGate','primitive','Startup Gate','Decorative particle host removed with the gate.','startupAshField'],
  ['startup-ash-particle','deterministic particle record','startupGate.mountStartupGate','primitive','Startup Ash Field','One data-driven ash mote with authored position, delay, duration, and size.','startupAshParticle'],

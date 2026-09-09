@@ -256,10 +256,10 @@ const ROWS = [
     placeholder: 'e.g. music/ or https://…',
     note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = built-in generated score.' },
 
-  { cat: 'Accessibility', key: 'touchFlickPlay', def: UI_DEFAULTS.touchFlick.enabled, label: 'Touch flick to play',
-    note: 'Flick a card upward to play it on the nearest valid target. Selection and the information button work as usual.' },
+  { cat: 'Accessibility', key: 'touchFlickPlay', def: UI_DEFAULTS.touchFlick.enabled, label: 'Card flick to play',
+    note: 'Flick a card upward with touch, mouse, trackpad or pen to play it on the nearest valid target. Selection and the information button work as usual.' },
   { cat: 'Accessibility', key: 'touchFlickDistance', type: 'number', def: UI_DEFAULTS.touchFlick.distance.def,
-    min: UI_DEFAULTS.touchFlick.distance.min, max: UI_DEFAULTS.touchFlick.distance.max, slider: true, practice: true, label: 'Touch flick distance',
+    min: UI_DEFAULTS.touchFlick.distance.min, max: UI_DEFAULTS.touchFlick.distance.max, slider: true, practice: true, label: 'Card flick distance',
     note: 'Upward travel in screen pixels. Shorter needs less movement; longer helps avoid accidental plays. Release with an upward flick.' },
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: 'Reduced motion',
     note: 'Calm ambient effects, drop the map pulse, and shorten animations.' },
@@ -658,7 +658,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
                  aria-label="${r.label}">
           ${r.slider ? `<input type="range" class="set-num-slider" min="${r.min}" max="${r.max}" step="1" value="${val}" aria-label="${r.label} slider"><button type="button" class="set-num-reset">Reset</button>` : ''}
         </span>
-        ${r.practice ? '<div class="flick-practice" data-flick-practice role="group" aria-label="Touch flick practice"><span>Practice here — flick upward</span><output aria-live="polite">No cards or resources are spent.</output></div>' : ''}
+        ${r.practice ? '<div class="flick-practice" data-flick-practice role="group" aria-label="Card flick practice"><span>Practice here — flick upward</span><output aria-live="polite">No cards or resources are spent.</output></div>' : ''}
       </div>`;
   }
   if (r.type === 'range') {
