@@ -32,7 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-09
 
-- **Inspect selected rewards and item choices** ([#905](https://github.com/cehinds/AshenSpire/pull/905), `0.6.0.80`). Selected reward cards keep their Information button visible, including after Back restores the choice. Keyboard focus and scrollable card rows retain room for inspection. Smith extraction and installation items, mounts, and deck cards can be inspected without confirming the service, with usable selection panes on phones.
+- **Inspect selected rewards and item choices** ([#905](https://github.com/cehinds/AshenSpire/pull/905), `0.6.0.82`). Selected reward cards keep their Information button visible, including after Back restores the choice. Keyboard focus and scrollable card rows retain room for inspection. Smith extraction and installation items, mounts, and deck cards can be inspected without confirming the service, with usable selection panes on phones.
+
+- **Bosses and elites keep their imposing size** ([#900](https://github.com/cehinds/AshenSpire/pull/900), `0.6.0.79`). Fit enemy and player sprites together so bosses and elites remain larger across phone, landscape, desktop, and co-op combat layouts.
+
+- **Complete armament kits are specified** ([#897](https://github.com/cehinds/AshenSpire/pull/897), `0.6.0.78`). Define Strike, Guard, and signature Art for each equipped armament, including shields, with rules for deck ownership, older saves, smithing, and Guardian. This specification does not change the live combat rules yet.
+
+- **The title stays centered on phones** ([#903](https://github.com/cehinds/AshenSpire/pull/903), `0.6.0.81`). Keep the divider diamond centered beneath the title at narrow widths, and align the visible wordmark and continue prompt with the subtitle. Portrait, landscape, and desktop layouts share the same center.
 
 - **Clearer maps and interactive local locations** ([#878](https://github.com/cehinds/AshenSpire/pull/878), `0.6.0.78`). Use consistent large nodes in every run mode, load native detail tiles only for the visible area, retain a small offline fallback, and add an extra manual zoom step. Trace routes with bright outlined ink over engraved unexplored parchment; preserve discovery and travel rules. Pan and zoom local maps with mouse, touch, or keyboard; center selected sites and read actual service benefits before acting.
 - **Close combat inspections from their footer** ([#893](https://github.com/cehinds/AshenSpire/pull/893), `0.6.0.74`). The Close button now dismisses player and enemy inspections with mouse, touch, or keyboard and restores focus through the shared modal behavior.

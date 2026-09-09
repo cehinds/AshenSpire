@@ -1,4 +1,5 @@
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
+import { statureFor } from '../components/stature.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
 import { combatEffectPlan, combatEffectTags, combatEffectTargetIds } from '../../model/combatEffects.js';
 import { playCombatEffect, playCombatEffectPlan, clearCombatEffects } from '../combatEffectSprites.js';
@@ -643,6 +644,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const box = document.createElement('div');
       box.className = `combatant enemy${dead ? ' dead' : ''}${!dead && e.id === selectedEnemy ? ' selected-target' : ''}`;
       box.dataset.eid = e.id;
+      box.dataset.stature = statureFor(registries, def.id);
       if (!dead) box.appendChild(intentEl(e.intent));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
