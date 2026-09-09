@@ -78,7 +78,10 @@ try {
   await sword.focus();await page.keyboard.press('Enter');
   await sword.locator('.card-info-button').click();
   check(await page.locator('.card-inspection-modal').isVisible(),'keyboard Information opens full equipment inspection');
-  await page.locator('.card-inspection-modal .inspection-lore summary').click();
+  await page.locator('.card-inspection-modal .inspection-facts .inspection-tag').last().focus();
+  await page.keyboard.press('Tab');
+  check(await page.evaluate(()=>document.activeElement.matches('.inspection-lore summary')),'Tab reaches the full flavor disclosure');
+  await page.keyboard.press('Enter');
   check((await page.locator('.card-inspection-modal .inspection-lore p').innerText()).includes('Honest steel'),'inspection preserves complete flavor');
   await page.keyboard.press('Escape');
   await page.emulateMedia({reducedMotion:'reduce'});

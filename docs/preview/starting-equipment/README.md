@@ -2,6 +2,8 @@
 
 Open [the playable review page](../../../equipment-selection-preview.html) through the local server. It uses the production creation screen and disposable `shot` state. The class switcher covers Reaver, Starseer, Rogue and Herald; view controls constrain the frame to desktop, tablet or phone widths.
 
+Final standalone build: **0.6.0.68**, source digest `4cc97d9128`. The branch includes dev `802065b3`; the latest integration changed only the automatic architecture document after the combat-effect update was incorporated.
+
 ## Changes
 
 - Empty Hand is a normal selectable card in both hand sections. It represents the existing null hand state and does not change unarmed mechanics.
@@ -19,6 +21,10 @@ The browser sweep covers every displayed hand choice for all four classes at 144
 
 **112 model cases** compare preview cards and quantities against independently created real runs for every available hand pair, and check that the preview leaves its input unchanged. This test is included in `tests/run-node.mjs`.
 
+The full repository suite passed **138 tests**, plus **25 card/flick regression checks** and the 112 new preview cases. Build-version, shipped-alias identity, receipts, About/changelog and whitespace checks passed. Source and standalone About routes were checked. A rebuilt standalone also started a real disposable run with both hands empty and no page errors.
+
+Final keyboard review found that the inspection focus loop skipped the native Flavor summary. Giving it an explicit focus entry fixed Tab traversal; Enter now opens the full wording. This final small change was checked in both source and the final standalone after the full browser/model/repository sweeps, with zero page errors. The repeatable browser runner now includes that regression assertion.
+
 The four-card screenshots add a fourth representative card only to measure grid capacity. The unmodified unarmed loadout has three distinct card types; this fixture does not change game content or quantities. Desktop/mobile tests use Edge; touch is emulated, not a physical-device test. Existing 500 ms tooltip timing is reused unchanged.
 
 ## Screenshots
@@ -32,6 +38,8 @@ The four-card screenshots add a fourth representative card only to measure grid 
 - [Four-card capacity on phone](phone-four-card-capacity.png)
 - [Reduced motion and long flavor](reduced-motion-and-flavor.png)
 - [320 px phone](narrow-320-unarmed.png)
+- [Keyboard-accessible full flavor](flavor-keyboard.png)
+- [Unarmed run started in standalone](standalone-unarmed-run.png)
 
 ## Re-run
 

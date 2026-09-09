@@ -111,7 +111,7 @@ export function equipmentDetails(explanations) {
   const lore = explanations.find(entry => entry.role === 'flavor' && entry.label);
   if (lore) {
     const disclosure = document.createElement('details'); disclosure.className = 'inspection-lore';
-    const summary = document.createElement('summary'); summary.textContent = 'Flavor';
+    const summary = document.createElement('summary'); summary.textContent = 'Flavor'; summary.tabIndex = 0;
     const text = document.createElement('p'); text.textContent = lore.label;
     disclosure.append(summary, text); details.append(disclosure);
   }
