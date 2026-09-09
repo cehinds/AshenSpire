@@ -52,16 +52,20 @@ import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
-import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
+import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
+import { combatBackdropHtml } from '../components/environmentArt.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskIdentityHtml, flaskTooltipHtml, mountFlaskActionMenu } from '../components/flask.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
+import { wireBattlefieldStage } from '../components/battlefieldStage.js';
+import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
+import { adoptCombatantFrame } from '../components/combatantFrame.js';
 import { mountHand } from '../components/hand.js';
 import { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } from '../input.js';
 import { decorateFriendlyTarget } from '../components/friendlyTargets.js';
@@ -171,6 +175,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // Animation follows authoritative cardPlayed receipts below, never an
   // optimistic local intent. Remote seats and repeated resyncs use the same path.
   const send = (obj) => {
+    if (pacing && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t)) return;
     return conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
   };
 
@@ -323,7 +328,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (!cancelFriendlyTargeting()) { armedFlask = null; render(); }
       return;
     }
-    if (!snap || snap.scene.kind !== 'combat') return;
+    if (pacing || !snap || snap.scene.kind !== 'combat') return;
     const sc = snap.scene;
     const meP = sc.players.find((p) => p.id === me);
     if (!meP || !meP.alive || !meP.connected) return;
@@ -467,19 +472,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function meterBars(ent, isEnemy, recentEvents = []) {
     const wrap = document.createElement('div');
     wrap.className = 'meters';
-    const hp = document.createElement('div');
-    hp.className = 'bar hpbar';
-    hp.innerHTML = `<div class="fill" style="width:${(Math.max(0, ent.hp) / ent.maxHp) * 100}%"></div><div class="label">${Math.max(0, ent.hp)} / ${ent.maxHp}</div>`;
-    wrap.appendChild(hp);
-    if (isEnemy && ent.poiseMeter && ent.poiseMeter.max) {
-      const poise = document.createElement('div');
-      poise.className = `bar poisebar${ent.poiseMeter.value >= ent.poiseMeter.max * 0.75 ? ' full' : ''}`;
-      poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (ent.poiseMeter.value / ent.poiseMeter.max) * 100)}%"></div>`;
-      const staggered = registries.frameworkTerms.statusDisplay('staggered');
-      const stagDesc = (staggered && staggered.tooltip) || '';
-      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${ent.poiseMeter.value} / ${ent.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
-      wrap.appendChild(poise);
-    }
+    const entity = { ...ent, kind: isEnemy ? 'enemy' : 'player' };
+    const plan = resourceBarPlan(registries, 'model', entity, entity, resourceDomainTable);
+    const bars = resourceBars(plan, { surface: 'model' });
+    wrap.classList.add('as-meters', 'tight');
+    while (bars.firstChild) wrap.append(bars.firstChild);
     if (isEnemy) {
       const arcane = renderArcaneExposure(registries, ent, recentEvents);
       if (arcane) wrap.appendChild(arcane);
@@ -531,7 +528,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const arming = armedFlask != null || armedFriendlyCard != null;
 
     app.innerHTML = `
-      <div class="combat coop">
+      <div class="combat coop" data-layout="formation" data-turn="${pacing ? 'enemy' : 'player'}">
         <header class="topbar combat-hud">
           ${hudQuickSettingsHtml(hudQuickSettingsModel({
             place: 'combat',
@@ -544,8 +541,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             <button class="subtle coop-leave" id="coop-leave">Leave</button>
           </div>
         </header>
-        <div class="${backdropClass(snap.actNumber)}"></div>
-        <div class="field">
+        ${combatBackdropHtml(snap)}
+        <div class="field"><div class="turn-ribbon" role="status" aria-live="polite">${pacing ? 'Enemy Turn' : 'Player Turn'}</div>
           <div class="player-zone"></div>
           <div class="enemy-row"></div>
         </div>
@@ -588,6 +585,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const friendly = targetPlan && targetPlan.targets.find((target) => target.id === p.id);
       box.className = `combatant player coop-seat${p.id === me ? ' me' : ''}${p.ended ? ' ended' : ''}${p.alive ? '' : ' down'}${p.connected ? '' : ' away'}${armedFlask != null && p.alive && p.connected ? ' throw-target' : ''}`;
       box.dataset.seat = p.id;
+      box.dataset.eid = p.id;
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId));
@@ -606,7 +604,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         chip({ key: '⚡', value: `${p.energy}/${p.energyMax}`, attrs: { 'aria-label': `Energy ${p.energy} of ${p.energyMax}` } }),
         pill({ ...seatState, attrs: { class: 'coop-turnflag' } }),
       ], { class: 'centered coop-seat-name' });
-      box.appendChild(nm);
+      const name = document.createElement('div');
+      name.className = 'nm'; name.textContent = m.name || p.id;
+      name.title = `${name.textContent}: ${seatState.label}, ${p.energy}/${p.energyMax} energy`;
+      box.appendChild(name);
       // Your own seat glows in YOUR accent, not a fixed gold.
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
       box.appendChild(meterBars(p, false));
@@ -627,6 +628,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           armedFlask = null;
         });
       }
+      adoptCombatantFrame(box);
       zone.appendChild(box);
     }
 
@@ -650,8 +652,18 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       ))));
       box.appendChild(statusRow(e.statuses));
       if (!dead) box.addEventListener('click', () => { selectedEnemy = e.id; render(); });
+      adoptCombatantFrame(box);
       row.appendChild(box);
     }
+
+    wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
+    const area = app.querySelector('.hand-area');
+    const rail = document.createElement('div'); rail.className = 'combat-action-row as-btnrow';
+    rail.append(area.querySelector('.energy-orb'), area.querySelector('.end-turn'));
+    area.append(rail);
+    const hand = area.querySelector('.hand');
+    hand.inert = pacing || !!meP?.ended;
+    hand.setAttribute('aria-disabled', String(hand.inert));
 
     // My hand — THE hand renderer, mounted fresh per snapshot render (this
     // screen rebuilds its DOM wholesale; the old strip's observers are torn
@@ -661,10 +673,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // and asks, it does not resolve.
     if (handStrip) handStrip.teardown();
     handStrip = mountHand(app.querySelector('.hand'), {
-      registries,
+      registries, fitFan: true,
       wireCard: (el, entry) => {
         el.addEventListener('click', () => {
-          if (!entry.affordable) return;
+          if (pacing || meP?.ended || !entry.affordable) return;
           const effects = entry.def.effects || [];
           if (friendlyTargetPlan(entry.def, me, sc.players).active) {
             armFriendlyTargeting(entry.inst.instanceId);
@@ -827,7 +839,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // warns by name for an older host, because a silent fallback is what let
       // this sit.
       act: {
-        nodes: map.nodes, columns: map.columns, actNumber: snap.actNumber,
+        seedString: snap.seedString, nodes: map.nodes, columns: map.columns, actNumber: snap.actNumber,
         startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds,
       },
       // THE VIEWER — the half that is legitimately different on every screen.
@@ -1163,7 +1175,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   async function paceEnemyTurn(s, moves) {
     pacing = true;
     try {
-      banner('ENEMY TURN');
+      const combat = app.querySelector('.combat');
+      combat.dataset.turn = 'enemy';
+      combat.querySelector('.turn-ribbon').textContent = 'Enemy Turn';
+      combat.querySelector('.hand').inert = true;
+      combat.querySelector('.end-turn').disabled = true;
       await sleep(650);
       for (const mv of moves) {
         const box = app.querySelector(`[data-eid="${mv.sourceId}"]`);
@@ -1211,7 +1227,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         : latest;
       pacing = false;
       render();
-      if (snap.scene.kind === 'combat') banner(`TURN ${snap.scene.turn}`, true);
+      if (snap.scene.kind === 'combat') app.querySelector('.turn-ribbon').textContent = 'Player Turn';
     }
   }
 

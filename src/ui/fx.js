@@ -668,7 +668,7 @@ export function playTimeline(events, ctx, done) {
     const beat = beats[bi++];
 
     if (beat.banner) {
-      safe(() => banner(ctx.layer, beat.banner, 'turn'));
+      safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn'); });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
       schedule(nextBeat, Math.max(260, speed.beatMs));
       return;

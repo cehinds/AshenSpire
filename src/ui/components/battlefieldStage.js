@@ -1,65 +1,9 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { combatFormation } from '../models/CombatFormationModel.js';
+import { alignCombatGround } from './environmentArt.js';
 
 let releaseActiveStage = null;
-const FLOOR_GAP_PX = 8;
-const MAX_SPRITE_ZOOM = 2.25;
-
-/**
- * measureFrame → what this frame WOULD need, and what it naturally is. The
- * scale is not applied here, because a scale chosen per frame is what made
- * every combatant a different size: each card was divided by its OWN sprite's
- * natural height, so a tall soldier shrank to 0.68 and a low hound stayed at
- * 1.00 — 260px and 384px side by side (Constantine, 2026-09-04: "combatant
- * card sizes should be uniform, this one is too narrow").
- */
-function measureFrame(frame, intentGapPx, centerHeightRatio) {
-  const stack = frame.querySelector(':scope > .combatant-stack');
-  const leading = stack?.querySelector(':scope > .combatant-leading');
-  const card = stack?.querySelector(':scope > .combatant-card');
-  if (!stack || !leading || !card) return null;
-  const availableHeight = frame.clientHeight;
-  const availableWidth = frame.clientWidth;
-  if (!(availableHeight > 0) || !(availableWidth > 0)) return null;
-
-  const rootStyle = getComputedStyle(document.documentElement);
-  const uiZoom = Number.parseFloat(rootStyle.getPropertyValue('--ui-zoom')) || 1;
-  const hasLeading = leading.childElementCount > 0;
-  const leadingHeight = hasLeading ? leading.offsetHeight : 0;
-  const gap = hasLeading ? intentGapPx / uiZoom : 0;
-  const naturalCardHeight = card.offsetHeight;
-  // Animated pose sheets include transparent overflow outside the authored
-  // sprite box. Measuring that overflow makes idle poses change the fit.
-  const sprite = card.querySelector(':scope > .sprite');
-  const spriteZoom = sprite ? Number.parseFloat(getComputedStyle(sprite).zoom) || 1 : 1;
-  const naturalCardWidth = Math.max(card.offsetWidth, (sprite?.offsetWidth || 0) * spriteZoom);
-  // Intent is critical combat information, so it keeps its authored size.
-  // Only the card beneath it scales; the two still move as one centered unit.
-  const centeredHeight = availableHeight * centerHeightRatio;
-  const fits = Math.max(0.01, Math.min(
-    frame.closest('.combat:not(.coop)') ? Math.max(1, 1 / uiZoom) : 1,
-    Math.max(0, centeredHeight - leadingHeight - gap) / Math.max(1, naturalCardHeight),
-    availableWidth / Math.max(1, naturalCardWidth),
-  ));
-  return { stack, frame, leadingHeight, gap, naturalCardHeight, fits, sprite, uiZoom,
-    availableHeight, availableWidth, spriteHeight: sprite?.offsetHeight || 0, spriteWidth: sprite?.offsetWidth || 0 };
-}
-
-/** applyFrame → the stage's ONE scale, so every card renders the same box. */
-function applyFrame(measure, scale) {
-  const { stack, frame, leadingHeight, gap, naturalCardHeight } = measure;
-  const cardOffset = leadingHeight + gap;
-  const visualHeight = cardOffset + (naturalCardHeight * scale);
-  stack.style.setProperty('--combatant-stack-height', `${visualHeight}px`);
-  stack.style.setProperty('--combatant-card-offset', `${cardOffset}px`);
-  stack.style.setProperty('--combatant-card-scale', String(scale));
-  // Stand on a shared floor near the hand, instead of centering small figures
-  // in a tall empty corridor. The fitting pass has already reserved intent/HUD.
-  const floorGap = FLOOR_GAP_PX / measure.uiZoom;
-  const center = Math.max(visualHeight / 2, measure.availableHeight - floorGap - visualHeight / 2);
-  stack.style.setProperty('--combatant-stage-center', `${center}px`);
-  frame.dataset.combatantScale = scale.toFixed(4);
-}
-
 export function wireBattlefieldStage(field, model) {
   if (releaseActiveStage) releaseActiveStage();
   if (!field) throw new Error('battlefieldStage requires a field host');
@@ -80,43 +24,61 @@ export function wireBattlefieldStage(field, model) {
     cancelAnimationFrame(frameRequest);
     frameRequest = requestAnimationFrame(() => {
       if (!field.isConnected) return;
-      // ONE SCALE FOR THE STAGE: measure every frame, then apply the smallest
-      // scale any of them needs. Uniform boxes, and nobody overflows its cell.
-      // Stature still differentiates an elite or a boss — that multiplier is
-      // on the sprite inside the card (kit.css COMBATANT), not on the card.
+      const combat = field.closest('.combat');
+      combat.dataset.layout = 'formation';
+      const fieldRect = field.getBoundingClientRect();
+      const zoom = fieldRect.width / field.clientWidth || 1;
       const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
-      field.style.setProperty('--stage-sprite-zoom', '1');
-      const baseline = frames
-        .map((frame) => measureFrame(frame, model.tokens.intentGapPx, model.tokens.centerHeightRatio))
-        .filter(Boolean);
-      const room = baseline.map(m => {
-        const displayScale = Math.max(1, 1 / m.uiZoom);
-        const fixedHeight = m.naturalCardHeight - m.spriteHeight;
-        return Math.min(
-          m.availableWidth / (Math.max(1, m.spriteWidth) * displayScale),
-          ((m.availableHeight - m.leadingHeight - m.gap - FLOOR_GAP_PX / m.uiZoom) / displayScale - fixedHeight) / Math.max(1, m.spriteHeight),
-        );
-      });
-      // Fill the spare space up to the presentation cap. On crowded stages
-      // the common fitter remains the authority preventing overlapping cells.
-      const spriteZoom = Math.max(1, Math.min(MAX_SPRITE_ZOOM, ...room));
-      field.style.setProperty('--stage-sprite-zoom', String(spriteZoom));
-      const measures = frames
-        .map((frame) => measureFrame(frame, model.tokens.intentGapPx, model.tokens.centerHeightRatio))
-        .filter(Boolean);
-      if (!measures.length) return;
-      const scale = measures.reduce((least, m) => Math.min(least, m.fits), Infinity);
-      for (const measure of measures) applyFrame(measure, scale);
+      const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
+        friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
+        enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
+      const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
+      for (const slot of plan.slots) {
+        const frame = frames.find(f => f.dataset.eid === slot.id);
+        const stack = frame.querySelector('.combatant-stack');
+        const sprite = frame.querySelector('.combatant-card > .sprite');
+        sprite.style.zoom = '1';
+        const naturalHeight = sprite.offsetHeight, naturalWidth = sprite.offsetWidth;
+        const height = Math.max(16, Math.min(210, fieldRect.height * .52, slot.ground - 34)) * slot.depth;
+        const scale = Math.min(height / Math.max(1, naturalHeight), slot.artWidth / Math.max(1, naturalWidth));
+        sprite.style.zoom = String(scale / zoom);
+        const paintedHeight = naturalHeight * scale;
+        const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: slot.x - nameWidth / 2, top: slot.ground - paintedHeight, width: nameWidth, height: paintedHeight });
+        frame.style.left = `${local.left}px`;
+        frame.style.width = `${local.width}px`;
+        frame.style.zIndex = 'auto';
+        sprite.style.zIndex = String(10 - slot.row);
+        frame.dataset.formationRow = String(slot.row);
+        frame.dataset.groundY = String(fieldRect.top + slot.ground);
+        frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
+        stack.style.top = `${local.top}px`;
+        frame.dataset.combatantScale = '1';
+      }
+      const rect = combat.getBoundingClientRect();
+      combat.style.setProperty('--environment-top', `${(fieldRect.top - rect.top) / zoom}px`);
+      combat.style.setProperty('--environment-height', `${fieldRect.height / zoom}px`);
+      alignCombatGround(combat.querySelector('.environment-backdrop'), plan.ground / fieldRect.height);
+      field.dataset.groundY = String(fieldRect.top + plan.ground);
+
     });
   };
   const resizeObserver = new ResizeObserver(refresh);
   resizeObserver.observe(field);
+  // CSS zoom can move the rendered floor without changing the observed
+  // element's unzoomed content box. Refit after responsive UI settings settle.
+  const layoutObserver = new MutationObserver(refresh);
+  layoutObserver.observe(document.documentElement, {
+    attributes: true, attributeFilter: ['style', 'data-layout', 'data-short', 'data-composition'],
+  });
+  window.addEventListener('resize', refresh);
   const detachObserver = new MutationObserver(() => {
     if (!field.isConnected) release();
   });
   const release = () => {
     cancelAnimationFrame(frameRequest);
     resizeObserver.disconnect();
+    layoutObserver.disconnect();
+    window.removeEventListener('resize', refresh);
     detachObserver.disconnect();
     if (releaseActiveStage === release) releaseActiveStage = null;
   };

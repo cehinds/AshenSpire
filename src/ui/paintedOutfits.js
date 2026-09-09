@@ -127,7 +127,8 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
     current = pose;
     el.dataset.pose = pose;
     img.src = assetUrl(frame.file);
-    img.style.filter = auraFilter(pose, resting, resources, active);
+    const auraCss = auraFilter(pose, resting, resources, active);
+    img.style.filter = `var(--combatant-edge, blur(0px))${auraCss === 'none' ? '' : ` ${auraCss}`}`;
     const restingState = COMBAT_POSE_STATES[resting];
     el.dataset.poseState = restingState && resting !== 'defeated' ? resting : '';
     el.dataset.aura = active ? resources.join(' ') : ['guard','shieldGuard','parry'].includes(resting) ? 'guard' : '';
