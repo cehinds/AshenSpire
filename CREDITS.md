@@ -111,6 +111,14 @@ frames: `assets/readiness-poses/`. No external game artwork. Original procedural
 diamond, constellation, and halo glows are authored in `paintedOutfits.js`.
 Source: this repository; dedicated CC0-1.0 by the project for these new assets.
 
+## Combat field backgrounds (2026-09-08)
+
+Twenty original location paintings in five source sheets under
+`art/environments/combat-fields/`, generated with built-in OpenAI imagegen using
+the project's own regional concept boards. Runtime WebP atlases are encoded by
+`tools/environment-art-build.mjs`. Prompt briefs and panel order are documented
+beside the source sheets. Project-owned AI-generated artwork, CC0-1.0.
+
 ## Readiness transition sprites (2026-09-08)
 
 Twelve additional project-owned CC0-1.0 pose illustrations created with the
