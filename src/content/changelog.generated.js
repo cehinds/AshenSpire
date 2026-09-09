@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-859",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Card removal and flick controls appear in About",
+    "detail": "Add the delivery entries to the in-game changelog before promoting the build to test.",
+    "build": "0.6.0.36",
+    "pullRequest": 859,
+    "url": "https://github.com/cehinds/AshenSpire/pull/859"
+  },
+  {
+    "id": "pr-856",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Remove basic Strikes and flick cards toward a target",
+    "detail": "Basic attack cards appear in removal choices and stay removed through equipment changes and saved fights. Touch flicks choose the nearest valid target while preserving card selection, Information and target highlights. Adjust flick distance in Accessibility and try the practice area.",
+    "build": "0.6.0.35",
+    "pullRequest": 856,
+    "url": "https://github.com/cehinds/AshenSpire/pull/856"
+  },
+  {
+    "id": "pr-855",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Record basic-card removal and touch flick rules",
+    "detail": "Specify permanent removal of individual basic attack slots, configurable touch flick distance, and nearest-valid-target selection with cancellation safeguards.",
+    "build": "0.6.0.33",
+    "pullRequest": 855,
+    "url": "https://github.com/cehinds/AshenSpire/pull/855"
+  },
+  {
     "id": "pr-847",
     "date": "2026-09-09",
     "group": "2026-09-09",
