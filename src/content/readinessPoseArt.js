@@ -9,6 +9,15 @@ export const READINESS_POSE_ART = {
         "x1": 490,
         "y1": 600
       }
+    },
+    "preparedTransition": {
+      "file": "assets/readiness-poses/rogue/preparedTransition.webp",
+      "box": {
+        "x0": 180,
+        "y0": 324,
+        "x1": 459,
+        "y1": 600
+      }
     }
   },
   "rogue-duelist": {
@@ -18,6 +27,15 @@ export const READINESS_POSE_ART = {
         "x0": 138,
         "y0": 317,
         "x1": 502,
+        "y1": 600
+      }
+    },
+    "preparedTransition": {
+      "file": "assets/readiness-poses/rogue-duelist/preparedTransition.webp",
+      "box": {
+        "x0": 178,
+        "y0": 317,
+        "x1": 462,
         "y1": 600
       }
     }
@@ -31,6 +49,15 @@ export const READINESS_POSE_ART = {
         "x1": 506,
         "y1": 600
       }
+    },
+    "preparedTransition": {
+      "file": "assets/readiness-poses/rogue-nightveil/preparedTransition.webp",
+      "box": {
+        "x0": 165,
+        "y0": 291,
+        "x1": 474,
+        "y1": 600
+      }
     }
   },
   "rogue-shadow": {
@@ -40,6 +67,15 @@ export const READINESS_POSE_ART = {
         "x0": 140,
         "y0": 305,
         "x1": 500,
+        "y1": 600
+      }
+    },
+    "preparedTransition": {
+      "file": "assets/readiness-poses/rogue-shadow/preparedTransition.webp",
+      "box": {
+        "x0": 173,
+        "y0": 305,
+        "x1": 467,
         "y1": 600
       }
     }
@@ -53,6 +89,15 @@ export const READINESS_POSE_ART = {
         "x1": 465,
         "y1": 600
       }
+    },
+    "starstoneChargeTransition": {
+      "file": "assets/readiness-poses/starseer/starstoneChargeTransition.webp",
+      "box": {
+        "x0": 177,
+        "y0": 260,
+        "x1": 462,
+        "y1": 600
+      }
     }
   },
   "starseer-astral": {
@@ -61,6 +106,15 @@ export const READINESS_POSE_ART = {
       "box": {
         "x0": 176,
         "y0": 205,
+        "x1": 464,
+        "y1": 600
+      }
+    },
+    "starstoneChargeTransition": {
+      "file": "assets/readiness-poses/starseer-astral/starstoneChargeTransition.webp",
+      "box": {
+        "x0": 176,
+        "y0": 260,
         "x1": 464,
         "y1": 600
       }
@@ -75,6 +129,15 @@ export const READINESS_POSE_ART = {
         "x1": 460,
         "y1": 600
       }
+    },
+    "starstoneChargeTransition": {
+      "file": "assets/readiness-poses/starseer-eclipse/starstoneChargeTransition.webp",
+      "box": {
+        "x0": 182,
+        "y0": 260,
+        "x1": 458,
+        "y1": 600
+      }
     }
   },
   "starseer-starlit": {
@@ -84,6 +147,15 @@ export const READINESS_POSE_ART = {
         "x0": 168,
         "y0": 207,
         "x1": 471,
+        "y1": 600
+      }
+    },
+    "starstoneChargeTransition": {
+      "file": "assets/readiness-poses/starseer-starlit/starstoneChargeTransition.webp",
+      "box": {
+        "x0": 177,
+        "y0": 261,
+        "x1": 462,
         "y1": 600
       }
     }
@@ -97,6 +169,15 @@ export const READINESS_POSE_ART = {
         "x1": 441,
         "y1": 600
       }
+    },
+    "bloodRiteTransition": {
+      "file": "assets/readiness-poses/herald/bloodRiteTransition.webp",
+      "box": {
+        "x0": 210,
+        "y0": 260,
+        "x1": 430,
+        "y1": 600
+      }
     }
   },
   "herald-emberhabit": {
@@ -106,6 +187,15 @@ export const READINESS_POSE_ART = {
         "x0": 194,
         "y0": 261,
         "x1": 446,
+        "y1": 600
+      }
+    },
+    "bloodRiteTransition": {
+      "file": "assets/readiness-poses/herald-emberhabit/bloodRiteTransition.webp",
+      "box": {
+        "x0": 208,
+        "y0": 261,
+        "x1": 431,
         "y1": 600
       }
     }
@@ -119,6 +209,15 @@ export const READINESS_POSE_ART = {
         "x1": 440,
         "y1": 600
       }
+    },
+    "bloodRiteTransition": {
+      "file": "assets/readiness-poses/herald-ossuary/bloodRiteTransition.webp",
+      "box": {
+        "x0": 211,
+        "y0": 260,
+        "x1": 429,
+        "y1": 600
+      }
     }
   },
   "herald-pilgrim": {
@@ -128,6 +227,15 @@ export const READINESS_POSE_ART = {
         "x0": 198,
         "y0": 261,
         "x1": 442,
+        "y1": 600
+      }
+    },
+    "bloodRiteTransition": {
+      "file": "assets/readiness-poses/herald-pilgrim/bloodRiteTransition.webp",
+      "box": {
+        "x0": 206,
+        "y0": 261,
+        "x1": 434,
         "y1": 600
       }
     }
