@@ -55,7 +55,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     return `data-card-tip="${index}"${interactive ? ' tabindex="0"' : ''}`;
   };
   card.innerHTML = `<span class="epc-frame">
-    <span class="epc-name ec-name" ${tip(model.name, model.identityExplanation || 'Painted equipment identity. The card shows authored base values; live upgrades and comparisons are shown separately.')}>${esc(model.name)}<span aria-hidden="true">◆</span></span>
+    <span class="epc-name ec-name" ${tip(model.name, model.identityExplanation || `${model.name}. ${model.type}. ${model.flavor} The card shows base values; upgrades and comparisons are listed separately.`)}>${esc(model.name)}<span aria-hidden="true">◆</span></span>
     <span class="epc-art" ${tip(`${model.name} artwork`, 'Item identity artwork. Appearance does not change its mechanics.')}>${presentation && !model.art ? `<span class="epc-art-glyph" aria-hidden="true">${esc(model.glyph || piece.icon || '◆')}</span>` : `<img src="${esc(presentation ? model.art : equipmentCardArt(piece))}" alt="${esc(model.name)}">`}</span>
     <span class="epc-type" ${tip(model.type, model.typeExplanation)}>${esc(model.type)}</span>
     <span class="epc-facts">${model.facts.map(f => `<span class="epc-fact" ${tip(`${f.label}: ${f.value}`, f.explanation)}><strong>${esc(f.value)}</strong>${esc(f.label)}</span>`).join('')}</span>

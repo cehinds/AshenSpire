@@ -34,6 +34,7 @@ import {
   selectStartingHand,
 } from '../../model/characterCreation.js';
 import { pieceChip } from './equipment.js';
+import { ATLAS } from '../../model/worldAtlas.js';
 import { relicText } from '../components/card.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from '../components/equipmentReceipts.js';
@@ -144,6 +145,11 @@ export function mountCustomize(app, {
   ]);
   const seedInput = el('input', { id: 'seed-input', type: 'text', value: defaultSeedString });
   const seedRow = row({ tag: 'div', setting: true, className: 'seed-line', labelNode: labelStack({ label: 'Seed', hint: 'The same seed produces the same climb.' }), trail: seedInput });
+  const journeySelect = el('select', { id: 'cz-journey', 'aria-label': 'Journey mode' }, [
+    el('option', { value: '' }, 'Classic Climb'),
+    ...Object.values(ATLAS.profiles).map(p => el('option', { value: p.profileId }, `World Journey · ${p.displayName} (${p.activeTarget} places)`)),
+  ]);
+  const journeyRow = row({ tag: 'div', setting: true, labelNode: labelStack({ label: 'Journey', hint: 'Explore a fixed world with a new route each run, or climb the classic acts.' }), trail: journeySelect });
 
   const split = el('div', { class: 'as-split cc-class-split' }, [
     el('div', { id: 'cz-class-preview-host', class: 'as-split-pane cc-class-preview-host' }),
@@ -175,7 +181,7 @@ export function mountCustomize(app, {
       flavour('An armament is one carried object. Choosing it for the other hand moves it.', { class: 'cc-move-note' }),
       nextRow('Continue to seed', 'seed'),
     ]),
-    seed: el('section', { id: 'cz-seed-panel', class: 'as-pane flush cz-stage' }, seedRow),
+    seed: el('section', { id: 'cz-seed-panel', class: 'as-pane flush cz-stage' }, [journeyRow, seedRow]),
   };
   const flow = el('div', { class: 'cz-flow cz-disc' }, Object.values(stages));
 
@@ -574,6 +580,9 @@ export function mountCustomize(app, {
       node.append(detailPane);
       const showDetails = piece => {
         detailPane.replaceChildren(equipmentDetails((section.kind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { interactive: false, inspection: false }) : renderEquipmentCard(registries, piece, { interactive: false, inspection: false })).explanations));
+        const heading = document.createElement('h3');
+        heading.textContent = piece.name + ' — full equipment details';
+        detailPane.prepend(heading);
       };
 
       for (const piece of section.choices) {
@@ -889,6 +898,7 @@ export function mountCustomize(app, {
     onStart({
       classId: state.classId,
       seedString: seedInput.value.trim(),
+      journeyProfile: journeySelect.value || null,
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
       keepsakeId: state.keepsakeId,
       startingKitId: state.startingKitId,

@@ -182,12 +182,15 @@ export function renderCard(registries, ref, opts = {}) {
   if (opts.small) el.dataset.small = 'true';
   if (opts.inspection !== false) bindCardInspection(el, { title: def.name, readOnly: opts.inspectReadOnly === true,
     touchSelectionSafe: Boolean(opts.preview?.needsTarget),
+    actionOwnsTouch: opts.actionOwnsTouch === true,
     open: opener => {
       const details = document.createElement('div');
       const liveCosts = opts.preview ? { variable: !!opts.preview.costIsX, action: opts.preview.cost, mana: opts.preview.manaCost, stamina: opts.preview.staminaCost } : null;
       details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts);
       const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false });
-      return openCardInspection({ title: def.name, card: face, details, opener });
+      details.classList.add('playing-card-details');
+      return openCardInspection({ title: def.name, card: face, details, opener,
+        getAction: opts.inspectionAction || (() => ({ enabled:false, reason:'Play cards from your combat hand.' })) });
     } });
   return el;
 }

@@ -17,12 +17,37 @@ export function cardInspectionLayout(card, details) {
   return body;
 }
 
-export function openCardInspection({ title, card, details, opener }) {
+export function openCardInspection({ title, card, details, opener, getAction = null }) {
   hideTooltip();
   document.getSelection()?.removeAllRanges();
+  const action = getAction?.();
+  const play = action ? document.createElement('button') : null;
+  const reason = action ? document.createElement('p') : null;
+  if (reason) {
+    reason.className = 'card-play-reason'; reason.setAttribute('role', 'status');
+    reason.textContent = action.reason || (action.needsTarget ? 'Choose a target after playing.' : 'Ready to play.');
+    details.append(reason);
+  }
+  if (play) {
+    play.type = 'button'; play.className = 'card-inspection-play';
+    play.textContent = 'Play card'; play.disabled = !action.enabled;
+    play.title = action.reason || (action.needsTarget ? 'Choose a target after closing this window.' : 'Play this card.');
+  }
   const shell = openModal({ title, eyebrow: 'Card information', size: 'lg',
     className: 'card-inspection-modal', opener,
+    primary: play,
     body: cardInspectionLayout(card, details) });
+  play?.addEventListener('click', () => {
+    const current = getAction();
+    if (!current.enabled) {
+      play.disabled = true; play.title = current.reason;
+      if (reason) reason.textContent = current.reason;
+      return;
+    }
+    play.disabled = true;
+    shell.close();
+    current.play();
+  });
   shell.panel.addEventListener('keydown', event => {
     if (event.key !== 'Tab') return;
     const targets = [...shell.panel.querySelectorAll('button:not([disabled]), [tabindex="0"], a[href]')].filter(el => el.getClientRects().length);
@@ -34,17 +59,16 @@ export function openCardInspection({ title, card, details, opener }) {
 }
 
 /** Information owns only its own button; action/hold/drag handlers stay on hosts. */
-export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false }) {
+export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false, actionOwnsTouch = false }) {
   card.style.userSelect = 'none';
   card.classList.add('card-inspection-target');
   if (!card.hasAttribute('tabindex')) card.tabIndex = 0;
-  // Keep the button visible while keyboard focus moves from the card to it.
-  // A touch focus alone must still wait for the second selection tap.
+  // Keyboard focus selects the card before exposing its information control.
   card.addEventListener('focusin', () => {
-    if (card.matches(':focus-visible')) card.classList.add('inspection-info-visible');
+    if (card.matches(':focus-visible')) select();
   });
   card.addEventListener('keydown', event => {
-    if (event.key === 'Tab') card.classList.add('inspection-info-visible');
+    if (event.key === 'Tab' && event.target === card) select();
   });
   const info = document.createElement('button');
   info.type = 'button';
@@ -79,7 +103,10 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     });
     card.classList.add('inspection-selected');
     card.setAttribute('aria-current', 'true');
+    card.dispatchEvent(new CustomEvent('cardinspectionselect', { bubbles: true }));
   };
+  card.addEventListener('cardholdstart', select);
+  card.addEventListener('cardinspectionrequest', () => { select(); revealInfo(); });
   for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
     info.addEventListener(type, event => event.stopImmediatePropagation());
   }
@@ -98,7 +125,6 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     if (event.target === info) return;
     select();
     revealInfo();
-    card.dispatchEvent(new CustomEvent('cardinspectionselect', { bubbles: true }));
     if (touch) {
       touchTaps = touchedIdentity === identity ? touchTaps + 1 : 1;
       touchedIdentity = identity;
@@ -109,7 +135,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
       // place under a thumb already on the glass. Both the delay and the fade
       // are authored in balance.ui.equipmentCard.info.
       revealInfo();
-      if (touchTaps === 2 || (touchTaps === 1 && !touchSelectionSafe)) {
+      if (!actionOwnsTouch && (touchTaps === 2 || (touchTaps === 1 && !touchSelectionSafe))) {
         // Selection/information taps cannot reach buy, equip or play handlers.
         event.preventDefault(); event.stopImmediatePropagation();
       }
@@ -119,7 +145,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   if (readOnly) {
     card.tabIndex = 0;
     card.setAttribute('role', 'group');
-    card.setAttribute('aria-label', `${title}. Enter to inspect. On touch, tap twice then Information.`);
+    card.setAttribute('aria-label', `${title}. Enter to inspect. On touch, tap then Information.`);
     card.addEventListener('keydown', event => {
       if (event.target !== card || !['Enter', ' '].includes(event.key)) return;
       event.preventDefault(); event.stopPropagation(); select(); open(card);

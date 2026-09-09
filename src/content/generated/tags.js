@@ -265,5 +265,437 @@ export const tags = [
     "color": "9FC3E8",
     "glyph": "✦",
     "blurb": "The class signature card."
+  },
+  {
+    "id": "fx:blade",
+    "domain": "presentation",
+    "label": "blade",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "blade visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:guard",
+    "domain": "presentation",
+    "label": "guard",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "guard visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:blood",
+    "domain": "presentation",
+    "label": "blood",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "blood visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:gorefire",
+    "domain": "presentation",
+    "label": "gorefire",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "gorefire visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:starstone",
+    "domain": "presentation",
+    "label": "starstone",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "starstone visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:ritual",
+    "domain": "presentation",
+    "label": "ritual",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "ritual visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:blight",
+    "domain": "presentation",
+    "label": "blight",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "blight visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:oath",
+    "domain": "presentation",
+    "label": "oath",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "oath visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:flourish",
+    "domain": "presentation",
+    "label": "flourish",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "flourish visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:ash",
+    "domain": "presentation",
+    "label": "ash",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "ash visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:heavy",
+    "domain": "presentation",
+    "label": "heavy",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "heavy visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:pierce",
+    "domain": "presentation",
+    "label": "pierce",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "pierce visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:ranged",
+    "domain": "presentation",
+    "label": "ranged",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "ranged visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:precision",
+    "domain": "presentation",
+    "label": "precision",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "precision visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:guile",
+    "domain": "presentation",
+    "label": "guile",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "guile visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:venom",
+    "domain": "presentation",
+    "label": "venom",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "venom visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:shield",
+    "domain": "presentation",
+    "label": "shield",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "shield visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:barrier",
+    "domain": "presentation",
+    "label": "barrier",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "barrier visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:ward",
+    "domain": "presentation",
+    "label": "ward",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "ward visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:magic",
+    "domain": "presentation",
+    "label": "magic",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "magic visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:arcane",
+    "domain": "presentation",
+    "label": "arcane",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "arcane visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:dodge",
+    "domain": "presentation",
+    "label": "dodge",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "dodge visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:riposte",
+    "domain": "presentation",
+    "label": "riposte",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "riposte visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:heal",
+    "domain": "presentation",
+    "label": "heal",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "heal visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:cleanse",
+    "domain": "presentation",
+    "label": "cleanse",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "cleanse visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:bind",
+    "domain": "presentation",
+    "label": "bind",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "bind visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:frost",
+    "domain": "presentation",
+    "label": "frost",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "frost visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:bulwark",
+    "domain": "presentation",
+    "label": "bulwark",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "bulwark visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:utility",
+    "domain": "presentation",
+    "label": "utility",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "utility visual identity; no combat modifier."
+  },
+  {
+    "id": "source:weapon",
+    "domain": "attackSource",
+    "label": "Weapon",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Weapon identity; effects are authored separately."
+  },
+  {
+    "id": "source:spell",
+    "domain": "attackSource",
+    "label": "Spell",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Spell identity; effects are authored separately."
+  },
+  {
+    "id": "source:unarmed",
+    "domain": "attackSource",
+    "label": "Unarmed",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Unarmed identity; effects are authored separately."
+  },
+  {
+    "id": "delivery:melee",
+    "domain": "delivery",
+    "label": "Melee",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Melee identity; effects are authored separately."
+  },
+  {
+    "id": "delivery:projectile",
+    "domain": "delivery",
+    "label": "Projectile",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Projectile identity; effects are authored separately."
+  },
+  {
+    "id": "delivery:area",
+    "domain": "delivery",
+    "label": "Area",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Area identity; effects are authored separately."
+  },
+  {
+    "id": "damage:slashing",
+    "domain": "damageType",
+    "label": "Slashing",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Slashing identity; effects are authored separately."
+  },
+  {
+    "id": "damage:piercing",
+    "domain": "damageType",
+    "label": "Piercing",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Piercing identity; effects are authored separately."
+  },
+  {
+    "id": "damage:blunt",
+    "domain": "damageType",
+    "label": "Blunt",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Blunt identity; effects are authored separately."
+  },
+  {
+    "id": "damage:fire",
+    "domain": "damageType",
+    "label": "Fire",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Fire identity; effects are authored separately."
+  },
+  {
+    "id": "damage:frost",
+    "domain": "damageType",
+    "label": "Frost",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Frost identity; effects are authored separately."
+  },
+  {
+    "id": "damage:lightning",
+    "domain": "damageType",
+    "label": "Lightning",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Lightning identity; effects are authored separately."
+  },
+  {
+    "id": "damage:arcane",
+    "domain": "damageType",
+    "label": "Arcane",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Arcane identity; effects are authored separately."
+  },
+  {
+    "id": "damage:sacred",
+    "domain": "damageType",
+    "label": "Sacred",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Sacred identity; effects are authored separately."
+  },
+  {
+    "id": "damage:decay",
+    "domain": "damageType",
+    "label": "Decay",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Decay identity; effects are authored separately."
+  },
+  {
+    "id": "technique:heavy",
+    "domain": "technique",
+    "label": "Heavy",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Heavy identity; effects are authored separately."
+  },
+  {
+    "id": "technique:precision",
+    "domain": "technique",
+    "label": "Precision",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Precision identity; effects are authored separately."
+  },
+  {
+    "id": "technique:cleave",
+    "domain": "technique",
+    "label": "Cleave",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Cleave identity; effects are authored separately."
+  },
+  {
+    "id": "technique:counter",
+    "domain": "technique",
+    "label": "Counter",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Counter identity; effects are authored separately."
+  },
+  {
+    "id": "technique:flourish",
+    "domain": "technique",
+    "label": "Flourish",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Flourish identity; effects are authored separately."
+  },
+  {
+    "id": "theme:blood",
+    "domain": "theme",
+    "label": "Blood",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Blood identity; effects are authored separately."
+  },
+  {
+    "id": "theme:blight",
+    "domain": "theme",
+    "label": "Blight",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Blight identity; effects are authored separately."
+  },
+  {
+    "id": "theme:astral",
+    "domain": "theme",
+    "label": "Astral",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Astral identity; effects are authored separately."
+  },
+  {
+    "id": "theme:oath",
+    "domain": "theme",
+    "label": "Oath",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Oath identity; effects are authored separately."
+  },
+  {
+    "id": "theme:stance",
+    "domain": "theme",
+    "label": "Stance",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "blurb": "Categorized Stance identity; effects are authored separately."
   }
 ];

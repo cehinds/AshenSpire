@@ -287,6 +287,7 @@ export const balance = {
   // slider can't drift apart — they previously lived in two files and silently
   // disagreed.
   ui: {
+    touchFlick: { enabled: true, distance: { min: 32, max: 160, def: 64 }, minVelocity: 300, velocityWindowMs: 120 },
     // HUD resource bars, per surface (content/resources.js holds the rows).
     //
     // `scaleByMax` is HIS RULE — "the size of that bar should scale depending on
@@ -404,7 +405,7 @@ export const balance = {
       // Regions, in visual order. `minPx` is the floor; `priority` breaks ties
       // when there is not enough room; `grow` shares out anything left over.
       regions: {
-        art:     { minPx: 180, priority: 3, grow: 3 },
+        art:     { minPx: 270, priority: 7, grow: 0 },
         type:    { minPx: 22,  priority: 5, grow: 0 },
         facts:   { minPx: 40,  priority: 6, grow: 0 },
         tags:    { minPx: 18,  priority: 4, grow: 0 },
