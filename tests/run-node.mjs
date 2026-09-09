@@ -960,4 +960,12 @@ console.log('          76 drives the shared confirmation component in a minimal 
 console.log('          the two controller call sites. It proves cancellation/commit semantics,');
 console.log('          focus containment/return, and native-prompt removal; it does not paint');
 console.log('          the dialog or prove responsive geometry in a real browser.');
+try {
+  const { runCardRemovalFlickTests } = await import('./card-removal-flick.test.mjs');
+  const result = runCardRemovalFlickTests();
+  console.log(`PASS  Card removal and touch flick regressions: ${result.checks} checks`);
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL  Card removal and touch flick regressions:', error);
+}
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

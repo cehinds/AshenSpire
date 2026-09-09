@@ -2563,18 +2563,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // ---- 26n. the tenth round: what stored state obliges ---------------------
-  test('26n. a generated slot is not removable, and the quota survives save and load', () => {
-    // THE COST OF STORING A FACT is that everything which could contradict it
-    // now has to be reconciled with it. Both findings here are consequences of
-    // round eight persisting the birth quota, and both are fair.
-
-    // The merchant's burn and the removeCardFromDeck opcode already refused
-    // package outputs, in both cases for the SAME stated reason: "the next
-    // authoritative reconcile would recreate the same deterministic id, so a
-    // removal here could never persist". A generated attack slot has exactly
-    // that property and was never excluded — burning one re-minted it, so the
-    // merchant charged cinders for nothing. Persisting the quota turned that
-    // silent no-op into a throw, which is how it was noticed at all.
+  test('26n. basic attack removal retires a slot and the birth quota survives save and load', () => {
     const run = createRunState({ seed: 1, classId: 'reaver', registries: REG });
     const composed = run.deck.filter(isEquipmentComposedInstance);
     assert(composed.length === 4 && composed.every((c) => c.equipmentAttackSlotId),
@@ -2584,10 +2573,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const before = run.deck.length;
     executeRunEffects({ run, registries: REG, rng: { float: () => 0 } },
       [{ op: 'removeCardFromDeck', card: 'strike' }]);
-    eq(run.deck.length, before, 'the opcode does not remove a card the next restamp would re-mint');
-    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 4, 'the slots are intact');
+    eq(run.deck.length, before - 1, 'the opcode removes one run-owned basic attack');
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 3, 'one slot is retired');
     stampDeck(REG, run); // threw "attack instance count 3 does not match authored 4" before
-    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 4, 'and the restamp agrees with the quota');
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 3, 'restamping preserves the removal');
 
     // A random removal still has real candidates — this closes a door on cards
     // equipment owns, it does not close the mechanic.

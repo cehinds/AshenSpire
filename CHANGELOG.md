@@ -65,6 +65,12 @@ this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-09
 
+- **Recent deliveries appear in About** ([#859](https://github.com/cehinds/AshenSpire/pull/859), `0.6.0.37`). Add the card removal, touch flick, Pose Studio usability and combat specification entries to the in-game changelog before promoting the build to test.
+- **Combat foundations have an explicit specification** ([#844](https://github.com/cehinds/AshenSpire/pull/844), `0.6.0.35`). Document equipment-based attacks, typed damage, defenses, impact, Evade, trigger ownership and prototype acceptance examples. This specification does not change gameplay or balance.
+- **Pose Studio makes authoring controls easier to find** ([#857](https://github.com/cehinds/AshenSpire/pull/857), `0.6.0.35`). Start from visible templates, animate before connecting a card, and open editing panels without long scrolling on phones. Preserve field focus, select overlapping effect tracks, and distinguish project downloads from local combat previews.
+- **Remove basic Strikes and flick cards toward a target** ([#856](https://github.com/cehinds/AshenSpire/pull/856), `0.6.0.35`). Basic attack cards appear in removal choices and stay removed through equipment changes and saved fights. Touch flicks choose the nearest valid target while preserving card selection, Information and target highlights. Adjust flick distance in Accessibility and try the practice area.
+- **Record basic-card removal and touch flick rules** ([#855](https://github.com/cehinds/AshenSpire/pull/855), `0.6.0.33`). Specify permanent removal of individual basic attack slots, configurable touch flick distance, and nearest-valid-target selection with cancellation safeguards.
+
 - **Compose poses and effects in a visual studio** ([#847](https://github.com/cehinds/AshenSpire/pull/847), `0.6.0.33`). Drag effects onto pose cues, adjust anchors and layered tracks, test card/tag/payment bindings, and save portable projects. Preview optional authored sequences in combat while preserving existing effects and auras. Add 24 six-frame sets for movement, contact, casting, defense and status feedback.
 - **Readiness poses ease in and out** ([#852](https://github.com/cehinds/AshenSpire/pull/852), `0.6.0.28`). Prepared, Starstone Charge and Herald Blood Rite use softer breathing glows and authored intermediate sprites for all twelve outfits. Entry, exit and action return crossfade smoothly; combat redraws preserve their timing, while reduced-motion and still-sprite modes resolve immediately.
 

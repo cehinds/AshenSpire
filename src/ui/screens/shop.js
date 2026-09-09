@@ -11,7 +11,8 @@ import { isEngaged, focusFirst } from '../input.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { flaskIdentityHtml } from '../components/flask.js';
-import { isEquipmentComposedInstance, carriedIds } from '../../model/loadout.js';
+import { canRemoveDeckCard, removeDeckCard } from '../../model/cardRemoval.js';
+import { carriedIds } from '../../model/loadout.js';
 import { armamentPurchasePlan, armamentSalePlan, commitArmamentPurchase, commitArmamentSale } from '../../model/armamentTrading.js';
 import { openModal } from '../components/modalShell.js';
 import { button, statusText, el } from '../kit/index.js';
@@ -216,12 +217,9 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         grid.style.flexWrap = 'wrap';
         grid.style.gap = '14px';
         grid.style.justifyContent = 'center';
-        run.deck.forEach((inst, idx) => {
-          // An equipment-COMPOSED instance is one the next authoritative
-          // reconcile recreates under the same id — a package output
-          // (grantedBy) or a generated attack slot. Offering either would
-          // charge cinders for a card that comes straight back.
-          if (isEquipmentComposedInstance(inst)) return;
+        run.deck.forEach((inst) => {
+          // Basic attacks are run-owned even when equipment supplies their face.
+          if (!canRemoveDeckCard(inst)) return;
           const el = renderCard(registries, inst, { small: true });
           const def = registries.cards.get(inst.cardId);
           // Same fixed box, same host: the hold hint stands under the card.
@@ -233,8 +231,8 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
             question: `Burn ${def.name} out of the deck? ${stock.removeCost} cinders, and the card is gone.`,
             confirmLabel: 'BURN IT',
             onConfirm: () => {
+              if (run.cinders < stock.removeCost || !removeDeckCard(run, inst.instanceId, { keepOne: true })) return;
               run.cinders -= stock.removeCost;
-              run.deck.splice(idx, 1);
               run.removesPurchased = (run.removesPurchased || 0) + 1;
               stock.removeCost = registries.balance.shop.removeBase + registries.balance.shop.removeStep * run.removesPurchased;
               sfx.play('buy');
