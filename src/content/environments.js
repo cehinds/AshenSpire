@@ -7,7 +7,7 @@ const region = (id, name, names, floorStarts) => Object.freeze({
     id: `${id}-${i + 1}`, name,
     box: Object.freeze([(i % 2) * 768, Math.floor(i / 2) * 512, 768, 512]),
     // Authored start of the clear, full-width ground in this painting.
-    floorStart: floorStarts[i], fieldRatio: 0.6,
+    floorStart: floorStarts[i], fieldRatio: 0.6, groundAnchor: 0.76,
   }))),
 });
 

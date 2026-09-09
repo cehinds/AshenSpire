@@ -15,6 +15,12 @@ The shared stage aligns sprite foot anchors, reserves the tallest information
 strip, and keeps intent/HUD clearance. Contrast edges follow image alpha before
 soft shadows and compose with readiness auras and target effects.
 
+Each scene also declares `groundAnchor`, a source-art height fraction for the
+standing line. On every stage fit, the distant and near floor sections reframe
+around the fighters' actual feet. Their shared source boundary stays directly
+underfoot as HUD strips, enemy states, text zoom and viewport dimensions change.
+This retains the full scene width and the 60% clear field.
+
 Review all scenes with `node tools/combat-ground-qa.mjs` (Playwright/Edge), serving
 the standalone game on port 8210. It checks 20 scenes at four viewport sizes,
 authored foot anchors, the 60% floor, overflow and embedded art, plus reduced motion.

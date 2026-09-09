@@ -28,11 +28,12 @@ test('atlas rectangles stay inside shipped images and all artwork exists', () =>
   for (const r of ENVIRONMENTS) {
     for (const path of [r.atlas, r.map]) assert.ok(existsSync(new URL('../' + path, import.meta.url)), path);
     assert.equal(r.scenes.length, 4);
-    for (const { box: [x, y, w, h], floorStart, fieldRatio } of r.scenes) {
+    for (const { box: [x, y, w, h], floorStart, fieldRatio, groundAnchor } of r.scenes) {
       assert.ok(x >= 0 && y >= 0 && w > 0 && h > 0);
       assert.ok(x + w <= ENVIRONMENT_ATLAS_SIZE[0] && y + h <= ENVIRONMENT_ATLAS_SIZE[1]);
       assert.ok(floorStart > 0 && floorStart < 1, 'authored floor boundary must be inside the painting');
       assert.equal(fieldRatio, 0.6, 'every scene reserves 60% clear ground');
+      assert.ok(groundAnchor > floorStart && groundAnchor < 1, 'foot anchor is on the clear ground');
     }
   }
 });

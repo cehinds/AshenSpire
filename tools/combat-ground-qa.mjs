@@ -41,11 +41,15 @@ async function check(page) {
       const r = i.getBoundingClientRect();
       return r.top + r.height * (i.classList.contains('enemy-pose-idle') ? 364 / 384 : 600 / 640);
     });
+    const groundFront = backdrop.querySelector('.environment-ground-front');
+    const groundBox = groundFront.viewBox.baseVal;
+    const paintedGroundY = new DOMPoint(groundBox.x, groundBox.y).matrixTransform(groundFront.getScreenCTM()).y;
     return {
       scene: backdrop.dataset.scene, viewport: `${innerWidth}x${innerHeight}`,
       floorRatio: floor.height / art.height,
       feetSpread: Math.max(...feet) - Math.min(...feet),
       anchorSpread: Math.max(...anchors) - Math.min(...anchors),
+      paintedGroundError: Math.max(...feet.map(y => Math.abs(y - paintedGroundY))),
       feetOnGround: feet.every(y => y >= floor.top && y <= floor.bottom),
       topClear: sprites.every(s => s.getBoundingClientRect().top >= field.top - 1),
       metersClear: [...document.querySelectorAll('.combatant .meters')].every(m => m.getBoundingClientRect().bottom <= field.bottom + 1),
@@ -55,7 +59,7 @@ async function check(page) {
       embedded: [...backdrop.querySelectorAll('image')].every(i => i.getAttribute('href').startsWith('data:')),
     };
   });
-  if (Math.abs(result.floorRatio - .6) > .002 || result.feetSpread > 1 || result.anchorSpread > 2 ||
+  if (Math.abs(result.floorRatio - .6) > .002 || result.feetSpread > 1 || result.anchorSpread > 2 || result.paintedGroundError > 1 ||
     !result.feetOnGround || !result.topClear || !result.metersClear || !result.outlined || !result.artFits || !result.noHorizontalOverflow ||
     (base.includes('AshenSpire.html') && !result.embedded)) throw Error(JSON.stringify(result));
   results.push(result);
@@ -86,6 +90,22 @@ try {
       if (id === 'cinder-reach-4' || (size.width === 390 && id === 'pale-marches-4')) await shot(page, `${id}-${size.width}`);
     }
     console.log(`PASS: 20 distinct scenes at ${size.width}x${size.height}`);
+    if (size.width === 794) {
+      await scene(page, 'cinder-reach', 0);
+      for (let turn = 0; turn < 2; turn++) {
+        const before = await page.evaluate(() => window.__combat.turn);
+        const button = page.locator('.end-turn');
+        await button.hover();
+        await page.mouse.down();
+        await page.waitForTimeout(1800);
+        await page.mouse.up();
+        await page.waitForFunction(before => window.__combat.turn > before, before);
+        await page.waitForTimeout(7000);
+        await settle(page);
+        await check(page);
+      }
+      await shot(page, 'basalt-after-enemy-turns');
+    }
     if (size.width === 844) {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.setViewportSize({ width: 390, height: 844 });

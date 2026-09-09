@@ -1,4 +1,5 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { alignCombatGround } from './environmentArt.js';
 
 let releaseActiveStage = null;
 const FLOOR_GAP_PX = 8;
@@ -123,6 +124,7 @@ export function wireBattlefieldStage(field, model) {
         const fieldRect = field.getBoundingClientRect();
         combat.style.setProperty('--environment-top', `${(fieldRect.top - rect.top) / zoom}px`);
         combat.style.setProperty('--environment-height', `${fieldRect.height / zoom}px`);
+        alignCombatGround(combat.querySelector('.environment-backdrop'), (groundY * zoom - fieldRect.top) / fieldRect.height);
         field.dataset.groundY = String(groundY * zoom);
       }
     });

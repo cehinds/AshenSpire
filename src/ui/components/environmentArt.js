@@ -13,6 +13,7 @@ export function combatBackdropHtml(run, previewSceneId = null) {
   const [x, y, w, h] = scene.box;
   const split = h * scene.floorStart;
   const horizon = 100 * (1 - scene.fieldRatio);
+  const ground = h * scene.groundAnchor;
   const plate = `<image href="${assetUrl(region.atlas)}" width="${width}" height="${height}"/>`;
   // Frame architecture and terrain independently: the full scene width stays
   // visible and the authored ground always occupies 60% of the battle view.
@@ -20,9 +21,28 @@ export function combatBackdropHtml(run, previewSceneId = null) {
   return `<div class="backdrop environment-backdrop" data-region="${region.id}" data-scene="${scene.id}" data-field-ratio="${scene.fieldRatio}" aria-hidden="true">
     <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
       <svg width="100" height="${horizon}" viewBox="${x} ${y} ${w} ${split}" preserveAspectRatio="none" overflow="hidden">${plate}</svg>
-      <svg class="environment-floor" y="${horizon}" width="100" height="${100 - horizon}" viewBox="${x} ${y + split} ${w} ${h - split}" preserveAspectRatio="none" overflow="hidden">${plate}</svg>
+      <svg class="environment-floor" y="${horizon}" width="100" height="${100 - horizon}" viewBox="0 0 100 100" preserveAspectRatio="none" overflow="hidden">
+        <svg class="environment-ground-distance" width="100" height="60" viewBox="${x} ${y + split} ${w} ${ground - split}" preserveAspectRatio="none" overflow="hidden">${plate}</svg>
+        <svg class="environment-ground-front" y="60" width="100" height="40" viewBox="${x} ${y + ground} ${w} ${h - ground}" preserveAspectRatio="none" overflow="hidden">${plate}</svg>
+      </svg>
     </svg>
   </div>`;
+}
+
+// Keep the same painted point beneath the shared foot line. Reframe the two
+// continuous portions of ground instead of letting HUD changes move the feet
+// across an unrelated background crop. The skyline and 60% field stay intact.
+export function alignCombatGround(backdrop, groundRatio) {
+  if (!backdrop) return;
+  const fieldRatio = Number(backdrop.dataset.fieldRatio);
+  const distance = backdrop.querySelector('.environment-ground-distance');
+  const front = backdrop.querySelector('.environment-ground-front');
+  if (!distance || !front || !(fieldRatio > 0)) return;
+  const percent = Math.max(1, Math.min(99, 100 * (groundRatio - (1 - fieldRatio)) / fieldRatio));
+  distance.setAttribute('height', String(percent));
+  front.setAttribute('y', String(percent));
+  front.setAttribute('height', String(100 - percent));
+  backdrop.dataset.groundRatio = String(groundRatio);
 }
 
 let nextMapId = 0;
