@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-862",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat card text fits beneath clear cost badges",
+    "detail": "Scale card text consistently with the face, allow titles to wrap to two lines, and group action, mana and stamina costs above the title. Selection, Information, targeting and touch flicks keep their existing behavior.",
+    "build": "0.6.0.48",
+    "pullRequest": 862,
+    "url": "https://github.com/cehinds/AshenSpire/pull/862"
+  },
+  {
     "id": "pr-850",
     "date": "2026-09-09",
     "group": "2026-09-09",
