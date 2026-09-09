@@ -139,10 +139,10 @@ export function renderCard(registries, ref, opts = {}) {
   const resourceWord = (resource) => esc(registries.framework.resourceWord(resource));
 
   el.innerHTML =
-    `<div class="cost">${esc(cost)}</div>` +
+    `<div class="card-costs"><div class="cost">${esc(cost)}</div>` +
     (manaCost ? `<div class="mana-cost" title="${resourceWord('mana')} cost">◆ ${esc(manaCost)}</div>` : '') +
     (staminaCost ? `<div class="stamina-cost" title="${resourceWord('stamina')} cost">● ${esc(staminaCost)}</div>` : '') +
-    `<div class="cname">${esc(def.name)}</div>` +
+    `</div><div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
     `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
     // Subtypes: authored in content/source/tagging.csv. Untagged cards
