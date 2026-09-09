@@ -443,6 +443,50 @@ must not replay combat, consume RNG, reset turn/enemy/event/trigger state, or ma
 reference. Invalid duplicate or explicit two-handed-plus-offhand snapshot loadouts are archived
 fail-closed rather than normalized or replaced with Unarmed.
 
+#### Complete armament kits
+
+Every shipped hand-equipped armament authors a `weaponCardPackage.combatKit`:
+`{ attackProfileId, guardProfileId, artCardId }`. Weapons, shields, implements,
+and staves each lend one Strike, one Guard, and one signature Armament Art while
+equipped. Armour, talismans, and consumables do not acquire this kit.
+
+These three item-owned cards are guaranteed before the starting filler budget
+is divided. A shield therefore supplies a Strike even beside a sword or when
+the filler budget is zero. Its Strike and Guard use its own profiles, attribute
+scaling, damage school, and smithing level. Attack modifiers are restricted to
+their source armament; Guard modifiers retain the existing loadout-wide rule.
+Run-owned filler attack slots and permanent removals retain their existing
+identities. In a shield/non-shield pair the non-shield retains the filler attack
+quota; the shield still lends its guaranteed Strike. Two other one-handed
+armaments split filler as before. A two-handed armament lends one kit.
+
+Kit basics use deterministic `kit:<item>:attack|guard` identities, are not smith
+mounts, and cannot be extracted or permanently removed. Their owner is recorded
+in `grantedBy`, with `equipmentRole: granted`, `kitRole`, and `profileId`.
+The signature Art uses the existing weapon-art mount and extraction/fallback
+rules. A deliberate smith replacement can therefore change the signature Art.
+Each item's signature mount is installed independently, even when two items
+author the same card; optional non-kit arts retain the existing shared-art rule.
+Reconciliation preserves cards already in discard or exhaust. Unequipping
+removes item-owned contributions and re-equipping restores their stable IDs.
+
+New armed starting decks omit the redundant global technique grant. Empty-hand
+Dodge Roll and fully unarmed Strike/Guard/technique behavior remain unchanged.
+Existing saves retain run-owned cards and their original attack-slot quota;
+normal equipment reconciliation adopts missing item-owned kits without
+re-minting permanently removed filler. Equipment previews use the same composer
+and show the exact contributed cards, including counts.
+
+Shield signature identities are Shield Bash (Round Shield), Riposte (Buckler),
+Guardian (Kite Shield), Bastion (Tower Shield), and Spiked Reprisal (Spiked Shield).
+Guardian costs 1 Energy, grants 5 Block, adds a temporary 1-Energy Enter: Bulwark
+skill to the hand, and Exhausts. The generated skill also Exhausts, is usable by
+every class, and enters the existing Bulwark stance. A full hand sends it to
+discard. It never enters the permanent run deck and disappears after combat.
+Bastion costs 1 Energy, grants 12 Block, applies 1 Weak to self, and Exhausts.
+Spiked Reprisal costs 1 Energy, grants 4 Block, deals 4 damage, and applies 2
+Bleed. Existing card effects supply the other authored armament Arts.
+
 ### 3.9 Action queue
 
 Combat resolves through a FIFO **action queue** (mirrors StS's GameActionManager). Playing a card enqueues its opcodes as actions; each executed action may emit events; triggers (§3.6) may enqueue further actions. The queue drains fully before control returns to the UI.
