@@ -12,7 +12,7 @@ export function runRewardConfirmTests() {
   const check = (value, expected, why) => { assert.deepEqual(value, expected, why); checks++; };
   try {
     const registries = createRegistries(contentBundle);
-    for (const pointerType of ['touch', 'mouse', 'pen']) {
+    for (const pointerType of ['touch', 'mouse', 'pen', 'synthetic']) {
       const app = document.createElement('main'); document.body.append(app);
       const run = { cinders: 0, deck: [], flasks: [], relics: [], loadout: { storage: [] } };
       const checkpoint = { states: {}, chosenCardId: null };
@@ -21,7 +21,7 @@ export function runRewardConfirmTests() {
         onPersist() { writes++; if (fail === 'throw') throw new Error('disk full'); if (fail) return false; savedDeck = [...run.deck]; },
       });
       const open = () => app.querySelector('[data-kind="card"]').click();
-      const tap = card => { card.dispatchEvent(new dom.Event('pointerdown', { pointerType, button: 0, bubbles: true })); card.click(); };
+      const tap = card => { if (pointerType !== 'synthetic') card.dispatchEvent(new dom.Event('pointerdown', { pointerType, button: 0, bubbles: true })); card.click(); };
       open();
       check(app.querySelector('#reward-card-confirm').disabled, true, 'no selection cannot confirm');
       tap(app.querySelectorAll('.reward-row .card')[2]);

@@ -877,6 +877,18 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   }
 }
 
+{
+  try {
+    const { runCardDragTests } = await import('./card-drag.test.mjs');
+    const count = runCardDragTests();
+    console.log(`PASS  configurable card drag and flick — ${count} checks`);
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  configurable card drag and flick — ${error.message}`);
+    zoomExtra++;
+  }
+}
+
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
 console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
 console.log('          check over coordinate spaces — they prove a transform has two');

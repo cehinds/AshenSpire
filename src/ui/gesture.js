@@ -159,8 +159,10 @@ export function trackGesture(startEv, { onMove, onEnd } = {}) {
   // hold nobody can abort.
   try { el.setPointerCapture(id); } catch { /* tracked without capture */ }
   let done = false;
+  let lastEvent = startEv;
   const move = (ev) => {
     if (ev.pointerId !== id || done) return;
+    lastEvent = ev;
     if (onMove) onMove(ev);
   };
   const finish = (cancelled) => (ev) => {
@@ -169,12 +171,17 @@ export function trackGesture(startEv, { onMove, onEnd } = {}) {
     window.removeEventListener('pointermove', move, true);
     window.removeEventListener('pointerup', up, true);
     window.removeEventListener('pointercancel', cancel, true);
+    window.removeEventListener('blur', blur, true);
+    el.removeEventListener('lostpointercapture', cancel);
     try { el.releasePointerCapture(id); } catch { /* already released */ }
     if (onEnd) onEnd(ev, { cancelled });
   };
   const up = finish(false);
   const cancel = finish(true);
+  const blur = () => cancel(lastEvent);
   window.addEventListener('pointermove', move, true);
   window.addEventListener('pointerup', up, true);
   window.addEventListener('pointercancel', cancel, true);
+  window.addEventListener('blur', blur, true);
+  el.addEventListener('lostpointercapture', cancel);
 }

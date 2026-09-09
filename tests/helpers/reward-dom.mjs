@@ -29,6 +29,8 @@ export function rewardDom() {
     matches(selector) {
       if (selector.includes(',')) return selector.split(',').some(s => this.matches(s.trim()));
       if (selector === ':focus-visible') return false;
+      for (const [, excluded] of selector.matchAll(/:not\(([^)]+)\)/g)) if (this.matches(excluded)) return false;
+      selector = selector.replace(/:not\([^)]+\)/g, '');
       const parts = selector.trim().split(/\s+/);
       if (parts.length > 1) { const last = parts.pop(); return this.matches(last) && !!this.parentNode?.closest(parts.join(' ')); }
       const attributes = [...selector.matchAll(/\[([\w-]+)(?:=["']?([^\]"']+)["']?)?\]/g)];
@@ -55,6 +57,8 @@ export function rewardDom() {
         if (!['br','img','input','hr','meta','link'].includes(tag) && !text.endsWith('/>')) stack.push(child);
       }
     }
+    getBoundingClientRect() { return this.box || {left:0,top:0,width:140,height:196}; }
+    cloneNode(deep) { const node = new Element(this.tagName); for (const [key,value] of this.attributes) node.setAttribute(key,value); Object.assign(node.dataset,this.dataset); if(deep) this.children.forEach(child=>node.appendChild(child.cloneNode(true))); return node; }
     addEventListener(type, listener) { const list = this.listeners.get(type) || []; list.push(listener); this.listeners.set(type, list); }
     removeEventListener(type, listener) { this.listeners.set(type, (this.listeners.get(type) || []).filter(x => x !== listener)); }
     dispatchEvent(event) {
@@ -75,5 +79,5 @@ export function rewardDom() {
   document.body = new Element('body');
   document.querySelectorAll = selector => document.body.querySelectorAll(selector);
   document.querySelector = selector => document.body.querySelector(selector);
-  return { document, Event: DomEvent, CustomEvent: DomEvent, window: {}, requestAnimationFrame: () => 0, addEventListener() {}, removeEventListener() {} };
+  return { document, Event: DomEvent, CustomEvent: DomEvent, window: new Element('window'), requestAnimationFrame: () => 0, cancelAnimationFrame: () => {}, addEventListener() {}, removeEventListener() {} };
 }

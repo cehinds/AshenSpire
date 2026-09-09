@@ -6,6 +6,7 @@
 
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { resolveCard } from '../../model/registries.js';
+import { cardDragConfig, cardDragVelocity, cardDragPlan } from '../models/CardDragModel.js';
 import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
@@ -46,7 +47,7 @@ import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
-import { armHold, holdMs } from '../components/holdconfirm.js';
+import { armHold, holdMs, HOLD_POINTER_SLOP } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
@@ -1438,6 +1439,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     let ghostHeight = 0;
     let lastConfirmTap = 0;
     let selectedThisPress = false;
+    let dragSamples = [];
+    let dragPeakUp = 0;
+    let dragConfig = null;
     const dragTargetMode = pv.values.some((value) => value.target === 'allEnemies')
       ? 'all' : pv.needsTarget ? 'single' : 'none';
     // A card whose only legal target is the player has ONE destination, so the
@@ -1462,12 +1466,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       && friendlyLegal.length === 1 && friendlyLegal[0] === combat.player.id;
 
     const livingEnemyEls = () => [...app.querySelectorAll('.enemy:not(.dead)')];
-
-    const nearestEnemy = (x, y) => livingEnemyEls().reduce((best, enemy) => {
-      const r = enemy.getBoundingClientRect();
-      const distance = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
-      return !best || distance < best.distance ? { enemy, distance } : best;
-    }, null)?.enemy || null;
 
     const showDragAims = (enemies) => {
       const wanted = new Set(enemies);
@@ -1512,40 +1510,44 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       combatEl.classList.add('drag-targeting');
     };
 
-    const updateDropTarget = (x, y) => {
+    const resolveDrop = (event) => {
+      const point = { x: event.clientX, y: event.clientY, time: event.timeStamp };
+      const velocity = cardDragVelocity(dragSamples, point, dragConfig.velocityWindowMs);
+      dragPeakUp = Math.max(dragPeakUp, startY - point.y);
+      dragSamples = [...dragSamples.filter(sample => point.time - sample.time <= dragConfig.velocityWindowMs), point];
+      const under = document.elementFromPoint(point.x, point.y);
+      const enemy = under?.closest?.('.enemy:not(.dead)');
+      const enemies = livingEnemyEls().map(node => {
+        const box = node.getBoundingClientRect();
+        return { id: node.dataset.eid, x: box.left + box.width / 2, y: box.top + box.height / 2 };
+      });
+      return cardDragPlan({ start: { x: startX, y: startY }, point, velocity,
+        peakUp: dragPeakUp, config: dragConfig, mode: dragTargetMode, enemies,
+        directTarget: enemy?.dataset.eid || (under?.closest?.('.combatant.player') ? 'self' : null),
+        blocked: busy || !under || !!under.closest?.('button, .modal-veil, .as-tip')
+          || !!document.querySelector('.modal-veil'),
+      });
+    };
+
+    const updateDropTarget = (event) => {
       if (!dragGhost) return;
-      const under = document.elementFromPoint(x, y);
-      const inField = !!(under && under.closest && under.closest('.field'));
-      let legal = !!under?.closest?.('.combatant.player');
-      if (dragTargetMode === 'single') {
-        const nearest = under?.closest?.('.enemy:not(.dead)') || null;
-        showDragAims(nearest ? [nearest] : []);
-        legal = !!nearest;
-      } else if (dragTargetMode === 'all') {
-        const enemies = under?.closest?.('.enemy:not(.dead)') ? livingEnemyEls() : [];
-        showDragAims(enemies);
-        legal = enemies.length > 0;
-      } else {
-        showDragAims([]);
-      }
-      // An ADDITION on top of the enemy silence above, never a branch around it:
-      // `showDragAims([])` is the one line that keeps a non-enemy drag from
-      // painting enemy silhouettes, and it has to keep running for a self-only
-      // card. 9 shipped cards reach that `else` with no self effect either
-      // (enterGorefire, enterBulwark, warriorsVow, transmute, masterOfStrategy
-      // and the four curses), so it is live code, not a fallback.
-      if (selfOnlyTarget) showSelfAim(legal);
-      const state = legal ? 'legal' : 'illegal';
+      const plan = resolveDrop(event);
+      showDragAims(livingEnemyEls().filter(enemy => plan.targetIds.includes(enemy.dataset.eid)));
+      if (selfOnlyTarget) showSelfAim(plan.legal);
+      const state = plan.legal ? 'legal' : 'illegal';
       combatEl.dataset.dropState = state;
       dragGhost.dataset.dropState = state;
       const verdict = dragGhost.querySelector('.drop-verdict');
-      if (verdict) verdict.textContent = legal ? 'DROP' : 'NO TARGET';
+      if (verdict) verdict.textContent = plan.legal ? 'RELEASE TO PLAY' : 'AIM TO PLAY';
     };
 
     el.addEventListener('pointerdown', (ev) => {
       if (busy || !affordable || ev.button !== 0) return;
       startX = ev.clientX;
       startY = ev.clientY;
+      dragConfig = cardDragConfig(meta.settings || {}, registries.balance.ui.cardDrag);
+      dragSamples = [{ x: startX, y: startY, time: ev.timeStamp }];
+      dragPeakUp = 0;
       const cardBox = el.getBoundingClientRect();
       const localCard = anchorLocalBox(VIEWPORT_ORIGIN, el);
       const localPointer = anchorLocalBox(VIEWPORT_ORIGIN, { left: startX, top: startY, width: 0, height: 0 });
@@ -1566,7 +1568,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // crossing the shared 12 px boundary abandons the inspect in the same
         // event and proceeds here, whichever handler ran first.
         if (el.dataset.inspect === 'open') return;
-        if (!dragging && Math.hypot(mv.clientX - startX, mv.clientY - startY) > 12) {
+        if (!dragging && Math.hypot(mv.clientX - startX, mv.clientY - startY) > HOLD_POINTER_SLOP) {
           dragging = true;
           lastConfirmTap = 0;
           el.dispatchEvent(new Event('carddragstart'));
@@ -1604,37 +1606,23 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           const p = clampBox({ left: at.left - gripX, top: at.top - gripY, width: g.width, height: g.height }, view, { keep: 40 });
           dragGhost.style.left = `${p.left}px`;
           dragGhost.style.top = `${p.top}px`;
-          updateDropTarget(mv.clientX, mv.clientY);
+          updateDropTarget(mv);
         }
       };
       trackGesture(ev, {
         onMove,
         onEnd: (up, { cancelled }) => {
+          const drop = dragging && !cancelled ? resolveDrop(up) : null;
           clearDragTargeting();
           el.classList.remove('drag-source');
           if (dragGhost) { dragGhost.remove(); dragGhost = null; }
           const wasDragging = dragging;
           dragging = false;
           if (!wasDragging) return; // plain click handled by 'click'
-          // A CANCELLED DRAG DROPS NOTHING — AND COSTS NOTHING. The cancelled
-          // return sits ABOVE the suppressClick arm, and the order is Vira's
-          // gate finding on this very fix: suppressClick guards a COMPLETED
-          // drag against double-firing as a click, but no click follows a
-          // cancel — armed here, the flag sat live and ate the card's next
-          // real tap (one tap swallowed, self-recovering, both shapes;
-          // introduced by the first version of this fix, on exactly the
-          // gesture the fix exists to make safe). elementFromPoint on a
-          // cancel would aim the card at wherever the finger happened to die.
-          if (cancelled) return;
-          // armHold consumes the trailing click of a moved press.
-          const under = document.elementFromPoint(up.clientX, up.clientY);
-          const inField = !!(under && under.closest && under.closest('.field'));
-          if (dragTargetMode === 'single') {
-            const enemyBox = under?.closest?.('.enemy:not(.dead)') || null;
-            if (enemyBox) playCard(inst.instanceId, enemyBox.dataset.eid);
-          } else if (dragTargetMode === 'all' ? under?.closest?.('.enemy:not(.dead)') : under?.closest?.('.combatant.player')) {
-            playCard(inst.instanceId, null);
-          }
+          // armHold consumes the completed drag's trailing click; cancellation
+          // never arms that suppression and the next real tap remains usable.
+          if (cancelled || !drop?.legal) return;
+          playCard(inst.instanceId, dragTargetMode === 'single' ? drop.targetIds[0] : null);
         },
       });
     });

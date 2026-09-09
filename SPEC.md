@@ -1226,6 +1226,8 @@ keeps the same state and focus contract without meaningful animation.
 ### 7.3 Input
 
 - **Both** targeting modes: (a) drag card onto a target/board, (b) click card → targeting arrow → click target. Esc/right-click cancels. Non-targeted cards: drag anywhere above the hand or click-then-click the board.
+- **Short card gestures:** recognition uses the shared 12 CSS-pixel hold tolerance. An upward pull arms play at the configured distance (Short 32, Normal 48, Long 72 CSS pixels); optional flick activation requires 24 CSS pixels and recent upward velocity of at least 0.3 CSS pixels/ms. Only release commits. Self/all-target cards resolve their legal targets; one enemy can auto-target, while multiple enemies require an unambiguous directional preview or a direct pointer hit. Card artwork overlap is irrelevant. Returning toward the hand, pointer cancellation, capture loss, and window blur cancel. Tuning lives in `balance.ui.cardDrag`; profile settings `cardDragDistance` and `cardFlick` take effect on the next press.
+- **Card rewards:** one touch, mouse, pen, or Confirm activation selects without collecting and enables the footer Confirm. Back preserves selection. Confirmation persists once; refused or throwing saves restore the pending card choice and allow retry.
 - Full playability with mouse only. Keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
 - **Controls rebind capture owns its armed keydown.** `rebind-capture-service`
   ignores lone modifiers. Escape cancels an armed keyboard capture, restores the

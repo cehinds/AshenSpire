@@ -665,6 +665,19 @@ export const balance = {
       def: 'normal',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
     },
+    // CSS-pixel displacement, independent of artwork size and device density.
+    // Pan recognition stays on HOLD_POINTER_SLOP; these thresholds commit play.
+    cardDrag: {
+      def: 'normal',
+      distances: { short: 32, normal: 48, long: 72 },
+      flick: true,
+      flickDistance: 24,
+      flickVelocity: 0.3,
+      velocityWindowMs: 100,
+      returnDistance: 12,
+      aimConeDegrees: 35,
+      aimSeparationDegrees: 10,
+    },
     // TITLE SAVE SLOT QUICK LOAD. This is a pointer/touch convenience gesture,
     // not the irreversible-action safety dial above: a short activation still
     // selects/reviews the save, while a stationary hold loads it directly.

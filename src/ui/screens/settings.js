@@ -78,6 +78,11 @@ function graceRefillRows() {
 }
 
 const ROWS = [
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'cardDragDistance', type: 'choice', def: UI_DEFAULTS.cardDrag.def,
+    choices: Object.keys(UI_DEFAULTS.cardDrag.distances), label: 'Card drag distance',
+    note: 'How far to pull a card toward the battlefield before release plays it. Return toward your hand to cancel.' },
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'cardFlick', def: UI_DEFAULTS.cardDrag.flick, label: 'Card flick to play',
+    note: 'A quick, short upward flick can play a card. The highlighted target shows where it will land.' },
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen when this browser supports app-controlled fullscreen.' },
   // Fullscreen and Music are persistent quick controls on Title, Map, and
