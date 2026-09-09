@@ -30,6 +30,9 @@ jobs:
         with:
           node-version: '22.14.0'
 
+      - name: Combat formations and painted ground
+        run: node --test tests/combat-formation.test.mjs tests/environment-art.test.mjs
+
       - name: World Journey normalized data and seeded routes
         run: node tests/world-atlas.test.mjs
 
@@ -117,6 +120,7 @@ jobs:
           mkdir -p preview/docs/preview
           cp -r docs/preview/world-atlas preview/docs/preview/
           cp -r docs/preview/combat-ground preview/docs/preview/
+          cp -r docs/preview/combat-formation preview/docs/preview/
           cp -r pose-studio preview/pose-studio
           cp -r assets/pose-effects preview/assets/
           cp -r art/pose-studio preview/art/
@@ -132,6 +136,7 @@ jobs:
             echo "Open AshenSpire.html locally to play this exact commit."
             echo "Run node pose-studio/server.mjs for the standalone editor at http://127.0.0.1:4318."
             echo "Open Combat-pose-preview.html for the offline readiness outfit gallery."
+            echo "Open docs/preview/combat-formation/index.html for turn and formation comparisons."
             echo "Open docs/preview/combat-ground/index.html for all 20 combat fields and phone screenshots."
             echo "Open art/combat-effects-2026-09-07/sprite-catalog.html for all 56 six-frame sets."
             echo "For the interactive card preview, serve this folder over HTTP and open"

@@ -1149,7 +1149,7 @@
   grid-area: actions; position: relative; inset: auto; align-self: stretch; box-sizing: border-box;
   width: 100%; padding: calc(8px / var(--ui-zoom,1)); margin: 0; align-items: center;
 }
-:root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(52px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(52px / var(--ui-zoom,1)) !important; }
 .turn-ribbon {
   position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 40; pointer-events: none;
   padding: calc(3px / var(--ui-zoom,1)) calc(32px / var(--ui-zoom,1));
@@ -1160,7 +1160,7 @@
 .turn-ribbon::before { content: '‹ ✧ '; } .turn-ribbon::after { content: ' ✧ ›'; }
 [data-turn='enemy'] .turn-ribbon { color: #ffc0a4; border-color: #9f492f; background: linear-gradient(90deg, transparent, #5a2017ec 20%, #5a2017ec 80%, transparent); }
 @media (max-height: 500px) {
-  :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(42px / var(--ui-zoom,1)); padding-block: 0; }
+  :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(42px / var(--ui-zoom,1)) !important; padding-block: 0; }
   :root .combat[data-layout='formation'] > .topbar .hud-info-row { display: none; }
   .turn-ribbon { font-size: calc(12px / var(--ui-zoom,1)); padding-block: 1px; }
 }
@@ -1233,3 +1233,21 @@
 /* The fitted fan has no scrollbars. A scrollbar appearing/disappearing when
    the enemy-turn filter changes would shift the vertically centered cards. */
 :root .combat[data-layout='formation'] .hand { overflow:visible !important; }
+
+/* Short landscape keeps vitals in one row inside the fixed HUD band. */
+@media (max-height:500px) {
+ :root .combat[data-layout='formation'] > .topbar { padding:0 calc(8px / var(--ui-zoom,1)); }
+ :root .combat[data-layout='formation'] .topbar .hud-top { width:100%; height:100%; justify-content:center; }
+ :root .combat[data-layout='formation'] .topbar .resbars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
+ :root .combat[data-layout='formation'] .topbar .resline { min-width:0; }
+ :root .combat[data-layout='formation'] .topbar .topbar-btn { height:calc(32px / var(--ui-zoom,1)); min-height:0; width:calc(32px / var(--ui-zoom,1)); }
+ :root .combat.coop[data-layout='formation'] .topbar .hud-top { display:flex; flex-direction:row; align-items:center; }
+ :root .combat.coop[data-layout='formation'] .topbar .resbars-host { flex:1; min-width:0; }
+ :root .combat.coop[data-layout='formation'] .topbar .fight-label { display:none; }
+ :root .combat.coop[data-layout='formation'] .topbar .coop-leave { height:calc(32px / var(--ui-zoom,1)); min-height:0; }
+}
+
+@media (max-height:500px) {
+ :root .combat[data-layout='formation'] .combat-action-row .combat-potions { font-size:calc(10px / var(--ui-zoom,1)); }
+ :root .combat[data-layout='formation'] .combat-action-row .energy-orb .sp-k { font-size:calc(7px / var(--ui-zoom,1)); }
+}
