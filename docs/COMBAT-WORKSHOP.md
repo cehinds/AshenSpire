@@ -4,9 +4,19 @@ This is the first executable slice of [spec PR #844](https://github.com/cehinds/
 
 ## Play
 
+### Game test build
+
+Open `AshenSpire.html?shot=combat-test` on the preview server, or use `index.html?shot=combat-test` for source development. Select a build, an individual encounter or the three-fight route, enemy strength, and a seed. This uses the shipped battlefield, hand, target confirmation, animation, and resource HUD. The route carries health, stamina, and mana to the next fight; it offers no automatic refill. The Armoury/menu receipt shows the controlled equipment profile and offers a return to build selection. Equipment swaps are disabled for this fixed-profile experiment, including keyboard and quick-menu routes.
+
+Dodge's card description and Evade indicator reflect the new deterministic rule. Measured Guard and Astral Focus use existing guard art with persistent blue and violet auras. Enemies reuse the game's authored sprites. This is a combat test mode, not a complete new campaign: rune loot, affinities, new stance artwork, item-derived defenses, and expanded reward decks remain pending. The `shot` storage seam keeps all profile/run writes in memory.
+
+Run `node tools/combat-test-browser.mjs` after rebuilding. It checks all three builds at desktop and phone sizes through real pointer/touch controls, including Dodge, stance auras, storage isolation, and route carryover. The continuation check uses an explicitly weakened enemy to reach the victory screen; it is a UI/state test, not a balance measurement.
+
+### Standalone workshop
+
 Run `node tools/serve.mjs --port 8618 --no-open --no-lan`, then open `http://localhost:8618/tests/combat-prototypes.html`. Choose a build and encounter, select an enemy, and play cards. The workshop uses `createCombat`, `dispatch`, and `previewCard`. It does not read or overwrite saved runs.
 
-The expandable rules editor accepts the complete configuration from `src/content/combatRules.js`. Restart the encounter to apply changes. Build decks, attributes, armor, resource caps, and opponent definitions are in `src/content/prototypes/combatBuilds.js`. The prototype bundle passes the production content validator and is excluded from the normal bundle and reward pools.
+The expandable rules editor accepts the complete configuration from `src/content/combatRules.js`. Restart the encounter to apply changes. Build decks, attributes, armor, resource caps, and opponent definitions are in `src/content/prototypes/combatBuilds.js`. The prototype bundle passes the production content validator and is excluded from ordinary run registries and reward pools. Its definitions are bundled so the explicit game test entry also works in the standalone HTML.
 
 ## Implemented
 

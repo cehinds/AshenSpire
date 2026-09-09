@@ -62,7 +62,9 @@ export function prototypeBundle(pressure = 1) {
   const enemy = (id, s) => ({ ...contentBundle.enemies[0], id: `prototype_${id}`, name: s.name, hp: [s.hp, s.hp], poiseMax: s.poise,
     moves: { strike: { intent: 'attack', damage: Math.round(s.damage * pressure), weight: 1 } }, phases: [], firstMove: 'strike' });
   return {
-    ...contentBundle, cards: [...contentBundle.cards, ...prototypeCards],
+    ...contentBundle, cards: [...contentBundle.cards.map((c) => c.id === 'dodgeRoll' ? { ...c,
+      keywords: [...new Set([...(c.keywords || []), 'retain'])],
+      textTemplate: 'Retain. Evade the next incoming hit this turn. Once per turn. Stamina cost depends on equipment weight.' } : c), ...prototypeCards],
     equipment: { ...contentBundle.equipment, cardExposure: [...contentBundle.equipment.cardExposure,
       ...prototypeCards.filter((c) => c.damageSchool).map((c) => ({ cardId: c.id, damageSchool: c.damageSchool, exposureBuildupPerHit: c.exposureBuildupPerHit }))] },
     enemies: [...contentBundle.enemies, ...Object.entries(prototypeScenarios).map(([id, s]) => enemy(id, s))],

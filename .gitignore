@@ -59,6 +59,9 @@ build/effect-logs/
 build/combat-effects-preview/
 build/combat-effects-preview.zip
 
+# Local combat workshop and game test-build screenshots/logs.
+artifacts/combat-foundations/
+artifacts/combat-test/
 build/pose-studio-app/
 build/pose-studio-app.zip
 
