@@ -598,7 +598,7 @@ function runOpcode(ctx, action, eff) {
         ctx.emit('stanceExited', { stance: ctx.player.stanceId });
       }
       ctx.player.stanceId = stanceId;
-      ctx.emit('stanceEntered', { stance: stanceId });
+      ctx.emit('stanceEntered', { stance: stanceId, playerId: ctx.playerKey || ctx.player.id });
       for (const onEnter of def.onEnter || []) {
         ctx.enqueue({ effect: onEnter, source: ctx.player, owner: ctx.player, target: action.target, meta: action.meta });
       }

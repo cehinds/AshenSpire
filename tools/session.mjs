@@ -540,18 +540,18 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => ['cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
+      .filter((e) => ['procBurst', 'statusApplied', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
         manaSpent: e.manaSpent, staminaSpent: e.staminaSpent,
         cardId: e.cardId, cardType: e.cardType, cardInstanceId: e.cardInstanceId, profileId: e.profileId,
         upgraded: e.upgraded, sourceArmamentId: e.sourceArmamentId,
-        kind: e.kind, targetId: e.targetId, playerId: e.playerId,
+        stance: e.stance, kind: e.kind, targetId: e.targetId, playerId: e.playerId,
         reason: e.reason, school: e.school, amount: e.amount, value: e.value,
         blocked: e.blocked, isAttack: e.isAttack, cause: e.cause,
         requested: e.requested, attempted: e.attempted,
-        threshold: e.threshold, status: e.status, duration: e.duration,
+        threshold: e.threshold, status: e.status, stacks: e.stacks, total: e.total, duration: e.duration,
       }));
     live.evCursor = c.eventLog.length;
     return {

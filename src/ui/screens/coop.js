@@ -1,3 +1,7 @@
+import { combatEffectForEvent } from '../../model/combatEffectEvents.js';
+import { combatEffectAngle } from '../combatEffectDirection.js';
+import { combatEffectFor } from '../../model/combatEffects.js';
+import { playCombatEffect, clearCombatEffects } from '../combatEffectSprites.js';
 // src/ui/screens/coop.js — Forsaken Together thin client (LAN co-op).
 //
 // Server-authoritative renderer: the launcher owns the run (tools/session.mjs)
@@ -107,6 +111,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         plan = resolveCombatAnimation({ ...definition, cardTags: tags, sourceArmamentId: event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId));
         const hpSpent = (scene.events || []).filter(e => e.type === 'hpLost' && e.targetId === ownerId && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
         plan.aura = resourceAura(definition, { ...event, hpSpent });
+        plan.spriteEffect=combatEffectFor({...definition,cardTags:tags},member.classId);plan.targetId=event.targetId;
         pendingAnimations.set(ownerId, plan);
       }
       combatRests.set(ownerId, combatRestAfterEvent(combatRests.get(ownerId) || 'idle', event, ownerId, plan));
@@ -346,6 +351,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function teardown() {
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
+    clearCombatEffects(app.querySelector('.fx-layer'));
     releaseFlaskKeyClaim();
     removeEventListener('keydown', flaskKeyHandler, true);
     removeEventListener('keydown', keyHandler);
@@ -394,6 +400,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function render() {
     if (!snap) return;
+    clearCombatEffects(app.querySelector('.fx-layer'));
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
     else { combatRests.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); }
@@ -741,6 +748,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     for (const [ownerId, plan] of pendingAnimations) {
       const stage = stageFor(app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`));
+      const layer=app.querySelector('.fx-layer'),anchor=app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`),target=plan.targetId&&app.querySelector(`[data-eid="${CSS.escape(String(plan.targetId))}"]`);
+      if(layer&&anchor&&plan.spriteEffect)playCombatEffect(layer,anchorLocalBox(layer,plan.spriteEffect.at==='target'&&target?target:anchor),plan.spriteEffect.kind,{direction:plan.spriteEffect.at==='target'&&target?combatEffectAngle(anchorLocalBox(layer,anchor),anchorLocalBox(layer,target)):'auto',to:plan.spriteEffect.projectile&&target?anchorLocalBox(layer,target):null,delay:plan.spriteEffect.at==='target'?100:0,duration:230});
       stage?.play(stage.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle', 420, plan.aura);
     }
     spawnCombatFx(sc, prevCombat);
@@ -1282,6 +1291,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // receiptSeq, not local object identity, owns whether these receipts are new.
     const receiptSeq = Number(now.receiptSeq) || 0;
     const hasNewReceipts = receiptSeq > lastReceiptSeq;
+    if(hasNewReceipts)for(const event of now.events||[]){
+      const effect=combatEffectForEvent(event);if(!effect)continue;
+      const id=CSS.escape(String(effect.targetId));
+      const anchor=app.querySelector('[data-eid="'+id+'"] .sprite')||app.querySelector('[data-eid="'+id+'"]')||app.querySelector('[data-seat="'+id+'"] .sprite');
+      if(anchor)playCombatEffect(layer,anchorLocalBox(layer,anchor),effect.kind,{size:190});
+    }
     const receipts = (hasNewReceipts ? (now.events || []) : [])
       .filter((ev) => ev.type === 'damageDealt' || ev.type === 'healed' || (ev.type === 'hpLost' && ev.cause !== 'attack'))
       .map((ev) => {
@@ -1299,6 +1314,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         const amount = Math.max(0, Number(ev.amount) || 0);
         if (!amount) continue;
         receiptHealByTarget.set(targetKey, (receiptHealByTarget.get(targetKey) || 0) + amount);
+        const healingAnchor=app.querySelector(sel);if(healingAnchor)playCombatEffect(layer,anchorLocalBox(layer,healingAnchor),'heal');
         put(sel, 'float-num heal', `+${amount}`, 0.35, 0, receiptRow);
       } else if (ev.type === 'hpLost') {
         const amount = Math.max(0, Number(ev.amount) || 0);

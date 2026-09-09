@@ -94,3 +94,9 @@ The fourteen expansion portraits in `assets/enemies-expansion/` were generated f
 ## Non-affiliation
 
 AshenSpire is an original fan-inspired work. It contains no assets, music, text, or proper nouns from Elden Ring, and is not affiliated with, endorsed by, or sponsored by FromSoftware Inc. or Bandai Namco Entertainment. Elden Ring is a trademark of its respective owners.
+
+## Painted combat effect sprites
+
+| Assets | Source | Rights |
+|---|---|---|
+| assets/combat-effects: 264 transparent frames (44 six-frame effects) for projectiles, guards, barriers, stances, auras, afflictions, healing, impact, melee trails and authored card schools | Project-generated with built-in OpenAI imagegen; six-frame source sheets and exact prompts in art/combat-effects-2026-09-07/six-frame-generation.json and guard-status-generation.json; exported by tools/combat-effects-ship.mjs | Project-owned AI-generated artwork, CC0 |

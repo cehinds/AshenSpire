@@ -1,3 +1,6 @@
+import { combatEffectAngle } from '../combatEffectDirection.js';
+import { combatEffectFor } from '../../model/combatEffects.js';
+import { playCombatEffect } from '../combatEffectSprites.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
 // docs/mockups/combat-screen.svg)
 //
@@ -198,7 +201,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (played && definition) {
         const grouped = visualPlans.get(played.cardInstanceId) || resolveCombatAnimation({ ...definition, cardTags: tags }, equippedPieces(registries, run.loadout, run.class));
         const pose = stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
-        plan = { ...plan, ...grouped, pose };
+        plan = { ...plan, ...grouped, pose, spriteEffect: combatEffectFor({ ...definition, cardTags: tags },run.class), targetId: played.targetId || beat.events.find(e=>e.type==='damageDealt')?.targetId };
         if (grouped.rest) stage?.setRestPose?.(grouped.rest);
         actorEl.dataset.actionGroup = grouped.group;
       }
@@ -231,6 +234,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const reach = Number.isFinite(plan.reach) ? Math.min(2, Math.max(0.25, plan.reach)) : 1;
     const direction = actorEl.closest('.enemy') ? -1 : 1;
     const totalMs = plan.family === 'neutral' ? 0 : Math.round(speed.lungeMs * tempo);
+    const target = plan.targetId && fxCtx.anchorFor(plan.targetId);
+    const cancelEffect = plan.spriteEffect ? playCombatEffect(fxCtx.layer,anchorLocalBox(fxCtx.layer,plan.spriteEffect.at==='target'&&target?target:actorEl),plan.spriteEffect.kind,{direction:plan.spriteEffect.at==='target'&&target?combatEffectAngle(anchorLocalBox(fxCtx.layer,actorEl),anchorLocalBox(fxCtx.layer,target)):'auto',to:plan.spriteEffect.projectile&&target?anchorLocalBox(fxCtx.layer,target):null,delay:plan.spriteEffect.at==='target'?totalMs*.45:0,duration:Math.max(100,totalMs*.55),size:plan.spriteEffect.projectile?140:180}) : ()=>{};
     const actionClass = ['slash', 'thrust', 'strike', 'projectile'].includes(plan.family) ? 'act-attack' : 'act-move';
     const overrides = {
       'animation-duration': totalMs + 'ms',
@@ -259,6 +264,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (value) actorEl.style.setProperty(name, value, priority);
         else actorEl.style.removeProperty(name);
       }
+      cancelEffect();
       stage?.settle();
     } };
   }

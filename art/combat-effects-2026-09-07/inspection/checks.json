@@ -1,0 +1,20 @@
+{
+  "result": {
+    "decoded": 264,
+    "playback": "passed",
+    "cancellation": "passed",
+    "reducedMotion": "passed"
+  },
+  "gameplay": {
+    "seen": [
+      "starbolt",
+      "impact",
+      "channelStance"
+    ],
+    "melee": [
+      "slash"
+    ],
+    "remaining": 0
+  },
+  "errors": []
+}
