@@ -84,13 +84,14 @@ export function mountRewards(app, {
     ...(rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {}),
   }; // kind → 'taken'|'skipped' (absent = pending / implicitly left in manual mode)
   let chosenCardId = checkpoint?.chosenCardId || null;
+  let pendingCardId = null;
 
   function persistProgress() {
     if (checkpoint) {
       checkpoint.states = { ...states };
       checkpoint.chosenCardId = chosenCardId;
     }
-    if (onPersist) onPersist();
+    if (onPersist && onPersist() === false) throw new Error('Reward save was refused.');
   }
 
   // ---- the 'new' derivation: run inventory ∪ the profile's record ----------
@@ -129,7 +130,6 @@ export function mountRewards(app, {
     card(row) {
       run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
-      recordSeen('card', [row.cardId]);
       return true;
     },
     flask(row) {
@@ -147,15 +147,33 @@ export function mountRewards(app, {
   };
 
   function take(row, viaKind) {
+    if (states[row.kind]) return false;
     // A row may say Taken only after its persistence door says it landed. The
     // armament collector returns false at the storage/duplicate boundary; a
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
+    const cardBefore = row.kind === 'card' ? {
+      deck: [...run.deck], chosenCardId, checkpoint: checkpoint ? structuredClone(checkpoint) : null,
+    } : null;
     if (!apply[row.kind](row)) return false;
     states[row.kind] = 'taken';
     // Reward state and the run mutation cross one save door. A reload can now
     // distinguish an already-applied row from an untouched one and cannot
     // duplicate a card, currency, flask, relic, or armament.
-    persistProgress();
+    try {
+      persistProgress();
+    } catch (error) {
+      if (cardBefore) {
+        run.deck.splice(0, run.deck.length, ...cardBefore.deck);
+        chosenCardId = cardBefore.chosenCardId;
+        delete states.card;
+        if (checkpoint) {
+          for (const key of Object.keys(checkpoint)) delete checkpoint[key];
+          Object.assign(checkpoint, cardBefore.checkpoint);
+        }
+      }
+      throw error;
+    }
+    if (row.kind === 'card') recordSeen('card', [row.cardId]);
     sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
     renderMenu(viaKind || row.kind);
     return true;
@@ -419,11 +437,17 @@ export function mountRewards(app, {
       foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
     });
     const strip = app.querySelector('.reward-row');
-    let selectedCardId = null;
+    let selectedCardId = pendingCardId;
+    let confirming = false;
+    const message = el('p', { role: 'status', class: 'reward-confirm-status', hidden: true });
+    strip.after(message);
     for (const cardId of row.cardIds) {
-      const el = renderCard(registries, { cardId, upgraded: false }, {});
+      // This face only selects; collection belongs to Confirm. Inspection must
+      // not consume the touch tap before selection enables that button.
+      const el = renderCard(registries, { cardId, upgraded: false }, { actionOwnsTouch: true });
       el.setAttribute('role', 'radio');
-      el.setAttribute('aria-checked', 'false');
+      el.setAttribute('aria-checked', String(cardId === selectedCardId));
+      el.classList.toggle('reward-selected', cardId === selectedCardId);
       if (marks.cards.includes(cardId)) {
         // The marker is a RENDERED badge, not only a data attribute — Codex
         // 4989824448's third finding: `data-new` alone had no consumer in any
@@ -439,17 +463,30 @@ export function mountRewards(app, {
       }
       el.addEventListener('click', () => {
         selectedCardId = cardId;
+        pendingCardId = cardId;
         for (const candidate of strip.querySelectorAll('.card')) {
           const selected = candidate === el;
           candidate.classList.toggle('reward-selected', selected);
           candidate.setAttribute('aria-checked', String(selected));
         }
         confirmButton.disabled = false;
+        message.hidden = true;
       });
       strip.appendChild(el);
     }
+    confirmButton.disabled = !selectedCardId;
     confirmButton.addEventListener('click', () => {
-      if (selectedCardId) take({ ...row, cardId: selectedCardId }, 'card');
+      if (!selectedCardId || confirming || states.card) return;
+      confirming = true;
+      confirmButton.disabled = true;
+      try {
+        take({ ...row, cardId: selectedCardId }, 'card');
+      } catch {
+        message.textContent = 'Card could not be saved. Your selection is kept. Try Confirm again.';
+        message.hidden = false;
+        confirming = false;
+        confirmButton.disabled = false;
+      }
     });
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">Back</div>${esc('Return to the spoils — the offer keeps.')}`);

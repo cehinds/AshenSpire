@@ -1,298 +1,149 @@
 # AshenSpire — Ashen Spire
 
-A roguelike deckbuilder for the browser — single-player, with optional LAN co-op. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**. Built with vanilla ES-module JavaScript, HTML, and CSS — no framework, no build step.
+A roguelike deckbuilder for the browser. Vanilla ES modules, HTML and CSS — no framework, no build step. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**.
 
-> **Core loop:** Four classes, three acts, 20 regular enemies, three elites and ten bosses, with seeded encounters and resumable runs. See [DEVELOPER.md](DEVELOPER.md) to run and extend it, and the [enemy roster](docs/ENEMY-ROSTER.md) for moves and destinations.
+**[▶ Play AshenSpire](https://cehinds.github.io/AshenSpire/AshenSpire.html)** (stable, from `main`) · **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** · **[Changelog](CHANGELOG.md)** · **[Developer guide](DEVELOPER.md)** · **[Spec](SPEC.md)**
 
-Feature descriptions include the September 7 enemy and combat expansion. See
-[CHANGELOG.md](CHANGELOG.md) for the corresponding PRs and development builds.
+> Single-player with optional LAN co-op. Four classes, three acts, 20 regular enemies, three elites, ten bosses. Seeded, resumable runs. Enemy moves and destinations: [enemy roster](docs/ENEMY-ROSTER.md).
 
-## Play a build
+**This is a development preview** — not a release, tag, or production approval. Release status is governed separately and is currently **RED**.
 
-Act maps offer distinct named boss destinations beyond the guaranteed rest.
-Enemy inspectors show each move's damage, effects, windup and phase unlocks.
-Card arrivals and actions have feedback that respects Reduced motion; the Piles
-control retains the latest discard or exhaust outcome after animations are skipped.
+## Playable builds
 
-Twelve enemies now use the painted sprites from the Unity fork, including the
-Wandering Soldier, Blight Hound, Fell Warden, Stitched King and Wyrm Lord.
-
-Traders now offer armaments and mountable weapon arts alongside their usual stock.
-Inspect an item before buying, or sell an unequipped armament from storage.
-Equipped items explain why they cannot be sold. Weapon arts are bought at traders
-and installed through the Armoury's existing card-mounting controls.
-The combat row is Actions, Draw, centered End Turn, Discard (with Exhaust),
-and Potions at the far right. Discard opens separate Discard and Exhaust tabs.
-Potion rows show their artwork and counts; expand one to inspect it inline.
-Use moves into the unfolded card and retains the shared confirmation/hold action.
-Selecting or expanding a potion never consumes it. Weapon arts play from the hand.
-
-Character creation uses attached foldout cards for its sections and choices.
-Stats, keepsakes, sprite options and equipment summaries start folded; opening
-a choice closes its siblings. Text retains readable minimum sizes on phones.
-Combat cards and character previews keep consistent portrait proportions; Armoury
-figures scale uniformly to fit their available space. Pile viewers use larger,
-non-overlapping cards with readable text on phones and scroll when needed.
-
-**[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)** — the stable
-build from `main`. **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** — the builds
-index: the current `dev`, `test`, `release` and `main` builds, each playable at its own address.
-
-### Playable builds and where each comes from
-
-| Branch | Role | Build number (live, derived) | Play | Changelog |
+| Branch | Role | Build | Play | Changelog |
 |---|---|---|---|---|
-| `main` | stable — the classic Play link serves this | [![main build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fmain%2Fbuildordinal.json&query=%24.ordinal&label=main%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/main/) | [play latest](https://cehinds.github.io/AshenSpire/main/latest/) · [all `main` builds](https://cehinds.github.io/AshenSpire/main/) | [CHANGELOG](https://github.com/cehinds/AshenSpire/blob/main/CHANGELOG.md) |
-| `release` | release candidate — awaiting the owner's release cut | [![release build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Frelease%2Fbuildordinal.json&query=%24.ordinal&label=release%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/release/) | [play latest](https://cehinds.github.io/AshenSpire/release/latest/) · [all `release` builds](https://cehinds.github.io/AshenSpire/release/) | [CHANGELOG](https://github.com/cehinds/AshenSpire/blob/release/CHANGELOG.md) |
-| `test` | QA — the dev→test promotion under independent test | [![test build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Ftest%2Fbuildordinal.json&query=%24.ordinal&label=test%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/test/) | [play latest](https://cehinds.github.io/AshenSpire/test/latest/) · [all `test` builds](https://cehinds.github.io/AshenSpire/test/) | [CHANGELOG](https://github.com/cehinds/AshenSpire/blob/test/CHANGELOG.md) |
-| `dev` | integration — merged work lands here first; unreviewed | [![dev build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fdev%2Fbuildordinal.json&query=%24.ordinal&label=dev%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/dev/) | [play latest](https://cehinds.github.io/AshenSpire/dev/latest/) · [all `dev` builds](https://cehinds.github.io/AshenSpire/dev/) | [CHANGELOG](https://github.com/cehinds/AshenSpire/blob/dev/CHANGELOG.md) |
+| `main` | stable — the Play link above | [![main build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fmain%2Fbuildordinal.json&query=%24.ordinal&label=main%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/main/) | [latest](https://cehinds.github.io/AshenSpire/main/latest/) · [all](https://cehinds.github.io/AshenSpire/main/) | [log](https://github.com/cehinds/AshenSpire/blob/main/CHANGELOG.md) |
+| `release` | release candidate | [![release build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Frelease%2Fbuildordinal.json&query=%24.ordinal&label=release%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/release/) | [latest](https://cehinds.github.io/AshenSpire/release/latest/) · [all](https://cehinds.github.io/AshenSpire/release/) | [log](https://github.com/cehinds/AshenSpire/blob/release/CHANGELOG.md) |
+| `test` | QA | [![test build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Ftest%2Fbuildordinal.json&query=%24.ordinal&label=test%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/test/) | [latest](https://cehinds.github.io/AshenSpire/test/latest/) · [all](https://cehinds.github.io/AshenSpire/test/) | [log](https://github.com/cehinds/AshenSpire/blob/test/CHANGELOG.md) |
+| `dev` | integration — unreviewed | [![dev build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fdev%2Fbuildordinal.json&query=%24.ordinal&label=dev%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/dev/) | [latest](https://cehinds.github.io/AshenSpire/dev/latest/) · [all](https://cehinds.github.io/AshenSpire/dev/) | [log](https://github.com/cehinds/AshenSpire/blob/dev/CHANGELOG.md) |
 
-The badge reads each branch's committed `buildordinal.json` — the number is never typed
-here. It is the last segment of the stamp the game paints on its title screen,
-`BUILD <version>.<ordinal> · src <digest>` (for example `BUILD 0.4.0.1688 · src b258350c3d`
-on `main`), so the number on the badge, the number on the builds index and the number on
-the title screen are the same fact read from the same file.
+- **Read each badge down its own column, not across.** The ordinal counts builds *within the current candidate* and restarts when the candidate advances — the four numbers are not a ranking. `main` predates the restart (it is on the `0.4.0` line, still counting globally), hence the thousands.
+- **The number is never typed here.** Each badge reads that branch's committed `buildordinal.json` — the same fact the title screen paints as `BUILD <version>.<ordinal> · src <digest>`.
+- **Addresses:** `…/<branch>/<ordinal>/` is that exact build, byte-identical to the `AshenSpire.html` of the commit that produced it. `…/<branch>/latest/` is the branch's newest. Each index entry links the `CHANGELOG.md` at that build's commit.
+- **Publication:** pushes to `dev`, `test` and `release` publish themselves. A push to **`main` publishes nothing** — the stable Play link moves only on the owner's own workflow dispatch with `publish` spelling PUBLISH. Merging to `main` is owner-only.
+- The site is assembled from git history by `node tools/pages-site.mjs`; nothing on it is hand-edited.
 
-**Read each badge down its own column, not across.** The ordinal counts builds *within the
-current candidate* and restarts when the candidate advances, so the four numbers above are
-not a ranking: a freshly cut candidate on `dev` starts near zero while `main` still carries
-the count it was promoted with. `main` also predates the restart — it is on the `0.4.0` line
-and still counting globally, which is why its badge reads in the thousands. To compare two
-branches, compare the whole stamp (`BUILD <version>.<ordinal>`), which the builds index and
-the title screen both show; the badge is a per-branch progress counter only.
+### Offline
 
-**Address scheme.** `https://cehinds.github.io/AshenSpire/<branch>/<ordinal>/` is that exact
-build — `…/main/1688/` is `main` build 1688, byte-identical to the `AshenSpire.html` of the
-commit that produced it — and `…/<branch>/latest/` is the branch's newest. Each entry on the
-index links the `CHANGELOG.md` **at that build's commit**, not at a moving branch head. The
-site is assembled from git history by `node tools/pages-site.mjs` in the `pages-builds`
-workflow on every push to one of the four branches; nothing on it is hand-edited.
+Download **[`AshenSpire.html`](AshenSpire.html)** from the repository root and double-click it — one self-contained file, no installation. It is an alias for [`dist/AshenSpire.html`](dist/AshenSpire.html); both are generated from [`build/AshenSpire.html`](build/AshenSpire.html) by `node tools/launch.mjs --build-only`, and `node tools/verify-shipped.mjs` fails if either copy differs. External music folders need http — see [dist/README.md](dist/README.md).
 
-**Publication is split by branch.** A push to `dev`, `test` or `release` assembles the site,
-proves it, and publishes it — those three keep themselves current without anyone asking.
-A push to **`main` publishes nothing**: the stable Play link changes only on the repository
-owner's own dispatch of that workflow with its `publish` input spelling PUBLISH, which
-publishes whichever branch it is run from. Because Pages serves one site and this one is
-assembled on top of `main`'s tree, a `main` change does reach the site on the next
-`dev`/`test`/`release` publication after it lands; what a push to `main` never does is
-publish itself. Merging to `main` is owner-only in the first place.
+## Running it
 
-**[AshenSpire Project #4](https://github.com/users/cehinds/projects/4)** owns
-workflow status. **[Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)**
-is the readable projection, with timestamped updates and Daily Briefs.
+- **One click:** double-click **`run.bat`** (Windows) or run **`./run.sh`** (macOS/Linux) — builds into `dist/`, serves on `http://localhost:8080`, opens your browser. Needs [Node.js](https://nodejs.org) only as a static server + bundler; no packages to install.
+- **Manually:** serve `index.html` with `node tools/serve.mjs`, `npx serve .`, or `python -m http.server`.
 
-**[AshenSpire UI Component Catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html)** —
-the interactive reference for stable component IDs, model and renderer names,
-live visual specimens, and reuse surfaces. UI delivery summaries list the exact
-changed IDs; an origin-bound UI change updates both catalog formats in the same change.
+## What is this?
 
-**[QA Testing](docs/QA-TESTING.md)** and the
-**[feature delivery loop](docs/FEATURE-DELIVERY-LOOP.md)** — the repeatable
-design, build, responsive playtest, evidence, and documentation process used for
-player-facing changes. The current Smith modal write-up is
-[here](docs/qa/2026-08-25-smith-modal-design.md).
+- **A run:** pick a class → traverse a branching map across 3 acts → fight with a deck of cards → collect relics, flasks and cinders → beat the final boss or die trying. Seeded and reproducible.
+- **Four classes:** Reaver (strike damage), Rogue (defense and actions), Starseer (magic), Herald (balanced martial-support). Starting attributes and equipment are data-owned.
+- **Faithful StS mechanics:** 3 energy / draw 5, block that expires, telegraphed intents, exhaust/ethereal/retain, exact StS damage-order math.
+- **Elden Ring flavour with real mechanics:** Bleed as a build-up meter bursting for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and Poise/Stagger that skips enemy turns and opens damage windows.
+- **Equip load and Weight Class:** hands and armour weigh against a capacity from Constitution and Strength; the percentage lands you in Light, Medium or Heavy. Comparing a piece shows the load and class the swap would leave you at.
+- **Stamina, and hands that fight empty:** spend no Stamina in a turn and you recover some. The Dodge Roll checks Dexterity against a d20 for a temporary guard, priced by Weight Class (Light 1 Stamina; Medium 2 + 1 action; Heavy 3 + 2 actions). Empty hands bring the Dodge Roll to your deck; a shield counts as a full hand.
+- **One component kit, one run HUD built from it:** every screen draws from one kit — one meter, one swatch, one page door, one modal chrome with the same way out in the same corner. Map and Combat compose the same header, vitals, Quick Access, relic and potion components.
+- **One data-driven Armoury:** Character, Inventory and Hybrid are presentations of the same equipment owner, using the shared Folding Tray grammar. Authored attack slots rebind to the active weapon package — a lone weapon owns all of them, dual wield splits them right-first without deck growth, and the comparison receipt shows exact before/after counts.
+- **Re-arm during a fight:** equip, move or remove carried weapons and armour on your turn. Costs the same Energy as switching a prepared set; equipment cards, HP/MP/SP limits, Poise and positions update inside the current fight and persist after it. A change you cannot afford is refused without spending anything.
+- **Every card has an owner, and a smith can change it:** cards lent by equipment leave with the item and return with it — mid-fight and across a save. At a Shrine or a smith-rolled merchant, **Extract a Card** makes one yours for good and **Seat a Card** fills an open mount. An emptied mount shows a fallback (Dodge Roll for weapon-art mounts). No shipped weapon authors a card package yet, so the smith will say there is nothing to work on.
+- **The deck cap is a creation rule:** it governs the basic strikes and defends dealt at creation and nothing else. Equipment cards are dealt first, never capped; after creation the cap does not apply.
+- **Painted class figures, in the builder and in the fight:** the figure you pick is the one you fight as — animated when you attack, turned to face its target, tinted on the garment so the painting keeps its own light. Each of the twelve alternative armour sets has its own painted figure, falling back to the class figure when it has none. Made with AI image-generation models; disclosed in-game and in [CREDITS.md](CREDITS.md).
+- **The battlefield answers what you point at:** hover, focus or tap a status effect for what it does and how far its build-up or countdown has run. Hover or tap either fighter for HP, Poise and effects, with **I** for the full read. When a card is armed, a tap on a target is still a play.
+- **Quests that remember what you did:** event choices are written into your run's history, and a step your history has not earned stays out of the pool. Earn it and later maps may roll it at Unknown nodes; an answered step never returns. The Grave of the Nameless is the first chain.
+- **Forsaken Together — LAN co-op:** a party shares one map, votes on the fork and fights one shared combat, each seat playing its own deck, relics and flasks. A seat that drops out returns to a catch-up queue. Served by the launcher's Node server, so a `file://` build stays single-player.
+- **Character creation, one panel at a time:** six folded picks — class, kit, keepsake, sigil, tint, sprite — each opening the next, with your choices read back in words. Starting armour and stat points sit open as rows of their own. Mouse, keyboard and pad walk the same flow.
+- **Rewards you open before you collect:** post-fight spoils are a menu; nothing joins your run until you take it. A reward you have no room for says so and is the only row offering Skip. Settings → Advanced → Reward collection decides whether Continue sweeps up the rest.
+- **A merchant who buys back:** five collapsing bars — cards, relics, flasks, remove-a-card, Sell — one open at a time. He buys relics and flasks back at half his cheapest price; the Sell bar can be switched off in Settings.
+- **An in-game changelog:** Settings → Changelog reads the repository changelog as expandable rows, with build stamps linking back to the exact source.
+- **Responsive browser play:** portrait and short-wide landscape stay playable down to 340 CSS pixels high; smaller viewports show a recoverable short-screen warning instead of a clipped board. Fullscreen is one toggle, first under Settings → Display.
 
-**[CHANGELOG.md](CHANGELOG.md)** — what changed, newest first, each entry
-naming the pull request that landed it and the build number it shipped in.
+Full design: **[SPEC.md](SPEC.md)** (rules, schemas, numbers) and **[docs/GDD.md](docs/GDD.md)** (design intent, mockups, art direction). Original brief: **[PROMPT.md](PROMPT.md)**.
 
-**[Working rules](CONTRIBUTING.md)** — how contributors and AI agents work here:
-one task per branch, draft pull requests into `dev`, and only the owner merges
-to `main`.
+## Recent additions
 
-**[Architecture map](docs/ARCHITECTURE-MAP.md)** — the stable
-composition/component redesign contract. The [current-`dev` architecture
-snapshot](docs/ARCHITECTURE-CURRENT-DEV.md) is refreshed automatically after
-every push to `dev` without rewriting the core contract.
+- **Combat:** act maps offer named boss destinations beyond the guaranteed rest; enemy inspectors show each move's damage, effects, windup and phase unlocks. Twelve enemies use the painted sprites from the Unity fork.
+- **Combat row:** Actions, Draw, centered End Turn, Discard (with separate Discard/Exhaust tabs), Potions at the far right. Potion rows show artwork and counts and expand inline; selecting or expanding one never consumes it. Weapon arts play from the hand.
+- **Traders:** armaments and mountable weapon arts alongside the usual stock. Inspect before buying, or sell an unequipped armament from storage; equipped items explain why they cannot be sold. Weapon arts install through the Armoury's card-mounting controls.
+- **Character creation:** attached foldout cards, folded by default, closing siblings as you open a choice. Text keeps readable minimums on phones.
+- **Armoury:** Character, Equipment, Inventory and Cards tabs, one natural page scroll each. Stats live in Character beside the figure; Cards shows the deck as large separate faces. Change on equipped gear browses compatible inventory; Show all items clears the filter.
+- **Motion:** card arrivals and actions respect Reduced motion (in-game setting *and* OS preference), and the Piles control retains the latest discard or exhaust outcome when animations are skipped.
 
-The stable Play link publishes the repository-root `AshenSpire.html` from `main`
-and follows the newest reviewed development build after GitHub Pages finishes
-deploying it; the builds index above serves the other branches' current builds
-beside it. This is a **development preview**, not a release, tag, or
-production approval. Release status remains governed separately and is currently
-**RED**.
+**Dodge feedback:** after a roll, select **Dodge succeeded** / **Dodge failed** beside your character for the roll, check, difficulty and base guard. Dodge grants Block on success — it does not guarantee avoiding the next attack.
 
-Work reaches `main` only when the owner merges it. `dev` is the integration
-branch, and since #632 a push to it publishes the builds site, so a change
-merged to `dev` appears at its own `dev/` address once that run finishes. What
-it does not do is move the stable Play link above, which follows `main` and is
-published only on the owner's own dispatch.
+See [CHANGELOG.md](CHANGELOG.md) for the PR and build behind each.
 
-For offline play, download [`AshenSpire.html`](AshenSpire.html) from the
-repository root and double-click it. It is a self-contained file and requires
-no installation.
+## Screenshots
 
-The root file is a discoverability alias for [`dist/AshenSpire.html`](dist/AshenSpire.html).
-Both are generated from [`build/AshenSpire.html`](build/AshenSpire.html) by
-`node tools/launch.mjs --build-only`, and `node tools/verify-shipped.mjs` fails if
-either copy differs from that build. The file is development evidence, not a
-release declaration; release status remains governed separately.
-
-## Current development screenshots
-
-These canonical images are captured from the exact `dev` tree by
-`node tools/screenshot.mjs`. Regenerate and review them whenever the development
-build changes; the visible build stamp ties each image to the tree that drew it.
-
-> **Look at any image you regenerate before you commit it.** `tools/screenshot.mjs`
-> sizes the *window* rather than the viewport, so under Chromium 141 it writes a
-> picture whose bottom band is blank and still **exits 0**. Measured 2026-08-21 at
-> `456b8ea`: its one-shot path produced **87 blank rows** at the bottom of a
-> 1440x860 capture, where a CDP capture of the same page at the same size produced
-> **0**. A green exit is not a good picture.
+Captured from the exact `dev` tree by `node tools/screenshot.mjs`; the visible build stamp ties each image to the tree that drew it.
 
 | Title | Act map | Combat |
 |---|---|---|
 | [![Current development title screen](docs/preview/title.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development act map](docs/preview/map.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development combat](docs/preview/combat.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) |
 
-The Armoury has dedicated Character, Equipment, Inventory and Cards tabs. Stats
-live in Character alongside the figure. Cards displays the complete deck as large,
-separate card faces. Choose Change on equipped gear to browse compatible inventory
-items; Show all items clears the filter. Each tab uses one natural page scroll.
+> **Look at any image you regenerate before you commit it.** `tools/screenshot.mjs` sizes the *window*, not the viewport, so under Chromium 141 it writes a picture with a blank bottom band and still **exits 0**. Measured 2026-08-21 at `456b8ea`: 87 blank rows on a 1440x860 capture where CDP produced 0. A green exit is not a good picture.
 
-Armoury previews: [Equipment](docs/preview/armoury-simple-equipment-1440.png),
-[Character](docs/preview/armoury-simple-character-1440.png),
-[Inventory](docs/preview/armoury-simple-inventory-1440.png),
-[Cards](docs/preview/armoury-simple-cards-1440.png), and
-[phone cards](docs/preview/armoury-simple-cards-390.png).
-The [menu control audit](docs/preview/menu-control-audit.md) records tested routes
-and remaining coverage limits.
-
-The in-game changelog is checked through the real title → Settings → Changelog route
-by `node tools/about-changelog.mjs`.
+More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-1440.png), [Character](docs/preview/armoury-simple-character-1440.png), [Inventory](docs/preview/armoury-simple-inventory-1440.png), [Cards](docs/preview/armoury-simple-cards-1440.png), [phone cards](docs/preview/armoury-simple-cards-390.png). Title flow: [folded wide](docs/preview/startup-folded-wide-1440x900.png), [folded phone](docs/preview/startup-folded-mobile-390x844.png), [title wide](docs/preview/title-menu-wide-1440x900.png), [Load phone](docs/preview/title-load-mobile-390x844.png). Catalog QA: [title family](docs/preview/component-catalog-title-wide-1440x900.png), [startup family](docs/preview/component-catalog-startup-mobile-390x844.png). Also the [class sprites](docs/preview/class-sprites.svg) and the [menu control audit](docs/preview/menu-control-audit.md).
 
 ## UI component library
 
-Use the [AshenSpire component catalog](docs/component-catalog.html) for the
-stable component IDs, model/factory names, renderers, reuse surfaces, and a
-distinct visual miniature for every component. Select any component card for its
-detail drawer; the [Folding Tray gallery](docs/tray-gallery.html) shows every
-top/right/bottom/left folded and unfolded state. The [Markdown catalog](docs/COMPONENT-CATALOG.md) is the
-chat-friendly reference. The [component model architecture](docs/COMPONENT-MODEL-ARCHITECTURE.md)
-defines the model, renderer, host, behavior, service, and infrastructure
-boundaries used as screens migrate. The [Folding Tray contract](docs/TRAY-COMPONENTS.md)
-defines the shared Top, Right, Bottom, and Left disclosure grammar. The
-[Armoury layout contract](docs/ARMOURY-LAYOUT-BRIEF.md) and
-[asset-component index](docs/ASSET-COMPONENTS.md) name the exact Character,
-Armaments, Inventory, Cards, Stats, card-hold, comparison, and resizing
-surfaces shown in the current build. Any merge or PR that changes a UI element
-or component must update the interactive and Markdown catalogs in the same
-origin-bound change and include `Changed catalog components: <id...>` plus this
-catalog link in its summary. If the surface has no stable ID, add one first.
+- **[Component catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html)** ([source](docs/component-catalog.html)) — stable component IDs, model/renderer names, reuse surfaces and a visual miniature per component. Select a card for its detail drawer.
+- **[Markdown catalog](docs/COMPONENT-CATALOG.md)** — the chat-friendly reference.
+- **[Folding Tray gallery](docs/tray-gallery.html)** — every top/right/bottom/left folded and unfolded state; the [Folding Tray contract](docs/TRAY-COMPONENTS.md) defines the grammar.
+- **[Component model architecture](docs/COMPONENT-MODEL-ARCHITECTURE.md)** — model, renderer, host, behavior, service and infrastructure boundaries.
+- **[Armoury layout contract](docs/ARMOURY-LAYOUT-BRIEF.md)** and **[asset-component index](docs/ASSET-COMPONENTS.md)** — the exact Character, Armaments, Inventory, Cards, Stats, card-hold, comparison and resizing surfaces.
+- The catalog decomposes the title flow as `startup-gate` (folded mark, deterministic ash, wordmark, subtitle, divider, input-family prompt), `title-menu` (six centered actions and their selection ornament) and `title-menu-modal` (Load/New heading, slot list, receipts and states, hold-to-delete, Back/Continue).
 
-The catalog now decomposes the complete title flow as reusable families:
-`startup-gate` contains the transparent-on-phone folded mark, deterministic ash,
-wordmark, subtitle, divider, and input-family prompt; `title-menu` contains the
-six centered actions and their selection ornament; and `title-menu-modal`
-contains the shared Load/New heading, slot list, slot receipts and states,
-hold-to-delete control, and Back/Continue action group. Reference captures:
-[folded wide](docs/preview/startup-folded-wide-1440x900.png),
-[folded phone](docs/preview/startup-folded-mobile-390x844.png),
-[title wide](docs/preview/title-menu-wide-1440x900.png), and
-[Load phone](docs/preview/title-load-mobile-390x844.png). Catalog QA is recorded
-at [title-family wide](docs/preview/component-catalog-title-wide-1440x900.png)
-and [startup-family phone](docs/preview/component-catalog-startup-mobile-390x844.png).
+**Rule:** any merge or PR that changes a UI element must update both catalogs in the same origin-bound change and include `Changed catalog components: <id...>` plus the catalog link in its summary. If the surface has no stable ID, add one first.
 
-More: the three [class sprites](docs/preview/class-sprites.svg).
+## Contributing
 
-## Playing
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — working rules: one task per branch, draft PRs into `dev`, only the owner merges to `main`.
+- **[DEVELOPER.md](DEVELOPER.md)** — build and test commands; how to add a card, relic, enemy or event.
+- **[Architecture map](docs/ARCHITECTURE-MAP.md)** — the stable composition/component contract. The [current-`dev` snapshot](docs/ARCHITECTURE-CURRENT-DEV.md) refreshes automatically after every push to `dev`.
+- **[QA testing](docs/QA-TESTING.md)** and the **[feature delivery loop](docs/FEATURE-DELIVERY-LOOP.md)** — the design → build → responsive playtest → evidence → documentation process. Latest write-up: [Smith modal design](docs/qa/2026-08-25-smith-modal-design.md).
+- **[Project #4](https://github.com/users/cehinds/projects/4)** owns workflow status; **[Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)** is the readable projection.
 
-**One-click (recommended):** double-click **`run.bat`** (Windows) or run **`./run.sh`**
-(macOS/Linux). This builds the standalone into `dist/`, serves the live app on
-`http://localhost:8080`, and opens it in your browser. Requires
-[Node.js](https://nodejs.org) (used only as a tiny static server + bundler — no
-packages to install).
+### Branches
 
-**Standalone file:** grab **[`AshenSpire.html`](AshenSpire.html)** from the root
-(or the byte-identical [`dist/AshenSpire.html`](dist/AshenSpire.html)) — the
-entire game compiled into one self-contained HTML file. Double-click to play,
-no server needed. (External music folders need http; see [dist/README.md](dist/README.md).)
+`feature/* → dev → release → main`
 
-**Manually:** open `index.html` via any static server:
+| Branch | Purpose |
+|---|---|
+| `main` | Stable, playable. Only receives merges from `release`. |
+| `release` | Release staging — final checks before `main`. |
+| `test` | QA / balance experiments that may never ship. Branched from `dev`. |
+| `dev` | Integration. Feature branches merge here. |
+| `feature/*` | One branch per unit of work, branched from `dev`, merged back via PR. |
 
-```
-node tools/serve.mjs      # zero-dependency, opens the browser
-# or
-npx serve .
-# or
-python -m http.server
-```
-
-No install, no framework, no build step for the source.
-
-## What is this?
-
-- **A run:** pick a class → traverse a branching map across 3 acts → fight enemies with a deck of cards → collect relics, flasks, and cinders → beat the final boss or die trying (seeded, reproducible runs).
-- **Four distinct classes:** Reaver leads with strike damage, Rogue with defense and actions, Starseer with magic, and Herald with a balanced martial-support kit. Their starting attributes and equipment are data-owned and validated through the shared character-creation flow.
-- **One component kit, and one run HUD built from it:** every screen is drawn from one kit of shared pieces — one meter, one swatch, one page door, one modal chrome with the same way out in the same corner — rather than each screen carrying its own. Map and Combat compose the same model-driven header, vitals, Quick Access, relic, and potion components from that kit. Stable IDs and tuning tokens are documented in the component catalog so UI changes name the exact surface they affect.
-- **One data-driven Armoury:** Character, Inventory, and Hybrid are presentations of the same equipment owner. Character places the contained figure beside expandable Combat Power, Attributes, and Relics; Inventory pairs procedural Armaments with the one shared carried-item list; Hybrid keeps the compact Character stack beside Armaments. Armaments, Inventory, Cards, and Stats use the shared Folding Tray grammar. Equipment cards drag as one surface and, when hold-confirm is enabled, fill across the whole folded or expanded card while equipping, moving, or unequipping. The fixed authored attack slots rebind in place to the active weapon package: a lone left- or right-hand weapon owns all of them, dual wield splits them right-first without deck growth, and the comparison receipt shows the exact before/after counts.
-- **You can re-arm during a fight:** the combat Armoury lets you equip, move, or remove carried weapons and armour on your turn, instead of limiting you to the sets prepared beforehand. Re-arming a position costs the same Energy as switching a prepared weapon set, and the change lands immediately — equipment cards, HP/MP/SP limits, Poise, and the item in each position all update inside the current fight, and the new loadout stays with you when the fight ends. A change you cannot afford is refused without spending Energy or moving anything.
-- **Every card has an owner, and a smith can change it:** a card your equipment lends you belongs to that item. Take the weapon or the armour off and its cards leave with it; put it back and they return — mid-fight and across a save, not only on the Armoury screen. At a Shrine, and at a merchant who rolled a smith, **Extract a Card** lifts a card out of the item that lends it and makes it yours for good, and **Seat a Card** puts one of your own into an open mount. An emptied mount is never dead: it shows a fallback — the Dodge Roll for a weapon-art mount — until something else is seated. Which cards can be lifted is a tag on the card, and the price and who offers the service are tables, so both change without code. No shipped weapon authors a card package yet, so until content does, the smith will tell you there is nothing to work on.
-- **The deck cap is a creation rule:** the starting deck size governs the basic strikes and defends dealt at character creation, and nothing else. The cards your equipment brings are dealt first and are never capped or dropped, and after creation the cap does not apply at all — your deck floats with your gear, by design.
-- **Painted class figures, in the builder and in the fight:** the figure you pick at character creation is the painted concept design for that class, and it is the same figure you fight as — cut from the owner's pose sheets, animated when you attack, and turned to face whoever it is fighting. Your tint colours the garment rather than just the outline, keeping the painting's own light and shadow. **The armour you equip changes that figure:** each of the twelve alternative armour sets has its own painted figure in combat and in the Armoury, and a set without one falls back to the class figure rather than leaving you without a figure at all. The attack plays four frames, the forward thrust landing before the downward slash. These figures were made with AI image-generation models; the game's AI disclosure and CREDITS say so.
-- **The battlefield answers what you point at:** hover a status effect, land the focus cursor on it, or tap it, and it says what it does and how far its build-up or countdown has run; the build-up bars under an enemy answer the same way. Hover or tap either fighter — yours included — for the glance: HP, Poise and effects, with **I** for the full read. When a card is armed, a tap on a target is still a play.
-- **Faithful StS mechanics:** 3 energy / draw 5 turns, block that expires, telegraphed enemy intents, exhaust/ethereal/retain keywords, exact StS damage-order math.
-- **Elden Ring flavor with real mechanics:** Bleed as a build-up meter that bursts for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and a Poise/Stagger system that skips enemy turns and opens damage windows.
-- **Equip load and Weight Class:** what your hands and armour weigh counts against a capacity set by Constitution and Strength, and the percentage lands you in Light, Medium or Heavy. The Armoury shows the load, the capacity and the class, and comparing a piece shows the load and class the swap would leave you at.
-- **Stamina, and hands that fight empty:** a turn in which you spend no Stamina recovers some at its end, and the Dodge Roll checks Dexterity against a d20 to land a temporary guard. Its price is your Weight Class — Light 1 Stamina, Medium 2 Stamina and 1 action, Heavy 3 Stamina and 2 actions — quoted the same way on the card face, in the tooltip and by the engine. An empty hand brings the Dodge Roll to your deck: with one hand armed the armed hand keeps its own technique, with both hands empty every guard slot is Evasive Guard and every technique slot the Dodge Roll. A shield counts as a full hand.
-- **Quests that remember what you did:** an event choice is written into your run's history, and a quest step your history has not earned is kept out of the event pool entirely. Earn it and it becomes eligible at the Unknown nodes of maps built after that — a chance the map rolls, not a node that opens on cue — and a step you have already answered never comes back. The Grave of the Nameless is the first chain: dig for cinders and the keeper may come to collect, or pay your respects and be thanked with the Gravetender's Bell, a relic no shop or drop will ever hand over.
-- **Forsaken Together — LAN co-op:** a party shares one map, votes on the fork and fights one shared combat, each seat playing its own deck, relics and flasks. Events are answered seat by seat, and a seat that drops out comes back to a catch-up queue that replays what it missed against the choices its history had earned at the time. Served by the launcher's own Node server, so a `file://`-opened build stays single-player.
-- **Character creation, one panel at a time:** six folded picks — class, starting kit, keepsake, sigil, tint, sprite — each pick opens the next, and the column reads your choices back in words. Below them, **starting armour** and **stat points** sit open as rows of their own: both change the run, so neither folds, and editing them never marches you on to the next section. Mouse, keyboard, and pad all walk the same flow; pressing Confirm repeatedly accepts the defaults.
-- **Rewards you open before you collect:** post-fight spoils are a menu — cinders, cards, flasks, armaments, relics — and nothing joins your run until you take it, so you can look first and back out unchanged. A reward you have no room for says so on its own row, and is the only row that offers Skip. Continue is always pressable; Settings → Advanced → Reward collection decides whether it sweeps up the rest for you or simply means *done*.
-- **A merchant who buys back:** the shop is five collapsing bars — cards, relics, flasks, remove-a-card, and Sell — one open at a time. He buys back relics and flasks at half his own cheapest price, and the Sell bar can be switched off entirely in Settings.
-- **An in-game development changelog:** Settings → Changelog reads the repository changelog as concise expandable rows, while development build stamps link back to the exact source repository and release-shaped standalone files remain inert.
-- **Responsive browser play:** portrait and fitting short-wide landscape layouts stay playable down to 340 CSS pixels high; smaller viewports show a clear, recoverable short-screen warning instead of a clipped board — a warning that reads whole even at the largest accessibility text size. Fullscreen is one toggle, first under Settings → Display.
-
-Full design: **[SPEC.md](SPEC.md)** (rules, schemas, numbers) and **[docs/GDD.md](docs/GDD.md)** (design intent, UI mockups, art direction). The original brief: **[PROMPT.md](PROMPT.md)**.
-
-## Roadmap
-
-| Milestone | Scope | Status |
-|---|---|---|
-| **M1** | Combat vertical slice — Reaver class, 24 cards, Act 1 enemies + elite + boss, full combat UI | **shipped** |
-| **M2** | The run — map generation, rewards, relics, flasks, shops, events, save/continue, seeds | **shipped** |
-| **M3** | Content — Rogue, Starseer & Herald classes, Acts 2–3, full relic/event pools, balance pass | **core content shipped**: 4 classes, 3 acts, 40 relics, 10 events, ~30 cards/class + colorless, first balance pass ([BALANCE.md](docs/BALANCE.md)). Deeper pools (~50) & win-rate tuning await playtest telemetry (M4) |
-| **M4** | Polish — fx, run history, keyboard shortcuts, asset pass | **shipped**: fx, customization, run-history + win-rate telemetry, keyboard shortcuts (1–9 / E / Esc), first-run tutorial, sfx hooks, DEVELOPER.md walkthroughs + perf notes, placeholder art tuned across all acts. Bundling real external art/audio is a deliberate v1 deferral (SPEC §11 non-goal) — the generated-placeholder system is the shipped visual style |
-
-Acceptance criteria per milestone are in [SPEC.md §9](SPEC.md).
-
-## Repository layout
+### Repository layout
 
 ```
 PROMPT.md        the build brief
 SPEC.md          the full design + technical specification (source of truth)
 AshenSpire.html  current standalone development build (root convenience copy)
-index.html       game entry point (lands with M1)
+index.html       game entry point
 styles/          CSS
 src/model/       schemas, registries, formula evaluator, validation
 src/engine/      generic interpreters + procedural generators — no DOM access
 src/content/     ALL game data: cards, statuses, enemies, relics, events, tuning
 src/ui/          rendering and input
 tests/           headless engine tests (open tests/index.html, expect all green)
-DEVELOPER.md     how to add a card/relic/enemy/event (lands with M1)
+DEVELOPER.md     how to add a card/relic/enemy/event
 docs/            design, component, and development-coordination documentation
 CREDITS.md       every asset's source and license
 ```
 
 Design rule: adding a new card touches exactly **one** file in `src/content/`.
 
-## Branches
+## Roadmap
 
-| Branch | Purpose |
-|---|---|
-| `main` | Stable, playable. Only receives merges from `release`. |
-| `release` | Release staging — final checks before merging to `main`. |
-| `dev` | Integration branch. Feature branches merge here. |
-| `test` | Balance/playtest experiments that may never ship. Branched from `dev`. |
-| `feature/*` | One branch per unit of work (e.g. `feature/m1-combat-slice`), branched from `dev`, merged back via PR. |
+| Milestone | Scope | Status |
+|---|---|---|
+| **M1** | Combat vertical slice — Reaver, 24 cards, Act 1 enemies + elite + boss, full combat UI | **shipped** |
+| **M2** | The run — map generation, rewards, relics, flasks, shops, events, save/continue, seeds | **shipped** |
+| **M3** | Content — Rogue, Starseer & Herald, Acts 2–3, full relic/event pools, balance pass | **core shipped**: 4 classes, 3 acts, 40 relics, 10 events, ~30 cards/class + colorless, first balance pass ([BALANCE.md](docs/BALANCE.md)). Deeper pools (~50) and win-rate tuning await M4 telemetry |
+| **M4** | Polish — fx, run history, keyboard shortcuts, asset pass | **shipped**: fx, customization, run-history + win-rate telemetry, shortcuts (1–9 / E / Esc), first-run tutorial, sfx hooks, walkthroughs + perf notes, placeholder art tuned across all acts. Bundling external art/audio is a deliberate v1 deferral (SPEC §11) |
 
-Flow: `feature/* → dev → release → main`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Acceptance criteria per milestone: [SPEC.md §9](SPEC.md).
 
 ## Legal
 
-Code is MIT ([LICENSE](LICENSE)). This is a fan-inspired original work: it contains **no** FromSoftware assets, music, or proper nouns, and is not affiliated with or endorsed by FromSoftware or Bandai Namco. All art assets are CC0/CC-BY/OFL and attributed in [CREDITS.md](CREDITS.md).
-
-## Dodge feedback and motion
-
-After a Dodge roll, select **Dodge succeeded** or **Dodge failed** beside your character to inspect the last result. The explanation shows the roll, check, difficulty and base guard. Dodge grants Block on success; it does not guarantee avoiding the next attack. Block modifiers and retention effects still apply.
-
-Armoury card scrolling honors both the in-game Reduced motion setting and your operating system preference.
+Code is MIT ([LICENSE](LICENSE)). A fan-inspired original work: **no** FromSoftware assets, music or proper nouns; not affiliated with or endorsed by FromSoftware or Bandai Namco. All art assets are CC0/CC-BY/OFL and attributed in [CREDITS.md](CREDITS.md).
