@@ -38,13 +38,14 @@ try {
     const cdp = await context.newCDPSession(page);
     const flick = async (distance, finish = 'release', side = 0) => {
       const b = await card.boundingBox(); const x = b.x + b.width / 2, y = Math.min(viewport.height - 25, b.y + b.height * .65);
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+      let gestureTime = Date.now() / 1000;
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', timestamp: gestureTime, touchPoints: [{ x, y }] });
       for (let n = 1; n <= 5; n++) {
-        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + side * n / 5, y: y - distance * n / 5 }] });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', timestamp: gestureTime += .016, touchPoints: [{ x: x + side * n / 5, y: y - distance * n / 5 }] });
         await page.waitForTimeout(10);
       }
       const drop = await page.locator('.drop-verdict').textContent();
-      if (finish === 'pause') await page.waitForTimeout(180);
+      if (finish === 'pause') { await page.waitForTimeout(180); gestureTime += .180; }
       if (finish === 'blur') await page.evaluate(() => window.dispatchEvent(new Event('blur')));
       if (finish === 'capture') await page.evaluate(() => {
         const card = document.querySelector('.hand .drag-source');
@@ -53,8 +54,8 @@ try {
       if (finish === 'modal') await page.evaluate(() => {
         const veil = document.createElement('div'); veil.className = 'modal-veil'; veil.id = 'qa-blocking-modal'; document.body.append(veil);
       });
-      if (finish === 'return') await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - 10 }] });
-      await cdp.send('Input.dispatchTouchEvent', { type: finish === 'cancel' ? 'touchCancel' : 'touchEnd', touchPoints: [] });
+      if (finish === 'return') await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', timestamp: gestureTime += .016, touchPoints: [{ x, y: y - 10 }] });
+      await cdp.send('Input.dispatchTouchEvent', { type: finish === 'cancel' ? 'touchCancel' : 'touchEnd', timestamp: gestureTime += .016, touchPoints: [] });
       await page.waitForTimeout(150);
       if (finish === 'modal') await page.locator('#qa-blocking-modal').evaluate(el => el.remove());
       return drop;
@@ -78,12 +79,13 @@ try {
     if (touch) {
       const b = await page.locator('[data-flick-practice]').boundingBox();
       const x = b.x + b.width / 2, y = b.y + b.height - 30;
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+      let gestureTime = Date.now() / 1000;
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', timestamp: gestureTime, touchPoints: [{ x, y }] });
       for (let n = 1; n <= 5; n++) {
-        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - n * 16 }] });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', timestamp: gestureTime += .016, touchPoints: [{ x, y: y - n * 16 }] });
         await page.waitForTimeout(10);
       }
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', timestamp: gestureTime += .016, touchPoints: [] });
       check((await page.locator('[data-flick-practice] output').innerText()).includes('Flick accepted'), shape + ': practice uses the flick recognizer');
       check(await state() === before, shape + ': practice never spends a card');
     }
@@ -141,12 +143,15 @@ try {
     const before = await page.evaluate(() => ({ count: window.__combat.piles.hand.length, block: window.__combat.player.block, energy: window.__combat.player.energy, hp: window.__combat.enemies.map(e => e.hp) }));
     const b = await page.locator('.hand .card').boundingBox();
     const x = b.x + b.width / 2, y = b.y + b.height * .65;
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+    // This fixture asserts routing, not host scheduling. Explicit event times
+    // keep a loaded test machine from turning the intended flick into a slow drag.
+    let gestureTime = Date.now() / 1000;
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', timestamp: gestureTime, touchPoints: [{ x, y }] });
     for (let n = 1; n <= 5; n++) {
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - 16 * n }] });
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', timestamp: gestureTime += .016, touchPoints: [{ x, y: y - 16 * n }] });
       await page.waitForTimeout(10);
     }
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', timestamp: gestureTime += .016, touchPoints: [] });
     await page.waitForTimeout(1600);
     const after = await page.evaluate(() => ({ count: window.__combat.piles.hand.length, block: window.__combat.player.block, energy: window.__combat.player.energy, hp: window.__combat.enemies.map(e => e.hp) }));
     check(scenario.disabled || scenario.dead ? JSON.stringify(before) === JSON.stringify(after)

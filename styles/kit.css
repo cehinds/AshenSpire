@@ -692,6 +692,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
 .card[data-small="true"] { transform: scale(0.92); }
 /* CostMedallion — top-left, outside the frame, the only element allowed to break the edge. */
+.card .card-costs { display: contents; }
 .card .cost, .as-cost {
   position: absolute; top: -1rem; left: -1rem;
   display: grid; place-items: center;
