@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "Card flicks choose targets across pointer devices",
     "detail": "Flick upward with touch, mouse, trackpad dragging or pen to play on the nearest legal target without reaching it. Card flick settings and practice now describe the same behavior; saved distance preferences, selection and Information remain available.",
-    "build": "0.6.0.50",
+    "build": "0.6.0.52",
     "pullRequest": 870,
     "url": "https://github.com/cehinds/AshenSpire/pull/870"
   },
@@ -18,19 +18,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "Card flick input parity has an explicit specification",
     "detail": "Specify shared pointer behavior and preserve existing distance, speed and cancellation rules.",
-    "build": "0.6.0.48",
+    "build": "0.6.0.51",
     "pullRequest": 869,
     "url": "https://github.com/cehinds/AshenSpire/pull/869"
   },
   {
-    "id": "pr-864",
+    "id": "pr-867",
     "date": "2026-09-09",
     "group": "2026-09-09",
-    "summary": "Pose Studio exposes direct effect editing",
-    "detail": "Resize and remove effects directly, edit named timeline strips and drop effects at the requested time and layer with mouse or touch.",
-    "build": "0.6.0.47",
-    "pullRequest": 864,
-    "url": "https://github.com/cehinds/AshenSpire/pull/864"
+    "summary": "Combat controls stay in one row and maps show a cleaner HUD",
+    "detail": "Center Actions, Draw, End Turn, Discard/Exhaust and Potions together, with flexible pile widths. Hide the potion and relic strip on maps in both HUD modes while retaining combat inventory controls.",
+    "build": "0.6.0.51",
+    "pullRequest": 867,
+    "url": "https://github.com/cehinds/AshenSpire/pull/867"
   },
   {
     "id": "pr-862",
@@ -41,6 +41,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.48",
     "pullRequest": 862,
     "url": "https://github.com/cehinds/AshenSpire/pull/862"
+  },
+  {
+    "id": "pr-864",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Pose Studio supports direct effect and timeline editing",
+    "detail": "Resize effects with visible handles, edit timeline cues directly and use accessible alternatives in the studio.",
+    "build": "0.6.0.47",
+    "pullRequest": 864,
+    "url": "https://github.com/cehinds/AshenSpire/pull/864"
+  },
+  {
+    "id": "pr-832",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Explore World Journey with grounded, stable combat formations",
+    "detail": "Explore a seeded atlas with local locations and regional paintings. Combat keeps fixed formations and proportional card fans across turns, with player and enemy turn banners and inactive cards remaining visible during enemy playback.",
+    "build": "0.6.0.47",
+    "pullRequest": 832,
+    "url": "https://github.com/cehinds/AshenSpire/pull/832"
   },
   {
     "id": "pr-850",
