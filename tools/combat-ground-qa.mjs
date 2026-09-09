@@ -7,11 +7,9 @@ const base = process.env.COMBAT_QA_URL || 'http://localhost:8210/AshenSpire.html
 const out = resolve(process.env.COMBAT_QA_OUT || 'docs/preview/combat-ground');
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
-const page = await browser.newPage();
 const errors = [], results = [], shots = [];
-page.on('pageerror', e => errors.push(e.message));
 const regions = ['ashen-crown', 'hollow-weald', 'pale-marches', 'cinder-reach', 'drowned-coast'];
-async function settle() {
+async function settle(page) {
   await page.waitForFunction(() => {
     const field = document.querySelector('.field');
     return Number(field?.dataset.groundY) > 0 && [...document.querySelectorAll('.enemy-pose-idle,.painted-stage .pose-frame')].every(i => i.complete && i.naturalWidth);
@@ -24,7 +22,7 @@ async function settle() {
     return field && art && feet.length && Math.abs(field.height - art.height) < 1 && Math.max(...feet) - Math.min(...feet) < 1;
   }, null, { timeout: 8000 });
 }
-async function check() {
+async function check(page) {
   const result = await page.evaluate(() => {
     const field = document.querySelector('.field').getBoundingClientRect();
     const backdrop = document.querySelector('.environment-backdrop');
@@ -38,7 +36,7 @@ async function check() {
     const floor = { top, bottom, height: bottom - top };
     const sprites = [...document.querySelectorAll('.combatant .sprite')];
     const feet = sprites.map(s => s.getBoundingClientRect().bottom);
-    const images = [...document.querySelectorAll('.enemy-pose-idle,.painted-stage .pose-frame')];
+    const images = [...document.querySelectorAll('.enemy-pose-idle,.painted-stage .pose-frame')].filter(i => getComputedStyle(i).display !== 'none');
     const anchors = images.map(i => {
       const r = i.getBoundingClientRect();
       return r.top + r.height * (i.classList.contains('enemy-pose-idle') ? 364 / 384 : 600 / 640);
@@ -62,36 +60,40 @@ async function check() {
     (base.includes('AshenSpire.html') && !result.embedded)) throw Error(JSON.stringify(result));
   results.push(result);
 }
-async function scene(region, floor) {
+async function scene(page, region, floor) {
   // Select the painting at combat mount, where normal encounters select it.
   await page.goto(`${base}?shot=combat&shotScene=${region}-${floor + 1}`);
   await page.locator('.enemy-pose-idle').first().waitFor();
-  await settle();
+  await settle(page);
   const actual = await page.locator('.environment-backdrop').getAttribute('data-scene');
   if (actual !== `${region}-${floor + 1}`) throw Error(`Wrong preview scene: ${actual}`);
 }
-async function shot(name, fieldOnly = false) {
+async function shot(page, name, fieldOnly = false) {
   const file = `${name}.png`;
   await (fieldOnly ? page.locator('.field') : page).screenshot({ path: resolve(out, file) });
   shots.push(file);
 }
 try {
-  for (const size of [{ width: 1440, height: 1080 }, { width: 794, height: 893 }, { width: 390, height: 844 }, { width: 844, height: 390 }]) {
-    await page.setViewportSize(size);
+  const runs = await Promise.allSettled([{ width: 1440, height: 1080 }, { width: 794, height: 893 }, { width: 390, height: 844 }, { width: 844, height: 390 }].map(async size => {
+    const page = await browser.newPage({ viewport: size });
+    page.on('pageerror', e => errors.push(e.message));
     for (const region of regions) for (let floor = 0; floor < 4; floor++) {
-      await scene(region, floor);
-      await check();
-      const id = results.at(-1).scene;
-      if (size.width === 1440) await shot(id, true);
-      if (id === 'cinder-reach-4' || (size.width === 390 && id === 'pale-marches-4')) await shot(`${id}-${size.width}`);
+      await scene(page, region, floor);
+      await check(page);
+      const id = `${region}-${floor + 1}`;
+      if (size.width === 1440) await shot(page, id, true);
+      if (id === 'cinder-reach-4' || (size.width === 390 && id === 'pale-marches-4')) await shot(page, `${id}-${size.width}`);
     }
     console.log(`PASS: 20 distinct scenes at ${size.width}x${size.height}`);
-  }
-  // Resize and reduced motion retain the same grounded arrangement.
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await settle();
-  await check();
+    if (size.width === 844) {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await settle(page);
+      await check(page);
+    }
+    await page.close();
+  }));
+  for (const run of runs) if (run.status === 'rejected') throw run.reason;
   if (errors.length) throw Error(errors.join('\n'));
   if (new Set(results.map(r => r.scene)).size !== 20) throw Error('Did not visit all twenty scenes');
   writeFileSync(resolve(out, 'checks.json'), JSON.stringify({ base, results, errors }, null, 2));

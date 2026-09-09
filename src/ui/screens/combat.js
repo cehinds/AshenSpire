@@ -1146,6 +1146,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderPlayer() {
     const zone = $('.player-zone');
+    const posePresentation = stageFor(zone)?.presentation;
     stageFor(zone)?.dispose?.();
     zone.innerHTML = '';
     const p = combat.player;
@@ -1216,7 +1217,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       else showCombatantContext(box, 'player', p);
     });
     zone.appendChild(box);
-    stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder));
+    stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { resume: posePresentation, immediate: !posePresentation });
   }
 
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's

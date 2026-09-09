@@ -1,0 +1,143 @@
+{
+  "checks": [
+    {
+      "classId": "rogue",
+      "standalone": false,
+      "width": 1440,
+      "realCard": "smokePellet",
+      "pose": "prepared",
+      "images": true,
+      "overflow": false
+    },
+    {
+      "classId": "rogue",
+      "standalone": false,
+      "width": 390,
+      "realCard": "smokePellet",
+      "pose": "prepared",
+      "images": true,
+      "overflow": false
+    },
+    {
+      "classId": "starseer",
+      "standalone": false,
+      "width": 1440,
+      "realCard": "crystalBarrier",
+      "pose": "starstoneCharge",
+      "images": true,
+      "overflow": false
+    },
+    {
+      "classId": "starseer",
+      "standalone": false,
+      "width": 390,
+      "realCard": "crystalBarrier",
+      "pose": "starstoneCharge",
+      "images": true,
+      "overflow": false
+    },
+    {
+      "classId": "herald",
+      "standalone": false,
+      "width": 1440,
+      "realCard": "stigmataCard",
+      "pose": "bloodRite",
+      "images": true,
+      "overflow": false
+    },
+    {
+      "classId": "herald",
+      "standalone": false,
+      "width": 390,
+      "realCard": "stigmataCard",
+      "pose": "bloodRite",
+      "images": true,
+      "overflow": false
+    },
+    {
+      "classId": "rogue",
+      "standalone": true,
+      "width": 1440,
+      "realCard": "smokePellet",
+      "pose": "prepared",
+      "images": true,
+      "overflow": false
+    },
+    {
+      "classId": "rogue",
+      "standalone": true,
+      "width": 390,
+      "realCard": "smokePellet",
+      "pose": "prepared",
+      "images": true,
+      "overflow": false
+    },
+    {
+      "classId": "starseer",
+      "standalone": true,
+      "width": 1440,
+      "realCard": "crystalBarrier",
+      "pose": "starstoneCharge",
+      "images": true,
+      "overflow": false
+    },
+    {
+      "classId": "starseer",
+      "standalone": true,
+      "width": 390,
+      "realCard": "crystalBarrier",
+      "pose": "starstoneCharge",
+      "images": true,
+      "overflow": false
+    },
+    {
+      "classId": "herald",
+      "standalone": true,
+      "width": 1440,
+      "realCard": "stigmataCard",
+      "pose": "bloodRite",
+      "images": true,
+      "overflow": false
+    },
+    {
+      "classId": "herald",
+      "standalone": true,
+      "width": 390,
+      "realCard": "stigmataCard",
+      "pose": "bloodRite",
+      "images": true,
+      "overflow": false
+    },
+    {
+      "coopRenderer": 1440,
+      "authoritativeSnapshots": true,
+      "poses": [
+        "prepared",
+        "starstoneCharge",
+        "bloodRite"
+      ],
+      "duplicateReceipt": true,
+      "transport": "snapshot replay, not sockets"
+    },
+    {
+      "coopRenderer": 390,
+      "authoritativeSnapshots": true,
+      "poses": [
+        "prepared",
+        "starstoneCharge",
+        "bloodRite"
+      ],
+      "duplicateReceipt": true,
+      "transport": "snapshot replay, not sockets"
+    },
+    {
+      "offlineGallery": true,
+      "queuedReactions": [
+        "hp",
+        "heal",
+        ""
+      ]
+    }
+  ],
+  "errors": []
+}

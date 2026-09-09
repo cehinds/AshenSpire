@@ -106,9 +106,9 @@ export function wireBattlefieldStage(field, model) {
         .filter(Boolean);
       if (!measures.length) return;
       const belowFeet = Math.max(...measures.map(m => m.naturalCardHeight - m.spriteHeight * m.spriteZoom));
-      const scale = measures.reduce((least, m) => Math.min(least, m.fits,
+      const scale = Math.max(0.01, measures.reduce((least, m) => Math.min(least, m.fits,
         (m.availableHeight * model.tokens.centerHeightRatio - m.leadingHeight - m.gap - FLOOR_GAP_PX / m.uiZoom)
-          / Math.max(1, m.spriteHeight * m.spriteZoom + belowFeet)), Infinity);
+          / Math.max(1, m.spriteHeight * m.spriteZoom + belowFeet)), Infinity));
       // Reserve the tallest information strip, then align sprite foot anchors
       // instead of card bottoms (enemy names must not lift their feet).
       const groundY = Math.min(...measures.map(m =>

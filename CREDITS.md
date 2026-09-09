@@ -117,3 +117,11 @@ Twenty original location paintings in five source sheets under
 the project's own regional concept boards. Runtime WebP atlases are encoded by
 `tools/environment-art-build.mjs`. Prompt briefs and panel order are documented
 beside the source sheets. Project-owned AI-generated artwork, CC0-1.0.
+
+## Readiness transition sprites (2026-09-08)
+
+Twelve additional project-owned CC0-1.0 pose illustrations created with the
+built-in OpenAI imagegen tool from the readiness outfit references. First-party
+sources: `art/readiness-poses/sources/*-transition.png`; exact prompts:
+`art/readiness-poses/transition-generation.json`. Exported to transparent WebP
+through `tools/readiness-poses-ship.mjs`.
