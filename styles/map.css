@@ -250,7 +250,7 @@
 .atlas-scrollport { width:100%; max-height:calc(100vh - 205px); min-height:320px; overflow:auto; border:1px solid #8a744d; background:#9d8051; box-shadow:0 10px 45px #0006; }
 .atlas-world { position:relative; width:calc(100% * var(--atlas-zoom)); min-width:600px; aspect-ratio:1; isolation:isolate; }
 .atlas-terrain { display:block; position:absolute; inset:0; width:100%; height:100%; }
-.atlas-unmapped { opacity:.28; filter:sepia(1) grayscale(1); }
+.atlas-unmapped { opacity:.18; }
 .atlas-roads path { stroke:#322a1c; stroke-width:3.5; fill:none; stroke-dasharray:4 4; }
 .atlas-roads .traveled { stroke:#e9c477; stroke-width:4; stroke-dasharray:none; }
 .atlas-node { position:absolute; z-index:2; transform:translate(-50%,-50%); width:44px; height:44px; padding:0; background:none; border:0; cursor:pointer; display:grid; place-items:center; }
@@ -330,3 +330,15 @@ dialog.atlas-dialog.modal-veil[open] { display:block; padding:0; background:#1b1
 
 /* Keep map navigation clear of the combat inventory strip, including its hit targets. */
 .mapscreen .shared-hud .hud-bottom { display:none; }
+
+/* Atlas profiles use the same compact circular node vocabulary as traditional runs. */
+.atlas-node .atlas-node-ring { width:30px; height:30px; font-size:17px; box-shadow:none; border-color:var(--map-structure,#806b49); }
+.atlas-node.reachable .atlas-node-ring { border-color:var(--gold); background:#312619; }
+.atlas-node.visited .atlas-node-ring { border-color:#c3953c; }
+.atlas-node.current .atlas-node-ring { outline:2px solid #ffe4a3; outline-offset:3px; }
+.atlas-node-label { top:40px; max-width:130px; white-space:normal; text-align:center; pointer-events:none; }
+@media (max-width:600px) {
+ .atlas-node-label { display:none; }
+ .atlas-scrollport { box-shadow:none; }
+ .atlas-world { min-width:0; }
+}

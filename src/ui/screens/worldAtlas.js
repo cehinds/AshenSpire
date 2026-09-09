@@ -7,19 +7,9 @@ import {
 } from "../../model/worldAtlas.js";
 import { esc } from "../components/tooltip.js";
 import { assetUrl } from "../assetmap.js";
-const icons = {
-  start: "♜",
-  city: "♜",
-  dungeon: "♜",
-  fight: "⚔",
-  shrine: "✦",
-  treasure: "◇",
-  landmark: "◈",
-  service: "●",
-  quest: "!",
-  gate: "↗",
-  boss: "⚔",
-};
+import { nodeIcon } from '../uiContent.js';
+// World-specific places project onto the established run-node vocabulary.
+const traditionalType = type => ({start:'shrine',city:'merchant',dungeon:'boss',landmark:'event',service:'merchant',quest:'event',gate:'event'}[type] || type);
 const uri = (id) => assetUrl(ATLAS.assets[id]?.uri);
 const pct = (n) => `${(n * 100).toFixed(2)}%`;
 const button = (label, attrs = "") =>
@@ -64,8 +54,8 @@ export function mountWorldAtlas(
   };
   app.innerHTML = `<section class="mapscreen world-atlas-screen"><header class="atlas-header"><div><span class="atlas-eyebrow">WORLD JOURNEY · ${esc(p.displayName)}</span><h1>${esc(map.displayName)}</h1></div><div class="atlas-header-actions"><span class="atlas-vitals">${run.hp} / ${run.maxHp} HP · ${run.cinders} cinders</span>${button("Armoury", "data-atlas-armoury")}${button("Menu", "data-atlas-menu")}${button("Save & quit", "data-atlas-quit")}</div></header>
  <div class="atlas-layout"><div class="atlas-map-column"><div class="atlas-map-tools"><span>At <strong>${esc(current.displayName)}</strong></span><div>${button("−", 'data-atlas-zoom="-1" aria-label="Zoom out"')}${button("Fit", 'data-atlas-zoom="0"')}${button("You", 'data-atlas-center')}${button("+", 'data-atlas-zoom="1" aria-label="Zoom in"')}</div></div>
- <div class="atlas-scrollport" tabindex="0" aria-label="World map; scroll to explore"><div class="atlas-world" style="--atlas-zoom:${j.view?.zoom || 1}"><svg class="atlas-terrain" viewBox="0 0 1000 1000" aria-hidden="true"><defs><filter id="atlas-unmapped"><feGaussianBlur stdDeviation="3"/></filter><radialGradient id="atlas-reveal"><stop offset="60%" stop-color="white"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient><mask id="atlas-fog" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" style="mask-type:alpha">${[...known].map((id) => `<circle cx="${pos[id].x * 1000}" cy="${pos[id].y * 1000}" r="${p.revealRadius * 1000}" fill="url(#atlas-reveal)"/>`).join("")}</mask></defs>
- <rect width="1000" height="1000" fill="#ba9b69"/><image href="${esc(art)}" width="1000" height="1000" class="atlas-unmapped" filter="url(#atlas-unmapped)"/><image href="${esc(art)}" width="1000" height="1000" ${authoring ? "" : 'mask="url(#atlas-fog)"'}/>
+ <div class="atlas-scrollport" tabindex="0" aria-label="World map; scroll to explore"><div class="atlas-world" style="--atlas-zoom:${j.view?.zoom || 1}"><svg class="atlas-terrain" viewBox="0 0 1000 1000" aria-hidden="true"><defs><radialGradient id="atlas-reveal"><stop offset="60%" stop-color="white"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient><mask id="atlas-fog" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" style="mask-type:alpha">${[...known].map((id) => `<circle cx="${pos[id].x * 1000}" cy="${pos[id].y * 1000}" r="${p.revealRadius * 1000}" fill="url(#atlas-reveal)"/>`).join("")}</mask></defs>
+ <rect width="1000" height="1000" fill="#ba9b69"/><image href="${esc(art)}" width="1000" height="1000" class="atlas-unmapped"/><image href="${esc(art)}" width="1000" height="1000" ${authoring ? "" : 'mask="url(#atlas-fog)"'}/>
  <g class="atlas-roads">${journeyEdges(j)
    .filter((e) => known.has(e.fromNodeId) && known.has(e.toNodeId))
    .map(
@@ -80,10 +70,10 @@ export function mountWorldAtlas(
    .map((id) => {
      const n = a.nodes[id],
        core = !!a.localByOwner[id];
-     return `<button type="button" class="atlas-node ${core ? "atlas-core" : ""} ${reachable.has(id) ? "reachable" : ""} ${done.has(id) ? "completed" : ""} ${id === j.currentNodeId ? "current" : ""}" style="left:${pct(pos[id].x)};top:${pct(pos[id].y)}" data-atlas-node="${esc(id)}" aria-label="${esc(n.displayName)}${id === j.currentNodeId ? ", current location" : reachable.has(id) ? ", road available" : ""}">${core ? `<span class="atlas-landmark">${coreArt(id)}</span>` : ""}<span class="atlas-node-ring">${done.has(id) ? "✓" : icons[n.nodeTypeId] || "◆"}</span>${core ? `<span class="atlas-node-label">${esc(n.displayName)}</span>` : ""}</button>`;
+     return `<button type="button" class="atlas-node map-node ${core ? "atlas-core" : ""} ${reachable.has(id) ? "reachable" : ""} ${done.has(id) ? "completed visited" : ""} ${id === j.currentNodeId ? "current" : ""}" style="left:${pct(pos[id].x)};top:${pct(pos[id].y)}" data-atlas-node="${esc(id)}" aria-label="${esc(n.displayName)}${id === j.currentNodeId ? ", current location" : reachable.has(id) ? ", road available" : ""}"><span class="atlas-node-ring" aria-hidden="true">${nodeIcon(traditionalType(n.nodeTypeId))}</span>${core ? `<span class="atlas-node-label">${esc(n.displayName)}</span>` : ""}</button>`;
    })
    .join("")}
- <span class="atlas-map-caption">THE FRACTURED REALM<br><small>Beyond the roads, the land remains uncharted</small></span></div></div><div class="atlas-legend"><span>◉ You are here</span><span>◌ Road available</span><span>✓ Visited</span><span>Inspect before traveling</span></div></div>
+ <span class="atlas-map-caption">THE FRACTURED REALM<br><small>Beyond the roads, the land remains uncharted</small></span></div></div><div class="atlas-legend"><span>◉ You are here</span><span>◌ Road available</span><span>Gold ring: visited</span><span>Inspect before traveling</span></div></div>
  <aside class="atlas-journal"><span class="atlas-eyebrow">YOUR JOURNEY</span><h2>${esc(current.displayName)}</h2><p>${esc(a.regions[a.regionOf(j.currentNodeId)].displayName)}</p>${button("Inspect current location", "data-atlas-inspect-current")}<div class="atlas-journal-rule"></div><h3>Three guiding lights</h3>${[
    ["start", "Starting city"],
    ["hub", "Major city"],
@@ -282,7 +272,7 @@ function localMapHtml(local) {
   return `<div class="atlas-local-map"><img src="${esc(uri(map.artAssetId))}" alt="Map of ${esc(map.displayName)}"/>${points
     .map((p) => {
       const n = ATLAS.nodes[p.nodeId];
-      return `<button type="button" data-local-point="${esc(p.nodeId)}" aria-pressed="false" class="atlas-local-point" style="left:${pct(p.x)};top:${pct(p.y)}"><span>${icons[n.nodeTypeId] || "◆"}</span><small>${esc(n.displayName)}</small></button>`;
+      return `<button type="button" data-local-point="${esc(p.nodeId)}" aria-pressed="false" class="atlas-local-point" style="left:${pct(p.x)};top:${pct(p.y)}"><span>${nodeIcon(traditionalType(n.nodeTypeId))}</span><small>${esc(n.displayName)}</small></button>`;
     })
     .join("")}</div>`;
 }
