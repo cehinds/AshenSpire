@@ -11,6 +11,7 @@
 //
 // It owns no shape: the host's edge and width are tokens the model carries.
 import { childModel } from '../models/ComponentModel.js';
+import { decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { renderTray } from './trayComponents.js';
 import { renderEnemyMoveCards } from './enemyMoveCards.js';
@@ -52,15 +53,20 @@ export function combatantDetailBody(subject, { heading = true } = {}) {
   if (!subject?.name) throw new Error('combatantDetailBody requires a named subject');
   // `heading: false` for a door whose HEAD already names the subject — the
   // tray has no head, so it keeps the LabelStack.
+  const effects = el('section', { class: 'combatant-inspector-section' }, [eyebrow('Active effects')]);
+  const tags = el('div', { class: 'inspection-tags' });
+  for (const status of subject.statuses || []) tags.append(inspectionTag(status.name, status.detail));
+  if (tags.childElementCount) effects.append(tags);
+  else effects.append(statusText('No active effects.'));
   return [
     el('div', { class: 'combatant-inspector-summary' }, [
       heading ? labelStack({ label: subject.name, hint: subject.subtitle || '' }) : null,
       resourceMeters(subject.resources),
     ]),
-    ...(subject.intent ? [section('Current intent', [subject.intent], 'No current intent.')] : []),
+    ...(subject.intent && !subject.moveCards?.some(card => card.active) ? [section('Current intent', [subject.intent], 'No current intent.')] : []),
     subject.moveCards ? renderEnemyMoveCards(subject.moveCards) : section(subject.skillLabel || 'Skills', subject.skills, 'No active skills.'),
-    section('Active effects', subject.statuses, 'No active effects.'),
-  ];
+    ...((subject.statuses || []).length ? [effects] : []),
+  ].map(decorateKeywords);
 }
 
 export function mountCombatantInspector(host, model, { onToggle = null } = {}) {
