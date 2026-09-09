@@ -6,6 +6,7 @@
 // Settings tab. Each row declares its default so stored settings stay sparse.
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
+import { mountFlickPractice } from '../components/flickPractice.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { setTabRing, hasTabRing } from '../input.js';
@@ -255,6 +256,11 @@ const ROWS = [
     placeholder: 'e.g. music/ or https://…',
     note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = built-in generated score.' },
 
+  { cat: 'Accessibility', key: 'touchFlickPlay', def: UI_DEFAULTS.touchFlick.enabled, label: 'Touch flick to play',
+    note: 'Flick a card upward to play it on the nearest valid target. Selection and the information button work as usual.' },
+  { cat: 'Accessibility', key: 'touchFlickDistance', type: 'number', def: UI_DEFAULTS.touchFlick.distance.def,
+    min: UI_DEFAULTS.touchFlick.distance.min, max: UI_DEFAULTS.touchFlick.distance.max, slider: true, practice: true, label: 'Touch flick distance',
+    note: 'Upward travel in screen pixels. Shorter needs less movement; longer helps avoid accidental plays. Release with an upward flick.' },
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: 'Reduced motion',
     note: 'Calm ambient effects, drop the map pulse, and shorten animations.' },
   // ON by default. Measured, not assumed: at the old default eight text targets
@@ -644,13 +650,15 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // number of its own. The synced slider (Part B) is still held behind #181.
   if (r.type === 'number') {
     const val = resolveNumberRow(settings, r);
-    return `${rowOpen()}
+    return `${rowOpen(r.slider ? 'set-row-wide' : '')}
         ${stack(appliedSlot(settings, r))}
         <span class="r-trail num-wrap">
           <input type="number" class="set-num" data-key="${r.key}" value="${val}"
                  min="${r.min}" max="${r.max}" step="1" inputmode="numeric"
                  aria-label="${r.label}">
+          ${r.slider ? `<input type="range" class="set-num-slider" min="${r.min}" max="${r.max}" step="1" value="${val}" aria-label="${r.label} slider"><button type="button" class="set-num-reset">Reset</button>` : ''}
         </span>
+        ${r.practice ? '<div class="flick-practice" data-flick-practice role="group" aria-label="Touch flick practice"><span>Practice here — flick upward</span><output aria-live="polite">No cards or resources are spent.</output></div>' : ''}
       </div>`;
   }
   if (r.type === 'range') {
@@ -674,7 +682,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     const opts = r.choices
       .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}">${c}</button>`)
       .join('');
-    return `${rowOpen()}
+    return `${rowOpen(r.slider ? 'set-row-wide' : '')}
         ${stack(appliedSlot(settings, r))}
         <span class="r-trail"><span class="as-seg choice-group"${r.resizesWhilePressed ? ' data-resizes-while-pressed="1"' : ''}>${opts}</span></span>
       </div>`;
@@ -1341,9 +1349,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // clamp on every keypress would rewrite the value under his fingers.
     field.addEventListener('change', () => commit(field.value));
     field.addEventListener('blur', () => commit(field.value));
+    wrap.querySelector('.set-num-slider')?.addEventListener('input', event => commit(event.target.value));
+    wrap.querySelector('.set-num-reset')?.addEventListener('click', () => commit(row.def));
     // Part B's slider commits on `input`, because dragging IS the gesture:
     //   slider.addEventListener('input', () => commit(slider.value));
   });
+
+  mountFlickPractice(container, settings, UI_DEFAULTS.touchFlick);
 
   container.querySelectorAll('.set-range').forEach((slider) => {
     const updateVolume = () => {

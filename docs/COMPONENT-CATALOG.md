@@ -1,5 +1,12 @@
 # AshenSpire component catalog
 
+Touch flick controls: Accessibility offers Touch flick to play and a 32–160 CSS-pixel
+distance setting (64 default), synchronized numeric field/slider, Reset, and a
+harmless practice surface. `TouchFlickModel.js` resolves distance, recent speed and
+nearest-target ties; `flickPractice.js` shares that recognition with the combat
+hand. The existing selected card and separate Information button remain unchanged.
+See [card removal and touch flick validation](qa/card-removal-touch-flick.md).
+
 This is the quick-reference library for the reusable UI vocabulary. The visual
 catalog is available at [`component-catalog.html`](./component-catalog.html).
 Select any component card there to open its detail drawer. The dedicated

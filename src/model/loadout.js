@@ -1,3 +1,4 @@
+import { retiredAttackSlots } from './cardRemoval.js';
 import { tokenRe } from './validate.js';
 import {
   applyMountOverrides, extraMountInstances, mountKey, ownerItemRef,
@@ -1116,22 +1117,7 @@ function attackProfileFor(registries, profileId, owner) {
   return profile;
 }
 
-/**
- * isEquipmentComposedInstance(inst) -> boolean
- *
- * Whether a deck instance is MINTED BY EQUIPMENT rather than owned by the deck,
- * and so is not a candidate for permanent removal. Both removal doors — the
- * merchant's burn and the `removeCardFromDeck` opcode — already excluded package
- * outputs (`grantedBy`) for the stated reason that "the next authoritative
- * reconcile would recreate the same deterministic id, so a removal here could
- * never persist". A generated attack slot has exactly that property and was
- * never excluded: burning one re-minted it on the next restamp, so the merchant
- * charged cinders for nothing and the event opcode did nothing. Persisting the
- * birth quota turned that silent no-op into a loud throw, which is how it was
- * finally noticed — the removal was already broken, it just failed quietly.
- *
- * One predicate, both doors, so the two cannot disagree about what a removal is.
- */
+/** Equipment-derived identity; permanent removal eligibility lives in cardRemoval.js. */
 export function isEquipmentComposedInstance(inst) {
   return Boolean(inst && (inst.grantedBy || inst.equipmentAttackSlotId));
 }
@@ -1259,7 +1245,7 @@ function quotaRefs(registries, source, count) {
 }
 
 /** Pure deterministic projection from active hand equipment to authored slots. */
-export function buildEquippedWeaponCardPlan(registries, loadout, classId, { attackSlotCount = undefined } = {}) {
+export function buildEquippedWeaponCardPlan(registries, loadout, classId, { attackSlotCount = undefined, removedAttackSlotIds = [] } = {}) {
   // WHERE THE DEFAULT COMES FROM. Under the composed starting deck the attack
   // quota is whatever the plan worked out — grants first, then filler split by
   // the class's strikeBias — and roleCopies.attack is the LEGACY answer, right
@@ -1310,9 +1296,11 @@ export function buildEquippedWeaponCardPlan(registries, loadout, classId, { atta
     const profile = attackProfileFor(registries, profileId, 'zero-weapon plan');
     refs = Array.from({ length: count }, () => ({ sourceHand: null, weaponId: null, cardId: profile.baseCardId, profileId: profile.id }));
   }
-  const slots = refs.map((ref, index) => ({ equipmentAttackSlotId: `attack:${index}`, ...ref }));
+  const retired = retiredAttackSlots(count, removedAttackSlotIds);
+  const slots = refs.map((ref, index) => ({ equipmentAttackSlotId: `attack:${index}`, ...ref }))
+    .filter(slot => !retired.has(slot.equipmentAttackSlotId));
   const fingerprint = slots.map((slot) => [slot.equipmentAttackSlotId, slot.sourceHand || '-', slot.weaponId || '-', slot.cardId, slot.profileId].join(':')).join('|');
-  return Object.freeze({ attackSlotCount: count, fingerprint, slots: Object.freeze(slots.map(Object.freeze)) });
+  return Object.freeze({ attackSlotCount: slots.length, fingerprint, slots: Object.freeze(slots.map(Object.freeze)) });
 }
 
 /** Rebind stable attack instances without replacing instances or touching metadata. */
@@ -2641,7 +2629,7 @@ export function stampDeck(registries, run, cards, {
   if (bornWith === undefined && Array.isArray(run.deck) && run.deck.length) {
     bornWith = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
   }
-  const attackPlan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class, { attackSlotCount: bornWith });
+  const attackPlan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class, { attackSlotCount: bornWith, removedAttackSlotIds: run.removedAttackSlotIds });
   for (const inst of list.filter((card) => card.equipmentRole === 'attack')) {
     const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
     const desired = attackPlan.slots.find((slot) => slot.equipmentAttackSlotId === inst.equipmentAttackSlotId);

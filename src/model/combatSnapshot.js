@@ -1,3 +1,4 @@
+import { retiredAttackSlots } from './cardRemoval.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
 // The snapshot is persisted inside run.combatEntered.snapshot. This module
@@ -58,6 +59,7 @@ export function combatSnapshotProblems(snapshot) {
   const problems = [];
   if (snapshot.version !== COMBAT_SNAPSHOT_VERSION) problems.push(`version must be ${COMBAT_SNAPSHOT_VERSION}`);
   if (!Number.isInteger(snapshot.turn) || snapshot.turn < 1) problems.push('turn must be a positive integer');
+  try { retiredAttackSlots(snapshot.equipmentAttackSlotCount, snapshot.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   if (!PHASES.includes(snapshot.phase)) problems.push(`phase must be one of ${PHASES.join(', ')}`);
   if (!RESULTS.includes(snapshot.result)) problems.push("result must be null, 'victory', or 'defeat'");
   if ((snapshot.phase === 'ended') !== (snapshot.result !== null)) problems.push('phase/result must describe the same ended state');

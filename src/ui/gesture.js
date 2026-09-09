@@ -169,11 +169,19 @@ export function trackGesture(startEv, { onMove, onEnd } = {}) {
     window.removeEventListener('pointermove', move, true);
     window.removeEventListener('pointerup', up, true);
     window.removeEventListener('pointercancel', cancel, true);
+    window.removeEventListener('blur', abort);
+    window.removeEventListener('pointerdown', otherTouch, true);
+    el.removeEventListener('lostpointercapture', cancel);
     try { el.releasePointerCapture(id); } catch { /* already released */ }
     if (onEnd) onEnd(ev, { cancelled });
   };
   const up = finish(false);
   const cancel = finish(true);
+  const abort = () => cancel({ pointerId: id });
+  const otherTouch = ev => { if (startEv.pointerType === 'touch' && ev.pointerType === 'touch' && ev.pointerId !== id) abort(); };
+  window.addEventListener('blur', abort);
+  window.addEventListener('pointerdown', otherTouch, true);
+  el.addEventListener('lostpointercapture', cancel);
   window.addEventListener('pointermove', move, true);
   window.addEventListener('pointerup', up, true);
   window.addEventListener('pointercancel', cancel, true);
