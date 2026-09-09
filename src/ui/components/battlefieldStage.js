@@ -3,6 +3,8 @@ import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
 import { fitStatusTray } from './statusTray.js';
 import { alignCombatGround } from './environmentArt.js';
+import { combatSpriteRatio, fitCombatSprites } from '../models/CombatSpriteScaleModel.js';
+import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model) {
@@ -30,21 +32,30 @@ export function wireBattlefieldStage(field, model) {
     const fieldRect = field.getBoundingClientRect();
     const zoom = fieldRect.width / field.clientWidth || 1;
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
+    if (!frames.length || fieldRect.width <= 0 || fieldRect.height <= 0) return;
     const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
-    for (const slot of plan.slots) {
+    const actors = plan.slots.map(slot => {
       const frame = frames.find(f => f.dataset.eid === slot.id);
       const stack = frame.querySelector('.combatant-stack');
       const sprite = frame.querySelector('.combatant-card > .sprite');
       sprite.style.zoom = '1';
-      const naturalHeight = sprite.offsetHeight, naturalWidth = sprite.offsetWidth;
-      const height = Math.max(16, Math.min(210, fieldRect.height * .52, slot.ground - 34)) * slot.depth;
-      const scale = Math.min(height / Math.max(1, naturalHeight), slot.artWidth / Math.max(1, naturalWidth));
+      const geometry = combatSpriteGeometry(sprite, schedule);
+      const enemyId = sprite.firstElementChild.dataset.enemyId;
+      const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
+      return { slot, frame, stack, sprite, ratio, ...geometry,
+        leading: Math.max(28, frame.querySelector('.combatant-leading').getBoundingClientRect().height) };
+    });
+    const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors });
+    for (const actor of actors) {
+      const { slot, frame, stack, sprite, boxHeight, footOffset, ratio } = actor;
+      const { scale, x, visibleHeight } = sizes.find(size => size.id === slot.id);
       sprite.style.zoom = String(scale / zoom);
-      const paintedHeight = naturalHeight * scale;
-      const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: slot.x - nameWidth / 2, top: slot.ground - paintedHeight, width: nameWidth, height: paintedHeight });
+      sprite.firstElementChild.style.top = `${footOffset}px`;
+      const paintedHeight = boxHeight * scale;
+      const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: slot.ground - paintedHeight, width: nameWidth, height: paintedHeight });
       frame.style.left = `${local.left}px`;
       frame.style.width = `${local.width}px`;
       frame.style.zIndex = 'auto';
@@ -54,6 +65,8 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
       stack.style.top = `${local.top}px`;
       frame.dataset.combatantScale = '1';
+      frame.dataset.spriteRatio = String(ratio);
+      frame.dataset.spriteVisibleHeight = String(visibleHeight);
     }
     for (const frame of frames) fitStatusTray(frame.querySelector('.statuses'), nameWidth);
     const rect = combat.getBoundingClientRect();

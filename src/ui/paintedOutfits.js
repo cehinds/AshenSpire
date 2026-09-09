@@ -61,6 +61,8 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
   if (READINESS_POSE_ART[classId]) el.classList.add('readiness-outfit');
   const readyFrames = READINESS_POSE_ART[el.dataset.poseClass] || READINESS_POSE_ART[classId] || {};
   const height = Math.max(600 - art.frames.idle.box.y0, ...Object.values(readyFrames).map(frame => 600 - frame.box.y0));
+  el.dataset.idleHeightRatio = String((600 - art.frames.idle.box.y0) / height);
+  el.dataset.idleWidthRatio = String(2 * Math.max(320 - art.frames.idle.box.x0, art.frames.idle.box.x1 + 1 - 320) / height);
   const layer = document.createElement('div');
   layer.className = 'pose-layer';
   layer.style.cssText = `height:${640 / height * 100}%;aspect-ratio:1;top:${100 - 600 / height * 100}%;transform:translateX(-50%);`;
