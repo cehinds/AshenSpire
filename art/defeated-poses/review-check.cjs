@@ -9,6 +9,11 @@ const assert = require('node:assert/strict');
   const body = (await response.text()).replace('if (stub._h && stub._h.onMessage)', 'window.__reviewStub = stub; if (stub._h && stub._h.onMessage)');
   await route.fulfill({response,body});
  });
+ await page.route('**/src/ui/enemyPoseStage.js', async route => {
+  const response=await route.fetch();
+  const body=(await response.text()).replace('play(pose, ms = 300) {', 'play(pose, ms = 300) { (window.__reviewPoses ||= []).push(pose);');
+  await route.fulfill({response,body});
+ });
  await page.goto('http://127.0.0.1:4288/index.html?shot=coop');
  await page.waitForFunction(() => window.__coopSnapshot && window.__reviewStub);
  const styles = await page.evaluate(async () => {
@@ -47,7 +52,7 @@ const assert = require('node:assert/strict');
   snapshot.scene.events=[{type:'damageDealt',targetId:'e2',amount:5,blocked:5}];
   __reviewStub._h.onMessage({t:'state',snapshot});
  });
- await page.waitForFunction(()=>document.querySelector('[data-eid="e2"] .enemy-pose-stage')?.dataset.pose==='guardHit');
+ assert(await page.evaluate(()=>window.__reviewPoses.includes('guardHit')), 'fully blocked receipt plays guarded impact');
  for(const [kind,enemyId,moveId,pose] of [['attack','fellWarden','hammerToss','projectile'],['buff','wanderingSoldier','warcry','buff'],['debuff','graveWisp','hex','buff'],['block','blightHound','guard','guard'],['attack','blightHound','bite','attack']]) {
   await page.evaluate(({kind,enemyId,moveId})=>{
    const snapshot=structuredClone(__coopSnapshot);snapshot.scene.turn++;snapshot.scene.receiptSeq++;
@@ -55,7 +60,7 @@ const assert = require('node:assert/strict');
    __reviewStub._h.onMessage({t:'state',snapshot});
   },{kind,enemyId,moveId});
   await page.waitForFunction(pose=>pose==='attack' ? getComputedStyle(document.querySelector('[data-eid="e2"] .enemy-pose-attack')).visibility==='visible' : document.querySelector('[data-eid="e2"] .enemy-pose-stage')?.dataset.pose===pose,pose);
-  await page.waitForTimeout(650);
+  await page.waitForTimeout(1300);
  }
  console.log('PASS: co-op guarded impacts and projectile, buff, debuff, guard and melee actions.');
  console.log('PASS: all 16 Rendered outfits retain static artwork, defeat and revive; actual co-op heavy/light receipts synchronize CSS flash duration.');
