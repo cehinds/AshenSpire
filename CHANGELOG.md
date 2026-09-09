@@ -63,6 +63,12 @@ gaps. All three are player-visible. A receipt here names the pull request that
 landed a change, and inventing one to fit these would be the reconstruction
 this file refuses at its own start date. They live in `git log`.*
 
+## 2026-09-09
+
+- **Combat animation changes appear in the in-game changelog** ([#841](https://github.com/cehinds/AshenSpire/pull/841), `0.6.0.21`). Record the combat effects and enemy animation deliveries at their original build numbers and refresh the changelog shown in About.
+- **Combat effects follow the card and its payment** ([#835](https://github.com/cehinds/AshenSpire/pull/835), `0.6.0.20`). Play 56 six-frame effect sets for attacks, projectiles, guards, wards, barriers, stances and status reactions in solo and co-op. Low-action moves use subtle mundane effects; larger action payments use stronger mundane effects, while mana or stamina spending enables fantastical variants. Preserve character auras and honor Reduce flashes.
+- **Combatants show hurt, guard and defeat** ([#833](https://github.com/cehinds/AshenSpire/pull/833), `0.6.0.15`). Painted enemies show hurt, guarded and buff poses, including co-op actions and guarded impacts. Direct damage and status bursts show hurt feedback, and defeated player artwork stays within narrow combat screens.
+
 ## 2026-09-08
 - **Smaller combatants on mobile** ([#822](https://github.com/cehinds/AshenSpire/pull/822), `0.6.0.13`). Combatant artwork is 10% smaller on mobile, with slight enemy artwork overlap allowed. Selected cards reveal a circular information button above the face. The cleaner inspection modal offers Play card when available and explains disabled actions. Holding a combat card fills it to use instead of zooming in; releasing early cancels. Selecting a card immediately lights its valid living targets with an artwork-shaped glow.
 
