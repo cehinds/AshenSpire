@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "Compose poses and effects in a visual studio",
     "detail": "Drag effects onto pose cues, adjust anchors and layered tracks, test card/tag/payment bindings, and save portable projects. Preview optional authored sequences in combat while preserving existing effects and auras. Add 24 six-frame sets for movement, contact, casting, defense and status feedback.",
-    "build": "0.6.0.32",
+    "build": "0.6.0.33",
     "pullRequest": 847,
     "url": "https://github.com/cehinds/AshenSpire/pull/847"
+  },
+  {
+    "id": "pr-852",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Readiness poses ease in and out",
+    "detail": "Prepared, Starstone Charge and Herald Blood Rite use softer breathing glows and authored intermediate sprites for all twelve outfits. Entry, exit and action return crossfade smoothly; combat redraws preserve their timing, while reduced-motion and still-sprite modes resolve immediately.",
+    "build": "0.6.0.28",
+    "pullRequest": 852,
+    "url": "https://github.com/cehinds/AshenSpire/pull/852"
   },
   {
     "id": "pr-849",

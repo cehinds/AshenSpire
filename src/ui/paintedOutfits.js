@@ -40,7 +40,7 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
       const down = resting === 'defeated' || Object.hasOwn(COMBAT_POSE_STATES, resting);
       presentation.style.visibility = down ? 'hidden' : 'visible';
       defeated.el.style.visibility = down ? 'visible' : 'hidden';
-      defeated.setRestPose(down ? resting : 'idle');
+      defeated.setRestPose(down ? resting : 'idle', { immediate: true });
       // Child frames set their own visibility, so hide the whole inactive stage.
       defeated.el.hidden = !down;
       el.dataset.pose = resting;
@@ -82,13 +82,32 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
   if (downArt) down.src = assetUrl(downArt.file);
   el.appendChild(down);
   const warmed = Object.values(frames).map(frame => { const image = new Image(); image.src = assetUrl(frame.file); return image; });
+  const previous = img.cloneNode();
+  previous.alt = ''; previous.setAttribute('aria-hidden', 'true');
+  previous.classList.add('pose-previous'); previous.style.opacity = '0'; previous.style.display = 'none';
+  layer.appendChild(previous);
+  aura.style.setProperty('--pulse-delay', `${-(Date.now() % 4200)}ms`);
   let current = 'idle';
   let resting = 'idle';
   let timers = [];
+  let transition = null, auraState = '';
   let resources = [], active = false;
   let reactionTimer, reactionQueue = [];
   const clear = () => { timers.forEach(clearTimeout); timers = []; };
-  const setPose = pose => {
+  const syncAura = (stateId, fade = false, initialOpacity) => {
+    const state = COMBAT_POSE_STATES[stateId];
+    const opacity = initialOpacity ?? (Number.parseFloat(getComputedStyle(aura).opacity) || 0);
+    aura.getAnimations().forEach(a => a.cancel());
+    if (state) {
+      auraState = stateId;
+      aura.dataset.motif = state.motif;
+      aura.style.setProperty('--pose-color', state.color);
+    }
+    aura.style.opacity = state ? '1' : '0';
+    if (fade && !reducedMotionRequested()) aura.animate([{ opacity }, { opacity: state ? 1 : 0 }], { duration: 360, easing: 'ease-in-out' });
+    if (!state && !fade) { auraState = ''; aura.dataset.motif = ''; }
+  };
+  const setPose = (pose, blend = false) => {
     if (pose === 'defeated' && downArt) {
       current = pose; el.dataset.pose = pose; el.dataset.aura = '';
       layer.style.visibility = 'hidden'; down.style.visibility = 'visible'; return true;
@@ -97,21 +116,64 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
     const state = COMBAT_POSE_STATES[pose];
     const frame = frames[pose] || (state ? frames[state.frame] || frames[state.fallback] : null) || (Object.hasOwn(POWER_FRAMES, pose) ? frames.idle : null);
     if (!frame) return false;
+    previous.getAnimations().forEach(a => a.cancel());
+    img.getAnimations().forEach(a => a.cancel());
+    if (blend && current !== pose && img.getAttribute('src') && !reducedMotionRequested()) {
+      previous.src = img.src; previous.style.filter = img.style.filter;
+      previous.style.display = '';
+      previous.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: 'ease-in-out' });
+      img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 140, easing: 'ease-in-out' });
+    }
     current = pose;
     el.dataset.pose = pose;
     img.src = assetUrl(frame.file);
     img.style.filter = auraFilter(pose, resting, resources, active);
     const restingState = COMBAT_POSE_STATES[resting];
     el.dataset.poseState = restingState && resting !== 'defeated' ? resting : '';
-    aura.dataset.motif = restingState?.motif || '';
-    aura.style.setProperty('--pose-color', restingState?.color || 'transparent');
     el.dataset.aura = active ? resources.join(' ') : ['guard','shieldGuard','parry'].includes(resting) ? 'guard' : '';
     return true;
   };
   const sequenceFor = pose => (Object.hasOwn(COMBAT_SEQUENCES, pose) ? COMBAT_SEQUENCES[pose] : [pose]).filter(p => Object.hasOwn(frames, p) || Object.hasOwn(POWER_FRAMES, p) || Object.hasOwn(COMBAT_POSE_STATES, p));
   const restingPose = () => resting === 'defeated' ? 'defeated' : sequenceFor(resting).at(-1) || (resting === 'shieldGuard' || resting === 'parry' ? 'guard' : 'idle');
-  const settle = () => { clear(); active = false; resources = []; setPose(restingPose()); };
-  const setRestPose = pose => { const next = pose || 'idle'; if (next === resting && active) return; resting = next; el.dataset.rest = resting; settle(); };
+  const settle = () => { clear(); transition = null; el.dataset.poseTransition = ''; active = false; resources = []; syncAura(resting); setPose(restingPose()); };
+  const changeRest = (from, startedAt = Date.now()) => {
+    clear(); active = false; resources = [];
+    const middle = frames[`${resting}Transition`] ? `${resting}Transition` : frames[`${from}Transition`] ? `${from}Transition` : null;
+    const elapsed = Date.now() - startedAt;
+    if (!middle || resting === 'defeated' || reducedMotionRequested() || elapsed >= 360) { settle(); return; }
+    transition = { from, to: resting, startedAt };
+    el.dataset.poseTransition = COMBAT_POSE_STATES[resting] ? 'enter' : 'leave';
+    if (elapsed < 180) {
+      setPose(middle, elapsed < 30);
+      timers.push(setTimeout(() => setPose(restingPose(), true), 180 - elapsed));
+    } else setPose(restingPose());
+    timers.push(setTimeout(() => { transition = null; el.dataset.poseTransition = ''; if (!COMBAT_POSE_STATES[resting]) { auraState = ''; aura.dataset.motif = ''; } }, 360 - elapsed));
+  };
+  // A combat screen replaces its DOM between receipts. Carry presentation time
+  // across that replacement so an unchanged status neither restarts nor cuts a fade.
+  const setRestPose = (pose, { resume, immediate = false } = {}) => {
+    const next = pose || 'idle';
+    if (resume) {
+      resting = resume.rest;
+      setPose(resume.pose);
+      syncAura(resume.auraState, false);
+      aura.style.opacity = String(resume.auraOpacity);
+    }
+    if (!resume && next === resting && (active || transition)) return;
+    const from = resting;
+    resting = next; el.dataset.rest = resting;
+    if (immediate || reducedMotionRequested() || next === 'defeated') { settle(); return; }
+    if (resume?.transition && next === from) {
+      const remaining = Math.max(0, 360 - (Date.now() - resume.transition.startedAt));
+      syncAura(next, true, resume.auraOpacity);
+      aura.getAnimations().forEach(a => a.cancel());
+      if (remaining) aura.animate([{ opacity: resume.auraOpacity }, { opacity: COMBAT_POSE_STATES[next] ? 1 : 0 }], { duration: remaining, easing: 'ease-out' });
+      changeRest(resume.transition.from, resume.transition.startedAt);
+    } else if (next !== from) {
+      syncAura(next, true, COMBAT_POSE_STATES[from] ? undefined : 0);
+      changeRest(from);
+    } else settle();
+  };
   const react = resource => {
     if (!['hp', 'heal'].includes(resource)) return;
     reactionQueue.push(resource);
@@ -122,7 +184,7 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
     if (!reactionTimer) next();
   };
   settle();
-  return Object.freeze({ el, poses: ['defeated', ...Object.keys(frames), ...Object.keys(POWER_FRAMES), ...Object.keys(COMBAT_POSE_STATES)], get pose() { return current; }, get rest() { return resting; }, setPose, setRestPose, settle, react, warmed, dispose() { clear(); clearTimeout(reactionTimer); reactionQueue = []; },
+  return Object.freeze({ el, poses: ['defeated', ...Object.keys(frames), ...Object.keys(POWER_FRAMES), ...Object.keys(COMBAT_POSE_STATES)], get pose() { return current; }, get rest() { return resting; }, get presentation() { return { rest: resting, pose: current, transition, auraState, auraOpacity: Number.parseFloat(getComputedStyle(aura).opacity) || 0 }; }, setPose, setRestPose, settle, react, warmed, dispose() { clear(); clearTimeout(reactionTimer); reactionQueue = []; [aura, img, previous].forEach(el => el.getAnimations().forEach(a => a.cancel())); },
     play(pose, ms = 260, aura = []) {
       if (pose === 'defeated') { setRestPose('defeated'); return true; }
       if (resting === 'defeated') return false;
@@ -130,12 +192,13 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
       const sequence = sequenceFor(/^attack[1-4]$/.test(pose) ? 'attack' : pose);
       if (!sequence.length) return false;
       clear();
+      transition = null; el.dataset.poseTransition = '';
       active = true;
       resources = aura;
       const duration = Math.max(60, ms);
       setPose(sequence[0]);
       sequence.slice(1).forEach((p, i) => timers.push(setTimeout(() => setPose(p), duration * (sequence.length === 4 ? [0.28, 0.55, 0.8][i] : (i + 1) / sequence.length))));
-      timers.push(setTimeout(settle, duration));
+      timers.push(setTimeout(() => changeRest(current), duration));
       return true;
     },
   });

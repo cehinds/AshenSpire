@@ -17,7 +17,7 @@ try{
   const {targetId}=await send('Target.createTarget',{url:'about:blank'}),{sessionId}=await send('Target.attachToTarget',{targetId,flatten:true});
   const call=(m,p)=>send(m,p,sessionId);await call('Runtime.enable');await call('Page.enable');
   const evaluate=async expression=>{const r=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;};
-  const ready=async expression=>{for(let i=0;i<160;i++){if(await evaluate(expression))return;await wait(100)}throw Error('Timed out: '+expression)};
+  const ready=async expression=>{for(let i=0;i<400;i++){if(await evaluate(expression))return;await wait(100)}throw Error('Timed out: '+expression)};
   const shot=async name=>{await evaluate('Promise.all([...document.images].map(i=>i.decode().catch(()=>{})))');const r=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});writeFileSync(`${out}/${name}.png`,Buffer.from(r.data,'base64'));};
   if (!process.argv.includes('--review-only')) {
   if (!process.argv.includes('--combat-only')) {
@@ -28,14 +28,14 @@ try{
     for(const entry of window.readinessPreview){const card=document.querySelector('[data-class="'+entry.classId+'"]');
       for(const option of card.querySelector('select').options){card.querySelector('select').value=option.value;entry.mount();const stage=entry.stage;
         await Promise.all(stage.warmed.map(i=>i.decode()));decoded+=stage.warmed.length;const expected=stage.rest;
-        for(const action of ['attack','cast','hit','shieldGuard','parry']){assert(stage.play(action,120),'play '+action);await sleep(160);assert(stage.pose===expected,entry.classId+' return '+action);}
-        stage.play('attack',600);stage.settle();await sleep(650);assert(stage.pose===expected,'canceled timer');
+        for(const action of ['attack','cast','hit','shieldGuard','parry']){assert(stage.play(action,120),'play '+action);await sleep(520);assert(stage.pose===expected,entry.classId+' return '+action);}
+        stage.setRestPose('idle',{immediate:true});stage.setRestPose(expected);assert(stage.pose===expected+'Transition','authored entry');const entryTime=stage.presentation.transition.startedAt;await sleep(80);stage.setRestPose(expected);assert(stage.presentation.transition.startedAt===entryTime,'same state does not restart');await sleep(350);assert(stage.pose===expected,'entry completes');stage.setRestPose('idle');assert(stage.pose===expected+'Transition','authored exit');assert(stage.el.querySelector('.combat-pose-aura').dataset.motif,'exit retains motif while fading');await sleep(400);assert(stage.pose==='idle','exit completes');assert(stage.el.querySelector('.combat-pose-aura').dataset.motif==='','exit clears aura');stage.setRestPose(expected,{immediate:true});stage.play('attack',600);stage.settle();await sleep(650);assert(stage.pose===expected,'canceled timer');
         document.body.classList.add('reduced-motion');assert(stage.play('attack')===false,'reduced motion');assert(stage.pose===expected,'reduced rest');document.body.classList.remove('reduced-motion');
         stage.setRestPose('guard');stage.play('attack',500);stage.setRestPose(expected);await sleep(550);assert(stage.pose===expected,'changed rest overrides timer');
       }
       card.querySelector('select').value='default';entry.mount();
     }
-    return {outfits:12,decoded,returns:'attack, cast, hit, shield guard, parry',cancel:true,reducedMotion:true};
+    return {outfits:12,decoded,returns:'attack, cast, hit, shield guard, parry',cancel:true,reducedMotion:true,authoredEntryExit:true,sameStateKeepsTransitionTime:true};
   })()`);checks.push(stageChecks);await shot('readiness-desktop');
   await call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true);
@@ -46,6 +46,7 @@ try{
   for(const standalone of [false,true])for(const [classId,cardId,statusId,pose] of [['rogue','smokePellet','prepared','prepared'],['starseer','crystalBarrier','starstoneCharge','starstoneCharge'],['herald','stigmataCard','stigmata','bloodRite']])for(const width of [1440,390]){
     if(process.argv.includes('--starseer-only') && classId!=='starseer')continue;
     await call('Emulation.setDeviceMetricsOverride',{width,height:width===390?844:1000,deviceScaleFactor:1,mobile:width===390});
+    console.log({classId,standalone,width});
     await call('Page.navigate',{url:base+'/'+(standalone?'AshenSpire.html':'')+'?shot=combat&shotClass='+classId});await ready('!!window.__combat && !!window.__renderCombatForShot');
     await evaluate(`(()=>{const c=window.__combat;c.player.energy=9;c.player.mana=9;c.player.stamina=9;c.player.statuses={};c.player.stanceId=null;c.piles.hand.unshift({instanceId:'readiness-card',cardId:'${cardId}',upgraded:false});window.__renderCombatForShot();})()`);
     await evaluate(`document.querySelector('.hand [data-instance-id="readiness-card"]').click();document.querySelector('.combatant.player').click()`);
@@ -95,5 +96,5 @@ try{
   await evaluate('Promise.all(window.readinessPreview.flatMap(e=>e.stage.warmed).map(i=>i.decode()))');
   const reaction=await evaluate(`(async()=>{const s=window.readinessPreview[2].stage;s.react('hp');s.react('heal');const first=s.el.dataset.poseReaction;await new Promise(r=>setTimeout(r,290));const second=s.el.dataset.poseReaction;await new Promise(r=>setTimeout(r,290));return[first,second,s.el.dataset.poseReaction]})()`);
   assert.deepEqual(reaction,['hp','heal','']);checks.push({offlineGallery:true,queuedReactions:reaction});
-  assert.deepEqual(errors,[]);writeFileSync(`${out}/${process.argv.includes('--review-only') ? 'review-checks' : process.argv.includes('--starseer-only') ? 'starseer-checks' : 'checks'}.json`,JSON.stringify({checks,errors},null,2));console.log(JSON.stringify({checks,errors},null,2));
+  assert.deepEqual(errors,[]);writeFileSync(`${out}/${process.argv.includes('--combat-only') ? 'combat-checks' : process.argv.includes('--review-only') ? 'review-checks' : process.argv.includes('--starseer-only') ? 'starseer-checks' : 'checks'}.json`,JSON.stringify({checks,errors},null,2));console.log(JSON.stringify({checks,errors},null,2));
 }finally{ws.close();await browser.close();}
