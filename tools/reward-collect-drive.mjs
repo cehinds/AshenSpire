@@ -145,8 +145,8 @@ if (process.argv.includes('--selftest')) {
         // prove one check of five.
         name: 'a row becomes Taken without the one durable snapshot the save door writes',
         file: 'src/ui/screens/reward.js',
-        find: '    persistProgress();\n    sfx.play(',
-        replace: '    /* planted: the save door does not save */\n    sfx.play(',
+        find: '    try {\n      persistProgress();\n    } catch (error) {',
+        replace: '    try {\n      /* planted: the save door does not save */\n    } catch (error) {',
         expectRed: /FAIL\s+S10 reload-before-Continue keeps cinders[\s\S]*FAIL\s+S10 reload-before-Continue keeps the flask[\s\S]*FAIL\s+S10 reload-before-Continue keeps the relic[\s\S]*FAIL\s+S10 reload-before-Continue keeps the armament[\s\S]*FAIL\s+S1 reload-before-Continue keeps the armament in saved run storage/,
       },
     ],

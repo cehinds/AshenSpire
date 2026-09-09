@@ -345,7 +345,7 @@ if (process.argv.includes('--selftest')) {
     }, {
       name: 'a self-only drag names no default target',
       file: 'src/ui/screens/combat.js',
-      find: '      if (selfOnlyTarget) showSelfAim(legal);',
+      find: '      if (selfOnlyTarget) showSelfAim(plan.legal);',
       replace: '      /* planted: a self-only drag names no default target */',
       expectRed: /FAIL a self-only drag lights the player blue/,
     }, {
@@ -371,8 +371,8 @@ if (process.argv.includes('--selftest')) {
       // every check that counts plays instead of naming which card left.
       name: 'a drag commits the SELECTED card instead of the dragged one',
       file: 'src/ui/screens/combat.js',
-      find: '            if (enemyBox) playCard(inst.instanceId, enemyBox.dataset.eid);',
-      replace: '            if (enemyBox) playCard(selected || inst.instanceId, enemyBox.dataset.eid);',
+      find: "          playCard(inst.instanceId, dragTargetMode === 'single' ? drop.targetIds[0] : null);",
+      replace: "          playCard(selected || inst.instanceId, dragTargetMode === 'single' ? drop.targetIds[0] : null);",
       expectRed: /FAIL cell 2 the card that PLAYS is the one under the finger/,
     }, {
       // CELL 3, AND IT IS AIMED AT THE DERIVATION, NOT THE GESTURE. The dial

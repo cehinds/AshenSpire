@@ -134,7 +134,7 @@
     },
     "tools/card-drag-targeting.mjs": {
       "count": 10,
-      "digest": "bcb9e43cd35b163b"
+      "digest": "3a032212397097f7"
     },
     "tools/class-loadouts.mjs": {
       "count": 4,
@@ -198,7 +198,7 @@
     },
     "tools/gesture-cancel.mjs": {
       "count": 2,
-      "digest": "6d9bdbd6b5dc8b74"
+      "digest": "77e2f70d7cdbe767"
     },
     "tools/hand-pager-threshold.mjs": {
       "count": 7,
@@ -270,7 +270,7 @@
     },
     "tools/reward-collect-drive.mjs": {
       "count": 9,
-      "digest": "a46bf617b94e88db"
+      "digest": "21894bc95a0694d9"
     },
     "tools/runcreation.mjs": {
       "count": 5,
