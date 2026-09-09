@@ -25,6 +25,7 @@ import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox
 import { figureSpec, equippedPieces } from '../../model/loadout.js';
 import { resourceAura } from '../combatAura.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
+import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../../model/combatPose.js';
 import {
   isReaverAttackEligible,
   playReaverAttack,
@@ -156,6 +157,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const resDomains = resourceDomains(registries);
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
   let playerRest = 'idle';
+  let readinessOrder = [];
   let visualPlans = new Map();
   const barrierVisuals = new Map();
   let appliedVisualEvents = new Set();
@@ -164,6 +166,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (appliedVisualEvents.has(event)) continue;
       appliedVisualEvents.add(event);
       playerRest = combatRestAfterEvent(playerRest, event, 'player', visualPlans.get(event.cardInstanceId));
+      readinessOrder = readinessAfterEvent(readinessOrder, event, 'player');
     }
   }
   const tooltipPlacement = tooltipPlacementModel(registries.balance.ui.tooltipPlacement);
@@ -204,7 +207,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const grouped = visualPlans.get(played.cardInstanceId) || resolveCombatAnimation({ ...definition, cardTags: tags }, equippedPieces(registries, run.loadout, run.class));
         const pose = stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
         plan = { ...plan, ...grouped, pose, spriteEffect: combatEffectPlan({ ...definition, cardTags: combatEffectTags(registries,definition) },played), effectEvents: beat.events, targetId: played.targetId || beat.events.find(e=>e.type==='damageDealt')?.targetId };
-        if (grouped.rest) stage?.setRestPose?.(grouped.rest);
         actorEl.dataset.actionGroup = grouped.group;
       }
       if (moved && stage?.enemy) {
@@ -768,6 +770,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       block: e.block,
       alive,
       statuses,
+      stanceId: e.stanceId,
       poiseMeter: e.poiseMeter ? { value: e.poiseMeter.value, max: e.poiseMeter.max } : null,
       arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
     };
@@ -860,6 +863,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'meterFilled':
           if (t && e.meter === 'poise' && t.poiseMeter) t.poiseMeter.value = 0;
+          break;
+        case 'stanceEntered':
+          if (disp.ents.player) disp.ents.player.stanceId = e.stance;
           break;
         case 'statusExpired':
           if (t) delete t.statuses[e.status];
@@ -1207,7 +1213,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       else showCombatantContext(box, 'player', p);
     });
     zone.appendChild(box);
-    stageFor(box)?.setRestPose?.(dv(p).hp <= 0 || dv(p).alive === false ? 'defeated' : playerRest);
+    stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder));
   }
 
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
@@ -1906,6 +1912,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           applyBeatToDisp(beat);
           renderTopbar();
           renderCombatantStage();
+          for (const event of beat.events) {
+            const reaction = bloodRiteReaction(dv(combat.player), event, 'player');
+            if (reaction) stageFor($('.combatant.player'))?.react?.(reaction);
+          }
           renderHand();
           renderControls();
           showPileFeedback(beat.events);

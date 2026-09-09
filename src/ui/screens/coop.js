@@ -44,6 +44,7 @@ import { playPoseOn, stageFor } from '../services/PoseAnimator.js';
 import { resourceAura } from '../combatAura.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
+import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../../model/combatPose.js';
 import { equippedPieces, figureSpec } from '../../model/loadout.js';
 import { tagService } from '../../model/tagService.js';
 import { renderCard } from '../components/card.js';
@@ -93,17 +94,27 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let armedFriendlyCard = null; // friendly-targeted card instanceId awaiting a legal seat
   let prevCombat = null; // last combat scene, for snapshot-diff FX
   const combatRests = new Map();
+  const readinessOrders = new Map();
+  let poseReactions = new Map();
   let animationReceiptSeq = 0;
   let pendingAnimations = new Map();
   const barrierVisuals = new Map();
   let effectEvents = [];
   function prepareCombatAnimations(scene) {
     pendingAnimations = new Map();
+    poseReactions = new Map();
     const seq = Number(scene.receiptSeq) || 0;
     if (seq <= animationReceiptSeq) return;
     animationReceiptSeq = seq;
     effectEvents = decorateCombatEffects((scene.events || []).map(combatEffectReceipt), registries, barrierVisuals);
     for (const event of scene.events || []) {
+      if (event.targetId) {
+        const targetId = event.targetId === 'player' ? event.playerId : event.targetId;
+        const targeted = { ...event, targetId };
+        readinessOrders.set(targetId, readinessAfterEvent(readinessOrders.get(targetId) || [], targeted, targetId));
+        const reaction = bloodRiteReaction(scene.players.find(p => p.id === targetId), targeted, targetId);
+        if (reaction) poseReactions.set(targetId, [...(poseReactions.get(targetId) || []), reaction]);
+      }
       const ownerId = event.playerId;
       if (!ownerId) continue;
       const member = snap.party.find(member => member.id === ownerId);
@@ -406,7 +417,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     clearCombatEffects(app.querySelector('.fx-layer'));
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
-    else { combatRests.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
+    else { combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
@@ -578,7 +589,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId));
-      stageFor(sprite)?.setRestPose?.(!p.alive || p.hp <= 0 ? 'defeated' : combatRests.get(p.id) || 'idle');
+      stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)));
+      for (const reaction of poseReactions.get(p.id) || []) stageFor(sprite)?.react?.(reaction);
       const bb = blockBadge(p.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       // THE SEAT LINE: the tinted name (the identity span hudbars reads,

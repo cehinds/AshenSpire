@@ -1,0 +1,24 @@
+/* Persistent status cues belong to the figure and never intercept targeting. */
+.combat-pose-aura { position:absolute; inset:-14% -24% -7%; pointer-events:none; color:var(--pose-color); opacity:.8; filter:drop-shadow(0 0 5px currentColor); }
+.combat-pose-aura svg { width:100%; height:100%; overflow:visible; fill:none; stroke:currentColor; stroke-width:1.3; }
+.combat-pose-aura g, .combat-pose-aura .pose-floor { display:none; }
+.combat-pose-aura[data-motif="diamond"] .pose-diamond,
+.combat-pose-aura[data-motif="constellation"] .pose-constellation,
+.combat-pose-aura[data-motif="halo"] .pose-halo,
+.combat-pose-aura:not([data-motif=""]) .pose-floor { display:initial; }
+.pose-halo-gold { stroke:#e2bd73; }
+.pose-constellation circle { fill:#dce7ff; }
+.pose-stage[data-pose="defeated"] .combat-pose-aura { display:none; }
+.pose-stage[data-pose-reaction="hp"] .combat-pose-aura { color:#ff4355; opacity:1; filter:drop-shadow(0 0 12px #f23c52); }
+.pose-stage[data-pose-reaction="heal"] .combat-pose-aura { color:#ffe098; opacity:1; filter:drop-shadow(0 0 12px #ffd475); }
+/* The new extended arms/blades need more width than the old narrow idle.
+   Keep one scale for every frame of these outfits on the compact solo board. */
+.combat:not(.coop) .player-zone .readiness-outfit { transform:translateX(3%); }
+@media(max-width:640px) {
+  .combat:not(.coop) .player-zone .readiness-outfit { transform:translateX(18%) scale(.6); transform-origin:50% 100%; }
+  :root[data-layout='narrow'] .combat.coop .player-zone { gap:.5rem; padding-top:2rem; flex-shrink:0; }
+  :root[data-layout='narrow'] .combat.coop .coop-seat { flex:1 1 0; min-width:0; }
+  :root[data-layout='narrow'] .combat.coop .coop-seat .sprite { width:100%; height:110px; }
+  :root[data-layout='narrow'] .combat.coop .coop-seat .painted-outfit { width:85px!important; height:100px!important; }
+  :root[data-layout='narrow'] .combat.coop .coop-seat .meters { width:100%; }
+}
