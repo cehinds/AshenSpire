@@ -29,3 +29,19 @@ Run the unit checks with `node --test tests/combatPose.test.mjs` and the desktop
 phone, source-game, and standalone browser checks with
 `node art/readiness-poses/playtest.mjs`. The combat captures use isolated shot
 fixtures and real card clicks; they are not full-run balance playtests.
+
+## Soft transitions
+
+Twelve additional authored gather frames sit between neutral idle and readiness.
+Entry and exit use the same frames in opposite order over 360ms, with 140ms
+crossfades. Aura motifs breathe between 18% and 38% opacity over 4.2 seconds.
+Silhouette glows use faint alpha; Herald reaction colors remain readable without
+a bright flash. Reduced motion resolves immediately and keeps a steady motif.
+
+Solo and co-op carry each stage presentation timestamp across DOM replacement.
+This preserves a fade already in progress and prevents repeated snapshots from
+restarting it. The gallery includes a Transition sprites strip for every outfit.
+Source prompts are in transition-generation.json; the built-in imagegen tool
+created the three transition source sheets. Run
+`node art/readiness-poses/transition-check.mjs` for entry/exit opacity, redraw,
+rapid reversal, and app/OS reduced-motion checks.

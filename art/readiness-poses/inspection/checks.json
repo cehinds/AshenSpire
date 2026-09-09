@@ -1,6 +1,15 @@
 {
   "checks": [
     {
+      "outfits": 12,
+      "decoded": 216,
+      "returns": "attack, cast, hit, shield guard, parry",
+      "cancel": true,
+      "reducedMotion": true,
+      "authoredEntryExit": true,
+      "sameStateKeepsTransitionTime": true
+    },
+    {
       "classId": "rogue",
       "standalone": false,
       "width": 1440,

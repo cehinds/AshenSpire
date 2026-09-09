@@ -18,7 +18,7 @@ export function resourceAura(card = {}, receipt) {
 }
 export function auraFilter(pose, rest = 'idle', resources = [], active = false) {
   const state = COMBAT_POSE_STATES[rest];
-  if (state && !active) return `drop-shadow(0 0 3px ${state.color}) drop-shadow(0 0 7px ${state.color}77)`;
+  if (state && !active) return `drop-shadow(0 0 2px ${state.color}55) drop-shadow(0 0 4px ${state.color}22)`;
   const phase = POWER_FRAMES[pose];
   const guarded = ['guard', 'shieldGuard', 'parry'].includes(rest);
   const palette = active && resources.length ? resources : phase ? ['power'] : guarded ? ['mana'] : [];

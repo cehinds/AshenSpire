@@ -95,6 +95,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let prevCombat = null; // last combat scene, for snapshot-diff FX
   const combatRests = new Map();
   const readinessOrders = new Map();
+  let posePresentations = new Map();
   let poseReactions = new Map();
   let animationReceiptSeq = 0;
   let pendingAnimations = new Map();
@@ -414,6 +415,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function render() {
     if (!snap) return;
+    posePresentations = new Map([...app.querySelectorAll('.coop-seat')].map(node => [node.dataset.seat, stageFor(node)?.presentation]));
     clearCombatEffects(app.querySelector('.fx-layer'));
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
@@ -589,7 +591,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId));
-      stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)));
+      const resume = posePresentations.get(p.id);
+      stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)), { resume, immediate: !resume });
       for (const reaction of poseReactions.get(p.id) || []) stageFor(sprite)?.react?.(reaction);
       const bb = blockBadge(p.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
