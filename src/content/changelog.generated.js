@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-880",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Clearer card inspection and predictable tooltips",
+    "detail": "Keep gameplay effects visible once, move supporting classifications beneath cards as tags, and explain keywords on demand. Hover explanations open, switch and close after half a second across cards, equipment, combatants and status effects; touch and keyboard inspection remain available.",
+    "build": "0.6.0.65",
+    "pullRequest": 880,
+    "url": "https://github.com/cehinds/AshenSpire/pull/880"
+  },
+  {
     "id": "pr-874",
     "date": "2026-09-09",
     "group": "2026-09-09",
