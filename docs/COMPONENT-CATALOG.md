@@ -1,10 +1,11 @@
 # AshenSpire component catalog
 
-Touch flick controls: Accessibility offers Touch flick to play and a 32–160 CSS-pixel
+Card flick controls: Accessibility offers Card flick to play and a 32–160 CSS-pixel
 distance setting (64 default), synchronized numeric field/slider, Reset, and a
 harmless practice surface. `TouchFlickModel.js` resolves distance, recent speed and
 nearest-target ties; `flickPractice.js` shares that recognition with the combat
-hand. The existing selected card and separate Information button remain unchanged.
+hand for touch, mouse, trackpad dragging and pen. Existing saved settings retain
+their values. The selected card and separate Information button remain unchanged.
 See [card removal and touch flick validation](qa/card-removal-touch-flick.md).
 
 This is the quick-reference library for the reusable UI vocabulary. The visual
