@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/822"
   },
   {
+    "id": "pr-830",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Card holds visibly fill before playing",
+    "detail": "Show a gold striped progress bar above the card face using the existing hold timer; clear it immediately on release or cancellation. Preserve the selection and targeting behavior already shipped by #822.",
+    "build": "0.6.0.14",
+    "pullRequest": 830,
+    "url": "https://github.com/cehinds/AshenSpire/pull/830"
+  },
+  {
     "id": "pr-819",
     "date": "2026-09-08",
     "group": "2026-09-08",

@@ -1674,6 +1674,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (lastConfirmTap && now - lastConfirmTap <= 350) { lastConfirmTap = 0; confirm(); }
       else lastConfirmTap = now;
     };
+    const holdProgress = document.createElement('span');
+    holdProgress.className = 'card-hold-progress';
+    holdProgress.setAttribute('aria-hidden', 'true');
+    el.appendChild(holdProgress);
     return armHold(el, {
       ms: () => affordable ? holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) : 0,
       onHoldStart: () => { selectedThisPress = selected !== inst.instanceId && selfArm !== inst.instanceId; if (!busy && affordable && selectedThisPress) select(); el.dispatchEvent(new CustomEvent('cardholdstart')); },

@@ -1030,3 +1030,17 @@
 .combat .hand .card.drag-source { opacity: .2; }
 .combat .combatant.player.skill-selected .sprite { filter: drop-shadow(0 0 .6rem var(--gold)); }
 .combat .hand .card { touch-action: none; }
+
+/* Progress sits above the opaque face and uses the shared hold timer. */
+.combat .hand .card > .card-hold-progress {
+  display: none; position: absolute; left: 6px; right: 6px; bottom: 6px;
+  height: max(6px, calc(6px / var(--ui-zoom, 1)));
+  z-index: 9; pointer-events: none; border-radius: 2px;
+  background: #17120e; box-shadow: 0 0 0 1px var(--gold);
+}
+.combat .hand .card[data-hold="holding"] > .card-hold-progress { display: block; }
+.combat .hand .card > .card-hold-progress::before {
+  content: ''; display: block; width: 100%; height: 100%;
+  background: repeating-linear-gradient(135deg, #ffe3a0 0 8px, #917025 8px 16px);
+  transform: scaleX(var(--hold, 0)); transform-origin: left;
+}
