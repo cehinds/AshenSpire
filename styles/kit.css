@@ -2652,7 +2652,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury[data-responsive='phone'] .armoury-head .modal-tab { min-width: 0; padding-inline: .5rem; }
 /* Approved 350 × 490 poker canvas. Every measurement scales together. */
 .equipment-poker-card { display:block; position:relative; width:100%; max-width:392px; aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
-.equipment-poker-card .epc-frame { box-sizing:border-box; display:grid; grid-template-rows:25px minmax(0,1fr) 25px 39px 19px 82px 36px 13px; position:absolute; inset:0 auto auto 0; width:350px; height:490px; padding:18px; gap:5px; border:1px solid var(--accent); border-radius:13px; transform-origin:top left; transform:scale(var(--card-scale,1)); box-shadow:0 9px 26px #0006,inset 0 0 0 4px #17120e,inset 0 0 0 5px #695334; background:linear-gradient(125deg,#302319,#19150f 45%,#251d15); font:13px/1.35 Arial,sans-serif; }
+.equipment-poker-card .epc-frame { box-sizing:border-box; display:grid; grid-template-rows:25px minmax(0,1fr) 25px 39px 19px 82px 36px 13px; position:absolute; inset:0 auto auto 0; width:var(--epc-frame-w,350px); height:var(--epc-frame-h,490px); padding:var(--epc-pad,18px); gap:var(--epc-gap,5px); border:1px solid var(--accent); border-radius:13px; transform-origin:top left; transform:scale(var(--card-scale,1)); box-shadow:0 9px 26px #0006,inset 0 0 0 4px #17120e,inset 0 0 0 5px #695334; background:linear-gradient(125deg,#302319,#19150f 45%,#251d15); font:13px/1.35 Arial,sans-serif; }
 .epc-frame > * { min-width:0; min-height:0; box-sizing:border-box; }
 .epc-name { display:flex; justify-content:space-between; gap:8px; align-items:center; font:600 20px/1.12 Georgia,serif; color:#f0dfaf; }
 .epc-name > span { font-size:13px; color:var(--accent); }
@@ -2751,11 +2751,31 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 }
 /* Shared inspection: 270px artwork + 180px information within the 450px face. */
 .equipment-poker-card .epc-frame,
-.collectible-poker-card .epc-frame { padding:19px; gap:3px; grid-template-rows:270px 22px 34px 20px 48px 22px 16px; }
+.collectible-poker-card .epc-frame { padding:var(--epc-pad,19px); gap:var(--epc-gap,3px); }
 .epc-frame > .epc-name { position:absolute; z-index:1; top:26px; left:27px; right:27px; height:29px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:#211a12dd; padding:3px 6px; }
 .epc-name > span { display:none; }
 .epc-art img { padding:35px 8px 8px; }
-.epc-frame > :is(.epc-type,.epc-flavor), .epc-bonus, .epc-footer > span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.epc-frame > :is(.epc-type,.epc-flavor), .epc-footer > span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+/* A BONUS IS THE MECHANIC, SO IT WRAPS BEFORE IT TRUNCATES. `nowrap` + ellipsis
+   cut real numbers mid-word — "Class power: +1 Poten…" — which is worse than a
+   second line. It still ends in an ellipsis once it passes the authored line
+   budget, so a pathological string cannot push the footer off the card. */
+.epc-bonus { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:var(--epc-bonus-lines,2); overflow:hidden; white-space:normal; }
+
+/* TYPE SCALES WITH THE CARD, AND CLAMPS RATHER THAN CLIPS. Each size is a
+   clamp(min, ideal, max) emitted from balance.ui.equipmentCard.text; the ideal
+   is in `cqw` against the frame's own inline size, so a face dropped into a
+   narrow column shrinks its own type instead of cutting the line off. */
+.epc-name { font-size:var(--epc-text-name, 20px); }
+.epc-type { font-size:var(--epc-text-type, 11px); }
+.epc-fact { font-size:var(--epc-text-fact, 10px); }
+.epc-fact strong { font-size:var(--epc-text-factValue, 16px); }
+.epc-tag { font-size:var(--epc-text-tag, 10px); }
+.epc-heading { font-size:var(--epc-text-heading, 10px); }
+.epc-bonus { font-size:var(--epc-text-bonus, 13px); line-height:1.3; }
+.epc-flavor { font-size:var(--epc-text-flavor, 12px); }
+.epc-footer { font-size:var(--epc-text-footer, 10px); }
+
 .epc-frame > .epc-tags { flex-wrap:nowrap; overflow:hidden; }
 .epc-frame > .epc-effects { overflow:hidden; }
 .epc-heading { margin-bottom:2px; }
@@ -2802,7 +2822,14 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
 
 .shop-inspect-card { position:relative; }
-.equipment-poker-card .epc-frame, .collectible-poker-card .epc-frame { grid-template-rows:270px 24px 46px 20px 38px 18px 16px; }
+/* Face rows come from balance.ui.equipmentCard via the card's own custom
+   property: regions declare a floor and a priority, and src/model/equipmentCard.js
+   solves them. The literal is the fallback for a card rendered before its tokens
+   land, not a second opinion about the layout. */
+.equipment-poker-card .epc-frame, .collectible-poker-card .epc-frame {
+  grid-template-rows:var(--epc-rows, 231.6px 22px 40px 18px 88.4px 18px 16px);
+  container-type:inline-size;
+}
 .epc-type { font-size:14px; padding:2px; letter-spacing:.04em; }
 .epc-facts { padding:2px 0; }
 .epc-fact { font-size:14px; }
@@ -2832,3 +2859,21 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .set-range { touch-action: pan-x; min-height: var(--tap-floor); }
 .cz-stage .equipment-poker-explanations { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5; }
 .cz-stage .equipment-poker-explanations :is(dt, dd) { white-space: normal; overflow-wrap: anywhere; }
+
+/* Equipment disclosure preserves the shared above-card placement. */
+.equipment-poker-card > .card-info-button { width:var(--card-info-size,44px); height:var(--card-info-size,44px); min-width:var(--card-info-size,44px); min-height:var(--card-info-size,44px); max-width:var(--card-info-size,44px); max-height:var(--card-info-size,44px); top:calc(-1 * (var(--card-info-size,44px) + 10px)); }
+@media (pointer:coarse) {
+  .equipment-poker-card > .card-info-button { opacity:0; pointer-events:none; transition:opacity var(--card-info-fade,120ms) ease; }
+  .equipment-poker-card.inspection-info-visible > .card-info-button, .equipment-poker-card:has(:focus-visible) > .card-info-button, .equipment-poker-card:focus-visible > .card-info-button { opacity:1; pointer-events:auto; }
+}
+@media (prefers-reduced-motion:reduce) { .equipment-poker-card > .card-info-button { transition:none; } }
+
+.equipment-poker-card:focus-visible > .card-info-button, .equipment-poker-card:has(:focus-visible) > .card-info-button { visibility:visible; pointer-events:auto; opacity:1; }
+
+/* Reserve room for the above-card control in Inventory scroll content. */
+.armoury .disc-faces:has(.poker-inventory-face) { padding-top:64px; }
+
+.armoury .disc-face:has(.poker-inventory-face) { overflow:visible; }
+
+.smith-card-list.as-options { padding-top:64px; }
+.smith-card-list.as-options.grid > .smith-candidate-card { overflow:visible; }

@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "Card flicks choose targets across pointer devices",
     "detail": "Flick upward with touch, mouse, trackpad dragging or pen to play on the nearest legal target without reaching it. Card flick settings and practice now describe the same behavior; saved distance preferences, selection and Information remain available.",
-    "build": "0.6.0.53",
+    "build": "0.6.0.58",
     "pullRequest": 870,
     "url": "https://github.com/cehinds/AshenSpire/pull/870"
   },
@@ -18,9 +18,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "Card flick input parity has an explicit specification",
     "detail": "Specify shared pointer behavior and preserve existing distance, speed and cancellation rules.",
-    "build": "0.6.0.52",
+    "build": "0.6.0.57",
     "pullRequest": 869,
     "url": "https://github.com/cehinds/AshenSpire/pull/869"
+  },
+  {
+    "id": "pr-823",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Equipment Information is reachable after one press",
+    "detail": "Reveal Information after the first touch selection, reserve room for its button in Inventory and Smith, and prioritize readable mechanics while retaining the approved artwork split. Inspection remains separate from equip, buy, upgrade and play actions.",
+    "build": "0.6.0.57",
+    "pullRequest": 823,
+    "url": "https://github.com/cehinds/AshenSpire/pull/823"
+  },
+  {
+    "id": "pr-826",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Narrow menus stay readable and dialogs support keyboard navigation",
+    "detail": "Bound text scaling, wrap descriptions, keep settings categories reachable, and support arrow-key tabs with contained and restored dialog focus.",
+    "build": "0.6.0.55",
+    "pullRequest": 826,
+    "url": "https://github.com/cehinds/AshenSpire/pull/826"
+  },
+  {
+    "id": "pr-836",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Reward cards select once and save safely",
+    "detail": "One press selects a card, Confirm collects it, and Back keeps the selection. Failed card saves restore the deck and allow retry without duplicates. Current combat flick controls are preserved.",
+    "build": "0.6.0.54",
+    "pullRequest": 836,
+    "url": "https://github.com/cehinds/AshenSpire/pull/836"
   },
   {
     "id": "pr-867",
@@ -68,7 +98,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "The README and the changelog stop burying what a reader came for",
     "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
-    "build": "0.6.0.40",
+    "build": "0.6.0.52",
     "pullRequest": 820,
     "url": "https://github.com/cehinds/AshenSpire/pull/820"
   },

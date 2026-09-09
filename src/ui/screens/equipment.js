@@ -1319,7 +1319,12 @@ export function mountEquipment(host, {
             ms: holdDuration,
             id: 'equipInventory',
             onConfirm: act,
-            onTap,
+            onTap: () => {
+              // The hold controller consumes its trailing click; reveal the
+              // nested card's Information control through the short-tap path.
+              button.querySelector('.card-inspection-target')?.dispatchEvent(new CustomEvent('cardinspectionrequest'));
+              onTap();
+            },
             hintHost: button.querySelector('.inventory-face'),
             hintBefore: button.querySelector('.inventory-category'),
             feedbackHosts: () => {
