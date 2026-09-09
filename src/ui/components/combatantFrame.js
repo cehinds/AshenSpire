@@ -67,7 +67,8 @@ export function combatantFrame({
     card.appendChild(name);
   }
   if (meters) card.appendChild(meters);
-  appendAll(card, trailing);
+  appendAll(card, trailing.filter(n => n?.classList.contains('statuses')));
+  appendAll(card, trailing.filter(n => !n?.classList.contains('statuses')));
   stack.appendChild(card);
   frame.appendChild(stack);
   return frame;

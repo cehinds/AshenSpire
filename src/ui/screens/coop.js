@@ -85,7 +85,10 @@ import {
   kitItem, pageDoor, decide, options, optionCard, flavour, prose, subtitle, blocker, glyph as kitGlyph,
 } from '../kit/index.js';
 
+import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
+
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave }) {
+  configureTooltipGlossary(registries);
   const resourceDomainTable = resourceDomains(registries);
   const arm = beatArmer(meta, registries);
   let snap = null;
@@ -464,7 +467,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       el.setAttribute('aria-label', semanticAttrs['aria-label']);
       el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${esc(presentation.valueText)}</span>`;
-      attachTooltip(el, () => `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}`);
+      attachTooltip(el, () => `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}`, { tapToExplain: () => !armedFriendlyCard && armedFlask == null });
       row.appendChild(el);
     }
     return row;

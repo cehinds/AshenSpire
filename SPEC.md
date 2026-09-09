@@ -1280,9 +1280,17 @@ keeps the same state and focus contract without meaningful animation.
   behavior. A later re-arm accepts a free key; occupied-key conflict resolution
   is a separate policy and is not implied by this contract. The containing
   `controls-rebind-capture` is the stable Controls component surface.
-- Ordinary interactive elements expose their concise tooltip within 150 ms of
-  hover: cards (with nested keyword tooltips), statuses (name, current math),
-  intents (exact damage after modifiers), relics, flasks, and map nodes.
+- Ordinary interactive elements expose their concise tooltip after 500 ms of
+  continuous hover: cards (with nested keyword tooltips), statuses (name, current
+  math), intents (exact damage after modifiers), relics, flasks, and map nodes.
+  Leaving early cancels opening. Every new target and nested keyword waits the
+  full delay. Keep the tooltip visible over its owner or panel; dismiss 500 ms
+  after leaving both, cancelling dismissal on re-entry. Touch does not synthesize
+  hover; deliberate touch and keyboard inspection retain access to definitions.
+  Card inspections show complete effect text and decision-relevant values or
+  requirements. General classifications appear as explained tags beneath the
+  card; keywords disclose definitions. Do not repeat artwork descriptions,
+  generic instructions, flavor explanations, or identical effect text.
   Deliberate reading surfaces may require a validated sustained hold instead;
   the Armoury equipment-comparison tooltip uses
   `armouryUi.layout.comparison.holdPreviewDelayMs` (`160` ms) and does not open

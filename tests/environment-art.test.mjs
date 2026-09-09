@@ -54,7 +54,7 @@ test('terrain reveal follows discovery and survives save/load without disclosing
   assert.match(html, /class="terrain-detail"[^>]+mask="url\(#terrain-/);
   const full = mapTerrainHtml({ world: MEGA_MAPS[0], width: 300, height: 600, points, fog: false });
   assert.doesNotMatch(full, /class="terrain-detail"[^>]+mask=/);
-  assert.notEqual(html.match(/id="(terrain-\d+)-paper/)[1], full.match(/id="(terrain-\d+)-paper/)[1]);
+  assert.notEqual(html.match(/id="(terrain-\d+)-light/)[1], full.match(/id="(terrain-\d+)-light/)[1]);
 });
 
 

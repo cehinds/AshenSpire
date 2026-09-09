@@ -11,7 +11,7 @@ export function combatFormation({ width, height, friends, enemies }) {
   const enemyFlex = demand ? COMBAT_LAYOUT.flex * enemyNeed / demand : 0;
   const friendlyWidth = width * (COMBAT_LAYOUT.friendly + friendlyFlex);
   const enemyWidth = width * (COMBAT_LAYOUT.enemy + enemyFlex);
-  const ground = height - Math.min(78, height * .44);
+  const ground = height - Math.min(102, height * .44);
   const group = (ids, left, span, right) => {
     const columns = Math.max(1, Math.ceil(ids.length / 2), Math.min(ids.length, Math.floor(span / minimum)));
     const cell = span / columns;

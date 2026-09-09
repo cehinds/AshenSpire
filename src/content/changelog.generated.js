@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-882",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat effects follow the caster",
+    "detail": "Wrap softer weapon and shield effects behind and in front of each pose, and release projectiles from the hand or staff. Keep resource auras and target impacts. Add a saved, default-off played-card animation option and an outfit/layer preview.",
+    "build": "0.6.0.66",
+    "pullRequest": 882,
+    "url": "https://github.com/cehinds/AshenSpire/pull/882"
+  },
+  {
+    "id": "pr-880",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Clearer card inspection and predictable tooltips",
+    "detail": "Keep gameplay effects visible once, move supporting classifications beneath cards as tags, and explain keywords on demand. Hover explanations open, switch and close after half a second across cards, equipment, combatants and status effects; touch and keyboard inspection remain available.",
+    "build": "0.6.0.65",
+    "pullRequest": 880,
+    "url": "https://github.com/cehinds/AshenSpire/pull/880"
+  },
+  {
+    "id": "pr-874",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat vitality stays steady and mobile maps load less artwork",
+    "detail": "Prevent stretched health bars at turn changes, reserve an inspectable status row beneath vitality, shrink map textures, reuse traditional node symbols in World Journey and Long Expedition, and show selected reward cards in green. Connected return travel and reward save recovery remain available.",
+    "build": "0.6.0.61",
+    "pullRequest": 874,
+    "url": "https://github.com/cehinds/AshenSpire/pull/874"
+  },
+  {
     "id": "pr-872",
     "date": "2026-09-09",
     "group": "2026-09-09",

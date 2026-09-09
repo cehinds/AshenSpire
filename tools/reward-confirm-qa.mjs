@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { serve } from './serve.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const output = resolve(process.env.TEMP || '.', 'reward-confirm-qa');
+const output = resolve(process.env.REWARD_QA_OUT || resolve(process.env.TEMP || '.', 'reward-confirm-qa'));
 mkdirSync(output, { recursive: true });
 const server = await serve({ root: process.cwd(), port: 0, open: false });
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
@@ -31,6 +31,13 @@ try {
     const card = page.locator('.reward-row .card').first();
     if (phone) await card.tap({position:{x:40,y:80}}); else await card.click({position:{x:40,y:80}});
     check(await page.locator('#reward-card-confirm').isEnabled(), 'first real press enables Confirm');
+    await page.waitForTimeout(300); // Allow the selected outline transition to settle.
+    check(await card.evaluate(el => {
+      const probe = document.createElement('span'); probe.style.color = 'var(--green)'; el.append(probe);
+      const green = getComputedStyle(probe).color; probe.remove();
+      return el.classList.contains('reward-selected') && getComputedStyle(el).borderTopColor === green;
+    }), 'selected card has a green outline');
+    await page.screenshot({path:resolve(output, `${phone?'phone':'desktop'}-selected.png`)});
     check(await page.evaluate(() => window.rewardQA.run.deck.length === 0), 'selection does not collect');
     await page.locator('#reward-back').click();
     await page.locator('[data-kind="card"]').click();

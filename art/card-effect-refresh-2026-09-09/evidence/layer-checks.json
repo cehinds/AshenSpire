@@ -1,0 +1,128 @@
+{
+  "checks": [
+    "16 outfits, pose-following attachments, back/art/front stacking, six effect frames, facing, size, opacity, visibility and 390px layout",
+    "Four accepted card plays preserve effect selection with card flight OFF; attached planes follow live poses and clean up",
+    "Actual Settings switch opts card flight in and out without disabling character effects",
+    "The profile save API preserves the preference across reloads; shot fixtures remain ephemeral",
+    "Shared solo/co-op adapter: no invented recipients, cancel cleanup, transformed emission point, Reduce flashes and reduced motion"
+  ],
+  "activations": [
+    {
+      "cardId": "strike",
+      "flightSeen": false,
+      "planes": [
+        "behind",
+        "front"
+      ],
+      "effects": [
+        "slash",
+        "steelGlint"
+      ],
+      "frames": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "poses": [
+        "attack1",
+        "attack2",
+        "attack3",
+        "attack4"
+      ],
+      "origins": [],
+      "remaining": 0
+    },
+    {
+      "cardId": "shieldBash",
+      "flightSeen": false,
+      "planes": [
+        "behind",
+        "front"
+      ],
+      "effects": [
+        "shieldBash",
+        "steelGlint",
+        "staggerBreak"
+      ],
+      "frames": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "poses": [
+        "shieldBash1",
+        "shieldBash2",
+        "shieldBash3"
+      ],
+      "origins": [],
+      "remaining": 0
+    },
+    {
+      "cardId": "starstonePebble",
+      "flightSeen": false,
+      "planes": [
+        "behind",
+        "front"
+      ],
+      "effects": [
+        "focusMotes",
+        "starbolt",
+        "impact",
+        "channelStance"
+      ],
+      "frames": [
+        "1",
+        "2",
+        "5"
+      ],
+      "poses": [
+        "attack1",
+        "attack2"
+      ],
+      "origins": [
+        {
+          "left": 181.314,
+          "top": 262.407,
+          "size": 180
+        }
+      ],
+      "remaining": 0
+    },
+    {
+      "cardId": "gorefireSlash",
+      "flightSeen": false,
+      "planes": [
+        "behind",
+        "front"
+      ],
+      "effects": [
+        "focusMotes",
+        "bloodSlash",
+        "impact",
+        "bloodAura"
+      ],
+      "frames": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "6",
+        "5"
+      ],
+      "poses": [
+        "attack1",
+        "attack2",
+        "attack4"
+      ],
+      "origins": [],
+      "remaining": 0
+    }
+  ],
+  "errors": []
+}

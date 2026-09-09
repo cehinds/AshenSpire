@@ -55,16 +55,10 @@ export function mapTerrainHtml({ world, width, height, points, fog }) {
     `<circle data-terrain-node="${node}" cx="${x}" cy="${y}" r="${MAP_TERRAIN_REVEAL_RADIUS}" fill="url(#${id}-light)"/>`).join('');
   return `<g class="map-terrain" data-world="${world.id}" aria-hidden="true" pointer-events="none">
     <defs>
-      <filter id="${id}-paper" x="0" y="0" width="100%" height="100%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="3" seed="7"/>
-        <feColorMatrix type="saturate" values="0"/>
-        <feComponentTransfer><feFuncA type="linear" slope="0.14"/></feComponentTransfer>
-        <feBlend in="SourceGraphic" mode="multiply"/>
-      </filter>
       <radialGradient id="${id}-light"><stop offset="0.56" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></radialGradient>
       <mask id="${id}-reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="${width}" height="${height}" style="mask-type:alpha">${circles}</mask>
     </defs>
-    <g class="map-fog-ground"><rect class="terrain-paper" width="${width}" height="${height}" filter="url(#${id}-paper)"/></g>
+    <g class="map-fog-ground"><rect class="terrain-paper" width="${width}" height="${height}"/></g>
     <image class="terrain-detail" href="${assetUrl(world.map)}" width="${width}" height="${height}" preserveAspectRatio="none"${fog ? ` mask="url(#${id}-reveal)"` : ''}/>
   </g>`;
 }
