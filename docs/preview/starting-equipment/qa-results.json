@@ -1,5 +1,5 @@
 {
-  "passed": 573,
+  "passed": 574,
   "checks": [
     "desktop/reaver/rightHand offers Empty Hand",
     "desktop/reaver/rightHand/empty-hand: one selected choice",
@@ -569,6 +569,7 @@
     "phone: final Continue reaches Seed",
     "phone: no page overflow",
     "keyboard Information opens full equipment inspection",
+    "Tab reaches the full flavor disclosure",
     "inspection preserves complete flavor",
     "OS reduced motion suppresses movement",
     "game reduced motion suppresses animation",

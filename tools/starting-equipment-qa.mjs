@@ -54,9 +54,11 @@ try {
     await main.evaluate(el=>el.scrollIntoView({block:'start'}));await snapshot(page,`${name}-selected-weapon`);
     await main.locator('.cc-equipment-continue').click();
     check(await page.locator('[data-equipment-section=leftHand]').isVisible(),`${name}: Continue opens Off Hand`);
+    if(name==='desktop')await snapshot(page,'continue-off-hand');
     const off=page.locator('[data-equipment-section=leftHand]');
     await off.locator('[data-armament-id=greatsword] .equipment-choose').click();
     check((await page.locator('[data-face=rightHand]').innerText()).includes('Empty Hand'),`${name}: moving the weapon empties its previous hand`);
+    if(name==='desktop')await snapshot(page,'weapon-hand-transfer');
     await off.locator('[data-armament-id=empty-hand] .equipment-choose').click();
     await off.locator('.cc-equipment-details').evaluate(el=>el.scrollIntoView({block:'start'}));await snapshot(page,`${name}-unarmed-cards`);
     const grid=off.locator('.cc-starting-card-grid');

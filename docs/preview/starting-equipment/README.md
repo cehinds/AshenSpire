@@ -2,7 +2,7 @@
 
 Open [the playable review page](../../../equipment-selection-preview.html) through the local server. It uses the production creation screen and disposable `shot` state. The class switcher covers Reaver, Starseer, Rogue and Herald; view controls constrain the frame to desktop, tablet or phone widths.
 
-Final standalone build: **0.6.0.68**, source digest `4cc97d9128`. The branch includes dev `802065b3`; the latest integration changed only the automatic architecture document after the combat-effect update was incorporated.
+Final standalone build: **0.6.0.69**, source digest `ec9d34a7f5`. The branch includes dev `802065b3`; the latest integration changed only the automatic architecture document after the combat-effect update was incorporated.
 
 ## Changes
 
@@ -15,7 +15,7 @@ Final standalone build: **0.6.0.68**, source digest `4cc97d9128`. The branch inc
 
 ## Evidence
 
-**573 browser checks passed with zero page errors.** [Machine-readable results](qa-results.json).
+**574 browser checks passed with zero page errors.** [Machine-readable results](qa-results.json).
 
 The browser sweep covers every displayed hand choice for all four classes at 1440×1000, 1024×1000 and 390×844: selected state, matching details, containment, empty hands, hand transfers, persistent nodes, lift/scale, explicit progression, keyboard Information, complete flavor text, and both reduced-motion modes. An additional 320×700 emulated-touch check confirmed both empty hands and a contained card grid.
 
@@ -23,7 +23,7 @@ The browser sweep covers every displayed hand choice for all four classes at 144
 
 The full repository suite passed **138 tests**, plus **25 card/flick regression checks** and the 112 new preview cases. Build-version, shipped-alias identity, receipts, About/changelog and whitespace checks passed. Source and standalone About routes were checked. A rebuilt standalone also started a real disposable run with both hands empty and no page errors.
 
-Final keyboard review found that the inspection focus loop skipped the native Flavor summary. Giving it an explicit focus entry fixed Tab traversal; Enter now opens the full wording. This final small change was checked in both source and the final standalone after the full browser/model/repository sweeps, with zero page errors. The repeatable browser runner now includes that regression assertion.
+Final keyboard review found that the inspection focus loop skipped the native Flavor summary. Giving it an explicit focus entry fixed Tab traversal; Enter now opens the full wording. This change was checked in both source and standalone, then the complete browser sweep was rerun with the Tab regression assertion: 574 checks passed. The final archive layout was also served independently: Empty Hand, Continue, class switching and phone width worked with zero page errors.
 
 The four-card screenshots add a fourth representative card only to measure grid capacity. The unmodified unarmed loadout has three distinct card types; this fixture does not change game content or quantities. Desktop/mobile tests use Edge; touch is emulated, not a physical-device test. Existing 500 ms tooltip timing is reused unchanged.
 
@@ -44,3 +44,9 @@ The four-card screenshots add a fourth representative card only to measure grid 
 ## Re-run
 
 Start `node tools/serve.mjs --port 8318 --no-open --no-lan`, then run `node tools/starting-equipment-qa.mjs`. The runner uses an installed Playwright package; set `PLAYWRIGHT_MODULE` when it is outside the project and `QA_BROWSER` for a browser executable. `QA_URL` and `QA_OUTPUT` override the server and evidence directory.
+
+## Downloaded preview
+
+Extract the GitHub Actions dev-preview archive. Open AshenSpire.html directly for the full standalone game, or run `node serve-preview.mjs` in the extracted folder and open http://127.0.0.1:8318/equipment-selection-preview.html for class and viewport controls. If that port is already occupied, set the PORT environment variable to another port. Screenshots are in docs/preview/starting-equipment/index.html.
+
+Additional evidence: [selection before](selection-before.png), [selection after](selection-after.png), [Continue button](continue-button.png), [Continue opens Off Hand](continue-off-hand.png), [weapon hand transfer](weapon-hand-transfer.png), and [packaged review controls](packaged-preview-controls.png).
