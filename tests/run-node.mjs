@@ -989,4 +989,10 @@ try {
   zoomExtra++;
   console.error('FAIL  Card removal and touch flick regressions:', error);
 }
+try {
+  await import('./starting-equipment-preview.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Starting equipment previews:', error);
+}
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

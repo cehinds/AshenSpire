@@ -4,6 +4,7 @@ const SIDES = Object.freeze(['left', 'right']);
 const REQUIRED_CLASS_FIELDS = Object.freeze(['armourIds', 'handIds', 'relicIds']);
 const CHOICE_VIEWS = Object.freeze(['list', 'grid']);
 const EQUIPMENT_SECTION_KINDS = Object.freeze(['armour', 'hand', 'slot', 'relic']);
+const EMPTY_HAND_CHOICE = Object.freeze({ id: null, name: 'Empty Hand', emptyHand: true, icon: '◇' });
 
 function config(source) {
   return (source && source.characterCreation) || source || {};
@@ -240,8 +241,8 @@ export function creationEquipmentSectionViews(registries, classId, { armourChoic
         if (!piece || piece.classId !== classId) throw new Error(`characterCreation.classes.${classId}.armourIds: choice does not resolve for class '${classId}'`);
       }
     } else if (section.kind === 'hand') {
-      choices = strictArmamentChoices(registries, classId, 'handIds')
-        .filter((piece) => fitsCreationHandSlot(registries, section.slot, piece));
+      choices = [EMPTY_HAND_CHOICE, ...strictArmamentChoices(registries, classId, 'handIds')
+        .filter((piece) => fitsCreationHandSlot(registries, section.slot, piece))];
     } else if (section.kind === 'relic') {
       choices = creationRelicChoices(registries, classId);
     } else if (section.kind === 'slot') {
