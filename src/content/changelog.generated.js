@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-823",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Equipment Information is reachable after one press",
+    "detail": "Reveal Information after the first touch selection, reserve room for its button in Inventory and Smith, and prioritize readable mechanics while retaining the approved artwork split. Inspection remains separate from equip, buy, upgrade and play actions.",
+    "build": "0.6.0.57",
+    "pullRequest": 823,
+    "url": "https://github.com/cehinds/AshenSpire/pull/823"
+  },
+  {
     "id": "pr-826",
     "date": "2026-09-09",
     "group": "2026-09-09",
@@ -68,7 +78,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "The README and the changelog stop burying what a reader came for",
     "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
-    "build": "0.6.0.40",
+    "build": "0.6.0.52",
     "pullRequest": 820,
     "url": "https://github.com/cehinds/AshenSpire/pull/820"
   },
