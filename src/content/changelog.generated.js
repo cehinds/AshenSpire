@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-823",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Equipment Information is reachable after one press",
+    "detail": "Reveal Information after the first touch selection, reserve room for its button in Inventory and Smith, and prioritize readable mechanics while retaining the approved artwork split. Inspection remains separate from equip, buy, upgrade and play actions.",
+    "build": "0.6.0.57",
+    "pullRequest": 823,
+    "url": "https://github.com/cehinds/AshenSpire/pull/823"
+  },
+  {
+    "id": "pr-826",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Narrow menus stay readable and dialogs support keyboard navigation",
+    "detail": "Bound text scaling, wrap descriptions, keep settings categories reachable, and support arrow-key tabs with contained and restored dialog focus.",
+    "build": "0.6.0.55",
+    "pullRequest": 826,
+    "url": "https://github.com/cehinds/AshenSpire/pull/826"
+  },
+  {
+    "id": "pr-836",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Reward cards select once and save safely",
+    "detail": "One press selects a card, Confirm collects it, and Back keeps the selection. Failed card saves restore the deck and allow retry without duplicates. Current combat flick controls are preserved.",
+    "build": "0.6.0.54",
+    "pullRequest": 836,
+    "url": "https://github.com/cehinds/AshenSpire/pull/836"
+  },
+  {
+    "id": "pr-867",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat controls stay in one row and maps show a cleaner HUD",
+    "detail": "Center Actions, Draw, End Turn, Discard/Exhaust and Potions together, with flexible pile widths. Hide the potion and relic strip on maps in both HUD modes while retaining combat inventory controls.",
+    "build": "0.6.0.51",
+    "pullRequest": 867,
+    "url": "https://github.com/cehinds/AshenSpire/pull/867"
+  },
+  {
     "id": "pr-862",
     "date": "2026-09-09",
     "group": "2026-09-09",
@@ -11,6 +51,36 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.48",
     "pullRequest": 862,
     "url": "https://github.com/cehinds/AshenSpire/pull/862"
+  },
+  {
+    "id": "pr-864",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Pose Studio supports direct effect and timeline editing",
+    "detail": "Resize effects with visible handles, edit timeline cues directly and use accessible alternatives in the studio.",
+    "build": "0.6.0.47",
+    "pullRequest": 864,
+    "url": "https://github.com/cehinds/AshenSpire/pull/864"
+  },
+  {
+    "id": "pr-832",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Explore World Journey with grounded, stable combat formations",
+    "detail": "Explore a seeded atlas with local locations and regional paintings. Combat keeps fixed formations and proportional card fans across turns, with player and enemy turn banners and inactive cards remaining visible during enemy playback.",
+    "build": "0.6.0.47",
+    "pullRequest": 832,
+    "url": "https://github.com/cehinds/AshenSpire/pull/832"
+  },
+  {
+    "id": "pr-820",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "The README and the changelog stop burying what a reader came for",
+    "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
+    "build": "0.6.0.52",
+    "pullRequest": 820,
+    "url": "https://github.com/cehinds/AshenSpire/pull/820"
   },
   {
     "id": "pr-850",
@@ -33,14 +103,14 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/859"
   },
   {
-    "id": "pr-844",
+    "id": "pr-810",
     "date": "2026-09-09",
     "group": "2026-09-09",
-    "summary": "Combat foundations have an explicit specification",
-    "detail": "Document equipment-based attacks, typed damage, defenses, impact, Evade, trigger ownership and prototype acceptance examples. This specification does not change gameplay or balance.",
-    "build": "0.6.0.35",
-    "pullRequest": 844,
-    "url": "https://github.com/cehinds/AshenSpire/pull/844"
+    "summary": "The screenreach step leaves the dev preview job",
+    "detail": "Nothing a player sees changes, and no gate loses coverage: tools/screenreach.mjs still runs in ci.yml exactly as before. What is withdrawn is the step added to dev-preview hours earlier by the same pass, which had been red on every push to dev and every pull request into it while the rest of that job was green. The measurement behind the withdrawal is that the tool calls a control covered when its geometric centre is hit-tested to something else, and the combat hand is a fan whose cards overlap on purpose — about a third of each card stayed reachable — while the creation view toggle is a header straddling a scroll clip that scrollIntoView reaches. Teaching the gate to judge a usable region rather than one pixel is left as its own change.",
+    "build": "0.6.0.37",
+    "pullRequest": 810,
+    "url": "https://github.com/cehinds/AshenSpire/pull/810"
   },
   {
     "id": "pr-857",
@@ -61,6 +131,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.35",
     "pullRequest": 856,
     "url": "https://github.com/cehinds/AshenSpire/pull/856"
+  },
+  {
+    "id": "pr-844",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat foundations have an explicit specification",
+    "detail": "Document equipment-based attacks, typed damage, defenses, impact, Evade, trigger ownership and prototype acceptance examples. This specification does not change gameplay or balance.",
+    "build": "0.6.0.35",
+    "pullRequest": 844,
+    "url": "https://github.com/cehinds/AshenSpire/pull/844"
+  },
+  {
+    "id": "pr-839",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "The World Journey atlas is specified",
+    "detail": "Nothing a player sees changes yet. A selectable run mode beside the Classic Climb is written down in the spec: one authored square world across five biomes, where the geography and the landmarks are content and a seed picks a connected route through them. Every journey pins a starting city, a major city and a final legacy dungeon; everything else varies, generation is deterministic by seed, profile and content revision, and a saved journey keeps the node and edge IDs it chose rather than regenerating on resume. Undiscovered ground stays indistinct parchment, inspecting a node never travels, and a completed encounter cannot be farmed by walking back to it.",
+    "build": "0.6.0.35",
+    "pullRequest": 839,
+    "url": "https://github.com/cehinds/AshenSpire/pull/839"
   },
   {
     "id": "pr-855",
@@ -143,16 +233,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/833"
   },
   {
-    "id": "pr-822",
-    "date": "2026-09-08",
-    "group": "2026-09-08",
-    "summary": "Smaller combatants on mobile",
-    "detail": "Combatant artwork is 10% smaller on mobile, with slight enemy artwork overlap allowed. Selected cards reveal a circular information button above the face. The cleaner inspection modal offers Play card when available and explains disabled actions. Holding a combat card fills it to use instead of zooming in; releasing early cancels. Selecting a card immediately lights its valid living targets with an artwork-shaped glow.",
-    "build": "0.6.0.13",
-    "pullRequest": 822,
-    "url": "https://github.com/cehinds/AshenSpire/pull/822"
-  },
-  {
     "id": "pr-830",
     "date": "2026-09-08",
     "group": "2026-09-08",
@@ -161,6 +241,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.14",
     "pullRequest": 830,
     "url": "https://github.com/cehinds/AshenSpire/pull/830"
+  },
+  {
+    "id": "pr-822",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Smaller combatants on mobile",
+    "detail": "Combatant artwork is 10% smaller on mobile, with slight enemy artwork overlap allowed. Selected cards reveal a circular information button above the face. The cleaner inspection modal offers Play card when available and explains disabled actions. Holding a combat card fills it to use instead of zooming in; releasing early cancels. Selecting a card immediately lights its valid living targets with an artwork-shaped glow.",
+    "build": "0.6.0.13",
+    "pullRequest": 822,
+    "url": "https://github.com/cehinds/AshenSpire/pull/822"
   },
   {
     "id": "pr-819",
@@ -173,11 +263,21 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/819"
   },
   {
+    "id": "pr-815",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Development builds move to the 0.6 series",
+    "detail": "Nothing a player sees changes. The candidate the CI and Pages builds carry advances from 0.5.5 to 0.6.0, so the build ordinal restarts at zero the way the versioning rule says it does — a dev badge reading 2 beside a main badge reading in the thousands is that restart, not a regression. A new gate refuses any current build whose stamp is not 0.6.x.<ordinal> and whose committed metadata disagrees with the source, and it is kept out of the Pages builds workflow, which rebuilds archived branches that legitimately still carry their own older series.",
+    "build": "0.6.0.1",
+    "pullRequest": 815,
+    "url": "https://github.com/cehinds/AshenSpire/pull/815"
+  },
+  {
     "id": "pr-809",
     "date": "2026-09-08",
     "group": "2026-09-08",
     "summary": "Card-driven information and starting equipment selection",
-    "detail": "Weapon faces retain their 5:7 shape with a 60:40 artwork-to-information split. Smaller cards sit beside complete readable details; touch and keyboard information access stays separate from buying, equipping, upgrading and playing. Starting Equipment previews selected details and commits the loadout only through Choose.",
+    "detail": "Weapon faces keep their 5:7 shape with a 60:40 art-to-text split, so smaller cards still carry complete readable details. Reading a card stays separate from buying, equipping, upgrading and playing; Starting Equipment previews first and commits only through Choose.",
     "build": "0.5.5.137",
     "pullRequest": 809,
     "url": "https://github.com/cehinds/AshenSpire/pull/809"
@@ -187,7 +287,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-08",
     "group": "2026-09-08",
     "summary": "Compact encounters without horizontal scrollbars",
-    "detail": "Up to three enemies fit beside the player in tighter columns. Hands of up to seven cards overlap to fit the viewport while retaining readable 150–180px faces and hold-to-inspect behavior.",
+    "detail": "Up to three enemies fit beside the player in tighter columns, and hands of up to seven cards overlap to fit the viewport while keeping 150–180px faces and hold-to-inspect.",
     "build": "0.5.5.134",
     "pullRequest": 811,
     "url": "https://github.com/cehinds/AshenSpire/pull/811"
@@ -197,7 +297,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Readable cards and larger combatants",
-    "detail": "Playing cards stay between 150 and 180 viewport pixels wide with readable body text. Sprites grow into available battlefield space and stand closer to the hand while preserving HUD and intent clearance. Crowded phone battlefields scroll sideways and short screens scroll vertically. Holding a card still opens inspection without playing it.",
+    "detail": "Cards stay 150–180 viewport pixels wide with readable body text; sprites grow into the free battlefield space while preserving HUD and intent clearance. Crowded phone battlefields scroll sideways, short screens scroll vertically, and holding a card still inspects without playing it.",
     "build": "0.5.5.131",
     "pullRequest": 808,
     "url": "https://github.com/cehinds/AshenSpire/pull/808"
@@ -207,7 +307,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Playing cards share the item-card motif",
-    "detail": "Combat, reward and deck cards gain warm brown backing, an inset gold frame, framed art and matching type bands. Costs, live card text, hand layout and play interactions retain their existing behavior.",
+    "detail": "Combat, reward and deck cards gain the warm brown backing, inset gold frame, framed art and type bands. Costs, live card text, hand layout and play interactions are unchanged.",
     "build": "0.5.5.129",
     "pullRequest": 806,
     "url": "https://github.com/cehinds/AshenSpire/pull/806"
@@ -217,7 +317,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Every weapon gets a card preview",
-    "detail": "Browse all weapons, shields and staves in a searchable gallery using the same painted poker cards as the game. Reward inspection, merchant offers and buy/sell inspection now share those cards while retaining prices, smithing tiers and mounted-card information. Cards are 20% smaller and arranged in uniform grids. Hold progress remains visible over artwork. Potion and relic cards share the frame in Inventory and merchant shelves, with potion reward inspection included. Preview tests cover every armament and collectible plus hold cancellation and completion.",
+    "detail": "A searchable gallery shows every weapon, shield and staff on the same painted poker cards the game uses, and reward, merchant and buy/sell inspection now share them — prices, smithing tiers and mounted-card details intact. Cards are 20% smaller in uniform grids, hold progress stays visible over artwork, and potion and relic cards share the frame.",
     "build": "0.5.5.128",
     "pullRequest": 801,
     "url": "https://github.com/cehinds/AshenSpire/pull/801"
@@ -227,7 +327,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Tooltips prefer above without covering controls in short windows",
-    "detail": "Shared tooltips first try above their target, retain sideways placement when a landscape window lacks vertical room, and fall below when needed. Authored top and side placement bands remain effective.",
+    "detail": "Shared tooltips try above first, stay sideways when a landscape window lacks vertical room, and fall below when needed. Authored top and side placement bands still apply.",
     "build": "0.5.5.127",
     "pullRequest": 790,
     "url": "https://github.com/cehinds/AshenSpire/pull/790"
@@ -237,7 +337,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Painted techniques, and a glow that follows the figure",
-    "detail": "Combat techniques get their own painted art, and the aura a fighter wears is drawn to the shape of the figure rather than to a box around it, so a lit effect follows the silhouette it belongs to.",
+    "detail": "Combat techniques get their own painted art, and a fighter's aura is drawn to the shape of the figure rather than a box around it, so the light follows the silhouette.",
     "build": "0.5.5.125",
     "pullRequest": 793,
     "url": "https://github.com/cehinds/AshenSpire/pull/793"
@@ -247,7 +347,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "What the combat animations and auras are supposed to do, written down",
-    "detail": "Nothing a player sees changes. The approved behaviour for the combat animation path and for the auras that ride on it is recorded, so the next change to either has something to be measured against instead of being read back out of the code.",
+    "detail": "Nothing a player sees changes. The approved behaviour for the combat animation path and its auras is recorded, so the next change has something to be measured against.",
     "build": "0.5.5.118",
     "pullRequest": 791,
     "url": "https://github.com/cehinds/AshenSpire/pull/791"
@@ -257,7 +357,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The receipts catch up on three merges",
-    "detail": "Nothing a player sees changes. The painted armaments (#778), the Star Seer's standing idle (#780) and the Armoury heading fix (#768) had all landed without an entry here, so the changelog inside the game did not carry them either. Each is written up at the build ordinal standing at its own merge, and the projection was regenerated from this file so both now say the same thing. The gate added in #652 is what named the three, rather than someone reading the merge log.",
+    "detail": "Nothing a player sees changes. The painted armaments (#778), the Star Seer's standing idle (#780) and the Armoury heading fix (#768) had landed with no entry here, so the in-game changelog missed them too; each is written up at the ordinal standing at its own merge. The gate added in #652 named the three, not a person reading the merge log.",
     "build": "0.5.5.124",
     "pullRequest": 792,
     "url": "https://github.com/cehinds/AshenSpire/pull/792"
@@ -267,7 +367,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The Armoury's card headings stay inside their own borders",
-    "detail": "On a narrow screen the Equipment cards summary could spill below the bordered heading it belongs to: the shared read-only row style let the text wrap while the heading itself kept a fixed height, so the words went outside the box. Those headings now put the label above the summary and grow to hold both, and the read-only rule no longer applies to them. Text keeps a 15px floor. The narrow Hybrid equipment pane has a separate clipping problem of its own, which this does not touch.",
+    "detail": "On a narrow screen the Equipment cards summary could spill below its bordered heading — the shared read-only row style let the text wrap while the heading kept a fixed height. Headings now put the label above the summary and grow to hold both, with a 15px text floor. The narrow Hybrid equipment pane has a separate clipping problem this does not touch.",
     "build": "0.5.5.118",
     "pullRequest": 768,
     "url": "https://github.com/cehinds/AshenSpire/pull/768"
@@ -277,7 +377,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The Star Seer stands with the staff",
-    "detail": "The Star Seer's resting pose in combat is the standing staff figure rather than the previous idle, across the base class and all three of its armour sets.",
+    "detail": "The Star Seer's resting combat pose is the standing staff figure, across the base class and all three armour sets.",
     "build": "0.5.5.117",
     "pullRequest": 780,
     "url": "https://github.com/cehinds/AshenSpire/pull/780"
@@ -287,7 +387,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "All twenty-five armaments are painted",
-    "detail": "Every weapon and shield in the game now has its own painted item art, and the Armoury cards that show them were refreshed to suit: the silhouette reads against the well it sits in, in the inventory list and in the opened detail alike. Reference sheets for the set are kept beside the art. The single-file download grows, because these are inlined into it like every other asset.",
+    "detail": "Every weapon and shield has its own painted item art, and the Armoury cards were refreshed so the silhouette reads against the well it sits in. Reference sheets are kept beside the art; the single-file download grows, because these inline like every other asset.",
     "build": "0.5.5.116",
     "pullRequest": 778,
     "url": "https://github.com/cehinds/AshenSpire/pull/778"
@@ -297,7 +397,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Armoury navigation is simpler and menu cancellation is reliable",
-    "detail": "Character, Equipment, Inventory and Cards have dedicated tabs instead of supporting trays. Stats stay with Character; the complete deck uses large, separate card faces that remain readable on phones. Change shows compatible inventory choices with a clear way to show all items again. Resizing no longer closes the item being read. In-run Load explains unavailable empty slots; Smith cancellation closes only the topmost dialog and supports clicking its backdrop.",
+    "detail": "Character, Equipment, Inventory and Cards get dedicated tabs instead of supporting trays; Stats stay with Character and the deck uses large separate faces that stay readable on phones. Change shows compatible inventory with a clear way back to all items, resizing no longer closes what you are reading, and Smith cancellation closes only the topmost dialog.",
     "build": "0.5.5.120",
     "pullRequest": 779,
     "url": "https://github.com/cehinds/AshenSpire/pull/779"
@@ -307,7 +407,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Equipment as painted poker cards",
-    "detail": "Inventory and equipment inspection use the approved gold-bordered 5:7 design, with canonical item facts and painted artwork. Hover or focus a field for its explanation, or read all details on touch. Long text remains available without stretching the card. Equip, compare and combat equipment behavior are preserved.",
+    "detail": "Inventory and equipment inspection use the gold-bordered 5:7 design with canonical facts and painted artwork. Hover or focus a field for its explanation, or read all details on touch; equip, compare and combat behaviour are preserved.",
     "build": "0.5.5.125",
     "pullRequest": 787,
     "url": "https://github.com/cehinds/AshenSpire/pull/787"
@@ -317,7 +417,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Two receipts, named in the same pass that writes them",
-    "detail": "Nothing a player sees changes. The classic-figure sigil fix (#769) and the enemy-sprite background note (#767) had merged with no receipt in this file, so the changelog inside the game did not carry them and the gate that checks this before a promotion was red. Both are written up below at the build standing at their own merge, and this receipt names its own pull request in the same commit — the habit that stops a receipts pass owing a receipt of its own.",
+    "detail": "Nothing a player sees changes. The classic-figure sigil fix (#769) and the enemy-sprite background note (#767) had merged with no receipt, so the in-game changelog missed them and the promotion gate was red. Both are written up below, and this receipt names its own pull request in the same commit — the habit that stops a receipts pass owing a receipt of its own.",
     "build": "0.5.5.112",
     "pullRequest": 771,
     "url": "https://github.com/cehinds/AshenSpire/pull/771"
@@ -327,7 +427,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The sigil comes off the classic figure too",
-    "detail": "Taking the sigil off the character in #764 removed the overlay but missed the other way it reached the figure: the Classic sprite style, and any figure that falls back to the inline drawing, still had the chosen sigil painted onto the chest as part of the silhouette itself. It now draws the plain accent it wore before sigils existed. The check that guards this could not have caught it — it looked only for the overlay, so it would have called a figure clean while the sigil sat on its chest — and it now reads both ways a sigil can arrive.",
+    "detail": "#764 removed the sigil overlay but missed the other route: the Classic sprite style, and any figure falling back to the inline drawing, still painted the sigil onto the chest as part of the silhouette. It now draws the plain accent it wore before sigils existed. The guard could not have caught it — it looked only for the overlay — and now reads both ways a sigil can arrive.",
     "build": "0.5.5.111",
     "pullRequest": 769,
     "url": "https://github.com/cehinds/AshenSpire/pull/769"
@@ -337,7 +437,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The enemy sprite background exception is written down",
-    "detail": "Nothing a player sees changes. The source backgrounds behind the enemy sprites follow a rule the tooling did not state anywhere, so the exception is recorded where the next person cutting a sprite will find it.",
+    "detail": "Nothing a player sees changes. The source backgrounds behind enemy sprites follow a rule the tooling never stated, so the exception is recorded where the next person cutting a sprite will find it.",
     "build": "0.5.5.110",
     "pullRequest": 767,
     "url": "https://github.com/cehinds/AshenSpire/pull/767"
@@ -357,7 +457,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Enemy attacks face the target and have more impact",
-    "detail": "The Stitched King now looks toward the player during his attack. Enemy attack frames are five percent larger than idle frames while keeping their shared foot line fixed.",
+    "detail": "The Stitched King looks toward the player during his attack, and enemy attack frames are five percent larger than idle frames while keeping their shared foot line fixed.",
     "build": "0.5.5.110",
     "pullRequest": 758,
     "url": "https://github.com/cehinds/AshenSpire/pull/758"
@@ -367,7 +467,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Damaging spells show the enemy attack frame",
-    "detail": "Enemy spells retain their casting motion while showing their attack artwork, then return to the idle frame when the animation finishes or is cancelled.",
+    "detail": "Enemy spells keep their casting motion while showing their attack artwork, then return to idle when the animation finishes or is cancelled.",
     "build": "0.5.5.108",
     "pullRequest": 755,
     "url": "https://github.com/cehinds/AshenSpire/pull/755"
@@ -377,7 +477,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Chosen sigils appear on painted figures",
-    "detail": "The chosen sigil is visible during character creation and combat. Character-creation checks follow the current folded sections, incomplete point allocations use a valid preview, and the sprite-cutting guard refuses incompatible metadata before overwriting art.",
+    "detail": "The chosen sigil is visible during character creation and combat. Character-creation checks follow the current folded sections, incomplete allocations use a valid preview, and the sprite-cutting guard refuses incompatible metadata before overwriting art.",
     "build": "0.5.5.107",
     "pullRequest": 752,
     "url": "https://github.com/cehinds/AshenSpire/pull/752"
@@ -387,7 +487,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Upgrade and armor choices use standard card sizes",
-    "detail": "Armor artwork fits inside the cards without cropping. Shrine actions share a consistent height, with flask allocation expanding below its header.",
+    "detail": "Armor artwork fits inside the cards without cropping, and Shrine actions share a consistent height with flask allocation expanding below its header.",
     "build": "0.5.5.106",
     "pullRequest": 761,
     "url": "https://github.com/cehinds/AshenSpire/pull/761"
@@ -397,7 +497,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Assign Points stays responsive on the final point",
-    "detail": "The character preview reads the current allocation instead of a stale cached draft, so spending or refunding points continues to update the controls even when a weapon requirement is unmet.",
+    "detail": "The character preview reads the current allocation instead of a stale cached draft, so spending or refunding points keeps updating the controls even when a weapon requirement is unmet.",
     "build": "0.5.5.105",
     "pullRequest": 751,
     "url": "https://github.com/cehinds/AshenSpire/pull/751"
@@ -407,7 +507,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Your figure holds the weapon and shield you gave it again",
-    "detail": "In the Armoury the figure had stopped showing the armament in its hands: the function that stacks the held pieces over the body returned a single standing frame before it built any of them, so nothing was held. It was found by the release promotion's own browser gate rather than by playing, and the shape of the finding is worth recording — all twenty-five armaments, in both hands, measured at the identical position. Fifty readings that agree to the pixel are not a weapon on the wrong side; they are no weapon at all. The short-circuit was also unreachable in the case it was written for and wrong in the case it did reach: the Armoury already chooses the painted standing pose itself, and only calls this when sprites are off or you have asked for the classic or glyph style, so the one thing it did was overrule the style you chose. The painted preview is untouched.",
+    "detail": "In the Armoury the figure had stopped showing its armament: the function that stacks held pieces over the body returned a single standing frame before building any of them. Found by the release promotion's browser gate — all twenty-five armaments, both hands, measured at the identical position, because fifty readings that agree to the pixel are not a weapon on the wrong side but no weapon at all. The short-circuit was also unreachable in the case it was written for, and in the case it did reach it only overruled the sprite style you chose. The painted preview is untouched.",
     "build": "0.5.5.103",
     "pullRequest": 757,
     "url": "https://github.com/cehinds/AshenSpire/pull/757"
@@ -417,7 +517,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Three receipts, and the pass names itself this time",
-    "detail": "Nothing a player sees changes. The Shrine level-up modal (#746) and the point-pool bound (#732) had landed on dev with no receipt in this file, so the changelog inside the game did not carry them and the gate that checks this before a promotion was red. Both are written up below at the build standing at their own merge. This receipt names its own pull request in the same commit that writes the other two — which is the lesson from the last backfill, where splitting the work across #714, #717 and #718 meant each pass closed the gate and then owed a receipt itself. One pull request, three receipts, no chain.",
+    "detail": "Nothing a player sees changes. The Shrine level-up modal (#746) and the point-pool bound (#732) had landed with no receipt, so the in-game changelog missed them and the promotion gate was red. Both are written up below, and this receipt names its own pull request in the same commit — one pull request, three receipts, no chain.",
     "build": "0.5.5.101",
     "pullRequest": 749,
     "url": "https://github.com/cehinds/AshenSpire/pull/749"
@@ -427,7 +527,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Levelling at a Shrine uses the same points panel as everywhere else",
-    "detail": "Choosing Level up at a Shrine now opens the shared stat-allocation panel instead of unfolding the stats in place, so spending a level reads the same as spending points at character creation. A pending purchase shows what it costs in cinders and what you would have left before you commit; Cancel and Escape discard it and Confirm applies the levels and returns you to the Shrine. Keyboard and pad focus survive each adjustment rather than being dropped back to the top of the list.",
+    "detail": "Level up at a Shrine opens the shared stat-allocation panel instead of unfolding stats in place, so it reads the same as spending points at creation. A pending purchase shows its cinder cost and your remaining balance before you commit; Cancel and Escape discard it, Confirm applies it. Keyboard and pad focus survive each adjustment.",
     "build": "0.5.5.94",
     "pullRequest": 746,
     "url": "https://github.com/cehinds/AshenSpire/pull/746"
@@ -437,7 +537,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The point pool cannot be pushed below zero, and its gate runs again",
-    "detail": "Assign Points refused to complete when a stat had been raised past the points you actually had — Done said \"1 stat point over the pool\" and left you to work out which stat to put back. The bound is now enforced where the change happens rather than only on the button that was drawn, so a stat cannot move past the mode's floor or ceiling and cannot spend a point the pool does not hold. The check that guards character creation had been dying at its first step since #692 moved the sprite and sigil group beside the preview, so none of its assertions had run in weeks; its selectors follow the move, and the sprite row is asserted where it now lives rather than deleted. Two findings it surfaced are recorded rather than quietly fixed: once the pool has been at zero and a point is freed by decrementing, the + controls report themselves enabled and spend nothing, so the allocation cannot be completed from that state; and two card-structure failures from the #690 era were unreachable while the gate was dead. Neither is fixed here.",
+    "detail": "Assign Points refused to complete when a stat had been raised past the points you held, saying \"1 stat point over the pool\" and leaving you to find it. The bound is now enforced where the change happens, so a stat cannot cross the mode's floor or ceiling or spend a point the pool does not hold. The character-creation gate had been dying at its first step since #692 moved the sprite and sigil group, so none of its assertions had run in weeks; its selectors follow the move. Two findings are recorded rather than quietly fixed: once the pool has been at zero and a point is freed, the + controls report themselves enabled and spend nothing; and two card-structure failures from the #690 era were unreachable while the gate was dead.",
     "build": "0.5.5.93",
     "pullRequest": 732,
     "url": "https://github.com/cehinds/AshenSpire/pull/732"
@@ -447,7 +547,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Character artwork uses the right pose on each screen",
-    "detail": "Class selection uses bottom-aligned close-up portraits and restores the colored class icons beside descriptions. Character customization uses detail poses. Armor choices, armory figures, smithing and mounting use the full-body menu pose for every outfit.",
+    "detail": "Class selection uses bottom-aligned close-up portraits with the colored class icons restored; customization uses detail poses; armor choices, armoury figures, smithing and mounting use the full-body menu pose for every outfit.",
     "build": "0.5.5.92",
     "pullRequest": 743,
     "url": "https://github.com/cehinds/AshenSpire/pull/743"
@@ -457,7 +557,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Painted outfits now appear throughout the game",
-    "detail": "All sixteen outfits have matching character-selection portraits, menu figures, armory previews and compact combat animations. Reaver uses the reviewed sword-rest stance and advance, overhead windup, cleave and recovery sequence. Classic and Sigil remain available. Painted weapons are part of the artwork; equipment icons and stats still describe the actual loadout.",
+    "detail": "All sixteen outfits have matching selection portraits, menu figures, armoury previews and compact combat animations, with Reaver using the reviewed sword-rest stance, advance, overhead windup, cleave and recovery. Classic and Sigil remain available; painted weapons are part of the artwork, while icons and stats still describe the actual loadout.",
     "build": "0.5.5.87",
     "pullRequest": 740,
     "url": "https://github.com/cehinds/AshenSpire/pull/740"
@@ -467,7 +567,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Reaver artwork follows the selected poses",
-    "detail": "All four Reaver outfits share the approved sword-rest menu and idle stance, the three selected attack poses and matching chest-up portraits. Earlier source sheets remain available in the art collection. This receipt records the artwork revision; game integration follows in #740.",
+    "detail": "All four Reaver outfits share the approved sword-rest menu and idle stance, the three selected attack poses and matching chest-up portraits. This records the artwork revision; game integration follows in #740.",
     "build": "0.5.5.78",
     "pullRequest": 735,
     "url": "https://github.com/cehinds/AshenSpire/pull/735"
@@ -477,7 +577,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Cards and figures keep their proportions",
-    "detail": "Combat cards retain a 5:7 profile across screen widths, character preview cards keep a 3:4 silhouette, and Armoury sprites fit both available dimensions without stretching. Card artwork stays contained and the fan reserves clearance for larger text. Pile viewers use larger cards with readable text and spaced rows on phones; combatant scaling is bounded by available space rather than an extra zoom cap. Read-only modal and tooltip rows let labels grow from 10% to 30% before truncating; descriptions wrap with readable text instead of being cut off. Intent symbols, combatant tooltips, and HUD text retain readable minimum sizes on narrow screens while the combat action controls keep their dimensions.",
+    "detail": "Combat cards hold a 5:7 profile at any width, preview cards a 3:4 silhouette, and Armoury sprites fit both dimensions without stretching. Pile viewers use larger cards with readable text and spaced rows on phones. Read-only modal and tooltip labels grow from 10% to 30% before truncating, and descriptions wrap instead of being cut off; intent symbols, combatant tooltips and HUD text keep readable minimums on narrow screens.",
     "build": "0.5.5.100",
     "pullRequest": 741,
     "url": "https://github.com/cehinds/AshenSpire/pull/741"
@@ -487,7 +587,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "A readable combat fan and compact inspection",
-    "detail": "Narrower, shorter cards retain their text size. Five to seven cards fan above the five-slot HUD with exposed costs along their left edges and a clear vertical gap. Hover or select a card to read its face. Inspect lives only in the hover panel as a compact, full-width action; sprite icons and the full-height character outline are removed. Panels stay open while entered, and closing inspection restores focus. Flask inspection effect text and charge counts retain readable minimum sizes when the game scales down. Potion rows include their artwork and unfold inline using the Armoury detail-card style; Use moves into the expanded card, and selecting a potion never consumes it. Selected enemy details return after transient character previews close. Hand resizing defers layout writes to the next frame and skips unchanged measurements to prevent resize-observer feedback. Character creation uses attached foldout cards with readable text, folded equipment summaries and contained sprite previews. Combat cards are slightly larger; Actions and Potions are equal circles matching the End Turn height. Enemies anchor toward the right and combatants compensate for reduced UI scale within their available space. The hand and bottom controls sit higher; Armoury and Menu align with the vitals.",
+    "detail": "Narrower, shorter cards keep their text size; five to seven fan above the five-slot HUD with costs exposed along their left edges. Inspect lives only in the hover panel as a compact full-width action, panels stay open while entered, and closing restores focus. Potion rows show artwork and unfold inline in the Armoury detail-card style, and selecting a potion never consumes it. Character creation uses attached foldout cards with readable text and folded equipment summaries; Actions and Potions are equal circles matching the End Turn height.",
     "build": "0.5.5.82",
     "pullRequest": 720,
     "url": "https://github.com/cehinds/AshenSpire/pull/720"
@@ -497,7 +597,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Cracked Tear makes your flasks stronger on the map too",
-    "detail": "The relic promises every flask is half again as strong, and in a fight it was — but a flask drunk on the map quietly restored its plain amount, so the Azure gave one Mana where it owed two and the Crimson healed fifteen where it owed twenty-three. The map now scales the same way combat already did, rounded up, and a run carrying no such relic restores exactly what it did before. Found by an automated review of the promotion rather than by playing, which is worth saying: the amounts were plausible on their own and only wrong next to the promise.",
+    "detail": "The relic promises every flask is half again as strong, and in a fight it was — but a flask drunk on the map restored its plain amount, so the Azure gave one Mana where it owed two and the Crimson healed fifteen where it owed twenty-three. The map now scales the same way combat did, rounded up; a run without the relic is unchanged. Found by automated review of the promotion, not by playing: the amounts were plausible on their own and only wrong next to the promise.",
     "build": "0.5.5.76",
     "pullRequest": 733,
     "url": "https://github.com/cehinds/AshenSpire/pull/733"
@@ -507,7 +607,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Every class gets one page showing all of its painted outfits",
-    "detail": "The painted character artwork for all sixteen outfits is preserved, and each class now has a single review page carrying its four outfits, the menu and detail poses, the matching close-up portraits, the compact combat poses and the earlier source sheets kept alongside them. The Reaver and the Duelist were facing the wrong way when inspected; both are corrected, and the frontal presentation art is kept separate from the combat art rather than standing in for it. This is an artwork and preview package: it does not replace the runtime assets, and it does not put the new portraits into character creation or the Armoury.",
+    "detail": "Each class gets a single review page carrying its four outfits, menu and detail poses, close-up portraits, compact combat poses and the earlier source sheets. The Reaver and the Duelist were facing the wrong way when inspected; both are corrected. This is an artwork and preview package — it does not replace runtime assets or reach character creation and the Armoury.",
     "build": "0.5.5.73",
     "pullRequest": 728,
     "url": "https://github.com/cehinds/AshenSpire/pull/728"
@@ -517,7 +617,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The branch histories are rejoined",
-    "detail": "Nothing a player sees changes. The test branch had stopped being only a promotion target — seven pull requests landed on it directly — so it had diverged from dev and a promotion could not merge at all. This rejoins them, keeping both of the receipts numbered 711 and 712 for what is the same change on two branches rather than folding one into the other. It also pays two debts the action-row fix left behind: its own receipt, and a standalone build left stale because the launch script does not write build/ — the bundler does, and only the bundler.",
+    "detail": "Nothing a player sees changes. test had stopped being only a promotion target — seven pull requests landed on it directly — so it diverged from dev and a promotion could not merge at all. This rejoins them, keeping both receipts 711 and 712 for what is one change on two branches. It also pays two debts left by the action-row fix: its own receipt, and a standalone build left stale because the launch script does not write build/ — the bundler does, and only the bundler.",
     "build": "0.5.5.73",
     "pullRequest": 726,
     "url": "https://github.com/cehinds/AshenSpire/pull/726"
@@ -527,7 +627,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "A receipts pass that names itself",
-    "detail": "Nothing a player sees changes. The entry above was owed by a pull request that, being one itself, owed one in turn; this is that one, and it names its own number so the debt does not pass to a third. That regress has been walked three times already, at 714, 717 and 718: each wrote the receipts that were owed and then owed one itself. The escape is the same every time — open the pull request first, because a receipt cannot name a number that does not yet exist, then write the receipt.",
+    "detail": "Nothing a player sees changes. The entry above was owed by a pull request that, being one itself, owed one in turn; this is that one, and it names its own number so the debt does not pass to a third. The escape is always the same: open the pull request first, because a receipt cannot name a number that does not yet exist.",
     "build": "0.5.5.73",
     "pullRequest": 730,
     "url": "https://github.com/cehinds/AshenSpire/pull/730"
@@ -537,7 +637,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Hand cards no longer come to rest on Draw and End Turn",
-    "detail": "On a desktop-shaped window the lowest cards in your hand overlapped the buttons beneath them at every text size — the defect #713's repaired gate found and recorded rather than fixed. The cause was one number: the band the combat column reserves under the hand is measured for the row's tallest cell, and #679 grew that row from four controls to six and gave every one of them a 44px minimum tap height without re-measuring it. The reservation is re-measured to match the row it now has to clear, with room to spare rather than the few pixels that merely avoid a touch. Two of the gate's own plants were pinned to the old number and stopped proving anything the moment it changed; one is re-pointed and the other re-anchored so a future re-measure cannot disarm it again.",
+    "detail": "On a desktop-shaped window the lowest cards overlapped the buttons beneath them at every text size — the defect #713's repaired gate found. The cause was one number: the band reserved under the hand is measured for the row's tallest cell, and #679 grew that row from four controls to six with a 44px minimum tap height without re-measuring. It is re-measured with room to spare. Two of the gate's plants were pinned to the old number and are re-pointed or re-anchored so a future re-measure cannot disarm them.",
     "build": "0.5.5.71",
     "pullRequest": 721,
     "url": "https://github.com/cehinds/AshenSpire/pull/721"
@@ -547,7 +647,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Three checks that had stopped checking anything check again",
-    "detail": "Nothing a player sees changes. Two component contracts and the changelog projector had all gone red on the development branch, and none of them for a real fault: each was pinned to the exact wording of a line that a later, deliberate change had moved — a tile size retuned so the Armoury and Menu controls fill the meter stack, a call that gained an argument, a renderer that gained a plural. They now check what the lines have to mean rather than how they are spelled, which is the same repair #645 made in August. The changelog inside the game also refused one receipt that had a link buried in its prose; flattening it revealed that the link had been the only thing standing in for a missing receipt, so that one is written up properly too.",
+    "detail": "Nothing a player sees changes. Two component contracts and the changelog projector had gone red on dev, none for a real fault: each was pinned to the exact wording of a line a later deliberate change had moved. They now check what the lines have to mean rather than how they are spelled — the same repair #645 made in August. The projector also refused one receipt with a link buried in its prose; flattening it revealed the link was standing in for a missing receipt, so that one is written up properly too.",
     "build": "0.5.5.70",
     "pullRequest": 722,
     "url": "https://github.com/cehinds/AshenSpire/pull/722"
@@ -557,7 +657,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The receipt #714 was owed",
-    "detail": "Nothing a player sees changes. #714 wrote up the eight merges that had no entry here and, being a pull request itself, owed one in turn; this is that one. It is written up separately because until now it was only ever named inside another receipt's prose, which reads as a citation but is not an entry of its own.",
+    "detail": "Nothing a player sees changes. #714 wrote up eight merges that had no entry here and, being a pull request itself, owed one in turn; this is that one, written separately because until now it was only ever named inside another receipt's prose.",
     "build": "0.5.5.66",
     "pullRequest": 717,
     "url": "https://github.com/cehinds/AshenSpire/pull/717"
@@ -567,7 +667,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The receipt chain closes on itself",
-    "detail": "Nothing a player sees changes. Splitting the receipts backfill across two pull requests bought a regress: #714 wrote the eight that were owed and then owed one itself, #717 wrote #714's and then owed one itself. This receipt names its own pull request and records #717 in the same line, which is the only way the loop ends — a receipt cannot name a number that does not exist until the pull request is opened, so the pull request goes first and the receipt follows. That pass landed at 0.5.5.66 and carried no player-visible change; nor does this. The lesson is written down rather than repeated: a receipts pass names itself in the same commit that writes the others.",
+    "detail": "Nothing a player sees changes. Splitting the backfill across two pull requests bought a regress: #714 wrote the eight that were owed and then owed one itself, #717 wrote #714's and then owed one itself. This receipt names its own pull request and records #717 in the same line, which is the only way the loop ends. The lesson is written down rather than repeated: a receipts pass names itself in the same commit that writes the others.",
     "build": "0.5.5.67",
     "pullRequest": 718,
     "url": "https://github.com/cehinds/AshenSpire/pull/718"
@@ -577,7 +677,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Eight merges get the receipts they owed",
-    "detail": "Nothing a player sees changes. Eight pull requests had landed on dev with no receipt in this file — #686, #690, #692, #694, #697, #698, #706 and #713 — so the changelog you can read inside the game carried none of them, and the gate that checks this before a promotion was red. All eight are written up below at the build standing at their own merge, and the projection was regenerated so both now say the same thing. Two of them state something a summary would have rounded off: #698's records that none of its own code was applied, because the game already solved what it set out to solve and solved it with painted frames rather than a transform; and #713's records the defect its repaired gate found — hand cards overlapping Draw and End Turn at 1200x730 — which is still open. This receipt names its own pull request, which is only possible because the pull request was opened before the receipt was written.",
+    "detail": "Nothing a player sees changes. Eight pull requests — #686, #690, #692, #694, #697, #698, #706 and #713 — had landed on dev with no receipt, so the in-game changelog carried none of them and the promotion gate was red. All eight are written up below at the build standing at their own merge. Two say something a summary would round off: #698's records that none of its own code was applied, and #713's records the defect its repaired gate found — hand cards overlapping Draw and End Turn at 1200x730 — which is still open.",
     "build": "0.5.5.66",
     "pullRequest": 714,
     "url": "https://github.com/cehinds/AshenSpire/pull/714"
@@ -587,7 +687,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The armour you wear keeps its own painted figure in a fight",
-    "detail": "Nothing a player sees changes, and that is the point. This pull request set out to stop an alternative armour set being erased from the animated combat figure — a real gap — but the game had already closed it by better means: each set draws its own authored pose sheet, one of the twelve shipped as 561 painted frames, rather than the class default. The change offered instead was a CSS animation over the layered equipment composite, with no art behind it, so none of it was applied; taking it would have swapped painted frames for a transform. The one thing the shipped path still gives up is stated in the code rather than hidden: the armour-set palette and the held weapon do not ride on the fighter.",
+    "detail": "Nothing a player sees changes, and that is the point. This set out to stop an alternative armour set being erased from the animated combat figure, but the game had already closed that gap by better means: each set draws its own authored pose sheet, one of the twelve shipped as 561 painted frames. The change offered instead was a CSS animation over the layered composite with no art behind it, so none of it was applied. What the shipped path still gives up is stated in the code rather than hidden: the armour-set palette and the held weapon do not ride on the fighter.",
     "build": "0.5.5.64",
     "pullRequest": 698,
     "url": "https://github.com/cehinds/AshenSpire/pull/698"
@@ -597,7 +697,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Assign Points refunds to a baseline, and its rows keep one even inset",
-    "detail": "Opening Assign Points returns every stat to the mode's baseline and hands the whole bonus pool back, instead of resuming the allocation you left; the ten points are yours to spend again from a neutral start. The save-slot chooser is rebuilt on the shared kit, and a setting row now carries the same padding on all four sides rather than shaving the horizontal edge. The check that measures those rows is now part of the foldout gate, beside the one that proves each stat's detail stays attached to its own card.",
+    "detail": "Opening Assign Points returns every stat to the mode's baseline and hands the whole pool back, instead of resuming the allocation you left. The save-slot chooser is rebuilt on the shared kit, and a setting row carries the same padding on all four sides rather than shaving the horizontal edge.",
     "build": "0.5.5.63",
     "pullRequest": 694,
     "url": "https://github.com/cehinds/AshenSpire/pull/694"
@@ -607,7 +707,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The bottom row's six controls are checked by what they are, not by name",
-    "detail": "Nothing a player sees changes here, but something a player can see is now known to be wrong. #679 merged the two spent piles into one and added Arts and Potions; the gate that guards the combat action row still listed the old names, so the two new controls were invisible to it and the row could grow without the gate noticing. Controls are now identified by what they are rather than by a whitelist. The working gate immediately found a real defect: hand cards overlap Draw and End Turn at 1200x730 at every text size. That is recorded, not fixed here.",
+    "detail": "Nothing a player sees changes here, but something a player can see is now known to be wrong. #679 merged the two spent piles and added Arts and Potions; the gate still listed the old names, so the two new controls were invisible to it. Controls are now identified by what they are rather than by a whitelist. The working gate immediately found a real defect: hand cards overlap Draw and End Turn at 1200x730 at every text size. Recorded, not fixed here.",
     "build": "0.5.5.63",
     "pullRequest": 713,
     "url": "https://github.com/cehinds/AshenSpire/pull/713"
@@ -617,7 +717,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Assign Points starts from the baseline, and setting rows share one inset",
-    "detail": "Reopening Assign Points seats every attribute at the mode's baseline rather than resuming a half-spent allocation, and the shared setting row keeps one equal inset on all four sides — a surface does not get to shave a side off it.",
+    "detail": "Reopening Assign Points seats every attribute at the mode's baseline rather than resuming a half-spent allocation, and the shared setting row keeps one equal inset on all four sides.",
     "build": "0.5.5.61",
     "pullRequest": 697,
     "url": "https://github.com/cehinds/AshenSpire/pull/697"
@@ -627,7 +727,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "A disabled potion slot is disabled, not merely labelled so",
-    "detail": "Nothing a player sees changes. The kit now records why an empty potion control is natively disabled instead of only carrying aria-disabled: the announcement alone tells a screen reader the control is unavailable while still letting the cursor, the keyboard and a programmatic click select it. Native disabling is what actually keeps an empty slot out of reach.",
+    "detail": "Nothing a player sees changes. An empty potion control is now natively disabled instead of only carrying aria-disabled, which announced unavailability while still letting the cursor, the keyboard and a programmatic click select it.",
     "build": "0.5.5.59",
     "pullRequest": 706,
     "url": "https://github.com/cehinds/AshenSpire/pull/706"
@@ -637,7 +737,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Character creation opens on a neutral allocation",
-    "detail": "Point-buy character creation now seats every attribute at the mode's baseline as its starting position, and the preview beside the panel is built from the last complete allocation until all ten points are spent — so a half-finished draft is never sent through the validator that only a finished one can pass. The creation preview's padding and margins were tidied at the same time.",
+    "detail": "Point-buy creation seats every attribute at the mode's baseline, and the preview is built from the last complete allocation until all ten points are spent — so a half-finished draft never reaches the validator only a finished one can pass.",
     "build": "0.5.5.58",
     "pullRequest": 692,
     "url": "https://github.com/cehinds/AshenSpire/pull/692"
@@ -647,7 +747,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Every primary stat is its own card, and it keeps its own explanation",
-    "detail": "The five primary stats are drawn as self-contained cards whose summary and detail are one piece, matching the grammar the Armoury's card rows already use — so a stat's explanation opens under that stat rather than in a panel shared with its neighbours, and only one is open at a time. The gate for this grew assertions that each detail stays attached to its own card, and the Intelligence row inside Assign Points no longer wraps to a second line and stands 1.44px taller than the other four, which had kept that gate red since #647.",
+    "detail": "The five primary stats are self-contained cards whose summary and detail are one piece, matching the Armoury's card grammar, so a stat's explanation opens under that stat and only one is open at a time. The Intelligence row inside Assign Points no longer wraps to a second line and stands 1.44px taller than the other four, which had kept that gate red since #647.",
     "build": "0.5.5.57",
     "pullRequest": 690,
     "url": "https://github.com/cehinds/AshenSpire/pull/690"
@@ -657,7 +757,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Crimson and Azure can be drunk outside a fight, if you ask for it",
-    "detail": "A new Settings switch, off by default, lets the healing and mana flasks be used on the map instead of only in combat; with it off they say so rather than silently refusing. Both now sit in the potion belt beside the carried flasks rather than in their own corner of Quick Access, which leaves Armoury and Menu the only two controls there and lets them take the full height of the meter stack beside them.",
+    "detail": "A Settings switch, off by default, lets the healing and mana flasks be used on the map; with it off they say so rather than silently refusing. Both now sit in the potion belt beside the carried flasks, leaving Armoury and Menu the only two Quick Access controls and letting them take the full height of the meter stack.",
     "build": "0.5.5.56",
     "pullRequest": 686,
     "url": "https://github.com/cehinds/AshenSpire/pull/686"
@@ -677,7 +777,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Saved boss destinations follow current content safely",
-    "detail": "Loading validates the original boss behind legacy maps and refuses missing or invalid encounters before play. Named destinations refresh when enemies are renamed or encounter composition changes, preserving paths, selected encounters and RNG state in solo and LAN saves. This applies the development fix from PR #711.",
+    "detail": "The same fix as #711, applied on the other branch.",
     "build": "0.5.5.57",
     "pullRequest": 712,
     "url": "https://github.com/cehinds/AshenSpire/pull/712"
@@ -687,7 +787,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "More enemies, named boss routes and readable combat actions",
-    "detail": "Seven new regular enemies and seven new bosses bring the roster to twenty regular enemies, three elites and ten bosses. Fourteen transparent painted portraits accompany new moves and phases, while the Unity-fork artwork stays intact. Boss routes name their locations, enemy inspectors share move cards, and card actions gain actor- and tag-based motion plus draw/play/pile feedback. Reduced motion and skipped animations retain readable outcomes; unchanged co-op snapshots do not replay arrivals.",
+    "detail": "Seven new regular enemies and seven new bosses bring the roster to twenty regular enemies, three elites and ten bosses, with fourteen transparent painted portraits for the new moves and phases. Boss routes name their locations, enemy inspectors share move cards, and card actions gain actor- and tag-based motion plus draw/play/pile feedback. Reduced motion and skipped animations keep readable outcomes.",
     "build": "0.5.5.55",
     "pullRequest": 704,
     "url": "https://github.com/cehinds/AshenSpire/pull/704"
@@ -697,7 +797,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Maps preserve distinct boss destinations",
-    "detail": "Acts with multiple boss encounters assign named terminal choices beyond their guaranteed rest. Each destination keeps its encounter through saves, LAN play and simulations. Compact terminal placement keeps the choices visible on phones, and co-op tooltips identify them. Invalid saved destination references are rejected at loading. Older maps retain their original boss without rerolling; single-boss acts retain their existing paths.",
+    "detail": "Acts with multiple boss encounters assign named terminal choices beyond their guaranteed rest, and each destination keeps its encounter through saves, LAN play and simulations. Compact placement keeps the choices visible on phones; invalid saved references are rejected at load, and older maps retain their original boss without rerolling.",
     "build": "0.5.5.52",
     "pullRequest": 689,
     "url": "https://github.com/cehinds/AshenSpire/pull/689"
@@ -707,7 +807,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The changelog keeps itself honest",
-    "detail": "Nothing a player sees changes. #700's receipt is written up below, and the changelog inside the game was regenerated so it carries the same entries this file does. This is the second merge running that the repository asked for its own receipt instead of waiting for someone to read the merge log and notice.",
+    "detail": "Nothing a player sees changes. #700's receipt is written up below and the in-game changelog was regenerated to match. This is the second merge running that the repository asked for its own receipt instead of waiting for someone to read the merge log.",
     "build": "0.5.5.50",
     "pullRequest": 703,
     "url": "https://github.com/cehinds/AshenSpire/pull/703"
@@ -717,7 +817,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Animated is the figure you get, everywhere a figure is made",
-    "detail": "The animated pose sheets are now the default sprite style at every place a character is created rather than only at character creation: a co-op seat you add locally, a LAN lobby with no remembered choice, and the fallback any surface reaches when a saved profile carries no style. A save that recorded Rendered, Classic or Sigil still keeps it, and a class with no shipped frames still falls through to its painting, so the choice is never a blank figure.",
+    "detail": "Animated pose sheets are the default sprite style everywhere a character is created, not just at character creation — a locally added co-op seat, a LAN lobby with no remembered choice, and the fallback any surface reaches when a profile carries no style. A save that recorded Rendered, Classic or Sigil keeps it, and a class with no shipped frames falls through to its painting.",
     "build": "0.5.5.48",
     "pullRequest": 700,
     "url": "https://github.com/cehinds/AshenSpire/pull/700"
@@ -727,7 +827,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The receipts catch up, and the gate that asks for them did the asking",
-    "detail": "Nothing a player sees changes. #695 landed without an entry here, and for the first time nobody had to notice: the check added in #652 went red on the development branch the moment it merged, naming the pull request it wanted. Both receipts are written up and the changelog inside the game was regenerated from this file so it carries them too.",
+    "detail": "Nothing a player sees changes. #695 landed without an entry here, and for the first time nobody had to notice: the check added in #652 went red on dev the moment it merged, naming the pull request it wanted.",
     "build": "0.5.5.49",
     "pullRequest": 701,
     "url": "https://github.com/cehinds/AshenSpire/pull/701"
@@ -737,7 +837,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "The five stat rows in Assign Points line up again",
-    "detail": "On a phone, the Intelligence row in Assign Points stood a hair taller than the other four: its hint — the longest of the five — ran onto a second line in an overlay narrower than the column that hint was written for. The five now read as one block again, the long hint trailing off with an ellipsis the way the same rows already do in the Armoury. Character Creation is untouched and still shows the sentence in full, because there is room for it there. This also clears a check that had been failing on the development branch since it was written, and which two later changes inherited without anyone finding out why.",
+    "detail": "On a phone the Intelligence row stood a hair taller than the other four: its hint — the longest of the five — ran onto a second line in an overlay narrower than the column it was written for. The five read as one block again, the long hint trailing off with an ellipsis as the same rows already do in the Armoury. Character Creation is untouched and still shows the sentence in full.",
     "build": "0.5.5.48",
     "pullRequest": 695,
     "url": "https://github.com/cehinds/AshenSpire/pull/695"
@@ -747,7 +847,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Twelve enemies gain their painted Unity-fork sprites",
-    "detail": "Combat reuses the existing transparent artwork with consistent foot alignment and left-facing figures. Other enemies retain their current art, and a failed painted-image load falls back to the original sprite.",
+    "detail": "Combat reuses the existing transparent artwork with consistent foot alignment and left-facing figures. Other enemies keep their current art, and a failed painted-image load falls back to the original sprite.",
     "build": "0.5.5.47",
     "pullRequest": 683,
     "url": "https://github.com/cehinds/AshenSpire/pull/683"
@@ -757,7 +857,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Dodge explains its outcome",
-    "detail": "Dodge now resolves correctly in the standalone build after removing a circular engine import that interrupted the action after payment. A resolved Dodge now leaves a result button beside the player. Open it to inspect the roll, check, difficulty and base guard; Block modifiers still determine the applied amount. Failed rolls are visible, and the explanation survives skipped or reduced animations. Armoury card scrolling also respects the in-game Reduced motion setting.",
+    "detail": "Dodge resolves correctly in the standalone build after removing a circular engine import that interrupted the action after payment. A resolved Dodge leaves a result button beside the player: open it for the roll, check, difficulty and base guard. Failed rolls are visible, and the explanation survives skipped or reduced animations.",
     "build": "0.5.5.44",
     "pullRequest": 672,
     "url": "https://github.com/cehinds/AshenSpire/pull/672"
@@ -767,7 +867,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Traders buy and sell armaments and stock weapon arts",
-    "detail": "Inspect equipment before buying, sell unequipped items from storage, and buy Draw Cut or Sundering Hew for the existing mounting system. Equipped items explain their sale restriction. Cancelled or stale quotes spend nothing; upgrades, mount history and discoveries survive a sale and reacquisition.",
+    "detail": "Inspect equipment before buying, sell unequipped items from storage, and buy Draw Cut or Sundering Hew for the existing mounting system. Equipped items explain their sale restriction, cancelled or stale quotes spend nothing, and upgrades, mount history and discoveries survive a sale and reacquisition.",
     "build": "0.5.5.45",
     "pullRequest": 676,
     "url": "https://github.com/cehinds/AshenSpire/pull/676"
@@ -777,7 +877,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-07",
     "group": "2026-09-07",
     "summary": "Combat groups potions, piles and weapon arts into shared menus",
-    "detail": "Potions stays at the far right, with quantities and explicit Use actions. Discard and Exhaust share an entry but retain separate tabs and counts. Arts shows equipped cards and selects only cards currently in hand. Map Quick Access controls use full-size targets so nearby controls no longer overlap.",
+    "detail": "Potions stays at the far right with quantities and explicit Use actions. Discard and Exhaust share an entry but keep separate tabs and counts, Arts shows equipped cards and selects only cards in hand, and map Quick Access controls use full-size targets.",
     "build": "0.5.5.46",
     "pullRequest": 679,
     "url": "https://github.com/cehinds/AshenSpire/pull/679"
@@ -787,7 +887,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-06",
     "group": "2026-09-06",
     "summary": "Assign Points starts with ten points to spend, and text keeps its inset",
-    "detail": "Opening or reopening Assign Points now refunds every attribute to 10 and puts all 10 points back in the pool, rather than reopening on the class's already-spent suggestion. The five stat cards and shared setting rows use balanced padding on every side, including narrow phone layouts, so labels and summaries no longer run against their component or modal edges. The character-creation browser check follows the current two-step New flow, verifies the refund on first open and reopen, measures all four row insets, assigns a complete legal allocation, and repeats the flow at desktop and phone sizes.",
+    "detail": "Opening or reopening Assign Points refunds every attribute to 10 and puts all 10 points back in the pool, rather than reopening on the class's already-spent suggestion. The five stat cards and shared setting rows use balanced padding on every side, including narrow phone layouts, so labels no longer run against their component or modal edges.",
     "build": "0.5.5.40",
     "pullRequest": 664,
     "url": "https://github.com/cehinds/AshenSpire/pull/664"
