@@ -22,3 +22,10 @@ for (const world of MEGA_MAPS) {
   await sharp(path(`art/environments/worlds/${world.id}.png`)).webp({ quality: 88 }).toFile(path(world.map));
   console.log(`${world.id}: all five biomes in one world`);
 }
+for (const [source, target] of [
+  ['worlds/fractured-realm-square.png', 'fractured-realm-square.webp'],
+  ['locations/crownfall-landmark.png', 'crownfall-landmark.webp'],
+  ['locations/crownfall-local.png', 'crownfall-local.webp'],
+]) {
+  await sharp(path(`art/environments/${source}`)).webp({ quality: 88 }).toFile(path(`assets/environments/${target}`));
+}

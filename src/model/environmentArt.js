@@ -13,7 +13,7 @@ export function regionForRun({ seedString = '', actNumber = 1 } = {}) {
 }
 
 export function combatEnvironment(run = {}) {
-  const region = regionForRun(run);
+  const region = (run.environmentRegionId && ENVIRONMENTS.find(r => r.id === run.environmentRegionId)) || regionForRun(run);
   const floor = Math.max(0, Math.trunc(Number(run.floor) || 0));
   const index = (hash(`${run.seedString ?? ''}:scenery`) + floor) % region.scenes.length;
   return { region, scene: region.scenes[index] };

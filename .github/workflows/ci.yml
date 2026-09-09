@@ -220,6 +220,9 @@ jobs:
       - name: Engine suite
         run: node tools/verdict.mjs -- node tests/run-node.mjs
 
+      - name: World Journey normalized data and seeded routes
+        run: node tests/world-atlas.test.mjs
+
       - name: Fullscreen capability, enter, exit, and refusal states
         run: node tools/verdict.mjs -- node tools/fullscreen-control.mjs
 

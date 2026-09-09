@@ -518,3 +518,11 @@ Mobile combat art: at widths up to 640px, figures render at 90% of their fitted 
 Combat card actions: selection reveals a circular Information button centered above the highlighted card. The information modal places the card beside readable details and exposes a green Play card action, or a disabled gray action with a visible reason. Stationary holds show shared progress and use the card on completion; early release cancels, and targeted cards enter the existing targeting flow. The floating information button replaces hold-to-zoom inspection for the solo combat hand.
 
 Selected combat cards preview legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes retain transparent backgrounds so glow follows artwork rather than its rectangular canvas.
+
+World Journey (`src/ui/screens/worldAtlas.js`) composes fixed map terrain, discovery
+masks, inspectable landmark overlays, the route journal, and one native location
+dialog. Local points select a detail pane instead of opening nested dialogs. The
+same renderer serves `world-atlas-preview.html`; its authoring controls and ID
+selector are isolated from the game. Actual service dispatch reuses the existing
+merchant, smith upgrade, and grace screens. See `docs/WORLD-ATLAS.md` for the
+normalized content contract and `tools/world-atlas-qa.mjs` for browser checks.

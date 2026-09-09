@@ -28,7 +28,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22.14.0'
+
+      - name: World Journey normalized data and seeded routes
+        run: node tests/world-atlas.test.mjs
 
       # #498: 28 plant sites had drifted and only one gate went red — the rest
       # stayed green while unable to fail. This cheap static detector (no
