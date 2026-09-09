@@ -11,7 +11,7 @@ export const characterCreation = {
     "classPreviewPercent": 30,
     "classChoiceView": "list",
     "equipmentChoiceView": "list",
-    "equipmentAutoAdvance": true
+    "equipmentAutoAdvance": false
   },
   "equipmentSections": [
     {
