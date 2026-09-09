@@ -265,5 +265,237 @@ export const tags = [
     "color": "9FC3E8",
     "glyph": "✦",
     "blurb": "The class signature card."
+  },
+  {
+    "id": "fx:blade",
+    "domain": "presentation",
+    "label": "blade",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "blade visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:guard",
+    "domain": "presentation",
+    "label": "guard",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "guard visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:blood",
+    "domain": "presentation",
+    "label": "blood",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "blood visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:gorefire",
+    "domain": "presentation",
+    "label": "gorefire",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "gorefire visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:starstone",
+    "domain": "presentation",
+    "label": "starstone",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "starstone visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:ritual",
+    "domain": "presentation",
+    "label": "ritual",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "ritual visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:blight",
+    "domain": "presentation",
+    "label": "blight",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "blight visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:oath",
+    "domain": "presentation",
+    "label": "oath",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "oath visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:flourish",
+    "domain": "presentation",
+    "label": "flourish",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "flourish visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:ash",
+    "domain": "presentation",
+    "label": "ash",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "ash visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:heavy",
+    "domain": "presentation",
+    "label": "heavy",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "heavy visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:pierce",
+    "domain": "presentation",
+    "label": "pierce",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "pierce visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:ranged",
+    "domain": "presentation",
+    "label": "ranged",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "ranged visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:precision",
+    "domain": "presentation",
+    "label": "precision",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "precision visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:guile",
+    "domain": "presentation",
+    "label": "guile",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "guile visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:venom",
+    "domain": "presentation",
+    "label": "venom",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "venom visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:shield",
+    "domain": "presentation",
+    "label": "shield",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "shield visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:barrier",
+    "domain": "presentation",
+    "label": "barrier",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "barrier visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:ward",
+    "domain": "presentation",
+    "label": "ward",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "ward visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:magic",
+    "domain": "presentation",
+    "label": "magic",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "magic visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:arcane",
+    "domain": "presentation",
+    "label": "arcane",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "arcane visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:dodge",
+    "domain": "presentation",
+    "label": "dodge",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "dodge visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:riposte",
+    "domain": "presentation",
+    "label": "riposte",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "riposte visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:heal",
+    "domain": "presentation",
+    "label": "heal",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "heal visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:cleanse",
+    "domain": "presentation",
+    "label": "cleanse",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "cleanse visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:bind",
+    "domain": "presentation",
+    "label": "bind",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "bind visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:frost",
+    "domain": "presentation",
+    "label": "frost",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "frost visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:bulwark",
+    "domain": "presentation",
+    "label": "bulwark",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "bulwark visual identity; no combat modifier."
+  },
+  {
+    "id": "fx:utility",
+    "domain": "presentation",
+    "label": "utility",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "utility visual identity; no combat modifier."
   }
 ];

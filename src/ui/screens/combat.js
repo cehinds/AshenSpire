@@ -1,3 +1,7 @@
+import { combatEffectAngle } from '../combatEffectDirection.js';
+import { combatEffectPlan, combatEffectTags, combatEffectTargetIds } from '../../model/combatEffects.js';
+import { decorateCombatEffects } from '../../model/combatEffectEvents.js';
+import { playCombatEffectPlan } from '../combatEffectSprites.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
 // docs/mockups/combat-screen.svg)
 //
@@ -153,6 +157,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
   let playerRest = 'idle';
   let visualPlans = new Map();
+  const barrierVisuals = new Map();
   let appliedVisualEvents = new Set();
   function applyVisualEvents(events) {
     for (const event of events) {
@@ -198,7 +203,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (played && definition) {
         const grouped = visualPlans.get(played.cardInstanceId) || resolveCombatAnimation({ ...definition, cardTags: tags }, equippedPieces(registries, run.loadout, run.class));
         const pose = stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
-        plan = { ...plan, ...grouped, pose };
+        plan = { ...plan, ...grouped, pose, spriteEffect: combatEffectPlan({ ...definition, cardTags: combatEffectTags(registries,definition) },played), effectEvents: beat.events, targetId: played.targetId || beat.events.find(e=>e.type==='damageDealt')?.targetId };
         if (grouped.rest) stage?.setRestPose?.(grouped.rest);
         actorEl.dataset.actionGroup = grouped.group;
       }
@@ -231,6 +236,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const reach = Number.isFinite(plan.reach) ? Math.min(2, Math.max(0.25, plan.reach)) : 1;
     const direction = actorEl.closest('.enemy') ? -1 : 1;
     const totalMs = plan.family === 'neutral' ? 0 : Math.round(speed.lungeMs * tempo);
+    const target = plan.targetId && fxCtx.anchorFor(plan.targetId);
+    const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,combat.player.id).map(id=>fxCtx.anchorFor(id)).filter(Boolean).map(anchor=>anchorLocalBox(fxCtx.layer,anchor));
+    const cancelEffect=playCombatEffectPlan(fxCtx.layer,anchorLocalBox(fxCtx.layer,actorEl),plan.spriteEffect,{targets:effectTargets,duration:Math.max(180,totalMs),size:180});
     const actionClass = ['slash', 'thrust', 'strike', 'projectile'].includes(plan.family) ? 'act-attack' : 'act-move';
     const overrides = {
       'animation-duration': totalMs + 'ms',
@@ -259,6 +267,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (value) actorEl.style.setProperty(name, value, priority);
         else actorEl.style.removeProperty(name);
       }
+      cancelEffect();
       stage?.settle();
     } };
   }
@@ -1858,6 +1867,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function afterDispatch(events) {
+    events = decorateCombatEffects(events, registries, barrierVisuals);
     // Capture definitions while disp still holds consumed Powers and equipment
     // profile instances. Reduce the SAME events on paced and skipped paths.
     appliedVisualEvents = new Set();

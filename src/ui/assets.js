@@ -1,3 +1,4 @@
+import { COMBAT_EFFECT_ART } from '../content/combatEffectArt.js';
 // src/ui/assets.js — asset lookup + placeholder generator (SPEC §2.4)
 //
 // Every visual goes through here. M1 ships zero downloaded assets: everything
@@ -705,3 +706,5 @@ export function equipmentCardArt(piece) {
     ? armourMenuAsset(piece.classId, piece.id)
     : `assets/equipment/icon_${piece.id}.webp`);
 }
+
+export function combatEffectFrames(kind) { return (Object.hasOwn(COMBAT_EFFECT_ART,kind) ? COMBAT_EFFECT_ART[kind] : []).map(assetUrl); }

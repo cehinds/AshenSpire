@@ -61,7 +61,7 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
     if (blocked > 0) {
       blocked = Math.min(blocked, amount);
       amount -= blocked;
-      ctx.emit('procResisted', { targetId: target.id, status: statusId, blocked, applied: amount });
+      ctx.emit('procResisted', { targetId: target.id, status: statusId, blocked, applied: amount, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(target) } : {}) });
       if (amount <= 0) return;
     }
   }
@@ -96,6 +96,7 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
   }
 
   ctx.emit('statusApplied', {
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {}),
     targetId: target.id,
     sourceId: source ? source.id : null,
     status: statusId,
@@ -124,6 +125,7 @@ function checkProcFill(ctx, entity, statusId, def, inst) {
   const pct = Math.floor((entity.maxHp * p.burstPercent) / 100);
   const burst = Math.max(p.burstMin, Math.min(p.burstMax, pct));
   ctx.emit('procBurst', {
+    ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
     targetId: entity.id,
     status: statusId,
     amount: burst,
