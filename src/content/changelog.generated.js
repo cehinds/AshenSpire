@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-872",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Sharper card effect art",
+    "detail": "Refresh six-frame blade slashes, physical shield impacts, Starstone bolts and blood slashes in combat and Pose Studio. Keep existing card tags, resource variants and auras, and add an interactive before/after gallery.",
+    "build": "0.6.0.60",
+    "pullRequest": 872,
+    "url": "https://github.com/cehinds/AshenSpire/pull/872"
+  },
+  {
     "id": "pr-870",
     "date": "2026-09-09",
     "group": "2026-09-09",
