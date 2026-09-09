@@ -6,6 +6,8 @@ import {starter,clone,sample,resolveBindings,validate,startTime,history} from '.
 import {catalog,effectFrames,cardContext} from '../catalog.mjs';
 import {createPresentationAdapter} from '../integration.mjs';
 import {playCombatEffectPlan} from '../../src/ui/combatEffectSprites.js';
+import {combatEffectFrames} from '../../src/ui/assets.js';
+test('every studio effect is available through the shared game asset registry',()=>{for(const id of catalog.effects)assert.equal(combatEffectFrames(id).length,6,id);assert.deepEqual(combatEffectFrames('missing.effect'),[]);});
 test('a removed combat layer remains a harmless no-op',()=>{assert.doesNotThrow(()=>playCombatEffectPlan(null,{left:0,top:0},{kind:'slash'})());});
 test('all 80 sets have six distinct frames, including 24 original additions',()=>{assert.equal(catalog.effects.length,80);for(const id of catalog.effects){assert.equal(effectFrames[id].length,6);const hashes=effectFrames[id].map(p=>createHash('sha256').update(readFileSync(new URL('../../'+p,import.meta.url))).digest('hex'));assert.equal(new Set(hashes).size,6,id);}});
 test('named contact cues follow sequence length; five to seven poses remain addressable',()=>{const p=starter();assert.deepEqual(validate(p,catalog),[]);assert.equal(startTime(p.clips[0],p),600);p.duration=2000;assert.equal(startTime(p.clips[0],p),1000);p.poses.push('idle');assert.equal(sample(p,1999).poseIndex,6);assert.equal(sample(p,1050).effects.length,1);assert.equal(sample(p,900).effects.length,0);});

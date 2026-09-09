@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "Compose poses and effects in a visual studio",
     "detail": "Drag effects onto pose cues, adjust anchors and layered tracks, test card/tag/payment bindings, and save portable projects. Preview optional authored sequences in combat while preserving existing effects and auras. Add 24 six-frame sets for movement, contact, casting, defense and status feedback.",
-    "build": "0.6.0.31",
+    "build": "0.6.0.32",
     "pullRequest": 847,
     "url": "https://github.com/cehinds/AshenSpire/pull/847"
   },
