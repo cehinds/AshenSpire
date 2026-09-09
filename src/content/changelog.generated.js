@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-888",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Inspect every active combat ability",
+    "detail": "Click or tap stance and Evade badges to read their effects alongside all active statuses. Evade follows the shared hover timing and explains its charges and expiry. Expand individual explanations with mouse, touch, or keyboard while keeping selected cards safe from accidental play.",
+    "build": "0.6.0.69",
+    "pullRequest": 888,
+    "url": "https://github.com/cehinds/AshenSpire/pull/888"
+  },
+  {
     "id": "pr-876",
     "date": "2026-09-09",
     "group": "2026-09-09",
