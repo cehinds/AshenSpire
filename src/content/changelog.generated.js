@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "The README and the changelog stop burying what a reader came for",
     "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
-    "build": "0.6.0.25",
+    "build": "0.6.0.27",
     "pullRequest": 820,
     "url": "https://github.com/cehinds/AshenSpire/pull/820"
+  },
+  {
+    "id": "pr-846",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Fighters hold a readiness pose, and a glow that stays",
+    "detail": "A combatant waiting for its turn stands in an authored readiness pose rather than the plain idle, and the aura a status effect puts on a fighter persists for as long as the effect does instead of flashing once. Painted readiness art ships for the roster, and a figure without one falls back to its existing idle. Co-op draws the same poses and glows from the shared snapshot.",
+    "build": "0.6.0.24",
+    "pullRequest": 846,
+    "url": "https://github.com/cehinds/AshenSpire/pull/846"
   },
   {
     "id": "pr-841",
