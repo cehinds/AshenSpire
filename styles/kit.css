@@ -2818,6 +2818,27 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-art > .card { width:220px; height:308px; min-width:0; max-width:100%; margin:0 auto; transform:none; }
 .card-inspection-art > .card .ctext { overflow:hidden; text-overflow:ellipsis; }
 
+.inspection-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.inspection-tag { display:inline-block; max-width:100%; padding:4px 8px; border:1px solid var(--line); border-radius:5px; color:var(--gold); font:inherit; font-size:13px; line-height:1.4; white-space:normal; overflow-wrap:anywhere; cursor:help; }
+.tooltip-keyword { color:var(--gold); border-bottom:1px dotted currentColor; cursor:help; }
+.tooltip-keyword:focus-visible, .inspection-tag:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
+.inspection-facts { display:flex; flex-wrap:wrap; gap:8px; }
+.inspection-facts .inspection-tag { font-size:15px; color:var(--parchment); }
+.inspection-effect { margin:0 0 14px; font-size:18px; line-height:1.55; }
+.inspection-facts + .inspection-effect { margin-top:18px; }
+.inspection-requirement { color:var(--gold); line-height:1.5; }
+.equipment-poker-explanations { min-width:0; }
+.equipment-poker-explanations .inspection-effect:last-of-type { margin-bottom:0; }
+.as-tip .ctext { white-space:normal; max-height:none; overflow:visible; }
+.as-tip .inspection-tags { gap:5px; }
+@media(max-width:600px) {
+  .card-inspection-modal .card-inspection-layout, .card-inspection-layout { grid-template-columns:minmax(0,1fr); gap:16px; padding:16px; }
+  .card-inspection-art { width:100%; max-width:100%; }
+  .card-inspection-art > :is(.equipment-poker-card, .card) { width:160px; height:auto; aspect-ratio:5/7; margin-inline:auto; }
+  .card-inspection-art > .inspection-tags { justify-content:center; }
+  .inspection-effect { font-size:16px; }
+  .inspection-tag { min-height:32px; display:inline-flex; align-items:center; }
+}
 .equipment-choose { width:100%; margin-top:10px; min-height:44px; }
 .poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
 

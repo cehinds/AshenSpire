@@ -1,4 +1,5 @@
 import { bindCardInspection, openCardInspection } from './cardInspection.js';
+import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js';
 // src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
 //
 // All numbers shown come from the engine: in combat, previewCard tokens
@@ -92,6 +93,7 @@ function fillTemplate(def, tokens, baseTokens) {
  *            tooltip?    (false suppresses the shared hover/focus tooltip) }
  */
 export function renderCard(registries, ref, opts = {}) {
+  configureTooltipGlossary(registries);
   const def = resolveCard(registries, ref);
   const el = document.createElement('div');
   // THE FACE IS THE KIT'S CARD (§10): a fixed box, fixed landmarks (name, art,
@@ -187,6 +189,7 @@ export function renderCard(registries, ref, opts = {}) {
       const details = document.createElement('div');
       const liveCosts = opts.preview ? { variable: !!opts.preview.costIsX, action: opts.preview.cost, mana: opts.preview.manaCost, stamina: opts.preview.staminaCost } : null;
       details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts);
+      decorateKeywords(details);
       const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false });
       details.classList.add('playing-card-details');
       return openCardInspection({ title: def.name, card: face, details, opener,
@@ -312,7 +315,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
     // Words resolve through the framework TermRegistry (one vocabulary home);
     // an id outside the keyword vocabulary is skipped, as before.
     const k = registries.framework.keywordDisplay(kw);
-    if (k) lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
+    if (k) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(k.tooltip)}">${esc(k.name)}</span>`);
   }
   for (const eff of def.effects || []) {
     // Status/stance WORDS resolve through the per-bundle framework term
@@ -335,14 +338,16 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
     // (mechanics numbers for tooltip substitution)". This is that site.
     if (eff.op === 'applyStatus') {
       const s = glossaryEntry(registries, 'status', eff.status);
-      if (s) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+      if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
     }
     if (eff.op === 'enterStance') {
       const s = glossaryEntry(registries, 'stance', eff.stance);
-      if (s) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+      if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
     }
   }
-  if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);
-  if (lines.length) html += `<div class="tt-kw">${lines.join('<br>')}</div>`;
+  const service = tagService(registries);
+  const tags = def.cardTags?.length ? service.resolve(def.cardTags) : service.tagsOf('card', def);
+  for (const tag of tags) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
+  if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
   return html;
 }
