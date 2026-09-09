@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-878",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Every run map opens at a readable close-up",
+    "detail": "World Journey and Long Expedition share traditional/co-op vector nodes, pale current markers, solid roads and parchment fog. Frame the current junction, retain zoom controls, recover more detail from the original paintings, and limit world fog rendering to the visible viewport.",
+    "build": "0.6.0.62",
+    "pullRequest": 878,
+    "url": "https://github.com/cehinds/AshenSpire/pull/878"
+  },
+  {
     "id": "pr-874",
     "date": "2026-09-09",
     "group": "2026-09-09",

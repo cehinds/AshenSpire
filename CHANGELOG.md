@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-09
 
+- **Every run map opens at a readable close-up** ([#878](https://github.com/cehinds/AshenSpire/pull/878), `0.6.0.62`). World Journey and Long Expedition share traditional/co-op vector nodes, pale current markers, solid roads and parchment fog. Frame the current junction, retain zoom controls, recover more detail from the original paintings, and limit world fog rendering to the visible viewport.
+
 - **Combat vitality stays steady and mobile maps load less artwork** ([#874](https://github.com/cehinds/AshenSpire/pull/874), `0.6.0.61`). Prevent stretched health bars at turn changes, reserve an inspectable status row beneath vitality, shrink map textures, reuse traditional node symbols in World Journey and Long Expedition, and show selected reward cards in green. Connected return travel and reward save recovery remain available.
 - **Sharper card effect art** ([#872](https://github.com/cehinds/AshenSpire/pull/872), `0.6.0.60`). Refresh six-frame blade slashes, physical shield impacts, Starstone bolts and blood slashes in combat and Pose Studio. Keep existing card tags, resource variants and auras, and add an interactive before/after gallery.
 
