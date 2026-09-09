@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-852",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Readiness poses ease in and out",
+    "detail": "Prepared, Starstone Charge and Herald Blood Rite use softer breathing glows and authored intermediate sprites for all twelve outfits. Entry, exit and action return crossfade smoothly; combat redraws preserve their timing, while reduced-motion and still-sprite modes resolve immediately.",
+    "build": "0.6.0.28",
+    "pullRequest": 852,
+    "url": "https://github.com/cehinds/AshenSpire/pull/852"
+  },
+  {
     "id": "pr-849",
     "date": "2026-09-09",
     "group": "2026-09-09",
