@@ -1,7 +1,7 @@
 import { combatBackdropHtml } from '../components/environmentArt.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
 import { combatEffectPlan, combatEffectTags, combatEffectTargetIds } from '../../model/combatEffects.js';
-import { decorateCombatEffects } from '../../model/combatEffectEvents.js';
+import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
 // docs/mockups/combat-screen.svg)
@@ -88,7 +88,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const previewParams = new URLSearchParams(window.location.search);
   const previewSceneId = previewParams.get('shot') === 'combat' ? previewParams.get('shotScene') : null;
   app.innerHTML = `
-    <div class="combat">
+    <div class="combat" data-layout="formation" data-turn="player">
       <!-- ONE HUD SHELL: map and combat supply state to hudShellHtml; neither
            screen owns row order, placement hooks, or a second copy of chrome. -->
       ${hudShellHtml(runHudViewModel({
@@ -111,6 +111,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }))}
       ${combatBackdropHtml(run, previewSceneId)}
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
+        <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
         <div class="player-zone"></div>
         <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>
         <div class="enemy-row"></div>
@@ -243,7 +244,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const totalMs = plan.family === 'neutral' ? 0 : Math.round(speed.lungeMs * tempo);
     const target = plan.targetId && fxCtx.anchorFor(plan.targetId);
     const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,combat.player.id).map(id=>fxCtx.anchorFor(id)).filter(Boolean).map(anchor=>anchorLocalBox(fxCtx.layer,anchor));
-    const cancelEffect=playCombatEffectPlan(fxCtx.layer,anchorLocalBox(fxCtx.layer,actorEl),plan.spriteEffect,{targets:effectTargets,duration:Math.max(180,totalMs),size:180});
+    const authoredTargets=presentationTargetIds(plan.effectEvents,combat.player.id,plan.spriteEffect?.bindingContext.objectId).map(id=>fxCtx.anchorFor(id)).filter(Boolean).map(anchor=>anchorLocalBox(fxCtx.layer,anchor));
+    const cancelEffect=playCombatEffectPlan(fxCtx.layer,anchorLocalBox(fxCtx.layer,actorEl),plan.spriteEffect,{targets:effectTargets,authoredTargets,duration:Math.max(180,totalMs),size:180});
     const actionClass = ['slash', 'thrust', 'strike', 'projectile'].includes(plan.family) ? 'act-attack' : 'act-move';
     const overrides = {
       'animation-duration': totalMs + 'ms',
@@ -282,6 +284,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
   let selectedEnemyId = null; // contextual reading selection; never combat targeting
   let combatantTooltipDelayTimer = null;
+  let heldTurnHand = null;
+  let enemyPlayback = false;
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
@@ -1192,6 +1196,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       classNames: selfArm ? ['armed'] : [],
       sprite: playerSprite(run.customization || {}, run.class, figure.armourId),
       blockBadge: blockBadge(p, { tooltips: false }),
+      name: labelStack({ label: run.customization?.name || registries.classes.get(run.class).name, attrs: { class: 'nm' } }),
       meters: meterBars(p, { tooltips: false }),
       trailing,
     });
@@ -1261,7 +1266,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       nm.setAttribute('aria-label', `${def.name} — the full read`);
       const openThisRead = (event) => {
         event.stopPropagation();
-        openCombatantDoor(combatantSubject('enemy', enemy));
+        if (selected) playCard(selected, enemy.id);
+        else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
+        else openCombatantDoor(combatantSubject('enemy', enemy));
       };
       nm.addEventListener('click', openThisRead);
       nm.addEventListener('keydown', (event) => {
@@ -1312,7 +1319,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function renderHand() {
-    const handList = disp ? disp.hand : combat.piles.hand;
+    const handList = heldTurnHand || (disp ? disp.hand : combat.piles.hand);
+    combatEl.dataset.turn = enemyPlayback ? 'enemy' : 'player';
+    $('.turn-ribbon').textContent = enemyPlayback ? 'Enemy Turn' : 'Player Turn';
+    $('.hand').inert = busy || enemyPlayback || !!combat.result;
+    $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.result));
+    if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
     handStrip.render({
       cards: handList.map((inst) => {
         // disp.hand is a pre-dispatch snapshot; on a combat-ending play the
@@ -1322,7 +1334,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // wedge the timeline (this froze the game on the killing blow).
         let pv = null;
         try {
-          pv = previewCard(combat, inst.instanceId);
+          if (!heldTurnHand) pv = previewCard(combat, inst.instanceId);
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }
@@ -1442,6 +1454,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // reason a beat can live on a control its own screen repaints every frame
     // without any screen tracking the dressing.
     if (endTurnBeat) endTurnBeat.refresh();
+    $('.end-turn').disabled = busy || enemyPlayback || !!combat.result;
     $('.pile.draw .sp-v').textContent = combat.piles.draw.length;
     $('.pile.spent').innerHTML = '<span>Discard ' + combat.piles.discard.length + '</span><small>Exhaust ' + combat.piles.exhaust.length + '</small>';
 
@@ -1935,8 +1948,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       () => {
         applyVisualEvents(events);
         disp = null;
-        render();
+        heldTurnHand = null;
+        enemyPlayback = false;
         busy = false;
+        render();
         if (combat.result) {
           removeEventListener('keydown', keyHandler);
           setTimeout(() => onEnd(combat.result, combat), 350);
@@ -2061,10 +2076,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     disp = takeSnapshot();
     let out;
     try {
+      heldTurnHand = [...disp.hand];
+      enemyPlayback = true;
       out = dispatch(combat, { type: 'endTurn' });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
       dlog('rejected', 'endTurn', err && err.message);
+      heldTurnHand = null;
+      enemyPlayback = false;
       disp = null;
       return;
     }

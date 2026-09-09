@@ -43,6 +43,8 @@ export function mountWorldAtlas(
     a = ATLAS,
     p = a.profiles[j.profileId],
     map = a.maps[j.mapId];
+  j.view ||= {};
+  if (!j.view.cameraVersion) { j.view.zoom = 2.5; j.view.cameraVersion = 1; }
   const pos = Object.fromEntries(
     a.data.world_map_nodes
       .filter((n) => n.mapId === j.mapId)
@@ -61,7 +63,7 @@ export function mountWorldAtlas(
       : `<svg viewBox="${v.x * 1000 - 65} ${v.y * 1000 - 75} 130 130" aria-hidden="true"><image href="${esc(art)}" width="1000" height="1000"/></svg>`;
   };
   app.innerHTML = `<section class="mapscreen world-atlas-screen"><header class="atlas-header"><div><span class="atlas-eyebrow">WORLD JOURNEY · ${esc(p.displayName)}</span><h1>${esc(map.displayName)}</h1></div><div class="atlas-header-actions"><span class="atlas-vitals">${run.hp} / ${run.maxHp} HP · ${run.cinders} cinders</span>${button("Armoury", "data-atlas-armoury")}${button("Menu", "data-atlas-menu")}${button("Save & quit", "data-atlas-quit")}</div></header>
- <div class="atlas-layout"><div class="atlas-map-column"><div class="atlas-map-tools"><span>At <strong>${esc(current.displayName)}</strong></span><div>${button("−", 'data-atlas-zoom="-1" aria-label="Zoom out"')}${button("Fit", 'data-atlas-zoom="0"')}${button("+", 'data-atlas-zoom="1" aria-label="Zoom in"')}</div></div>
+ <div class="atlas-layout"><div class="atlas-map-column"><div class="atlas-map-tools"><span>At <strong>${esc(current.displayName)}</strong></span><div>${button("−", 'data-atlas-zoom="-1" aria-label="Zoom out"')}${button("Fit", 'data-atlas-zoom="0"')}${button("You", 'data-atlas-center')}${button("+", 'data-atlas-zoom="1" aria-label="Zoom in"')}</div></div>
  <div class="atlas-scrollport" tabindex="0" aria-label="World map; scroll to explore"><div class="atlas-world" style="--atlas-zoom:${j.view?.zoom || 1}"><svg class="atlas-terrain" viewBox="0 0 1000 1000" aria-hidden="true"><defs><filter id="atlas-unmapped"><feGaussianBlur stdDeviation="3"/></filter><radialGradient id="atlas-reveal"><stop offset="60%" stop-color="white"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient><mask id="atlas-fog" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" style="mask-type:alpha">${[...known].map((id) => `<circle cx="${pos[id].x * 1000}" cy="${pos[id].y * 1000}" r="${p.revealRadius * 1000}" fill="url(#atlas-reveal)"/>`).join("")}</mask></defs>
  <rect width="1000" height="1000" fill="#ba9b69"/><image href="${esc(art)}" width="1000" height="1000" class="atlas-unmapped" filter="url(#atlas-unmapped)"/><image href="${esc(art)}" width="1000" height="1000" ${authoring ? "" : 'mask="url(#atlas-fog)"'}/>
  <g class="atlas-roads">${journeyEdges(j)
@@ -118,6 +120,7 @@ export function mountWorldAtlas(
       pos[j.currentNodeId].y * world.offsetHeight - port.clientHeight / 2;
   };
   requestAnimationFrame(center);
+  app.querySelector('[data-atlas-center]').onclick = () => { j.view.zoom = 2.5; app.querySelector('.atlas-world').style.setProperty('--atlas-zoom', j.view.zoom); center(); onSave?.(); };
   app.querySelectorAll("[data-atlas-zoom]").forEach(
     (b) =>
       (b.onclick = () => {

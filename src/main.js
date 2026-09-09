@@ -2144,6 +2144,8 @@ function coopStubMount(snapshot, myId) {
     onLeave() {},
   });
   if (stub._h && stub._h.onMessage) stub._h.onMessage({ t: 'state', snapshot });
+  window.__coopSnapshotForShot = snapshot;
+  window.__receiveCoopSnapshotForShot = next => stub._h.onMessage({ t: 'state', snapshot: next });
 }
 function coopCombatShot() {
   const hand = ['strike', 'rallyingBanner', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));

@@ -18,7 +18,7 @@ async function settle(page) {
   await page.waitForFunction(() => {
     const field = document.querySelector('.field')?.getBoundingClientRect();
     const art = document.querySelector('.environment-backdrop')?.getBoundingClientRect();
-    const feet = [...document.querySelectorAll('.combatant .sprite')].map(s => s.getBoundingClientRect().bottom);
+    const feet = [...document.querySelectorAll('.combatant[data-formation-row="0"] .sprite')].map(s => s.getBoundingClientRect().bottom);
     return field && art && feet.length && Math.abs(field.height - art.height) < 1 && Math.max(...feet) - Math.min(...feet) < 1;
   }, null, { timeout: 8000 });
 }
@@ -35,8 +35,8 @@ async function check(page) {
     const bottom = new DOMPoint(box.x, box.y + box.height).matrixTransform(matrix).y;
     const floor = { top, bottom, height: bottom - top };
     const sprites = [...document.querySelectorAll('.combatant .sprite')];
-    const feet = sprites.map(s => s.getBoundingClientRect().bottom);
-    const images = [...document.querySelectorAll('.enemy-pose-idle,.painted-stage .pose-frame')].filter(i => getComputedStyle(i).display !== 'none');
+    const feet = sprites.filter(s => s.closest('.combatant').dataset.formationRow === '0').map(s => s.getBoundingClientRect().bottom);
+    const images = [...document.querySelectorAll('.enemy-pose-idle,.painted-stage .pose-frame')].filter(i => getComputedStyle(i).display !== 'none' && i.closest('.combatant').dataset.formationRow === '0');
     const anchors = images.map(i => {
       const r = i.getBoundingClientRect();
       return r.top + r.height * (i.classList.contains('enemy-pose-idle') ? 364 / 384 : 600 / 640);

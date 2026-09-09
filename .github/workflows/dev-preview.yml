@@ -97,6 +97,9 @@ jobs:
       - name: Combat effect tags, outcomes, and character outlines
         run: node --test tests/combatEffects.test.mjs tests/combatEffectIntegration.test.mjs tests/combatAnimation.test.mjs tests/combatAura.test.mjs tests/combatPose.test.mjs
 
+      - name: Pose studio project schema and event bindings
+        run: node --test pose-studio/tests/model.test.mjs
+
       - name: Collect the playable build
         run: |
           set -euo pipefail
@@ -114,6 +117,9 @@ jobs:
           mkdir -p preview/docs/preview
           cp -r docs/preview/world-atlas preview/docs/preview/
           cp -r docs/preview/combat-ground preview/docs/preview/
+          cp -r pose-studio preview/pose-studio
+          cp -r assets/pose-effects preview/assets/
+          cp -r art/pose-studio preview/art/
           cp -r assets/combat-effects assets/painted-outfits preview/assets/
           cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html preview/art/combat-effects-2026-09-07/
           cp -r art/combat-effects-2026-09-07/inspection preview/art/combat-effects-2026-09-07/inspection
@@ -124,6 +130,7 @@ jobs:
             echo "built:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo
             echo "Open AshenSpire.html locally to play this exact commit."
+            echo "Run node pose-studio/server.mjs for the standalone editor at http://127.0.0.1:4318."
             echo "Open Combat-pose-preview.html for the offline readiness outfit gallery."
             echo "Open docs/preview/combat-ground/index.html for all 20 combat fields and phone screenshots."
             echo "Open art/combat-effects-2026-09-07/sprite-catalog.html for all 56 six-frame sets."
@@ -206,3 +213,12 @@ jobs:
 
       - name: Every control a phone must reach is reachable at 390x650
         run: node tools/verdict.mjs -- node tools/screenreach.mjs --only 390x650
+
+      - name: Capture the pose studio on desktop and phone
+        run: node tools/pose-studio-capture.mjs --out "${{ runner.temp }}/pose-studio-evidence"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pose-studio-screenshots
+          path: ${{ runner.temp }}/pose-studio-evidence/
+          retention-days: 14
