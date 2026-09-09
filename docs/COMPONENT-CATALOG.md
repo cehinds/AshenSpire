@@ -574,3 +574,5 @@ Equipment Information appears after the first touch selection, with a configurab
 Shared modals contain keyboard focus in the top dialog, restore the opener on Escape, and activate tabs with arrows, Home and End. Narrow labels scale within readable bounds and settings categories remain horizontally scrollable. See `docs/preview/responsive-type/index.html`.
 
 Reward chooser: playing-card inspection yields face taps to reward selection; the separate Confirm control owns collection. Back retains selection and a failed save exposes a retry status without adding a duplicate card. Touch flicks retain the current shared TouchFlickModel and Accessibility controls.
+
+Selected content inspection: reward radio choices retain Information after Back and redraw. Keyboard focus reveals the same control. Reward, merchant, pile, inventory and smith card rows reserve space above the face, including wrapped rows. Smith extraction/installation item choices and mount rows expose Information without collecting, buying or confirming the service; explicit transaction controls retain ownership.

@@ -16,6 +16,8 @@ import { renderCard } from './card.js';
 import { armOptionDecision } from '../../framework/optionDecision.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { openModal } from './modalShell.js';
+import { bindCardInspection } from './cardInspection.js';
+import { renderEquipmentInspection } from './equipmentCard.js';
 
 export function mountMountServiceModal(host, initialModel, {
   registries,
@@ -157,6 +159,13 @@ export function mountMountServiceModal(host, initialModel, {
         + `<div>Smith Stone Cost: 🪨 ${item.cost}/${item.stones} available.</div>`);
       card.tabIndex = item.selected || (!p.selected && cardsHost.childElementCount === 0) ? 0 : -1;
       markUiComponent(card, UI.mountCandidateCard, item.selected ? 'selected' : 'available');
+      const piece = item.itemKind === 'armor'
+        ? registries.equipment.armour.find(piece => piece.id === item.itemId && piece.classId === item.classId)
+        : registries.equipment.armaments.find(piece => piece.id === item.itemId);
+      if (piece) bindCardInspection(card, { title: item.name, actionOwnsTouch: true, open: opener => openModal({
+        title: item.name, eyebrow: 'Item information', opener, size: 'lg',
+        body: renderEquipmentInspection(registries, piece, { interactive: false }),
+      }) });
       const choose = () => onSelectItem(item.itemRef);
       card.addEventListener('click', choose);
       card.addEventListener('keydown', (event) => {
@@ -195,6 +204,16 @@ export function mountMountServiceModal(host, initialModel, {
     if (selected) {
       for (const row of previewHost.querySelectorAll('.mount-row')) {
         markUiComponent(row, UI.mountRow, row.classList.contains('selected') ? 'selected' : 'available');
+        const mount = selected.mounts.find(mount => mount.mountKey === row.dataset.mountKey);
+        bindCardInspection(row, { title: mount.cardName || mount.kindLabel, actionOwnsTouch: true, open: opener => openModal({
+          title: mount.cardName || 'Open mount', eyebrow: mount.kindLabel, opener,
+          bodyClassName: 'as-pane', body: host => {
+            if (mount.cardId) host.append(renderCard(registries, { cardId: mount.cardId, upgraded: mount.upgraded }, { inspection: false, tooltip: false }));
+            const description = document.createElement('p');
+            description.textContent = `${selected.name} · ${mount.kindLabel} · ${mount.stateLabel}. ${p.service === 'extract' ? 'Confirm extraction to move the card into your deck.' : 'Choose a compatible deck card, then confirm to seat it here.'}`;
+            host.append(description);
+          },
+        }) });
         const choose = () => onSelectMount(row.dataset.mountKey);
         row.addEventListener('click', choose);
         row.addEventListener('keydown', (event) => {
@@ -206,7 +225,7 @@ export function mountMountServiceModal(host, initialModel, {
       const cardList = previewHost.querySelector('.mount-card-list');
       if (cardList && p.selectedMount) {
         for (const card of p.selectedMount.cards) {
-          const el = renderCard(registries, { cardId: card.cardId, upgraded: card.upgraded, instanceId: card.instanceId }, { small: true });
+          const el = renderCard(registries, { cardId: card.cardId, upgraded: card.upgraded, instanceId: card.instanceId }, { small: true, actionOwnsTouch: true });
           el.classList.toggle('selected', card.selected);
           el.setAttribute('role', 'option');
           el.setAttribute('aria-selected', String(card.selected));
