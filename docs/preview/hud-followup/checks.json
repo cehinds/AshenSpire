@@ -1,553 +1,458 @@
 {
-  "build": "0.6.0.50",
+  "build": "0.6.0.51",
   "results": [
     {
-      "size": {
-        "width": 320,
-        "height": 740
-      },
+      "width": 320,
       "phase": "player",
-      "rail": {
-        "x": 0,
-        "y": 629,
-        "width": 320,
-        "height": 111,
-        "top": 629,
-        "right": 320,
-        "bottom": 740,
-        "left": 0
-      },
-      "controls": [
+      "boxes": [
         {
           "x": 8,
-          "y": 658.5,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 658.5,
+          "top": 806.5,
           "right": 60,
-          "bottom": 710.5,
+          "bottom": 858.5,
           "left": 8
         },
         {
           "x": 64.4375,
-          "y": 662.5,
+          "y": 810.5,
           "width": 56.953125,
           "height": 44,
-          "top": 662.5,
+          "top": 810.5,
           "right": 121.390625,
-          "bottom": 706.5,
+          "bottom": 854.5,
           "left": 64.4375
         },
         {
           "x": 125.828125,
-          "y": 658.5,
+          "y": 806.5,
           "width": 68.34375,
           "height": 52,
-          "top": 658.5,
+          "top": 806.5,
           "right": 194.171875,
-          "bottom": 710.5,
+          "bottom": 858.5,
           "left": 125.828125
         },
         {
           "x": 198.609375,
-          "y": 662.5,
+          "y": 810.5,
           "width": 56.953125,
           "height": 44,
-          "top": 662.5,
+          "top": 810.5,
           "right": 255.5625,
-          "bottom": 706.5,
+          "bottom": 854.5,
           "left": 198.609375
         },
         {
           "x": 260,
-          "y": 658.5,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 658.5,
+          "top": 806.5,
           "right": 312,
-          "bottom": 710.5,
+          "bottom": 858.5,
           "left": 260
         }
       ],
       "cards": [
-        0.71429890039329,
-        0.71429890039329,
-        0.71429890039329,
-        0.71429890039329,
-        0.71429890039329
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302
       ],
       "locked": false,
-      "combatInventoryVisible": true
+      "inventory": true
     },
     {
-      "size": {
-        "width": 320,
-        "height": 740
-      },
+      "width": 320,
       "phase": "enemy",
-      "rail": {
-        "x": 0,
-        "y": 629,
-        "width": 320,
-        "height": 111,
-        "top": 629,
-        "right": 320,
-        "bottom": 740,
-        "left": 0
-      },
-      "controls": [
+      "boxes": [
         {
           "x": 8,
-          "y": 658.5,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 658.5,
+          "top": 806.5,
           "right": 60,
-          "bottom": 710.5,
+          "bottom": 858.5,
           "left": 8
         },
         {
           "x": 64.4375,
-          "y": 662.5,
+          "y": 810.5,
           "width": 56.953125,
           "height": 44,
-          "top": 662.5,
+          "top": 810.5,
           "right": 121.390625,
-          "bottom": 706.5,
+          "bottom": 854.5,
           "left": 64.4375
         },
         {
           "x": 125.828125,
-          "y": 658.5,
+          "y": 806.5,
           "width": 68.34375,
           "height": 52,
-          "top": 658.5,
+          "top": 806.5,
           "right": 194.171875,
-          "bottom": 710.5,
+          "bottom": 858.5,
           "left": 125.828125
         },
         {
           "x": 198.609375,
-          "y": 662.5,
+          "y": 810.5,
           "width": 56.953125,
           "height": 44,
-          "top": 662.5,
+          "top": 810.5,
           "right": 255.5625,
-          "bottom": 706.5,
+          "bottom": 854.5,
           "left": 198.609375
         },
         {
           "x": 260,
-          "y": 658.5,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 658.5,
+          "top": 806.5,
           "right": 312,
-          "bottom": 710.5,
+          "bottom": 858.5,
           "left": 260
         }
       ],
       "cards": [
-        0.71429890039329,
-        0.71429890039329,
-        0.71429890039329,
-        0.71429890039329,
-        0.71429890039329
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302
       ],
       "locked": true,
-      "combatInventoryVisible": true
+      "inventory": true
     },
     {
-      "size": {
-        "width": 360,
-        "height": 800
-      },
+      "width": 360,
       "phase": "player",
-      "rail": {
-        "x": 0,
-        "y": 680,
-        "width": 360,
-        "height": 120,
-        "top": 680,
-        "right": 360,
-        "bottom": 800,
-        "left": 0
-      },
-      "controls": [
+      "boxes": [
         {
           "x": 8,
-          "y": 714,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 714,
+          "top": 806.5,
           "right": 60,
-          "bottom": 766,
+          "bottom": 858.5,
           "left": 8
         },
         {
           "x": 64.96875,
-          "y": 717.3125,
+          "y": 809.8125,
           "width": 68.78125,
           "height": 45.359375,
-          "top": 717.3125,
+          "top": 809.8125,
           "right": 133.75,
-          "bottom": 762.671875,
+          "bottom": 855.171875,
           "left": 64.96875
         },
         {
           "x": 138.71875,
-          "y": 714,
+          "y": 806.5,
           "width": 82.546875,
           "height": 52,
-          "top": 714,
+          "top": 806.5,
           "right": 221.265625,
-          "bottom": 766,
+          "bottom": 858.5,
           "left": 138.71875
         },
         {
           "x": 226.234375,
-          "y": 718,
+          "y": 810.5,
           "width": 68.796875,
           "height": 44,
-          "top": 718,
+          "top": 810.5,
           "right": 295.03125,
-          "bottom": 762,
+          "bottom": 854.5,
           "left": 226.234375
         },
         {
           "x": 300,
-          "y": 714,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 714,
+          "top": 806.5,
           "right": 352,
-          "bottom": 766,
+          "bottom": 858.5,
           "left": 300
         }
       ],
       "cards": [
-        0.7143052066361134,
-        0.7143052066361134,
-        0.7143052066361134,
-        0.7143052066361134,
-        0.7143052066361134
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302
       ],
       "locked": false,
-      "combatInventoryVisible": true
+      "inventory": true
     },
     {
-      "size": {
-        "width": 360,
-        "height": 800
-      },
+      "width": 360,
       "phase": "enemy",
-      "rail": {
-        "x": 0,
-        "y": 680,
-        "width": 360,
-        "height": 120,
-        "top": 680,
-        "right": 360,
-        "bottom": 800,
-        "left": 0
-      },
-      "controls": [
+      "boxes": [
         {
           "x": 8,
-          "y": 714,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 714,
+          "top": 806.5,
           "right": 60,
-          "bottom": 766,
+          "bottom": 858.5,
           "left": 8
         },
         {
           "x": 64.96875,
-          "y": 717.3125,
+          "y": 809.8125,
           "width": 68.78125,
           "height": 45.359375,
-          "top": 717.3125,
+          "top": 809.8125,
           "right": 133.75,
-          "bottom": 762.671875,
+          "bottom": 855.171875,
           "left": 64.96875
         },
         {
           "x": 138.71875,
-          "y": 714,
+          "y": 806.5,
           "width": 82.546875,
           "height": 52,
-          "top": 714,
+          "top": 806.5,
           "right": 221.265625,
-          "bottom": 766,
+          "bottom": 858.5,
           "left": 138.71875
         },
         {
           "x": 226.234375,
-          "y": 718,
+          "y": 810.5,
           "width": 68.796875,
           "height": 44,
-          "top": 718,
+          "top": 810.5,
           "right": 295.03125,
-          "bottom": 762,
+          "bottom": 854.5,
           "left": 226.234375
         },
         {
           "x": 300,
-          "y": 714,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 714,
+          "top": 806.5,
           "right": 352,
-          "bottom": 766,
+          "bottom": 858.5,
           "left": 300
         }
       ],
       "cards": [
-        0.7143052066361134,
-        0.7143052066361134,
-        0.7143052066361134,
-        0.7143052066361134,
-        0.7143052066361134
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302
       ],
       "locked": true,
-      "combatInventoryVisible": true
+      "inventory": true
     },
     {
-      "size": {
-        "width": 390,
-        "height": 844
-      },
+      "width": 390,
       "phase": "player",
-      "rail": {
-        "x": 0,
-        "y": 717.375,
-        "width": 390,
-        "height": 126.609375,
-        "top": 717.375,
-        "right": 390,
-        "bottom": 843.984375,
-        "left": 0
-      },
-      "controls": [
+      "boxes": [
         {
           "x": 8,
-          "y": 754.671875,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 754.671875,
+          "top": 806.5,
           "right": 60,
-          "bottom": 806.671875,
+          "bottom": 858.5,
           "left": 8
         },
         {
           "x": 65.390625,
-          "y": 757.40625,
+          "y": 809.234375,
           "width": 77.625,
           "height": 46.53125,
-          "top": 757.40625,
+          "top": 809.234375,
           "right": 143.015625,
-          "bottom": 803.9375,
+          "bottom": 855.765625,
           "left": 65.390625
         },
         {
           "x": 148.40625,
-          "y": 754.671875,
+          "y": 806.5,
           "width": 93.171875,
           "height": 52,
-          "top": 754.671875,
+          "top": 806.5,
           "right": 241.578125,
-          "bottom": 806.671875,
+          "bottom": 858.5,
           "left": 148.40625
         },
         {
           "x": 246.96875,
-          "y": 758.671875,
+          "y": 810.5,
           "width": 77.640625,
           "height": 44,
-          "top": 758.671875,
+          "top": 810.5,
           "right": 324.609375,
-          "bottom": 802.671875,
+          "bottom": 854.5,
           "left": 246.96875
         },
         {
           "x": 330,
-          "y": 754.671875,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 754.671875,
+          "top": 806.5,
           "right": 382,
-          "bottom": 806.671875,
+          "bottom": 858.5,
           "left": 330
         }
       ],
       "cards": [
-        0.7142656500802569,
-        0.7142656500802569,
-        0.7142656500802569,
-        0.7142656500802569,
-        0.7142656500802569
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302
       ],
       "locked": false,
-      "combatInventoryVisible": true
+      "inventory": true
     },
     {
-      "size": {
-        "width": 390,
-        "height": 844
-      },
+      "width": 390,
       "phase": "enemy",
-      "rail": {
-        "x": 0,
-        "y": 717.375,
-        "width": 390,
-        "height": 126.609375,
-        "top": 717.375,
-        "right": 390,
-        "bottom": 843.984375,
-        "left": 0
-      },
-      "controls": [
+      "boxes": [
         {
           "x": 8,
-          "y": 754.671875,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 754.671875,
+          "top": 806.5,
           "right": 60,
-          "bottom": 806.671875,
+          "bottom": 858.5,
           "left": 8
         },
         {
           "x": 65.390625,
-          "y": 757.40625,
+          "y": 809.234375,
           "width": 77.625,
           "height": 46.53125,
-          "top": 757.40625,
+          "top": 809.234375,
           "right": 143.015625,
-          "bottom": 803.9375,
+          "bottom": 855.765625,
           "left": 65.390625
         },
         {
           "x": 148.40625,
-          "y": 754.671875,
+          "y": 806.5,
           "width": 93.171875,
           "height": 52,
-          "top": 754.671875,
+          "top": 806.5,
           "right": 241.578125,
-          "bottom": 806.671875,
+          "bottom": 858.5,
           "left": 148.40625
         },
         {
           "x": 246.96875,
-          "y": 758.671875,
+          "y": 810.5,
           "width": 77.640625,
           "height": 44,
-          "top": 758.671875,
+          "top": 810.5,
           "right": 324.609375,
-          "bottom": 802.671875,
+          "bottom": 854.5,
           "left": 246.96875
         },
         {
           "x": 330,
-          "y": 754.671875,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 754.671875,
+          "top": 806.5,
           "right": 382,
-          "bottom": 806.671875,
+          "bottom": 858.5,
           "left": 330
         }
       ],
       "cards": [
-        0.7142656500802569,
-        0.7142656500802569,
-        0.7142656500802569,
-        0.7142656500802569,
-        0.7142656500802569
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302,
+        0.7142943133344302
       ],
       "locked": true,
-      "combatInventoryVisible": true
+      "inventory": true
     },
     {
       "width": 390,
       "mode": "expanded",
-      "hidden": true,
-      "menu": 44,
-      "overflow": false
+      "mapInventoryHidden": true
     },
     {
       "width": 390,
       "mode": "compact",
-      "hidden": true,
-      "menu": 44,
-      "overflow": false
+      "mapInventoryHidden": true
     },
     {
-      "size": {
-        "width": 794,
-        "height": 893
-      },
+      "width": 794,
       "phase": "player",
-      "rail": {
-        "x": 0,
-        "y": 759.03125,
-        "width": 794,
-        "height": 133.953125,
-        "top": 759.03125,
-        "right": 794,
-        "bottom": 892.984375,
-        "left": 0
-      },
-      "controls": [
+      "boxes": [
         {
           "x": 8,
-          "y": 800,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 800,
+          "top": 806.5,
           "right": 60,
-          "bottom": 852,
+          "bottom": 858.5,
           "left": 8
         },
         {
           "x": 63.953125,
-          "y": 804,
+          "y": 810.5,
           "width": 205.671875,
           "height": 44,
-          "top": 804,
+          "top": 810.5,
           "right": 269.625,
-          "bottom": 848,
+          "bottom": 854.5,
           "left": 63.953125
         },
         {
           "x": 273.578125,
-          "y": 800,
+          "y": 806.5,
           "width": 246.828125,
           "height": 52,
-          "top": 800,
+          "top": 806.5,
           "right": 520.40625,
-          "bottom": 852,
+          "bottom": 858.5,
           "left": 273.578125
         },
         {
           "x": 524.359375,
-          "y": 804,
+          "y": 810.5,
           "width": 205.6875,
           "height": 44,
-          "top": 804,
+          "top": 810.5,
           "right": 730.046875,
-          "bottom": 848,
+          "bottom": 854.5,
           "left": 524.359375
         },
         {
           "x": 734,
-          "y": 800,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 800,
+          "top": 806.5,
           "right": 786,
-          "bottom": 852,
+          "bottom": 858.5,
           "left": 734
         }
       ],
@@ -559,73 +464,60 @@
         0.7142943133344302
       ],
       "locked": false,
-      "combatInventoryVisible": true
+      "inventory": true
     },
     {
-      "size": {
-        "width": 794,
-        "height": 893
-      },
+      "width": 794,
       "phase": "enemy",
-      "rail": {
-        "x": 0,
-        "y": 759.03125,
-        "width": 794,
-        "height": 133.953125,
-        "top": 759.03125,
-        "right": 794,
-        "bottom": 892.984375,
-        "left": 0
-      },
-      "controls": [
+      "boxes": [
         {
           "x": 8,
-          "y": 800,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 800,
+          "top": 806.5,
           "right": 60,
-          "bottom": 852,
+          "bottom": 858.5,
           "left": 8
         },
         {
           "x": 63.953125,
-          "y": 804,
+          "y": 810.5,
           "width": 205.671875,
           "height": 44,
-          "top": 804,
+          "top": 810.5,
           "right": 269.625,
-          "bottom": 848,
+          "bottom": 854.5,
           "left": 63.953125
         },
         {
           "x": 273.578125,
-          "y": 800,
+          "y": 806.5,
           "width": 246.828125,
           "height": 52,
-          "top": 800,
+          "top": 806.5,
           "right": 520.40625,
-          "bottom": 852,
+          "bottom": 858.5,
           "left": 273.578125
         },
         {
           "x": 524.359375,
-          "y": 804,
+          "y": 810.5,
           "width": 205.6875,
           "height": 44,
-          "top": 804,
+          "top": 810.5,
           "right": 730.046875,
-          "bottom": 848,
+          "bottom": 854.5,
           "left": 524.359375
         },
         {
           "x": 734,
-          "y": 800,
+          "y": 806.5,
           "width": 52,
           "height": 52,
-          "top": 800,
+          "top": 806.5,
           "right": 786,
-          "bottom": 852,
+          "bottom": 858.5,
           "left": 734
         }
       ],
@@ -637,25 +529,12 @@
         0.7142943133344302
       ],
       "locked": true,
-      "combatInventoryVisible": true
+      "inventory": true
     },
     {
-      "size": {
-        "width": 1440,
-        "height": 900
-      },
+      "width": 1440,
       "phase": "player",
-      "rail": {
-        "x": 0,
-        "y": 765,
-        "width": 1440,
-        "height": 135,
-        "top": 765,
-        "right": 1440,
-        "bottom": 900,
-        "left": 0
-      },
-      "controls": [
+      "boxes": [
         {
           "x": 8,
           "y": 806.5,
@@ -715,25 +594,12 @@
         0.7142943133344302
       ],
       "locked": false,
-      "combatInventoryVisible": true
+      "inventory": true
     },
     {
-      "size": {
-        "width": 1440,
-        "height": 900
-      },
+      "width": 1440,
       "phase": "enemy",
-      "rail": {
-        "x": 0,
-        "y": 765,
-        "width": 1440,
-        "height": 135,
-        "top": 765,
-        "right": 1440,
-        "bottom": 900,
-        "left": 0
-      },
-      "controls": [
+      "boxes": [
         {
           "x": 8,
           "y": 806.5,
@@ -793,39 +659,22 @@
         0.7142943133344302
       ],
       "locked": true,
-      "combatInventoryVisible": true
+      "inventory": true
     },
     {
       "width": 1440,
       "mode": "expanded",
-      "hidden": true,
-      "menu": 44,
-      "overflow": false
+      "mapInventoryHidden": true
     },
     {
       "width": 1440,
       "mode": "compact",
-      "hidden": true,
-      "menu": 44,
-      "overflow": false
+      "mapInventoryHidden": true
     },
     {
-      "size": {
-        "width": 844,
-        "height": 390
-      },
+      "width": 844,
       "phase": "player",
-      "rail": {
-        "x": 0,
-        "y": 331.5,
-        "width": 844,
-        "height": 58.5,
-        "top": 331.5,
-        "right": 844,
-        "bottom": 390,
-        "left": 0
-      },
-      "controls": [
+      "boxes": [
         {
           "x": 8,
           "y": 339.75,
@@ -885,25 +734,12 @@
         0.714308645542393
       ],
       "locked": false,
-      "combatInventoryVisible": true
+      "inventory": true
     },
     {
-      "size": {
-        "width": 844,
-        "height": 390
-      },
+      "width": 844,
       "phase": "enemy",
-      "rail": {
-        "x": 0,
-        "y": 331.5,
-        "width": 844,
-        "height": 58.5,
-        "top": 331.5,
-        "right": 844,
-        "bottom": 390,
-        "left": 0
-      },
-      "controls": [
+      "boxes": [
         {
           "x": 8,
           "y": 339.75,
@@ -963,7 +799,7 @@
         0.714308645542393
       ],
       "locked": true,
-      "combatInventoryVisible": true
+      "inventory": true
     }
   ],
   "errors": []
