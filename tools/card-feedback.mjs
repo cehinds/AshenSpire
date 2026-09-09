@@ -101,7 +101,7 @@ async function openTarget(shape) {
   return { targetId, sessionId, evaluate, until };
 }
 
-async function trustedClick(page, shape, selector) {
+async function trustedClick(page, shape, selector, holdForMs = 0) {
   const point = await page.evaluate(`(async () => {
     const target=document.querySelector(${JSON.stringify(selector)});
     if (!target) return null;
@@ -125,11 +125,13 @@ async function trustedClick(page, shape, selector) {
   if (shape.mobile) {
     const touch = { x: point.x, y: point.y, id: 1, radiusX: 8, radiusY: 8, force: 1 };
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [touch] }, page.sessionId);
+    if (holdForMs) await wait(holdForMs);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, page.sessionId);
   } else {
     await cdp.send('Input.dispatchMouseEvent', {
       type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1,
     }, page.sessionId);
+    if (holdForMs) await wait(holdForMs);
     await cdp.send('Input.dispatchMouseEvent', {
       type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1,
     }, page.sessionId);
@@ -236,8 +238,8 @@ for (const width of (args.includes('--width') ? [Number(args[args.indexOf('--wid
       check(!shared.first&&!shared.remount&&!shared.repeat&&shared.opted===(mode==='normal'),shape.name+': snapshot remount never replays arrival; persistent solo opts in',shared);
       check(shared.shake===(mode==='normal'),shape.name+': heavy-hit shake honors OS and app reduced motion',shared);
     }
-    await trustedClick(page,shape,'.hand [data-card-id=dodgeRoll]');
-    if(await page.evaluate('!document.querySelector(".dodge-receipt")')) await trustedClick(page,shape,'.hand [data-card-id=dodgeRoll]');
+    // Hold-confirm avoids a timing-sensitive select + double-tap sequence.
+    await trustedClick(page,shape,'.hand [data-card-id=dodgeRoll]',800);
     if(mode==='normal') await trustedClick(page,shape,'.combat .field');
     await page.until('document.querySelector(".pile.spent")?.dataset.cardOutcome==="discard"','discard feedback after play/skip',8000);
     await wait(1300);
@@ -251,8 +253,7 @@ for (const width of (args.includes('--width') ? [Number(args[args.indexOf('--wid
     const refused=await page.evaluate(`({flights:window.__flights.length,plays:window.__combat.eventLog.filter(e=>e.type==='cardPlayed'&&e.cardInstanceId==='qa-refused').length,hand:window.__combat.piles.hand.some(c=>c.instanceId==='qa-refused')})`);
     check(refused.flights===0&&refused.plays===0&&refused.hand,shape.name+': refused input has no ghost or state change',refused);
     await page.evaluate(`(() => {const c=window.__combat;c.piles.hand=[{instanceId:'qa-exhaust',cardId:'warSurgeon',upgraded:false}];c.player.energy=3;window.__renderCombatForShot();})()`);
-    await trustedClick(page,shape,'.hand [data-card-id=warSurgeon]');
-    if(await page.evaluate('!window.__combat.eventLog.some(e=>e.type==="cardPlayed"&&e.cardInstanceId==="qa-exhaust")')) await trustedClick(page,shape,'.hand [data-card-id=warSurgeon]');
+    await trustedClick(page,shape,'.hand [data-card-id=warSurgeon]',800);
     if(mode==='normal') await trustedClick(page,shape,'.combat .field');
     await page.until('document.querySelector(".pile.spent")?.dataset.cardOutcome==="exhaust"','exhaust feedback',8000);
     check(await page.evaluate('window.__combat.piles.exhaust.filter(c=>c.instanceId==="qa-exhaust").length===1 && /1 exhausted/.test(document.querySelector(".pile.spent").getAttribute("aria-description"))'),shape.name+': real exhaust outcome remains after skip');

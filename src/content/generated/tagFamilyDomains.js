@@ -89,5 +89,125 @@ export const tagFamilyDomains = [
   {
     "family": "basicCardProfile",
     "domain": "presentation"
+  },
+  {
+    "family": "card",
+    "domain": "attackSource"
+  },
+  {
+    "family": "card",
+    "domain": "delivery"
+  },
+  {
+    "family": "card",
+    "domain": "damageType"
+  },
+  {
+    "family": "card",
+    "domain": "technique"
+  },
+  {
+    "family": "card",
+    "domain": "theme"
+  },
+  {
+    "family": "effect",
+    "domain": "attackSource"
+  },
+  {
+    "family": "effect",
+    "domain": "delivery"
+  },
+  {
+    "family": "effect",
+    "domain": "damageType"
+  },
+  {
+    "family": "effect",
+    "domain": "technique"
+  },
+  {
+    "family": "effect",
+    "domain": "theme"
+  },
+  {
+    "family": "armament",
+    "domain": "attackSource"
+  },
+  {
+    "family": "armament",
+    "domain": "delivery"
+  },
+  {
+    "family": "armament",
+    "domain": "damageType"
+  },
+  {
+    "family": "armament",
+    "domain": "technique"
+  },
+  {
+    "family": "armament",
+    "domain": "theme"
+  },
+  {
+    "family": "armour",
+    "domain": "attackSource"
+  },
+  {
+    "family": "armour",
+    "domain": "delivery"
+  },
+  {
+    "family": "armour",
+    "domain": "damageType"
+  },
+  {
+    "family": "armour",
+    "domain": "technique"
+  },
+  {
+    "family": "armour",
+    "domain": "theme"
+  },
+  {
+    "family": "relic",
+    "domain": "attackSource"
+  },
+  {
+    "family": "relic",
+    "domain": "delivery"
+  },
+  {
+    "family": "relic",
+    "domain": "damageType"
+  },
+  {
+    "family": "relic",
+    "domain": "technique"
+  },
+  {
+    "family": "relic",
+    "domain": "theme"
+  },
+  {
+    "family": "basicCardProfile",
+    "domain": "attackSource"
+  },
+  {
+    "family": "basicCardProfile",
+    "domain": "delivery"
+  },
+  {
+    "family": "basicCardProfile",
+    "domain": "damageType"
+  },
+  {
+    "family": "basicCardProfile",
+    "domain": "technique"
+  },
+  {
+    "family": "basicCardProfile",
+    "domain": "theme"
   }
 ];

@@ -11,6 +11,7 @@ import { playCombatEffectPlan } from '../combatEffectSprites.js';
 // number displayed comes from previewCard / previewIntent — no math here.
 
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
+import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
 import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
@@ -76,7 +77,7 @@ function pileButton(kind, label) {
   return node;
 }
 
-export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {}, readSettings = () => meta.settings || {} }) {
+export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -1175,6 +1176,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       trailing.push(chip);
     }
     trailing.push(statusRow(p));
+    if (combat.foundation && p.evade > 0) trailing.push(pill({ label: `Evade ${p.evade}`, attrs: { class: 'foundation-evade', 'aria-label': `Evade active: prevents the next ${p.evade} incoming hit${p.evade === 1 ? '' : 's'} this turn` } }));
     if (lastDodge) {
       const receipt = dodgeReceipt(lastDodge);
       const outcome = button({ label: receipt.outcome, className: 'dodge-receipt', attrs: {
@@ -1282,7 +1284,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         entityId: enemy.id,
         classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : '', selectedEnemyId === enemy.id ? 'context-selected' : ''],
         leading,
-        sprite: enemySprite(def, { ...dv(enemy), maxHp: enemy.maxHp }),
+        sprite: enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp }),
         blockBadge: blockBadge(enemy, { tooltips: false }),
         name: nm,
         meters: meterBars(enemy, { tooltips: false }),
@@ -1354,7 +1356,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (busy || combat.phase !== 'player') return unavailable('Wait for your turn.');
     const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
     if (!inst) return unavailable('This card is no longer in your hand.');
-    if (isUnplayable(inst)) return unavailable('This card cannot be played.');
+    const reason = unplayableReason(inst);
+    if (reason) return unavailable(reason);
     const pv = previewCard(combat, instanceId);
     if (combat.player.energy < (pv.costIsX ? 0 : pv.cost) || combat.player.mana < pv.manaCost || combat.player.stamina < (pv.staminaCost || 0)) {
       return unavailable('Not enough resources to play this card.');
@@ -1418,14 +1421,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     cards[next].scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
   }
 
-  function isUnplayable(inst) {
-    return registries.framework.isUnplayable(resolveCard(registries, inst));
+  function unplayableReason(inst) {
+    const def = resolveCard(registries, inst);
+    if (registries.framework.isUnplayable(def)) return 'This card cannot be played.';
+    try { assertFoundationPlayable(combat, def); } catch (error) { return error.message; }
+    return '';
   }
+  function isUnplayable(inst) { return !!unplayableReason(inst); }
 
   /** The pulse reports that the player still has an affordable play. */
   function endTurnHasPlayable() {
     const anyPlayable = combat.piles.hand.some((inst) => {
-      if (registries.framework.isUnplayable(resolveCard(registries, inst))) return false;
+      if (isUnplayable(inst)) return false;
       // The live preview — class-priced dodge costs, Power reductions — the
       // same numbers the badge shows and the engine charges, in all three
       // pools. A card the preview cannot resolve is not a playable card.
@@ -1705,11 +1712,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (busy || dragging) return;
       if (!affordable) {
         const reasons = [];
-        if (isUnplayable(inst)) reasons.push('This card cannot be played.');
+        const reason = unplayableReason(inst);
+        if (reason) reasons.push(reason);
         if (combat.player.energy < (pv.costIsX ? 0 : pv.cost)) reasons.push('Not enough actions.');
         if (combat.player.mana < pv.manaCost) reasons.push('Not enough mana.');
         if (combat.player.stamina < (pv.staminaCost || 0)) reasons.push('Not enough stamina.');
-        showTooltipFor(el, '<p>' + reasons.join(' ') + '</p>');
+        showTooltipFor(el, '<p>' + esc(reasons.join(' ')) + '</p>');
         return;
       }
       if (selectedThisPress) { selectedThisPress = false; return; }
@@ -2159,9 +2167,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // MENU table. Armoury is the canonical equipment name in every context.
   {
     const row = (MENU.combat || []).find((r) => r.act === 'armoury');
-    if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
+    if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(onArmoury ? 'View this test build’s fixed weapon, defense, and resource rules.' : row.tip)}`);
     attachTooltip(menuBtn, () =>
-      `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
+      `<div class="tt-title">Menu</div>${esc(onArmoury ? 'Test build details and return to build selection.' : quickNavMode() === 'off'
         ? 'Armoury, settings, controls and saving.'
         : 'Everywhere you can go from here.')}`);
   }
@@ -2170,6 +2178,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // set switches and item replacement route through engine intents so Energy,
   // live card piles, resources, Poise, and the combat snapshot stay atomic.
   function openCombatArmoury(request = '') {
+    if (onArmoury) return onArmoury();
     if (!registries.balance.equipment.enabled) return;
     const equipView = typeof request === 'string' ? request : '';
     const destination = request && typeof request === 'object' ? request.destination || '' : '';
