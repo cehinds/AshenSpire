@@ -13,6 +13,7 @@
 .pose-stage[data-pose-reaction="heal"] .combat-pose-aura { color:#ffe098; opacity:1; filter:drop-shadow(0 0 12px #ffd475); }
 /* The new extended arms/blades need more width than the old narrow idle.
    Keep one scale for every frame of these outfits on the compact solo board. */
+.combat:not(.coop) .player-zone .readiness-outfit { transform:translateX(3%); }
 @media(max-width:640px) {
   .combat:not(.coop) .player-zone .readiness-outfit { transform:translateX(18%) scale(.6); transform-origin:50% 100%; }
   :root[data-layout='narrow'] .combat.coop .player-zone { gap:.5rem; padding-top:2rem; flex-shrink:0; }

@@ -20,6 +20,7 @@ try{
   const ready=async expression=>{for(let i=0;i<160;i++){if(await evaluate(expression))return;await wait(100)}throw Error('Timed out: '+expression)};
   const shot=async name=>{await evaluate('Promise.all([...document.images].map(i=>i.decode().catch(()=>{})))');const r=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});writeFileSync(`${out}/${name}.png`,Buffer.from(r.data,'base64'));};
   if (!process.argv.includes('--review-only')) {
+  if (!process.argv.includes('--combat-only')) {
   await call('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
   await call('Page.navigate',{url:base+'/art/readiness-poses/preview.html'});await ready('!!window.readinessPreview');
   const stageChecks=await evaluate(`(async()=>{
@@ -39,6 +40,7 @@ try{
   await call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true);
   for(const cls of ['rogue','starseer','herald']){await evaluate(`document.querySelector('[data-class="${cls}"]').scrollIntoView({block:'start'})`);await shot(`${cls}-preview-phone`);}
+  }
   // Exercise cards through the shipped combat screen. The query fixture only
   // seeds the fight; all status application/consumption uses normal card clicks.
   for(const standalone of [false,true])for(const [classId,cardId,statusId,pose] of [['rogue','smokePellet','prepared','prepared'],['starseer','crystalBarrier','starstoneCharge','starstoneCharge'],['herald','stigmataCard','stigmata','bloodRite']])for(const width of [1440,390]){
@@ -52,7 +54,8 @@ try{
     assert.equal(await evaluate('window.__combatRunForShot.class'),classId);
     await evaluate('window.__combat.player.energy=1;window.__renderCombatForShot()');
     const bounded=await evaluate(`(async()=>{const {READINESS_POSE_ART}=await import('/src/content/readinessPoseArt.js');const s=document.querySelector('.player-zone .painted-stage'),b=READINESS_POSE_ART[s.dataset.poseClass][s.dataset.pose].box,r=s.querySelector('.pose-frame').getBoundingClientRect(),hud=document.querySelector('.combat-hud').getBoundingClientRect();return r.left+b.x0/640*r.width>=0&&r.left+(b.x1+1)/640*r.width<=innerWidth&&r.top+b.y0/640*r.height>=hud.bottom})()`);
-    assert.equal(bounded,true,`${classId} complete silhouette inside viewport below HUD`);
+    if (!bounded) { console.log(await evaluate(`JSON.stringify({width:innerWidth,stage:document.querySelector('.player-zone .painted-stage').getBoundingClientRect(),image:document.querySelector('.player-zone .pose-frame').getBoundingClientRect(),hud:document.querySelector('.combat-hud').getBoundingClientRect()})`)); await shot('bounds-failure'); }
+    assert.equal(bounded,true,`${classId} ${standalone?'standalone':'source'} ${width} complete silhouette inside viewport below HUD`);
     await shot(`${classId}-${standalone?'standalone':'game'}-${width}`);
     assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true);
     assert.equal(await evaluate('[...document.images].filter(i=>i.getBoundingClientRect().width>0).every(i=>i.complete&&i.naturalWidth>0)'),true);
