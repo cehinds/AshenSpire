@@ -5,6 +5,8 @@ import {createHash} from 'node:crypto';
 import {starter,clone,sample,resolveBindings,validate,startTime,history} from '../model.mjs';
 import {catalog,effectFrames,cardContext} from '../catalog.mjs';
 import {createPresentationAdapter} from '../integration.mjs';
+import {playCombatEffectPlan} from '../../src/ui/combatEffectSprites.js';
+test('a removed combat layer remains a harmless no-op',()=>{assert.doesNotThrow(()=>playCombatEffectPlan(null,{left:0,top:0},{kind:'slash'})());});
 test('all 80 sets have six distinct frames, including 24 original additions',()=>{assert.equal(catalog.effects.length,80);for(const id of catalog.effects){assert.equal(effectFrames[id].length,6);const hashes=effectFrames[id].map(p=>createHash('sha256').update(readFileSync(new URL('../../'+p,import.meta.url))).digest('hex'));assert.equal(new Set(hashes).size,6,id);}});
 test('named contact cues follow sequence length; five to seven poses remain addressable',()=>{const p=starter();assert.deepEqual(validate(p,catalog),[]);assert.equal(startTime(p.clips[0],p),600);p.duration=2000;assert.equal(startTime(p.clips[0],p),1000);p.poses.push('idle');assert.equal(sample(p,1999).poseIndex,6);assert.equal(sample(p,1050).effects.length,1);assert.equal(sample(p,900).effects.length,0);});
 test('flashes are suppressed and reduced motion holds a readable frame',()=>{const p=starter();assert.equal(sample(p,700,{reduceFlashes:true}).effects.length,0);assert.equal(sample(p,700,{reducedMotion:true}).effects[0].frame,2);assert.equal(sample(p,800,{direction:'left'}).effects[0].x,1-sample(p,800).effects[0].x);});

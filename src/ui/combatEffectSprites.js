@@ -6,7 +6,7 @@ import {playPresentationSequence} from './presentationSequence.js';
 const active=new WeakMap();
 // Shared solo/co-op sequence: one cast, then one release per actual recipient.
 export function playCombatEffectPlan(layer,from,plan,{targets=[],duration=260,size=160}={}){
- if(!plan)return ()=>{};
+ if(!plan||!layer||!from)return ()=>{};
  size*=plan.sizeScale??1;
  const set=active.get(layer)||new Set();active.set(layer,set);
  const studioStop=playPresentationSequence(layer,from,plan.bindingContext,{targets,duration,onStop:()=>set.delete(studioStop)});
