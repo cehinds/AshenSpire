@@ -1267,6 +1267,7 @@ keeps the same state and focus contract without meaningful animation.
   Returning below threshold, downward release, an information-button gesture,
   pointer cancellation, capture loss, blur or a blocking modal cannot flick-play.
   No qualifying gesture can commit twice. Disabling flicks preserves direct drops.
+- **Card rewards:** one touch, mouse, pen, or Confirm activation selects without collecting and enables the footer Confirm. Back preserves selection. Confirmation persists once; refused or throwing saves restore the pending card choice and allow retry.
 - Full playability with mouse only. Keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
 - **Controls rebind capture owns its armed keydown.** `rebind-capture-service`
   ignores lone modifiers. Escape cancels an armed keyboard capture, restores the
