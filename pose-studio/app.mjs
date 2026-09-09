@@ -1,4 +1,5 @@
 import {createDirectEditor} from './direct-editing.mjs';
+import {combatEffectOpacity} from '../src/content/combatEffectPresentation.js';
 import {starter,clone,title,CUES,ANCHORS,history,sample,startTime,validate,resolveBindings} from './model.mjs';
 import {catalog,effectFrames,PAINTED_OUTFITS,labels,cards,cardContext,effectAnchors} from './catalog.mjs';
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -51,7 +52,7 @@ function drawCharacter(actor,pose,x,base,height,alpha=1){const art=PAINTED_OUTFI
 function draw(){if(!ctx)return;const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);const bg=ctx.createRadialGradient(460,430,10,480,280,600);bg.addColorStop(0,'#364335');bg.addColorStop(.6,'#202d26');bg.addColorStop(1,'#15211e');ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);editing?.begin(ctx);ctx.strokeStyle='#435244';ctx.lineWidth=1;for(let i=1;i<6;i++){ctx.beginPath();ctx.moveTo(0,i*100);ctx.lineTo(w,i*100);ctx.stroke();}for(let i=1;i<10;i++){ctx.beginPath();ctx.moveTo(i*100,0);ctx.lineTo(i*100,h);ctx.stroke();}ctx.fillStyle='#101b1680';ctx.beginPath();ctx.ellipse(300,518,125,15,0,0,7);ctx.fill();if($('#show-target').checked){ctx.beginPath();ctx.ellipse(760,518,90,12,0,0,7);ctx.fill();}
  ctx.save();if($('#direction').value==='left'){ctx.translate(w,0);ctx.scale(-1,1);}
  const result=sample(project,time,{reducedMotion:$('#reduced').checked,reduceFlashes:$('#flashes').checked});
- const drawEffect=c=>{const img=image(effectFrames[c.effect][c.frame]);if(!img.complete||!img.naturalWidth)return;ctx.save();ctx.translate(c.x*w,c.y*h);ctx.rotate(c.rotation*Math.PI/180);ctx.globalAlpha=c.opacity;ctx.drawImage(img,-c.size/2,-c.size/2,c.size,c.size);ctx.restore();};
+ const drawEffect=c=>{const img=image(effectFrames[c.effect][c.frame]);if(!img.complete||!img.naturalWidth)return;ctx.save();ctx.translate(c.x*w,c.y*h);ctx.rotate(c.rotation*Math.PI/180);ctx.globalAlpha=c.opacity*combatEffectOpacity(c.effect);ctx.drawImage(img,-c.size/2,-c.size/2,c.size,c.size);ctx.restore();};
  result.effects.filter(c=>c.layer==='behind'||c.layer==='aura').forEach(drawEffect);if($('#show-target').checked)drawCharacter('starseer','guard',760,510,260,.5);drawCharacter(project.actor,result.pose,300,510,350);result.effects.filter(c=>c.layer==='front').forEach(drawEffect);
  if($('#anchors').checked){ctx.font='11px Segoe UI';for(const [key,[x,y]]of Object.entries(project.anchors)){ctx.strokeStyle='#a8c48c99';ctx.fillStyle='#c3d1b8';ctx.beginPath();ctx.arc(x*w,y*h,5,0,7);ctx.stroke();ctx.fillText(key,x*w+9,y*h-7);}}
  editing?.selection(ctx,result.effects);ctx.restore();editing?.end(ctx);ctx.fillStyle='#b8c6ac';ctx.font='12px Segoe UI';ctx.fillText(title(project.actor)+' · '+title(result.pose),25,570);

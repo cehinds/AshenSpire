@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-878",
+    "id": "pr-882",
     "date": "2026-09-09",
     "group": "2026-09-09",
-    "summary": "Every run map opens at a readable close-up",
-    "detail": "World Journey and Long Expedition share traditional/co-op vector nodes, pale current markers, solid roads and parchment fog. Frame the current junction, retain zoom controls, recover more detail from the original paintings, and limit world fog rendering to the visible viewport.",
+    "summary": "Combat effects follow the caster",
+    "detail": "Wrap softer weapon and shield effects behind and in front of each pose, and release projectiles from the hand or staff. Keep resource auras and target impacts. Add a saved, default-off played-card animation option and an outfit/layer preview.",
     "build": "0.6.0.66",
-    "pullRequest": 878,
-    "url": "https://github.com/cehinds/AshenSpire/pull/878"
+    "pullRequest": 882,
+    "url": "https://github.com/cehinds/AshenSpire/pull/882"
   },
   {
     "id": "pr-880",
