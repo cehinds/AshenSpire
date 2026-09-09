@@ -39,6 +39,8 @@
 // The `legal:` list on a domain error is the point: the message tells the
 // author which words this family accepts instead of making them find out.
 
+import { attackDescriptor } from './attackTags.js';
+
 /** Walk a dotted `source` path ('equipment.armaments') into the bundle. */
 function atPath(bundle, path) {
   let node = bundle;
@@ -289,6 +291,25 @@ export function tagContentProblems(bundle, keywordIds = []) {
       err(path, scope
         ? `no ${family} with id '${objectId}' and ${spec.scopeField} '${scope}' — the row tags nothing`
         : `no ${family} with id '${objectId}' — the row tags nothing`);
+    }
+  }
+
+  // Categorized attack identity is authored in this same junction. Validate
+  // cardinality and agreement here, before a card can spend resources.
+  const attackIndex = tagIndex(b);
+  for (const family of ['card', 'armament', 'basicCardProfile']) {
+    const spec = familyByName.get(family);
+    const rows = spec?.source && atPath(b, spec.source);
+    if (!Array.isArray(rows)) continue;
+    for (const row of rows) {
+      if (!row) continue;
+      const tags = attackIndex.tagIdsOf(family, row);
+      try {
+        attackDescriptor({ tags, attack: row.attack });
+        for (const effect of [...(row.effects || []), ...(row.upgrade?.effects || [])]) {
+          if (effect.attack) attackDescriptor({ tags, attack: effect.attack });
+        }
+      } catch (error) { err(`tagging.${family}.${row.id}`, error.message); }
     }
   }
 

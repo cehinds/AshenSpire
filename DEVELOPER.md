@@ -10,6 +10,9 @@ For how work is branched, reviewed, and merged, see
 ## Run & test
 
 The opt-in combat workshop is documented in [docs/COMBAT-WORKSHOP.md](docs/COMBAT-WORKSHOP.md).
+Tag assignments and source ownership are documented in [docs/COMBAT-TAG-SOURCES.md](docs/COMBAT-TAG-SOURCES.md).
+Run `node tools/attack-source-audit.mjs --write` after editing the tag junction;
+`--check` verifies complete attack-source mappings and the review table.
 `node tests/run-node.mjs` includes its focused engine regression suite.
 `node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
 and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared

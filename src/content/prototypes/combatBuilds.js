@@ -86,7 +86,7 @@ export function prototypeInput(buildId = 'heavy', scenarioId = 'basic', seed = 1
   const weapon = regs.equipment.armaments.find((item) => item.id === build.itemId);
   const deck = ['dodgeRoll', 'prototypeGuard', 'prototypeGuard', 'prototypeRecover', build.stance, ...build.cards].map((cardId, i) => ({ instanceId: `prototype${i}`, cardId, upgraded: false }));
   const profiles = { player: { armor: build.armor, weightClass: build.weightClass, sources: { mainHand: {
-    id: `armament/${build.itemId}/prototype`, weight: weapon.weight, family: build.family, grip: build.grip, damageType: build.damageType, tags: [], buildup: build.buildup || [],
+    id: `armament/${build.itemId}/prototype`, itemId: build.itemId, weight: weapon.weight, family: build.family, grip: build.grip, damageType: build.damageType, tags: [], buildup: build.buildup || [],
   } } } };
   for (let i = 0; i < scenario.count; i++) profiles[`e${i + 1}`] = { armor: scenario.armor || 0,
     sources: { mainHand: { id: `enemy/${scenarioId}`, weight: 4, family: 'natural', grip: 'oneHand', damageType: 'blunt' } } };

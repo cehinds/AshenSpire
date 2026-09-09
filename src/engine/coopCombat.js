@@ -386,6 +386,14 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
     if (!target) throw new Error('No living enemy to target');
   }
 
+  const cardRef = {
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
+    type: def.type, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    damageSchool: inst.damageSchool ?? def.damageSchool,
+    exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+  };
+  const sourceSnapshots = F.cardSourceSnapshots(C, def, p, cardRef);
+
   p.energy -= cost;
   if (cost > 0 || isX) C.emit('energySpent', { amount: cost });
   p.mana -= manaCost;
@@ -406,14 +414,7 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
     attackOrdinal: null,
   };
   if (def.type === 'attack') { p.counters.attacksPlayedThisCombat += 1; meta.attackOrdinal = p.counters.attacksPlayedThisCombat; }
-  const cardRef = {
-    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-    type: def.type, tags: def.cardTags, attack: def.attack, sourceHand: inst.sourceHand,
-    damageSchool: inst.damageSchool ?? def.damageSchool,
-    exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
-  };
-
-  for (const action of F.cardActions(C, def, p, target, cardRef, meta)) C.enqueue(action);
+  for (const action of F.cardActions(C, def, p, target, cardRef, meta, sourceSnapshots)) C.enqueue(action);
   C.emit('cardPlayed', {
     playerId: C.playerKey, profileId: inst.profileId, upgraded: inst.upgraded, sourceArmamentId: inst.sourceArmamentId,
     cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: def.type,
