@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-870",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Card flicks choose targets across pointer devices",
+    "detail": "Flick upward with touch, mouse, trackpad dragging or pen to play on the nearest legal target without reaching it. Card flick settings and practice now describe the same behavior; saved distance preferences, selection and Information remain available.",
+    "build": "0.6.0.50",
+    "pullRequest": 870,
+    "url": "https://github.com/cehinds/AshenSpire/pull/870"
+  },
+  {
+    "id": "pr-869",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Card flick input parity has an explicit specification",
+    "detail": "Specify shared pointer behavior and preserve existing distance, speed and cancellation rules.",
+    "build": "0.6.0.48",
+    "pullRequest": 869,
+    "url": "https://github.com/cehinds/AshenSpire/pull/869"
+  },
+  {
+    "id": "pr-864",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Pose Studio exposes direct effect editing",
+    "detail": "Resize and remove effects directly, edit named timeline strips and drop effects at the requested time and layer with mouse or touch.",
+    "build": "0.6.0.47",
+    "pullRequest": 864,
+    "url": "https://github.com/cehinds/AshenSpire/pull/864"
+  },
+  {
     "id": "pr-862",
     "date": "2026-09-09",
     "group": "2026-09-09",

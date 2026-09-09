@@ -65,6 +65,9 @@ this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-09
 
+- **Card flicks choose targets across pointer devices** ([#870](https://github.com/cehinds/AshenSpire/pull/870), `0.6.0.50`). Flick upward with touch, mouse, trackpad dragging or pen to play on the nearest legal target without reaching it. Card flick settings and practice now describe the same behavior; saved distance preferences, selection and Information remain available.
+- **Card flick input parity has an explicit specification** ([#869](https://github.com/cehinds/AshenSpire/pull/869), `0.6.0.48`). Specify shared pointer behavior and preserve existing distance, speed and cancellation rules.
+- **Pose Studio exposes direct effect editing** ([#864](https://github.com/cehinds/AshenSpire/pull/864), `0.6.0.47`). Resize and remove effects directly, edit named timeline strips and drop effects at the requested time and layer with mouse or touch.
 - **Combat card text fits beneath clear cost badges** ([#862](https://github.com/cehinds/AshenSpire/pull/862), `0.6.0.48`). Scale card text consistently with the face, allow titles to wrap to two lines, and group action, mana and stamina costs above the title. Selection, Information, targeting and touch flicks keep their existing behavior.
 - **Combat foundations have a playable test workshop** ([#850](https://github.com/cehinds/AshenSpire/pull/850), `0.6.0.38`). Play the real game battlefield or the standalone workshop with heavy physical, fast Bleed and rare-mana builds with configurable damage, armor, weapon impact and retained deterministic Dodge. The workshop is experimental; existing runs keep their current rules.
 - **Recent deliveries appear in About** ([#859](https://github.com/cehinds/AshenSpire/pull/859), `0.6.0.37`). Add the card removal, touch flick, Pose Studio usability and combat specification entries to the in-game changelog before promoting the build to test.

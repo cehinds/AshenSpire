@@ -17,7 +17,9 @@ try {
     const page = await context.newPage();
     const cdp = await context.newCDPSession(page);
     const errors = []; page.on('pageerror', e => errors.push(e.message));
+    let scenario = 'enabled';
     const load = async (settings = {}) => {
+      scenario = settings.touchFlickPlay === false ? 'disabled' : settings.touchFlickDistance ? 'long-distance' : 'enabled';
       await page.goto(base + route + '&shotSettings=' + encodeURIComponent(JSON.stringify(settings)));
       await page.locator('.hand .card').first().waitFor();
       await page.waitForTimeout(600);
@@ -71,7 +73,7 @@ try {
       }
       await page.waitForTimeout(1400);
       const evidence = await page.evaluate(() => window.flickEvidence);
-      writeFileSync(join(output, input + '-' + finish + '-' + distance + '.json'), JSON.stringify(evidence, null, 2));
+      writeFileSync(join(output, input + '-' + scenario + '-' + finish + '-' + distance + '.json'), JSON.stringify(evidence, null, 2));
       return evidence;
     };
     await load();
