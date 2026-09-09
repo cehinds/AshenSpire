@@ -32,7 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-09
 
-- **Combat vitality stays steady and mobile maps load less artwork** ([#874](https://github.com/cehinds/AshenSpire/pull/874), `0.6.0.59`). Prevent stretched health bars at turn changes, reserve an inspectable status row beneath vitality, shrink map textures, reuse traditional node symbols in World Journey and Long Expedition, and show selected reward cards in green. Connected return travel and reward save recovery remain available.
+- **Combat vitality stays steady and mobile maps load less artwork** ([#874](https://github.com/cehinds/AshenSpire/pull/874), `0.6.0.61`). Prevent stretched health bars at turn changes, reserve an inspectable status row beneath vitality, shrink map textures, reuse traditional node symbols in World Journey and Long Expedition, and show selected reward cards in green. Connected return travel and reward save recovery remain available.
+- **Sharper card effect art** ([#872](https://github.com/cehinds/AshenSpire/pull/872), `0.6.0.60`). Refresh six-frame blade slashes, physical shield impacts, Starstone bolts and blood slashes in combat and Pose Studio. Keep existing card tags, resource variants and auras, and add an interactive before/after gallery.
 
 - **Card flicks choose targets across pointer devices** ([#870](https://github.com/cehinds/AshenSpire/pull/870), `0.6.0.58`). Flick upward with touch, mouse, trackpad dragging or pen to play on the nearest legal target without reaching it. Card flick settings and practice now describe the same behavior; saved distance preferences, selection and Information remain available.
 - **Card flick input parity has an explicit specification** ([#869](https://github.com/cehinds/AshenSpire/pull/869), `0.6.0.57`). Specify shared pointer behavior and preserve existing distance, speed and cancellation rules.

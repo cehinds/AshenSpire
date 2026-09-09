@@ -97,6 +97,8 @@ AshenSpire is an original fan-inspired work. It contains no assets, music, text,
 
 ## Painted combat effect sprites
 
+The September 9 card-effect refresh adds 24 lossless transparent frames in `assets/combat-effects` for slash, shield bash, Starstone bolt and blood slash. Source: OpenAI built-in imagegen, with complete prompts and green-matte source plates in [art/card-effect-refresh-2026-09-09/sources.json](art/card-effect-refresh-2026-09-09/sources.json). Project-owned AI-generated artwork, CC0. Reproducible crop, matte extraction and export: `tools/card-effect-art-build.mjs`. The previous frames remain under `art/card-effect-refresh-2026-09-09/before` for visual comparison.
+
 | Assets | Source | Rights |
 |---|---|---|
 | assets/combat-effects: 336 transparent frames (56 six-frame effects) for projectiles, guards, barriers, stances, auras, afflictions, healing, impact, melee trails and authored card schools | Project-generated with built-in OpenAI imagegen; six-frame source sheets and exact prompts in art/combat-effects-2026-09-07/six-frame-generation.json, guard-status-generation.json and integration-generation.json; exported by tools/combat-effects-ship.mjs | Project-owned AI-generated artwork, CC0 |
