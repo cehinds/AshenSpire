@@ -143,6 +143,7 @@ export function createCombat({
     _emitDepth: 0,
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
+  combat._emitEvent = emitEvent;
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
 

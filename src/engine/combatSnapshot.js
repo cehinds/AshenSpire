@@ -97,6 +97,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     _emitDepth: saved.emitDepth,
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
+  combat._emitEvent = emitEvent;
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
   return combat;

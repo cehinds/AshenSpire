@@ -2,6 +2,8 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { launchBrowser, resolveBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { combatRules } from '../src/content/combatRules.js';
+import { createFoundation } from '../src/engine/combatRules.js';
 const out = resolve('artifacts/combat-foundations'); mkdirSync(out, { recursive: true });
 const server = await serve({ root: resolve('.'), port: 8618, open: false });
 const browser = await launchBrowser({ prefix: 'combat-foundations-', browser: resolveBrowser(['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe']) });
@@ -9,6 +11,7 @@ const ws = new WebSocket(browser.wsUrl), pending = new Map(), errors = []; let s
 ws.addEventListener('message', (event) => {
   const msg = JSON.parse(event.data);
   if (msg.method === 'Runtime.exceptionThrown') errors.push(msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text);
+  if (msg.method === 'Runtime.consoleAPICalled' && ['error', 'warning'].includes(msg.params.type)) console.log('BROWSER', msg.params.type, msg.params.args.map((a) => a.value || a.description).join(' '));
   const pair = pending.get(msg.id); if (!pair) return;
   pending.delete(msg.id); if (msg.error) pair.reject(new Error(msg.error.message)); else pair.resolve(msg.result);
 });
@@ -58,6 +61,18 @@ try {
       await click('#setup button'); await click('#suggest');
       check(await evaluate('!document.querySelector("#error").textContent && document.querySelector("#receipt").textContent!=="Choose an enemy, then play a card."'), `${shape.name}: ${build} preset plays through real dispatch`);
     }
+    // Exercise the bundled adapter too: source ESM can hide CommonJS cycle bugs.
+    await send('Page.navigate', { url: `${server.url}AshenSpire.html?shot=combat` }, sessionId);
+    for (let i = 0; i < 300 && !(await evaluate('!!window.__combat && !!window.__renderCombatForShot')); i++) await wait(100);
+    check(await evaluate('!!window.__combat && !!window.__renderCombatForShot'), `${shape.name}: standalone combat boots`);
+    const foundation = createFoundation(combatRules, { player: { weightClass: 'light' } });
+    await evaluate(`(()=>{const c=window.__combat;c.foundation=${JSON.stringify(foundation)};c.piles.hand=[{instanceId:'foundation-dodge',cardId:'dodgeRoll',upgraded:false}];c.player.stamina=10;c.player.maxStamina=10;c.player.energy=3;window.__renderCombatForShot();})()`);
+    await wait(500);
+    // Current card input selects first, then confirms a double tap.
+    for (let i = 0; i < 3 && !(await evaluate('window.__combat.player.evade===1')); i++) await click('.hand [data-card-id="dodgeRoll"]');
+    for (let i = 0; i < 50 && !(await evaluate('window.__combat.player.evade===1')); i++) await wait(100);
+    const receipt = await evaluate('({evade:window.__combat.player.evade, stamina:window.__combat.player.stamina, energy:window.__combat.player.energy, hand:window.__combat.piles.hand, events:window.__combat.eventLog.slice(-8),errors:document.querySelector(".toast")?.textContent})');
+    check(receipt.evade === 1 && receipt.stamina === 9 && receipt.energy === 3, `${shape.name}: bundled new-rules Dodge executes atomically through real input: ${JSON.stringify(receipt)}`);
     await send('Target.closeTarget', { targetId });
   }
   check(errors.length === 0, `no browser exceptions: ${errors.join('; ')}`);

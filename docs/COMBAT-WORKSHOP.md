@@ -24,7 +24,7 @@ The expandable rules editor accepts the complete configuration from `src/content
 
 `node tests/run-node.mjs` includes `node --test tests/combat-foundations.test.mjs`. The focused suite covers damage/Block/rounding, impact allocation, Bleed contact, deterministic Dodge, recovery, failed-action rollback, previews, saves, trigger loops, and co-op ownership.
 
-`node tools/combat-prototypes-browser.mjs` drives real pointer/touch input at 1365×1000 and 390×844, with reduced motion on the phone. Screenshots and logs are written to `artifacts/combat-foundations/`. It checks all three presets, stance persistence, Dodge retention/consumption, resolved card text, and overflow. It is a controlled workshop, not an end-to-end production run.
+`node tools/combat-prototypes-browser.mjs` drives real pointer/touch input at 1365×1000 and 390×844, with reduced motion on the phone. Screenshots and logs are written to `artifacts/combat-foundations/`. It checks all three presets, stance persistence, Dodge retention/consumption, resolved card text, and overflow, then exercises the new-rules adapter in the standalone bundle. The bundled check catches dependency cycles that native source-module tests cannot. It is a controlled workshop, not an end-to-end production run.
 
 Run `node tools/combat-prototypes.mjs --seeds=100` for standard pressure and add `--pressure=2` to double incoming enemy damage. Reports include every scored run, including losses. The fixed policy uses exact previews; it is deliberately shared across builds and is not optimal human play.
 

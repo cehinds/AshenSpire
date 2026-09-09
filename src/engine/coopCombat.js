@@ -81,6 +81,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
     _enemyStatuses: enemyStatuses,
   };
   C.emit = (type, payload) => emitEvent(C, type, payload);
+  C._emitEvent = emitEvent;
   C.enqueue = (action) => C.queue.push(action);
   C.nextInstanceId = () => `gen${++C._idCounter}`;
   // Player combat entities intentionally share the engine id `player`. Events

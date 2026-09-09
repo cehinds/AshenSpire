@@ -3,7 +3,6 @@
 import { validateCombatRules, validateCombatProfile, validateAttack, allocateInteger, resolveDamageComponents, weaponImpact, groupedResistance } from '../model/combatRules.js';
 import { evaluate } from '../model/formulas.js';
 import { createRng } from './rng.js';
-import { emitEvent } from './triggers.js';
 import * as S from '../framework/statusSemantics.js';
 import { equipmentRoleSource } from '../model/loadout.js';
 
@@ -173,8 +172,8 @@ function candidateState(ctx) {
   for (const [key, value] of Object.entries(ctx)) {
     if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') data[key] = value;
   }
-  const candidate = { ...structuredClone(data), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()) };
-  candidate.emit = (type, payload) => emitEvent(candidate, type, payload);
+  const candidate = { ...structuredClone(data), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  candidate.emit = (type, payload) => candidate._emitEvent(candidate, type, payload);
   candidate.enqueue = (action) => candidate.queue.push(action);
   candidate.nextInstanceId = () => `gen${++candidate._idCounter}`;
   if (ctx.players) candidate.playerIdForEntity = (entity) => {
