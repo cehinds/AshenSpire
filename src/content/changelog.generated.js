@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-820",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "The README and the changelog stop burying what a reader came for",
+    "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
+    "build": "0.6.0.53",
+    "pullRequest": 820,
+    "url": "https://github.com/cehinds/AshenSpire/pull/820"
+  },
+  {
     "id": "pr-867",
     "date": "2026-09-09",
     "group": "2026-09-09",
@@ -41,16 +51,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.47",
     "pullRequest": 832,
     "url": "https://github.com/cehinds/AshenSpire/pull/832"
-  },
-  {
-    "id": "pr-820",
-    "date": "2026-09-09",
-    "group": "2026-09-09",
-    "summary": "The README and the changelog stop burying what a reader came for",
-    "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
-    "build": "0.6.0.40",
-    "pullRequest": 820,
-    "url": "https://github.com/cehinds/AshenSpire/pull/820"
   },
   {
     "id": "pr-850",
