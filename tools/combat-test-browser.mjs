@@ -56,6 +56,11 @@ try {
       await until('!!window.__combat.player.stanceId && !document.querySelector(".end-turn").disabled');
       await wait(600);
       check(await evaluate('!!document.querySelector(".combat-pose-aura")?.dataset.motif'), `${shape.name}/${build}: persistent stance aura`);
+      // A returned stance card must be visibly unavailable while already active.
+      // Temporarily expose a copy, then remove it before continuing the fight.
+      await evaluate(`(()=>{const c=window.__combat;const card=c.piles.discard.find(x=>x.cardId===${JSON.stringify(stance)});c.piles.hand.push({...card,instanceId:'test-active-stance'});window.__renderCombatForShot();})()`);
+      check(await evaluate('document.querySelector("[data-instance-id=test-active-stance]").classList.contains("unaffordable")'), `${shape.name}/${build}: already-active stance is visibly unavailable`);
+      await evaluate('window.__combat.piles.hand=window.__combat.piles.hand.filter(c=>c.instanceId!=="test-active-stance");window.__renderCombatForShot()');
       await click('.end-turn'); await until('window.__combat.turn===2 && !document.querySelector(".end-turn").disabled');
       await wait(600);
       check(await evaluate('window.__combat.piles.hand.some(c=>c.cardId==="dodgeRoll") && !!window.__combat.player.stanceId'), `${shape.name}/${build}: Dodge retained and stance persists`);

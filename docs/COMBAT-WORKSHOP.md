@@ -14,6 +14,8 @@ Run `node tools/combat-test-browser.mjs` after rebuilding. It checks all three b
 
 ### Standalone workshop
 
+The user-friendly standalone tool now lives in its own private repository, [AshenSpire Combat Workshop](https://github.com/cehinds/AshenSpire-Combat-Workshop). Its pinned engine snapshot is documented there. Start it with `npm start` in that repository and open `http://localhost:8623/`. The page below remains a small engine regression fixture.
+
 Run `node tools/serve.mjs --port 8618 --no-open --no-lan`, then open `http://localhost:8618/tests/combat-prototypes.html`. Choose a build and encounter, select an enemy, and play cards. The workshop uses `createCombat`, `dispatch`, and `previewCard`. It does not read or overwrite saved runs.
 
 The expandable rules editor accepts the complete configuration from `src/content/combatRules.js`. Restart the encounter to apply changes. Build decks, attributes, armor, resource caps, and opponent definitions are in `src/content/prototypes/combatBuilds.js`. The prototype bundle passes the production content validator and is excluded from ordinary run registries and reward pools. Its definitions are bundled so the explicit game test entry also works in the standalone HTML.
