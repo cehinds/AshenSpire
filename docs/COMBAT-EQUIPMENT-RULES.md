@@ -119,6 +119,13 @@ payloads retain their explicit impact effects through migration.
 One resolver supplies live combat, previews, logs, and automated assertions in
 solo and co-op. Tests cover mixed damage, Block, immunity, rounding, and empty hits.
 
+Acceptance example with explicit fixture values: an 8-Slashing + 3-Fire hit,
+25% armor mitigation, 50% Fire resistance, no other modifiers, and floor-per-component
+rounding resolves to 6 Slashing + 1 Fire. Against 4 Block it consumes 4 Block and
+deals 3 HP damage. Adding an unrelated Blood theme changes none of these numbers.
+Evade prevents this complete hit and its attached buildup, rather than consuming
+only the Slashing component. These are expected arithmetic results, not test output.
+
 ## 4. Weapon impact and stagger
 
 Each direct attack derives a positive base impact budget from its source, even
@@ -145,6 +152,12 @@ All rounding, delivery factors, source weights, area factors, and bonus distribu
 are configuration. Individual low-impact hits may round to zero; the complete
 direct attack still has its positive base budget before defense. Card previews
 show total impact and the additional card contribution separately.
+
+Acceptance example: a configured impact budget of 5 with a card bonus of 1 and
+three equally weighted hits resolves as 2/2/2 impact, not 6/6/6. Evading the first
+hit leaves 4 total impact. A +1 contact-Bleed rune still applies once on each of
+the two landed hits, for 2 buildup. Neither splitting a hit into damage types nor
+the resulting Bleed burst supplies another baseline weapon-impact budget.
 
 Keep the recognizable stagger payoff initially: skip one enemy action and expose
 the target to extra damage. Retune thresholds against the prototype corpus. Define
