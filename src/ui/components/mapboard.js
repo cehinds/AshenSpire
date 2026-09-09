@@ -1,3 +1,5 @@
+import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
+import { mountMapDetail } from './mapDetail.js';
 // src/ui/components/mapboard.js — THE ACT MAP. One renderer, mounted twice.
 //
 // WHY THIS FILE EXISTS, and it is a collapse and not a repair.
@@ -59,7 +61,8 @@ import { attachTooltip } from './tooltip.js';
 import { html, iconButton } from '../kit/index.js';
 import { worldMapForRun } from '../../model/environmentArt.js';
 import { mapTerrainHtml } from './environmentArt.js';
-import { nodeIcon, actTitle, parchmentClass } from '../uiContent.js';
+import { mapNodeInk } from './mapNodeInk.js';
+import { actTitle, parchmentClass } from '../uiContent.js';
 import { trackGesture } from '../gesture.js';
 import {
   mapKnowledge, nodeReading, resolveMapMode, resolveShrineGlow, shrineLane,
@@ -266,7 +269,8 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       const ia = path.indexOf(n.id);
       const isTraveled = ia >= 0 && path[ia + 1] === toId;
       const isLane = laneEdge.has(`${n.id}>${toId}`);
-      edgeSvg += `<line class="map-edge${isTraveled ? ' traveled' : ''}${isLane ? ' shrine-lane' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
+      edgeSvg += `<line class="map-route-outline" vector-effect="non-scaling-stroke" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>` ;
+      edgeSvg += `<line vector-effect="non-scaling-stroke" class="map-edge${isTraveled ? ' traveled' : ''}${isLane ? ' shrine-lane' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
     }
   }
 
@@ -400,12 +404,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // node's own in every mode and on every screen: fog changes WHICH nodes are
     // drawn and never HOW BIG one is, and neither does having a partner.
     const r = nodeRadius(n.type);
-    const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
     // The per-viewer mark rides LAST so it draws over the node, and it is given
     // the geometry rather than left to re-derive it — a second copy of `y()` is
     // how this whole file came to be needed.
     const mark = viewer.mark ? viewer.mark(n, { x: x(n.col), y: y(n.floor), r }) : '';
-    el.insertAdjacentHTML('beforeend', `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>${mark || ''}`);
+    el.insertAdjacentHTML('beforeend', `${mapNodeInk({ type: shownType, x: x(n.col), y: y(n.floor), radius: r, reachable: isReachable })}${mark || ''}`);
     if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));
     if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }));
     g.appendChild(el);
@@ -416,6 +419,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // while appending, never re-derived from the ladder it is meant to check.
   scroll.dataset.world = world.id;
   scroll.dataset.mapPlate = 'loading';
+  mountMapDetail(scroll, scroll.querySelector('.map-detail-surface'), world.map);
   const terrain = scroll.querySelector('.terrain-detail');
   terrain.addEventListener('load', () => { scroll.dataset.mapPlate = 'ok'; });
   terrain.addEventListener('error', () => { scroll.dataset.mapPlate = 'missing'; });
@@ -839,7 +843,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       // the decision box, so the zoom that fits it fits the decision as well.
       const zDecision = fitZoom(framingBox(fs, height), scroll.clientWidth, scroll.clientHeight);
       const zContext = fitZoom(framingBox(contextNodes(), height), scroll.clientWidth, scroll.clientHeight);
-      const z = clampZoom(Math.min(zDecision, zContext));
+      const z = clampZoom(Math.min(zDecision, zContext, MAP_CLOSE_NODE_SCALE));
       if (Math.abs(z - zoom) > 0.0005) zoom = z;
     }
     const box = framingBox(fs, height);

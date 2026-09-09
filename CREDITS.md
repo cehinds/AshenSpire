@@ -128,3 +128,7 @@ built-in OpenAI imagegen tool from the readiness outfit references. First-party
 sources: `art/readiness-poses/sources/*-transition.png`; exact prompts:
 `art/readiness-poses/transition-generation.json`. Exported to transparent WebP
 through `tools/readiness-poses-ship.mjs`.
+
+## Map detail and engraving (2026-09-09)
+
+Original square-world detail remaster: `art/environments/worlds/fractured-realm-square-detail.png`, generated with OpenAI imagegen from the project-owned original. Project-owned AI artwork, CC0-1.0. Geography retained, fine shapes redrawn; native output remains 1254px, not a 4K master. Original procedural parchment engraving: `src/ui/components/mapFog.js`, CC0-1.0. Source: this repository. Pyramid exports are derived by `tools/map-detail-build.mjs`.
