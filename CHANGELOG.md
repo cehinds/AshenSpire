@@ -65,6 +65,13 @@ this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-09
 
+- **Compose poses and effects in a visual studio** ([#847](https://github.com/cehinds/AshenSpire/pull/847), `0.6.0.33`). Drag effects onto pose cues, adjust anchors and layered tracks, test card/tag/payment bindings, and save portable projects. Preview optional authored sequences in combat while preserving existing effects and auras. Add 24 six-frame sets for movement, contact, casting, defense and status feedback.
+- **Readiness poses ease in and out** ([#852](https://github.com/cehinds/AshenSpire/pull/852), `0.6.0.28`). Prepared, Starstone Charge and Herald Blood Rite use softer breathing glows and authored intermediate sprites for all twelve outfits. Entry, exit and action return crossfade smoothly; combat redraws preserve their timing, while reduced-motion and still-sprite modes resolve immediately.
+
+- **Readiness pose delivery appears in About** ([#849](https://github.com/cehinds/AshenSpire/pull/849), `0.6.0.26`). Record the original readiness-pose delivery and refresh the in-game changelog.
+
+- **Readiness poses show when the next move is primed** ([#846](https://github.com/cehinds/AshenSpire/pull/846), `0.6.0.24`). Prepared, Starstone Charge and Herald Blood Rite have authored poses across twelve outfits, persistent glows, and correct return behavior after actions. Solo and co-op preserve status ownership and keep extended figures within narrow combat screens.
+
 - **Combat animation changes appear in the in-game changelog** ([#841](https://github.com/cehinds/AshenSpire/pull/841), `0.6.0.21`). Record the combat effects and enemy animation deliveries at their original build numbers and refresh the changelog shown in About.
 - **Combat effects follow the card and its payment** ([#835](https://github.com/cehinds/AshenSpire/pull/835), `0.6.0.20`). Play 56 six-frame effect sets for attacks, projectiles, guards, wards, barriers, stances and status reactions in solo and co-op. Low-action moves use subtle mundane effects; larger action payments use stronger mundane effects, while mana or stamina spending enables fantastical variants. Preserve character auras and honor Reduce flashes.
 - **Combatants show hurt, guard and defeat** ([#833](https://github.com/cehinds/AshenSpire/pull/833), `0.6.0.15`). Painted enemies show hurt, guarded and buff poses, including co-op actions and guarded impacts. Direct damage and status bursts show hurt feedback, and defeated player artwork stays within narrow combat screens.

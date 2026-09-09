@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-847",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Compose poses and effects in a visual studio",
+    "detail": "Drag effects onto pose cues, adjust anchors and layered tracks, test card/tag/payment bindings, and save portable projects. Preview optional authored sequences in combat while preserving existing effects and auras. Add 24 six-frame sets for movement, contact, casting, defense and status feedback.",
+    "build": "0.6.0.33",
+    "pullRequest": 847,
+    "url": "https://github.com/cehinds/AshenSpire/pull/847"
+  },
+  {
+    "id": "pr-852",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Readiness poses ease in and out",
+    "detail": "Prepared, Starstone Charge and Herald Blood Rite use softer breathing glows and authored intermediate sprites for all twelve outfits. Entry, exit and action return crossfade smoothly; combat redraws preserve their timing, while reduced-motion and still-sprite modes resolve immediately.",
+    "build": "0.6.0.28",
+    "pullRequest": 852,
+    "url": "https://github.com/cehinds/AshenSpire/pull/852"
+  },
+  {
+    "id": "pr-849",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Readiness pose delivery appears in About",
+    "detail": "Record the original readiness-pose delivery and refresh the in-game changelog.",
+    "build": "0.6.0.26",
+    "pullRequest": 849,
+    "url": "https://github.com/cehinds/AshenSpire/pull/849"
+  },
+  {
+    "id": "pr-846",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Readiness poses show when the next move is primed",
+    "detail": "Prepared, Starstone Charge and Herald Blood Rite have authored poses across twelve outfits, persistent glows, and correct return behavior after actions. Solo and co-op preserve status ownership and keep extended figures within narrow combat screens.",
+    "build": "0.6.0.24",
+    "pullRequest": 846,
+    "url": "https://github.com/cehinds/AshenSpire/pull/846"
+  },
+  {
     "id": "pr-841",
     "date": "2026-09-09",
     "group": "2026-09-09",
