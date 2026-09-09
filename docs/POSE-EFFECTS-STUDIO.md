@@ -1,6 +1,6 @@
 # Pose Studio: effects, sequences and game bindings
 
-Status: proposed design, not an implemented editor. Existing Pose Studio location is still to be identified. The separate standalone-editor task is actively building `editor/` in `D:/repos/AshenSpire-editor`; this feature should share that application's project model and save workflow.
+Status: the first standalone implementation is available in [Pose & Effects Studio](../art/pose-studio/index.html). See its [README](../pose-studio/README.md) for implemented behavior, launch instructions, service adapters and limits. The design below includes future extensions such as a multi-sequence library and more advanced bulk editing. The separately developed game editor can register this workspace with the supplied plugin manifest.
 
 ## Reframed request
 

@@ -1,4 +1,4 @@
-import {PAINTED_OUTFITS} from '../src/content/paintedOutfits.js';
+import {PRESENTATION_POSES as PAINTED_OUTFITS} from '../src/model/presentationPoseCatalog.js';
 import {COMBAT_EFFECT_ART} from '../src/content/combatEffectArt.js';
 import {EXTRA_EFFECTS} from './new-effects.mjs';
 import {contentBundle} from '../src/content/index.js';

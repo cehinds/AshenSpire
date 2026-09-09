@@ -8,7 +8,10 @@ const active=new WeakMap();
 export function playCombatEffectPlan(layer,from,plan,{targets=[],duration=260,size=160}={}){
  if(!plan)return ()=>{};
  size*=plan.sizeScale??1;
- const stops=[playPresentationSequence(layer,from,plan.bindingContext,{targets,duration})];
+ const set=active.get(layer)||new Set();active.set(layer,set);
+ const studioStop=playPresentationSequence(layer,from,plan.bindingContext,{targets,duration,onStop:()=>set.delete(studioStop)});
+ if(studioStop)set.add(studioStop);
+ const stops=studioStop?[studioStop]:[];
  const targetLocal=plan.at==='target';
  if(plan.cast)stops.push(playCombatEffect(layer,from,plan.cast,{duration:110,size:size*.7}));
  const delay=plan.cast?65:targetLocal?Math.round(duration*.25):0;
