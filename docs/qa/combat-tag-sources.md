@@ -1,6 +1,6 @@
 # Combat tag/source browser verification
 
-PR #876, build `0.6.0.63`, rebased on dev `769dc18f`.
+PR #876, build `0.6.0.66`, rebased on dev `c90a9008`, including the concise tooltip update.
 
 Run `node tools/combat-prototypes-browser.mjs` after rebuilding the standalone.
 All 41 checks passed at 1365 by 1000 and 390 by 844 pixels, with no browser
@@ -20,6 +20,21 @@ the checks above concern card tags and source selection, not all battlefield art
 
 - [Desktop capture](combat-tag-sources/desktop.png)
 - [Phone capture](combat-tag-sources/phone.png)
+
+## Playable preview
+
+Serve the built game with `node tools/serve.mjs --port 8876 --no-open --root dist`
+and open `http://localhost:8876/AshenSpire.html?shot=combat-test`.
+Choose heavy physical, fast Bleed, or caster and begin the test run. This route
+uses in-memory storage and does not alter durable saves.
+
+`node tools/combat-test-browser.mjs` passed 57 checks across all three builds at
+desktop and phone sizes, including stance persistence, deterministic Evade,
+resource carryover between fights, and unchanged durable storage. Route
+continuation uses an explicit low-HP fixture; it is not a full balance playthrough.
+
+- [Playable desktop preview](combat-tag-sources/preview-desktop.png)
+- [Playable phone preview](combat-tag-sources/preview-phone.png)
 
 Engine source ownership, equipment swaps across all piles, exact preview/save
 restoration, wrong-hand rollback, and payment-event source snapshots are covered
