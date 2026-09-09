@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-900",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Bosses and elites keep their imposing size",
+    "detail": "Fit enemy and player sprites together so bosses and elites remain larger across phone, landscape, desktop, and co-op combat layouts.",
+    "build": "0.6.0.79",
+    "pullRequest": 900,
+    "url": "https://github.com/cehinds/AshenSpire/pull/900"
+  },
+  {
+    "id": "pr-897",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Complete armament kits are specified",
+    "detail": "Define Strike, Guard, and signature Art for each equipped armament, including shields, with rules for deck ownership, older saves, smithing, and Guardian. This specification does not change the live combat rules yet.",
+    "build": "0.6.0.78",
+    "pullRequest": 897,
+    "url": "https://github.com/cehinds/AshenSpire/pull/897"
+  },
+  {
+    "id": "pr-903",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "The title stays centered on phones",
+    "detail": "Keep the divider diamond centered beneath the title at narrow widths, and align the visible wordmark and continue prompt with the subtitle. Portrait, landscape, and desktop layouts share the same center.",
+    "build": "0.6.0.81",
+    "pullRequest": 903,
+    "url": "https://github.com/cehinds/AshenSpire/pull/903"
+  },
+  {
     "id": "pr-878",
     "date": "2026-09-09",
     "group": "2026-09-09",

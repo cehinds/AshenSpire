@@ -493,7 +493,9 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 
 /* TitleMenu — the one menu with no panel around it. */
 .as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
-.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+/* The name fills its line: an indent would overflow and disable centering.
+   Shift half the trailing tracking instead, keeping the visible text centered. */
+.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; transform: translateX(calc(var(--track) / 2)); color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
 .as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
 .as-titlemenu li + li { border-top: 1px solid var(--rule); }
@@ -509,8 +511,8 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 }
 .as-titlemenu .tm-entry:hover, .as-titlemenu .tm-entry:focus-visible { color: var(--gold); outline: none; background: transparent; box-shadow: none; }
 .as-titlemenu .tm-entry:disabled { color: var(--muted); background: transparent; }
-.as-titlemenu > .as-ornament { margin-top: 1.35rem; }
-.as-titlemenu .tm-foot { margin-top: 1.5rem; color: var(--muted); font-size: 1.05rem; letter-spacing: 0.2em; text-transform: uppercase; }
+.as-titlemenu > .as-ornament { margin-top: 1.35rem; margin-inline: auto; }
+.as-titlemenu .tm-foot { --track: 0.2em; margin-top: 1.5rem; color: var(--muted); font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; }
 
 /* ═══ TOOLTIP — Title + meta + effect + hairline + glossary + flavour ══════ */
 .as-tip { width: 36rem; max-width: 100%; padding: 1.1rem 1.35rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-2); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55); font-size: 1.35rem; line-height: 1.45; color: var(--parchment); }
@@ -1634,7 +1636,6 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .startup-gate > .as-titlemenu { position: relative; z-index: 1; align-self: center; animation: startupMarkIn 520ms ease-out both; }
 .startup-gate > .as-titlemenu .tm-name {
   font-size: min(12cqi, 5.4rem);
-  text-indent: 0;
   text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38);
 }
 .startup-gate > .as-titlemenu .tm-sub { margin-top: 0.75rem; }
