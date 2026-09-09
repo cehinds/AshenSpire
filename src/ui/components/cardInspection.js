@@ -76,12 +76,29 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   info.textContent = 'i';
   info.setAttribute('aria-label', `Information about ${title}`);
   let touch = false;
+  let revealTimer = null;
+  // The delay is read from the card's own custom property so one authored
+  // number reaches CSS and JS alike; a card rendered without tokens still gets
+  // the documented default rather than an instant flash.
+  const revealDelayMs = () => {
+    const raw = getComputedStyle(card).getPropertyValue('--card-info-delay').trim();
+    const ms = raw.endsWith('ms') ? parseFloat(raw) : raw.endsWith('s') ? parseFloat(raw) * 1000 : parseFloat(raw);
+    return Number.isFinite(ms) && ms >= 0 ? ms : 125;
+  };
+  const revealInfo = () => {
+    if (card.classList.contains('inspection-info-visible')) return;
+    clearTimeout(revealTimer);
+    revealTimer = setTimeout(() => card.classList.add('inspection-info-visible'), revealDelayMs());
+  };
   const identity = card.dataset.instanceId || card.dataset.item || card.dataset.cardId || title;
   const select = () => {
     document.querySelectorAll('.inspection-selected').forEach(other => {
       if (other !== card) {
         other.classList.remove('inspection-selected', 'inspection-info-visible');
         other.removeAttribute('aria-current');
+        // A pending reveal on the card being deselected would otherwise land
+        // after it lost selection, showing a button on a card nobody chose.
+        other.dispatchEvent(new CustomEvent('cardinspectioncancelreveal'));
       }
     });
     card.classList.add('inspection-selected');
@@ -89,6 +106,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     card.dispatchEvent(new CustomEvent('cardinspectionselect', { bubbles: true }));
   };
   card.addEventListener('cardholdstart', select);
+  card.addEventListener('cardinspectionrequest', () => { select(); revealInfo(); });
   for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
     info.addEventListener(type, event => event.stopImmediatePropagation());
   }
@@ -97,17 +115,26 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     touchedIdentity = null; touchTaps = 0;
     select(); open(info);
   });
+  card.addEventListener('cardinspectioncancelreveal', () => {
+    clearTimeout(revealTimer);
+    card.classList.remove('inspection-info-visible');
+  });
   card.append(info);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });
   card.addEventListener('click', event => {
     if (event.target === info) return;
     select();
+    revealInfo();
     if (touch) {
       touchTaps = touchedIdentity === identity ? touchTaps + 1 : 1;
       touchedIdentity = identity;
-      if (touchTaps >= 2) {
-        card.classList.add('inspection-info-visible');
-      }
+      // ONE PRESS REVEALS IT. This waited for touchTaps >= 2, so the button
+      // that explains a card could only be found by someone who already knew
+      // it was there — every first-time player selected a card and saw nothing.
+      // Selection is the signal; the reveal is a fade so it does not snap into
+      // place under a thumb already on the glass. Both the delay and the fade
+      // are authored in balance.ui.equipmentCard.info.
+      revealInfo();
       if (!actionOwnsTouch && (touchTaps === 2 || (touchTaps === 1 && !touchSelectionSafe))) {
         // Selection/information taps cannot reach buy, equip or play handlers.
         event.preventDefault(); event.stopImmediatePropagation();
@@ -118,7 +145,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   if (readOnly) {
     card.tabIndex = 0;
     card.setAttribute('role', 'group');
-    card.setAttribute('aria-label', `${title}. Enter to inspect. On touch, tap twice then Information.`);
+    card.setAttribute('aria-label', `${title}. Enter to inspect. On touch, tap then Information.`);
     card.addEventListener('keydown', event => {
       if (event.target !== card || !['Enter', ' '].includes(event.key)) return;
       event.preventDefault(); event.stopPropagation(); select(); open(card);

@@ -124,6 +124,7 @@ jobs:
           cp -r pose-studio preview/pose-studio
           cp -r assets/pose-effects preview/assets/
           cp -r art/pose-studio preview/art/
+          cp -r art/card-effect-refresh-2026-09-09 preview/art/
           cp -r assets/combat-effects assets/painted-outfits preview/assets/
           cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html preview/art/combat-effects-2026-09-07/
           cp -r art/combat-effects-2026-09-07/inspection preview/art/combat-effects-2026-09-07/inspection
