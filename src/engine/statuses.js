@@ -18,6 +18,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { MODIFIER_KEYS } from '../model/schemas.js';
+import { resolveStackApplications, stackMagnitude } from '../model/combatRules.js';
 
 export function getStatusInstance(entity, statusId) {
   return (entity && entity.statuses && entity.statuses[statusId]) || null;
@@ -73,7 +74,12 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
     else if (def.proc) inst.meter = { value: 0, max: def.proc.threshold };
   }
 
-  switch (def.stackMode) {
+  if (ctx.foundation && def.stacking && !inst.meter) {
+    const rule = def.stacking;
+    const sourceId = ctx.playerIdForEntity?.(source) || source?.id || 'environment';
+    inst.applications = resolveStackApplications(inst.applications || [], { sourceId, value: amount, expires: rule.duration ?? null }, rule);
+    inst.stacks = stackMagnitude(inst.applications, rule.mode, rule.cap);
+  } else switch (def.stackMode) {
     case 'add':
       if (inst.meter) inst.meter.value += amount;
       else inst.stacks += amount;
@@ -91,7 +97,7 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
   }
 
   // Re-applying a duration status adds stacks (above) AND refreshes duration.
-  if (isDurationDecay(def.decay)) {
+  if (!(ctx.foundation && def.stacking) && isDurationDecay(def.decay)) {
     inst.duration = def.decay.duration;
   }
 
@@ -133,7 +139,7 @@ function checkProcFill(ctx, entity, statusId, def, inst) {
     poiseDamage: p.poiseDamage || 0,
     stagger: !!p.stagger,
   });
-  const enq = (effect) => ctx.enqueue({ effect, source: entity, owner: entity, target: entity, meta: {} });
+  const enq = (effect) => ctx.enqueue({ effect, source: entity, owner: entity, target: entity, meta: ctx.foundation ? { foundationAncestry: [...(ctx._foundationAncestry || []), `proc:${statusId}`] } : {} });
   enq({ op: 'loseHp', target: 'self', amount: burst, cause: `proc:${statusId}` });
   if (p.poiseDamage > 0 && entity.kind === 'enemy') enq({ op: 'poiseDamage', amount: p.poiseDamage });
   if (p.stagger && entity.kind === 'enemy') enq({ op: 'stagger' });
@@ -167,7 +173,7 @@ function checkMeterFill(ctx, entity, statusId, def, inst) {
       inst.meter.max = Math.ceil(inst.meter.max * growth);
     }
     for (const eff of def.meter.onFill || []) {
-      ctx.enqueue({ effect: eff, source: entity, owner: entity, target: entity, meta: {} });
+      ctx.enqueue({ effect: eff, source: entity, owner: entity, target: entity, meta: ctx.foundation ? { foundationAncestry: [...(ctx._foundationAncestry || []), `meter:${statusId}`] } : {} });
     }
   }
 }
@@ -190,6 +196,7 @@ export function decayAtTurnEnd(ctx, entity) {
   for (const statusId of Object.keys(entity.statuses)) {
     const inst = entity.statuses[statusId];
     const def = ctx.registries.statuses.get(statusId);
+    if (ctx.foundation && def.stacking) continue;
     if (def.decay === 'perTurnEnd') {
       if (inst.meter) inst.meter.value -= 1;
       else inst.stacks -= 1;
@@ -202,6 +209,18 @@ export function decayAtTurnEnd(ctx, entity) {
         removeStatus(ctx, entity, statusId, { reason: 'expired' });
       }
     }
+  }
+}
+
+/** Explicit per-application expiry; strongest sources can become visible again. */
+export function advanceStatusClock(ctx, entity, clock) {
+  if (!ctx.foundation) return;
+  for (const [id, inst] of Object.entries(entity.statuses)) {
+    const rule = ctx.registries.statuses.get(id).stacking;
+    if (!rule || rule.duration == null || (rule.clock || 'ownerTurnEnd') !== clock) continue;
+    inst.applications = (inst.applications || []).map((a) => ({ ...a, expires: a.expires - 1 })).filter((a) => a.expires > 0);
+    inst.stacks = stackMagnitude(inst.applications, rule.mode, rule.cap);
+    if (!inst.applications.length) removeStatus(ctx, entity, id, { reason: 'expired' });
   }
 }
 

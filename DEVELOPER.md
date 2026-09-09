@@ -9,6 +9,13 @@ For how work is branched, reviewed, and merged, see
 
 ## Run & test
 
+The opt-in combat workshop is documented in [docs/COMBAT-WORKSHOP.md](docs/COMBAT-WORKSHOP.md).
+`node tests/run-node.mjs` includes its focused engine regression suite.
+`node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
+and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared
+three-build policy through the actual combat engine. Ordinary runs do not select
+this ruleset yet. See the workshop's remaining content-expansion gate.
+
 Boss destinations are assigned when an act map is created. `bossIds` lists the
 terminal nodes, each carrying its saved `encounterId`; `bossId` remains a
 compatibility alias. Resolve the chosen terminal through

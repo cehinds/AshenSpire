@@ -1,0 +1,23 @@
+.combat-test-setup{max-width:1040px;margin:auto;padding:clamp(20px,5vw,64px);color:var(--text,#eee5d6);font-size:16px;line-height:1.55}
+.combat-test-setup h1{font-size:clamp(30px,5vw,54px);line-height:1.1;margin:12px 0 20px}
+.test-eyebrow{color:#c9ac71;letter-spacing:.14em;font-size:12px;font-weight:bold}
+.test-lead{max-width:760px;color:#bcb9b2;font-size:18px}
+.combat-test-setup fieldset{border:0;padding:0;margin:28px 0}
+.combat-test-setup legend{font-size:20px;margin-bottom:12px}
+.test-build-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.test-build-choice{display:grid;grid-template-columns:20px 1fr;gap:10px;padding:20px;border:1px solid #554d42;border-radius:12px;background:#211f1d;cursor:pointer}
+.test-build-choice:has(input:checked){border-color:#c9ac71;background:#302b23;box-shadow:inset 0 0 0 1px #c9ac71}
+.test-build-choice span{grid-column:2;font-size:14px;color:#c9c5bc}
+.test-build-choice strong{font-size:18px}
+.test-options{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:24px}
+.test-options label{display:grid;gap:6px;flex:1;min-width:160px}
+.combat-test-setup select,.combat-test-setup input[type=number]{width:100%;min-height:46px;padding:10px;background:#211f1d;color:#eee5d6;border:1px solid #686054;border-radius:6px;font:inherit}
+.combat-test-setup button,.test-exit{min-height:48px;padding:12px 22px;border:1px solid #c9ac71;border-radius:6px;background:#302b23;color:#f7edda;font:inherit;cursor:pointer;margin:0 12px 12px 0}
+.combat-test-setup .test-start{background:#c9ac71;color:#171510;font-weight:bold}
+.combat-test-setup :focus-visible{outline:3px solid #a9d9fb;outline-offset:4px}
+.test-help{margin:20px 0;padding:16px 0;border-top:1px solid #554d42}
+.test-help summary{cursor:pointer;min-height:40px}
+.test-note{color:#a8a49b;font-size:13px;max-width:780px}
+.test-results{padding:0;list-style:none;margin:28px 0}.test-results li{padding:18px 0;border-bottom:1px solid #554d42}
+.foundation-evade{color:#b8e5fd;border:1px solid #75abc9}
+@media(max-width:640px){.test-build-grid{grid-template-columns:1fr}.test-build-choice{padding:14px}.test-options{gap:12px}.test-options label{min-width:100%}.combat-test-setup{padding:24px 18px}}

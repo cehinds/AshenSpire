@@ -65,6 +65,7 @@ this file refuses at its own start date. They live in `git log`.*
 
 ## 2026-09-09
 
+- **Combat foundations have a playable test workshop** ([#850](https://github.com/cehinds/AshenSpire/pull/850), `0.6.0.38`). Play the real game battlefield or the standalone workshop with heavy physical, fast Bleed and rare-mana builds with configurable damage, armor, weapon impact and retained deterministic Dodge. The workshop is experimental; existing runs keep their current rules.
 - **Recent deliveries appear in About** ([#859](https://github.com/cehinds/AshenSpire/pull/859), `0.6.0.37`). Add the card removal, touch flick, Pose Studio usability and combat specification entries to the in-game changelog before promoting the build to test.
 - **Combat foundations have an explicit specification** ([#844](https://github.com/cehinds/AshenSpire/pull/844), `0.6.0.35`). Document equipment-based attacks, typed damage, defenses, impact, Evade, trigger ownership and prototype acceptance examples. This specification does not change gameplay or balance.
 - **Pose Studio makes authoring controls easier to find** ([#857](https://github.com/cehinds/AshenSpire/pull/857), `0.6.0.35`). Start from visible templates, animate before connecting a card, and open editing panels without long scrolling on phones. Preserve field focus, select overlapping effect tracks, and distinguish project downloads from local combat previews.
