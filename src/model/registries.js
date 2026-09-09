@@ -243,19 +243,12 @@ export function createRegistries(contentBundle) {
   // so an index built from the shipped rows would answer a different question
   // than `card.tags` does — two answers, one question, and the fit check
   // quietly using the stale one.
-  const cardTagging = new Map();
-  for (const row of bundle.tagging || []) {
-    if (!row || row.family !== 'card') continue;
-    const tags = cardTagging.get(row.objectId);
-    if (tags) tags.push(row.tagId);
-    else cardTagging.set(row.objectId, [row.tagId]);
-  }
   // Derived UNCONDITIONALLY, so `equipment.cardTagging` cannot disagree with
   // what was stamped. No tagging table at all means no index either — the
   // missing-table guard in validateEquipment then fires, rather than the fit
   // check quietly reading a shipped fold that no longer describes this bundle.
   if (Array.isArray(bundle.tagging)) {
-    equipment.cardTagging = [...cardTagging].map(([cardId, tags]) => ({ cardId, tags }));
+    equipment.cardTagging = registries.cards.all().filter(card=>card.tags?.length).map(card=>({cardId:card.id,tags:[...card.tags]}));
   } else {
     delete equipment.cardTagging;
   }

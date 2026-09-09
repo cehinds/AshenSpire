@@ -52,3 +52,8 @@ build/components/
 # the sprite step. The sprites it produces are committed under art/poses; these
 # are the intermediate, rebuilt by the recipe in art/poses/README.md.
 build/painted/
+
+# Local combat-effect validation logs and assembled preview package.
+build/effect-logs/
+build/combat-effects-preview/
+build/combat-effects-preview.zip

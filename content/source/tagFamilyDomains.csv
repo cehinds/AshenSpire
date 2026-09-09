@@ -37,3 +37,6 @@ startingKit,item
 unlock,run
 effect,card
 grant,grantSource
+# Combat presentation
+card,presentation
+basicCardProfile,presentation
