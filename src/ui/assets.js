@@ -90,6 +90,7 @@ export function enemySprite(enemyDef, entity = {}) {
   const tier = SIZE_TIERS[enemyDef.size || 'medium'];
   const tint = enemyDef.tint || 'var(--line-soft)';
   const el = document.createElement('div');
+  el.dataset.enemyId = enemyDef.id;
   const placeholder = () => {
     el.innerHTML = '';
     // This drops the facing layer with the rest of the children, and that is

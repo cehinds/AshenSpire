@@ -47,6 +47,17 @@ the shared `enemySprite()` asset function. The twelve PNGs in
 384px square canvas and common foot anchor when replacing them. Keep the
 original sprite files as fallback assets. See CREDITS.md and the extraction
 manifest beside the images for provenance.
+Combat stature is presentation-only: `CombatSpriteScaleModel.js` uses the
+encounter pool to keep elites at 1.75x and bosses at 2x (Ashheart Dragon at 3x).
+`combatSpriteGeometry.js` caches visible idle bounds, while painted player
+stages expose their existing authored idle bounds. The shared formation fit
+reduces all art together when space is limited, retaining per-row depth and
+ground anchors. Names, health bars and their inspection targets do not shrink.
+Run `node --test tests/combat-sprite-scale.test.mjs` and
+`node tools/combat-sprite-scale-qa.mjs` against `COMBAT_QA_URL`; set
+`COMBAT_QA_OUT` for screenshots outside the checkout. The browser check needs
+Playwright and Edge and covers elite/boss ratios, feet, health bars, card
+selection and returning from an enemy turn at desktop and narrow widths.
 The fourteen new frames in `assets/enemies-expansion/` use the same canvas,
 left-facing orientation and foot anchor (192, 364). They are transparent idle
 paintings; runtime motion supplies their action feedback, not authored attack
