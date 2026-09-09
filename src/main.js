@@ -12,7 +12,11 @@ import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
 import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
-import { grantSmithingReward, smithingPlan } from './model/smithing.js';
+import { grantSmithingReward, smithingPlan, commitSmithing } from './model/smithing.js';
+import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode, questAction } from './model/worldAtlas.js';
+import { mountWorldAtlas } from './ui/screens/worldAtlas.js';
+import { mountSmithUpgradeModal } from './ui/components/smithUpgradeModal.js';
+import { smithSelectionModel } from './ui/models/SmithSelectionModel.js';
 import { smithServicesAt } from './model/cardExtraction.js';
 import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
@@ -42,6 +46,7 @@ import { mountDraft } from './ui/screens/draft.js';
 import { executeRunEffects, drawCards, discardFromHand } from './engine/actions.js';
 import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
+import { mountCombatTest } from './ui/screens/combatTest.js';
 import { mountRewards } from './ui/screens/reward.js';
 import { mountRest } from './ui/screens/rest.js';
 import { mountShop } from './ui/screens/shop.js';
@@ -209,6 +214,7 @@ const saves = createSaveManager(bootStorage);
 // and setting `body.hi-contrast` itself, which would have been three lines and
 // would have measured my own mock.
 if (shotState) {
+  window.__worldJourney = () => run?.journey ? structuredClone(run.journey) : null;
   const raw = shotParams.get('shotSettings');
   if (raw) {
     try {
@@ -758,7 +764,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1 }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -815,6 +821,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
     derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
   });
   run.seedString = seedToString(seed);
+  if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile);
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
@@ -846,7 +853,8 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
-  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
+  run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
+  if (run.journey) syncWorldPosition();
   persist();
   showMap();
 }
@@ -913,6 +921,7 @@ function resumeRun(slot = 1) {
   activeSlot = slot;
   run = saves.loadRun(registries, slot);
   if (!run) return showTitle();
+  if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
   if (run.pendingReward) {
     mountPendingReward();
@@ -922,6 +931,8 @@ function resumeRun(slot = 1) {
     enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true });
   } else if (run.shopStock) {
     showShop();
+  } else if (run.journey?.activeService?.handlerId === 'rest') {
+    showRest();
   } else {
     showMap();
   }
@@ -1440,6 +1451,12 @@ function remountMapIfShowing(changed) {
 
 function showMap() {
   audio.music('map');
+  if (run.journey) return mountWorldAtlas(app, {
+    run, onTravel: enterWorldNode, onAction: worldLocationAction, onSave: persist,
+    onMenu: showOverlay, onArmoury: showArmoury,
+    onQuit: () => { persist(); showCollapsedTitle(); },
+    inspectNodeId: run.journey.inspectNodeId || null,
+  });
   mountMap(app, {
     registries,
     run,
@@ -1463,11 +1480,104 @@ function showMap() {
   });
 }
 
+function syncWorldPosition() {
+  const j = run.journey;
+  run.mapNodeId = j.currentNodeId;
+  run.path = j.visitedNodeIds.slice();
+  run.floor = run.mapGraph.nodes[j.currentNodeId].floor;
+  run.actNumber = ATLAS.world[j.currentNodeId].difficultyAct;
+  run.environmentRegionId = ATLAS.regionOf(j.currentNodeId);
+}
+
+function enterWorldNode(nodeId) {
+  travelJourney(run.journey, nodeId);
+  delete run.journey.inspectNodeId;
+  syncWorldPosition();
+  persist();
+  if (ATLAS.localByOwner[nodeId]) {
+    run.journey.inspectNodeId = nodeId;
+    return showMap();
+  }
+  if (run.journey.completedNodeIds.includes(nodeId)) return showMap();
+  return enterNode(nodeId);
+}
+
+function worldLocationAction(action) {
+  const j = run.journey;
+  if (!j || action.ownerId !== j.currentNodeId) throw Error('Travel to this location before using it');
+  if (action.pointId) {
+    const local = ATLAS.localByOwner[action.ownerId];
+    if (!(ATLAS.localPoints[local?.mapId] || []).some(p => p.nodeId === action.pointId)) throw Error('Local point does not belong to this location');
+  }
+  delete j.inspectNodeId;
+  if (action.kind === 'quest') {
+    if (!(ATLAS.nodeQuests[action.pointId] || []).some(q => q.questId === action.questId)) throw Error('Quest not offered here');
+    const plan = questAction(j, action.questId);
+    if (!plan.allowed) return;
+    j.questStates[action.questId] = plan.next;
+    run.cinders += plan.reward;
+    persist();
+    return;
+  }
+  if (action.kind === 'local') {
+    if (!j.localCompletedIds.includes(action.pointId)) j.localCompletedIds.push(action.pointId);
+    persist(); return;
+  }
+  if (action.kind === 'boss' || action.kind === 'explore') {
+    if (j.completedNodeIds.includes(j.currentNodeId)) return;
+    if (action.kind === 'boss' && ATLAS.nodes[action.pointId]?.nodeTypeId !== 'boss') throw Error('Not a boss chamber');
+    return enterNode(j.currentNodeId);
+  }
+  if (action.kind !== 'service' || !(ATLAS.nodeServices[action.pointId] || []).some(s => s.serviceId === action.serviceId)) throw Error('Service not offered here');
+  const service = ATLAS.services[action.serviceId];
+  const handlerId = ATLAS.serviceTypes[service.serviceTypeId].handlerId;
+  const state = j.serviceStates[action.pointId] ||= {};
+  if (state.used) return;
+  if (handlerId === 'lore') {
+    state.used = true;
+    if (!j.localCompletedIds.includes(action.pointId)) j.localCompletedIds.push(action.pointId);
+    persist(); j.inspectNodeId = j.currentNodeId; return showMap();
+  }
+  if (handlerId === 'smith') {
+    showMap();
+    let selection = null;
+    const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selection, { multiUse: true });
+    const modal = mountSmithUpgradeModal(app, model(), {
+      registries, meta: saves.loadMeta(),
+      onSelect: ref => { selection = ref; modal.update(model()); },
+      onBack: () => {},
+      onConfirm: ref => { commitSmithing(registries, run, ref); persist(); j.inspectNodeId = j.currentNodeId; showMap(); },
+    });
+    return;
+  }
+  j.activeService = { ownerId: action.ownerId, pointId: action.pointId, handlerId };
+  if (handlerId === 'shop') {
+    state.stock ||= buildShopStock(registries, rng, run);
+    run.shopStock = state.stock;
+    persist(); return showShop();
+  }
+  if (handlerId === 'rest') { persist(); return showRest(); }
+  throw Error(`Unsupported atlas service ${handlerId}`);
+}
+
+function finishWorldService() {
+  const j = run.journey;
+  if (!j) return;
+  const service = j.activeService;
+  if (service) {
+    const state = j.serviceStates[service.pointId];
+    if (service.handlerId === 'rest') state.used = true;
+    if (!j.localCompletedIds.includes(service.pointId)) j.localCompletedIds.push(service.pointId);
+    delete j.activeService;
+    j.inspectNodeId = j.currentNodeId;
+  } else completeJourneyNode(j);
+}
+
 function enterNode(nodeId) {
   sfx.play('nodeTravel');
   const node = run.mapGraph.nodes[nodeId];
   run.mapNodeId = nodeId;
-  run.path.push(nodeId);
+  if (!run.path.includes(nodeId)) run.path.push(nodeId);
   run.floor = node.floor;
 
   let kind = node.type;
@@ -1522,6 +1632,7 @@ function enterNode(nodeId) {
         rewards: { relicId, armamentId, title: 'TREASURE' },
         onDone: () => {
           rewardDoneCount++;
+          if (run.journey) completeJourneyNode(run.journey);
           persist();
           showMap();
         },
@@ -1555,6 +1666,7 @@ function combatMods(pool) {
 }
 
 function startFight(pool, nodeId) {
+  if (run.journey) return enterCombat(nodeId, journeyEncounter(run.journey, nodeId, registries).id);
   // "Elite Gauntlet" chaos rule promotes ordinary monster nodes to elites.
   if (pool === 'normal' && run.custom && activeMods(run.custom).allElite) pool = 'elite';
   const encounterId = pool === 'boss'
@@ -1573,10 +1685,10 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   // The entry receipt is a deterministic recovery checkpoint. An explicit Save
   // Game replaces it with an exact committed-turn snapshot below.
   if (!resuming) persist();
-  const enc = registries.encounters.get(encounterId);
+  const enc = run.journey ? journeyEncounter(run.journey, nodeId, registries) : registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount }) : createCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds }) : createCombat({
     registries,
     rng,
     player: {
@@ -1593,6 +1705,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       equipmentAttackSlotCount: run.equipmentAttackSlotCount,
+      removedAttackSlotIds: run.removedAttackSlotIds,
       equipmentPoolDeficits: run.equipmentPoolDeficits,
       itemUpgradeLevels: run.itemUpgradeLevels,
       itemMounts: run.itemMounts,
@@ -1678,6 +1791,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     registries,
     run,
     combat,
+    readSettings: () => activeSettings,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
     meta: activeMeta,
@@ -1738,6 +1852,7 @@ function onCombatEnd(result, combat, enc) {
   }
 
   run.stats.fightsWon += 1;
+  if (run.journey) completeJourneyNode(run.journey);
   run.combatEntered = null;
   const smithingStoneReceipt = grantSmithingReward(
     registries,
@@ -1754,7 +1869,7 @@ function onCombatEnd(result, combat, enc) {
     run.bossesBeaten = run.bossesBeaten || [];
     for (const id of enc.enemies) if (!run.bossesBeaten.includes(id)) run.bossesBeaten.push(id);
     // Endless Spire: no summit — the climb loops until death.
-    if (run.actNumber >= 3 && !endlessOn()) {
+    if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (run.actNumber >= 3 && !endlessOn())) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.
       audio.music('victory');
       sendLanStatus({ victory: true });
@@ -1775,7 +1890,7 @@ function onCombatEnd(result, combat, enc) {
       armamentId: bossArmament,
       smithingStoneReceipt,
     };
-    return beginPendingReward(bossRewards, { source: 'boss', after: 'advanceAct' });
+    return beginPendingReward(bossRewards, { source: 'boss', after: run.journey ? 'map' : 'advanceAct' });
   }
 
   const rewards = {
@@ -1858,7 +1973,10 @@ function showRest() {
   for (const b of bad) {
     dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
   }
-  const refill = applyGraceRefill(registries, run, { counts });
+  const worldRest = run.journey?.activeService;
+  const restState = worldRest ? run.journey.serviceStates[worldRest.pointId] : null;
+  const refill = restState?.refilled ? { hp: 0, mana: 0, total: 0 } : applyGraceRefill(registries, run, { counts });
+  if (restState && !restState.refilled) { restState.refilled = true; persist(); }
   if (refill.total) persist();
   mountRest(app, {
     registries,
@@ -1882,8 +2000,9 @@ function showRest() {
     onLevelUp: () => persist(),
     // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
     // leaving it, and the screen carries its own LEAVE.
-    multiUse: settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
+    multiUse: run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
+      finishWorldService();
       persist();
       showMap();
     },
@@ -1891,6 +2010,12 @@ function showRest() {
 }
 
 function showShop() {
+  if (run.journey?.activeService) {
+    const state = run.journey.serviceStates[run.journey.activeService.pointId];
+    // After a JSON reload these are distinct objects; reconnect the canonical stock.
+    state.stock = run.shopStock || state.stock;
+    run.shopStock = state.stock;
+  }
   audio.music('shop');
   mountShop(app, {
     registries,
@@ -1899,6 +2024,7 @@ function showShop() {
     onChanged: () => persist(),
     onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
     onLeave: () => {
+      finishWorldService();
       run.shopStock = null;
       persist();
       showMap();
@@ -2014,13 +2140,17 @@ function poseFxShowcase() {
 // a canned server snapshot through a stub socket — no server/second player
 // needed — so the co-op board/map can be photographed like the solo shots.
 function coopStubMount(snapshot, myId) {
-  const stub = { _h: null, setHandlers(h) { this._h = h; }, send() {}, close() {}, get open() { return false; } };
+  const sent = [];
+  window.__coopSentForShot = sent;
+  const stub = { _h: null, setHandlers(h) { this._h = h; }, send(message) { sent.push(message); }, close() {}, get open() { return false; } };
   mountCoop(app, {
     registries, conn: stub, myId, meta: saves.loadMeta(),
     onSettingsChange: persistSettingsChange,
     onLeave() {},
   });
   if (stub._h && stub._h.onMessage) stub._h.onMessage({ t: 'state', snapshot });
+  window.__coopSnapshotForShot = snapshot;
+  window.__receiveCoopSnapshotForShot = next => stub._h.onMessage({ t: 'state', snapshot: next });
 }
 function coopCombatShot() {
   const hand = ['strike', 'rallyingBanner', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));
@@ -2240,7 +2370,9 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
+if (shotState === 'combat-test') {
+  mountCombatTest(app, { params: shotParams, meta: activeMeta });
+} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -2258,7 +2390,8 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // Read through `shotParams`, the single const declared beside pickStorage() —
   // NOT a fresh location.search read, which the note up there forbids, for the
   // reason it gives: that const IS the gate's reach.
-  newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
+  const shotClass = shotParams.get('shotClass');
+  newRun({ classId: registries.classes.all().some(c => c.id === shotClass) ? shotClass : 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', journeyProfile: shotState === 'atlas' ? (shotParams.get('shotProfile') || 'wanderer') : null, slot: 1 });
   // ---- THE POOL REACH DOORS, AT ONE SITE FOR EVERY SCREEN THAT DRAWS A HUD ---
   //
   // `?shotMaxHp` / `?shotMaxMana` / `?shotMaxStamina` / `?shotMana` — STAND AT A

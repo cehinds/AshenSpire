@@ -3,6 +3,146 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-862",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat card text fits beneath clear cost badges",
+    "detail": "Scale card text consistently with the face, allow titles to wrap to two lines, and group action, mana and stamina costs above the title. Selection, Information, targeting and touch flicks keep their existing behavior.",
+    "build": "0.6.0.48",
+    "pullRequest": 862,
+    "url": "https://github.com/cehinds/AshenSpire/pull/862"
+  },
+  {
+    "id": "pr-850",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat foundations have a playable test workshop",
+    "detail": "Play the real game battlefield or the standalone workshop with heavy physical, fast Bleed and rare-mana builds with configurable damage, armor, weapon impact and retained deterministic Dodge. The workshop is experimental; existing runs keep their current rules.",
+    "build": "0.6.0.38",
+    "pullRequest": 850,
+    "url": "https://github.com/cehinds/AshenSpire/pull/850"
+  },
+  {
+    "id": "pr-859",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Recent deliveries appear in About",
+    "detail": "Add the card removal, touch flick, Pose Studio usability and combat specification entries to the in-game changelog before promoting the build to test.",
+    "build": "0.6.0.37",
+    "pullRequest": 859,
+    "url": "https://github.com/cehinds/AshenSpire/pull/859"
+  },
+  {
+    "id": "pr-844",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat foundations have an explicit specification",
+    "detail": "Document equipment-based attacks, typed damage, defenses, impact, Evade, trigger ownership and prototype acceptance examples. This specification does not change gameplay or balance.",
+    "build": "0.6.0.35",
+    "pullRequest": 844,
+    "url": "https://github.com/cehinds/AshenSpire/pull/844"
+  },
+  {
+    "id": "pr-857",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Pose Studio makes authoring controls easier to find",
+    "detail": "Start from visible templates, animate before connecting a card, and open editing panels without long scrolling on phones. Preserve field focus, select overlapping effect tracks, and distinguish project downloads from local combat previews.",
+    "build": "0.6.0.35",
+    "pullRequest": 857,
+    "url": "https://github.com/cehinds/AshenSpire/pull/857"
+  },
+  {
+    "id": "pr-856",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Remove basic Strikes and flick cards toward a target",
+    "detail": "Basic attack cards appear in removal choices and stay removed through equipment changes and saved fights. Touch flicks choose the nearest valid target while preserving card selection, Information and target highlights. Adjust flick distance in Accessibility and try the practice area.",
+    "build": "0.6.0.35",
+    "pullRequest": 856,
+    "url": "https://github.com/cehinds/AshenSpire/pull/856"
+  },
+  {
+    "id": "pr-855",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Record basic-card removal and touch flick rules",
+    "detail": "Specify permanent removal of individual basic attack slots, configurable touch flick distance, and nearest-valid-target selection with cancellation safeguards.",
+    "build": "0.6.0.33",
+    "pullRequest": 855,
+    "url": "https://github.com/cehinds/AshenSpire/pull/855"
+  },
+  {
+    "id": "pr-847",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Compose poses and effects in a visual studio",
+    "detail": "Drag effects onto pose cues, adjust anchors and layered tracks, test card/tag/payment bindings, and save portable projects. Preview optional authored sequences in combat while preserving existing effects and auras. Add 24 six-frame sets for movement, contact, casting, defense and status feedback.",
+    "build": "0.6.0.33",
+    "pullRequest": 847,
+    "url": "https://github.com/cehinds/AshenSpire/pull/847"
+  },
+  {
+    "id": "pr-852",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Readiness poses ease in and out",
+    "detail": "Prepared, Starstone Charge and Herald Blood Rite use softer breathing glows and authored intermediate sprites for all twelve outfits. Entry, exit and action return crossfade smoothly; combat redraws preserve their timing, while reduced-motion and still-sprite modes resolve immediately.",
+    "build": "0.6.0.28",
+    "pullRequest": 852,
+    "url": "https://github.com/cehinds/AshenSpire/pull/852"
+  },
+  {
+    "id": "pr-849",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Readiness pose delivery appears in About",
+    "detail": "Record the original readiness-pose delivery and refresh the in-game changelog.",
+    "build": "0.6.0.26",
+    "pullRequest": 849,
+    "url": "https://github.com/cehinds/AshenSpire/pull/849"
+  },
+  {
+    "id": "pr-846",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Readiness poses show when the next move is primed",
+    "detail": "Prepared, Starstone Charge and Herald Blood Rite have authored poses across twelve outfits, persistent glows, and correct return behavior after actions. Solo and co-op preserve status ownership and keep extended figures within narrow combat screens.",
+    "build": "0.6.0.24",
+    "pullRequest": 846,
+    "url": "https://github.com/cehinds/AshenSpire/pull/846"
+  },
+  {
+    "id": "pr-841",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat animation changes appear in the in-game changelog",
+    "detail": "Record the combat effects and enemy animation deliveries at their original build numbers and refresh the changelog shown in About.",
+    "build": "0.6.0.21",
+    "pullRequest": 841,
+    "url": "https://github.com/cehinds/AshenSpire/pull/841"
+  },
+  {
+    "id": "pr-835",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat effects follow the card and its payment",
+    "detail": "Play 56 six-frame effect sets for attacks, projectiles, guards, wards, barriers, stances and status reactions in solo and co-op. Low-action moves use subtle mundane effects; larger action payments use stronger mundane effects, while mana or stamina spending enables fantastical variants. Preserve character auras and honor Reduce flashes.",
+    "build": "0.6.0.20",
+    "pullRequest": 835,
+    "url": "https://github.com/cehinds/AshenSpire/pull/835"
+  },
+  {
+    "id": "pr-833",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combatants show hurt, guard and defeat",
+    "detail": "Painted enemies show hurt, guarded and buff poses, including co-op actions and guarded impacts. Direct damage and status bursts show hurt feedback, and defeated player artwork stays within narrow combat screens.",
+    "build": "0.6.0.15",
+    "pullRequest": 833,
+    "url": "https://github.com/cehinds/AshenSpire/pull/833"
+  },
+  {
     "id": "pr-822",
     "date": "2026-09-08",
     "group": "2026-09-08",

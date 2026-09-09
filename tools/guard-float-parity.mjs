@@ -6,6 +6,9 @@
 // LAN clients through lobby, shared map vote, live fight, real Defend cards and
 // real End Turn controls. `--standalone` selects the root artifact instead of
 // the source page. `--shots DIR` records those measured frames.
+// `--lobby-door` enters the existing lobby shot route when the title menu has
+// no LAN entry. Transport, shared session and combat remain real; this does
+// not validate title-to-lobby reachability.
 
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
@@ -33,7 +36,7 @@ function sourceContract(tree) {
     /guard: blocked > 0 \? \{ text: String\(blocked\), cls: 'blk small' \}/.test(tree.fx),
     /damage: residual > 0 \? \{ text: `-\$\{residual\}`/.test(tree.fx),
     /\(type === 'damageDealt' \|\| type === 'hpLost' \|\| type === 'healed'\) && payload\.targetId === 'player'[\s\S]{0,160}playerId: payload\.playerId \?\? combat\.playerKey/.test(tree.session),
-    /ctx\.playerIdForEntity\(target\)/.test(tree.actions),
+    /const playerId = target\.kind === 'player' && typeof ctx\.playerIdForEntity === 'function'\s*\? ctx\.playerIdForEntity\(target\)/.test(tree.actions),
     /for \(const \[id, P\] of C\.players\) if \(P\.entity === entity\) return id;/.test(tree.engineCoop),
     /\.filter\(\(e\) => \[[^\]]*'damageDealt'/.test(tree.session),
     /e\.type === 'hpLost' && e\.cause !== 'attack'/.test(tree.session),
@@ -88,7 +91,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     ['coop-loses-healed-player-owner', 'tools/session.mjs', "(type === 'damageDealt' || type === 'hpLost' || type === 'healed')", "(type === 'damageDealt' || type === 'hpLost')"],
     ['coop-duplicates-heal-remainder', 'src/ui/screens/coop.js', 'heal - (receiptHealByTarget.get(`player:${p.id}`) || 0)', 'heal'],
     ['coop-heal-overwrites-resolved-recipient', 'tools/session.mjs', 'playerId: payload.playerId ?? combat.playerKey', 'playerId: combat.playerKey'],
-    ['coop-heal-drops-recipient-resolution', 'src/engine/actions.js', 'ctx.playerIdForEntity(target)', 'null'],
+    ['coop-heal-drops-recipient-resolution', 'src/engine/actions.js', '? ctx.playerIdForEntity(target)', '? null'],
     ['coop-heal-maps-active-instead-of-target', 'src/engine/coopCombat.js', 'if (P.entity === entity) return id;', 'if (id === C.playerKey) return id;'],
   ];
   const sourceStatus = await doorSelftest({
@@ -198,6 +201,11 @@ async function browserDoor() {
   // the product listens for the bubbling click event, so use that one door for
   // HTML buttons, cards and SVG nodes alike.
   const click = (selector) => `(() => { const el=document.querySelector(${JSON.stringify(selector)}); if(!el)return false; el.dispatchEvent(new MouseEvent('click',{bubbles:true})); return true; })()`;
+  const endCoopTurn = async (tab) => {
+    await evaluate(tab, click('#coop-endturn'));
+    await until(tab, `!!document.querySelector('.confirmation-confirm')`, 'End Turn review');
+    await evaluate(tab, click('.confirmation-confirm'));
+  };
   const pointOf = async (tab, selector) => evaluate(tab, `(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return null;const r=e.getBoundingClientRect();return r.width&&r.height?{x:r.left+r.width/2,y:r.top+r.height/2}:null})()`);
   const press = async (tab, shape, selector) => {
     const point = await pointOf(tab, selector);
@@ -239,7 +247,7 @@ async function browserDoor() {
     const tab = await makeTab({ width: 1400, height: 900, dpr: 1 });
     try {
       await evaluate(tab, `(()=>{document.open();document.write(${JSON.stringify(html)});document.close();return true})()`);
-      await until(tab, `[...document.images].length===6&&[...document.images].every(img=>img.complete&&img.naturalWidth>0)`, 'contact-sheet images', 30000);
+      await until(tab, `[...document.images].length===${entries.length}&&[...document.images].every(img=>img.complete&&img.naturalWidth>0)`, 'contact-sheet images', 30000);
       await wait(120);
       const metrics = await cdp.send('Page.getLayoutMetrics', {}, tab.sessionId);
       const size = metrics.cssContentSize || metrics.contentSize;
@@ -453,21 +461,30 @@ async function browserDoor() {
           : row.review ? { hp: 30 } : undefined,
       });
       const server = await serve({ root: ROOT, port: port++, open: false, lan: true });
-      const base = `http://localhost:${server.port}/${standalone ? 'AshenSpire.html' : 'index.html'}?guardTool=1`;
+      const lobbyDoor = args.includes('--lobby-door');
+      const base = `http://localhost:${server.port}/${standalone ? 'AshenSpire.html' : 'index.html'}?guardTool=1${lobbyDoor ? '&shot=lobby' : ''}`;
       const host = await makeTab(shape); const guest = await makeTab(shape);
       console.log(`\n  ${shape.tag} ${row.name} — real two-client GUARD2 fight`);
       try {
         await cdp.send('Page.navigate', { url: base }, host.sessionId);
+        if (!lobbyDoor) {
+        await until(host, `!!document.querySelector('.startup-gate, #lan-play')`, 'host arrival');
+        await evaluate(host, `document.querySelector('.startup-gate')?.click()`);
         await until(host, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'host LAN door');
         await evaluate(host, click('#lan-play'));
+        }
         await until(host, `!!document.querySelector('#lb-name')`, 'host lobby');
         await evaluate(host, `(()=>{const n=document.querySelector('#lb-name');n.value='Wren';n.dispatchEvent(new Event('input',{bubbles:true}));return true})()`);
         await evaluate(host, click('#lb-host'));
         await until(host, `/at the fire/i.test(document.querySelector('.lobby-room .as-title-m')?.textContent || '')`, 'host fire');
 
         await cdp.send('Page.navigate', { url: base }, guest.sessionId);
+        if (!lobbyDoor) {
+        await until(guest, `!!document.querySelector('.startup-gate, #lan-play')`, 'guest arrival');
+        await evaluate(guest, `document.querySelector('.startup-gate')?.click()`);
         await until(guest, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'guest LAN door');
         await evaluate(guest, click('#lan-play'));
+        }
         await until(guest, `!!document.querySelector('#lb-name')`, 'guest lobby');
         await evaluate(guest, `(()=>{const n=document.querySelector('#lb-name');n.value='Fenn';n.dispatchEvent(new Event('input',{bubbles:true}));return true})()`);
         await until(guest, `!!document.querySelector('.lb-join')`, 'guest sees fire');
@@ -487,6 +504,9 @@ async function browserDoor() {
         await until(guest, `!!window.__coopSnapshot?.scene?.players?.length`, 'guest snapshot');
         await until(guest, `!!window.__guardCoopTool`, 'real co-op wire control');
         await until(guest, `document.querySelectorAll('.combat.coop .hand .card').length>0`, 'guest hand');
+        if (args.includes('--effects')) for (const client of [host, guest]) {
+          await evaluate(client, `(()=>{window.__seenCombatEffects=[];new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes){if(node.dataset?.effect)window.__seenCombatEffects.push(node.dataset.effect);for(const child of node.querySelectorAll?.('[data-effect]')||[])window.__seenCombatEffects.push(child.dataset.effect)}}).observe(document.querySelector('#app')||document.body,{childList:true,subtree:true});return true})()`);
+        }
         if (row.sharedFlame) {
           console.log('\n    Shared Flame review regression — actual ally owns the heal receipt');
           const armed = await evaluate(guest, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Shared Flame'));if(c)c.click();return !!c})()`);
@@ -516,7 +536,7 @@ async function browserDoor() {
           const afterResync = await evaluate(guest, `({state:window.__guardCoopTool.state(),floats:[...document.querySelectorAll('.fx-layer .float-num')].map(n=>n.textContent)})`);
           check(afterResync.state.latestReceiptSeq === beforeResync.latestReceiptSeq && afterResync.floats.length === 0,
             'Shared Flame: unchanged resync replays no heal', JSON.stringify(afterResync));
-          await evaluate(host, click('#coop-endturn')); await evaluate(guest, click('#coop-endturn'));
+          await endCoopTurn(host); await endCoopTurn(guest);
           await until(guest, `window.__guardCoopTool.state().pacing===true`, 'Shared Flame paced enemy phase begins');
           const pacingStart = await evaluate(guest, `window.__guardCoopTool.state()`);
           const pacedPlay = await evaluate(guest, `window.__guardCoopTool.playCardOnAllyFromLatest('sharedFlame',${JSON.stringify(ids.ally)})`);
@@ -540,6 +560,8 @@ async function browserDoor() {
           const play = await evaluate(guest, `(()=>{const all=[...document.querySelectorAll('.hand .card')],c=all.find(x=>/defend/i.test(x.textContent));if(c)c.click();return{played:!!c,cards:all.map(x=>({text:x.textContent.trim().replace(/\\s+/g,' '),aria:x.getAttribute('aria-label'),id:x.dataset.instanceId||x.dataset.cardId||null}))}})()`);
           check(play.played, `${row.name}: Fenn plays a real Defend card`, play.played ? '' : JSON.stringify(play.cards));
           if (!play.played) throw new Error(`Defend card not found in guest hand: ${JSON.stringify(play.cards)}`);
+          // Friendly cards now select their recipient explicitly, including self.
+          await evaluate(guest, `(()=>{const id=window.__coopSnapshot.party.find(p=>p.name==='Fenn')?.id;document.querySelector('[data-friendly-target][data-seat="'+id+'"]')?.click();return true})()`);
           await until(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id;return s.scene.players.find(p=>p.id===id)?.block===${row.before.block}})()`, `Fenn block ${row.before.block}`).catch(async (error) => {
             const debug = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id,p=s.scene.players.find(p=>p.id===id);return{player:p,cards:[...document.querySelectorAll('.hand .card')].map(x=>x.textContent.trim().replace(/\\s+/g,' ')),body:document.body.innerText.slice(-1200)}})()`);
             throw new Error(`${error.message}; snapshot=${JSON.stringify(debug)}`);
@@ -590,7 +612,12 @@ async function browserDoor() {
           }
         }
         const before = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id,p=s.scene.players.find(p=>p.id===id);return{hp:p?.hp,block:p?.block}})()`);
-        await evaluate(host, click('#coop-endturn')); await evaluate(guest, click('#coop-endturn'));
+        if (args.includes('--effects') && row.name === 'full') for (const [label,client] of [['host',host],['guest',guest]]) {
+          const seen=await evaluate(client, `window.__seenCombatEffects`);
+          check(seen.includes('bloodSlash') && seen.includes('bloodLoss'), `${label}: tag-selected melee and confirmed bleed proc sprites render`, JSON.stringify(seen));
+          if(shots)writeFileSync(join(resolve(shots),`sprite-events-${shape.tag}-${label}.json`),JSON.stringify(seen,null,2));
+        }
+        await endCoopTurn(host); await endCoopTurn(guest);
         let pacedControl = null;
         if (row.name === 'partial') {
           await until(guest, `window.__guardCoopTool.state().pacing===true`, 'enemy phase pacing begins');
@@ -833,7 +860,7 @@ const plants = [
   ['coop-loses-healed-player-owner', 'session', "(type === 'damageDealt' || type === 'hpLost' || type === 'healed')", "(type === 'damageDealt' || type === 'hpLost')"],
   ['coop-duplicates-heal-remainder', 'coop', 'heal - (receiptHealByTarget.get(`player:${p.id}`) || 0)', 'heal'],
   ['coop-heal-overwrites-resolved-recipient', 'session', 'playerId: payload.playerId ?? combat.playerKey', 'playerId: combat.playerKey'],
-  ['coop-heal-drops-recipient-resolution', 'actions', 'ctx.playerIdForEntity(target)', 'null'],
+  ['coop-heal-drops-recipient-resolution', 'actions', '? ctx.playerIdForEntity(target)', '? null'],
   ['coop-heal-maps-active-instead-of-target', 'engineCoop', 'if (P.entity === entity) return id;', 'if (id === C.playerKey) return id;'],
 ];
 for (const [name, file, find, replacement] of plants) {

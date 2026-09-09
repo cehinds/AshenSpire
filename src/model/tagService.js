@@ -106,7 +106,13 @@ export function tagService(registries) {
      */
     idsOf(family, object) {
       if (!object) return [];
-      return byObject.get(keyOf(family, scopeOf(family, object), object.id)) || [];
+      return [...new Set((byObject.get(keyOf(family, scopeOf(family, object), object.id)) || []).filter(id=>byId.get(id)?.domain!=='presentation'))];
+    },
+
+    /** Explicit visual identity; excluded from ordinary card/equipment queries. */
+    presentationIdsOf(family, object) {
+      if(!object)return [];
+      return (byObject.get(keyOf(family, scopeOf(family, object), object.id)) || []).filter(id=>byId.get(id)?.domain==='presentation');
     },
 
     /** The same, resolved to registry rows (label, colour, glyph). @returns {Tag[]} */

@@ -1,3 +1,5 @@
+import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
+import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
 // Rules: every animation ≤300 ms; queued events play ≤80 ms apart; a click
@@ -595,6 +597,7 @@ export function playTimeline(events, ctx, done) {
   const skip = () => {
     if (finished) return;
     flushed = true;
+    clearCombatEffects(ctx.layer);
     cancelActorAnimation();
     clearTimeout(pendingTimer);
     // Finish after this pointer is released. Re-rendering under pointerdown
@@ -612,6 +615,7 @@ export function playTimeline(events, ctx, done) {
   const finish = () => {
     if (finished) return;
     finished = true;
+    clearCombatEffects(ctx.layer);
     clearTimeout(pendingTimer);
     clearSkipRelease();
     cancelActorAnimation();
@@ -664,7 +668,7 @@ export function playTimeline(events, ctx, done) {
     const beat = beats[bi++];
 
     if (beat.banner) {
-      safe(() => banner(ctx.layer, beat.banner, 'turn'));
+      safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn'); });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
       schedule(nextBeat, Math.max(260, speed.beatMs));
       return;
@@ -745,6 +749,16 @@ export function playTimeline(events, ctx, done) {
 }
 
 function visualFor(e, beatKind) {
+  const base=baseVisualFor(e,beatKind),effect=combatEffectForEvent(e);
+  if(!effect)return base;
+  return ctx=>{
+    base?.(ctx);
+    const anchor=ctx.anchorFor(effect.targetId);
+    if(anchor)playCombatEffect(ctx.layer,anchorLocalBox(ctx.layer,anchor),effect.kind,{size:190});
+  };
+}
+
+function baseVisualFor(e, beatKind) {
   switch (e.type) {
     case 'dodgeRolled':
       // The following blockGained event owns the numeric gain.
@@ -810,6 +824,7 @@ function visualFor(e, beatKind) {
       return e.amount > 0
         ? (ctx) => {
             sfx.play('heal');
+            const anchor=ctx.anchorFor(e.targetId);if(anchor)playCombatEffect(ctx.layer,anchorLocalBox(ctx.layer,anchor),'heal');
             floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
           }
         : null;
@@ -865,8 +880,6 @@ function visualFor(e, beatKind) {
     case 'stanceEntered':
       return (ctx) => {
         sfx.play('stance');
-        const color = e.stance === 'bulwark' ? 'rgba(127,168,201,.55)' : 'rgba(201,80,46,.55)';
-        flare(ctx.layer, ctx.anchorFor('player'), color);
       };
     case 'relicTriggered':
       return (ctx) => {

@@ -1,3 +1,5 @@
+import { COMBAT_EFFECT_ART } from '../content/combatEffectArt.js';
+import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
 // src/ui/assets.js — asset lookup + placeholder generator (SPEC §2.4)
 //
 // Every visual goes through here. M1 ships zero downloaded assets: everything
@@ -147,7 +149,7 @@ export function enemySprite(enemyDef, entity = {}) {
     : expansion ? assetUrl(`assets/enemies-expansion/${enemyDef.id}.png`) : original;
   img.alt = enemyDef.name || enemyDef.id;
   img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
-    `filter:drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
+    `filter:var(--combatant-edge, blur(0px)) drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
   if (painted) {
     img.dataset.artSource = posed ? 'enemy-poses' : unity ? 'unity' : 'expansion';
     // Align the common foot line without cropping or stretching the frame.
@@ -705,3 +707,5 @@ export function equipmentCardArt(piece) {
     ? armourMenuAsset(piece.classId, piece.id)
     : `assets/equipment/icon_${piece.id}.webp`);
 }
+
+export function combatEffectFrames(kind) { return (Object.hasOwn(COMBAT_EFFECT_ART,kind) ? COMBAT_EFFECT_ART[kind] : Object.hasOwn(POSE_EFFECT_ART,kind) ? POSE_EFFECT_ART[kind] : []).map(assetUrl); }
