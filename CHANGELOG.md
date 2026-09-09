@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-09
 
+- **Combat vitality stays steady and mobile maps load less artwork** ([#874](https://github.com/cehinds/AshenSpire/pull/874), `0.6.0.58`). Prevent stretched health bars at turn changes, reserve an inspectable status row beneath vitality, shrink map textures, reuse traditional node symbols in World Journey and Long Expedition, and show selected reward cards in green. Connected return travel and reward save recovery remain available.
+
 - **Equipment Information is reachable after one press** ([#823](https://github.com/cehinds/AshenSpire/pull/823), `0.6.0.57`). Reveal Information after the first touch selection, reserve room for its button in Inventory and Smith, and prioritize readable mechanics while retaining the approved artwork split. Inspection remains separate from equip, buy, upgrade and play actions.
 
 - **Narrow menus stay readable and dialogs support keyboard navigation** ([#826](https://github.com/cehinds/AshenSpire/pull/826), `0.6.0.55`). Bound text scaling, wrap descriptions, keep settings categories reachable, and support arrow-key tabs with contained and restored dialog focus.
