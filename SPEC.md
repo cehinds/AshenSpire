@@ -14,6 +14,23 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 Numbers in this spec are the **initial balance targets**. They will move during the M3 balance pass, but the *structures* (formulas, orderings, state shapes) are contractual.
 
+### Combat and equipment revision: implementation contract
+
+[Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) is the normative
+contract for the next combat ruleset: categorized tags, typed damage and defenses,
+weapon impact, deterministic Evade, trigger/stacking semantics, and the three-build
+prototype gate before equipment and class-card expansion. It also specifies the
+accepted stance, grip, affinity, armor, rune, loot, and empty-hand creation work.
+
+This is a specification change, not a claim that those mechanics are shipped.
+Existing runs use their supported ruleset until an explicit migration is implemented.
+For the new ruleset, the linked contract supersedes the conflicting parts of
+sections 3.3-3.7 (schemas/effects/triggers), 3.8 (equipment and rewards), 3.12 (saves),
+4.1-4.5 (combat), 5.1-5.4 (content), 6 (reward generation), and 7.4 (stance animation).
+Those sections continue to describe legacy behavior during migration. New code
+must not silently combine legacy dodge, idle-only recovery, armor-weight coupling,
+or card-only poise with the replacement rules.
+
 ---
 
 ## 1. Product overview
