@@ -3,7 +3,7 @@ import {SCHEMA,uuid,clone,placement,entry,validateProject,moveEntry,gapMatches} 
 import * as storage from './storage.mjs';
 import {preparePose,splitFile} from './images.mjs';
 const $=id=>document.getElementById(id),catalog=await fetch('art/pose-editor/catalog.json').then(r=>{if(!r.ok)throw Error('Pose catalog could not load.');return r.json()}),poses=new Map(catalog.poses.map(p=>[p.id,p])),cache=new Map();
-let sequence,requests=[],selected=0,playing=false,timer,saveTimer,drawVersion=0,undo=[],redo=[],drag=null,dragScroll,stageDrag=null,requestGap=0,busy=false;
+let sequence,requests=[],selected=0,playing=false,loadingPlayback=false,playbackToken=0,timer,saveTimer,drawVersion=0,undo=[],redo=[],drag=null,dragScroll,stageDrag=null,requestGap=0,busy=false;
 const qp=new URLSearchParams(location.search),starter=SEQUENCES[qp.get('class')]?qp.get('class'):'reaver';
 function message(text,error=false){$('notice').textContent=text;$('notice').classList.toggle('error',error)}
 function button(text,fn,attrs={}){const b=document.createElement('button');b.type='button';b.textContent=text;Object.assign(b,attrs);b.onclick=fn;return b}
@@ -11,7 +11,12 @@ function textEl(tag,text,cls){const n=document.createElement(tag);n.textContent=
 function image(pose){const img=new Image();img.src=pose.src;img.alt=pose.label;img.draggable=false;if(pose.kind==='uploaded')prepared(pose).then(a=>{img.src=a.silhouette.toDataURL('image/png')}).catch(e=>message(e.message,true));return img}
 function project(){return {schema:SCHEMA,sequence:clone(sequence),poses:[...poses.values()].filter(p=>p.kind==='uploaded').map(p=>clone(p)),requests:clone(requests)}}
 function snapshot(){return {sequence:clone(sequence),requests:clone(requests)}}
-function stop(){playing=false;clearTimeout(timer);$('play').textContent='Play'}
+function syncPlaybackControls(){
+ const label=loadingPlayback?'Loading frames…':playing?'Ⅱ Pause sequence':'▶ Play sequence';
+ for(const id of ['play','timeline-play']){$(id).textContent=label;$(id).disabled=!current()||loadingPlayback;$(id).setAttribute('aria-pressed',String(playing))}
+ $('playback-state').textContent=current()?`${playing?'Playing':loadingPlayback?'Loading':'Ready'} · Frame ${selected+1} of ${sequence.entries.length}`:'Add poses to play a sequence';
+}
+function stop(){playbackToken++;playing=false;loadingPlayback=false;clearTimeout(timer);syncPlaybackControls()}
 function autosave(){clearTimeout(saveTimer);$('save-state').textContent='Unsaved changes';saveTimer=setTimeout(async()=>{try{await storage.write('draft',project());$('save-state').textContent='Draft saved in this browser'}catch(e){message(`Local save failed: ${e.message}. Export JSON to preserve your work.`,true)}},200)}
 function changed(){sequence.revision++;autosave();render()}
 function edit(fn){stop();undo.push(snapshot());if(undo.length>50)undo.shift();redo=[];fn();selected=Math.max(0,Math.min(selected,sequence.entries.length-1));changed()}
@@ -30,7 +35,7 @@ function renderSelection(){const e=current(),p=e&&poses.get(e.poseId);$('frame-i
  for(const el of $('timeline').querySelectorAll('[data-index]'))el.classList.toggle('selected',Number(el.dataset.index)===selected);
  for(const id of ['duration','pos-x','pos-y','scale','pivot-x','pivot-y','duplicate','remove','align','earlier','later'])$(id).disabled=!e;
  if(e){for(const[id,val]of Object.entries({duration:e.durationMs,'pos-x':e.placement.x,'pos-y':e.placement.y,scale:e.placement.scale,'pivot-x':e.placement.pivotX,'pivot-y':e.placement.pivotY}))$(id).value=val}
- $('play').disabled=!e;$('back').disabled=!e;$('next').disabled=!e;draw();
+ syncPlaybackControls();$('back').disabled=!e;$('next').disabled=!e;draw();
  window.poseEditor={sequence:clone(sequence),selected,playing,poseCount:poses.size,requests:clone(requests)};
 }
 function renderTimeline(){const nodes=[];sequence.entries.forEach((e,i)=>{if(i>0){const gap=button('+',()=>openRequest(i-1));gap.className='gap';gap.dataset.gap=i;gap.setAttribute('aria-label',`Request transition between ${i} and ${i+1}`);nodes.push(gap)}const p=poses.get(e.poseId),tile=document.createElement('div');tile.className='tile';tile.dataset.index=i;const img=image(p);img.onpointerdown=event=>startDrag(event,{kind:'entry',index:i,poseId:p.id});const title=textEl('span',`${i+1}. ${p.label}`,'pose-name');title.title=p.id;tile.append(img,title,textEl('small',`${e.durationMs} ms`));const actions=document.createElement('div');actions.className='bar actions';actions.append(button('Select',()=>select(i)),button('×',()=>remove(i),{ariaLabel:`Remove occurrence ${i+1}`}));tile.append(actions);nodes.push(tile)});
@@ -42,7 +47,9 @@ function renderLibrary(){const search=$('search').value.toLowerCase(),cls=$('cla
 }
 function advance(delta){if(!sequence.entries.length)return;selected=(selected+delta+sequence.entries.length)%sequence.entries.length;renderSelection()}
 function schedule(){clearTimeout(timer);if(!playing||!current())return;timer=setTimeout(()=>{if(selected===sequence.entries.length-1&&!$('loop').checked){stop();renderSelection();return}advance(1);schedule()},current().durationMs/Number($('speed').value))}
-async function startPlayback(){if(!current())return;try{await Promise.all([...new Set(sequence.entries.map(e=>e.poseId))].map(id=>prepared(poses.get(id))));playing=true;$('play').textContent='Pause';renderSelection();schedule()}catch(e){message(e.message,true)}}
+async function startPlayback(){if(!current()||loadingPlayback)return;const token=++playbackToken;loadingPlayback=true;syncPlaybackControls();try{await Promise.all([...new Set(sequence.entries.map(e=>e.poseId))].map(id=>prepared(poses.get(id))));if(token!==playbackToken)return;loadingPlayback=false;playing=true;renderSelection();schedule()}catch(e){if(token!==playbackToken)return;stop();renderSelection();message(e.message,true)}}
+function toggleSequencePlayback(){if(playing){stop();renderSelection();return}selected=0;renderSelection();$('viewer').closest('.workspace').scrollIntoView({block:'start',behavior:'instant'});startPlayback()}
+
 function distanceOutside(x,y,r){return Math.hypot(Math.max(r.left-x,0,x-r.right),Math.max(r.top-y,0,y-r.bottom))}
 function startDrag(e,data){if(e.button!==0)return;drag={...data,startX:e.clientX,startY:e.clientY,pointerId:e.pointerId,active:false};e.currentTarget.setPointerCapture(e.pointerId)}
 function clearDrag(){cancelAnimationFrame(dragScroll);document.getElementById('drag-ghost')?.remove();document.getElementById('drag-message')?.remove();$('timeline').classList.remove('drop-active');drag=null}
@@ -86,7 +93,7 @@ function renderRequests(){if(!requests.length){$('requests').replaceChildren(tex
 for(const[key,s]of Object.entries(SEQUENCES))$('preset').append(Object.assign(document.createElement('option'),{value:key,textContent:s.title}));$('preset').value=starter;
 for(const cls of ['reaver','rogue','starseer','herald','uploaded'])$('class-filter').append(Object.assign(document.createElement('option'),{value:cls,textContent:cls}));
 for(const id of ['search','class-filter','kind-filter'])$(id).addEventListener(id==='search'?'input':'change',renderLibrary);
-$('play').onclick=()=>{if(playing){stop();renderSelection()}else startPlayback()};$('back').onclick=()=>{stop();advance(-1)};$('next').onclick=()=>{stop();advance(1)};$('speed').onchange=schedule;$('onion').onchange=$('display').onchange=draw;
+$('play').onclick=$('timeline-play').onclick=toggleSequencePlayback;$('back').onclick=()=>{stop();advance(-1)};$('next').onclick=()=>{stop();advance(1)};$('speed').onchange=schedule;$('onion').onchange=$('display').onchange=draw;
 $('name').onchange=()=>edit(()=>sequence.name=$('name').value.trim().slice(0,120)||'Untitled sequence');
 for(const[id,key]of [['duration','durationMs'],['pos-x','x'],['pos-y','y'],['scale','scale'],['pivot-x','pivotX'],['pivot-y','pivotY']])$(id).onchange=()=>{if(!current())return;const v=Number($(id).value),min=Number($(id).min),max=Number($(id).max);if(!Number.isFinite(v)||v<min||v>max){message(`Use a value from ${min} to ${max}.`,true);renderSelection();return}edit(()=>{if(key==='durationMs')current()[key]=v;else current().placement[key]=v})};
 $('align').onclick=()=>edit(()=>current().placement=placement());$('duplicate').onclick=()=>{if(!current()||sequence.entries.length>=500)return;edit(()=>{sequence.entries.splice(selected+1,0,{...clone(current()),entryId:uuid()});selected++})};$('remove').onclick=()=>remove(selected);
