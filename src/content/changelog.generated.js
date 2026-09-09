@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-870",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Card flicks choose targets across pointer devices",
+    "detail": "Flick upward with touch, mouse, trackpad dragging or pen to play on the nearest legal target without reaching it. Card flick settings and practice now describe the same behavior; saved distance preferences, selection and Information remain available.",
+    "build": "0.6.0.58",
+    "pullRequest": 870,
+    "url": "https://github.com/cehinds/AshenSpire/pull/870"
+  },
+  {
+    "id": "pr-869",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Card flick input parity has an explicit specification",
+    "detail": "Specify shared pointer behavior and preserve existing distance, speed and cancellation rules.",
+    "build": "0.6.0.57",
+    "pullRequest": 869,
+    "url": "https://github.com/cehinds/AshenSpire/pull/869"
+  },
+  {
     "id": "pr-823",
     "date": "2026-09-09",
     "group": "2026-09-09",

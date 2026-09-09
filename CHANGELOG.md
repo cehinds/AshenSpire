@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-09
 
+- **Card flicks choose targets across pointer devices** ([#870](https://github.com/cehinds/AshenSpire/pull/870), `0.6.0.58`). Flick upward with touch, mouse, trackpad dragging or pen to play on the nearest legal target without reaching it. Card flick settings and practice now describe the same behavior; saved distance preferences, selection and Information remain available.
+- **Card flick input parity has an explicit specification** ([#869](https://github.com/cehinds/AshenSpire/pull/869), `0.6.0.57`). Specify shared pointer behavior and preserve existing distance, speed and cancellation rules.
 - **Equipment Information is reachable after one press** ([#823](https://github.com/cehinds/AshenSpire/pull/823), `0.6.0.57`). Reveal Information after the first touch selection, reserve room for its button in Inventory and Smith, and prioritize readable mechanics while retaining the approved artwork split. Inspection remains separate from equip, buy, upgrade and play actions.
 
 - **Narrow menus stay readable and dialogs support keyboard navigation** ([#826](https://github.com/cehinds/AshenSpire/pull/826), `0.6.0.55`). Bound text scaling, wrap descriptions, keep settings categories reachable, and support arrow-key tabs with contained and restored dialog focus.

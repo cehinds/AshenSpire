@@ -21,7 +21,7 @@ export function mountFlickPractice(container, settings, rules) {
         zone.dataset.ready = 'false';
         const verdict = flickVerdict(start, touchPoint(up), points, settings, rules);
         result.textContent = cancelled ? 'Cancelled. Try again.' : verdict.qualifies ? 'Flick accepted — no card spent.'
-          : !flickPreferences(settings, rules).enabled ? 'Touch flick to play is off.'
+          : !flickPreferences(settings, rules).enabled ? 'Card flick to play is off.'
           : verdict.distanceMet ? 'Distance reached. Release with a quicker upward motion.' : 'Too short or sideways. Try upward again.';
       },
     });
