@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-867",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat controls stay in one row and maps show a cleaner HUD",
+    "detail": "Center Actions, Draw, End Turn, Discard/Exhaust and Potions together, with flexible pile widths. Hide the potion and relic strip on maps in both HUD modes while retaining combat inventory controls.",
+    "build": "0.6.0.51",
+    "pullRequest": 867,
+    "url": "https://github.com/cehinds/AshenSpire/pull/867"
+  },
+  {
     "id": "pr-862",
     "date": "2026-09-09",
     "group": "2026-09-09",
@@ -11,6 +21,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.48",
     "pullRequest": 862,
     "url": "https://github.com/cehinds/AshenSpire/pull/862"
+  },
+  {
+    "id": "pr-864",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Pose Studio supports direct effect and timeline editing",
+    "detail": "Resize effects with visible handles, edit timeline cues directly and use accessible alternatives in the studio.",
+    "build": "0.6.0.47",
+    "pullRequest": 864,
+    "url": "https://github.com/cehinds/AshenSpire/pull/864"
+  },
+  {
+    "id": "pr-832",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Explore World Journey with grounded, stable combat formations",
+    "detail": "Explore a seeded atlas with local locations and regional paintings. Combat keeps fixed formations and proportional card fans across turns, with player and enemy turn banners and inactive cards remaining visible during enemy playback.",
+    "build": "0.6.0.47",
+    "pullRequest": 832,
+    "url": "https://github.com/cehinds/AshenSpire/pull/832"
   },
   {
     "id": "pr-850",

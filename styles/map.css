@@ -327,3 +327,6 @@ dialog.atlas-dialog.modal-veil[open] { display:block; padding:0; background:#1b1
 .world-atlas-screen .atlas-roads path { stroke:#edd19a; stroke-width:3; stroke-dasharray:5 5; filter:drop-shadow(0 1px 2px #000); }
 .world-atlas-screen .atlas-roads .traveled { stroke:#ffde84; stroke-width:4; stroke-dasharray:none; }
 @media(min-width:1000px) { .atlas-layout { grid-template-columns:minmax(0,min(100%,calc(100vh - 240px))) 270px; justify-content:center; } }
+
+/* Keep map navigation clear of the combat inventory strip, including its hit targets. */
+.mapscreen .shared-hud .hud-bottom { display:none; }
