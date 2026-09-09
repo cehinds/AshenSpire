@@ -33,6 +33,7 @@ function applyCardTokens(card, tokens) {
   set('--epc-frame-h', `${tokens.frameHeightPx}px`);
   set('--epc-pad', `${tokens.paddingPx}px`);
   set('--epc-gap', `${tokens.gapPx}px`);
+  set('--epc-flavor-row', `${tokens.heights.flavor}px`);
   set('--epc-bonus-lines', String(tokens.bonusMaxLines));
   set('--card-info-size', `${tokens.info.sizePx}px`);
   set('--card-info-inset', `${tokens.info.insetPx}px`);
@@ -63,7 +64,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     <span class="epc-facts">${model.facts.map(f => `<span class="epc-fact" ${tip(model.cardKind ? f.value : `${f.label}: ${f.value}`, f.explanation, model.cardKind ? 'tag' : 'fact')}><strong>${esc(f.value)}</strong>${esc(f.label)}</span>`).join('')}</span>
     <span class="epc-tags ec-tags">${model.tags.map(t => `<span class="epc-tag" ${tip(t.label, t.explanation)}>${esc(t.label)}</span>`).join('')}</span>
     <span class="epc-effects ec-mods"><span class="epc-heading">${esc(model.effectsLabel || 'Equipment bonuses')}</span>${model.bonuses.map(b => `<span class="epc-bonus" ${tip(b.label, b.explanation, 'effect')}>${esc(b.label)}</span>`).join('') || '<span>No additional bonuses</span>'}</span>
-    <span class="epc-flavor">${esc(model.flavor)}</span>
+    <span class="epc-flavor" ${tip(model.flavor, model.flavor, 'flavor')}>${esc(model.flavor)}</span>
     <span class="epc-footer"><span ${tip(model.requirement, model.requirementExplanation, model.cardKind ? 'support' : model.requirement.startsWith('Requires ') ? 'requirement' : 'tag')}>${esc(model.requirement)}</span><span ${tip(model.rarity, `Rarity: ${model.rarity}.`)}>${esc(model.rarity)}</span></span>
   </span>`;
   card.querySelector('img')?.addEventListener('error', event => event.target.replaceWith(document.createTextNode(piece.icon || '◆')));
@@ -92,7 +93,7 @@ export function equipmentDetails(explanations) {
   const tags = document.createElement('div'); tags.className = 'inspection-tags'; tags.setAttribute('aria-label', 'Card tags');
   const seen = new Set();
   for (const entry of explanations.filter(e => e.role === 'tag')) {
-    if (seen.has(entry.label.toLowerCase())) continue;
+    if (!entry.label || seen.has(entry.label.toLowerCase())) continue;
     seen.add(entry.label.toLowerCase()); tags.append(inspectionTag(entry.label[0].toUpperCase() + entry.label.slice(1), entry.explanation));
   }
   const facts = explanations.filter(e => e.role === 'fact');
@@ -107,6 +108,13 @@ export function equipmentDetails(explanations) {
     details.append(p);
   }
   details.append(tags);
+  const lore = explanations.find(entry => entry.role === 'flavor' && entry.label);
+  if (lore) {
+    const disclosure = document.createElement('details'); disclosure.className = 'inspection-lore';
+    const summary = document.createElement('summary'); summary.textContent = 'Flavor';
+    const text = document.createElement('p'); text.textContent = lore.label;
+    disclosure.append(summary, text); details.append(disclosure);
+  }
   return decorateKeywords(details);
 }
 

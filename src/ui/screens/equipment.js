@@ -446,10 +446,10 @@ function pieceArt(piece, fallback = '⚔') {
 }
 
 /** The kit picker's chip (creation's starting kit): an OptionCard — art, name, mods, tags. `.ec-*` are the hooks the tools read. */
-export function pieceChip(registries, piece, { selected, kind = null }) {
+export function pieceChip(registries, piece, { selected, kind = null, presentation = null }) {
   const card = document.createElement('div');
   card.className = 'equip-chip poker-equipment-choice' + (selected ? ' on' : '');
-  const face = (kind ? renderCollectibleCard(registries, piece, kind, { interactive: false }) : renderEquipmentCard(registries, piece, { interactive: false })).card;
+  const face = (kind ? renderCollectibleCard(registries, piece, kind, { interactive: false }) : renderEquipmentCard(registries, piece, { interactive: false, presentation })).card;
   face.tabIndex = 0;
   face.setAttribute('role', 'group');
   const choose = document.createElement('button');

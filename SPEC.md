@@ -1058,7 +1058,15 @@ keeps the same state and focus contract without meaningful animation.
   `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
   `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`,
   `mode-choice`, `sprite-choice`, `tint-choice`, `sigil-choice`, `keepsake-choice`,
-  `equipment-choice-card`, and `relic-choice-card`. `class-preview-pane` composes
+  `equipment-choice-card`, and `relic-choice-card`. Hand selectors include an Empty Hand
+  card for the existing unequipped state. The focused choice drives the detail panel and
+  a compact two-column grid of its starting combat cards, with quantities derived from
+  the current loadout. Choosing updates existing cards in place; the focused card lifts
+  and enlarges over 180 ms (less movement on phones; no movement with reduced motion).
+  Continue names the next equipment section. Automatic advancement remains optional and
+  defaults off. Flavor occupies one line with an ellipsis on overflow, and its complete
+  text remains available through inspection. These are presentation rules; starting-deck
+  composition and unarmed fallback mechanics remain as defined above. `class-preview-pane` composes
   `class-resource-grid`; `character-disclosure` composes the stat, appearance, and keepsake
   choices. A new character defaults to the Animated sprite style while preserving any explicit
   style stored on an existing character or LAN player. `primary-stat-card` is one shared
