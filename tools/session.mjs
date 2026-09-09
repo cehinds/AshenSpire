@@ -545,7 +545,7 @@ export function createSession({ registries, seedString, endless = false, restore
       .map((e) => ({
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
         sourcePlayerId: e.sourcePlayerId, targetPlayerId: e.targetPlayerId,
-        manaSpent: e.manaSpent, staminaSpent: e.staminaSpent,
+        energySpent: e.energySpent, manaSpent: e.manaSpent, staminaSpent: e.staminaSpent,
         cardId: e.cardId, cardType: e.cardType, cardInstanceId: e.cardInstanceId, profileId: e.profileId,
         upgraded: e.upgraded, sourceArmamentId: e.sourceArmamentId,
         stance: e.stance, kind: e.kind, targetId: e.targetId, playerId: e.playerId,

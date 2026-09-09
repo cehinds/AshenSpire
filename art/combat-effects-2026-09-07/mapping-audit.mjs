@@ -11,7 +11,7 @@ for(const base of reg.cards.all().filter(c=>['attack','skill','power'].includes(
  for(const profile of [null,...profiles.filter(p=>p.baseCardId===base.id)])for(const upgraded of [false,true]){
   const card=resolveCard(reg,{cardId:base.id,upgraded,...(profile?{profileId:profile.id}:{})});
   const tags=combatEffectTags(reg,card).map(t=>typeof t==='string'?t:t.id).sort();
-  const variants=classes.map(cls=>({cls,plan:combatEffectPlan({...card,cardTags:tags},cls)}));
+  const variants=classes.map(cls=>({cls,plan:combatEffectPlan({...card,cardTags:tags})}));
   const distinct=new Map();for(const v of variants){const key=JSON.stringify(v.plan);if(!distinct.has(key))distinct.set(key,{plan:v.plan,classes:[]});distinct.get(key).classes.push(v.cls);}
   for(const {plan,classes:owners} of distinct.values()){
    const owner=distinct.size>1?owners.join('/'):'any class';
@@ -23,7 +23,7 @@ for(const base of reg.cards.all().filter(c=>['attack','skill','power'].includes(
 }
 const rows=[...groups.values()].map(g=>({...g,cards:[...g.cards]})).sort((a,b)=>a.type.localeCompare(b.type)||a.tags.join().localeCompare(b.tags.join())||(a.profile||'').localeCompare(b.profile||''));
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
-const line=r=>`${r.type} · ${r.tags.join(' + ')||'no tags'}${r.profile?' · '+r.profile:''}${r.owner!=='any class'?' · '+r.owner:''} → ${r.plan?.kind||'no added effect'}${r.plan?.projectile?' (projectile → impact)':r.plan?.at==='target'?' (target)':' (caster)'}`;
+const line=r=>`${r.type} · ${r.tags.join(' + ')||'no tags'}${r.profile?' · '+r.profile:''}${r.owner!=='any class'?' · '+r.owner:''} → ${r.plan?.kind||'no added effect'} · ${r.plan?.activation||''} · ${r.plan?.sizeScale||1}×${r.plan?.projectile?' (projectile → impact)':r.plan?.at==='target'?' (target)':' (caster)'}`;
 writeFileSync(new URL('inspection/integrated-tag-mappings.json',import.meta.url),JSON.stringify(rows,null,2));
 writeFileSync(new URL('inspection/integrated-tag-mappings.md',import.meta.url),'Current resolved card/tag mappings. Base and upgraded cards are included. Equipment profiles use the same effective tags as solo/co-op combat. Class alternatives are shown only where they change the effect. This is the integrated combination-rule resolver.\n\n'+rows.map(r=>'- **'+line(r)+'** — '+r.cards.join(', ')).join('\n'));
 const chunks=[];for(let i=0;i<rows.length;i+=12)chunks.push(rows.slice(i,i+12));

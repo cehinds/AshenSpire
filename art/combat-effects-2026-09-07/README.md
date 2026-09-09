@@ -92,6 +92,14 @@ Block is depleted or the turn resets, and reset between co-op encounters.
 Target effects require confirmed recipients and cover all actual AoE targets.
 The shared playCombatEffectPlan coordinates caster effects and directional releases.
 
+Action treatments use the actual cardPlayed receipt, falling back to declared
+costs in previews: 0–1 action uses restrained mundane variants; 2+ actions uses
+larger mundane variants. Positive mana/stamina spending enables fantastical
+effects and a casting cue, with greater scale at 2+ actions or combined resource
+spending of 2+. Free activations use mundane treatment even if the card normally
+costs mana. Power auras, stances, named defenses and all outcome overlays remain
+intact. No card costs or aura rules change. The gallery labels each treatment.
+
 Co-op receipts include sourcePlayerId/targetPlayerId at actual resolution. The
 presentation adapter maps the engine's shared `player` id to the correct seat,
 including a different ally receiving Block or status stacks. Real two-client

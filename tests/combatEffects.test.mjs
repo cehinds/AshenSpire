@@ -1,6 +1,6 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {combatEffectFor as effect, combatEffectPlan, combatEffectTags, combatEffectTargetIds} from '../src/model/combatEffects.js';
-test('ranged identity, not mana or class, selects projectiles',()=>{const hit={op:'damage',target:'enemy'};assert.equal(effect({type:'attack',manaCost:2,effects:[hit]},'starseer').projectile,false);assert.equal(effect({type:'attack',tags:['starstone','ranged'],effects:[hit]}).kind,'starbolt');assert.equal(effect({type:'attack',tags:['blade','starstone'],effects:[hit]}).projectile,false);});
-test('guards and Powers use local effects and heals wait for actual receipts',()=>{assert.deepEqual(effect({type:'skill',tags:['guard']}),{kind:'physicalGuard',projectile:false});assert.equal(effect({type:'power'},'reaver').kind,'focusMotes');assert.equal(effect({type:'skill',tags:['heal'],effects:[{op:'heal',target:'self'}]}).kind,'cleanse');});
+test('ranged identity, not mana or class, selects projectiles',()=>{const hit={op:'damage',target:'enemy'};assert.equal(effect({type:'attack',manaCost:2,effects:[hit]},'starseer').projectile,false);assert.equal(effect({type:'attack',manaCost:1,tags:['starstone','ranged'],effects:[hit]}).kind,'starbolt');assert.equal(effect({type:'attack',tags:['blade','starstone'],effects:[hit]}).projectile,false);});
+test('guards and Powers use local effects and heals wait for actual receipts',()=>{assert.deepEqual(effect({type:'skill',tags:['guard']}),{kind:'physicalGuard',projectile:false});assert.equal(effect({type:'power'},'reaver').kind,'focusMotes');assert.equal(effect({type:'skill',manaCost:1,tags:['heal'],effects:[{op:'heal',target:'self'}]}).kind,'cleanse');});
 import {createRegistries} from '../src/model/registries.js';import {contentBundle} from '../src/content/index.js';import {createSession} from '../tools/session.mjs';
 test('co-op stance receipt identifies the actor for its visual effect',()=>{const host=createSession({registries:createRegistries(contentBundle),seedString:'GUARD2'});for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});host.start();for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);const p=host.live.combat.players.get('p2');p.piles.hand.push({instanceId:'stance-fx',cardId:'enterBulwark',upgraded:false});p.entity.energy=20;p.entity.stamina=99;const r=host.combatPlay('p2','stance-fx');assert.ok(r.ok,r.error);const receipt=host.snapshot().scene.events.find(e=>e.type==='stanceEntered');assert.equal(receipt.playerId,'p2');assert.equal(receipt.stance,'bulwark');});
 import { COMBAT_EFFECT_ART } from '../src/content/combatEffectArt.js';
@@ -52,7 +52,7 @@ test('co-op digest preserves the fields needed to render status and stagger rece
 });
 
 test('subtle utility effects stay smaller and dimmer than combat releases',()=>{
- for(const [tag,kind]of [['precision','steelGlint'],['flourish','dustStep'],['guile','dustStep'],['starstone','focusMotes'],['ritual','focusMotes']]){
+ for(const [tag,kind]of [['precision','steelGlint'],['flourish','dustStep'],['guile','dustStep'],['starstone','steelGlint'],['ritual','steelGlint']]){
   assert.equal(effect({type:'skill',tags:[tag]}).kind,kind);
   const subtle=combatEffectPresentation(kind),release=combatEffectPresentation('starbolt');
   assert.ok(subtle.opacity<release.opacity);assert.ok(subtle.sizeScale<release.sizeScale);
@@ -79,23 +79,23 @@ import { resolveCard } from '../src/model/registries.js';
 test('authored styles use deterministic effects and melee is target-local',()=>{
  for(const [tag,kind]of [['blade','slash'],['pierce','thrust'],['heavy','heavyImpact']]){const plan=effect({type:'attack',tags:[tag],effects:[{op:'damage',target:'enemy'}]});assert.equal(plan.kind,kind);}
  for(const tag of ['blade','pierce','heavy','blood','precision','flourish'])assert.equal(effect({type:'attack',tags:[tag],effects:[{op:'damage',target:'enemy'}]}).at,'target');
- const a={type:'attack',tags:['blood','blade'],effects:[{op:'damage',target:'enemy'}]};assert.deepEqual(effect(a),effect({...a,tags:[...a.tags].reverse()}));assert.equal(effect(a).kind,'bloodSlash');
+ const a={type:'attack',manaCost:1,tags:['blood','blade'],effects:[{op:'damage',target:'enemy'}]};assert.deepEqual(effect(a),effect({...a,tags:[...a.tags].reverse()}));assert.equal(effect(a).kind,'bloodSlash');
  assert.equal(effect({type:'attack',tags:['shield'],equipmentProfileId:'shieldAttack',effects:[{op:'damage',target:'enemy'}]}).kind,'shieldBash');
 });
 test('live named card styles select their authored effects',()=>{
  const reg=createRegistries(contentBundle);
- for(const [id,kind]of [['starstonePebble','starbolt'],['bloodPact','focusMotes']]){const card=resolveCard(reg,{cardId:id});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)}).kind,kind);}
+ for(const [id,kind]of [['starstonePebble','starbolt'],['bloodPact','steelGlint']]){const card=resolveCard(reg,{cardId:id});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)}).kind,kind);}
 });
 
 test('expanded effects follow live cards and equipment profiles without changing resource auras',()=>{
  const reg=createRegistries(contentBundle);
- for(const [id,kind]of [['twinPrick','crossSlash'],['bladeDanceRogue','whirlwind'],['sacredHarvest','lifeDrain'],['disorient','bind']]){
+ for(const [id,kind]of [['twinPrick','crossSlash'],['bladeDanceRogue','whirlwind'],['sacredHarvest','heavyImpact'],['disorient','steelGlint']]){
   const card=resolveCard(reg,{cardId:id});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)},card.class).kind,kind,id);
  }
  const healing=reg.cards.all().find(c=>c.class==='herald'&&c.type==='skill'&&c.effects?.every(e=>e.op==='heal'));
  assert.ok(healing);assert.equal(effect({...healing,cardTags:combatEffectTags(reg,healing)},'herald').kind,'cleanse');
  assert.equal(effect({type:'skill',tags:['guard'],equipmentProfileId:'weaponGuard'}).kind,'parry');
- for(const [profile,kind]of [['shieldAttack','shieldBash'],['sceptreArcaneAttack','arcaneBurst']]){
+ for(const [profile,kind]of [['shieldAttack','shieldBash'],['sceptreArcaneAttack','heavyImpact']]){
   const card=resolveCard(reg,{cardId:'strike',profileId:profile});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)}).kind,kind);
  }
 });

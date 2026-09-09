@@ -6,25 +6,26 @@ const active=new WeakMap();
 // Shared solo/co-op sequence: one cast, then one release per actual recipient.
 export function playCombatEffectPlan(layer,from,plan,{targets=[],duration=260,size=160}={}){
  if(!plan)return ()=>{};
+ size*=plan.sizeScale??1;
  const stops=[];
  const targetLocal=plan.at==='target';
  if(plan.cast)stops.push(playCombatEffect(layer,from,plan.cast,{duration:110,size:size*.7}));
  const delay=plan.cast?65:targetLocal?Math.round(duration*.25):0;
  const recipients=targetLocal?targets:[from];
  for(const target of recipients){
-  stops.push(playCombatEffect(layer,plan.projectile?from:target,plan.kind,{to:plan.projectile?target:null,direction:targetLocal?combatEffectAngle(from,target):'auto',delay,duration:Math.max(96,duration-delay),size}));
+  stops.push(playCombatEffect(layer,plan.projectile?from:target,plan.kind,{to:plan.projectile?target:null,direction:targetLocal?combatEffectAngle(from,target):'auto',delay,duration:Math.max(96,duration-delay),size,impactKind:plan.impactKind}));
  }
  return ()=>stops.forEach(stop=>stop());
 }
 export function clearCombatEffects(layer){for(const stop of [...(active.get(layer)||[])])stop();}
 // Caller supplies boxes in layer-local coordinates, using the shared geometry
 // helper. All six frames retain one center anchor and common canvas scale.
-export function playCombatEffect(layer,from,kind,{to=null,direction='auto',duration=260,size=140,delay=0}={}){
+export function playCombatEffect(layer,from,kind,{to=null,direction='auto',duration=260,size=140,delay=0,impactKind='impact'}={}){
  if(!layer||!from||reducedMotionRequested())return ()=>{};
  if(delay>0){
    const set=active.get(layer)||new Set();active.set(layer,set);let child=()=>{};
    const stop=()=>{clearTimeout(ticket);child();set.delete(stop);};
-   const ticket=setTimeout(()=>{set.delete(stop);child=playCombatEffect(layer,from,kind,{to,direction,duration,size});},delay);
+   const ticket=setTimeout(()=>{set.delete(stop);child=playCombatEffect(layer,from,kind,{to,direction,duration,size,impactKind});},delay);
    set.add(stop);return stop;
  }
  const frames=combatEffectFrames(kind);if(!frames.length)return ()=>{};
@@ -42,6 +43,6 @@ export function playCombatEffect(layer,from,kind,{to=null,direction='auto',durat
  const angle=direction==='auto'?combatEffectAngle(from,to):direction;
  const orientation=combatEffectOrientation(angle);el.dataset.direction=String(angle);
  animation=el.animate([{transform:`translate(0,0) scale(${presentation.startScale}) ${orientation}`,opacity:.3*presentation.opacity},{transform:`translate(${dx*.7}px,${dy*.7}px) scale(1) ${orientation}`,opacity:presentation.opacity,offset:.6},{transform:`translate(${dx}px,${dy}px) scale(${presentation.endScale}) ${orientation}`,opacity:0}],{duration:ms,easing:'ease-out',fill:'forwards'});
- tickets.push(setTimeout(()=>{el.remove();if(to){impactStop=playCombatEffect(layer,to,'impact',{direction:angle,duration:160,size:110});tickets.push(setTimeout(stop,170));}else stop();},ms));
+ tickets.push(setTimeout(()=>{el.remove();if(to){impactStop=playCombatEffect(layer,to,impactKind,{direction:angle,duration:160,size:110});tickets.push(setTimeout(stop,170));}else stop();},ms));
  return stop;
 }

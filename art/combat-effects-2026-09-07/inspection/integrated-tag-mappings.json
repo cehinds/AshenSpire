@@ -8,12 +8,15 @@
     ],
     "profile": "sceptreArcaneAttack",
     "plan": {
-      "kind": "arcaneBurst",
+      "kind": "heavyImpact",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "arcane-strike",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "arcane",
@@ -35,11 +38,14 @@
     "profile": null,
     "plan": {
       "kind": "slash",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-blade",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade"
@@ -51,22 +57,45 @@
       "Strike+",
       "Twinblade Flurry",
       "Twinblade Flurry+",
-      "Executioner",
-      "Executioner+",
       "Stitched Arms",
       "Stitched Arms+",
+      "Bashing Blow",
+      "Bashing Blow+",
+      "Sweeping Blow",
+      "Sweeping Blow+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "whirlwind",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-blade",
+      "phase": "impact",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Executioner",
+      "Executioner+",
       "Ruinous Blow",
       "Ruinous Blow+",
       "Flame to Blade",
       "Flame to Blade+",
       "Poise Breaker",
       "Poise Breaker+",
-      "Sundering Hew",
-      "Sundering Hew+",
-      "Bashing Blow",
-      "Bashing Blow+",
-      "Sweeping Blow",
-      "Sweeping Blow+",
       "Colossus Smash",
       "Colossus Smash+"
     ]
@@ -79,11 +108,14 @@
     "profile": null,
     "plan": {
       "kind": "crossSlash",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-double",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade"
@@ -93,10 +125,62 @@
     "cards": [
       "Bloodhunter's Strike",
       "Bloodhunter's Strike+",
-      "Blood Tithe",
-      "Blood Tithe+",
       "Twin Fang",
       "Twin Fang+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "crossSlash",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-double",
+      "phase": "impact",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Blood Tithe",
+      "Blood Tithe+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "slash",
+      "activation": "resourceHigh",
+      "sizeScale": 1.25,
+      "cast": "focusMotes",
+      "impactKind": "impact",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-blade",
+      "phase": "impact",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Sundering Hew",
+      "Sundering Hew+"
     ]
   },
   {
@@ -107,11 +191,14 @@
     "profile": "bladeAttack",
     "plan": {
       "kind": "slash",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-blade",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade"
@@ -131,12 +218,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "bloodSlash",
+      "kind": "whirlwind",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
       "projectile": false,
       "at": "target",
       "ruleId": "blood-blade",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade",
@@ -147,14 +237,41 @@
     "cards": [
       "Crimson Cleave",
       "Crimson Cleave+",
+      "Sunderplate",
+      "Sunderplate+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:blood"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "slash",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "blood-blade",
+      "phase": "impact",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "blood"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
       "Serrated Blade",
       "Serrated Blade+",
       "Rend",
       "Rend+",
       "Goreslash",
       "Goreslash+",
-      "Sunderplate",
-      "Sunderplate+",
       "Serrated Shiv",
       "Serrated Shiv+",
       "Garrote",
@@ -171,11 +288,14 @@
     "profile": null,
     "plan": {
       "kind": "bloodSlash",
+      "activation": "resourceLow",
+      "sizeScale": 1,
+      "cast": "focusMotes",
+      "impactKind": "impact",
       "projectile": false,
       "at": "target",
       "ruleId": "blood-blade",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade",
@@ -199,11 +319,14 @@
     "profile": null,
     "plan": {
       "kind": "bloodSlash",
+      "activation": "resourceLow",
+      "sizeScale": 1,
+      "cast": "focusMotes",
+      "impactKind": "impact",
       "projectile": false,
       "at": "target",
       "ruleId": "blood-blade",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade",
@@ -226,12 +349,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "bloodSlash",
+      "kind": "whirlwind",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
       "projectile": false,
       "at": "target",
       "ruleId": "blood-blade",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade",
@@ -254,11 +380,14 @@
     "profile": null,
     "plan": {
       "kind": "whirlwind",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-flourish",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade",
@@ -272,9 +401,7 @@
       "Quick Cut",
       "Quick Cut+",
       "Blade Dance",
-      "Blade Dance+",
-      "Thousand Cuts",
-      "Thousand Cuts+"
+      "Blade Dance+"
     ]
   },
   {
@@ -286,11 +413,14 @@
     "profile": null,
     "plan": {
       "kind": "crossSlash",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-double",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade",
@@ -307,17 +437,49 @@
     "type": "attack",
     "tags": [
       "fx:blade",
+      "fx:flourish"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "whirlwind",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-flourish",
+      "phase": "impact",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "flourish"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Thousand Cuts",
+      "Thousand Cuts+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
       "fx:guard",
       "fx:shield"
     ],
     "profile": null,
     "plan": {
       "kind": "shieldBash",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "shield-attack",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade",
@@ -340,11 +502,14 @@
     "profile": null,
     "plan": {
       "kind": "slash",
+      "activation": "resourceLow",
+      "sizeScale": 1,
+      "cast": "focusMotes",
+      "impactKind": "impact",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-blade",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade",
@@ -354,11 +519,65 @@
     "owner": "any class",
     "cards": [
       "Ambush",
-      "Ambush+",
+      "Ambush+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "slash",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-blade",
+      "phase": "impact",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "guile"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
       "Hamstring",
       "Hamstring+",
       "Low Blow",
-      "Low Blow+",
+      "Low Blow+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "whirlwind",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-blade",
+      "phase": "impact",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "guile"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
       "Cheap Shot",
       "Cheap Shot+"
     ]
@@ -371,12 +590,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "slash",
+      "kind": "heavyImpact",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-blade",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade",
@@ -388,7 +610,34 @@
       "Cleaving Blow",
       "Cleaving Blow+",
       "Stomp",
-      "Stomp+",
+      "Stomp+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:heavy"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "slash",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-blade",
+      "phase": "impact",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "heavy"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
       "Kick Off",
       "Kick Off+"
     ]
@@ -402,11 +651,14 @@
     "profile": null,
     "plan": {
       "kind": "thrust",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-thrust",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade",
@@ -417,10 +669,37 @@
     "cards": [
       "Coup de Grace",
       "Coup de Grace+",
-      "Assassinate",
-      "Assassinate+",
       "Deathblow",
       "Deathblow+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blade",
+      "fx:precision"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "thrust",
+      "activation": "resourceHigh",
+      "sizeScale": 1.25,
+      "cast": "focusMotes",
+      "impactKind": "impact",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "physical-thrust",
+      "phase": "impact",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blade",
+        "precision"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Assassinate",
+      "Assassinate+"
     ]
   },
   {
@@ -432,11 +711,14 @@
     "profile": null,
     "plan": {
       "kind": "crossSlash",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-double",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade",
@@ -457,12 +739,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "slash",
+      "kind": "whirlwind",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-blade",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blade",
@@ -485,12 +770,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "blight",
+      "kind": "heavyImpact",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "blight-release",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "blight",
@@ -503,12 +791,39 @@
       "Blight Touch+",
       "Plague Bearer",
       "Plague Bearer+",
-      "Scourge",
-      "Scourge+",
       "Withering Touch",
       "Withering Touch+",
       "Blightward Lash",
       "Blightward Lash+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:blight",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "heavyImpact",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "blight-release",
+      "phase": "impact",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "blight",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Scourge",
+      "Scourge+"
     ]
   },
   {
@@ -521,11 +836,14 @@
     "profile": null,
     "plan": {
       "kind": "riposte",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "counter-strike",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "flourish",
@@ -550,11 +868,14 @@
     "profile": "daggerPierceAttack",
     "plan": {
       "kind": "whirlwind",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-flourish",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "flourish",
@@ -576,12 +897,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "starbolt",
+      "kind": "thrust",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": true,
       "at": "target",
       "ruleId": "starstone-projectile",
       "phase": "release",
-      "cast": "focusMotes",
       "targetEvent": "damageDealt",
       "tags": [
         "frost",
@@ -604,12 +928,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "starbolt",
+      "kind": "thrust",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": true,
       "at": "target",
       "ruleId": "starstone-projectile",
       "phase": "release",
-      "cast": "focusMotes",
       "targetEvent": "damageDealt",
       "tags": [
         "guard",
@@ -632,11 +959,14 @@
     "profile": "shieldAttack",
     "plan": {
       "kind": "shieldBash",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "shield-attack",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "guard",
@@ -657,11 +987,14 @@
     "profile": null,
     "plan": {
       "kind": "heavyImpact",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-impact",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "guile"
@@ -681,12 +1014,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "lifeDrain",
+      "kind": "heavyImpact",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "life-drain",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "heal",
@@ -712,12 +1048,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "starbolt",
+      "kind": "thrust",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
       "projectile": true,
       "at": "target",
       "ruleId": "starstone-projectile",
       "phase": "release",
-      "cast": "focusMotes",
       "targetEvent": "damageDealt",
       "tags": [
         "heavy",
@@ -743,11 +1082,14 @@
     "profile": "bowPierceAttack",
     "plan": {
       "kind": "thrust",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": true,
       "at": "target",
       "ruleId": "physical-thrust",
       "phase": "release",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "pierce",
@@ -770,11 +1112,14 @@
     "profile": null,
     "plan": {
       "kind": "thrust",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": true,
       "at": "target",
       "ruleId": "physical-thrust",
       "phase": "release",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "pierce",
@@ -798,11 +1143,14 @@
     "profile": null,
     "plan": {
       "kind": "thrust",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-thrust",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "pierce",
@@ -824,11 +1172,14 @@
     "profile": null,
     "plan": {
       "kind": "starbolt",
+      "activation": "resourceLow",
+      "sizeScale": 1,
+      "cast": "focusMotes",
+      "impactKind": "impact",
       "projectile": true,
       "at": "target",
       "ruleId": "starstone-projectile",
       "phase": "release",
-      "cast": "focusMotes",
       "targetEvent": "damageDealt",
       "tags": [
         "ranged",
@@ -838,29 +1189,83 @@
     "owner": "any class",
     "cards": [
       "Starstone Pebble",
-      "Starstone Pebble+",
+      "Starstone Pebble+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:ranged",
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "thrust",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
+      "projectile": true,
+      "at": "target",
+      "ruleId": "starstone-projectile",
+      "phase": "release",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "ranged",
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
       "Comet Fragment",
       "Comet Fragment+",
-      "Star Shower",
-      "Star Shower+",
-      "Starlance",
-      "Starlance+",
       "Starstone Arc",
       "Starstone Arc+",
-      "Radiant Spray",
-      "Radiant Spray+",
       "Supernova",
       "Supernova+",
-      "Starfall Beam",
-      "Starfall Beam+",
       "Starcaller",
       "Starcaller+",
       "Shooting Shard",
       "Shooting Shard+",
-      "Celestial Lance",
-      "Celestial Lance+",
       "Star Spark",
       "Star Spark+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "fx:ranged",
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "thrust",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
+      "projectile": true,
+      "at": "target",
+      "ruleId": "starstone-projectile",
+      "phase": "release",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "ranged",
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Star Shower",
+      "Star Shower+",
+      "Starlance",
+      "Starlance+",
+      "Radiant Spray",
+      "Radiant Spray+",
+      "Starfall Beam",
+      "Starfall Beam+",
+      "Celestial Lance",
+      "Celestial Lance+"
     ]
   },
   {
@@ -870,12 +1275,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "ritual",
+      "kind": "heavyImpact",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "ritual-release",
       "phase": "impact",
-      "cast": "focusMotes",
       "targetEvent": "damageDealt",
       "tags": [
         "ritual"
@@ -885,14 +1293,10 @@
     "cards": [
       "Flagellation",
       "Flagellation+",
-      "Grave Offering",
-      "Grave Offering+",
       "Cull the Weak",
       "Cull the Weak+",
       "Exsanguinate",
       "Exsanguinate+",
-      "Blight Nova",
-      "Blight Nova+",
       "Pain Offering",
       "Pain Offering+",
       "Desperate Rite",
@@ -904,16 +1308,48 @@
   {
     "type": "attack",
     "tags": [
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "heavyImpact",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "ritual-release",
+      "phase": "impact",
+      "targetEvent": "damageDealt",
+      "tags": [
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Grave Offering",
+      "Grave Offering+",
+      "Blight Nova",
+      "Blight Nova+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
       "fx:starstone"
     ],
     "profile": "staffMagicAttack",
     "plan": {
       "kind": "heavyImpact",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-impact",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "starstone"
@@ -933,11 +1369,14 @@
     "profile": "unarmedAttack",
     "plan": {
       "kind": "heavyImpact",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "physical-impact",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "damageDealt",
       "tags": [
         "utility"
@@ -957,10 +1396,12 @@
     "profile": null,
     "plan": {
       "kind": "bloodAura",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "power-blood",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "blood"
@@ -981,10 +1422,12 @@
     "profile": null,
     "plan": {
       "kind": "sacredAura",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "power-oath",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "flourish",
@@ -1008,10 +1451,12 @@
     "profile": null,
     "plan": {
       "kind": "sacredAura",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "power-oath",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "guile",
@@ -1033,10 +1478,12 @@
     "profile": null,
     "plan": {
       "kind": "poisonAura",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "power-venom",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "oath",
@@ -1057,10 +1504,12 @@
     "profile": null,
     "plan": {
       "kind": "ritual",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "power-ritual",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "ritual"
@@ -1092,10 +1541,12 @@
     "profile": null,
     "plan": {
       "kind": "focusMotes",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "power-focus",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "starstone"
@@ -1127,10 +1578,12 @@
     "profile": null,
     "plan": {
       "kind": "focusMotes",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "power-focus",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "utility"
@@ -1159,10 +1612,12 @@
     "profile": null,
     "plan": {
       "kind": "barrier",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "barrier",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "arcane",
@@ -1189,10 +1644,12 @@
     "profile": null,
     "plan": {
       "kind": "arcaneWard",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "arcane-ward",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "arcane",
@@ -1219,10 +1676,12 @@
     "profile": "sceptreGuard",
     "plan": {
       "kind": "arcaneWard",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "arcane-ward",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "arcane",
@@ -1246,12 +1705,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "bind",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "binding",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "ash",
@@ -1274,10 +1736,13 @@
     "profile": null,
     "plan": {
       "kind": "dustStep",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "footwork",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "ash",
@@ -1300,12 +1765,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "ash",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "ash-application",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "ash",
@@ -1329,10 +1797,12 @@
     "profile": null,
     "plan": {
       "kind": "barrier",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "barrier",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "barrier",
@@ -1354,12 +1824,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "bind",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "binding",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "bind"
@@ -1380,12 +1853,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "bind",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "binding",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "bind",
@@ -1407,12 +1883,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "bind",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "binding",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "bind",
@@ -1433,12 +1912,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "bind",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "binding",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "bind",
@@ -1459,12 +1941,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "bloodSlash",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "blood-application",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "blade",
@@ -1486,10 +1971,13 @@
     "profile": "weaponTechnique",
     "plan": {
       "kind": "dustStep",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "footwork",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "blade",
@@ -1510,12 +1998,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "blight",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "blight-application",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "blight",
@@ -1527,7 +2018,34 @@
       "Contagion",
       "Contagion+",
       "Blight Bloom",
-      "Blight Bloom+",
+      "Blight Bloom+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:blight",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "steelGlint",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
+      "projectile": false,
+      "at": "target",
+      "ruleId": "blight-application",
+      "phase": "impact",
+      "targetEvent": "statusApplied",
+      "tags": [
+        "blight",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
       "Plague of Butterflies",
       "Plague of Butterflies+"
     ]
@@ -1539,12 +2057,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "bloodSlash",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "blood-application",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "blood"
@@ -1564,11 +2085,14 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "focusMotes",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "magic-utility",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "blood",
@@ -1590,10 +2114,12 @@
     "profile": null,
     "plan": {
       "kind": "ward",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "bulwark-guard",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "bulwark",
@@ -1616,10 +2142,12 @@
     "profile": null,
     "plan": {
       "kind": "ward",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "bulwark-guard",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "bulwark",
@@ -1641,10 +2169,12 @@
     "profile": null,
     "plan": {
       "kind": "dustStep",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "dodge",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "dodge"
@@ -1667,10 +2197,12 @@
     "profile": "unarmedTechnique",
     "plan": {
       "kind": "dustStep",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "dodge",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "dodge",
@@ -1691,10 +2223,13 @@
     "profile": null,
     "plan": {
       "kind": "dustStep",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "footwork",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "flourish"
@@ -1717,10 +2252,12 @@
     "profile": null,
     "plan": {
       "kind": "physicalGuard",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "physical-guard",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "flourish",
@@ -1742,10 +2279,13 @@
     "profile": null,
     "plan": {
       "kind": "dustStep",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "footwork",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "flourish",
@@ -1769,10 +2309,12 @@
     "profile": null,
     "plan": {
       "kind": "frostAura",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "frost-ward",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "frost",
@@ -1796,10 +2338,12 @@
     "profile": null,
     "plan": {
       "kind": "gorefire",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "gorefire-stance-cast",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "gorefire",
@@ -1820,10 +2364,12 @@
     "profile": null,
     "plan": {
       "kind": "physicalGuard",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "physical-guard",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "guard"
@@ -1861,10 +2407,12 @@
     "profile": "unarmedGuard",
     "plan": {
       "kind": "guardPulse",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "unarmed-guard",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "guard"
@@ -1884,10 +2432,12 @@
     "profile": "weaponGuard",
     "plan": {
       "kind": "parry",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "weapon-parry",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "guard"
@@ -1908,10 +2458,12 @@
     "profile": null,
     "plan": {
       "kind": "physicalGuard",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "physical-guard",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "guard",
@@ -1936,10 +2488,12 @@
     "profile": null,
     "plan": {
       "kind": "arcaneWard",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "arcane-guard",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "guard",
@@ -1966,10 +2520,12 @@
     "profile": null,
     "plan": {
       "kind": "magicGuard",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "magic-ward",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "guard",
@@ -1995,10 +2551,12 @@
     "profile": "staffGuard",
     "plan": {
       "kind": "magicGuard",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "magic-ward",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "guard",
@@ -2022,10 +2580,12 @@
     "profile": null,
     "plan": {
       "kind": "arcaneWard",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "arcane-guard",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "guard",
@@ -2049,10 +2609,12 @@
     "profile": "shieldGuard",
     "plan": {
       "kind": "physicalGuard",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "physical-guard",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "guard",
@@ -2074,10 +2636,12 @@
     "profile": null,
     "plan": {
       "kind": "magicGuard",
+      "cast": null,
+      "activation": "retained",
+      "sizeScale": 1,
       "projectile": false,
       "ruleId": "magic-guard",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "guard",
@@ -2098,10 +2662,13 @@
     "profile": null,
     "plan": {
       "kind": "dustStep",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "footwork",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "guile"
@@ -2126,11 +2693,14 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "cleanse",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "healing-cast",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "heal"
@@ -2152,10 +2722,13 @@
     "profile": null,
     "plan": {
       "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "quiet-utility",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "heal"
@@ -2176,10 +2749,13 @@
     "profile": null,
     "plan": {
       "kind": "cleanse",
+      "activation": "resourceLow",
+      "sizeScale": 1,
+      "cast": "focusMotes",
+      "impactKind": "impact",
       "projectile": false,
       "ruleId": "healing-cast",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "heal",
@@ -2189,13 +2765,65 @@
     "owner": "any class",
     "cards": [
       "Urgent Heal",
-      "Urgent Heal+",
+      "Urgent Heal+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:heal",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
+      "projectile": false,
+      "ruleId": "healing-cast",
+      "phase": "cast",
+      "targetEvent": "statusApplied",
+      "tags": [
+        "heal",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
       "Transfusion",
       "Transfusion+",
       "Reclamation",
       "Reclamation+",
+      "Second Bloom+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:heal",
+      "fx:ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "steelGlint",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
+      "projectile": false,
+      "ruleId": "healing-cast",
+      "phase": "cast",
+      "targetEvent": "statusApplied",
+      "tags": [
+        "heal",
+        "ritual"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
       "Second Bloom",
-      "Second Bloom+",
       "Last Rites",
       "Last Rites+"
     ]
@@ -2208,11 +2836,14 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "focusMotes",
+      "kind": "steelGlint",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
       "projectile": false,
       "ruleId": "magic-utility",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "oath",
@@ -2233,12 +2864,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "venom",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "at": "target",
       "ruleId": "venom-application",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "oath",
@@ -2260,10 +2894,13 @@
     "profile": "bowTechnique",
     "plan": {
       "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "weapon-utility",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "precision",
@@ -2284,12 +2921,15 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "venom",
+      "kind": "steelGlint",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
       "projectile": false,
       "at": "target",
       "ruleId": "venom-application",
       "phase": "impact",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "ranged",
@@ -2309,11 +2949,14 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "focusMotes",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "magic-utility",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "ritual"
@@ -2332,11 +2975,14 @@
     ],
     "profile": "staffTechnique",
     "plan": {
-      "kind": "focusMotes",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "magic-utility",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "ritual"
@@ -2355,11 +3001,14 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "focusMotes",
+      "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "magic-utility",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "starstone"
@@ -2373,8 +3022,6 @@
       "Twinkling+",
       "Lucidity",
       "Lucidity+",
-      "Time Dilation",
-      "Time Dilation+",
       "Star Path",
       "Star Path+"
     ]
@@ -2386,11 +3033,14 @@
     ],
     "profile": null,
     "plan": {
-      "kind": "focusMotes",
+      "kind": "steelGlint",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
       "projectile": false,
       "ruleId": "hostile-magic-cast",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "starstone"
@@ -2405,15 +3055,44 @@
   {
     "type": "skill",
     "tags": [
+      "fx:starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "steelGlint",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
+      "projectile": false,
+      "ruleId": "magic-utility",
+      "phase": "cast",
+      "targetEvent": "statusApplied",
+      "tags": [
+        "starstone"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Time Dilation",
+      "Time Dilation+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
       "fx:utility"
     ],
     "profile": null,
     "plan": {
       "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "quiet-utility",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "utility"
@@ -2430,9 +3109,7 @@
       "Transmute",
       "Transmute+",
       "Master of Strategy",
-      "Master of Strategy+",
-      "Oath of Ash",
-      "Oath of Ash+"
+      "Master of Strategy+"
     ]
   },
   {
@@ -2443,10 +3120,13 @@
     "profile": null,
     "plan": {
       "kind": "steelGlint",
+      "activation": "mundaneLow",
+      "sizeScale": 0.8,
+      "cast": null,
+      "impactKind": "steelGlint",
       "projectile": false,
       "ruleId": "hostile-utility-cast",
       "phase": "cast",
-      "cast": null,
       "targetEvent": "statusApplied",
       "tags": [
         "utility"
@@ -2460,6 +3140,32 @@
       "Hamstring+",
       "Enfeeble",
       "Enfeeble+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "fx:utility"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "steelGlint",
+      "activation": "mundaneHigh",
+      "sizeScale": 1.12,
+      "cast": null,
+      "impactKind": "heavyImpact",
+      "projectile": false,
+      "ruleId": "quiet-utility",
+      "phase": "cast",
+      "targetEvent": "statusApplied",
+      "tags": [
+        "utility"
+      ]
+    },
+    "owner": "any class",
+    "cards": [
+      "Oath of Ash",
+      "Oath of Ash+"
     ]
   }
 ]

@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser, resolveBrowser } from '../../tools/browser.mjs';
 const here=dirname(fileURLToPath(import.meta.url));
-const out=join(here,'inspection',process.argv.includes('--delivery')?'delivery':'');mkdirSync(out,{recursive:true});
+const out=join(here,'inspection',process.argv.includes('--costs')?'costs':process.argv.includes('--delivery')?'delivery':'');mkdirSync(out,{recursive:true});
 const browser=await launchBrowser({prefix:'animation-review-',browser:resolveBrowser(['C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe']),timeoutMs:20000});
 const ws=new WebSocket(browser.wsUrl), pending=new Map(),errors=[];let serial=0;
 ws.addEventListener('message',event=>{const msg=JSON.parse(event.data);if(msg.method==='Runtime.exceptionThrown')errors.push(msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text);if(msg.id){const pair=pending.get(msg.id);pending.delete(msg.id);msg.error?pair.reject(msg.error):pair.resolve(msg.result);}});
@@ -14,6 +14,22 @@ const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 try{
 const {targetId}=await send('Target.createTarget',{url:'about:blank'});const {sessionId}=await send('Target.attachToTarget',{targetId,flatten:true});const call=(m,p)=>send(m,p,sessionId);await call('Runtime.enable');await call('Page.enable');const ev=async expression=>{const r=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;};
 await call('Emulation.setDeviceMetricsOverride',{width:1180,height:900,deviceScaleFactor:1,mobile:false});await call('Page.navigate',{url:'http://127.0.0.1:4290/art/combat-effects-2026-09-07/index.html'});await wait(2000);
+const costVariants=await ev(`(async()=>{
+ const {combatEffectPlan}=await import('/src/model/combatEffects.js');
+ const {playCombatEffectPlan,clearCombatEffects}=await import('/src/ui/combatEffectSprites.js');
+ const layer=document.querySelector('#layer'),from={left:20,top:50,width:80,height:100},to={left:450,top:70,width:80,height:100};
+ const card={type:'attack',cost:1,manaCost:1,cardTags:['blood','blade'],effects:[{op:'damage',target:'enemy'}]},rows=[];
+ for(const [label,receipt,expected]of [['mundaneLow',{energySpent:1,manaSpent:0,staminaSpent:0},'slash'],['mundaneHigh',{energySpent:2,manaSpent:0,staminaSpent:0},'whirlwind'],['resourceLow',{energySpent:1,manaSpent:1,staminaSpent:0},'bloodSlash'],['resourceHigh',{energySpent:1,manaSpent:0,staminaSpent:2},'bloodSlash']]){
+  const plan=combatEffectPlan(card,receipt);playCombatEffectPlan(layer,from,plan,{targets:[to],duration:900,size:160});
+  const cast=!!layer.querySelector('[data-effect="focusMotes"]');await new Promise(r=>setTimeout(r,250));const sprite=layer.querySelector('[data-effect="'+expected+'"]');
+  if(!sprite||Math.abs(parseFloat(sprite.style.width)-160*plan.sizeScale)>.1||cast!==label.startsWith('resource'))throw Error('cost treatment '+label);
+  rows.push({activation:plan.activation,kind:plan.kind,size:parseFloat(sprite.style.width),cast});clearCombatEffects(layer);
+ }
+ const ranged=combatEffectPlan({type:'attack',cost:1,cardTags:['starstone','ranged'],effects:[{op:'damage',target:'enemy'}]});
+ playCombatEffectPlan(layer,from,ranged,{targets:[to],duration:160});await new Promise(r=>setTimeout(r,190));
+ if(!layer.querySelector('[data-effect="steelGlint"]')||layer.querySelector('[data-effect="impact"]'))throw Error('mundane ranged impact');clearCombatEffects(layer);
+ return rows;
+})()`);writeFileSync(join(out,'cost-variants.json'),JSON.stringify(costVariants,null,2));
 const result=await ev(`(async()=>{const {playCombatEffect,clearCombatEffects}=await import('/src/ui/combatEffectSprites.js');const {combatEffectFrames}=await import('/src/ui/assets.js');const layer=document.querySelector('#layer'),from={left:20,top:50,width:80,height:100},to={left:450,top:70,width:80,height:100};let decoded=0;const sleep=ms=>new Promise(r=>setTimeout(r,ms)),check=(v,m)=>{if(!v)throw Error(m)};for(const kind of Object.keys((await import('/src/content/combatEffectArt.js')).COMBAT_EFFECT_ART)){for(const src of combatEffectFrames(kind)){const img=new Image();img.src=src;await img.decode();decoded++;}playCombatEffect(layer,from,kind,{to:kind.endsWith('bolt')?to:null,duration:900});check(combatEffectFrames(kind).length===6,'six frames');await sleep(65);for(let frame=1;frame<=6;frame++){check(layer.firstChild?.dataset.frame===String(frame),kind+' phase '+frame);if(frame<6)await sleep(150);}clearCombatEffects(layer);await sleep(220);check(!layer.children.length,'cancel no impact');}document.body.classList.add('reduced-motion');playCombatEffect(layer,from,'ward');check(!layer.children.length,'reduced');document.body.classList.remove('reduced-motion');playCombatEffect(layer,from,'starbolt',{to,duration:150});await sleep(175);check(layer.firstChild?.dataset.effect==='impact','target impact');await sleep(220);check(!layer.children.length,'cleanup');playCombatEffect(layer,from,'slash',{delay:160});check(!layer.children.length,'melee waits for impact');clearCombatEffects(layer);await sleep(220);check(!layer.children.length,'delayed melee canceled');return {decoded,playback:'passed',cancellation:'passed',reducedMotion:'passed'};})()`);
 const directional=await ev(`(async()=>{
  const {playCombatEffect,clearCombatEffects}=await import('/src/ui/combatEffectSprites.js');
@@ -57,7 +73,7 @@ for(const direction of ['left','up']){
  await ev(`document.querySelector('#direction').value='${direction}';document.querySelector('#direction').dispatchEvent(new Event('change'));document.querySelector('[data-effect="starbolt"]').click()`);await wait(300);
  const shot=await call('Page.captureScreenshot',{format:'png'});writeFileSync(join(out,'direction-'+direction+'.png'),Buffer.from(shot.data,'base64'));
 }
-await ev(`document.querySelector('#card-style').value='bloodPact';document.querySelector('#card-style').dispatchEvent(new Event('change'))`);assert.ok((await ev(`document.querySelector('#status').textContent`)).includes('focus motes'));
+await ev(`document.querySelector('#card-style').value='bloodPact';document.querySelector('#card-style').dispatchEvent(new Event('change'))`);assert.ok((await ev(`document.querySelector('#status').textContent`)).includes('steel glint'));
 for(const kind of ['arcaneWard','barrier','frostAura','frostbite','staggerBreak']){await ev(`document.querySelector('[data-effect="${kind}"]').click()`);await wait(300);const art=await call('Page.captureScreenshot',{format:'png'});writeFileSync(join(out,kind+'-desktop.png'),Buffer.from(art.data,'base64'));}
 await ev(`document.querySelector('[data-effect="ward"]').click()`);await wait(300);const shot=await call('Page.captureScreenshot',{format:'png'});writeFileSync(join(out,'ward-desktop.png'),Buffer.from(shot.data,'base64'));
 await call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});assert.ok(await ev('document.documentElement.scrollWidth<=innerWidth'));const mobile=await call('Page.captureScreenshot',{format:'png'});writeFileSync(join(out,'effects-phone.png'),Buffer.from(mobile.data,'base64'));
@@ -72,7 +88,7 @@ const expansion=await ev(`(async()=>{
  }
  clearInterval(poll);return [...seen];
 })()`);
-for(const kind of ['shieldBash','parry','bind','guardPulse','dustStep','arcaneWard','magicGuard','barrier','riposte'])assert.ok(expansion.includes(kind),JSON.stringify(expansion));
+for(const kind of ['shieldBash','parry','steelGlint','guardPulse','dustStep','arcaneWard','magicGuard','barrier','riposte'])assert.ok(expansion.includes(kind),JSON.stringify(expansion));
 assert.deepEqual(errors,[]);writeFileSync(join(out,'expansion-gameplay.json'),JSON.stringify({expansion,errors},null,2));
 for(const [name,width,height,mobile] of [['integrated-game-desktop',1180,900,false],['integrated-game-phone',390,844,true]]){
  await call('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile});await wait(150);

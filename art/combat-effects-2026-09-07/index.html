@@ -18,7 +18,7 @@ function play(kind,plan,label=names[kind]){
  selected={kind,plan,label};clearCombatEffects(layer);layout();
  const direction=directionSelect.value,from=anchorLocalBox(layer,document.querySelector('#caster')),target=anchorLocalBox(layer,document.querySelector('#target'));
  if(plan.ruleId)playCombatEffectPlan(layer,from,plan,{targets:[target],duration:Number(document.querySelector('#speed').value),size:150});else playCombatEffect(layer,plan.at==='target'?target:from,kind,{to:plan.projectile?target:null,direction,duration:Number(document.querySelector('#speed').value),size:150});
- document.querySelector('#status').textContent=label+' · '+direction+(plan.ruleId?' · rule: '+plan.ruleId+' · '+(plan.cast?plan.cast+' → ':'')+plan.kind+(plan.projectile?' → impact':''):'');
+ document.querySelector('#status').textContent=label+' · '+direction+(plan.ruleId?' · '+plan.activation+' · size '+plan.sizeScale+'× · rule: '+plan.ruleId+' · '+(plan.cast?plan.cast+' → ':'')+plan.kind+(plan.projectile?' → impact':''):'');
  document.querySelector('#frames').replaceChildren(...combatEffectFrames(kind).map((src,i)=>{
   const image=new Image();image.src=src;image.alt=label+' '+direction+' frame '+(i+1);image.style.transform=combatEffectOrientation(direction);return image;
  }));

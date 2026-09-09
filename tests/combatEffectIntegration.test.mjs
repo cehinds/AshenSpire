@@ -10,6 +10,28 @@ import {COMBAT_EFFECT_RULES} from '../src/content/combatEffectRules.js';
 import {applyAttackDamage} from '../src/engine/actions.js';
 const reg=createRegistries(contentBundle);
 const plan=(id,profileId,upgraded=false)=>{const card=resolveCard(reg,{cardId:id,profileId,upgraded});return combatEffectPlan({...card,cardTags:combatEffectTags(reg,card)});};
+test('action-only magic motifs use mundane variants; paid activations retain fantastical effects',()=>{
+ const card={type:'attack',cost:1,manaCost:1,cardTags:['blood','blade'],effects:[{op:'damage',target:'enemy'}]};
+ const paid=combatEffectPlan(card,{energySpent:1,manaSpent:1,staminaSpent:0});
+ const free=combatEffectPlan(card,{energySpent:1,manaSpent:0,staminaSpent:0});
+ assert.equal(paid.kind,'bloodSlash');assert.equal(paid.cast,'focusMotes');
+ assert.equal(free.kind,'slash');assert.equal(free.cast,null);assert.equal(free.activation,'mundaneLow');
+ const heavy=combatEffectPlan({...card,cost:2,manaCost:0});
+ assert.equal(heavy.kind,'whirlwind');assert.ok(heavy.sizeScale>free.sizeScale);
+ const stamina=combatEffectPlan({...card,manaCost:0,staminaCost:2});
+ assert.equal(stamina.kind,'bloodSlash');assert.equal(stamina.activation,'resourceHigh');assert.ok(stamina.sizeScale>paid.sizeScale);
+ assert.equal(plan('crimsonCleave').kind,'whirlwind');
+ assert.equal(plan('disorient').kind,'steelGlint');
+});
+test('cost variants retain auras, defensive identities and actual X spending',()=>{
+ for(const id of ['crystalBarrier','starstoneWard','frostVeil','goreblood']){
+  const card=resolveCard(reg,{cardId:id}),tagged={...card,cardTags:combatEffectTags(reg,card)};
+  assert.deepEqual(combatEffectPlan(tagged,{energySpent:0,manaSpent:0,staminaSpent:0}),combatEffectPlan(tagged,{energySpent:3,manaSpent:3,staminaSpent:3}),id);
+ }
+ const x={type:'attack',cost:'X',cardTags:['blade'],effects:[{op:'damage',target:'enemy'}]};
+ assert.equal(combatEffectPlan(x,{energySpent:1}).activation,'mundaneLow');
+ assert.equal(combatEffectPlan(x,{energySpent:3}).activation,'mundaneHigh');
+});
 test('real co-op receipts retain the casting seat and a different friendly recipient',()=>{
  const host=createSession({registries:reg,seedString:'GUARD2'});
  for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});
@@ -18,6 +40,7 @@ test('real co-op receipts retain the casting seat and a different friendly recip
  p.piles.hand.push({instanceId:'fx-hit',cardId:'gorefireSlash',upgraded:false},{instanceId:'fx-ally',cardId:'rallyingBanner',upgraded:false},{instanceId:'fx-status',cardId:'ashOath',upgraded:false});
  host.snapshot();assert.ok(host.combatPlay('p2','fx-hit','e1').ok);
  const hit=host.snapshot().scene.events.map(combatEffectReceipt);
+ assert.equal(hit.find(e=>e.type==='cardPlayed').energySpent,1);
  assert.deepEqual(combatEffectTargetIds(plan('gorefireSlash'),hit,'p2'),['e1']);
  assert.deepEqual(combatEffectTargetIds(plan('gorefireSlash'),hit,'p1'),[]);
  assert.ok(host.combatPlay('p2','fx-ally','p1').ok);
