@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "Combat workshop cards inherit tags from their weapon or focus",
     "detail": "Show categorized attack tags and explain which equipment grants them. Weapon techniques use their selected weapon; spells use their own focus. Swaps refresh previews, and each played attack keeps its source through all hits. The new combat rules remain experimental and opt-in.",
-    "build": "0.6.0.66",
+    "build": "0.6.0.67",
     "pullRequest": 876,
     "url": "https://github.com/cehinds/AshenSpire/pull/876"
+  },
+  {
+    "id": "pr-882",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat effects follow the caster",
+    "detail": "Wrap softer weapon and shield effects behind and in front of each pose, and release projectiles from the hand or staff. Keep resource auras and target impacts. Add a saved, default-off played-card animation option and an outfit/layer preview.",
+    "build": "0.6.0.66",
+    "pullRequest": 882,
+    "url": "https://github.com/cehinds/AshenSpire/pull/882"
   },
   {
     "id": "pr-880",

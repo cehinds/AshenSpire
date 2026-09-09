@@ -244,6 +244,9 @@ const ROWS = [
     choices: ['left', 'center', 'right'], label: 'Phone Armaments location',
     note: 'Geometry only: place the radial at the lower left, lower center, or lower right on narrow screens.' },
 
+  { cat: 'Display', key: 'showPlayedCard', def: false, label: 'Show played card animation',
+    note: 'Show the played card flying toward its target. Off by default. Character animations, combat effects and auras still play.' },
+
   { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
     resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
   { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: 'Audio',
