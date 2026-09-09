@@ -14,6 +14,11 @@ export async function applyCardEffectRefresh(manifest){
  for(const {kind,file} of sources.sheets){
   const {data,info}=await sharp(path.join(root,refreshRoot,file)).ensureAlpha().raw().toBuffer({resolveWithObject:true});
   if(info.width%3||info.height%2||info.width/3!==info.height/2)throw Error(`${kind}: expected three by two square cells`);
+  const cell=info.width/3;
+  for(let frame=0;frame<6;frame++)for(const [x,y]of [[4,4],[cell-5,4],[4,cell-5],[cell-5,cell-5]]){
+   const at=((Math.floor(frame/3)*cell+y)*info.width+(frame%3)*cell+x)*4;
+   if(data[at]>60||data[at+1]<180||data[at+2]>60)throw Error(`${kind}: cell ${frame+1} has no clean green matte`);
+  }
   const pixels=Buffer.from(data);
   // Authored green matte, not a painted checkerboard. These four palettes have
   // no green. Unmix the key from antialiased edges before resizing to avoid halos.
@@ -23,7 +28,7 @@ export async function applyCardEffectRefresh(manifest){
    if(alpha===0){pixels.fill(0,i,i+4);continue;}
    pixels[i]=Math.min(255,r/coverage);pixels[i+1]=Math.min(255,(g-spill)/coverage);pixels[i+2]=Math.min(255,b/coverage);pixels[i+3]=Math.round(alpha*data[i+3]);
   }
-  const cell=info.width/3,sheet=await sharp(pixels,{raw:{...info,channels:4}}).png().toBuffer();
+  const sheet=await sharp(pixels,{raw:{width:info.width,height:info.height,channels:4}}).png().toBuffer();
   manifest[kind]=[];audit[kind]={cell,canvas:256,sharedScale:240/cell,frames:[]};
   for(let frame=0;frame<6;frame++){
    const reduced=await sharp(sheet).extract({left:(frame%3)*cell,top:Math.floor(frame/3)*cell,width:cell,height:cell}).resize(240,240).raw().toBuffer();
@@ -34,9 +39,9 @@ export async function applyCardEffectRefresh(manifest){
    await sharp({create:{width:256,height:256,channels:4,background:'#00000000'}}).composite([{input:image,left:8,top:8}]).webp({lossless:true}).toFile(path.join(root,file));
    const rgba=await sharp(path.join(root,file)).ensureAlpha().raw().toBuffer();
    let visible=0,border=0,green=0;for(let y=0;y<256;y++)for(let x=0;x<256;x++){
-    const at=(y*256+x)*4;if(rgba[at+3]>20){visible++;if(x<8||y<8||x>=248||y>=248)border++;if(rgba[at+1]>Math.max(rgba[at],rgba[at+2])+30)green++;}
+    const at=(y*256+x)*4;if(rgba[at+3]>20){visible++;if(x<16||y<16||x>=240||y>=240)border++;if(rgba[at+1]>Math.max(rgba[at],rgba[at+2])+30)green++;}
    }
-   if(!visible||border||green)throw Error(`${file}: invalid alpha or matte spill (${visible}/${border}/${green})`);
+   if(!visible||visible>256*256*.45||border||green)throw Error(`${file}: invalid alpha or matte spill (${visible}/${border}/${green})`);
    manifest[kind].push(file);audit[kind].frames.push({file,visiblePixels:visible,borderPixels:border,greenPixels:green});
   }
   console.log(`${kind}: six refined transparent frames`);

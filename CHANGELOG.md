@@ -32,6 +32,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-09
 
+- **Sharper card effect art** ([#872](https://github.com/cehinds/AshenSpire/pull/872), `0.6.0.55`). Refresh six-frame blade slashes, physical shield impacts, Starstone bolts and blood slashes in combat and Pose Studio. Keep existing card tags, resource variants and auras, and add an interactive before/after gallery.
+
+
 - **Combat controls stay in one row and maps show a cleaner HUD** ([#867](https://github.com/cehinds/AshenSpire/pull/867), `0.6.0.51`). Center Actions, Draw, End Turn, Discard/Exhaust and Potions together, with flexible pile widths. Hide the potion and relic strip on maps in both HUD modes while retaining combat inventory controls.
 - **Combat card text fits beneath clear cost badges** ([#862](https://github.com/cehinds/AshenSpire/pull/862), `0.6.0.48`). Scale card text consistently with the face, allow titles to wrap to two lines, and group action, mana and stamina costs above the title. Selection, Information, targeting and touch flicks keep their existing behavior.
 - **Pose Studio supports direct effect and timeline editing** ([#864](https://github.com/cehinds/AshenSpire/pull/864), `0.6.0.47`). Resize effects with visible handles, edit timeline cues directly and use accessible alternatives in the studio.
