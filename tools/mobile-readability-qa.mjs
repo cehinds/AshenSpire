@@ -62,7 +62,7 @@ try {
       await page.locator('.atlas-node').first().waitFor(); await page.waitForTimeout(600);
       assert.equal(await page.locator('.atlas-node:not(.map-node)').count(),0);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
-      await page.screenshot({path:resolve(out,`map-${profile}-${viewport.width}.png`),fullPage:true});
+      await page.screenshot({path:resolve(out,`map-${profile}-${viewport.width}.png`)});
       await page.locator('[data-atlas-inspect-current]').click();
       await page.locator('.atlas-dialog').waitFor();
       await page.screenshot({path:resolve(out,`location-${profile}-${viewport.width}.png`)});
