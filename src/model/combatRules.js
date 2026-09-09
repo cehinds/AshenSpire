@@ -1,4 +1,5 @@
 // Pure rules validation and arithmetic shared by execution and previews.
+import { attackDescriptor } from './attackTags.js';
 export function assertNumber(value, path, min = 0, max = Infinity) {
   if (!Number.isFinite(value) || value < min || value > max) throw new Error(`${path}: expected finite number in [${min}, ${max}]`);
 }
@@ -28,6 +29,9 @@ export function validateCombatRules(rules, registries = null) {
   if (!['play', 'target', 'hit'].includes(rules.triggers?.rollScope)) throw new Error('invalid trigger rollScope');
   assertNumber(rules.stacking?.cap, 'stacking.cap', 1);
   validateSource(rules.fallbackSource, rules);
+  for (const table of Object.values(rules.equipmentSources || {})) {
+    for (const [id, family] of Object.entries(table)) if (!(family in rules.impact.family)) throw new Error(`equipmentSources.${id}: unknown family '${family}'`);
+  }
   return rules;
 }
 
@@ -61,10 +65,14 @@ export function validateAttack(attack, rules = null) {
 
 export function validateSource(source, rules) {
   if (!source || typeof source.id !== 'string') throw new Error('attack source requires id');
+  if (source.sourceType !== undefined && !['weapon', 'spell', 'unarmed'].includes(source.sourceType)) throw new Error(`${source.id}: invalid sourceType`);
   assertNumber(source.weight, `${source.id}.weight`);
   if (!(source.family in rules.impact.family)) throw new Error(`${source.id}: unknown family '${source.family}'`);
   if (!(source.grip in rules.impact.grip)) throw new Error(`${source.id}: unknown grip '${source.grip}'`);
   if (!(source.damageType in rules.damageTypes)) throw new Error(`${source.id}: unknown damage type '${source.damageType}'`);
+  if (source.tags !== undefined && (!Array.isArray(source.tags) || source.tags.some((tag) => typeof tag !== 'string'))) throw new Error(`${source.id}: tags must be strings`);
+  try { attackDescriptor({ tags: source.tags || [], attack: { source: source.sourceType, damageType: source.damageType } }); }
+  catch (error) { throw new Error(`${source.id}: ${error.message}`); }
   for (const effect of source.buildup || []) {
     if (typeof effect.status !== 'string') throw new Error(`${source.id}: buildup requires status`);
     assertNumber(effect.amount, `${source.id}.buildup.amount`);

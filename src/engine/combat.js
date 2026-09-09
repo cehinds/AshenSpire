@@ -836,6 +836,14 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     if (!target) throw new Error('No living enemy to target');
   }
 
+  const cardRef = {
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
+    type: def.type, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    damageSchool: inst.damageSchool ?? def.damageSchool,
+    exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+  };
+  const sourceSnapshots = F.cardSourceSnapshots(combat, def, p, cardRef);
+
   // Pay cost (X-cost consumes ALL energy — SPEC §4.3).
   p.energy -= cost;
   if (cost > 0 || isX) combat.emit('energySpent', { amount: cost });
@@ -863,16 +871,9 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     p.counters.attacksPlayedThisCombat += 1;
     meta.attackOrdinal = p.counters.attacksPlayedThisCombat;
   }
-  const cardRef = {
-    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-    type: def.type, tags: def.cardTags, attack: def.attack, sourceHand: inst.sourceHand,
-    damageSchool: inst.damageSchool ?? def.damageSchool,
-    exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
-  };
-
   // Enqueue the card's own effects first, then announce the play — triggers
   // reacting to cardPlayed enqueue after the card's effects (FIFO).
-  for (const action of F.cardActions(combat, def, p, target, cardRef, meta)) combat.enqueue(action);
+  for (const action of F.cardActions(combat, def, p, target, cardRef, meta, sourceSnapshots)) combat.enqueue(action);
   combat.emit('cardPlayed', {
     cardInstanceId: inst.instanceId,
     cardId: inst.cardId,
@@ -984,7 +985,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
     card: {
       instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-      type: def.type, tags: def.cardTags, attack: def.attack, sourceHand: inst.sourceHand,
+      type: def.type, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
       damageSchool: inst.damageSchool ?? def.damageSchool,
       exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
     },
@@ -1003,8 +1004,16 @@ export function previewCard(combat, cardInstanceId, targetId) {
     const primary = firstResolvedTarget(combat, action, eff);
     switch (eff.op) {
       case 'damage': {
-        const attackTags = A.attackTagsFor(action, eff, combat.registries);
-        const carrier = combat.foundation && eff.attack ? { ...action.card, attack: eff.attack } : action.card;
+        let attackTags = A.attackTagsFor(action, eff, combat.registries);
+        const carrier = combat.foundation ? F.foundationCarrier(combat, p, action.card, eff.attack) : action.card;
+        if (combat.foundation) {
+          entry.sourceInstanceId = carrier.resolvedSource.id;
+          entry.sourceName = carrier.resolvedSource.name || combat.registries.equipment.armaments.find((piece) => piece.id === carrier.resolvedSource.itemId)?.name || 'Attack source';
+          entry.tags = carrier.tags;
+          entry.inheritedTags = carrier.tags.filter((tag) => !attackTags.includes(tag));
+          entry.sourceBuildup = structuredClone(carrier.resolvedSource.buildup || []);
+          attackTags = carrier.tags;
+        }
         const base = evalPreview(combat, action, eff.amount, primary);
         entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags, carrier);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);

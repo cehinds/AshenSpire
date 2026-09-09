@@ -293,7 +293,10 @@ export function cardEquipmentCompatibility(registries, { cardId, classId, pieceI
   if (card.class === classId) return { ok: true, reason: 'class', cardId, pieceId };
   const tagging = (equipment.cardTagging || []).find((row) => row.cardId === cardId);
   const cardTags = (tagging && tagging.tags) || [];
-  const sharedTags = cardTags.filter((tag) => (piece.tags || []).includes(tag));
+  // Source/damage categories describe execution, not permission to inherit a
+  // different class's card. Preserve the existing card-school compatibility.
+  const schoolTags = new Set((registries.tags || []).filter((tag) => tag.domain === 'card').map((tag) => tag.id));
+  const sharedTags = cardTags.filter((tag) => schoolTags.has(tag) && (piece.tags || []).includes(tag));
   if (sharedTags.length) return { ok: true, reason: 'tag', sharedTags, cardId, pieceId };
   return { ok: false, reason: 'noMatch', sharedTags: [], cardId, pieceId };
 }
