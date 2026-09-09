@@ -576,3 +576,9 @@ armament at 1280x1000 and 390x844, capture every card and grouped gallery screen
 and verify keyboard tooltips, full details, filtering and read-only merchant
 inspection. Uses `tools/browser.mjs`; set `CHROME` when automatic discovery does
 not locate your Chromium browser. `--shots` is optional for test-only runs.
+
+### Mobile card interaction checks
+
+Combat cards select before committing. A selected card retains its fan position and reveals above its siblings. Confirm using the shared hold duration/progress, a double-tap after selection, or a valid target tap/drop. A single extra tap does not play. Empty-field taps and Escape cancel; invalid/cancelled drags spend nothing. Test both a self skill and an enemy attack, including switching selection, at 320x568, 375x667 and desktop sizes.
+
+Phone checks must include browser bars expanded/collapsed, full detail titles, and equipment explanations. Chromium mobile emulation cannot certify iPhone Safari fullscreen or audio. Unsupported fullscreen should explain Safari Share → Add to Home Screen. Volume sliders adjust game mix; device volume remains under the player's control.

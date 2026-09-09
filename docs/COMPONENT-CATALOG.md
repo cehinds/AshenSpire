@@ -1,10 +1,38 @@
 # AshenSpire component catalog
 
+Touch flick controls: Accessibility offers Touch flick to play and a 32–160 CSS-pixel
+distance setting (64 default), synchronized numeric field/slider, Reset, and a
+harmless practice surface. `TouchFlickModel.js` resolves distance, recent speed and
+nearest-target ties; `flickPractice.js` shares that recognition with the combat
+hand. The existing selected card and separate Information button remain unchanged.
+See [card removal and touch flick validation](qa/card-removal-touch-flick.md).
+
 This is the quick-reference library for the reusable UI vocabulary. The visual
 catalog is available at [`component-catalog.html`](./component-catalog.html).
 Select any component card there to open its detail drawer. The dedicated
 [`tray-gallery.html`](./tray-gallery.html) shows all eight top/right/bottom/left
 folded and unfolded Tray states using the production renderer.
+
+The [Pose & Effects Studio](../art/pose-studio/index.html) provides a reusable
+animation-authoring workspace: effect library, anchored stage, five-to-seven
+pose strip, layered cue timeline, selection inspector, binding rule builder,
+and relationship view. Its stage and library provide live visual miniatures
+of all 80 effect sets. The shared `presentationSequence` model owns project
+validation and matching; the optional gameplay adapter preserves existing FX.
+See [launch, package and integration instructions](../pose-studio/README.md).
+The authoring flow uses template starts, immediate effect previews, a direct
+card connection action, progressive disclosure for precise controls, and native
+tool dialogs at narrow widths. The dialogs reuse the same library/inspector DOM
+and return keyboard focus on close. `pose-studio/tests/usability.mjs` covers this
+workflow at desktop and phone sizes; no game presentation rules are replaced.
+
+The [combat sprite catalog](../art/combat-effects-2026-09-07/sprite-catalog.html)
+shows all 56 six-frame sets. `combatEffectPlan` resolves presentation tag
+combinations; `playCombatEffectPlan` renders the shared solo/co-op cast and
+target sequence. `combatEffectForEvent` owns status and defensive reactions.
+These transient overlays use the existing FX layer and introduce no new HUD
+component IDs. The adjacent card preview names the matched rule and equipment
+profile; the catalog provides visual miniatures for every exported set.
 
 Use the catalog's **Grid / List** switch to choose card tiles or a compact
 vertical list. In Grid view, use the **− / reset / +** controls, Ctrl/Command +
@@ -92,7 +120,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Player combatant card. |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
-| `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` | Combat cards | Rendered player or enemy figure. |
+| `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` + `paintedOutfits.js` | Solo and co-op combat cards | Rendered player or enemy figure. Player rest resolves stance, readiness, guard, then idle through `combatPose.js`; Prepared, Starstone Charge and Blood Rite have authored outfit poses, intermediate entry/exit sprites, subtle breathing glows, and fades that survive combat redraws. Reduced motion uses a steady glow. [Interactive miniature](../art/readiness-poses/preview.html). |
 | `combatant-nameplate` | `combatantFrame` child | `combatantFrame.js` | Combat cards | Combatant name label. |
 | `intent-indicator` | semantic component | `combat.js` + `uiContent.js` | Enemy cards | Telegraphed enemy action and amount. |
 | `block-badge` | semantic component | `combat.js` | Combat cards | Current Guard/Block over the sprite. |
@@ -511,3 +539,10 @@ merchant armament offers and buy/sell inspection, reward armament inspection, an
 
 Item cards: equipmentCard.js owns the uniformly scaled poker canvas. collectibleCard.js composes authored potion/relic effects into that frame for Inventory, merchant shelves, and potion reward inspection. Listing tracks are fixed at 280px; reveals span the grid. Delegated hold feedback paints above card art and inspection gestures reach the existing hold owner. Full-text disclosure remains independent of equip gestures.
 Playing cards: card.renderCard now adds playing-poker-card. The brown-and-gold inset frame, art well and subdued type band match equipment cards. Combat dimensions, resource badges, live values, tag fitting and selected/unaffordable states retain their existing contracts. Validation: tools/card-feedback.mjs covers desktop/phone input and reduced motion; --shots also records the initial hand.
+Combat sizing: fitFan hands now keep card faces between 150 and 180 viewport pixels, uniformly scaling the complete 178px canvas. Body text remains at least approximately 15px at the minimum. BattlefieldStage grows sprites into available space and grounds their stacks near the hand, preserving HUD/intent clearance. Three-enemy phone fields fit without horizontal scrolling; four or more may scroll. Short-height battles scroll vertically instead of shrinking below readable card sizes.
+
+Mobile combat art: at widths up to 640px, figures render at 90% of their fitted size (157.5px reference minimum instead of 175px). Neighboring enemy artwork may overlap slightly; names, meters and intents retain their existing layout and size.
+
+Combat card actions: selection reveals a circular Information button centered above the highlighted card. The information modal places the card beside readable details and exposes a green Play card action, or a disabled gray action with a visible reason. Stationary holds show shared progress and use the card on completion; early release cancels, and targeted cards enter the existing targeting flow. The floating information button replaces hold-to-zoom inspection for the solo combat hand.
+
+Selected combat cards preview legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes retain transparent backgrounds so glow follows artwork rather than its rectangular canvas.

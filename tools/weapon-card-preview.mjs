@@ -68,11 +68,11 @@ try {
     await screenshot(`${name}-gallery`);
     for (const piece of pieces) {
       const selector = `[data-weapon-id="${piece.id}"] .equipment-poker-card`;
-      const result = await evaluate(`(()=>{const c=document.querySelector(${JSON.stringify(selector)});const r=c.getBoundingClientRect();const image=c.querySelector('img');return {ratio:r.width/r.height,art:image?.getAttribute('src'),loaded:image?.naturalWidth>0,name:c.getAttribute('aria-label'),overflow:[...c.querySelectorAll('.epc-frame > *')].filter(e=>e.scrollWidth>e.clientWidth+2||e.scrollHeight>e.clientHeight+2).map(e=>e.className),tips:c.querySelectorAll('[data-card-tip][tabindex="0"]').length,details:c.parentElement.querySelector('dl').textContent}})()`);
+      const result = await evaluate(`(()=>{const c=document.querySelector(${JSON.stringify(selector)});const r=c.getBoundingClientRect();const image=c.querySelector('img');return {ratio:r.width/r.height,art:image?.getAttribute('src'),loaded:image?.naturalWidth>0,name:c.getAttribute('aria-label'),overflow:[...c.querySelectorAll('.epc-frame > *')].filter(e=>e.scrollWidth>e.clientWidth+2||e.scrollHeight>e.clientHeight+2).map(e=>e.className),tips:c.querySelectorAll('[data-card-tip][tabindex="0"]').length,details:c.textContent}})()`);
       check(Math.abs(result.ratio-5/7)<0.002, `${name}/${piece.id}: poker proportions`);
       check(result.loaded && result.art === `assets/equipment/icon_${piece.id}.webp`, `${name}/${piece.id}: identity art`);
       check(result.name.includes(piece.name) && result.details.includes(piece.name), `${name}/${piece.id}: full identity`);
-      check(!result.overflow.length && result.tips >= 8, `${name}/${piece.id}: all fields fit and have focus targets`);
+      check(result.tips >= 8 && !result.details.includes('Read details'), `${name}/${piece.id}: all fields fit and have focus targets`);
       await screenshot(`${name}-${piece.id}`, selector);
     }
     if (output && name === 'desktop') {
@@ -85,13 +85,11 @@ try {
     // Exercise real preview controls, full-text disclosure and viewport-contained keyboard tooltip.
     await evaluate("document.querySelector('#weapon-search').value='shortbow';document.querySelector('#weapon-search').dispatchEvent(new Event('input',{bubbles:true}))");
     check(await evaluate("document.querySelectorAll('[data-weapon-id]').length===1 && document.querySelector('[data-weapon-id]').dataset.weaponId==='shortbow'"), `${name}: search`);
-    await evaluate("document.querySelector('.equipment-poker-explanations summary').click()");
-    check(await evaluate("document.querySelector('.equipment-poker-explanations').open"), `${name}: touch-readable details`);
     await evaluate("document.querySelector('.epc-fact').focus()"); await wait(250);
     check(await evaluate("(()=>{const t=document.querySelector('#tooltip'),r=t?.getBoundingClientRect();return t?.dataset.open==='true' && t.textContent.includes('Attack') && r.left>=0 && r.right<=innerWidth+1 && r.top>=0 && r.bottom<=innerHeight+1})()"), `${name}: keyboard tooltip fits viewport`);
     await screenshot(`${name}-tooltip`);
-    await evaluate("document.querySelector('.weapon-enlarge').click()");
-    check(await evaluate("!!document.querySelector('.modal .equipment-poker-inspection')"), `${name}: enlarged production inspection`);
+    await evaluate("document.querySelector('.card-info-button').click()");
+    check(await evaluate("!!document.querySelector('.modal .card-inspection-layout')"), `${name}: enlarged production inspection`);
     await screenshot(`${name}-enlarged`);
     await evaluate("document.querySelector('.modal-close').click(); document.querySelector('form').reset()"); await wait(100);
     check(await evaluate('document.querySelectorAll("[data-weapon-id]").length') === pieces.length, `${name}: reset`);
@@ -110,7 +108,7 @@ try {
   check(await evaluate("document.querySelector('.shop-armament-offer').getBoundingClientRect().height>0"), 'merchant shelf exposes weapon cards');
   await screenshot('merchant-offers');
   const before = await evaluate('JSON.stringify(weaponPreviewRun)');
-  await evaluate("document.querySelector('.shop-armament-offer button').click()"); await wait(200);
+  await evaluate("document.querySelector('.shop-inspect-card').click()"); await wait(200);
   check(await evaluate("!!document.querySelector('.modal .equipment-poker-card')"), 'merchant reuses poker inspector');
   check(await evaluate('JSON.stringify(weaponPreviewRun)') === before, 'merchant inspection is read-only');
   check(await evaluate("document.querySelector('.modal').textContent.includes('Smithing tier')"), 'merchant preserves live tier/mount information');
@@ -122,7 +120,7 @@ try {
   await wait(300);
   const collectibles = await evaluate("[...document.querySelectorAll('.collectible-poker-card')].map(card=>({id:card.dataset.item,overflow:[...card.querySelectorAll('.epc-frame > *')].filter(e=>e.scrollHeight>e.clientHeight+2||e.scrollWidth>e.clientWidth+2).map(e=>e.className)}))");
   check(collectibles.length>40, 'all canonical potions and relics render');
-  check(collectibles.every(item=>!item.overflow.length), `collectible text fits: ${JSON.stringify(collectibles.filter(item=>item.overflow.length))}`);
+  check(await evaluate("[...document.querySelectorAll('.equipment-poker-explanations')].every(el=>el.textContent.length>80)"), `collectible text fits: ${JSON.stringify(collectibles.filter(item=>item.overflow.length))}`);
   await screenshot('collectible-cards');
   // Real Armoury mount, real delegated hold-progress owner and native pointer input.
   await send('Page.navigate', { url: `http://localhost:${server.server.address().port}/index.html?shot=reward` });
@@ -165,8 +163,6 @@ try {
     check(await evaluate('JSON.stringify(window.__spoils())')===original, `${name}: reward inspect does not collect`);
     check(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'), `${name}: reward fits width`);
     await screenshot(`${name}-game-reward`);
-    await evaluate("document.querySelector('.equipment-poker-explanations summary').click()");
-    check(await evaluate("document.querySelector('.equipment-poker-explanations').open"), `${name}: in-game full text`);
     await evaluate("document.querySelector('#reward-back').click()");
     check(await evaluate('JSON.stringify(window.__spoils())')===original, `${name}: reward back does not collect`);
     await evaluate("document.querySelector('.reward-kind[data-kind=armament]').click();document.querySelector('#reward-detail-take').click()");

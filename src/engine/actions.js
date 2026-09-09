@@ -28,7 +28,7 @@ import { evaluate, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
-import { isEquipmentComposedInstance } from '../model/loadout.js';
+import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
 import { flaskSlotCap, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
@@ -135,10 +135,12 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   const hpLoss = dmg - blocked;
   if (hpLoss > 0) target.hp -= hpLoss;
   ctx.emit('damageDealt', {
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {}),
     sourceId: source ? source.id : null,
     targetId: target.id,
     amount: dmg,
     blocked,
+    blockRemaining: target.block,
     isAttack: true,
   });
   if (hpLoss > 0) {
@@ -203,7 +205,7 @@ export function gainBlock(ctx, entity, base) {
     amt = Math.max(0, cap - entity.block);
   }
   entity.block += amt;
-  ctx.emit('blockGained', { targetId: entity.id, amount: amt });
+  ctx.emit('blockGained', { targetId: entity.id, amount: amt, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
   return amt;
 }
 
@@ -499,6 +501,7 @@ function runOpcode(ctx, action, eff) {
       const stance = playerWeightClass(ctx);
       const receipt = ctx.registries.framework.dodgeRoll({ roll, dexterity, weightClass: stance.weightClass });
       ctx.emit('dodgeRolled', {
+        ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(p) } : {}),
         sourceId: p.id, roll, check: receipt.check, difficulty: receipt.difficulty,
         success: receipt.success, temporaryGuard: receipt.temporaryGuard, weightClass: stance.weightClass.id,
       });
@@ -598,7 +601,7 @@ function runOpcode(ctx, action, eff) {
         ctx.emit('stanceExited', { stance: ctx.player.stanceId });
       }
       ctx.player.stanceId = stanceId;
-      ctx.emit('stanceEntered', { stance: stanceId });
+      ctx.emit('stanceEntered', { stance: stanceId, playerId: ctx.playerKey || ctx.player.id });
       for (const onEnter of def.onEnter || []) {
         ctx.enqueue({ effect: onEnter, source: ctx.player, owner: ctx.player, target: action.target, meta: action.meta });
       }
@@ -643,18 +646,14 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'removeCardFromDeck': {
-      // Equipment-COMPOSED instances are not candidates: the next authoritative
-      // reconcile recreates them under the same deterministic id, so a removal
-      // here could never persist. That was already the rule for package outputs
-      // (grantedBy); it holds identically for a generated attack slot, which
-      // this opcode used to remove and the next restamp used to re-mint.
+      // Run-owned basics retire their slot; item grants remain equipment-owned.
       let idx = -1;
-      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && !isEquipmentComposedInstance(c));
+      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && canRemoveDeckCard(c));
       else if (eff.random) {
-        const candidates = run.deck.map((c, i) => i).filter((i) => !isEquipmentComposedInstance(run.deck[i]));
+        const candidates = run.deck.map((c, i) => i).filter((i) => canRemoveDeckCard(run.deck[i]));
         idx = candidates.length ? candidates[Math.floor(ctx.rng.float('misc') * candidates.length)] : -1;
       }
-      if (idx >= 0) run.deck.splice(idx, 1);
+      if (idx >= 0) removeDeckCard(run, run.deck[idx].instanceId);
       break;
     }
     case 'upgradeCard': {

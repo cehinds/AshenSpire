@@ -31,5 +31,10 @@ export const tagDomains = [
     "id": "grantSource",
     "label": "Grant source",
     "blurb": "Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these — the `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry."
+  },
+  {
+    "id": "presentation",
+    "label": "Combat presentation",
+    "blurb": "Sprite selection only; never damage or resistance identity."
   }
 ];

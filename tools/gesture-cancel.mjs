@@ -99,10 +99,10 @@ if (process.argv.includes('--selftest')) {
         // ABOVE the cancelled-return eats exactly one tap — on the very
         // gesture the fix exists to make safe. Swapping the two lines back is
         // that known-bad, entering where it originally shipped.
-        name: 'F3 returns: suppressClick arms above the cancelled-return and eats the next tap',
+        name: 'F3 returns: a cancelled card cannot receive its next tap',
         file: 'src/ui/screens/combat.js',
-        find: "          if (cancelled) return;\n          suppressClick = true;",
-        replace: "          suppressClick = true; // planted: armed above the cancelled-return (the F3 shape)\n          if (cancelled) return;",
+        find: "          if (cancelled) return;",
+        replace: "          if (cancelled) { selected = null; selfArm = null; syncCardSelection(); el.style.pointerEvents = 'none'; return; } // planted: cancelled card cannot receive its next tap",
         expectRed: /FAIL F3: ONE tap after a cancel selects the card/,
       },
     ],

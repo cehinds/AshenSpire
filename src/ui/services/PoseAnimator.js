@@ -178,7 +178,7 @@ export function registerStage(hostEl, stage) {
 export function stageFor(anchorEl) {
   if (!anchorEl) return null;
   if (anchorEl[STAGE_KEY]) return anchorEl[STAGE_KEY];
-  const below = anchorEl.querySelector?.('.class-sprite.animated, .pose-stage');
+  const below = anchorEl.querySelector?.('.class-sprite.animated, .pose-stage, .enemy-pose-stage');
   if (below?.[STAGE_KEY]) return below[STAGE_KEY];
   for (let el = anchorEl.parentElement; el; el = el.parentElement) {
     if (el[STAGE_KEY]) return el[STAGE_KEY];

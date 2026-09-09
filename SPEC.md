@@ -340,7 +340,14 @@ the loadout, and refuses nothing.
 smaller deck; more, a larger one. There is no re-minting of base cards mid-run and no
 attempt to hold a total. What DOES hold mid-run is the attack count: a swap re-skins the
 attack slots the run was born with (`equipmentAttackSlotCount`, recorded at creation and
-read, never re-derived), so equipment never changes how many attacks you hold.
+read, never re-derived), minus permanently removed slots. `removedAttackSlotIds`
+records unique stable `attack:N` ids from that birth allocation; absent means none.
+Merchant and event removal may remove run-owned basic attacks, including their
+current weapon-derived faces. Removal retires that slot for the run without
+renumbering survivors. Equipment swaps, combat setup, save/load and mid-combat
+restamping use the same surviving slot plan and never restore a removed copy.
+Item-owned grants remain ineligible for permanent deck removal. The merchant
+revalidates the selected instance, funds and nonempty-deck guard before charging.
 
 **Every card has an owner: the run, or one item.** Run-owned cards are the run's for good —
 the base strikes and defends (gear only re-skins them), the class signature, global grants,
@@ -1225,7 +1232,24 @@ keeps the same state and focus contract without meaningful animation.
 
 ### 7.3 Input
 
-- **Both** targeting modes: (a) drag card onto a target/board, (b) click card → targeting arrow → click target. Esc/right-click cancels. Non-targeted cards: drag anywhere above the hand or click-then-click the board.
+- **Card selection and information stay separate from play.** Preserve the current
+  focused card, selection glow, revealed information button and legal-target
+  highlights. Information opens details without playing. Existing tap, hold,
+  keyboard, controller and direct-target drag confirmation remain available.
+- **Touch flick to play.** An upward or upward-diagonal single-touch flick from a
+  playable hand card can play on release without reaching a combatant. A profile
+  setting enables it (default on); Touch flick distance accepts 32–160 CSS pixels
+  (default 64), with synchronized slider, numeric entry, reset and a harmless
+  practice area. This distance is net upward displacement in viewport CSS pixels,
+  independent of artwork/UI scale and of the existing 12-pixel drag-start slop.
+  Flick recognition also requires upward-dominant movement and at least 300 CSS
+  pixels/second recent upward velocity, authored separately from the player setting.
+  The preview selects the nearest legal target to the finger; release uses that
+  same resolver and revalidates playability. Self cards select the player and
+  all-enemy cards select their legal group. Equal-distance ties are deterministic.
+  Returning below threshold, downward release, an information-button gesture,
+  pointer cancellation, capture loss, blur or a blocking modal cannot flick-play.
+  No qualifying gesture can commit twice. Disabling flicks preserves direct drops.
 - Full playability with mouse only. Keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
 - **Controls rebind capture owns its armed keydown.** `rebind-capture-service`
   ignores lone modifiers. Escape cancels an armed keyboard capture, restores the
@@ -1449,3 +1473,10 @@ inspection also use that component; prices, smithing tiers, mounted cards and
 transaction rules remain live receipts outside the base-value card (#799).
 
 Item card presentation: weapon, potion and relic inventory faces share a 5:7 canvas. Standard listing cards use a 280px track (20% smaller than 350px), arranged in a responsive grid with no last-row stretching. Hold progress overlays the face; the existing hold duration and commit/cancel rules are unchanged. Potion and relic cards display authored effects, with full-text inspection.
+Combat presentation: the solo hand uses a 150–180 viewport-pixel card width range, preserving its 5:7 aspect ratio. More cards overlap or scroll rather than becoming smaller. Combatants expand within their available cells and stand close to the hand without overlapping its cards or the HUD. Three enemies fit without horizontal scrolling; four or more may scroll. Short-height combat may scroll vertically to preserve readable element sizes. Inspection must not play a card.
+
+Mobile combat art: at widths up to 640px, figures render at 90% of their fitted size (157.5px reference minimum instead of 175px). Neighboring enemy artwork may overlap slightly; names, meters and intents retain their existing layout and size.
+
+Combat card actions: selection reveals a circular Information button centered above the highlighted card. The information modal places the card beside readable details and exposes a green Play card action, or a disabled gray action with a visible reason. Stationary holds show shared progress and use the card on completion; early release cancels, and targeted cards enter the existing targeting flow. The floating information button replaces hold-to-zoom inspection for the solo combat hand.
+
+Selected combat cards preview legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes retain transparent backgrounds so glow follows artwork rather than its rectangular canvas.

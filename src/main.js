@@ -474,7 +474,10 @@ function resolveLayout(uiScale, vw, vh) {
 }
 
 function applyUiScale(settings) {
-  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale);
+  const viewport = window.visualViewport;
+  const visibleHeight = viewport && viewport.scale === 1 ? viewport.height : window.innerHeight;
+  document.documentElement.style.setProperty('--visible-height', visibleHeight + 'px');
+  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale, window.innerWidth, visibleHeight);
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
@@ -569,6 +572,10 @@ function reflexAutoScale() {
 }
 if (typeof window !== 'undefined') {
   window.addEventListener('resize', () => {
+    clearTimeout(uiResizeTimer);
+    uiResizeTimer = setTimeout(reflexAutoScale, 150);
+  });
+  window.visualViewport?.addEventListener('resize', () => {
     clearTimeout(uiResizeTimer);
     uiResizeTimer = setTimeout(reflexAutoScale, 150);
   });
@@ -1569,7 +1576,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   const enc = registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount }) : createCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds }) : createCombat({
     registries,
     rng,
     player: {
@@ -1586,6 +1593,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       equipmentAttackSlotCount: run.equipmentAttackSlotCount,
+      removedAttackSlotIds: run.removedAttackSlotIds,
       equipmentPoolDeficits: run.equipmentPoolDeficits,
       itemUpgradeLevels: run.itemUpgradeLevels,
       itemMounts: run.itemMounts,
@@ -1671,6 +1679,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     registries,
     run,
     combat,
+    readSettings: () => activeSettings,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
     meta: activeMeta,
@@ -2251,7 +2260,8 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // Read through `shotParams`, the single const declared beside pickStorage() —
   // NOT a fresh location.search read, which the note up there forbids, for the
   // reason it gives: that const IS the gate's reach.
-  newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
+  const shotClass = shotParams.get('shotClass');
+  newRun({ classId: registries.classes.all().some(c => c.id === shotClass) ? shotClass : 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
   // ---- THE POOL REACH DOORS, AT ONE SITE FOR EVERY SCREEN THAT DRAWS A HUD ---
   //
   // `?shotMaxHp` / `?shotMaxMana` / `?shotMaxStamina` / `?shotMana` — STAND AT A

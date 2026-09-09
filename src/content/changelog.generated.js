@@ -3,6 +3,136 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-847",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Compose poses and effects in a visual studio",
+    "detail": "Drag effects onto pose cues, adjust anchors and layered tracks, test card/tag/payment bindings, and save portable projects. Preview optional authored sequences in combat while preserving existing effects and auras. Add 24 six-frame sets for movement, contact, casting, defense and status feedback.",
+    "build": "0.6.0.33",
+    "pullRequest": 847,
+    "url": "https://github.com/cehinds/AshenSpire/pull/847"
+  },
+  {
+    "id": "pr-852",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Readiness poses ease in and out",
+    "detail": "Prepared, Starstone Charge and Herald Blood Rite use softer breathing glows and authored intermediate sprites for all twelve outfits. Entry, exit and action return crossfade smoothly; combat redraws preserve their timing, while reduced-motion and still-sprite modes resolve immediately.",
+    "build": "0.6.0.28",
+    "pullRequest": 852,
+    "url": "https://github.com/cehinds/AshenSpire/pull/852"
+  },
+  {
+    "id": "pr-849",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Readiness pose delivery appears in About",
+    "detail": "Record the original readiness-pose delivery and refresh the in-game changelog.",
+    "build": "0.6.0.26",
+    "pullRequest": 849,
+    "url": "https://github.com/cehinds/AshenSpire/pull/849"
+  },
+  {
+    "id": "pr-846",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Readiness poses show when the next move is primed",
+    "detail": "Prepared, Starstone Charge and Herald Blood Rite have authored poses across twelve outfits, persistent glows, and correct return behavior after actions. Solo and co-op preserve status ownership and keep extended figures within narrow combat screens.",
+    "build": "0.6.0.24",
+    "pullRequest": 846,
+    "url": "https://github.com/cehinds/AshenSpire/pull/846"
+  },
+  {
+    "id": "pr-841",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat animation changes appear in the in-game changelog",
+    "detail": "Record the combat effects and enemy animation deliveries at their original build numbers and refresh the changelog shown in About.",
+    "build": "0.6.0.21",
+    "pullRequest": 841,
+    "url": "https://github.com/cehinds/AshenSpire/pull/841"
+  },
+  {
+    "id": "pr-835",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat effects follow the card and its payment",
+    "detail": "Play 56 six-frame effect sets for attacks, projectiles, guards, wards, barriers, stances and status reactions in solo and co-op. Low-action moves use subtle mundane effects; larger action payments use stronger mundane effects, while mana or stamina spending enables fantastical variants. Preserve character auras and honor Reduce flashes.",
+    "build": "0.6.0.20",
+    "pullRequest": 835,
+    "url": "https://github.com/cehinds/AshenSpire/pull/835"
+  },
+  {
+    "id": "pr-833",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combatants show hurt, guard and defeat",
+    "detail": "Painted enemies show hurt, guarded and buff poses, including co-op actions and guarded impacts. Direct damage and status bursts show hurt feedback, and defeated player artwork stays within narrow combat screens.",
+    "build": "0.6.0.15",
+    "pullRequest": 833,
+    "url": "https://github.com/cehinds/AshenSpire/pull/833"
+  },
+  {
+    "id": "pr-822",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Smaller combatants on mobile",
+    "detail": "Combatant artwork is 10% smaller on mobile, with slight enemy artwork overlap allowed. Selected cards reveal a circular information button above the face. The cleaner inspection modal offers Play card when available and explains disabled actions. Holding a combat card fills it to use instead of zooming in; releasing early cancels. Selecting a card immediately lights its valid living targets with an artwork-shaped glow.",
+    "build": "0.6.0.13",
+    "pullRequest": 822,
+    "url": "https://github.com/cehinds/AshenSpire/pull/822"
+  },
+  {
+    "id": "pr-830",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Card holds visibly fill before playing",
+    "detail": "Show a gold striped progress bar above the card face using the existing hold timer; clear it immediately on release or cancellation. Preserve the selection and targeting behavior already shipped by #822.",
+    "build": "0.6.0.14",
+    "pullRequest": 830,
+    "url": "https://github.com/cehinds/AshenSpire/pull/830"
+  },
+  {
+    "id": "pr-819",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Mobile cards select before playing, and detail names stay readable",
+    "detail": "Keep the selected card in its fan position; confirm with the shared hold, a double-tap after selection, or a valid target tap/drop. Preserve the drag grip and cancel invalid drops. Show item-specific creation details and full modal titles, center title ornaments, track the visible viewport, and recover interrupted audio without restarting music on volume changes.",
+    "build": "0.6.0.9",
+    "pullRequest": 819,
+    "url": "https://github.com/cehinds/AshenSpire/pull/819"
+  },
+  {
+    "id": "pr-809",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Card-driven information and starting equipment selection",
+    "detail": "Weapon faces retain their 5:7 shape with a 60:40 artwork-to-information split. Smaller cards sit beside complete readable details; touch and keyboard information access stays separate from buying, equipping, upgrading and playing. Starting Equipment previews selected details and commits the loadout only through Choose.",
+    "build": "0.5.5.137",
+    "pullRequest": 809,
+    "url": "https://github.com/cehinds/AshenSpire/pull/809"
+  },
+  {
+    "id": "pr-811",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Compact encounters without horizontal scrollbars",
+    "detail": "Up to three enemies fit beside the player in tighter columns. Hands of up to seven cards overlap to fit the viewport while retaining readable 150–180px faces and hold-to-inspect behavior.",
+    "build": "0.5.5.134",
+    "pullRequest": 811,
+    "url": "https://github.com/cehinds/AshenSpire/pull/811"
+  },
+  {
+    "id": "pr-808",
+    "date": "2026-09-07",
+    "group": "2026-09-07",
+    "summary": "Readable cards and larger combatants",
+    "detail": "Playing cards stay between 150 and 180 viewport pixels wide with readable body text. Sprites grow into available battlefield space and stand closer to the hand while preserving HUD and intent clearance. Crowded phone battlefields scroll sideways and short screens scroll vertically. Holding a card still opens inspection without playing it.",
+    "build": "0.5.5.131",
+    "pullRequest": 808,
+    "url": "https://github.com/cehinds/AshenSpire/pull/808"
+  },
+  {
     "id": "pr-806",
     "date": "2026-09-07",
     "group": "2026-09-07",

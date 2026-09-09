@@ -85,6 +85,7 @@ export function createCombat({
     // Carried from the run so a mid-combat swap can restamp against the quota
     // the run was BORN with. Absent for a headless fixture with no run behind
     // it, which is the one case a replan is the right answer.
+    removedAttackSlotIds: structuredClone(player.removedAttackSlotIds || []),
     equipmentAttackSlotCount: Number.isFinite(player.equipmentAttackSlotCount)
       ? player.equipmentAttackSlotCount
       : undefined,
@@ -658,6 +659,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     // pile stamp replans from the CURRENT loadout — and the pile holding the
     // slot the replan dropped throws mid-swap.
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
+    removedAttackSlotIds: combat.removedAttackSlotIds,
     itemMounts: combat.itemMounts,
   };
   // Pile stamps are subset calls, so granted/weaponArt instances reconcile
@@ -761,6 +763,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     itemUpgradeLevels: combat.itemUpgradeLevels,
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
+    removedAttackSlotIds: combat.removedAttackSlotIds,
     itemMounts: combat.itemMounts,
   };
   reconcileGrantedCardsInCombat(combat.registries, run, combat.piles);

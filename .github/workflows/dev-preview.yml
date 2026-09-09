@@ -65,6 +65,11 @@ jobs:
       # both are pure reads, no execution and no browser, well under a second,
       # on the runner this job already pays for. The 3-OS matrix in ci.yml stays
       # dispatch-only; nothing here re-enables it or spends a Windows minute.
+      - name: Current builds use the 0.6.x.x release series
+        run: node tools/release-series.mjs
+      - name: Release series gate rejects older and malformed versions
+        run: node tools/release-series.mjs --selftest
+
       - name: The shipped artifact is this source, and the number on it is ours
         run: node tools/buildversion.mjs --check
 
@@ -86,12 +91,29 @@ jobs:
       - name: Every named import in the tree resolves against a real export
         run: node tools/linkcheck.mjs --check
 
+      - name: Combat effect tags, outcomes, and character outlines
+        run: node --test tests/combatEffects.test.mjs tests/combatEffectIntegration.test.mjs tests/combatAnimation.test.mjs tests/combatAura.test.mjs tests/combatPose.test.mjs
+
+      - name: Pose studio project schema and event bindings
+        run: node --test pose-studio/tests/model.test.mjs
+
       - name: Collect the playable build
         run: |
           set -euo pipefail
           mkdir -p preview
+          node tools/readiness-preview-build.mjs preview
+          mkdir -p preview/art/readiness-poses
+          cp -r art/readiness-poses/inspection preview/art/readiness-poses/inspection
           cp AshenSpire.html preview/AshenSpire.html
-          cp index.html preview/index.html
+          cp AshenSpire.html preview/index.html
+          mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
+          cp -r src preview/src
+          cp -r pose-studio preview/pose-studio
+          cp -r assets/pose-effects preview/assets/
+          cp -r art/pose-studio preview/art/
+          cp -r assets/combat-effects assets/painted-outfits preview/assets/
+          cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html preview/art/combat-effects-2026-09-07/
+          cp -r art/combat-effects-2026-09-07/inspection preview/art/combat-effects-2026-09-07/inspection
           {
             echo "AshenSpire dev preview"
             echo "commit:   ${GITHUB_SHA}"
@@ -99,6 +121,12 @@ jobs:
             echo "built:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo
             echo "Open AshenSpire.html locally to play this exact commit."
+            echo "Run node pose-studio/server.mjs for the standalone editor at http://127.0.0.1:4318."
+            echo "Open Combat-pose-preview.html for the offline readiness outfit gallery."
+            echo "Open art/combat-effects-2026-09-07/sprite-catalog.html for all 56 six-frame sets."
+            echo "For the interactive card preview, serve this folder over HTTP and open"
+            echo "art/combat-effects-2026-09-07/index.html?integrated=1."
+            echo "Card/tag assignments and screenshots are in the same art folder."
             echo
             echo "This is an inspection artifact, not a deployment. Pages serves main;"
             echo "dev has no hosted URL."
@@ -213,3 +241,12 @@ jobs:
       # reachable when a usable region of it is hittable, rather than only its
       # centre pixel — at which point it belongs here, because the #720 card
       # overlap it found is real and the fan is not the whole of it.
+
+      - name: Capture the pose studio on desktop and phone
+        run: node tools/pose-studio-capture.mjs --out "${{ runner.temp }}/pose-studio-evidence"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pose-studio-screenshots
+          path: ${{ runner.temp }}/pose-studio-evidence/
+          retention-days: 14

@@ -1,3 +1,5 @@
+import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
+import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
 // Rules: every animation ≤300 ms; queued events play ≤80 ms apart; a click
@@ -423,15 +425,24 @@ function shake(combatEl) {
 }
 
 // Add a short-lived CSS class (restarting its animation if already present).
+const flashTimers = new WeakMap();
 function flash(el, cls, ms = 300) {
   if (!el) return;
   // Photosensitivity: suppress bright impact/proc flashes when asked. Damage
   // numbers and HUD updates (which carry the actual info) are unaffected.
   if (document.body.classList.contains('reduce-flashes')) return;
+  const timers = flashTimers.get(el) || new Map();
+  flashTimers.set(el, timers);
+  clearTimeout(timers.get(cls));
+  if (cls === 'hitflash') {
+    clearTimeout(timers.get('hit-heavy')); timers.delete('hit-heavy');
+    el.classList.remove('hit-heavy');
+    el.style.setProperty('--hurt-duration', `${ms}ms`);
+  }
   el.classList.remove(cls);
   void el.offsetWidth;
   el.classList.add(cls);
-  setTimeout(() => el.classList.remove(cls), ms);
+  timers.set(cls, setTimeout(() => { el.classList.remove(cls); timers.delete(cls); }, ms));
 }
 
 // Radial flare over an anchor (stance entries, big procs).
@@ -586,6 +597,7 @@ export function playTimeline(events, ctx, done) {
   const skip = () => {
     if (finished) return;
     flushed = true;
+    clearCombatEffects(ctx.layer);
     cancelActorAnimation();
     clearTimeout(pendingTimer);
     // Finish after this pointer is released. Re-rendering under pointerdown
@@ -603,6 +615,7 @@ export function playTimeline(events, ctx, done) {
   const finish = () => {
     if (finished) return;
     finished = true;
+    clearCombatEffects(ctx.layer);
     clearTimeout(pendingTimer);
     clearSkipRelease();
     cancelActorAnimation();
@@ -736,6 +749,16 @@ export function playTimeline(events, ctx, done) {
 }
 
 function visualFor(e, beatKind) {
+  const base=baseVisualFor(e,beatKind),effect=combatEffectForEvent(e);
+  if(!effect)return base;
+  return ctx=>{
+    base?.(ctx);
+    const anchor=ctx.anchorFor(effect.targetId);
+    if(anchor)playCombatEffect(ctx.layer,anchorLocalBox(ctx.layer,anchor),effect.kind,{size:190});
+  };
+}
+
+function baseVisualFor(e, beatKind) {
   switch (e.type) {
     case 'dodgeRolled':
       // The following blockGained event owns the numeric gain.
@@ -749,6 +772,7 @@ function visualFor(e, beatKind) {
         const anchor = ctx.anchorFor(e.targetId);
         const paired = !!(parts.guard && parts.damage);
         if (parts.guard) {
+          if (!parts.damage && anchor?.closest('.enemy')) playPoseOn(anchor, 'guardHit', 220);
           sfx.play('block');
           spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
           floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
@@ -784,16 +808,23 @@ function visualFor(e, beatKind) {
       if (typeof e.cause === 'string' && e.cause.startsWith('proc:')) {
         return (ctx) => {
           const info = ctx.statusInfo && ctx.statusInfo(e.cause.slice(5));
+          const anchor = ctx.anchorFor(e.targetId);
+          if (e.amount > 0) { playPoseOn(anchor, 'hit', 300); flash(anchor, 'hitflash', 300); }
           floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} -${e.amount}`, 'burst', info && info.tint);
         };
       }
       return e.cause === 'effect'
-        ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, 'burst')
+        ? (ctx) => {
+            const anchor = ctx.anchorFor(e.targetId);
+            if (e.amount > 0) { playPoseOn(anchor, 'hit', 300); flash(anchor, 'hitflash', 300); }
+            floatNum(ctx.layer, anchor, `-${e.amount}`, 'burst');
+          }
         : null; // attack damage already shown by damageDealt
     case 'healed':
       return e.amount > 0
         ? (ctx) => {
             sfx.play('heal');
+            const anchor=ctx.anchorFor(e.targetId);if(anchor)playCombatEffect(ctx.layer,anchorLocalBox(ctx.layer,anchor),'heal');
             floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
           }
         : null;
@@ -844,13 +875,11 @@ function visualFor(e, beatKind) {
         sfx.play('enemyDeath');
         const anchor = ctx.anchorFor(e.targetId);
         floatNum(ctx.layer, anchor, '✝', 'dmg heavy');
-        if (anchor) anchor.classList.add('crumble');
+        if (anchor) { anchor.classList.remove('hitflash', 'hit-heavy'); playPoseOn(anchor, 'defeated'); }
       };
     case 'stanceEntered':
       return (ctx) => {
         sfx.play('stance');
-        const color = e.stance === 'bulwark' ? 'rgba(127,168,201,.55)' : 'rgba(201,80,46,.55)';
-        flare(ctx.layer, ctx.anchorFor('player'), color);
       };
     case 'relicTriggered':
       return (ctx) => {
