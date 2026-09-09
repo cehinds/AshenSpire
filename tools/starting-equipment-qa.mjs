@@ -49,6 +49,14 @@ try {
     }
     await open(page);
     const main=page.locator('[data-equipment-section=rightHand]');
+    const layout=await main.evaluate(el=>{
+      const list=el.querySelector('.cc-card-selectors'), detail=el.querySelector('.cc-equipment-details'), next=el.querySelector('.cc-equipment-continue');
+      const a=list.getBoundingClientRect(), b=detail.getBoundingClientRect(), c=next.getBoundingClientRect();
+      return {columns:getComputedStyle(list).gridTemplateColumns.split(' ').length, left:a.left, right:a.right, bottom:a.bottom, detailLeft:b.left, detailTop:b.top, actionBottom:c.bottom, actionRight:c.right};
+    });
+    check(layout.columns===2,`${name}: equipment choices remain two columns`);
+    check(name==='phone' ? layout.detailTop>=layout.bottom : layout.detailLeft>=layout.right,`${name}: details use the expected stacked or side-by-side layout`);
+    if(name!=='phone')check(Math.abs(layout.actionBottom-layout.bottom)<2&&layout.actionRight>layout.right,`${name}: Continue sits at the bottom-right beside the choices`);
     const sword=main.locator('[data-armament-id=straightSword] .equipment-poker-card');
     await sword.evaluate(el=>el.dataset.retained='yes');
     await chooseItem(main.locator('[data-armament-id=greatsword]'));

@@ -2,13 +2,17 @@
 
 Open [the playable review page](../../../equipment-selection-preview.html) through the local server. It uses the production creation screen and disposable `shot` state. The class switcher covers Reaver, Starseer, Rogue and Herald; view controls constrain the frame to desktop, tablet or phone widths.
 
-Final standalone build: **0.6.0.70**, source digest `ea28e31c88`. The branch includes dev `802065b3`; the latest integration changed only the automatic architecture document after the combat-effect update was incorporated.
+Final standalone build: **0.6.0.72**, source digest `adad7547c1`. The branch includes dev `4e1882a5`, including the latest combat-tag source changes.
 
-## Latest visual follow-up
+## Reference layout
 
-Only the focused equipment candidate exposes Choose/Selected and Information. Action space stays reserved to avoid moving rows while browsing. Choice gaps are 32/12 px (previously 64/24); starting-card gaps are also halved. Responsive columns make room for more choices. Title strips now grow vertically with their font, fixing the cut-off Empty Hand and weapon names.
+[Complete tablet section](reference-layout-tablet.png) · [Desktop section](reference-layout-1440.png) · [Phone details](reference-layout-phone.png). The latest layout follows the owner reference: larger cards in two left-hand columns, details and starting cards on the right, Continue at bottom-right. Empty Hand and focused-only actions remain available. Only layout CSS changed in this follow-up; the complete Node/model suite below passed at the preceding dev integration, and the 870-case browser sweep plus build checks were rerun for this layout.
 
-Keyboard selection and complete Empty Hand text were checked at 320, 390, 1024 and 1440 px. The 862-check browser sweep covers all hand choices, focused action visibility and title containment. The rebuilt 0.6.0.70 standalone also passed these focused checks. The full Node/model suite reported below passed before this CSS-only follow-up; build identity and receipt checks were rerun.
+## Interaction and spacing
+
+Only the focused equipment candidate exposes Choose/Selected and Information. Action space stays reserved to avoid moving rows while browsing. Choice gaps are 32/12 px (previously 64/24); starting-card gaps are also halved. Larger choices stay in two columns beside the details and starting-card preview. Continue aligns with the bottom-right of the choice list; phones stack these areas. Title strips now grow vertically with their font, fixing the cut-off Empty Hand and weapon names.
+
+Keyboard selection and complete Empty Hand text were checked at 320, 390, 1024 and 1440 px. The 870-check browser sweep covers all hand choices, focused action visibility and title containment. The rebuilt 0.6.0.72 standalone passed focused selection, two-column layout, Continue alignment and phone stacking checks. After integrating current dev, the full Node suite and all 112 hand/loadout comparisons passed again, followed by version, shipped-alias, receipt and About checks. Final standalone smoke checks passed for all four classes at desktop, tablet and phone widths (12 cases, zero page errors).
 
 ## Changes
 
@@ -21,7 +25,7 @@ Keyboard selection and complete Empty Hand text were checked at 320, 390, 1024 a
 
 ## Evidence
 
-**862 browser checks passed with zero page errors.** [Machine-readable results](qa-results.json).
+**870 browser checks passed with zero page errors.** [Machine-readable results](qa-results.json).
 
 The browser sweep covers every displayed hand choice for all four classes at 1440×1000, 1024×1000 and 390×844: selected state, matching details, containment, empty hands, hand transfers, persistent nodes, lift/scale, explicit progression, keyboard Information, complete flavor text, and both reduced-motion modes. An additional 320×700 emulated-touch check confirmed both empty hands and a contained card grid.
 
@@ -29,7 +33,7 @@ The browser sweep covers every displayed hand choice for all four classes at 144
 
 The full repository suite passed **138 tests**, plus **25 card/flick regression checks** and the 112 new preview cases. Build-version, shipped-alias identity, receipts, About/changelog and whitespace checks passed. Source and standalone About routes were checked. A rebuilt standalone also started a real disposable run with both hands empty and no page errors.
 
-Final keyboard review found that the inspection focus loop skipped the native Flavor summary. Giving it an explicit focus entry fixed Tab traversal; Enter now opens the full wording. This change was checked in both source and standalone, then the complete browser sweep was rerun with the Tab regression assertion: 862 checks passed. The final archive layout was also served independently: Empty Hand, Continue, class switching and phone width worked with zero page errors.
+Final keyboard review found that the inspection focus loop skipped the native Flavor summary. Giving it an explicit focus entry fixed Tab traversal; Enter now opens the full wording. This change was checked in both source and standalone, then the complete browser sweep was rerun with the Tab regression assertion: 870 checks passed. The final archive layout was also served independently: Empty Hand, Continue, class switching and phone width worked with zero page errors.
 
 The four-card screenshots add a fourth representative card only to measure grid capacity. The unmodified unarmed loadout has three distinct card types; this fixture does not change game content or quantities. Desktop/mobile tests use Edge; touch is emulated, not a physical-device test. Existing 500 ms tooltip timing is reused unchanged.
 
