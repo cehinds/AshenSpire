@@ -853,18 +853,29 @@ async function assertShape(shape, textSize) {
   const settings = encodeURIComponent(JSON.stringify({ textSize }));
   const p = await page({ query: `?shot=startup&shotInput=keyboard&shotSettings=${settings}`, width: shape.w, height: shape.h, mobile: shape.w <= 390 });
   await p.until(`!!document.querySelector('.startup-gate')`, `${shape.tag} Text ${textSize}`);
-  const fact = await p.ev(`(() => { const e=document.querySelector('.startup-gate'); const r=e.getBoundingClientRect();
+  const measure = `(() => { const e=document.querySelector('.startup-gate'); const r=e.getBoundingClientRect();
     const critical=[document.querySelector('.startup-wordmark'),document.querySelector('.startup-prompt'),document.querySelector('[data-place="startup"]')].filter(Boolean);
     const boxes=critical.map(x=>{let b=x.getBoundingClientRect();let name=x.className||x.dataset.place;
-      if(x.matches('.startup-wordmark')){const range=document.createRange();range.selectNodeContents(x);b=range.getBoundingClientRect();name+=' text';}
+      if(x.matches('.startup-wordmark')){const range=document.createRange();range.selectNodeContents(x);const advance=range.getBoundingClientRect();
+        // Range includes the trailing letter-spacing after the last glyph.
+        // Measure the text span without that empty advance, matching the kit's
+        // tracking compensation rather than treating it as a centering error.
+        const trailing=parseFloat(getComputedStyle(x).letterSpacing)||0;
+        b={left:advance.left,top:advance.top,right:advance.right-trailing,bottom:advance.bottom};name+=' text';}
       return [name,Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]});
     const centerDeltas=boxes.map(([name,left,,right])=>[name,Math.round((((left+right)/2)-(innerWidth/2))*100)/100]);
     const centered=centerDeltas.every(([,delta])=>Math.abs(delta)<=1);
     const outside=boxes.some(([,l,t,right,bottom])=>l < -1 || t < -1 || right > innerWidth+1 || bottom > innerHeight+1);
-    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, centered, centerDeltas, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes, upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`);
+    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, centered, centerDeltas, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes, upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`;
+  const fact = await p.ev(measure);
   const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, p.sessionId);
   const expectedFont = textSize === 'M' ? '10px' : '12px';
   verdict(fact.font === expectedFont && !fact.overflow && fact.centered && !fact.upright && shot.data.length > 5000, 'A11.RESPONSIVE-SHAPE', `${shape.tag} Text ${textSize}: font=${fact.font}, box=${fact.box.join('x')}, criticalOutside=${fact.overflow}, centered=${fact.centered}, centerDeltas=${JSON.stringify(fact.centerDeltas)}, documentWidth=${fact.documentWidth}, upright=${fact.upright}, capture=${shot.data.length}b64 chars, critical=${JSON.stringify(fact.boxes)}`);
+  if (shape.w === 2550 && textSize === 'XL') {
+    await p.ev(`document.querySelector('.startup-wordmark').style.setProperty('transform','none','important')`);
+    const uncentered = await p.ev(measure);
+    verdict(!uncentered.centered, 'A11.CENTERING-DETECTOR', `removing tracking compensation is detected: ${JSON.stringify(uncentered.centerDeltas)}`);
+  }
   await p.close();
 }
 
