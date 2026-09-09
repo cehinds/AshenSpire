@@ -4,6 +4,7 @@
 // RNG, queues, buffers, and runtime methods stay outside persisted data; this
 // service validates the versioned model and reconnects those dependencies.
 
+import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
 
@@ -15,6 +16,7 @@ export function serializeCombatSnapshot(combat) {
   }
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.foundation ? { foundation: combat.foundation } : {}),
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
@@ -56,9 +58,11 @@ export function serializeCombatSnapshot(combat) {
 export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds }) {
   assertCombatSnapshot(snapshot);
   const saved = structuredClone(snapshot);
+  if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
     registries,
     rng,
+    foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
     equipmentAttackSlotCount: Number.isFinite(saved.equipmentAttackSlotCount)
@@ -93,6 +97,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     _emitDepth: saved.emitDepth,
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
+  combat._emitEvent = emitEvent;
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
   return combat;
