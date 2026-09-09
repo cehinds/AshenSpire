@@ -1,0 +1,284 @@
+{
+  "reaver": {
+    "key": "trans-reaver",
+    "file": "exec-3712dd57-71c8-4652-830f-69815ea99f64.png",
+    "pivots": [
+      [
+        260,
+        420
+      ],
+      [
+        688,
+        423
+      ],
+      [
+        1040,
+        434
+      ],
+      [
+        1380,
+        421
+      ],
+      [
+        236,
+        896
+      ],
+      [
+        602,
+        912
+      ],
+      [
+        999,
+        912
+      ]
+    ],
+    "cuts": [
+      [
+        0,
+        384,
+        768,
+        1152,
+        1536
+      ],
+      [
+        0,
+        384,
+        794,
+        1152,
+        1536
+      ]
+    ],
+    "prompt": "Generate a NEW coherent SEVEN-FRAME ATTACK ANIMATION SPRITE SHEET using the supplied combined silhouette keyframe sheet as anatomical, weapon and style reference. Output exact FOUR COLUMNS by TWO ROWS, seven figures occupying cells1–7 and cell8 EMPTY. Same black featureless humanoid with thin light-gray outlines; same rigid black weapon shapes as reference, already held in hands, flat solid charcoal #303030 background. No dots/anchors, no labels, no text, no grid borders, no effects. Every cell has exactly same camera, body scale, head size, weapon dimensions, floor at 88 percent of cell height, generous margins for weapons. Whole figures and entire weapons fit cells. Feet carry weight naturally without sliding. EXACT NEW FRAME SEQUENCE: 1 GUARD (reference guard); 2 WINDUP (specified reference key); 3 NEW TRANSITION INTO CONTACT, halfway in body joint rotation and weapon arc between windup and strike, NOT another duplicate of windup or contact; 4 CONTACT (specified attack key); 5 NEW TRANSITION OUT OF CONTACT, continuing the same weapon arc and hip/foot weight transfer toward follow-through; 6 FOLLOW-THROUGH (reference attack4 adapted to finish the same arc); 7 NEW RECOVERY BRIDGE, bringing hands and feet most of the way toward frame1 guard so the loop closes naturally. Exactly 3 clearly distinct authored bridge poses at frames3,5,7, and 4 readable key poses at1,2,4,6. Not seven unrelated poses. Exclude hurt reactions and upright menu idle. Same two arms/two hands/two legs in EVERY figure; hands remain attached to wrists and their own equipment, fingers wrap grips. Blade, handle and pommel on ONE straight axis, no bending or disconnected blade. For long weapons maintain constant length. Movement fights screen RIGHT. Keep underlying character and weapon as one complete combined drawing. Only add transition poses that physically connect neighboring keyframes.\nReaver TWO-HANDED GREATSWORD: source guard is cell1, overhead windup sourcecell3, down-right strike sourcecell4. NEW frame2 has sword high behind head pointing UP-LEFT. NEW frame3 blade crosses above/front of head, blade points UP-RIGHT while elbows extend forward and hips begin dropping. Frame4 strong down-right strike through target; frame5 continues toward lower right, knees absorb swing; frame6 low forward finish, blade must NOT suddenly reverse upward; frame7 pulls sword back and starts lifting to guard. BOTH hands continuously grip the SAME hilt, never swap main/support hand. Smooth clockwise downstroke viewed from camera.",
+    "source": "masters/reaver.png",
+    "recoveryEdit": {
+      "previousFile": "exec-a82ff055-e398-4f68-b89b-3d54795478a5.png",
+      "prompt": "Edit ONLY bottom-row THIRD figure (frame7). This must be a sword recovery bridge halfway between bottom-row middle's low sword finish and top-left's guard. Retain both hands together gripping hilt and all body proportions. Sword points RIGHT at 15 degrees above horizontal, not steeply up; hands around lower chest, torso slightly forward, knees flexed. Tip is to the right, rigid straight blade same length as every other frame. Keep every other figure and existing4x2layout unchanged,7figures8thcellblank, no text or markers. Black featureless humanoid pale contours charcoalbackground."
+    }
+  },
+  "rogue": {
+    "key": "transition-rogue",
+    "file": "exec-250f6fa4-9adb-4e2e-bdb7-60f24cd1e027.png",
+    "order": [
+      0,
+      1,
+      2,
+      3,
+      5,
+      4,
+      6
+    ],
+    "pivots": [
+      [
+        302,
+        455
+      ],
+      [
+        685,
+        455
+      ],
+      [
+        1035,
+        455
+      ],
+      [
+        1416,
+        455
+      ],
+      [
+        244,
+        921
+      ],
+      [
+        649,
+        934
+      ],
+      [
+        1066,
+        937
+      ]
+    ],
+    "cuts": [
+      [
+        0,
+        384,
+        768,
+        1152,
+        1536
+      ],
+      [
+        0,
+        406,
+        794,
+        1152,
+        1536
+      ]
+    ],
+    "prompt": "Create a coherent seven-frame animation sprite sheet using this FOUR-POSE reference guide. The four input poses from left to right are guard, windup, contact, follow-through (ignore printed labels). Output exactly FOUR equal columns and TWO equal rows; seven full-body figures in reading order, eighth cell completely empty. No text, labels, grid, anchor points or effects. Flat charcoal #303030 background. Featureless solid black humanoid with thin pale outlines separating limbs, hands, legs and weapons. Weapon is physically part of each complete reference silhouette, held naturally. Preserve the reference weapon type and character shape.\nOutput frames: 1 guard; 2 windup; 3 NEW intermediate between windup and contact; 4 contact; 5 NEW intermediate between contact and follow-through; 6 follow-through; 7 NEW recovery toward the first guard. Three genuine bridge drawings. This is one continuous action moving RIGHT, never a hurt reaction or backwards fall. Exactly two arms, two hands, two legs. Same body size, head size and rigid weapon length in every frame. Feet aligned on the same floor at 87% of each cell, stable stance, smooth changes in knees and hips. Keep every weapon and extremity INSIDE its cell with at least 10% margin, use smaller consistent figures if necessary. Connect hands to wrists and grips; straight weapons do not bend. Frame7 must naturally lead into frame1.\nTwo short daggers. Coil, cross the daggers through the target to the right, uncoil low forward into follow-through, then rise into guard. Never lean backward as if hit. Follow-through is forward crouch with arms opening.",
+    "source": "masters/rogue.png",
+    "recoveryEdit": {
+      "previousFile": "exec-4a83c4d2-6146-460e-be9e-3717051f37f9.png",
+      "prompt": "Edit this sprite sheet ONLY bottom-row THIRD figure (frame7). It is a recovery bridge, not guard. Keep its feet planted where they are. Bend knees and lean torso forward about 30 degrees, halfway up from the low crouch in bottom-row first figure toward the upright guard top-left. Head must be lower than top-left guard head. Draw both daggers being brought inward toward chest, elbows bent, wrists midway between the wide low attack finish and guard. Exactly two hands, two daggers, two arms and two legs. Retain original body size and all other figures unchanged. No new figures, same4x2sheet sevenposes lastcellblank. Black humanoid thin white contours on charcoal."
+    }
+  },
+  "starseer": {
+    "key": "transition-starseer-fix",
+    "file": "exec-a94673f4-250d-4df4-b22f-93a97ac21f20.png",
+    "order": [
+      0,
+      1,
+      2,
+      3,
+      5,
+      4,
+      6
+    ],
+    "pivots": [
+      [
+        273,
+        434
+      ],
+      [
+        671,
+        432
+      ],
+      [
+        1019,
+        432
+      ],
+      [
+        1397,
+        432
+      ],
+      [
+        247,
+        927
+      ],
+      [
+        644,
+        928
+      ],
+      [
+        1039,
+        942
+      ]
+    ],
+    "prompt": "Edit this seven-frame sheet, keep 4x2 layout, black silhouettes, same size, all figures fully contained in their cells. Correct ONLY the bridge poses 3, 5, 7. Frame3 top row third: STAFF STAR HEAD points UP-RIGHT at 40 degrees above horizontal, shaft runs diagonally through both hands, body halfway between windup2 and cast4. This is before the horizontal cast, NOT down-right. Frame5 bottom row first: front elbow starts bending, staff is still aimed nearly horizontal toward right with star head SLIGHTLY ABOVE hands, body begins rising. Frame7 bottom row third: recovery at a diagonal 55 degrees above horizontal, halfway between horizontal followthrough and upright guard, elbows folded at chest. All frames same rigid staff length and head size, two hands, correct grip, two arms. Flat charcoal background. No text, no grid. Keep other frames unchanged.",
+    "source": "masters/starseer.png"
+  },
+  "herald": {
+    "key": "transition-herald-final",
+    "file": "exec-15f99495-eb2f-45ba-9783-013eda10a94e.png",
+    "pivots": [
+      [
+        302,
+        435
+      ],
+      [
+        692,
+        435
+      ],
+      [
+        1070,
+        435
+      ],
+      [
+        1452,
+        435
+      ],
+      [
+        303,
+        947
+      ],
+      [
+        688,
+        947
+      ],
+      [
+        1070,
+        947
+      ]
+    ],
+    "prompt": "Create a coherent seven-frame animation sprite sheet using this FOUR-POSE reference guide. The four input poses from left to right are guard, windup, contact, follow-through (ignore printed labels). Output exactly FOUR equal columns and TWO equal rows; seven full-body figures in reading order, eighth cell completely empty. No text, labels, grid, anchor points or effects. Flat charcoal #303030 background. Featureless solid black humanoid with thin pale outlines separating limbs, hands, legs and weapons. Weapon is physically part of each complete reference silhouette, held naturally. Preserve the reference weapon type and character shape.\nOutput frames: 1 guard; 2 windup; 3 NEW intermediate between windup and contact; 4 contact; 5 NEW intermediate between contact and follow-through; 6 follow-through; 7 NEW recovery toward the first guard. Three genuine bridge drawings. This is one continuous action moving RIGHT, never a hurt reaction or backwards fall. Exactly two arms, two hands, two legs. Same body size, head size and rigid weapon length in every frame. Feet aligned on the same floor at 87% of each cell, stable stance, smooth changes in knees and hips. Keep every weapon and extremity INSIDE its cell with at least 10% margin, use smaller consistent figures if necessary. Connect hands to wrists and grips; straight weapons do not bend. Frame7 must naturally lead into frame1.\nEmpty hands only. Windup gathers palms near chest, intermediate3 partially extends leading palm, contact4 fully extends toward RIGHT, bridge5 slightly bends leading elbow while rear hand starts returning, follow6 settles, recovery7 brings palm halfway toward guard. No effects or arrows.",
+    "source": "masters/herald.png",
+    "order": [
+      0,
+      1,
+      2,
+      3,
+      5,
+      4,
+      6
+    ]
+  },
+  "herald-staff": {
+    "key": "transition-herald-staff",
+    "file": "exec-06c60e33-255a-4bae-b002-a262a4860f98.png",
+    "pivots": [
+      [
+        303,
+        455
+      ],
+      [
+        686,
+        455
+      ],
+      [
+        1069,
+        455
+      ],
+      [
+        1452,
+        455
+      ],
+      [
+        303,
+        936
+      ],
+      [
+        685,
+        936
+      ],
+      [
+        1069,
+        936
+      ]
+    ],
+    "prompt": "Create a coherent seven-frame animation sprite sheet using this FOUR-POSE reference guide. The four input poses from left to right are guard, windup, contact, follow-through (ignore printed labels). Output exactly FOUR equal columns and TWO equal rows; seven full-body figures in reading order, eighth cell completely empty. No text, labels, grid, anchor points or effects. Flat charcoal #303030 background. Featureless solid black humanoid with thin pale outlines separating limbs, hands, legs and weapons. Weapon is physically part of each complete reference silhouette, held naturally. Preserve the reference weapon type and character shape.\nOutput frames: 1 guard; 2 windup; 3 NEW intermediate between windup and contact; 4 contact; 5 NEW intermediate between contact and follow-through; 6 follow-through; 7 NEW recovery toward the first guard. Three genuine bridge drawings. This is one continuous action moving RIGHT, never a hurt reaction or backwards fall. Exactly two arms, two hands, two legs. Same body size, head size and rigid weapon length in every frame. Feet aligned on the same floor at 87% of each cell, stable stance, smooth changes in knees and hips. Keep every weapon and extremity INSIDE its cell with at least 10% margin, use smaller consistent figures if necessary. Connect hands to wrists and grips; straight weapons do not bend. Frame7 must naturally lead into frame1.\nOne straight staff held in rear hand, free FRONT hand casts to the RIGHT. Rear hand holds staff throughout; no third arm. Guard palm raised; windup draw free palm toward chest; bridge extend elbow halfway; release palm forward; soften elbow during follow-through; recovery draw palm in. Staff tilts slightly with torso, constant length and grip. No duplicates.",
+    "source": "masters/herald-staff.png"
+  },
+  "reaver-shield": {
+    "file": "exec-8aef3832-54ba-45b0-9712-8800f4d11285.png",
+    "pivots": [
+      [
+        239,
+        475
+      ],
+      [
+        661,
+        478
+      ],
+      [
+        1032,
+        479
+      ],
+      [
+        1386,
+        477
+      ],
+      [
+        256,
+        946
+      ],
+      [
+        633,
+        946
+      ],
+      [
+        1005,
+        950
+      ]
+    ],
+    "prompt": "Correct ONLY the top-row THIRD figure's sword in this 4-column 2-row sheet. It mistakenly has a blade extending to BOTH sides of its grip. Replace that weapon with a normal single-bladed one-handed sword: short pommel and handle held by the raised right hand, crossguard just beyond the knuckles, ONE straight blade extending diagonally UP AND RIGHT from that hand. Nothing extends to the upper-left beyond a short handle. The blade should have the same length as frame2. Keep the raised hand position, body, off-hand round shield, every other pose and seven-frame layout unchanged. No arrows or labels.",
+    "source": "masters/reaver-shield.png"
+  }
+}

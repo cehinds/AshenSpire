@@ -1,0 +1,884 @@
+[
+  {
+    "id": "reaver",
+    "frame": 0,
+    "sourceSlot": 0,
+    "pivot": [
+      260,
+      420
+    ],
+    "sourceCrop": {
+      "left": 3,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      110,
+      128,
+      426,
+      505
+    ]
+  },
+  {
+    "id": "reaver",
+    "frame": 1,
+    "sourceSlot": 1,
+    "pivot": [
+      688,
+      423
+    ],
+    "sourceCrop": {
+      "left": 387,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      45,
+      80,
+      350,
+      511
+    ]
+  },
+  {
+    "id": "reaver",
+    "frame": 2,
+    "sourceSlot": 2,
+    "pivot": [
+      1040,
+      434
+    ],
+    "sourceCrop": {
+      "left": 771,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      100,
+      92,
+      381,
+      499
+    ]
+  },
+  {
+    "id": "reaver",
+    "frame": 3,
+    "sourceSlot": 3,
+    "pivot": [
+      1380,
+      421
+    ],
+    "sourceCrop": {
+      "left": 1155,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      108,
+      224,
+      466,
+      501
+    ]
+  },
+  {
+    "id": "reaver",
+    "frame": 4,
+    "sourceSlot": 4,
+    "pivot": [
+      236,
+      896
+    ],
+    "sourceCrop": {
+      "left": 3,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      110,
+      210,
+      473,
+      504
+    ]
+  },
+  {
+    "id": "reaver",
+    "frame": 5,
+    "sourceSlot": 5,
+    "pivot": [
+      602,
+      912
+    ],
+    "sourceCrop": {
+      "left": 387,
+      "top": 515,
+      "width": 404,
+      "height": 506
+    },
+    "bounds": [
+      115,
+      202,
+      509,
+      503
+    ]
+  },
+  {
+    "id": "reaver",
+    "frame": 6,
+    "sourceSlot": 6,
+    "pivot": [
+      999,
+      912
+    ],
+    "sourceCrop": {
+      "left": 797,
+      "top": 515,
+      "width": 352,
+      "height": 506
+    },
+    "bounds": [
+      128,
+      186,
+      479,
+      503
+    ]
+  },
+  {
+    "id": "rogue",
+    "frame": 0,
+    "sourceSlot": 0,
+    "pivot": [
+      302,
+      455
+    ],
+    "sourceCrop": {
+      "left": 3,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      73,
+      123,
+      368,
+      494
+    ]
+  },
+  {
+    "id": "rogue",
+    "frame": 1,
+    "sourceSlot": 1,
+    "pivot": [
+      685,
+      455
+    ],
+    "sourceCrop": {
+      "left": 387,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      45,
+      94,
+      392,
+      493
+    ]
+  },
+  {
+    "id": "rogue",
+    "frame": 2,
+    "sourceSlot": 2,
+    "pivot": [
+      1035,
+      455
+    ],
+    "sourceCrop": {
+      "left": 771,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      80,
+      136,
+      400,
+      493
+    ]
+  },
+  {
+    "id": "rogue",
+    "frame": 3,
+    "sourceSlot": 3,
+    "pivot": [
+      1416,
+      455
+    ],
+    "sourceCrop": {
+      "left": 1155,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      69,
+      153,
+      396,
+      493
+    ]
+  },
+  {
+    "id": "rogue",
+    "frame": 4,
+    "sourceSlot": 5,
+    "pivot": [
+      649,
+      934
+    ],
+    "sourceCrop": {
+      "left": 409,
+      "top": 515,
+      "width": 382,
+      "height": 506
+    },
+    "bounds": [
+      96,
+      182,
+      461,
+      491
+    ]
+  },
+  {
+    "id": "rogue",
+    "frame": 5,
+    "sourceSlot": 4,
+    "pivot": [
+      244,
+      921
+    ],
+    "sourceCrop": {
+      "left": 3,
+      "top": 515,
+      "width": 400,
+      "height": 506
+    },
+    "bounds": [
+      106,
+      234,
+      483,
+      500
+    ]
+  },
+  {
+    "id": "rogue",
+    "frame": 6,
+    "sourceSlot": 6,
+    "pivot": [
+      1066,
+      937
+    ],
+    "sourceCrop": {
+      "left": 797,
+      "top": 515,
+      "width": 352,
+      "height": 506
+    },
+    "bounds": [
+      77,
+      171,
+      360,
+      490
+    ]
+  },
+  {
+    "id": "starseer",
+    "frame": 0,
+    "sourceSlot": 0,
+    "pivot": [
+      273,
+      434
+    ],
+    "sourceCrop": {
+      "left": 3,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      91,
+      113,
+      361,
+      500
+    ]
+  },
+  {
+    "id": "starseer",
+    "frame": 1,
+    "sourceSlot": 1,
+    "pivot": [
+      671,
+      432
+    ],
+    "sourceCrop": {
+      "left": 387,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      77,
+      141,
+      367,
+      500
+    ]
+  },
+  {
+    "id": "starseer",
+    "frame": 2,
+    "sourceSlot": 2,
+    "pivot": [
+      1019,
+      432
+    ],
+    "sourceCrop": {
+      "left": 771,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      98,
+      146,
+      454,
+      493
+    ]
+  },
+  {
+    "id": "starseer",
+    "frame": 3,
+    "sourceSlot": 3,
+    "pivot": [
+      1397,
+      432
+    ],
+    "sourceCrop": {
+      "left": 1155,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      97,
+      203,
+      451,
+      491
+    ]
+  },
+  {
+    "id": "starseer",
+    "frame": 4,
+    "sourceSlot": 5,
+    "pivot": [
+      644,
+      928
+    ],
+    "sourceCrop": {
+      "left": 387,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      84,
+      196,
+      436,
+      490
+    ]
+  },
+  {
+    "id": "starseer",
+    "frame": 5,
+    "sourceSlot": 4,
+    "pivot": [
+      247,
+      927
+    ],
+    "sourceCrop": {
+      "left": 3,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      106,
+      188,
+      463,
+      494
+    ]
+  },
+  {
+    "id": "starseer",
+    "frame": 6,
+    "sourceSlot": 6,
+    "pivot": [
+      1039,
+      942
+    ],
+    "sourceCrop": {
+      "left": 771,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      96,
+      106,
+      378,
+      489
+    ]
+  },
+  {
+    "id": "herald",
+    "frame": 0,
+    "sourceSlot": 0,
+    "pivot": [
+      302,
+      435
+    ],
+    "sourceCrop": {
+      "left": 3,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      50,
+      134,
+      381,
+      492
+    ]
+  },
+  {
+    "id": "herald",
+    "frame": 1,
+    "sourceSlot": 1,
+    "pivot": [
+      692,
+      435
+    ],
+    "sourceCrop": {
+      "left": 387,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      45,
+      134,
+      362,
+      491
+    ]
+  },
+  {
+    "id": "herald",
+    "frame": 2,
+    "sourceSlot": 2,
+    "pivot": [
+      1070,
+      435
+    ],
+    "sourceCrop": {
+      "left": 771,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      47,
+      140,
+      384,
+      491
+    ]
+  },
+  {
+    "id": "herald",
+    "frame": 3,
+    "sourceSlot": 3,
+    "pivot": [
+      1452,
+      435
+    ],
+    "sourceCrop": {
+      "left": 1155,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      48,
+      141,
+      391,
+      491
+    ]
+  },
+  {
+    "id": "herald",
+    "frame": 4,
+    "sourceSlot": 5,
+    "pivot": [
+      688,
+      947
+    ],
+    "sourceCrop": {
+      "left": 387,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      47,
+      141,
+      382,
+      491
+    ]
+  },
+  {
+    "id": "herald",
+    "frame": 5,
+    "sourceSlot": 4,
+    "pivot": [
+      303,
+      947
+    ],
+    "sourceCrop": {
+      "left": 3,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      49,
+      141,
+      374,
+      492
+    ]
+  },
+  {
+    "id": "herald",
+    "frame": 6,
+    "sourceSlot": 6,
+    "pivot": [
+      1070,
+      947
+    ],
+    "sourceCrop": {
+      "left": 771,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      48,
+      140,
+      361,
+      491
+    ]
+  },
+  {
+    "id": "herald-staff",
+    "frame": 0,
+    "sourceSlot": 0,
+    "pivot": [
+      303,
+      455
+    ],
+    "sourceCrop": {
+      "left": 3,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      60,
+      121,
+      386,
+      492
+    ]
+  },
+  {
+    "id": "herald-staff",
+    "frame": 1,
+    "sourceSlot": 1,
+    "pivot": [
+      686,
+      455
+    ],
+    "sourceCrop": {
+      "left": 387,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      59,
+      118,
+      369,
+      492
+    ]
+  },
+  {
+    "id": "herald-staff",
+    "frame": 2,
+    "sourceSlot": 2,
+    "pivot": [
+      1069,
+      455
+    ],
+    "sourceCrop": {
+      "left": 771,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      38,
+      122,
+      367,
+      492
+    ]
+  },
+  {
+    "id": "herald-staff",
+    "frame": 3,
+    "sourceSlot": 3,
+    "pivot": [
+      1452,
+      455
+    ],
+    "sourceCrop": {
+      "left": 1155,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      38,
+      122,
+      389,
+      492
+    ]
+  },
+  {
+    "id": "herald-staff",
+    "frame": 4,
+    "sourceSlot": 4,
+    "pivot": [
+      303,
+      936
+    ],
+    "sourceCrop": {
+      "left": 3,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      60,
+      118,
+      406,
+      490
+    ]
+  },
+  {
+    "id": "herald-staff",
+    "frame": 5,
+    "sourceSlot": 5,
+    "pivot": [
+      685,
+      936
+    ],
+    "sourceCrop": {
+      "left": 387,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      60,
+      120,
+      375,
+      490
+    ]
+  },
+  {
+    "id": "herald-staff",
+    "frame": 6,
+    "sourceSlot": 6,
+    "pivot": [
+      1069,
+      936
+    ],
+    "sourceCrop": {
+      "left": 771,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      50,
+      117,
+      375,
+      490
+    ]
+  },
+  {
+    "id": "reaver-shield",
+    "frame": 0,
+    "sourceSlot": 0,
+    "pivot": [
+      239,
+      475
+    ],
+    "sourceCrop": {
+      "left": 3,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      131,
+      146,
+      370,
+      500
+    ]
+  },
+  {
+    "id": "reaver-shield",
+    "frame": 1,
+    "sourceSlot": 1,
+    "pivot": [
+      661,
+      478
+    ],
+    "sourceCrop": {
+      "left": 387,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      96,
+      70,
+      365,
+      497
+    ]
+  },
+  {
+    "id": "reaver-shield",
+    "frame": 2,
+    "sourceSlot": 2,
+    "pivot": [
+      1032,
+      479
+    ],
+    "sourceCrop": {
+      "left": 771,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      99,
+      83,
+      359,
+      495
+    ]
+  },
+  {
+    "id": "reaver-shield",
+    "frame": 3,
+    "sourceSlot": 3,
+    "pivot": [
+      1386,
+      477
+    ],
+    "sourceCrop": {
+      "left": 1155,
+      "top": 3,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      121,
+      195,
+      450,
+      494
+    ]
+  },
+  {
+    "id": "reaver-shield",
+    "frame": 4,
+    "sourceSlot": 4,
+    "pivot": [
+      256,
+      946
+    ],
+    "sourceCrop": {
+      "left": 3,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      106,
+      212,
+      439,
+      498
+    ]
+  },
+  {
+    "id": "reaver-shield",
+    "frame": 5,
+    "sourceSlot": 5,
+    "pivot": [
+      633,
+      946
+    ],
+    "sourceCrop": {
+      "left": 387,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      105,
+      169,
+      445,
+      498
+    ]
+  },
+  {
+    "id": "reaver-shield",
+    "frame": 6,
+    "sourceSlot": 6,
+    "pivot": [
+      1005,
+      950
+    ],
+    "sourceCrop": {
+      "left": 771,
+      "top": 515,
+      "width": 378,
+      "height": 506
+    },
+    "bounds": [
+      135,
+      140,
+      382,
+      498
+    ]
+  }
+]

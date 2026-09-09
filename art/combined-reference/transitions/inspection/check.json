@@ -1,0 +1,87 @@
+{
+  "frames": 42,
+  "playback": [
+    {
+      "id": "reaver",
+      "framesSeen": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "quarterSpeed": true
+    },
+    {
+      "id": "rogue",
+      "framesSeen": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "quarterSpeed": true
+    },
+    {
+      "id": "starseer",
+      "framesSeen": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "quarterSpeed": true
+    },
+    {
+      "id": "herald",
+      "framesSeen": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "quarterSpeed": true
+    },
+    {
+      "id": "reaver-shield",
+      "framesSeen": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "quarterSpeed": true
+    },
+    {
+      "id": "herald-staff",
+      "framesSeen": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "quarterSpeed": true
+    }
+  ],
+  "durationMs": 1000,
+  "mobileOverflow": false,
+  "errors": [],
+  "failed": []
+}
