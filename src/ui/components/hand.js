@@ -88,7 +88,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
       // Reference-approved physical size range. Grow the fan by overlap, never
       // by shrinking a card's type below its readable minimum.
-      const cardWidth = Math.max(150, Math.min(180, 150 + (window.innerWidth - 480) / 16));
+      const bandHeight = handEl.getBoundingClientRect().height;
+      const cardWidth = Math.min(162, Math.max(72, (bandHeight - 28) * 5 / 7));
       handEl.style.setProperty('--hand-card-zoom', String(cardWidth / (178 * zoom)));
       const cs = getComputedStyle(handEl);
       const available = handEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
@@ -97,8 +98,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const measurement = [available, width, zoom, cards.length].join(':');
       if (measurement === fanMeasurement) return;
       fanMeasurement = measurement;
-      const shown = Math.min(cards.length, 7);
-      const step = shown > 1 ? Math.max(0, Math.min(width + 12, (available - width - 1) / (shown - 1))) : width;
+      const shown = cards.length;
+      const step = shown > 1 ? Math.max(0, Math.min(width + 8, (available - width - 8) / (shown - 1))) : width;
       cards.forEach((el, i) => {
         // Margins belong to the card's zoomed coordinate space, unlike the
         // available width measured on its parent.

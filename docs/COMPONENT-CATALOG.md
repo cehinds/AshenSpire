@@ -1,10 +1,42 @@
 # AshenSpire component catalog
 
+Touch flick controls: Accessibility offers Touch flick to play and a 32–160 CSS-pixel
+distance setting (64 default), synchronized numeric field/slider, Reset, and a
+harmless practice surface. `TouchFlickModel.js` resolves distance, recent speed and
+nearest-target ties; `flickPractice.js` shares that recognition with the combat
+hand. The existing selected card and separate Information button remain unchanged.
+See [card removal and touch flick validation](qa/card-removal-touch-flick.md).
+
 This is the quick-reference library for the reusable UI vocabulary. The visual
 catalog is available at [`component-catalog.html`](./component-catalog.html).
 Select any component card there to open its detail drawer. The dedicated
 [`tray-gallery.html`](./tray-gallery.html) shows all eight top/right/bottom/left
 folded and unfolded Tray states using the production renderer.
+
+The [Pose & Effects Studio](../art/pose-studio/index.html) provides a reusable
+animation-authoring workspace: effect library, anchored stage, five-to-seven
+pose strip, layered cue timeline, selection inspector, binding rule builder,
+and relationship view. Its stage and library provide live visual miniatures
+of all 80 effect sets. The shared `presentationSequence` model owns project
+validation and matching; the optional gameplay adapter preserves existing FX.
+See [launch, package and integration instructions](../pose-studio/README.md).
+The authoring flow uses template starts, immediate effect previews, a direct
+card connection action, progressive disclosure for precise controls, and
+an inline effect tray at narrow widths. The preview has visible size, hide,
+duplicate and remove controls, corner resize handles and independent view zoom.
+Each effect has a six-frame strip with move/trim handles and a removal button.
+The tray and inspector reuse the original DOM and restore focus on close.
+`pose-studio/tests/direct-editing.mjs` checks pointer/touch manipulation;
+`pose-studio/tests/usability.mjs` covers this
+workflow at desktop and phone sizes; no game presentation rules are replaced.
+
+The [combat sprite catalog](../art/combat-effects-2026-09-07/sprite-catalog.html)
+shows all 56 six-frame sets. `combatEffectPlan` resolves presentation tag
+combinations; `playCombatEffectPlan` renders the shared solo/co-op cast and
+target sequence. `combatEffectForEvent` owns status and defensive reactions.
+These transient overlays use the existing FX layer and introduce no new HUD
+component IDs. The adjacent card preview names the matched rule and equipment
+profile; the catalog provides visual miniatures for every exported set.
 
 Use the catalog's **Grid / List** switch to choose card tiles or a compact
 vertical list. In Grid view, use the **− / reset / +** controls, Ctrl/Command +
@@ -88,11 +120,11 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `relic-slot` | `componentModel` semantic ID | Item view | Map + Combat | Individual relic tile. |
 | `potion-tray` | `itemTrayModel` | Belt view | Map + Combat | Utility potion tray, right anchored. |
 | `potion-control` | `componentModel` semantic ID | Item view | Inventory | Individual utility potion control. |
-| `battlefield-stage` | `battlefieldStageModel` | `battlefieldStage.js` + `combat.js` | Combat | Data-driven protected corridor that centers combatants between the HUD and hand. |
+| `battlefield-stage` | `battlefieldStageModel` | `battlefieldStage.js` + `combat.js` | Combat | Fixed 10/45/30/15 tracks; shared formation slots for solo and party combat, with grounded art, uniform nameplates and shallow overflow rows. |
 | `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Player combatant card. |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
-| `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` | Combat cards | Rendered player or enemy figure. |
+| `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` + `paintedOutfits.js` | Solo and co-op combat cards | Rendered player or enemy figure. Player rest resolves stance, readiness, guard, then idle through `combatPose.js`; Prepared, Starstone Charge and Blood Rite have authored outfit poses, intermediate entry/exit sprites, subtle breathing glows, and fades that survive combat redraws. Reduced motion uses a steady glow. [Interactive miniature](../art/readiness-poses/preview.html). |
 | `combatant-nameplate` | `combatantFrame` child | `combatantFrame.js` | Combat cards | Combatant name label. |
 | `intent-indicator` | semantic component | `combat.js` + `uiContent.js` | Enemy cards | Telegraphed enemy action and amount. |
 | `block-badge` | semantic component | `combat.js` | Combat cards | Current Guard/Block over the sprite. |
@@ -105,7 +137,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `damage-feedback` | semantic component | `fx.js` | Combat feedback | One hit receipt containing Guard and HP channels. |
 | `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |
 | `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
-| `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Player card hand. |
+| `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Fixed 5:7 faces fan by overlap and remain visible, inert and dim during enemy turns. |
 | `combat-action-rail` | `componentModel` | `combat.js` | Combat | Edge-anchored Actions and Exhaust around a tight Draw / End Turn / Discard cluster. |
 | `kit.pageDoor` | `pageDoor(spec)` | `kit/index.js` pageDoor | Every screen that asks something | The one door-opener: head with eyebrow, title and a single close control, a body the surface owns, and a foot on the button ladder. Four named widths (sm, md, lg, xl) or full; Escape, veil click and focus return are bound here once. |
 | `kit.optionCard` | `optionCard(spec)` | `kit/index.js` optionCard | Every list of ways on | One choosable way on — glyph or art, name, description, optional badge, meta and trail — carrying its own selected and disabled states. |
@@ -519,6 +551,12 @@ Combat card actions: selection reveals a circular Information button centered ab
 
 Selected combat cards preview legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes retain transparent backgrounds so glow follows artwork rather than its rectangular canvas.
 
-Reward chooser: playing-card inspection yields face taps to reward selection; the separate Confirm control owns collection. Back retains selection and a failed save exposes a retry status without adding a duplicate card.
+World Journey (`src/ui/screens/worldAtlas.js`) composes fixed map terrain, discovery
+masks, inspectable landmark overlays, the route journal, and one native location
+dialog. Local points select a detail pane instead of opening nested dialogs. The
+same renderer serves `world-atlas-preview.html`; its authoring controls and ID
+selector are isolated from the game. Actual service dispatch reuses the existing
+merchant, smith upgrade, and grace screens. See `docs/WORLD-ATLAS.md` for the
+normalized content contract and `tools/world-atlas-qa.mjs` for browser checks.
 
-Combat card drag: `CardDragModel` supplies one target verdict to both the existing aim silhouettes and release handler. Advanced → Gameplay exposes Card drag distance and Card flick to play. The artwork remains presentation only; pointer displacement and legal target geometry govern activation.
+Reward chooser: playing-card inspection yields face taps to reward selection; the separate Confirm control owns collection. Back retains selection and a failed save exposes a retry status without adding a duplicate card. Touch flicks retain the current shared TouchFlickModel and Accessibility controls.

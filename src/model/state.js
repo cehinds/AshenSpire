@@ -1,3 +1,4 @@
+import { retiredAttackSlots } from './cardRemoval.js';
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
 // State stores INSTANCE data referencing definitions by id only:
@@ -11,6 +12,7 @@
 
 import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
+import { journeyProblems } from './worldAtlas.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
 import { classAttributePreset, creationModeSnapshot, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
 import {
@@ -526,6 +528,7 @@ export const RUN_SHAPE = [
   // Optional only for runs saved before the quota was written down; stampDeck
   // falls back to counting a run's own deck for exactly those.
   { key: 'equipmentAttackSlotCount', type: 'number', optional: true },
+  { key: 'removedAttackSlotIds', type: 'array', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
@@ -585,6 +588,8 @@ function typeOk(value, type) {
  *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger } = {}) {
   const problems = [];
+  if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
+  try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
     if (preHpLedger && (f.key === 'maxHpAdjustment' || f.key === 'damageBySchoolAdd')) continue;

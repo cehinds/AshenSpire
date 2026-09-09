@@ -182,7 +182,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // The legend belongs to the corner it opens from — the ? in the zoom bar — so
   // it is mounted with the board's chrome, not on the HUD.
   const board = mountMapBoard(app.querySelector('.mapscreen'), {
-    act: { nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds },
+    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds },
     showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,

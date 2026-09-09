@@ -101,8 +101,8 @@ if (process.argv.includes('--selftest')) {
         // that known-bad, entering where it originally shipped.
         name: 'F3 returns: a cancelled card cannot receive its next tap',
         file: 'src/ui/screens/combat.js',
-        find: "          if (cancelled || !drop?.legal) return;",
-        replace: "          if (cancelled) { selected = null; selfArm = null; syncCardSelection(); el.style.pointerEvents = 'none'; return; } if (!drop?.legal) return; // planted: cancelled card cannot receive its next tap",
+        find: "          if (cancelled) return;",
+        replace: "          if (cancelled) { selected = null; selfArm = null; syncCardSelection(); el.style.pointerEvents = 'none'; return; } // planted: cancelled card cannot receive its next tap",
         expectRed: /FAIL F3: ONE tap after a cancel selects the card/,
       },
     ],

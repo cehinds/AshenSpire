@@ -39,6 +39,29 @@
   background: linear-gradient(to bottom, rgba(13, 11, 8, 0.30) 0%, rgba(13, 11, 8, 0.10) 38%, rgba(13, 11, 8, 0.82) 100%);
 }
 
+/* Approved environment paintings are selected with an SVG atlas viewBox. */
+.environment-backdrop { opacity: 1; overflow: hidden; background: #17130f; top: var(--environment-top, 0); bottom: auto; height: var(--environment-height, 65%); }
+.environment-backdrop > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.environment-backdrop::after { display: none; }
+.environment-backdrop::before {
+  z-index: 1;
+  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.22), rgba(13, 11, 8, 0.06) 40%, rgba(13, 11, 8, 0.22) 90%, #17130f 100%);
+}
+
+/* A pale alpha-shaped edge plus dark separation reads on snow and charcoal.
+   Keep this on the art host, so frame-level target glows and pose auras compose. */
+.combat .combatant .sprite {
+  --combatant-edge: drop-shadow(0.7px 0 0 #f4e6c4) drop-shadow(-0.7px 0 0 #f4e6c4)
+    drop-shadow(0 0.7px 0 #f4e6c4) drop-shadow(0 -0.7px 0 #f4e6c4)
+    drop-shadow(0 0 2px #100e0c);
+}
+.combat .combatant .pose-frame, .combat .combatant .defeated-frame { filter: var(--combatant-edge); }
+.combat .combatant .sprite::before {
+  content: ''; position: absolute; bottom: -3px; left: 12%; right: 12%;
+  height: 12px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(ellipse, rgba(10, 8, 6, .7), rgba(10, 8, 6, .28) 45%, transparent 72%);
+}
+
 /* ---------- battlefield ---------- */
 /* The combatants sit ON the backdrop, so the field is a positioned layer above
    it and the rows are pulled up out of the old dead space at the top. */
@@ -146,7 +169,12 @@
 .combatant .sprite { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
 /* Bring the figures forward without enlarging their names or resource bars.
    The stage still fits the complete stack inside its safe battlefield area. */
-.combat .combatant-card > .sprite { zoom:var(--stage-sprite-zoom,1); }
+.combat .combatant-card > .sprite {
+  zoom:var(--stage-sprite-zoom,1);
+  /* Fitting reads zoom synchronously. The global reduced-motion rule gives
+     every property a tiny transition; even that interpolates these measures. */
+  transition-property: none !important;
+}
 /* The under-model strip. Its bars are the SAME component as the main HUD's —
    the old .hpbar/.poisebar pair here was two more homes for one grammar, and
    they are gone rather than kept in parallel (Law 0 clause 4). What survives is
@@ -375,6 +403,7 @@
 /* Attack lunge: enemies step left toward the player, the player steps right. */
 .enemy .sprite.act-attack { animation: lunge-left 280ms ease-out; }
 .enemy-pose-attack { visibility: hidden; }
+.facing[data-state-active="true"] > :is(.enemy-pose-idle, .enemy-pose-attack) { visibility: hidden !important; }
 .enemy .sprite:is(.act-attack, .enemy-attack-pose) [data-attack-ready="true"] > .enemy-pose-idle { visibility: hidden; }
 .enemy .sprite:is(.act-attack, .enemy-attack-pose) [data-attack-ready="true"] > .enemy-pose-attack { visibility: visible; }
 /* Keep the idle drawing for anticipation and recovery. The attack drawing
@@ -466,42 +495,45 @@
 /* Hit reaction: the victim flashes AND recoils away from the blow — enemies are
    knocked right (struck from the player's side), the player left. A heavy hit
    (≥15, the same threshold as screen shake) recoils further with a tilt. */
-.sprite.hitflash > :first-child { animation: hitflash 200ms ease-out; }
-.enemy .sprite.hitflash > :first-child { animation: hit-enemy 220ms cubic-bezier(0.25, 0.8, 0.35, 1); }
-.player .sprite.hitflash > :first-child { animation: hit-player 220ms cubic-bezier(0.25, 0.8, 0.35, 1); }
-.enemy .sprite.hitflash.hit-heavy > :first-child { animation: hit-enemy-heavy 340ms cubic-bezier(0.25, 0.8, 0.35, 1); }
-.player .sprite.hitflash.hit-heavy > :first-child { animation: hit-player-heavy 340ms cubic-bezier(0.25, 0.8, 0.35, 1); }
+.sprite.hitflash > :first-child { animation: hitflash var(--hurt-duration, 220ms) linear; }
+.enemy .sprite.hitflash > :first-child { animation-name: hit-enemy; }
+.player .sprite.hitflash > :first-child { animation-name: hit-player; }
+.enemy .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-enemy-heavy; }
+.player .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-player-heavy; }
 @keyframes hitflash {
-  0% { filter: brightness(2.1) saturate(1.8); transform: translateX(4px); }
-  100% { filter: none; transform: none; }
+  0%, 32.99% { filter: none; }
+  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  67%, 100% { filter: none; }
+  0%, 100% { transform: none; }
+  30% { transform: translateX(4px); }
 }
 @keyframes hit-enemy {
-  0% { filter: brightness(2.1) saturate(1.8); }
+  0%, 32.99% { filter: none; }
+  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  67%, 100% { filter: none; }
+  0%, 100% { transform: none; }
   30% { transform: translateX(13px); }
-  100% { filter: none; transform: none; }
 }
 @keyframes hit-player {
-  0% { filter: brightness(2.1) saturate(1.8); }
+  0%, 32.99% { filter: none; }
+  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  67%, 100% { filter: none; }
+  0%, 100% { transform: none; }
   30% { transform: translateX(-13px); }
-  100% { filter: none; transform: none; }
 }
 @keyframes hit-enemy-heavy {
-  0% { filter: brightness(2.3) saturate(1.9); }
-  28% { transform: translateX(26px) rotate(5deg); }
-  60% { transform: translateX(6px) rotate(1deg); }
-  100% { filter: none; transform: none; }
+  0%, 32.99% { filter: none; }
+  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  67%, 100% { filter: none; }
+  0%, 100% { transform: none; }
+  30% { transform: translateX(26px); }
 }
 @keyframes hit-player-heavy {
-  0% { filter: brightness(2.3) saturate(1.9); }
-  28% { transform: translateX(-26px) rotate(-5deg); }
-  60% { transform: translateX(-6px) rotate(-1deg); }
-  100% { filter: none; transform: none; }
-}
-/* Death: a slower dissolve — sag, drain, blur to ash. */
-.sprite.crumble > :first-child { animation: crumble 550ms ease-in forwards; }
-@keyframes crumble {
-  40% { opacity: 0.7; filter: grayscale(0.6) blur(1px); }
-  to { opacity: 0.12; transform: translateY(14px) scale(0.9); filter: grayscale(1) blur(3px); }
+  0%, 32.99% { filter: none; }
+  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  67%, 100% { filter: none; }
+  0%, 100% { transform: none; }
+  30% { transform: translateX(-26px); }
 }
 
 /* Attack impact: a slashing arc sweeping across the victim. */
@@ -1030,3 +1062,192 @@
 .combat .hand .card.drag-source { opacity: .2; }
 .combat .combatant.player.skill-selected .sprite { filter: drop-shadow(0 0 .6rem var(--gold)); }
 .combat .hand .card { touch-action: none; }
+
+/* Progress sits above the opaque face and uses the shared hold timer. */
+.combat .hand .card > .card-hold-progress {
+  display: none; position: absolute; left: 6px; right: 6px; bottom: 6px;
+  height: max(6px, calc(6px / var(--ui-zoom, 1)));
+  z-index: 9; pointer-events: none; border-radius: 2px;
+  background: #17120e; box-shadow: 0 0 0 1px var(--gold);
+}
+.combat .hand .card[data-hold="holding"] > .card-hold-progress { display: block; }
+.combat .hand .card > .card-hold-progress::before {
+  content: ''; display: block; width: 100%; height: 100%;
+  background: repeating-linear-gradient(135deg, #ffe3a0 0 8px, #917025 8px 16px);
+  transform: scaleX(var(--hold, 0)); transform-origin: left;
+}
+
+/* A horizontal body needs room to the right of the leftmost solo player. */
+@media (max-width: 600px) {
+  .combat:not(.coop) .player .defeated-frame { left: 100% !important; }
+}
+
+/* Stable combat composition. Percent tracks share one viewport-sized parent;
+   disappearing cards, status chips and turn banners cannot resize the field. */
+:root .combat[data-layout='formation'] {
+  flex: none; height: calc(100dvh / var(--ui-zoom, 1)); min-height: 0;
+  display: grid; grid-template-rows: 10% 45% 45%; overflow: clip;
+}
+:root .combat[data-layout='formation'] > .topbar { grid-row: 1; min-height: 0; height: 100%; box-sizing: border-box; overflow: visible; }
+:root .combat[data-layout='formation'] > .field {
+  grid-row: 2; height: 100%; min-height: 0; padding: 0; display: block; overflow: visible;
+}
+:root .combat[data-layout='formation'] .field > :is(.player-zone,.enemy-row) {
+  display: contents; width: auto; min-width: 0; padding: 0;
+}
+:root .combat[data-layout='formation'] .field .combatant {
+  position: absolute; top: 0; bottom: 0; height: 100%; min-width: 0; max-width: none;
+  transform: translateX(-50%); pointer-events: none; border: 0; background: none;
+}
+:root .combat[data-layout='formation'] .combatant-stack {
+  height: auto; transform: translateX(-50%); transition: none;
+}
+:root .combat[data-layout='formation'] .combatant-card {
+  position: relative; inset: auto; transform: none; width: 100%; gap: calc(3px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .combatant-leading {
+  top: auto; bottom: calc(100% + 3px / var(--ui-zoom,1)); pointer-events: auto;
+}
+:root .combat[data-layout='formation'] .combatant .sprite {
+  width: max-content; min-width: 0; scale: none; flex: none; pointer-events: auto;
+  transition: none !important;
+}
+:root .combat[data-layout='formation'] .combatant .sprite > :first-child { flex-shrink: 0; }
+:root .combat[data-layout='formation'] .combatant :is(.nm,.meters) {
+  width: 100%; min-width: 0; max-width: none; pointer-events: auto;
+}
+:root .combat[data-layout='formation'] .combatant .nm {
+  height: calc(20px / var(--ui-zoom,1)); line-height: calc(20px / var(--ui-zoom,1));
+  font-size: calc(12px / var(--ui-zoom,1)); text-align: center; overflow: hidden;
+  white-space: nowrap; text-overflow: ellipsis; flex: none;
+}
+:root .combat[data-layout='formation'] .combatant .nm :is(.as-label,.label) { font: inherit; line-height: inherit; }
+:root .combat[data-layout='formation'] .combatant .meters { gap: calc(3px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .combatant .meters .bar { height: calc(10px / var(--ui-zoom,1)); min-height: 0; }
+:root .combat[data-layout='formation'] .combatant .meters .bar .label { font-size: calc(10px / var(--ui-zoom,1)); line-height: 1; }
+:root .combat[data-layout='formation'] .combatant :is(.status-row,.stance-chip,.dodge-receipt) { pointer-events: auto; }
+:root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) { z-index: 30 !important; }
+:root .combat[data-layout='formation'] > .hand-area {
+  grid-row: 3; height: 100%; min-height: 0; margin: 0; padding: 0;
+  display: grid; grid-template-rows: 2fr 1fr; grid-template-areas: 'hand' 'actions'; gap: 0;
+}
+:root .combat[data-layout='formation'] .hand-overlay { grid-area: hand; height: 100%; width: 100%; min-height: 0; }
+:root .combat[data-layout='formation'] .hand {
+  grid-area: hand; width: 100%; height: 100%; min-height: 0; box-sizing: border-box;
+  align-items: center; justify-content: center; padding: calc(18px / var(--ui-zoom,1)) calc(16px / var(--ui-zoom,1)) calc(10px / var(--ui-zoom,1));
+  gap: 0; overflow: visible;
+}
+:root .combat[data-layout='formation'] .hand .card {
+  box-sizing: border-box; flex: 0 0 178px; min-width: 178px; max-width: 178px;
+  width: 178px; height: 249.2px; min-height: 249.2px; max-height: 249.2px; aspect-ratio: 5 / 7;
+}
+:root .combat[data-layout='formation'] .hand .card .ctext { min-height: 0; overflow: hidden; }
+:root .combat[data-layout='formation'][data-turn='enemy'] .hand {
+  filter: grayscale(.85); opacity: .55; pointer-events: none;
+}
+:root .combat[data-layout='formation'] .combat-action-row {
+  grid-area: actions; position: relative; inset: auto; align-self: stretch; box-sizing: border-box;
+  width: 100%; padding: calc(8px / var(--ui-zoom,1)); margin: 0; align-items: center;
+}
+:root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(52px / var(--ui-zoom,1)) !important; }
+.turn-ribbon {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 40; pointer-events: none;
+  padding: calc(3px / var(--ui-zoom,1)) calc(32px / var(--ui-zoom,1));
+  font: small-caps bold calc(16px / var(--ui-zoom,1))/1.2 Georgia, serif; letter-spacing: .08em;
+  white-space: nowrap; color: #ead294; border-block: 1px solid #ac854b;
+  background: linear-gradient(90deg, transparent, #332515e8 20%, #332515e8 80%, transparent);
+}
+.turn-ribbon::before { content: '‹ ✧ '; } .turn-ribbon::after { content: ' ✧ ›'; }
+[data-turn='enemy'] .turn-ribbon { color: #ffc0a4; border-color: #9f492f; background: linear-gradient(90deg, transparent, #5a2017ec 20%, #5a2017ec 80%, transparent); }
+@media (max-height: 500px) {
+  :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(42px / var(--ui-zoom,1)) !important; padding-block: 0; }
+  :root .combat[data-layout='formation'] > .topbar .hud-info-row { display: none; }
+  .turn-ribbon { font-size: calc(12px / var(--ui-zoom,1)); padding-block: 1px; }
+}
+
+/* The snapshot party uses the same complete card face and fixed hand tracks. */
+:root .combat.coop[data-layout='formation'] .hand .card {
+ zoom:var(--hand-card-zoom,1); --card-w:178px; padding:20px 8px 8px;
+ --card-name-h:32px; --card-art-h:53.4px; --card-band-h:17px;
+ --card-row:22px; --card-pad:8px; --card-gap:4px;
+}
+:root .combat.coop[data-layout='formation'] .hand .card .cname { font-size:16px; }
+:root .combat.coop[data-layout='formation'] .hand .card .ctext { font-size:18px; line-height:24px; }
+:root .combat.coop[data-layout='formation'] .hand .card .ctype,
+:root .combat.coop[data-layout='formation'] .hand .card .ctag { font-size:10px; }
+:root .combat.coop[data-layout='formation'] .combat-action-row { display:flex; justify-content:space-between; }
+:root .combat.coop[data-layout='formation'] .combat-action-row > * { position:static; transform:none; }
+:root .combat.coop[data-layout='formation'] > :is(.coop-flasks-host,.coop-arm-host) { position:absolute; bottom:0; left:25%; z-index:20; max-width:50%; }
+:root .combat[data-layout='formation'] .hand[inert] .card { animation:none; }
+
+:root .combat[data-layout='formation'] .combatant .nm {
+ min-height:calc(44px / var(--ui-zoom,1)); height:calc(44px / var(--ui-zoom,1));
+ display:flex; justify-content:center; align-items:center; padding:0;
+}
+:root .combat[data-layout='formation'] .combatant .nm .ls-label {
+ font-size:calc(12px / var(--ui-zoom,1)); line-height:1.2; max-width:100%; overflow:hidden; text-overflow:ellipsis;
+}
+:root .combat[data-layout='formation'] .combatant .meters .m-value {
+ font-size:calc(10px / var(--ui-zoom,1)); line-height:1;
+}
+
+:root .combat[data-layout='formation'] .combatant .nm {
+ min-height:0 !important; height:calc(20px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .combatant .nm-inspect { cursor:pointer; }
+:root .combat[data-layout='formation'] .combatant[data-formation-row='1'] .nm,
+:root .combat[data-layout='formation'] .combatant[data-formation-row='1'] .meters {
+ background:#17130fd9; border-radius:3px;
+}
+
+:root .combat[data-layout='formation'] > .hand-area { grid-template-columns:minmax(0,1fr); justify-content:stretch; }
+:root .combat[data-layout='formation'] .hand .card { margin-right:0; }
+:root .combat.coop[data-layout='formation'] .combatant { outline:none !important; box-shadow:none !important; border:0 !important; }
+:root .combat.coop[data-layout='formation'] .combatant.selected-target .sprite { filter:drop-shadow(0 0 3px var(--gold)); }
+:root .combat.coop[data-layout='formation'] .combat-action-row .end-turn { min-width:calc(150px / var(--ui-zoom,1)); height:var(--combat-control-size); }
+
+/* Names stay above every silhouette, including the shallow rear row. Frames
+   do not create stacking contexts; only sprite art participates in depth. */
+:root .combat[data-layout='formation'] .field .combatant { transform:none; }
+:root .combat[data-layout='formation'] .combatant-stack { left:0; transform:none; }
+:root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) { position:relative; z-index:40; }
+:root .combat[data-layout='formation'] .combatant .nm { background:#17130fa6; border-radius:3px; }
+:root .combat.coop[data-layout='formation'] .combat-action-row .energy-orb {
+ width:var(--combat-control-size); height:var(--combat-control-size); border-radius:50%;
+ padding:0; display:flex; flex-direction:column; justify-content:center; align-items:center;
+}
+
+:root .combat.coop[data-layout='formation'] > .hand-area {
+ width:100%; height:100%; min-height:0; padding:0; margin:0; gap:0;
+ display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:2fr 1fr; justify-content:stretch;
+}
+:root .combat.coop[data-layout='formation'] .hand { width:100%; height:100%; min-height:0; padding:calc(18px / var(--ui-zoom,1)) calc(16px / var(--ui-zoom,1)) calc(10px / var(--ui-zoom,1)); }
+
+:root .combat.coop[data-layout="formation"] > .hand-area { grid-template-areas:"hand" "actions"; }
+
+:root .combat[data-layout='formation'] > .hand-area,
+:root .combat.coop[data-layout='formation'] > .hand-area { grid-template-rows:minmax(0,2fr) minmax(0,1fr); }
+:root .combat[data-layout='formation'] .combat-action-row { min-height:0; }
+:root .combat[data-layout='formation'] .combat-action-row > * { max-height:100%; }
+
+/* The fitted fan has no scrollbars. A scrollbar appearing/disappearing when
+   the enemy-turn filter changes would shift the vertically centered cards. */
+:root .combat[data-layout='formation'] .hand { overflow:visible !important; }
+
+/* Short landscape keeps vitals in one row inside the fixed HUD band. */
+@media (max-height:500px) {
+ :root .combat[data-layout='formation'] > .topbar { padding:0 calc(8px / var(--ui-zoom,1)); }
+ :root .combat[data-layout='formation'] .topbar .hud-top { width:100%; height:100%; justify-content:center; }
+ :root .combat[data-layout='formation'] .topbar .resbars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
+ :root .combat[data-layout='formation'] .topbar .resline { min-width:0; }
+ :root .combat[data-layout='formation'] .topbar .topbar-btn { height:calc(32px / var(--ui-zoom,1)); min-height:0; width:calc(32px / var(--ui-zoom,1)); }
+ :root .combat.coop[data-layout='formation'] .topbar .hud-top { display:flex; flex-direction:row; align-items:center; }
+ :root .combat.coop[data-layout='formation'] .topbar .resbars-host { flex:1; min-width:0; }
+ :root .combat.coop[data-layout='formation'] .topbar .fight-label { display:none; }
+ :root .combat.coop[data-layout='formation'] .topbar .coop-leave { height:calc(32px / var(--ui-zoom,1)); min-height:0; }
+}
+
+@media (max-height:500px) {
+ :root .combat[data-layout='formation'] .combat-action-row .combat-potions { font-size:calc(10px / var(--ui-zoom,1)); }
+ :root .combat[data-layout='formation'] .combat-action-row .energy-orb .sp-k { font-size:calc(7px / var(--ui-zoom,1)); }
+}

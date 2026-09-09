@@ -371,8 +371,8 @@ if (process.argv.includes('--selftest')) {
       // every check that counts plays instead of naming which card left.
       name: 'a drag commits the SELECTED card instead of the dragged one',
       file: 'src/ui/screens/combat.js',
-      find: "          playCard(inst.instanceId, dragTargetMode === 'single' ? drop.targetIds[0] : null);",
-      replace: "          playCard(selected || inst.instanceId, dragTargetMode === 'single' ? drop.targetIds[0] : null);",
+      find: '          if (plan.legal) playCard(inst.instanceId, plan.targetId || null);',
+      replace: '          if (plan.legal) playCard(selected || inst.instanceId, plan.targetId || null);',
       expectRed: /FAIL cell 2 the card that PLAYS is the one under the finger/,
     }, {
       // CELL 3, AND IT IS AIMED AT THE DERIVATION, NOT THE GESTURE. The dial
@@ -394,8 +394,8 @@ if (process.argv.includes('--selftest')) {
       // cell 4 existing: no amount of dispatchMouseEvent can see this.
       name: 'the card drag refuses every pointer that is not a mouse',
       file: 'src/ui/screens/combat.js',
-      find: "      if (busy || !affordable || ev.button !== 0) return;",
-      replace: "      if (busy || !affordable || ev.button !== 0 || ev.pointerType !== 'mouse') return;",
+      find: "      if (busy || !affordable || ev.button !== 0 || ev.isPrimary === false || ev.target.closest('.card-info-button') || veilIsOpen()) return;",
+      replace: "      if (ev.pointerType !== 'mouse' || busy || !affordable || ev.button !== 0 || ev.isPrimary === false || ev.target.closest('.card-info-button') || veilIsOpen()) return;",
       expectRed: /FAIL cell 4 the finger plays the selected card exactly once/,
     }, {
       // A READ OPENING ON TOP OF A LIVE DRAG — the inverse of the #311 plant
