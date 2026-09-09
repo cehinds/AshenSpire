@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "Clearer maps and interactive local locations",
     "detail": "Use consistent large nodes in every run mode, load native detail tiles only for the visible area, retain a small offline fallback, and add an extra manual zoom step. Trace routes with bright outlined ink over engraved unexplored parchment; preserve discovery and travel rules. Pan and zoom local maps with mouse, touch, or keyboard; center selected sites and read actual service benefits before acting.",
-    "build": "0.6.0.71",
+    "build": "0.6.0.74",
     "pullRequest": 878,
     "url": "https://github.com/cehinds/AshenSpire/pull/878"
+  },
+  {
+    "id": "pr-885",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Choose a hand and see its starting cards",
+    "detail": "Offer Empty Hand in both slots, preview each hand's starting combat cards in a compact grid, and continue explicitly to the next setup section. Focused equipment lifts gently and reveals its action, with reduced-motion support. Larger equipment choices sit in two columns beside their details, with Continue at bottom-right; titles fit vertically, and clipped flavor uses an ellipsis while remaining readable in inspection.",
+    "build": "0.6.0.73",
+    "pullRequest": 885,
+    "url": "https://github.com/cehinds/AshenSpire/pull/885"
   },
   {
     "id": "pr-888",

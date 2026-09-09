@@ -245,7 +245,7 @@ custom art does not require a second card implementation.
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
 | `sigil-choice` | glyph + selected state | `creationCards.sigilChoiceButton` | Appearance + catalog |
 | `keepsake-choice` | keepsake row + selected state | `creationCards.keepsakeChoiceButton` | Keepsake + catalog |
-| `equipment-choice-card` | equipment row + selected state | `equipment.pieceChip` | Starting Equipment + Armoury/catalog |
+| `equipment-choice-card` | equipment row or Empty Hand + selected/preview state | `equipment.pieceChip` | Starting Equipment + Armoury/catalog |
 | `relic-choice-card` | relic row + selected state | `creationCards.relicChoiceButton` | Starting Equipment + catalog |
 
 ```text
@@ -535,6 +535,15 @@ The three columns negotiate inside one grid. `cinders-counter` stays centered;
 `build-metadata-trail` is capped and progressively hides Source, Seed, then
 Build. `metadataShowTotals` is false by default, so only current Act/Floor are
 shown.
+
+Starting equipment: Empty Hand uses the normal card frame and existing null hand state.
+The focused choice drives its details and a two-column starting-combat-card grid with
+copy counts from the run's deck planner, grant reconciliation and card stamping. Choice
+nodes persist through selection so the 180 ms lift/scale transition can settle smoothly.
+Phones use a smaller lift, and OS/in-game reduced motion disables movement. Continue
+opens the named next section; automatic advancement defaults off. Flavor stays on one
+line with an ellipsis, and full wording is available in the Flavor inspection disclosure.
+Review: `equipment-selection-preview.html`; checks: `tools/starting-equipment-qa.mjs`.
 
 Equipment cards (#784): Inventory, starting equipment choices and equipped-item
 inspection reuse `equipmentCardModel` and `equipmentCard.js`. The approved 5:7
