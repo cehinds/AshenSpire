@@ -963,8 +963,6 @@
  --card-band-h: max(22px, calc(22px / var(--ui-zoom, 1))); --card-row: max(22px, calc(22px / var(--ui-zoom, 1))); --card-pad: max(8px, calc(8px / var(--ui-zoom, 1))); --card-gap: max(5px, calc(5px / var(--ui-zoom, 1)));
  margin: 0; touch-action: pan-x;
 }
-:root:not([data-composition='short-wide']) .combat:not(.coop) .hand .card .cname { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); }
-:root:not([data-composition='short-wide']) .combat:not(.coop) .hand .card .ctext { font-size: max(15px, calc(15px / var(--ui-zoom, 1))); line-height: max(22px, calc(22px / var(--ui-zoom, 1))); }
 :root .combat:not(.coop) > .hand-area > .combat-action-row {
  position: relative; inset: auto; grid-area: actions; width: 100%;
   --combat-control-size: max(64px, calc(64px / var(--ui-zoom, 1)));
@@ -984,8 +982,6 @@
 :root .combat:not(.coop) .hand { padding-top:calc(84px / var(--ui-zoom,1)); }
 .hand .card.beat-hold[data-hold='holding']::after { content:''; position:absolute; inset:0; z-index:6; pointer-events:none; border-radius:inherit; background:linear-gradient(0deg,rgba(72,166,98,.42),rgba(121,204,132,.22)); clip-path:inset(calc((1 - var(--hold,0)) * 100%) 0 0 0); }
 .hand .card > .hold-hint { position:absolute; bottom:10px; left:0; right:0; margin:0; text-align:center; pointer-events:none; }
-:root .combat:not(.coop) .hand .card .mana-cost { right: auto; left: -0.7rem; top: 2.4rem; }
-:root .combat:not(.coop) .hand .card .stamina-cost { right: auto; left: -0.7rem; top: 5rem; }
 
 @media (max-width: 480px) {
   :root .combat:not(.coop) .hand { padding-inline: 16px; }
@@ -1030,8 +1026,19 @@
   --card-name-h:32px; --card-art-h:53.4px; --card-band-h:17px;
   --card-row:22px; --card-pad:8px; --card-gap:4px;
 }
-:root .combat:not(.coop) .hand .card .cname { font-size:16px; }
-:root .combat:not(.coop) .hand .card .ctext { font-size:18px; line-height:24px; }
+:root .combat:not(.coop) .hand .card .cname {
+  font-size:16px; line-height:16px; white-space:normal; overflow-wrap:anywhere;
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
+}
+:root .combat:not(.coop) .hand .card .ctext { font-size:16px; line-height:20px; }
+:root .combat:not(.coop) .hand .card .card-costs {
+  display:flex; align-items:center; gap:4px; position:absolute; top:-10px; left:-6px; right:22px;
+}
+:root .combat:not(.coop) .hand .card .card-costs > :is(.cost,.mana-cost,.stamina-cost) {
+  position:static; flex:0 0 auto; box-sizing:border-box; margin:0; height:24px;
+  min-width:24px; padding:0 5px; font-size:12px; line-height:1;
+}
+:root .combat:not(.coop) .hand .card .card-costs > .cost { width:24px; padding:0; }
 :root .combat:not(.coop) .hand .card .ctype { font-size:10px; }
 :root .combat:not(.coop) .hand .card .ctag { font-size:10px; }
 :root .combat:not(.coop) .hand .card .art { width:100%; height:var(--card-art-h); margin:0; }
@@ -1250,4 +1257,13 @@
 @media (max-height:500px) {
  :root .combat[data-layout='formation'] .combat-action-row .combat-potions { font-size:calc(10px / var(--ui-zoom,1)); }
  :root .combat[data-layout='formation'] .combat-action-row .energy-orb .sp-k { font-size:calc(7px / var(--ui-zoom,1)); }
+}
+
+/* A fixed-height StatPair must share the buttons' center, not stretch to the
+   taller controls band. Flexible pile columns keep the five controls in one row. */
+:root .combat[data-layout='formation'] > .hand-area > .combat-action-row > * {
+  align-self:center; min-width:0; grid-row:1;
+}
+:root .combat[data-layout='formation'] .combat-action-row > .pile {
+  width:100%; max-width:100%; box-sizing:border-box;
 }

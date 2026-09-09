@@ -21,9 +21,13 @@ of all 80 effect sets. The shared `presentationSequence` model owns project
 validation and matching; the optional gameplay adapter preserves existing FX.
 See [launch, package and integration instructions](../pose-studio/README.md).
 The authoring flow uses template starts, immediate effect previews, a direct
-card connection action, progressive disclosure for precise controls, and native
-tool dialogs at narrow widths. The dialogs reuse the same library/inspector DOM
-and return keyboard focus on close. `pose-studio/tests/usability.mjs` covers this
+card connection action, progressive disclosure for precise controls, and
+an inline effect tray at narrow widths. The preview has visible size, hide,
+duplicate and remove controls, corner resize handles and independent view zoom.
+Each effect has a six-frame strip with move/trim handles and a removal button.
+The tray and inspector reuse the original DOM and restore focus on close.
+`pose-studio/tests/direct-editing.mjs` checks pointer/touch manipulation;
+`pose-studio/tests/usability.mjs` covers this
 workflow at desktop and phone sizes; no game presentation rules are replaced.
 
 The [combat sprite catalog](../art/combat-effects-2026-09-07/sprite-catalog.html)
@@ -105,7 +109,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `music-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Positive-state Music toggle mirrored by Quick Menu and Settings and persisted through the shared settings owner. |
 | `crimson-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Health charge flask. |
 | `azure-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Mana charge flask. |
-| `inventory-belt` | `inventoryBeltModel` | `inventoryBeltHtml` | Map + Combat | Shared relic/potion belt. |
+| `inventory-belt` | `inventoryBeltModel` | `inventoryBeltHtml` | Map + Combat | Shared relic/potion belt, visible in combat and hidden on map screens. |
 | `item-tray` | `itemTrayModel` child | Belt view | Inventory | Shared horizontal tray behavior. |
 | `item-slot` | `componentModel` semantic ID | Item view | Inventory | Generic item slot contract. |
 | `folding-tray` | `trayModel` | `trayComponents.renderTray` | Armoury + future menus | Edge-aware disclosure composition. |
@@ -134,7 +138,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |
 | `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
 | `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Fixed 5:7 faces fan by overlap and remain visible, inert and dim during enemy turns. |
-| `combat-action-rail` | `componentModel` | `combat.js` | Combat | Edge-anchored Actions and Exhaust around a tight Draw / End Turn / Discard cluster. |
+| `combat-action-rail` | `componentModel` | `combat.js` | Combat | Single centered row: Actions, flexible Draw, End Turn, flexible Discard/Exhaust, and Potions. All five controls share a vertical center at narrow widths. |
 | `kit.pageDoor` | `pageDoor(spec)` | `kit/index.js` pageDoor | Every screen that asks something | The one door-opener: head with eyebrow, title and a single close control, a body the surface owns, and a foot on the button ladder. Four named widths (sm, md, lg, xl) or full; Escape, veil click and focus return are bound here once. |
 | `kit.optionCard` | `optionCard(spec)` | `kit/index.js` optionCard | Every list of ways on | One choosable way on — glyph or art, name, description, optional badge, meta and trail — carrying its own selected and disabled states. |
 | `kit.detailCard` | `detailCard(spec)` | `kit/index.js` detailCard | Inspectors and summaries | One subject described: eyebrow, name, line, meta, and any body the caller adds. The muted variant is the same card standing back. |
@@ -539,7 +543,7 @@ merchant armament offers and buy/sell inspection, reward armament inspection, an
 
 Item cards: equipmentCard.js owns the uniformly scaled poker canvas. collectibleCard.js composes authored potion/relic effects into that frame for Inventory, merchant shelves, and potion reward inspection. Listing tracks are fixed at 280px; reveals span the grid. Delegated hold feedback paints above card art and inspection gestures reach the existing hold owner. Full-text disclosure remains independent of equip gestures.
 Playing cards: card.renderCard now adds playing-poker-card. The brown-and-gold inset frame, art well and subdued type band match equipment cards. Combat dimensions, resource badges, live values, tag fitting and selected/unaffordable states retain their existing contracts. Validation: tools/card-feedback.mjs covers desktop/phone input and reduced motion; --shots also records the initial hand.
-Combat sizing: fitFan hands now keep card faces between 150 and 180 viewport pixels, uniformly scaling the complete 178px canvas. Body text remains at least approximately 15px at the minimum. BattlefieldStage grows sprites into available space and grounds their stacks near the hand, preserving HUD/intent clearance. Three-enemy phone fields fit without horizontal scrolling; four or more may scroll. Short-height battles scroll vertically instead of shrinking below readable card sizes.
+Combat sizing: fitFan hands uniformly scale the complete 178px canvas to fit the current hand area. Titles and body use 16px canvas type, and titles wrap to two lines. One cost row above the title groups action, mana and stamina badges without covering text. Full details remain available through Information. BattlefieldStage grows sprites into available space and grounds their stacks near the hand, preserving HUD/intent clearance. Three-enemy phone fields fit without horizontal scrolling; four or more may scroll. Short-height battles scroll vertically instead of shrinking below readable card sizes.
 
 Mobile combat art: at widths up to 640px, figures render at 90% of their fitted size (157.5px reference minimum instead of 175px). Neighboring enemy artwork may overlap slightly; names, meters and intents retain their existing layout and size.
 
