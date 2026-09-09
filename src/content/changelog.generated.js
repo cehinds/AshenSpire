@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-08",
     "summary": "The README and the changelog stop burying what a reader came for",
     "detail": "Nothing a player sees in the game changes; the two files a reader meets first do. The README lost the three separate restatements of the publication rules, the duplicated build-stamp explanation and the second branch table, and is half its length with all sixty-four of its links intact. This file's preamble folds its renumbering, start-date and uncoverable-landing notes into one collapsed block, and the receipts for the last three days are cut to what they say rather than how long they say it. Every one of the 223 receipts, its pull request and its build stamp is unchanged, which is the part that had to be true: the shorter prose is a rewrite of the words, never of the record.",
-    "build": "0.6.0.14",
+    "build": "0.6.0.16",
     "pullRequest": 820,
     "url": "https://github.com/cehinds/AshenSpire/pull/820"
+  },
+  {
+    "id": "pr-833",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Enemies show what is happening to them",
+    "detail": "Enemies get combat states of their own: a buff wears an aura drawn to the figure, a hit plays a hurt reaction, and a defeated enemy falls to its own pose rather than simply vanishing. Painted state and defeated art ships for the roster with its manifests and generation records beside it, and a missing pose falls back to the enemy's existing artwork rather than leaving a gap. Co-op replays the same states from the shared snapshot.",
+    "build": "0.6.0.15",
+    "pullRequest": 833,
+    "url": "https://github.com/cehinds/AshenSpire/pull/833"
+  },
+  {
+    "id": "pr-830",
+    "date": "2026-09-08",
+    "group": "2026-09-08",
+    "summary": "Card holds visibly fill before playing",
+    "detail": "Show a gold striped progress bar above the card face using the existing hold timer; clear it immediately on release or cancellation. Preserve the selection and targeting behavior already shipped by #822.",
+    "build": "0.6.0.14",
+    "pullRequest": 830,
+    "url": "https://github.com/cehinds/AshenSpire/pull/830"
   },
   {
     "id": "pr-822",

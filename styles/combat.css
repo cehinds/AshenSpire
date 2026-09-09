@@ -375,6 +375,7 @@
 /* Attack lunge: enemies step left toward the player, the player steps right. */
 .enemy .sprite.act-attack { animation: lunge-left 280ms ease-out; }
 .enemy-pose-attack { visibility: hidden; }
+.facing[data-state-active="true"] > :is(.enemy-pose-idle, .enemy-pose-attack) { visibility: hidden !important; }
 .enemy .sprite:is(.act-attack, .enemy-attack-pose) [data-attack-ready="true"] > .enemy-pose-idle { visibility: hidden; }
 .enemy .sprite:is(.act-attack, .enemy-attack-pose) [data-attack-ready="true"] > .enemy-pose-attack { visibility: visible; }
 /* Keep the idle drawing for anticipation and recovery. The attack drawing
@@ -466,42 +467,45 @@
 /* Hit reaction: the victim flashes AND recoils away from the blow — enemies are
    knocked right (struck from the player's side), the player left. A heavy hit
    (≥15, the same threshold as screen shake) recoils further with a tilt. */
-.sprite.hitflash > :first-child { animation: hitflash 200ms ease-out; }
-.enemy .sprite.hitflash > :first-child { animation: hit-enemy 220ms cubic-bezier(0.25, 0.8, 0.35, 1); }
-.player .sprite.hitflash > :first-child { animation: hit-player 220ms cubic-bezier(0.25, 0.8, 0.35, 1); }
-.enemy .sprite.hitflash.hit-heavy > :first-child { animation: hit-enemy-heavy 340ms cubic-bezier(0.25, 0.8, 0.35, 1); }
-.player .sprite.hitflash.hit-heavy > :first-child { animation: hit-player-heavy 340ms cubic-bezier(0.25, 0.8, 0.35, 1); }
+.sprite.hitflash > :first-child { animation: hitflash var(--hurt-duration, 220ms) linear; }
+.enemy .sprite.hitflash > :first-child { animation-name: hit-enemy; }
+.player .sprite.hitflash > :first-child { animation-name: hit-player; }
+.enemy .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-enemy-heavy; }
+.player .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-player-heavy; }
 @keyframes hitflash {
-  0% { filter: brightness(2.1) saturate(1.8); transform: translateX(4px); }
-  100% { filter: none; transform: none; }
+  0%, 32.99% { filter: none; }
+  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  67%, 100% { filter: none; }
+  0%, 100% { transform: none; }
+  30% { transform: translateX(4px); }
 }
 @keyframes hit-enemy {
-  0% { filter: brightness(2.1) saturate(1.8); }
+  0%, 32.99% { filter: none; }
+  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  67%, 100% { filter: none; }
+  0%, 100% { transform: none; }
   30% { transform: translateX(13px); }
-  100% { filter: none; transform: none; }
 }
 @keyframes hit-player {
-  0% { filter: brightness(2.1) saturate(1.8); }
+  0%, 32.99% { filter: none; }
+  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  67%, 100% { filter: none; }
+  0%, 100% { transform: none; }
   30% { transform: translateX(-13px); }
-  100% { filter: none; transform: none; }
 }
 @keyframes hit-enemy-heavy {
-  0% { filter: brightness(2.3) saturate(1.9); }
-  28% { transform: translateX(26px) rotate(5deg); }
-  60% { transform: translateX(6px) rotate(1deg); }
-  100% { filter: none; transform: none; }
+  0%, 32.99% { filter: none; }
+  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  67%, 100% { filter: none; }
+  0%, 100% { transform: none; }
+  30% { transform: translateX(26px); }
 }
 @keyframes hit-player-heavy {
-  0% { filter: brightness(2.3) saturate(1.9); }
-  28% { transform: translateX(-26px) rotate(-5deg); }
-  60% { transform: translateX(-6px) rotate(-1deg); }
-  100% { filter: none; transform: none; }
-}
-/* Death: a slower dissolve — sag, drain, blur to ash. */
-.sprite.crumble > :first-child { animation: crumble 550ms ease-in forwards; }
-@keyframes crumble {
-  40% { opacity: 0.7; filter: grayscale(0.6) blur(1px); }
-  to { opacity: 0.12; transform: translateY(14px) scale(0.9); filter: grayscale(1) blur(3px); }
+  0%, 32.99% { filter: none; }
+  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  67%, 100% { filter: none; }
+  0%, 100% { transform: none; }
+  30% { transform: translateX(-26px); }
 }
 
 /* Attack impact: a slashing arc sweeping across the victim. */
@@ -1030,3 +1034,22 @@
 .combat .hand .card.drag-source { opacity: .2; }
 .combat .combatant.player.skill-selected .sprite { filter: drop-shadow(0 0 .6rem var(--gold)); }
 .combat .hand .card { touch-action: none; }
+
+/* Progress sits above the opaque face and uses the shared hold timer. */
+.combat .hand .card > .card-hold-progress {
+  display: none; position: absolute; left: 6px; right: 6px; bottom: 6px;
+  height: max(6px, calc(6px / var(--ui-zoom, 1)));
+  z-index: 9; pointer-events: none; border-radius: 2px;
+  background: #17120e; box-shadow: 0 0 0 1px var(--gold);
+}
+.combat .hand .card[data-hold="holding"] > .card-hold-progress { display: block; }
+.combat .hand .card > .card-hold-progress::before {
+  content: ''; display: block; width: 100%; height: 100%;
+  background: repeating-linear-gradient(135deg, #ffe3a0 0 8px, #917025 8px 16px);
+  transform: scaleX(var(--hold, 0)); transform-origin: left;
+}
+
+/* A horizontal body needs room to the right of the leftmost solo player. */
+@media (max-width: 600px) {
+  .combat:not(.coop) .player .defeated-frame { left: 100% !important; }
+}
