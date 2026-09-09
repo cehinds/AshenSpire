@@ -7,7 +7,18 @@ import { COMBAT_EFFECT_ART } from '../src/content/combatEffectArt.js';
 import { combatEffectPresentation } from '../src/content/combatEffectPresentation.js';
 import { combatEffectForEvent } from '../src/model/combatEffectEvents.js';
 import { readFileSync } from 'node:fs';
+import {playCombatEffect,playCombatEffectPlan} from '../src/ui/combatEffectSprites.js';
 import { createHash } from 'node:crypto';
+
+test('Reduce flashes suppresses painted releases, casts and reactions before creating animation nodes',()=>{
+ const previous=globalThis.document;
+ globalThis.document={body:{classList:{contains:name=>name==='reduce-flashes'}}};
+ try{
+  const layer={appendChild:()=>assert.fail('flashing sprite appended')},box={left:0,top:0,width:10,height:10};
+  for(const kind of Object.keys(COMBAT_EFFECT_ART))assert.equal(typeof playCombatEffect(layer,box,kind),'function');
+  playCombatEffectPlan(layer,box,{kind:'starbolt',at:'target',projectile:true,cast:'focusMotes'},{targets:[box]})();
+ }finally{if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}
+});
 
 test('every shipped effect has six distinct painted frames',()=>{
  assert.equal(Object.keys(COMBAT_EFFECT_ART).length,56);

@@ -21,7 +21,7 @@ export function clearCombatEffects(layer){for(const stop of [...(active.get(laye
 // Caller supplies boxes in layer-local coordinates, using the shared geometry
 // helper. All six frames retain one center anchor and common canvas scale.
 export function playCombatEffect(layer,from,kind,{to=null,direction='auto',duration=260,size=140,delay=0,impactKind='impact'}={}){
- if(!layer||!from||reducedMotionRequested())return ()=>{};
+ if(!layer||!from||reducedMotionRequested()||document.body.classList.contains('reduce-flashes'))return ()=>{};
  if(delay>0){
    const set=active.get(layer)||new Set();active.set(layer,set);let child=()=>{};
    const stop=()=>{clearTimeout(ticket);child();set.delete(stop);};
