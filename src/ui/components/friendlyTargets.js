@@ -9,7 +9,7 @@ export const TARGET_COLORS = Object.freeze({
 });
 
 function tintedClone(spriteWrap, color) {
-  const src = spriteWrap && spriteWrap.firstElementChild;
+  const src = spriteWrap && [...spriteWrap.children].find(child => !child.classList.contains('aim-silho'));
   if (!src) return null;
   const clone = src.cloneNode(true);
   const svg = clone.matches && clone.matches('svg') ? clone : clone.querySelector && clone.querySelector('svg');
@@ -21,8 +21,9 @@ function tintedClone(spriteWrap, color) {
       if (stroke && stroke !== 'none') node.setAttribute('stroke', color);
     });
   } else if (clone.style) {
-    clone.style.background = clone.matches?.('img, canvas') || clone.querySelector?.('img, canvas') ? 'transparent' : color;
-    clone.style.borderColor = color;
+    const artwork = clone.matches?.('img,canvas') || clone.querySelector?.('img,canvas,.painted-stage');
+    clone.style.background = artwork ? 'transparent' : color;
+    clone.style.borderColor = artwork ? 'transparent' : color;
     clone.style.color = 'transparent';
     clone.style.boxShadow = 'none';
     // Rendered class art is an <img> inside a wrapper. Recolor the wrapper's

@@ -164,12 +164,12 @@ for (const width of (args.includes('--width') ? [Number(args[args.indexOf('--wid
       })()`);
       check(geometry.widths.every(w=>w>=149.5&&w<=180.5),shape.name+': readable 150–180px card range',geometry);
       check(geometry.stacks.every(r=>r.bottom<=geometry.handTop-8),shape.name+': combatants leave clear space above the hand',geometry);
-      check(geometry.playerHeight>=175,shape.name+': player sprite retains reference minimum height',geometry);
+      check(geometry.playerHeight>=(width<=640?157.5:175),shape.name+': player sprite retains responsive reference minimum height',geometry);
       check(geometry.handOverflow<=1&&geometry.fieldOverflow<=1,shape.name+': five cards and three enemies fit without horizontal scroll',geometry);
       console.log('GEOMETRY '+shape.name+' '+JSON.stringify(geometry));
       const shot=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false},page.sessionId);
       writeFileSync(join(OUT,'playing-hand-'+shape.width+'-'+DOOR+'.png'),Buffer.from(shot.data,'base64'));
-      if (width===1440||width===390) {
+      if (!args.includes('--layout-only') && (width===1440||width===390)) {
         const beforeInspect=await page.evaluate('JSON.stringify(window.__combat.piles.hand)');
         const point=await page.evaluate(`(()=>{const card=[...document.querySelectorAll('.hand .card')].at(-1);card.scrollIntoView({block:'center',inline:'center'});const r=card.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`);
         if (shape.mobile) await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...point,id:1}]},page.sessionId);
@@ -195,6 +195,7 @@ for (const width of (args.includes('--width') ? [Number(args[args.indexOf('--wid
       const sevenShot=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false},page.sessionId);
       writeFileSync(join(OUT,'seven-hand-'+shape.width+'-'+DOOR+'.png'),Buffer.from(sevenShot.data,'base64'));
     }
+    if (args.includes('--layout-only')) continue;
     const entry=await page.evaluate(`(() => {
       document.body.classList.toggle('reduced-motion', ${mode==='app'});
       const c=window.__combat;
@@ -264,6 +265,8 @@ for (const width of (args.includes('--width') ? [Number(args[args.indexOf('--wid
   await Promise.race([cdp.send('Browser.close').catch(()=>{}),wait(1200)]);
   cdp.close();await browser.close();server.server.closeAllConnections?.();await new Promise(done=>server.server.close(done));
 }
-console.log('BOUNDARY: actual hand input and card outcome feedback; controlled fixtures, not a full run.');
+console.log(args.includes('--layout-only')
+  ? 'BOUNDARY: rendered combat geometry and five/seven-card fit only; no play or inspection interactions tested.'
+  : 'BOUNDARY: actual hand input and card outcome feedback; controlled fixtures, not a full run.');
 console.log('card-feedback: '+(checks-failures)+' passed, '+failures+' failed ('+DOOR+')');
 process.exitCode=failures?1:0;

@@ -134,16 +134,25 @@ if (hasAlpha) {
     // An enclosed pocket is by definition walled in by figure pixels, so it always
     // touches them: what makes it background is that the border fill never got here
     // and it is the sheet's own colour.
-    const stack = [start]; pocket[start] = 1; filled[start] = 1;
+    const stack = [start], region = []; pocket[start] = 1;
+    let darkest = 255, lightest = 0;
     while (stack.length) {
       const i = stack.pop(), x = i % W, y = (i - x) / W;
+      region.push(i);
+      const light = (img.px[i*4]+img.px[i*4+1]+img.px[i*4+2])/3;
+      darkest = Math.min(darkest, light); lightest = Math.max(lightest, light);
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const nx = x + dx, ny = y + dy;
         if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
         const ni = ny * W + nx;
         if (filled[ni] || pocket[ni] || !isBg(ni * 4)) continue;
-        pocket[ni] = 1; filled[ni] = 1; stack.push(ni);
+        pocket[ni] = 1; stack.push(ni);
       }
+    }
+    // Checkerboard holes contain both background tones. Small solid highlights
+    // (eyes, polished metal) enclosed by the figure are part of the painting.
+    if (!has('--checker-pockets') || (region.length > 32 && lightest-darkest > 20)) {
+      for (const i of region) filled[i] = 1;
     }
   }
   for (let i = 0; i < W * H; i++) fg[i] = filled[i] ? 0 : 1;
@@ -177,6 +186,15 @@ for (let start = 0; start < W * H; start++) {
 // belongs to that figure.
 const parts = boxes.map((b, i) => ({ ...b, id: i })).filter(b => b.area >= speckArea * W * H);
 parts.sort((a, b) => b.area - a.area);
+if (has('--mask-only')) {
+  const keep = new Set(parts.map(b => b.id));
+  const px = Buffer.from(img.px);
+  for (let i=0;i<W*H;i++) if (!keep.has(label[i])) px[i*4+3]=0;
+  mkdirSync(outDir,{recursive:true});
+  writeFileSync(join(outDir, `${cls}_mask.png`), encodePng(W,H,px));
+  console.log(`${cls}: transparent source mask written`);
+  process.exit(0);
+}
 // A body is one big blob; a spell burst or a dropped blade is a small one beside it.
 // Only blobs that clear the figure threshold start a figure; everything larger than
 // a speck stays a candidate for adoption, however small — that is what the effects
