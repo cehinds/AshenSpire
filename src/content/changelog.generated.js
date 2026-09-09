@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "Clearer maps and interactive local locations",
     "detail": "Use consistent large nodes in every run mode, load native detail tiles only for the visible area, retain a small offline fallback, and add an extra manual zoom step. Trace routes with bright outlined ink over engraved unexplored parchment; preserve discovery and travel rules. Pan and zoom local maps with mouse, touch, or keyboard; center selected sites and read actual service benefits before acting.",
-    "build": "0.6.0.77",
+    "build": "0.6.0.78",
     "pullRequest": 878,
     "url": "https://github.com/cehinds/AshenSpire/pull/878"
+  },
+  {
+    "id": "pr-893",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Close combat inspections from their footer",
+    "detail": "The Close button now dismisses player and enemy inspections with mouse, touch, or keyboard and restores focus through the shared modal behavior.",
+    "build": "0.6.0.74",
+    "pullRequest": 893,
+    "url": "https://github.com/cehinds/AshenSpire/pull/893"
   },
   {
     "id": "pr-885",

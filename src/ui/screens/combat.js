@@ -597,7 +597,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function openCombatantDoor(subject, opener = document.activeElement) {
     if (!subject?.name) return;
     hideTooltip();
-    openModal({
+    const done = button({ label: 'Close', weight: 'primary', attrs: { 'data-focusable': 'true' } });
+    const shell = openModal({
       size: 'md',
       className: 'combatant-door',
       opener,
@@ -606,9 +607,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       closeLabel: `Close ${subject.name}`,
       bodyClassName: 'combatant-inspector-body',
       body: (host) => host.replaceChildren(...combatantDetailBody(subject, { heading: false })),
-      primary: button({ label: 'Close', weight: 'primary', attrs: { 'data-focusable': 'true' } }),
+      primary: done,
       footSize: 'short',
     });
+    done.addEventListener('click', shell.close);
   }
 
   function renderedContentRect(el) {

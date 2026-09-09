@@ -1,6 +1,6 @@
 # Local maps: navigate, inspect, then act
 
-Build **0.6.0.77** adds the same local-map controls to World Journey and Long Expedition.
+Build **0.6.0.78** adds the same local-map controls to World Journey and Long Expedition.
 
 - Open at 150% of Fit; pan by mouse or one-finger drag, arrows, or directional buttons.
 - Wheel zoom follows the cursor. Pinch zoom follows the midpoint. Main keyboard `+`, `=`, `-` and numpad Add/Subtract work when the map has focus. Browser Ctrl/Command shortcuts and form controls retain their normal behavior.
