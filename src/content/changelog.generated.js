@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-836",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Reward cards select once and save safely",
+    "detail": "One press selects a card, Confirm collects it, and Back keeps the selection. Failed card saves restore the deck and allow retry without duplicates. Current combat flick controls are preserved.",
+    "build": "0.6.0.54",
+    "pullRequest": 836,
+    "url": "https://github.com/cehinds/AshenSpire/pull/836"
+  },
+  {
     "id": "pr-867",
     "date": "2026-09-09",
     "group": "2026-09-09",

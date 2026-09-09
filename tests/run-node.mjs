@@ -876,6 +876,15 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     zoomExtra++;
   }
 }
+try {
+  const { runRewardConfirmTests } = await import('./reward-confirm.test.mjs');
+  const count = runRewardConfirmTests();
+  console.log('PASS  reward selection and confirmation: ' + count + ' checks');
+  zoomPassed++;
+} catch (error) {
+  console.log('FAIL  reward selection and confirmation: ' + error.message);
+  zoomExtra++;
+}
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
 console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
 console.log('          check over coordinate spaces — they prove a transform has two');

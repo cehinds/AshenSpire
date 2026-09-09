@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-09
 
+- **Reward cards select once and save safely** ([#836](https://github.com/cehinds/AshenSpire/pull/836), `0.6.0.54`). One press selects a card, Confirm collects it, and Back keeps the selection. Failed card saves restore the deck and allow retry without duplicates. Current combat flick controls are preserved.
+
 - **Combat controls stay in one row and maps show a cleaner HUD** ([#867](https://github.com/cehinds/AshenSpire/pull/867), `0.6.0.51`). Center Actions, Draw, End Turn, Discard/Exhaust and Potions together, with flexible pile widths. Hide the potion and relic strip on maps in both HUD modes while retaining combat inventory controls.
 - **Combat card text fits beneath clear cost badges** ([#862](https://github.com/cehinds/AshenSpire/pull/862), `0.6.0.48`). Scale card text consistently with the face, allow titles to wrap to two lines, and group action, mana and stamina costs above the title. Selection, Information, targeting and touch flicks keep their existing behavior.
 - **Pose Studio supports direct effect and timeline editing** ([#864](https://github.com/cehinds/AshenSpire/pull/864), `0.6.0.47`). Resize effects with visible handles, edit timeline cues directly and use accessible alternatives in the studio.

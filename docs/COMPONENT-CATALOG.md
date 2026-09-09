@@ -558,3 +558,5 @@ same renderer serves `world-atlas-preview.html`; its authoring controls and ID
 selector are isolated from the game. Actual service dispatch reuses the existing
 merchant, smith upgrade, and grace screens. See `docs/WORLD-ATLAS.md` for the
 normalized content contract and `tools/world-atlas-qa.mjs` for browser checks.
+
+Reward chooser: playing-card inspection yields face taps to reward selection; the separate Confirm control owns collection. Back retains selection and a failed save exposes a retry status without adding a duplicate card. Touch flicks retain the current shared TouchFlickModel and Accessibility controls.
