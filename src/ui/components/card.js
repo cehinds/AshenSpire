@@ -10,6 +10,7 @@ import { resolveCard } from '../../model/registries.js';
 import { computeTokenBindings, relicTokens, tokenRe } from '../../model/validate.js';
 import { flaskGrowthClause } from '../../model/flaskgrowth.js';
 import { attachTooltip, esc } from './tooltip.js';
+import { helpText } from '../../model/tooltipSettings.js';
 import { statusTooltipText } from '../uiContent.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
@@ -191,6 +192,13 @@ export function renderCard(registries, ref, opts = {}) {
       ? { variable: !!opts.preview.costIsX, action: opts.preview.cost, mana: opts.preview.manaCost, stamina: opts.preview.staminaCost }
       : null;
     attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts)));
+    for (const [selector, resource, amount] of [['.cost', 'action', cost], ['.mana-cost', 'mana', manaCost], ['.stamina-cost', 'stamina', staminaCost]]) {
+      const badge = el.querySelector(selector);
+      if (badge) attachTooltip(badge, () => {
+        const values = { resource: registries.framework.resourceWord(resource), amount, card: def.name };
+        return `<div class="tt-title">${esc(helpText('costTitle', values))}</div>${esc(helpText(amount === 'X' ? 'costAll' : 'cost', values))}`;
+      });
+    }
   }
   if (opts.small) el.dataset.small = 'true';
   if (opts.inspection !== false) bindCardInspection(el, { title: def.name, readOnly: opts.inspectReadOnly === true,

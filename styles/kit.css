@@ -601,7 +601,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 #tooltip[data-overflow="true"], #tooltip-2[data-overflow="true"] { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
 #tooltip[data-open="true"], #tooltip-2[data-open="true"] { opacity: 1; visibility: visible; pointer-events: auto; }
 #tooltip[data-stuck="true"] { pointer-events: none; }
-#tooltip.is-fading { opacity: 0; transition: opacity 160ms ease-out; }
+#tooltip.is-fading { opacity: 0; transition: opacity var(--tooltip-fade-duration) ease-out; }
 .reduced-motion #tooltip, .reduced-motion #tooltip-2 { transition: none !important; }
 @media (prefers-reduced-motion: reduce) { #tooltip, #tooltip-2 { transition: none !important; } }
 /* The content grammar: title, meta (type + cost), effect, tags, then under

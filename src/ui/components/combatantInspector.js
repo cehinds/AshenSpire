@@ -15,19 +15,26 @@ import { decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { renderTray } from './trayComponents.js';
 import { renderEnemyMoveCards } from './enemyMoveCards.js';
+import { attachTooltip, esc } from './tooltip.js';
+import { helpText } from '../../model/tooltipSettings.js';
 import { el, eyebrow, titleS, hairline, labelStack, meter, meters, row, statusText } from '../kit/index.js';
 
 function resourceMeters(resources) {
-  return meters((resources || []).map((r) => meter({
-    id: String(r.label).toLowerCase(),
-    tone: String(r.label).toLowerCase(),
-    label: r.label,
-    value: r.max == null ? String(r.value) : `${r.value} / ${r.max}`,
-    cur: r.value, max: r.max == null ? r.value : r.max,
-    pct: r.max ? Math.max(0, Math.min(100, (r.value / r.max) * 100)) : (r.value > 0 ? 100 : 0),
-    stack: true,
-    attrs: { class: 'combatant-inspector-resource' },
-  })), { class: 'combatant-inspector-resources' });
+  return meters((resources || []).map((r) => {
+    const node = meter({
+      id: String(r.label).toLowerCase(),
+      tone: String(r.label).toLowerCase(),
+      label: r.label,
+      value: r.max == null ? String(r.value) : `${r.value} / ${r.max}`,
+      cur: r.value, max: r.max == null ? r.value : r.max,
+      pct: r.max ? Math.max(0, Math.min(100, (r.value / r.max) * 100)) : (r.value > 0 ? 100 : 0),
+      stack: true,
+      attrs: { class: 'combatant-inspector-resource' },
+    });
+    node.tabIndex = 0;
+    attachTooltip(node, () => `<div class="tt-title">${esc(r.label)}</div>${esc(r.value)}${r.max == null ? '' : ` / ${esc(r.max)}`}. ${r.tooltipHtml || ''}`);
+    return node;
+  }), { class: 'combatant-inspector-resources' });
 }
 
 function section(title, rows, empty) {
@@ -44,12 +51,13 @@ function section(title, rows, empty) {
 
 function abilitySection(abilities) {
   const list = el('details', { class: 'combatant-inspector-section combatant-abilities', open: true }, [
-    el('summary', { class: 'as-eyebrow', text: `Active skills & stance (${abilities.length})` }), hairline(),
+    el('summary', { class: 'as-eyebrow', text: `${helpText('activeListTitle')} (${abilities.length})` }), hairline(),
   ]);
+  attachTooltip(list.querySelector('summary'), () => `<div class="tt-title">${esc(helpText('activeListTitle'))}</div>${esc(helpText('activeList', { count: abilities.length, action: helpText(list.open ? 'collapse' : 'expand') }))}`);
   for (const ability of abilities) list.append(el('details', {
     class: 'combatant-ability', open: true, dataset: { abilityId: ability.id, abilityKind: ability.kind },
   }, [
-    el('summary', { text: ability.name }),
+    el('summary', { text: ability.name, 'data-tip': ability.detail }),
     el('p', { class: 'as-prose', text: ability.detail }),
   ]));
   if (!abilities.length) list.append(statusText('No active skills or effects.'));

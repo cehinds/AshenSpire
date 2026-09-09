@@ -1133,6 +1133,7 @@
 :root .combat[data-layout='formation'] .combatant .meters .bar { height: calc(10px / var(--ui-zoom,1)); min-height: 0; }
 :root .combat[data-layout='formation'] .combatant .meters .bar .label { font-size: calc(10px / var(--ui-zoom,1)); line-height: 1; }
 :root .combat[data-layout='formation'] .combatant :is(.status-row,.stance-chip,.foundation-evade,.dodge-receipt) { pointer-events: auto; }
+:root .combat[data-layout='formation'] .combatant [data-tip-attached], .combat .turn-ribbon { pointer-events: auto; }
 .combat-ability-badge { cursor: pointer; }
 .combat-ability-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 :root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) { z-index: 30 !important; }
