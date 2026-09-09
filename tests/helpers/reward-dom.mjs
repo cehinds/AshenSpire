@@ -79,5 +79,5 @@ export function rewardDom() {
   document.body = new Element('body');
   document.querySelectorAll = selector => document.body.querySelectorAll(selector);
   document.querySelector = selector => document.body.querySelector(selector);
-  return { document, Event: DomEvent, CustomEvent: DomEvent, window: new Element('window'), requestAnimationFrame: () => 0, cancelAnimationFrame: () => {}, addEventListener() {}, removeEventListener() {} };
+  return { document, getComputedStyle: () => ({ getPropertyValue: () => '' }), Event: DomEvent, CustomEvent: DomEvent, window: new Element('window'), requestAnimationFrame: () => 0, cancelAnimationFrame: () => {}, addEventListener() {}, removeEventListener() {} };
 }
