@@ -45,10 +45,10 @@ async function geometry(page, label) {
   return g;
 }
 try {
-  for (const size of [{width:1440,height:900},{width:794,height:893},{width:390,height:844},{width:844,height:390}]) {
+  for (const size of [{width:1440,height:900},{width:794,height:893},{width:390,height:844},{width:844,height:390}].filter(s=>!process.env.QA_WIDTH || s.width===Number(process.env.QA_WIDTH))) {
     const page = await browser.newPage({ viewport: size });
     page.on('pageerror', e => errors.push(e.message));
-    for (const mode of ['duel','enemies','party']) {
+    for (const mode of ['duel','enemies','party'].filter(m=>!process.env.QA_MODE || m===process.env.QA_MODE)) {
       await page.goto(`${base}?shot=${mode==='party'?'coop':'combat'}&shotScene=cinder-reach-4`, { waitUntil:'domcontentloaded', timeout:60000 });
       await page.waitForSelector('.combatant');
       if (mode === 'duel') await page.evaluate(() => { window.__combat.enemies.splice(1); window.__renderCombatForShot(); });
@@ -75,7 +75,7 @@ try {
       if (!during.handLocked) throw Error(label+': hand accepts enemy-turn input');
       for (let i=0;i<before.cards.length;i++) {
         const a=before.cards[i],b=during.cards[i];
-        if (!b || ['x','y','w','h'].some(k=>Math.abs(a[k]-b[k])>1)) throw Error(label+': hand moved between phases');
+        if (!b || ['x','y','w','h'].some(k=>Math.abs(a[k]-b[k])>1)) throw Error(label+': hand moved between phases '+JSON.stringify({a,b}));
       }
       await page.screenshot({ path:resolve(out,label+'-enemy.png') });
       await page.waitForFunction(()=>document.querySelector('.combat').dataset.turn==='player',null,{timeout:30000});
@@ -91,5 +91,5 @@ try {
   }
   if(errors.length) throw Error(errors.join('\n'));
   writeFileSync(resolve(out,'checks.json'), JSON.stringify({base,results,errors},null,2));
-  console.log(`PASS ${results.length} checks, 24 screenshots, no page errors`);
+  console.log(`PASS ${results.length} checks, ${results.length / 3 * 2} screenshots, no page errors`);
 } finally { await browser.close(); }

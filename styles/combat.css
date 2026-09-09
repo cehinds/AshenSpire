@@ -1086,7 +1086,7 @@
    disappearing cards, status chips and turn banners cannot resize the field. */
 :root .combat[data-layout='formation'] {
   flex: none; height: calc(100dvh / var(--ui-zoom, 1)); min-height: 0;
-  display: grid; grid-template-rows: 10% 45% 45%; overflow: hidden;
+  display: grid; grid-template-rows: 10% 45% 45%; overflow: clip;
 }
 :root .combat[data-layout='formation'] > .topbar { grid-row: 1; min-height: 0; height: 100%; box-sizing: border-box; overflow: visible; }
 :root .combat[data-layout='formation'] > .field {
@@ -1224,3 +1224,12 @@
 :root .combat.coop[data-layout='formation'] .hand { width:100%; height:100%; min-height:0; padding:calc(18px / var(--ui-zoom,1)) calc(16px / var(--ui-zoom,1)) calc(10px / var(--ui-zoom,1)); }
 
 :root .combat.coop[data-layout="formation"] > .hand-area { grid-template-areas:"hand" "actions"; }
+
+:root .combat[data-layout='formation'] > .hand-area,
+:root .combat.coop[data-layout='formation'] > .hand-area { grid-template-rows:minmax(0,2fr) minmax(0,1fr); }
+:root .combat[data-layout='formation'] .combat-action-row { min-height:0; }
+:root .combat[data-layout='formation'] .combat-action-row > * { max-height:100%; }
+
+/* The fitted fan has no scrollbars. A scrollbar appearing/disappearing when
+   the enemy-turn filter changes would shift the vertically centered cards. */
+:root .combat[data-layout='formation'] .hand { overflow:visible !important; }

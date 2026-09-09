@@ -1,6 +1,6 @@
 // Presentation only: never changes combat order, range, or target legality.
 export const COMBAT_LAYOUT = Object.freeze({ hud: 10, field: 45, hand: 30, controls: 15,
-  friendly: .3, flex: .1, enemy: .6, rearScale: .8, rearDepth: .12 });
+  friendly: .3, flex: .1, enemy: .6, rearScale: .8, rearClearance: 50 });
 
 export function combatFormation({ width, height, friends, enemies }) {
   const minimum = Math.max(72, Math.min(130, height * .38));
@@ -21,9 +21,9 @@ export function combatFormation({ width, height, friends, enemies }) {
       const row = Math.floor(index / columns), column = index % columns;
       const count = Math.min(columns, ids.length - row * columns);
       const used = Math.min(span, count * Math.min(180, cell));
-      const start = row ? left + (span - used) / 2 : right ? left + span - used : left;
+      const start = row || !right ? left + (span - used) / 2 : left + span - used;
       return { id, row, x: start + (column + .5) * used / count,
-        ground: ground - row * Math.min(36, height * COMBAT_LAYOUT.rearDepth / Math.max(1, rows - 1)),
+        ground: ground - row * Math.min(COMBAT_LAYOUT.rearClearance, Math.max(0, ground - height * .45) / Math.max(1, rows - 1)),
         width: Math.min(124, cell - 6), artWidth: cell * 1.12,
         depth: row ? COMBAT_LAYOUT.rearScale : 1 };
     });

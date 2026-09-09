@@ -16,7 +16,7 @@ test('shared space is allocated by crowding, with grounded shallow overflow', ()
     assert.ok(p.slots.every(s => s.x - s.width / 2 >= 0 && s.x + s.width / 2 <= width));
     assert.ok(p.slots.every(s => s.ground >= 380 * .4 && s.ground <= p.ground));
     assert.ok(p.slots.every(s => s.depth === (s.row ? .8 : 1)));
-    assert.ok(p.ground - Math.min(...p.slots.map(s => s.ground)) <= 46);
+    assert.ok(p.ground - Math.min(...p.slots.map(s => s.ground)) <= 50);
   }
 });
 test('layout budgets sum to viewport and allocation ignores transient states', () => {

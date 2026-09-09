@@ -2137,7 +2137,9 @@ function poseFxShowcase() {
 // a canned server snapshot through a stub socket — no server/second player
 // needed — so the co-op board/map can be photographed like the solo shots.
 function coopStubMount(snapshot, myId) {
-  const stub = { _h: null, setHandlers(h) { this._h = h; }, send() {}, close() {}, get open() { return false; } };
+  const sent = [];
+  window.__coopSentForShot = sent;
+  const stub = { _h: null, setHandlers(h) { this._h = h; }, send(message) { sent.push(message); }, close() {}, get open() { return false; } };
   mountCoop(app, {
     registries, conn: stub, myId, meta: saves.loadMeta(),
     onSettingsChange: persistSettingsChange,

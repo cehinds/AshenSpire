@@ -175,6 +175,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // Animation follows authoritative cardPlayed receipts below, never an
   // optimistic local intent. Remote seats and repeated resyncs use the same path.
   const send = (obj) => {
+    if (pacing && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t)) return;
     return conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
   };
 
@@ -327,7 +328,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (!cancelFriendlyTargeting()) { armedFlask = null; render(); }
       return;
     }
-    if (!snap || snap.scene.kind !== 'combat') return;
+    if (pacing || !snap || snap.scene.kind !== 'combat') return;
     const sc = snap.scene;
     const meP = sc.players.find((p) => p.id === me);
     if (!meP || !meP.alive || !meP.connected) return;
