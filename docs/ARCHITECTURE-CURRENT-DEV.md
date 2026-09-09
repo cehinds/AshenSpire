@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `36f94670033cab4dd6839ce2009ad6d439136966`
+- Source commit: `324257a9c5d6b62d0146428e1affa6c4b34f41c7`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -25,13 +25,13 @@
 | Headless simulation/services | `src/engine/` | 13 |
 | Screen presenters/hosts | `src/ui/screens/` | 24 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
-| Component models and behavior records | `src/ui/models/` | 26 |
-| DOM components and observer adapters | `src/ui/components/` | 62 |
+| Component models and behavior records | `src/ui/models/` | 27 |
+| DOM components and observer adapters | `src/ui/components/` | 63 |
 | Code-side content adapters | `src/content/` | 81 |
 | Authoritative JSON/CSV content | `content/source/` | 22 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 53 |
-| Architecture/tooling | `tools/` | 336 |
+| Tests | `tests/` | 54 |
+| Architecture/tooling | `tools/` | 337 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **5140**.
-Extensions: `.bat` 1, `.cjs` 9, `.cmd` 1, `.css` 13, `.csv` 21, `.gitattributes` 1, `.gitignore` 7, `.html` 47, `.js` 346, `.json` 111, `.log` 23, `.md` 108, `.mjs` 320, `.nojekyll` 1, `.png` 1634, `.ps1` 1, `.py` 7, `.sh` 4, `.sql` 1, `.svg` 11, `.txt` 12, `.webp` 2455, `.yml` 5, `(none)` 1.
+Tracked files: **5148**.
+Extensions: `.bat` 1, `.cjs` 9, `.cmd` 1, `.css` 13, `.csv` 21, `.gitattributes` 1, `.gitignore` 7, `.html` 47, `.js` 348, `.json` 111, `.log` 23, `.md` 108, `.mjs` 322, `.nojekyll` 1, `.png` 1638, `.ps1` 1, `.py` 7, `.sh` 4, `.sql` 1, `.svg` 11, `.txt` 12, `.webp` 2455, `.yml` 5, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
