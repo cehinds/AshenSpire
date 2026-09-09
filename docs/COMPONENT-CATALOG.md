@@ -6,6 +6,14 @@ Select any component card there to open its detail drawer. The dedicated
 [`tray-gallery.html`](./tray-gallery.html) shows all eight top/right/bottom/left
 folded and unfolded Tray states using the production renderer.
 
+The [Pose & Effects Studio](../art/pose-studio/index.html) provides a reusable
+animation-authoring workspace: effect library, anchored stage, five-to-seven
+pose strip, layered cue timeline, selection inspector, binding rule builder,
+and relationship view. Its stage and library provide live visual miniatures
+of all 80 effect sets. The shared `presentationSequence` model owns project
+validation and matching; the optional gameplay adapter preserves existing FX.
+See [launch, package and integration instructions](../pose-studio/README.md).
+
 The [combat sprite catalog](../art/combat-effects-2026-09-07/sprite-catalog.html)
 shows all 56 six-frame sets. `combatEffectPlan` resolves presentation tag
 combinations; `playCombatEffectPlan` renders the shared solo/co-op cast and

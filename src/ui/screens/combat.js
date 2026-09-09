@@ -1,6 +1,6 @@
 import { combatEffectAngle } from '../combatEffectDirection.js';
 import { combatEffectPlan, combatEffectTags, combatEffectTargetIds } from '../../model/combatEffects.js';
-import { decorateCombatEffects } from '../../model/combatEffectEvents.js';
+import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
 // docs/mockups/combat-screen.svg)
@@ -240,7 +240,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const totalMs = plan.family === 'neutral' ? 0 : Math.round(speed.lungeMs * tempo);
     const target = plan.targetId && fxCtx.anchorFor(plan.targetId);
     const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,combat.player.id).map(id=>fxCtx.anchorFor(id)).filter(Boolean).map(anchor=>anchorLocalBox(fxCtx.layer,anchor));
-    const cancelEffect=playCombatEffectPlan(fxCtx.layer,anchorLocalBox(fxCtx.layer,actorEl),plan.spriteEffect,{targets:effectTargets,duration:Math.max(180,totalMs),size:180});
+    const authoredTargets=presentationTargetIds(plan.effectEvents,combat.player.id,plan.spriteEffect?.bindingContext.objectId).map(id=>fxCtx.anchorFor(id)).filter(Boolean).map(anchor=>anchorLocalBox(fxCtx.layer,anchor));
+    const cancelEffect=playCombatEffectPlan(fxCtx.layer,anchorLocalBox(fxCtx.layer,actorEl),plan.spriteEffect,{targets:effectTargets,authoredTargets,duration:Math.max(180,totalMs),size:180});
     const actionClass = ['slash', 'thrust', 'strike', 'projectile'].includes(plan.family) ? 'act-attack' : 'act-move';
     const overrides = {
       'animation-duration': totalMs + 'ms',
