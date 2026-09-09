@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-874",
+    "date": "2026-09-09",
+    "group": "2026-09-09",
+    "summary": "Combat vitality stays steady and mobile maps load less artwork",
+    "detail": "Prevent stretched health bars at turn changes, reserve an inspectable status row beneath vitality, shrink map textures, reuse traditional node symbols in World Journey and Long Expedition, and show selected reward cards in green. Connected return travel and reward save recovery remain available.",
+    "build": "0.6.0.61",
+    "pullRequest": 874,
+    "url": "https://github.com/cehinds/AshenSpire/pull/874"
+  },
+  {
     "id": "pr-872",
     "date": "2026-09-09",
     "group": "2026-09-09",

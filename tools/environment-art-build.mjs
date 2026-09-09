@@ -15,11 +15,11 @@ for (const region of ENVIRONMENTS) {
   const size = await sharp(board).metadata();
   if (size.width !== ENVIRONMENT_ATLAS_SIZE[0] || size.height !== ENVIRONMENT_ATLAS_SIZE[1]) throw Error(`Unexpected atlas size: ${region.id}`);
   await sharp(board).webp({ quality: 80, effort: 6 }).toFile(path(region.atlas));
-  await sharp(path(`art/environments/maps/${region.id}.png`)).webp({ quality: 78, effort: 6 }).toFile(path(region.map));
+  await sharp(path(`art/environments/maps/${region.id}.png`)).resize({ width:768, height:768, fit:"inside", withoutEnlargement:true }).webp({ quality: 65, effort: 6 }).toFile(path(region.map));
   console.log(`${region.id}: four combat paintings and one map`);
 }
 for (const world of MEGA_MAPS) {
-  await sharp(path(`art/environments/worlds/${world.id}.png`)).webp({ quality: 82, effort: 6 }).toFile(path(world.map));
+  await sharp(path(`art/environments/worlds/${world.id}.png`)).resize({ width:768, height:768, fit:"inside", withoutEnlargement:true }).webp({ quality: 65, effort: 6 }).toFile(path(world.map));
   console.log(`${world.id}: all five biomes in one world`);
 }
 for (const [source, target] of [
@@ -27,5 +27,7 @@ for (const [source, target] of [
   ['locations/crownfall-landmark.png', 'crownfall-landmark.webp'],
   ['locations/crownfall-local.png', 'crownfall-local.webp'],
 ]) {
-  await sharp(path(`art/environments/${source}`)).webp({ quality: 84, effort: 6 }).toFile(path(`assets/environments/${target}`));
+  const texture = sharp(path(`art/environments/${source}`));
+  if (!target.includes("landmark")) texture.resize({ width:768, height:768, fit:"inside", withoutEnlargement:true });
+  await texture.webp({ quality: target.includes("landmark") ? 84 : 65, effort:6 }).toFile(path(`assets/environments/${target}`));
 }
