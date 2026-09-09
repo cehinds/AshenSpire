@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-09",
     "summary": "Combat foundations have a playable test workshop",
     "detail": "Play the real game battlefield or the standalone workshop with heavy physical, fast Bleed and rare-mana builds with configurable damage, armor, weapon impact and retained deterministic Dodge. The workshop is experimental; existing runs keep their current rules.",
-    "build": "0.6.0.34",
+    "build": "0.6.0.36",
     "pullRequest": 850,
     "url": "https://github.com/cehinds/AshenSpire/pull/850"
   },
