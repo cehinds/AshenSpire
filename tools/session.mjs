@@ -475,6 +475,8 @@ export function createSession({ registries, seedString, endless = false, restore
     combat.emit = (type, payload = {}) => emit(type,
       (type === 'damageDealt' || type === 'hpLost' || type === 'healed') && payload.targetId === 'player'
         ? { ...payload, playerId: payload.playerId ?? combat.playerKey }
+        : ['statusApplied', 'statusExpired'].includes(type) && payload.targetId === 'player'
+          ? { ...payload, playerId: payload.playerId ?? combat.playerKey }
         : payload);
     if (combatStartStateForTools) {
       const member = connectedMembers().find((entry) => entry.name === combatStartStateForTools.name);
@@ -540,7 +542,7 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => ['blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
+      .filter((e) => ['blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,

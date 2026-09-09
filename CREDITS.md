@@ -100,3 +100,12 @@ AshenSpire is an original fan-inspired work. It contains no assets, music, text,
 | Assets | Source | Rights |
 |---|---|---|
 | assets/combat-effects: 336 transparent frames (56 six-frame effects) for projectiles, guards, barriers, stances, auras, afflictions, healing, impact, melee trails and authored card schools | Project-generated with built-in OpenAI imagegen; six-frame source sheets and exact prompts in art/combat-effects-2026-09-07/six-frame-generation.json, guard-status-generation.json and integration-generation.json; exported by tools/combat-effects-ship.mjs | Project-owned AI-generated artwork, CC0 |
+
+# Combat readiness poses (2026-09-08)
+
+Twelve original outfit pose illustrations generated with OpenAI imagegen for
+AshenSpire, using the project's existing painted outfit art as references.
+First-party source sheets: `art/readiness-poses/sources/`; transparent shipped
+frames: `assets/readiness-poses/`. No external game artwork. Original procedural
+diamond, constellation, and halo glows are authored in `paintedOutfits.js`.
+Source: this repository; dedicated CC0-1.0 by the project for these new assets.
