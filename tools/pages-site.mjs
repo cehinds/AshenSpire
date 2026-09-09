@@ -346,6 +346,13 @@ function assemble(outDir, keep) {
       const dir = join(outDir, branch, String(b.ordinal));
       mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, 'index.html'), html);
+      // Detail belongs to this exact build, not main's potentially older art.
+      const detailFiles = gitBuf(['ls-tree', '-r', '--name-only', b.sha, '--', 'map-detail']).toString('utf8').trim().split('\n').filter(Boolean);
+      for (const file of detailFiles) {
+        const destination = join(dir, file);
+        mkdirSync(dirname(destination), {recursive:true});
+        writeFileSync(destination, gitBuf(['show', `${b.sha}:${file}`]));
+      }
       writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch, ordinal: b.ordinal, version: b.version, digest: b.digest, built: b.built, commit: b.sha, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
       // The proof: what was written is the blob, byte for byte.
       if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${branch}/${b.ordinal}: written build differs from git blob`);
@@ -356,6 +363,8 @@ function assemble(outDir, keep) {
       mkdirSync(latest, { recursive: true });
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'index.html'), join(latest, 'index.html'));
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'build.json'), join(latest, 'build.json'));
+      const detail = join(outDir, branch, String(builds[0].ordinal), 'map-detail');
+      if (existsSync(detail)) cpSync(detail, join(latest, 'map-detail'), {recursive:true});
     }
     mkdirSync(join(outDir, branch), { recursive: true });
     const idx = branchIndex(branch, builds, head, generatedAt);

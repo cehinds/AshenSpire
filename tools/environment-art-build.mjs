@@ -15,11 +15,11 @@ for (const region of ENVIRONMENTS) {
   const size = await sharp(board).metadata();
   if (size.width !== ENVIRONMENT_ATLAS_SIZE[0] || size.height !== ENVIRONMENT_ATLAS_SIZE[1]) throw Error(`Unexpected atlas size: ${region.id}`);
   await sharp(board).webp({ quality: 80, effort: 6 }).toFile(path(region.atlas));
-  await sharp(path(`art/environments/maps/${region.id}.png`)).resize({ width:768, height:768, fit:"inside", withoutEnlargement:true }).webp({ quality: 65, effort: 6 }).toFile(path(region.map));
+  await sharp(path(`art/environments/maps/${region.id}.png`)).resize({ width:1024, height:1024, fit:"inside", withoutEnlargement:true }).webp({ quality: 74, effort: 6 }).toFile(path(region.map));
   console.log(`${region.id}: four combat paintings and one map`);
 }
 for (const world of MEGA_MAPS) {
-  await sharp(path(`art/environments/worlds/${world.id}.png`)).resize({ width:768, height:768, fit:"inside", withoutEnlargement:true }).webp({ quality: 65, effort: 6 }).toFile(path(world.map));
+  await sharp(path(`art/environments/worlds/${world.id}.png`)).resize({ width:1536, height:1536, fit:"inside", withoutEnlargement:true }).webp({ quality: 74, effort: 6 }).toFile(path(world.map));
   console.log(`${world.id}: all five biomes in one world`);
 }
 for (const [source, target] of [
@@ -28,6 +28,11 @@ for (const [source, target] of [
   ['locations/crownfall-local.png', 'crownfall-local.webp'],
 ]) {
   const texture = sharp(path(`art/environments/${source}`));
-  if (!target.includes("landmark")) texture.resize({ width:768, height:768, fit:"inside", withoutEnlargement:true });
-  await texture.webp({ quality: target.includes("landmark") ? 84 : 65, effort:6 }).toFile(path(`assets/environments/${target}`));
+  if (!target.includes("landmark")) {
+    const edge = source.startsWith("worlds/") ? 1536 : 1024;
+    texture.resize({ width:edge, height:edge, fit:"inside", withoutEnlargement:true });
+  }
+  await texture.webp({ quality: target.includes("landmark") ? 84 : 74, effort:6 }).toFile(path(`assets/environments/${target}`));
 }
+
+await import('./map-detail-build.mjs');
