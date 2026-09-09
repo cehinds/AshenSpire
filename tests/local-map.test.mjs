@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LOCAL_MAP_PRESENTATION as policy } from '../src/content/localMapPresentation.js';
+import { localMapPolicy } from '../src/content/localMapPresentation.js';
 import { localCamera, anchoredZoom, panCamera, inspectionCamera } from '../src/ui/models/LocalMapCameraModel.js';
 import { localServiceModel } from '../src/ui/models/LocalServiceModel.js';
 import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
@@ -9,6 +9,7 @@ import { contentBundle } from '../src/content/index.js';
 import { generateJourney, journeyGraph } from '../src/model/worldAtlas.js';
 import { shrineHealAmount } from '../src/engine/encounters.js';
 import { smithingPlan } from '../src/model/smithing.js';
+const policy = localMapPolicy('crownfall');
 
 test('camera anchors the same map point under the cursor and bounds saved values',()=>{
   const a={x:.5,y:.5,zoom:1.5}, anchor={x:250,y:180};
@@ -39,6 +40,8 @@ test('service inspection derives real plans without changing inventory or rollin
   for(const c of plan.candidates) assert.ok(smith.facts.some(f=>f.includes(`${c.cost} stones`)));
   const shop=localServiceModel({handlerId:'shop',registries,run,state});
   assert.ok(shop.facts.some(f=>f.includes('exact prices')));
+  const stocked = localServiceModel({handlerId:'shop',registries,run,state:{stock:{cards:[{cost:30},{cost:15}],removeCost:50}}});
+  assert.ok(stocked.facts.some(f=>f.includes('prices 15, 30 cinders')));
   assert.deepEqual(state,{});assert.equal(JSON.stringify(run),before);
   run.flaskCharges.hpCurrent=0;
   const depleted=JSON.stringify(run);

@@ -253,7 +253,11 @@ export function mountWorldAtlas(
           `data-local-explore ${!here || j.localCompletedIds.includes(pointId) ? "disabled" : ""}`,
         );
       const pane = dialog.querySelector(".atlas-location-detail");
-      pane.innerHTML = html;
+      pane.innerHTML = services.length ? `<div class="atlas-detail-scroll">${html}</div><div class="atlas-detail-actions"></div>` : html;
+      if (services.length) {
+        const actions = pane.querySelector('.atlas-detail-actions');
+        pane.querySelectorAll('[data-local-service]').forEach(b=>actions.append(b));
+      }
       pane.querySelectorAll("[data-local-service]").forEach(
         (b) =>
           (b.onclick = () => {

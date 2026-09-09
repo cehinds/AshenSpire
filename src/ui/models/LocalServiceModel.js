@@ -44,7 +44,8 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
       const stock = state.stock;
       for (const key of ['cards','armaments','weaponArts','relics','flasks']) {
         const items = stock[key] || [];
-        if (items.length) result.facts.push(`${({weaponArts:'Weapon arts',armaments:'Equipment',cards:'Cards',relics:'Relics',flasks:'Flasks'})[key]}: ${items.length} remaining.`);
+        const prices = [...new Set(items.map(item=>item.cost).filter(Number.isFinite))].sort((a,b)=>a-b);
+        if (items.length) result.facts.push(`${({weaponArts:'Weapon arts',armaments:'Equipment',cards:'Cards',relics:'Relics',flasks:'Flasks'})[key]}: ${items.length} remaining${prices.length ? ` · prices ${prices.join(', ')} cinders` : ''}.`);
       }
       result.facts.push(`Remove a card: ${stock.removeCost} cinders. You must keep at least one card.`);
     } else result.facts.push('Enter the market to reveal this visit’s inventory and exact prices. Inspection does not roll or reserve stock.');

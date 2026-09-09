@@ -349,14 +349,17 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
 .atlas-service-benefits .atlas-service-benefit,.atlas-service-benefit { color:#f2dfb6; font-size:16px; }
 .atlas-service-benefits ul { padding-left:20px; font-size:14px; line-height:1.6; }
 .atlas-service-benefits li+li { margin-top:9px; }
-.atlas-location-detail > [data-local-service] { position:sticky; bottom:0; background:#302514; box-shadow:0 -8px 16px #1b1813; }
+.atlas-dialog:has(.atlas-local-port) .atlas-location-detail:has(.atlas-detail-scroll) { display:flex; flex-direction:column; overflow:hidden; }
+.atlas-detail-scroll { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; }
+.atlas-detail-actions { flex:none; padding-top:8px; }
+.atlas-detail-actions .as-btn { margin-top:0; background:#302514; }
 @media(max-width:700px) {
   dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((100dvh - 16px) / var(--ui-zoom,1)); }
   .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-rows:minmax(0,1.2fr) minmax(0,.8fr); }
   .atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { padding:10px 12px; }
   .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { padding:8px; gap:5px; }
   .atlas-dialog:has(.atlas-local-port) .atlas-location-detail { padding:12px 18px; border-top:1px solid #655034; }
-  .atlas-local-help { font-size:10px; }
+  .atlas-local-help { font-size:max(10px,calc(11px / var(--ui-zoom,1))); }
   .atlas-local-tools { gap:3px; }
   .atlas-local-tools .as-btn { padding:4px; }
   .atlas-local-zoom-tools,.atlas-local-pan-tools { gap:2px; }
