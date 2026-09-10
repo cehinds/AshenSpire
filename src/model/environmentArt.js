@@ -1,7 +1,7 @@
 import { resolveLocationPresentation, presentationScene } from './locationPresentation.js';
 import { ENVIRONMENTS, MEGA_MAPS } from '../content/environments.js';
 
-// Decorative choices never consume the engine's RNG or add save fields.
+// Decorative choices never consume the engine's RNG.
 function hash(text) {
   let value = 2166136261;
   for (const char of String(text ?? '')) value = Math.imul(value ^ char.charCodeAt(0), 16777619) >>> 0;

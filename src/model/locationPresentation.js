@@ -50,7 +50,7 @@ export function resolveLocationPresentation({ nodeId, seedString = '', profileId
   const profile = profiles.get(profileId);
   if (!profile) return null;
   const pool = data.sceneProfiles.filter(row => row.profileId === profileId);
-  const weather = pool.filter(row => ['any', weatherId].includes(sceneMeta.get(row.sceneId).weatherId));
+  const weather = weatherId === 'any' ? pool : pool.filter(row => ['any', weatherId].includes(sceneMeta.get(row.sceneId).weatherId));
   const timed = (weather.length ? weather : pool).filter(row => sceneMeta.get(row.sceneId).timeId === timeId);
   const candidates = timed.length ? timed : weather.length ? weather : pool;
   if (!candidates.length) throw Error(`No compatible scene for ${profileId}`);

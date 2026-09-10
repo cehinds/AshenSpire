@@ -37,3 +37,15 @@ test('authoring mistakes fail with their IDs', () => {
   assert.ok(presentationProblems(bad).some(e=>e.includes(bad.sceneProfiles[0].profileId)));
   bad.nodeProfiles[0].profileId='unknown';assert.ok(presentationProblems(bad).some(e=>e.includes(bad.nodeProfiles[0].nodeId)));
 });
+
+
+test('unrestricted weather keeps explicitly tagged art eligible', () => {
+  const scene=data.scenes.find(s=>s.sceneId==='hollow-weald-4');
+  const previous=scene.weatherId;
+  try {
+    scene.weatherId='rain';
+    const selected=resolveLocationPresentation({profileId:'hollow-weald/forest',timeId:'night',weatherId:'any'});
+    assert.equal(selected.sceneId,scene.sceneId);
+    assert.equal(selected.weatherFallback,false);
+  } finally { scene.weatherId=previous; }
+});
