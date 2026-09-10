@@ -240,21 +240,37 @@ function fitRung(el, pinned) {
 // surface has to remember to call hideTooltip() on its way out.
 let sceneWatch = null;
 let sceneAnchor = null;
+// The observer is connected only while a tooltip is open or pending and is
+// released the moment neither holds. Combat rebuilds whole rows of the board
+// per animation beat; a subtree observer that stays attached pays a record
+// for every one of those nodes even when there is nothing to close.
+//
+// A veil is only ever raised as a child of <body> or of the screen root, so
+// the nested `querySelector` runs for those records alone; a deep record —
+// a card added to the hand, a status pip — is answered by `matches` only.
 function watchScene() {
   if (sceneWatch) return;
   sceneWatch = new MutationObserver((records) => {
     if (pending && !pending.el.isConnected) cancelOpen();
-    if (!sceneAnchor && !pending) return;
+    if (!sceneAnchor && !pending) { unwatchScene(); return; }
     if (sceneAnchor && !sceneAnchor.isConnected) { hideTooltip(); return; }
+    const subject = sceneAnchor || pending?.el;
     for (const record of records) {
+      if (!record.addedNodes.length) continue;
+      const top = record.target === document.body || record.target.id === 'app';
       for (const node of record.addedNodes) {
         if (node.nodeType !== 1) continue;
-        const veil = node.matches?.('.modal-veil') ? node : node.querySelector?.('.modal-veil');
-        if (veil && !veil.contains(sceneAnchor || pending?.el)) { hideTooltip(); return; }
+        const veil = node.classList.contains('modal-veil') ? node : (top ? node.querySelector('.modal-veil') : null);
+        if (veil && !veil.contains(subject)) { hideTooltip(); return; }
       }
     }
   });
   sceneWatch.observe(document.documentElement, { childList: true, subtree: true });
+}
+function unwatchScene() {
+  if (!sceneWatch) return;
+  sceneWatch.disconnect();
+  sceneWatch = null;
 }
 
 function showWith(html, anchor, clear = null, intent = 'above', appearance = null, placementModel = null, autoHideMs = 0, align = 'start', level = 0, target = null, action = null) {
@@ -460,6 +476,7 @@ export function hideTooltip() {
   cancelOpen();
   conceal(1);
   conceal(0);
+  unwatchScene();
 }
 export function esc(s) {
   return String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
