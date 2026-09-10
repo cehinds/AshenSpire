@@ -13,7 +13,7 @@ export function adoptCombatantFrame(frame) {
   const stack = document.createElement('div'); stack.className = 'combatant-stack';
   const leading = document.createElement('div'); leading.className = 'combatant-leading';
   const card = document.createElement('div'); card.className = 'combatant-card';
-  for (const child of [...frame.children]) (child.classList.contains('intent') ? leading : card).append(child);
+  for (const child of [...frame.children]) (child.matches('.intent, .combatant-info') ? leading : card).append(child);
   stack.append(leading, card); frame.append(stack);
   const role = frame.classList.contains('player') ? 'player' : 'enemy';
   markUiComponent(frame, UI.combatantFrame, role);
