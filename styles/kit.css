@@ -3028,3 +3028,11 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 @media (max-width: 720px) {
   .mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 42%) minmax(0, 1fr); }
 }
+/* Modal height is independent of its standard width. Keep chrome pinned and
+   let the body scroll at its natural text/art size. */
+.modal-veil:not(dialog), .as-veil { padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+.modal, .as-modal { max-height: calc((100dvh - 24px) / var(--ui-zoom, 1)); min-height: 0; }
+.modal[data-height='long'], .as-modal[data-height='long'] { height: calc((100dvh - 24px) / var(--ui-zoom, 1)); }
+.modal-body, .as-body, .as-pane { overscroll-behavior: contain; scrollbar-gutter: stable; }
+.as-pane > * { flex-shrink: 0; }
+.modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { white-space: normal; overflow-wrap: anywhere; }
