@@ -1,3 +1,4 @@
+import { openCollectibleInspection } from '../components/collectibleCard.js';
 // src/ui/screens/map.js — the act map SCREEN (SPEC §7.1, mockup: map-screen.svg)
 //
 // THE BOARD IS NOT HERE ANY MORE. Geometry, edges, nodes, fog, the camera, the
@@ -207,8 +208,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const strip = app.querySelector('.hud-relics');
   for (const rid of run.relics) {
     const def = registries.relics.get(rid);
-    const el = slot({ art: def.icon || '◆', small: true, static: true, tag: 'div', label: def.name, className: 'relic' });
+    const el = slot({ art: def.icon || '◆', small: true, tag: 'button', label: def.name, className: 'relic' });
     markUiComponent(el, UI.relicSlot);
+    el.addEventListener('click', () => openCollectibleInspection(registries, def, 'Relic', el));
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
     strip.appendChild(el);
   }
