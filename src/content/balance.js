@@ -734,6 +734,35 @@ export const balance = {
     holdConfirm: {
       def: 'normal',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
+      // THE SETTLE WINDOW — A PRESS IS NOT A HOLD UNTIL IT HAS STAYED PUT.
+      //
+      // The fill used to arm on `pointerdown` and only cancel once the finger
+      // passed the slop. On any surface that also drags — the map camera, the
+      // Armoury tray, an inventory card you can drag — that meant every drag
+      // began with a hold animation flashing and dying under the thumb. The
+      // gesture was correct and the feedback was a lie.
+      //
+      // Nothing is dressed, painted or announced until the pointer has held
+      // still inside the slop for `settleMs`. Move first and this press is a
+      // drag: the hold never existed, so it has nothing to take back.
+      //
+      // `settleMs` is time BEFORE the hold, and the hold's own duration starts
+      // when the settle ends — a `long` hold on a dragging surface is
+      // 1000 + 1000. That ordering is deliberate: the fill should represent the
+      // whole of the commitment, not resume a bar that already crept while the
+      // player was deciding whether to scroll. Setting `settleMs: 0` restores
+      // the old immediate arm exactly, and a surface may override it per call.
+      //
+      // WHY IT IS NOT ON EVERY CONTROL. A control with no drag beneath it has
+      // nothing to disambiguate, and a safety beat that waits a second before
+      // it even begins to look like it is working reads as a broken button.
+      // `settleMs` is opt-in per call site; `dragSettleMs` is the value those
+      // sites use so the delay is authored once rather than eleven times.
+      dragSettleMs: 1000,
+      // How far the finger may drift during the settle and still be judged
+      // still. Kept apart from the hold's own slop so "did they mean to drag"
+      // and "did they wander off mid-hold" can be tuned independently.
+      settleSlopPx: 8,
     },
     // TITLE SAVE SLOT QUICK LOAD. This is a pointer/touch convenience gesture,
     // not the irreversible-action safety dial above: a short activation still
