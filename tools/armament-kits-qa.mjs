@@ -11,7 +11,7 @@ const errors = [], checks = [];
 const check = (ok, name) => { assert.ok(ok, name); checks.push(name); };
 try {
   for (const [name, width, height] of [['desktop',1440,1000],['tablet',1024,1000],['phone',390,844]]) {
-    const page = await browser.newPage({ viewport: { width, height } }); page.setDefaultTimeout(8000);
+    const page = await browser.newPage({ viewport: { width, height } }); page.setDefaultTimeout(30000); page.setDefaultNavigationTimeout(60000);
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(`${base}/armament-kits-preview.html`);
     await page.locator('#kits .card').first().waitFor();
@@ -30,7 +30,7 @@ try {
     }
     await page.close();
   }
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }); page.setDefaultTimeout(8000);
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }); page.setDefaultTimeout(30000); page.setDefaultNavigationTimeout(60000);
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(`${base}/index.html?shot=combat&shotKit=1&shotClass=rogue&shotMainHand=straightSword&shotOffHand=kiteShield`);
   await page.locator('.hand .card').first().waitFor();

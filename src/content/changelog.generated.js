@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-10",
     "summary": "Every armament brings a complete combat kit",
     "detail": "Weapons, shields, and staves each lend a Strike, Guard, and signature Art. Shields can attack beside a weapon; Guardian creates an Exhausting Bulwark skill, Bastion trades offense for Block, and Spiked Reprisal combines defence with Bleed. Equipment previews show the actual contributions, and solo/co-op fights retain their ownership and upgrade data.",
-    "build": "0.6.0.113",
+    "build": "0.6.0.115",
     "pullRequest": 904,
     "url": "https://github.com/cehinds/AshenSpire/pull/904"
+  },
+  {
+    "id": "pr-931",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "A city spire welcomes each journey",
+    "detail": "Replace the startup and main-menu backdrop with a painted medieval city and central tower in muted gold and charcoal. Keep the title centered and readable on phones and larger screens; ship the artwork as compact WebP.",
+    "build": "0.6.0.113",
+    "pullRequest": 931,
+    "url": "https://github.com/cehinds/AshenSpire/pull/931"
   },
   {
     "id": "pr-924",
