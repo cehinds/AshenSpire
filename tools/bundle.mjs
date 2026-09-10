@@ -10,9 +10,10 @@
 //
 // Usage: node tools/bundle.mjs
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync, readdirSync, statSync } from 'node:fs';
 import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
+import { MIME } from './assetmime.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,12 +29,20 @@ const ROOT = resolve(__dirname, '..');
 // dropped from the single-file build without a word — and we would rediscover
 // the art-less-build bug in a new medium. sfx.js and music.js already document
 // the hooks (SFX_MANIFEST / MUSIC_MANIFEST), so the day they get used is coming.
-const MIME = {
-  '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml',
-  '.ogg': 'audio/ogg', '.mp3': 'audio/mpeg', '.wav': 'audio/wav',
-  '.m4a': 'audio/mp4', '.woff2': 'font/woff2',
-};
+// The table moved to tools/assetmime.mjs so this bundler and
+// tools/verify-external.mjs cannot disagree about what ships. The reasoning
+// that used to sit here — including why audio is listed before any audio
+// exists — moved with it.
+
+function walkCount(dir) {
+  if (!existsSync(dir)) return 0;
+  let n = 0;
+  for (const name of readdirSync(dir)) {
+    const abs = resolve(dir, name);
+    n += statSync(abs).isDirectory() ? walkCount(abs) : 1;
+  }
+  return n;
+}
 
 function canonicalText(text) {
   return text.replace(/\r\n?/g, '\n');
@@ -87,8 +96,39 @@ function idOf(absPath) {
 // one writer of this page, it sits on the way out, and a new refusal path
 // cannot forget it because it never has to remember it.
 // ---------------------------------------------------------------------------
-const OUT_DIR = resolve(ROOT, 'build');
+// TWO SHAPES OF THE SAME BUILD, AND WHY BOTH EXIST.
+//
+// Default (no flags): the consolidated single file. Every module, stylesheet
+// and image travels inside one HTML, so it runs from file:// with no server —
+// which is the whole reason this bundler rewrites ES modules into closures.
+// That artifact is unchanged by the flag below and remains what build/,
+// dist/AshenSpire.html and the root alias carry.
+//
+// `--external-art`: the same bundle with the art left OUTSIDE, referenced as
+// ordinary `assets/…` URLs beside the HTML. 91.6% of the single file is 1,929
+// base64 art URIs, so this is 57.6 MB → 4.8 MB, and the art then arrives per
+// screen and stays in the browser cache instead of being re-read whole on
+// every load. It needs a server, so it does NOT replace the standalone; it is
+// what a phone should be handed.
+//
+// This is not a new mechanism. src/ui/assetmap.js has always had two modes and
+// says so: with ASSET_MAP empty, assetUrl() returns the plain path and the
+// browser fetches normally. `--external-art` is that mode, chosen deliberately
+// rather than by being served from a directory.
+const ARGV = process.argv.slice(2);
+const EXTERNAL_ART = ARGV.includes('--external-art');
+const OUT_FLAG = ARGV.indexOf('--out');
+if (OUT_FLAG >= 0 && !ARGV[OUT_FLAG + 1]) {
+  console.error('bundle.mjs: --out needs a directory');
+  process.exit(2);
+}
+// ONE HOME still, and the invariant below depends on it: the success write and
+// the refusal write must resolve to the same file. Both read OUT_PATH, so a
+// flag that moves the output moves both or neither.
+const OUT_DIR = resolve(ROOT, OUT_FLAG >= 0 ? ARGV[OUT_FLAG + 1] : 'build');
 const OUT_PATH = resolve(OUT_DIR, 'AshenSpire.html');
+// Where an `assets/…` URL resolves from, for the copy pass and the CSS rewrite.
+const EXTERNAL_ASSET_DIR = resolve(OUT_DIR, 'assets');
 
 // Reasons collected by fail(). May legitimately be empty — a throw or a bare
 // exit has none — and the page says so rather than inventing one.
@@ -271,6 +311,8 @@ function walkAssets(dir) {
 
 let mapEntries = 0;
 let mapBytes = 0;
+let copiedAssets = 0;
+let copiedDetail = 0;
 const skipped = []; // files under assets/ with no MIME mapping — reported, not silent
 if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
   const pairs = [];
@@ -286,7 +328,26 @@ if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
     }
     const buf = readAssetBytes(abs);
     const key = posix.join('assets', relative(ASSET_DIR, abs).split(/[\\/]/g).join('/'));
-    pairs.push(`  ${JSON.stringify(key)}: "data:${mime};base64,${buf.toString('base64')}"`);
+    if (EXTERNAL_ART) {
+      // THE SAME SWEEP, A DIFFERENT DESTINATION. Copying exactly what the map
+      // would have carried is what makes the two shapes carry the same art:
+      // if a file is good enough to inline it is good enough to serve, and a
+      // file this sweep skips is absent from both. That parity is the point —
+      // two enumerations would drift, and the art-less-build bug this file's
+      // header describes is what drift looks like when it lands.
+      //
+      // The WHOLE tree is copied, not the statically-reachable part of it.
+      // assetmap.js says why in its first paragraph: paths are built at
+      // runtime (`assets/equipment/weapon_${id}.webp`), so no reader of this
+      // source can know which files are reachable. A "copy only what is
+      // referenced" pass would ship a build that 404s on the third weapon.
+      const dest = resolve(EXTERNAL_ASSET_DIR, relative(ASSET_DIR, abs));
+      mkdirSync(dirname(dest), { recursive: true });
+      writeFileSync(dest, buf);
+      copiedAssets += 1;
+    } else {
+      pairs.push(`  ${JSON.stringify(key)}: "data:${mime};base64,${buf.toString('base64')}"`);
+    }
     mapEntries += 1;
     mapBytes += buf.length;
   }
@@ -294,7 +355,11 @@ if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
   if (!/\/\* ASSET_MAP_START \*\/[\s\S]*?\/\* ASSET_MAP_END \*\//.test(src)) {
     fail(`${ASSET_MAP_ID} has lost its ASSET_MAP markers — the bundler anchors on them`);
   }
-  sources.set(
+  // The markers are checked in BOTH modes on purpose. External art leaves the
+  // map empty rather than not caring about it: if the anchors ever vanish the
+  // single-file build breaks, and finding that out only on the other build's
+  // run is a worse day than finding it here.
+  if (!EXTERNAL_ART) sources.set(
     ASSET_MAP_ID,
     src.replace(
       /\/\* ASSET_MAP_START \*\/[\s\S]*?\/\* ASSET_MAP_END \*\//,
@@ -504,6 +569,7 @@ for (const id of order) {
 // a hard fail rather than a silently blank background.
 let inlinedAssets = 0;
 let inlinedAssetBytes = 0;
+let externalCssUrls = 0;
 
 function inlineCssUrls(css, cssAbs) {
   return css.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (whole, _q, ref) => {
@@ -513,6 +579,36 @@ function inlineCssUrls(css, cssAbs) {
     const ext = extname(assetAbs).toLowerCase();
     const mime = MIME[ext];
     if (!mime) fail(`unsupported CSS asset type '${ext}' for ${ref}`);
+    if (EXTERNAL_ART) {
+      // REWRITTEN, NOT LEFT ALONE, AND THAT DISTINCTION IS THE WHOLE BUG.
+      //
+      // These urls are authored relative to the STYLESHEET (`../assets/bg/
+      // bg_act1.webp` from styles/). Inlining the CSS into the HTML moves the
+      // base: a relative url in a <style> block resolves against the DOCUMENT.
+      // Left untouched, `../assets/…` would climb out of the output directory
+      // and 404 — silently, as a blank act backdrop, which is exactly the
+      // failure mode the paragraph above this function was written about.
+      //
+      // So resolve against the stylesheet as before, then re-express relative
+      // to the output HTML. Same file, correct base.
+      // Point at the COPY, not the source. The first cut of this rebased onto
+      // `assetAbs` — the file in the source tree — and emitted
+      // `../../assets/bg/bg_act1.webp`, which climbs out of the output
+      // directory into the repo. It happens to resolve when the output sits
+      // two levels under the root and 404s everywhere else, including on the
+      // published site. The sweep copies each asset to EXTERNAL_ASSET_DIR, so
+      // that copy is what a url has to name.
+      const fromAssets = relative(ASSET_DIR, assetAbs);
+      if (fromAssets.startsWith('..')) {
+        // The sweep only copies assets/. Anything outside it is not shipped by
+        // this mode at all, so a url naming it would be a guaranteed 404 —
+        // refuse rather than emit a path to a file that will not be there.
+        fail(`CSS url outside assets/ cannot ship with --external-art: ${ref}`);
+      }
+      const rel = relative(OUT_DIR, resolve(EXTERNAL_ASSET_DIR, fromAssets)).split(/[\\/]/g).join('/');
+      externalCssUrls += 1;
+      return `url("${rel}")`;
+    }
     const buf = readAssetBytes(assetAbs);
     inlinedAssets += 1;
     inlinedAssetBytes += buf.length;
@@ -839,6 +935,31 @@ const probeEntries = `${JSON.stringify(SIGNATURE_PROBE_ID)}: ${MODULE_FN}
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(OUT_PATH, html, 'utf8');
 
+// THE SIBLING DIRECTORY THE SINGLE FILE DELIBERATELY DOES NOT CARRY.
+//
+// src/ui/components/mapDetail.js states the contract in its own header: "Detail
+// files are never bundled into the single HTML: hosted builds carry a sibling
+// map-detail directory." The standalone therefore ships WITHOUT them and falls
+// back — `detailState = 'offline-fallback'` under file:// — which is why the
+// assets/ sweep above has never known about this tree.
+//
+// A de-inlined build IS a hosted build, so it is on the other side of that
+// sentence and has to carry them. tools/launch.mjs:107 already does exactly
+// this for dist/, and pages-site.mjs does it per build; this is the third site
+// of the same copy and it is deliberate rather than accidental, because each
+// one places the tree beside a different output.
+//
+// Found by loading the build in a browser and watching the network: static
+// checks all passed while two map tiles 404'd. The fallback is graceful, so
+// nothing threw — it just quietly showed the low-detail map.
+if (EXTERNAL_ART) {
+  const detailSrc = resolve(ROOT, 'map-detail');
+  if (existsSync(detailSrc)) {
+    cpSync(detailSrc, resolve(OUT_DIR, 'map-detail'), { recursive: true });
+    copiedDetail = walkCount(resolve(OUT_DIR, 'map-detail'));
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
@@ -849,13 +970,34 @@ console.log('  entry            : ' + entryId);
 console.log('  build version    : ' + buildDigest + ' (derived from this source; node tools/buildversion.mjs --which ' + buildDigest + ')');
 console.log('  modules bundled  : ' + order.length);
 console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', ') + ')');
-console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');
-console.log('  art inlined      : ' + mapEntries + ' files (' + Math.round(mapBytes / 1024) + ' KiB raw)');
+console.log('  shape            : ' + (EXTERNAL_ART ? 'external art (needs a server; assets/ beside the HTML)'
+  : 'consolidated single file (runs from file://)'));
+if (EXTERNAL_ART) {
+  console.log('  art copied       : ' + copiedAssets + ' files (' + Math.round(mapBytes / 1024) + ' KiB) → ' + idOf(EXTERNAL_ASSET_DIR));
+  console.log('  css assets linked: ' + externalCssUrls + ' (rebased onto the output HTML)');
+  console.log('  map detail       : ' + copiedDetail + ' tiles → ' + idOf(resolve(OUT_DIR, 'map-detail'))
+    + (copiedDetail ? '' : ' (none found — the map falls back to low detail)'));
+} else {
+  console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');
+  console.log('  art inlined      : ' + mapEntries + ' files (' + Math.round(mapBytes / 1024) + ' KiB raw)');
+}
 if (skipped.length) {
   console.log('  skipped (no MIME): ' + skipped.length + ' — ' + skipped.slice(0, 4).join(', ') + (skipped.length > 4 ? ' …' : ''));
 }
 if (mapEntries === 0) {
-  console.log('  WARNING          : no art inlined — the standalone build will show fallbacks');
+  // The wording still says "standalone" because that is the build it is about.
+  // In external mode zero swept files means zero COPIED files, which is the
+  // same defect wearing different clothes, so the same line covers both — but
+  // it names what is actually broken rather than the shape it was broken in.
+  console.log('  WARNING          : the assets/ sweep found nothing — this build will show fallbacks');
+}
+if (EXTERNAL_ART) {
+  // The counter this mode cannot afford to be quiet about. verify-shipped.mjs
+  // guards the single file's art by looking for data: URIs in it; nothing can
+  // do that here, because correctness now means "the file is on disk beside
+  // the HTML" — which is tools/verify-external.mjs, and it is a gate, not a
+  // print.
+  console.log('  NOT CHECKED HERE : that every runtime-built asset path resolves — node tools/verify-external.mjs');
 }
 
 console.log('  literal refs     : all resolve');
