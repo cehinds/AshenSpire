@@ -77,6 +77,9 @@ import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled } from './ui/audio.js';
+import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
+import { clearPosePreloads } from './ui/services/posePreloads.js';
+import { scheduleCardFits } from './ui/components/card.js';
 import { installHoldBeat } from './ui/components/holdbeat.js';
 import { updateUprightGate } from './ui/components/upright.js';
 import { surfaceReport } from './ui/surfaces.js';
@@ -597,6 +600,9 @@ if (typeof window !== 'undefined') {
 }
 
 function applyDisplaySettings(settings) {
+  const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
+  document.documentElement.dataset.performance = quality;
+  if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();
   configureTooltipSettings(settings);
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
@@ -615,7 +621,7 @@ function applyDisplaySettings(settings) {
       : (settings.largeText === true ? 'L' : null);
   if (tKey) document.documentElement.style.fontSize = TEXT_SIZES[tKey];
   else document.documentElement.style.removeProperty('font-size');
-  document.body.classList.toggle('no-shake', settings.screenShake === false);
+  document.body.classList.toggle('no-shake', quality === 'lite' || settings.screenShake === false);
   // Card colour motif: mode on the root as a data attr, wash depth as a var, so
   // switching is a re-paint with no re-render. Both defaults live in balance.ui.
   const motif = UI.cardMotifModes.includes(settings.cardMotif) ? settings.cardMotif : UI.cardMotif;
@@ -659,7 +665,7 @@ function applyDisplaySettings(settings) {
   document.documentElement.dataset.walkedFade = wf;
   // Ambient effects level → data attr read by the title screen (ember count) + CSS.
   const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
-  document.documentElement.dataset.ambient = amb;
+  document.documentElement.dataset.ambient = quality === 'lite' ? 'off' : amb;
   // Accent theme → CSS variables on the root (falls back to gold).
   const accent = ACCENTS[settings.accent] || ACCENTS.gold;
   const root = document.documentElement.style;
@@ -671,8 +677,9 @@ function applyDisplaySettings(settings) {
   // applyUiScale for readability only: `--tap-floor` divides one by the other
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
-  setAnimSpeed(settings.animSpeed || 'normal');
+  setAnimSpeed(resolveCombatPacing(settings, quality));
   audio.setVolumes({ ...settings, musicEnabled: resolveMusicEnabled(settings) });
+  scheduleCardFits(document.querySelectorAll('.card'));
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak).
   const folder = settings.musicFolder || '';
@@ -1042,7 +1049,7 @@ function showStartupGate({ forcedFamily = '' } = {}) {
   audio.music('title');
   const family = startupInputFamily(forcedFamily);
   unmountStartupGate = mountStartupGate(app, {
-    model: startupGateModel({ inputFamily: family }),
+    model: startupGateModel({ inputFamily: family, settings: activeSettings }),
     registerInputGate: setInputGate,
     onReveal: ({ family }) => {
       startupGatePending = false;

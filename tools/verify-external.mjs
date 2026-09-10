@@ -37,7 +37,7 @@ import { readFileSync, existsSync, readdirSync, statSync, rmSync, cpSync, mkdtem
 import { resolve, dirname, relative, join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
-import { MIME } from './assetmime.mjs';
+import { MIME, runtimeAsset } from './assetmime.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ARGV = process.argv.slice(2);
@@ -81,14 +81,19 @@ function verify(outDir) {
   if (payloads.length) findings.push(`${payloads.length} inlined asset payload(s) in a build that should carry none`);
 
   // C — the copy is complete and faithful
-  const want = walk(SRC_ASSETS).filter((a) => Object.prototype.hasOwnProperty.call(MIME, extname(a).toLowerCase()));
+  const want = walk(SRC_ASSETS).filter((a) => runtimeAsset(relative(SRC_ASSETS, a)) && Object.prototype.hasOwnProperty.call(MIME, extname(a).toLowerCase()));
   let missing = 0, differing = 0;
   for (const abs of want) {
     checks++;
     const rel = relative(SRC_ASSETS, abs);
     const copy = resolve(outDir, 'assets', rel);
     if (!existsSync(copy)) { missing++; if (missing <= 3) findings.push(`asset missing beside the build: assets/${rel.split(/[\\/]/g).join('/')}`); continue; }
-    if (!readFileSync(abs).equals(readFileSync(copy))) {
+    // bundle.mjs canonicalizes authored SVG line endings on every platform.
+    const sourceBytes = readFileSync(abs), copiedBytes = readFileSync(copy);
+    const matches = extname(abs).toLowerCase() === '.svg'
+      ? sourceBytes.toString('utf8').replace(/\r\n?/g, '\n') === copiedBytes.toString('utf8').replace(/\r\n?/g, '\n')
+      : sourceBytes.equals(copiedBytes);
+    if (!matches) {
       differing++; if (differing <= 3) findings.push(`asset differs from source: assets/${rel.split(/[\\/]/g).join('/')}`);
     }
   }

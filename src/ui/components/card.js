@@ -170,7 +170,7 @@ export function renderCard(registries, ref, opts = {}) {
   // MEASURED, NOT GUESSED: the name shrinks to one line, tags past the second
   // row defer to `+N`, and the text takes what the budget leaves. CSS cannot
   // count or measure, so the renderer reports after the first paint.
-  requestAnimationFrame(() => fitCardFace(el));
+  scheduleCardFits([el]);
 
   // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
   // number in the status row's own tint — "these cards just lit up" instead
@@ -225,40 +225,71 @@ export function renderCard(registries, ref, opts = {}) {
  *   data-tags-hidden n              — tags deferred past the second row (+n)
  *   data-truncated true             — both were full; the face carries the chevron
  */
-export function fitCardFace(el) {
-  if (!el?.isConnected) return;
-  const name = el.querySelector('.cname');
-  if (name) {
-    el.dataset.name = '';
-    if (name.scrollWidth > name.clientWidth + 1) el.dataset.name = 'long';
-    if (name.scrollWidth > name.clientWidth + 1) el.dataset.name = 'verylong';
+const pendingFits = new Set();
+let fitFrame = 0;
+
+export function scheduleCardFits(cards) {
+  for (const card of cards) pendingFits.add(card);
+  if (fitFrame) return;
+  fitFrame = requestAnimationFrame(() => {
+    fitFrame = 0;
+    const batch = [...pendingFits]; pendingFits.clear();
+    fitCardFaces(batch);
+  });
+}
+
+export function fitCardFace(el) { fitCardFaces([el]); }
+
+// Every phase reads the whole batch before the next phase writes. The number
+// of forced layouts is bounded by fitting stages, not by cards times tags.
+function fitCardFaces(cards) {
+  const rows = cards.filter(el => el?.isConnected).map(el => {
+    const name = el.querySelector('.cname'), tags = el.querySelector('.ctags');
+    return { el, name, tags, chips: [...(tags?.querySelectorAll('.ctag') || [])], more: null, hidden: 0, tagRows: 0 };
+  });
+  for (const row of rows) {
+    row.el.dataset.name = '';
+    row.tags?.querySelector('.as-tag.more')?.remove();
+    row.chips.forEach(chip => { chip.hidden = false; });
   }
-  const tagsEl = el.querySelector('.ctags');
-  if (tagsEl) {
-    const chips = [...tagsEl.querySelectorAll('.ctag')];
-    tagsEl.querySelector('.as-tag.more')?.remove();
-    chips.forEach((chip) => { chip.hidden = false; });
-    const rowOf = (chip) => Math.round((chip.offsetTop - tagsEl.offsetTop) / Math.max(1, chip.offsetHeight + 2));
-    let hidden = 0;
-    let rows = chips.length ? 1 : 0;
-    for (const chip of chips) {
-      const row = rowOf(chip);
-      if (row >= 2) { chip.hidden = true; hidden += 1; } else rows = Math.max(rows, row + 1);
+  const long = rows.filter(({name}) => name && name.scrollWidth > name.clientWidth + 1);
+  long.forEach(row => { row.el.dataset.name = 'long'; });
+  const veryLong = long.filter(({name}) => name.scrollWidth > name.clientWidth + 1);
+  veryLong.forEach(row => { row.el.dataset.name = 'verylong'; });
+  for (const row of rows) {
+    const top = row.tags?.offsetTop || 0;
+    row.positions = row.chips.map(chip => Math.round((chip.offsetTop - top) / Math.max(1, chip.offsetHeight + 2)));
+  }
+  for (const row of rows) {
+    row.chips.forEach((chip, i) => {
+      if (row.positions[i] >= 2) { chip.hidden = true; row.hidden++; }
+      else row.tagRows = Math.max(row.tagRows, row.positions[i] + 1);
+    });
+    if (row.hidden) {
+      row.more = document.createElement('span'); row.more.className = 'as-tag more';
+      row.more.textContent = '+' + row.hidden;
+      row.tags.appendChild(row.more);
     }
-    if (hidden) {
-      const more = document.createElement('span');
-      more.className = 'as-tag more';
-      more.textContent = `+${hidden}`;
-      more.dataset.tip = chips.filter((chip) => chip.hidden).map((chip) => chip.textContent.trim()).join(' · ');
-      tagsEl.appendChild(more);
-      // the remainder chip may itself wrap: hide one more and recount
-      if (rowOf(more) >= 2) { const last = chips.filter((chip) => !chip.hidden).pop(); if (last) { last.hidden = true; hidden += 1; more.textContent = `+${hidden}`; } }
-      el.dataset.tagsHidden = String(hidden);
-    } else delete el.dataset.tagsHidden;
-    el.dataset.tagRows = String(Math.min(2, rows));
   }
-  const text = el.querySelector('.ctext');
-  el.dataset.truncated = text && text.scrollHeight > text.clientHeight + 1 ? 'true' : 'false';
+  const overflow = rows.filter(({more,tags}) => more && Math.round((more.offsetTop - tags.offsetTop) / Math.max(1, more.offsetHeight + 2)) >= 2);
+  for (const row of overflow) {
+    const last = row.chips.filter(chip => !chip.hidden).pop();
+    if (last) { last.hidden = true; row.hidden++; row.more.textContent = '+' + row.hidden; }
+  }
+  for (const row of rows) {
+    if (row.more) {
+      row.more.dataset.tip = row.chips.filter(chip => chip.hidden).map(chip => chip.textContent.trim()).join(' · ');
+      row.el.dataset.tagsHidden = String(row.hidden);
+    } else delete row.el.dataset.tagsHidden;
+    row.el.dataset.tagRows = String(Math.min(2, row.tagRows));
+  }
+  const truncated = rows.map(({el}) => { const text = el.querySelector('.ctext'); return !!text && text.scrollHeight > text.clientHeight + 1; });
+  rows.forEach((row, i) => { row.el.dataset.truncated = String(truncated[i]); });
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', () => scheduleCardFits(document.querySelectorAll('.card')));
+  document.fonts?.ready.then(() => scheduleCardFits(document.querySelectorAll('.card')));
 }
 
 /**

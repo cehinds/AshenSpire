@@ -70,11 +70,11 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
-| `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark, deterministic ash, family prompt, and shared build receipt; Title is not mounted behind it. |
+| `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark and family prompt over River Citadel; activation lights the city, holds for Settings > Game > Lit city pause, then fades into the layered hall. Title mounts after the fade. |
 | `startup-ash-field` | `startupGateModel.properties.particles` | `startupGate.mountStartupGate` | Startup Gate | Decorative particle host; visual-only and removed with the boot gate. |
 | `startup-ash-particle` | deterministic particle record | `startupGate.mountStartupGate` | Startup Ash Field | One data-driven ash mote with position, delay, duration, and size. |
 | `startup-mark` | startup copy + responsive presentation | `startupGate.mountStartupGate` | Startup Gate | Centered folded-title content group; its phone backing is fully transparent. |
-| `startup-wordmark` | `startupGateModel.properties.wordmark` | `startupGate.mountStartupGate` | Startup Mark | Replaceable Ashen Spire wordmark text. |
+| `startup-wordmark` | `startupGateModel.properties.wordmark` | `startupGate.mountStartupGate` | Startup Mark | Replaceable Ashen Spire wordmark text with a feathered translucent backing that fades in. |
 | `startup-subtitle` | `startupGateModel.properties.subtitle` | `startupGate.mountStartupGate` | Startup Mark | Replaceable genre subtitle. |
 | `startup-divider` | semantic child | `startupGate.mountStartupGate` | Startup Mark | Decorative gold rule separating title copy from the prompt. |
 | `startup-prompt` | input-family prompt record | `startupGate.mountStartupGate` | Startup Mark | Polite live-region invitation updated for pointer, touch, keyboard, or controller. |
@@ -134,7 +134,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `potion-tray` | `itemTrayModel` | Belt view | Map + Combat | Utility potion tray, right anchored. |
 | `potion-control` | `componentModel` semantic ID | Item view | Inventory | Individual utility potion control. |
 | `battlefield-stage` | `battlefieldStageModel` | `battlefieldStage.js` + `combat.js` | Combat | Fixed 10/45/30/15 tracks; shared formation slots for solo and party combat, with grounded art, uniform nameplates and shallow overflow rows. |
-| `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. |
+| `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. Updates retain the frame, sprite host and input listeners; Lite targeting uses a colored ground ring without cloning art. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Player combatant card. |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
 | `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` + `paintedOutfits.js` | Solo and co-op combat cards | Rendered player or enemy figure. Player rest resolves stance, readiness, guard, then idle through `combatPose.js`; Prepared, Starstone Charge and Blood Rite have authored outfit poses, intermediate entry/exit sprites, subtle breathing glows, and fades that survive combat redraws. Reduced motion uses a steady glow. [Interactive miniature](../art/readiness-poses/preview.html). |
@@ -597,3 +597,7 @@ Relic reward rows open a collectible card and full effects before Take relic; Ba
 
 Primary confirmation buttons use green when enabled and neutral styling when native or ARIA disabled. Reward Continue stays gold while any reward remains unresolved and turns green once all rows are taken or explicitly skipped; its existing hold and auto-collect behavior is preserved.
 Combatant overhead controls: `combatantOverhead.js` shares Information and enlarged intent between solo and co-op. The vertical stack anchors to visible idle artwork and collapses empty slots. Its selected outline precedes the configured tooltip delay for hover, touch, and focus. Information opens the existing detailed body; overhead input never bubbles into combat targeting.
+
+Ready primary actions lift by 2px and scale to 1.015 without shifting surrounding layout. End Turn is ready only during the player phase when no affordable playable hand card remains; zero-Action cards still use their Mana/Stamina costs. Ready modal footers hide helper copy, retain secondary actions in their own row, and expand the primary button across the container. Reduced motion removes the transition.
+
+Ready colors use a 240ms background-color transition, including hovered hold buttons. Hold-progress background images remain independent and uneased. Newly mounted ready controls use a starting style so modal redraws also fade into green; hover does not switch between green shades.
