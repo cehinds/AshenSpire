@@ -3028,3 +3028,13 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 @media (max-width: 720px) {
   .mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 42%) minmax(0, 1fr); }
 }
+
+/* Inspection shows the complete face; compact pickers retain their text budget. */
+.card-inspection-art > .card { min-height:308px; }
+.card-inspection-modal .card-inspection-art > .card { height:auto; aspect-ratio:auto; }
+.card-inspection-art > .card .cd-body { flex:0 0 auto; height:auto; overflow:visible; }
+.card-inspection-art > .card .ctext { display:block; flex:0 0 auto; overflow:visible; -webkit-line-clamp:unset; }
+@media (max-width:600px) {
+  .card-inspection-modal .card-inspection-layout { grid-template-columns:minmax(0,1fr); }
+  .card-inspection-modal .card-inspection-art { width:100%; max-width:220px; }
+}

@@ -346,7 +346,7 @@ export function mountRewards(app, {
       if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
       el.addEventListener('click', (ev) => {
         if (row.kind === 'card') return renderChooser();
-        if (row.kind === 'flask' || row.kind === 'armament') return renderDetail(row);
+        if (row.kind === 'flask' || row.kind === 'armament' || row.kind === 'relic') return renderDetail(row);
         take(row);
       });
     }
@@ -393,25 +393,27 @@ export function mountRewards(app, {
     }
   }
 
-  // Potion and Armament are inspect-before-collect surfaces. Opening either
+  // Potions, armaments and relics are inspect-before-collect surfaces. Opening one
   // commits nothing; Back restores the exact menu state, and Take is the only
   // collection door from the detail.
   function renderDetail(row) {
     const body = rowBody(row);
     const isFlask = row.kind === 'flask';
-    const takeButton = button({ label: `Take ${isFlask ? 'potion' : 'armament'}`, weight: 'primary', id: 'reward-detail-take' });
+    const kindLabel = isFlask ? 'Potion' : row.kind === 'relic' ? 'Relic' : 'Armament';
+    const takeButton = button({ label: `Take ${kindLabel.toLowerCase()}`, weight: 'primary', id: 'reward-detail-take' });
     const backButton = button({ label: 'Back', id: 'reward-back', className: 'subtle' });
     const detailBody = el('div', { class: 'class-row reward-menu' });
     const armament = !isFlask && registries.equipment.armaments.find(piece => piece.id === row.armamentId);
     if (armament) detailBody.append(renderEquipmentInspection(registries, armament));
+    else if (row.kind === 'relic') detailBody.append(renderCollectibleInspection(registries, registries.relics.get(row.relicId), 'Relic', { interactive: false }));
     else if (isFlask) detailBody.append(renderCollectibleInspection(registries, registries.flasks.get(row.flaskId), 'Potion'));
     else detailBody.innerHTML = `<div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
       <div class="glyph">${KIND_GLYPHS[row.kind]}</div>
       <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>
     </div>`;
     door({
-      eyebrow: isFlask ? 'Inspect the potion' : 'Inspect the armament',
-      title: isFlask ? 'Potion' : 'Armament',
+      eyebrow: `Inspect the ${kindLabel.toLowerCase()}`,
+      title: kindLabel,
       attrs: { dataset: { size: 'md', rewardDetail: row.kind } },
       body: detailBody,
       foot: modalFooter({ secondary: [backButton], primary: takeButton, className: 'reward-foot', size: 'medium' }),
