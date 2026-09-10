@@ -495,6 +495,15 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: color-mi
 .as-actions .am-detail { padding: 0 1.35rem 0.9rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 1.28rem; line-height: 1.45; }
 
 /* TitleMenu — the one menu with no panel around it. */
+.offline-play-modal .offline-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-block: 1rem; }
+.offline-play-modal #offline-branch { display: block; width: 100%; min-height: 44px; padding: 0.6rem; margin-block: 0.5rem 1rem; font: inherit; color: var(--parchment); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; color-scheme: dark; }
+.offline-play-modal #offline-branch:disabled { opacity: 0.65; }
+.offline-play-modal #offline-progress { display: block; width: 100%; height: 1rem; accent-color: var(--gold, #c9a84c); }
+.offline-play-modal li { margin-block: 0.6rem; }
+.offline-play-modal .modal-body { overflow-wrap: anywhere; }
+.offline-play-modal .modal-body { padding: 1.4rem; }
+.offline-play-modal ul { padding-inline-start: 1.5rem; list-style: disc; }
+.offline-play-modal h3 { margin-block: 1.5rem 0.7rem; }
 .as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
 /* The name fills its line: an indent would overflow and disable centering.
    Shift half the trailing tracking instead, keeping the visible text centered. */
