@@ -210,6 +210,7 @@ body.cb-safe {
   --frost: #56b4e9;
   --grace: #56b4e9;
   --rot: #e69f00;
+  --danger: #d55e00; /* danger buttons track the same vermillion as --blood */
   /* Okabe-Ito reddish-purple — the SAME VALUE this palette already shipped,
      moved out of a selector and into the token block where a palette decision
      belongs. It now reaches card text wherever card text is drawn, which is

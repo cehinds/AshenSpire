@@ -1,5 +1,12 @@
 # AshenSpire component catalog
 
+`offlinePlay.js` supplies the shared **Download & saves** modal, opened from
+Title and Settings (including in-run Settings). Release metadata supplies its
+version, size, and numbered download; `src/content/offlinePlay.js` owns the feed,
+instructions, and transfer limits. The save-transfer engine validates all slots
+before replacing storage and preserves a recovery copy. Import is available from
+Title, with a preview and confirmation. See [offline play](offline-play.md).
+
 All run maps share the vector face in `mapNodeInk.js`: opaque dark discs, readable
 glyphs, a pale current-node marker and reachable halos. `mapview.js` owns the
 node radii; `AtlasCameraModel.js` frames a journey junction using that same close-up

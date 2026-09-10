@@ -90,6 +90,7 @@ export function openConfirmationModal({
     onClose: () => cancel(),
   });
   header.querySelector?.('.modal-close')?.classList.add('confirmation-close');
+  header.querySelector?.('.modal-eyebrow')?.classList.add('confirmation-eyebrow');
 
   const copy = prose(message || '', { id: 'confirmation-modal-copy', class: 'confirmation-copy' });
 
