@@ -3,14 +3,34 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-936",
+    "id": "pr-938",
     "date": "2026-09-10",
     "group": "2026-09-10",
-    "summary": "Compare equipment in the combat test",
-    "detail": "Choose armor, weapon grip, and a Blood Rune before a test route. The preview shows armor, weight, Dodge stamina, grip requirements, weapon impact, and rune-inclusive value. The chosen equipment supplies the real fight's defense and attack properties; incompatible grips and runes explain why they cannot be used. This remains an isolated equipment experiment with fixed resource caps, not production loot or inventory migration.",
-    "build": "0.6.0.123",
-    "pullRequest": 936,
-    "url": "https://github.com/cehinds/AshenSpire/pull/936"
+    "summary": "Combatants share clear overhead controls",
+    "detail": "Solo and co-op combatants gain Information and larger intent controls with delayed tooltips and aligned sprite framing.",
+    "build": "0.6.0.116",
+    "pullRequest": 938,
+    "url": "https://github.com/cehinds/AshenSpire/pull/938"
+  },
+  {
+    "id": "pr-945",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Information follows combatant selection",
+    "detail": "Combatant Information matches card styling and appears on selection while preserving sprite size, foot positions, and health bars.",
+    "build": "0.6.0.119",
+    "pullRequest": 945,
+    "url": "https://github.com/cehinds/AshenSpire/pull/945"
+  },
+  {
+    "id": "pr-940",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Ready actions stand out",
+    "detail": "End Turn turns green when no affordable playable cards remain. Actions and Potions have larger controls beside compact Draw and Discard buttons. Green confirmations fade in smoothly over 480ms, rise slightly and grow subtly, with reduced-motion support. Hold feedback remains visible without interrupting the color fade. Ready modal confirmations fill their footer while Back and Cancel remain available.",
+    "build": "0.6.0.125",
+    "pullRequest": 940,
+    "url": "https://github.com/cehinds/AshenSpire/pull/940"
   },
   {
     "id": "pr-943",
