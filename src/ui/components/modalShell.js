@@ -134,6 +134,19 @@ export function modalFooter({ note = '', secondary = [], primary = null, classNa
  *   to lose a settings change mid-gesture.
  */
 export function bindModalDismiss({ veil, panel, close, opener = document.activeElement } = {}) {
+  // Promote overflowing dialogs once per opening; shrinking back would oscillate
+  // when content or scrollbars change the available width.
+  const promote = () => {
+    if (!panel.isConnected || panel.dataset.height === 'long') return;
+    const bodies = panel.querySelectorAll('.modal-body, .as-body, .as-pane');
+    if ([...bodies].some(body => body.scrollHeight > body.clientHeight + 2)) {
+      panel.dataset.height = 'long';
+    }
+  };
+  const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(promote) : null;
+  resize?.observe(panel);
+  const mutations = typeof MutationObserver === 'function' ? new MutationObserver(promote) : null;
+  mutations?.observe(panel, { childList: true, subtree: true, characterData: true });
   const onKeydown = (event) => {
     if (event.defaultPrevented) return;
     if (event.key === 'Tab') {
@@ -163,6 +176,8 @@ export function bindModalDismiss({ veil, panel, close, opener = document.activeE
   document.addEventListener('keydown', onKeydown, true);
   veil.addEventListener('click', onClick);
   return function release({ restoreFocus = true } = {}) {
+    resize?.disconnect();
+    mutations?.disconnect();
     document.removeEventListener('keydown', onKeydown, true);
     veil.removeEventListener('click', onClick);
     if (restoreFocus && opener?.isConnected && typeof opener.focus === 'function') {

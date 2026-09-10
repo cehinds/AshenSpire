@@ -165,8 +165,12 @@ export function mountWorldAtlas(
     const dialog = document.createElement("dialog");
     dialog.className = "atlas-dialog modal-veil";
     dialog.setAttribute("aria-labelledby", "atlas-location-title");
-    dialog.innerHTML = `<div class="atlas-dialog-head"><div><span class="atlas-eyebrow">${esc(a.regions[a.regionOf(id)].displayName)}</span><h2 id="atlas-location-title">${esc(n.displayName)}</h2></div>${button("Close", 'data-atlas-close aria-label="Close location"')}</div><div class="atlas-location-body"><div class="atlas-local-wrap">${local ? localMapHtml(local) : `<div class="atlas-location-illustration">${coreArt(id)}</div>`}</div><section class="atlas-location-detail" aria-live="polite"></section></div><footer class="atlas-dialog-foot"><span>${here ? "You are here" : reachable.has(id) ? "A connected road leads here" : "Explore connecting roads to reach this place"}</span>${button(here ? "Return to world" : `Travel to ${n.displayName}`, `data-atlas-travel ${!here && !reachable.has(id) ? "disabled" : ""}`)}</footer>`;
+    dialog.innerHTML = `<div class="atlas-dialog-head"><div><span class="atlas-eyebrow">${esc(a.regions[a.regionOf(id)].displayName)}</span><h2 id="atlas-location-title">${esc(n.displayName)}</h2></div>${button("Close", 'data-atlas-close aria-label="Close location"')}</div><div class="atlas-location-body"><div class="atlas-local-wrap">${local ? localMapHtml(local) : `<div class="atlas-location-illustration">${coreArt(id)}</div>`}</div><section class="atlas-location-detail" aria-live="polite"></section></div><footer class="atlas-dialog-foot"><span>${here ? "You are here" : reachable.has(id) ? "A connected road leads here" : "Explore connecting roads to reach this place"}</span>${button(here ? "Return to world" : `Travel to ${n.displayName}`, `data-atlas-travel ${!here && !reachable.has(id) ? "disabled" : ""}`)}<div class="atlas-detail-actions"></div></footer>`;
     document.body.append(dialog);
+    if (local) {
+      const tools = dialog.querySelector('.atlas-local-tools');
+      dialog.querySelector('.atlas-location-body').append(tools);
+    }
     dialog.showModal();
     let disposeLocal = () => {};
     const close = () => {
@@ -195,7 +199,7 @@ export function mountWorldAtlas(
       };
     if (local) {
       j.view.localMaps ||= {};
-      disposeLocal = mountLocalMapCamera(dialog.querySelector('.atlas-local-wrap'), {
+      disposeLocal = mountLocalMapCamera(dialog, {
         mapId: local.mapId, source: a.assets[a.maps[local.mapId].artAssetId].uri,
         points: a.localPoints[local.mapId] || [], saved: j.view.localMaps[local.mapId],
         onSelect: detail,
@@ -254,12 +258,11 @@ export function mountWorldAtlas(
           `data-local-explore ${!here || j.localCompletedIds.includes(pointId) ? "disabled" : ""}`,
         );
       const pane = dialog.querySelector(".atlas-location-detail");
-      pane.innerHTML = services.length ? `<div class="atlas-detail-scroll">${html}</div><div class="atlas-detail-actions"></div>` : html;
-      if (services.length) {
-        const actions = pane.querySelector('.atlas-detail-actions');
-        pane.querySelectorAll('[data-local-service]').forEach(b=>actions.append(b));
-      }
-      pane.querySelectorAll("[data-local-service]").forEach(
+      pane.innerHTML = `<div class="atlas-detail-scroll">${html}</div>`;
+      const actions = dialog.querySelector('.atlas-detail-actions');
+      actions.replaceChildren();
+      pane.querySelectorAll('[data-local-service], [data-local-quest], [data-local-gate], [data-local-boss], [data-local-explore]').forEach(b => actions.append(b));
+      actions.querySelectorAll("[data-local-service]").forEach(
         (b) =>
           (b.onclick = () => {
             close();
@@ -271,7 +274,7 @@ export function mountWorldAtlas(
             });
           }),
       );
-      pane.querySelectorAll("[data-local-quest]").forEach(
+      actions.querySelectorAll("[data-local-quest]").forEach(
         (b) =>
           (b.onclick = () => {
             onAction({
@@ -284,19 +287,19 @@ export function mountWorldAtlas(
             detail(pointId);
           }),
       );
-      const g = pane.querySelector("[data-local-gate]");
+      const g = actions.querySelector("[data-local-gate]");
       if (g)
         g.onclick = () => {
           close();
           onTravel(gate.destinationNodeId);
         };
-      const boss = pane.querySelector("[data-local-boss]");
+      const boss = actions.querySelector("[data-local-boss]");
       if (boss)
         boss.onclick = () => {
           close();
           onAction({ kind: "boss", ownerId: id, pointId });
         };
-      const visit = pane.querySelector("[data-local-explore]");
+      const visit = actions.querySelector("[data-local-explore]");
       if (visit)
         visit.onclick = () => {
           onAction({ kind: "local", ownerId: id, pointId, stay: true });

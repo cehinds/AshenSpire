@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-10",
     "summary": "Relics open as cards before you take them",
     "detail": "Relic rewards show their card and full effects with Back and Take controls. Owned relics also open a card inspection from the map and combat HUD. Inspected playing cards show complete effect text, with card and details stacked on phones. Valid confirmation buttons turn green; reward Continue turns green after every reward is collected or explicitly skipped.",
-    "build": "0.6.0.111",
+    "build": "0.6.0.112",
     "pullRequest": 924,
     "url": "https://github.com/cehinds/AshenSpire/pull/924"
   },
