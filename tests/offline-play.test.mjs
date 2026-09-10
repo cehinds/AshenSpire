@@ -17,38 +17,38 @@ function fixture(seed = 7) {
 }
 test('all slots and profile survive transfer; previous data stays recoverable', () => {
   const source = fixture(7), destination = fixture(9);
-  const previous = destination.transfer.export(), exported = source.transfer.export();
+  const previous = destination.transfer.createBackup(), exported = source.transfer.createBackup();
   assert.equal(source.transfer.inspect(exported).slots.filter(x => x.summary).length, 1);
-  assert.equal(destination.transfer.import(exported).ok, true);
-  assert.equal(destination.transfer.export(), exported);
+  assert.equal(destination.transfer.restore(exported).ok, true);
+  assert.equal(destination.transfer.createBackup(), exported);
   assert.equal(destination.transfer.previous(), previous);
   assert.equal(createSaveManager(destination.storage).loadMeta().settings.tooltipDelay, '1s');
   assert(createSaveManager(destination.storage).loadRun(registries, 2));
 });
 test('bad and future files cannot mutate existing saves', () => {
-  const { transfer } = fixture(), before = transfer.export();
-  for (const text of ['oops', '{}', JSON.stringify({ ...JSON.parse(before), version: 999 })]) assert.throws(() => transfer.import(text));
+  const { transfer } = fixture(), before = transfer.createBackup();
+  for (const text of ['oops', '{}', JSON.stringify({ ...JSON.parse(before), version: 999 })]) assert.throws(() => transfer.restore(text));
   const future = JSON.parse(before); const profile = JSON.parse(future.entries[META_KEY]);
   profile.schemaVersion = META_SCHEMA_VERSION + 1; future.entries[META_KEY] = JSON.stringify(profile);
-  assert.throws(() => transfer.import(JSON.stringify(future)), /Profile cannot/);
+  assert.throws(() => transfer.restore(JSON.stringify(future)), /Profile cannot/);
   const corrupt = JSON.parse(before); corrupt.entries[RUN_KEY] = '{}';
-  assert.throws(() => transfer.import(JSON.stringify(corrupt)), /Slot 1/);
-  assert.equal(transfer.export(), before); assert.equal(transfer.previous(), null);
+  assert.throws(() => transfer.restore(JSON.stringify(corrupt)), /Slot 1/);
+  assert.equal(transfer.createBackup(), before); assert.equal(transfer.previous(), null);
 });
 test('storage failure rolls back every touched key and retains recovery copy', () => {
-  const target = fixture(9), original = target.transfer.export(); let refused = false;
+  const target = fixture(9), original = target.transfer.createBackup(); let refused = false;
   const broken = { ...target.storage, setItem(key, value) {
     if (key === `${RUN_KEY}_s2` && !refused) { refused = true; throw new Error('quota'); }
     target.storage.setItem(key, value);
   } };
   const transfer = createSaveTransfer(broken, registries);
-  assert.throws(() => transfer.import(fixture(7).transfer.export()), /quota/);
-  assert.equal(transfer.export(), original); assert.equal(transfer.previous(), original);
+  assert.throws(() => transfer.restore(fixture(7).transfer.createBackup()), /quota/);
+  assert.equal(transfer.createBackup(), original); assert.equal(transfer.previous(), original);
 });
 test('backup failure happens before live storage is touched', () => {
-  const target = fixture(), before = target.transfer.export();
+  const target = fixture(), before = target.transfer.createBackup();
   const transfer = createSaveTransfer({ ...target.storage, setItem() { throw new Error('full'); } }, registries);
-  assert.throws(() => transfer.import(before), /full/); assert.equal(transfer.export(), before);
+  assert.throws(() => transfer.restore(before), /full/); assert.equal(transfer.createBackup(), before);
 });
 test('download metadata pins the exact released file and derives version and filename', () => {
   const result = releasedDownload({ branch: 'main', ordinal: 42, version: '0.6.0', bytes: 500 }, 'https://example.org/game/main/latest/build.json');

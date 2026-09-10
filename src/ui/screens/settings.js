@@ -1265,7 +1265,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   if (onOffline) {
     const offline = button({ label: offlinePlay.title, id: 'settings-download' });
     offline.addEventListener('click', onOffline);
-    container.appendChild(offline);
+    container.prepend(offline);
   }
 
   const syncFullscreen = (message = '') => {
@@ -1554,6 +1554,8 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null })
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
   const done = button({ label: 'Done', weight: 'primary', id: 'set-close' });
+  const offline = onOffline ? button({ label: offlinePlay.title, id: 'settings-download' }) : null;
+  offline?.addEventListener('click', onOffline);
   const door = openModal({
     size: 'lg',
     className: 'settings-modal',
@@ -1562,7 +1564,8 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null })
     title: 'Settings',
     closeLabel: 'Close Settings',
     bodyClassName: 'set-body',
-    body: (host) => renderSettings(host, { settings, onChange, saves, onOffline }),
+    body: (host) => renderSettings(host, { settings, onChange, saves }),
+    secondary: offline ? [offline] : [],
     primary: done,
     footSize: 'short',
   });

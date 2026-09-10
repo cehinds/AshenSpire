@@ -330,7 +330,10 @@ function assemble(outDir, keep) {
   const mainRef = refFor('main');
   if (!mainRef) throw new Error("no ref for 'main' — it is the site's base tree, so nothing can be assembled without it");
   const tmp = mkdtempSync(join(tmpdir(), 'pages-site-main-'));
-  execFileSync('sh', ['-c', `git -C "${ROOT}" archive --format=tar "${mainRef}" | tar -x -C "${tmp}"`]);
+  const archive = join(tmp, 'source.tar');
+  execFileSync('git', ['-C', ROOT, 'archive', '--format=tar', '--output', archive, mainRef]);
+  execFileSync('tar', ['-xf', archive, '-C', tmp]);
+  rmSync(archive);
   cpSync(tmp, outDir, { recursive: true });
   rmSync(tmp, { recursive: true, force: true });
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
@@ -391,6 +394,10 @@ function check(outDir) {
   for (const d of manifest.branches) for (const b of d.builds) {
     const blob = gitBuf(['show', `${b.sha}:AshenSpire.html`]);
     const onDisk = readFileSync(join(outDir, d.branch, String(b.ordinal), 'index.html'));
+    const download = JSON.parse(readFileSync(join(outDir, d.branch, String(b.ordinal), 'build.json'), 'utf8'));
+    if (download.bytes !== onDisk.length || download.ordinal !== b.ordinal || download.version !== b.version) {
+      console.error(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}: metadata differs from the downloadable file`); process.exitCode = 1;
+    } else checks++;
     if (Buffer.compare(blob, onDisk) !== 0) { console.error(`DRIFT ${d.branch}/${b.ordinal}: site file differs from git blob ${b.sha.slice(0, 10)}`); process.exitCode = 1; }
     else checks++;
   }

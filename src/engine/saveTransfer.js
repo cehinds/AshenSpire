@@ -33,10 +33,10 @@ export function createSaveTransfer(storage, registries) {
   };
   return {
     slotCount: SLOTS,
-    export: () => encode(snapshot()),
+    createBackup: () => encode(snapshot()),
     previous: () => storage.getItem(BACKUP_KEY),
     inspect: text => { const { slots, hasProfile } = validate(text); return { slots, hasProfile }; },
-    import(text) {
+    restore(text) {
       const { data } = validate(text);
       const before = snapshot();
       const oldMirror = storage.getItem(META_BACKUP_KEY);

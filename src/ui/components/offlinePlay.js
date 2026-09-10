@@ -56,15 +56,15 @@ export function openOfflinePlay({ transfer, canImport = () => true, onImported =
     status.textContent = 'Downloading the game… keep this panel open.';
     try {
       // Pin the numbered build so a release changing mid-download cannot mix versions.
-      const blob = await (await request(manifest.url)).blob();
-      if (blob.size !== manifest.bytes) throw new Error('Download was incomplete. Please try again.');
-      saveFile(new Blob([blob], { type: 'text/html' }), manifest.filename);
+      const bytes = await (await request(manifest.url)).arrayBuffer();
+      if (bytes.byteLength !== manifest.bytes) throw new Error('Download was incomplete. Please try again.');
+      saveFile(new Blob([bytes], { type: 'text/html' }), manifest.filename);
       status.textContent = 'Download ready. Open the HTML file from your Downloads folder.';
     } catch (error) { status.textContent = error.message; }
     finally { busy = false; download.disabled = false; }
   });
   const exportText = (text, name) => saveFile(new Blob([text], { type: 'application/json' }), name);
-  exportSave.addEventListener('click', () => { try { exportText(transfer.export(), 'AshenSpire-saves.json'); status.textContent = 'Save backup downloaded.'; } catch (error) { status.textContent = error.message; } });
+  exportSave.addEventListener('click', () => { try { exportText(transfer.createBackup(), 'AshenSpire-saves.json'); status.textContent = 'Save backup downloaded.'; } catch (error) { status.textContent = error.message; } });
   recovery.addEventListener('click', () => { try { exportText(transfer.previous(), 'AshenSpire-previous-saves.json'); } catch (error) { status.textContent = error.message; } });
   importSave.addEventListener('click', () => { if (!canImport()) { status.textContent = 'Return to the title screen before importing saves.'; return; } file.value = ''; file.click(); });
   file.addEventListener('change', async () => {
@@ -79,7 +79,7 @@ export function openOfflinePlay({ transfer, canImport = () => true, onImported =
         confirmLabel: 'Import saves', onConfirm: () => {
           try {
             if (!canImport()) throw new Error('Return to the title screen before importing saves.');
-            transfer.import(text); status.textContent = 'Saves imported. Reload the game to use them.';
+            transfer.restore(text); status.textContent = 'Saves imported. Reload the game to use them.';
             reload.hidden = false; importSave.disabled = true; reload.focus();
             onImported();
           } catch (error) { status.textContent = error.message; }

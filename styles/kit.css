@@ -495,6 +495,9 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .offline-play-modal .offline-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-block: 1rem; }
 .offline-play-modal li { margin-block: 0.6rem; }
 .offline-play-modal .modal-body { overflow-wrap: anywhere; }
+.offline-play-modal .modal-body { padding: 1.4rem; }
+.offline-play-modal ul { padding-inline-start: 1.5rem; list-style: disc; }
+.offline-play-modal h3 { margin-block: 1.5rem 0.7rem; }
 .as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
 /* The name fills its line: an indent would overflow and disable centering.
    Shift half the trailing tracking instead, keeping the visible text centered. */
