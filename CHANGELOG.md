@@ -32,7 +32,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-10
 
-- **Ready actions stand out** ([#940](https://github.com/cehinds/AshenSpire/pull/940), `0.6.0.119`). End Turn turns green when no affordable playable cards remain. Green confirmations fade in smoothly, rise slightly and grow subtly, with reduced-motion support. Hold feedback remains visible without interrupting the color fade. Ready modal confirmations fill their footer while Back and Cancel remain available.
+- **Ready actions stand out** ([#940](https://github.com/cehinds/AshenSpire/pull/940), `0.6.0.122`). End Turn turns green when no affordable playable cards remain. Actions and Potions have larger controls beside compact Draw and Discard buttons. Green confirmations fade in smoothly over 480ms, rise slightly and grow subtly, with reduced-motion support. Hold feedback remains visible without interrupting the color fade. Ready modal confirmations fill their footer while Back and Cancel remain available.
 
 
 - **Every armament brings a complete combat kit** ([#904](https://github.com/cehinds/AshenSpire/pull/904), `0.6.0.115`). Weapons, shields, and staves each lend a Strike, Guard, and signature Art. Shields can attack beside a weapon; Guardian creates an Exhausting Bulwark skill, Bastion trades offense for Block, and Spiked Reprisal combines defence with Bleed. Equipment previews show the actual contributions, and solo/co-op fights retain their ownership and upgrade data.

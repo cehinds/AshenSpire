@@ -3062,7 +3062,7 @@ button.primary:disabled, button.primary[aria-disabled='true'],
 .as-pane > * { flex-shrink: 0; }
 .modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { white-space: normal; overflow-wrap: anywhere; }
 /* Ready actions rise slightly without moving surrounding layout. */
-button.primary, .as-btn.primary, button.primary.beat-hold, .as-btn.primary.beat-hold { transition:background-color 240ms ease, border-color 240ms ease, color 240ms ease, scale 240ms ease, translate 240ms ease, box-shadow 240ms ease; }
+button.primary, .as-btn.primary, button.primary.beat-hold, .as-btn.primary.beat-hold { transition:background-color 480ms ease, border-color 480ms ease, color 480ms ease, scale 480ms ease, translate 480ms ease, box-shadow 480ms ease; }
 button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
 .as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
   scale:1.015; translate:0 -2px; box-shadow:0 4px 10px #0005;

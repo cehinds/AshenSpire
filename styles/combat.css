@@ -1335,3 +1335,29 @@
   :root:has(.combat) .hud-relics { pointer-events: none; }
   :root:has(.combat) .hud-relics > * { pointer-events: auto; }
 }
+
+/* Reserve space for larger edge controls; compact piles leave End Turn room. */
+:root .combat:not(.coop)[data-layout='formation'] > .hand-area {
+  --combat-orb-size: calc(clamp(72px, 10vw, 104px) / var(--ui-zoom,1));
+  grid-template-rows: minmax(0,1fr) calc(var(--combat-orb-size) + 16px / var(--ui-zoom,1));
+}
+:root .combat:not(.coop)[data-layout='formation'] > .hand-area > .combat-action-row {
+  grid-template-columns: var(--combat-orb-size) calc(64px / var(--ui-zoom,1)) minmax(0,1fr) calc(64px / var(--ui-zoom,1)) var(--combat-orb-size);
+  gap:calc(8px / var(--ui-zoom,1));
+}
+:root .combat:not(.coop)[data-layout='formation'] .combat-action-row > :is(.energy-orb,.combat-potions) {
+  width:var(--combat-orb-size); height:var(--combat-orb-size); min-height:var(--combat-orb-size);
+}
+:root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .pile {
+  height:calc(52px / var(--ui-zoom,1)); min-height:calc(52px / var(--ui-zoom,1)); padding-inline:2px;
+}
+@media (max-width:480px) {
+  :root .combat:not(.coop)[data-layout='formation'] > .hand-area > .combat-action-row {
+    grid-template-columns:var(--combat-orb-size) calc(48px / var(--ui-zoom,1)) minmax(0,1fr) calc(48px / var(--ui-zoom,1)) var(--combat-orb-size);
+    gap:calc(4px / var(--ui-zoom,1));
+  }
+}
+@media (max-height:500px) {
+  :root .combat:not(.coop)[data-layout='formation'] { grid-template-rows:10% minmax(0,1fr) calc(236px / var(--ui-zoom,1)); }
+  :root .combat:not(.coop)[data-layout='formation'] > .hand-area { --combat-orb-size:calc(84px / var(--ui-zoom,1)); }
+}
