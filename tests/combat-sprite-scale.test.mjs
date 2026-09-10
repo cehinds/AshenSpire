@@ -27,14 +27,14 @@ test('cramped screens shrink the shared player reference, preserving ratio and d
     for (let i=0;i<sizes.length;i++) {
       const a=actors[i],s=sizes[i];
       assert.ok(Math.abs(s.visibleHeight/sizes[0].visibleHeight-a.ratio*a.slot.depth)<1e-9);
-      assert.ok(s.scale*a.boxHeight+a.leading+6<=a.slot.ground+1e-8);
+      assert.ok(s.visibleHeight+a.leading+6<=a.slot.ground+1e-8);
       const half=s.scale*a.visibleWidth/2;
       assert.ok(s.x-half>=6-1e-8 && s.x+half<=width-6+1e-8);
     }
   }
 });
 
-test('transparent padding affects fit without erasing the requested visible size ratio',()=>{
+test('transparent padding does not consume overhead clearance or erase the visible size ratio',()=>{
   const actors=[
     {slot:{id:'p',ground:300,x:100,artWidth:190,depth:1},ratio:1,leading:28,boxHeight:190,visibleHeight:160,visibleWidth:120},
     {slot:{id:'b',ground:300,x:950,artWidth:400,depth:1},ratio:3,leading:28,boxHeight:384,visibleHeight:240,visibleWidth:300},
@@ -43,4 +43,6 @@ test('transparent padding affects fit without erasing the requested visible size
   assert.equal(b.visibleHeight/p.visibleHeight,3);
   assert.ok(b.x<950,'wide boss moves inward from the screen edge');
   assert.ok(p.visibleHeight<150,'player yields space to the large boss');
+  const padded = fitCombatSprites({width:1000,height:405,actors:actors.map(a=>({...a,boxHeight:a.boxHeight*2}))});
+  assert.deepEqual(padded.map(a=>a.visibleHeight),[p.visibleHeight,b.visibleHeight]);
 });

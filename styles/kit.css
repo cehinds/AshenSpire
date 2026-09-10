@@ -2856,7 +2856,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-details dt:first-child { margin-top:0; }
 .card-inspection-modal .modal-body { overflow:auto; overscroll-behavior:contain; }
 .equipment-poker-explanations { margin-top:0; }
-.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:-46px; right:auto; bottom:auto; left:50%; transform:translateX(-50%); box-sizing:border-box; width:36px; height:36px; min-width:36px; min-height:36px; max-width:36px; max-height:36px; padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px/1 Georgia,serif; cursor:pointer; touch-action:manipulation; visibility:hidden; pointer-events:none; }
+.card-inspection-target > .card-info-button,
+.combatant-leading > .combatant-info { box-sizing:border-box; width:36px; height:36px; min-width:36px; min-height:36px; max-width:36px; max-height:36px; padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
+.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:-46px; right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
 .inspection-selected { outline:3px solid #e0bd68; outline-offset:3px; border-radius:12px; }
 .card-info-button:focus-visible { outline:3px solid #fff0bd; outline-offset:2px; }
