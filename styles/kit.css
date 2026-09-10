@@ -3114,6 +3114,10 @@ button.primary:disabled, button.primary[aria-disabled='true'],
 .title-screen { background: #080705; }
 .title-screen::before { background: none; }
 .title-screen > .tower-hall { position: absolute; inset: 0; z-index: 0; opacity: 1; pointer-events: none; }
+.title-screen .tower-door-frame { animation: towerDoorBreathe 5500ms ease-in-out infinite alternate; }
+@keyframes towerDoorBreathe { from { opacity: 1; } to { opacity: .92; } }
+.reduced-motion .title-screen .tower-door-frame,
+:root[data-ambient='off'] .title-screen .tower-door-frame { animation: none; }
 .title-screen .as-titlemenu { text-shadow: 0 2px 12px #090705; }
 .startup-wordmark, .title-screen .tm-name { position: relative; isolation: isolate; }
 .startup-wordmark::before, .title-screen .tm-name::before {
@@ -3149,6 +3153,7 @@ button.primary:disabled, button.primary[aria-disabled='true'],
 .startup-gate.tower-calm .tower-exterior { opacity: 0; }
 .startup-gate.tower-calm .tower-hall { opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
+  .title-screen .tower-door-frame { animation: none; }
   .startup-gate > .as-titlemenu, .startup-gate .tm-foot { animation: none; }
   .startup-wordmark::before, .title-screen .tm-name::before { animation: none; }
 }

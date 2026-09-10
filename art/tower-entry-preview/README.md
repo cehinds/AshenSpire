@@ -62,6 +62,10 @@ WebP quality 90. Runtime assets are in `assets/bg/`.
 
 ## Validation
 
+The outer doorway gently fades between 100% and 92% opacity over an 11-second
+cycle while the city and menu stay steady. Reduced motion and Ambient Off
+disable this idle effect.
+
 Flow: initial prompt -> city lights -> hall -> real menu -> New slot dialog ->
 back -> replay. Playwright is used because the Browser plugin is unavailable.
 Checks cover 390x844, 1440x900, 320x568, 844x390, repeated activation and system
