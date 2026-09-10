@@ -1,4 +1,5 @@
 import { openCollectibleInspection } from '../components/collectibleCard.js';
+import { combatantInfo, combatantIntent } from '../components/combatantOverhead.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -22,7 +23,7 @@ import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { tagService } from '../../model/tagService.js';
 import { reducedMotionRequested } from '../motion.js';
 import { stageFor } from '../services/PoseAnimator.js';
-import { attachTooltip, ensureTooltip, hideTooltip, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
+import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
@@ -41,7 +42,7 @@ import {
   preloadReaverAttackFrames,
   reaverAttackTiming,
 } from '../reaverAttack.js';
-import { intentBadge, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
+import { MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -578,17 +579,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
   }
 
-  function combatantContextTooltip(subject) {
-    const hp = subject.resources.find((row) => row.label === 'HP');
-    const poise = subject.resources.find((row) => row.label === 'Poise');
-    const effects = subject.statuses.map(row => `<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(row.detail)}">${esc(row.name)}</span>`).join('');
-    return `<div class="tt-title">${esc(subject.name)}</div>`
-      + `<div class="tt-combatant-line"><b>HP</b> ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</div>`
-      + `<div class="tt-combatant-line"><b>Poise</b> ${esc(poise?.value ?? '—')}/${esc(poise?.max ?? '—')}</div>`
-      + (subject.intent ? `<p>${esc(subject.intent.name)} · ${esc(subject.intent.detail)}</p>` : '')
-      + (effects ? `<div class="inspection-tags">${effects}</div>` : '');
-  }
-
   /**
    * openCombatantDoor(subject) — THE FULL READ, in the kit's own door
    * (Constantine, 2026-09-04: "no way to expand combatant tooltip to see more
@@ -616,82 +606,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     done.addEventListener('click', shell.close);
   }
 
-  function renderedContentRect(el) {
-    const rects = [...(el?.children || [])]
-      .map((child) => child.getBoundingClientRect())
-      .filter((rect) => rect.width > 0 && rect.height > 0);
-    if (!rects.length) return el?.getBoundingClientRect() || null;
-    const left = Math.min(...rects.map((rect) => rect.left));
-    const top = Math.min(...rects.map((rect) => rect.top));
-    const right = Math.max(...rects.map((rect) => rect.right));
-    const bottom = Math.max(...rects.map((rect) => rect.bottom));
-    return { left, top, right, bottom, width: right - left, height: bottom - top };
-  }
-
-  /**
-   * showCombatantContext(box, role, entity) — THE GLANCE, for either side of
-   * the field. #045/#046 made this the single battlefield tooltip surface;
-   * until 2026-09-05 it answered for enemies only, so the player's own frame
-   * answered nothing at all (Constantine: "no tool tip for ... player
-   * combatants"). One surface, both roles: `combatantContextTooltip` already
-   * wrote the player's footer sentence, and `combatantSubject` already read
-   * the player's pools, stance and effects — nothing new is being invented
-   * here, the door was simply never opened on his side.
-   */
-  function showCombatantContext(box, role, entity) {
-    if (!box.isConnected) return false;
-    if (role === 'enemy' && !entity.alive) return false;
-    const card = renderedContentRect(box.querySelector('.combatant-card'));
-    if (!card) return false;
-    const inspect = button({ label: 'Inspect', attrs: { 'aria-label': `Inspect ${combatantSubject(role, entity).name}`, 'aria-haspopup': 'dialog' } });
-    inspect.addEventListener('click', (event) => {
-      event.stopPropagation();
-      openCombatantDoor(combatantSubject(role, entity), box);
-    });
-    inspect.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') box?.focus({ preventScroll: true });
-    });
-    showTooltipForRect(card, combatantContextTooltip(combatantSubject(role, entity)), {
-      intent: 'above',
-      align: 'center',
-      clear: [box.querySelector('.intent'), app.querySelector('.topbar.combat-hud')],
-      appearance: { variant: 'combatant-context', maxWidthRem: 21 },
-      target: box,
-      action: inspect,
-    });
-    return true;
-  }
-
-  const showEnemyContext = (box, enemy) => showCombatantContext(box, 'enemy', enemy);
-
   function wireEnemyContext(box, enemy) {
-    ensureTooltip();
-    box.classList.add('inspectable');
     box.tabIndex = -1;
     box.dataset.focusable = '';
-    box.tabIndex = -1;
     box.setAttribute('role', 'button');
-    box.setAttribute('aria-pressed', selectedEnemyId === enemy.id ? 'true' : 'false');
-    box.setAttribute('aria-describedby', 'tooltip');
-    box.setAttribute('aria-label', `Select ${combatantSubject('enemy', enemy).name} for combat details`);
-    attachTooltip(box, () => '', { showFn: () => showEnemyContext(box, enemy) });
-    box.addEventListener('keydown', (event) => {
-      if (event.target !== box) return;
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      box.click();
+    box.setAttribute('aria-label', `Select ${combatantSubject('enemy', enemy).name}`);
+    box.addEventListener('keydown', event => {
+      if (event.target !== box || !['Enter', ' '].includes(event.key)) return;
+      event.preventDefault(); box.click();
     });
-  }
-  // The player remains reachable by the controller for inspection. Arming a
-  // self-target card adds confirmation semantics to that same focus stop.
-  function wirePlayerContext(box, player) {
-    box.tabIndex = -1;
-    box.dataset.focusable = '';
-    box.setAttribute('aria-label', 'Player information');
-    ensureTooltip();
-    box.classList.add('inspectable');
-    box.setAttribute('aria-describedby', 'tooltip');
-    attachTooltip(box, () => '', { showFn: () => showCombatantContext(box, 'player', player) });
   }
 
   // The snapshot is the PACED state the whole HUD renders from. It must carry
@@ -1153,6 +1076,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const box = combatantFrame({
       role: 'player',
       entityId: 'player',
+      leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: selfArm ? ['armed'] : [],
       sprite: playerSprite(run.customization || {}, run.class, figure.armourId),
       blockBadge: blockBadge(p),
@@ -1160,7 +1084,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       meters: meterBars(p),
       trailing,
     });
-    wirePlayerContext(box, p);
     // When a self/buff card is armed, the player is a confirmable target.
     // Publish that temporary target through the same unified focus door as an
     // enemy target. Without this, armSelf() asks focusFirst() for the player,
@@ -1179,7 +1102,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
-      else showCombatantContext(box, 'player', p);
+
     });
     zone.appendChild(box);
     stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { resume: posePresentation, immediate: !posePresentation });
@@ -1188,19 +1111,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
   // `pill.lg` (uiContent.js intentBadge picks the tone and the words).
   function intentEl(enemy) {
-    const iv = previewIntent(combat, enemy.id);
-    const badge = intentBadge(iv);
-    const node = pill({
-      label: badge.label,
-      attrs: { class: `intent lg ${badge.cls}${badge.dashed ? ' dashed' : ''}`, dataset: { tone: badge.tone || undefined } },
-    });
-    if (badge.glyph) node.prepend(glyph(badge.glyph, { class: 'ic' }));
-    markUiComponent(node, UI.intentIndicator, badge.cls);
-    attachTooltip(node, () => {
+    return combatantIntent(previewIntent(combat, enemy.id), () => {
       const intent = combatantSubject('enemy', enemy).intent;
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
     });
-    return node;
   }
 
   function renderEnemies() {
@@ -1211,7 +1125,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
       const leading = [];
-      if (enemy.alive) leading.push(intentEl(enemy));
+      if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), intentEl(enemy));
       // Target-number badge for keyboard targeting (SPEC §7.3).
       if (enemy.alive && targeting) {
         const idx = living.indexOf(enemy);
@@ -1265,9 +1179,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
               candidate.classList.toggle('context-selected', current);
               candidate.setAttribute('aria-pressed', current ? 'true' : 'false');
             });
-            // A tap or keyboard confirmation explicitly requests this reading.
-            // Mouse hover is owned by the shared cancellable clock above.
-            if (event.pointerType === 'touch' || event.detail === 0) showEnemyContext(box, enemy);
+
           }
         });
         box.addEventListener('pointerenter', () => (selected || selectedFlask != null) && box.classList.add('hover-target'));
@@ -1394,6 +1306,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // pools. A card the preview cannot resolve is not a playable card.
       let pv = null;
       try { pv = previewCard(combat, inst.instanceId); } catch (e) { return false; }
+      if (pv.needsTarget && !combat.enemies.some(enemy => enemy.alive)) return false;
+      const friendly = friendlyTargetPlan(resolveCard(registries, inst), combat.player.id,
+        [{ ...combat.player, connected: true }]);
+      if (friendly.active && !friendly.legalIds.length) return false;
       return combat.player.energy >= (pv.costIsX ? 0 : pv.cost)
         && combat.player.mana >= pv.manaCost
         && combat.player.stamina >= (pv.staminaCost || 0);
@@ -1412,7 +1328,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
     $('.end-turn').replaceChildren('End Turn', keycap(etKey, { class: 'et-key' }));
-    $('.end-turn').classList.toggle('pulse', endTurnHasPlayable());
+    const hasPlayable = endTurnHasPlayable();
+    $('.end-turn').classList.toggle('pulse', hasPlayable);
+    $('.end-turn').dataset.confirmReady = String(!hasPlayable);
     // The innerHTML above just dropped the HOLD hint on the floor. `refresh()`
     // re-reads the action's state and re-dresses the button — and it is the
     // reason a beat can live on a control its own screen repaints every frame
