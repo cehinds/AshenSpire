@@ -3,6 +3,7 @@
 // WebPs into the standalone build.
 import { assetUrl } from './assetmap.js';
 import { DEFAULT_SPRITE_STYLE } from '../model/spriteStyle.js';
+import { hintImage } from './imageHints.js';
 
 const FRAME_ROOT = 'assets/animations/reaver/default-greatsword/right';
 const NORMAL_LUNGE_MS = 260;
@@ -88,7 +89,7 @@ export function playReaverAttack(actorEl, timing = reaverAttackTiming()) {
   const priorFigure = actorEl.querySelector(':scope > .class-sprite');
   if (!priorFigure) return null;
 
-  const image = document.createElement('img');
+  const image = hintImage(document.createElement('img'));
   image.className = 'reaver-attack-sequence';
   image.alt = '';
   image.setAttribute('aria-hidden', 'true');

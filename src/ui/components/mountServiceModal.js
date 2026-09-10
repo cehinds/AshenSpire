@@ -11,6 +11,7 @@
 // owns is the BODY: the item chooser, the mount list and (seating) the deck
 // cards the chosen mount takes.
 import { assetUrl } from '../assetmap.js';
+import { imageHintAttrs } from '../imageHints.js';
 import { esc, attachTooltip } from './tooltip.js';
 import { renderCard } from './card.js';
 import { armOptionDecision } from '../../framework/optionDecision.js';
@@ -148,7 +149,7 @@ export function mountMountServiceModal(host, initialModel, {
       card.innerHTML = `
         <span class="smith-weapon-count" aria-label="${esc(item.whereLabel)}">${item.equipped ? '⚔' : '▣'}</span>
         <strong class="smith-weapon-name">${esc(item.name)}</strong>
-        <span class="as-artwell smith-weapon-art"><img src="${esc(assetUrl(item.artAsset))}" alt=""></span>
+        <span class="as-artwell smith-weapon-art"><img${imageHintAttrs({ offscreen: true })} src="${esc(assetUrl(item.artAsset))}" alt=""></span>
         <span class="smith-item-type-row">${typeHtml}</span>
         <span class="smith-weapon-tags"><em>${esc(item.whereLabel)}</em><em>${item.mounts.length} mount${item.mounts.length === 1 ? '' : 's'}</em></span>`;
       const art = card.querySelector('.smith-weapon-art img');
