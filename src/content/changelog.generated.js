@@ -3,14 +3,44 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-951",
+    "id": "pr-936",
     "date": "2026-09-10",
     "group": "2026-09-10",
-    "summary": "A hit redraws a health bar, not the whole battlefield",
-    "detail": "Every beat of a combat animation used to tear down and rebuild both sides of the board — every fighter's artwork, its pose stage, its controls and its tooltips — and then re-fit the formation, five times over a five-beat enemy turn. Now a beat changes only what a beat can change: the health, poise and block readouts, the status tray, and the player's stance and Evade chips; the fighters, their artwork and their controls stay where they are, and a wounded or fallen pose still follows the numbers. An enemy's death still redraws the board in full, as does the end of every animation, so nothing a player sees at rest has changed. Measured against three enemies over one turn: eight combatant frames created where there were thirty-six, and sixty-nine sprite images where there were three hundred.",
-    "build": "0.6.0.128",
-    "pullRequest": 951,
-    "url": "https://github.com/cehinds/AshenSpire/pull/951"
+    "summary": "Compare equipment in the combat test",
+    "detail": "Choose armor, weapon grip, and a Blood Rune before a test route. The preview shows armor, weight, Dodge stamina, grip requirements, weapon impact, and rune-inclusive value. The chosen equipment supplies the real fight's defense and attack properties; incompatible grips and runes explain why they cannot be used. This remains an isolated equipment experiment with fixed resource caps, not production loot or inventory migration.",
+    "build": "0.6.0.127",
+    "pullRequest": 936,
+    "url": "https://github.com/cehinds/AshenSpire/pull/936"
+  },
+  {
+    "id": "pr-938",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combatants share clear overhead controls",
+    "detail": "Solo and co-op combatants gain Information and larger intent controls with delayed tooltips and aligned sprite framing.",
+    "build": "0.6.0.116",
+    "pullRequest": 938,
+    "url": "https://github.com/cehinds/AshenSpire/pull/938"
+  },
+  {
+    "id": "pr-945",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Information follows combatant selection",
+    "detail": "Combatant Information matches card styling and appears on selection while preserving sprite size, foot positions, and health bars.",
+    "build": "0.6.0.119",
+    "pullRequest": 945,
+    "url": "https://github.com/cehinds/AshenSpire/pull/945"
+  },
+  {
+    "id": "pr-940",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Ready actions stand out",
+    "detail": "End Turn turns green when no affordable playable cards remain. Actions and Potions have larger controls beside compact Draw and Discard buttons. Green confirmations fade in smoothly over 480ms, rise slightly and grow subtly, with reduced-motion support. Hold feedback remains visible without interrupting the color fade. Ready modal confirmations fill their footer while Back and Cancel remain available.",
+    "build": "0.6.0.125",
+    "pullRequest": 940,
+    "url": "https://github.com/cehinds/AshenSpire/pull/940"
   },
   {
     "id": "pr-943",
