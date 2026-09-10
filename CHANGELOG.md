@@ -32,7 +32,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-10
 
-- **Configurable help across the combat screen** ([#891](https://github.com/cehinds/AshenSpire/pull/891), `0.6.0.100`). Hover HUD labels, meters, Block, enemy intent, card costs, and inspector headings for explanations. Accessibility settings control hover visibility and opening/closing delays, with a half-second default. Shared data supplies the choices, timing, and help text; keyboard and explicit inspection remain available with hover off.
+- **Configurable help across the combat screen** ([#891](https://github.com/cehinds/AshenSpire/pull/891), `0.6.0.102`). Hover HUD labels, meters, Block, enemy intent, card costs, and inspector headings for explanations. Accessibility settings control hover visibility and opening/closing delays, with a half-second default. Shared data supplies the choices, timing, and help text; keyboard and explicit inspection remain available with hover off.
+
+- **A phone-shape check stops failing for want of a few seconds** ([#916](https://github.com/cehinds/AshenSpire/pull/916), `0.6.0.94`). Nothing a player sees changes. One of the automated checks that opens a browser and confirms the game reaches every control on a phone-sized screen was the first to start that browser, and so paid for waking it up, while being given the least time to do it. On a slow machine it ran out of time and reported that it could not run at all — which is not the same as finding a fault, but stops work merging just as firmly. It now gets the time the later checks already had. It cannot pass anything it would have failed: a check that starts and then finds a fault still reports one.
 
 - **Inspect selected rewards and item choices** ([#905](https://github.com/cehinds/AshenSpire/pull/905), `0.6.0.92`). Selected reward cards keep their Information button visible, including after Back restores the choice. Keyboard focus and scrollable card rows retain room for inspection. Smith extraction and installation items, mounts, and deck cards can be inspected without confirming the service, with usable selection panes on phones.
 
