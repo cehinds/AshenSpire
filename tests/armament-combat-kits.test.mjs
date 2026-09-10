@@ -6,6 +6,7 @@ import { startingDeckRefs, stampDeck, WeaponCardPackageModel, reconcileGrantedCa
 import { startingEquipmentPreview } from '../src/model/startingEquipmentPreview.js';
 import { removeDeckCard, canRemoveDeckCard } from '../src/model/cardRemoval.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -109,6 +110,23 @@ for (const cls of r.classes.all()) {
   cases++;
 }
 const shield = r.equipment.armaments.find(p => p.id === 'roundShield');
+const coopRun = fixture('kiteShield', 'buckler', 'rogue');
+const coop = createCoopCombat({ registries: r, rng: createRng(896), enemyIds: [contentBundle.enemies[0].id], players: [{ ...coopRun, id: 'kit-player', classId: coopRun.class, relicIds: coopRun.relics }] });
+const seat = coop.players.get('kit-player');
+for (const ref of coopRun.deck.filter(c => c.grantedBy)) {
+  const live = Object.values(seat.piles).flat().find(c => c.instanceId === ref.instanceId);
+  assert.equal(live.grantedBy, ref.grantedBy);
+  assert.equal(live.kitRole, ref.kitRole);
+  assert.deepEqual(resolveCard(r, live), resolveCard(r, ref));
+}
+const coopGuardian = Object.values(seat.piles).flat().find(c => c.cardId === 'shieldGuardian');
+for (const pile of Object.values(seat.piles)) { const at = pile.indexOf(coopGuardian); if (at >= 0) pile.splice(at, 1); }
+seat.piles.hand.push(coopGuardian); seat.entity.energy = 10;
+playCoopCard(coop, seat.id, coopGuardian.instanceId);
+const coopBulwark = seat.piles.hand.find(c => c.cardId === 'guardianBulwark'); assert.ok(coopBulwark);
+playCoopCard(coop, seat.id, coopBulwark.instanceId);
+assert.equal(seat.entity.stanceId, 'bulwark');
+assert.ok(seat.piles.exhaust.some(c => c.instanceId === coopBulwark.instanceId));
 // A full hand uses the engine's normal overflow-to-discard rule.
 const fullRun = fixture('kiteShield');
 const full = combatFor(fullRun);
