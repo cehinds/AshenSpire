@@ -16,6 +16,7 @@ import { createPaintedStage, paintedPresentation } from './paintedOutfits.js';
 import { assetUrl } from './assetmap.js';
 import { createEnemyPoseStage } from './enemyPoseStage.js';
 import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
+import { hintImage } from './imageHints.js';
 
 export { DEFAULT_SPRITE_STYLE, SPRITE_STYLES };
 
@@ -143,7 +144,7 @@ export function enemySprite(enemyDef, entity = {}) {
   facing.style.cssText = 'width:100%;height:100%;display:flex;align-items:flex-end;'
     + 'justify-content:center;'
     + (spriteMirror(artFaces) ? 'transform:scaleX(-1);' : '');
-  const img = document.createElement('img');
+  const img = hintImage(document.createElement('img'));
   const original = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
   img.src = posed ? assetUrl(`assets/enemy-poses/${enemyDef.id}_idle.webp`)
     : unity ? assetUrl(`assets/enemies-unity/painted_${enemyDef.id}.webp`)
@@ -524,7 +525,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
     fallbackToSvg();
     return el;
   }
-  const img = document.createElement('img');
+  const img = hintImage(document.createElement('img'));
   img.src = url;
   img.alt = classId;
   img.style.cssText = 'width:100%;height:100%;object-fit:contain;image-rendering:auto;';
@@ -582,7 +583,7 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
   el.className = 'equipped-figure';
   el.style.cssText = 'position:relative;width:100%;height:100%;';
   const layer = (src, z, mirror = false) => {
-    const img = document.createElement('img');
+    const img = hintImage(document.createElement('img'));
     img.src = src;
     img.alt = '';
     img.style.cssText =

@@ -2516,7 +2516,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   margin: 0; transform: none;
 }
 .pile-body .card :is(.cname, .ctext) { font-size: calc(15px / var(--ui-zoom, 1)); line-height: 1.35; }
-.pile-body .card .art { overflow: hidden; }
+.pile-body .card .art { overflow: hidden; contain: layout paint; }
 .pile-body .card .art img { width: 100%; height: 100%; object-fit: contain; }
 .pile-body .card .ctag { font-size: calc(10px / var(--ui-zoom, 1)); }
 .pile-body .card .cost { font-size: calc(14px / var(--ui-zoom, 1)); width: calc(24px / var(--ui-zoom, 1)); height: calc(24px / var(--ui-zoom, 1)); }
@@ -2673,7 +2673,26 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury-card-gallery .ctext { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.35; }
 .armoury-card-gallery .cost { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); }
 .armoury-card-gallery .ctype, .armoury-card-gallery .ctag { font-size: max(.9rem, calc(10px / var(--ui-zoom, 1))); }
-.armoury-card-gallery .art { min-height: calc(55px / var(--ui-zoom, 1)); overflow: hidden; }
+/* CONTAINMENT, AND WHERE IT STOPS.
+   `contain: layout paint` on the art wells below is free: they already declare
+   `overflow: hidden`, so paint containment clips nothing that was not already
+   clipped, and their only child is a statically positioned <img>, so layout
+   containment steals no containing block from anyone. What it buys is that a
+   sprite swapping frames inside one card cannot dirty the layout or the paint
+   of the gallery around it — which on a phone scrolling forty cards is the
+   difference between one invalidated box and forty.
+
+   It stops at the well, and the stopping point is the load-bearing part.
+   ui/cardEffectLayers.js mounts its planes absolutely, at percentage offsets
+   under `translate(-50%,-50%)`, DELIBERATELY extending past the face they
+   decorate — the overhang is the effect. Today they mount on `.card-flight`
+   (combat.js), a fixed-position wrapper on <body> that holds a card ghost, so
+   the wells below never host one and this containment is provably inert.
+   That is a fact about the current call site, not a property of the selector:
+   lifting `contain` to `.card` — or mounting a layer inside `.art` — would
+   clip every hit spark to a border, and would look harmless in review because
+   nothing else in this file mentions the layers. Hence this paragraph. */
+.armoury-card-gallery .art { min-height: calc(55px / var(--ui-zoom, 1)); overflow: hidden; contain: layout paint; }
 .armoury[data-responsive='phone'] .armoury-head [role='tablist'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; }
 .armoury[data-responsive='phone'] .armoury-head .modal-tab { min-width: 0; padding-inline: .5rem; }
 /* Approved 350 × 490 poker canvas. Every measurement scales together. */

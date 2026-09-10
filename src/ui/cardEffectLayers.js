@@ -2,13 +2,14 @@ import {CARD_EFFECT_LAYERS,LAYERED_CARD_EFFECTS,combatEffectOpacity} from '../co
 import {combatEffectFrames} from './assets.js';
 import {combatEffectOrientation} from './combatEffectDirection.js';
 import {reducedMotionRequested} from './motion.js';
+import { hintImage } from './imageHints.js';
 
 // The caller owns a stacking context with its card face at z=1. These are real
 // sibling planes: the rear image is occluded by the face, not painted over it.
 export function mountCardEffectLayers(host,kind,{opacity=combatEffectOpacity(kind),direction='right',frames=combatEffectFrames(kind)}={}){
  if(!host||!LAYERED_CARD_EFFECTS.includes(kind)||!frames.length)return null;
  const nodes=CARD_EFFECT_LAYERS.map(part=>{
-  const el=document.createElement('img');el.className='card-effect-layer';el.dataset.effect=kind;el.dataset.plane=part.plane;el.alt='';el.setAttribute('aria-hidden','true');
+  const el=hintImage(document.createElement('img'));el.className='card-effect-layer';el.dataset.effect=kind;el.dataset.plane=part.plane;el.alt='';el.setAttribute('aria-hidden','true');
   Object.assign(el.style,{position:'absolute',pointerEvents:'none',maxWidth:'none',width:part.scale*100+'%',height:'auto',aspectRatio:'1',objectFit:'contain',left:part.x*100+'%',top:part.y*100+'%',zIndex:part.plane==='behind'?'0':'2',maskImage:part.mask,webkitMaskImage:part.mask});
   host.append(el);return {el,part};
  });
