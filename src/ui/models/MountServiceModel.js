@@ -77,6 +77,7 @@ export function mountServiceModel(registries, plan, selection = {}, { multiUse =
       itemRef: candidate.itemRef,
       itemKind: candidate.itemKind,
       itemId: candidate.itemId,
+      classId: candidate.classId || null,
       name: candidate.itemName,
       selected,
       equipped: candidate.equipped,

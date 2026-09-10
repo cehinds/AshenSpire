@@ -2982,3 +2982,26 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 
 .smith-card-list.as-options { padding-top:64px; }
 .smith-card-list.as-options.grid > .smith-candidate-card { overflow:visible; }
+
+/* Selected content keeps Information after a host redraw, including radio choices. */
+.card-inspection-target:is(.reward-selected, [aria-checked='true']) > .card-info-button {
+  visibility: visible; pointer-events: auto;
+}
+.equipment-poker-card:is(.selected, [aria-selected='true'], [aria-checked='true']) > .card-info-button {
+  visibility: visible; opacity: 1; pointer-events: auto;
+}
+/* Leave space inside scrollports for the above-card control, including wrapped rows. */
+:is(.reward-row, .mount-card-list, .armoury-card-gallery, .pile-body .grid):has(.card-inspection-target) {
+  padding-top: 64px; row-gap: 64px;
+}
+.smith-card-list:has(.card-inspection-target) { padding-top: 64px; row-gap: 64px; }
+.smith-card-list > .card-inspection-target { position: relative; overflow: visible; }
+.mount-row.card-inspection-target { position: relative; padding-right: 54px; }
+.mount-row.card-inspection-target > .card-info-button {
+  top: 50%; right: 8px; left: auto; transform: translateY(-50%);
+}
+/* Focusing a selected card must retain its inspection gutter in scrollports. */
+.card-inspection-target { scroll-margin-top: 64px; }
+@media (max-width: 720px) {
+  .mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 42%) minmax(0, 1fr); }
+}
