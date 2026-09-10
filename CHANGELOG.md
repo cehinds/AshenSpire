@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-10
 
+- **The combat screen draws again** ([#TBD](https://github.com/cehinds/AshenSpire/pull/TBD), `0.6.0.130`). #939 landed reading a name #945 had renamed, so the board mounted with no enemies and no hand. Two words, corrected.
+
 - **Compare equipment in the combat test** ([#936](https://github.com/cehinds/AshenSpire/pull/936), `0.6.0.127`). Choose armor, weapon grip, and a Blood Rune before a test route. The preview shows armor, weight, Dodge stamina, grip requirements, weapon impact, and rune-inclusive value. The chosen equipment supplies the real fight's defense and attack properties; incompatible grips and runes explain why they cannot be used. This remains an isolated equipment experiment with fixed resource caps, not production loot or inventory migration.
 - **Combatants share clear overhead controls** ([#938](https://github.com/cehinds/AshenSpire/pull/938), `0.6.0.116`). Solo and co-op combatants gain Information and larger intent controls with delayed tooltips and aligned sprite framing.
 - **Information follows combatant selection** ([#945](https://github.com/cehinds/AshenSpire/pull/945), `0.6.0.119`). Combatant Information matches card styling and appears on selection while preserving sprite size, foot positions, and health bars.
