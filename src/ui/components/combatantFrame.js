@@ -7,6 +7,28 @@ function appendAll(parent, nodes) {
   for (const node of nodes || []) if (node) parent.appendChild(node);
 }
 
+// The trailing order has one home: the status tray first, then every other
+// chip, on a fresh frame and on a patched one alike.
+function appendTrailing(card, trailing) {
+  appendAll(card, trailing.filter(n => n?.classList.contains('statuses')));
+  appendAll(card, trailing.filter(n => !n?.classList.contains('statuses')));
+}
+
+/**
+ * replaceCombatantTrailing(frame, trailing) — swap what follows the meters on
+ * a live frame (the status tray, the player's stance/evade/dodge chips) and
+ * leave the sprite, nameplate and meters where they are. The per-beat patch
+ * in combat.js uses this so a hit re-draws a tray, not a combatant. Returns
+ * false when the frame has no card to patch.
+ */
+export function replaceCombatantTrailing(frame, trailing = []) {
+  const card = frame?.querySelector('.combatant-card');
+  if (!card) return false;
+  for (const child of [...card.children]) if (!child.matches('.sprite, .nm, .meters')) child.remove();
+  appendTrailing(card, trailing);
+  return true;
+}
+
 // Snapshot clients keep their existing input listeners while adopting the
 // same measured sprite / name / meter structure as local combat.
 export function adoptCombatantFrame(frame) {
@@ -67,8 +89,7 @@ export function combatantFrame({
     card.appendChild(name);
   }
   if (meters) card.appendChild(meters);
-  appendAll(card, trailing.filter(n => n?.classList.contains('statuses')));
-  appendAll(card, trailing.filter(n => !n?.classList.contains('statuses')));
+  appendTrailing(card, trailing);
   stack.appendChild(card);
   frame.appendChild(stack);
   return frame;

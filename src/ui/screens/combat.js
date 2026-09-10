@@ -65,7 +65,7 @@ import { armHold, holdMs, HOLD_DRAG_SETTLE_MS } from '../components/holdconfirm.
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
-import { combatantFrame } from '../components/combatantFrame.js';
+import { combatantFrame, replaceCombatantTrailing } from '../components/combatantFrame.js';
 import { statureFor } from '../components/stature.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
@@ -86,6 +86,9 @@ function pileButton(kind, label) {
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
 const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
+// The event types that change the board's SHAPE, not its numbers: a beat that
+// carries one is drawn by the full rebuild, never by the per-beat patch.
+const BOARD_REBUILD_EVENTS = new Set(['enemyDied']);
 
 export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {} }) {
   configureTooltipGlossary(registries);
@@ -1036,19 +1039,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     chip.addEventListener('keydown', inspect);
   }
 
-  function renderPlayer() {
-    const zone = $('.player-zone');
-    const posePresentation = stageFor(zone)?.presentation;
-    stageFor(zone)?.dispose?.();
-    zone.innerHTML = '';
-    const p = combat.player;
-    const figure = figureSpec(registries, run.loadout, run.class);
-    if (isReaverAttackEligible({
-      classId: run.class,
-      figure,
-      customization: run.customization,
-      spritesEnabled: spritesAreEnabled(),
-    })) preloadReaverAttackFrames();
+  // What follows the player's meters: the stance chip, the status tray, the
+  // Evade chip and the last Dodge receipt. One builder for the full render and
+  // for the per-beat patch, so the two cannot drift.
+  function playerTrailing(p) {
     const trailing = [];
     if (p.stanceId) {
       const st = registries.frameworkTerms.withStanceWords(registries.stances.get(p.stanceId));
@@ -1084,6 +1078,76 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       });
       trailing.push(outcome);
     }
+    return trailing;
+  }
+
+  // THE PER-BEAT PATCH. A beat moves numbers: HP, Block, a status stack, a
+  // poise meter. It does not move the board. Until now every beat tore down
+  // and rebuilt both zones — every sprite, pose stage, listener, tooltip and
+  // overhead control — five times over a five-beat enemy turn, and the
+  // battlefield stage re-fitted the formation each time. This patch keeps
+  // every frame and swaps only what a beat can change: the block badge, the
+  // meters, the status tray and the player's chips; each pose stage is told
+  // the entity's new state so wounded, defeated and aura poses still follow
+  // the beat. The overhead (intent, Information, target keycaps) reads the
+  // engine's final state and was constant across a timeline already.
+  //
+  // It answers false — and the caller falls back to the full rebuild — when
+  // the beat changes the board's SHAPE (an enemy died: its overhead goes, its
+  // frame reads dead) or when the frames on the field do not match the
+  // combat's entities one for one. The flush and the terminal callback still
+  // render the whole board, so a patch can never be the last word.
+  function patchCombatantStage(beat) {
+    if (beat.events.some((event) => BOARD_REBUILD_EVENTS.has(event.type))) return false;
+    const entities = [combat.player, ...combat.enemies];
+    const frames = new Map();
+    for (const frame of combatEl.querySelectorAll('.combatant[data-eid]')) frames.set(frame.dataset.eid, frame);
+    if (frames.size !== entities.length) return false;
+    const work = [];
+    for (const entity of entities) {
+      const frame = frames.get(entity.id);
+      const spriteHost = frame?.querySelector('.combatant-card > .sprite');
+      const meters = frame?.querySelector('.combatant-card > .meters');
+      if (!frame || !spriteHost || !meters) return false;
+      work.push({ entity, frame, spriteHost, meters });
+    }
+    hideTooltip();
+    for (const { entity, frame, spriteHost, meters } of work) {
+      spriteHost.querySelector(':scope > .block-badge')?.remove();
+      const badge = blockBadge(entity);
+      if (badge) spriteHost.appendChild(badge);
+      meters.replaceWith(meterBars(entity));
+      const shown = dv(entity);
+      if (entity.kind === 'player') {
+        replaceCombatantTrailing(frame, playerTrailing(entity));
+        const stage = stageFor(frame);
+        const rest = resolveCombatPose(shown, playerRest, readinessOrder);
+        const known = stage?.rest !== undefined ? stage.rest : stage?.pose;
+        if (stage?.setRestPose && known !== rest) stage.setRestPose(rest);
+      } else {
+        replaceCombatantTrailing(frame, [statusRow(entity)]);
+        frame.classList.toggle('dead', !shown.alive);
+        stageFor(frame)?.setState?.({ ...shown, maxHp: entity.maxHp });
+      }
+    }
+    battlefieldStage.refresh();
+    return true;
+  }
+
+  function renderPlayer() {
+    const zone = $('.player-zone');
+    const posePresentation = stageFor(zone)?.presentation;
+    stageFor(zone)?.dispose?.();
+    zone.innerHTML = '';
+    const p = combat.player;
+    const figure = figureSpec(registries, run.loadout, run.class);
+    if (isReaverAttackEligible({
+      classId: run.class,
+      figure,
+      customization: run.customization,
+      spritesEnabled: spritesAreEnabled(),
+    })) preloadReaverAttackFrames();
+    const trailing = playerTrailing(p);
     const box = combatantFrame({
       role: 'player',
       entityId: 'player',
@@ -1822,7 +1886,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           applyVisualEvents(beat.events);
           applyBeatToDisp(beat);
           renderTopbar();
-          renderCombatantStage();
+          if (!patchCombatantStage(beat)) renderCombatantStage();
           for (const event of beat.events) {
             const reaction = bloodRiteReaction(dv(combat.player), event, 'player');
             if (reaction) stageFor($('.combatant.player'))?.react?.(reaction);
