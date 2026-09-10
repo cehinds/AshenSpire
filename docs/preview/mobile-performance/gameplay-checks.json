@@ -1,6 +1,6 @@
 {
-  "sourceDigest": "f29392cf5c",
-  "build": "0.6.0.114",
+  "sourceDigest": "dbfa7f55ae",
+  "build": "0.6.0.116",
   "checks": [
     "desktop page identity",
     "desktop populated combat",
