@@ -151,6 +151,7 @@ export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets
  */
 export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/bundle.mjs',
+  'tools/assetmime.mjs',
   'tools/buildversion.mjs',
   'tools/dirorder.mjs',
 ]);
