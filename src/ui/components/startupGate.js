@@ -61,7 +61,7 @@ export function mountStartupGate(app, {
       role="${esc(accessibility.role)}" aria-label="${esc(accessibility.label)}">
       <div class="tower-scene" aria-hidden="true">
         <div class="tower-exterior"><div class="tower-city-unlit"></div><div class="tower-city-lit"></div></div>
-        <div class="tower-hall"></div>
+        <div class="tower-hall"><div class="tower-interior-city"></div><div class="tower-door-frame"></div></div>
       </div>
       <div class="startup-ash-field" data-component="startup-ash-field" aria-hidden="true">${particleHtml}</div>
       ${lockupHtml(properties, accessibility)}

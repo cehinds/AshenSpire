@@ -3076,7 +3076,20 @@ button.primary:disabled, button.primary[aria-disabled='true'],
 .startup-gate .tower-scene { z-index: 0; overflow: hidden; }
 .tower-city-unlit { background-image: url('../assets/bg/river-citadel-unlit.webp'); }
 .tower-city-lit { background-image: url('../assets/bg/river-citadel-lit.webp'); opacity: 0; }
-.tower-hall { background-image: url('../assets/bg/tower-entrance-hall.webp'); opacity: 0; }
+.tower-hall { opacity: 0; background: #080705; }
+.tower-interior-city, .tower-door-frame {
+  position: absolute; inset: 0; pointer-events: none;
+  background-position: center; background-size: cover;
+}
+.tower-interior-city {
+  background-image: url('../assets/bg/tower-city-background.webp');
+  filter: brightness(.28) saturate(.82);
+}
+.tower-door-frame {
+  background-image: linear-gradient(180deg, rgba(8,7,5,.28), rgba(8,7,5,.48)), url('../assets/bg/tower-entrance-hall.webp');
+  -webkit-mask: url('../assets/bg/tower-door-mask.svg') center / cover no-repeat;
+  mask: url('../assets/bg/tower-door-mask.svg') center / cover no-repeat;
+}
 .startup-gate::after {
   background: linear-gradient(180deg, rgba(8,7,5,.28), rgba(8,7,5,.48)),
     radial-gradient(ellipse at center, rgba(7,6,4,.25), rgba(7,6,4,.5));
@@ -3098,13 +3111,9 @@ button.primary:disabled, button.primary[aria-disabled='true'],
   0%, 45% { opacity: 0; }
   100% { opacity: 1; }
 }
-.title-screen {
-  background: linear-gradient(180deg, rgba(8,7,5,.28), rgba(8,7,5,.48)),
-    url('../assets/bg/tower-entrance-hall.webp') center / cover;
-}
-.title-screen::before {
-  background: radial-gradient(ellipse at center, rgba(7,6,4,.5), rgba(7,6,4,.25) 65%, rgba(7,6,4,.45));
-}
+.title-screen { background: #080705; }
+.title-screen::before { background: none; }
+.title-screen > .tower-hall { position: absolute; inset: 0; z-index: 0; opacity: 1; pointer-events: none; }
 .title-screen .as-titlemenu { text-shadow: 0 2px 12px #090705; }
 .tower-preview-replay {
   margin-top: .8rem; padding: .5rem 1rem; min-height: 3.2rem;
@@ -3114,9 +3123,10 @@ button.primary:disabled, button.primary[aria-disabled='true'],
 }
 .tower-preview-replay:hover, .tower-preview-replay:focus-visible { border-color: var(--gold); color: var(--parchment); }
 @media (orientation: portrait) {
-  .tower-hall { background-image: url('../assets/bg/tower-entrance-hall-phone.webp'); }
-  .title-screen {
+  .tower-door-frame {
     background-image: linear-gradient(180deg, rgba(8,7,5,.28), rgba(8,7,5,.48)), url('../assets/bg/tower-entrance-hall-phone.webp');
+    -webkit-mask-image: url('../assets/bg/tower-door-mask-phone.svg');
+    mask-image: url('../assets/bg/tower-door-mask-phone.svg');
   }
 }
 .startup-gate.tower-calm .tower-exterior,

@@ -154,3 +154,8 @@ The River Citadel unlit/lit pair and landscape/portrait entrance hall in
 the River Citadel concept and its derived hall. Exported to WebP at quality
 90. Prompt specifications and preview scope are in
 `art/tower-entry-preview/README.md`. No third-party asset license is claimed.
+
+`assets/bg/tower-city-background.webp` is a generated outdoor-only background
+plate derived from the hall reference. The foreground retains the existing
+hall paintings with project-authored SVG display masks. City brightness is
+controlled independently from the doorway and sconces.

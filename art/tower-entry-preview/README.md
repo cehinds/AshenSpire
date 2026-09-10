@@ -10,6 +10,12 @@ This preview uses opacity fades only, without camera movement or a doorway wipe.
 The portrait hall is separately composed to retain
 the arch and pillars on phones. No save schema or game mechanics change.
 
+The hall is now two independently rendered layers: an unobstructed city plate
+at 28% brightness behind a foreground doorway. SVG display masks remove the
+outdoor opening from the original doorway paintings, preserving the original
+stonework, doors, lights and floor. The masks have matching landscape and
+portrait dimensions and use the same cover/crop behavior as their artwork.
+
 ## Artwork and prompts
 
 Created with the built-in image-generation tool and converted using Sharp to
@@ -34,6 +40,14 @@ WebP quality 90. Runtime assets are in `assets/bg/`.
   showing the whole arch, pillars and sconces rather than merely cropping.
   Center the opening at approximately 55% of the width. Same scene, materials
   and palette, quiet center for lettering, no added panel.
+- **tower-city-background.webp:** built-in image-generation edit of the
+  landscape hall. Remove foreground door, pillars, sconces, banners and floor;
+  extend only the outdoor river city, bridges, mountains and sky across the
+  canvas. Preserve the central outdoor perspective and muted painted style.
+  No central giant tower, people or UI. Export to WebP at quality 90.
+- **tower-door-mask.svg / tower-door-mask-phone.svg:** native display masks
+  defining the transparent arch opening over the original hall paintings.
+  Attempted raster cutouts returned painted checkerboards and are not used.
 
 ## Validation
 
