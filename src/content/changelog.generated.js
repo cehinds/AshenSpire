@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-915",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Screens build with less stalling on a phone",
+    "detail": "Every image in the game now tells the browser it may decode off the main thread. Sixteen places drew pictures without saying so, which meant each one was unpacked in the same instant its screen was being assembled — free on a desktop, and the reason a phone hitched when an armoury or a hand of cards appeared, because a build carries its art inside itself and unpacking is all the work that is left. Two lists that can run longer than a screen — the inventory grid and the smith's stock — also hold their pictures back until they are scrolled near. That second habit is deliberately not applied to combat effects or to map landmarks under fog, where a picture that waits to be looked at may never arrive at all. Three artwork frames that already hid anything spilling past their edges now say so, so a sprite changing frames inside one card no longer makes the gallery around it redraw. Everything here reads from one setting rather than sixteen scattered ones, and can be turned off in a single edit.",
+    "build": "0.6.0.89",
+    "pullRequest": 915,
+    "url": "https://github.com/cehinds/AshenSpire/pull/915"
+  },
+  {
     "id": "pr-914",
     "date": "2026-09-10",
     "group": "2026-09-10",
