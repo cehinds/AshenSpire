@@ -23,7 +23,7 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
     frame.addEventListener('load', () => { frame.dataset.ready = 'true'; draw(); });
     frame.addEventListener('error', () => { delete frame.dataset.ready; draw(); });
     frames.set(pose, frame); facing.appendChild(frame);
-    frame.src = assetUrl(pose === 'defeated' ? DEFEATED_ART[id]?.file || '' : `assets/enemy-states/${id}_${pose}.png`);
+    frame.src = assetUrl(pose === 'defeated' ? DEFEATED_ART[id]?.file || '' : `assets/enemy-states/${id}_${pose}.webp`);
   }
   idle.addEventListener('error', draw);
   function setState(next) {
