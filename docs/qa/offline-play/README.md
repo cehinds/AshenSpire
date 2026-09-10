@@ -1,5 +1,25 @@
 # Offline download and save-transfer verification
 
+## Branch selection, progress and save location: 0.6.0.119
+
+- Added data-configured Release, Test, Dev and Main feed choices, with branch
+  and version in downloaded filenames. All four live metadata feeds responded.
+- Download invokes the native save picker during the initiating click when
+  available, streams bytes to the selected file, and closes only after validation.
+  Unsupported browsers receive an automatic Blob download with a retry button.
+- Progress shows percentage and received/total MB when size is known, otherwise
+  an indeterminate bar and received MB. Build selection is locked during transfer.
+- All 10 targeted Node tests and 14 browser controls checks passed: four branches,
+  partial progress, activation timing, cancellation, disk failure/abort, exact
+  fallback Blob bytes, automatic browser download request, and no exceptions.
+- Browser controls checks use a throttled 1 MB fixture and controlled writable
+  handle. They do not exercise the native Windows dialog or prove a completed
+  on-disk download. The normal browser save still canceled with C: full.
+- Build-version (8), shipped-file (6), and whitespace checks passed. Full Node
+  suite results below are from 0.6.0.116, not this build.
+- [Desktop progress](download-progress-desktop.png)
+- [Phone-width progress](download-progress-phone.png)
+
 ## Download button regression: 0.6.0.117
 
 - Fixed legacy release metadata without a byte count disabling Download.

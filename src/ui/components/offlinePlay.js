@@ -1,6 +1,6 @@
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { BUILD_VERSION } from '../../buildversion.js';
-import { releasedDownload } from '../../model/offlineDownload.js';
+import { releasedDownload, receiveDownload } from '../../model/offlineDownload.js';
 import { button, el, openModal } from '../kit/index.js';
 import { openConfirmationModal } from './confirmationModal.js';
 
@@ -13,7 +13,12 @@ function saveFile(blob, name) {
 
 export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onImported = () => location.reload() }) {
   const status = el('p', { role: 'status', 'aria-live': 'polite', class: 'set-note' });
-  const release = el('p', { class: 'set-note', text: 'Checking for the released game…' });
+  const release = el('p', { class: 'set-note', text: 'Checking for the selected build…' });
+  const branch = el('select', { id: 'offline-branch' }, offlinePlay.branches.map(item => el('option', { value: item.id, text: item.label })));
+  branch.value = offlinePlay.releaseBranch;
+  const progress = el('progress', { id: 'offline-progress', max: 100, 'aria-label': 'Game download progress' });
+  const progressText = el('p', { class: 'set-note', text: '' });
+  const progressGroup = el('div', { hidden: true }, [progress, progressText]);
   const download = button({ label: offlinePlay.downloadLabel, id: 'offline-download' });
   download.disabled = true;
   const check = button({ label: 'Check for updates', id: 'offline-check' });
@@ -27,14 +32,18 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
   const controller = new AbortController();
   const request = async url => {
     const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(offlinePlay.requestTimeoutMs)]) });
-    if (!response.ok) throw new Error('The released download is unavailable. Try again when online.');
+    if (!response.ok) throw new Error('This branch download is unavailable. Try another branch or check again when online.');
     return response;
   };
   const door = openModal({ title: offlinePlay.title, size: 'md', className: 'offline-play-modal',
     onClose: () => { controller.abort(); prepared = null; }, body: host => {
       host.append(el('p', { text: `Your game: ${BUILD_VERSION}` }),
-        el('ul', {}, offlinePlay.instructions.map(text => el('li', { text }))), release,
-        el('div', { class: 'offline-actions' }, [check, download]),
+        el('ul', {}, offlinePlay.instructions.map(text => el('li', { text }))),
+        el('label', { for: 'offline-branch', text: 'Build branch' }), branch, release,
+        el('div', { class: 'offline-actions' }, [check, download]), progressGroup,
+        el('p', { class: 'set-note', text: typeof window.showSaveFilePicker === 'function'
+          ? 'Download opens a save-location dialog, then saves the game there.'
+          : 'Your browser controls the save location. Enable “Ask where to save” in its download settings to choose a folder.' }),
         el('h3', { text: 'Move your saves' }),
         el('p', { class: 'set-note', text: `A backup includes your profile and all ${transfer.slotCount} save slots. Import replaces them in this browser. Existing archives stay here. Import from the title screen.` }),
         el('div', { class: 'offline-actions' }, [exportSave, importSave, recovery, reload]), file, status);
@@ -43,20 +52,23 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
   recovery.hidden = !transfer.previous();
   const showRelease = data => {
     const size = data.bytes === null ? 'Size available after preparation' : `${(data.bytes / 1024 / 1024).toFixed(1)} MB`;
-    release.textContent = `Released game: ${data.version} · ${size}. ${data.version === BUILD_VERSION ? 'You have this version.' : 'Export your saves before switching versions.'}`;
+    release.textContent = `${offlinePlay.branches.find(item => item.id === branch.value).label} build: ${data.version} · ${size}. ${data.version === BUILD_VERSION ? 'You have this version.' : 'Export your saves before switching versions.'}`;
   };
   const refreshRelease = async () => {
-    if (busy) return; busy = true; check.disabled = true; download.disabled = true;
+    if (busy) return; busy = true; check.disabled = true; download.disabled = true; branch.disabled = true;
+    manifest = null; progressGroup.hidden = true;
     prepared = null; download.textContent = offlinePlay.downloadLabel;
     try {
-      const data = releasedDownload(await (await request(offlinePlay.manifestUrl)).json());
+      const selected = offlinePlay.branches.find(item => item.id === branch.value);
+      const data = releasedDownload(await (await request(selected.manifestUrl)).json(), selected.manifestUrl, selected.id);
       manifest = data;
       showRelease(data);
       download.disabled = false; status.textContent = '';
     } catch (error) { release.textContent = 'Could not check the release. Connect to the internet and try Check for updates.'; status.textContent = error.message; }
-    finally { busy = false; check.disabled = false; }
+    finally { busy = false; check.disabled = false; branch.disabled = false; }
   };
   check.addEventListener('click', refreshRelease);
+  branch.addEventListener('change', refreshRelease);
   download.addEventListener('click', async () => {
     if (busy || !manifest) return;
     if (prepared) {
@@ -66,19 +78,41 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
       status.textContent = 'Save requested. Open the HTML file from your Downloads folder.';
       return;
     }
-    busy = true; download.disabled = true;
-    status.textContent = 'Downloading the game… keep this panel open.';
+    busy = true; download.disabled = true; check.disabled = true; branch.disabled = true;
+    progressGroup.hidden = true;
+    let writer = null;
     try {
-      // Pin the numbered build so a release changing mid-download cannot mix versions.
-      const bytes = await (await request(manifest.url)).arrayBuffer();
-      if (!bytes.byteLength || (manifest.bytes !== null && bytes.byteLength !== manifest.bytes)) throw new Error('Download was incomplete. Please try again.');
-      if (controller.signal.aborted) return;
-      prepared = new Blob([bytes], { type: 'text/html' });
-      manifest.bytes = bytes.byteLength; showRelease(manifest);
-      download.textContent = offlinePlay.saveDownloadLabel;
-      status.textContent = 'Game ready. Choose Save game file to keep it on your computer.';
-    } catch (error) { status.textContent = error.message; }
-    finally { busy = false; download.disabled = false; }
+      // Ask during the click's activation window, before waiting for any network I/O.
+      if (typeof window.showSaveFilePicker === 'function') {
+        status.textContent = 'Choose where to save the game…';
+        const handle = await window.showSaveFilePicker({ suggestedName: manifest.filename,
+          types: [{ description: 'HTML game', accept: { 'text/html': ['.html'] } }] });
+        controller.signal.throwIfAborted();
+        writer = await handle.createWritable();
+      }
+      controller.signal.throwIfAborted();
+      status.textContent = 'Downloading the game… keep this panel open.';
+      progressGroup.hidden = false; progress.removeAttribute('value'); progressText.textContent = 'Connecting…';
+      const result = await receiveDownload(await request(manifest.url), { bytes: manifest.bytes, writer,
+        onProgress: (received, total) => {
+          controller.signal.throwIfAborted();
+          const amount = (received / 1024 / 1024).toFixed(1);
+          if (total !== null) {
+            progress.value = Math.min(100, received / total * 100);
+            progressText.textContent = `${Math.floor(progress.value)}% · ${amount} / ${(total / 1024 / 1024).toFixed(1)} MB`;
+          } else { progress.removeAttribute('value'); progressText.textContent = `${amount} MB downloaded · total size unknown`; }
+        } });
+      controller.signal.throwIfAborted();
+      if (writer) { status.textContent = 'Finishing file save…'; await writer.close(); writer = null; }
+      else { prepared = result.blob; saveFile(prepared, manifest.filename); download.textContent = offlinePlay.saveDownloadLabel; }
+      manifest.bytes = result.bytes; showRelease(manifest); progress.value = 100;
+      progressText.textContent = `100% · ${(result.bytes / 1024 / 1024).toFixed(1)} MB downloaded`;
+      status.textContent = prepared ? 'Download sent to your browser. If it did not save, choose Save game file to retry.' : 'Game saved to your chosen location. Open the HTML file to play.';
+    } catch (error) {
+      if (writer) await writer.abort().catch(() => {});
+      status.textContent = error.name === 'AbortError' ? 'Download canceled. No completed game file was saved.' : error.message;
+    }
+    finally { busy = false; download.disabled = false; check.disabled = false; branch.disabled = false; }
   });
   const exportText = (text, name) => saveFile(new Blob([text], { type: 'application/json' }), name);
   exportSave.addEventListener('click', () => { try { exportText(transfer.createBackup(), 'AshenSpire-saves.json'); status.textContent = 'Save backup downloaded.'; } catch (error) { status.textContent = error.message; } });

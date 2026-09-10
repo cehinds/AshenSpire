@@ -2,7 +2,13 @@ export const offlinePlay = {
   title: 'Download & saves',
   manifestUrl: 'https://cehinds.github.io/AshenSpire/main/latest/build.json',
   releaseBranch: 'main',
-  downloadLabel: 'Download released game',
+  branches: [
+    { id: 'release', label: 'Release', manifestUrl: 'https://cehinds.github.io/AshenSpire/release/latest/build.json' },
+    { id: 'test', label: 'Test', manifestUrl: 'https://cehinds.github.io/AshenSpire/test/latest/build.json' },
+    { id: 'dev', label: 'Dev', manifestUrl: 'https://cehinds.github.io/AshenSpire/dev/latest/build.json' },
+    { id: 'main', label: 'Main', manifestUrl: 'https://cehinds.github.io/AshenSpire/main/latest/build.json' },
+  ],
+  downloadLabel: 'Download game',
   saveDownloadLabel: 'Save game file',
   instructions: [
     'Download the HTML file on your computer, then double-click it to play in your browser.',

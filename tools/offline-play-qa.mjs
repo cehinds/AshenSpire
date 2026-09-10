@@ -13,6 +13,7 @@ import { createSaveTransfer } from '../src/engine/saveTransfer.js';
 const out = resolve('artifacts/offline-play'); mkdirSync(out, { recursive: true });
 const offlineOnly = process.argv.includes('--offline-only');
 const liveReleaseCheck = process.argv.includes('--live-release-check');
+const downloadControlsCheck = process.argv.includes('--download-controls-check');
 const downloads = resolve(out, `downloads-${Date.now()}`); mkdirSync(downloads);
 const html = readFileSync('AshenSpire.html'), build = JSON.parse(readFileSync('buildordinal.json'));
 const metadata = { branch: 'main', version: build.release, ordinal: build.ordinal, bytes: html.length };
@@ -27,12 +28,19 @@ saves.saveRun(fixtureRun, fixtureRng, 2);
 const original = createSaveTransfer(storage, registries).createBackup();
 const server = createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  if (req.url !== '/AshenSpire.html' && !req.url.startsWith('/main/')) { res.writeHead(404); res.end(); return; }
-  if (req.url.endsWith('build.json')) { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(metadata)); }
+  const branch = req.url.split('/')[1];
+  if (req.url !== '/AshenSpire.html' && !['main', 'release', 'test', 'dev'].includes(branch)) { res.writeHead(404); res.end(); return; }
+  if (req.url.endsWith('build.json')) { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ ...metadata, branch, ...(downloadControlsCheck ? { bytes: 1024 * 1024 } : {}) })); }
+  else if (downloadControlsCheck && req.url !== '/AshenSpire.html') {
+    res.setHeader('Content-Type', 'text/html'); res.setHeader('Content-Length', 1024 * 1024);
+    let count = 0;
+    const timer = setInterval(() => { res.write(Buffer.alloc(65536, 65)); if (++count === 16) { clearInterval(timer); res.end(); } }, 100);
+    res.on('close', () => clearInterval(timer));
+  }
   else { res.setHeader('Content-Type', 'text/html');
     // Only the hosted QA copy points its authored release feed at this fixture.
     // The downloaded numbered build is the unmodified shipping artifact.
-    res.end(req.url.startsWith('/main/') || liveReleaseCheck ? html : html.toString().replace('https://cehinds.github.io/AshenSpire/main/latest/build.json', base + '/main/latest/build.json')); }
+    res.end(req.url !== '/AshenSpire.html' || liveReleaseCheck ? html : html.toString().replaceAll('https://cehinds.github.io/AshenSpire/', base + '/')); }
 });
 await new Promise(done => server.listen(0, '127.0.0.1', done));
 const base = `http://127.0.0.1:${server.address().port}`;
@@ -77,7 +85,46 @@ try {
   const boot = async url => { await send('Page.navigate', { url }, sessionId); await until('!!document.querySelector(".startup-gate")'); await click('.startup-gate'); await until('!!document.querySelector("#download-game")'); };
   const waitDownload = async count => { for (let i = 0; i < 600 && completed.length < count; i++) { await wait(100); if(i%10===0 && await evaluate('document.querySelector(".offline-play-modal [role=status]")?.textContent.includes("Failed to fetch")')) break; } if(completed.length < count) console.error(await evaluate('document.body.innerText')); check(completed.length >= count, 'browser completes requested download'); return resolve(downloads, completed[count - 1]); };
   await send('Emulation.setDeviceMetricsOverride', { width: 1365, height: 1000, deviceScaleFactor: 1, mobile: false }, sessionId);
-  if (liveReleaseCheck) {
+  if (downloadControlsCheck) {
+    await boot(base + '/AshenSpire.html');
+    // A controlled file handle checks picker timing, writes, cancel and failures.
+    // This is not a claim that an OS dialog was exercised by headless automation.
+    await evaluate(`window.pickerCalls=[]; window.savedBytes=0; window.fileClosed=false; window.fileAborted=false;
+      window.showSaveFilePicker=async options=>{pickerCalls.push({name:options.suggestedName,active:navigator.userActivation.isActive});
+        if(window.cancelPicker)throw new DOMException('Canceled','AbortError');
+        return{createWritable:async()=>({write:async bytes=>{if(window.failWrite)throw new Error('Test disk full');savedBytes+=bytes.length},close:async()=>{fileClosed=true},abort:async()=>{fileAborted=true}})}}`);
+    await click('#download-game'); await until('!document.querySelector("#offline-download").disabled');
+    check(await evaluate('Array.from(document.querySelector("#offline-branch").options,o=>o.value).join(",")==="release,test,dev,main"'), 'all four branch choices are present');
+    await evaluate('window.cancelPicker=true'); await click('#offline-download');
+    check(await evaluate('document.querySelector(".offline-play-modal [role=status]").textContent.includes("canceled") && savedBytes===0'), 'canceling save location starts no file write');
+    await evaluate('window.cancelPicker=false');
+    for (const branch of ['release','test','dev','main']) {
+      await evaluate(`savedBytes=0;fileClosed=false;document.querySelector('#offline-branch').value=${JSON.stringify(branch)};document.querySelector('#offline-branch').dispatchEvent(new Event('change'))`);
+      await until('!document.querySelector("#offline-download").disabled');
+      await click('#offline-download');
+      await until('document.querySelector("#offline-progress").value > 0 && document.querySelector("#offline-progress").value < 100');
+      check(await evaluate('document.querySelector("#offline-branch").disabled && document.querySelector("#offline-check").disabled'), `${branch} shows partial progress and locks build selection during transfer`);
+      if (branch === 'release') await capture('download-progress-desktop');
+      await until('window.fileClosed');
+      check(await evaluate(`savedBytes===1048576 && pickerCalls.at(-1).active && pickerCalls.at(-1).name.includes('-${branch}-') && document.querySelector('#offline-progress').value===100`), `${branch} opens picker from click and writes every byte before success`);
+    }
+    await evaluate('window.failWrite=true'); await click('#offline-download');
+    await until('window.fileAborted');
+    check(await evaluate('document.querySelector(".offline-play-modal [role=status]").textContent.includes("Test disk full") && !document.querySelector("#offline-download").disabled'), 'disk error aborts writer and permits retry');
+    await evaluate('window.failWrite=false');
+    await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true }, sessionId);
+    await click('#offline-download');
+    await until('document.querySelector("#offline-progress").value > 0 && document.querySelector("#offline-progress").value < 100');
+    await capture('download-progress-phone');
+    await until('!document.querySelector("#offline-download").disabled');
+    await evaluate('window.showSaveFilePicker=undefined;const originalBlobURL=URL.createObjectURL;URL.createObjectURL=blob=>{window.fallbackBlob=blob;return originalBlobURL(blob)}');
+    await click('#offline-download');
+    await until('!!window.fallbackBlob');
+    check(await evaluate('fallbackBlob.arrayBuffer().then(buffer=>buffer.byteLength===1048576 && new Uint8Array(buffer).every(byte=>byte===65))'), 'unsupported-picker fallback contains exact fixture bytes');
+    check(downloadNames.size > 0, 'unsupported-picker fallback automatically requests a browser download');
+    check(errors.length === 0, `no browser exceptions: ${errors.join('; ')}`);
+  } else if (liveReleaseCheck) {
+    await send('Page.addScriptToEvaluateOnNewDocument', { source: 'window.showSaveFilePicker=undefined' }, sessionId);
     await boot(base + '/AshenSpire.html'); await click('#download-game');
     await until('!document.querySelector("#offline-download").disabled');
     check(true, 'live release enables Download automatically without Check for updates');
@@ -90,6 +137,7 @@ try {
     await wait(1200); await capture('live-release-phone');
     check(errors.length === 0, `no browser exceptions: ${errors.join('; ')}`);
   } else {
+  await send('Page.addScriptToEvaluateOnNewDocument', { source: 'window.showSaveFilePicker=undefined' }, sessionId);
   let backupPath, gamePath;
   if (offlineOnly) {
     backupPath = resolve(downloads, 'fixture-saves.json'); writeFileSync(backupPath, original);
@@ -104,7 +152,7 @@ try {
   await capture('desktop-download');
   await click('#offline-download');
   await until('document.querySelector("#offline-download").textContent === "Save game file"');
-  await click('#offline-download'); gamePath = await waitDownload(2);
+  gamePath = await waitDownload(2);
   check(readFileSync(gamePath).equals(html), 'downloaded HTML is byte-identical to the packaged build');
   await click('.offline-play-modal .modal-close'); await click('#settings');
   await capture('desktop-settings');
@@ -158,4 +206,4 @@ try {
   await Promise.race([send('Browser.close').catch(() => {}), wait(1000)]); ws.close(); await browser.close();
   server.closeAllConnections(); await new Promise(done => server.close(done));
 }
-console.log(`${checks} ${liveReleaseCheck ? 'live release preparation' : offlineOnly ? 'offline-only' : 'download and offline'} browser checks passed. ${liveReleaseCheck ? 'Real published metadata and HTML fetched; final file save not tested.' : offlineOnly ? 'Download skipped; local generated HTML and a save fixture were used.' : 'Release metadata is a local fixture; downloaded bytes are the real generated build.'}`);
+console.log(`${checks} ${downloadControlsCheck ? 'download controls' : liveReleaseCheck ? 'live release preparation' : offlineOnly ? 'offline-only' : 'download and offline'} browser checks passed. ${downloadControlsCheck ? 'Throttled 1 MB fixture and controlled picker handle; native OS dialog not tested.' : liveReleaseCheck ? 'Real published metadata and HTML fetched; final file save not tested.' : offlineOnly ? 'Download skipped; local generated HTML and a save fixture were used.' : 'Release metadata is a local fixture; downloaded bytes are the real generated build.'}`);

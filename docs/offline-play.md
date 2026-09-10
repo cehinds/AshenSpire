@@ -1,8 +1,13 @@
 # Download and play offline
 
 - Open **Download & saves** from Title or Settings while online.
-- The release is checked automatically. Choose **Download released game**, then
-  **Save game file**. On a computer,
+- Choose **Release**, **Test**, **Dev**, or **Main** in **Build branch**. Its latest
+  published build is checked automatically. Choose **Download game**.
+- In supported browsers, the save-location dialog opens immediately. Choose a
+  file location; the progress bar tracks the transfer and the game saves there.
+  Other browsers start a normal download automatically and control the location
+  through their download settings. **Save game file** retries that browser save.
+  On a computer,
   double-click the downloaded HTML file to open it in your browser.
 - Use **Export saves** in your online game and **Import saves** in the downloaded
   game to move your profile and all three slots. Import from Title; it previews
@@ -18,11 +23,18 @@
 
 `src/content/offlinePlay.js` owns configuration. `tools/pages-site.mjs` writes
 the actual artifact byte count into each build's existing JSON metadata. The UI
-reads the main/latest feed and pins its numbered build URL, validates the byte
+reads the selected branch's latest feed and pins its numbered build URL, validates the byte
 count when supplied, and downloads that HTML. Older published metadata without
 a byte count is supported; the size is measured after preparation. Opening the
 panel checks the release automatically; **Check for updates** refreshes it.
 A development preview does not publish a release.
+
+Branch labels and feed URLs are configured in `src/content/offlinePlay.js`.
+Files include the branch and version in their names. The native save picker runs
+within the Download click's user activation, before fetching. Its writable stream
+is closed only after byte validation and aborted on failure. Without the picker,
+the game uses a Blob download. Progress uses metadata or response length when
+available; unknown totals show an indeterminate bar and actual received MB.
 
 `src/engine/saveTransfer.js` transfers only the profile and three run slots.
 It validates in memory with the normal save manager, rejects unsupported or
@@ -47,3 +59,8 @@ the blocked-storage guard without claiming to test a downloaded release.
 `--live-release-check` verifies automatic release detection and preparation
 against the published feed and HTML. It captures desktop and phone-width views,
 but does not test the final file save.
+
+`--download-controls-check` tests all branch selections, intermediate progress,
+picker activation timing, cancellation, failed writes, and automatic fallback
+download. It uses a throttled 1 MB fixture and controlled file handle, not the
+native OS dialog. It captures desktop and phone-width progress screenshots.
