@@ -313,7 +313,7 @@ export function mountWorldAtlas(
 function localMapHtml(local) {
   const map = ATLAS.maps[local.mapId],
     points = ATLAS.localPoints[local.mapId] || [];
-  return `<div class="atlas-local-tools"><div class="atlas-local-zoom-tools">${button('−','data-local-zoom="out" aria-label="Zoom local map out"')}<output data-local-zoom-value aria-label="Map zoom">150%</output>${button('+','data-local-zoom="in" aria-label="Zoom local map in"')}${button('Fit','data-local-zoom="fit"')}</div><div class="atlas-local-pan-tools">${[['left','←'],['up','↑'],['down','↓'],['right','→']].map(([dir,label])=>button(label,`data-local-pan="${dir}" aria-label="Pan map ${dir}"`)).join('')}</div></div>
+  return `<div class="atlas-local-tools" role="group" aria-label="Map controls"><div class="atlas-local-pan-tools" role="group" aria-label="Pan map"><output data-local-zoom-value aria-label="Map zoom">150%</output>${[['up','↑'],['left','←'],['right','→'],['down','↓']].map(([dir,label])=>button(label,`data-local-pan="${dir}" aria-label="Pan map ${dir}"`)).join('')}</div><div class="atlas-local-zoom-tools">${button('−','data-local-zoom="out" aria-label="Zoom local map out"')}${button('Fit','data-local-zoom="fit"')}${button('+','data-local-zoom="in" aria-label="Zoom local map in"')}</div></div>
   <p class="atlas-local-help">Drag to explore · scroll or pinch to zoom · focus map for + / − and arrow keys</p>
   <div class="atlas-local-port" tabindex="0" role="group" aria-label="${esc(map.displayName)} interactive map"><div class="atlas-local-map"><svg viewBox="0 0 1000 1000" aria-hidden="true"><g class="map-detail-surface"><image href="${esc(uri(map.artAssetId))}" width="1000" height="1000" preserveAspectRatio="none"/></g></svg>${points
     .map((p) => {
