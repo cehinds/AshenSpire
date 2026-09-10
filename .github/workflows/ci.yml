@@ -220,6 +220,9 @@ jobs:
       - name: Engine suite
         run: node tools/verdict.mjs -- node tests/run-node.mjs
 
+      - name: World Journey normalized data and seeded routes
+        run: node tests/world-atlas.test.mjs
+
       - name: Fullscreen capability, enter, exit, and refusal states
         run: node tools/verdict.mjs -- node tools/fullscreen-control.mjs
 
@@ -251,6 +254,11 @@ jobs:
         # exact mutation — the one that put the 40c5b21 key order back with every
         # other leg of this gate green.
         run: node tools/verdict.mjs -- node tools/dirorder.mjs --mutate
+
+      - name: Current builds use the 0.6.x.x release series
+        run: node tools/release-series.mjs
+      - name: Release series gate rejects older and malformed versions
+        run: node tools/release-series.mjs --selftest
 
       - name: One version, derived — SOP 5's detector, which this file said was missing
         # Requirement 3's named gap, closed. The header above used to say "SOP 5's

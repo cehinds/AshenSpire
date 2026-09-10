@@ -62,7 +62,7 @@ import { keycap, pill } from '../kit/index.js';
 // asserting a property nobody writes.
 export const FAN_LIFT_PROP = '--fan-lift';
 
-export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false }) {
+export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false, inspectHold = true }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
   // value here would silently turn the gesture off.
@@ -78,6 +78,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   let handEls = []; // the rendered cards, in hand order (filled by render)
   let fanMeasurement = null;
   let handFan = []; // each card's shipped fan transform, same index
+  let releaseCardInputs = [];
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
 
   function applyHandLayout() {
@@ -85,16 +86,24 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const cards = handEls.filter(el => el.parentNode === handEl);
       if (!cards.length || !handEl.isConnected) return;
       const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+      // Reference-approved physical size range. Grow the fan by overlap, never
+      // by shrinking a card's type below its readable minimum.
+      const bandHeight = handEl.getBoundingClientRect().height;
+      const cardWidth = Math.min(162, Math.max(72, (bandHeight - 28) * 5 / 7));
+      handEl.style.setProperty('--hand-card-zoom', String(cardWidth / (178 * zoom)));
       const cs = getComputedStyle(handEl);
       const available = handEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      const width = cards[0].offsetWidth;
+      const cardZoom = parseFloat(getComputedStyle(cards[0]).zoom) || 1;
+      const width = cards[0].offsetWidth * cardZoom;
       const measurement = [available, width, zoom, cards.length].join(':');
       if (measurement === fanMeasurement) return;
       fanMeasurement = measurement;
-      const shown = Math.min(cards.length, 7);
-      const step = shown > 1 ? Math.max(28 / zoom, Math.min(width + 12, (available - width) / (shown - 1))) : width;
+      const shown = cards.length;
+      const step = shown > 1 ? Math.max(0, Math.min(width + 8, (available - width - 8) / (shown - 1))) : width;
       cards.forEach((el, i) => {
-        el.style.marginLeft = i ? (step - width) + 'px' : '0px';
+        // Margins belong to the card's zoomed coordinate space, unlike the
+        // available width measured on its parent.
+        el.style.marginLeft = i ? ((step - width) / cardZoom) + 'px' : '0px';
         el.style.transform = handFan[i];
       });
       return;
@@ -162,6 +171,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   }
 
   function render({ cards = [], emptyHtml = null }) {
+    releaseCardInputs.splice(0).forEach(release => release());
     const drawn = new Set(cards.filter(entry => !previousCards.has(entry.inst.instanceId)).map(entry => entry.inst.instanceId));
     previousCards = new Set(cards.map(entry => entry.inst.instanceId));
     fanMeasurement = null;
@@ -180,7 +190,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     handEl.style.setProperty(FAN_LIFT_PROP, `${((n - 1) / 2) * 6}px`);
     cards.forEach((entry, i) => {
       const el = renderCard(registries, entry.inst,
-        entry.preview ? { preview: entry.preview, affordable: entry.affordable } : { affordable: entry.affordable });
+        { preview: entry.preview, affordable: entry.affordable, inspectionAction: entry.inspectionAction, actionOwnsTouch: true });
       const spread = Math.min(6, n) * 1.2;
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
       // CENTRE. Same arc, same step, same look — translated so the LOWEST card
@@ -212,6 +222,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // is meant to feature. A number that is only right for today's hand size.
       const mid = (n - 1) / 2;
       el.style.transform = `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
+      el.style.setProperty('--card-fan-transform', el.style.transform);
       el.style.zIndex = i;
       if (animateArrival && drawn.has(entry.inst.instanceId) && !reducedMotionRequested()) {
         el.classList.add('card-drawn');
@@ -241,8 +252,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // E8, and it is the one line of his ask that lives outside tooltip.js:
       // the zoom used to HIDE the tooltip here. Now the completed hold KEEPS
       // it — same moment, opposite verb — and tooltip.js owns what ends it.
-      armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
-      if (wireCard) wireCard(el, entry, i);
+      if (inspectHold && !entry.inspectionAction) armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
+      const releaseInput = wireCard?.(el, entry, i);
+      if (typeof releaseInput === 'function') releaseCardInputs.push(releaseInput);
       handEl.appendChild(el);
     });
     // The overlap arm: record what this render made, then reconcile. Inert —
@@ -259,6 +271,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   }
 
   function teardown() {
+    releaseCardInputs.splice(0).forEach(release => release());
     cancelAnimationFrame(layoutFrame);
     layoutFrame = 0;
     if (ro) ro.disconnect();

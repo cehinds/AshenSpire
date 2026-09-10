@@ -9,6 +9,16 @@ For how work is branched, reviewed, and merged, see
 
 ## Run & test
 
+The opt-in combat workshop is documented in [docs/COMBAT-WORKSHOP.md](docs/COMBAT-WORKSHOP.md).
+Tag assignments and source ownership are documented in [docs/COMBAT-TAG-SOURCES.md](docs/COMBAT-TAG-SOURCES.md).
+Run `node tools/attack-source-audit.mjs --write` after editing the tag junction;
+`--check` verifies complete attack-source mappings and the review table.
+`node tests/run-node.mjs` includes its focused engine regression suite.
+`node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
+and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared
+three-build policy through the actual combat engine. Ordinary runs do not select
+this ruleset yet. See the workshop's remaining content-expansion gate.
+
 Boss destinations are assigned when an act map is created. `bossIds` lists the
 terminal nodes, each carrying its saved `encounterId`; `bossId` remains a
 compatibility alias. Resolve the chosen terminal through
@@ -37,6 +47,17 @@ the shared `enemySprite()` asset function. The twelve PNGs in
 384px square canvas and common foot anchor when replacing them. Keep the
 original sprite files as fallback assets. See CREDITS.md and the extraction
 manifest beside the images for provenance.
+Combat stature is presentation-only: `CombatSpriteScaleModel.js` uses the
+encounter pool to keep elites at 1.75x and bosses at 2x (Ashheart Dragon at 3x).
+`combatSpriteGeometry.js` caches visible idle bounds, while painted player
+stages expose their existing authored idle bounds. The shared formation fit
+reduces all art together when space is limited, retaining per-row depth and
+ground anchors. Names, health bars and their inspection targets do not shrink.
+Run `node --test tests/combat-sprite-scale.test.mjs` and
+`node tools/combat-sprite-scale-qa.mjs` against `COMBAT_QA_URL`; set
+`COMBAT_QA_OUT` for screenshots outside the checkout. The browser check needs
+Playwright and Edge and covers elite/boss ratios, feet, health bars, card
+selection and returning from an enemy turn at desktop and narrow widths.
 The fourteen new frames in `assets/enemies-expansion/` use the same canvas,
 left-facing orientation and foot anchor (192, 364). They are transparent idle
 paintings; runtime motion supplies their action feedback, not authored attack
@@ -576,3 +597,9 @@ armament at 1280x1000 and 390x844, capture every card and grouped gallery screen
 and verify keyboard tooltips, full details, filtering and read-only merchant
 inspection. Uses `tools/browser.mjs`; set `CHROME` when automatic discovery does
 not locate your Chromium browser. `--shots` is optional for test-only runs.
+
+### Mobile card interaction checks
+
+Combat cards select before committing. A selected card retains its fan position and reveals above its siblings. Confirm using the shared hold duration/progress, a double-tap after selection, or a valid target tap/drop. A single extra tap does not play. Empty-field taps and Escape cancel; invalid/cancelled drags spend nothing. Test both a self skill and an enemy attack, including switching selection, at 320x568, 375x667 and desktop sizes.
+
+Phone checks must include browser bars expanded/collapsed, full detail titles, and equipment explanations. Chromium mobile emulation cannot certify iPhone Safari fullscreen or audio. Unsupported fullscreen should explain Safari Share → Add to Home Screen. Volume sliders adjust game mix; device volume remains under the player's control.

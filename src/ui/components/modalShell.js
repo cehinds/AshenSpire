@@ -135,7 +135,24 @@ export function modalFooter({ note = '', secondary = [], primary = null, classNa
  */
 export function bindModalDismiss({ veil, panel, close, opener = document.activeElement } = {}) {
   const onKeydown = (event) => {
-    if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
+    if (event.defaultPrevented) return;
+    if (event.key === 'Tab') {
+      const top = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
+      if (top !== panel) return;
+      const controls = [...panel.querySelectorAll('button, a[href], input, select, textarea, [tabindex]')]
+        .filter(el => el.tabIndex >= 0 && !el.matches(':disabled') && !el.closest('[inert]')
+          && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+      const first = controls[0], last = controls.at(-1);
+      const active = document.activeElement;
+      if (!first || !panel.contains(active) || active === panel
+          || (event.shiftKey ? active === first : active === last)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first)?.focus();
+        if (!first) panel.focus();
+      }
+      return;
+    }
+    if (event.key !== 'Escape' || event.repeat) return;
     const top = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
     if (top !== panel) return;
     event.preventDefault();
@@ -222,18 +239,44 @@ export function modalHead({
     const strip = document.createElement('div');
     strip.className = 'modal-tabs';
     strip.setAttribute('role', 'tablist');
+    const selectedTab = tabList.find(tab => tab.selected) || tabList[0];
     for (const tab of tabList) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'modal-tab';
       button.setAttribute('role', 'tab');
-      button.setAttribute('aria-selected', String(!!tab.selected));
+      button.setAttribute('aria-selected', String(tab === selectedTab));
+      button.tabIndex = tab === selectedTab ? 0 : -1;
       button.dataset.modalTab = tab.id || tab.label;
       button.dataset.focusable = 'true';
       button.textContent = tab.label;
-      if (onTab) button.addEventListener('click', () => onTab(tab.id || tab.label));
+      button.addEventListener('click', () => {
+        for (const sibling of strip.querySelectorAll('[role="tab"]')) {
+          const selected = sibling === button;
+          sibling.setAttribute('aria-selected', String(selected));
+          sibling.tabIndex = selected ? 0 : -1;
+        }
+        onTab?.(tab.id || tab.label);
+      });
       strip.appendChild(button);
     }
+    strip.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      const buttons = [...strip.querySelectorAll('[role="tab"]')];
+      const index = buttons.indexOf(document.activeElement);
+      if (index < 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1
+        : (index + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+      const target = buttons[next];
+      target.focus();
+      target.click();
+      // Hosts may rebuild the header when activating a tab.
+      const replacement = [...(head.isConnected ? head : document).querySelectorAll('.modal-tab')]
+        .find(button => button.dataset.modalTab === target.dataset.modalTab && button.isConnected);
+      replacement?.focus({ preventScroll: true });
+    });
     head.appendChild(strip);
   } else {
     const identity = document.createElement('div');

@@ -41,7 +41,7 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'same-context-reenable-noop', file: 'src/ui/audio.js',
-        find: 'else if (state.context && (!wasMusicEnabled || musicVolume != null || muteAudio != null)) {',
+        find: 'else if (state.context && (!wasMusicEnabled || wasMuted !== state.muted)) {',
         replace: 'else if (state.context && wasMusicEnabled && (musicVolume != null || muteAudio != null)) {',
         expectRed: /same-context re-enable restarts playback/,
       },
@@ -231,7 +231,7 @@ check(overlay.includes('onQuit?.();') && main.includes('onQuit: () => {\n      p
   'Save & Quit prefers the persistence callback');
 check(audio.includes('if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns fallback scheduling.'), 'fallback is gated by musicEnabled');
 check(audio.includes('if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns procedural scheduling.'), 'procedural scheduling is gated by musicEnabled');
-check(audio.includes('else if (state.context && (!wasMusicEnabled || musicVolume != null || muteAudio != null)) {'), 're-enable clears same-context no-op before restart');
+check(audio.includes('else if (state.context && (!wasMusicEnabled || wasMuted !== state.muted)) {'), 're-enable clears same-context no-op before restart');
 check(audio.includes('if (state.muted || !state.musicEnabled) stopMusic(0.3);'), 'disable and global mute share the stop-only branch');
 check(audio.includes('        el.pause();'), 'disabling Music pauses external media');
 check(main.includes('applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif'), 'restore applies the complete settings bag');

@@ -39,6 +39,7 @@ import { openLedger, closeLedger, note, readLedger } from '../model/healLedger.j
 import { combatSnapshotReferenceProblems } from '../model/combatSnapshot.js';
 import { assertSavedBossReferences } from '../model/mapReferences.js';
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
+import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
 
 export const RUN_KEY = 'sote_run_v1';
@@ -166,7 +167,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   const bornWith = Number.isFinite(snapshot.equipmentAttackSlotCount)
     ? snapshot.equipmentAttackSlotCount
     : (Number.isFinite(run.equipmentAttackSlotCount) ? run.equipmentAttackSlotCount : undefined);
-  const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId, { attackSlotCount: bornWith });
+  const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId, { attackSlotCount: bornWith, removedAttackSlotIds: snapshot.removedAttackSlotIds ?? run.removedAttackSlotIds });
   // Full-pile order is the one legacy assignment door: draw, hand, discard,
   // exhaust. No card moves; missing ids bind once to attack:0..N-1. Applying
   // even when zero attacks were recognized keeps the authored count fail closed.
@@ -179,6 +180,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
     equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
     equipmentAttackSlotCount: bornWith,
+    removedAttackSlotIds: snapshot.removedAttackSlotIds ?? run.removedAttackSlotIds,
     itemMounts,
     deck: cards,
   }, cards, {
@@ -514,8 +516,15 @@ export function createSaveManager(storage) {
       try {
         run = deserializeRun(json);
         const mapAct = run.custom && activeMods(run.custom).endless ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
-        assertSavedBossReferences(registries, run.mapGraph, mapAct);
-        run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
+        if (run.journey) {
+          // deserializeRun validated the pinned manifest. Its graph is a derived
+          // projection, and its dungeon may belong to a different classic act.
+          for (const id of Object.keys(run.journey.outcomes)) journeyEncounter(run.journey, id, registries);
+          run.mapGraph = journeyGraph(run.journey);
+        } else {
+          assertSavedBossReferences(registries, run.mapGraph, mapAct);
+          run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
+        }
         const snapshotReferenceProblems = combatSnapshotReferenceProblems(run.combatEntered?.snapshot, registries);
         if (snapshotReferenceProblems.length) {
           throw new Error(`Malformed combat snapshot references: ${snapshotReferenceProblems.join('; ')}`);

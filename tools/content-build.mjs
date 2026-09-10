@@ -867,6 +867,8 @@ if (SELFTEST) {
 } else if (MUTATE) {
   await mutate();
 } else {
+  const { checkAtlasBuild } = await import('./world-atlas-data.mjs');
+  await checkAtlasBuild();
   let r;
   try {
     r = compileDir(SRC, OUT, { write: !CHECK });

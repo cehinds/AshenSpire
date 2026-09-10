@@ -5,13 +5,10 @@
 // `title` ATTRIBUTE — the second is adopted, so the native yellow box never
 // shows and every hint in the game opens on the same clock:
 //
-//   TIMING (Constantine, 2026-09-03: "delayed fade in (0.5s by default), and
-//   then fades out after (5-10 s by default) or 2s when mouse moves"):
-//     open after 500ms of intent; leaving before that cancels with no flash.
-//     once open, leaving starts a 2s close that RE-ENTERING CANCELS — and the
-//     panel itself counts as on-target, which is what makes a tooltip's
-//     tooltip reachable. Dwell (7s) runs only after the pointer has left.
-//     a new target hands over WITHOUT paying the open delay again.
+//   Every hover, handover and nested term waits 500ms. Leaving early cancels.
+//   The owner and its panel form one hover region; leaving both closes after
+//   500ms. A hovered panel never expires. Explicit touch/inspect actions remain
+//   available without manufacturing hover from a touch pointer.
 //
 //   FOUR RUNGS, BY HEIGHT: small · medium · large · expanded. The rung is
 //     derived from the content, then MEASURED: the panel steps up while it
@@ -35,7 +32,7 @@ import { placeAnchored, viewportLocalBox } from '../fx.js';
 import { tooltipPlacementIntent } from '../models/TooltipPlacementModel.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
-export const TOOLTIP_TIMING = Object.freeze({ open: 500, handover: 120, focus: 160, close: 2000, dwell: 7000, hold: 420, doubleTap: 300 });
+export const TOOLTIP_TIMING = Object.freeze({ open: 500, handover: 500, focus: 500, close: 500, hold: 420, doubleTap: 300 });
 const RUNGS = ['small', 'medium', 'large', 'expanded'];
 
 // ---- the two panels ---------------------------------------------------------
@@ -47,6 +44,30 @@ let dwellTimer = null;
 let fadeTimer = null;
 let expander = null; // the `full` tier opener, injected to avoid a circular import
 let pending = null;  // { el, show } — the show an open timer is counting down to
+let nestedOpenTimer = null;
+let nestedCloseTimer = null;
+let nestedPending = null;
+let tooltipDecorator = () => {};
+export function registerTooltipDecorator(fn) { tooltipDecorator = fn; }
+
+function cancelOpen(el = null) {
+  if (el && pending?.el !== el) return;
+  clearTimeout(openTimer); openTimer = null; pending = null;
+}
+function cancelNested() { clearTimeout(nestedOpenTimer); nestedPending = null; }
+function closeNestedLater() {
+  clearTimeout(nestedCloseTimer);
+  nestedCloseTimer = setTimeout(() => conceal(1), TOOLTIP_TIMING.close);
+}
+function queueNested(term) {
+  clearTimeout(nestedCloseTimer);
+  if (term === state[1].target || term === nestedPending) return;
+  cancelNested(); nestedPending = term;
+  nestedOpenTimer = setTimeout(() => {
+    nestedPending = null;
+    if (term.isConnected && state[0].open) showNested(term);
+  }, TOOLTIP_TIMING.open);
+}
 
 function panel(level) {
   if (!panels[level]) {
@@ -60,10 +81,15 @@ function panel(level) {
     if (level === 0) markUiComponent(el, UI.tooltip);
     // The panel is part of the target while open: entering it cancels the
     // close, leaving it schedules one, and a term inside it may open level 2.
-    el.addEventListener('pointerenter', () => { clearTimeout(closeTimer); clearTimeout(dwellTimer); });
+    el.addEventListener('pointerenter', () => {
+      cancelOpen(); clearTimers();
+      if (level === 1) clearTimeout(nestedCloseTimer);
+    });
     el.addEventListener('focusin', clearTimers);
     el.addEventListener('focusout', (ev) => { if (!el.contains(ev.relatedTarget)) scheduleClose(); });
     el.addEventListener('pointerleave', (ev) => {
+      if (level === 0) cancelNested();
+      if (level === 1 && !state[1].target?.contains(ev.relatedTarget)) closeNestedLater();
       if (panels.some((p) => p && p !== el && p.contains(ev.relatedTarget))) return;
       if (state[0].target && state[0].target.contains?.(ev.relatedTarget)) return;
       scheduleClose();
@@ -71,12 +97,22 @@ function panel(level) {
     el.addEventListener('pointerover', (ev) => {
       if (level !== 0) return;
       const term = nestedTarget(ev.target, el);
-      if (term && term !== state[1].target) showNested(term);
+      if (ev.pointerType !== 'touch' && term) queueNested(term);
     });
     el.addEventListener('pointerout', (ev) => {
-      if (level !== 0 || !state[1].open) return;
+      if (level !== 0) return;
       const term = nestedTarget(ev.target, el);
-      if (term && !term.contains(ev.relatedTarget) && !(panels[1] && panels[1].contains(ev.relatedTarget))) hide(1);
+      if (term && !term.contains(ev.relatedTarget)) {
+        cancelNested();
+        if (!panels[1]?.contains(ev.relatedTarget)) closeNestedLater();
+      }
+    });
+    el.addEventListener('focusin', ev => {
+      const term = level === 0 && nestedTarget(ev.target, el);
+      if (term) queueNested(term);
+    });
+    el.addEventListener('focusout', ev => {
+      if (level === 0 && nestedTarget(ev.target, el)) { cancelNested(); closeNestedLater(); }
     });
     document.body.appendChild(el);
   }
@@ -85,6 +121,7 @@ function panel(level) {
 let tipEl = null; // level 0, kept under its old name for the stick logic below
 
 function conceal(level = 0) {
+  if (level === 1) { cancelNested(); clearTimeout(nestedCloseTimer); }
   if (level === 0) hoverCloseCallback = null;
   const el = panels[level];
   if (!el) return;
@@ -92,6 +129,12 @@ function conceal(level = 0) {
   el.dataset.open = 'false';
   el.classList.remove('is-fading');
   el.setAttribute('aria-hidden', 'true');
+  const owner = state[level].target;
+  if (owner?.getAttribute) {
+    const ids = (owner.getAttribute('aria-describedby') || '').split(/\s+/).filter(id => id && id !== el.id);
+    if (ids.length) owner.setAttribute('aria-describedby', ids.join(' '));
+    else owner.removeAttribute('aria-describedby');
+  }
   state[level].target?.removeAttribute?.('data-tip-open');
   state[level].target = null;
   state[level].open = false;
@@ -107,15 +150,15 @@ function closeAfterHover() {
   if (panels.some(p => p?.contains(document.activeElement))) return;
   const callback = hoverCloseCallback;
   hoverCloseCallback = null;
-  hideTooltip();
+  // The old owner's close and a new owner's open can expire on the same tick.
+  // Dismiss only the old panels; do not cancel the new owner's pending hover.
+  sceneAnchor = null; unstick(); clearTimers(); conceal(1); conceal(0);
   callback?.();
 }
 function scheduleClose() {
   if (stuck) return;
   clearTimeout(closeTimer);
   closeTimer = setTimeout(closeAfterHover, TOOLTIP_TIMING.close);
-  clearTimeout(dwellTimer);
-  dwellTimer = setTimeout(closeAfterHover, TOOLTIP_TIMING.dwell);
 }
 function scheduleAutoHide(autoHideMs) {
   if (!(autoHideMs > 0)) return;
@@ -194,13 +237,14 @@ let sceneAnchor = null;
 function watchScene() {
   if (sceneWatch) return;
   sceneWatch = new MutationObserver((records) => {
-    if (!sceneAnchor) return;
-    if (!sceneAnchor.isConnected) { hideTooltip(); return; }
+    if (pending && !pending.el.isConnected) cancelOpen();
+    if (!sceneAnchor && !pending) return;
+    if (sceneAnchor && !sceneAnchor.isConnected) { hideTooltip(); return; }
     for (const record of records) {
       for (const node of record.addedNodes) {
         if (node.nodeType !== 1) continue;
         const veil = node.matches?.('.modal-veil') ? node : node.querySelector?.('.modal-veil');
-        if (veil && !veil.contains(sceneAnchor)) { hideTooltip(); return; }
+        if (veil && !veil.contains(sceneAnchor || pending?.el)) { hideTooltip(); return; }
       }
     }
   });
@@ -212,10 +256,13 @@ function showWith(html, anchor, clear = null, intent = 'above', appearance = nul
   // `anchor` is a rect; `target` is the element it was measured from (null
   // for a caller-owned rect — then there is no surface to watch).
   if (level === 0) { sceneAnchor = target instanceof Node ? target : null; watchScene(); }
-  if (level === 0) { unstick(); hide(1); }
+  if (level === 0) { cancelOpen(); unstick(); hide(1); }
   clearTimers();
   const t = level === 0 ? ensure() : panel(1);
+  conceal(level);
   t.innerHTML = html;
+  // At the second level definitions are terminal: no unreachable third panel.
+  if (level === 0) tooltipDecorator(t);
   t.setAttribute('role', action ? 'dialog' : 'tooltip');
   if (action) {
     t.setAttribute('aria-label', action.getAttribute('aria-label') || action.textContent);
@@ -253,6 +300,7 @@ function showWith(html, anchor, clear = null, intent = 'above', appearance = nul
   state[level].target = target;
   state[level].open = true;
   if (target?.setAttribute) target.setAttribute('data-tip-open', 'true');
+  if (target?.setAttribute) target.setAttribute('aria-describedby', [...new Set([...(target.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean), t.id])].join(' '));
   scheduleAutoHide(autoHideMs);
   return true;
 }
@@ -284,41 +332,62 @@ function adoptTitle(el) {
  */
 export function attachTooltip(el, contentFn, {
   intent = 'above', align = 'start', clear = null, delayMs = TOOLTIP_TIMING.open, focusDelayMs = TOOLTIP_TIMING.focus,
-  appearance = null, placementModel = null, autoHideMs = 0, expand = false, expandTitle = null,
+  appearance = null, placementModel = null, autoHideMs = 0, expand = false, expandTitle = null, showFn = null, tapToExplain = false,
 } = {}) {
   adoptTitle(el);
   el.dataset.tipAttached = 'true';
-  const show = () => { pending = null; return showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs, align, 0, el); };
-  el.addEventListener('pointerenter', () => {
-    clearTimeout(closeTimer); clearTimeout(dwellTimer);
-    clearTimeout(openTimer);
+  const show = () => {
+    pending = null;
+    if (!el.isConnected || el.closest('[inert], [hidden]')) return false;
+    const information = el.querySelector('.card-info-button');
+    const avoid = clear || (information ? [el.parentElement, information] : el.parentElement);
+    return showFn ? showFn() : showWith(contentFn(), el.getBoundingClientRect(), avoid, intent, appearance, placementModel, 0, align, 0, el);
+  };
+  const queue = delay => {
+    cancelOpen();
+    if (state[0].open && state[0].target === el) { clearTimers(); if (stuck) unstick(); return; }
     pending = { el, show };
-    // A new target hands over without re-paying the open delay — but not
-    // instantly: a transient enter (the zoom copy landing under a held finger,
-    // gone on the next frame) must not replace a STUCK tooltip. The short
-    // timer is what pointerleave cancels.
-    if (state[0].open && state[0].target !== el) { openTimer = setTimeout(show, TOOLTIP_TIMING.handover); return; }
-    // Re-entering the stuck tooltip's own target is a fresh hover: it takes
-    // ownership back from the hold, so the next leave hides it (E8's floor).
-    if (state[0].open) { if (stuck) unstick(); return; }
-    openTimer = setTimeout(show, delayMs);
+    watchScene();
+    openTimer = setTimeout(show, delay);
+  };
+  el.addEventListener('pointerover', ev => {
+    if (ev.pointerType === 'touch' || ev.target?.closest('[data-tip-attached], [data-tip]') !== el) return;
+    const previous = ev.relatedTarget?.closest?.('[data-tip-attached], [data-tip]');
+    if (previous && previous !== el && el.contains(previous)) queue(delayMs);
+  });
+  el.addEventListener('pointerenter', ev => {
+    if (ev.pointerType === 'touch') return;
+    const child = ev.clientX != null ? document.elementFromPoint(ev.clientX, ev.clientY)?.closest('[data-tip-attached], [data-tip]') : null;
+    if (child && child !== el && el.contains(child)) return;
+    queue(delayMs);
   });
   el.addEventListener('pointerleave', (ev) => {
-    clearTimeout(openTimer);
+    cancelOpen(el);
     if (stuck) return; // E8: a completed hold outlives the pointer leaving
     if (panels.some((p) => p && p.contains(ev.relatedTarget))) return;
-    scheduleClose();
+    if (state[0].target === el) scheduleClose();
   });
-  el.addEventListener('gpfocus', () => {
-    clearTimeout(openTimer);
-    pending = { el, show };
-    openTimer = setTimeout(show, focusDelayMs);
-  });
-  el.addEventListener('gpblur', () => {
-    clearTimeout(openTimer);
+  const focus = ev => { if (ev.target === el) queue(focusDelayMs); };
+  el.addEventListener('gpfocus', focus);
+  el.addEventListener('focus', ev => { if (el.matches(':focus-visible')) focus(ev); });
+  const blur = ev => {
+    if (ev.target !== el) return;
+    cancelOpen(el);
     if (stuck) return;
-    hideTooltip();
-  });
+    if (state[0].target === el && !panels.some(p => p?.contains(ev.relatedTarget))) scheduleClose();
+  };
+  el.addEventListener('gpblur', blur);
+  el.addEventListener('blur', blur);
+  if (tapToExplain) {
+    if (!el.hasAttribute('tabindex')) el.tabIndex = 0;
+    if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
+    const answer = ev => {
+      if (typeof tapToExplain === 'function' && !tapToExplain()) return;
+      if (ev.type === 'keydown' && !['Enter', ' '].includes(ev.key)) return;
+      ev.preventDefault(); ev.stopPropagation(); cancelOpen(); show();
+    };
+    el.addEventListener('click', answer); el.addEventListener('keydown', answer);
+  }
   if (expand) {
     const isControl = () => !!el.closest('button, [role="button"], a, input, select, [data-hold]');
     const open = () => { hideTooltip(); expander?.(contentFn(), { title: expandTitle || el.dataset.tipTitle || '', eyebrow: el.dataset.tipType || 'Detail' }); };
@@ -381,7 +450,7 @@ export function hideTooltip() {
   sceneAnchor = null;
   unstick();
   clearTimers();
-  clearTimeout(openTimer);
+  cancelOpen();
   conceal(1);
   conceal(0);
 }
@@ -397,26 +466,41 @@ let titleWired = false;
 function wireTitles() {
   if (titleWired || typeof document === 'undefined') return;
   titleWired = true;
-  document.addEventListener('pointerover', (ev) => {
-    const el = ev.target?.closest?.('[title]');
+  const adopt = ev => {
+    const el = ev.target?.closest?.('[title], [data-tip]');
     if (!el || panels.some((p) => p && p.contains(el))) return;
     // A title INSIDE an attached target (a card's cost badge) is that target's
     // business — it must not open a second, competing tooltip over the first.
-    const owner = el.closest('[data-tip-attached]');
-    if (owner && owner !== el) {
-      el.removeAttribute('title');
-      return;
-    }
     adoptTitle(el);
-    if (!el.dataset.tip || el.dataset.tip === 'off' || el.dataset.tipAdopted === 'true') return;
+    if (!el.dataset.tip || el.dataset.tip === 'off' || el.dataset.tipAttached === 'true') return;
+    // A native label inside a card must not race its attached explanation.
+    const owner = el.parentElement?.closest('[data-tip-attached]');
+    if (owner && !el.matches('[role="button"], .ctag, .epc-tag')) return;
     el.dataset.tipAdopted = 'true';
     attachTooltip(el, () => `<div>${esc(el.dataset.tip)}</div>`, { intent: 'above', align: 'center' });
-    el.dispatchEvent(new Event('pointerenter'));
+    if (ev.type === 'pointerover' && ev.pointerType !== 'touch') el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: ev.pointerType || 'mouse', clientX: ev.clientX, clientY: ev.clientY }));
+    if (ev.type === 'focusin') el.dispatchEvent(new Event('gpfocus'));
+  };
+  document.addEventListener('pointerover', adopt, true);
+  document.addEventListener('focusin', adopt, true);
+  const explain = ev => {
+    const term = ev.target?.closest?.('.tooltip-keyword[data-tip], .inspection-tag[data-tip], .as-tip [data-tip][role="button"]');
+    if (!term || panels[1]?.contains(term)) return;
+    if (ev.type === 'keydown' && !['Enter', ' '].includes(ev.key)) return;
+    ev.preventDefault(); ev.stopPropagation();
+    if (panels[0]?.contains(term)) { cancelNested(); showNested(term); }
+    else showTooltipFor(term, `<div>${esc(term.dataset.tip)}</div>`);
+  };
+  document.addEventListener('click', explain, true);
+  document.addEventListener('keydown', explain, true);
+  document.addEventListener('pointerdown', ev => {
+    if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target)) hideTooltip();
   }, true);
   document.addEventListener('keydown', (ev) => {
     if (ev.key !== 'Escape') return;
-    if (state[1].open) hide(1);
-    else if (state[0].open && !stuck) hideTooltip();
+    if (state[1].open) { hide(1); ev.stopImmediatePropagation(); }
+    else if (state[0].open) { hideTooltip(); ev.stopImmediatePropagation(); }
+    else { cancelOpen(); cancelNested(); }
   }, true);
   const replace = () => { for (const [i, st] of state.entries()) if (st.open && st.target?.getBoundingClientRect && panels[i]) placeAnchored(panels[i], st.target.getBoundingClientRect(), { intent: panels[i].dataset.tooltipPlacement || 'above' }); };
   addEventListener('resize', replace);

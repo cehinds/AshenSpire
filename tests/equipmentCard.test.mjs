@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { equipmentCardModel } from '../src/model/equipmentCard.js';
+import { equipmentCardModel, equipmentCardTokens } from '../src/model/equipmentCard.js';
 import { armourMenuAsset } from '../src/model/paintedOutfitArt.js';
 const r = createRegistries(contentBundle);
 test('every canonical equipment item has complete card facts, bonuses and available painted identity', () => {
@@ -32,4 +32,12 @@ test('requirements and hybrid item types retain authored identity', () => {
   const hybrid=equipmentCardModel(r,r.equipment.armaments.find(p=>p.id==='parryDagger'));
   assert.match(hybrid.type,/Blade \/ Shield/);
   assert.match(hybrid.typeExplanation,/Blade/);
+});
+
+test("default card layout preserves artwork and keeps all regions within the frame", () => {
+  const tokens = equipmentCardTokens();
+  assert.equal(tokens.heights.art, 270);
+  assert.ok(tokens.heights.effects >= 54);
+  assert.ok(Object.values(tokens.heights).every(height => height > 0));
+  assert.ok(Object.values(tokens.heights).reduce((sum, height) => sum + height, 0) <= tokens.budget);
 });

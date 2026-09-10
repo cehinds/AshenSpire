@@ -865,6 +865,27 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   else zoomPassed++;
 }
 
+{
+  const { execFileSync } = await import('node:child_process');
+  try {
+    execFileSync(process.execPath, ['--test', 'tests/combat-foundations.test.mjs', 'tests/attack-sources.test.mjs', 'tests/combat-abilities.test.mjs'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    execFileSync(process.execPath, ['tools/attack-source-audit.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  combat foundations: engine, co-op, save, preview and trigger regression suite');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  combat foundations: ${error.stdout || error.message}`);
+    zoomExtra++;
+  }
+}
+try {
+  const { runRewardConfirmTests } = await import('./reward-confirm.test.mjs');
+  const count = runRewardConfirmTests();
+  console.log('PASS  reward selection and confirmation: ' + count + ' checks');
+  zoomPassed++;
+} catch (error) {
+  console.log('FAIL  reward selection and confirmation: ' + error.message);
+  zoomExtra++;
+}
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
 console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
 console.log('          check over coordinate spaces — they prove a transform has two');
@@ -960,4 +981,18 @@ console.log('          76 drives the shared confirmation component in a minimal 
 console.log('          the two controller call sites. It proves cancellation/commit semantics,');
 console.log('          focus containment/return, and native-prompt removal; it does not paint');
 console.log('          the dialog or prove responsive geometry in a real browser.');
+try {
+  const { runCardRemovalFlickTests } = await import('./card-removal-flick.test.mjs');
+  const result = runCardRemovalFlickTests();
+  console.log(`PASS  Card removal and touch flick regressions: ${result.checks} checks`);
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL  Card removal and touch flick regressions:', error);
+}
+try {
+  await import('./starting-equipment-preview.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Starting equipment previews:', error);
+}
 process.exit(failed + zoomExtra > 0 ? 1 : 0);
