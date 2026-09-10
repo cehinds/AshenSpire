@@ -166,7 +166,7 @@ export function mountWorldAtlas(
     const dialog = document.createElement("dialog");
     dialog.className = "atlas-dialog modal-veil";
     dialog.dataset.localMap = String(!!local);
-    const scene = locationScene(id);
+    const scene = locationScene(id, run);
     const illustration = scene
       ? `<svg viewBox="${scene.box.join(' ')}" role="img" aria-label="${esc(n.displayName)} — ${esc(scene.name)}" data-location-scene="${esc(scene.id)}"><image href="${esc(assetUrl(scene.atlas))}" width="1536" height="1024"/></svg>`
       : coreArt(id);

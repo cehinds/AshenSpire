@@ -1,3 +1,4 @@
+import { resolveLocationPresentation } from './model/locationPresentation.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -1496,6 +1497,9 @@ function syncWorldPosition() {
   run.floor = run.mapGraph.nodes[j.currentNodeId].floor;
   run.actNumber = ATLAS.world[j.currentNodeId].difficultyAct;
   run.environmentRegionId = ATLAS.regionOf(j.currentNodeId);
+  run.locationPresentation = resolveLocationPresentation({ nodeId:j.currentNodeId, seedString:run.seedString,
+    timeId:run.presentationTimeId || 'day', weatherId:run.presentationWeatherId || 'any',
+    savedSceneId:run.locationPresentation?.nodeId === j.currentNodeId ? run.locationPresentation?.sceneId : undefined });
 }
 
 function enterWorldNode(nodeId) {

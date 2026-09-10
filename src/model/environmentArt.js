@@ -1,3 +1,4 @@
+import { resolveLocationPresentation, presentationScene } from './locationPresentation.js';
 import { ENVIRONMENTS, MEGA_MAPS } from '../content/environments.js';
 
 // Decorative choices never consume the engine's RNG or add save fields.
@@ -14,6 +15,15 @@ export function regionForRun({ seedString = '', actNumber = 1 } = {}) {
 
 export function combatEnvironment(run = {}) {
   const region = (run.environmentRegionId && ENVIRONMENTS.find(r => r.id === run.environmentRegionId)) || regionForRun(run);
+  const nodeId = run.journey?.currentNodeId || run.mapNodeId;
+  const node = run.mapGraph?.nodes?.[nodeId];
+  const setting = node?.type === 'boss' ? 'dungeon' : node?.type === 'merchant' ? 'city' : 'road';
+  const selection = resolveLocationPresentation({ nodeId, seedString:run.seedString,
+    profileId:node ? `${region.id}/${setting}` : undefined,
+    timeId:run.presentationTimeId || 'day', weatherId:run.presentationWeatherId || 'any',
+    savedSceneId:run.locationPresentation?.nodeId === nodeId ? run.locationPresentation?.sceneId : undefined });
+  const selected = presentationScene(selection);
+  if (selected) return selected;
   const floor = Math.max(0, Math.trunc(Number(run.floor) || 0));
   const index = (hash(`${run.seedString ?? ''}:scenery`) + floor) % region.scenes.length;
   return { region, scene: region.scenes[index] };
