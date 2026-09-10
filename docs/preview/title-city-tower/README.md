@@ -1,6 +1,6 @@
 # City spire title background
 
-Build 0.6.0.110 uses the owner-approved city spire on the startup gate and title menu.
+Build 0.6.0.113 uses the owner-approved city spire on the startup gate and title menu.
 The native 1586 x 992 WebP is 72,522 bytes. The centering and activation behavior
 are unchanged. This delivery does not implement the proposed city-light transition.
 
