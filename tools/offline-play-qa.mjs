@@ -106,6 +106,13 @@ try {
   await boot(pathToFileURL(gamePath).href);
   check(await evaluate('location.protocol === "file:"'), 'downloaded game boots locally with network disabled');
   await click('#download-game');
+  if (offlineOnly) {
+    await capture('phone-download');
+    await send('Emulation.setDeviceMetricsOverride', { width: 1365, height: 1000, deviceScaleFactor: 1, mobile: false }, sessionId);
+    await wait(1200); await capture('desktop-download');
+    await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true }, sessionId);
+    await wait(1200);
+  }
   await send('DOM.enable', {}, sessionId); const doc = await send('DOM.getDocument', {}, sessionId);
   const { nodeId } = await send('DOM.querySelector', { nodeId: doc.root.nodeId, selector: '.offline-play-modal input[type=file]' }, sessionId);
   await click('#offline-import');
@@ -124,6 +131,7 @@ try {
   check(true, 'imported run continues offline');
   await click('.map-node.reachable');
   await until('!!document.querySelector(".combat")');
+  if (await evaluate('!!document.querySelector(".tut-skip")')) await click('.tut-skip');
   await capture('phone-offline-combat');
   check(true, 'offline map entry opens playable combat');
   await send('Page.addScriptToEvaluateOnNewDocument', { source: `Object.defineProperty(window,'localStorage',{get(){throw new Error('Browser storage blocked')}})` }, sessionId);
