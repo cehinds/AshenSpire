@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-891",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Configurable help across the combat screen",
+    "detail": "Hover HUD labels, meters, Block, enemy intent, card costs, and inspector headings for explanations. Accessibility settings control hover visibility and opening/closing delays, with a half-second default. Shared data supplies the choices, timing, and help text; keyboard and explicit inspection remain available with hover off.",
+    "build": "0.6.0.102",
+    "pullRequest": 891,
+    "url": "https://github.com/cehinds/AshenSpire/pull/891"
+  },
+  {
     "id": "pr-916",
     "date": "2026-09-10",
     "group": "2026-09-10",

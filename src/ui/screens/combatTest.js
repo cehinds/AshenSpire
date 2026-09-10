@@ -7,7 +7,8 @@ import { createLoadout } from '../../model/loadout.js';
 import { weaponImpact } from '../../model/combatRules.js';
 import { mountCombat } from './combat.js';
 import { openModal } from '../kit/index.js';
-import { esc } from '../components/tooltip.js';
+import { esc, configureTooltipSettings } from '../components/tooltip.js';
+import { openSettings } from './settings.js';
 import { BUILD_VERSION } from '../../buildversion.js';
 
 export function mountCombatTest(app, { params, meta }) {
@@ -18,6 +19,7 @@ export function mountCombatTest(app, { params, meta }) {
   let route = [], stage = 0, pools = {}, results = [];
   // This mode has no durable profile or save actions. Settings stay in memory.
   const testMeta = { ...meta, settings: { ...meta.settings, seenTutorial: true, holdConfirm: 'normal' } };
+  const changeSettings = patch => { Object.assign(testMeta.settings, patch); configureTooltipSettings(testMeta.settings); };
   function setup() {
     app.innerHTML = `<section class="combat-test-setup"><p class="test-eyebrow">ASHENSPIRE ${esc(BUILD_VERSION)} · TEST BUILD</p>
       <h1>Choose your way through.</h1><p class="test-lead">Play the new combat rules on the game's battlefield. Break Poise with a heavy weapon, build Bleed with quick hits, or save rare mana for a decisive spell.</p>
@@ -55,11 +57,14 @@ export function mountCombatTest(app, { params, meta }) {
         <p>Current health ${combat.player.hp}/${combat.player.maxHp}, stamina ${combat.player.stamina}/${combat.player.maxStamina}, mana ${combat.player.mana}/${combat.player.maxMana}.</p>
         <p>These are fixed test equipment profiles. Select a card, then confirm its target. Hold a card to inspect it. E ends your turn.</p><button class="test-exit" type="button">Return to build selection</button>`;
       host.querySelector('button').onclick = () => { const url = new URL(location.href); url.search = '?shot=combat-test'; location.href = url.href; };
+      const settings = document.createElement('button'); settings.className = 'test-settings'; settings.textContent = 'Settings';
+      settings.onclick = () => openSettings({ meta: testMeta, onChange: changeSettings });
+      host.appendChild(settings);
     } });
     const appearance = { basic: 'wanderingSoldier', armored: 'livingArmor', group: 'chainScavenger', resistant: 'huskBrute', boss: 'fellWarden' };
     mountCombat(app, { registries, run, combat, meta: testMeta, showTutorial: false, onMenu: info, onSettings: info, onArmoury: info,
       enemyAppearance: { [`prototype_${route[stage]}`]: appearance[route[stage]] },
-      onSettingsChange: (patch) => Object.assign(testMeta.settings, patch), onEnd: (result, ended) => {
+      onSettingsChange: changeSettings, onEnd: (result, ended) => {
         pools = Object.fromEntries(['hp', 'stamina', 'mana'].map((key) => [key, ended.player[key]]));
         results.push({ result, name: prototypeScenarios[route[stage]].name, turn: ended.turn, ...pools });
         finish(result);

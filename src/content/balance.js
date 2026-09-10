@@ -2,6 +2,8 @@
 //
 // Code never embeds a balance number; a balance change is a one-file diff here.
 
+import { tooltipHelp } from './tooltipHelp.js';
+
 export const balance = {
   // Arcane Exposure host resolution: visible name plus the explicit school
   // mapping actions.js consumes. No buildup is inferred from card tags.
@@ -468,7 +470,7 @@ export const balance = {
       info: { revealDelayMs: 125, fadeMs: 120, sizePx: 44, insetPx: 6 },
     },
     tooltipPlacement: {
-      hoverDelayMs: 500,
+      hoverDelayMs: tooltipHelp.delays[tooltipHelp.settings.find(row => row.key === 'tooltipDelay').def],
       autoFadeMs: 5000,
       topBandViewportPct: 25,
       sideBandViewportPct: 30,
