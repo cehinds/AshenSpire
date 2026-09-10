@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-10",
     "summary": "Compare equipment in the combat test",
     "detail": "Choose armor, weapon grip, and a Blood Rune before a test route. The preview shows armor, weight, Dodge stamina, grip requirements, weapon impact, and rune-inclusive value. The chosen equipment supplies the real fight's defense and attack properties; incompatible grips and runes explain why they cannot be used. This remains an isolated equipment experiment with fixed resource caps, not production loot or inventory migration.",
-    "build": "0.6.0.110",
+    "build": "0.6.0.114",
     "pullRequest": 936,
     "url": "https://github.com/cehinds/AshenSpire/pull/936"
+  },
+  {
+    "id": "pr-931",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "A city spire welcomes each journey",
+    "detail": "Replace the startup and main-menu backdrop with a painted medieval city and central tower in muted gold and charcoal. Keep the title centered and readable on phones and larger screens; ship the artwork as compact WebP.",
+    "build": "0.6.0.113",
+    "pullRequest": 931,
+    "url": "https://github.com/cehinds/AshenSpire/pull/931"
+  },
+  {
+    "id": "pr-924",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Relics open as cards before you take them",
+    "detail": "Relic rewards show their card and full effects with Back and Take controls. Owned relics also open a card inspection from the map and combat HUD. Inspected playing cards show complete effect text, with card and details stacked on phones. Valid confirmation buttons turn green; reward Continue turns green after every reward is collected or explicitly skipped.",
+    "build": "0.6.0.112",
+    "pullRequest": 924,
+    "url": "https://github.com/cehinds/AshenSpire/pull/924"
   },
   {
     "id": "pr-919",

@@ -770,7 +770,7 @@ button.ev-choice {
   padding: 2.2rem 1.6rem;
   background:
     linear-gradient(180deg, rgba(12, 9, 6, 0.22), rgba(10, 8, 6, 0.96)),
-    url('../assets/bg/bg_act1.webp') center / cover;
+    url('../assets/bg/title-city-tower.webp') center / cover;
 }
 .title-screen::before {
   content: '';
