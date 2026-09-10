@@ -11,7 +11,7 @@ function saveFile(blob, name) {
   setTimeout(() => URL.revokeObjectURL(url), offlinePlay.revokeDelayMs);
 }
 
-export function openOfflinePlay({ transfer, canImport = () => true, onImported = () => location.reload() }) {
+export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onImported = () => location.reload() }) {
   const status = el('p', { role: 'status', 'aria-live': 'polite', class: 'set-note' });
   const release = el('p', { class: 'set-note', text: 'Check for a released download when you have internet.' });
   const download = button({ label: offlinePlay.downloadLabel, id: 'offline-download' });
@@ -66,7 +66,10 @@ export function openOfflinePlay({ transfer, canImport = () => true, onImported =
   const exportText = (text, name) => saveFile(new Blob([text], { type: 'application/json' }), name);
   exportSave.addEventListener('click', () => { try { exportText(transfer.createBackup(), 'AshenSpire-saves.json'); status.textContent = 'Save backup downloaded.'; } catch (error) { status.textContent = error.message; } });
   recovery.addEventListener('click', () => { try { exportText(transfer.previous(), 'AshenSpire-previous-saves.json'); } catch (error) { status.textContent = error.message; } });
-  importSave.addEventListener('click', () => { if (!canImport()) { status.textContent = 'Return to the title screen before importing saves.'; return; } file.value = ''; file.click(); });
+  importSave.addEventListener('click', () => {
+    try { assertImportAllowed(); file.value = ''; file.click(); }
+    catch (error) { status.textContent = error.message; }
+  });
   file.addEventListener('change', async () => {
     const selected = file.files?.[0]; if (!selected) return;
     try {
@@ -78,7 +81,7 @@ export function openOfflinePlay({ transfer, canImport = () => true, onImported =
         consequence: `All ${preview.slots.length} slots and the profile will be replaced. A previous-save backup is kept first. The game reloads after import.`,
         confirmLabel: 'Import saves', onConfirm: () => {
           try {
-            if (!canImport()) throw new Error('Return to the title screen before importing saves.');
+            assertImportAllowed();
             transfer.restore(text); status.textContent = 'Saves imported. Reload the game to use them.';
             reload.hidden = false; importSave.disabled = true; reload.focus();
             onImported();

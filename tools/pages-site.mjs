@@ -332,10 +332,8 @@ function assemble(outDir, keep) {
   const tmp = mkdtempSync(join(tmpdir(), 'pages-site-main-'));
   const archive = join(tmp, 'source.tar');
   execFileSync('git', ['-C', ROOT, 'archive', '--format=tar', '--output', archive, mainRef]);
-  execFileSync('tar', ['-xf', archive, '-C', tmp]);
-  rmSync(archive);
-  cpSync(tmp, outDir, { recursive: true });
-  rmSync(tmp, { recursive: true, force: true });
+  try { execFileSync('tar', ['-xf', archive, '-C', outDir]); }
+  finally { rmSync(tmp, { recursive: true, force: true }); }
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
   writeFileSync(join(outDir, '.nojekyll'), '');
 
@@ -513,7 +511,7 @@ try {
     const discovered = JSON.parse(readFileSync(join(dir, 'builds.json'), 'utf8')).otherPages || [];
     const before = process.exitCode;
     const ok = check(dir);
-    const caught = process.exitCode === 1 && ok === pages - 1 + discovered.length;
+    const caught = process.exitCode === 1 && ok === 2 * (pages - 1) + discovered.length;
     process.exitCode = before || 0;
     void checks;
     if (!caught) { console.error(`MISS planted drift on ${victim.branch}/${victim.builds[0].ordinal} was not caught`); process.exitCode = 1; }

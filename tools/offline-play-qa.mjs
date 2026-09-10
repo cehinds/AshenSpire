@@ -11,6 +11,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { createSaveTransfer } from '../src/engine/saveTransfer.js';
 const out = resolve('artifacts/offline-play'); mkdirSync(out, { recursive: true });
+const offlineOnly = process.argv.includes('--offline-only');
 const downloads = resolve(out, `downloads-${Date.now()}`); mkdirSync(downloads);
 const html = readFileSync('AshenSpire.html'), build = JSON.parse(readFileSync('buildordinal.json'));
 const metadata = { branch: 'main', version: build.release, ordinal: build.ordinal, bytes: html.length };
@@ -34,7 +35,9 @@ const browser = await launchBrowser({ prefix: 'offline-qa-', browser: resolveBro
 const ws = new WebSocket(browser.wsUrl), pending = new Map(), completed = [], downloadNames = new Map(), errors = [];
 let serial = 0, checks = 0;
 const send = (method, params = {}, sessionId) => new Promise((resolve, reject) => {
-  const id = ++serial; pending.set(id, { resolve, reject }); ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+  const id = ++serial;
+  const timer = setTimeout(() => { pending.delete(id); reject(new Error(`Browser command timed out: ${method}`)); }, 60000);
+  pending.set(id, { resolve, reject, timer }); ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
 });
 ws.addEventListener('message', event => {
   const msg = JSON.parse(event.data);
@@ -42,7 +45,7 @@ ws.addEventListener('message', event => {
   if (msg.method === 'Browser.downloadWillBegin') downloadNames.set(msg.params.guid, msg.params.suggestedFilename);
   if (msg.method === 'Browser.downloadProgress' && msg.params.state === 'completed') completed.push(downloadNames.get(msg.params.guid));
   if (msg.method === 'Runtime.exceptionThrown') errors.push(msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text);
-  const pair = pending.get(msg.id); if (!pair) return; pending.delete(msg.id);
+  const pair = pending.get(msg.id); if (!pair) return; pending.delete(msg.id); clearTimeout(pair.timer);
   if (msg.error) pair.reject(new Error(msg.error.message)); else pair.resolve(msg.result);
 });
 await new Promise(done => ws.addEventListener('open', done));
@@ -68,13 +71,19 @@ try {
   const boot = async url => { await send('Page.navigate', { url }, sessionId); await until('!!document.querySelector(".startup-gate")'); await click('.startup-gate'); await until('!!document.querySelector("#download-game")'); };
   const waitDownload = async count => { for (let i = 0; i < 600 && completed.length < count; i++) { await wait(100); if(i%10===0 && await evaluate('document.querySelector(".offline-play-modal [role=status]")?.textContent.includes("Failed to fetch")')) break; } if(completed.length < count) console.error(await evaluate('document.body.innerText')); check(completed.length >= count, 'browser completes requested download'); return resolve(downloads, completed[count - 1]); };
   await send('Emulation.setDeviceMetricsOverride', { width: 1365, height: 1000, deviceScaleFactor: 1, mobile: false }, sessionId);
+  let backupPath, gamePath;
+  if (offlineOnly) {
+    backupPath = resolve(downloads, 'fixture-saves.json'); writeFileSync(backupPath, original);
+    gamePath = resolve('AshenSpire.html');
+    await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true }, sessionId);
+  } else {
   await boot(base + '/AshenSpire.html');
   await click('#download-game'); await until('!!document.querySelector("#offline-export")');
-  await click('#offline-export'); const backupPath = await waitDownload(1);
+  await click('#offline-export'); backupPath = await waitDownload(1);
   check(createSaveTransfer(createMemoryStorage(), registries).inspect(readFileSync(backupPath, 'utf8')).slots.filter(x => x.summary).length === 1, 'exported backup includes the saved run');
   await click('#offline-check'); await until('!document.querySelector("#offline-download").disabled');
   await capture('desktop-download');
-  await click('#offline-download'); const gamePath = await waitDownload(2);
+  await click('#offline-download'); gamePath = await waitDownload(2);
   check(readFileSync(gamePath).equals(html), 'downloaded HTML is byte-identical to the packaged build');
   await click('.offline-play-modal .modal-close'); await click('#settings');
   await capture('desktop-settings');
@@ -85,6 +94,7 @@ try {
   await wait(1200);
   await click('#download-game'); await until('!!document.querySelector("#offline-export")');
   check(await evaluate('document.documentElement.scrollWidth<=innerWidth'), 'phone download panel fits viewport'); await capture('phone-download');
+  }
   await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 }, sessionId);
   await boot(pathToFileURL(gamePath).href);
   check(await evaluate('location.protocol === "file:"'), 'downloaded game boots locally with network disabled');
@@ -109,9 +119,13 @@ try {
   await until('!!document.querySelector(".combat")');
   await capture('phone-offline-combat');
   check(true, 'offline map entry opens playable combat');
+  await send('Page.addScriptToEvaluateOnNewDocument', { source: `Object.defineProperty(window,'localStorage',{get(){throw new Error('Browser storage blocked')}})` }, sessionId);
+  await boot(pathToFileURL(gamePath).href);
+  await click('#download-game'); await click('#offline-import');
+  check(await evaluate('document.querySelector(".offline-play-modal [role=status]").textContent.includes("not keeping saves")'), 'blocked storage refuses import before changing saves');
   check(errors.length === 0, `no browser exceptions: ${errors.join('; ')}`);
 } finally {
   await Promise.race([send('Browser.close').catch(() => {}), wait(1000)]); ws.close(); await browser.close();
   server.closeAllConnections(); await new Promise(done => server.close(done));
 }
-console.log(`${checks} offline download/save browser checks passed. Release metadata is a local fixture; downloaded bytes are the real generated build.`);
+console.log(`${checks} ${offlineOnly ? 'offline-only' : 'download and offline'} browser checks passed. ${offlineOnly ? 'Download skipped; local generated HTML and a save fixture were used.' : 'Release metadata is a local fixture; downloaded bytes are the real generated build.'}`);

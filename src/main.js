@@ -1174,7 +1174,12 @@ function showSettings() {
 }
 
 function showOfflinePlay() {
-  openOfflinePlay({ transfer: createSaveTransfer(bootStorage, registries), canImport: () => !run });
+  openOfflinePlay({ transfer: createSaveTransfer(bootStorage, registries), assertImportAllowed: () => {
+    if (run) throw new Error('Return to the title screen before importing saves.');
+    let persistent = false;
+    try { persistent = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
+    if (!persistent) throw new Error('This browser is not keeping saves. Enable browser storage and reopen the game before importing.');
+  } });
 }
 
 /**
