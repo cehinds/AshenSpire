@@ -1,6 +1,6 @@
 # Equipment experiment preview
 
-PR #936, build 0.6.0.110. Open `AshenSpire.html?shot=combat-test`.
+PR #936, build 0.6.0.114. Open `AshenSpire.html?shot=combat-test`.
 
 Both screenshots show the greatsword with no armor, one-handed grip, and a Blood
 Rune. The receipt derives 18 required Strength, 8 total weight, light load, zero
