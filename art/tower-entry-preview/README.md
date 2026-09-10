@@ -1,13 +1,13 @@
 # Tower entrance preview
 
 Local concept on `codex/tower-entry-preview`; not promoted to dev, test or release.
-The initial prompt starts a 2.6-second sequence: River Citadel lights awaken,
-the view approaches the tower, and a central doorway reveal opens onto its hall.
+The initial prompt starts a 1.6-second sequence: River Citadel lights awaken,
+then the scene crossfades into the hall. Darker overlays improve menu readability.
 The real menu then mounts. Continue retains its existing save-resume action.
 Replay entrance returns to the initial prompt; reduced motion skips the movement.
 
-This preview uses layered paintings and a doorway wipe, not a 3D camera or
-physical door simulation. The portrait hall is separately composed to retain
+This preview uses opacity fades only, without camera movement or a doorway wipe.
+The portrait hall is separately composed to retain
 the arch and pillars on phones. No save schema or game mechanics change.
 
 ## Artwork and prompts

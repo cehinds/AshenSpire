@@ -91,9 +91,9 @@ export function mountStartupGate(app, {
     const reducedMotion = document.body.classList.contains('reduced-motion')
       || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     root.classList.toggle('tower-calm', reducedMotion);
-    // Retain the input gate until the doorway is fully open so the activation
+    // Retain the input gate until the hall fade completes so the activation
     // gesture cannot fall through to Continue/New on the revealed menu.
-    const delay = reducedMotion ? 140 : 2600;
+    const delay = reducedMotion ? 140 : 1600;
     revealTimer = setTimeout(() => {
       revealTimer = null;
       teardown(true);
