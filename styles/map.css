@@ -408,3 +408,31 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
 .mapscreen svg:has(.map-terrain) .map-edge.shrine-lane, .world-atlas-screen .atlas-roads .available { stroke:#ffe39a; stroke-width:3.5px; }
 .mapscreen .map-scroll:has(.map-terrain), .atlas-scrollport, .atlas-world { background:#8b7d61; }
 .map-terrain .terrain-detail { opacity:1; }
+
+/* Tall local-location shell: the same map and action layout for every city. */
+dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((100dvh - 24px) / var(--ui-zoom,1)); max-height:calc((100dvh - 24px) / var(--ui-zoom,1)); }
+.atlas-dialog:has(.atlas-local-port) .atlas-location-body { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:minmax(320px, 2fr) minmax(150px,1fr); overflow:auto; overscroll-behavior:contain; }
+.atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1 / -1; min-height:280px; padding:12px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-local-port { min-height:220px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-location-detail { min-width:0; min-height:150px; padding:16px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-local-tools { align-self:start; padding:16px 12px; flex-direction:column; }
+.atlas-dialog:has(.atlas-local-port) .atlas-local-help { order:2; }
+.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { display:flex; flex-wrap:wrap; gap:10px; padding:12px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot > span { display:none; }
+.atlas-dialog:has(.atlas-local-port) .atlas-detail-actions { margin-left:auto; padding:0; display:flex; flex-wrap:wrap; gap:8px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-detail-actions .as-btn { margin:0; white-space:normal; }
+@media(max-width:700px) {
+ .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(300px,1.5fr) auto minmax(160px,1fr); }
+ .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1; min-height:300px; }
+ .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { grid-row:2; flex-direction:row; padding:6px 10px; }
+ .atlas-dialog:has(.atlas-local-port) .atlas-location-detail { min-height:160px; }
+}
+@media(max-height:500px) and (min-width:701px) {
+ .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); grid-template-rows:minmax(220px,1fr) auto; }
+ .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1; grid-row:1 / 3; min-height:280px; }
+ .atlas-dialog:has(.atlas-local-port) .atlas-location-detail { grid-column:2; grid-row:1; }
+ .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { grid-column:2; grid-row:2; padding:6px; flex-direction:row; }
+}
+
+.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot .as-btn { width:auto; min-width:120px; max-width:100%; }
+.atlas-detail-scroll { scrollbar-gutter:stable; scrollbar-color:#947548 #211b14; }
