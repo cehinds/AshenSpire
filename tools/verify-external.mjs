@@ -112,7 +112,13 @@ if (!SELFTEST) {
     console.log(`verify-external: RED — ${findings.length} finding(s) over ${checks} check(s) in ${relative(ROOT, OUT) || '.'}`);
     process.exit(1);
   }
-  console.log(`verify-external: OK — ${checks} checks passed (${assets} shippable assets present and byte-identical beside the build)`);
+  // THE VERDICT LINE ENDS AT THE COUNT. tools/verdict.mjs parses a fixed
+  // grammar and a trailing parenthetical matches none of it: `OK — N checks
+  // passed (…)` read as prose, so an exit-0 run reported SILENCE and the CI
+  // step failed with "a tool that checked nothing and a tool that found
+  // nothing are the same green". The detail belongs on the line above.
+  console.log(`  ${assets} shippable assets present and byte-identical beside the build.`);
+  console.log(`verify-external: OK — ${checks} checks passed`);
   console.log('BOUNDARY: files on disk only. Runtime-built paths are covered only insofar as the');
   console.log('          WHOLE tree is present; a path that was already wrong is still wrong, and');
   console.log('          nothing here loaded the page or played the game.');
@@ -170,4 +176,5 @@ plant('an injected ASSET_MAP — the wrong shape shipped', (d) => {
 });
 rmSync(work, { recursive: true, force: true });
 if (fail) { console.log(`verify-external --selftest: RED — ${fail} of ${pass + fail} did not behave`); process.exit(1); }
-console.log(`verify-external --selftest: OK — ${pass} checks, every plant caught and the clean copy green`);
+console.log(`  the clean baseline was green, which is what makes the ${pass - 1} plants mean anything.`);
+console.log(`verify-external --selftest: OK — ${pass - 1} plants, ${pass - 1} caught`);

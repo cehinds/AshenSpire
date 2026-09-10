@@ -117,6 +117,9 @@ if (thrown.length) findings.push(`${thrown.length} uncaught exception(s): ${thro
 await close(); server.server.close();
 for (const f of findings) console.log('  RED ' + f);
 if (findings.length) { console.log(`external-play: RED — ${findings.length} finding(s) over ${checks} checks`); process.exit(1); }
-console.log(`external-play: OK — ${checks} checks passed (3 screens mounted from ${relative(ROOT, DIR)}, no broken art, no failed requests)`);
+// Same grammar rule as verify-external: the verdict line ends at the count, or
+// tools/verdict.mjs reads the whole thing as prose and calls the run silent.
+console.log(`  3 screens mounted from ${relative(ROOT, DIR)}; 0 broken images; 0 failed requests.`);
+console.log(`external-play: OK — ${checks} checks passed`);
 console.log('BOUNDARY: three screens and the network. No run was played, and a screen that');
 console.log('          mounts with the WRONG art passes this.');
