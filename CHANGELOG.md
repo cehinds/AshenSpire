@@ -32,8 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-10
 
+- **Ready actions stand out** ([#940](https://github.com/cehinds/AshenSpire/pull/940), `0.6.0.119`). End Turn turns green when no affordable playable cards remain. Green confirmations fade in smoothly, rise slightly and grow subtly, with reduced-motion support. Hold feedback remains visible without interrupting the color fade. Ready modal confirmations fill their footer while Back and Cancel remain available.
+
+
 - **Every armament brings a complete combat kit** ([#904](https://github.com/cehinds/AshenSpire/pull/904), `0.6.0.115`). Weapons, shields, and staves each lend a Strike, Guard, and signature Art. Shields can attack beside a weapon; Guardian creates an Exhausting Bulwark skill, Bastion trades offense for Block, and Spiked Reprisal combines defence with Bleed. Equipment previews show the actual contributions, and solo/co-op fights retain their ownership and upgrade data.
-- **Ready actions stand out** ([#940](https://github.com/cehinds/AshenSpire/pull/940), `0.6.0.117`). End Turn turns green when no affordable playable cards remain. Green confirmations fade in smoothly, rise slightly and grow subtly, with reduced-motion support. Hold feedback remains visible without interrupting the color fade. Ready modal confirmations fill their footer while Back and Cancel remain available.
 
 - **A city spire welcomes each journey** ([#931](https://github.com/cehinds/AshenSpire/pull/931), `0.6.0.113`). Replace the startup and main-menu backdrop with a painted medieval city and central tower in muted gold and charcoal. Keep the title centered and readable on phones and larger screens; ship the artwork as compact WebP.
 

@@ -105,14 +105,14 @@ button:hover, .as-btn:hover, button:focus-visible, .as-btn:focus-visible { backg
 button:focus-visible, .as-btn:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
 button:disabled, .as-btn:disabled, .as-btn[aria-disabled="true"] { border-color: var(--line); color: var(--muted); background: var(--panel); cursor: default; }
 button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 1.38rem; padding: 0.75rem 1.65rem; }
-button.primary, .as-btn.primary { background: color-mix(in srgb, var(--gold) 20%, var(--panel)); border-color: var(--gold); color: var(--parchment); font-weight: 600; }
-button.primary:hover, .as-btn.primary:hover { background: color-mix(in srgb, var(--gold) 30%, var(--panel)); }
-button.primary:disabled, .as-btn.primary:disabled { background: var(--panel); border-color: var(--line); color: var(--muted); }
+button.primary, .as-btn.primary { background-color: color-mix(in srgb, var(--gold) 20%, var(--panel)); border-color: var(--gold); color: var(--parchment); font-weight: 600; }
+button.primary:hover, .as-btn.primary:hover { background-color: color-mix(in srgb, var(--gold) 30%, var(--panel)); }
+button.primary:disabled, .as-btn.primary:disabled { background-color: var(--panel); border-color: var(--line); color: var(--muted); }
 button.danger, .as-btn.danger, button.subtle.danger { border-color: var(--danger); color: var(--danger); background: var(--panel); }
 button.danger:hover, .as-btn.danger:hover { background: rgba(212, 98, 46, 0.08); }
 /* A loss is the way forward on a danger door: primary weight, danger colour. */
-button.primary.danger, .as-btn.primary.danger { background: rgba(212, 98, 46, 0.14); border-color: var(--danger); color: var(--parchment); }
-button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212, 98, 46, 0.24); }
+button.primary.danger, .as-btn.primary.danger { background-color: rgba(212, 98, 46, 0.14); border-color: var(--danger); color: var(--parchment); }
+button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: rgba(212, 98, 46, 0.24); }
 
 /* IconButton — ONE tap-safe box for every header action, close included. A
    LENGTH, not a floor: --iconbtn-size (base.css), the same on every component. */
@@ -2870,8 +2870,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .playing-card-details .ti-meta { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding-bottom:16px; border-bottom:1px solid var(--line); }
 .playing-card-details .ctext { font-size:18px; line-height:1.55; }
 .playing-card-details .ti-flavor { color:var(--muted); line-height:1.5; }
-.card-inspection-modal button.card-inspection-play { background:#255c39; border-color:#6fb580; color:#f0fff3; }
-.card-inspection-modal button.card-inspection-play:disabled { background:#363633; border-color:#65655f; color:#b9b9ad; opacity:1; cursor:not-allowed; }
+.card-inspection-modal button.card-inspection-play { background-color:#255c39; border-color:#6fb580; color:#f0fff3; }
+.card-inspection-modal button.card-inspection-play:disabled { background-color:#363633; border-color:#65655f; color:#b9b9ad; opacity:1; cursor:not-allowed; }
 @media(max-width:600px) {
   .card-inspection-modal .card-inspection-layout { padding:16px; gap:18px; grid-template-columns:minmax(0,120px) minmax(0,1fr); }
   .playing-card-details .ctext { font-size:16px; }
