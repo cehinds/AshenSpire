@@ -36,9 +36,15 @@ export function createAtlasIndex(data = worldAtlas) {
     localMaps = index(data.local_maps, "mapId");
   const localByOwner = index(data.local_maps, "ownerNodeId"),
     localPoints = group(data.local_map_nodes, "mapId");
+  // The revision hashes every row of every table (a JSON pass plus two FNV
+  // passes over the result). Nothing on the title screen reads it, so it is
+  // computed on first use rather than on boot.
+  let revision = null;
   return {
     data,
-    revision: atlasRevision(data),
+    get revision() {
+      return (revision ??= atlasRevision(data));
+    },
     nodes,
     world,
     maps: index(data.maps, "mapId"),

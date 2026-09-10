@@ -330,9 +330,10 @@ function assemble(outDir, keep) {
   const mainRef = refFor('main');
   if (!mainRef) throw new Error("no ref for 'main' — it is the site's base tree, so nothing can be assembled without it");
   const tmp = mkdtempSync(join(tmpdir(), 'pages-site-main-'));
-  execFileSync('sh', ['-c', `git -C "${ROOT}" archive --format=tar "${mainRef}" | tar -x -C "${tmp}"`]);
-  cpSync(tmp, outDir, { recursive: true });
-  rmSync(tmp, { recursive: true, force: true });
+  const archive = join(tmp, 'source.tar');
+  execFileSync('git', ['-C', ROOT, 'archive', '--format=tar', '--output', archive, mainRef]);
+  try { execFileSync('tar', ['-xf', archive, '-C', outDir]); }
+  finally { rmSync(tmp, { recursive: true, force: true }); }
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
   writeFileSync(join(outDir, '.nojekyll'), '');
 
@@ -353,7 +354,7 @@ function assemble(outDir, keep) {
         mkdirSync(dirname(destination), {recursive:true});
         writeFileSync(destination, gitBuf(['show', `${b.sha}:${file}`]));
       }
-      writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch, ordinal: b.ordinal, version: b.version, digest: b.digest, built: b.built, commit: b.sha, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
+      writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch, ordinal: b.ordinal, version: b.version, bytes: html.length, digest: b.digest, built: b.built, commit: b.sha, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
       // The proof: what was written is the blob, byte for byte.
       if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${branch}/${b.ordinal}: written build differs from git blob`);
       checks++;
@@ -391,6 +392,10 @@ function check(outDir) {
   for (const d of manifest.branches) for (const b of d.builds) {
     const blob = gitBuf(['show', `${b.sha}:AshenSpire.html`]);
     const onDisk = readFileSync(join(outDir, d.branch, String(b.ordinal), 'index.html'));
+    const download = JSON.parse(readFileSync(join(outDir, d.branch, String(b.ordinal), 'build.json'), 'utf8'));
+    if (download.bytes !== onDisk.length || download.ordinal !== b.ordinal || download.version !== b.version) {
+      console.error(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}: metadata differs from the downloadable file`); process.exitCode = 1;
+    } else checks++;
     if (Buffer.compare(blob, onDisk) !== 0) { console.error(`DRIFT ${d.branch}/${b.ordinal}: site file differs from git blob ${b.sha.slice(0, 10)}`); process.exitCode = 1; }
     else checks++;
   }
@@ -506,7 +511,7 @@ try {
     const discovered = JSON.parse(readFileSync(join(dir, 'builds.json'), 'utf8')).otherPages || [];
     const before = process.exitCode;
     const ok = check(dir);
-    const caught = process.exitCode === 1 && ok === pages - 1 + discovered.length;
+    const caught = process.exitCode === 1 && ok === 2 * (pages - 1) + discovered.length;
     process.exitCode = before || 0;
     void checks;
     if (!caught) { console.error(`MISS planted drift on ${victim.branch}/${victim.builds[0].ordinal} was not caught`); process.exitCode = 1; }
