@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-951",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "A hit redraws a health bar, not the whole battlefield",
+    "detail": "Every beat of a combat animation used to tear down and rebuild both sides of the board — every fighter's artwork, its pose stage, its controls and its tooltips — and then re-fit the formation, five times over a five-beat enemy turn. Now a beat changes only what a beat can change: the health, poise and block readouts, the status tray, and the player's stance and Evade chips; the fighters, their artwork and their controls stay where they are, and a wounded or fallen pose still follows the numbers. An enemy's death still redraws the board in full, as does the end of every animation, so nothing a player sees at rest has changed. Measured against three enemies over one turn: eight combatant frames created where there were thirty-six, and sixty-nine sprite images where there were three hundred.",
+    "build": "0.6.0.130",
+    "pullRequest": 951,
+    "url": "https://github.com/cehinds/AshenSpire/pull/951"
+  },
+  {
     "id": "pr-936",
     "date": "2026-09-10",
     "group": "2026-09-10",
