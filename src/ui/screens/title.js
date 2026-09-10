@@ -214,11 +214,13 @@ export function mountTitle(app, {
         ${hudQuickSettingsHtml(hudQuickSettingsModel({ place: 'title', presentation: registries.balance.ui.hudQuickSettings, settings: meta.settings || {} }))}
         ${menuHtml()}
         ${buildStampHtml('title')}
+        <button type="button" class="tower-preview-replay">Replay entrance</button>
         ${modalHtml()}
       </div>`;
 
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
     const root = app.querySelector('.title-screen');
+    root.querySelector('.tower-preview-replay')?.addEventListener('click', () => onCollapse?.());
     root.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && modal) {
         event.preventDefault();

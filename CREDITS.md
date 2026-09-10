@@ -146,3 +146,11 @@ Three review-only alternatives generated from the approved title artwork are
 retained in `art/title-background-variations/`: River Citadel, Forgotten
 Observatory, and Ashen Bastion. They use the same native resolution and WebP
 export settings and are excluded from the runtime asset bundle.
+
+## Tower entrance preview (2026-09-10)
+
+The River Citadel unlit/lit pair and landscape/portrait entrance hall in
+`assets/bg/` are project-owned artwork generated with OpenAI imagegen from
+the River Citadel concept and its derived hall. Exported to WebP at quality
+90. Prompt specifications and preview scope are in
+`art/tower-entry-preview/README.md`. No third-party asset license is claimed.

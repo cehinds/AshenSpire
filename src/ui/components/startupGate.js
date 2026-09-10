@@ -59,6 +59,10 @@ export function mountStartupGate(app, {
   app.innerHTML = `
     <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
       role="${esc(accessibility.role)}" aria-label="${esc(accessibility.label)}">
+      <div class="tower-scene" aria-hidden="true">
+        <div class="tower-exterior"><div class="tower-city-unlit"></div><div class="tower-city-lit"></div></div>
+        <div class="tower-hall"></div>
+      </div>
       <div class="startup-ash-field" data-component="startup-ash-field" aria-hidden="true">${particleHtml}</div>
       ${lockupHtml(properties, accessibility)}
       ${buildStampHtml('startup')}
@@ -84,7 +88,12 @@ export function mountStartupGate(app, {
     armed = null;
     root.classList.add('is-revealing');
     root.setAttribute('aria-busy', 'true');
-    const delay = document.body.classList.contains('reduced-motion') ? 140 : 180;
+    const reducedMotion = document.body.classList.contains('reduced-motion')
+      || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    root.classList.toggle('tower-calm', reducedMotion);
+    // Retain the input gate until the doorway is fully open so the activation
+    // gesture cannot fall through to Continue/New on the revealed menu.
+    const delay = reducedMotion ? 140 : 2600;
     revealTimer = setTimeout(() => {
       revealTimer = null;
       teardown(true);
