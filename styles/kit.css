@@ -105,16 +105,18 @@ button:hover, .as-btn:hover, button:focus-visible, .as-btn:focus-visible { backg
 button:focus-visible, .as-btn:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
 button:disabled, .as-btn:disabled, .as-btn[aria-disabled="true"] { border-color: var(--line); color: var(--muted); background: var(--panel); cursor: default; }
 button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 1.38rem; padding: 0.75rem 1.65rem; }
-button.primary, .as-btn.primary { background: color-mix(in srgb, var(--gold) 20%, var(--panel)); border-color: var(--gold); color: var(--parchment); font-weight: 600; }
-button.primary:hover, .as-btn.primary:hover { background: color-mix(in srgb, var(--gold) 30%, var(--panel)); }
-button.primary:disabled, .as-btn.primary:disabled { background: var(--panel); border-color: var(--line); color: var(--muted); }
+button.primary, .as-btn.primary { background-color: color-mix(in srgb, var(--gold) 20%, var(--panel)); border-color: var(--gold); color: var(--parchment); font-weight: 600; }
+button.primary:hover, .as-btn.primary:hover { background-color: color-mix(in srgb, var(--gold) 30%, var(--panel)); }
+button.primary:disabled, .as-btn.primary:disabled { background-color: var(--panel); border-color: var(--line); color: var(--muted); }
 button.danger, .as-btn.danger, button.subtle.danger { border-color: var(--danger); color: var(--danger); background: var(--panel); }
 button.danger:hover, .as-btn.danger:hover { background: rgba(212, 98, 46, 0.08); }
 /* A loss is the way forward on a danger door: primary weight, danger colour. */
 /* Opaque on purpose: the same tint over the panel, mixed rather than layered,
-   so the face has one colour a contrast check (and a screenshot) can read. */
-button.primary.danger, .as-btn.primary.danger { background: color-mix(in srgb, var(--danger) 14%, var(--panel)); border-color: var(--danger); color: var(--parchment); }
-button.primary.danger:hover, .as-btn.primary.danger:hover { background: color-mix(in srgb, var(--danger) 24%, var(--panel)); }
+   so the face has one colour a contrast check (and a screenshot) can read.
+   background-color, not background: the hold-progress image lives on the same
+   element and a colour rule must never reset it. */
+button.primary.danger, .as-btn.primary.danger { background-color: color-mix(in srgb, var(--danger) 14%, var(--panel)); border-color: var(--danger); color: var(--parchment); }
+button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: color-mix(in srgb, var(--danger) 24%, var(--panel)); }
 
 /* IconButton — ONE tap-safe box for every header action, close included. A
    LENGTH, not a floor: --iconbtn-size (base.css), the same on every component. */
@@ -3066,15 +3068,15 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* Green means the primary action is ready; native/ARIA disabled states remain muted. */
 button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
 .as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
-  background:#255c39; border-color:#6fb580; color:#f0fff3;
+  background-color:#255c39; border-color:#6fb580; color:#f0fff3;
 }
 button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover,
 .as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover {
-  background:#306e46;
+  background-color:#255c39;
 }
 button.primary:disabled, button.primary[aria-disabled='true'],
 .as-btn.primary:disabled, .as-btn.primary[aria-disabled='true'] {
-  background:var(--panel); border-color:var(--line); color:var(--muted);
+  background-color:var(--panel); border-color:var(--line); color:var(--muted);
 }
 /* Modal height is independent of its standard width. Keep chrome pinned and
    let the body scroll at its natural text/art size. */
@@ -3100,3 +3102,40 @@ button.primary:disabled, button.primary[aria-disabled='true'],
 .modal-body, .as-body, .as-pane { overscroll-behavior: contain; scrollbar-gutter: stable; }
 .as-pane > * { flex-shrink: 0; }
 .modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { white-space: normal; overflow-wrap: anywhere; }
+/* Ready actions rise slightly without moving surrounding layout. */
+button.primary, .as-btn.primary, button.primary.beat-hold, .as-btn.primary.beat-hold { transition:background-color 480ms ease, border-color 480ms ease, color 480ms ease, scale 480ms ease, translate 480ms ease, box-shadow 480ms ease; }
+button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
+.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+  scale:1.015; translate:0 -2px; box-shadow:0 4px 10px #0005;
+}
+/* The lift's shadow sits at higher specificity than the house focus ring and
+   used to replace it, so a keyboard user focusing a ready primary saw nothing
+   change. Ring and lift together. */
+button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):focus-visible,
+.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):focus-visible {
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent), 0 4px 10px #0005;
+}
+.modal-foot:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) {
+  flex-direction:column; align-items:stretch;
+}
+.modal-foot:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) > .modal-foot-note { display:none; }
+.modal-foot-actions:has(> .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; margin-left:0;
+}
+.modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+  grid-column:1 / -1; order:1; width:100%; max-width:none; min-width:0;
+}
+@media (prefers-reduced-motion:reduce) { button.primary, .as-btn.primary, button.primary.beat-hold, .as-btn.primary.beat-hold { transition:none; } }
+body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transition:none; }
+/* Pending confirmations keep their explanatory text even on narrow screens. */
+.modal-foot:not(:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']))) { flex-wrap:wrap; }
+.modal-foot:not(:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']))) > .modal-foot-note { display:block; flex:1 1 100%; }
+.modal-foot > .modal-foot-note > span { visibility:visible; white-space:normal; overflow:visible; }
+/* Redrawn ready controls fade in too; hold progress itself remains uneased. */
+@starting-style {
+  button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
+  .as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+    background-color:color-mix(in srgb, var(--gold) 20%, var(--panel));
+    border-color:var(--gold); scale:1; translate:0 0; box-shadow:none;
+  }
+}

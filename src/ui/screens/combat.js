@@ -1376,7 +1376,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if ($('.end-turn .et-key')?.textContent !== etKey) $('.end-turn').replaceChildren('End Turn', keycap(etKey, { class: 'et-key' }));
     const hasPlayable = endTurnHasPlayable();
     $('.end-turn').classList.toggle('pulse', hasPlayable);
-    $('.end-turn').dataset.confirmReady = String(!hasPlayable);
+    $('.end-turn').dataset.confirmReady = String(combat.phase === 'player' && !hasPlayable);
+
     // The innerHTML above just dropped the HOLD hint on the floor. `refresh()`
     // re-reads the action's state and re-dresses the button — and it is the
     // reason a beat can live on a control its own screen repaints every frame

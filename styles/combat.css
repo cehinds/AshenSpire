@@ -41,7 +41,8 @@
 
 /* Approved environment paintings are selected with an SVG atlas viewBox. */
 .environment-backdrop { opacity: 1; overflow: hidden; background: #17130f; top: var(--environment-top, 0); bottom: auto; height: var(--environment-height, 65%); }
-.environment-backdrop > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.environment-backdrop > svg { position: absolute; inset: 0; width: 100%; height: 100%; transform:scale(1.06); transform-origin:center; }
+@media (max-width:600px) { .environment-backdrop > svg { transform:scale(1.02); } }
 .environment-backdrop::after { display: none; }
 .environment-backdrop::before {
   z-index: 1;
@@ -1351,4 +1352,30 @@
      controls should intercept a press on the battlefield below. */
   :root:has(.combat) .hud-relics { pointer-events: none; }
   :root:has(.combat) .hud-relics > * { pointer-events: auto; }
+}
+
+/* Reserve space for larger edge controls; compact piles leave End Turn room. */
+:root .combat:not(.coop)[data-layout='formation'] > .hand-area {
+  --combat-orb-size: calc(clamp(64px, 20vw, 128px) / var(--ui-zoom,1));
+  grid-template-rows: minmax(0,1fr) calc(var(--combat-orb-size) + 16px / var(--ui-zoom,1));
+}
+:root .combat:not(.coop)[data-layout='formation'] > .hand-area > .combat-action-row {
+  grid-template-columns: var(--combat-orb-size) minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr) var(--combat-orb-size);
+  gap:calc(8px / var(--ui-zoom,1));
+}
+:root .combat:not(.coop)[data-layout='formation'] .combat-action-row > :is(.energy-orb,.combat-potions) {
+  width:var(--combat-orb-size); height:var(--combat-orb-size); min-height:var(--combat-orb-size);
+}
+:root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .pile {
+  height:calc(52px / var(--ui-zoom,1)); min-height:calc(52px / var(--ui-zoom,1)); padding-inline:2px;
+}
+@media (max-width:480px) {
+  :root .combat:not(.coop)[data-layout='formation'] > .hand-area > .combat-action-row {
+    grid-template-columns:var(--combat-orb-size) minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr) var(--combat-orb-size);
+    gap:calc(4px / var(--ui-zoom,1));
+  }
+}
+@media (max-height:500px) {
+  :root .combat:not(.coop)[data-layout='formation'] { grid-template-rows:10% minmax(0,1fr) calc(248px / var(--ui-zoom,1)); }
+  :root .combat:not(.coop)[data-layout='formation'] > .hand-area { --combat-orb-size:calc(96px / var(--ui-zoom,1)); }
 }
