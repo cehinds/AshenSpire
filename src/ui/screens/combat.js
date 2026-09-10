@@ -1159,7 +1159,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance]);
       let record = enemyFrames.get(enemy.id);
       if (record && record.key !== artKey) { stageFor(record.box)?.dispose?.(); record.box.remove(); record = null; }
-      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), combat.player, targeting, selectedEnemyId, living.map(e => e.id), disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
+      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), combat.player, targeting, selectedCombatantId, living.map(e => e.id), disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
       if (record?.renderKey === renderKey) continue;
       const leading = [];
       if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), intentEl(enemy));
@@ -1218,7 +1218,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         box.addEventListener('pointerenter', () => (selected || selectedFlask != null) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
       }
-      box.setAttribute('aria-pressed', String(selectedEnemyId === enemy.id));
+      box.setAttribute('aria-pressed', String(selectedCombatantId === enemy.id));
       if (!enemy.alive) { delete box.dataset.focusable; box.removeAttribute('tabindex'); box.setAttribute('aria-disabled', 'true'); }
       else box.removeAttribute('aria-disabled');
       if (!record) row.appendChild(box);
