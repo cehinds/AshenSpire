@@ -1,3 +1,4 @@
+import { COMBAT_POSE_STATES } from '../content/combatPoseStates.js';
 // Silhouette effects are applied to the image alpha, never the sprite box.
 export const POWER_FRAMES = Object.freeze({
   power1: { radius: 1.4, blur: 3, alpha: .55, brightness: 1.03 },
@@ -16,6 +17,8 @@ export function resourceAura(card = {}, receipt) {
   return result;
 }
 export function auraFilter(pose, rest = 'idle', resources = [], active = false) {
+  const state = COMBAT_POSE_STATES[rest];
+  if (state && !active) return `drop-shadow(0 0 2px ${state.color}55) drop-shadow(0 0 4px ${state.color}22)`;
   const phase = POWER_FRAMES[pose];
   const guarded = ['guard', 'shieldGuard', 'parry'].includes(rest);
   const palette = active && resources.length ? resources : phase ? ['power'] : guarded ? ['mana'] : [];

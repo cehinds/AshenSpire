@@ -107,7 +107,7 @@ export function openFlaskInspectModal({ def, charges = null, opener = document.a
     // so the door's height is the art's and two flasks are the same door.
     body: (host) => {
       const inspection = renderCollectibleInspection(null, def, 'Potion', { interactive: false });
-      inspection.querySelector('.card-inspection-details').prepend(el('div', { class: 'flask-inspect-lines' }, lines.map(line => prose(line))));
+      if (Number.isFinite(charges)) inspection.querySelector('.card-inspection-details').append(el('p', { class: 'flask-inspect-lines' }, `${charges} charge${charges === 1 ? '' : 's'} remaining.`));
       host.replaceChildren(inspection);
     },
     primary: done,

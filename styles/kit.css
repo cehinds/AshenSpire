@@ -493,7 +493,9 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 
 /* TitleMenu — the one menu with no panel around it. */
 .as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
-.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+/* The name fills its line: an indent would overflow and disable centering.
+   Shift half the trailing tracking instead, keeping the visible text centered. */
+.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; transform: translateX(calc(var(--track) / 2)); color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
 .as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
 .as-titlemenu li + li { border-top: 1px solid var(--rule); }
@@ -509,8 +511,8 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 }
 .as-titlemenu .tm-entry:hover, .as-titlemenu .tm-entry:focus-visible { color: var(--gold); outline: none; background: transparent; box-shadow: none; }
 .as-titlemenu .tm-entry:disabled { color: var(--muted); background: transparent; }
-.as-titlemenu > .as-ornament { margin-top: 1.35rem; }
-.as-titlemenu .tm-foot { margin-top: 1.5rem; color: var(--muted); font-size: 1.05rem; letter-spacing: 0.2em; text-transform: uppercase; }
+.as-titlemenu > .as-ornament { margin-top: 1.35rem; margin-inline: auto; }
+.as-titlemenu .tm-foot { --track: 0.2em; margin-top: 1.5rem; color: var(--muted); font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; }
 
 /* ═══ TOOLTIP — Title + meta + effect + hairline + glossary + flavour ══════ */
 .as-tip { width: 36rem; max-width: 100%; padding: 1.1rem 1.35rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-2); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55); font-size: 1.35rem; line-height: 1.45; color: var(--parchment); }
@@ -692,6 +694,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
 .card[data-small="true"] { transform: scale(0.92); }
 /* CostMedallion — top-left, outside the frame, the only element allowed to break the edge. */
+.card .card-costs { display: contents; }
 .card .cost, .as-cost {
   position: absolute; top: -1rem; left: -1rem;
   display: grid; place-items: center;
@@ -1090,8 +1093,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 .reward-door .reward-row .card.reward-selected {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 2px var(--gold), 0 10px 30px rgba(var(--accent-rgb), 0.28);
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px var(--green), 0 10px 30px color-mix(in srgb, var(--green) 28%, transparent);
   transform: translateY(-8px) scale(1.06);
 }
 .reward-door .reward-confirm:not(:disabled) {
@@ -1633,7 +1636,6 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .startup-gate > .as-titlemenu { position: relative; z-index: 1; align-self: center; animation: startupMarkIn 520ms ease-out both; }
 .startup-gate > .as-titlemenu .tm-name {
   font-size: min(12cqi, 5.4rem);
-  text-indent: 0;
   text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38);
 }
 .startup-gate > .as-titlemenu .tm-sub { margin-top: 0.75rem; }
@@ -2208,6 +2210,12 @@ body.pad-mode .as-keycap.float { display: none; }
 .combatant-inspector-summary { display: grid; gap: 0.55rem; }
 .combatant-inspector-resources { gap: 0.45rem; }
 .combatant-inspector-section { margin-top: 0.7rem; }
+.combatant-abilities > summary, .combatant-ability > summary { cursor: pointer; padding-block: 0.4rem; }
+.combatant-abilities > summary { display: list-item; list-style-position: inside; }
+.combatant-ability { border-bottom: 1px solid var(--line); padding-block: 0.25rem; }
+.combatant-ability > summary { color: var(--gold); font-weight: 600; }
+.combatant-ability > .as-prose { margin: 0.2rem 0 0.65rem; }
+.combatant-abilities summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .combatant-inspector-section > .as-hairline { margin: 0.35rem 0 0.2rem; }
 .combatant-inspector-row { padding-inline: 0; white-space: normal; align-items: flex-start; }
 .combatant-inspector-row > .r-label { flex: 0 1 auto; }
@@ -2651,7 +2659,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury[data-responsive='phone'] .armoury-head .modal-tab { min-width: 0; padding-inline: .5rem; }
 /* Approved 350 × 490 poker canvas. Every measurement scales together. */
 .equipment-poker-card { display:block; position:relative; width:100%; max-width:392px; aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
-.equipment-poker-card .epc-frame { box-sizing:border-box; display:grid; grid-template-rows:25px minmax(0,1fr) 25px 39px 19px 82px 36px 13px; position:absolute; inset:0 auto auto 0; width:350px; height:490px; padding:18px; gap:5px; border:1px solid var(--accent); border-radius:13px; transform-origin:top left; transform:scale(var(--card-scale,1)); box-shadow:0 9px 26px #0006,inset 0 0 0 4px #17120e,inset 0 0 0 5px #695334; background:linear-gradient(125deg,#302319,#19150f 45%,#251d15); font:13px/1.35 Arial,sans-serif; }
+.equipment-poker-card .epc-frame { box-sizing:border-box; display:grid; grid-template-rows:25px minmax(0,1fr) 25px 39px 19px 82px 36px 13px; position:absolute; inset:0 auto auto 0; width:var(--epc-frame-w,350px); height:var(--epc-frame-h,490px); padding:var(--epc-pad,18px); gap:var(--epc-gap,5px); border:1px solid var(--accent); border-radius:13px; transform-origin:top left; transform:scale(var(--card-scale,1)); box-shadow:0 9px 26px #0006,inset 0 0 0 4px #17120e,inset 0 0 0 5px #695334; background:linear-gradient(125deg,#302319,#19150f 45%,#251d15); font:13px/1.35 Arial,sans-serif; }
 .epc-frame > * { min-width:0; min-height:0; box-sizing:border-box; }
 .epc-name { display:flex; justify-content:space-between; gap:8px; align-items:center; font:600 20px/1.12 Georgia,serif; color:#f0dfaf; }
 .epc-name > span { font-size:13px; color:var(--accent); }
@@ -2750,11 +2758,31 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 }
 /* Shared inspection: 270px artwork + 180px information within the 450px face. */
 .equipment-poker-card .epc-frame,
-.collectible-poker-card .epc-frame { padding:19px; gap:3px; grid-template-rows:270px 22px 34px 20px 48px 22px 16px; }
-.epc-frame > .epc-name { position:absolute; z-index:1; top:26px; left:27px; right:27px; height:29px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:#211a12dd; padding:3px 6px; }
+.collectible-poker-card .epc-frame { padding:var(--epc-pad,19px); gap:var(--epc-gap,3px); }
+.epc-frame > .epc-name { position:absolute; z-index:1; top:26px; left:27px; right:27px; min-height:29px; height:auto; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:#211a12dd; padding:3px 6px; }
 .epc-name > span { display:none; }
 .epc-art img { padding:35px 8px 8px; }
-.epc-frame > :is(.epc-type,.epc-flavor), .epc-bonus, .epc-footer > span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.epc-frame > :is(.epc-type,.epc-flavor), .epc-footer > span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+/* A BONUS IS THE MECHANIC, SO IT WRAPS BEFORE IT TRUNCATES. `nowrap` + ellipsis
+   cut real numbers mid-word — "Class power: +1 Poten…" — which is worse than a
+   second line. It still ends in an ellipsis once it passes the authored line
+   budget, so a pathological string cannot push the footer off the card. */
+.epc-bonus { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:var(--epc-bonus-lines,2); overflow:hidden; white-space:normal; }
+
+/* TYPE SCALES WITH THE CARD, AND CLAMPS RATHER THAN CLIPS. Each size is a
+   clamp(min, ideal, max) emitted from balance.ui.equipmentCard.text; the ideal
+   is in `cqw` against the frame's own inline size, so a face dropped into a
+   narrow column shrinks its own type instead of cutting the line off. */
+.epc-name { font-size:var(--epc-text-name, 20px); }
+.epc-type { font-size:var(--epc-text-type, 11px); }
+.epc-fact { font-size:var(--epc-text-fact, 10px); }
+.epc-fact strong { font-size:var(--epc-text-factValue, 16px); }
+.epc-tag { font-size:var(--epc-text-tag, 10px); }
+.epc-heading { font-size:var(--epc-text-heading, 10px); }
+.epc-bonus { font-size:var(--epc-text-bonus, 13px); line-height:1.3; }
+.epc-flavor { font-size:var(--epc-text-flavor, 12px); }
+.epc-footer { font-size:var(--epc-text-footer, 10px); }
+
 .epc-frame > .epc-tags { flex-wrap:nowrap; overflow:hidden; }
 .epc-frame > .epc-effects { overflow:hidden; }
 .epc-heading { margin-bottom:2px; }
@@ -2767,12 +2795,23 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-details dt:first-child { margin-top:0; }
 .card-inspection-modal .modal-body { overflow:auto; overscroll-behavior:contain; }
 .equipment-poker-explanations { margin-top:0; }
-.card-info-button { position:absolute; z-index:8; top:6px; right:6px; width:44px; height:44px; min-width:44px; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px Georgia,serif; cursor:pointer; touch-action:manipulation; }
+.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:-46px; right:auto; bottom:auto; left:50%; transform:translateX(-50%); box-sizing:border-box; width:36px; height:36px; min-width:36px; min-height:36px; max-width:36px; max-height:36px; padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px/1 Georgia,serif; cursor:pointer; touch-action:manipulation; visibility:hidden; pointer-events:none; }
+.card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
 .inspection-selected { outline:3px solid #e0bd68; outline-offset:3px; border-radius:12px; }
 .card-info-button:focus-visible { outline:3px solid #fff0bd; outline-offset:2px; }
-@media (pointer:coarse) {
-  .card-info-button { visibility:hidden; pointer-events:none; }
-  .inspection-info-visible > .card-info-button, .card-inspection-target:focus-visible > .card-info-button, .card-inspection-target:has(:focus-visible) > .card-info-button, .card-info-button:focus-visible { visibility:visible; pointer-events:auto; }
+.card-info-button::before { content:''; position:absolute; inset:100% -8px -12px; }
+.card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,190px) minmax(0,1fr); }
+.card-inspection-modal .card-inspection-art > .card { width:100%; height:auto; aspect-ratio:5/7; box-sizing:border-box; }
+.playing-card-details { display:flex; flex-direction:column; gap:16px; padding:4px 0; }
+.playing-card-details .tt-title { display:none; }
+.playing-card-details .ti-meta { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding-bottom:16px; border-bottom:1px solid var(--line); }
+.playing-card-details .ctext { font-size:18px; line-height:1.55; }
+.playing-card-details .ti-flavor { color:var(--muted); line-height:1.5; }
+.card-inspection-modal button.card-inspection-play { background:#255c39; border-color:#6fb580; color:#f0fff3; }
+.card-inspection-modal button.card-inspection-play:disabled { background:#363633; border-color:#65655f; color:#b9b9ad; opacity:1; cursor:not-allowed; }
+@media(max-width:600px) {
+  .card-inspection-modal .card-inspection-layout { padding:16px; gap:18px; grid-template-columns:minmax(0,120px) minmax(0,1fr); }
+  .playing-card-details .ctext { font-size:16px; }
 }
 @media (max-width:600px) {
   .card-inspection-layout { grid-template-columns:minmax(0,1fr); padding:12px; gap:20px; }
@@ -2786,11 +2825,78 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-art > .card { width:220px; height:308px; min-width:0; max-width:100%; margin:0 auto; transform:none; }
 .card-inspection-art > .card .ctext { overflow:hidden; text-overflow:ellipsis; }
 
+.inspection-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.inspection-tag { display:inline-block; max-width:100%; padding:4px 8px; border:1px solid var(--line); border-radius:5px; color:var(--gold); font:inherit; font-size:13px; line-height:1.4; white-space:normal; overflow-wrap:anywhere; cursor:help; }
+.tooltip-keyword { color:var(--gold); border-bottom:1px dotted currentColor; cursor:help; }
+.tooltip-keyword:focus-visible, .inspection-tag:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
+.inspection-facts { display:flex; flex-wrap:wrap; gap:8px; }
+.inspection-facts .inspection-tag { font-size:15px; color:var(--parchment); }
+.inspection-effect { margin:0 0 14px; font-size:18px; line-height:1.55; }
+.inspection-facts + .inspection-effect { margin-top:18px; }
+.inspection-requirement { color:var(--gold); line-height:1.5; }
+.equipment-poker-explanations { min-width:0; }
+.equipment-poker-explanations .inspection-effect:last-of-type { margin-bottom:0; }
+.as-tip .ctext { white-space:normal; max-height:none; overflow:visible; }
+.as-tip .inspection-tags { gap:5px; }
+@media(max-width:600px) {
+  .card-inspection-modal .card-inspection-layout, .card-inspection-layout { grid-template-columns:minmax(0,1fr); gap:16px; padding:16px; }
+  .card-inspection-art { width:100%; max-width:100%; }
+  .card-inspection-art > :is(.equipment-poker-card, .card) { width:160px; height:auto; aspect-ratio:5/7; margin-inline:auto; }
+  .card-inspection-art > .inspection-tags { justify-content:center; }
+  .inspection-effect { font-size:16px; }
+  .inspection-tag { min-height:32px; display:inline-flex; align-items:center; }
+}
 .equipment-choose { width:100%; margin-top:10px; min-height:44px; }
 .poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
 
+/* Creation keeps card nodes in place so focus can lift and settle smoothly. */
+.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { padding:20px 6px 14px; gap:32px 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
+.cc-card-selectors .poker-equipment-choice { min-width:0; max-width:220px; width:100%; justify-self:center; }
+.cc-card-selectors .equipment-poker-card { position:relative; z-index:1; transform-origin:center bottom; transition:transform 180ms ease-out, box-shadow 180ms ease-out; }
+.cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-6px) scale(1.05); z-index:3; box-shadow:0 12px 26px #0008,0 0 18px #d0ac5d55; border-radius:12px; }
+.cc-card-selectors .equipment-choose { white-space:normal; overflow-wrap:anywhere; line-height:1.3; padding:8px; }
+/* Retain the action slot so browsing does not move the next row under a pointer. */
+.cc-card-selectors .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
+.cc-card-selectors .poker-equipment-choice:not(.choice-focused) .card-info-button { visibility:hidden; pointer-events:none; }
+.cc-equipment-details { max-width:none; }
+.cc-equipment-details h3 { margin:0 0 8px; }
+.cc-choice-context, .cc-package-context { color:var(--muted); font-size:14px; line-height:1.4; margin:0 0 12px; }
+.cc-equipment-continue { grid-column:2; grid-row:2; justify-self:end; align-self:end; min-height:44px; max-width:100%; white-space:normal; }
+.cc-starting-package { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
+.cc-starting-package h4 { margin:0 0 8px; color:var(--gold); font-size:18px; }
+.cc-starting-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px 9px; }
+.cc-starting-card { min-width:0; display:flex; flex-direction:column; align-items:center; gap:6px; padding-top:42px; }
+.cc-card-quantity { font-size:13px; color:var(--gold); align-self:start; }
+.cc-starting-card > .card { width:100%; max-width:150px; height:auto; aspect-ratio:5/7; min-width:0; margin:0; transform:none; }
+.equipment-poker-card[data-item='empty-hand'] .epc-art-glyph { font-size:92px; line-height:1; color:var(--gold); }
+.cc-starting-card .card-info-button { top:-44px; }
+.inspection-lore { margin-top:12px; color:var(--muted); font-size:14px; }
+.inspection-lore summary { cursor:pointer; }
+.inspection-lore p { font-style:italic; margin:8px 0 0; }
+.equipment-poker-card .epc-frame > .epc-flavor { display:block; box-sizing:border-box; min-width:0; min-height:0; max-height:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:calc(var(--epc-flavor-row,14px) - 2px); line-height:1; padding-top:0; }
+@media(max-width:700px) {
+  .cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { grid-row:auto; }
+  .cc-equipment-continue { grid-column:1; grid-row:auto; width:100%; }
+  .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-4px) scale(1.03); }
+  .cc-starting-card-grid { gap:9px 6px; }
+  .cc-starting-card > .card { max-width:150px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .cc-card-selectors .equipment-poker-card { transition:none; }
+  .cc-card-selectors .choice-focused .equipment-poker-card { transform:none; }
+}
+.reduced-motion .cc-card-selectors .equipment-poker-card { transition:none; }
+.reduced-motion .cc-card-selectors .choice-focused .equipment-poker-card { transform:none; }
+
 .shop-inspect-card { position:relative; }
-.equipment-poker-card .epc-frame, .collectible-poker-card .epc-frame { grid-template-rows:270px 24px 46px 20px 38px 18px 16px; }
+/* Face rows come from balance.ui.equipmentCard via the card's own custom
+   property: regions declare a floor and a priority, and src/model/equipmentCard.js
+   solves them. The literal is the fallback for a card rendered before its tokens
+   land, not a second opinion about the layout. */
+.equipment-poker-card .epc-frame, .collectible-poker-card .epc-frame {
+  grid-template-rows:var(--epc-rows, 231.6px 22px 40px 18px 88.4px 18px 16px);
+  container-type:inline-size;
+}
 .epc-type { font-size:14px; padding:2px; letter-spacing:.04em; }
 .epc-facts { padding:2px 0; }
 .epc-fact { font-size:14px; }
@@ -2809,3 +2915,32 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-effects:has(.epc-bonus + .epc-bonus)::after { content:'…'; position:absolute; right:0; bottom:0; }
 .epc-frame > .epc-tags { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .epc-tag { display:inline-block; margin-right:3px; }
+/* Detail surfaces disclose the complete label, even when compact faces truncate. */
+.modal-head-id h2, .as-head-id h2, .as-tip .tt-title {
+  font-size: clamp(calc(16px / var(--ui-zoom, 1)), 2rem, calc(22px / var(--ui-zoom, 1))); white-space: normal; overflow: visible;
+  text-overflow: clip; overflow-wrap: anywhere; line-height: 1.3; max-height: none;
+}
+.as-ornament::before, .as-ornament::after { flex: 1 1 0; min-width: 0; }
+.title-screen .as-titlemenu { margin-inline: auto; text-align: center; }
+.title-screen .as-ornament { width: 100%; justify-content: center; margin-inline: auto; }
+.set-range { touch-action: pan-x; min-height: var(--tap-floor); }
+.cz-stage .equipment-poker-explanations { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5; }
+.cz-stage .equipment-poker-explanations :is(dt, dd) { white-space: normal; overflow-wrap: anywhere; }
+
+/* Equipment disclosure preserves the shared above-card placement. */
+.equipment-poker-card > .card-info-button { width:var(--card-info-size,44px); height:var(--card-info-size,44px); min-width:var(--card-info-size,44px); min-height:var(--card-info-size,44px); max-width:var(--card-info-size,44px); max-height:var(--card-info-size,44px); top:calc(-1 * (var(--card-info-size,44px) + 10px)); }
+@media (pointer:coarse) {
+  .equipment-poker-card > .card-info-button { opacity:0; pointer-events:none; transition:opacity var(--card-info-fade,120ms) ease; }
+  .equipment-poker-card.inspection-info-visible > .card-info-button, .equipment-poker-card:has(:focus-visible) > .card-info-button, .equipment-poker-card:focus-visible > .card-info-button { opacity:1; pointer-events:auto; }
+}
+@media (prefers-reduced-motion:reduce) { .equipment-poker-card > .card-info-button { transition:none; } }
+
+.equipment-poker-card:focus-visible > .card-info-button, .equipment-poker-card:has(:focus-visible) > .card-info-button { visibility:visible; pointer-events:auto; opacity:1; }
+
+/* Reserve room for the above-card control in Inventory scroll content. */
+.armoury .disc-faces:has(.poker-inventory-face) { padding-top:64px; }
+
+.armoury .disc-face:has(.poker-inventory-face) { overflow:visible; }
+
+.smith-card-list.as-options { padding-top:64px; }
+.smith-card-list.as-options.grid > .smith-candidate-card { overflow:visible; }

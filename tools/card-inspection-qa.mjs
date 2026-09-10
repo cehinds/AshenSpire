@@ -1,4 +1,4 @@
-// Browser plugin not available; production UI exercised through Playwright.
+// Production UI interaction regression checks through Playwright.
 import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -32,9 +32,8 @@ try {
     if (phone) {
       await card.tap({ position:{x:70,y:90} });
       check(await page.locator('.card-inspection-modal').count() === 0, 'first tap selects only');
-      check(await card.evaluate(c => c.classList.contains('inspection-selected') && !c.classList.contains('inspection-info-visible')), 'first tap selected without info');
-      await card.tap({ position:{x:70,y:90} });
-      check(await card.locator('.card-info-button').isVisible(), 'second tap reveals info');
+      await page.locator('.equipment-poker-card.inspection-selected.inspection-info-visible').waitFor();
+      check(await card.evaluate(c => c.classList.contains('inspection-selected') && c.classList.contains('inspection-info-visible')), 'first tap selects and reveals information');
       await card.locator('.card-info-button').tap();
     } else await card.click({ position:{x:70,y:90} });
     await page.locator('.card-inspection-modal').waitFor();
@@ -89,7 +88,7 @@ try {
     await page.locator('[data-face="bar:armaments"]').click();
     const merchantBefore = await page.evaluate(() => JSON.stringify(window.inspectionRun));
     const offer = page.locator('.shop-inspect-card').first();
-    if (phone) { await offer.tap({position:{x:70,y:90}}); await offer.tap({position:{x:70,y:90}}); await offer.locator('.card-info-button').tap(); }
+    if (phone) { await offer.tap({position:{x:70,y:90}}); await offer.locator('.card-info-button').tap(); }
     else await offer.click({position:{x:70,y:90}});
     check(await page.locator('.modal .card-inspection-layout').count() === 1, 'merchant shared layout');
     check(await page.locator('.modal-foot-actions .primary').isDisabled(), 'unaffordable purchase stays disabled while inspect works');
@@ -110,7 +109,8 @@ try {
     await page.getByRole('tab', {name:'Inventory',exact:true}).click();
     const inventoryCard = page.locator('.poker-inventory-face .equipment-poker-card').first();
     const inventoryBefore = await page.evaluate(() => JSON.stringify(window.inspectionRun));
-    if (phone) { await inventoryCard.tap({position:{x:50,y:85}}); await inventoryCard.tap({position:{x:50,y:85}}); }
+    if (phone) await inventoryCard.tap({position:{x:50,y:85}});
+    else await inventoryCard.click({position:{x:50,y:85}});
     await inventoryCard.locator('.card-info-button').click();
     await page.locator('.card-inspection-modal').waitFor();
     check(await page.evaluate(() => JSON.stringify(window.inspectionRun)) === inventoryBefore, 'Inventory information never equips');
@@ -132,6 +132,7 @@ try {
     check(await page.locator('.smith-confirm').isDisabled(), 'Smith empty selection cannot upgrade');
     const smithCard=page.locator('.smith-candidate-card').first();
     if (phone) { await smithCard.tap({position:{x:50,y:70}}); await smithCard.tap({position:{x:50,y:70}}); }
+    await smithCard.focus();
     await smithCard.locator('.card-info-button').click();
     await page.locator('.card-inspection-modal').waitFor();
     check(await page.evaluate(() => window.inspectionSmithCommits===0 && JSON.stringify(window.inspectionRun)) === inventoryBefore, 'Smith inspection never upgrades');
@@ -146,17 +147,16 @@ try {
       const rect = await playing.boundingBox();
       await page.mouse.move(rect.x + 35, rect.y + 70);
       await page.mouse.down();
-      await page.waitForTimeout(650);
-      check(await playing.getAttribute('data-inspect') === 'open', 'existing hold inspection still opens');
+      await page.waitForTimeout(150);
       await page.mouse.up();
-      check(await page.evaluate(() => JSON.stringify(window.__combat)) === combatBefore, 'hold inspection never plays');
+      check(await page.evaluate(() => JSON.stringify(window.__combat)) === combatBefore, 'early hold release never plays');
     }
     if (phone) {
       await playing.tap({position:{x:35,y:70}});
       await playing.tap({position:{x:35,y:70}});
       check(await page.evaluate(() => JSON.stringify(window.__combat)) === combatBefore, 'two inspection taps never play');
       await playing.locator('.card-info-button').tap();
-    } else await playing.locator('.card-info-button').click();
+    } else { await playing.focus(); await playing.locator('.card-info-button').click(); }
     await page.locator('.card-inspection-modal').waitFor();
     check(await page.evaluate(() => JSON.stringify(window.__combat)) === combatBefore, 'information never plays a card');
     await page.waitForTimeout(400);
@@ -194,6 +194,7 @@ try {
   const shippedErrors=[];
   shipped.on('pageerror',error=>shippedErrors.push(error.message));
   await shipped.goto(`${base}/AshenSpire.html?shot=combat`);
+  await shipped.locator('.hand .card').first().focus();
   await shipped.locator('.hand .card .card-info-button').first().click();
   await shipped.locator('.card-inspection-modal').waitFor();
   check(shippedErrors.length===0, 'regenerated standalone boots and opens inspection');

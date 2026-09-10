@@ -19,7 +19,7 @@ const assert=require('node:assert/strict');
     window.poseSamples=[];
     const samplePoses=()=>{
      document.querySelectorAll('.enemy .sprite').forEach(e=>{
-      if(e.classList.contains('enemy-attack-pose'))window.poseSamples.push({family:e.dataset.actionFamily,visible:getComputedStyle(e.querySelector('.enemy-pose-attack')).visibility,idle:getComputedStyle(e.querySelector('.enemy-pose-idle')).visibility});
+      if(e.classList.contains('enemy-attack-pose'))window.poseSamples.push({family:e.dataset.actionFamily,pose:e.querySelector('.enemy-pose-stage')?.dataset.pose,visible:getComputedStyle(e.querySelector('.enemy-pose-attack')).visibility,idle:getComputedStyle(e.querySelector('.enemy-pose-idle')).visibility});
      });
      window.poseRaf=requestAnimationFrame(samplePoses);
     };
@@ -37,7 +37,7 @@ const assert=require('node:assert/strict');
     inline:[...document.querySelectorAll('.enemy-pose-attack')].every(e=>e.src.startsWith('data:image/')),
    }));
    assert(result.spellExecuted,'real spell attack must execute');
-   assert(result.samples.some(e=>e.family==='spell'&&e.visible==='visible'&&e.idle==='hidden'),'spell attack frame visible');
+   assert(result.samples.some(e=>e.family==='spell'&&(e.visible==='visible'||e.pose==='projectile')&&e.idle==='hidden'),'spell attack frame visible');
    assert(result.samples.some(e=>e.family!=='spell'&&e.visible==='visible'),'melee attack visible');
    assert.equal(result.lingering,0);assert(result.idleRestored);assert.equal(result.broken,0);
    assert.equal(result.inline,file==='AshenSpire.html');assert.deepEqual(errors,[]);

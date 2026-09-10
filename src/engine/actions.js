@@ -23,12 +23,14 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import * as F from './combatRules.js';
+import { allocateInteger } from '../model/combatRules.js';
 import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
 import { evaluate, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
-import { isEquipmentComposedInstance } from '../model/loadout.js';
+import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
 import { flaskSlotCap, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
@@ -43,6 +45,7 @@ import { commitSmithing, smithingPlan } from '../model/smithing.js';
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
 export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
+  if (ctx.foundation) return F.foundationDamage(ctx, source, target, base, carrier, attackTags || []).amount;
   let dmg = base;
   const school = carrier && carrier.damageSchool;
   if (source && source.kind === 'player' && school) {
@@ -129,16 +132,24 @@ export function attackTagsFor(action, effect, registries) {
  */
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (!target || !target.alive) return 0;
-  const dmg = computeAttackDamage(ctx, source, target, base, attackTags, carrier);
+  if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
+  const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, base, carrier, attackTags || []) : null;
+  const dmg = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier);
   const blocked = Math.min(target.block, dmg);
   target.block -= blocked;
   const hpLoss = dmg - blocked;
+  const components = receipt?.components;
+  const hpShares = components && dmg > 0 ? allocateInteger(hpLoss, components.map((c) => c.amount)) : [];
   if (hpLoss > 0) target.hp -= hpLoss;
   ctx.emit('damageDealt', {
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {}),
     sourceId: source ? source.id : null,
     targetId: target.id,
     amount: dmg,
     blocked,
+    blockRemaining: target.block,
+    ...(components ? { components, hpComponents: components.map((c, i) => ({ type: c.type, amount: hpShares[i] || 0 })), sourceInstanceId: F.foundationSource(ctx, source, carrier).id,
+      tags: receipt.tags } : {}),
     isAttack: true,
   });
   if (hpLoss > 0) {
@@ -203,7 +214,7 @@ export function gainBlock(ctx, entity, base) {
     amt = Math.max(0, cap - entity.block);
   }
   entity.block += amt;
-  ctx.emit('blockGained', { targetId: entity.id, amount: amt });
+  ctx.emit('blockGained', { targetId: entity.id, amount: amt, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
   return amt;
 }
 
@@ -266,9 +277,11 @@ function afterHpChange(ctx, target) {
  */
 export function staggerEnemy(ctx, enemy) {
   if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
+  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return;
   const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
   enemy.pendingMove = null;
   enemy.skipNextTurn = true;
+  if (ctx.foundation) enemy.impactProtectedUntil = ctx.turn + ctx.foundation.rules.impact.protectionTurns;
   enemy.intent = { kind: 'staggered', moveId: null };
   ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled });
 }
@@ -276,6 +289,10 @@ export function staggerEnemy(ctx, enemy) {
 export function dealPoiseDamage(ctx, enemy, amount) {
   if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
   const n = Math.max(0, Math.floor(amount));
+  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) {
+    enemy.poiseMeter.value = Math.min(enemy.poiseMeter.max - 1, enemy.poiseMeter.value + n);
+    return;
+  }
   enemy.poiseMeter.value += n;
   const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
   let guard = 0;
@@ -291,6 +308,7 @@ export function dealPoiseDamage(ctx, enemy, amount) {
     if (growth !== 1 && !statuses.anyCombatantFlag(ctx, 'meterMaxGrowthDisabled')) {
       enemy.poiseMeter.max = Math.ceil(enemy.poiseMeter.max * growth);
     }
+    if (ctx.foundation) { enemy.poiseMeter.value = Math.min(enemy.poiseMeter.max - 1, enemy.poiseMeter.value); break; }
   }
 }
 
@@ -426,6 +444,7 @@ function evalNum(ctx, action, value, dflt, target) {
 
 export function executeAction(ctx, action) {
   if (ctx.result) return; // combat already decided; remaining actions fizzle
+  if (ctx.foundation) ctx._foundationAncestry = action.meta?.foundationAncestry || [];
   const eff = action.effect;
 
   // Budgeted escape hatch (SPEC §3.1(6)): { script: 'name', ...args }.
@@ -468,6 +487,7 @@ function runOpcode(ctx, action, eff) {
       // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
       const attackTags = attackTagsFor(action, eff, ctx.registries);
+      const impact = ctx.foundation ? F.foundationImpact(ctx, action, hits) : [];
       for (let h = 0; h < hits; h++) {
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.
@@ -475,7 +495,18 @@ function runOpcode(ctx, action, eff) {
         for (const t of targets) {
           if (!t.alive) continue;
           const base = evalNum(ctx, action, eff.amount, 0, t);
-          applyAttackDamage(ctx, action.source, t, base, attackTags, action.card);
+          const carrier = eff.attack ? { ...action.card, attack: eff.attack } : action.card;
+          const evaded = ctx.foundation && t.evade > 0 && carrier?.attack?.dodgeable !== false;
+          applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
+          if (ctx.foundation && !evaded && t.alive && !(action.meta?.foundationAncestry?.length)) {
+            const resistedImpact = Math.floor((impact[h] || 0) * (1 - (F.foundationProfile(ctx, t).impactResistance || 0)));
+            dealPoiseDamage(ctx, t, resistedImpact);
+            if (t.kind === 'enemy') ctx.emit('impactDealt', { sourceId: action.source?.id, targetId: t.id, amount: resistedImpact });
+            // Only the resolved source contributes contact buildup. A focus
+            // can own effects too; the other hand's sword is never consulted.
+            const weaponBuildup = F.foundationSource(ctx, action.source, carrier).buildup || [];
+            for (const buildup of [...weaponBuildup, ...(carrier?.attack?.buildup || [])]) statuses.applyStatus(ctx, t, buildup.status, buildup.amount, action.source);
+          }
         }
       }
       break;
@@ -487,6 +518,7 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'dodgeRoll': {
+      if (ctx.foundation) { F.grantFoundationEvade(ctx, action.source); break; }
       // The dodge (framework contract: Weight Class and Dodge Roll). Player
       // only — the class, Dexterity and the die live on the player's side of
       // the board. The engine rolls on its own stream; the framework decides
@@ -499,6 +531,7 @@ function runOpcode(ctx, action, eff) {
       const stance = playerWeightClass(ctx);
       const receipt = ctx.registries.framework.dodgeRoll({ roll, dexterity, weightClass: stance.weightClass });
       ctx.emit('dodgeRolled', {
+        ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(p) } : {}),
         sourceId: p.id, roll, check: receipt.check, difficulty: receipt.difficulty,
         success: receipt.success, temporaryGuard: receipt.temporaryGuard, weightClass: stance.weightClass.id,
       });
@@ -563,6 +596,13 @@ function runOpcode(ctx, action, eff) {
       ctx.emit('energyGained', { amount: n });
       break;
     }
+    case 'restoreStamina': {
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        const amount = Math.min(t.maxStamina - t.stamina, Math.max(0, evalNum(ctx, action, eff.amount, 1)));
+        t.stamina += amount; ctx.emit('staminaRecovered', { targetId: t.id, amount, reason: 'effect' });
+      }
+      break;
+    }
     case 'restoreMana': {
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
       for (const t of resolveTargets(ctx, action, eff.target)) {
@@ -598,7 +638,7 @@ function runOpcode(ctx, action, eff) {
         ctx.emit('stanceExited', { stance: ctx.player.stanceId });
       }
       ctx.player.stanceId = stanceId;
-      ctx.emit('stanceEntered', { stance: stanceId });
+      ctx.emit('stanceEntered', { stance: stanceId, playerId: ctx.playerKey || ctx.player.id });
       for (const onEnter of def.onEnter || []) {
         ctx.enqueue({ effect: onEnter, source: ctx.player, owner: ctx.player, target: action.target, meta: action.meta });
       }
@@ -643,18 +683,14 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'removeCardFromDeck': {
-      // Equipment-COMPOSED instances are not candidates: the next authoritative
-      // reconcile recreates them under the same deterministic id, so a removal
-      // here could never persist. That was already the rule for package outputs
-      // (grantedBy); it holds identically for a generated attack slot, which
-      // this opcode used to remove and the next restamp used to re-mint.
+      // Run-owned basics retire their slot; item grants remain equipment-owned.
       let idx = -1;
-      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && !isEquipmentComposedInstance(c));
+      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && canRemoveDeckCard(c));
       else if (eff.random) {
-        const candidates = run.deck.map((c, i) => i).filter((i) => !isEquipmentComposedInstance(run.deck[i]));
+        const candidates = run.deck.map((c, i) => i).filter((i) => canRemoveDeckCard(run.deck[i]));
         idx = candidates.length ? candidates[Math.floor(ctx.rng.float('misc') * candidates.length)] : -1;
       }
-      if (idx >= 0) run.deck.splice(idx, 1);
+      if (idx >= 0) removeDeckCard(run, run.deck[idx].instanceId);
       break;
     }
     case 'upgradeCard': {

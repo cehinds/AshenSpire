@@ -49,26 +49,10 @@ const cards = authoredCards.map((card) => {
 });
 
 export const contentBundle = {
-  // THE RELEASE HALF, AND THE CANDIDATE NUMBER IS THE THIRD COMPONENT.
-  //
-  // Constantine, 2026-09-01, on reading `0.5.0-rc.4.1959`: "I thought it was
-  // going to be something like 0.5.3.2" — the candidate in slot three, and a
-  // build counter in slot four that "should restart ... to 0.5.4.0 and
-  // increment from there". So `0.5.0-rc.4` is written `0.5.4`: the fourth
-  // candidate of the 0.5 line, and tools/buildversion.mjs appends the count of
-  // builds within it.
-  //
-  // WHAT THAT COSTS, STATED HERE RATHER THAN DISCOVERED LATER: the patch number
-  // of the release being auditioned no longer appears, so a shipped `0.5.0`
-  // would sort BELOW the `0.5.4` that led to it. A release under this scheme
-  // must be numbered past its last candidate. Raised with him when the
-  // directive was given; the scheme is his call and this is the note.
-  // 0.5.4 was promoted to `test` (#611) and on to `release` (#609) on
-  // 2026-09-04, carrying the component kit, the card-ownership rulings and the
-  // painted class figures. Cutting the fifth candidate here is the same step
-  // #556 and #563 took when their candidates reached `test` — the owner's call,
-  // given 2026-09-05. The build counter restarts, so the next build is 0.5.5.0.
-  version: '0.5.5',
+  // Release series and candidate live here; tools/buildversion.mjs derives the
+  // fourth component and resets it to zero whenever this release changes.
+  // The owner moved current builds to the 0.6.x.x series on 2026-09-08.
+  version: '0.6.0',
   balance,
   cards,
   relics,

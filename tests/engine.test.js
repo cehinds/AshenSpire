@@ -1907,7 +1907,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(row.scope === '', `card rows carry no scope ('${row.objectId}')`);
     }
     // The lookups the UI and any future synergy predicate depend on.
-    eq(tagsFor('gorefireSlash').length, 3, 'gorefireSlash carries three tags');
+    eq(tagsFor('gorefireSlash').map((tag) => tag.id).join('|'), 'blade|blood|gorefire|source:weapon|delivery:melee|theme:blood', 'Gorefire Slash separates legacy school, source, delivery and theme');
     eq(tagsFor('strike')[0].label, 'Blade', 'strike resolves to the Blade tag');
     eq(tagsFor('nonexistentCard').length, 0, 'an untagged card resolves to no tags');
     assert(Array.isArray(tagIdsFor('strike')), 'tag ids always come back as an array');
@@ -1970,11 +1970,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Registries resolve the join onto the object, so a mechanic reads
     // obj.tags whatever table the row was authored in.
     eq(REG.classes.get('reaver').tags.join('|'), 'blade|guard|blood', 'the Reaver carries its class tags');
-    eq(REG.cards.get('strike').tags.join('|'), 'blade', 'a card carries its tags on the def');
+    eq(REG.cards.get('strike').tags.join('|'), 'blade|source:weapon|delivery:melee', 'a card carries its tags on the def');
     eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged', 'the table resolves by family and id');
-    eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade', 'tagIdsOf resolves an unscoped family');
+    eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade|source:weapon|delivery:melee', 'tagIdsOf resolves an unscoped family');
     eq(tagIdsOf('armament', REG.equipment.armaments.find((a) => a.id === 'straightSword')).join('|'),
-      'item:blade|blade|basic', 'tagIdsOf resolves an armament, item type included');
+      'item:blade|blade|basic|source:weapon|delivery:melee|damage:slashing', 'tagIdsOf resolves an armament, item type included');
     eq(tagIdsOf('class', { id: 'nobody' }).length, 0, 'an untagged object resolves to no tags');
 
     // SCOPE: outfit ids repeat per class, so the parent key is (classId, id).
@@ -2005,7 +2005,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const svc = tagService(REG);
     eq(svc, tagService(REG), 'the service is memoised per registries');
 
-    eq(svc.idsOf('card', { id: 'strike' }).join('|'), 'blade', 'ids by family and id');
+    eq(svc.idsOf('card', { id: 'strike' }).join('|'), 'blade|source:weapon|delivery:melee', 'ids by family and id');
     eq(svc.tagsOf('card', { id: 'strike' })[0].label, 'Blade', 'resolved to registry rows');
     assert(svc.has('card', { id: 'strike' }, 'blade'), 'has() is true for a carried tag');
     assert(!svc.has('card', { id: 'strike' }, 'venom'), 'has() is false for one it does not carry');
@@ -2016,7 +2016,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(svc.idsOf('armour', armour).join('|'), 'item:armor|starstone', 'a scoped object resolves by (classId, id)');
 
     // The junction is the authority: a doctored copy cannot answer for content.
-    eq(svc.idsOf('card', { id: 'strike', tags: ['venom'] }).join('|'), 'blade',
+    eq(svc.idsOf('card', { id: 'strike', tags: ['venom'] }).join('|'), 'blade|source:weapon|delivery:melee',
       'a hand-edited tags field does not override the rows');
 
     // Reverse lookup hands back objects, not ids.
@@ -2037,7 +2037,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Vocabulary questions.
     eq(svc.inDomain('creature').map((t) => t.id).join('|'), 'beast|humanoid|undead|construct|spirit',
       'inDomain lists one domain');
-    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType', 'a family may carry several domains');
+    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType|attackSource|delivery|damageType|technique|theme', 'armaments allow categorized combat tags alongside legacy tags');
     assert(svc.allowedFor('enemy').every((t) => t.domain === 'creature'), 'allowedFor is domain-filtered');
     assert(svc.allowedFor('enemy').length > 0, 'allowedFor is non-empty for a live family');
     eq(svc.tag('blade').label, 'Blade', 'tag() resolves one row');
@@ -2563,18 +2563,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // ---- 26n. the tenth round: what stored state obliges ---------------------
-  test('26n. a generated slot is not removable, and the quota survives save and load', () => {
-    // THE COST OF STORING A FACT is that everything which could contradict it
-    // now has to be reconciled with it. Both findings here are consequences of
-    // round eight persisting the birth quota, and both are fair.
-
-    // The merchant's burn and the removeCardFromDeck opcode already refused
-    // package outputs, in both cases for the SAME stated reason: "the next
-    // authoritative reconcile would recreate the same deterministic id, so a
-    // removal here could never persist". A generated attack slot has exactly
-    // that property and was never excluded — burning one re-minted it, so the
-    // merchant charged cinders for nothing. Persisting the quota turned that
-    // silent no-op into a throw, which is how it was noticed at all.
+  test('26n. basic attack removal retires a slot and the birth quota survives save and load', () => {
     const run = createRunState({ seed: 1, classId: 'reaver', registries: REG });
     const composed = run.deck.filter(isEquipmentComposedInstance);
     assert(composed.length === 4 && composed.every((c) => c.equipmentAttackSlotId),
@@ -2584,10 +2573,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const before = run.deck.length;
     executeRunEffects({ run, registries: REG, rng: { float: () => 0 } },
       [{ op: 'removeCardFromDeck', card: 'strike' }]);
-    eq(run.deck.length, before, 'the opcode does not remove a card the next restamp would re-mint');
-    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 4, 'the slots are intact');
+    eq(run.deck.length, before - 1, 'the opcode removes one run-owned basic attack');
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 3, 'one slot is retired');
     stampDeck(REG, run); // threw "attack instance count 3 does not match authored 4" before
-    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 4, 'and the restamp agrees with the quota');
+    eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 3, 'restamping preserves the removal');
 
     // A random removal still has real candidates — this closes a door on cards
     // equipment owns, it does not close the mechanic.
@@ -2630,14 +2619,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE JOIN IS THE AUTHORITY, OR THE TABLE IS DECORATION. tagFamilyDomains
     // declares which domains the `effect` family may carry; the validator had
     // the answer hard-coded, so editing that row changed the table and nothing
-    // else. Today the row says `card` and the derived answer is identical —
-    // which is the point: same behaviour, actually derived.
+    // else. Effects now allow the legacy card domain plus categorized combat
+    // domains; changing the junction must still change validation.
     const kw = contentBundle.keywords.map((k) => k.id);
-    eq(tagIdsAllowedFor(contentBundle, 'effect').join('|'), tagIdsInDomain(contentBundle, 'card').join('|'),
-      'the derived effect vocabulary matches the card domain the row names');
+    const effectDomains = ['card', 'attackSource', 'delivery', 'damageType', 'technique', 'theme'];
+    eq(tagIdsAllowedFor(contentBundle, 'effect').join('|'), effectDomains.flatMap((domain) => tagIdsInDomain(contentBundle, domain)).join('|'),
+      'the derived effect vocabulary includes every approved combat category');
     const repaired = JSON.parse(JSON.stringify(contentBundle));
-    repaired.tagFamilyDomains = repaired.tagFamilyDomains
-      .map((r) => (r.family === 'effect' ? { ...r, domain: 'item' } : r));
+    repaired.tagFamilyDomains = [...repaired.tagFamilyDomains.filter((r) => r.family !== 'effect'), { family: 'effect', domain: 'item' }];
     const effectSaid = validateContent(repaired).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
     assert(/unknown effect tag 'blight'/.test(effectSaid),
       `re-pairing the effect family now actually re-scopes effect tags — said ${JSON.stringify(effectSaid.slice(0, 200))}`);
@@ -7386,7 +7375,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(REG.characterCreation.layout.classPreviewPercent, 30, 'the wide class preview split is read from JSON configuration');
     eq(REG.characterCreation.layout.classChoiceView, 'list', 'the class selector defaults to the configured list view');
     eq(REG.characterCreation.layout.equipmentChoiceView, 'list', 'equipment selectors default to the configured list view');
-    eq(REG.characterCreation.layout.equipmentAutoAdvance, true, 'equipment auto-advance is configured rather than hard-coded');
+    eq(REG.characterCreation.layout.equipmentAutoAdvance, false, 'equipment selection waits for Continue by default');
     eq(REG.characterCreation.equipmentSections.map((row) => row.id).join(','), 'armour,rightHand,leftHand,equipSlot,relic',
       'the equipment subcard order is authored in character-creation content');
     const projectedSections = creationEquipmentSectionViews(REG, 'reaver');

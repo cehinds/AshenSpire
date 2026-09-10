@@ -7,6 +7,20 @@ function appendAll(parent, nodes) {
   for (const node of nodes || []) if (node) parent.appendChild(node);
 }
 
+// Snapshot clients keep their existing input listeners while adopting the
+// same measured sprite / name / meter structure as local combat.
+export function adoptCombatantFrame(frame) {
+  const stack = document.createElement('div'); stack.className = 'combatant-stack';
+  const leading = document.createElement('div'); leading.className = 'combatant-leading';
+  const card = document.createElement('div'); card.className = 'combatant-card';
+  for (const child of [...frame.children]) (child.classList.contains('intent') ? leading : card).append(child);
+  stack.append(leading, card); frame.append(stack);
+  const role = frame.classList.contains('player') ? 'player' : 'enemy';
+  markUiComponent(frame, UI.combatantFrame, role);
+  const name = card.querySelector('.nm');
+  if (name) markUiComponent(name, UI.combatantNameplate, role);
+}
+
 export function combatantFrame({
   role,
   entityId,
@@ -53,7 +67,8 @@ export function combatantFrame({
     card.appendChild(name);
   }
   if (meters) card.appendChild(meters);
-  appendAll(card, trailing);
+  appendAll(card, trailing.filter(n => n?.classList.contains('statuses')));
+  appendAll(card, trailing.filter(n => !n?.classList.contains('statuses')));
   stack.appendChild(card);
   frame.appendChild(stack);
   return frame;

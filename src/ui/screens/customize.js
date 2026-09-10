@@ -1,5 +1,7 @@
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
+import { EMPTY_HAND_PRESENTATION } from '../components/emptyHandCard.js';
+import { startingEquipmentPreview } from '../../model/startingEquipmentPreview.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // Character creation: four progressive sections backed by validated content.
 //
@@ -34,7 +36,8 @@ import {
   selectStartingHand,
 } from '../../model/characterCreation.js';
 import { pieceChip } from './equipment.js';
-import { relicText } from '../components/card.js';
+import { ATLAS } from '../../model/worldAtlas.js';
+import { relicText, renderCard } from '../components/card.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from '../components/equipmentReceipts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
@@ -144,6 +147,11 @@ export function mountCustomize(app, {
   ]);
   const seedInput = el('input', { id: 'seed-input', type: 'text', value: defaultSeedString });
   const seedRow = row({ tag: 'div', setting: true, className: 'seed-line', labelNode: labelStack({ label: 'Seed', hint: 'The same seed produces the same climb.' }), trail: seedInput });
+  const journeySelect = el('select', { id: 'cz-journey', 'aria-label': 'Journey mode' }, [
+    el('option', { value: '' }, 'Classic Climb'),
+    ...Object.values(ATLAS.profiles).map(p => el('option', { value: p.profileId }, `World Journey · ${p.displayName} (${p.activeTarget} places)`)),
+  ]);
+  const journeyRow = row({ tag: 'div', setting: true, labelNode: labelStack({ label: 'Journey', hint: 'Explore a fixed world with a new route each run, or climb the classic acts.' }), trail: journeySelect });
 
   const split = el('div', { class: 'as-split cc-class-split' }, [
     el('div', { id: 'cz-class-preview-host', class: 'as-split-pane cc-class-preview-host' }),
@@ -175,7 +183,7 @@ export function mountCustomize(app, {
       flavour('An armament is one carried object. Choosing it for the other hand moves it.', { class: 'cc-move-note' }),
       nextRow('Continue to seed', 'seed'),
     ]),
-    seed: el('section', { id: 'cz-seed-panel', class: 'as-pane flush cz-stage' }, seedRow),
+    seed: el('section', { id: 'cz-seed-panel', class: 'as-pane flush cz-stage' }, [journeyRow, seedRow]),
   };
   const flow = el('div', { class: 'cz-flow cz-disc' }, Object.values(stages));
 
@@ -562,6 +570,7 @@ export function mountCustomize(app, {
   function renderEquipment(preferredOpenId = null) {
     equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices() });
     equipmentNodes = new Map();
+    const refreshers = [];
     for (const section of equipmentSectionViews) {
       const boxId = section.kind === 'armour' ? 'cz-armours'
         : section.kind === 'relic' ? 'cz-relics'
@@ -572,42 +581,91 @@ export function mountCustomize(app, {
       equipmentNodes.set(section.id, node);
       const detailPane = el('div', { class: 'cc-equipment-details card-inspection-details', 'aria-live': 'polite' });
       node.append(detailPane);
+      const isSelected = piece => section.kind === 'relic' ? piece.id === state.startingRelicId : section.kind === 'armour'
+        ? piece.id === state.startingArmourId : section.kind === 'hand'
+          ? state.startingHands[section.slot] === piece.id : state.startingSlotChoices[section.id] === piece.id;
       const showDetails = piece => {
-        detailPane.replaceChildren(equipmentDetails((section.kind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { interactive: false, inspection: false }) : renderEquipmentCard(registries, piece, { interactive: false, inspection: false })).explanations));
+        detailPane.dataset.previewItem = piece.id || 'empty-hand';
+        detailPane.replaceChildren(equipmentDetails((section.kind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { interactive: false, inspection: false }) : renderEquipmentCard(registries, piece, { interactive: false, inspection: false, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null })).explanations));
+        const heading = document.createElement('h3');
+        heading.textContent = piece.name;
+        const context = el('p', { class: 'cc-choice-context' }, isSelected(piece) ? `Selected · ${section.label}` : 'Preview · Choose below the card to select');
+        detailPane.prepend(heading, context);
+        if (section.kind === 'hand') {
+          const hands = selectStartingHand(state.startingHands, section.slot, piece.id);
+          const preview = startingEquipmentPreview(registries, previewRun(), hands, section.slot);
+          const grid = el('div', { class: 'cc-starting-card-grid', 'aria-label': `${piece.name} starting combat cards` });
+          for (const { ref, count } of preview.cards) {
+            const face = renderCard(registries, ref);
+            const entry = el('div', { class: 'cc-starting-card', dataset: { cardId: ref.cardId, quantity: String(count) } }, [
+              el('span', { class: 'cc-card-quantity' }, `${count} ${count === 1 ? 'copy' : 'copies'}`), face,
+            ]);
+            grid.append(entry);
+          }
+          const packageNode = el('section', { class: 'cc-starting-package' }, [
+            el('h4', {}, 'Starting combat cards'),
+            el('p', { class: 'cc-package-context' }, `${preview.total} ${preview.total === 1 ? 'card' : 'cards'} with this loadout. Quantities depend on both hands.`),
+            preview.cards.length ? grid : el('p', {}, 'This choice adds no combat cards with the other hand currently selected.'),
+          ]);
+          detailPane.append(packageNode);
+        }
       };
-
+      const choiceRows = [];
+      const focusChoice = piece => {
+        for (const row of choiceRows) {
+          const active = row.piece === piece;
+          row.node.classList.toggle('choice-focused', active);
+          if (!active) row.face.classList.remove('inspection-selected', 'inspection-info-visible');
+        }
+        showDetails(piece);
+      };
       for (const piece of section.choices) {
-        const selected = section.kind === 'relic' ? piece.id === state.startingRelicId : section.kind === 'armour'
-          ? piece.id === state.startingArmourId
-          : section.kind === 'hand'
-            ? state.startingHands[section.slot] === piece.id
-            : state.startingSlotChoices[section.id] === piece.id;
-        const chipButton = pieceChip(registries, piece, { selected, kind: section.kind === 'relic' ? 'Relic' : null });
-        if (selected) showDetails(piece);
-        const previewChoice = () => {
-          showDetails(piece);
-          box.querySelectorAll('.inspection-selected').forEach(card => card.classList.remove('inspection-selected'));
-          chipButton.querySelector('.equipment-poker-card').classList.add('inspection-selected');
-        };
-        chipButton.querySelector('.equipment-poker-card').addEventListener('cardinspectionselect', previewChoice);
-        chipButton.querySelector('.equipment-poker-card').addEventListener('keydown', event => {
+        const chipButton = pieceChip(registries, piece, { selected: isSelected(piece), kind: section.kind === 'relic' ? 'Relic' : null, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null });
+        const face = chipButton.querySelector('.equipment-poker-card');
+        choiceRows.push({ piece, node: chipButton, face });
+        face.addEventListener('cardinspectionselect', () => focusChoice(piece));
+        face.addEventListener('keydown', event => {
           if (event.target.classList.contains('equipment-poker-card') && ['Enter', ' '].includes(event.key)) {
-            event.preventDefault(); previewChoice();
+            event.preventDefault(); focusChoice(piece);
           }
         });
         markUiComponent(chipButton, UI.equipmentChoiceCard, section.id);
         if (section.kind === 'armour') chipButton.dataset.startingArmourId = piece.id;
-        else if (section.kind === 'hand') { chipButton.dataset.hand = section.slot; chipButton.dataset.armamentId = piece.id; }
+        else if (section.kind === 'hand') { chipButton.dataset.hand = section.slot; chipButton.dataset.armamentId = piece.id || 'empty-hand'; }
         else chipButton.dataset.startingSlotItemId = piece.id;
         chipButton.querySelector('.equipment-choose').addEventListener('click', () => {
           if (section.kind === 'relic') state.startingRelicId = piece.id;
           else if (section.kind === 'armour') state.startingArmourId = piece.id;
           else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
           else state.startingSlotChoices[section.id] = piece.id;
-          renderEquipment(section.id); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(section.id);
+          for (const refresh of refreshers) refresh();
+          renderEquipmentSummary(); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(section.id);
         });
         box.appendChild(chipButton);
       }
+      const refresh = () => {
+        for (const row of choiceRows) {
+          const selected = isSelected(row.piece);
+          row.node.classList.toggle('on', selected);
+          row.face.classList.toggle('selected', selected);
+          const choose = row.node.querySelector('.equipment-choose');
+          choose.textContent = selected ? 'Selected' : `Choose ${row.piece.name}`;
+          choose.setAttribute('aria-pressed', String(selected));
+        }
+        const chosen = section.choices.find(isSelected);
+        if (chosen) focusChoice(chosen);
+      };
+      refreshers.push(refresh); refresh();
+      const next = equipmentSectionViews.find(row => row.id === section.nextId);
+      const nextLabel = next ? next.label.toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase()) : 'Seed';
+      const continueButton = button({ label: `Continue to ${nextLabel}`, weight: 'primary', className: 'cc-equipment-continue' });
+      continueButton.addEventListener('click', () => {
+        if (next) {
+          equipmentFold.open(next.id);
+          queueMicrotask(() => focusElement(app.querySelector(`[data-face="${next.id}"]`)));
+        } else app.querySelector('.cz-next[data-next="seed"]')?.click();
+      });
+      node.append(continueButton);
     }
 
     const equipmentFaces = new Map(equipmentSectionViews.map((section) => [
@@ -626,6 +684,10 @@ export function mountCustomize(app, {
       : equipmentSectionViews[0]?.id;
     if (preferredOpenId && openId) equipmentFold.open(openId);
 
+    renderEquipmentSummary();
+  }
+
+  function renderEquipmentSummary() {
     const surface = equipmentSurfaceReceipt(registries, previewRun());
     const receiptBody = el('div', { class: 'as-stack' });
     receiptBody.innerHTML = '<section class="equip-role-receipts"><b>Starting equipment card packages</b>'
@@ -699,7 +761,7 @@ export function mountCustomize(app, {
     if (section.kind === 'relic') return section.choices.find((row) => row.id === state.startingRelicId)?.name || 'None';
     if (section.kind === 'slot') return section.choices.find((row) => row.id === state.startingSlotChoices[section.id])?.name || 'None';
     const id = state.startingHands[section.slot];
-    return registries.equipment.armaments.find((row) => row.id === id)?.name || 'Empty';
+    return registries.equipment.armaments.find((row) => row.id === id)?.name || 'Empty Hand';
   };
   resetClassChoices();
   renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderCharacterPreview(); renderViewToggles(); refreshFaces();
@@ -711,7 +773,7 @@ export function mountCustomize(app, {
     { key: 'character', label: 'CHARACTER', node: panels.character, value: () => state.name || 'Forsaken' },
     { key: 'equipment', label: 'STARTING EQUIP', node: panels.equipment, value: () => {
       const arms = registries.equipment.armaments;
-      return `${selectedName(state.startingHands.leftHand, arms, 'Empty')} / ${selectedName(state.startingHands.rightHand, arms, 'Empty')}`;
+      return `${selectedName(state.startingHands.leftHand, arms, 'Empty Hand')} / ${selectedName(state.startingHands.rightHand, arms, 'Empty Hand')}`;
     } },
     { key: 'seed', label: 'SEED', node: panels.seed, value: () => seedInput.value.trim() || '—' },
   ];
@@ -889,6 +951,7 @@ export function mountCustomize(app, {
     onStart({
       classId: state.classId,
       seedString: seedInput.value.trim(),
+      journeyProfile: journeySelect.value || null,
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
       keepsakeId: state.keepsakeId,
       startingKitId: state.startingKitId,

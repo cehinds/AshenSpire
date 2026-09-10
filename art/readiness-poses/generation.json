@@ -1,0 +1,22 @@
+{
+  "tool": "OpenAI built-in imagegen",
+  "date": "2026-09-08",
+  "outputs": [
+    {
+      "id": "rogue",
+      "prompt": "Create a transparent-background game sprite sheet with exactly 4 isolated full-body figures in a precise 2 columns by 2 rows grid, equal cells, no labels, no shadow, no floor, no glow. Edit the four reference characters into a distinct PREPARED readiness pose: low coiled crouch, weight loaded on rear bent leg, leading dagger held forward at chest height and rear dagger tucked upward near shoulder ready to spring. All face RIGHT in three-quarter side view. Top-left reference 1 rogue brown black hood; top-right reference 2 rogue duelist blue hood; bottom-left reference 3 rogue nightveil teal hood; bottom-right reference 4 rogue shadow purple hood. Preserve each exact outfit, hood, colors, faceted painted style, weapons, body identity and proportions. Visibly change anatomy and arm/leg positioning from reference idle; no new equipment. Equal apparent body size in all four cells, full feet and blades, ample transparent padding separating cells. Professional dark fantasy painted game cutouts. RGBA true transparent background.",
+      "source": "sources/rogue.png"
+    },
+    {
+      "id": "starseer",
+      "prompt": "Game sprite sheet, exactly four full-body figures in a precise 2x2 equal-cell grid. Flat pure #ff00ff magenta background for chroma-key extraction, NO checkerboard, no shadows, no floor, no text. Four references in reading order top left, top right, bottom left, bottom right: base Starseer, Astral purple, Eclipse black-purple, Starlit blue. Preserve each outfit design, star staff, hat, face hidden, faceted painterly dark-fantasy style. Change all into a STARSTONE CHARGE readiness stance: legs planted wide, torso facing right three-quarter view, right hand raising star staff diagonally above shoulder, left forearm lifted with open palm at chest height channeling. This is a sustained prepared casting pose, visibly unlike straight neutral idle. No painted magic glow or particles (added at runtime). Same body proportions and size all four cells, each isolated within own cell with large empty margins around hands staff hat and feet. Full bodies no clipping.",
+      "source": "sources/starseer.png"
+    },
+    {
+      "id": "herald",
+      "prompt": "Create game sprite sheet exactly 4 isolated full-body figures in precise 2x2 grid equal cells. Flat pure #ff00ff magenta background for chroma key, no checkerboard no text no shadow no ground. Use four references in order: top-left base Herald olive brown, top-right Ember Habit burnt orange, bottom-left Ossuary grey bone, bottom-right Pilgrim muted olive. Preserve exact hooded outfits, details, bead strings, existing metal halo, faceted painterly dark fantasy style. Author a distinct sustained BLOOD RITE ritual-ready pose: standing legs apart, knees gently bent, torso angled right three-quarter; both arms held outward away from body, left palm cupped upward at chest height, right palm extended forward in blessing with spread fingers, dignified prepared ritual stance. No weapons, no additional accessories, no glow or magic particles (runtime layer). Full body same human proportions and same apparent size per cell. Large blank margins, complete feet and existing halo.",
+      "source": "sources/herald.png"
+    }
+  ],
+  "rogueMatteCorrection": "Second imagegen edit replaced a baked checkerboard with flat magenta; extraction preserves source sheet."
+}
