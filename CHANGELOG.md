@@ -30,6 +30,14 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-10
+
+- **The game a phone downloads is a third smaller** ([#908](https://github.com/cehinds/AshenSpire/pull/908), `0.6.0.84`). Nothing a player sees changes; how much they wait for it does. The three hundred and twenty-five PNG sprites are re-encoded as WebP, and the single shipped file falls from ninety-three megabytes to fifty-eight. The format was chosen by measurement rather than habit: lossless WebP saved thirty-nine per cent and quality ninety saved seventy-five, and these are painted sprites rather than pixel art, so the second is the honest trade. Every file keeps its name and its pixels; only the container changed. The gate that renders equipment art through the real browser and measures where each piece lands passed fifty of fifty afterwards, which is the check that mattered.
+
+- **A press is not a hold until it has stayed put** ([#907](https://github.com/cehinds/AshenSpire/pull/907), `0.6.0.83`). Anything you can drag — a card in your hand, a piece in the Armoury — used to flash the hold ring the instant you touched it, then snatch it away when the drag began. The gesture was right and the feedback was a lie. A press now has to stay still before the ring appears at all, so a drag simply drags and a hold still holds. The wait and the distance are both authored numbers rather than constants in a stylesheet, and a control with nothing to drag under it is untouched: a safety prompt that waits before it looks alive reads as a broken button.
+
+- **The wordmark was corrected twice, so it ended up off-centre** ([#910](https://github.com/cehinds/AshenSpire/pull/910), `0.6.0.82`). The title on the startup screen sat a few pixels right of centre, and the browser gate that measures it had been red for a day. The cause was a correction for a problem the browser had already solved: letter-spacing leaves a gap after the final letter, something was nudging the title right to compensate, and Chromium had already accounted for it. Removing the nudge puts the ink dead centre at every width tested. The alternative fix was measured too, and was no better — which is what proves there was nothing to compensate for.
+
 ## 2026-09-09
 
 - **Bosses and elites keep their imposing size** ([#900](https://github.com/cehinds/AshenSpire/pull/900), `0.6.0.79`). Fit enemy and player sprites together so bosses and elites remain larger across phone, landscape, desktop, and co-op combat layouts.
