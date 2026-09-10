@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-939",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combat on a phone redraws less, and the download is smaller",
+    "detail": "Frames, sprites and hand cards are reused between updates instead of rebuilt, and pose art is kept in one small shared cache. On a touch screen the game picks a lighter rendering that drops the heavy filters and cloned target silhouettes but keeps a coloured target ring; Full rendering stays available in Settings. The standalone file is about 7 MB smaller.",
+    "build": "0.6.0.129",
+    "pullRequest": 939,
+    "url": "https://github.com/cehinds/AshenSpire/pull/939"
+  },
+  {
     "id": "pr-936",
     "date": "2026-09-10",
     "group": "2026-09-10",
