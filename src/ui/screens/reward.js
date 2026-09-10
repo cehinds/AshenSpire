@@ -413,7 +413,7 @@ export function mountRewards(app, {
     </div>`;
     door({
       eyebrow: `Inspect the ${kindLabel.toLowerCase()}`,
-      title: kindLabel,
+      title: row.kind === 'relic' ? registries.relics.get(row.relicId).name : kindLabel,
       attrs: { dataset: { size: 'md', rewardDetail: row.kind } },
       body: detailBody,
       foot: modalFooter({ secondary: [backButton], primary: takeButton, className: 'reward-foot', size: 'medium' }),
