@@ -3,14 +3,24 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-956",
+    "id": "pr-949",
     "date": "2026-09-10",
     "group": "2026-09-10",
-    "summary": "The combat screen draws again",
-    "detail": "#939 landed reading a name #945 had renamed, so the board mounted with no enemies and no hand. Two words, corrected.",
+    "summary": "The tower reveals its menu from River Citadel",
+    "detail": "The title now opens outside an unlit River Citadel: the first activation lights the city, holds for a configurable pause, and fades into the entrance hall before the menu appears; Continue still resumes the saved game. The hall keeps its dark city behind the foreground doorway, a translucent backing keeps the wordmark readable, and the doorway breathes between full and 92% opacity on an eleven-second cycle. Reduced motion disables the idle effect and skips the entrance hold; Ambient Off disables the idle effect too. A Replay entrance control previews the sequence. Physical mobile Safari is untested.",
     "build": "0.6.0.130",
-    "pullRequest": 956,
-    "url": "https://github.com/cehinds/AshenSpire/pull/956"
+    "pullRequest": 949,
+    "url": "https://github.com/cehinds/AshenSpire/pull/949"
+  },
+  {
+    "id": "pr-953",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The test branch comes back when GitHub deletes it",
+    "detail": "The test → release promotion uses test as its pull request head, so the repository's \"Automatically delete head branches\" setting removed test on every promotion merge. A workflow now listens for that deletion and recreates test at release's tip (falling back to dev); nothing in the game changed.",
+    "build": "0.6.0.127",
+    "pullRequest": 953,
+    "url": "https://github.com/cehinds/AshenSpire/pull/953"
   },
   {
     "id": "pr-936",

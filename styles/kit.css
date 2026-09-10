@@ -3139,3 +3139,102 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
     border-color:var(--gold); scale:1; translate:0 0; box-shadow:none;
   }
 }
+
+/* Local entrance preview: one activation lights the city and crossfades
+   into the hall before releasing the real title menu. */
+.startup-gate { background: #100e0b; }
+.startup-gate .tower-scene,
+.tower-scene .tower-exterior,
+.tower-scene .tower-city-unlit,
+.tower-scene .tower-city-lit,
+.tower-scene .tower-hall {
+  position: absolute; inset: 0; pointer-events: none;
+  background-position: center; background-size: cover;
+}
+.startup-gate .tower-scene { z-index: 0; overflow: hidden; }
+.tower-city-unlit { background-image: url('../assets/bg/river-citadel-unlit.webp'); }
+.tower-city-lit { background-image: url('../assets/bg/river-citadel-lit.webp'); opacity: 0; }
+.tower-hall { opacity: 0; background: #080705; }
+.tower-interior-city, .tower-door-frame {
+  position: absolute; inset: 0; pointer-events: none;
+  background-position: center; background-size: cover;
+}
+.tower-interior-city {
+  background-image: url('../assets/bg/tower-city-background-unlit.webp');
+  filter: brightness(.28) saturate(.82);
+}
+.tower-door-frame {
+  background-image: linear-gradient(180deg, rgba(8,7,5,.28), rgba(8,7,5,.48)), url('../assets/bg/tower-entrance-hall.webp');
+  -webkit-mask: url('../assets/bg/tower-door-mask.svg') center / cover no-repeat;
+  mask: url('../assets/bg/tower-door-mask.svg') center / cover no-repeat;
+}
+.startup-gate::after {
+  background: linear-gradient(180deg, rgba(8,7,5,.28), rgba(8,7,5,.48)),
+    radial-gradient(ellipse at center, rgba(7,6,4,.25), rgba(7,6,4,.5));
+}
+.startup-gate .startup-ash-field { opacity: 0; }
+.startup-gate.is-revealing { opacity: 1; }
+.startup-gate.is-revealing > .as-titlemenu,
+.startup-gate.is-revealing > .build-stamp { animation: towerLockupAway 380ms ease both; }
+.startup-gate.is-revealing .tower-city-lit { animation: towerLightsWake var(--tower-light-ms) ease both; }
+.startup-gate.is-revealing .tower-exterior { animation: towerExteriorFade var(--tower-fade-ms) ease var(--tower-fade-delay) both; }
+.startup-gate.is-revealing .tower-hall { animation: towerHallFade var(--tower-fade-ms) ease var(--tower-fade-delay) both; }
+@keyframes towerLockupAway { to { opacity: 0; } }
+@keyframes towerLightsWake { from { opacity: 0; } to { opacity: 1; } }
+@keyframes towerExteriorFade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes towerHallFade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.title-screen { background: #080705; }
+.title-screen::before { background: none; }
+.title-screen > .tower-hall { position: absolute; inset: 0; z-index: 0; opacity: 1; pointer-events: none; }
+.title-screen .tower-door-frame { animation: towerDoorBreathe 5500ms ease-in-out infinite alternate; }
+@keyframes towerDoorBreathe { from { opacity: 1; } to { opacity: .92; } }
+.reduced-motion .title-screen .tower-door-frame,
+:root[data-ambient='off'] .title-screen .tower-door-frame { animation: none; }
+.title-screen .as-titlemenu { text-shadow: 0 2px 12px #090705; }
+.startup-wordmark, .title-screen .tm-name { position: relative; isolation: isolate; }
+.startup-wordmark::before, .title-screen .tm-name::before {
+  content: ''; position: absolute; inset: -.14em -.25em; z-index: -1;
+  pointer-events: none; border-radius: .18em;
+  background: linear-gradient(90deg, transparent, rgba(7,6,4,.68) 15%, rgba(7,6,4,.68) 85%, transparent);
+  -webkit-mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent);
+  animation: titleBackdropIn 850ms ease both;
+}
+@keyframes titleBackdropIn { from { opacity: 0; } to { opacity: 1; } }
+.reduced-motion .startup-wordmark::before,
+.reduced-motion .title-screen .tm-name::before { animation: none; }
+.tower-preview-replay {
+  margin-top: .8rem; padding: .5rem 1rem; min-height: 3.2rem;
+  color: var(--gold); border: 1px solid rgba(190,160,95,.3);
+  background: rgba(8,7,5,.65); font-size: 1.1rem; letter-spacing: .08em;
+  cursor: pointer; border-radius: 2px;
+}
+.tower-preview-replay:hover, .tower-preview-replay:focus-visible { border-color: var(--gold); color: var(--parchment); }
+@media (orientation: portrait) {
+  .tower-door-frame {
+    background-image: linear-gradient(180deg, rgba(8,7,5,.28), rgba(8,7,5,.48)), url('../assets/bg/tower-entrance-hall-phone.webp');
+    -webkit-mask-image: url('../assets/bg/tower-door-mask-phone.svg');
+    mask-image: url('../assets/bg/tower-door-mask-phone.svg');
+  }
+}
+.startup-gate.tower-calm .tower-exterior,
+.startup-gate.tower-calm .tower-city-lit,
+.startup-gate.tower-calm .tower-hall,
+.startup-gate.tower-calm > .as-titlemenu,
+.startup-gate.tower-calm > .build-stamp { animation: none; }
+.startup-gate.tower-calm .tower-exterior { opacity: 0; }
+.startup-gate.tower-calm .tower-hall { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .title-screen .tower-door-frame { animation: none; }
+  .startup-gate > .as-titlemenu, .startup-gate .tm-foot { animation: none; }
+  .startup-wordmark::before, .title-screen .tm-name::before { animation: none; }
+}
+@media (max-width: 360px) and (orientation: portrait) {
+  .title-screen { padding-top: 8.2rem; padding-bottom: 1.2rem; }
+}
