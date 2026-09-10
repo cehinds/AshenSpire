@@ -492,6 +492,9 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .as-actions .am-detail { padding: 0 1.35rem 0.9rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 1.28rem; line-height: 1.45; }
 
 /* TitleMenu — the one menu with no panel around it. */
+.offline-play-modal .offline-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-block: 1rem; }
+.offline-play-modal li { margin-block: 0.6rem; }
+.offline-play-modal .modal-body { overflow-wrap: anywhere; }
 .as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
 /* The name fills its line: an indent would overflow and disable centering.
    Shift half the trailing tracking instead, keeping the visible text centered. */

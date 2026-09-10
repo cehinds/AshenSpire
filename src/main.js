@@ -29,6 +29,8 @@ import { createCombat } from './engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode } from './engine/actmap.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
+import { createSaveTransfer } from './engine/saveTransfer.js';
+import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -1090,6 +1092,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     onCompendium: showCompendium,
     onProfile: showProfile,
     onSettings: showSettings,
+    onOffline: showOfflinePlay,
     onSettingsChange: persistSettingsChange,
     onCollapse: showCollapsedTitle,
     onQuit: quitGame,
@@ -1166,7 +1169,12 @@ function showSettings() {
   openSettings({
     meta: activeMeta,
     onChange: persistSettingsChange,
+    onOffline: showOfflinePlay,
   });
+}
+
+function showOfflinePlay() {
+  openOfflinePlay({ transfer: createSaveTransfer(bootStorage, registries), canImport: () => !run });
 }
 
 /**
@@ -1245,6 +1253,7 @@ function quitGame() {
 function showOverlay(initialTab = 'settings') {
   if (!run) return;
   openOverlay({
+    onOffline: showOfflinePlay,
     registries,
     run,
     meta: activeMeta,

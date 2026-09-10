@@ -7,6 +7,7 @@
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { mountFlickPractice } from '../components/flickPractice.js';
+import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { setTabRing, hasTabRing } from '../input.js';
@@ -1212,7 +1213,7 @@ function categoryHtml(cat, settings, saves) {
  * derives the set from what is filed; a tab, its tooltip, its bumper stop and
  * its place in the ring all follow from that one list.
  */
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null }) {
   let html = '';
   let cats = [];
   let current = null;
@@ -1261,6 +1262,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // releases listeners even while the shared container remains on the page.
   const lifecycleSentinel = document.createComment('settings-render-lifecycle');
   container.appendChild(lifecycleSentinel);
+  if (onOffline) {
+    const offline = button({ label: offlinePlay.title, id: 'settings-download' });
+    offline.addEventListener('click', onOffline);
+    container.appendChild(offline);
+  }
 
   const syncFullscreen = (message = '') => {
     const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
@@ -1543,7 +1549,7 @@ export function showSettingsNotice(msg) {
   el.textContent = msg;
 }
 
-export function openSettings({ meta, onChange, saves = null }) {
+export function openSettings({ meta, onChange, saves = null, onOffline = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
@@ -1556,7 +1562,7 @@ export function openSettings({ meta, onChange, saves = null }) {
     title: 'Settings',
     closeLabel: 'Close Settings',
     bodyClassName: 'set-body',
-    body: (host) => renderSettings(host, { settings, onChange, saves }),
+    body: (host) => renderSettings(host, { settings, onChange, saves, onOffline }),
     primary: done,
     footSize: 'short',
   });
