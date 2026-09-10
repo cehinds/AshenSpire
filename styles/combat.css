@@ -635,10 +635,10 @@
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
 .combatant.enemy .sprite > img { animation-duration: 2.6s; }
-.combatant.enemy.context-selected .combatant-card {
+.combatant.context-selected .combatant-card {
   filter: drop-shadow(0 0 5px rgba(201, 162, 39, 0.72));
 }
-.combatant.enemy.context-selected .nm { color: var(--gold); }
+.combatant.context-selected .nm { color: var(--gold); }
 .combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
 .combatant:nth-child(3) .sprite > img { animation-delay: -1.7s; }
 .combatant:nth-child(4) .sprite > img { animation-delay: -2.3s; }
@@ -1136,7 +1136,7 @@
 :root .combat[data-layout='formation'] .combatant [data-tip-attached], .combat .turn-ribbon { pointer-events: auto; }
 .combat-ability-badge { cursor: pointer; }
 .combat-ability-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
-:root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) { z-index: 30 !important; }
+:root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) .combatant-leading { z-index: 30; }
 :root .combat[data-layout='formation'] > .hand-area {
   grid-row: 3; height: 100%; min-height: 0; margin: 0; padding: 0;
   display: grid; grid-template-rows: 2fr 1fr; grid-template-areas: 'hand' 'actions'; gap: 0;
@@ -1295,19 +1295,16 @@
 }
 .combatant-leading .overhead-control {
   pointer-events: auto; cursor: pointer; flex: none;
-  color: #fff1d0; border: calc(2px / var(--ui-zoom, 1)) solid #af9161;
-  background: linear-gradient(#34313a, #16151d);
-  box-shadow: inset 0 1px 0 #ffffff36, 0 2px 5px #0009;
   touch-action: manipulation;
 }
-.combatant-leading .combatant-info {
-  display: grid; place-items: center;
-  width: calc(44px / var(--ui-zoom, 1)); height: calc(44px / var(--ui-zoom, 1));
-  padding: 0; border-radius: 50%;
-  font: italic bold calc(24px / var(--ui-zoom, 1))/1 Georgia, serif;
-}
+/* Match the card Information motif; hidden controls leave no empty grid cell. */
+.combatant:not(.context-selected) .combatant-leading > .combatant-info { display: none; }
+.combatant-leading > .combatant-info { box-shadow: none; }
 .combatant-leading .intent {
   --intent-accent: #d9bc74;
+  border: calc(2px / var(--ui-zoom, 1)) solid var(--intent-accent);
+  background: linear-gradient(#34313a, #16151d);
+  box-shadow: inset 0 1px 0 #ffffff36, 0 2px 5px #0009;
   display: flex; align-items: center; justify-content: center;
   gap: calc(5px / var(--ui-zoom, 1));
   min-width: calc(52px / var(--ui-zoom, 1)); min-height: calc(48px / var(--ui-zoom, 1));

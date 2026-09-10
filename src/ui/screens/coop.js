@@ -1,4 +1,4 @@
-import { combatantInfo, combatantIntent } from '../components/combatantOverhead.js';
+import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
@@ -103,6 +103,31 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let seatIdx = 0;
   let me = seats[0];
   let selectedEnemy = null;
+  let selectedCombatantId = null;
+  function selectCombatant(id) {
+    selectedCombatantId = id;
+    selectCombatantInfo(app, id);
+  }
+  function wireCombatantContext(box, name) {
+    box.tabIndex = -1;
+    box.dataset.focusable = '';
+    box.setAttribute('role', 'button');
+    if (!box.hasAttribute('aria-label')) box.setAttribute('aria-label', `Select ${name}`);
+    box.classList.toggle('context-selected', selectedCombatantId === box.dataset.eid);
+    box.setAttribute('aria-pressed', String(selectedCombatantId === box.dataset.eid));
+    box.addEventListener('focus', () => selectCombatant(box.dataset.eid));
+    box.addEventListener('gpfocus', event => { if (event.target === box) selectCombatant(box.dataset.eid); });
+    box.addEventListener('keydown', event => {
+      if (event.target !== box || !['Enter', ' '].includes(event.key)) return;
+      event.preventDefault(); box.click();
+    });
+  }
+  const dismissCombatant = event => {
+    if (!event.target.closest('.combatant, .combatant-door, .modal')) selectCombatant(null);
+  };
+  const inspectCard = () => selectCombatant(null);
+  app.addEventListener('click', dismissCombatant);
+  app.addEventListener('cardinspectionselect', inspectCard);
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
   let armedFriendlyCard = null; // friendly-targeted card instanceId awaiting a legal seat
   let prevCombat = null; // last combat scene, for snapshot-diff FX
@@ -332,6 +357,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const keyHandler = (ev) => {
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (ev.key === 'Tab' && seats.length > 1) { ev.preventDefault(); setSeat((seatIdx + 1) % seats.length); return; }
+    if (ev.key === 'Escape') selectCombatant(null);
     if (ev.key === 'Escape' && (armedFriendlyCard || armedFlask != null)) {
       ev.preventDefault();
       if (!cancelFriendlyTargeting()) { armedFlask = null; render(); }
@@ -379,6 +405,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
+    app.removeEventListener('click', dismissCombatant);
+    app.removeEventListener('cardinspectionselect', inspectCard);
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     clearCombatEffects(app.querySelector('.fx-layer'));
     releaseFlaskKeyClaim();
@@ -531,6 +559,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       || document.activeElement?.closest?.('.coop-seat[data-friendly-target]'))?.dataset.seat || null;
     let restoreFriendlyCardFocus = null;
     const living = sc.enemies.filter((e) => e.hp > 0);
+    if (selectedCombatantId && ![...living, ...sc.players.filter(p => p.alive)].some(e => e.id === selectedCombatantId)) selectedCombatantId = null;
+    if (armedFlask != null || armedFriendlyCard) selectedCombatantId = null;
     if (selectedEnemy == null || !living.find((e) => e.id === selectedEnemy)) selectedEnemy = living[0] ? living[0].id : null;
     const meP = sc.players.find((p) => p.id === me);
     let armedCardDef = armedFriendlyCard && meP ? (() => { const c = meP.hand.find((h) => h.instanceId === armedFriendlyCard); return c ? cardDef(c) : null; })() : null;
@@ -604,7 +634,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.className = `combatant player coop-seat${p.id === me ? ' me' : ''}${p.ended ? ' ended' : ''}${p.alive ? '' : ' down'}${p.connected ? '' : ' away'}${armedFlask != null && p.alive && p.connected ? ' throw-target' : ''}`;
       box.dataset.seat = p.id;
       box.dataset.eid = p.id;
-      box.append(infoEl(p, m.name || p.id));
+      if (p.alive) box.append(infoEl(p, m.name || p.id));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId));
@@ -646,7 +676,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           sendFlaskUse({ slot: armedFlask, targetId: p.id === me ? undefined : p.id });
           armedFlask = null;
         });
+      } else if (p.alive) {
+        box.addEventListener('click', () => selectCombatant(p.id));
       }
+      if (p.alive) wireCombatantContext(box, m.name || p.id);
       adoptCombatantFrame(box);
       zone.appendChild(box);
     }
@@ -671,7 +704,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         event.targetId === e.id && (event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak' || event.type === 'arcaneExposureChanged')
       ))));
       box.appendChild(statusRow(e.statuses));
-      if (!dead) box.addEventListener('click', () => { selectedEnemy = e.id; render(); });
+      if (!dead) {
+        wireCombatantContext(box, def.name);
+        box.addEventListener('click', () => { selectedEnemy = e.id; selectCombatant(e.id); render(); });
+      }
       adoptCombatantFrame(box);
       row.appendChild(box);
     }
