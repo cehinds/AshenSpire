@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-954",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The record of what shipped caught up with what shipped",
+    "detail": "Nothing a player sees changes. Three changes had landed without an entry here, and the number stamped on the downloadable game belonged to an older version of the source — it had been merged without being rebuilt, so the box and its contents disagreed. The three entries are written, and the build is made again so its stamp is honest. One detail worth keeping: each entry's build number was read out of the project's own history at the moment that change landed, not copied from what its author wrote down, and the two disagreed once out of three.",
+    "build": "0.6.0.123",
+    "pullRequest": 954,
+    "url": "https://github.com/cehinds/AshenSpire/pull/954"
+  },
+  {
     "id": "pr-945",
     "date": "2026-09-10",
     "group": "2026-09-10",
