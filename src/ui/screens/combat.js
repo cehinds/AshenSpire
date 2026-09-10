@@ -24,6 +24,8 @@ import { stageFor } from '../services/PoseAnimator.js';
 import { attachTooltip, ensureTooltip, hideTooltip, showTooltipFor, showTooltipForRect, esc } from '../components/tooltip.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
+import { tooltipHelp } from '../../content/tooltipHelp.js';
+import { helpText } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
@@ -532,12 +534,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         role: 'player',
         name: (run.customization?.name || classDef.name).toUpperCase(),
         subtitle: `${classDef.name} · Level ${run.level ?? 1}`,
-        resources: [
+        resources: inspectorResources([
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },
           { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
           { label: 'Block', value: v.block || 0 },
-        ],
+        ], 'player'),
         skillLabel: 'Active skills & stance',
         abilities,
         skills: abilities,
@@ -558,11 +560,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       role: 'enemy',
       name: def.name,
       subtitle: (def.tags || []).map(words).join(' · ') || 'Enemy',
-      resources: [
+      resources: inspectorResources([
         { label: 'HP', value: v.hp, max: entity.maxHp },
         { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
         { label: 'Block', value: v.block || 0 },
-      ],
+      ], 'enemy'),
       intent: {
         name: currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
         detail: moveDetail(current, intent),
@@ -597,7 +599,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function openCombatantDoor(subject, opener = document.activeElement) {
     if (!subject?.name) return;
     hideTooltip();
-    const done = button({ label: 'Close', weight: 'primary', attrs: { 'data-focusable': 'true' } });
+    const done = button({ label: 'Close', weight: 'primary', attrs: { 'data-focusable': 'true', title: helpText('close') } });
     const shell = openModal({
       size: 'md',
       className: 'combatant-door',
@@ -865,6 +867,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     host.innerHTML = '';
     const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
     host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player') }));
+    host.querySelectorAll('[data-tip-attached]').forEach(node => { node.tabIndex = 0; });
     const relics = $('.topbar .relics');
     relics.innerHTML = '';
     for (const rid of p.relicIds) {
@@ -936,14 +939,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function statusRow(entity) {
     // The status row is the kit's Pips: one round badge per effect, its count a
     // round StatePill on the corner.
-    // EVERY PIP ANSWERS FOR ITSELF — the one exception to #045/#046's single
-    // battlefield tooltip surface, and Constantine's own reversal of it
-    // (2026-09-05: "no tool tip for Status effects"). The frame's context
-    // reading repeats HP, Poise and the intent, so a second tooltip on those
-    // is redundant and stays suppressed; it only NAMES the effects ("Effects
-    // Crimson Blight"), so a pip with no tooltip is a glyph the player cannot
-    // read. Naming without explaining is the gap this closes. The same holds
-    // for the threshold proc bars below — they are status rows too.
+    // Each meaningful battlefield detail has its own half-second explanation.
+    // The frame remains the broader reading when the pointer leaves a detail.
     const row = pips([], { class: 'statuses' });
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
@@ -993,13 +990,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // the sentence that must change with them.
   function poiseTip(kind) {
     return (bar) => {
+      if (['block', 'hp'].includes(bar.id)) return esc(helpText(bar.id));
+      if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id) + (combat.foundation ? helpText('recovery', { amount: combat.foundation.rules.recovery[`${bar.id}PerTurn`] }) : ''));
       if (bar.id !== 'poise') return '';
       if (kind === 'player') {
-        return 'Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet.';
+        return esc(helpText('playerPoise'));
       }
       const staggered = registries.frameworkTerms.statusDisplay('staggered');
       const stagDesc = (staggered && staggered.tooltip) || '';
-      return `Fill it to Stagger. ${esc(stagDesc)}`;
+      return esc(helpText('enemyPoise', { effect: stagDesc }));
     };
   }
 
@@ -1018,6 +1017,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (const bar of plan) {
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
       if (!el) continue;
+      if (tooltips) el.tabIndex = 0;
       if (bar.id === 'hp') markUiComponent(el, UI.healthStatusBar, entity.kind);
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
     }
@@ -1075,7 +1075,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (v.block <= 0) return null;
     const b = pill({ label: String(v.block), round: true, attrs: { class: 'block-badge solid lg' } });
     markUiComponent(b, UI.blockBadge);
-    if (tooltips) attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
+    if (tooltips) attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>${esc(helpText('block'))}`);
     return b;
   }
 
@@ -1153,9 +1153,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       entityId: 'player',
       classNames: selfArm ? ['armed'] : [],
       sprite: playerSprite(run.customization || {}, run.class, figure.armourId),
-      blockBadge: blockBadge(p, { tooltips: false }),
+      blockBadge: blockBadge(p),
       name: labelStack({ label: run.customization?.name || registries.classes.get(run.class).name, attrs: { class: 'nm' } }),
-      meters: meterBars(p, { tooltips: false }),
+      meters: meterBars(p),
       trailing,
     });
     wirePlayerContext(box, p);
@@ -1194,6 +1194,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
     if (badge.glyph) node.prepend(glyph(badge.glyph, { class: 'ic' }));
     markUiComponent(node, UI.intentIndicator, badge.cls);
+    attachTooltip(node, () => {
+      const intent = combatantSubject('enemy', enemy).intent;
+      return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
+    });
     return node;
   }
 
@@ -1240,9 +1244,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : '', selectedEnemyId === enemy.id ? 'context-selected' : ''],
         leading,
         sprite: enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp }),
-        blockBadge: blockBadge(enemy, { tooltips: false }),
+        blockBadge: blockBadge(enemy),
         name: nm,
-        meters: meterBars(enemy, { tooltips: false }),
+        meters: meterBars(enemy),
         trailing: [statusRow(enemy)],
       });
       box.dataset.stature = statureFor(registries, def.id);
@@ -2080,6 +2084,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // other control on this screen carries a tooltip; the five that decide a
   // turn carried none. Counts are read at open time, so the panel is never a
   // stale copy of a number the row already shows.
+  for (const { selector, title, message } of tooltipHelp.combatTargets) {
+    const node = $(selector);
+    node.tabIndex = 0;
+    attachTooltip(node, () => `<div class="tt-title">${esc(title)}</div>${esc(helpText(message, {
+      className: registries.classes.get(run.class).name, classDescription: registries.classes.get(run.class).description || '',
+      cinders: run.cinders, act: run.actNumber, floor: run.floor, turn: $('.turn-ribbon').textContent,
+      instruction: helpText(combatEl.dataset.turn === 'player' ? 'playerTurn' : 'enemyTurn'),
+    }))}`);
+  }
+
+  function inspectorResources(rows, kind) {
+    return rows.map(row => ({ ...row, tooltipHtml: poiseTip(kind)({ id: ({ MP: 'mana', SP: 'stamina' })[row.label] || row.label.toLowerCase() }) }));
+  }
   attachTooltip($('.energy-orb'), () => `<div class="tt-title">Actions</div>`
     + `${dv(combat.player).energy ?? combat.player.energy} of ${combat.player.energyMax} left this turn.`
     + `<div class="ti-detail">Playing a card spends its cost. Unspent actions do not carry over.</div>`);
@@ -2126,7 +2143,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // MENU table. Armoury is the canonical equipment name in every context.
   {
     const row = (MENU.combat || []).find((r) => r.act === 'armoury');
-    if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(onArmoury ? 'View this test build’s fixed weapon, defense, and resource rules.' : row.tip)}`);
+    attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row?.label || helpText('armouryTitle'))}</div>${esc(onArmoury ? helpText('armouryTest') : row?.tip || helpText('armoury'))}`);
     attachTooltip(menuBtn, () =>
       `<div class="tt-title">Menu</div>${esc(onArmoury ? 'Test build details and return to build selection.' : quickNavMode() === 'off'
         ? 'Armoury, settings, controls and saving.'

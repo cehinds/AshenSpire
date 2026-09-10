@@ -70,7 +70,43 @@ try {
       check(await evaluate('document.documentElement.scrollWidth<=innerWidth'), `${shape.name}/${build}: battlefield fits viewport`);
       if (build === 'heavy') {
         const tipOpen = 'document.querySelector("#tooltip")?.dataset.open==="true"';
+        const hover = async (selector, expected, screenshot, reset = true) => {
+          if (reset) { await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 }, sessionId); await wait(650); }
+          const point = await evaluate(`(()=>{const el=document.querySelector(${JSON.stringify(selector)});if(!el)throw new Error('Missing hover target '+${JSON.stringify(selector)});const b=el.getBoundingClientRect();for(const fy of [.5,.2,.8])for(const fx of [.5,.15,.85]){const x=b.x+b.width*fx,y=b.y+b.height*fy;if(el.contains(document.elementFromPoint(x,y)))return{x,y};}throw new Error('Unreachable hover target '+${JSON.stringify(selector)});})()`);
+          await evaluate('window.__hoverAt=performance.now();window.__openedAfter=0;window.__hoverObserver?.disconnect();window.__hoverObserver=new MutationObserver(()=>{if(document.querySelector("#tooltip")?.dataset.open==="true"&&!window.__openedAfter)window.__openedAfter=performance.now()-window.__hoverAt;});window.__hoverObserver.observe(document.body,{subtree:true,attributes:true});');
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point }, sessionId);
+          await until(`${tipOpen} && document.querySelector(${JSON.stringify(selector)}).closest('[data-tip-attached]')?.hasAttribute('data-tip-open') && document.querySelector('#tooltip').textContent.includes(${JSON.stringify(expected)})`);
+          check(await evaluate('window.__openedAfter>=450 && window.__openedAfter<1500'), `hover ${selector}: explains after half a second`);
+          check(await evaluate('(()=>{const b=document.querySelector("#tooltip").getBoundingClientRect();return b.left>=0&&b.right<=innerWidth+1&&b.top>=0&&b.bottom<=innerHeight+1})()'), `hover ${selector}: explanation fits viewport`);
+          if (screenshot) await capture(screenshot);
+        };
         if (!shape.mobile) {
+          for (const [selector, expected, screenshot] of [
+            ['.hud-class', 'Class'], ['.hud-cinders', 'Currency'], ['.hud-act', 'region'], ['.hud-floor', 'current step'],
+            ['.topbar [data-res=hp]', 'Health remaining', 'health-hover'], ['.topbar [data-res=mana]', 'Mana pays', 'mana-hover'], ['.topbar [data-res=stamina]', 'Stamina pays'],
+            ['#combat-armoury', 'fixed weapon'], ['#combat-menu', 'Menu'], ['.hud-mode-grip', 'HUD'], ['.turn-ribbon', 'Turn'],
+            ['.combatant.player [data-res=hp]', 'Health remaining'], ['.combatant.player .block-badge', 'Absorbs'],
+            ['.stance-chip', 'Gain 3 Block'], ['.foundation-evade', 'charge'],
+            ['.combatant.enemy [data-res=hp]', 'Health remaining'], ['.combatant.enemy .intent', 'Intent:', 'intent-hover'],
+            ['.combatant.enemy .nm', 'HP'], ['.energy-orb', 'Actions'], ['.pile.draw', 'Draw pile'], ['.pile.spent', 'Discard'], ['.combat-potions', 'Potions'], ['.end-turn', 'End Turn'],
+            ['.hand .card .cost', 'cost'], ['.hand .card .stamina-cost', 'cost'], ['.hand .card .ctag', ''],
+          ]) await hover(selector, expected, screenshot);
+          for (const selector of ['.combatant.enemy [data-res=poise]', '.arcane-exposure-meter']) {
+            if (await evaluate(`!!document.querySelector(${JSON.stringify(selector)})`)) await hover(selector, selector.includes('poise') ? 'Stagger' : '/', 'buildup-hover');
+          }
+          await hover('.hand .card .cost', 'cost');
+          const cardName = await evaluate('document.querySelector(".hand .card .cname").textContent');
+          await hover('.hand .card .cname', cardName, null, false);
+          await hover('.hand .card .cost', 'cost', 'card-cost-hover', false);
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 }, sessionId); await wait(650);
+          await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 }, sessionId);
+          await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 }, sessionId);
+          await evaluate('document.querySelector(".hud-class").focus()');
+          await until(`${tipOpen} && document.querySelector('#tooltip').textContent.includes('Class')`);
+          check(true, 'keyboard focus explains HUD identity');
+          await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }, sessionId);
+          check(!(await evaluate(tipOpen)), 'Escape dismisses HUD help');
+          await evaluate('document.activeElement.blur()');
           await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 3, y: 3 }, sessionId); await wait(650);
           const point = await evaluate(`(()=>{const el=document.querySelector('.foundation-evade');const b=el.getBoundingClientRect();window.__abilityHoverStart=0;window.__abilityHoverDelay=0;el.addEventListener('pointerenter',()=>{window.__abilityHoverStart=performance.now();},{once:true});const observer=new MutationObserver(()=>{const tip=document.querySelector('#tooltip');if(tip?.dataset.open==='true'&&tip.textContent.includes('charge')){window.__abilityHoverDelay=performance.now()-window.__abilityHoverStart;observer.disconnect();}});observer.observe(document.body,{subtree:true,attributes:true,childList:true});return{x:b.x+b.width/2,y:b.y+b.height/2};})()`);
           await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point }, sessionId);
@@ -90,13 +126,22 @@ try {
         check(await evaluate('document.querySelector("[data-ability-id=evade]").textContent.includes("Unused charges expire") && document.querySelector("[data-ability-id=strength]").textContent.includes("2")'), `${shape.name}: Evade and live status stacks are inspectable`);
         check(!(await evaluate('document.querySelector(".combatant-abilities > summary .tooltip-keyword")')), `${shape.name}: section heading is a disclosure rather than an accidental glossary link`);
         await capture('active-abilities');
+        if (!shape.mobile) {
+          await hover('.combatant-inspector-resource[data-res=hp]', 'Health remaining');
+          await hover('.combatant-inspector-resource[data-res=block]', 'Absorbs');
+          await hover('.combatant-abilities > summary', 'active entries');
+          await hover('[data-ability-id=evade] > summary', 'charge', 'inspector-hover');
+          await hover('.combatant-door .modal-close', 'Close');
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 }, sessionId); await wait(650);
+        }
         await click('.combatant-abilities > summary');
         check(!(await evaluate('document.querySelector(".combatant-abilities").open')), `${shape.name}: active skills heading collapses the list`);
         await click('.combatant-abilities > summary');
         await click('[data-ability-id=evade] > summary');
         check(!(await evaluate('document.querySelector("[data-ability-id=evade]").open')), `${shape.name}: an ability supports detail disclosure`);
         await click('[data-ability-id=evade] > summary');
-        await click('.combatant-door .modal-close'); await until('!document.querySelector(".combatant-door")');
+        await click('.combatant-door .modal-foot button'); await until('!document.querySelector(".combatant-door")');
+        check(true, `${shape.name}: inspector footer closes after tooltip interaction`);
         await click('.stance-chip'); await until('!!document.querySelector(".combatant-abilities")');
         check(await evaluate('document.querySelectorAll(".combatant-ability").length===3'), `${shape.name}: stance badge also opens the complete list`);
         await click('.combatant-door .modal-close'); await until('!document.querySelector(".combatant-door")');
@@ -109,6 +154,45 @@ try {
           check(true, 'desktop: keyboard activates badge inspection');
           await click('.combatant-door .modal-close'); await until('!document.querySelector(".combatant-door")');
         }
+        const openHelpSettings = async () => {
+          await click('#combat-armoury'); await click('.test-settings');
+          await click('.set-tab[data-member="Accessibility"]');
+        };
+        const closeHelpSettings = async () => { await click('#set-close'); await click('.modal-veil .modal-close'); };
+        await openHelpSettings();
+        await click('[data-key="tooltipDelay"][data-val="1s"]');
+        await click('[data-key="tooltipCloseDelay"][data-val="0.25s"]');
+        check(await evaluate('document.documentElement.scrollWidth<=innerWidth'), `${shape.name}: tooltip settings fit viewport`);
+        await evaluate('document.querySelector(".set-panel").scrollTop=0');
+        await capture('tooltip-settings');
+        await closeHelpSettings();
+        if (!shape.mobile) {
+          await hover('.hud-class', 'Class');
+          check(await evaluate('window.__openedAfter>=950'), 'existing HUD target uses newly selected one-second delay');
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 }, sessionId); await wait(400);
+          check(!(await evaluate(tipOpen)), 'tooltip uses newly selected quarter-second closing delay');
+        }
+        await openHelpSettings();
+        check(await evaluate(`document.querySelector('[data-key="tooltipDelay"].on')?.dataset.val === '1s'`), `${shape.name}: reopening settings retains selected delay`);
+        await click('.toggle[data-key="hoverTooltips"]');
+        await closeHelpSettings();
+        if (!shape.mobile) {
+          const point = await evaluate('(()=>{const b=document.querySelector(".hud-class").getBoundingClientRect();return{x:b.x+b.width/2,y:b.y+b.height/2}})()');
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point }, sessionId); await wait(1150);
+          check(!(await evaluate(tipOpen)), 'disabled hover remains silent');
+          await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 }, sessionId);
+          await evaluate('document.querySelector(".hud-class").focus()');
+          await until(`${tipOpen} && document.querySelector('#tooltip').textContent.includes('Class')`);
+          check(true, 'keyboard help works while pointer hover is disabled');
+        }
+        await click('.foundation-evade'); await until('!!document.querySelector(".combatant-abilities")');
+        check(true, `${shape.name}: explicit inspection works with hover disabled`);
+        await click('.combatant-door .modal-close');
+        await openHelpSettings();
+        await click('.toggle[data-key="hoverTooltips"]');
+        await click('[data-key="tooltipDelay"][data-val="0.5s"]');
+        await click('[data-key="tooltipCloseDelay"][data-val="0.5s"]');
+        await closeHelpSettings();
         await evaluate('delete window.__combat.player.statuses.strength;window.__renderCombatForShot()');
       }
       await capture(build);

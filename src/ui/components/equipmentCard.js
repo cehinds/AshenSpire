@@ -1,6 +1,7 @@
 import { bindCardInspection, cardInspectionLayout, openCardInspection } from './cardInspection.js';
 import { equipmentCardModel, equipmentCardTokens } from '../../model/equipmentCard.js';
 import { equipmentCardArt } from '../assets.js';
+import { imageHintAttrs } from '../imageHints.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { configureTooltipGlossary, decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 
@@ -59,7 +60,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
   };
   card.innerHTML = `<span class="epc-frame">
     <span class="epc-name ec-name" style="--title-units:${Math.max(1, Array.from(String(model.name)).length * 0.62)}">${esc(model.name)}<span aria-hidden="true">◆</span></span>
-    <span class="epc-art">${presentation && !model.art ? `<span class="epc-art-glyph" aria-hidden="true">${esc(model.glyph || piece.icon || '◆')}</span>` : `<img src="${esc(presentation ? model.art : equipmentCardArt(piece))}" alt="${esc(model.name)}">`}</span>
+    <span class="epc-art">${presentation && !model.art ? `<span class="epc-art-glyph" aria-hidden="true">${esc(model.glyph || piece.icon || '◆')}</span>` : `<img${imageHintAttrs({ offscreen: true })} src="${esc(presentation ? model.art : equipmentCardArt(piece))}" alt="${esc(model.name)}">`}</span>
     <span class="epc-type" ${tip(model.armor ? model.type : model.type.split(' · ')[0], model.typeExplanation)}>${esc(model.type)}</span>
     <span class="epc-facts">${model.facts.map(f => `<span class="epc-fact" ${tip(model.cardKind ? f.value : `${f.label}: ${f.value}`, f.explanation, model.cardKind ? 'tag' : 'fact')}><strong>${esc(f.value)}</strong>${esc(f.label)}</span>`).join('')}</span>
     <span class="epc-tags ec-tags">${model.tags.map(t => `<span class="epc-tag" ${tip(t.label, t.explanation)}>${esc(t.label)}</span>`).join('')}</span>

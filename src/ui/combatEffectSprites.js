@@ -5,6 +5,7 @@ import { combatEffectPresentation } from '../content/combatEffectPresentation.js
 import {playPresentationSequence} from './presentationSequence.js';
 import {combatEffectAttachment} from '../content/combatEffectAnchors.js';
 import {playCombatantEffectLayers,combatantEmissionBox} from './combatantEffectLayers.js';
+import { hintImage } from './imageHints.js';
 const active=new WeakMap();
 // Shared solo/co-op sequence: one cast, then one release per actual recipient.
 export function playCombatEffectPlan(layer,from,plan,{targets=[],authoredTargets=[],duration=260,size=160,actor=null,localBox=null}={}){
@@ -52,7 +53,7 @@ export function playCombatEffect(layer,from,kind,{to=null,direction='auto',durat
  const frames=combatEffectFrames(kind);if(!frames.length)return ()=>{};
  const presentation=combatEffectPresentation(kind);size*=presentation.sizeScale;
  frames.forEach(src=>{const warm=new Image();warm.src=src;});
- const el=document.createElement('img');el.className='painted-combat-effect';el.alt='';el.setAttribute('aria-hidden','true');el.dataset.effect=kind;
+ const el=hintImage(document.createElement('img'));el.className='painted-combat-effect';el.alt='';el.setAttribute('aria-hidden','true');el.dataset.effect=kind;
  const x=from.left+from.width/2-size/2,y=from.top+from.height/2-size/2;
  el.style.cssText=`position:absolute;pointer-events:none;width:${size}px;height:${size}px;left:${x}px;top:${y}px;object-fit:contain;z-index:4;`;
  const show=i=>{el.src=frames[i];el.dataset.frame=String(i+1);};show(0);layer.appendChild(el);

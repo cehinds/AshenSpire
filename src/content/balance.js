@@ -2,6 +2,8 @@
 //
 // Code never embeds a balance number; a balance change is a one-file diff here.
 
+import { tooltipHelp } from './tooltipHelp.js';
+
 export const balance = {
   // Arcane Exposure host resolution: visible name plus the explicit school
   // mapping actions.js consumes. No buildup is inferred from card tags.
@@ -287,6 +289,28 @@ export const balance = {
   // slider can't drift apart — they previously lived in two files and silently
   // disagreed.
   ui: {
+    // How every rendered <img> is handed to the browser. Both of these are
+    // decode-path settings, not network settings, and that distinction is the
+    // whole reason this block exists rather than sixteen literal attributes
+    // scattered through the render sites.
+    //
+    // The shipped build inlines its art as data: URIs (see ui/assetmap.js), so
+    // there is no request to defer — the cost that remains is DECODE, and on a
+    // phone decoding a 350x490 WebP synchronously on the main thread is a
+    // dropped frame every time a card mounts. `decoding: 'async'` is the fix
+    // and it is safe everywhere, because the only thing it gives up is the
+    // guarantee that the image is painted in the same frame as its parent.
+    //
+    // `lazy` is NOT safe everywhere, and it is off by default for that reason.
+    // A `loading="lazy"` image inside a container that is display:none, or
+    // translated off-screen, or opacity:0 may never load at all — which is
+    // exactly the shape of every combat effect overlay in this codebase. It is
+    // opted into per call site, and only for images that sit in a scrollable
+    // list where being below the fold is the normal case.
+    imageHints: {
+      decoding: 'async',
+      lazy: true,
+    },
     touchFlick: { enabled: true, distance: { min: 32, max: 160, def: 64 }, minVelocity: 300, velocityWindowMs: 120 },
     // HUD resource bars, per surface (content/resources.js holds the rows).
     //
@@ -446,7 +470,7 @@ export const balance = {
       info: { revealDelayMs: 125, fadeMs: 120, sizePx: 44, insetPx: 6 },
     },
     tooltipPlacement: {
-      hoverDelayMs: 500,
+      hoverDelayMs: tooltipHelp.delays[tooltipHelp.settings.find(row => row.key === 'tooltipDelay').def],
       autoFadeMs: 5000,
       topBandViewportPct: 25,
       sideBandViewportPct: 30,
