@@ -49,6 +49,12 @@ let closeTimer = null;
 let dwellTimer = null;
 let fadeTimer = null;
 let expander = null; // the `full` tier opener, injected to avoid a circular import
+let selectedControl = null;
+let touchSelectedControl = null;
+function clearControlSelection() {
+  selectedControl?.classList.remove("tooltip-selected");
+  selectedControl = touchSelectedControl = null;
+}
 let pending = null;  // { el, show } — the show an open timer is counting down to
 let nestedOpenTimer = null;
 let nestedCloseTimer = null;
@@ -155,6 +161,7 @@ let hoverCloseCallback = null;
 function closeAfterHover() {
   if (panels.some(p => p?.contains(document.activeElement))) return;
   const callback = hoverCloseCallback;
+  if (selectedControl === state[0].target && pending?.el !== selectedControl) clearControlSelection();
   hoverCloseCallback = null;
   // The old owner's close and a new owner's open can expire on the same tick.
   // Dismiss only the old panels; do not cancel the new owner's pending hover.
@@ -240,21 +247,38 @@ function fitRung(el, pinned) {
 // surface has to remember to call hideTooltip() on its way out.
 let sceneWatch = null;
 let sceneAnchor = null;
+// The observer is connected only while a tooltip is open or pending and is
+// released the moment neither holds. Combat rebuilds whole rows of the board
+// per animation beat; a subtree observer that stays attached pays a record
+// for every one of those nodes even when there is nothing to close.
+//
+// A veil is only ever raised as a child of <body> or of the screen root, so
+// the nested `querySelector` runs for those records alone; a deep record —
+// a card added to the hand, a status pip — is answered by `matches` only.
 function watchScene() {
   if (sceneWatch) return;
   sceneWatch = new MutationObserver((records) => {
+    if (selectedControl && !selectedControl.isConnected) clearControlSelection();
     if (pending && !pending.el.isConnected) cancelOpen();
-    if (!sceneAnchor && !pending) return;
+    if (!sceneAnchor && !pending) { unwatchScene(); return; }
     if (sceneAnchor && !sceneAnchor.isConnected) { hideTooltip(); return; }
+    const subject = sceneAnchor || pending?.el;
     for (const record of records) {
+      if (!record.addedNodes.length) continue;
+      const top = record.target === document.body || record.target.id === 'app';
       for (const node of record.addedNodes) {
         if (node.nodeType !== 1) continue;
-        const veil = node.matches?.('.modal-veil') ? node : node.querySelector?.('.modal-veil');
-        if (veil && !veil.contains(sceneAnchor || pending?.el)) { hideTooltip(); return; }
+        const veil = node.classList.contains('modal-veil') ? node : (top ? node.querySelector('.modal-veil') : null);
+        if (veil && !veil.contains(subject)) { hideTooltip(); return; }
       }
     }
   });
   sceneWatch.observe(document.documentElement, { childList: true, subtree: true });
+}
+function unwatchScene() {
+  if (!sceneWatch) return;
+  sceneWatch.disconnect();
+  sceneWatch = null;
 }
 
 function showWith(html, anchor, clear = null, intent = 'above', appearance = null, placementModel = null, autoHideMs = 0, align = 'start', level = 0, target = null, action = null) {
@@ -339,18 +363,23 @@ function adoptTitle(el) {
  */
 export function attachTooltip(el, contentFn, {
   intent = 'above', align = 'start', clear = null, delayMs = null, focusDelayMs = null,
-  appearance = null, placementModel = null, autoHideMs = 0, expand = false, expandTitle = null, showFn = null, tapToExplain = false,
+  appearance = null, placementModel = null, autoHideMs = 0, expand = false, expandTitle = null, showFn = null, tapToExplain = false, selectionFirst = false, activate = null,
 } = {}) {
   adoptTitle(el);
   el.dataset.tipAttached = 'true';
   const show = () => {
     pending = null;
-    if (!el.isConnected || el.closest('[inert], [hidden]')) return false;
+    if (!el.isConnected || el.closest('[inert], [hidden]') || (selectionFirst && selectedControl !== el)) return false;
     const information = el.querySelector('.card-info-button');
     const avoid = clear || (information ? [el.parentElement, information] : el.parentElement);
     return showFn ? showFn() : showWith(contentFn(), el.getBoundingClientRect(), avoid, intent, appearance, placementModel, 0, align, 0, el);
   };
   const queue = delay => {
+    if (selectedControl && selectedControl !== el) hideTooltip();
+    if (selectionFirst) {
+      selectedControl = el;
+      el.classList.add('tooltip-selected');
+    }
     cancelOpen();
     if (state[0].open && state[0].target === el) { clearTimers(); if (stuck) unstick(); return; }
     pending = { el, show };
@@ -369,7 +398,9 @@ export function attachTooltip(el, contentFn, {
     queue(delayMs ?? tooltipSettings.open);
   });
   el.addEventListener('pointerleave', (ev) => {
+    if (selectionFirst && (ev.pointerType === 'touch' || touchSelectedControl === el)) return;
     cancelOpen(el);
+    if (selectionFirst && selectedControl === el && state[0].target !== el) clearControlSelection();
     if (stuck) return; // E8: a completed hold outlives the pointer leaving
     if (panels.some((p) => p && p.contains(ev.relatedTarget))) return;
     if (state[0].target === el) scheduleClose();
@@ -380,11 +411,28 @@ export function attachTooltip(el, contentFn, {
   const blur = ev => {
     if (ev.target !== el) return;
     cancelOpen(el);
+    if (selectionFirst && selectedControl === el && state[0].target !== el) clearControlSelection();
     if (stuck) return;
     if (state[0].target === el && !panels.some(p => p?.contains(ev.relatedTarget))) scheduleClose();
   };
   el.addEventListener('gpblur', blur);
   el.addEventListener('blur', blur);
+  if (selectionFirst) {
+    el.dataset.tooltipSelection = 'true';
+    el.addEventListener('pointerdown', ev => ev.stopPropagation());
+    el.addEventListener('click', ev => {
+      ev.preventDefault(); ev.stopPropagation();
+      const touch = ev.pointerType === 'touch';
+      if (activate && (!touch || (touchSelectedControl === el && selectedControl === el))) {
+        hideTooltip(); activate(el); return;
+      }
+      queue(delayMs ?? tooltipSettings.open);
+      if (touch) touchSelectedControl = el;
+    });
+    el.addEventListener('keydown', ev => {
+      if (['Enter', ' '].includes(ev.key)) ev.stopPropagation();
+    });
+  }
   if (tapToExplain) {
     if (!el.hasAttribute('tabindex')) el.tabIndex = 0;
     if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
@@ -454,12 +502,14 @@ export function showTooltipAt(x, y, html) {
   return showWith(html, { left: x, top: y, width: 0, height: 0 });
 }
 export function hideTooltip() {
+  clearControlSelection();
   sceneAnchor = null;
   unstick();
   clearTimers();
   cancelOpen();
   conceal(1);
   conceal(0);
+  unwatchScene();
 }
 export function esc(s) {
   return String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
@@ -501,12 +551,12 @@ function wireTitles() {
   document.addEventListener('click', explain, true);
   document.addEventListener('keydown', explain, true);
   document.addEventListener('pointerdown', ev => {
-    if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target)) hideTooltip();
+    if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target) && !selectedControl?.contains(ev.target)) hideTooltip();
   }, true);
   document.addEventListener('keydown', (ev) => {
     if (ev.key !== 'Escape') return;
     if (state[1].open) { hide(1); ev.stopImmediatePropagation(); }
-    else if (state[0].open) { hideTooltip(); ev.stopImmediatePropagation(); }
+    else if (state[0].open || selectedControl) { hideTooltip(); ev.stopImmediatePropagation(); }
     else { cancelOpen(); cancelNested(); }
   }, true);
   const replace = () => { for (const [i, st] of state.entries()) if (st.open && st.target?.getBoundingClientRect && panels[i]) placeAnchored(panels[i], st.target.getBoundingClientRect(), { intent: panels[i].dataset.tooltipPlacement || 'above' }); };

@@ -27,8 +27,7 @@ export function paintedPresentation(classId, armourId = 'default', pose = 'stand
   return img;
 }
 
-// The reviewed frames share a 640px canvas, center 320 and floor 600.
-// Fit the tallest resting body to the stage; every action keeps that scale.
+
 export function createPaintedStage(classId, armourId = 'default', { still = false } = {}) {
   if (still) {
     const presentation = paintedPresentation(classId, armourId);
