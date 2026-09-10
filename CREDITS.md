@@ -132,3 +132,12 @@ through `tools/readiness-poses-ship.mjs`.
 ## Map detail and engraving (2026-09-09)
 
 Original square-world detail remaster: `art/environments/worlds/fractured-realm-square-detail.png`, generated with OpenAI imagegen from the project-owned original. Project-owned AI artwork, CC0-1.0. Geography retained, fine shapes redrawn; native output remains 1254px, not a 4K master. Original procedural parchment engraving: `src/ui/components/mapFog.js`, CC0-1.0. Source: this repository. Pyramid exports are derived by `tools/map-detail-build.mjs`.
+
+## Title city and tower (2026-09-10)
+
+`assets/bg/title-city-tower.webp` is original project-owned artwork generated
+with OpenAI imagegen using the existing `bg_act1.webp` as a palette and mood
+reference. It depicts a central stone spire above a medieval city in muted
+umber and olive-gold haze. Exported at its native 1586 × 992 resolution as WebP,
+quality 90. Used by the startup gate and title menu. No third-party asset
+license is claimed.
