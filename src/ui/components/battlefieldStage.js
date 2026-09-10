@@ -2,7 +2,6 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
 import { fitStatusTray } from './statusTray.js';
-import { alignCombatGround } from './environmentArt.js';
 import { combatSpriteRatio, fitCombatSprites } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 
@@ -38,11 +37,17 @@ export function wireBattlefieldStage(field, model) {
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
-    const actors = plan.slots.map(slot => {
+    // Writes first, then reads: resetting each sprite's zoom immediately before
+    // measuring it forced one synchronous layout per combatant. One batch of
+    // writes and one layout serve every measurement below.
+    const slotFrames = plan.slots.map(slot => {
       const frame = frames.find(f => f.dataset.eid === slot.id);
-      const stack = frame.querySelector('.combatant-stack');
       const sprite = frame.querySelector('.combatant-card > .sprite');
       sprite.style.zoom = '1';
+      return { slot, frame, sprite };
+    });
+    const actors = slotFrames.map(({ slot, frame, sprite }) => {
+      const stack = frame.querySelector('.combatant-stack');
       const geometry = combatSpriteGeometry(sprite, schedule);
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
@@ -83,7 +88,6 @@ export function wireBattlefieldStage(field, model) {
     const rect = combat.getBoundingClientRect();
     combat.style.setProperty('--environment-top', `${(fieldRect.top - rect.top) / zoom}px`);
     combat.style.setProperty('--environment-height', `${fieldRect.height / zoom}px`);
-    alignCombatGround(combat.querySelector('.environment-backdrop'), plan.ground / fieldRect.height);
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };

@@ -41,7 +41,8 @@
 
 /* Approved environment paintings are selected with an SVG atlas viewBox. */
 .environment-backdrop { opacity: 1; overflow: hidden; background: #17130f; top: var(--environment-top, 0); bottom: auto; height: var(--environment-height, 65%); }
-.environment-backdrop > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.environment-backdrop > svg { position: absolute; inset: 0; width: 100%; height: 100%; transform:scale(1.06); transform-origin:center; }
+@media (max-width:600px) { .environment-backdrop > svg { transform:scale(1.02); } }
 .environment-backdrop::after { display: none; }
 .environment-backdrop::before {
   z-index: 1;
@@ -620,7 +621,10 @@
 
 /* ---- rendered sprites: idle bob + death fade (solo + co-op boards) -------- */
 @keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; }
+.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: transform; }
+/* A fallen combatant holds still: the idle bob kept every dead sprite on the
+   compositor's per-frame list for the rest of the fight. */
+.combatant.dead .sprite > img { animation: none; }
 .player .sprite.reaver-attack-playing { overflow: visible; }
 .combatant .sprite > img.reaver-attack-sequence {
   width: 17rem;
@@ -1053,7 +1057,11 @@
 /* Increase the reading inside the existing five fixed HUD tracks. */
 :root .combat:not(.coop) .combat-action-row .sp-k { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.1; letter-spacing: 0; }
 :root .combat:not(.coop) .combat-action-row .sp-v { font-size: max(1.5rem, calc(17px / var(--ui-zoom, 1))); line-height: 1.1; }
-:root .combat:not(.coop) .combat-action-row > :is(.end-turn, .combat-potions) { font-size: max(1.38rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.1; }
+:root .combat:not(.coop) .combat-action-row > .end-turn { font-size: max(1.38rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.1; }
+/* The round Potions face is --combat-control-size wide; at End Turn's size the
+   word overran the circle and read "Potion" with a sliver. It keeps its own
+   smaller step (declared above) and never wraps or clips. */
+:root .combat:not(.coop) .combat-action-row > .combat-potions { line-height: 1.1; letter-spacing: 0; padding-inline: 2px; white-space: nowrap; overflow: visible; }
 :root .combat:not(.coop) .combat-action-row .spent { padding-inline: 2px; font-size: max(1.1rem, calc(11px / var(--ui-zoom, 1))); line-height: 1.15; }
 :root .combat:not(.coop) .combat-action-row .spent small { font-size: inherit; }
 :root .combat:not(.coop) .combat-action-row :is(.hold-hint, .et-key) { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1; }
@@ -1334,4 +1342,30 @@
      controls should intercept a press on the battlefield below. */
   :root:has(.combat) .hud-relics { pointer-events: none; }
   :root:has(.combat) .hud-relics > * { pointer-events: auto; }
+}
+
+/* Reserve space for larger edge controls; compact piles leave End Turn room. */
+:root .combat:not(.coop)[data-layout='formation'] > .hand-area {
+  --combat-orb-size: calc(clamp(64px, 20vw, 128px) / var(--ui-zoom,1));
+  grid-template-rows: minmax(0,1fr) calc(var(--combat-orb-size) + 16px / var(--ui-zoom,1));
+}
+:root .combat:not(.coop)[data-layout='formation'] > .hand-area > .combat-action-row {
+  grid-template-columns: var(--combat-orb-size) minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr) var(--combat-orb-size);
+  gap:calc(8px / var(--ui-zoom,1));
+}
+:root .combat:not(.coop)[data-layout='formation'] .combat-action-row > :is(.energy-orb,.combat-potions) {
+  width:var(--combat-orb-size); height:var(--combat-orb-size); min-height:var(--combat-orb-size);
+}
+:root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .pile {
+  height:calc(52px / var(--ui-zoom,1)); min-height:calc(52px / var(--ui-zoom,1)); padding-inline:2px;
+}
+@media (max-width:480px) {
+  :root .combat:not(.coop)[data-layout='formation'] > .hand-area > .combat-action-row {
+    grid-template-columns:var(--combat-orb-size) minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr) var(--combat-orb-size);
+    gap:calc(4px / var(--ui-zoom,1));
+  }
+}
+@media (max-height:500px) {
+  :root .combat:not(.coop)[data-layout='formation'] { grid-template-rows:10% minmax(0,1fr) calc(248px / var(--ui-zoom,1)); }
+  :root .combat:not(.coop)[data-layout='formation'] > .hand-area { --combat-orb-size:calc(96px / var(--ui-zoom,1)); }
 }
