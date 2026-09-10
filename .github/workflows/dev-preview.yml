@@ -33,6 +33,9 @@ jobs:
       - name: Complete armament kits and temporary Guardian skill
         run: node tests/armament-combat-kits.test.mjs
 
+      - name: Mobile rendering and bounded pose preloads
+        run: node --test tests/mobile-performance.test.mjs
+
       - name: Combat formations and painted ground
         run: node --test tests/combat-formation.test.mjs tests/environment-art.test.mjs tests/map-detail.test.mjs tests/map-presentation.test.mjs tests/local-map.test.mjs
 

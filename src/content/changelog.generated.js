@@ -53,6 +53,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/943"
   },
   {
+    "id": "pr-939",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combat renders lighter on phones, and the standalone ships smaller",
+    "detail": "Mobile combat used to recreate its frames, sprites and hand cards on every routine update; unchanged combatant frames, card nodes and their input bindings are now reused, card measurements are batched, and pose preloads share one bounded cache. Auto rendering picks Lite on a coarse pointer: no costly filters or cloned target silhouettes, a coloured target ring instead, enemy state art loaded on demand and faster pacing by default — Full rendering and explicit pacing stay available. The launcher builds the portable standalone and the external-art web edition, and unused equipment-component authoring assets no longer ship, so the standalone is 7.47 MB smaller. This is a DOM-churn measurement, not a physical-device frame rate.",
+    "build": "0.6.0.128",
+    "pullRequest": 939,
+    "url": "https://github.com/cehinds/AshenSpire/pull/939"
+  },
+  {
     "id": "pr-904",
     "date": "2026-09-10",
     "group": "2026-09-10",
