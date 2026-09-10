@@ -32,7 +32,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-10
 
-- **Configurable help across the combat screen** ([#891](https://github.com/cehinds/AshenSpire/pull/891), `0.6.0.94`). Hover HUD labels, meters, Block, enemy intent, card costs, and inspector headings for explanations. Accessibility settings control hover visibility and opening/closing delays, with a half-second default. Shared data supplies the choices, timing, and help text; keyboard and explicit inspection remain available with hover off.
+- **Configurable help across the combat screen** ([#891](https://github.com/cehinds/AshenSpire/pull/891), `0.6.0.100`). Hover HUD labels, meters, Block, enemy intent, card costs, and inspector headings for explanations. Accessibility settings control hover visibility and opening/closing delays, with a half-second default. Shared data supplies the choices, timing, and help text; keyboard and explicit inspection remain available with hover off.
 
 - **Inspect selected rewards and item choices** ([#905](https://github.com/cehinds/AshenSpire/pull/905), `0.6.0.92`). Selected reward cards keep their Information button visible, including after Back restores the choice. Keyboard focus and scrollable card rows retain room for inspection. Smith extraction and installation items, mounts, and deck cards can be inspected without confirming the service, with usable selection panes on phones.
 

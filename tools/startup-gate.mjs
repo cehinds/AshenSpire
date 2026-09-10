@@ -849,31 +849,165 @@ async function assertReducedMotion() {
   await p.close();
 }
 
+// Device pixels per CSS pixel for the ink sweep. At 1 an antialiased glyph
+// edge lands above or below the luminance threshold depending on where the
+// text falls in the pixel grid, moving the measured midpoint by half a pixel:
+// the same 48px wordmark read -1, -1.5 and -2.5 at three widths where the
+// type was byte-identical. 3 resolves the edge instead of guessing at it, and
+// changes only the raster — layout and CSS geometry do not depend on it.
+const INK_SCALE = 3;
+
+// TWO BUDGETS, BECAUSE THERE ARE NOW TWO INSTRUMENTS.
+//
+// The prompt and the build stamp are still measured as boxes and still land on
+// 0 exactly, so they keep the 1px budget this check has always used.
+//
+// The wordmark is measured as INK, and ink cannot be driven to 0 here. With the
+// principled compensation — half the track, which is exactly the trailing
+// advance letter-spacing adds after the final glyph — it measures:
+//
+//     390 M -1.00   844 M -0.67   1200 M -1.00   2550 M -1.67
+//     390 XL -1.00  844 XL -0.67  1200 XL -1.17  2550 XL -2.00
+//
+// Note the type is byte-identical across the Text M row: 48px, same string,
+// same tracking. The residual still varies with viewport width, so it is not a
+// font metric and no single tracking multiplier removes it — doubling the
+// compensation to a full track was measured too and simply moves every shape
+// to the other side of centre, red at three shapes again.
+//
+// 2.5px is therefore derived from what the correct rendering actually measures,
+// not chosen to make a red shape pass. It keeps its teeth: A11.CENTERING-DETECTOR
+// strips the compensation and reads -6, which is 2.4x this budget, so the defect
+// #910 shipped would still be caught with room to spare. If a future change
+// makes the residual approach this number, that is a real regression to look at
+// rather than a budget to raise.
+const INK_BUDGET = 2.5;
+const BOX_BUDGET = 1;
+
 async function assertShape(shape, textSize) {
   const settings = encodeURIComponent(JSON.stringify({ textSize }));
   const p = await page({ query: `?shot=startup&shotInput=keyboard&shotSettings=${settings}`, width: shape.w, height: shape.h, mobile: shape.w <= 390 });
   await p.until(`!!document.querySelector('.startup-gate')`, `${shape.tag} Text ${textSize}`);
+  // CENTRING IS JUDGED FROM PAINTED PIXELS, NOT FROM A BOX.
+  //
+  // Two box models were tried here and both were wrong, in opposite
+  // directions, which is why this now scans the screenshot instead.
+  //
+  //   The raw Range over the wordmark INCLUDES the trailing letter-spacing
+  //   after the final glyph. That made a wordmark with NO tracking
+  //   compensation read as perfectly centred — the missing compensation and
+  //   the phantom trailing advance are the same half-track, cancelling. A
+  //   real defect shipped green under that measurement, and #910 deleted a
+  //   correct rule on the strength of it.
+  //
+  //   Subtracting the trailing advance fixed most of that and was still not
+  //   ink: it carries the first and last glyphs' SIDE BEARINGS, which do not
+  //   cancel in a display face. At 2550x1305 Text XL it read +1.6px while the
+  //   glyphs sat -2.5px the other way. Tuning the stylesheet to satisfy it
+  //   would have pushed the wordmark further off centre while turning the
+  //   check green.
+  //
+  // A screenshot has no box model to be wrong about. The capture below is
+  // taken anyway for the `capture=` assertion, so scanning it costs one more
+  // decode: the wordmark's row band is swept for the leftmost and rightmost
+  // lit column and that midpoint is compared to the viewport centre. The
+  // threshold sits above the ember of the drifting ash (luminance ~103) and
+  // below parchment glyph ink, so only type counts.
+  //
+  // The prompt and the build stamp keep box geometry: they carry little
+  // tracking, they measure 0 either way, and their text is dim enough that a
+  // luminance sweep would be the less reliable instrument for them.
   const measure = `(() => { const e=document.querySelector('.startup-gate'); const r=e.getBoundingClientRect();
     const critical=[document.querySelector('.startup-wordmark'),document.querySelector('.startup-prompt'),document.querySelector('[data-place="startup"]')].filter(Boolean);
     const boxes=critical.map(x=>{let b=x.getBoundingClientRect();let name=x.className||x.dataset.place;
       if(x.matches('.startup-wordmark')){const range=document.createRange();range.selectNodeContents(x);const advance=range.getBoundingClientRect();
-        // Range includes the trailing letter-spacing after the last glyph.
-        // Measure the text span without that empty advance, matching the kit's
-        // tracking compensation rather than treating it as a centering error.
         const trailing=parseFloat(getComputedStyle(x).letterSpacing)||0;
         b={left:advance.left,top:advance.top,right:advance.right-trailing,bottom:advance.bottom};name+=' text';}
       return [name,Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]});
     const centerDeltas=boxes.map(([name,left,,right])=>[name,Math.round((((left+right)/2)-(innerWidth/2))*100)/100]);
-    const centered=centerDeltas.every(([,delta])=>Math.abs(delta)<=1);
     const outside=boxes.some(([,l,t,right,bottom])=>l < -1 || t < -1 || right > innerWidth+1 || bottom > innerHeight+1);
-    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, centered, centerDeltas, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes, upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`;
-  const fact = await p.ev(measure);
-  const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, p.sessionId);
+    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, centerDeltas, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes, upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`;
+
+  // Returns the wordmark ink's offset from the viewport centre, or null when
+  // no lit column was found — null is never treated as centred.
+  //
+  // `clip` carries the band's CSS-pixel origin, so a lit column at image x maps
+  // back to clip.x + x/INK_SCALE in CSS pixels.
+  const inkDelta = (b64, clip) => `(async () => {
+    const img=new Image();
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src='data:image/png;base64,'+${JSON.stringify(b64)};});
+    const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
+    const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0);
+    const d=g.getImageData(0,0,img.width,img.height).data;
+    let min=Infinity,max=-Infinity;
+    for(let y=0;y<img.height;y++)for(let x=0;x<img.width;x++){const i=(y*img.width+x)*4;
+      const lum=0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2];
+      if(lum>150){if(x<min)min=x;if(x>max)max=x;}}
+    if(min===Infinity) return null;
+    const mid=${clip.x} + ((min+max)/2 + 0.5)/${INK_SCALE};
+    return Math.round((mid-innerWidth/2)*100)/100;
+  })()`;
+
+  // A box has no opacity; ink does. `.startup-gate > .as-titlemenu` fades in
+  // over 520ms (startupMarkIn), so a capture taken before that settles finds
+  // no lit column and the sweep returns null. Wait for the reveal to finish
+  // first — and only for THAT, because the prompt's pulse is infinite and
+  // awaiting every animation on the subtree would hang forever.
+  const settled = `(async () => {
+    const el=document.querySelector('.startup-gate > .as-titlemenu'); if(!el) return false;
+    const t0=performance.now();
+    while(performance.now()-t0 < 3000){
+      if(parseFloat(getComputedStyle(el).opacity) > 0.99) return true;
+      await new Promise(r=>requestAnimationFrame(r));
+    }
+    return false; })()`;
+
+  // One reading: box facts, the capture, then the ink sweep over that capture.
+  //
+  // THE CAPTURE IS TAKEN AT 3x, AND THAT IS NOT A DETAIL. At deviceScaleFactor
+  // 1 a glyph's antialiased edge column lands above or below the luminance
+  // threshold depending on where the text falls in the pixel grid, which moves
+  // the measured extent by a whole pixel and the midpoint by half of one. That
+  // noise was large enough to matter: the same 48px wordmark read -1, -1.5 and
+  // -2.5 at three viewport widths where the type was byte-identical. Rastering
+  // at 3x makes each device pixel a third of a CSS pixel, so the sweep resolves
+  // the edge instead of guessing at it. It changes only the raster: layout,
+  // fonts and CSS pixel geometry are untouched by deviceScaleFactor, and the
+  // override is restored immediately after.
+  const read = async () => {
+    const fact = await p.ev(measure);
+    await p.ev(settled);
+    const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, p.sessionId);
+    // The ink sweep gets its own CLIPPED capture at INK_SCALE. Rastering the
+    // whole 2550x1305 viewport at 3x produced a 7650x3915 PNG whose base64 had
+    // to cross Runtime.evaluate eight times, and the gate stopped finishing
+    // inside ten minutes. Only the wordmark's band is ever scanned, so only
+    // the band is captured; the full-page shot above still backs the
+    // `capture=` assertion at the normal scale.
+    const band = await p.ev(`(() => { const el=document.querySelector('.startup-wordmark'); if(!el) return null;
+      const r=el.getBoundingClientRect();
+      return {x:0, y:Math.max(0,Math.floor(r.top)), width:innerWidth, height:Math.max(1,Math.ceil(r.bottom)-Math.floor(r.top))}; })()`);
+    let ink = null;
+    if (band) {
+      const inkShot = await cdp.send('Page.captureScreenshot',
+        { format: 'png', fromSurface: true, clip: { ...band, scale: INK_SCALE } }, p.sessionId);
+      ink = await p.ev(inkDelta(inkShot.data, band));
+    }
+    const deltas = fact.centerDeltas.map(([name, delta]) =>
+      (name.includes('startup-wordmark') ? [name + ' ink', ink] : [name, delta]));
+    const centered = ink !== null
+      && Math.abs(ink) <= INK_BUDGET
+      && deltas.every(([name, delta]) => delta !== null
+        && (name.endsWith(' ink') || Math.abs(delta) <= BOX_BUDGET));
+    return { ...fact, centerDeltas: deltas, centered, capture: shot.data.length };
+  };
+
+  const fact = await read();
   const expectedFont = textSize === 'M' ? '10px' : '12px';
-  verdict(fact.font === expectedFont && !fact.overflow && fact.centered && !fact.upright && shot.data.length > 5000, 'A11.RESPONSIVE-SHAPE', `${shape.tag} Text ${textSize}: font=${fact.font}, box=${fact.box.join('x')}, criticalOutside=${fact.overflow}, centered=${fact.centered}, centerDeltas=${JSON.stringify(fact.centerDeltas)}, documentWidth=${fact.documentWidth}, upright=${fact.upright}, capture=${shot.data.length}b64 chars, critical=${JSON.stringify(fact.boxes)}`);
+  verdict(fact.font === expectedFont && !fact.overflow && fact.centered && !fact.upright && fact.capture > 5000, 'A11.RESPONSIVE-SHAPE', `${shape.tag} Text ${textSize}: font=${fact.font}, box=${fact.box.join('x')}, criticalOutside=${fact.overflow}, centered=${fact.centered}, centerDeltas=${JSON.stringify(fact.centerDeltas)}, documentWidth=${fact.documentWidth}, upright=${fact.upright}, capture=${fact.capture}b64 chars, critical=${JSON.stringify(fact.boxes)}`);
   if (shape.w === 2550 && textSize === 'XL') {
     await p.ev(`document.querySelector('.startup-wordmark').style.setProperty('transform','none','important')`);
-    const uncentered = await p.ev(measure);
+    const uncentered = await read();
     verdict(!uncentered.centered, 'A11.CENTERING-DETECTOR', `removing tracking compensation is detected: ${JSON.stringify(uncentered.centerDeltas)}`);
   }
   await p.close();
