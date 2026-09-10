@@ -1,6 +1,6 @@
 # Tower entrance preview
 
-Local concept on `codex/tower-entry-preview`; not promoted to dev, test or release.
+Tower entrance presentation developed on `codex/tower-entry-preview`.
 The initial prompt lights River Citadel over 560ms, holds the fully lit city,
 then crossfades into the hall over 880ms. Settings > Game > Lit city pause
 offers 0s, 0.3s, 0.5s (default), 1s and 2s. The setting persists between visits.
