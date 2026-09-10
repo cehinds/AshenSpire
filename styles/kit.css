@@ -111,8 +111,10 @@ button.primary:disabled, .as-btn.primary:disabled { background: var(--panel); bo
 button.danger, .as-btn.danger, button.subtle.danger { border-color: var(--danger); color: var(--danger); background: var(--panel); }
 button.danger:hover, .as-btn.danger:hover { background: rgba(212, 98, 46, 0.08); }
 /* A loss is the way forward on a danger door: primary weight, danger colour. */
-button.primary.danger, .as-btn.primary.danger { background: rgba(212, 98, 46, 0.14); border-color: var(--danger); color: var(--parchment); }
-button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212, 98, 46, 0.24); }
+/* Opaque on purpose: the same tint over the panel, mixed rather than layered,
+   so the face has one colour a contrast check (and a screenshot) can read. */
+button.primary.danger, .as-btn.primary.danger { background: color-mix(in srgb, var(--danger) 14%, var(--panel)); border-color: var(--danger); color: var(--parchment); }
+button.primary.danger:hover, .as-btn.primary.danger:hover { background: color-mix(in srgb, var(--danger) 24%, var(--panel)); }
 
 /* IconButton — ONE tap-safe box for every header action, close included. A
    LENGTH, not a floor: --iconbtn-size (base.css), the same on every component. */
@@ -228,6 +230,8 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .as-toggle.on, .as-toggle[aria-checked="true"] { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.14); }
 .as-toggle.on .knob, .as-toggle[aria-checked="true"] .knob { left: calc(100% - 2.3rem); background: var(--gold); }
 .as-toggle:disabled { opacity: 0.55; cursor: default; }
+/* The drawn pill is 2.8rem tall; the finger gets the tap floor around it. */
+.as-toggle::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: max(100%, var(--tap-floor)); transform: translateY(-50%); }
 
 /* StatePill — binary state, scannable down a column. */
 .as-pill {
@@ -394,7 +398,6 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .modal-veil, .as-veil {
   position: fixed; inset: 0; z-index: 500;
   display: flex; align-items: center; justify-content: center;
-  padding: 2.4rem;
   background: rgba(0, 0, 0, 0.62);
 }
 /* THE INSET IS THE DOOR'S: one number, all four sides, every bar. */
@@ -408,7 +411,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
   border: 1px solid var(--gold);
   border-radius: var(--r-4);
   overflow: hidden;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.69), inset 0 1px 0 rgba(var(--accent-rgb), 0.09);
 }
 /* FOUR WIDTHS, a body picks the smallest that holds it. */
 .modal[data-size='sm'], .as-modal[data-size="sm"] { width: 43rem; max-width: 100%; }
@@ -581,7 +584,6 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* A phone: the inset stays one number, the note goes, every row fills. */
 @media (max-width: 640px) {
   .as-modal, .modal { --modal-inset: 1rem; }
-  .modal-veil, .as-veil { padding: 1rem; }
   .modal-foot, .as-foot { align-items: stretch; }
   .modal-foot-note, .as-foot-note { display: none; }
   .modal-foot-actions, .as-foot-actions { width: 100%; }
@@ -601,6 +603,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .as-row.setting input[type="text"] { width: min(100%, 30rem); }
 .as-row.setting input:focus-visible { border-color: var(--gold); outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
 .as-row.setting input[type="range"] { width: 18rem; accent-color: var(--gold); cursor: pointer; }
+input[type="range"] { min-height: var(--tap-floor); }
 .as-row.setting > .as-status.range-val { flex: 0 0 auto; margin-left: auto; min-width: 3.6rem; color: var(--gold); font-variant-numeric: tabular-nums; }
 .as-row.setting > .as-status.range-val + .r-trail { margin-left: 0; }
 .as-row.setting .set-applied-slot:empty { display: none; }
@@ -652,6 +655,17 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 #tooltip[data-overflow="true"], #tooltip-2[data-overflow="true"] { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
 #tooltip[data-open="true"], #tooltip-2[data-open="true"] { opacity: 1; visibility: visible; pointer-events: auto; }
 #tooltip[data-stuck="true"] { pointer-events: none; }
+/* ON A TOUCH SCREEN A TOOLTIP THAT NOTHING INSIDE CAN ANSWER IS SEE-THROUGH.
+   There is no hover to keep, so an open tooltip only ever needs the finger
+   when it scrolls or carries a term that opens a nested reading. Every other
+   one used to swallow the tap that landed on it — measured at 390x844 on
+   character creation: the seed field's "Edit seed." sat over the STARTING
+   EQUIP row and the row could not be opened at all. The tap now reaches the
+   control beneath, and the document's own pointerdown closes the tooltip. */
+@media (pointer: coarse) {
+  #tooltip[data-open="true"]:not([data-overflow="true"]):not(:has(.tooltip-keyword[data-tip], .inspection-tag[data-tip], [data-tip][role="button"], a, button)),
+  #tooltip-2[data-open="true"]:not([data-overflow="true"]):not(:has(.tooltip-keyword[data-tip], .inspection-tag[data-tip], [data-tip][role="button"], a, button)) { pointer-events: none; }
+}
 #tooltip.is-fading { opacity: 0; transition: opacity var(--tooltip-fade-duration) ease-out; }
 .reduced-motion #tooltip, .reduced-motion #tooltip-2 { transition: none !important; }
 @media (prefers-reduced-motion: reduce) { #tooltip, #tooltip-2 { transition: none !important; } }
@@ -947,6 +961,10 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .event-door .as-option.ev-choice { min-height: var(--tap-floor); }
 .event-door .as-option.ev-choice[disabled] { opacity: 0.55; cursor: default; }
 .event-door .as-option .on { white-space: normal; }
+/* The label's own ellipsis rule (.as-label-text above) outranked the line
+   above, so a choice's consequence — "gain 90 cinders; take 6 damage" — was
+   cut to "gain 90 cinders; t…" on a phone. A choice wraps; it never hides. */
+.event-door .as-option .on .as-label-text { white-space: normal; overflow: visible; text-overflow: clip; }
 
 /* ═══ ARMOURY — an xl door on the shell ════════════════════════════════════ */
 /* The head is the kit's (tab strip = the views, IconButton close in the same
@@ -2500,7 +2518,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .combat-potion-menu .potion-fold > summary { cursor: pointer; }
 .combat-potion-menu .potion-fold .flask-identity { flex: 0 0 44px; }
 .combat-potion-menu .potion-fold .flask-art { width: 40px; height: 40px; }
-.combat-potion-menu .potion-fold .potion-use { flex-shrink: 0; min-height: 36px; }
+.combat-potion-menu .potion-fold .potion-use { flex-shrink: 0; min-height: var(--tap-floor); }
 .combat-potion-menu .potion-fold[open] > summary { border-color: var(--gold); }
 .combat-potion-menu .potion-fold[open] > summary::after { transform: rotate(90deg); }
 .combat-potion-menu .potion-fold > .as-detailcard .potion-use { margin-top: 8px; align-self: flex-end; }
@@ -2552,7 +2570,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .pile-body .card .art img { width: 100%; height: 100%; object-fit: contain; }
 .pile-body .card .ctag { font-size: calc(10px / var(--ui-zoom, 1)); }
 .pile-body .card .cost { font-size: calc(14px / var(--ui-zoom, 1)); width: calc(24px / var(--ui-zoom, 1)); height: calc(24px / var(--ui-zoom, 1)); }
-.modal:has(.pile-body) .modal-tab { font-size: calc(15px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); }
+.modal:has(.pile-body) .modal-tab { font-size: calc(15px / var(--ui-zoom, 1)); min-height: var(--tap-floor); }
 
 /* Read-only detail rows: let names claim 10–30%, then wrap the explanation. */
 :is(.modal, .as-tip) div.as-row:not(.character-info-head):has(> .r-label):has(> .as-status),
@@ -2865,9 +2883,13 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-details dt:first-child { margin-top:0; }
 .card-inspection-modal .modal-body { overflow:auto; overscroll-behavior:contain; }
 .equipment-poker-explanations { margin-top:0; }
+/* One drawn face for both information controls; the size is a variable so the
+   card's control reads the tap floor while the combatant's keeps the 36px the
+   overhead layout was fitted around (docs/qa/combatant-overhead). */
 .card-inspection-target > .card-info-button,
-.combatant-leading > .combatant-info { box-sizing:border-box; width:36px; height:36px; min-width:36px; min-height:36px; max-width:36px; max-height:36px; padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
-.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:-46px; right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
+.combatant-leading > .combatant-info { box-sizing:border-box; width:var(--card-info-size,var(--tap-floor)); height:var(--card-info-size,var(--tap-floor)); min-width:var(--card-info-size,var(--tap-floor)); min-height:var(--card-info-size,var(--tap-floor)); max-width:var(--card-info-size,var(--tap-floor)); max-height:var(--card-info-size,var(--tap-floor)); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
+.combatant-leading > .combatant-info { --card-info-size: 36px; }
+.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--card-info-size,var(--tap-floor)) + 10px)); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
 .inspection-selected { outline:3px solid #e0bd68; outline-offset:3px; border-radius:12px; }
 .card-info-button:focus-visible { outline:3px solid #fff0bd; outline-offset:2px; }
@@ -2879,16 +2901,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .playing-card-details .ti-meta { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding-bottom:16px; border-bottom:1px solid var(--line); }
 .playing-card-details .ctext { font-size:18px; line-height:1.55; }
 .playing-card-details .ti-flavor { color:var(--muted); line-height:1.5; }
-.card-inspection-modal button.card-inspection-play { background:#255c39; border-color:#6fb580; color:#f0fff3; }
-.card-inspection-modal button.card-inspection-play:disabled { background:#363633; border-color:#65655f; color:#b9b9ad; opacity:1; cursor:not-allowed; }
-@media(max-width:600px) {
-  .card-inspection-modal .card-inspection-layout { padding:16px; gap:18px; grid-template-columns:minmax(0,120px) minmax(0,1fr); }
-  .playing-card-details .ctext { font-size:16px; }
-}
-@media (max-width:600px) {
-  .card-inspection-layout { grid-template-columns:minmax(0,1fr); padding:12px; gap:20px; }
-  .card-inspection-art { max-width:220px; margin-inline:auto; }
-}
+.card-inspection-modal button.card-inspection-play:disabled { opacity:1; cursor:not-allowed; }
 .cc-equip-group[data-equipment-section] { display:grid; grid-template-columns:minmax(220px, .85fr) minmax(0,1.15fr); gap:24px; align-items:start; }
 .cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { grid-template-columns:repeat(auto-fit,minmax(180px,220px)); gap:16px; }
 .cc-equipment-details { padding:16px; border:1px solid #74603c; border-radius:8px; min-width:0; }
@@ -2912,7 +2925,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .as-tip .inspection-tags { gap:5px; }
 @media(max-width:600px) {
   .card-inspection-modal .card-inspection-layout, .card-inspection-layout { grid-template-columns:minmax(0,1fr); gap:16px; padding:16px; }
-  .card-inspection-art { width:100%; max-width:100%; }
+  .playing-card-details .ctext { font-size:16px; }
+  .card-inspection-art { width:100%; max-width:100%; margin-inline:auto; }
   .card-inspection-art > :is(.equipment-poker-card, .card) { width:160px; height:auto; aspect-ratio:5/7; margin-inline:auto; }
   .card-inspection-art > .inspection-tags { justify-content:center; }
   .inspection-effect { font-size:16px; }
@@ -2978,7 +2992,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-heading { font-size:12px; letter-spacing:.03em; }
 .epc-flavor { font-size:14px; line-height:1.1; padding-top:0; }
 .epc-footer { font-size:13px; letter-spacing:0; }
-.card-inspection-modal.modal[data-size='lg'] { height:auto; max-height:90%; }
+.card-inspection-modal.modal[data-size='lg'] { height:auto; }
 .equipment-poker-card, .card.playing-poker-card, .shop-inspect-card { -webkit-user-select:none; user-select:none; }
 .card-inspection-details { font-size:max(16px, calc(16px / var(--ui-zoom, 1))); }
 .epc-effects { position:relative; }
@@ -3000,7 +3014,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cz-stage .equipment-poker-explanations :is(dt, dd) { white-space: normal; overflow-wrap: anywhere; }
 
 /* Equipment disclosure preserves the shared above-card placement. */
-.equipment-poker-card > .card-info-button { width:var(--card-info-size,44px); height:var(--card-info-size,44px); min-width:var(--card-info-size,44px); min-height:var(--card-info-size,44px); max-width:var(--card-info-size,44px); max-height:var(--card-info-size,44px); top:calc(-1 * (var(--card-info-size,44px) + 10px)); }
+.equipment-poker-card > .card-info-button { width:var(--card-info-size,var(--tap-floor)); height:var(--card-info-size,var(--tap-floor)); min-width:var(--card-info-size,var(--tap-floor)); min-height:var(--card-info-size,var(--tap-floor)); max-width:var(--card-info-size,var(--tap-floor)); max-height:var(--card-info-size,var(--tap-floor)); top:calc(-1 * (var(--card-info-size,var(--tap-floor)) + 10px)); }
 @media (pointer:coarse) {
   .equipment-poker-card > .card-info-button { opacity:0; pointer-events:none; transition:opacity var(--card-info-fade,120ms) ease; }
   .equipment-poker-card.inspection-info-visible > .card-info-button, .equipment-poker-card:has(:focus-visible) > .card-info-button, .equipment-poker-card:focus-visible > .card-info-button { opacity:1; pointer-events:auto; }
@@ -3064,9 +3078,25 @@ button.primary:disabled, button.primary[aria-disabled='true'],
 }
 /* Modal height is independent of its standard width. Keep chrome pinned and
    let the body scroll at its natural text/art size. */
-.modal-veil:not(dialog), .as-veil { padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
-.modal, .as-modal { max-height: calc((100dvh - 24px) / var(--ui-zoom, 1)); min-height: 0; }
-.modal[data-height='long'], .as-modal[data-height='long'] { height: calc((100dvh - 24px) / var(--ui-zoom, 1)); }
+/* The veil's vertical padding and the door's height ceiling are ONE pair of
+   numbers: the ceiling used to subtract a literal 24px that matched neither
+   the 8px minimum nor a notched phone's insets, so a content-tall door could
+   paint under the home indicator. Insets are divided by the zoom for the
+   reason combat.css's --safe-*-local are: an env() length inside the zoomed
+   body renders at env x zoom, which under-covers the notch at every zoom
+   below 1. */
+.modal-veil:not(dialog), .as-veil {
+  --veil-pad-top: max(8px, calc(env(safe-area-inset-top, 0px) / var(--ui-zoom, 1)));
+  --veil-pad-bottom: max(8px, calc(env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1)));
+  padding: var(--veil-pad-top) max(8px, calc(env(safe-area-inset-right, 0px) / var(--ui-zoom, 1))) var(--veil-pad-bottom) max(8px, calc(env(safe-area-inset-left, 0px) / var(--ui-zoom, 1)));
+}
+.modal, .as-modal { max-height: calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)); min-height: 0; }
+.modal[data-height='long'], .as-modal[data-height='long'] { height: calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)); }
+/* A short viewport (the decider's own `data-short`, written by main.js): the
+   railed doors give up their fixed share and follow their body, and the
+   veil's ceiling above still caps them. */
+:root[data-short='true'] .modal[data-size='lg'], :root[data-short='true'] .modal[data-size='xl'],
+:root[data-short='true'] .as-modal[data-size='lg'], :root[data-short='true'] .as-modal[data-size='xl'] { height: auto; }
 .modal-body, .as-body, .as-pane { overscroll-behavior: contain; scrollbar-gutter: stable; }
 .as-pane > * { flex-shrink: 0; }
 .modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { white-space: normal; overflow-wrap: anywhere; }

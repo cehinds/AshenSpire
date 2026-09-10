@@ -172,13 +172,28 @@ export function bindModalDismiss({ veil, panel, close, opener = document.activeE
     event.stopImmediatePropagation();
     close();
   };
-  const onClick = (event) => { if (event.target === veil) close(); };
+  // A SCRIM CLICK CANCELS ONLY WHEN THE PRESS BEGAN ON THE SCRIM. With the
+  // hold dial off, a control opens a door on pointerup, and the browser then
+  // dispatches that same touch's trailing click at the point of release —
+  // which is now the scrim (the finger never moved; the veil did). Cancelling
+  // on it closed the door in the gesture that opened it. The confirmation
+  // modal measured this first (tools/holdconfirm.mjs, the title's dial-off
+  // leg); every shell door now carries the same guard.
+  let scrimPressed = false;
+  const onPointerDown = (event) => { scrimPressed = event.target === veil; };
+  const onClick = (event) => {
+    const pressedHere = scrimPressed;
+    scrimPressed = false;
+    if (event.target === veil && pressedHere) close();
+  };
   document.addEventListener('keydown', onKeydown, true);
+  veil.addEventListener('pointerdown', onPointerDown);
   veil.addEventListener('click', onClick);
   return function release({ restoreFocus = true } = {}) {
     resize?.disconnect();
     mutations?.disconnect();
     document.removeEventListener('keydown', onKeydown, true);
+    veil.removeEventListener('pointerdown', onPointerDown);
     veil.removeEventListener('click', onClick);
     if (restoreFocus && opener?.isConnected && typeof opener.focus === 'function') {
       opener.focus({ preventScroll: true });

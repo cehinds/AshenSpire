@@ -83,6 +83,10 @@ function pileButton(kind, label) {
   return node;
 }
 
+// The event types that move the displayed hand between beats — the same four
+// applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
+const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
+
 export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {} }) {
   configureTooltipGlossary(registries);
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -1823,7 +1827,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             const reaction = bloodRiteReaction(dv(combat.player), event, 'player');
             if (reaction) stageFor($('.combatant.player'))?.react?.(reaction);
           }
-          renderHand();
+          // The displayed hand (disp.hand) moves only on the four card events
+          // applyBeatToDisp handles; every other beat — a hit, a heal, a
+          // status — re-rendered every card in the hand for no change. The
+          // flush and the terminal callback still render the whole board.
+          if (beat.events.some((event) => HAND_BEAT_EVENTS.has(event.type))) renderHand();
           renderControls();
           showPileFeedback(beat.events);
         },
@@ -1844,6 +1852,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         render();
         if (combat.result) {
           removeEventListener('keydown', keyHandler);
+          handStrip.teardown();
           setTimeout(() => onEnd(combat.result, combat), 350);
         } else {
           focusHandDefault(); // land on the leftmost playable card for kb/pad
