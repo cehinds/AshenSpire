@@ -1,3 +1,4 @@
+import { locationScene } from '../../content/locationScenes.js';
 import { mountLocalMapCamera } from '../components/localMapCamera.js';
 import { localServiceModel } from '../models/LocalServiceModel.js';
 import { mountMapDetail } from '../components/mapDetail.js';
@@ -164,8 +165,13 @@ export function mountWorldAtlas(
       here = id === j.currentNodeId;
     const dialog = document.createElement("dialog");
     dialog.className = "atlas-dialog modal-veil";
+    dialog.dataset.localMap = String(!!local);
+    const scene = locationScene(id, run);
+    const illustration = scene
+      ? `<svg viewBox="${scene.box.join(' ')}" role="img" aria-label="${esc(n.displayName)} — ${esc(scene.name)}" data-location-scene="${esc(scene.id)}"><image href="${esc(assetUrl(scene.atlas))}" width="1536" height="1024"/></svg>`
+      : coreArt(id);
     dialog.setAttribute("aria-labelledby", "atlas-location-title");
-    dialog.innerHTML = `<div class="atlas-dialog-head"><div><span class="atlas-eyebrow">${esc(a.regions[a.regionOf(id)].displayName)}</span><h2 id="atlas-location-title">${esc(n.displayName)}</h2></div>${button("Close", 'data-atlas-close aria-label="Close location"')}</div><div class="atlas-location-body"><div class="atlas-local-wrap">${local ? localMapHtml(local) : `<div class="atlas-location-illustration">${coreArt(id)}</div>`}</div><section class="atlas-location-detail" aria-live="polite"></section></div><footer class="atlas-dialog-foot"><span>${here ? "You are here" : reachable.has(id) ? "A connected road leads here" : "Explore connecting roads to reach this place"}</span>${button(here ? "Return to world" : `Travel to ${n.displayName}`, `data-atlas-travel ${!here && !reachable.has(id) ? "disabled" : ""}`)}<div class="atlas-detail-actions"></div></footer>`;
+    dialog.innerHTML = `<div class="atlas-dialog-head"><div><span class="atlas-eyebrow">${esc(a.regions[a.regionOf(id)].displayName)}</span><h2 id="atlas-location-title">${esc(n.displayName)}</h2></div>${button("Close", 'data-atlas-close aria-label="Close location"')}</div><div class="atlas-location-body"><div class="atlas-local-wrap">${local ? localMapHtml(local) : `<div class="atlas-location-illustration">${illustration}</div>`}</div><section class="atlas-location-detail" aria-live="polite"></section></div><footer class="atlas-dialog-foot"><span>${here ? "You are here" : reachable.has(id) ? "A connected road leads here" : "Explore connecting roads to reach this place"}</span>${button(here ? "Return to world" : `Travel to ${n.displayName}`, `data-atlas-travel data-forward="${!here}" ${!here && !reachable.has(id) ? "disabled" : ""}`)}<div class="atlas-detail-actions"></div></footer>`;
     document.body.append(dialog);
     if (local) {
       const tools = dialog.querySelector('.atlas-local-tools');
@@ -313,7 +319,7 @@ export function mountWorldAtlas(
 function localMapHtml(local) {
   const map = ATLAS.maps[local.mapId],
     points = ATLAS.localPoints[local.mapId] || [];
-  return `<div class="atlas-local-tools"><div class="atlas-local-zoom-tools">${button('−','data-local-zoom="out" aria-label="Zoom local map out"')}<output data-local-zoom-value aria-label="Map zoom">150%</output>${button('+','data-local-zoom="in" aria-label="Zoom local map in"')}${button('Fit','data-local-zoom="fit"')}</div><div class="atlas-local-pan-tools">${[['left','←'],['up','↑'],['down','↓'],['right','→']].map(([dir,label])=>button(label,`data-local-pan="${dir}" aria-label="Pan map ${dir}"`)).join('')}</div></div>
+  return `<div class="atlas-local-tools" role="group" aria-label="Map controls"><div class="atlas-local-pan-tools" role="group" aria-label="Pan map"><output data-local-zoom-value aria-label="Map zoom">150%</output>${[['up','↑'],['left','←'],['right','→'],['down','↓']].map(([dir,label])=>button(label,`data-local-pan="${dir}" aria-label="Pan map ${dir}"`)).join('')}</div><div class="atlas-local-zoom-tools">${button('−','data-local-zoom="out" aria-label="Zoom local map out"')}${button('Fit','data-local-zoom="fit"')}${button('+','data-local-zoom="in" aria-label="Zoom local map in"')}</div></div>
   <p class="atlas-local-help">Drag to explore · scroll or pinch to zoom · focus map for + / − and arrow keys</p>
   <div class="atlas-local-port" tabindex="0" role="group" aria-label="${esc(map.displayName)} interactive map"><div class="atlas-local-map"><svg viewBox="0 0 1000 1000" aria-hidden="true"><g class="map-detail-surface"><image href="${esc(uri(map.artAssetId))}" width="1000" height="1000" preserveAspectRatio="none"/></g></svg>${points
     .map((p) => {
