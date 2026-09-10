@@ -1292,6 +1292,16 @@
 .status-overflow summary { cursor:pointer; list-style:none; padding:2px; color:var(--gold); }
 .status-overflow-list { position:absolute; top:100%; right:0; display:flex; flex-wrap:wrap; gap:8px; padding:10px; width:calc(170px / var(--ui-zoom,1)); background:#17130f; border:1px solid var(--gold); z-index:100; }
 .player .status-overflow-list { left:0; right:auto; }
+/* Lite keeps the target color and selection affordance without cloning art. */
+:root[data-performance='lite'] .aim-silho.aim-outline {
+  inset: auto 8% -3%; width: auto; height: 12%; border: 2px solid var(--target-color);
+  border-radius: 50%; filter: none; animation: none; opacity: 0.9;
+  transform: scale(1.04); background: transparent; box-shadow: none;
+}
+:root[data-performance='lite'] .backdrop::after,
+:root[data-performance='lite'] .sprite > img { animation: none; }
+:root[data-performance='lite'] .sprite img,
+:root[data-performance='lite'] .sprite .facing { filter: none !important; }
 
 /* Overhead controls are screen-sized, independent of sprite zoom and animation. */
 :root .combat[data-layout='formation'] .combatant-leading {

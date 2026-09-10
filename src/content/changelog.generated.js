@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-10",
     "summary": "The tower reveals its menu from River Citadel",
     "detail": "The title now opens outside an unlit River Citadel: the first activation lights the city, holds for a configurable pause, and fades into the entrance hall before the menu appears; Continue still resumes the saved game. The hall keeps its dark city behind the foreground doorway, a translucent backing keeps the wordmark readable, and the doorway breathes between full and 92% opacity on an eleven-second cycle. Reduced motion disables the idle effect and skips the entrance hold; Ambient Off disables the idle effect too. A Replay entrance control previews the sequence. Physical mobile Safari is untested.",
-    "build": "0.6.0.128",
+    "build": "0.6.0.129",
     "pullRequest": 949,
     "url": "https://github.com/cehinds/AshenSpire/pull/949"
   },
@@ -61,6 +61,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.121",
     "pullRequest": 943,
     "url": "https://github.com/cehinds/AshenSpire/pull/943"
+  },
+  {
+    "id": "pr-939",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combat renders lighter on phones, and the standalone ships smaller",
+    "detail": "Mobile combat used to recreate its frames, sprites and hand cards on every routine update; unchanged combatant frames, card nodes and their input bindings are now reused, card measurements are batched, and pose preloads share one bounded cache. Auto rendering picks Lite on a coarse pointer: no costly filters or cloned target silhouettes, a coloured target ring instead, enemy state art loaded on demand and faster pacing by default — Full rendering and explicit pacing stay available. The launcher builds the portable standalone and the external-art web edition, and unused equipment-component authoring assets no longer ship, so the standalone is 7.47 MB smaller. This is a DOM-churn measurement, not a physical-device frame rate.",
+    "build": "0.6.0.128",
+    "pullRequest": 939,
+    "url": "https://github.com/cehinds/AshenSpire/pull/939"
   },
   {
     "id": "pr-904",

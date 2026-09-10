@@ -23,6 +23,8 @@ import { POSE_CANVAS, POSE_DIR, POSE_FRAMES, POSE_STRIP } from '../../content/po
 import { assetUrl } from '../assetmap.js';
 import { reducedMotionRequested } from '../motion.js';
 import { hintImage } from '../imageHints.js';
+import { preloadPoses } from './posePreloads.js';
+import { liteRendering } from '../performance.js';
 
 const key = (classId, pose, tint) => `${classId}_${pose}_${tint}`;
 
@@ -99,13 +101,8 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
 
   // Warm the other frames now: a pose fetched at the moment of the attack would
   // land after the beat it belongs to.
-  const warmed = [];
-  for (const p of posesFor(classId, tint)) {
-    if (p === 'idle') continue;
-    const pre = new Image();
-    pre.src = assetUrl(POSE_DIR + poseFrame(classId, p, tint).f);
-    warmed.push(pre);
-  }
+  preloadPoses(`poses:${classId}:${tint}`, posesFor(classId, tint)
+    .filter(p => p !== 'idle').map(p => assetUrl(POSE_DIR + poseFrame(classId, p, tint).f)));
 
   let timer = null;
   let current = 'idle';
@@ -140,7 +137,7 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
     setPose,
     /** Hold `pose` for ms, then return to idle. Reduced motion holds nothing. */
     play(pose, ms = 260) {
-      if (reducedMotionRequested()) return false;
+      if (reducedMotionRequested() || liteRendering()) return false;
       // Decide what would be shown BEFORE cancelling the hold already running. A
       // pose this build does not carry used to clear the settle timer and then
       // bail, which left whatever was on screen — a lunge, mid-swing — frozen
@@ -155,8 +152,7 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
     settle,
     /** Who this figure is, for the swing rotation that outlives its DOM. */
     id,
-    /** Keep the preloaded frames reachable for as long as the stage lives. */
-    warmed,
+    dispose() { if (timer) clearTimeout(timer); timer = null; },
   });
 }
 

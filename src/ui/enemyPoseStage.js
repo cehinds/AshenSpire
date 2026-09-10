@@ -2,13 +2,16 @@ import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { assetUrl } from './assetmap.js';
 import { ENEMY_STATE_SCALE } from '../content/enemyStateArt.js';
 import { ENEMY_STATE_POSES, enemyPresentation, enemyAuraFilter } from './enemyStates.js';
+import { liteRendering } from './performance.js';
 
 export function createEnemyPoseStage(host, facing, idle, id, entity) {
   host.classList.add('enemy-pose-stage');
   const frames = new Map();
+  const urls = new Map();
   let presentation = enemyPresentation(entity), current = presentation.rest, timer;
   function draw() {
     const selected = frames.get(current);
+    if (selected && !selected.getAttribute('src') && urls.get(current)) selected.src = urls.get(current);
     const ready = selected?.dataset.ready === 'true' && idle.dataset.artSource === 'enemy-poses';
     facing.dataset.stateActive = ready ? 'true' : 'false';
     host.dataset.pose = ready ? current : 'idle';
@@ -23,7 +26,10 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
     frame.addEventListener('load', () => { frame.dataset.ready = 'true'; draw(); });
     frame.addEventListener('error', () => { delete frame.dataset.ready; draw(); });
     frames.set(pose, frame); facing.appendChild(frame);
-    frame.src = assetUrl(pose === 'defeated' ? DEFEATED_ART[id]?.file || '' : `assets/enemy-states/${id}_${pose}.webp`);
+    frame.removeAttribute('src');
+    const src = assetUrl(pose === 'defeated' ? DEFEATED_ART[id]?.file || '' : `assets/enemy-states/${id}_${pose}.webp`);
+    urls.set(pose, src);
+    if (!liteRendering() && src) frame.src = src;
   }
   idle.addEventListener('error', draw);
   function setState(next) {
@@ -36,8 +42,10 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
   function settle() { clearTimeout(timer); timer = null; current = presentation.rest; draw(); }
   setState(entity);
   return {
+    dispose() { clearTimeout(timer); timer = null; },
     enemy: true, poses: ['idle', 'attack', ...ENEMY_STATE_POSES, 'defeated'], setState, settle,
     play(pose, ms = 300) {
+      if (liteRendering() && pose !== 'defeated') return false;
       if (presentation.rest === 'defeated' && pose !== 'defeated') return false;
       clearTimeout(timer);
       if (pose === 'defeated') {
