@@ -449,3 +449,10 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((100dv
 @media(max-height:500px) and (min-width:701px) {
  .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { flex-direction:row; align-items:center; justify-content:space-evenly; flex-wrap:wrap; }
 }
+
+/* Ordinary road/encounter inspection uses scene art, never an enlarged map tile. */
+.atlas-dialog[data-local-map="false"] .atlas-location-illustration { aspect-ratio:3 / 2; max-width:calc(768px / var(--ui-zoom,1)); margin:auto; }
+.atlas-dialog[data-local-map="false"] .atlas-detail-actions:empty { display:none; }
+.atlas-dialog[data-local-map="false"] [data-atlas-travel] { margin-left:auto; }
+.atlas-dialog [data-atlas-travel][data-forward="true"]:enabled { background:color-mix(in srgb,var(--green) 22%,var(--panel)); border-color:var(--green); color:var(--parchment); font-weight:600; }
+.atlas-dialog [data-atlas-travel][data-forward="true"]:enabled:hover { background:color-mix(in srgb,var(--green) 34%,var(--panel)); }
