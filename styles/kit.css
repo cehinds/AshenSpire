@@ -525,9 +525,18 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
    cancelling — and that false green is what invited #910.
 
    A residual remains at 2550x1305 Text XL: the gate reads +1.605px against a
-   1px tolerance. It is not tracking and not rounding — the advance box itself
-   sits right of centre at that one shape before any transform applies. Left
-   red deliberately rather than papered over by widening the tolerance. */
+   1px tolerance. DO NOT TUNE THIS RULE TO CLEAR IT. At that exact shape and
+   text size the painted ink measures -2.5px WITH this transform and -6.5px
+   without, so the gate and the pixels disagree in SIGN: the gate says the
+   wordmark sits right of centre, the glyphs say it sits left. Moving the
+   wordmark right to satisfy the gate would take the ink to about -4px, away
+   from centre, and the check would go green while the defect got worse.
+
+   The cause is that advance-minus-trailing is still not ink: it carries the
+   first and last glyphs' side bearings, which do not cancel in a display face.
+   The fix belongs in the measurement, not here — startup-gate already captures
+   a screenshot, so it can scan for lit columns instead of doing Range
+   arithmetic. Left red deliberately, and NOT by widening the tolerance. */
 .as-titlemenu .tm-name { --track: 0.08em; margin: 0; transform: translateX(calc(var(--track) / 2)); font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
 .as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
