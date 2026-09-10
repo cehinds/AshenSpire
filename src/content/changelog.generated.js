@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-936",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Compare equipment in the combat test",
+    "detail": "Choose armor, weapon grip, and a Blood Rune before a test route. The preview shows armor, weight, Dodge stamina, grip requirements, weapon impact, and rune-inclusive value. The chosen equipment supplies the real fight's defense and attack properties; incompatible grips and runes explain why they cannot be used. This remains an isolated equipment experiment with fixed resource caps, not production loot or inventory migration.",
+    "build": "0.6.0.127",
+    "pullRequest": 936,
+    "url": "https://github.com/cehinds/AshenSpire/pull/936"
+  },
+  {
     "id": "pr-938",
     "date": "2026-09-10",
     "group": "2026-09-10",
@@ -48,7 +58,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-10",
     "summary": "Combat renders lighter on phones, and the standalone ships smaller",
     "detail": "Mobile combat used to recreate its frames, sprites and hand cards on every routine update; unchanged combatant frames, card nodes and their input bindings are now reused, card measurements are batched, and pose preloads share one bounded cache. Auto rendering picks Lite on a coarse pointer: no costly filters or cloned target silhouettes, a coloured target ring instead, enemy state art loaded on demand and faster pacing by default — Full rendering and explicit pacing stay available. The launcher builds the portable standalone and the external-art web edition, and unused equipment-component authoring assets no longer ship, so the standalone is 7.47 MB smaller. This is a DOM-churn measurement, not a physical-device frame rate.",
-    "build": "0.6.0.126",
+    "build": "0.6.0.128",
     "pullRequest": 939,
     "url": "https://github.com/cehinds/AshenSpire/pull/939"
   },
