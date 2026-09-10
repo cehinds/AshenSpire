@@ -27,6 +27,28 @@ export function paintedPresentation(classId, armourId = 'default', pose = 'stand
 
 // The reviewed frames share a 640px canvas, center 320 and floor 600.
 // Fit the tallest resting body to the stage; every action keeps that scale.
+// Frame warm-up happens once per file for the life of the page. The stage is
+// rebuilt on every combat render (one per animation beat), and each rebuild
+// used to allocate a fresh Image per outfit frame — nineteen per render for a
+// painted class — so the decoded set was re-requested constantly and the
+// objects were garbage the moment they were made.
+const warmedFrames = new Map();
+function warmOutfitFrames(frames) {
+  const images = [];
+  for (const frame of Object.values(frames)) {
+    const url = assetUrl(frame.file);
+    if (!url) continue;
+    let image = warmedFrames.get(url);
+    if (!image) {
+      image = new Image();
+      image.src = url;
+      warmedFrames.set(url, image);
+    }
+    images.push(image);
+  }
+  return images;
+}
+
 export function createPaintedStage(classId, armourId = 'default', { still = false } = {}) {
   if (still) {
     const presentation = paintedPresentation(classId, armourId);
@@ -85,7 +107,7 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
   down.style.cssText = `position:absolute;left:50%;bottom:0;height:${100 * (downArt?.scale || 1)}%;width:auto;max-width:none;transform:translate(-50%,5.208333%);visibility:hidden;pointer-events:none;`;
   if (downArt) down.src = assetUrl(downArt.file);
   el.appendChild(down);
-  const warmed = Object.values(frames).map(frame => { const image = new Image(); image.src = assetUrl(frame.file); return image; });
+  const warmed = warmOutfitFrames(frames);
   const previous = img.cloneNode();
   previous.alt = ''; previous.setAttribute('aria-hidden', 'true');
   previous.classList.add('pose-previous'); previous.style.opacity = '0'; previous.style.display = 'none';

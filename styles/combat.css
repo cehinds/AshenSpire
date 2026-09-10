@@ -621,7 +621,10 @@
 
 /* ---- rendered sprites: idle bob + death fade (solo + co-op boards) -------- */
 @keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; }
+.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: transform; }
+/* A fallen combatant holds still: the idle bob kept every dead sprite on the
+   compositor's per-frame list for the rest of the fight. */
+.combatant.dead .sprite > img { animation: none; }
 .player .sprite.reaver-attack-playing { overflow: visible; }
 .combatant .sprite > img.reaver-attack-sequence {
   width: 17rem;
@@ -1054,7 +1057,11 @@
 /* Increase the reading inside the existing five fixed HUD tracks. */
 :root .combat:not(.coop) .combat-action-row .sp-k { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.1; letter-spacing: 0; }
 :root .combat:not(.coop) .combat-action-row .sp-v { font-size: max(1.5rem, calc(17px / var(--ui-zoom, 1))); line-height: 1.1; }
-:root .combat:not(.coop) .combat-action-row > :is(.end-turn, .combat-potions) { font-size: max(1.38rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.1; }
+:root .combat:not(.coop) .combat-action-row > .end-turn { font-size: max(1.38rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.1; }
+/* The round Potions face is --combat-control-size wide; at End Turn's size the
+   word overran the circle and read "Potion" with a sliver. It keeps its own
+   smaller step (declared above) and never wraps or clips. */
+:root .combat:not(.coop) .combat-action-row > .combat-potions { line-height: 1.1; letter-spacing: 0; padding-inline: 2px; white-space: nowrap; overflow: visible; }
 :root .combat:not(.coop) .combat-action-row .spent { padding-inline: 2px; font-size: max(1.1rem, calc(11px / var(--ui-zoom, 1))); line-height: 1.15; }
 :root .combat:not(.coop) .combat-action-row .spent small { font-size: inherit; }
 :root .combat:not(.coop) .combat-action-row :is(.hold-hint, .et-key) { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1; }
