@@ -21,3 +21,9 @@ export const MIME = {
 export function shippable(ext) {
   return Object.prototype.hasOwnProperty.call(MIME, ext.toLowerCase());
 }
+
+// Authoring-only layered equipment experiments. Runtime figures use the
+// reviewed outfits/poses instead. Keep these sources in git, outside payloads.
+export function runtimeAsset(path) {
+  return !path.replace(/\\/g, '/').startsWith('equipment/components/');
+}
