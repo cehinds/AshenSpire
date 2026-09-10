@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-956",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The combat screen draws again",
+    "detail": "#939 landed reading a name #945 had renamed, so the board mounted with no enemies and no hand. Two words, corrected.",
+    "build": "0.6.0.132",
+    "pullRequest": 956,
+    "url": "https://github.com/cehinds/AshenSpire/pull/956"
+  },
+  {
     "id": "pr-949",
     "date": "2026-09-10",
     "group": "2026-09-10",
