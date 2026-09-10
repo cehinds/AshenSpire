@@ -145,9 +145,9 @@ export function enemySprite(enemyDef, entity = {}) {
     + (spriteMirror(artFaces) ? 'transform:scaleX(-1);' : '');
   const img = document.createElement('img');
   const original = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
-  img.src = posed ? assetUrl(`assets/enemy-poses/${enemyDef.id}_idle.png`)
-    : unity ? assetUrl(`assets/enemies-unity/painted_${enemyDef.id}.png`)
-    : expansion ? assetUrl(`assets/enemies-expansion/${enemyDef.id}.png`) : original;
+  img.src = posed ? assetUrl(`assets/enemy-poses/${enemyDef.id}_idle.webp`)
+    : unity ? assetUrl(`assets/enemies-unity/painted_${enemyDef.id}.webp`)
+    : expansion ? assetUrl(`assets/enemies-expansion/${enemyDef.id}.webp`) : original;
   img.alt = enemyDef.name || enemyDef.id;
   img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
     `filter:var(--combatant-edge, blur(0px)) drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
@@ -181,7 +181,7 @@ export function enemySprite(enemyDef, entity = {}) {
     // Add impact while keeping the shared foot line fixed during the pose swap.
     attack.style.transformOrigin = '50% 94.791667%';
     attack.style.transform = 'translateY(5.208333%) scale(1.05)';
-    attack.src = assetUrl(`assets/enemy-poses/${enemyDef.id}_attack.png`);
+    attack.src = assetUrl(`assets/enemy-poses/${enemyDef.id}_attack.webp`);
     attack.addEventListener('load', () => {
       if (img.dataset.artSource === 'enemy-poses') facing.dataset.attackReady = 'true';
     });

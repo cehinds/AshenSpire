@@ -57,7 +57,7 @@ import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
-import { armHold, holdMs } from '../components/holdconfirm.js';
+import { armHold, holdMs, HOLD_DRAG_SETTLE_MS } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
@@ -1681,6 +1681,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     el.appendChild(holdProgress);
     return armHold(el, {
       ms: () => affordable ? holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) : 0,
+      // A hand card is dragged to play it, so the press must prove it is not a
+      // drag before it shows a fill. Without this the first 12 px of every
+      // drag-to-play flashed a hold that then died under the thumb.
+      settleMs: HOLD_DRAG_SETTLE_MS,
       onHoldStart: () => { selectedThisPress = selected !== inst.instanceId && selfArm !== inst.instanceId; if (!busy && affordable && selectedThisPress) select(); el.dispatchEvent(new CustomEvent('cardholdstart')); },
       onTap: tap, tapOnEarlyRelease: true,
       onConfirm: () => holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0 ? confirm() : tap(),
