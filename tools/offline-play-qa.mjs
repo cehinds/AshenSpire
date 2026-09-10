@@ -17,12 +17,16 @@ const html = readFileSync('AshenSpire.html'), build = JSON.parse(readFileSync('b
 const metadata = { branch: 'main', version: build.release, ordinal: build.ordinal, bytes: html.length };
 const storage = createMemoryStorage(), registries = createRegistries(contentBundle), saves = createSaveManager(storage);
 const fixtureRun = createRunState({ seed: 54321, classId: contentBundle.classes[0].id, registries });
+Object.assign(fixtureRun, { customization: { name: 'Offline test', glyph: '⚔', tint: 'gold' },
+  custom: { ascension: 0, mods: {}, deckMode: 'standard' },
+  stats: { fightsWon: 0, damageDealt: 0, damageTaken: 0 }, path: [], seenEvents: [], lastEncounters: [] });
 const fixtureRng = createRng(fixtureRun.seed);
 fixtureRun.mapGraph = buildActMap(registries, fixtureRng, fixtureRun.actNumber, null, { history: fixtureRun.history });
 saves.saveRun(fixtureRun, fixtureRng, 2);
 const original = createSaveTransfer(storage, registries).createBackup();
 const server = createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  if (req.url !== '/AshenSpire.html' && !req.url.startsWith('/main/')) { res.writeHead(404); res.end(); return; }
   if (req.url.endsWith('build.json')) { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(metadata)); }
   else { res.setHeader('Content-Type', 'text/html');
     // Only the hosted QA copy points its authored release feed at this fixture.
@@ -42,7 +46,8 @@ const send = (method, params = {}, sessionId) => new Promise((resolve, reject) =
 ws.addEventListener('message', event => {
   const msg = JSON.parse(event.data);
   if (msg.method === 'Network.loadingFailed') console.log('NETWORK FAILURE', JSON.stringify(msg.params));
-  if (msg.method === 'Browser.downloadWillBegin') downloadNames.set(msg.params.guid, msg.params.suggestedFilename);
+  if (msg.method === 'Browser.downloadWillBegin') { downloadNames.set(msg.params.guid, msg.params.suggestedFilename); console.log('DOWNLOAD START', msg.params.suggestedFilename); }
+  if (msg.method === 'Browser.downloadProgress' && msg.params.state !== 'inProgress') console.log('DOWNLOAD RESULT', JSON.stringify(msg.params));
   if (msg.method === 'Browser.downloadProgress' && msg.params.state === 'completed') completed.push(downloadNames.get(msg.params.guid));
   if (msg.method === 'Runtime.exceptionThrown') errors.push(msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text);
   const pair = pending.get(msg.id); if (!pair) return; pending.delete(msg.id); clearTimeout(pair.timer);
@@ -83,6 +88,8 @@ try {
   check(createSaveTransfer(createMemoryStorage(), registries).inspect(readFileSync(backupPath, 'utf8')).slots.filter(x => x.summary).length === 1, 'exported backup includes the saved run');
   await click('#offline-check'); await until('!document.querySelector("#offline-download").disabled');
   await capture('desktop-download');
+  await click('#offline-download');
+  await until('document.querySelector("#offline-download").textContent === "Save game file"');
   await click('#offline-download'); gamePath = await waitDownload(2);
   check(readFileSync(gamePath).equals(html), 'downloaded HTML is byte-identical to the packaged build');
   await click('.offline-play-modal .modal-close'); await click('#settings');

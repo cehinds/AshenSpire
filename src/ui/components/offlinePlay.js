@@ -23,7 +23,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
   const reload = button({ label: 'Reload game', id: 'offline-reload' }); reload.hidden = true;
   const file = el('input', { type: 'file', accept: '.json,application/json', hidden: true });
   const done = button({ label: 'Done', weight: 'primary' });
-  let manifest = null, busy = false;
+  let manifest = null, prepared = null, busy = false;
   const controller = new AbortController();
   const request = async url => {
     const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(offlinePlay.requestTimeoutMs)]) });
@@ -31,7 +31,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
     return response;
   };
   const door = openModal({ title: offlinePlay.title, size: 'md', className: 'offline-play-modal',
-    onClose: () => controller.abort(), body: host => {
+    onClose: () => { controller.abort(); prepared = null; }, body: host => {
       host.append(el('p', { text: `Your game: ${BUILD_VERSION}` }),
         el('ul', {}, offlinePlay.instructions.map(text => el('li', { text }))), release,
         el('div', { class: 'offline-actions' }, [check, download]),
@@ -43,6 +43,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
   recovery.hidden = !transfer.previous();
   check.addEventListener('click', async () => {
     if (busy) return; busy = true; check.disabled = true; download.disabled = true;
+    prepared = null; download.textContent = offlinePlay.downloadLabel;
     try {
       const data = releasedDownload(await (await request(offlinePlay.manifestUrl)).json());
       manifest = data;
@@ -52,14 +53,24 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
     finally { busy = false; check.disabled = false; }
   });
   download.addEventListener('click', async () => {
-    if (busy || !manifest) return; busy = true; download.disabled = true;
+    if (busy || !manifest) return;
+    if (prepared) {
+      // Saving stays within a fresh click, even when fetching a large build
+      // took longer than the browser's transient user-activation window.
+      saveFile(prepared, manifest.filename);
+      status.textContent = 'Save requested. Open the HTML file from your Downloads folder.';
+      return;
+    }
+    busy = true; download.disabled = true;
     status.textContent = 'Downloading the game… keep this panel open.';
     try {
       // Pin the numbered build so a release changing mid-download cannot mix versions.
       const bytes = await (await request(manifest.url)).arrayBuffer();
       if (bytes.byteLength !== manifest.bytes) throw new Error('Download was incomplete. Please try again.');
-      saveFile(new Blob([bytes], { type: 'text/html' }), manifest.filename);
-      status.textContent = 'Download ready. Open the HTML file from your Downloads folder.';
+      if (controller.signal.aborted) return;
+      prepared = new Blob([bytes], { type: 'text/html' });
+      download.textContent = offlinePlay.saveDownloadLabel;
+      status.textContent = 'Game ready. Choose Save game file to keep it on your computer.';
     } catch (error) { status.textContent = error.message; }
     finally { busy = false; download.disabled = false; }
   });

@@ -1,7 +1,8 @@
 # Download and play offline
 
 - Open **Download & saves** from Title or Settings while online.
-- **Check for updates**, then **Download released game**. On a computer,
+- **Check for updates**, then **Download released game**. When ready, choose
+  **Save game file**. On a computer,
   double-click the downloaded HTML file to open it in your browser.
 - Use **Export saves** in your online game and **Import saves** in the downloaded
   game to move your profile and all three slots. Import from Title; it previews
@@ -36,3 +37,7 @@ files, compares game bytes, exports/imports a real run, disables the network,
 opens the downloaded file, and captures desktop and phone-size screenshots in
 `artifacts/offline-play/`. This fixture does not prove a deployed Pages release
 or physical phone support.
+
+`--offline-only` skips download verification and uses the local generated file
+with a save fixture. It checks import, recovery, reload, map/combat entry, and
+the blocked-storage guard without claiming to test a downloaded release.

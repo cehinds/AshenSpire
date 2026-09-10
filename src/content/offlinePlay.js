@@ -3,6 +3,7 @@ export const offlinePlay = {
   manifestUrl: 'https://cehinds.github.io/AshenSpire/main/latest/build.json',
   releaseBranch: 'main',
   downloadLabel: 'Download released game',
+  saveDownloadLabel: 'Save game file',
   instructions: [
     'Download the HTML file on your computer, then double-click it to play in your browser.',
     'Solo play works without internet. Offline maps use simpler artwork; online multiplayer needs a connection.',
