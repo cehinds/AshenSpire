@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-945",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The Information button on a fighter now matches the one on a card",
+    "detail": "It used to carry its own look and hang above every combatant at once. It now wears the same gold ring the cards use and appears only on the one you have actually selected, so the battlefield stops being a row of buttons. What an enemy intends to do stays visible either way, and the empty slot closes up rather than leaving a gap. Selecting someone no longer nudges the artwork: feet, proportions and health bars stay where they were.",
+    "build": "0.6.0.119",
+    "pullRequest": 945,
+    "url": "https://github.com/cehinds/AshenSpire/pull/945"
+  },
+  {
+    "id": "pr-938",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Fighters gained an Information button, and enemy intentions got easier to read",
+    "detail": "Each combatant now has a dedicated Information control above the sprite, stacked with a larger framed badge showing what an enemy means to do next. Pointing at one, touching it, or reaching it with a keyboard or controller outlines it before the explanation appears; a second tap opens the full details. Tapping the controls above a fighter can no longer set off a card you had aimed at them. The battlefield reserves room for the stack so nothing overlaps, and short screens give the fight more space.",
+    "build": "0.6.0.116",
+    "pullRequest": 938,
+    "url": "https://github.com/cehinds/AshenSpire/pull/938"
+  },
+  {
+    "id": "pr-921",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "City maps and pop-up panels stay readable when there is a lot to show",
+    "detail": "All eleven local maps use a tall layout that protects the map area, lets the benefit details scroll on their own, and pins Return and the service buttons where you can always reach them. A short, wide screen puts the map and its details side by side instead. Shared dialogs keep their usual widths but grow taller when the content needs it, with headers and footers staying put while the middle scrolls.",
+    "build": "0.6.0.108",
+    "pullRequest": 921,
+    "url": "https://github.com/cehinds/AshenSpire/pull/921"
+  },
+  {
     "id": "pr-943",
     "date": "2026-09-10",
     "group": "2026-09-10",
