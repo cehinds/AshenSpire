@@ -3061,3 +3061,21 @@ button.primary:disabled, button.primary[aria-disabled='true'],
 .modal-body, .as-body, .as-pane { overscroll-behavior: contain; scrollbar-gutter: stable; }
 .as-pane > * { flex-shrink: 0; }
 .modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { white-space: normal; overflow-wrap: anywhere; }
+/* Ready actions rise slightly without moving surrounding layout. */
+button.primary, .as-btn.primary { transition:background 120ms, border-color 120ms, scale 160ms ease, translate 160ms ease, box-shadow 160ms ease; }
+button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
+.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+  scale:1.015; translate:0 -2px; box-shadow:0 4px 10px #0005;
+}
+.modal-foot:has(> .modal-foot-actions > .primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) {
+  flex-direction:column; align-items:stretch;
+}
+.modal-foot:has(> .modal-foot-actions > .primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) > .modal-foot-note { display:none; }
+.modal-foot-actions:has(> .primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; margin-left:0;
+}
+.modal-foot-actions > .primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+  grid-column:1 / -1; order:1; width:100%; max-width:none; min-width:0;
+}
+@media (prefers-reduced-motion:reduce) { button.primary, .as-btn.primary { transition:none; } }
+body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transition:none; }
