@@ -1306,6 +1306,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // pools. A card the preview cannot resolve is not a playable card.
       let pv = null;
       try { pv = previewCard(combat, inst.instanceId); } catch (e) { return false; }
+      if (pv.needsTarget && !combat.enemies.some(enemy => enemy.alive)) return false;
+      const friendly = friendlyTargetPlan(resolveCard(registries, inst), combat.player.id,
+        [{ ...combat.player, connected: true }]);
+      if (friendly.active && !friendly.legalIds.length) return false;
       return combat.player.energy >= (pv.costIsX ? 0 : pv.cost)
         && combat.player.mana >= pv.manaCost
         && combat.player.stamina >= (pv.staminaCost || 0);
@@ -1324,7 +1328,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
     $('.end-turn').replaceChildren('End Turn', keycap(etKey, { class: 'et-key' }));
-    $('.end-turn').classList.toggle('pulse', endTurnHasPlayable());
+    const hasPlayable = endTurnHasPlayable();
+    $('.end-turn').classList.toggle('pulse', hasPlayable);
+    $('.end-turn').dataset.confirmReady = String(!hasPlayable);
     // The innerHTML above just dropped the HOLD hint on the floor. `refresh()`
     // re-reads the action's state and re-dresses the button — and it is the
     // reason a beat can live on a control its own screen repaints every frame

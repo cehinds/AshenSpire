@@ -775,7 +775,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const canEnd = meP && meP.alive && meP.connected && !meP.ended;
     const et = app.querySelector('#coop-endturn');
     et.disabled = !canEnd;
-    et.classList.toggle('pulse', canEnd && meP.energy > 0);
+    const hasPlayable = canEnd && meP.hand.some(card => {
+      const def = cardDef(card);
+      if (registries.framework.isUnplayable(def) || !cardAffordableFromSnapshot(def, meP)) return false;
+      if (def.effects?.some(effect => effect.target === 'enemy') && !sc.enemies.some(enemy => enemy.hp > 0)) return false;
+      const friendly = friendlyTargetPlan(def, me, sc.players);
+      return !friendly.active || friendly.legalIds.length > 0;
+    });
+    et.classList.toggle('pulse', hasPlayable);
+    et.dataset.confirmReady = String(canEnd && !hasPlayable);
     endTurnBeat = arm(et, 'endTurn', {
       onConfirm: () => {
         const current = snap && snap.scene && snap.scene.kind === 'combat'
