@@ -1,3 +1,8 @@
+import { combatantInfo, combatantIntent } from '../components/combatantOverhead.js';
+import { combatantDetailBody } from '../components/combatantInspector.js';
+import { activeCombatAbilities } from '../components/combatAbilities.js';
+import { enemyMoveCards } from '../../model/enemyMoveCards.js';
+import { openModal } from '../kit/index.js';
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { statureFor } from '../components/stature.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -53,7 +58,7 @@ import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
-import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
+import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
@@ -496,19 +501,28 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return b;
   }
   function intentEl(intent) {
-    // ONE INTENT PIECE, the kit's StatePill in the fact's own tone — the same
-    // composition solo combat draws (screens/combat.js intentEl). This read
-    // `badge.html`, which intentBadge has never returned, so the co-op board
-    // printed the word "undefined" over every enemy.
-    const badge = intentBadge(intent);
-    const node = pill({
-      label: badge.label,
-      attrs: { class: `intent lg ${badge.cls}${badge.dashed ? ' dashed' : ''}`, dataset: { tone: badge.tone || undefined } },
-    });
-    if (badge.glyph) node.prepend(kitGlyph(badge.glyph, { class: 'ic' }));
-    attachTooltip(node, () => intentTooltip(intent, { victim: 'each hero' }));
-    return node;
+    return combatantIntent(intent, () => intentTooltip(intent, { victim: 'each hero' }));
   }
+
+  function infoEl(entity, name, def = null) {
+    return combatantInfo(name, opener => {
+      const resources = [
+        { label: 'HP', value: entity.hp, max: entity.maxHp },
+        { label: 'MP', value: entity.mana, max: entity.maxMana },
+        { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
+        { label: 'Block', value: entity.block || 0 },
+      ].filter(row => row.value != null);
+      const abilities = activeCombatAbilities(registries, entity, false);
+      const subject = { name, resources, statuses: abilities, ...(def
+        ? { moveCards: enemyMoveCards(def, { enemy: entity, preview: entity.intent, registries }) }
+        : { abilities }) };
+      openModal({ title: name, size: 'md', className: 'combatant-door', opener,
+        bodyClassName: 'combatant-inspector-body',
+        body: host => host.replaceChildren(...combatantDetailBody(subject, { heading: false })),
+      });
+    });
+  }
+
 
   // ---- combat (parity board) ------------------------------------------------
   function renderCombat() {
@@ -590,6 +604,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.className = `combatant player coop-seat${p.id === me ? ' me' : ''}${p.ended ? ' ended' : ''}${p.alive ? '' : ' down'}${p.connected ? '' : ' away'}${armedFlask != null && p.alive && p.connected ? ' throw-target' : ''}`;
       box.dataset.seat = p.id;
       box.dataset.eid = p.id;
+      box.append(infoEl(p, m.name || p.id));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId));
@@ -645,7 +660,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.className = `combatant enemy${dead ? ' dead' : ''}${!dead && e.id === selectedEnemy ? ' selected-target' : ''}`;
       box.dataset.eid = e.id;
       box.dataset.stature = statureFor(registries, def.id);
-      if (!dead) box.appendChild(intentEl(e.intent));
+      if (!dead) box.append(infoEl(e, def.name, def), intentEl(e.intent));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(enemySprite(def, e));
