@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-904",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Every armament brings a complete combat kit",
+    "detail": "Weapons, shields, and staves each lend a Strike, Guard, and signature Art. Shields can attack beside a weapon; Guardian creates an Exhausting Bulwark skill, Bastion trades offense for Block, and Spiked Reprisal combines defence with Bleed. Equipment previews show the actual contributions, and solo/co-op fights retain their ownership and upgrade data.",
+    "build": "0.6.0.110",
+    "pullRequest": 904,
+    "url": "https://github.com/cehinds/AshenSpire/pull/904"
+  },
+  {
     "id": "pr-919",
     "date": "2026-09-10",
     "group": "2026-09-10",
