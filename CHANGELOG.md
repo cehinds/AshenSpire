@@ -32,15 +32,15 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-10
 
+- **Inspect selected rewards and item choices** ([#905](https://github.com/cehinds/AshenSpire/pull/905), `0.6.0.92`). Selected reward cards keep their Information button visible, including after Back restores the choice. Keyboard focus and scrollable card rows retain room for inspection. Smith extraction and installation items, mounts, and deck cards can be inspected without confirming the service, with usable selection panes on phones.
+
 - **Screens build with less stalling on a phone** ([#915](https://github.com/cehinds/AshenSpire/pull/915), `0.6.0.89`). Every image in the game now tells the browser it may decode off the main thread. Sixteen places drew pictures without saying so, which meant each one was unpacked in the same instant its screen was being assembled — free on a desktop, and the reason a phone hitched when an armoury or a hand of cards appeared, because a build carries its art inside itself and unpacking is all the work that is left. Two lists that can run longer than a screen — the inventory grid and the smith's stock — also hold their pictures back until they are scrolled near. That second habit is deliberately *not* applied to combat effects or to map landmarks under fog, where a picture that waits to be looked at may never arrive at all. Three artwork frames that already hid anything spilling past their edges now say so, so a sprite changing frames inside one card no longer makes the gallery around it redraw. Everything here reads from one setting rather than sixteen scattered ones, and can be turned off in a single edit.
 
 - **The receipt chain closes on itself, again** ([#914](https://github.com/cehinds/AshenSpire/pull/914), `0.6.0.86`). Nothing a player sees changes. The pull request before this one wrote the receipt that was owed and then owed one itself, which is the seventh time that loop has been walked here — 714, 717, 718, 721, 726, 728 and now 913. What makes this one worth recording rather than merely fixing is that its own description promised to name itself and then did not: the intent was stated, the other receipt was written, and the self-reference was forgotten in the same breath. Knowing the escape is not the same as taking it. This entry and the one below it are written in a single commit, which is the only shape that ends the chain.
 
 - **The receipt #913 owed** ([#913](https://github.com/cehinds/AshenSpire/pull/913), `0.6.0.86`). Nothing a player sees changes. It wrote up the receipts pass that preceded it and, being a pull request itself, owed one in turn; this is that one.
 
-
 - **The receipts pass that names itself** ([#912](https://github.com/cehinds/AshenSpire/pull/912), `0.6.0.85`). Nothing a player sees changes. Three merges had landed with no entry here, and the gate that catches exactly that reported all clear — because it measures the span between the test branch and the development branch, and the promotion that followed those merges closed the span before anything looked. A gate that the next legitimate action can silence is not a gate for that window, so this writes the three by hand and records why they were missed. It also adds the game's download weight to the readme, which described every other property of a build except the one a slow connection feels first.
-
 
 - **The game a phone downloads is a third smaller** ([#908](https://github.com/cehinds/AshenSpire/pull/908), `0.6.0.84`). Nothing a player sees changes; how much they wait for it does. The three hundred and twenty-five PNG sprites are re-encoded as WebP, and the single shipped file falls from ninety-three megabytes to fifty-eight. The format was chosen by measurement rather than habit: lossless WebP saved thirty-nine per cent and quality ninety saved seventy-five, and these are painted sprites rather than pixel art, so the second is the honest trade. Every file keeps its name and its pixels; only the container changed. The gate that renders equipment art through the real browser and measures where each piece lands passed fifty of fifty afterwards, which is the check that mattered.
 
@@ -49,8 +49,6 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **The wordmark was corrected twice, so it ended up off-centre** ([#910](https://github.com/cehinds/AshenSpire/pull/910), `0.6.0.82`). The title on the startup screen sat a few pixels right of centre, and the browser gate that measures it had been red for a day. The cause was a correction for a problem the browser had already solved: letter-spacing leaves a gap after the final letter, something was nudging the title right to compensate, and Chromium had already accounted for it. Removing the nudge puts the ink dead centre at every width tested. The alternative fix was measured too, and was no better — which is what proves there was nothing to compensate for.
 
 ## 2026-09-09
-
-- **Inspect selected rewards and item choices** ([#905](https://github.com/cehinds/AshenSpire/pull/905), `0.6.0.82`). Selected reward cards keep their Information button visible, including after Back restores the choice. Keyboard focus and scrollable card rows retain room for inspection. Smith extraction and installation items, mounts, and deck cards can be inspected without confirming the service, with usable selection panes on phones.
 
 - **Bosses and elites keep their imposing size** ([#900](https://github.com/cehinds/AshenSpire/pull/900), `0.6.0.79`). Fit enemy and player sprites together so bosses and elites remain larger across phone, landscape, desktop, and co-op combat layouts.
 
@@ -62,7 +60,6 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **Close combat inspections from their footer** ([#893](https://github.com/cehinds/AshenSpire/pull/893), `0.6.0.74`). The Close button now dismisses player and enemy inspections with mouse, touch, or keyboard and restores focus through the shared modal behavior.
 
 - **Choose a hand and see its starting cards** ([#885](https://github.com/cehinds/AshenSpire/pull/885), `0.6.0.73`). Offer Empty Hand in both slots, preview each hand's starting combat cards in a compact grid, and continue explicitly to the next setup section. Focused equipment lifts gently and reveals its action, with reduced-motion support. Larger equipment choices sit in two columns beside their details, with Continue at bottom-right; titles fit vertically, and clipped flavor uses an ellipsis while remaining readable in inspection.
-
 
 - **Inspect every active combat ability** ([#888](https://github.com/cehinds/AshenSpire/pull/888), `0.6.0.69`). Click or tap stance and Evade badges to read their effects alongside all active statuses. Evade follows the shared hover timing and explains its charges and expiry. Expand individual explanations with mouse, touch, or keyboard while keeping selected cards safe from accidental play.
 

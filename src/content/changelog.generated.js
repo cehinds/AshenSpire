@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-905",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Inspect selected rewards and item choices",
+    "detail": "Selected reward cards keep their Information button visible, including after Back restores the choice. Keyboard focus and scrollable card rows retain room for inspection. Smith extraction and installation items, mounts, and deck cards can be inspected without confirming the service, with usable selection panes on phones.",
+    "build": "0.6.0.92",
+    "pullRequest": 905,
+    "url": "https://github.com/cehinds/AshenSpire/pull/905"
+  },
+  {
     "id": "pr-915",
     "date": "2026-09-10",
     "group": "2026-09-10",
@@ -71,16 +81,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.82",
     "pullRequest": 910,
     "url": "https://github.com/cehinds/AshenSpire/pull/910"
-  },
-  {
-    "id": "pr-905",
-    "date": "2026-09-09",
-    "group": "2026-09-09",
-    "summary": "Inspect selected rewards and item choices",
-    "detail": "Selected reward cards keep their Information button visible, including after Back restores the choice. Keyboard focus and scrollable card rows retain room for inspection. Smith extraction and installation items, mounts, and deck cards can be inspected without confirming the service, with usable selection panes on phones.",
-    "build": "0.6.0.82",
-    "pullRequest": 905,
-    "url": "https://github.com/cehinds/AshenSpire/pull/905"
   },
   {
     "id": "pr-900",
