@@ -46,9 +46,17 @@ export function wireBattlefieldStage(field, model) {
       const geometry = combatSpriteGeometry(sprite, schedule);
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
+      const overhead = frame.querySelector('.combatant-leading');
+      const info = overhead.querySelector('.combatant-info');
+      // Reserve the full stack even while Information is collapsed. Selection
+      // must never change sprite proportions, feet, or health-bar positions.
+      const hiddenInfoHeight = info && getComputedStyle(info).display === 'none'
+        ? parseFloat(getComputedStyle(info).height) * zoom
+          + (overhead.querySelector('.intent') ? parseFloat(getComputedStyle(overhead).rowGap) * zoom : 0)
+        : 0;
       return { slot, frame, stack, sprite, ratio, ...geometry,
         // Keep the overhead controls below the turn banner as well as the HUD.
-        leading: Math.max(28, frame.querySelector('.combatant-leading').getBoundingClientRect().height) + 28 };
+        leading: Math.max(28, overhead.getBoundingClientRect().height + hiddenInfoHeight) + 28 };
     });
     const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors });
     for (const actor of actors) {

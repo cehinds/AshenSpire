@@ -1,7 +1,17 @@
-import { attachTooltip, esc } from './tooltip.js';
+import { attachTooltip, hideTooltip, esc } from './tooltip.js';
 import { intentBadge } from '../uiContent.js';
 import { glyph } from '../kit/index.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+
+// Reading selection is separate from an armed card or co-op's attack target.
+export function selectCombatantInfo(root, id) {
+  hideTooltip();
+  for (const frame of root.querySelectorAll('.combatant')) {
+    const selected = frame.dataset.eid === id;
+    frame.classList.toggle('context-selected', selected);
+    frame.setAttribute('aria-pressed', String(selected));
+  }
+}
 
 export function combatantInfo(name, open) {
   const node = document.createElement('button');
