@@ -620,7 +620,10 @@
 
 /* ---- rendered sprites: idle bob + death fade (solo + co-op boards) -------- */
 @keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; }
+.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: transform; }
+/* A fallen combatant holds still: the idle bob kept every dead sprite on the
+   compositor's per-frame list for the rest of the fight. */
+.combatant.dead .sprite > img { animation: none; }
 .player .sprite.reaver-attack-playing { overflow: visible; }
 .combatant .sprite > img.reaver-attack-sequence {
   width: 17rem;
@@ -635,10 +638,10 @@
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
 .combatant.enemy .sprite > img { animation-duration: 2.6s; }
-.combatant.enemy.context-selected .combatant-card {
+.combatant.context-selected .combatant-card {
   filter: drop-shadow(0 0 5px rgba(201, 162, 39, 0.72));
 }
-.combatant.enemy.context-selected .nm { color: var(--gold); }
+.combatant.context-selected .nm { color: var(--gold); }
 .combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
 .combatant:nth-child(3) .sprite > img { animation-delay: -1.7s; }
 .combatant:nth-child(4) .sprite > img { animation-delay: -2.3s; }
@@ -1053,7 +1056,11 @@
 /* Increase the reading inside the existing five fixed HUD tracks. */
 :root .combat:not(.coop) .combat-action-row .sp-k { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.1; letter-spacing: 0; }
 :root .combat:not(.coop) .combat-action-row .sp-v { font-size: max(1.5rem, calc(17px / var(--ui-zoom, 1))); line-height: 1.1; }
-:root .combat:not(.coop) .combat-action-row > :is(.end-turn, .combat-potions) { font-size: max(1.38rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.1; }
+:root .combat:not(.coop) .combat-action-row > .end-turn { font-size: max(1.38rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.1; }
+/* The round Potions face is --combat-control-size wide; at End Turn's size the
+   word overran the circle and read "Potion" with a sliver. It keeps its own
+   smaller step (declared above) and never wraps or clips. */
+:root .combat:not(.coop) .combat-action-row > .combat-potions { line-height: 1.1; letter-spacing: 0; padding-inline: 2px; white-space: nowrap; overflow: visible; }
 :root .combat:not(.coop) .combat-action-row .spent { padding-inline: 2px; font-size: max(1.1rem, calc(11px / var(--ui-zoom, 1))); line-height: 1.15; }
 :root .combat:not(.coop) .combat-action-row .spent small { font-size: inherit; }
 :root .combat:not(.coop) .combat-action-row :is(.hold-hint, .et-key) { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1; }
@@ -1136,7 +1143,7 @@
 :root .combat[data-layout='formation'] .combatant [data-tip-attached], .combat .turn-ribbon { pointer-events: auto; }
 .combat-ability-badge { cursor: pointer; }
 .combat-ability-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
-:root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) { z-index: 30 !important; }
+:root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) .combatant-leading { z-index: 30; }
 :root .combat[data-layout='formation'] > .hand-area {
   grid-row: 3; height: 100%; min-height: 0; margin: 0; padding: 0;
   display: grid; grid-template-rows: 2fr 1fr; grid-template-areas: 'hand' 'actions'; gap: 0;
@@ -1284,3 +1291,54 @@
 .status-overflow summary { cursor:pointer; list-style:none; padding:2px; color:var(--gold); }
 .status-overflow-list { position:absolute; top:100%; right:0; display:flex; flex-wrap:wrap; gap:8px; padding:10px; width:calc(170px / var(--ui-zoom,1)); background:#17130f; border:1px solid var(--gold); z-index:100; }
 .player .status-overflow-list { left:0; right:auto; }
+
+/* Overhead controls are screen-sized, independent of sprite zoom and animation. */
+:root .combat[data-layout='formation'] .combatant-leading {
+  top: var(--overhead-top, 0); bottom: auto;
+  transform: translateY(-100%);
+  display: flex; flex-direction: column; align-items: center;
+  gap: calc(4px / var(--ui-zoom, 1)); z-index: 20;
+  pointer-events: none;
+}
+.combatant-leading .overhead-control {
+  pointer-events: auto; cursor: pointer; flex: none;
+  touch-action: manipulation;
+}
+/* Match the card Information motif; hidden controls leave no empty grid cell. */
+.combatant:not(.context-selected) .combatant-leading > .combatant-info { display: none; }
+.combatant-leading > .combatant-info { box-shadow: none; }
+.combatant-leading .intent {
+  --intent-accent: #d9bc74;
+  border: calc(2px / var(--ui-zoom, 1)) solid var(--intent-accent);
+  background: linear-gradient(#34313a, #16151d);
+  box-shadow: inset 0 1px 0 #ffffff36, 0 2px 5px #0009;
+  display: flex; align-items: center; justify-content: center;
+  gap: calc(5px / var(--ui-zoom, 1));
+  min-width: calc(52px / var(--ui-zoom, 1)); min-height: calc(48px / var(--ui-zoom, 1));
+  padding: calc(4px / var(--ui-zoom, 1)) calc(9px / var(--ui-zoom, 1));
+  border-radius: calc(12px / var(--ui-zoom, 1)) calc(4px / var(--ui-zoom, 1));
+  border-color: var(--intent-accent); color: var(--intent-accent);
+  font: 800 calc(28px / var(--ui-zoom, 1))/1.05 var(--font-ui, sans-serif);
+  white-space: nowrap; letter-spacing: 0;
+}
+.combatant-leading .intent .as-glyph { font-size: inherit; }
+.combatant-leading .intent.attack { --intent-accent: #ffac94; }
+.combatant-leading .intent.block { --intent-accent: #a7defb; }
+.combatant-leading .intent.debuff { --intent-accent: #d6afff; }
+.combatant-leading .intent.staggered { font-size: calc(18px / var(--ui-zoom, 1)); }
+.combatant-leading .intent.dashed { border-style: dashed; }
+.combatant-leading .overhead-control:is(.tooltip-selected, :focus-visible) {
+  outline: calc(3px / var(--ui-zoom, 1)) solid #fff2bd;
+  outline-offset: calc(3px / var(--ui-zoom, 1));
+  box-shadow: 0 0 12px #f8d98588, inset 0 1px 0 #ffffff55;
+}
+.combatant-leading .enemy-key { position: absolute; left: calc(100% + 3px); bottom: 0; }
+@media (max-height: 700px) {
+  :root .combat[data-layout='formation'] { grid-template-rows: 10% 55% 35%; }
+}
+@media (max-height: 480px) and (min-width: 600px) {
+  /* The expanded relic tray can extend beyond its HUD row. Only its actual
+     controls should intercept a press on the battlefield below. */
+  :root:has(.combat) .hud-relics { pointer-events: none; }
+  :root:has(.combat) .hud-relics > * { pointer-events: auto; }
+}
