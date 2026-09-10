@@ -63,6 +63,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/924"
   },
   {
+    "id": "pr-929",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Download the game and move your saves",
+    "detail": "Open Download & saves from Title or Settings to choose a release, test, dev, or main HTML build, track download progress, and choose a save location in supported browsers. Export your profile and save slots together, preview imports, and retain a recovery backup before replacing local saves.",
+    "build": "0.6.0.119",
+    "pullRequest": 929,
+    "url": "https://github.com/cehinds/AshenSpire/pull/929"
+  },
+  {
     "id": "pr-919",
     "date": "2026-09-10",
     "group": "2026-09-10",
