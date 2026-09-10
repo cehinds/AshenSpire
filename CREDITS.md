@@ -141,3 +141,8 @@ reference. It depicts a central stone spire above a medieval city in muted
 umber and olive-gold haze. Exported at its native 1586 × 992 resolution as WebP,
 quality 90. Used by the startup gate and title menu. No third-party asset
 license is claimed.
+
+Three review-only alternatives generated from the approved title artwork are
+retained in `art/title-background-variations/`: River Citadel, Forgotten
+Observatory, and Ashen Bastion. They use the same native resolution and WebP
+export settings and are excluded from the runtime asset bundle.
