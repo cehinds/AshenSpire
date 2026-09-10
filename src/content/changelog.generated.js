@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-916",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "A phone-shape check stops failing for want of a few seconds",
+    "detail": "Nothing a player sees changes. One of the automated checks that opens a browser and confirms the game reaches every control on a phone-sized screen was the first to start that browser, and so paid for waking it up, while being given the least time to do it. On a slow machine it ran out of time and reported that it could not run at all — which is not the same as finding a fault, but stops work merging just as firmly. It now gets the time the later checks already had. It cannot pass anything it would have failed: a check that starts and then finds a fault still reports one.",
+    "build": "0.6.0.94",
+    "pullRequest": 916,
+    "url": "https://github.com/cehinds/AshenSpire/pull/916"
+  },
+  {
     "id": "pr-905",
     "date": "2026-09-10",
     "group": "2026-09-10",

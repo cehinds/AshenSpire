@@ -453,7 +453,23 @@ if (process.argv.includes('--selftest')) {
 }
 
 async function run(port, pieces) {
-  const launched = await launchBrowser({ prefix: 'handside-', headless: '--headless=new' });
+  // THIS PROBE PAYS THE COLD START FOR THE WHOLE JOB, so it gets more headroom
+  // than the launcher's 15s default rather than less.
+  //
+  // In .github/workflows/dev-preview.yml's browser-gates job this is the FIRST
+  // step to spawn Chrome. Nothing has faulted the binary into page cache yet,
+  // no profile directory has been written, and the runner may still be busy
+  // with checkout and node setup. Every later probe in that job launches warm —
+  // startup-gate already asks for 20000 and still runs second.
+  //
+  // Measured: the workflow's own cost note records this probe at 9s end to end,
+  // so the default left roughly six seconds of margin on the slowest single
+  // operation in it. That margin ran out twice in a row on 2026-09-10 (PR #891,
+  // `no DevTools endpoint from /usr/bin/google-chrome in 15000 ms`) while the
+  // same commit range passed on a faster runner, which is variance rather than
+  // a finding — and a launch that times out reports HARNESS COULD NOT RUN, so
+  // it blocks the merge without measuring anything.
+  const launched = await launchBrowser({ prefix: 'handside-', headless: '--headless=new', timeoutMs: 30000 });
   const cdp = connect(launched.wsUrl);
   try {
     await cdp.ready;
