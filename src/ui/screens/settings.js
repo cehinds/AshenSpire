@@ -87,9 +87,12 @@ const ROWS = [
   // Combat. Settings does not duplicate them with a second stateful surface.
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
-  { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'normal',
-    choices: ['slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',
-    note: 'How deliberately actions play out — one actor at a time, or instant.' },
+  { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'auto',
+    choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',
+    note: 'Auto uses Fast with Lite rendering and Normal with Full. Choose a pace to override it.' },
+  { cat: 'Display', key: 'performanceMode', type: 'choice', def: 'auto',
+    choices: ['auto', 'full', 'lite'], label: 'Rendering quality',
+    note: 'Auto uses lighter effects on touch devices. Lite keeps targeting and hit feedback, reduces decorative effects, and uses fast combat pacing when pacing is Auto.' },
   // `choices` and `def` are DERIVED. The four numbers here used to be typed, and
   // they were a second copy of the zoom ladder that had already drifted: the
   // ladder has six steps and this row offered four of them, so 175% and 200%

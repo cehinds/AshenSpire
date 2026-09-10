@@ -10,12 +10,12 @@
 //
 // Usage: node tools/bundle.mjs
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync, readdirSync, statSync, unlinkSync } from 'node:fs';
 import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
-import { MIME } from './assetmime.mjs';
+import { MIME, runtimeAsset } from './assetmime.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE } from './buildversion.mjs';
-import { dirname, resolve, relative, posix, extname } from 'node:path';
+import { dirname, resolve, relative, posix, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -314,9 +314,18 @@ let mapBytes = 0;
 let copiedAssets = 0;
 let copiedDetail = 0;
 const skipped = []; // files under assets/ with no MIME mapping — reported, not silent
+let authoringBytes = 0;
 if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
   const pairs = [];
   for (const abs of walkAssets(ASSET_DIR)) {
+    const assetPath = relative(ASSET_DIR, abs);
+    if (!runtimeAsset(assetPath)) {
+      authoringBytes += statSync(abs).size;
+      // A rebuild also retires this file from a previous external-art output.
+      const oldCopy = resolve(EXTERNAL_ASSET_DIR, assetPath);
+      if (EXTERNAL_ART && oldCopy.startsWith(EXTERNAL_ASSET_DIR + sep) && existsSync(oldCopy)) unlinkSync(oldCopy);
+      continue;
+    }
     const mime = MIME[extname(abs).toLowerCase()];
     if (!mime) {
       // A LOUD COUNTER beside a quiet fallback. Skipping unknown types is the
@@ -970,6 +979,7 @@ console.log('  entry            : ' + entryId);
 console.log('  build version    : ' + buildDigest + ' (derived from this source; node tools/buildversion.mjs --which ' + buildDigest + ')');
 console.log('  modules bundled  : ' + order.length);
 console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', ') + ')');
+console.log('  authoring omitted: ' + Math.round(authoringBytes / 1024) + ' KiB (equipment component experiments)');
 console.log('  shape            : ' + (EXTERNAL_ART ? 'external art (needs a server; assets/ beside the HTML)'
   : 'consolidated single file (runs from file://)'));
 if (EXTERNAL_ART) {

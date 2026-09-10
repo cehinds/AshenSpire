@@ -8,6 +8,8 @@ import { READINESS_POSE_ART } from '../content/readinessPoseArt.js';
 import { assetUrl } from './assetmap.js';
 import { reducedMotionRequested } from './motion.js';
 import { hintImage } from './imageHints.js';
+import { preloadPoses } from './services/posePreloads.js';
+import { liteRendering } from './performance.js';
 
 export function paintedPortraitUrl(classId, armourId = 'default') {
   const art = paintedOutfit(classId, armourId);
@@ -85,7 +87,7 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
   down.style.cssText = `position:absolute;left:50%;bottom:0;height:${100 * (downArt?.scale || 1)}%;width:auto;max-width:none;transform:translate(-50%,5.208333%);visibility:hidden;pointer-events:none;`;
   if (downArt) down.src = assetUrl(downArt.file);
   el.appendChild(down);
-  const warmed = Object.values(frames).map(frame => { const image = new Image(); image.src = assetUrl(frame.file); return image; });
+  preloadPoses(`painted:${classId}:${armourId}`, Object.values(frames).map(frame => assetUrl(frame.file)));
   const previous = img.cloneNode();
   previous.alt = ''; previous.setAttribute('aria-hidden', 'true');
   previous.classList.add('pose-previous'); previous.style.opacity = '0'; previous.style.display = 'none';
@@ -189,11 +191,11 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
     if (!reactionTimer) next();
   };
   settle();
-  return Object.freeze({ el, poses: ['defeated', ...Object.keys(frames), ...Object.keys(POWER_FRAMES), ...Object.keys(COMBAT_POSE_STATES)], get pose() { return current; }, get rest() { return resting; }, get presentation() { return { rest: resting, pose: current, transition, auraState, auraOpacity: Number.parseFloat(getComputedStyle(aura).opacity) || 0 }; }, setPose, setRestPose, settle, react, warmed, dispose() { clear(); clearTimeout(reactionTimer); reactionQueue = []; [aura, img, previous].forEach(el => el.getAnimations().forEach(a => a.cancel())); },
+  return Object.freeze({ el, poses: ['defeated', ...Object.keys(frames), ...Object.keys(POWER_FRAMES), ...Object.keys(COMBAT_POSE_STATES)], get pose() { return current; }, get rest() { return resting; }, get presentation() { return { rest: resting, pose: current, transition, auraState, auraOpacity: Number.parseFloat(getComputedStyle(aura).opacity) || 0 }; }, setPose, setRestPose, settle, react, dispose() { clear(); clearTimeout(reactionTimer); reactionQueue = []; [aura, img, previous].forEach(el => el.getAnimations().forEach(a => a.cancel())); },
     play(pose, ms = 260, aura = []) {
       if (pose === 'defeated') { setRestPose('defeated'); return true; }
       if (resting === 'defeated') return false;
-      if (reducedMotionRequested()) { settle(); return false; }
+      if (reducedMotionRequested() || liteRendering()) { settle(); return false; }
       const sequence = sequenceFor(/^attack[1-4]$/.test(pose) ? 'attack' : pose);
       if (!sequence.length) return false;
       clear();

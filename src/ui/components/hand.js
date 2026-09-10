@@ -62,7 +62,7 @@ import { keycap, pill } from '../kit/index.js';
 // asserting a property nobody writes.
 export const FAN_LIFT_PROP = '--fan-lift';
 
-export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false, inspectHold = true }) {
+export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false, inspectHold = true, reuseCards = false }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
   // value here would silently turn the gesture off.
@@ -78,7 +78,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   let handEls = []; // the rendered cards, in hand order (filled by render)
   let fanMeasurement = null;
   let handFan = []; // each card's shipped fan transform, same index
-  let releaseCardInputs = [];
+  const renderedCards = new Map();
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
 
   function applyHandLayout() {
@@ -171,11 +171,14 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   }
 
   function render({ cards = [], emptyHtml = null }) {
-    releaseCardInputs.splice(0).forEach(release => release());
+    const wanted = new Set(cards.map(entry => entry.inst.instanceId));
+    for (const [id, record] of renderedCards) if (!reuseCards || emptyHtml != null || !wanted.has(id)) {
+      record.release?.(); record.el.remove(); renderedCards.delete(id);
+    }
     const drawn = new Set(cards.filter(entry => !previousCards.has(entry.inst.instanceId)).map(entry => entry.inst.instanceId));
     previousCards = new Set(cards.map(entry => entry.inst.instanceId));
     fanMeasurement = null;
-    handEl.innerHTML = '';
+    if (!renderedCards.size) handEl.replaceChildren();
     handEls = [];
     handFan = [];
     // An empty hand fans nothing, so it reserves nothing — stated rather than
@@ -189,6 +192,17 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // 0px and the defect is visible, not plausible (Law 0 clause 5).
     handEl.style.setProperty(FAN_LIFT_PROP, `${((n - 1) / 2) * 6}px`);
     cards.forEach((entry, i) => {
+      const id = entry.inst.instanceId;
+      // Solo action callbacks resolve current combat state by instance ID. A
+      // preview/affordability change invalidates both the face and its inputs.
+      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, i, n]);
+      let record = renderedCards.get(id);
+      if (record && record.signature !== signature) { record.release?.(); record.el.remove(); renderedCards.delete(id); record = null; }
+      if (record) {
+        record.el.classList.toggle('selected', !!entry.selected);
+        if (handEl.children[i] !== record.el) handEl.insertBefore(record.el, handEl.children[i] || null);
+        return;
+      }
       const el = renderCard(registries, entry.inst,
         { preview: entry.preview, affordable: entry.affordable, inspectionAction: entry.inspectionAction, actionOwnsTouch: true });
       const spread = Math.min(6, n) * 1.2;
@@ -254,8 +268,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // it — same moment, opposite verb — and tooltip.js owns what ends it.
       if (inspectHold && !entry.inspectionAction) armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
       const releaseInput = wireCard?.(el, entry, i);
-      if (typeof releaseInput === 'function') releaseCardInputs.push(releaseInput);
-      handEl.appendChild(el);
+      renderedCards.set(id, { el, signature, release: typeof releaseInput === 'function' ? releaseInput : null });
+      handEl.insertBefore(el, handEl.children[i] || null);
     });
     // The overlap arm: record what this render made, then reconcile. Inert —
     // including the observer re-point — unless the layout word is 'overlap';
@@ -271,7 +285,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   }
 
   function teardown() {
-    releaseCardInputs.splice(0).forEach(release => release());
+    for (const record of renderedCards.values()) record.release?.();
+    renderedCards.clear();
     cancelAnimationFrame(layoutFrame);
     layoutFrame = 0;
     if (ro) ro.disconnect();
