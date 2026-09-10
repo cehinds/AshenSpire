@@ -495,7 +495,26 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
 /* The name fills its line: an indent would overflow and disable centering.
    Shift half the trailing tracking instead, keeping the visible text centered. */
-.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; transform: translateX(calc(var(--track) / 2)); color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+/* NO translateX COMPENSATION ON THE TRACK, AND THE MEASUREMENT IS WHY.
+   A `transform: translateX(calc(var(--track) / 2))` sat on this rule to offset
+   the trailing space `letter-spacing` adds after the final glyph. Chromium
+   already discounts that trailing advance when it centres a text line, so the
+   compensation was a SECOND correction for a problem the browser had solved:
+   it pushed the wordmark right, and startup-gate's A11.RESPONSIVE-SHAPE —
+   which measures a Range over the text and allows 1px — went red at seven of
+   its twelve shapes.
+
+   Measured at 390, 1200 and 2550 wide, as the INK's offset from the viewport
+   centre rather than the element box's, because the box can be centred while
+   the glyphs are not:
+
+     with the transform     1.73px, 1.92px, 3.26px
+     without it             0px,    0px,    0px
+
+   Absorbing the trailing space instead (margin-right: calc(-1 * var(--track)))
+   was tried and measured too — 1.72px, 1.91px, 3.25px, no better — which is
+   the proof that there was no trailing-space problem here to absorb. */
+.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
 .as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
 .as-titlemenu li + li { border-top: 1px solid var(--rule); }
