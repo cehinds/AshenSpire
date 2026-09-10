@@ -8,5 +8,8 @@ The formation reserves space for the complete overhead stack and the turn banner
 
 Validation: `tools/combatant-overhead-qa.mjs` exercises mouse, touch, keyboard/controller focus, armed-card inspection, unobstructed control centers, grounded geometry, and co-op at 1440x900, 390x844, 320x640, and 844x390. Additional browser checks cover 1.75x elite, 2x boss, 3x boss, reduced motion, and the rebuilt standalone. Fixtures exercise real combat rendering; they are not a complete game run.
 
+The selection follow-up also compares the shared card/combatant Information styling, checks that only the selected combatant exposes Information, and measures unchanged sprite height and ground after selection and rerender. Touch probes use an exposed point on the visible sprite; transparent padding can overlap an intent badge.
+
+![Desktop combat](combatant-overhead/desktop.png)
 ![Phone combat](combatant-overhead/phone.png)
 ![Large boss](combatant-overhead/large-boss.png)

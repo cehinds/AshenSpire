@@ -616,7 +616,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     box.setAttribute('role', 'button');
     box.setAttribute('aria-label', `Select ${subject.name}`);
     box.setAttribute('aria-pressed', String(selectedCombatantId === box.dataset.eid));
-    box.addEventListener('focus', () => selectCombatant(box.dataset.eid));
+    box.addEventListener('focus', () => { if (box.matches(':focus-visible')) selectCombatant(box.dataset.eid); });
     box.addEventListener('gpfocus', event => { if (event.target === box) selectCombatant(box.dataset.eid); });
     box.addEventListener('keydown', event => {
       if (event.target !== box || !['Enter', ' '].includes(event.key)) return;

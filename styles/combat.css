@@ -1332,6 +1332,6 @@
 @media (max-height: 480px) and (min-width: 600px) {
   /* The expanded relic tray can extend beyond its HUD row. Only its actual
      controls should intercept a press on the battlefield below. */
-  .combat .hud-relics { pointer-events: none; }
-  .combat .hud-relics > * { pointer-events: auto; }
+  :root:has(.combat) .hud-relics { pointer-events: none; }
+  :root:has(.combat) .hud-relics > * { pointer-events: auto; }
 }

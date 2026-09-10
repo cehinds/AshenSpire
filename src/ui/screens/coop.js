@@ -115,7 +115,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (!box.hasAttribute('aria-label')) box.setAttribute('aria-label', `Select ${name}`);
     box.classList.toggle('context-selected', selectedCombatantId === box.dataset.eid);
     box.setAttribute('aria-pressed', String(selectedCombatantId === box.dataset.eid));
-    box.addEventListener('focus', () => selectCombatant(box.dataset.eid));
+    box.addEventListener('focus', () => { if (box.matches(':focus-visible')) selectCombatant(box.dataset.eid); });
     box.addEventListener('gpfocus', event => { if (event.target === box) selectCombatant(box.dataset.eid); });
     box.addEventListener('keydown', event => {
       if (event.target !== box || !['Enter', ' '].includes(event.key)) return;

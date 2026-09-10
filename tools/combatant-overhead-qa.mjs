@@ -11,6 +11,25 @@ const errors = [];
 try {
   for (const [width, height] of [[1440,900],[390,844],[320,640],[844,390]].filter(([w]) => !process.env.QA_WIDTH || w === Number(process.env.QA_WIDTH))) {
     const page = await browser.newPage({ viewport: { width, height }, hasTouch: true });
+    const tapCombatant = async frame => {
+      // Transparent sprite padding can extend behind its own intent badge.
+      // Find an exposed body point, avoiding overlapping rear-row controls.
+      await page.locator('.combatant-door').waitFor({ state: 'hidden' });
+      const point = await frame.evaluate(e => {
+        const sprite=e.querySelector('.sprite'), r=sprite.getBoundingClientRect();
+        for (const height of [0.2,0.4,0.6,0.8]) for (const width of [0.5,0.3,0.7]) {
+          const point={ x:r.x+r.width*width, y:r.bottom-Number(e.dataset.spriteVisibleHeight)*height };
+          if (document.elementFromPoint(point.x,point.y)?.closest('.sprite') === sprite) return point;
+        }
+        return null;
+      });
+      assert(point, `combatant has an exposed body target: ${JSON.stringify(await frame.evaluate(e=> {
+        const r=e.querySelector('.sprite').getBoundingClientRect();
+        const p={x:r.x+r.width/2,y:r.bottom-Number(e.dataset.spriteVisibleHeight)*0.2};
+        return {id:e.dataset.eid,rect:r.toJSON(),height:e.dataset.spriteVisibleHeight,hit:document.elementFromPoint(p.x,p.y)?.outerHTML.slice(0,500)};
+      }))}`);
+      await page.touchscreen.tap(point.x, point.y);
+    };
     page.setDefaultTimeout(30000); page.setDefaultNavigationTimeout(120000);
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${base}?shot=combat`, { waitUntil: 'domcontentloaded' });
@@ -24,7 +43,7 @@ try {
     })));
     const initialGeometry = await geometry();
     const enemy = page.locator('.combatant.enemy').first();
-    await enemy.locator('.sprite').tap();
+    await tapCombatant(enemy);
     assert.equal(await page.locator('.combatant-info:visible').count(), 1, 'only selected combatant shows Information');
     await page.evaluate(() => window.__renderCombatForShot());
     await page.waitForTimeout(400);
@@ -49,7 +68,7 @@ try {
     await info.tap();
     await page.locator('.combatant-door').waitFor();
     await page.keyboard.press('Escape');
-    await enemy.locator('.sprite').tap();
+    await tapCombatant(enemy);
     await page.mouse.move(0, height - 1);
     await page.evaluate(async () => (await import('./src/ui/components/tooltip.js')).hideTooltip());
     await intent.hover();
@@ -71,9 +90,9 @@ try {
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('.combatant-info:visible').count(), 0, 'Escape clears reading selection');
     await page.mouse.move(0, height - 1);
-    await enemy.locator('.sprite').tap();
+    await tapCombatant(enemy);
     await page.screenshot({ path: resolve(out, `combat-${width}.png`) });
-    await page.locator('.combatant.player').first().locator('.sprite').tap();
+    await tapCombatant(page.locator('.combatant.player').first());
     assert.equal(await page.locator('.combatant-info:visible').count(), 1);
     assert(await page.locator('.player .combatant-info').isVisible(), 'player selection uses the same Information control');
     assert.equal(await page.locator('.enemy .combatant-info:visible').count(), 0);
@@ -93,7 +112,11 @@ try {
     assert.equal(await page.locator('.combatant-info:visible').count(), 0, 'card selection dismisses combatant Information');
     const motif = el => {
       const s=getComputedStyle(el);
-      return [s.width,s.height,s.borderTopColor,s.borderTopWidth,s.backgroundColor,s.color,s.fontFamily,s.fontStyle,s.fontWeight,s.fontSize];
+      // CSS zoom can round computed lengths by a fraction of a pixel.
+      const px = value => Math.round(parseFloat(value) * 10) / 10;
+      let zoom = 1;
+      for (let node=el; node; node=node.parentElement) zoom *= Number(getComputedStyle(node).zoom) || 1;
+      return [px(s.width),px(s.height),s.borderTopColor,px(parseFloat(s.borderTopWidth)*zoom),s.backgroundColor,s.color,s.fontFamily,s.fontStyle,s.fontWeight,s.fontSize];
     };
     assert.deepEqual(await info.evaluate(motif), await card.locator('.card-info-button').evaluate(motif), 'card and combatant Information share the same motif');
     await card.locator('.card-info-button').click();
@@ -101,6 +124,7 @@ try {
     assert(await page.locator('.enemy.targetable').count(), 'card is armed for a target');
     const before = await page.evaluate(() => JSON.stringify(window.__combat.piles));
     await enemy.focus();
+    await enemy.dispatchEvent('gpfocus');
     await info.click();
     await page.locator('.combatant-door').waitFor();
     assert.equal(await page.evaluate(() => JSON.stringify(window.__combat.piles)), before);
@@ -126,13 +150,14 @@ try {
     await page.waitForTimeout(1200);
     assert.equal(await page.locator('.combatant-info:visible').count(), 0, 'default co-op attack target is not a reading selection');
     for (const role of ['player','enemy']) {
-      await page.locator(`.combatant.${role}`).first().locator('.sprite').tap();
-      assert.equal(await page.locator('.combatant-info:visible').count(), 1, 'co-op Information is selected-only');
+      await tapCombatant(page.locator(`.combatant.${role}`).first());
+      assert.equal(await page.locator('.combatant-info:visible').count(), 1, `co-op ${role} Information is selected-only: ${JSON.stringify(await page.locator('.combatant').evaluateAll(es => es.map(e=>({id:e.dataset.eid,cls:e.className,selected:e.getAttribute('aria-pressed')}))))}`);
+      assert(await page.locator(`.${role} .combatant-info`).first().isVisible(), 'the tapped combatant owns Information');
       await page.locator(`.${role} .combatant-info`).first().click();
       await page.locator('.combatant-door').waitFor();
       await page.keyboard.press('Escape');
     }
-    await page.locator('.combatant.enemy').first().locator('.sprite').tap();
+    await tapCombatant(page.locator('.combatant.enemy').first());
     await page.screenshot({ path: resolve(out, `coop-${width}.png`) });
     console.log('PASS co-op inspection', width, height);
     await page.close();
