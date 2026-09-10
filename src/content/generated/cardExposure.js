@@ -406,5 +406,10 @@ export const cardExposure = [
     "cardId": "greatswordSunderingHew",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "spikedReprisal",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
   }
 ];
