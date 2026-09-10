@@ -1,3 +1,4 @@
+import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -876,8 +877,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     relics.innerHTML = '';
     for (const rid of p.relicIds) {
       const def = registries.relics.get(rid);
-      const el = slot({ art: def.icon || '◆', small: true, static: true, tag: 'div', label: def.name, className: 'relic', attrs: { dataset: { relicId: rid } } });
+      const el = slot({ art: def.icon || '◆', small: true, tag: 'button', label: def.name, className: 'relic', attrs: { dataset: { relicId: rid } } });
       markUiComponent(el, UI.relicSlot);
+      el.addEventListener('click', () => openCollectibleInspection(registries, def, 'Relic', el));
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
       relics.appendChild(el);
     }

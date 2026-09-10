@@ -1685,7 +1685,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   gap: 1.2rem; padding: 2.4rem; min-height: 100%; overflow: hidden; cursor: pointer;
   background:
     linear-gradient(180deg, rgba(11, 9, 6, 0.34), rgba(9, 7, 5, 0.96)),
-    url('../assets/bg/bg_act1.webp') center / cover;
+    url('../assets/bg/title-city-tower.webp') center / cover;
   transition: opacity 180ms ease-out;
 }
 .startup-gate::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 20%, transparent 0, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.66) 100%); }
@@ -3037,6 +3037,29 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-target { scroll-margin-top: 64px; }
 @media (max-width: 720px) {
   .mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 42%) minmax(0, 1fr); }
+}
+
+/* Inspection shows the complete face; compact pickers retain their text budget. */
+.card-inspection-art > .card { min-height:308px; }
+.card-inspection-modal .card-inspection-art > .card { height:auto; aspect-ratio:auto; }
+.card-inspection-art > .card .cd-body { flex:0 0 auto; height:auto; overflow:visible; }
+.card-inspection-art > .card .ctext { display:block; flex:0 0 auto; overflow:visible; -webkit-line-clamp:unset; }
+@media (max-width:600px) {
+  .card-inspection-modal .card-inspection-layout { grid-template-columns:minmax(0,1fr); }
+  .card-inspection-modal .card-inspection-art { width:100%; max-width:220px; }
+}
+/* Green means the primary action is ready; native/ARIA disabled states remain muted. */
+button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
+.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+  background:#255c39; border-color:#6fb580; color:#f0fff3;
+}
+button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover,
+.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover {
+  background:#306e46;
+}
+button.primary:disabled, button.primary[aria-disabled='true'],
+.as-btn.primary:disabled, .as-btn.primary[aria-disabled='true'] {
+  background:var(--panel); border-color:var(--line); color:var(--muted);
 }
 /* Modal height is independent of its standard width. Keep chrome pinned and
    let the body scroll at its natural text/art size. */
