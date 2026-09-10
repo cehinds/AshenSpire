@@ -1017,7 +1017,7 @@
   --card-art-h: calc(var(--card-w) * 0.30);
   --card-name-h: calc(var(--card-w) * 0.18);
 }
-:root .combat:not(.coop) .hand .card .art { overflow: hidden; }
+:root .combat:not(.coop) .hand .card .art { overflow: hidden; contain: layout paint; }
 :root .combat:not(.coop) .hand .card .art img { width: 100%; height: 100%; object-fit: contain; }
 
 /* Scale the complete playing face, including costs and text, in one step. */
