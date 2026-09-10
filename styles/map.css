@@ -172,14 +172,19 @@
   stroke: var(--gold);
   stroke-width: 3;
   stroke-opacity: 0.9;
+  filter: drop-shadow(0 0 5px var(--gold));
   animation: shrineLanePulse 2.2s ease-in-out infinite alternate;
 }
 .map-node.shrine-lane > circle:not(.node-halo) {
+  filter: drop-shadow(0 0 5px var(--gold));
   animation: shrineLanePulse 2.2s ease-in-out infinite alternate;
 }
+/* The glow is painted once at its mid radius and the PULSE is opacity: an
+   animated drop-shadow re-rasterised every lane and node on the board each
+   frame, for the life of the map screen. */
 @keyframes shrineLanePulse {
-  from { filter: drop-shadow(0 0 2px var(--gold)); }
-  to { filter: drop-shadow(0 0 7px var(--gold)); }
+  from { opacity: 0.72; }
+  to { opacity: 1; }
 }
 /* Same contract as every other pulse on this board: the cue survives, the
    motion does not. A player on Reduced motion still sees the lane. */
@@ -246,7 +251,7 @@
 .atlas-map-column { min-width:0; }
 .atlas-map-tools { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; font-size:13px; }
 .atlas-map-tools>div { display:flex; gap:5px; }
-.atlas-map-tools .as-btn { min-width:40px; min-height:40px; }
+.atlas-map-tools .as-btn { min-width:var(--tap-floor); min-height:var(--tap-floor); }
 .atlas-scrollport { width:100%; max-height:calc(100vh - 205px); min-height:320px; overflow:auto; border:1px solid #8a744d; background:#9d8051; box-shadow:0 10px 45px #0006; }
 .atlas-world { position:relative; width:calc(100% * var(--atlas-zoom)); min-width:600px; aspect-ratio:1; isolation:isolate; }
 .atlas-terrain { display:block; position:absolute; inset:0; width:100%; height:100%; }
@@ -268,7 +273,7 @@
 .atlas-journal h2 { font:26px Georgia,serif; margin:12px 0 5px; }
 .atlas-journal h3 { font:18px Georgia,serif; margin:18px 0; color:#d6bc84; }
 .atlas-journal p { line-height:1.6; font-size:13px; }
-.atlas-journal .as-btn { white-space:normal; text-align:left; width:100%; min-height:44px; padding:9px 12px; line-height:1.4; }
+.atlas-journal .as-btn { white-space:normal; text-align:left; width:100%; min-height:var(--tap-floor); padding:9px 12px; line-height:1.4; }
 .atlas-journal-rule { height:1px; background:linear-gradient(90deg,#695437,transparent); margin:25px 0; }
 .atlas-objective { display:flex; flex-direction:column; gap:5px; padding:12px 0; font-size:13px; }
 .atlas-objective>span { font-size:10px; text-transform:uppercase; letter-spacing:.13em; color:#9b8664; }
@@ -388,7 +393,7 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
 
 /* All run modes use the traditional map's vector discs and close-up scale. */
 .atlas-scrollport { background:#c4af85; }
-.atlas-node { width:calc(var(--atlas-node-size) * var(--atlas-face-scale,1)); height:calc(var(--atlas-node-size) * var(--atlas-face-scale,1)); min-width:44px; min-height:44px; }
+.atlas-node { width:calc(var(--atlas-node-size) * var(--atlas-face-scale,1)); height:calc(var(--atlas-node-size) * var(--atlas-face-scale,1)); min-width:var(--tap-floor); min-height:var(--tap-floor); }
 .atlas-node-face { display:block; width:100%; height:100%; overflow:visible; pointer-events:none; }
 .atlas-node-label { top:calc(100% + 8px); }
 .atlas-world { min-width:0; }

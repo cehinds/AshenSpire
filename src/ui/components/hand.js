@@ -55,6 +55,10 @@ import { stickTooltip } from './tooltip.js';
 import { applyHandExemption } from '../handAxis.js';
 import { keycap, pill } from '../kit/index.js';
 
+// Whether this browser lays out CSS `zoom` at all (hand.js reads card widths
+// against it). Asked once; the answer does not change while the page lives.
+const ZOOM_SUPPORTED = typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('zoom', '1');
+
 // The custom property this component publishes so the stylesheets can reserve
 // room for the fan's upward lift without knowing how it is computed. Named here
 // because the value has exactly one author; tools/hintstrip.mjs reads the NAME
@@ -90,11 +94,18 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // by shrinking a card's type below its readable minimum.
       const bandHeight = handEl.getBoundingClientRect().height;
       const cardWidth = Math.min(162, Math.max(72, (bandHeight - 28) * 5 / 7));
-      handEl.style.setProperty('--hand-card-zoom', String(cardWidth / (178 * zoom)));
+      // Every read comes before the one write, so the pass costs one layout
+      // rather than one per read.
       const cs = getComputedStyle(handEl);
       const available = handEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      const cardZoom = parseFloat(getComputedStyle(cards[0]).zoom) || 1;
+      // `.hand .card { zoom: var(--hand-card-zoom) }` (combat.css) is the card's
+      // whole zoom, and offsetWidth reports the card's own unzoomed box, so the
+      // rendered width is known before the property is written. A browser
+      // without CSS zoom renders the box unscaled, as it always did.
+      const nextCardZoom = cardWidth / (178 * zoom);
+      const cardZoom = ZOOM_SUPPORTED ? nextCardZoom : 1;
       const width = cards[0].offsetWidth * cardZoom;
+      handEl.style.setProperty('--hand-card-zoom', String(nextCardZoom));
       const measurement = [available, width, zoom, cards.length].join(':');
       if (measurement === fanMeasurement) return;
       fanMeasurement = measurement;
