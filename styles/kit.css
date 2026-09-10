@@ -495,26 +495,40 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
 /* The name fills its line: an indent would overflow and disable centering.
    Shift half the trailing tracking instead, keeping the visible text centered. */
-/* NO translateX COMPENSATION ON THE TRACK, AND THE MEASUREMENT IS WHY.
-   A `transform: translateX(calc(var(--track) / 2))` sat on this rule to offset
-   the trailing space `letter-spacing` adds after the final glyph. Chromium
-   already discounts that trailing advance when it centres a text line, so the
-   compensation was a SECOND correction for a problem the browser had solved:
-   it pushed the wordmark right, and startup-gate's A11.RESPONSIVE-SHAPE —
-   which measures a Range over the text and allows 1px — went red at seven of
-   its twelve shapes.
+/* THE translateX COMPENSATION IS CORRECT. IT WAS REMOVED ONCE, IN ERROR, AND
+   THIS PARAGRAPH IS THE RECORD SO IT IS NOT REMOVED AGAIN.
 
-   Measured at 390, 1200 and 2550 wide, as the INK's offset from the viewport
-   centre rather than the element box's, because the box can be centred while
-   the glyphs are not:
+   `letter-spacing` adds its track AFTER the final glyph too, so a centred line
+   has its INK sitting half a track LEFT of the box centre. The translateX puts
+   it back. #910 deleted it, on a measurement that took a Range over the text
+   as if that were the ink — but a Range INCLUDES the trailing advance, so it
+   reported the uncompensated layout as perfectly centred. The number was real;
+   it was measuring the wrong box, and it read 0px for a wordmark that was
+   visibly off.
 
-     with the transform     1.73px, 1.92px, 3.26px
-     without it             0px,    0px,    0px
+   Re-measured from PAINTED PIXELS — a screenshot scanned for the leftmost and
+   rightmost lit column of the wordmark, which has no box model to be wrong
+   about — as the ink's offset from the viewport centre, at three widths:
 
-   Absorbing the trailing space instead (margin-right: calc(-1 * var(--track)))
-   was tried and measured too — 1.72px, 1.91px, 3.25px, no better — which is
-   the proof that there was no trailing-space problem here to absorb. */
-.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+                          390      1200     2550
+     with the transform   -1.5px   -1.5px   -2.5px
+     without it           -3.0px   -3.5px   -5.5px
+
+   The compensation roughly halves the error at every width. It is not a second
+   correction for a solved problem; the browser does NOT discount the trailing
+   advance when centring, and #910's claim that it does was wrong.
+
+   startup-gate now subtracts the trailing advance before judging centring
+   (A11.RESPONSIVE-SHAPE, and A11.CENTERING-DETECTOR is its self-test), so the
+   gate and this rule finally agree. Before that fix the gate measured the raw
+   advance box, which made the MISSING compensation look green — two errors
+   cancelling — and that false green is what invited #910.
+
+   A residual remains at 2550x1305 Text XL: the gate reads +1.605px against a
+   1px tolerance. It is not tracking and not rounding — the advance box itself
+   sits right of centre at that one shape before any transform applies. Left
+   red deliberately rather than papered over by widening the tolerance. */
+.as-titlemenu .tm-name { --track: 0.08em; margin: 0; transform: translateX(calc(var(--track) / 2)); font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
 .as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
 .as-titlemenu li + li { border-top: 1px solid var(--rule); }
