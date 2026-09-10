@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-951",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combat renders again on the development line",
+    "detail": "A merge on the development branch left the fight screen reading a setting that had been renamed, so entering combat produced a blank battlefield and an error banner. The two readings now name the live setting. This build also withdraws a second copy of the same frame-reuse work that pull request 939 had already landed, so the board keeps one way of redrawing a hit: the readouts change, the fighters stay put.",
+    "build": "0.6.0.134",
+    "pullRequest": 951,
+    "url": "https://github.com/cehinds/AshenSpire/pull/951"
+  },
+  {
     "id": "pr-949",
     "date": "2026-09-10",
     "group": "2026-09-10",
