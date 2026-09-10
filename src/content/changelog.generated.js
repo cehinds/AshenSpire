@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-10",
     "summary": "Every armament brings a complete combat kit",
     "detail": "Weapons, shields, and staves each lend a Strike, Guard, and signature Art. Shields can attack beside a weapon; Guardian creates an Exhausting Bulwark skill, Bastion trades offense for Block, and Spiked Reprisal combines defence with Bleed. Equipment previews show the actual contributions, and solo/co-op fights retain their ownership and upgrade data.",
-    "build": "0.6.0.110",
+    "build": "0.6.0.113",
     "pullRequest": 904,
     "url": "https://github.com/cehinds/AshenSpire/pull/904"
+  },
+  {
+    "id": "pr-924",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Relics open as cards before you take them",
+    "detail": "Relic rewards show their card and full effects with Back and Take controls. Owned relics also open a card inspection from the map and combat HUD. Inspected playing cards show complete effect text, with card and details stacked on phones. Valid confirmation buttons turn green; reward Continue turns green after every reward is collected or explicitly skipped.",
+    "build": "0.6.0.112",
+    "pullRequest": 924,
+    "url": "https://github.com/cehinds/AshenSpire/pull/924"
   },
   {
     "id": "pr-919",

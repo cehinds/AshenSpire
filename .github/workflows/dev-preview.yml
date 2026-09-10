@@ -30,6 +30,9 @@ jobs:
         with:
           node-version: '22.14.0'
 
+      - name: Complete armament kits and temporary Guardian skill
+        run: node tests/armament-combat-kits.test.mjs
+
       - name: Combat formations and painted ground
         run: node --test tests/combat-formation.test.mjs tests/environment-art.test.mjs tests/map-detail.test.mjs tests/map-presentation.test.mjs tests/local-map.test.mjs
 

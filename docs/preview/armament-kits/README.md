@@ -16,9 +16,10 @@ item pairs, starter budgeting with no filler, permanent removals, saves,
 equipment swaps, smithing, two-handed conflicts, and solo/co-op ownership.
 The browser probe checks all 25 contribution panels, desktop/tablet/phone
 containment, and playing Guardian then Bulwark as a Rogue through real input.
-The separate character-creation probe passed 870 checks on the same gameplay
-build. Screenshots capture the combat changes before the final changelog-only
-rebuild; the gameplay source is unchanged.
+The separate character-creation probe passed 870 checks. The full Node suite
+passed 138 tests, with no failures; after integrating the latest dev changes,
+the 106 core engine tests, 704 kit cases, and 70 migration regressions also passed.
+The kit screenshots and 38 browser checks were refreshed on build 0.6.0.113.
 
 - [Desktop kits](desktop-sword-and-shield.png)
 - [Tablet kits](tablet-sword-and-shield.png)
