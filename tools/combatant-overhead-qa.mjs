@@ -56,7 +56,12 @@ try {
     await page.screenshot({ path: resolve(out, `combat-${width}.png`) });
     // Info must remain a reading action while a combat card is armed.
     await page.evaluate(() => window.__renderCombatForShot());
-    const card = page.locator('.hand .card').first();
+    const attackId = await page.evaluate(async () => {
+      const { previewCard } = await import('./src/engine/combat.js');
+      return window.__combat.piles.hand.find(c => previewCard(window.__combat, c.instanceId).needsTarget)?.instanceId;
+    });
+    assert(attackId, 'fixture provides an enemy-targeted card');
+    const card = page.locator(`.hand .card[data-instance-id="${attackId}"]`);
     await card.focus();
     await card.locator('.card-info-button').click();
     await page.getByRole('button', { name: 'Play card', exact: true }).click();

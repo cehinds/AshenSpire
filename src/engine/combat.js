@@ -176,6 +176,8 @@ export function createCombat({
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
+    ...(c.kitRole ? { kitRole: c.kitRole } : {}),
+    ...(c.grantedBy ? { grantedBy: c.grantedBy, grantSource: c.grantSource } : {}),
     ...(c.equipmentAttackSlotId ? { equipmentAttackSlotId: c.equipmentAttackSlotId } : {}),
     ...(c.equipmentPlanFingerprint ? { equipmentPlanFingerprint: c.equipmentPlanFingerprint } : {}),
     ...(c.sourceHand ? { sourceHand: c.sourceHand } : {}),

@@ -14,6 +14,7 @@ import { heraldCards } from './cards/herald.js';
 import { rogueCards } from './cards/rogue.js';
 import { colorlessCards } from './cards/colorless.js';
 import { coopCards } from './cards/coop.js';
+import { armamentCards } from './cards/armaments.js';
 import { relics } from './relics.js';
 import { flasks } from './flasks.js';
 import { act1Enemies } from './enemies/act1.js';
@@ -41,7 +42,7 @@ import { retiredAttributeNames } from './retiredNames.js';
 import { derivedStatRules } from './derivedStats.js';
 import { characterCreation } from './generated/characterCreation.js';
 
-const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...rogueCards, ...colorlessCards, ...coopCards];
+const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...rogueCards, ...colorlessCards, ...coopCards, ...armamentCards];
 const exposureByCard = new Map(CARD_EXPOSURE.map((row) => [row.cardId, row]));
 const cards = authoredCards.map((card) => {
   const carrier = exposureByCard.get(card.id);
