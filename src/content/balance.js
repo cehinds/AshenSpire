@@ -287,6 +287,7 @@ export const balance = {
   // slider can't drift apart — they previously lived in two files and silently
   // disagreed.
   ui: {
+    touchFlick: { enabled: true, distance: { min: 32, max: 160, def: 64 }, minVelocity: 300, velocityWindowMs: 120 },
     // HUD resource bars, per surface (content/resources.js holds the rows).
     //
     // `scaleByMax` is HIS RULE — "the size of that bar should scale depending on
@@ -375,6 +376,75 @@ export const balance = {
     // blindly choosing the first side with room. Combatants add a persistent,
     // foldable edge inspector while the shared floating tooltip remains the
     // short-lived hover/tap explanation.
+    // THE EQUIPMENT CARD FACE, SIZED BY WHAT THE INFORMATION IS WORTH.
+    //
+    // The face used to be seven hard-coded pixel rows. Whatever did not fit was
+    // cut wherever the row happened to end, and because flavour and the footer
+    // sat in rows of their own, the thing that got cut was the MECHANICS: a
+    // player could read "Grey wood, warm at the grip." in full while
+    // "Class power: +1 Potency" was sliced through the middle.
+    //
+    // Rows are now declared with a PRIORITY and a floor. Every region states
+    // what it must never shrink below and how willingly it gives space up:
+    // higher `priority` keeps its room longer, and `grow` says who absorbs the
+    // slack when there is any. Nothing here is a magic constant in a
+    // stylesheet — the numbers are data, and the face is composed from them.
+    //
+    // The ordering is the claim, and it is deliberate: what the item DOES
+    // (bonuses) outranks what it IS (type, tags), which outranks what it is
+    // LIKE (flavour). Flavour is lore and says so in its own tooltip; it is the
+    // first thing to give up room and the first thing to ellipsis.
+    equipmentCard: {
+      // Face geometry. The frame lays out at this size and is then scaled to
+      // whatever box it is dropped into, so these are design pixels, not
+      // device pixels.
+      frameWidthPx: 350,
+      frameHeightPx: 490,
+      paddingPx: 19,
+      gapPx: 3,
+      // Regions, in visual order. `minPx` is the floor; `priority` breaks ties
+      // when there is not enough room; `grow` shares out anything left over.
+      regions: {
+        art:     { minPx: 270, priority: 7, grow: 0 },
+        type:    { minPx: 22,  priority: 5, grow: 0 },
+        facts:   { minPx: 40,  priority: 6, grow: 0 },
+        tags:    { minPx: 18,  priority: 4, grow: 0 },
+        effects: { minPx: 54,  priority: 7, grow: 2 },
+        flavor:  { minPx: 18,  priority: 1, grow: 0 },
+        footer:  { minPx: 16,  priority: 2, grow: 0 },
+      },
+      // Text sizing. Every face value is a clamp: it may shrink to `minPx` so a
+      // long line stays on the card, and never grows past `maxPx` so a short
+      // one does not shout. `idealCh` is the width the size is derived from, so
+      // the type scales with the card rather than with the viewport.
+      // `floorPx` is a PHYSICAL floor, and it is the one that matters on a
+      // phone. The frame lays out at frameWidthPx and is then transform-scaled
+      // into whatever box holds it, so a 13px line inside a face scaled to 0.6
+      // reaches the glass at 7.8px. The floor is divided by that scale — the
+      // same compensation the rest of the kit applies against `--ui-zoom` — so
+      // authored type shrinks with the card only until it would stop being
+      // readable, and then stops shrinking. The priority solver above is what
+      // affords this: the regions that hold text now have room to take it.
+      text: {
+        name:    { minPx: 13, idealCh: 5.2, maxPx: 20, floorPx: 15 },
+        type:    { minPx: 9,  idealCh: 2.9, maxPx: 11, floorPx: 10 },
+        fact:    { minPx: 9,  idealCh: 2.7, maxPx: 10, floorPx: 10 },
+        factValue: { minPx: 13, idealCh: 4.2, maxPx: 16, floorPx: 15 },
+        tag:     { minPx: 9,  idealCh: 2.6, maxPx: 10, floorPx: 10 },
+        heading: { minPx: 9,  idealCh: 2.6, maxPx: 10, floorPx: 10 },
+        bonus:   { minPx: 11, idealCh: 3.4, maxPx: 13, floorPx: 13 },
+        flavor:  { minPx: 10, idealCh: 3.1, maxPx: 12, floorPx: 11 },
+        footer:  { minPx: 9,  idealCh: 2.6, maxPx: 10, floorPx: 10 },
+      },
+      // How many lines a single bonus may wrap to before it ellipsises. One
+      // line was the old behaviour and it truncated real numbers mid-word.
+      bonusMaxLines: 2,
+      // The information button. It appears on the FIRST press of a card, not
+      // the second: a control nobody can find is a control nobody uses. The
+      // delay keeps it from flickering under a press that is really a scroll,
+      // and the fade keeps it from snapping into place under the thumb.
+      info: { revealDelayMs: 125, fadeMs: 120, sizePx: 44, insetPx: 6 },
+    },
     tooltipPlacement: {
       hoverDelayMs: 500,
       autoFadeMs: 5000,

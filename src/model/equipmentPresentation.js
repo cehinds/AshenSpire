@@ -108,7 +108,7 @@ function copiesByRole(registries, run) {
   try { plan = startingDeckPlan(registries, run.loadout, run.class); } catch { plan = null; }
   if (!plan) return legacy;
   const attack = Number.isFinite(run.equipmentAttackSlotCount)
-    ? run.equipmentAttackSlotCount
+    ? run.equipmentAttackSlotCount - (run.removedAttackSlotIds?.length || 0)
     : plan.attackCount;
   return { ...legacy, attack, guard: plan.guardCount };
 }
@@ -130,6 +130,7 @@ function attackPackageCounts(registries, run) {
   // against the birth quota, not a fresh count off the current loadout.
   const plan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class, {
     attackSlotCount: Number.isFinite(run.equipmentAttackSlotCount) ? run.equipmentAttackSlotCount : undefined,
+    removedAttackSlotIds: run.removedAttackSlotIds,
   });
   const groups = new Map();
   for (const slot of plan.slots) {

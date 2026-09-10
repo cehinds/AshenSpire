@@ -1,10 +1,48 @@
 # AshenSpire component catalog
 
+All run maps share the vector face in `mapNodeInk.js`: opaque dark discs, readable
+glyphs, a pale current-node marker and reachable halos. `mapview.js` owns the
+node radii; `AtlasCameraModel.js` frames a journey junction using that same close-up
+scale. World map fog compositing is bounded to the visible viewport.
+
+Card flick controls: Accessibility offers Card flick to play and a 32–160 CSS-pixel
+distance setting (64 default), synchronized numeric field/slider, Reset, and a
+harmless practice surface. `TouchFlickModel.js` resolves distance, recent speed and
+nearest-target ties; `flickPractice.js` shares that recognition with the combat
+hand for touch, mouse, trackpad dragging and pen. Existing saved settings retain
+their values. The selected card and separate Information button remain unchanged.
+See [card removal and touch flick validation](qa/card-removal-touch-flick.md).
+
 This is the quick-reference library for the reusable UI vocabulary. The visual
 catalog is available at [`component-catalog.html`](./component-catalog.html).
 Select any component card there to open its detail drawer. The dedicated
 [`tray-gallery.html`](./tray-gallery.html) shows all eight top/right/bottom/left
 folded and unfolded Tray states using the production renderer.
+
+The [Pose & Effects Studio](../art/pose-studio/index.html) provides a reusable
+animation-authoring workspace: effect library, anchored stage, five-to-seven
+pose strip, layered cue timeline, selection inspector, binding rule builder,
+and relationship view. Its stage and library provide live visual miniatures
+of all 80 effect sets. The shared `presentationSequence` model owns project
+validation and matching; the optional gameplay adapter preserves existing FX.
+See [launch, package and integration instructions](../pose-studio/README.md).
+The authoring flow uses template starts, immediate effect previews, a direct
+card connection action, progressive disclosure for precise controls, and
+an inline effect tray at narrow widths. The preview has visible size, hide,
+duplicate and remove controls, corner resize handles and independent view zoom.
+Each effect has a six-frame strip with move/trim handles and a removal button.
+The tray and inspector reuse the original DOM and restore focus on close.
+`pose-studio/tests/direct-editing.mjs` checks pointer/touch manipulation;
+`pose-studio/tests/usability.mjs` covers this
+workflow at desktop and phone sizes; no game presentation rules are replaced.
+
+The [combat sprite catalog](../art/combat-effects-2026-09-07/sprite-catalog.html)
+shows all 56 six-frame sets. `combatEffectPlan` resolves presentation tag
+combinations; `playCombatEffectPlan` renders the shared solo/co-op cast and
+target sequence. `combatEffectForEvent` owns status and defensive reactions.
+These transient overlays use the existing FX layer and introduce no new HUD
+component IDs. The adjacent card preview names the matched rule and equipment
+profile; the catalog provides visual miniatures for every exported set.
 
 Use the catalog's **Grid / List** switch to choose card tiles or a compact
 vertical list. In Grid view, use the **− / reset / +** controls, Ctrl/Command +
@@ -77,7 +115,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `music-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Positive-state Music toggle mirrored by Quick Menu and Settings and persisted through the shared settings owner. |
 | `crimson-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Health charge flask. |
 | `azure-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Mana charge flask. |
-| `inventory-belt` | `inventoryBeltModel` | `inventoryBeltHtml` | Map + Combat | Shared relic/potion belt. |
+| `inventory-belt` | `inventoryBeltModel` | `inventoryBeltHtml` | Map + Combat | Shared relic/potion belt, visible in combat and hidden on map screens. |
 | `item-tray` | `itemTrayModel` child | Belt view | Inventory | Shared horizontal tray behavior. |
 | `item-slot` | `componentModel` semantic ID | Item view | Inventory | Generic item slot contract. |
 | `folding-tray` | `trayModel` | `trayComponents.renderTray` | Armoury + future menus | Edge-aware disclosure composition. |
@@ -88,11 +126,11 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `relic-slot` | `componentModel` semantic ID | Item view | Map + Combat | Individual relic tile. |
 | `potion-tray` | `itemTrayModel` | Belt view | Map + Combat | Utility potion tray, right anchored. |
 | `potion-control` | `componentModel` semantic ID | Item view | Inventory | Individual utility potion control. |
-| `battlefield-stage` | `battlefieldStageModel` | `battlefieldStage.js` + `combat.js` | Combat | Data-driven protected corridor that centers combatants between the HUD and hand. |
+| `battlefield-stage` | `battlefieldStageModel` | `battlefieldStage.js` + `combat.js` | Combat | Fixed 10/45/30/15 tracks; shared formation slots for solo and party combat, with grounded art, uniform nameplates and shallow overflow rows. |
 | `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Player combatant card. |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
-| `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` | Combat cards | Rendered player or enemy figure. |
+| `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` + `paintedOutfits.js` | Solo and co-op combat cards | Rendered player or enemy figure. Player rest resolves stance, readiness, guard, then idle through `combatPose.js`; Prepared, Starstone Charge and Blood Rite have authored outfit poses, intermediate entry/exit sprites, subtle breathing glows, and fades that survive combat redraws. Reduced motion uses a steady glow. [Interactive miniature](../art/readiness-poses/preview.html). |
 | `combatant-nameplate` | `combatantFrame` child | `combatantFrame.js` | Combat cards | Combatant name label. |
 | `intent-indicator` | semantic component | `combat.js` + `uiContent.js` | Enemy cards | Telegraphed enemy action and amount. |
 | `block-badge` | semantic component | `combat.js` | Combat cards | Current Guard/Block over the sprite. |
@@ -101,12 +139,12 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `proc-status-bar` | semantic component | `combat.js` | Enemy cards | Individual Bleed/Frost/Insanity buildup bar. |
 | `arcane-exposure-bar` | semantic component | `arcaneExposure.js` | Enemy cards | Individual Arcane Exposure meter. |
 | `status-effect-tray` | semantic component | `combat.js` | Combat cards | Active status icons and stacks. |
-| `tooltip` | semantic component | `tooltip.js` | All interactive surfaces | Shared contextual explanation. |
+| `tooltip` | semantic component | `tooltip.js` + `tooltipGlossary.js` | All interactive surfaces | Every hover, handover and nested term waits 500 ms; dismiss 500 ms after leaving owner and panel. Active-bundle keywords and touch/keyboard definitions share the renderer. |
 | `damage-feedback` | semantic component | `fx.js` | Combat feedback | One hit receipt containing Guard and HP channels. |
 | `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |
 | `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
-| `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Player card hand. |
-| `combat-action-rail` | `componentModel` | `combat.js` | Combat | Edge-anchored Actions and Exhaust around a tight Draw / End Turn / Discard cluster. |
+| `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Fixed 5:7 faces fan by overlap and remain visible, inert and dim during enemy turns. |
+| `combat-action-rail` | `componentModel` | `combat.js` | Combat | Single centered row: Actions, flexible Draw, End Turn, flexible Discard/Exhaust, and Potions. All five controls share a vertical center at narrow widths. |
 | `kit.pageDoor` | `pageDoor(spec)` | `kit/index.js` pageDoor | Every screen that asks something | The one door-opener: head with eyebrow, title and a single close control, a body the surface owns, and a foot on the button ladder. Four named widths (sm, md, lg, xl) or full; Escape, veil click and focus return are bound here once. |
 | `kit.optionCard` | `optionCard(spec)` | `kit/index.js` optionCard | Every list of ways on | One choosable way on — glyph or art, name, description, optional badge, meta and trail — carrying its own selected and disabled states. |
 | `kit.detailCard` | `detailCard(spec)` | `kit/index.js` detailCard | Inspectors and summaries | One subject described: eyebrow, name, line, meta, and any body the caller adds. The muted variant is the same card standing back. |
@@ -207,7 +245,7 @@ custom art does not require a second card implementation.
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
 | `sigil-choice` | glyph + selected state | `creationCards.sigilChoiceButton` | Appearance + catalog |
 | `keepsake-choice` | keepsake row + selected state | `creationCards.keepsakeChoiceButton` | Keepsake + catalog |
-| `equipment-choice-card` | equipment row + selected state | `equipment.pieceChip` | Starting Equipment + Armoury/catalog |
+| `equipment-choice-card` | equipment row or Empty Hand + selected/preview state | `equipment.pieceChip` | Starting Equipment + Armoury/catalog |
 | `relic-choice-card` | relic row + selected state | `creationCards.relicChoiceButton` | Starting Equipment + catalog |
 
 ```text
@@ -498,6 +536,15 @@ The three columns negotiate inside one grid. `cinders-counter` stays centered;
 Build. `metadataShowTotals` is false by default, so only current Act/Floor are
 shown.
 
+Starting equipment: Empty Hand uses the normal card frame and existing null hand state.
+The focused choice drives its details and a two-column starting-combat-card grid with
+copy counts from the run's deck planner, grant reconciliation and card stamping. Choice
+nodes persist through selection so the 180 ms lift/scale transition can settle smoothly.
+Phones use a smaller lift, and OS/in-game reduced motion disables movement. Continue
+opens the named next section; automatic advancement defaults off. Flavor stays on one
+line with an ellipsis, and full wording is available in the Flavor inspection disclosure.
+Review: `equipment-selection-preview.html`; checks: `tools/starting-equipment-qa.mjs`.
+
 Equipment cards (#784): Inventory, starting equipment choices and equipped-item
 inspection reuse `equipmentCardModel` and `equipmentCard.js`. The approved 5:7
 painted card scales one 350 by 490 canvas. Each meaningful field has an authored
@@ -510,3 +557,29 @@ merchant armament offers and buy/sell inspection, reward armament inspection, an
 `node tools/weapon-card-preview.mjs --shots <output-directory>`.
 
 Item cards: equipmentCard.js owns the uniformly scaled poker canvas. collectibleCard.js composes authored potion/relic effects into that frame for Inventory, merchant shelves, and potion reward inspection. Listing tracks are fixed at 280px; reveals span the grid. Delegated hold feedback paints above card art and inspection gestures reach the existing hold owner. Full-text disclosure remains independent of equip gestures.
+Playing cards: card.renderCard now adds playing-poker-card. The brown-and-gold inset frame, art well and subdued type band match equipment cards. Combat dimensions, resource badges, live values, tag fitting and selected/unaffordable states retain their existing contracts. Validation: tools/card-feedback.mjs covers desktop/phone input and reduced motion; --shots also records the initial hand.
+Combat sizing: fitFan hands uniformly scale the complete 178px canvas to fit the current hand area. Titles and body use 16px canvas type, and titles wrap to two lines. One cost row above the title groups action, mana and stamina badges without covering text. Full details remain available through Information. BattlefieldStage grows sprites into available space and grounds their stacks near the hand, preserving HUD/intent clearance. Three-enemy phone fields fit without horizontal scrolling; four or more may scroll. Short-height battles scroll vertically instead of shrinking below readable card sizes.
+
+Mobile combat art: at widths up to 640px, figures render at 90% of their fitted size (157.5px reference minimum instead of 175px). Neighboring enemy artwork may overlap slightly; names, meters and intents retain their existing layout and size.
+
+Combat card actions: selection reveals a circular Information button centered above the highlighted card. The information modal places the card beside readable details and exposes a green Play card action, or a disabled gray action with a visible reason. Stationary holds show shared progress and use the card on completion; early release cancels, and targeted cards enter the existing targeting flow. The floating information button replaces hold-to-zoom inspection for the solo combat hand.
+
+Selected combat cards preview legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes retain transparent backgrounds so glow follows artwork rather than its rectangular canvas.
+
+World Journey (`src/ui/screens/worldAtlas.js`) composes fixed map terrain, discovery
+masks, inspectable landmark overlays, the route journal, and one native location
+dialog. Local points select a detail pane instead of opening nested dialogs. The
+same renderer serves `world-atlas-preview.html`; its authoring controls and ID
+selector are isolated from the game. Actual service dispatch reuses the existing
+merchant, smith upgrade, and grace screens. See `docs/WORLD-ATLAS.md` for the
+normalized content contract and `tools/world-atlas-qa.mjs` for browser checks.
+
+Equipment Information appears after the first touch selection, with a configurable delay and fade. Inventory short taps reveal it without equipping, and Inventory and Smith reserve room above their cards so the control remains reachable. The approved 60 percent art allocation remains; mechanics receive at least 54 pixels on the authored canvas.
+
+Shared modals contain keyboard focus in the top dialog, restore the opener on Escape, and activate tabs with arrows, Home and End. Narrow labels scale within readable bounds and settings categories remain horizontally scrollable. See `docs/preview/responsive-type/index.html`.
+
+Reward chooser: playing-card inspection yields face taps to reward selection; the separate Confirm control owns collection. Back retains selection and a failed save exposes a retry status without adding a duplicate card. Touch flicks retain the current shared TouchFlickModel and Accessibility controls.
+
+`map-detail` shares viewport tile selection, decoded-image replacement and engraved fog between traditional/co-op and World Journey/Long Expedition. `mapPresentation.js` holds the tile budget, density cap and route widths; `mapArt.generated.js` owns asset versions and available dimensions. Tiles never carry node discovery or travel permissions.
+
+`local-map-camera` composes fixed-size accessible markers over adaptive detail imagery. `localMapPresentation.js` holds defaults and optional map-ID overrides; `LocalMapCameraModel` derives pan and anchored zoom. `LocalServiceModel` reads existing healing, smithing, refill and level-up plans without mutating the run. World Journey and Long Expedition share this location dialog.

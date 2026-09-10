@@ -1,3 +1,5 @@
+import { COMBAT_EFFECT_ART } from '../content/combatEffectArt.js';
+import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
 // src/ui/assets.js — asset lookup + placeholder generator (SPEC §2.4)
 //
 // Every visual goes through here. M1 ships zero downloaded assets: everything
@@ -12,6 +14,7 @@ import { medallionAnchor } from '../content/classArtAnchors.js';
 import { DEFAULT_SPRITE_STYLE, SPRITE_STYLES } from '../model/spriteStyle.js';
 import { createPaintedStage, paintedPresentation } from './paintedOutfits.js';
 import { assetUrl } from './assetmap.js';
+import { createEnemyPoseStage } from './enemyPoseStage.js';
 import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
 
 export { DEFAULT_SPRITE_STYLE, SPRITE_STYLES };
@@ -78,7 +81,7 @@ export function spriteMirror(artFaces, side = 'enemy') {
  * no render yet fall back automatically — the img error handler swaps in the
  * placeholder, so content can ship art-less.
  */
-export function enemySprite(enemyDef) {
+export function enemySprite(enemyDef, entity = {}) {
   const unity = PAINTED_ENEMIES.includes(enemyDef.id);
   const expansion = EXPANSION_ENEMIES.includes(enemyDef.id);
   const posed = ENEMY_POSES.includes(enemyDef.id);
@@ -87,6 +90,7 @@ export function enemySprite(enemyDef) {
   const tier = SIZE_TIERS[enemyDef.size || 'medium'];
   const tint = enemyDef.tint || 'var(--line-soft)';
   const el = document.createElement('div');
+  el.dataset.enemyId = enemyDef.id;
   const placeholder = () => {
     el.innerHTML = '';
     // This drops the facing layer with the rest of the children, and that is
@@ -146,7 +150,7 @@ export function enemySprite(enemyDef) {
     : expansion ? assetUrl(`assets/enemies-expansion/${enemyDef.id}.png`) : original;
   img.alt = enemyDef.name || enemyDef.id;
   img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
-    `filter:drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
+    `filter:var(--combatant-edge, blur(0px)) drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
   if (painted) {
     img.dataset.artSource = posed ? 'enemy-poses' : unity ? 'unity' : 'expansion';
     // Align the common foot line without cropping or stretching the frame.
@@ -183,6 +187,7 @@ export function enemySprite(enemyDef) {
     });
     attack.addEventListener('error', () => { delete facing.dataset.attackReady; });
     facing.appendChild(attack);
+    registerStage(el, createEnemyPoseStage(el, facing, img, enemyDef.id, entity));
   }
   el.appendChild(facing);
   return el;
@@ -426,14 +431,14 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   // measured by tools/sigil-medallion.mjs; nothing on a FIGURE calls it.
   const applyMedallion = () => {};
   if (style === 'animated' || style === 'rendered') {
-    const stage = style === 'animated' ? createPaintedStage(classId, armourId) : null;
+    const stage = createPaintedStage(classId, armourId, { still: style === 'rendered' });
     const art = stage?.el || paintedPresentation(classId, armourId);
     if (art) {
       const host = document.createElement('div');
-      host.className = 'class-sprite painted-outfit' + (stage ? ' animated' : '');
+      host.className = 'class-sprite painted-outfit' + (stage && style === 'animated' ? ' animated' : '');
       host.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';
       host.appendChild(art);
-      if (stage) registerStage(host, stage);
+      if (stage) { registerStage(host, stage); registerStage(art, stage); }
       applyMedallion(host);
       return host;
     }
@@ -703,3 +708,5 @@ export function equipmentCardArt(piece) {
     ? armourMenuAsset(piece.classId, piece.id)
     : `assets/equipment/icon_${piece.id}.webp`);
 }
+
+export function combatEffectFrames(kind) { return (Object.hasOwn(COMBAT_EFFECT_ART,kind) ? COMBAT_EFFECT_ART[kind] : Object.hasOwn(POSE_EFFECT_ART,kind) ? POSE_EFFECT_ART[kind] : []).map(assetUrl); }

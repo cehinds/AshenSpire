@@ -39,6 +39,8 @@
 // The `legal:` list on a domain error is the point: the message tells the
 // author which words this family accepts instead of making them find out.
 
+import { attackDescriptor } from './attackTags.js';
+
 /** Walk a dotted `source` path ('equipment.armaments') into the bundle. */
 function atPath(bundle, path) {
   let node = bundle;
@@ -292,6 +294,25 @@ export function tagContentProblems(bundle, keywordIds = []) {
     }
   }
 
+  // Categorized attack identity is authored in this same junction. Validate
+  // cardinality and agreement here, before a card can spend resources.
+  const attackIndex = tagIndex(b);
+  for (const family of ['card', 'armament', 'basicCardProfile']) {
+    const spec = familyByName.get(family);
+    const rows = spec?.source && atPath(b, spec.source);
+    if (!Array.isArray(rows)) continue;
+    for (const row of rows) {
+      if (!row) continue;
+      const tags = attackIndex.tagIdsOf(family, row);
+      try {
+        attackDescriptor({ tags, attack: row.attack });
+        for (const effect of [...(row.effects || []), ...(row.upgrade?.effects || [])]) {
+          if (effect.attack) attackDescriptor({ tags, attack: effect.attack });
+        }
+      } catch (error) { err(`tagging.${family}.${row.id}`, error.message); }
+    }
+  }
+
   // ---- every equipment piece still declares an item type ---------------------
   // content/equipment.js used to THROW at CSV-normalisation time when a piece
   // carried no `item:*` tag. The tags moved, so the guarantee moved with them:
@@ -431,11 +452,13 @@ export function tagIndex(bundle) {
     .filter((row) => row && row.family)
     .map((row) => [row.family, row]));
   const index = new Map();
+  const presentation=new Set((b.tags||[]).filter(tag=>tag.domain==='presentation').map(tag=>tag.id));
   for (const row of (Array.isArray(b.tagging) ? b.tagging : [])) {
     if (!row || !families.has(row.family)) continue;
+    if(presentation.has(row.tagId))continue;
     const k = rowKey(row.family, row.scope, row.objectId);
     const list = index.get(k);
-    if (list) list.push(row.tagId);
+    if (list) { if(!list.includes(row.tagId))list.push(row.tagId); }
     else index.set(k, [row.tagId]);
   }
   // The scope half of a parent key, and the one call anything outside this

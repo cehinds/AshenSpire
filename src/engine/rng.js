@@ -26,6 +26,7 @@ export const STREAM_NAMES = Object.freeze([
   // later reward draws in an existing seed (the same reason `armaments` is
   // its own stream). A save written before the stream existed starts it at 0.
   'smith',
+  'combatProcs',
 ]);
 
 const MULBERRY_INC = 0x6d2b79f5;
@@ -125,6 +126,12 @@ export function createRng(seed, counters = {}) {
     },
     chance(stream, pct) {
       return rng.float(stream) * 100 < pct;
+    },
+    restoreCounters(counters) {
+      for (const name of STREAM_NAMES) {
+        if (!Number.isInteger(counters[name]) || counters[name] < 0) throw new Error('Invalid RNG counter: ' + name);
+      }
+      for (const name of STREAM_NAMES) state[name] = counters[name] >>> 0;
     },
     getCounters() {
       const out = {};

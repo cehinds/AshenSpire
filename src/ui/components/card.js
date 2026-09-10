@@ -1,3 +1,5 @@
+import { bindCardInspection, openCardInspection } from './cardInspection.js';
+import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js';
 // src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
 //
 // All numbers shown come from the engine: in combat, previewCard tokens
@@ -91,13 +93,14 @@ function fillTemplate(def, tokens, baseTokens) {
  *            tooltip?    (false suppresses the shared hover/focus tooltip) }
  */
 export function renderCard(registries, ref, opts = {}) {
+  configureTooltipGlossary(registries);
   const def = resolveCard(registries, ref);
   const el = document.createElement('div');
   // THE FACE IS THE KIT'S CARD (§10): a fixed box, fixed landmarks (name, art,
   // type band), and one shared row budget below the band that tags and text
   // divide. `as-card` is the recipe; the old class names stay as the hooks
   // every tool and screen reads.
-  el.className = `card as-card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
+  el.className = `card as-card playing-poker-card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
   // Type presentation is data (balance.ui.cardTypes): corner radii carry the
   // type (attack squarest → power roundest) and each type owns its banner
   // colour. Renaming a label here never touches engine logic.
@@ -122,9 +125,20 @@ export function renderCard(registries, ref, opts = {}) {
   // changed a card's tags changed what combat did with them and not what the
   // card showed, which is the chip strip lying about the run being played.
   const service = tagService(registries);
-  const tags = def.cardTags && def.cardTags.length
+  const liveTagRows = (opts.preview?.values || []).filter((row) => Array.isArray(row.tags));
+  const inheritedBy = new Map();
+  for (const row of liveTagRows) for (const id of row.inheritedTags || []) {
+    const sources = inheritedBy.get(id) || new Set(); sources.add(row.sourceName); inheritedBy.set(id, sources);
+  }
+  const resolvedTags = liveTagRows.length
+    ? service.resolve([...new Set(liveTagRows.flatMap((row) => row.tags))])
+    : def.cardTags && def.cardTags.length
     ? service.resolve(def.cardTags)
     : service.tagsOf('card', def);
+  // Keep legacy schools for compatibility, but do not print Blood/Heavy twice
+  // when the categorized theme/technique is the same visible word.
+  const categorizedLabels = new Set(resolvedTags.filter((tag) => ['theme', 'technique'].includes(tag.domain)).map((tag) => tag.label.toLowerCase()));
+  const tags = resolvedTags.filter((tag) => tag.domain !== 'card' || !categorizedLabels.has(tag.label.toLowerCase()));
   el.dataset.tagRows = tags.length ? '1' : '0';
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
@@ -138,17 +152,17 @@ export function renderCard(registries, ref, opts = {}) {
   const resourceWord = (resource) => esc(registries.framework.resourceWord(resource));
 
   el.innerHTML =
-    `<div class="cost">${esc(cost)}</div>` +
+    `<div class="card-costs"><div class="cost">${esc(cost)}</div>` +
     (manaCost ? `<div class="mana-cost" title="${resourceWord('mana')} cost">◆ ${esc(manaCost)}</div>` : '') +
     (staminaCost ? `<div class="stamina-cost" title="${resourceWord('stamina')} cost">● ${esc(staminaCost)}</div>` : '') +
-    `<div class="cname">${esc(def.name)}</div>` +
+    `</div><div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
     `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
     // Subtypes: authored in content/source/tagging.csv. Untagged cards
     // render nothing here, so the layout is unchanged for them.
     (tags.length
       ? `<div class="cd-body"><div class="ctags cd-tags">${tags
-          .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb)}">${esc(t.glyph)} ${esc(t.label)}</span>`)
+          .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb + (inheritedBy.has(t.id) ? ` Granted by ${[...inheritedBy.get(t.id)].join(', ')}.` : ''))}">${esc(t.glyph)} ${esc(t.label)}</span>`)
           .join('')}</div>`
       : '<div class="cd-body">') +
     `<div class="ctext cd-text">${fillTemplate(def, tokens, base)}</div></div>`;
@@ -179,6 +193,19 @@ export function renderCard(registries, ref, opts = {}) {
     attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts)));
   }
   if (opts.small) el.dataset.small = 'true';
+  if (opts.inspection !== false) bindCardInspection(el, { title: def.name, readOnly: opts.inspectReadOnly === true,
+    touchSelectionSafe: Boolean(opts.preview?.needsTarget),
+    actionOwnsTouch: opts.actionOwnsTouch === true,
+    open: opener => {
+      const details = document.createElement('div');
+      const liveCosts = opts.preview ? { variable: !!opts.preview.costIsX, action: opts.preview.cost, mana: opts.preview.manaCost, stamina: opts.preview.staminaCost } : null;
+      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts);
+      decorateKeywords(details);
+      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false });
+      details.classList.add('playing-card-details');
+      return openCardInspection({ title: def.name, card: face, details, opener,
+        getAction: opts.inspectionAction || (() => ({ enabled:false, reason:'Play cards from your combat hand.' })) });
+    } });
   return el;
 }
 
@@ -299,7 +326,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
     // Words resolve through the framework TermRegistry (one vocabulary home);
     // an id outside the keyword vocabulary is skipped, as before.
     const k = registries.framework.keywordDisplay(kw);
-    if (k) lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
+    if (k) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(k.tooltip)}">${esc(k.name)}</span>`);
   }
   for (const eff of def.effects || []) {
     // Status/stance WORDS resolve through the per-bundle framework term
@@ -322,14 +349,16 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
     // (mechanics numbers for tooltip substitution)". This is that site.
     if (eff.op === 'applyStatus') {
       const s = glossaryEntry(registries, 'status', eff.status);
-      if (s) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+      if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
     }
     if (eff.op === 'enterStance') {
       const s = glossaryEntry(registries, 'stance', eff.stance);
-      if (s) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+      if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
     }
   }
-  if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);
-  if (lines.length) html += `<div class="tt-kw">${lines.join('<br>')}</div>`;
+  const service = tagService(registries);
+  const tags = def.cardTags?.length ? service.resolve(def.cardTags) : service.tagsOf('card', def);
+  for (const tag of tags) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
+  if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
   return html;
 }

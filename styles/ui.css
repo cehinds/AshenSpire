@@ -857,9 +857,10 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    between two lines of one logo is what reads as "the logo is off centre"
    (Constantine, 2026-09-03) — neither line looks wrong alone.
 
-   ONE MECHANISM, ONE MAGNITUDE: declare the tracking once as `--track`, use it
-   for `letter-spacing`, and indent by the SAME token. A rule that is centred
-   and tracked and does not do this is the bug this block exists to prevent. */
+   Declare the tracking once as `--track` and indent by the SAME token when
+   the line has room. The kit's full-width TitleMenu name instead shifts by
+   half its tracking: an indent there exceeds the nowrap line's available
+   width, causing the browser to stop centering it. */
 
 
 .armoury-smithing-receipt {
@@ -869,3 +870,80 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 
 .armoury-smithing-receipt b { color: var(--gold); }
+
+/* Shared modal polish: warm metal edges, clear selected and keyboard states. */
+.modal-veil > .modal {
+  box-shadow: 0 24px 72px #000b, inset 0 1px 0 #e9c77c18;
+}
+.modal > .modal-head {
+  background: linear-gradient(110deg, #c6983212, transparent 70%);
+}
+.modal > .modal-foot {
+  background: linear-gradient(180deg, #ffffff03, #00000018);
+}
+.modal .modal-tabs { gap: .5rem; }
+.modal .modal-tab[aria-selected='true'] {
+  background: linear-gradient(0deg, #d6ac3420, transparent);
+  border-radius: .4rem .4rem 0 0;
+}
+.modal .modal-tab:focus-visible,
+.modal .modal-close:focus-visible,
+.modal .modal-iconbtn:focus-visible,
+.modal .set-tab:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 4px #17130e;
+}
+.modal .set-railed .set-panel { scrollbar-gutter: stable; }
+@media (max-width: 600px) {
+  .modal .set-railed {
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .modal .set-railed > .set-tabs {
+    display: flex; flex-direction: row; flex: 0 0 auto;
+    gap: .5rem; padding: .7rem;
+    overflow-x: auto; overflow-y: hidden;
+    border-right: 0; border-bottom: 1px solid var(--line);
+    scrollbar-width: thin;
+  }
+  .modal .set-railed > .set-tabs > .set-tab {
+    flex: 0 0 auto; width: auto; min-width: max-content;
+    min-height: var(--tap-floor); padding-inline: 1.2rem;
+  }
+  .modal .set-railed > .set-panel {
+    flex: 1 1 auto; min-height: 0; width: 100%;
+  }
+}
+@media (max-width: 600px) {
+  .modal .set-panel .r-trail:has(> .choice-group) {
+    flex-basis: 100%; width: 100%; max-width: 100%;
+  }
+  .modal .set-panel .choice-group {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    width: 100%; gap: .4rem; border: 0; overflow: visible;
+  }
+  .modal .set-panel .choice-group > button {
+    margin: 0; border: 1px solid var(--line-soft); border-radius: var(--r-2);
+    min-width: 0; padding-inline: .6rem;
+  }
+}
+@media (min-width: 601px) {
+  .modal .set-panel .r-trail:has(> .choice-group > button:nth-child(5)) {
+    flex-basis: 100%; width: 100%; max-width: 100%;
+  }
+  .modal .set-panel .choice-group:has(> button:nth-child(5)) {
+    display: flex; flex-wrap: wrap; width: 100%;
+  }
+  .modal .set-panel .choice-group:has(> button:nth-child(5)) > button {
+    flex: 1 0 auto; min-width: 7rem;
+  }
+}
+/* The flick setting keeps its numeric value, slider and practice surface together. */
+.num-wrap:has(.set-num-slider) { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; max-width:100%; width:100%; flex-basis:100%; order:1; }
+.set-num-slider { grid-column:1 / -1; grid-row:2; width:100%; max-width:100%; min-height:32px; }
+.set-num-reset { grid-column:2; grid-row:1; }
+.set-row:has(.flick-practice) { display:flex; flex-wrap:wrap; }
+.set-row:has(.flick-practice) > .as-labelstack { flex-basis:100%; }
+.flick-practice { display:flex; flex-direction:column; justify-content:flex-end; gap:8px; flex-basis:100%; order:2; width:100%; box-sizing:border-box; min-height:210px; padding:16px; border:1px dashed var(--gold); border-radius:8px; touch-action:none; user-select:none; }
+.flick-practice[data-ready='true'] { border-style:solid; box-shadow:inset 0 0 12px #c9a84c55; }
+.flick-practice output { min-height:3em; font-size:14px; }

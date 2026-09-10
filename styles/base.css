@@ -230,7 +230,7 @@ body.readable-ui { --font-display: var(--font-body); }
 /* Root text anchor: 62.5% makes 1rem = 10px at Text M. The Text-size setting
    overrides this value for type and line metrics; component geometry must not
    derive from this calibration. */
-html { height: 100dvh; overflow: hidden; font-size: 62.5%; }
+html { height: var(--visible-height, 100dvh); overflow: hidden; font-size: 62.5%; }
 /* AIM AT THE FAR ENEMY, LEAVE THE GAME — Sunna's gate finding on #22, measured
    both edges x3. The straight line from the leftmost card to the far-right
    enemy runs at 38 deg, under the ~45-47 deg boundary where Chromium claims a

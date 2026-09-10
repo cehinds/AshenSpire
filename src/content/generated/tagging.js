@@ -1795,5 +1795,4613 @@ export const tagging = [
     "scope": "",
     "objectId": "ashheartDragon",
     "tagId": "beast"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "strike",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "defend",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "technique",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "evasiveGuard",
+    "tagId": "fx:dodge"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dodgeRoll",
+    "tagId": "fx:dodge"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gorefireSlash",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gorefireSlash",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gorefireSlash",
+    "tagId": "fx:gorefire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBash",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBash",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBash",
+    "tagId": "fx:shield"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickstep",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardCounter",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardCounter",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardCounter",
+    "tagId": "fx:riposte"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironResolve",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedBlade",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedBlade",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterGorefire",
+    "tagId": "fx:gorefire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterGorefire",
+    "tagId": "fx:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterBulwark",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterBulwark",
+    "tagId": "fx:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterBulwark",
+    "tagId": "fx:bulwark"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "fx:riposte"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rend",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rend",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "fx:heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stomp",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stomp",
+    "tagId": "fx:heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rallyingStandard",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warSurgeon",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hemorrhage",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinbladeFlurry",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldwall",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kickOff",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kickOff",
+    "tagId": "fx:heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingLunge",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "impale",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "impale",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "impale",
+    "tagId": "fx:pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warcry",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executioner",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreblood",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "unbreakable",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stitchedArms",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastStand",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warriorsVow",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ruinousBlow",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodhuntersStrike",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sanguinePactCard",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreslash",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreslash",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bracingStance",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bracingStance",
+    "tagId": "fx:bulwark"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flameToBlade",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironVowCard",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodTithe",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "poiseBreaker",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rondelParry",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderplate",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderplate",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstonePebble",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstonePebble",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cometFragment",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cometFragment",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starbladePhalanx",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starbladePhalanx",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starbladePhalanx",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crystalBarrier",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crystalBarrier",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crystalBarrier",
+    "tagId": "fx:barrier"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crystalBarrier",
+    "tagId": "fx:magic"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starShower",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starShower",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scholarsInsight",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostVeil",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostVeil",
+    "tagId": "fx:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostVeil",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostVeil",
+    "tagId": "fx:ward"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSlicer",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSlicer",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneWard",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneWard",
+    "tagId": "fx:bind"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneWard",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneWard",
+    "tagId": "fx:ward"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneWard",
+    "tagId": "fx:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starlance",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starlance",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinkling",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostNova",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostNova",
+    "tagId": "fx:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostNova",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneArc",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneArc",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lucidity",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stargazerCard",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralArmorCard",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonrendCut",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonrendCut",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorite",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorite",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorite",
+    "tagId": "fx:heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorSwarm",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorSwarm",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorSwarm",
+    "tagId": "fx:heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gravityWell",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "azureCoilCard",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralCleave",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralCleave",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "radiantSpray",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "radiantSpray",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "supernova",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "supernova",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "timeDilation",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneKris",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneKris",
+    "tagId": "fx:pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "constellationCard",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starfallBeam",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starfallBeam",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starcaller",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starcaller",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "umbralWard",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "umbralWard",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "umbralWard",
+    "tagId": "fx:barrier"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "umbralWard",
+    "tagId": "fx:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "waxingMoonCard",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shootingShard",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shootingShard",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingStar",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingStar",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingStar",
+    "tagId": "fx:ward"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingStar",
+    "tagId": "fx:magic"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starPath",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonlitShieldCard",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "celestialLance",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "celestialLance",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astromancerCard",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSpark",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSpark",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralInsight",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralInsight",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "urgentHeal",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "urgentHeal",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodPact",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodPact",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightTouch",
+    "tagId": "fx:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightTouch",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flagellation",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "penance",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "penance",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "penance",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "litany",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "litany",
+    "tagId": "fx:bind"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "graveOffering",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodletting",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodletting",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "contagion",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "contagion",
+    "tagId": "fx:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cullTheWeak",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "transfusion",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "transfusion",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightward",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightward",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "martyrBlood",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightBloom",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightBloom",
+    "tagId": "fx:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sacredHarvest",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sacredHarvest",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thornHaloCard",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "communionCard",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gildedOath",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gildedOath",
+    "tagId": "fx:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "plagueBearer",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "plagueBearer",
+    "tagId": "fx:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "exsanguinate",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stigmataCard",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scourge",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scourge",
+    "tagId": "fx:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "reclamation",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "reclamation",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "secondBloom",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "secondBloom",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "butterflyPlague",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "butterflyPlague",
+    "tagId": "fx:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lifeTitheCard",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonRite",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonRite",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightNova",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastRites",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastRites",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "zealotryCard",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodHarvest",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodHarvest",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "painOffering",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "witheringTouch",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "witheringTouch",
+    "tagId": "fx:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "desperateRite",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberTideCard",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodOfferingRite",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "harbingerOfBlightCard",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "fx:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastMercy",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastMercy",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastMercy",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ambush",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ambush",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rogueShiv",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rogueShiv",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokePellet",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokePellet",
+    "tagId": "fx:ash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickCut",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickCut",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "feint",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "backstep",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "backstep",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinPrick",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinPrick",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pocketSand",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pocketSand",
+    "tagId": "fx:ash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pocketSand",
+    "tagId": "fx:bind"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hamstringRogue",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hamstringRogue",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedShiv",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedShiv",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokeVeil",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokeVeil",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ricochet",
+    "tagId": "fx:pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ricochet",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowBlow",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowBlow",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pilfer",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "vanish",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "vanish",
+    "tagId": "fx:ash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cheapShot",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cheapShot",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bladeDanceRogue",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bladeDanceRogue",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "garrote",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "garrote",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fanOfKnives",
+    "tagId": "fx:pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fanOfKnives",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "setupRogue",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "acrobaticsRogue",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "disorient",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "disorient",
+    "tagId": "fx:bind"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "coupDeGrace",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "coupDeGrace",
+    "tagId": "fx:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sap",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shadowstep",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shadowstep",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "afterimageCard",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "afterimageCard",
+    "tagId": "fx:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodletterRogue",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodletterRogue",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "venomcoat",
+    "tagId": "fx:venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "venomcoat",
+    "tagId": "fx:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "misdirect",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "misdirect",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "assassinate",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "assassinate",
+    "tagId": "fx:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thousandCutsRogue",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thousandCutsRogue",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deadlyTempoCard",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deadlyTempoCard",
+    "tagId": "fx:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "opportunistCard",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "opportunistCard",
+    "tagId": "fx:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "envenomCard",
+    "tagId": "fx:venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "envenomCard",
+    "tagId": "fx:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "toxicVolley",
+    "tagId": "fx:venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "toxicVolley",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokeBomb",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokeBomb",
+    "tagId": "fx:ash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executionWindow",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executionWindow",
+    "tagId": "fx:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executionWindow",
+    "tagId": "fx:bind"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "perfectHeist",
+    "tagId": "fx:guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deathblow",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deathblow",
+    "tagId": "fx:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "greatswordSunderingHew",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "honedEdge",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironSkin",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fieldDressing",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hex",
+    "tagId": "fx:bind"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "transmute",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinFang",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blindingSand",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hamstring",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "masterOfStrategy",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bashingBlow",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickGuard",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sweepingBlow",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enfeeble",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "colossusSmash",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rallyingBanner",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sharedFlame",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashOath",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedAttack",
+    "tagId": "fx:utility"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "shieldAttack",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "shieldAttack",
+    "tagId": "fx:shield"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bladeAttack",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "daggerPierceAttack",
+    "tagId": "fx:pierce"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "daggerPierceAttack",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowPierceAttack",
+    "tagId": "fx:pierce"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowPierceAttack",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowPierceAttack",
+    "tagId": "fx:precision"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffMagicAttack",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreArcaneAttack",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreArcaneAttack",
+    "tagId": "fx:blight"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreArcaneAttack",
+    "tagId": "fx:arcane"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedGuard",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "weaponGuard",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "shieldGuard",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "shieldGuard",
+    "tagId": "fx:shield"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffGuard",
+    "tagId": "fx:starstone"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffGuard",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffGuard",
+    "tagId": "fx:magic"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffGuard",
+    "tagId": "fx:ward"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreGuard",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreGuard",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreGuard",
+    "tagId": "fx:arcane"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreGuard",
+    "tagId": "fx:ward"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedTechnique",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedTechnique",
+    "tagId": "fx:dodge"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "weaponTechnique",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "weaponTechnique",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowTechnique",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowTechnique",
+    "tagId": "fx:precision"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffTechnique",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "strike",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gorefireSlash",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBash",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardCounter",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedBlade",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rend",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinbladeFlurry",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "impale",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executioner",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stitchedArms",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ruinousBlow",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodhuntersStrike",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreslash",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flameToBlade",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodTithe",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "poiseBreaker",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderplate",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ambush",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rogueShiv",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickCut",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinPrick",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hamstringRogue",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedShiv",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ricochet",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowBlow",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cheapShot",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bladeDanceRogue",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "garrote",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fanOfKnives",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "coupDeGrace",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sap",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "assassinate",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thousandCutsRogue",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deathblow",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "greatswordSunderingHew",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinFang",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bashingBlow",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sweepingBlow",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "colossusSmash",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stomp",
+    "tagId": "source:unarmed"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stomp",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stomp",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kickOff",
+    "tagId": "source:unarmed"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kickOff",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kickOff",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstonePebble",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstonePebble",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cometFragment",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cometFragment",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starbladePhalanx",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starbladePhalanx",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starShower",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starShower",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSlicer",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSlicer",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starlance",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starlance",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostNova",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostNova",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneArc",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneArc",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonrendCut",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonrendCut",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorite",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorite",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorSwarm",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorSwarm",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralCleave",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralCleave",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "radiantSpray",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "radiantSpray",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "supernova",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "supernova",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneKris",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneKris",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starfallBeam",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starfallBeam",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starcaller",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starcaller",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shootingShard",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shootingShard",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "celestialLance",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "celestialLance",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSpark",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSpark",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightTouch",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightTouch",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flagellation",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flagellation",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "graveOffering",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "graveOffering",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cullTheWeak",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cullTheWeak",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sacredHarvest",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sacredHarvest",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "plagueBearer",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "plagueBearer",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "exsanguinate",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "exsanguinate",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scourge",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scourge",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonRite",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonRite",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightNova",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightNova",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodHarvest",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodHarvest",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "painOffering",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "painOffering",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "witheringTouch",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "witheringTouch",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "desperateRite",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "desperateRite",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodOfferingRite",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodOfferingRite",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ricochet",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ricochet",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fanOfKnives",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fanOfKnives",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstonePebble",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cometFragment",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starbladePhalanx",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starShower",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starlance",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneArc",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorite",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorSwarm",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "radiantSpray",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starfallBeam",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starcaller",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shootingShard",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "celestialLance",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSpark",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSlicer",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonrendCut",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralCleave",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneKris",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightTouch",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flagellation",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "witheringTouch",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorSwarm",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "radiantSpray",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "supernova",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starfallBeam",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "graveOffering",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scourge",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodHarvest",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ricochet",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fanOfKnives",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sweepingBlow",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "strike",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gorefireSlash",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBash",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardCounter",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedBlade",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rend",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinbladeFlurry",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "impale",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executioner",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stitchedArms",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ruinousBlow",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodhuntersStrike",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreslash",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flameToBlade",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodTithe",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "poiseBreaker",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderplate",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ambush",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rogueShiv",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickCut",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinPrick",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hamstringRogue",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedShiv",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowBlow",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cheapShot",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bladeDanceRogue",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "garrote",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "coupDeGrace",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sap",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "assassinate",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thousandCutsRogue",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deathblow",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "greatswordSunderingHew",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinFang",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bashingBlow",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sweepingBlow",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "colossusSmash",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rogueShiv",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickCut",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "backstep",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinPrick",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedShiv",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bladeDanceRogue",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "garrote",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "acrobaticsRogue",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "coupDeGrace",
+    "tagId": "technique:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shadowstep",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "afterimageCard",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "afterimageCard",
+    "tagId": "theme:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodletterRogue",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "venomcoat",
+    "tagId": "theme:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "assassinate",
+    "tagId": "technique:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thousandCutsRogue",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deadlyTempoCard",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deadlyTempoCard",
+    "tagId": "theme:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "opportunistCard",
+    "tagId": "theme:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "envenomCard",
+    "tagId": "theme:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executionWindow",
+    "tagId": "technique:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deathblow",
+    "tagId": "technique:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gorefireSlash",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickstep",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardCounter",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedBlade",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterGorefire",
+    "tagId": "theme:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterBulwark",
+    "tagId": "theme:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstonePebble",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cometFragment",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starbladePhalanx",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostNova",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gildedOath",
+    "tagId": "theme:oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodPact",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightTouch",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "greatsword",
+    "tagId": "technique:heavy"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "dagger",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "shortbow",
+    "tagId": "technique:precision"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "katana",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "katana",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "halberd",
+    "tagId": "technique:heavy"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "warhammer",
+    "tagId": "technique:heavy"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "twinblade",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "battleaxe",
+    "tagId": "technique:heavy"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "buckler",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "towerShield",
+    "tagId": "technique:heavy"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "parryDagger",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "starstoneStaff",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "boneSceptre",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "emberlightSceptre",
+    "tagId": "theme:oath"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "goldboughBranch",
+    "tagId": "theme:oath"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "blightRod",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "gorefireBrand",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "wyrmhornStaff",
+    "tagId": "technique:heavy"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "daggerPierceAttack",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowPierceAttack",
+    "tagId": "technique:precision"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffMagicAttack",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreArcaneAttack",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffGuard",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedTechnique",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "weaponTechnique",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowTechnique",
+    "tagId": "technique:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterGorefire",
+    "tagId": "theme:stance"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterBulwark",
+    "tagId": "theme:stance"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterGorefire",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreslash",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreblood",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodTithe",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodhuntersStrike",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sanguinePactCard",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hemorrhage",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rend",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodOfferingRite",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodHarvest",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodletting",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "martyrBlood",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "exsanguinate",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonRite",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "painOffering",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightward",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "contagion",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightBloom",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "plagueBearer",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "butterflyPlague",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightNova",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "witheringTouch",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "harbingerOfBlightCard",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "theme:blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crystalBarrier",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starShower",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scholarsInsight",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostVeil",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSlicer",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneWard",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starlance",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinkling",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneArc",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lucidity",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stargazerCard",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralArmorCard",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonrendCut",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorite",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorSwarm",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gravityWell",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "azureCoilCard",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralCleave",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "radiantSpray",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "supernova",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "timeDilation",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneKris",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "constellationCard",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starfallBeam",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starcaller",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "umbralWard",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "waxingMoonCard",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shootingShard",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingStar",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starPath",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonlitShieldCard",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "celestialLance",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astromancerCard",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSpark",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralInsight",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardCounter",
+    "tagId": "technique:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "technique:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rondelParry",
+    "tagId": "technique:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "technique:cleave"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "technique:cleave"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sweepingBlow",
+    "tagId": "technique:cleave"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "poiseBreaker",
+    "tagId": "technique:heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ruinousBlow",
+    "tagId": "technique:heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderplate",
+    "tagId": "technique:heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "colossusSmash",
+    "tagId": "technique:heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "greatswordSunderingHew",
+    "tagId": "technique:heavy"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedAttack",
+    "tagId": "source:unarmed"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedAttack",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedAttack",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "shieldAttack",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "shieldAttack",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bladeAttack",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bladeAttack",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "daggerPierceAttack",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "daggerPierceAttack",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "daggerPierceAttack",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowPierceAttack",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowPierceAttack",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowPierceAttack",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffMagicAttack",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffMagicAttack",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffMagicAttack",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreArcaneAttack",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreArcaneAttack",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreArcaneAttack",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "straightSword",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "straightSword",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "straightSword",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "greatsword",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "greatsword",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "greatsword",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "dagger",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "dagger",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "dagger",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "shortbow",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "shortbow",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "shortbow",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "katana",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "katana",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "katana",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "halberd",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "halberd",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "halberd",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "warhammer",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "warhammer",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "warhammer",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "twinblade",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "twinblade",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "twinblade",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "battleaxe",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "battleaxe",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "battleaxe",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "buckler",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "buckler",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "buckler",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "kiteShield",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "kiteShield",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "kiteShield",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "towerShield",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "towerShield",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "towerShield",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "roundShield",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "roundShield",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "roundShield",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "spikedShield",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "spikedShield",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "spikedShield",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "lantern",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "lantern",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "lantern",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "torch",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "torch",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "torch",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "parryDagger",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "parryDagger",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "parryDagger",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "ashStaff",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "ashStaff",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "ashStaff",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "starstoneStaff",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "starstoneStaff",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "starstoneStaff",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "boneSceptre",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "boneSceptre",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "boneSceptre",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "emberlightSceptre",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "emberlightSceptre",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "emberlightSceptre",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "goldboughBranch",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "goldboughBranch",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "goldboughBranch",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "blightRod",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "blightRod",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "blightRod",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "gorefireBrand",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "gorefireBrand",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "gorefireBrand",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "wyrmhornStaff",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "wyrmhornStaff",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "wyrmhornStaff",
+    "tagId": "damage:arcane"
   }
 ];

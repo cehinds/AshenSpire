@@ -8,7 +8,7 @@
 // Invoked by run.bat (Windows) and run.sh (macOS/Linux), or: node tools/launch.mjs
 
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, copyFileSync, existsSync } from 'node:fs';
+import { mkdirSync, copyFileSync, existsSync, cpSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
@@ -103,6 +103,8 @@ const aliases = [
   resolve(distDir, `AshenSpire-${ver}.html`),
 ];
 for (const dest of aliases) copyFileSync(src, dest);
+// Optional hosted detail is separate from the offline-safe HTML fallback.
+if (existsSync(resolve(ROOT, 'map-detail'))) cpSync(resolve(ROOT, 'map-detail'), resolve(distDir, 'map-detail'), {recursive:true});
 const landed = aliases.filter((f) => existsSync(f)).length;
 console.log(`launch: current build refreshed → AshenSpire.html + dist/AshenSpire.html + dist/AshenSpire-${ver}.html`);
 if (landed !== aliases.length) {

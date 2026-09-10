@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Rendered contract for the combat battlefield's vertical safe corridor.
-// The combatant frame (intent + card) belongs in the center of the space left
+// The combatant frame (intent + card) stands near the hand in the space left
 // between the shared HUD and the visible hand. The authored viewport share is
 // protected at each edge; intent stays attached without touching either card
 // or HUD. DOM presence alone cannot prove any of those statements.
@@ -165,7 +165,7 @@ async function main() {
         const who = `${frame.role} ${index + 1}`;
         assert(frame.topClearance >= receipt.requiredTop - 1, `${who} keeps the authored HUD clearance above its visible frame`, `${frame.topClearance.toFixed(2)}px`);
         assert(frame.bottomClearance >= receipt.requiredBottom - 1, `${who} keeps the authored hand clearance below its card`, `${frame.bottomClearance.toFixed(2)}px`);
-        assert(Math.abs(frame.centerDelta) <= Math.max(4, (receipt.safeBottom-receipt.safeTop)*.08), `${who} is centered in the protected corridor`, `delta ${frame.centerDelta.toFixed(2)}px`);
+        assert(frame.bottomClearance <= 100, `${who} stays near the hand instead of leaving a large empty gap`, `${frame.bottomClearance.toFixed(2)}px`);
         assert(!frame.intentCardOverlap && !frame.hudOverlap && !frame.actionOverlap && frame.onGlass, `${who} has no HUD, intent, card, hand, or viewport collision`);
         if (frame.intent) {
           assert(frame.intentGap >= 2 && frame.intentGap <= 12, `${who} intent is closely attached without overlap`, `${frame.intentGap.toFixed(2)}px`);

@@ -1,0 +1,67 @@
+TAP version 13
+# (node:3720) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/suprbludude/.codex/worktrees/2eb2/AshenSpire/src/model/combatAnimation.js is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\suprbludude\\package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: real shield equipment selects bash; dagger and lighting tools do not
+ok 1 - real shield equipment selects bash; dagger and lighting tools do not
+  ---
+  duration_ms: 3.2048
+  ...
+# Subtest: attack and Power type precede guard tags; untagged skill casts
+ok 2 - attack and Power type precede guard tags; untagged skill casts
+  ---
+  duration_ms: 0.2019
+  ...
+# Subtest: rest reducer is owner-relative and paced/flush reduction agree
+ok 3 - rest reducer is owner-relative and paced/flush reduction agree
+  ---
+  duration_ms: 0.2379
+  ...
+# Subtest: authoritative co-op digest carries accepted actor and equipment profile, plus owner turn resets
+ok 4 - authoritative co-op digest carries accepted actor and equipment profile, plus owner turn resets
+  ---
+  duration_ms: 83.6859
+  ...
+# (node:60360) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/suprbludude/.codex/worktrees/2eb2/AshenSpire/src/ui/combatAura.js is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\suprbludude\\package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: actual payments override nominal resource costs and keep mixed colors
+ok 5 - actual payments override nominal resource costs and keep mixed colors
+  ---
+  duration_ms: 2.6174
+  ...
+# Subtest: Power phases are distinct silhouette filters; guard fades and idle clears
+ok 6 - Power phases are distinct silhouette filters; guard fades and idle clears
+  ---
+  duration_ms: 0.6612
+  ...
+# (node:46704) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/suprbludude/.codex/worktrees/2eb2/AshenSpire/src/model/combatEffects.js is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\suprbludude\\package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: physical attacks remain plain while ranged magic uses class projectiles
+ok 7 - physical attacks remain plain while ranged magic uses class projectiles
+  ---
+  duration_ms: 1.7649
+  ...
+# Subtest: guards and Powers use local effects and heals wait for actual receipts
+ok 8 - guards and Powers use local effects and heals wait for actual receipts
+  ---
+  duration_ms: 0.2083
+  ...
+# Subtest: co-op stance receipt identifies the actor for its visual effect
+ok 9 - co-op stance receipt identifies the actor for its visual effect
+  ---
+  duration_ms: 97.135
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 575.8195
