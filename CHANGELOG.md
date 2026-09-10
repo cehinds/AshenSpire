@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-10
 
+- **Combatant Information follows your selection** ([#945](https://github.com/cehinds/AshenSpire/pull/945), `0.6.0.119`). The Information button matches the gold-ring card motif and appears only above the selected combatant. Intent stays visible; changing selection preserves sprite size, foot positions, and health-bar alignment in solo and co-op.
+- **Combatants show larger intents and delayed Information** ([#938](https://github.com/cehinds/AshenSpire/pull/938), `0.6.0.116`). Intent and Information share a compact vertical stack above each sprite. Hover, touch, and keyboard selection highlight the control before its delayed explanation. End Turn stays gold while playable cards remain and turns green when none can be played.
 - **Every armament brings a complete combat kit** ([#904](https://github.com/cehinds/AshenSpire/pull/904), `0.6.0.115`). Weapons, shields, and staves each lend a Strike, Guard, and signature Art. Shields can attack beside a weapon; Guardian creates an Exhausting Bulwark skill, Bastion trades offense for Block, and Spiked Reprisal combines defence with Bleed. Equipment previews show the actual contributions, and solo/co-op fights retain their ownership and upgrade data.
 - **A city spire welcomes each journey** ([#931](https://github.com/cehinds/AshenSpire/pull/931), `0.6.0.113`). Replace the startup and main-menu backdrop with a painted medieval city and central tower in muted gold and charcoal. Keep the title centered and readable on phones and larger screens; ship the artwork as compact WebP.
 
