@@ -38,7 +38,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-10",
     "summary": "Download the game and move your saves",
     "detail": "Open Download & saves from Title or Settings to get the released HTML game. Export your profile and save slots together, preview imports, and retain a recovery backup before replacing local saves.",
-    "build": "0.6.0.116",
+    "build": "0.6.0.117",
     "pullRequest": 929,
     "url": "https://github.com/cehinds/AshenSpire/pull/929"
   },

@@ -56,3 +56,12 @@ test('download metadata pins the exact released file and derives version and fil
   assert.throws(() => releasedDownload({ branch: 'dev', ordinal: 42, version: '0.6.0', bytes: 500 }));
   assert.throws(() => releasedDownload({ branch: 'main', ordinal: '../bad', version: '0.6.0', bytes: 500 }));
 });
+
+test('existing published metadata without size stays downloadable; malformed sizes fail', () => {
+  const published = { branch: 'main', ordinal: 81, version: '0.6.0', digest: '1420ebec5e' };
+  assert.equal(releasedDownload(published).bytes, null);
+  assert.equal(releasedDownload(published).filename, 'AshenSpire-0.6.0.81.html');
+  for (const bytes of [null, 0, -1, '500', Infinity]) {
+    assert.throws(() => releasedDownload({ ...published, bytes }));
+  }
+});

@@ -12,6 +12,7 @@ import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { createSaveTransfer } from '../src/engine/saveTransfer.js';
 const out = resolve('artifacts/offline-play'); mkdirSync(out, { recursive: true });
 const offlineOnly = process.argv.includes('--offline-only');
+const liveReleaseCheck = process.argv.includes('--live-release-check');
 const downloads = resolve(out, `downloads-${Date.now()}`); mkdirSync(downloads);
 const html = readFileSync('AshenSpire.html'), build = JSON.parse(readFileSync('buildordinal.json'));
 const metadata = { branch: 'main', version: build.release, ordinal: build.ordinal, bytes: html.length };
@@ -31,7 +32,7 @@ const server = createServer((req, res) => {
   else { res.setHeader('Content-Type', 'text/html');
     // Only the hosted QA copy points its authored release feed at this fixture.
     // The downloaded numbered build is the unmodified shipping artifact.
-    res.end(req.url.startsWith('/main/') ? html : html.toString().replace('https://cehinds.github.io/AshenSpire/main/latest/build.json', base + '/main/latest/build.json')); }
+    res.end(req.url.startsWith('/main/') || liveReleaseCheck ? html : html.toString().replace('https://cehinds.github.io/AshenSpire/main/latest/build.json', base + '/main/latest/build.json')); }
 });
 await new Promise(done => server.listen(0, '127.0.0.1', done));
 const base = `http://127.0.0.1:${server.address().port}`;
@@ -76,6 +77,19 @@ try {
   const boot = async url => { await send('Page.navigate', { url }, sessionId); await until('!!document.querySelector(".startup-gate")'); await click('.startup-gate'); await until('!!document.querySelector("#download-game")'); };
   const waitDownload = async count => { for (let i = 0; i < 600 && completed.length < count; i++) { await wait(100); if(i%10===0 && await evaluate('document.querySelector(".offline-play-modal [role=status]")?.textContent.includes("Failed to fetch")')) break; } if(completed.length < count) console.error(await evaluate('document.body.innerText')); check(completed.length >= count, 'browser completes requested download'); return resolve(downloads, completed[count - 1]); };
   await send('Emulation.setDeviceMetricsOverride', { width: 1365, height: 1000, deviceScaleFactor: 1, mobile: false }, sessionId);
+  if (liveReleaseCheck) {
+    await boot(base + '/AshenSpire.html'); await click('#download-game');
+    await until('!document.querySelector("#offline-download").disabled');
+    check(true, 'live release enables Download automatically without Check for updates');
+    await capture('live-release-enabled');
+    await click('#offline-download');
+    await until('document.querySelector("#offline-download").textContent === "Save game file"');
+    check(await evaluate('document.querySelector(".offline-play-modal").textContent.includes(" MB.")'), 'actual live release bytes are prepared and their size is displayed');
+    await capture('live-release-prepared');
+    await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true }, sessionId);
+    await wait(1200); await capture('live-release-phone');
+    check(errors.length === 0, `no browser exceptions: ${errors.join('; ')}`);
+  } else {
   let backupPath, gamePath;
   if (offlineOnly) {
     backupPath = resolve(downloads, 'fixture-saves.json'); writeFileSync(backupPath, original);
@@ -139,8 +153,9 @@ try {
   await click('#download-game'); await click('#offline-import');
   check(await evaluate('document.querySelector(".offline-play-modal [role=status]").textContent.includes("not keeping saves")'), 'blocked storage refuses import before changing saves');
   check(errors.length === 0, `no browser exceptions: ${errors.join('; ')}`);
+  }
 } finally {
   await Promise.race([send('Browser.close').catch(() => {}), wait(1000)]); ws.close(); await browser.close();
   server.closeAllConnections(); await new Promise(done => server.close(done));
 }
-console.log(`${checks} ${offlineOnly ? 'offline-only' : 'download and offline'} browser checks passed. ${offlineOnly ? 'Download skipped; local generated HTML and a save fixture were used.' : 'Release metadata is a local fixture; downloaded bytes are the real generated build.'}`);
+console.log(`${checks} ${liveReleaseCheck ? 'live release preparation' : offlineOnly ? 'offline-only' : 'download and offline'} browser checks passed. ${liveReleaseCheck ? 'Real published metadata and HTML fetched; final file save not tested.' : offlineOnly ? 'Download skipped; local generated HTML and a save fixture were used.' : 'Release metadata is a local fixture; downloaded bytes are the real generated build.'}`);

@@ -13,7 +13,7 @@ function saveFile(blob, name) {
 
 export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onImported = () => location.reload() }) {
   const status = el('p', { role: 'status', 'aria-live': 'polite', class: 'set-note' });
-  const release = el('p', { class: 'set-note', text: 'Check for a released download when you have internet.' });
+  const release = el('p', { class: 'set-note', text: 'Checking for the released game…' });
   const download = button({ label: offlinePlay.downloadLabel, id: 'offline-download' });
   download.disabled = true;
   const check = button({ label: 'Check for updates', id: 'offline-check' });
@@ -41,17 +41,22 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
     }, primary: done });
   done.addEventListener('click', door.close);
   recovery.hidden = !transfer.previous();
-  check.addEventListener('click', async () => {
+  const showRelease = data => {
+    const size = data.bytes === null ? 'Size available after preparation' : `${(data.bytes / 1024 / 1024).toFixed(1)} MB`;
+    release.textContent = `Released game: ${data.version} · ${size}. ${data.version === BUILD_VERSION ? 'You have this version.' : 'Export your saves before switching versions.'}`;
+  };
+  const refreshRelease = async () => {
     if (busy) return; busy = true; check.disabled = true; download.disabled = true;
     prepared = null; download.textContent = offlinePlay.downloadLabel;
     try {
       const data = releasedDownload(await (await request(offlinePlay.manifestUrl)).json());
       manifest = data;
-      release.textContent = `Released game: ${data.version} · ${(data.bytes / 1024 / 1024).toFixed(1)} MB. ${data.version === BUILD_VERSION ? 'You have this version.' : 'Export your saves before switching versions.'}`;
+      showRelease(data);
       download.disabled = false; status.textContent = '';
-    } catch (error) { status.textContent = error.message; }
+    } catch (error) { release.textContent = 'Could not check the release. Connect to the internet and try Check for updates.'; status.textContent = error.message; }
     finally { busy = false; check.disabled = false; }
-  });
+  };
+  check.addEventListener('click', refreshRelease);
   download.addEventListener('click', async () => {
     if (busy || !manifest) return;
     if (prepared) {
@@ -66,9 +71,10 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
     try {
       // Pin the numbered build so a release changing mid-download cannot mix versions.
       const bytes = await (await request(manifest.url)).arrayBuffer();
-      if (bytes.byteLength !== manifest.bytes) throw new Error('Download was incomplete. Please try again.');
+      if (!bytes.byteLength || (manifest.bytes !== null && bytes.byteLength !== manifest.bytes)) throw new Error('Download was incomplete. Please try again.');
       if (controller.signal.aborted) return;
       prepared = new Blob([bytes], { type: 'text/html' });
+      manifest.bytes = bytes.byteLength; showRelease(manifest);
       download.textContent = offlinePlay.saveDownloadLabel;
       status.textContent = 'Game ready. Choose Save game file to keep it on your computer.';
     } catch (error) { status.textContent = error.message; }
@@ -102,4 +108,5 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
     } catch (error) { status.textContent = error.message; }
   });
   reload.addEventListener('click', onImported);
+  void refreshRelease();
 }

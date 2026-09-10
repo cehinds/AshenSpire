@@ -1,5 +1,19 @@
 # Offline download and save-transfer verification
 
+## Download button regression: 0.6.0.117
+
+- Fixed legacy release metadata without a byte count disabling Download.
+- Opening the panel now checks the release automatically.
+- All 6 targeted Node tests and 3 live-release browser checks passed. The real
+  published 0.6.0.81 HTML was fetched and prepared (93.4 MB), with no browser
+  exceptions. The final file save was not tested; the system drive remains full.
+- Build-version (8), shipped-file (6), and About/changelog (279) checks passed.
+  The full Node suite below ran on 0.6.0.116, not 0.6.0.117.
+- [Live release ready to save](live-release-prepared.png)
+- [Phone-width live release](live-release-phone.png)
+
+## Previous full validation
+
 Build: **0.6.0.116**, rebased onto dev `bdc1374f` (including the armament kits).
 
 - Final standalone browser checks: **8 passed**, using the generated file with
