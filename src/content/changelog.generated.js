@@ -3,14 +3,24 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-951",
+    "id": "pr-949",
     "date": "2026-09-10",
     "group": "2026-09-10",
-    "summary": "Combat renders again on the development line",
-    "detail": "A merge on the development branch left the fight screen reading a setting that had been renamed, so entering combat produced a blank battlefield and an error banner. The two readings now name the live setting. This build also withdraws a second copy of the same frame-reuse work that pull request 939 had already landed, so the board keeps one way of redrawing a hit: the readouts change, the fighters stay put.",
-    "build": "0.6.0.132",
-    "pullRequest": 951,
-    "url": "https://github.com/cehinds/AshenSpire/pull/951"
+    "summary": "The tower reveals its menu from River Citadel",
+    "detail": "The title now opens outside an unlit River Citadel: the first activation lights the city, holds for a configurable pause, and fades into the entrance hall before the menu appears; Continue still resumes the saved game. The hall keeps its dark city behind the foreground doorway, a translucent backing keeps the wordmark readable, and the doorway breathes between full and 92% opacity on an eleven-second cycle. Reduced motion disables the idle effect and skips the entrance hold; Ambient Off disables the idle effect too. A Replay entrance control previews the sequence. Physical mobile Safari is untested.",
+    "build": "0.6.0.130",
+    "pullRequest": 949,
+    "url": "https://github.com/cehinds/AshenSpire/pull/949"
+  },
+  {
+    "id": "pr-953",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The test branch comes back when GitHub deletes it",
+    "detail": "The test → release promotion uses test as its pull request head, so the repository's \"Automatically delete head branches\" setting removed test on every promotion merge. A workflow now listens for that deletion and recreates test at release's tip (falling back to dev); nothing in the game changed.",
+    "build": "0.6.0.127",
+    "pullRequest": 953,
+    "url": "https://github.com/cehinds/AshenSpire/pull/953"
   },
   {
     "id": "pr-936",
