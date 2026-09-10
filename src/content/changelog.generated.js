@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-912",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The receipts pass that names itself",
+    "detail": "Nothing a player sees changes. Three merges had landed with no entry here, and the gate that catches exactly that reported all clear — because it measures the span between the test branch and the development branch, and the promotion that followed those merges closed the span before anything looked. A gate that the next legitimate action can silence is not a gate for that window, so this writes the three by hand and records why they were missed. It also adds the game's download weight to the readme, which described every other property of a build except the one a slow connection feels first.",
+    "build": "0.6.0.85",
+    "pullRequest": 912,
+    "url": "https://github.com/cehinds/AshenSpire/pull/912"
+  },
+  {
     "id": "pr-908",
     "date": "2026-09-10",
     "group": "2026-09-10",
