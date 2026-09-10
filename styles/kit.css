@@ -3038,3 +3038,16 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   .card-inspection-modal .card-inspection-layout { grid-template-columns:minmax(0,1fr); }
   .card-inspection-modal .card-inspection-art { width:100%; max-width:220px; }
 }
+/* Green means the primary action is ready; native/ARIA disabled states remain muted. */
+button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
+.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+  background:#255c39; border-color:#6fb580; color:#f0fff3;
+}
+button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover,
+.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover {
+  background:#306e46;
+}
+button.primary:disabled, button.primary[aria-disabled='true'],
+.as-btn.primary:disabled, .as-btn.primary[aria-disabled='true'] {
+  background:var(--panel); border-color:var(--line); color:var(--muted);
+}

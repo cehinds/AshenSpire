@@ -310,10 +310,14 @@ export function mountRewards(app, {
     // E11 dial: auto-collect takes the rest, manual leaves it) and how to press.
     const cont = button({
       label: 'Continue',
-      weight: 'primary', id: 'reward-continue', attrs: { 'aria-describedby': 'reward-hold-copy' },
+      weight: 'primary', id: 'reward-continue', attrs: {
+        'aria-describedby': 'reward-hold-copy',
+        'data-confirm-ready': String(plan.rows.every(row => states[row.kind] === 'taken' || states[row.kind] === 'skipped')),
+      },
     });
     const foot = modalFooter({
-      note: mode === 'auto' && pending.length ? 'Hold to continue — takes the rest' : 'Hold to continue — leaves the rest',
+      note: cont.dataset.confirmReady === 'true' ? 'Hold to continue — rewards complete'
+        : mode === 'auto' && pending.length ? 'Hold to continue — takes the rest' : 'Hold to continue — leaves the rest',
       primary: cont, className: 'reward-foot', size: 'medium',
     });
     const note = foot.querySelector('.modal-foot-note');
