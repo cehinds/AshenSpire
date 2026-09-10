@@ -17,6 +17,10 @@ at 28% brightness behind a foreground doorway. SVG display masks remove the
 outdoor opening from the original doorway paintings, preserving the original
 stonework, doors, lights and floor. The masks have matching landscape and
 portrait dimensions and use the same cover/crop behavior as their artwork.
+The interior city now uses an unlit variant with all windows, street lights
+and golden river reflections removed. The doorway sconces remain separate.
+A feathered, translucent dark backing fades in behind the ASHEN SPIRE wordmark
+on both title states; reduced motion shows it without animation.
 
 ## Artwork and prompts
 
@@ -50,6 +54,11 @@ WebP quality 90. Runtime assets are in `assets/bg/`.
 - **tower-door-mask.svg / tower-door-mask-phone.svg:** native display masks
   defining the transparent arch opening over the original hall paintings.
   Attempted raster cutouts returned painted checkerboards and are not used.
+- **tower-city-background-unlit.webp:** built-in image-generation lighting
+  edit of the city plate. Preserve camera, geometry, buildings, bridge and river;
+  extinguish every artificial light and remove gold reflections and floating
+  particles. Slightly darken ambient light, retain silhouettes and painterly
+  charcoal/umber palette, add no objects or UI. Converted to WebP quality 90.
 
 ## Validation
 

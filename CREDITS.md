@@ -159,3 +159,7 @@ the River Citadel concept and its derived hall. Exported to WebP at quality
 plate derived from the hall reference. The foreground retains the existing
 hall paintings with project-authored SVG display masks. City brightness is
 controlled independently from the doorway and sconces.
+
+`assets/bg/tower-city-background-unlit.webp` is a generated lighting edit of
+that city plate with artificial lights and their reflections removed, exported
+to WebP at quality 90 for the menu's separate background layer.
