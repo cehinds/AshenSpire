@@ -28,7 +28,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-10",
     "summary": "Ready actions stand out",
     "detail": "End Turn turns green when no affordable playable cards remain. Actions and Potions have larger controls beside compact Draw and Discard buttons. Green confirmations fade in smoothly over 480ms, rise slightly and grow subtly, with reduced-motion support. Hold feedback remains visible without interrupting the color fade. Ready modal confirmations fill their footer while Back and Cancel remain available.",
-    "build": "0.6.0.124",
+    "build": "0.6.0.123",
     "pullRequest": 940,
     "url": "https://github.com/cehinds/AshenSpire/pull/940"
   },
