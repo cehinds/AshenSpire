@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-919",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The game can now be handed over in a light form",
+    "detail": "The build has always been one enormous file with every picture packed inside it, which meant a phone downloaded fifty-eight megabytes before it could show anything — and downloaded all of it again on the next visit, because a picture buried in a page cannot be kept by the browser on its own. There is now a second form of the same build that leaves the pictures outside: under five megabytes to start, with art arriving as each screen needs it and staying cached afterwards. The old single file is unchanged and still the one to double-click with no internet; the new one needs to be served, so neither replaces the other. Both are built from one pass over the same artwork, so they cannot come to hold different pictures, and two new checks confirm the light form has every image it will ask for and that it really loads — one of them caught two faults that looked perfectly fine until a browser opened the page.",
+    "build": "0.6.0.107",
+    "pullRequest": 919,
+    "url": "https://github.com/cehinds/AshenSpire/pull/919"
+  },
+  {
     "id": "pr-891",
     "date": "2026-09-10",
     "group": "2026-09-10",
