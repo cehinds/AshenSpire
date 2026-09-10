@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-914",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The receipt chain closes on itself, again",
+    "detail": "Nothing a player sees changes. The pull request before this one wrote the receipt that was owed and then owed one itself, which is the seventh time that loop has been walked here — 714, 717, 718, 721, 726, 728 and now 913. What makes this one worth recording rather than merely fixing is that its own description promised to name itself and then did not: the intent was stated, the other receipt was written, and the self-reference was forgotten in the same breath. Knowing the escape is not the same as taking it. This entry and the one below it are written in a single commit, which is the only shape that ends the chain.",
+    "build": "0.6.0.86",
+    "pullRequest": 914,
+    "url": "https://github.com/cehinds/AshenSpire/pull/914"
+  },
+  {
+    "id": "pr-913",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The receipt #913 owed",
+    "detail": "Nothing a player sees changes. It wrote up the receipts pass that preceded it and, being a pull request itself, owed one in turn; this is that one.",
+    "build": "0.6.0.86",
+    "pullRequest": 913,
+    "url": "https://github.com/cehinds/AshenSpire/pull/913"
+  },
+  {
     "id": "pr-912",
     "date": "2026-09-10",
     "group": "2026-09-10",
