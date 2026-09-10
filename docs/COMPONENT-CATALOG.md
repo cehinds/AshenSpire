@@ -1,5 +1,12 @@
 # AshenSpire component catalog
 
+`offlinePlay.js` supplies the shared **Download & saves** modal, opened from
+Title and Settings (including in-run Settings). Release metadata supplies its
+version, size, and numbered download; `src/content/offlinePlay.js` owns the feed,
+instructions, and transfer limits. The save-transfer engine validates all slots
+before replacing storage and preserves a recovery copy. Import is available from
+Title, with a preview and confirmation. See [offline play](offline-play.md).
+
 All run maps share the vector face in `mapNodeInk.js`: opaque dark discs, readable
 glyphs, a pale current-node marker and reachable halos. `mapview.js` owns the
 node radii; `AtlasCameraModel.js` frames a journey junction using that same close-up
@@ -589,3 +596,4 @@ Selected content inspection: reward radio choices retain Information after Back 
 Relic reward rows open a collectible card and full effects before Take relic; Back leaves the reward pending. Map and combat relic slots open the same read-only collectible inspection. Playing-card inspection expands its text area and stacks card/details on phones so complete effects remain readable.
 
 Primary confirmation buttons use green when enabled and neutral styling when native or ARIA disabled. Reward Continue stays gold while any reward remains unresolved and turns green once all rows are taken or explicitly skipped; its existing hold and auto-collect behavior is preserved.
+Combatant overhead controls: `combatantOverhead.js` shares Information and enlarged intent between solo and co-op. The vertical stack anchors to visible idle artwork and collapses empty slots. Its selected outline precedes the configured tooltip delay for hover, touch, and focus. Information opens the existing detailed body; overhead input never bubbles into combat targeting.

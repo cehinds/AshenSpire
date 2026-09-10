@@ -29,6 +29,11 @@ export function paintedPresentation(classId, armourId = 'default', pose = 'stand
 
 // The reviewed frames share a 640px canvas, center 320 and floor 600.
 // Fit the tallest resting body to the stage; every action keeps that scale.
+// Frame warm-up happens once per stage for the life of the page, through the
+// bounded pose-preload cache shared with PoseAnimator (posePreloads.js). The
+// stage is rebuilt on every combat render, and each rebuild used to allocate
+// a fresh Image per outfit frame — nineteen per render for a painted class.
+
 export function createPaintedStage(classId, armourId = 'default', { still = false } = {}) {
   if (still) {
     const presentation = paintedPresentation(classId, armourId);

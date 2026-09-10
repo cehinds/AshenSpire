@@ -2,7 +2,7 @@
 export const COMBAT_LAYOUT = Object.freeze({ hud: 10, field: 45, hand: 30, controls: 15,
   friendly: .3, flex: .1, enemy: .6, rearScale: .8, rearClearance: 50 });
 
-export function combatFormation({ width, height, friends, enemies }) {
+export function combatFormation({ width, height, friends, enemies, footerClearance }) {
   const minimum = Math.max(72, Math.min(130, height * .38));
   const friendlyNeed = Math.max(0, friends.length * minimum - width * COMBAT_LAYOUT.friendly);
   const enemyNeed = Math.max(0, enemies.length * minimum - width * COMBAT_LAYOUT.enemy);
@@ -11,7 +11,7 @@ export function combatFormation({ width, height, friends, enemies }) {
   const enemyFlex = demand ? COMBAT_LAYOUT.flex * enemyNeed / demand : 0;
   const friendlyWidth = width * (COMBAT_LAYOUT.friendly + friendlyFlex);
   const enemyWidth = width * (COMBAT_LAYOUT.enemy + enemyFlex);
-  const ground = height - Math.min(102, height * .44);
+  const ground = height - (footerClearance ?? Math.min(102, height * .44));
   const group = (ids, left, span, right) => {
     const columns = Math.max(1, Math.ceil(ids.length / 2), Math.min(ids.length, Math.floor(span / minimum)));
     const cell = span / columns;

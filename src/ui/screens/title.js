@@ -13,6 +13,7 @@ import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
+import { offlinePlay } from '../../content/offlinePlay.js';
 
 let releaseActiveTitleBack = null;
 
@@ -33,6 +34,7 @@ export function mountTitle(app, {
   onHistory,
   onProfile,
   onSettings,
+  onOffline,
   onSettingsChange,
   onCollapse,
   onQuit,
@@ -94,6 +96,7 @@ export function mountTitle(app, {
         // #armaments remains the compatibility anchor for the existing watched probe.
         entry('Collection', 'collection', { id: 'armaments' }),
         entry('Settings', 'settings', { id: 'settings' }),
+        ...(onOffline ? [entry(offlinePlay.title, 'offline', { id: 'download-game' })] : []),
         entry('Quit', 'quit', { id: 'quit-game' }),
       ],
       attrs: { 'data-component': UI.titleBrandLockup },
@@ -246,6 +249,7 @@ export function mountTitle(app, {
         else if (action === 'new') openModal(action);
         else if (action === 'collection' && onCompendium) onCompendium();
         else if (action === 'settings') onSettings();
+        else if (action === 'offline') onOffline?.();
         else if (action === 'quit' && onQuit) onQuit();
         else if (action === 'close-modal' || action === 'back') closeModal();
         else if (action === 'modal-continue') openNewReview(selectionModel().properties.actionSlot);

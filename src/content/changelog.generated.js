@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-943",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combat draws less, and doors behave the same on every screen",
+    "detail": "Fights used to re-request every frame of your outfit's artwork on every beat of every animation — over two hundred picture requests per turn — and kept a document-wide watcher running for tooltips that were not even open. Both are gone, along with a few smaller drains: the hand is redrawn only when a card actually moves, the world atlas no longer hashes itself before the title can paint, fallen enemies stop bobbing, and the shrine lane's glow pulses without repainting the whole map each frame. Modals now share one way out: a tap that opens a door can no longer close it on release, Escape reaches the Load door wherever focus sits, and every door's height is measured against the same safe margins a notched phone needs. On a phone, a tooltip that has nothing to tap inside it no longer swallows the tap beneath it — the starting-equipment row in character creation could not be opened because the seed hint sat on top of it — and the smaller controls (card info buttons, sliders, toggles, the potion Use button, atlas tools) now honour your Minimum tap size. Event choices show their whole consequence instead of trailing off, and the Potions button's word fits its circle.",
+    "build": "0.6.0.121",
+    "pullRequest": 943,
+    "url": "https://github.com/cehinds/AshenSpire/pull/943"
+  },
+  {
+    "id": "pr-939",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combat renders lighter on phones, and the standalone ships smaller",
+    "detail": "Mobile combat used to recreate its frames, sprites and hand cards on every routine update; unchanged combatant frames, card nodes and their input bindings are now reused, card measurements are batched, and pose preloads share one bounded cache. Auto rendering picks Lite on a coarse pointer: no costly filters or cloned target silhouettes, a coloured target ring instead, enemy state art loaded on demand and faster pacing by default — Full rendering and explicit pacing stay available. The launcher builds the portable standalone and the external-art web edition, and unused equipment-component authoring assets no longer ship, so the standalone is 7.47 MB smaller. This is a DOM-churn measurement, not a physical-device frame rate.",
+    "build": "0.6.0.124",
+    "pullRequest": 939,
+    "url": "https://github.com/cehinds/AshenSpire/pull/939"
+  },
+  {
     "id": "pr-904",
     "date": "2026-09-10",
     "group": "2026-09-10",
@@ -31,6 +51,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.112",
     "pullRequest": 924,
     "url": "https://github.com/cehinds/AshenSpire/pull/924"
+  },
+  {
+    "id": "pr-929",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Download the game and move your saves",
+    "detail": "Open Download & saves from Title or Settings to choose a release, test, dev, or main HTML build, track download progress, and choose a save location in supported browsers. Export your profile and save slots together, preview imports, and retain a recovery backup before replacing local saves.",
+    "build": "0.6.0.119",
+    "pullRequest": 929,
+    "url": "https://github.com/cehinds/AshenSpire/pull/929"
   },
   {
     "id": "pr-919",

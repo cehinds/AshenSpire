@@ -1,3 +1,4 @@
+import { resolveLocationPresentation } from './model/locationPresentation.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -29,6 +30,8 @@ import { createCombat } from './engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode } from './engine/actmap.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
+import { createSaveTransfer } from './engine/saveTransfer.js';
+import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -1097,6 +1100,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     onCompendium: showCompendium,
     onProfile: showProfile,
     onSettings: showSettings,
+    onOffline: showOfflinePlay,
     onSettingsChange: persistSettingsChange,
     onCollapse: showCollapsedTitle,
     onQuit: quitGame,
@@ -1173,7 +1177,17 @@ function showSettings() {
   openSettings({
     meta: activeMeta,
     onChange: persistSettingsChange,
+    onOffline: showOfflinePlay,
   });
+}
+
+function showOfflinePlay() {
+  openOfflinePlay({ transfer: createSaveTransfer(bootStorage, registries), assertImportAllowed: () => {
+    if (run) throw new Error('Return to the title screen before importing saves.');
+    let persistent = false;
+    try { persistent = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
+    if (!persistent) throw new Error('This browser is not keeping saves. Enable browser storage and reopen the game before importing.');
+  } });
 }
 
 /**
@@ -1252,6 +1266,7 @@ function quitGame() {
 function showOverlay(initialTab = 'settings') {
   if (!run) return;
   openOverlay({
+    onOffline: showOfflinePlay,
     registries,
     run,
     meta: activeMeta,
@@ -1504,6 +1519,9 @@ function syncWorldPosition() {
   run.floor = run.mapGraph.nodes[j.currentNodeId].floor;
   run.actNumber = ATLAS.world[j.currentNodeId].difficultyAct;
   run.environmentRegionId = ATLAS.regionOf(j.currentNodeId);
+  run.locationPresentation = resolveLocationPresentation({ nodeId:j.currentNodeId, seedString:run.seedString,
+    timeId:run.presentationTimeId || 'day', weatherId:run.presentationWeatherId || 'any',
+    savedSceneId:run.locationPresentation?.nodeId === j.currentNodeId ? run.locationPresentation?.sceneId : undefined });
 }
 
 function enterWorldNode(nodeId) {
