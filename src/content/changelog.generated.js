@@ -3,12 +3,22 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-951",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "A hit redraws a health bar, not the whole battlefield",
+    "detail": "Every beat of a combat animation used to tear down and rebuild both sides of the board — every fighter's artwork, its pose stage, its controls and its tooltips — and then re-fit the formation, five times over a five-beat enemy turn. Now a beat changes only what a beat can change: the health, poise and block readouts, the status tray, and the player's stance and Evade chips; the fighters, their artwork and their controls stay where they are, and a wounded or fallen pose still follows the numbers. An enemy's death still redraws the board in full, as does the end of every animation, so nothing a player sees at rest has changed. Measured against three enemies over one turn: eight combatant frames created where there were thirty-six, and sixty-nine sprite images where there were three hundred.",
+    "build": "0.6.0.126",
+    "pullRequest": 951,
+    "url": "https://github.com/cehinds/AshenSpire/pull/951"
+  },
+  {
     "id": "pr-943",
     "date": "2026-09-10",
     "group": "2026-09-10",
     "summary": "Combat draws less, and doors behave the same on every screen",
-    "detail": "Fights used to re-request every frame of your outfit's artwork on every beat of every animation — over two hundred picture requests per turn — and kept a document-wide watcher running for tooltips that were not even open. Both are gone. The board itself is no longer torn down and rebuilt on every beat either: a hit now redraws a health bar, a badge or a status tray, and the fighters, their artwork and their controls stay put — so an enemy turn against three foes creates eight combatant frames where it created thirty-six. This lands along with a few smaller drains: the hand is redrawn only when a card actually moves, the world atlas no longer hashes itself before the title can paint, fallen enemies stop bobbing, and the shrine lane's glow pulses without repainting the whole map each frame. Modals now share one way out: a tap that opens a door can no longer close it on release, Escape reaches the Load door wherever focus sits, and every door's height is measured against the same safe margins a notched phone needs. On a phone, a tooltip that has nothing to tap inside it no longer swallows the tap beneath it — the starting-equipment row in character creation could not be opened because the seed hint sat on top of it — and the smaller controls (card info buttons, sliders, toggles, the potion Use button, atlas tools) now honour your Minimum tap size. Event choices show their whole consequence instead of trailing off, and the Potions button's word fits its circle.",
-    "build": "0.6.0.125",
+    "detail": "Fights used to re-request every frame of your outfit's artwork on every beat of every animation — over two hundred picture requests per turn — and kept a document-wide watcher running for tooltips that were not even open. Both are gone, along with a few smaller drains: the hand is redrawn only when a card actually moves, the world atlas no longer hashes itself before the title can paint, fallen enemies stop bobbing, and the shrine lane's glow pulses without repainting the whole map each frame. Modals now share one way out: a tap that opens a door can no longer close it on release, Escape reaches the Load door wherever focus sits, and every door's height is measured against the same safe margins a notched phone needs. On a phone, a tooltip that has nothing to tap inside it no longer swallows the tap beneath it — the starting-equipment row in character creation could not be opened because the seed hint sat on top of it — and the smaller controls (card info buttons, sliders, toggles, the potion Use button, atlas tools) now honour your Minimum tap size. Event choices show their whole consequence instead of trailing off, and the Potions button's word fits its circle.",
+    "build": "0.6.0.121",
     "pullRequest": 943,
     "url": "https://github.com/cehinds/AshenSpire/pull/943"
   },
