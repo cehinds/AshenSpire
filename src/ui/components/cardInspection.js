@@ -107,6 +107,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     });
     card.classList.add('inspection-selected');
     card.setAttribute('aria-current', 'true');
+    revealInfo();
     card.dispatchEvent(new CustomEvent('cardinspectionselect', { bubbles: true }));
   };
   card.addEventListener('cardholdstart', select);

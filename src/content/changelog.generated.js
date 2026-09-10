@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-10",
     "summary": "Configurable help across the combat screen",
     "detail": "Hover HUD labels, meters, Block, enemy intent, card costs, and inspector headings for explanations. Accessibility settings control hover visibility and opening/closing delays, with a half-second default. Shared data supplies the choices, timing, and help text; keyboard and explicit inspection remain available with hover off.",
-    "build": "0.6.0.98",
+    "build": "0.6.0.94",
     "pullRequest": 891,
     "url": "https://github.com/cehinds/AshenSpire/pull/891"
+  },
+  {
+    "id": "pr-905",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Inspect selected rewards and item choices",
+    "detail": "Selected reward cards keep their Information button visible, including after Back restores the choice. Keyboard focus and scrollable card rows retain room for inspection. Smith extraction and installation items, mounts, and deck cards can be inspected without confirming the service, with usable selection panes on phones.",
+    "build": "0.6.0.92",
+    "pullRequest": 905,
+    "url": "https://github.com/cehinds/AshenSpire/pull/905"
   },
   {
     "id": "pr-915",
