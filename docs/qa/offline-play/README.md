@@ -10,8 +10,9 @@ Build: **0.6.0.116**, rebased onto dev `bdc1374f` (including the armament kits).
   279 checks passed. Receipt and whitespace checks passed.
 - Pages metadata selftest passed both deliberate breakages. Its release metadata
   comes from the exact artifact rather than manually maintained sizes or links.
-- The full Node suite passed 138/0 before the final armament catch-up; the final
-  combined-tree suite is recorded separately when it completes.
+- The final combined-tree Node suite passed **138/0** (exit 0), including the
+  additional 704 armament class/loadout regression cases. The earlier pre-catch-up
+  full suite also passed 138/0.
 
 ## Download-test limitation
 
