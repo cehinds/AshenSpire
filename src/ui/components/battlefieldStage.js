@@ -34,6 +34,7 @@ export function wireBattlefieldStage(field, model) {
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length || fieldRect.width <= 0 || fieldRect.height <= 0) return;
     const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
+      footerClearance: window.innerHeight <= 480 && window.innerWidth >= 600 ? 48 : 64,
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
@@ -51,8 +52,17 @@ export function wireBattlefieldStage(field, model) {
       const geometry = combatSpriteGeometry(sprite, schedule);
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
+      const overhead = frame.querySelector('.combatant-leading');
+      const info = overhead.querySelector('.combatant-info');
+      // Reserve the full stack even while Information is collapsed. Selection
+      // must never change sprite proportions, feet, or health-bar positions.
+      const hiddenInfoHeight = info && getComputedStyle(info).display === 'none'
+        ? parseFloat(getComputedStyle(info).height) * zoom
+          + (overhead.querySelector('.intent') ? parseFloat(getComputedStyle(overhead).rowGap) * zoom : 0)
+        : 0;
       return { slot, frame, stack, sprite, ratio, ...geometry,
-        leading: Math.max(28, frame.querySelector('.combatant-leading').getBoundingClientRect().height) };
+        // Keep the overhead controls below the turn banner as well as the HUD.
+        leading: Math.max(28, overhead.getBoundingClientRect().height + hiddenInfoHeight) + 28 };
     });
     const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors });
     for (const actor of actors) {
@@ -70,6 +80,7 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.groundY = String(fieldRect.top + slot.ground);
       frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
       stack.style.top = `${local.top}px`;
+      frame.style.setProperty('--overhead-top', `${(paintedHeight - visibleHeight - 6) / zoom}px`);
       frame.dataset.combatantScale = '1';
       frame.dataset.spriteRatio = String(ratio);
       frame.dataset.spriteVisibleHeight = String(visibleHeight);

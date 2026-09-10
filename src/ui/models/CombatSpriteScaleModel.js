@@ -14,7 +14,9 @@ export function fitCombatSprites({ width, height, actors }) {
     const ratio = a.ratio * a.slot.depth;
     const maxHeight = Math.max(1, a.slot.ground - a.leading - 6);
     const maxWidth = Math.max(1, Math.min(a.slot.artWidth, width - 12));
-    base = Math.min(base, maxHeight * a.visibleHeight / a.boxHeight / ratio,
+    // Overhead controls anchor to the visible idle top, so transparent canvas
+    // padding must not consume the clearance a second time.
+    base = Math.min(base, maxHeight / ratio,
       maxWidth * a.visibleHeight / a.visibleWidth / ratio);
   }
   return actors.map(a => {
