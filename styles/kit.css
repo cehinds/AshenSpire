@@ -3043,15 +3043,15 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* Green means the primary action is ready; native/ARIA disabled states remain muted. */
 button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
 .as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
-  background:#255c39; border-color:#6fb580; color:#f0fff3;
+  background-color:#255c39; border-color:#6fb580; color:#f0fff3;
 }
 button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover,
 .as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover {
-  background:#306e46;
+  background-color:#255c39;
 }
 button.primary:disabled, button.primary[aria-disabled='true'],
 .as-btn.primary:disabled, .as-btn.primary[aria-disabled='true'] {
-  background:var(--panel); border-color:var(--line); color:var(--muted);
+  background-color:var(--panel); border-color:var(--line); color:var(--muted);
 }
 /* Modal height is independent of its standard width. Keep chrome pinned and
    let the body scroll at its natural text/art size. */
@@ -3062,7 +3062,7 @@ button.primary:disabled, button.primary[aria-disabled='true'],
 .as-pane > * { flex-shrink: 0; }
 .modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { white-space: normal; overflow-wrap: anywhere; }
 /* Ready actions rise slightly without moving surrounding layout. */
-button.primary, .as-btn.primary { transition:background 120ms, border-color 120ms, scale 160ms ease, translate 160ms ease, box-shadow 160ms ease; }
+button.primary, .as-btn.primary, button.primary.beat-hold, .as-btn.primary.beat-hold { transition:background-color 240ms ease, border-color 240ms ease, color 240ms ease, scale 240ms ease, translate 240ms ease, box-shadow 240ms ease; }
 button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
 .as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
   scale:1.015; translate:0 -2px; box-shadow:0 4px 10px #0005;
@@ -3077,9 +3077,17 @@ button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-read
 .modal-foot-actions > .primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
   grid-column:1 / -1; order:1; width:100%; max-width:none; min-width:0;
 }
-@media (prefers-reduced-motion:reduce) { button.primary, .as-btn.primary { transition:none; } }
+@media (prefers-reduced-motion:reduce) { button.primary, .as-btn.primary, button.primary.beat-hold, .as-btn.primary.beat-hold { transition:none; } }
 body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transition:none; }
 /* Pending confirmations keep their explanatory text even on narrow screens. */
 .modal-foot:not(:has(> .modal-foot-actions > .primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']))) { flex-wrap:wrap; }
 .modal-foot:not(:has(> .modal-foot-actions > .primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']))) > .modal-foot-note { display:block; flex:1 1 100%; }
 .modal-foot > .modal-foot-note > span { visibility:visible; white-space:normal; overflow:visible; }
+/* Redrawn ready controls fade in too; hold progress itself remains uneased. */
+@starting-style {
+  button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
+  .as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+    background-color:color-mix(in srgb, var(--gold) 20%, var(--panel));
+    border-color:var(--gold); scale:1; translate:0 0; box-shadow:none;
+  }
+}
