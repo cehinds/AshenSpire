@@ -32,6 +32,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-10
 
+- **Every armament brings a complete combat kit** ([#904](https://github.com/cehinds/AshenSpire/pull/904), `0.6.0.115`). Weapons, shields, and staves each lend a Strike, Guard, and signature Art. Shields can attack beside a weapon; Guardian creates an Exhausting Bulwark skill, Bastion trades offense for Block, and Spiked Reprisal combines defence with Bleed. Equipment previews show the actual contributions, and solo/co-op fights retain their ownership and upgrade data.
 - **A city spire welcomes each journey** ([#931](https://github.com/cehinds/AshenSpire/pull/931), `0.6.0.113`). Replace the startup and main-menu backdrop with a painted medieval city and central tower in muted gold and charcoal. Keep the title centered and readable on phones and larger screens; ship the artwork as compact WebP.
 
 - **Relics open as cards before you take them** ([#924](https://github.com/cehinds/AshenSpire/pull/924), `0.6.0.112`). Relic rewards show their card and full effects with Back and Take controls. Owned relics also open a card inspection from the map and combat HUD. Inspected playing cards show complete effect text, with card and details stacked on phones. Valid confirmation buttons turn green; reward Continue turns green after every reward is collected or explicitly skipped.
