@@ -32,6 +32,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-10
 
+- **Combatants share clear overhead controls** ([#938](https://github.com/cehinds/AshenSpire/pull/938), `0.6.0.116`). Solo and co-op combatants gain Information and larger intent controls with delayed tooltips and aligned sprite framing.
+- **Information follows combatant selection** ([#945](https://github.com/cehinds/AshenSpire/pull/945), `0.6.0.119`). Combatant Information matches card styling and appears on selection while preserving sprite size, foot positions, and health bars.
+
 - **Ready actions stand out** ([#940](https://github.com/cehinds/AshenSpire/pull/940), `0.6.0.122`). End Turn turns green when no affordable playable cards remain. Actions and Potions have larger controls beside compact Draw and Discard buttons. Green confirmations fade in smoothly over 480ms, rise slightly and grow subtly, with reduced-motion support. Hold feedback remains visible without interrupting the color fade. Ready modal confirmations fill their footer while Back and Cancel remain available.
 
 

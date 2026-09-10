@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-938",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combatants share clear overhead controls",
+    "detail": "Solo and co-op combatants gain Information and larger intent controls with delayed tooltips and aligned sprite framing.",
+    "build": "0.6.0.116",
+    "pullRequest": 938,
+    "url": "https://github.com/cehinds/AshenSpire/pull/938"
+  },
+  {
+    "id": "pr-945",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Information follows combatant selection",
+    "detail": "Combatant Information matches card styling and appears on selection while preserving sprite size, foot positions, and health bars.",
+    "build": "0.6.0.119",
+    "pullRequest": 945,
+    "url": "https://github.com/cehinds/AshenSpire/pull/945"
+  },
+  {
+    "id": "pr-940",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Ready actions stand out",
+    "detail": "End Turn turns green when no affordable playable cards remain. Actions and Potions have larger controls beside compact Draw and Discard buttons. Green confirmations fade in smoothly over 480ms, rise slightly and grow subtly, with reduced-motion support. Hold feedback remains visible without interrupting the color fade. Ready modal confirmations fill their footer while Back and Cancel remain available.",
+    "build": "0.6.0.122",
+    "pullRequest": 940,
+    "url": "https://github.com/cehinds/AshenSpire/pull/940"
+  },
+  {
     "id": "pr-904",
     "date": "2026-09-10",
     "group": "2026-09-10",
