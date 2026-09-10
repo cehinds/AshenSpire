@@ -35,6 +35,14 @@ build/components/
 # this one is 49 MB per build. CI rebuilds it; nobody commits it.
 build/web/
 
+# preview/ — what .github/workflows/dev-preview.yml assembles and uploads. It
+# has always been created by that workflow; it is named here because the
+# de-inlined build made it worth reproducing locally, and it is now ~123 MB
+# (a 5 MB de-inlined build beside its art, plus the 57.6 MB standalone in
+# preview/standalone/). CI builds it fresh every run; committing it would put
+# a third copy of the art in git.
+preview/
+
 # dist: keep the stable standalone (dist/AshenSpire.html — the root README links
 # it as the canonical twin of the root current-build alias); the version-stamped copies the launcher emits are build
 # artifacts. The name here MUST match what tools/launch.mjs:53 writes: this rule

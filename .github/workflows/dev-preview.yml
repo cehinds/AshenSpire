@@ -41,18 +41,6 @@ jobs:
       # execution, no browser, <1s) runs on every PR: any NEW drifted
       # find-string fails here the day the refactor lands, and the checked-in
       # baseline holds the known backlog to exactly itself.
-      # THE DE-INLINED BUILD'S ART IS ON DISK, NOT IN THE HTML — so the guard
-      # that reads the shipped file cannot see it. verify-shipped.mjs still
-      # covers the single file (its art is inside it and nothing here changed
-      # that); these two cover the other shape, and they cover it at two
-      # depths because a disk check and a browser disagree about what "present"
-      # means. Both defects this build actually had — CSS urls rebased to
-      # `../../assets/…`, and map-detail never copied — were green on disk.
-      - name: The de-inlined build carries every asset it will ask for
-        run: node tools/verdict.mjs -- node tools/verify-external.mjs --dir preview
-      - name: That gate still catches its own known-bads
-        run: node tools/verdict.mjs -- node tools/verify-external.mjs --selftest
-
       - name: No plant site has drifted beyond the recorded baseline
         run: node tools/plantsites.mjs --check
 
@@ -181,6 +169,28 @@ jobs:
             echo "dev has no hosted URL."
           } > preview/README.txt
           echo "collected $(find preview -type f | wc -l) files"
+
+      # AFTER "Collect the playable build", BECAUSE THAT STEP CREATES preview/.
+      # These sat before it on the first cut and CI went red with "no build at
+      # preview/AshenSpire.html" — the gate refusing a directory that did not
+      # exist yet, which is the right behaviour and the wrong placement.
+      #
+      # --dir is passed to the selftest too. It plants into a COPY of whatever
+      # --dir names; without it the selftest looks for build/web, which this
+      # job never builds, and exits 2 — "the harness could not run", which
+      # blocks without measuring anything.
+      #
+      # The de-inlined build's art is on disk, not in the HTML, so the guard
+      # that reads the shipped file cannot see it. verify-shipped.mjs still
+      # covers the single file (its art is inside it, and nothing here changed
+      # that); these cover the other shape. Both defects this build actually
+      # had — CSS urls rebased to `../../assets/…`, and map-detail never copied
+      # — were green on disk, which is why the browser-gates job carries a
+      # third check rather than these two standing alone.
+      - name: The de-inlined build carries every asset it will ask for
+        run: node tools/verdict.mjs -- node tools/verify-external.mjs --dir preview
+      - name: That gate still catches its own known-bads
+        run: node tools/verdict.mjs -- node tools/verify-external.mjs --selftest --dir preview
 
       - uses: actions/upload-artifact@v4
         with:
