@@ -3079,3 +3079,7 @@ button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-read
 }
 @media (prefers-reduced-motion:reduce) { button.primary, .as-btn.primary { transition:none; } }
 body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transition:none; }
+/* Pending confirmations keep their explanatory text even on narrow screens. */
+.modal-foot:not(:has(> .modal-foot-actions > .primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']))) { flex-wrap:wrap; }
+.modal-foot:not(:has(> .modal-foot-actions > .primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']))) > .modal-foot-note { display:block; flex:1 1 100%; }
+.modal-foot > .modal-foot-note > span { visibility:visible; white-space:normal; overflow:visible; }
