@@ -52,8 +52,9 @@ try {
       if (build === 'heavy') {
         check(await evaluate('document.querySelector("#equipment-preview").textContent.includes("Total weight 20 (heavy)")'), `${shape.name}: default equipment receipt derives heavy load`);
         await configureEquipment({ armor: 'empty', grip: 'oneHand', rune: 'on' });
-        check(await evaluate('document.querySelector("#equipment-preview").textContent.includes("18 strength") && document.querySelector("#equipment-preview").textContent.includes("Dodge 1 stamina")'), `${shape.name}: grip requirement and lighter Dodge shown before payment`);
+        check(await evaluate('document.querySelector("#equipment-preview").textContent.includes("18 strength") && document.querySelector("#equipment-preview").textContent.includes("Dodge 1 stamina")'), `${shape.name}: grip requirement and lighter Dodge shown before payment; ${await evaluate('document.querySelector("#test-error").textContent || document.querySelector("#equipment-preview").textContent')}`);
         check(await evaluate('document.querySelector("#equipment-preview").textContent.includes("125 cinders")'), `${shape.name}: socketed rune adds its value once`);
+        if (shape.mobile) await evaluate('document.querySelector("#equipment-preview").scrollIntoView({block:"center"})');
         await capture('equipment-options');
         await click('.test-start');
         await until('!!window.__combat?.foundation && document.querySelectorAll(".hand .card").length===5');
@@ -73,6 +74,16 @@ try {
         await configureEquipment({ rune: 'on' });
         check(await evaluate('document.querySelector(".test-start").disabled && document.querySelector("#test-error").textContent.includes("incompatible rune")'), `${shape.name}: weapon rune cannot attach to casting focus`);
         await configureEquipment({ rune: '' });
+      }
+      if (process.argv.includes('--equipment-only')) {
+        if (build !== 'heavy') {
+          await click('.test-start');
+          await until('!!window.__combat?.foundation && document.querySelectorAll(".hand .card").length===5');
+          check(await evaluate(`window.__combat.foundation.profiles.player.sources.mainHand.sourceType===${JSON.stringify(build === 'caster' ? 'spell' : 'weapon')}`), `${shape.name}/${build}: correct attack source in battlefield`);
+          check(await evaluate(`window.__combat.foundation.profiles.player.sources.mainHand.tags.includes('theme:blood')===${build === 'bleed'}`), `${shape.name}/${build}: rune theme follows its equipped source`);
+        }
+        check(await evaluate('JSON.stringify({...localStorage})') === storage, `${shape.name}/${build}: equipment experiment leaves saves unchanged`);
+        continue;
       }
       await click('.test-start');
       await until('!!window.__combat?.foundation && document.querySelectorAll(".hand .card").length===5');
@@ -251,4 +262,4 @@ try {
   await Promise.race([send('Browser.close').catch(() => {}), wait(1200)]); ws.close(); await browser.close();
   server.server.closeAllConnections?.(); await new Promise((done) => server.server.close(done));
 }
-console.log(`${checks} game test-build browser checks passed. Route continuation uses an explicit low-HP fixture; this is not a full-run balance test.`);
+console.log(`${checks} game test-build browser checks passed. ${process.argv.includes('--equipment-only') ? 'Focused equipment setup and Dodge checks only.' : 'Route continuation uses an explicit low-HP fixture; this is not a full-run balance test.'}`);

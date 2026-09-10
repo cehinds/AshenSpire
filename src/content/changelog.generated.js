@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-936",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Compare equipment in the combat test",
+    "detail": "Choose armor, weapon grip, and a Blood Rune before a test route. The preview shows armor, weight, Dodge stamina, grip requirements, weapon impact, and rune-inclusive value. The chosen equipment supplies the real fight's defense and attack properties; incompatible grips and runes explain why they cannot be used. This remains an isolated equipment experiment with fixed resource caps, not production loot or inventory migration.",
+    "build": "0.6.0.110",
+    "pullRequest": 936,
+    "url": "https://github.com/cehinds/AshenSpire/pull/936"
+  },
+  {
     "id": "pr-919",
     "date": "2026-09-10",
     "group": "2026-09-10",

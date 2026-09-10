@@ -20,7 +20,7 @@ export const prototypeEquipmentRules = {
     robes: { name: 'Robe test set', weight: 1, armor: 5, value: 30 },
     empty: { name: 'No armor', weight: 0, armor: 0, value: 0 },
   },
-  bloodRune: { name: 'Blood Rune', families: ['blade'], tags: ['theme:blood'], buildup: [{ status: 'bleed', amount: 1 }], value: 25 },
+  bloodRune: { name: 'Blood Rune', scope: 'source', families: ['blade'], tags: ['theme:blood'], buildup: [{ status: 'bleed', amount: 1 }], value: 25 },
   weaponValue: 100,
 };
 

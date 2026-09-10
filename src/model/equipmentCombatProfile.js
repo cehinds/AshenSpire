@@ -6,6 +6,7 @@ export function deriveEquipmentCombatProfile(equipment, rules, config) {
   const fail = (message) => { throw new Error(`Equipment: ${message}`); };
   const number = (value, path, min = 0) => assertNumber(value, `Equipment.${path}`, min);
   if (!equipment || !Array.isArray(equipment.items)) fail('items must be an array');
+  if (!Array.isArray(config?.runeTags) || !Array.isArray(config?.buildupStatuses)) fail('rune tag/status registries required');
   number(config?.oneHandStrengthMultiplier, 'oneHandStrengthMultiplier', 1);
   if (!Array.isArray(config.loadBands) || !config.loadBands.length) fail('load bands required');
   let previous = -1;
@@ -17,7 +18,7 @@ export function deriveEquipmentCombatProfile(equipment, rules, config) {
   if (config.loadBands[0].minimum !== 0) fail('load bands must start at zero');
   const items = new Map(), runeIds = new Set();
   for (const item of equipment.items) {
-    if (!item?.instanceId || items.has(item.instanceId)) fail('duplicate or missing item instance');
+    if (typeof item?.instanceId !== 'string' || !item.instanceId || items.has(item.instanceId)) fail('duplicate or missing item instance');
     if (!['armament', 'armor'].includes(item.kind)) fail(`${item.instanceId}: unknown kind`);
     if (!item.itemId || !item.name) fail(`${item.instanceId}: catalog identity required`);
     number(item.weight, `${item.instanceId}.weight`);
@@ -26,8 +27,9 @@ export function deriveEquipmentCombatProfile(equipment, rules, config) {
     if (!quality || !Number.isInteger(quality.sockets) || quality.sockets < 0) fail(`${item.instanceId}: invalid quality`);
     if (!Array.isArray(item.runes) || item.runes.length > quality.sockets) fail(`${item.instanceId}: socket capacity exceeded`);
     for (const rune of item.runes) {
-      if (!rune?.instanceId || runeIds.has(rune.instanceId)) fail('duplicate or missing rune instance');
+      if (typeof rune?.instanceId !== 'string' || !rune.instanceId || runeIds.has(rune.instanceId)) fail('duplicate or missing rune instance');
       runeIds.add(rune.instanceId);
+      if (rune.scope !== 'source') fail(`${rune.instanceId}: unsupported rune scope`);
       if (!Array.isArray(rune.families) || !rune.families.includes(item.family)) fail(`${item.instanceId}: incompatible rune`);
       number(rune.value, `${rune.instanceId}.value`);
       if (!Array.isArray(rune.tags) || rune.tags.some(tag => !config.runeTags.includes(tag))) fail(`${rune.instanceId}: unregistered rune tag`);

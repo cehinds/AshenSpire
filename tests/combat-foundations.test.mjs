@@ -71,6 +71,9 @@ test('runes obey quality sockets, compatibility and configured tag/status regist
   equipment.items[0].quality = 'standard';
   assert.throws(() => deriveGear(equipment), /socket capacity/);
   equipment.items[0].quality = 'fine';
+  equipment.items[0].runes[0].scope = 'actor';
+  assert.throws(() => deriveGear(equipment), /unsupported rune scope/);
+  equipment.items[0].runes[0].scope = 'source';
   equipment.items[0].runes[0].tags.push('invented:tag');
   assert.throws(() => deriveGear(equipment), /unregistered rune tag/);
   equipment.items[0].runes[0].tags.pop(); equipment.items[0].runes[0].buildup[0].status = 'invented';
