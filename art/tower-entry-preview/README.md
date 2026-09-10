@@ -1,8 +1,10 @@
 # Tower entrance preview
 
 Local concept on `codex/tower-entry-preview`; not promoted to dev, test or release.
-The initial prompt starts a 1.6-second sequence: River Citadel lights awaken,
-then the scene crossfades into the hall. Darker overlays improve menu readability.
+The initial prompt lights River Citadel over 560ms, holds the fully lit city,
+then crossfades into the hall over 880ms. Settings > Game > Lit city pause
+offers 0s, 0.3s, 0.5s (default), 1s and 2s. The setting persists between visits.
+Reduced motion skips the hold. Darker layers improve menu readability.
 The real menu then mounts. Continue retains its existing save-resume action.
 Replay entrance returns to the initial prompt; reduced motion skips the movement.
 

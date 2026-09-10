@@ -3098,17 +3098,17 @@ button.primary:disabled, button.primary[aria-disabled='true'],
 .startup-gate.is-revealing { opacity: 1; }
 .startup-gate.is-revealing > .as-titlemenu,
 .startup-gate.is-revealing > .build-stamp { animation: towerLockupAway 380ms ease both; }
-.startup-gate.is-revealing .tower-city-lit { animation: towerLightsWake 1600ms ease both; }
-.startup-gate.is-revealing .tower-exterior { animation: towerExteriorFade 1600ms ease both; }
-.startup-gate.is-revealing .tower-hall { animation: towerHallFade 1600ms ease both; }
+.startup-gate.is-revealing .tower-city-lit { animation: towerLightsWake var(--tower-light-ms) ease both; }
+.startup-gate.is-revealing .tower-exterior { animation: towerExteriorFade var(--tower-fade-ms) ease var(--tower-fade-delay) both; }
+.startup-gate.is-revealing .tower-hall { animation: towerHallFade var(--tower-fade-ms) ease var(--tower-fade-delay) both; }
 @keyframes towerLockupAway { to { opacity: 0; } }
-@keyframes towerLightsWake { 0% { opacity: 0; } 35%, 100% { opacity: 1; } }
+@keyframes towerLightsWake { from { opacity: 0; } to { opacity: 1; } }
 @keyframes towerExteriorFade {
-  0%, 45% { opacity: 1; }
+  0% { opacity: 1; }
   100% { opacity: 0; }
 }
 @keyframes towerHallFade {
-  0%, 45% { opacity: 0; }
+  0% { opacity: 0; }
   100% { opacity: 1; }
 }
 .title-screen { background: #080705; }

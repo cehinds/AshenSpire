@@ -69,6 +69,10 @@ export function mountStartupGate(app, {
     </section>`;
 
   const root = app.querySelector('.startup-gate');
+  const { lightUpMs, holdMs, fadeMs } = properties.entrance;
+  root.style.setProperty('--tower-light-ms', `${lightUpMs}ms`);
+  root.style.setProperty('--tower-fade-ms', `${fadeMs}ms`);
+  root.style.setProperty('--tower-fade-delay', `${lightUpMs + holdMs}ms`);
   const prompt = root.querySelector('.startup-prompt');
   let family = properties.inputFamily;
   let armed = null;
@@ -93,7 +97,7 @@ export function mountStartupGate(app, {
     root.classList.toggle('tower-calm', reducedMotion);
     // Retain the input gate until the hall fade completes so the activation
     // gesture cannot fall through to Continue/New on the revealed menu.
-    const delay = reducedMotion ? 140 : 1600;
+    const delay = reducedMotion ? 140 : lightUpMs + holdMs + fadeMs;
     revealTimer = setTimeout(() => {
       revealTimer = null;
       teardown(true);
