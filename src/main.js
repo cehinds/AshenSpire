@@ -1049,7 +1049,7 @@ function showStartupGate({ forcedFamily = '' } = {}) {
   audio.music('title');
   const family = startupInputFamily(forcedFamily);
   unmountStartupGate = mountStartupGate(app, {
-    model: startupGateModel({ inputFamily: family }),
+    model: startupGateModel({ inputFamily: family, settings: activeSettings }),
     registerInputGate: setInputGate,
     onReveal: ({ family }) => {
       startupGatePending = false;
