@@ -2,6 +2,7 @@ import {combatPoseAttachment,COMBATANT_EFFECT_PLANES,ATTACHMENT_SIZE} from '../c
 import {combatEffectFrames} from './assets.js';
 import {combatEffectOpacity} from '../content/combatEffectPresentation.js';
 import {reducedMotionRequested} from './motion.js';
+import { hintImage } from './imageHints.js';
 const visiblePose=stage=>stage.querySelector('.studio-pose-frame')?.dataset.pose||stage.dataset.pose;
 
 // Mount inside the pose's 640px canvas: character transforms, zoom and facing
@@ -10,7 +11,7 @@ export function mountCombatantEffectLayers(host,kind,{actor,pose='idle',anchor='
  if(!host||!frames.length||!combatPoseAttachment(actor,pose,anchor))return null;
  const state={actor,pose,anchor,opacity,scale,behind:true,front:true};
  const nodes=COMBATANT_EFFECT_PLANES.map(part=>{
-  const el=document.createElement('img');el.className='combatant-effect-layer';el.alt='';el.setAttribute('aria-hidden','true');el.dataset.effect=kind;el.dataset.plane=part.plane;
+  const el=hintImage(document.createElement('img'));el.className='combatant-effect-layer';el.alt='';el.setAttribute('aria-hidden','true');el.dataset.effect=kind;el.dataset.plane=part.plane;
   Object.assign(el.style,{position:'absolute',pointerEvents:'none',maxWidth:'none',maxHeight:'none',aspectRatio:'1',objectFit:'contain',zIndex:part.plane==='behind'?'-1':'2',maskImage:part.mask,webkitMaskImage:part.mask});host.append(el);return {el,part};
  });
  let stopped=false;

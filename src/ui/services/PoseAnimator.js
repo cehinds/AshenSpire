@@ -22,6 +22,7 @@
 import { POSE_CANVAS, POSE_DIR, POSE_FRAMES, POSE_STRIP } from '../../content/poseSprites.js';
 import { assetUrl } from '../assetmap.js';
 import { reducedMotionRequested } from '../motion.js';
+import { hintImage } from '../imageHints.js';
 
 const key = (classId, pose, tint) => `${classId}_${pose}_${tint}`;
 
@@ -87,7 +88,7 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
   layer.style.top = `${100 - (idle.g / figureH) * 100}%`;
   layer.style.transform = `translateX(${-(idle.rx / cw) * 100}%)`;
 
-  const img = document.createElement('img');
+  const img = hintImage(document.createElement('img'));
   img.className = 'pose-frame';
   img.alt = classId;
   img.draggable = false;

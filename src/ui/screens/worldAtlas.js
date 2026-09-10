@@ -12,6 +12,7 @@ import {
 } from "../../model/worldAtlas.js";
 import { esc } from "../components/tooltip.js";
 import { assetUrl } from "../assetmap.js";
+import { imageHintAttrs } from "../imageHints.js";
 import { nodeIcon } from '../uiContent.js';
 import { mapNodeInk } from '../components/mapNodeInk.js';
 import { nodeRadius } from '../../model/mapview.js';
@@ -60,7 +61,7 @@ export function mountWorldAtlas(
     const n = a.nodes[id],
       v = pos[id];
     return n.landmarkAssetId
-      ? `<img src="${esc(uri(n.landmarkAssetId))}" alt=""/>`
+      ? `<img${imageHintAttrs()} src="${esc(uri(n.landmarkAssetId))}" alt=""/>`
       : `<svg viewBox="${v.x * 1000 - 65} ${v.y * 1000 - 75} 130 130" aria-hidden="true"><image href="${esc(art)}" width="1000" height="1000"/></svg>`;
   };
   app.innerHTML = `<section class="mapscreen world-atlas-screen"><header class="atlas-header"><div><span class="atlas-eyebrow">WORLD JOURNEY · ${esc(p.displayName)}</span><h1>${esc(map.displayName)}</h1></div><div class="atlas-header-actions"><span class="atlas-vitals">${run.hp} / ${run.maxHp} HP · ${run.cinders} cinders</span>${button("Armoury", "data-atlas-armoury")}${button("Menu", "data-atlas-menu")}${button("Save & quit", "data-atlas-quit")}</div></header>
