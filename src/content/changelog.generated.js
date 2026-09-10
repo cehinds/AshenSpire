@@ -13,6 +13,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/943"
   },
   {
+    "id": "pr-945",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combatant Information follows your selection",
+    "detail": "The Information button matches the gold-ring card motif and appears only above the selected combatant. Intent stays visible; changing selection preserves sprite size, foot positions, and health-bar alignment in solo and co-op.",
+    "build": "0.6.0.119",
+    "pullRequest": 945,
+    "url": "https://github.com/cehinds/AshenSpire/pull/945"
+  },
+  {
+    "id": "pr-938",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combatants show larger intents and delayed Information",
+    "detail": "Intent and Information share a compact vertical stack above each sprite. Hover, touch, and keyboard selection highlight the control before its delayed explanation. End Turn stays gold while playable cards remain and turns green when none can be played.",
+    "build": "0.6.0.116",
+    "pullRequest": 938,
+    "url": "https://github.com/cehinds/AshenSpire/pull/938"
+  },
+  {
     "id": "pr-904",
     "date": "2026-09-10",
     "group": "2026-09-10",
