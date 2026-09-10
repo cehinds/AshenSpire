@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `ca468feb062965716e3f049e9352a10bab5d990c`
+- Source commit: `85c66b9b08fc10c03f4ecdcdf6315c2c46dbad09`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -21,17 +21,17 @@
 
 | Area | Path | Tracked files |
 |---|---|---:|
-| Domain models and contracts | `src/model/` | 64 |
-| Headless simulation/services | `src/engine/` | 13 |
+| Domain models and contracts | `src/model/` | 65 |
+| Headless simulation/services | `src/engine/` | 14 |
 | Screen presenters/hosts | `src/ui/screens/` | 24 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
 | Component models and behavior records | `src/ui/models/` | 27 |
-| DOM components and observer adapters | `src/ui/components/` | 64 |
-| Code-side content adapters | `src/content/` | 83 |
+| DOM components and observer adapters | `src/ui/components/` | 65 |
+| Code-side content adapters | `src/content/` | 84 |
 | Authoritative JSON/CSV content | `content/source/` | 22 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 56 |
-| Architecture/tooling | `tools/` | 342 |
+| Tests | `tests/` | 57 |
+| Architecture/tooling | `tools/` | 343 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **5206**.
-Extensions: `.bat` 1, `.cjs` 9, `.cmd` 1, `.css` 13, `.csv` 21, `.gitattributes` 1, `.gitignore` 7, `.html` 48, `.js` 354, `.json` 112, `.log` 23, `.md` 114, `.mjs` 329, `.nojekyll` 1, `.png` 1346, `.ps1` 1, `.py` 7, `.sh` 4, `.sql` 1, `.svg` 11, `.txt` 12, `.webp` 2784, `.yml` 5, `(none)` 1.
+Tracked files: **5221**.
+Extensions: `.bat` 1, `.cjs` 9, `.cmd` 1, `.css` 13, `.csv` 21, `.gitattributes` 1, `.gitignore` 7, `.html` 48, `.js` 358, `.json` 112, `.log` 23, `.md` 116, `.mjs` 331, `.nojekyll` 1, `.png` 1353, `.ps1` 1, `.py` 7, `.sh` 4, `.sql` 1, `.svg` 11, `.txt` 12, `.webp` 2784, `.yml` 5, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
