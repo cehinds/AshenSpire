@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { contentBundle } from '../src/content/index.js';
+import { contentBundle as shippedBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
@@ -17,6 +17,20 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
 
+// Fixed four-slot migration corpus: preserve its pre-kit catalogue. The shipped
+// kit composer is covered exhaustively by tests/armament-combat-kits.test.mjs.
+const contentBundle = { ...shippedBundle, equipment: { ...shippedBundle.equipment,
+  armaments: shippedBundle.equipment.armaments.map(piece => {
+    const copy = { ...piece };
+    if (copy.weaponCardPackage?.combatKit) {
+      if (['katana', 'greatsword'].includes(piece.id)) {
+        const { combatKit, ...pkg } = copy.weaponCardPackage;
+        copy.weaponCardPackage = pkg;
+      } else delete copy.weaponCardPackage;
+    }
+    return copy;
+  }),
+} };
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const baseRegistries = createRegistries(contentBundle);
 const ownsEverything = { has: () => true };

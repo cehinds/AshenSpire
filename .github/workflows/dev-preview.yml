@@ -30,6 +30,9 @@ jobs:
         with:
           node-version: '22.14.0'
 
+      - name: Complete armament kits and temporary Guardian skill
+        run: node tests/armament-combat-kits.test.mjs
+
       - name: Combat formations and painted ground
         run: node --test tests/combat-formation.test.mjs tests/environment-art.test.mjs tests/map-detail.test.mjs tests/map-presentation.test.mjs tests/local-map.test.mjs
 
@@ -130,6 +133,7 @@ jobs:
           cp -r src preview/src
           cp world-atlas-preview.html preview/
           cp equipment-selection-preview.html preview/
+          cp armament-kits-preview.html preview/
           cp tools/serve-preview.mjs preview/serve-preview.mjs
           cp -r styles preview/styles
           cp -r assets/environments preview/assets/
@@ -138,6 +142,7 @@ jobs:
           cp -r docs/preview/combat-ground preview/docs/preview/
           cp -r docs/preview/combat-formation preview/docs/preview/
           cp -r docs/preview/starting-equipment preview/docs/preview/
+          cp -r docs/preview/armament-kits preview/docs/preview/
           cp -r pose-studio preview/pose-studio
           cp -r assets/pose-effects preview/assets/
           cp -r art/pose-studio preview/art/
@@ -154,6 +159,7 @@ jobs:
             echo "Open AshenSpire.html locally to play this exact commit."
             echo "For the equipment review, run node serve-preview.mjs in this folder."
             echo "Then open http://127.0.0.1:8318/equipment-selection-preview.html."
+            echo "For all 25 armament kits and disposable combat, open http://127.0.0.1:8318/armament-kits-preview.html."
             echo "Use its class and screen-size controls to test hand choices and Continue."
             echo "Equipment screenshots and QA: docs/preview/starting-equipment/index.html."
             echo "Run node pose-studio/server.mjs for the standalone editor at http://127.0.0.1:4318."

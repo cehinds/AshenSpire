@@ -32,7 +32,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-10
 
-- **Compare equipment in the combat test** ([#936](https://github.com/cehinds/AshenSpire/pull/936), `0.6.0.114`). Choose armor, weapon grip, and a Blood Rune before a test route. The preview shows armor, weight, Dodge stamina, grip requirements, weapon impact, and rune-inclusive value. The chosen equipment supplies the real fight's defense and attack properties; incompatible grips and runes explain why they cannot be used. This remains an isolated equipment experiment with fixed resource caps, not production loot or inventory migration.
+- **Compare equipment in the combat test** ([#936](https://github.com/cehinds/AshenSpire/pull/936), `0.6.0.116`). Choose armor, weapon grip, and a Blood Rune before a test route. The preview shows armor, weight, Dodge stamina, grip requirements, weapon impact, and rune-inclusive value. The chosen equipment supplies the real fight's defense and attack properties; incompatible grips and runes explain why they cannot be used. This remains an isolated equipment experiment with fixed resource caps, not production loot or inventory migration.
+
+- **Every armament brings a complete combat kit** ([#904](https://github.com/cehinds/AshenSpire/pull/904), `0.6.0.115`). Weapons, shields, and staves each lend a Strike, Guard, and signature Art. Shields can attack beside a weapon; Guardian creates an Exhausting Bulwark skill, Bastion trades offense for Block, and Spiked Reprisal combines defence with Bleed. Equipment previews show the actual contributions, and solo/co-op fights retain their ownership and upgrade data.
 
 - **A city spire welcomes each journey** ([#931](https://github.com/cehinds/AshenSpire/pull/931), `0.6.0.113`). Replace the startup and main-menu backdrop with a painted medieval city and central tower in muted gold and charcoal. Keep the title centered and readable on phones and larger screens; ship the artwork as compact WebP.
 

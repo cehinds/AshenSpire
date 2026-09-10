@@ -179,6 +179,24 @@ function testBundle() {
 }
 
 const REG = createRegistries(testBundle());
+// Historical quota regressions use the pre-kit equipment catalogue explicitly.
+// Shipped complete kits are covered by armament-combat-kits.test.mjs across all items.
+function legacyKitFixture(bundle) {
+  return { ...bundle, equipment: { ...bundle.equipment, armaments: bundle.equipment.armaments.map(piece => {
+    const copy = { ...piece };
+    if (copy.weaponCardPackage?.combatKit) {
+      if (['katana', 'greatsword'].includes(piece.id)) {
+        const { combatKit, ...pkg } = copy.weaponCardPackage;
+        copy.weaponCardPackage = pkg;
+      } else delete copy.weaponCardPackage;
+    }
+    return copy;
+  }) } };
+}
+const legacyBundle = legacyKitFixture(contentBundle);
+const legacyTestBundle = () => legacyKitFixture(testBundle());
+const LEGACY_REG = createRegistries(legacyTestBundle());
+
 
 // #90 — equipPiece now gates on OWNERSHIP as well as fit, and the argument is
 // required so a stale call site fails closed rather than skipping the check.
@@ -1483,8 +1501,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(rn.flaskCharges.hp, 4, "Traveler's Flask allocates the added charge to Crimson");
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
     eq(rn.itemUpgradeLevels['armament/straightSword'], 1, 'Whetstone Memory promotes the sourced Straight Sword package');
-    assert(rn.deck.filter((c) => c.cardId === 'strike').every((c) => c.smithingLevel === 1 && !c.upgraded),
+    assert(rn.deck.filter((c) => c.cardId === 'strike' && c.sourceArmamentId === 'straightSword').every((c) => c.smithingLevel === 1 && !c.upgraded),
       'Whetstone Memory upgrades every sourced Strike through equipment authority, not per-copy flags');
+    assert(rn.deck.filter(c => c.kitRole === 'attack' && c.grantedBy === 'roundShield').every(c => c.smithingLevel === 0),
+      'the other armament retains its own smithing tier');
   });
 
   // ---- 20. M3 phase 1: Starseer + Herald class mechanics ---------------------------------
@@ -2065,9 +2085,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // attack plan from the LEGACY roleCopies.attack and refused the mismatch.
     // The quota now defaults to the composed plan wherever it is live.
     for (const [bias, wantAttack, wantGuard] of [[0.5, 4, 4], [0.75, 6, 2], [0.25, 2, 6], [1, 8, 0], [0, 0, 8]]) {
-      const balance = JSON.parse(JSON.stringify(contentBundle.balance));
+      const balance = JSON.parse(JSON.stringify(legacyBundle.balance));
       balance.equipment.startingDeck.classes.reaver.strikeBias = bias;
-      const reg = createRegistries({ ...testBundle(), balance });
+      const reg = createRegistries({ ...legacyTestBundle(), balance });
       const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
       eq(run.deck.length, 10, `bias ${bias} still starts a 10-card deck`);
       eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, wantAttack, `bias ${bias} deals ${wantAttack} attacks`);
@@ -2078,20 +2098,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // runtime by the `item:` prefix. An itemType id without the prefix would
     // pass here and be stamped as an ordinary tag, silently stripping every
     // piece's type, so the prefix is a checked rule.
-    const renamed = JSON.parse(JSON.stringify(contentBundle));
+    const renamed = JSON.parse(JSON.stringify(legacyBundle));
     for (const t of renamed.tags) if (t.id === 'item:armor') t.id = 'armor';
     for (const r of renamed.tagging) if (r.tagId === 'item:armor') r.tagId = 'armor';
-    const said = tagContentProblems(renamed, contentBundle.keywords.map((k) => k.id))
+    const said = tagContentProblems(renamed, legacyBundle.keywords.map((k) => k.id))
       .map((row) => `${row.path}: ${row.message}`).join(' | ');
     assert(/must be 'item:' followed by at least one word/.test(said), `a prefix-less itemType id is refused by name — said ${JSON.stringify(said.slice(0, 120))}`);
 
     // P2b. Outfit ids repeat per class, so a grant keyed on the bare id names
     // four different outfits at once. The key is (family, scope, sourceId).
-    const armour = REG.equipment.armour.map((o) => (o.id === 'default' ? { ...o, tags: [...o.tags, 'bound'] } : o));
+    const armour = LEGACY_REG.equipment.armour.map((o) => (o.id === 'default' ? { ...o, tags: [...o.tags, 'bound'] } : o));
     const scoped = {
-      ...REG,
+      ...LEGACY_REG,
       equipment: {
-        ...REG.equipment,
+        ...LEGACY_REG.equipment,
         armour,
         equipmentGrants: [
           { family: 'armour', scope: 'reaver', sourceId: 'default', cards: ['strike'] },
@@ -2206,13 +2226,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // A composed deck's attack count is decided ONCE, at birth, from the grants
     // the run started with. Recomputing it from the current loadout meant
     // swapping between pieces with different grant counts threw mid-run.
-    const granting = JSON.parse(JSON.stringify(contentBundle));
+    const granting = JSON.parse(JSON.stringify(legacyBundle));
     granting.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
     granting.equipment = {
       ...granting.equipment,
       equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'straightSword', cards: ['strike', 'defend'] }],
     };
-    const reg = createRegistries({ ...granting, cards: contentBundle.cards, statuses: contentBundle.statuses });
+    const reg = createRegistries({ ...granting, cards: legacyBundle.cards, statuses: legacyBundle.statuses });
     const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
     const born = run.deck.filter((c) => c.equipmentRole === 'attack').length;
     eq(born, 3, 'two granted cards shift the composed attack quota to three');
@@ -2230,10 +2250,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // coupling the composed deck removes, so it is a rule only while it is the
     // one being read — otherwise a valid twelve-card plan is rejected for
     // summing to ten.
-    const bigger = JSON.parse(JSON.stringify(contentBundle));
+    const bigger = JSON.parse(JSON.stringify(legacyBundle));
     bigger.balance.startingDeckSize = 12;
     eq(validateEquipment(createRegistries(bigger)).length, 0, 'raising startingDeckSize alone is now a legal edit');
-    const legacy = JSON.parse(JSON.stringify(contentBundle));
+    const legacy = JSON.parse(JSON.stringify(legacyBundle));
     legacy.balance.equipment.startingDeck.enabled = false;
     legacy.balance.startingDeckSize = 12;
     assert(validateEquipment(createRegistries(legacy)).some((p) => /roleCopies sum/.test(p)),
@@ -2242,7 +2262,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Character creation decides what is selectable — not the kit table. Two
     // grant-bearing pieces that share no authored kit can still be picked
     // together, which three rounds of axis-by-axis enumeration kept missing.
-    const pair = JSON.parse(JSON.stringify(contentBundle));
+    const pair = JSON.parse(JSON.stringify(legacyBundle));
     for (const id of ['greatsword', 'buckler']) pair.tagging.push({ family: 'armament', scope: '', objectId: id, tagId: 'bound' });
     pair.equipment = {
       ...pair.equipment,
@@ -2253,7 +2273,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // not the kit table — is still what fails if the enumeration narrows.
     const said = startingDeckWarnings(createRegistries(pair)).join(' | ');
     assert(/hands greatsword\/buckler/.test(said), `the hand pair is still enumerated — said ${JSON.stringify(said.slice(0, 160))}`);
-    const kits = REG.equipment.startingKits.filter((k) => k.classId === 'reaver');
+    const kits = LEGACY_REG.equipment.startingKits.filter((k) => k.classId === 'reaver');
     assert(!kits.some((k) => k.rightHand === 'greatsword' && k.leftHand === 'buckler'),
       'and that pair is in no authored kit, which is why the kit table could not have found it');
   });
@@ -2264,7 +2284,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // left the subset path recomputing. Combat calls stampDeck once per pile,
     // so the pile holding attack:3 threw mid-swap. The whole deck is on the run
     // in BOTH cases, so both read the same number from the same place.
-    const granting = JSON.parse(JSON.stringify(contentBundle));
+    const granting = JSON.parse(JSON.stringify(legacyBundle));
     granting.tagging.push({ family: 'armament', scope: '', objectId: 'dagger', tagId: 'bound' });
     granting.equipment = {
       ...granting.equipment,
@@ -2283,7 +2303,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Round three routed the equipment fit index through the supplied bundle
     // and left a second consumer of the module-global fold: the action engine's
     // own tag read, which feeds tag-scoped vulnerabilities.
-    const extended = JSON.parse(JSON.stringify(contentBundle));
+    const extended = JSON.parse(JSON.stringify(legacyBundle));
     extended.tagging.push({ family: 'card', scope: '', objectId: 'strike', tagId: 'venom' });
     const extReg = createRegistries(extended);
     const action = { card: { cardId: 'strike' } };
@@ -2450,7 +2470,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // once per pile. There was never a deck to count. 26h passed because it
     // handed stampDeck a real run; production does not. So the number is
     // written down at birth and carried, and this drives the actual dispatch.
-    const granting = JSON.parse(JSON.stringify(contentBundle));
+    const granting = JSON.parse(JSON.stringify(legacyBundle));
     granting.tagging.push({ family: 'armament', scope: '', objectId: 'dagger', tagId: 'bound' });
     granting.equipment = {
       ...granting.equipment,
@@ -2466,7 +2486,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const combat = createCombat({
       registries: reg,
       rng: createRng(7),
-      enemyIds: [contentBundle.enemies[0].id],
+      enemyIds: [legacyBundle.enemies[0].id],
       player: {
         classId: run.class, attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
         maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
@@ -2490,8 +2510,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // the validator classifies by domain, so a NON-itemType id wearing `item:`
     // is filed as a type and dropped from the piece's gameplay tags — the fit
     // check then says noMatch for a pairing the author wrote on purpose.
-    const kw = contentBundle.keywords.map((k) => k.id);
-    const reserved = JSON.parse(JSON.stringify(contentBundle));
+    const kw = legacyBundle.keywords.map((k) => k.id);
+    const reserved = JSON.parse(JSON.stringify(legacyBundle));
     reserved.tags.push({ id: 'item:venomous', domain: 'card', label: 'Venomous', color: '#888', glyph: '*', blurb: '' });
     const reservedSaid = tagContentProblems(reserved, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
     assert(/reserved for the itemType domain/.test(reservedSaid),
@@ -2564,18 +2584,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   // ---- 26n. the tenth round: what stored state obliges ---------------------
   test('26n. basic attack removal retires a slot and the birth quota survives save and load', () => {
-    const run = createRunState({ seed: 1, classId: 'reaver', registries: REG });
+    const run = createRunState({ seed: 1, classId: 'reaver', registries: LEGACY_REG });
     const composed = run.deck.filter(isEquipmentComposedInstance);
     assert(composed.length === 4 && composed.every((c) => c.equipmentAttackSlotId),
       'the four attack slots are equipment-composed, and the predicate says so');
     eq(run.equipmentAttackSlotCount, 4, 'and the run recorded that as its quota');
 
     const before = run.deck.length;
-    executeRunEffects({ run, registries: REG, rng: { float: () => 0 } },
+    executeRunEffects({ run, registries: LEGACY_REG, rng: { float: () => 0 } },
       [{ op: 'removeCardFromDeck', card: 'strike' }]);
     eq(run.deck.length, before - 1, 'the opcode removes one run-owned basic attack');
     eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 3, 'one slot is retired');
-    stampDeck(REG, run); // threw "attack instance count 3 does not match authored 4" before
+    stampDeck(LEGACY_REG, run); // threw "attack instance count 3 does not match authored 4" before
     eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, 3, 'restamping preserves the removal');
 
     // A random removal still has real candidates — this closes a door on cards
@@ -2589,13 +2609,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const storage = createMemoryStorage();
     const saves = createSaveManager(storage);
     const rng = createRng(0xfeed);
-    const saved = createRunState({ seed: 0xfeed, classId: 'reaver', registries: REG });
+    const saved = createRunState({ seed: 0xfeed, classId: 'reaver', registries: LEGACY_REG });
     saves.saveRun(saved, rng);
-    const loaded = saves.loadRun(REG);
+    const loaded = saves.loadRun(LEGACY_REG);
     assert(loaded != null, 'the run loads');
     eq(loaded.equipmentAttackSlotCount, saved.equipmentAttackSlotCount,
       'and carries the quota it was born with across save and load');
-    stampDeck(REG, loaded);
+    stampDeck(LEGACY_REG, loaded);
     eq(loaded.deck.filter((c) => c.equipmentRole === 'attack').length, saved.equipmentAttackSlotCount,
       'so a restamp after loading still plans the born quota');
   });
@@ -2677,7 +2697,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // `equipment.extras.charms` had its rows dropped onto `equipment.extras`,
     // REPLACING the object that held `charms`. The bundle validated, the rows
     // stamped, and every reader that walked the declared path found nothing.
-    const deep = JSON.parse(JSON.stringify(contentBundle));
+    const deep = JSON.parse(JSON.stringify(legacyBundle));
     deep.equipment.extras = { charms: [{ id: 'luckCharm', name: 'Luck Charm' }], note: 'a sibling' };
     deep.tagFamilies.push({ family: 'charm', source: 'equipment.extras.charms', scopeField: '', label: 'Charm', blurb: '' });
     deep.tagFamilyDomains.push({ family: 'charm', domain: 'item' });
@@ -2693,7 +2713,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // composed deck the authored roleCopies table is no longer what the deck
     // holds: bias 0.75 builds six attacks and two guards while that table still
     // reads 4/4, so the Armoury told the player something the deck contradicted.
-    const biased = JSON.parse(JSON.stringify(contentBundle));
+    const biased = JSON.parse(JSON.stringify(legacyBundle));
     biased.balance.equipment.startingDeck.classes.reaver = { strikeBias: 0.75 };
     const biasedReg = createRegistries(biased);
     const run = createRunState({ seed: 2, classId: 'reaver', registries: biasedReg });
@@ -2707,7 +2727,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(shown.guard, actual.guard, 'and the guards');
     // Legacy path untouched: with the composed deck off, the authored table is
     // still the answer, because then it is the one the deck was built from.
-    const legacy = JSON.parse(JSON.stringify(contentBundle));
+    const legacy = JSON.parse(JSON.stringify(legacyBundle));
     legacy.balance.equipment.startingDeck.enabled = false;
     const legacyReg = createRegistries(legacy);
     const legacyRun = createRunState({ seed: 2, classId: 'reaver', registries: legacyReg });
@@ -2725,7 +2745,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // guard exactly as they did for attack. Counting roles off the deck has no
     // per-role list to be incomplete: a role added later is counted the day it
     // exists, without anyone remembering to add it here.
-    const granting = JSON.parse(JSON.stringify(contentBundle));
+    const granting = JSON.parse(JSON.stringify(legacyBundle));
     granting.tagging.push({ family: 'armament', scope: '', objectId: 'straightSword', tagId: 'bound' });
     granting.equipment = {
       ...granting.equipment,
@@ -2740,7 +2760,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     };
     const born = roleCount(run.deck);
     eq(born.guard, 3, 'two grants shift the composed guard count to three');
-    assert(born.guard !== contentBundle.balance.equipment.roleCopies.guard,
+    assert(born.guard !== legacyBundle.balance.equipment.roleCopies.guard,
       'and that differs from the authored table, which is what makes this checkable');
 
     run.loadout.sets.rightHand[0] = 'dagger'; // unbound: a fresh plan would say four
@@ -2755,7 +2775,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // this round found it, before the cap ruling left nothing to drop) is a
     // list, and a plausible typo — the bare string instead of a one-item list —
     // reached `.join` and crashed validateEquipment instead of being answered.
-    const typo = JSON.parse(JSON.stringify(contentBundle));
+    const typo = JSON.parse(JSON.stringify(legacyBundle));
     typo.balance.equipment.startingDeck.sourceOrder = 'from:global';
     const said = validateEquipment(createRegistries(typo)).join(' | ');
     assert(/sourceOrder must be an array of grant-source tags/.test(said),
@@ -2763,14 +2783,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // The vocabulary is closed AND it is the tag registry, not a list in code:
     // a misspelling is caught because no such row exists, and adding a sixth
     // source is a row in tags.csv rather than an edit to loadout.js.
-    const unknown = JSON.parse(JSON.stringify(contentBundle));
+    const unknown = JSON.parse(JSON.stringify(legacyBundle));
     unknown.balance.equipment.startingDeck.sourceOrder = ['from:global', 'from:armour'];
     assert(/unknown grant source 'from:armour'/.test(validateEquipment(createRegistries(unknown)).join(' | ')),
       "the 'armor'/'armour' spelling trap is named rather than silently ignored");
-    const registered = contentBundle.tags.filter((t) => t.domain === 'grantSource').map((t) => t.id);
+    const registered = legacyBundle.tags.filter((t) => t.domain === 'grantSource').map((t) => t.id);
     assert(registered.length === 5 && registered.every((id) => id.startsWith('from:')),
       `the grant sources are tag rows, not a constant (${registered.join(', ')})`);
-    assert(contentBundle.balance.equipment.startingDeck.sourceOrder.every((id) => registered.includes(id)),
+    assert(legacyBundle.balance.equipment.startingDeck.sourceOrder.every((id) => registered.includes(id)),
       'and the shipped order names only registered ones');
 
     // ROUND TWENTY: the vocabulary was data, but the ids the ENGINE stamped
@@ -2782,7 +2802,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Two claims, because the fix has two halves: the rename works when the
     // binding moves with it, and it is REFUSED when it does not.
     const renamed = (moveBinding) => {
-      const b = JSON.parse(JSON.stringify(contentBundle));
+      const b = JSON.parse(JSON.stringify(legacyBundle));
       for (const t of b.tags) if (t.id === 'from:weapon') t.id = 'from:armament';
       const deck = b.balance.equipment.startingDeck;
       deck.sourceOrder = deck.sourceOrder.map((id) => (id === 'from:weapon' ? 'from:armament' : id));
@@ -2805,11 +2825,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // The seam set is closed in both directions: a seam left unbound would
     // stamp nothing, and a binding for a seam the engine does not have would
     // never be read. Both are authoring mistakes with no visible symptom.
-    const unbound = JSON.parse(JSON.stringify(contentBundle));
+    const unbound = JSON.parse(JSON.stringify(legacyBundle));
     delete unbound.balance.equipment.startingDeck.sources.class;
     assert(/sources\.class must name a grant-source tag/.test(validateEquipment(createRegistries(unbound)).join(' | ')),
       'an unbound minting seam is named');
-    const invented = JSON.parse(JSON.stringify(contentBundle));
+    const invented = JSON.parse(JSON.stringify(legacyBundle));
     invented.balance.equipment.startingDeck.sources.relic = 'from:relic';
     assert(/unknown seam 'relic'/.test(validateEquipment(createRegistries(invented)).join(' | ')),
       "a binding for a seam that mints nothing is named — it would never be stamped");
@@ -2915,7 +2935,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // counts with a count of the deck — and merged that count over the legacy
     // table, so a role the deck does NOT contain fell through to the authored
     // number. Bias 1 builds eight attacks and no guards; the panel said four.
-    const biased = JSON.parse(JSON.stringify(contentBundle));
+    const biased = JSON.parse(JSON.stringify(legacyBundle));
     biased.balance.equipment.startingDeck.classes.reaver = { strikeBias: 1 };
     const biasedReg = createRegistries(biased);
     const run = createRunState({ seed: 9, classId: 'reaver', registries: biasedReg });
@@ -2935,12 +2955,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // re-deriving it, which is the mistake four earlier rounds were about.
     const storage = createMemoryStorage();
     const saves = createSaveManager(storage);
-    const fresh = createRunState({ seed: 21, classId: 'reaver', registries: REG });
+    const fresh = createRunState({ seed: 21, classId: 'reaver', registries: LEGACY_REG });
     const bornWith = fresh.equipmentAttackSlotCount;
     assert(Number.isFinite(bornWith) && bornWith > 0, 'a new run records its quota');
     delete fresh.equipmentAttackSlotCount; // exactly what a pre-field save holds
     saves.saveRun(fresh, createRng(21));
-    const loaded = saves.loadRun(REG);
+    const loaded = saves.loadRun(LEGACY_REG);
     assert(loaded != null, 'the legacy-shaped save still loads');
     eq(loaded.equipmentAttackSlotCount, bornWith, 'and its quota is recovered from its own deck');
     eq(loaded.equipmentAttackSlotCount, loaded.deck.filter((c) => c.equipmentRole === 'attack').length,
@@ -2951,12 +2971,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // migration used the recovered number for its restamp and then dropped it.
     // Healing the door and leaving the consumer is the half-fix this work keeps
     // making, so the resolved value is written where the resume looks.
-    const midFight = createRunState({ seed: 31, classId: 'reaver', registries: REG });
+    const midFight = createRunState({ seed: 31, classId: 'reaver', registries: LEGACY_REG });
     const midBorn = midFight.equipmentAttackSlotCount;
     const fight = createCombat({
-      registries: REG,
+      registries: LEGACY_REG,
       rng: createRng(31),
-      enemyIds: [contentBundle.enemies[0].id],
+      enemyIds: [legacyBundle.enemies[0].id],
       player: {
         classId: midFight.class, attributes: midFight.attributes, maxHp: midFight.maxHp, hp: midFight.hp,
         maxMana: midFight.maxMana, mana: midFight.mana, maxStamina: midFight.maxStamina, stamina: midFight.stamina,
@@ -2969,12 +2989,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         flaskCharges: midFight.flaskCharges, loadout: midFight.loadout,
       },
     });
-    commitCombatSnapshot({ run: midFight, combat: fight, nodeId: 'n1', encounterId: contentBundle.encounters[0].id });
+    commitCombatSnapshot({ run: midFight, combat: fight, nodeId: 'n1', encounterId: legacyBundle.encounters[0].id });
     delete midFight.combatEntered.snapshot.equipmentAttackSlotCount; // pre-field shape
     delete midFight.equipmentAttackSlotCount;
     const fightSaves = createSaveManager(createMemoryStorage());
     fightSaves.saveRun(midFight, createRng(31));
-    const resumed = fightSaves.loadRun(REG);
+    const resumed = fightSaves.loadRun(LEGACY_REG);
     assert(resumed != null, 'the mid-fight legacy save loads');
     eq(resumed.equipmentAttackSlotCount, midBorn, 'the run is healed');
     // The RESUME is what matters, and it reads the run's number when the
@@ -2984,7 +3004,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(resumed.combatEntered.snapshot.equipmentAttackSlotCount, undefined,
       'the stored snapshot is left byte-identical, not rewritten by the load');
     const restored = restoreCombatSnapshot({
-      registries: REG,
+      registries: LEGACY_REG,
       rng: createRng(31),
       snapshot: resumed.combatEntered.snapshot,
       fallbackAttackSlotCount: resumed.equipmentAttackSlotCount,
@@ -2994,7 +3014,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // Repaired at the door means every downstream reader gets it for free —
     // combat, the snapshot, and the panel — with no second derivation.
-    stampDeck(REG, loaded);
+    stampDeck(LEGACY_REG, loaded);
     eq(loaded.deck.filter((c) => c.equipmentRole === 'attack').length, bornWith,
       'so a restamp after loading plans the recovered quota');
   });
@@ -3008,7 +3028,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // decision, and the decision is: the cap applies at CHARACTER CREATION and
     // nowhere else. It governs how many BASE strikes and defends are minted.
     // Bound cards are dealt first and are never capped, dropped or refused.
-    const packaged = JSON.parse(JSON.stringify(contentBundle));
+    const packaged = JSON.parse(JSON.stringify(legacyBundle));
     const piece = packaged.equipment.armaments.find((p) => p.id === 'straightSword');
     piece.weaponCardPackage = {
       compatibility: 'attack-v1',
@@ -3018,7 +3038,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const reg = createRegistries(packaged);
     eq(validateEquipment(reg).length, 0, 'the combination is legal — there is nothing left to gate');
 
-    const cap = contentBundle.balance.startingDeckSize;
+    const cap = legacyBundle.balance.startingDeckSize;
     const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
     eq(run.deck.length, cap, 'creation lands on the cap');
     const bound = run.deck.filter((c) => c.equipmentRole === 'granted' || c.equipmentRole === 'weaponArt').length;
@@ -3043,14 +3063,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // package grants and arts after that again, so starseer opened with four
     // strikes and three defends and its equipment cards trailed behind. The
     // spec I wrote and the code I wrote disagreed, and the spec is the ruling.
-    const ordered = createRunState({ seed: 3, classId: 'starseer', registries: REG });
+    const ordered = createRunState({ seed: 3, classId: 'starseer', registries: LEGACY_REG });
     const provenance = ordered.deck.map((c) => c.grantSource || null);
     const firstBase = provenance.indexOf(null);
     assert(firstBase > 0, 'the deck opens with bound cards, not base cards');
     assert(provenance.slice(firstBase).every((p) => p === null),
       `and every base card follows them — ${JSON.stringify(provenance)}`);
     const boundOrder = provenance.slice(0, firstBase);
-    const authored = contentBundle.balance.equipment.startingDeck.sourceOrder;
+    const authored = legacyBundle.balance.equipment.startingDeck.sourceOrder;
     const ranks = boundOrder.map((p) => authored.indexOf(p));
     assert(ranks.every((r, i) => i === 0 || r >= ranks[i - 1]),
       `bound cards follow sourceOrder — ${JSON.stringify(boundOrder)} against ${JSON.stringify(authored)}`);
@@ -3063,17 +3083,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'attacks still precede guards among the base cards');
 
     // The odd-split winner is authored, not a rounding accident.
-    const guardWins = JSON.parse(JSON.stringify(contentBundle));
+    const guardWins = JSON.parse(JSON.stringify(legacyBundle));
     guardWins.balance.equipment.startingDeck.oddFillerGoesTo = 'guard';
     guardWins.balance.equipment.startingDeck.classes.starseer = { strikeBias: 0.5 };
-    const starseerDefault = startingDeckPlan(REG, createLoadout(REG, 'starseer'), 'starseer');
+    const starseerDefault = startingDeckPlan(LEGACY_REG, createLoadout(LEGACY_REG, 'starseer'), 'starseer');
     const guardReg = createRegistries(guardWins);
     const starseerGuard = startingDeckPlan(guardReg, createLoadout(guardReg, 'starseer'), 'starseer');
     eq(starseerDefault.filler % 2, 1, 'starseer has an odd number of base cards to split');
     eq(starseerDefault.attackCount, starseerGuard.attackCount + 1,
       'the remainder goes to attack by default and to guard when the field says so');
     assert(!['attack', 'guard'].includes('either'), 'the field is a closed pair');
-    const badOdd = JSON.parse(JSON.stringify(contentBundle));
+    const badOdd = JSON.parse(JSON.stringify(legacyBundle));
     badOdd.balance.equipment.startingDeck.oddFillerGoesTo = 'either';
     assert(/oddFillerGoesTo must be 'attack' or 'guard'/.test(validateEquipment(createRegistries(badOdd)).join(' | ')),
       'and anything else is refused by name');
@@ -3473,39 +3493,39 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // The load-bearing claim of the whole system: equipment adds no cards and
     // no engine code. It changes numbers on the starters, through one closed
     // vocabulary (equipMods.csv) that a typo cannot slip past.
-    eq(validateEquipment(REG).join('; '), '', 'every authored piece parses against the vocabulary');
+    eq(validateEquipment(LEGACY_REG).join('; '), '', 'every authored piece parses against the vocabulary');
 
-    const intrinsicReceipts = REG.equipment.armaments.map(armamentIntrinsicReceipt);
+    const intrinsicReceipts = LEGACY_REG.equipment.armaments.map(armamentIntrinsicReceipt);
     eq(intrinsicReceipts.length, 25, 'all 25 armaments expose an intrinsic stat receipt');
     assert(intrinsicReceipts.every((row) => ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
       .every((field) => Number.isInteger(row[field]) && row[field] >= 0)),
     'each intrinsic receipt exposes five explicit non-negative integer facts');
-    assert(REG.equipment.armaments.every((piece) => piece.weight === piece.poiseThreshold),
+    assert(LEGACY_REG.equipment.armaments.every((piece) => piece.weight === piece.poiseThreshold),
       'presentation weight is the already-authored Poise threshold and adds no balance behavior');
-    assert(REG.equipment.armaments.every((piece) => piece.weaponArtManaCost === (
+    assert(LEGACY_REG.equipment.armaments.every((piece) => piece.weaponArtManaCost === (
       piece.itemTypeTags.includes('item:magic-focus') && piece.techniqueProfile === 'staffTechnique' ? 1 : 0
     )), 'only magic-focus staff-technique armaments author one Weapon Art Mana');
-    assert(REG.equipment.armaments.every((piece) => piece.uniqueSkillStaminaCost === 0),
+    assert(LEGACY_REG.equipment.armaments.every((piece) => piece.uniqueSkillStaminaCost === 0),
       'Unique Skill Stamina remains explicit zero until a priority or unique-skill consumer exists');
-    eq(JSON.stringify(armamentIntrinsicReceipt(REG.equipment.armaments.find((piece) => piece.id === 'greatsword'))),
+    eq(JSON.stringify(armamentIntrinsicReceipt(LEGACY_REG.equipment.armaments.find((piece) => piece.id === 'greatsword'))),
       JSON.stringify({ itemId: 'greatsword', attackRating: 9, defenseRating: 2, weight: 8, weaponArtManaCost: 0, uniqueSkillStaminaCost: 0 }),
       'the Greatsword receipt is intrinsic and does not include generated-card or Smithing deltas');
 
     const missingIntrinsicBundle = {
-      ...contentBundle,
+      ...legacyBundle,
       equipment: {
-        ...contentBundle.equipment,
-        armaments: contentBundle.equipment.armaments.map((piece) => ({ ...piece })),
+        ...legacyBundle.equipment,
+        armaments: legacyBundle.equipment.armaments.map((piece) => ({ ...piece })),
       },
     };
     delete missingIntrinsicBundle.equipment.armaments[0].attackRating;
     assert(validateContent(missingIntrinsicBundle).errors.some((error) => error.path.endsWith('.attackRating')),
       'boot validation fails closed when an intrinsic armament field is absent');
     const mismatchedIntrinsicRegistries = {
-      ...REG,
+      ...LEGACY_REG,
       equipment: {
-        ...REG.equipment,
-        armaments: REG.equipment.armaments.map((piece) => (
+        ...LEGACY_REG.equipment,
+        armaments: LEGACY_REG.equipment.armaments.map((piece) => (
           piece.id === 'straightSword' ? { ...piece, weaponArtManaCost: 1 } : piece
         )),
       },
@@ -3513,8 +3533,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(validateEquipment(mismatchedIntrinsicRegistries).some((problem) => /straightSword: weaponArtManaCost/.test(problem)),
       'registry validation rejects a Weapon Art cost that contradicts the authored type/profile contract');
 
-    const bal = REG.balance.equipment;
-    const strikeOf = (mods) => resolveCard(REG, { cardId: 'strike', mods });
+    const bal = LEGACY_REG.balance.equipment;
+    const strikeOf = (mods) => resolveCard(LEGACY_REG, { cardId: 'strike', mods });
     const dmgOf = (def) => (def.effects.find((e) => e.op === 'damage') || {}).amount;
 
     eq(dmgOf(strikeOf([])), 6, 'a bare Strike is still 6');
@@ -3539,28 +3559,28 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(strikeOf(['hits=+99']).effects[0].hits, bal.limits.maxHits, 'hits are capped');
 
     // Mods layer ON TOP of an upgrade rather than fighting with it.
-    eq(dmgOf(resolveCard(REG, { cardId: 'strike', upgraded: true })), 9, 'Strike+ is 9 bare-handed');
-    eq(dmgOf(resolveCard(REG, { cardId: 'strike', upgraded: true, mods: ['damage=+4'] })), 13, 'Strike+ with a greatsword is 13');
+    eq(dmgOf(resolveCard(LEGACY_REG, { cardId: 'strike', upgraded: true })), 9, 'Strike+ is 9 bare-handed');
+    eq(dmgOf(resolveCard(LEGACY_REG, { cardId: 'strike', upgraded: true, mods: ['damage=+4'] })), 13, 'Strike+ with a greatsword is 13');
 
     // A run starts stamped by whatever it starts wearing, and `self.*` mods
     // reach the run rather than a card.
-    const run = createRunState({ seed: 7, classId: 'reaver', registries: REG });
+    const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
     assert(run.loadout && run.loadout.sets.rightHand.length === 3, 'the right hand carries three sets');
     eq(run.loadout.sets.armor[0], 'default', 'the reaver starts in its one unlocked set');
 
-    equipPiece(REG, run.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, AT_CAMP);
-    equipPiece(REG, run.loadout, 'rightHand', 1, 'greatsword', OWNS_EVERYTHING, AT_CAMP);
-    equipPiece(REG, run.loadout, 'armor', 0, 'oathsworn', OWNS_EVERYTHING, AT_CAMP);
-    stampDeck(REG, run);
+    equipPiece(LEGACY_REG, run.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, AT_CAMP);
+    equipPiece(LEGACY_REG, run.loadout, 'rightHand', 1, 'greatsword', OWNS_EVERYTHING, AT_CAMP);
+    equipPiece(LEGACY_REG, run.loadout, 'armor', 0, 'oathsworn', OWNS_EVERYTHING, AT_CAMP);
+    stampDeck(LEGACY_REG, run);
     const aStrike = run.deck.find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(REG, aStrike)), 7, 'the deck itself is stamped with the tuned STR strike receipt');
-    eq(runMods(REG, run.loadout, 'reaver').startStatuses[0].status, 'strength', 'the Oathsworn set grants Strength');
-    assert(loadoutTags(REG, run.loadout, 'reaver').includes('blade'), 'worn pieces contribute their tags');
+    eq(dmgOf(resolveCard(LEGACY_REG, aStrike)), 7, 'the deck itself is stamped with the tuned STR strike receipt');
+    eq(runMods(LEGACY_REG, run.loadout, 'reaver').startStatuses[0].status, 'strength', 'the Oathsworn set grants Strength');
+    assert(loadoutTags(LEGACY_REG, run.loadout, 'reaver').includes('blade'), 'worn pieces contribute their tags');
 
     // Swapping mid-fight: the price is paid, and the hand is re-armed.
     const rng = createRng(11);
     const combat = createCombat({
-      registries: REG,
+      registries: LEGACY_REG,
       rng,
       player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, relicIds: [], loadout: run.loadout },
       enemyIds: ['fellWarden'],
@@ -3569,7 +3589,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
     eq(combat.player.energy, energyBefore - bal.swapCost, 'the swap costs what the config says');
     const inHand = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(REG, inHand)), 12, 'every Strike now carries the greatsword profile, rarity, tier, and explicit mod');
+    eq(dmgOf(resolveCard(LEGACY_REG, inHand)), 12, 'every Strike now carries the greatsword profile, rarity, tier, and explicit mod');
 
     // Re-arming a position in combat uses the same priced action economy, but
     // it can replace/move/unequip the item rather than only select a prepared
@@ -3584,7 +3604,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(combat.loadout.sets.rightHand[0], null, 'moving the dagger clears its previous position');
     assert(combat.loadout.storage.includes('greatsword'), 'the replaced greatsword returns to carried storage');
     const daggerStrike = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(REG, daggerStrike)), 5, 'live Strikes immediately use the newly equipped dagger profile');
+    eq(dmgOf(resolveCard(LEGACY_REG, daggerStrike)), 5, 'live Strikes immediately use the newly equipped dagger profile');
     assert(rearmed.events.some((event) => event.type === 'equipmentRearmed' && event.pieceId === 'dagger'),
       'the combat receipt names the item that was equipped');
 
@@ -3594,7 +3614,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       type: 'changeEquipment', slotId: 'armor', setIndex: 0, pieceId: 'default',
     });
     eq(combat.loadout.sets.armor[0], 'default', 'armour can also be changed during the player turn');
-    eq(combat.player.poiseMeter.max, playerPoiseThresholdReceipt(REG, {
+    eq(combat.player.poiseMeter.max, playerPoiseThresholdReceipt(LEGACY_REG, {
       loadout: combat.loadout, relics: combat.player.relicIds, class: combat.player.classId,
       itemUpgradeLevels: combat.itemUpgradeLevels,
     }).value, 'changing armour immediately stamps the exact live Poise threshold');
@@ -3612,7 +3632,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(combat.loadout.sets.rightHand[1], null, 'the requested combat position is empty after unequip');
     assert(combat.loadout.storage.includes('dagger'), 'the unequipped dagger returns to carried storage');
     const bareStrike = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(REG, bareStrike)), 4,
+    eq(dmgOf(resolveCard(LEGACY_REG, bareStrike)), 4,
       'live Strikes are re-stamped to the run\'s tuned unarmed profile after unequip');
     assert(unequipped.events.some((event) => event.type === 'equipmentChanged'
       && event.changedPositions.some((position) => position.slotId === 'rightHand'
@@ -3664,7 +3684,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // wording stays free to improve, and no other throw site can wear this
     // refusal's name. Under her plant: 57/1, caught. Reworded `fastened` →
     // `buckled down`: 58/0.
-    eq(refused, canSwap(REG, 'armor', { inCombat: true }).reason,
+    eq(refused, canSwap(LEGACY_REG, 'armor', { inCombat: true }).reason,
       'armour is refused mid-fight, in the words the model itself refuses in');
     // AND THE FLOOR UNDER IT, which the identity alone does not carry: if canSwap
     // ever stopped refusing, `reason` would be '' and the dispatch would not
@@ -3676,21 +3696,21 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // red. The deletion does not escape the SUITE — it escapes the one test whose
     // whole subject is that armour is refused mid-fight, which is the same defect
     // Vira just caught in my pair, reporting on something it never observed.
-    eq(canSwap(REG, 'armor', { inCombat: true }).ok, false,
+    eq(canSwap(LEGACY_REG, 'armor', { inCombat: true }).ok, false,
       '…and the refusal exists at all, so the identity is not two empty strings');
 
     // Combat works on COPIES of the deck instances, so the orchestrator
     // re-stamps the run's own copies when the fight ends (main.js onCombatEnd).
-    stampDeck(REG, run);
+    stampDeck(LEGACY_REG, run);
 
     // The instance carries the numbers, so the save carries them too.
     const storage = createMemoryStorage();
     const saves = createSaveManager(storage);
     saves.saveRun(run, rng);
-    const loaded = saves.loadRun(REG);
+    const loaded = saves.loadRun(LEGACY_REG);
     eq(loaded.loadout.sets.rightHand[1], null, 'the combat unequip round-trips');
     assert(loaded.loadout.storage.includes('dagger'), 'the unequipped item round-trips in carried storage');
-    eq(dmgOf(resolveCard(REG, loaded.deck.find((c) => c.cardId === 'strike'))), 4,
+    eq(dmgOf(resolveCard(LEGACY_REG, loaded.deck.find((c) => c.cardId === 'strike'))), 4,
       'the saved deck round-trips with the live unarmed profile');
 
     // And a run saved before equipment existed is healed, not refused.
@@ -3698,7 +3718,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     delete legacy.loadout;
     for (const c of legacy.deck) delete c.mods;
     storage.setItem(RUN_KEY, JSON.stringify(legacy));
-    const healed = saves.loadRun(REG);
+    const healed = saves.loadRun(LEGACY_REG);
     assert(healed && healed.loadout, 'a pre-equipment save loads with a fresh loadout');
     eq(healed.loadout.sets.rightHand[0], 'straightSword', 'the healed loadout restores the class-authored starting weapon');
   });

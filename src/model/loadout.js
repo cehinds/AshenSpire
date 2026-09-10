@@ -1202,6 +1202,17 @@ export const WeaponCardPackageModel = Object.freeze({
       artSeen.add(artId);
       return artId;
     });
+    let combatKit = null;
+    if (source.combatKit != null) {
+      const kit = source.combatKit;
+      if (!kit || typeof kit !== 'object' || Array.isArray(kit)) throw new Error(`${piece.id}: combatKit must be an object`);
+      for (const role of ['attack', 'guard']) {
+        const profile = profileById(registries, kit[`${role}ProfileId`]);
+        if (!profile || profile.role !== role) throw new Error(`${piece.id}: combatKit.${role}ProfileId must name a ${role} profile`);
+      }
+      if (!weaponArtDefaults.includes(kit.artCardId)) throw new Error(`${piece.id}: combatKit.artCardId must be an authored weapon art`);
+      combatKit = Object.freeze({ attackProfileId: kit.attackProfileId, guardProfileId: kit.guardProfileId, artCardId: kit.artCardId });
+    }
     const seen = new Set();
     const priorities = priorityAttackRefs.map((raw, index) => {
       const ref = typeof raw === 'string' ? { cardId: raw } : raw;
@@ -1222,6 +1233,7 @@ export const WeaponCardPackageModel = Object.freeze({
       priorityAttackRefs: Object.freeze(priorities),
       grantedCards: Object.freeze(grantedCards),
       weaponArtDefaults: Object.freeze(weaponArtDefaults),
+      combatKit,
       fillerAttackProfileId: filler.id,
       compatibility: WEAPON_CARD_PACKAGE_COMPATIBILITY,
     });
@@ -1723,7 +1735,8 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // Weapon — the technique the equipped armament teaches. Weapon ATTACK grants
   // (priorityAttackRefs) are not counted here: they are dealt inside the attack
   // quota by quotaRefs, so counting them again would charge them twice.
-  if (techniqueRow && techniqueRow.profile) {
+  const hasCombatKit = ['right', 'left'].some((hand) => handSource(registries, loadout, classId, hand).package?.combatKit);
+  if (techniqueRow && techniqueRow.profile && !hasCombatKit) {
     grants.push({
       source: grantSourceFor(cfg, 'weapon'),
       cardId: techniqueRow.profile.baseCardId,
@@ -1986,7 +1999,13 @@ function pieceFamily(piece) {
  * leave a Dodge Roll wearing Crimson Cleave's stamp.
  */
 function adoptWanted(inst, wanted) {
-  return inst.cardId === wanted.cardId && (inst.upgraded === true) === (wanted.upgraded === true) ? inst : wanted;
+  if (inst.cardId !== wanted.cardId || (inst.upgraded === true) !== (wanted.upgraded === true)) return wanted;
+  // Older combat snapshots omitted ownership metadata. Adopt it without moving
+  // the card out of its current pile or resetting its combat lifecycle.
+  inst.grantedBy = wanted.grantedBy;
+  inst.grantSource = wanted.grantSource;
+  if (wanted.kitRole) { inst.kitRole = wanted.kitRole; inst.profileId = wanted.profileId; }
+  return inst;
 }
 
 export function reconcileGrantedCards(registries, run) {
@@ -2043,11 +2062,16 @@ function desiredGrantInstances(registries, run) {
     if (!source) continue;
     desired.push(...packageGrantInstances(source.package, weaponSource));
   }
+  const optionalArts = (source) => source.package.weaponArtDefaults.filter((id) => id !== source.package.combatKit?.artCardId);
   const arts = sources.right && sources.left
-    ? splitAuthoredWeaponArts(sources.right.package.weaponArtDefaults, sources.left.package.weaponArtDefaults)
+    ? splitAuthoredWeaponArts(optionalArts(sources.right), optionalArts(sources.left))
     : ['right', 'left'].flatMap((hand) => (sources[hand]
-      ? sources[hand].package.weaponArtDefaults.map((id) => ({ id, hand }))
+      ? optionalArts(sources[hand]).map((id) => ({ id, hand }))
       : []));
+  for (const hand of ['right', 'left']) {
+    const kit = sources[hand]?.package.combatKit;
+    if (kit) arts.push({ id: kit.artCardId, hand });
+  }
   for (const art of arts) {
     desired.push(weaponArtInstance(sources[art.hand].package.weaponId, art.id, weaponSource));
   }
@@ -2056,6 +2080,20 @@ function desiredGrantInstances(registries, run) {
   // below so an art mount emptied down to its Dodge Roll fallback counts as a
   // Dodge Roll already installed — one, not one per hand.
   desired = applyMountOverrides(registries, run, desired);
+  // Guaranteed basics are item-owned, but are not extractable smith mounts.
+  for (const hand of ['right', 'left']) {
+    const source = sources[hand];
+    const kit = source?.package.combatKit;
+    if (!kit) continue;
+    for (const role of ['attack', 'guard']) {
+      const profile = profileById(registries, kit[`${role}ProfileId`]);
+      desired.push({
+        instanceId: `kit:${source.piece.id}:${role}`, cardId: profile.baseCardId,
+        upgraded: false, equipmentRole: 'granted', kitRole: role, profileId: profile.id,
+        grantedBy: source.piece.id, grantSource: weaponSource,
+      });
+    }
+  }
 
   // THE EMPTY HAND'S ART: the Dodge Roll rides as long as one hand is empty
   // (the owner's rule, 2026-09-02) — not only when both are. With one hand
@@ -2651,12 +2689,13 @@ export function stampDeck(registries, run, cards, {
   let n = 0;
   for (const inst of list) {
     let row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
-    if (inst.equipmentRole === 'attack') {
+    if (inst.equipmentRole === 'attack' || inst.kitRole) {
       const profile = profileById(registries, inst.profileId);
-      const piece = inst.weaponId
-        ? (registries.equipment.armaments || []).find((candidate) => candidate.id === inst.weaponId) || null
+      const owner = inst.kitRole ? inst.grantedBy : inst.weaponId;
+      const piece = owner
+        ? (registries.equipment.armaments || []).find((candidate) => candidate.id === owner) || null
         : null;
-      row = { role: 'attack', profile, piece };
+      row = { role: inst.kitRole || 'attack', profile, piece };
       row.receipt = roleAmountReceipt(registries, row, run.attributes, run.equipmentProfileRuleSnapshot);
     }
     if (row && row.profile) {
@@ -2701,7 +2740,7 @@ export function stampDeck(registries, run, cards, {
     if (Number.isInteger(carrier.exposureBuildupPerHit)) inst.exposureBuildupPerHit = carrier.exposureBuildupPerHit;
     else delete inst.exposureBuildupPerHit;
     const mods = cardMods(registries, run.loadout, run.class, {
-      attackSourceWeaponId: inst.equipmentRole === 'attack' ? (inst.weaponId || null) : undefined,
+      attackSourceWeaponId: inst.kitRole === 'attack' ? inst.grantedBy : inst.equipmentRole === 'attack' ? (inst.weaponId || null) : undefined,
     });
     const amountMod = row && row.role === 'attack' ? `damage=${row.receipt.value}`
       : row && row.role === 'guard' ? `block=${row.receipt.value}` : null;
