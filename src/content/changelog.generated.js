@@ -3,6 +3,166 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-945",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combatant Information follows your selection",
+    "detail": "The Information button matches the gold-ring card motif and appears only above the selected combatant. Intent stays visible; changing selection preserves sprite size, foot positions, and health-bar alignment in solo and co-op.",
+    "build": "0.6.0.119",
+    "pullRequest": 945,
+    "url": "https://github.com/cehinds/AshenSpire/pull/945"
+  },
+  {
+    "id": "pr-938",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combatants show larger intents and delayed Information",
+    "detail": "Intent and Information share a compact vertical stack above each sprite. Hover, touch, and keyboard selection highlight the control before its delayed explanation. End Turn stays gold while playable cards remain and turns green when none can be played.",
+    "build": "0.6.0.116",
+    "pullRequest": 938,
+    "url": "https://github.com/cehinds/AshenSpire/pull/938"
+  },
+  {
+    "id": "pr-904",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Every armament brings a complete combat kit",
+    "detail": "Weapons, shields, and staves each lend a Strike, Guard, and signature Art. Shields can attack beside a weapon; Guardian creates an Exhausting Bulwark skill, Bastion trades offense for Block, and Spiked Reprisal combines defence with Bleed. Equipment previews show the actual contributions, and solo/co-op fights retain their ownership and upgrade data.",
+    "build": "0.6.0.115",
+    "pullRequest": 904,
+    "url": "https://github.com/cehinds/AshenSpire/pull/904"
+  },
+  {
+    "id": "pr-931",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "A city spire welcomes each journey",
+    "detail": "Replace the startup and main-menu backdrop with a painted medieval city and central tower in muted gold and charcoal. Keep the title centered and readable on phones and larger screens; ship the artwork as compact WebP.",
+    "build": "0.6.0.113",
+    "pullRequest": 931,
+    "url": "https://github.com/cehinds/AshenSpire/pull/931"
+  },
+  {
+    "id": "pr-924",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Relics open as cards before you take them",
+    "detail": "Relic rewards show their card and full effects with Back and Take controls. Owned relics also open a card inspection from the map and combat HUD. Inspected playing cards show complete effect text, with card and details stacked on phones. Valid confirmation buttons turn green; reward Continue turns green after every reward is collected or explicitly skipped.",
+    "build": "0.6.0.112",
+    "pullRequest": 924,
+    "url": "https://github.com/cehinds/AshenSpire/pull/924"
+  },
+  {
+    "id": "pr-919",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The game can now be handed over in a light form",
+    "detail": "The build has always been one enormous file with every picture packed inside it, which meant a phone downloaded fifty-eight megabytes before it could show anything — and downloaded all of it again on the next visit, because a picture buried in a page cannot be kept by the browser on its own. There is now a second form of the same build that leaves the pictures outside: under five megabytes to start, with art arriving as each screen needs it and staying cached afterwards. The old single file is unchanged and still the one to double-click with no internet; the new one needs to be served, so neither replaces the other. Both are built from one pass over the same artwork, so they cannot come to hold different pictures, and two new checks confirm the light form has every image it will ask for and that it really loads — one of them caught two faults that looked perfectly fine until a browser opened the page.",
+    "build": "0.6.0.107",
+    "pullRequest": 919,
+    "url": "https://github.com/cehinds/AshenSpire/pull/919"
+  },
+  {
+    "id": "pr-891",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Configurable help across the combat screen",
+    "detail": "Hover HUD labels, meters, Block, enemy intent, card costs, and inspector headings for explanations. Accessibility settings control hover visibility and opening/closing delays, with a half-second default. Shared data supplies the choices, timing, and help text; keyboard and explicit inspection remain available with hover off.",
+    "build": "0.6.0.102",
+    "pullRequest": 891,
+    "url": "https://github.com/cehinds/AshenSpire/pull/891"
+  },
+  {
+    "id": "pr-916",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "A phone-shape check stops failing for want of a few seconds",
+    "detail": "Nothing a player sees changes. One of the automated checks that opens a browser and confirms the game reaches every control on a phone-sized screen was the first to start that browser, and so paid for waking it up, while being given the least time to do it. On a slow machine it ran out of time and reported that it could not run at all — which is not the same as finding a fault, but stops work merging just as firmly. It now gets the time the later checks already had. It cannot pass anything it would have failed: a check that starts and then finds a fault still reports one.",
+    "build": "0.6.0.94",
+    "pullRequest": 916,
+    "url": "https://github.com/cehinds/AshenSpire/pull/916"
+  },
+  {
+    "id": "pr-905",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Inspect selected rewards and item choices",
+    "detail": "Selected reward cards keep their Information button visible, including after Back restores the choice. Keyboard focus and scrollable card rows retain room for inspection. Smith extraction and installation items, mounts, and deck cards can be inspected without confirming the service, with usable selection panes on phones.",
+    "build": "0.6.0.92",
+    "pullRequest": 905,
+    "url": "https://github.com/cehinds/AshenSpire/pull/905"
+  },
+  {
+    "id": "pr-915",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Screens build with less stalling on a phone",
+    "detail": "Every image in the game now tells the browser it may decode off the main thread. Sixteen places drew pictures without saying so, which meant each one was unpacked in the same instant its screen was being assembled — free on a desktop, and the reason a phone hitched when an armoury or a hand of cards appeared, because a build carries its art inside itself and unpacking is all the work that is left. Two lists that can run longer than a screen — the inventory grid and the smith's stock — also hold their pictures back until they are scrolled near. That second habit is deliberately not applied to combat effects or to map landmarks under fog, where a picture that waits to be looked at may never arrive at all. Three artwork frames that already hid anything spilling past their edges now say so, so a sprite changing frames inside one card no longer makes the gallery around it redraw. Everything here reads from one setting rather than sixteen scattered ones, and can be turned off in a single edit.",
+    "build": "0.6.0.89",
+    "pullRequest": 915,
+    "url": "https://github.com/cehinds/AshenSpire/pull/915"
+  },
+  {
+    "id": "pr-914",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The receipt chain closes on itself, again",
+    "detail": "Nothing a player sees changes. The pull request before this one wrote the receipt that was owed and then owed one itself, which is the seventh time that loop has been walked here — 714, 717, 718, 721, 726, 728 and now 913. What makes this one worth recording rather than merely fixing is that its own description promised to name itself and then did not: the intent was stated, the other receipt was written, and the self-reference was forgotten in the same breath. Knowing the escape is not the same as taking it. This entry and the one below it are written in a single commit, which is the only shape that ends the chain.",
+    "build": "0.6.0.86",
+    "pullRequest": 914,
+    "url": "https://github.com/cehinds/AshenSpire/pull/914"
+  },
+  {
+    "id": "pr-913",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The receipt #913 owed",
+    "detail": "Nothing a player sees changes. It wrote up the receipts pass that preceded it and, being a pull request itself, owed one in turn; this is that one.",
+    "build": "0.6.0.86",
+    "pullRequest": 913,
+    "url": "https://github.com/cehinds/AshenSpire/pull/913"
+  },
+  {
+    "id": "pr-912",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The receipts pass that names itself",
+    "detail": "Nothing a player sees changes. Three merges had landed with no entry here, and the gate that catches exactly that reported all clear — because it measures the span between the test branch and the development branch, and the promotion that followed those merges closed the span before anything looked. A gate that the next legitimate action can silence is not a gate for that window, so this writes the three by hand and records why they were missed. It also adds the game's download weight to the readme, which described every other property of a build except the one a slow connection feels first.",
+    "build": "0.6.0.85",
+    "pullRequest": 912,
+    "url": "https://github.com/cehinds/AshenSpire/pull/912"
+  },
+  {
+    "id": "pr-908",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The game a phone downloads is a third smaller",
+    "detail": "Nothing a player sees changes; how much they wait for it does. The three hundred and twenty-five PNG sprites are re-encoded as WebP, and the single shipped file falls from ninety-three megabytes to fifty-eight. The format was chosen by measurement rather than habit: lossless WebP saved thirty-nine per cent and quality ninety saved seventy-five, and these are painted sprites rather than pixel art, so the second is the honest trade. Every file keeps its name and its pixels; only the container changed. The gate that renders equipment art through the real browser and measures where each piece lands passed fifty of fifty afterwards, which is the check that mattered.",
+    "build": "0.6.0.84",
+    "pullRequest": 908,
+    "url": "https://github.com/cehinds/AshenSpire/pull/908"
+  },
+  {
+    "id": "pr-907",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "A press is not a hold until it has stayed put",
+    "detail": "Anything you can drag — a card in your hand, a piece in the Armoury — used to flash the hold ring the instant you touched it, then snatch it away when the drag began. The gesture was right and the feedback was a lie. A press now has to stay still before the ring appears at all, so a drag simply drags and a hold still holds. The wait and the distance are both authored numbers rather than constants in a stylesheet, and a control with nothing to drag under it is untouched: a safety prompt that waits before it looks alive reads as a broken button.",
+    "build": "0.6.0.83",
+    "pullRequest": 907,
+    "url": "https://github.com/cehinds/AshenSpire/pull/907"
+  },
+  {
+    "id": "pr-910",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The wordmark was corrected twice, so it ended up off-centre",
+    "detail": "The title on the startup screen sat a few pixels right of centre, and the browser gate that measures it had been red for a day. The cause was a correction for a problem the browser had already solved: letter-spacing leaves a gap after the final letter, something was nudging the title right to compensate, and Chromium had already accounted for it. Removing the nudge puts the ink dead centre at every width tested. The alternative fix was measured too, and was no better — which is what proves there was nothing to compensate for.",
+    "build": "0.6.0.82",
+    "pullRequest": 910,
+    "url": "https://github.com/cehinds/AshenSpire/pull/910"
+  },
+  {
     "id": "pr-900",
     "date": "2026-09-09",
     "group": "2026-09-09",

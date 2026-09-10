@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `1d0da1b76e85e92fa1db8931a5bc68805c0b5d4f`
+- Source commit: `0b0b22c3792c1c959bca7eec62355b4c0f0f21cf`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -21,17 +21,17 @@
 
 | Area | Path | Tracked files |
 |---|---|---:|
-| Domain models and contracts | `src/model/` | 63 |
+| Domain models and contracts | `src/model/` | 64 |
 | Headless simulation/services | `src/engine/` | 13 |
 | Screen presenters/hosts | `src/ui/screens/` | 24 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
 | Component models and behavior records | `src/ui/models/` | 27 |
-| DOM components and observer adapters | `src/ui/components/` | 63 |
-| Code-side content adapters | `src/content/` | 81 |
+| DOM components and observer adapters | `src/ui/components/` | 64 |
+| Code-side content adapters | `src/content/` | 83 |
 | Authoritative JSON/CSV content | `content/source/` | 22 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 54 |
-| Architecture/tooling | `tools/` | 337 |
+| Tests | `tests/` | 56 |
+| Architecture/tooling | `tools/` | 342 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **5150**.
-Extensions: `.bat` 1, `.cjs` 9, `.cmd` 1, `.css` 13, `.csv` 21, `.gitattributes` 1, `.gitignore` 7, `.html` 47, `.js` 348, `.json` 111, `.log` 23, `.md` 108, `.mjs` 322, `.nojekyll` 1, `.png` 1640, `.ps1` 1, `.py` 7, `.sh` 4, `.sql` 1, `.svg` 11, `.txt` 12, `.webp` 2455, `.yml` 5, `(none)` 1.
+Tracked files: **5205**.
+Extensions: `.bat` 1, `.cjs` 9, `.cmd` 1, `.css` 13, `.csv` 21, `.gitattributes` 1, `.gitignore` 7, `.html` 48, `.js` 354, `.json` 112, `.log` 23, `.md` 114, `.mjs` 329, `.nojekyll` 1, `.png` 1345, `.ps1` 1, `.py` 7, `.sh` 4, `.sql` 1, `.svg` 11, `.txt` 12, `.webp` 2784, `.yml` 5, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

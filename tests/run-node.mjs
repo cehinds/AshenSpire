@@ -868,7 +868,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
 {
   const { execFileSync } = await import('node:child_process');
   try {
-    execFileSync(process.execPath, ['--test', 'tests/combat-foundations.test.mjs', 'tests/attack-sources.test.mjs', 'tests/combat-abilities.test.mjs'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    execFileSync(process.execPath, ['--test', 'tests/combat-foundations.test.mjs', 'tests/attack-sources.test.mjs', 'tests/combat-abilities.test.mjs', 'tests/tooltip-settings.test.mjs'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
     execFileSync(process.execPath, ['tools/attack-source-audit.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
     console.log('PASS  combat foundations: engine, co-op, save, preview and trigger regression suite');
     zoomPassed++;
@@ -994,5 +994,11 @@ try {
 } catch (error) {
   zoomExtra++;
   console.error('FAIL Starting equipment previews:', error);
+}
+try {
+  await import('./armament-combat-kits.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Armament combat kits:', error);
 }
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

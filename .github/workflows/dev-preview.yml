@@ -30,6 +30,9 @@ jobs:
         with:
           node-version: '22.14.0'
 
+      - name: Complete armament kits and temporary Guardian skill
+        run: node tests/armament-combat-kits.test.mjs
+
       - name: Combat formations and painted ground
         run: node --test tests/combat-formation.test.mjs tests/environment-art.test.mjs tests/map-detail.test.mjs tests/map-presentation.test.mjs tests/local-map.test.mjs
 
@@ -110,13 +113,27 @@ jobs:
           node tools/readiness-preview-build.mjs preview
           mkdir -p preview/art/readiness-poses
           cp -r art/readiness-poses/inspection preview/art/readiness-poses/inspection
-          cp AshenSpire.html preview/AshenSpire.html
-          cp AshenSpire.html preview/index.html
-          if [ -d map-detail ]; then cp -R map-detail preview/map-detail; fi
+          # TWO SHAPES, AND THE ROOT IS THE FAST ONE.
+          #
+          # preview/            the de-inlined build: 4.9 MB of HTML beside the
+          #                     art, which arrives per screen and stays in the
+          #                     browser cache. This is what a phone should open.
+          # preview/standalone/ the consolidated single file, 57.6 MB, every
+          #                     asset inlined. Needs no server — double-click it.
+          #
+          # The root used to be the single file, so opening the preview on a
+          # phone meant 57.6 MB before the first frame. --external-art writes
+          # AshenSpire.html plus assets/ and map-detail/ into preview/ in one
+          # pass, so the copies that used to place those by hand are gone with it.
+          node tools/bundle.mjs --external-art --out preview
+          cp preview/AshenSpire.html preview/index.html
+          mkdir -p preview/standalone
+          cp AshenSpire.html preview/standalone/AshenSpire.html
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
           cp -r src preview/src
           cp world-atlas-preview.html preview/
           cp equipment-selection-preview.html preview/
+          cp armament-kits-preview.html preview/
           cp tools/serve-preview.mjs preview/serve-preview.mjs
           cp -r styles preview/styles
           cp -r assets/environments preview/assets/
@@ -125,6 +142,7 @@ jobs:
           cp -r docs/preview/combat-ground preview/docs/preview/
           cp -r docs/preview/combat-formation preview/docs/preview/
           cp -r docs/preview/starting-equipment preview/docs/preview/
+          cp -r docs/preview/armament-kits preview/docs/preview/
           cp -r pose-studio preview/pose-studio
           cp -r assets/pose-effects preview/assets/
           cp -r art/pose-studio preview/art/
@@ -141,6 +159,7 @@ jobs:
             echo "Open AshenSpire.html locally to play this exact commit."
             echo "For the equipment review, run node serve-preview.mjs in this folder."
             echo "Then open http://127.0.0.1:8318/equipment-selection-preview.html."
+            echo "For all 25 armament kits and disposable combat, open http://127.0.0.1:8318/armament-kits-preview.html."
             echo "Use its class and screen-size controls to test hand choices and Continue."
             echo "Equipment screenshots and QA: docs/preview/starting-equipment/index.html."
             echo "Run node pose-studio/server.mjs for the standalone editor at http://127.0.0.1:4318."
@@ -156,6 +175,28 @@ jobs:
             echo "dev has no hosted URL."
           } > preview/README.txt
           echo "collected $(find preview -type f | wc -l) files"
+
+      # AFTER "Collect the playable build", BECAUSE THAT STEP CREATES preview/.
+      # These sat before it on the first cut and CI went red with "no build at
+      # preview/AshenSpire.html" — the gate refusing a directory that did not
+      # exist yet, which is the right behaviour and the wrong placement.
+      #
+      # --dir is passed to the selftest too. It plants into a COPY of whatever
+      # --dir names; without it the selftest looks for build/web, which this
+      # job never builds, and exits 2 — "the harness could not run", which
+      # blocks without measuring anything.
+      #
+      # The de-inlined build's art is on disk, not in the HTML, so the guard
+      # that reads the shipped file cannot see it. verify-shipped.mjs still
+      # covers the single file (its art is inside it, and nothing here changed
+      # that); these cover the other shape. Both defects this build actually
+      # had — CSS urls rebased to `../../assets/…`, and map-detail never copied
+      # — were green on disk, which is why the browser-gates job carries a
+      # third check rather than these two standing alone.
+      - name: The de-inlined build carries every asset it will ask for
+        run: node tools/verdict.mjs -- node tools/verify-external.mjs --dir preview
+      - name: That gate still catches its own known-bads
+        run: node tools/verdict.mjs -- node tools/verify-external.mjs --selftest --dir preview
 
       - uses: actions/upload-artifact@v4
         with:
@@ -215,6 +256,14 @@ jobs:
             [ -x "$p" ] && echo "found: $p" && "$p" --version
           done
           echo "(the probes exit 2 if none exists — unknown, which blocks)"
+
+      # THE DE-INLINED BUILD, LOADED RATHER THAN INSPECTED. It builds its own
+      # copy because this job does not share a filesystem with `preview`, and
+      # the build is cheap without the 52.8 MB of base64 the single file carries.
+      - name: The de-inlined build plays, and its art arrives over the wire
+        run: |
+          node tools/bundle.mjs --external-art --out build/web
+          node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web
 
       - name: Hand-side placement reaches the correct rendered side
         run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs

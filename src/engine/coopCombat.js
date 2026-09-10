@@ -155,6 +155,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
+    ...(c.kitRole ? { kitRole: c.kitRole } : {}),
+    ...(c.grantedBy ? { grantedBy: c.grantedBy, grantSource: c.grantSource } : {}),
     ...(c.sourceArmamentId ? { sourceArmamentId: c.sourceArmamentId } : {}),
     ...(Number.isInteger(c.smithingLevel) ? { smithingLevel: c.smithingLevel } : {}),
   }));

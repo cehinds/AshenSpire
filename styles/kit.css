@@ -495,7 +495,49 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
 /* The name fills its line: an indent would overflow and disable centering.
    Shift half the trailing tracking instead, keeping the visible text centered. */
-.as-titlemenu .tm-name { --track: 0.08em; margin: 0; font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; transform: translateX(calc(var(--track) / 2)); color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+/* THE translateX COMPENSATION IS CORRECT. IT WAS REMOVED ONCE, IN ERROR, AND
+   THIS PARAGRAPH IS THE RECORD SO IT IS NOT REMOVED AGAIN.
+
+   `letter-spacing` adds its track AFTER the final glyph too, so a centred line
+   has its INK sitting half a track LEFT of the box centre. The translateX puts
+   it back. #910 deleted it, on a measurement that took a Range over the text
+   as if that were the ink — but a Range INCLUDES the trailing advance, so it
+   reported the uncompensated layout as perfectly centred. The number was real;
+   it was measuring the wrong box, and it read 0px for a wordmark that was
+   visibly off.
+
+   Re-measured from PAINTED PIXELS — a screenshot scanned for the leftmost and
+   rightmost lit column of the wordmark, which has no box model to be wrong
+   about — as the ink's offset from the viewport centre, at three widths:
+
+                          390      1200     2550
+     with the transform   -1.5px   -1.5px   -2.5px
+     without it           -3.0px   -3.5px   -5.5px
+
+   The compensation roughly halves the error at every width. It is not a second
+   correction for a solved problem; the browser does NOT discount the trailing
+   advance when centring, and #910's claim that it does was wrong.
+
+   startup-gate now subtracts the trailing advance before judging centring
+   (A11.RESPONSIVE-SHAPE, and A11.CENTERING-DETECTOR is its self-test), so the
+   gate and this rule finally agree. Before that fix the gate measured the raw
+   advance box, which made the MISSING compensation look green — two errors
+   cancelling — and that false green is what invited #910.
+
+   A residual remains at 2550x1305 Text XL: the gate reads +1.605px against a
+   1px tolerance. DO NOT TUNE THIS RULE TO CLEAR IT. At that exact shape and
+   text size the painted ink measures -2.5px WITH this transform and -6.5px
+   without, so the gate and the pixels disagree in SIGN: the gate says the
+   wordmark sits right of centre, the glyphs say it sits left. Moving the
+   wordmark right to satisfy the gate would take the ink to about -4px, away
+   from centre, and the check would go green while the defect got worse.
+
+   The cause is that advance-minus-trailing is still not ink: it carries the
+   first and last glyphs' side bearings, which do not cancel in a display face.
+   The fix belongs in the measurement, not here — startup-gate already captures
+   a screenshot, so it can scan for lit columns instead of doing Range
+   arithmetic. Left red deliberately, and NOT by widening the tolerance. */
+.as-titlemenu .tm-name { --track: 0.08em; margin: 0; transform: translateX(calc(var(--track) / 2)); font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
 .as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
 .as-titlemenu li + li { border-top: 1px solid var(--rule); }
@@ -601,7 +643,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 #tooltip[data-overflow="true"], #tooltip-2[data-overflow="true"] { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
 #tooltip[data-open="true"], #tooltip-2[data-open="true"] { opacity: 1; visibility: visible; pointer-events: auto; }
 #tooltip[data-stuck="true"] { pointer-events: none; }
-#tooltip.is-fading { opacity: 0; transition: opacity 160ms ease-out; }
+#tooltip.is-fading { opacity: 0; transition: opacity var(--tooltip-fade-duration) ease-out; }
 .reduced-motion #tooltip, .reduced-motion #tooltip-2 { transition: none !important; }
 @media (prefers-reduced-motion: reduce) { #tooltip, #tooltip-2 { transition: none !important; } }
 /* The content grammar: title, meta (type + cost), effect, tags, then under
@@ -1625,7 +1667,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   gap: 1.2rem; padding: 2.4rem; min-height: 100%; overflow: hidden; cursor: pointer;
   background:
     linear-gradient(180deg, rgba(11, 9, 6, 0.34), rgba(9, 7, 5, 0.96)),
-    url('../assets/bg/bg_act1.webp') center / cover;
+    url('../assets/bg/title-city-tower.webp') center / cover;
   transition: opacity 180ms ease-out;
 }
 .startup-gate::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 20%, transparent 0, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.66) 100%); }
@@ -2497,7 +2539,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   margin: 0; transform: none;
 }
 .pile-body .card :is(.cname, .ctext) { font-size: calc(15px / var(--ui-zoom, 1)); line-height: 1.35; }
-.pile-body .card .art { overflow: hidden; }
+.pile-body .card .art { overflow: hidden; contain: layout paint; }
 .pile-body .card .art img { width: 100%; height: 100%; object-fit: contain; }
 .pile-body .card .ctag { font-size: calc(10px / var(--ui-zoom, 1)); }
 .pile-body .card .cost { font-size: calc(14px / var(--ui-zoom, 1)); width: calc(24px / var(--ui-zoom, 1)); height: calc(24px / var(--ui-zoom, 1)); }
@@ -2654,7 +2696,26 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury-card-gallery .ctext { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.35; }
 .armoury-card-gallery .cost { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); }
 .armoury-card-gallery .ctype, .armoury-card-gallery .ctag { font-size: max(.9rem, calc(10px / var(--ui-zoom, 1))); }
-.armoury-card-gallery .art { min-height: calc(55px / var(--ui-zoom, 1)); overflow: hidden; }
+/* CONTAINMENT, AND WHERE IT STOPS.
+   `contain: layout paint` on the art wells below is free: they already declare
+   `overflow: hidden`, so paint containment clips nothing that was not already
+   clipped, and their only child is a statically positioned <img>, so layout
+   containment steals no containing block from anyone. What it buys is that a
+   sprite swapping frames inside one card cannot dirty the layout or the paint
+   of the gallery around it — which on a phone scrolling forty cards is the
+   difference between one invalidated box and forty.
+
+   It stops at the well, and the stopping point is the load-bearing part.
+   ui/cardEffectLayers.js mounts its planes absolutely, at percentage offsets
+   under `translate(-50%,-50%)`, DELIBERATELY extending past the face they
+   decorate — the overhang is the effect. Today they mount on `.card-flight`
+   (combat.js), a fixed-position wrapper on <body> that holds a card ghost, so
+   the wells below never host one and this containment is provably inert.
+   That is a fact about the current call site, not a property of the selector:
+   lifting `contain` to `.card` — or mounting a layer inside `.art` — would
+   clip every hit spark to a border, and would look harmless in review because
+   nothing else in this file mentions the layers. Hence this paragraph. */
+.armoury-card-gallery .art { min-height: calc(55px / var(--ui-zoom, 1)); overflow: hidden; contain: layout paint; }
 .armoury[data-responsive='phone'] .armoury-head [role='tablist'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; }
 .armoury[data-responsive='phone'] .armoury-head .modal-tab { min-width: 0; padding-inline: .5rem; }
 /* Approved 350 × 490 poker canvas. Every measurement scales together. */
@@ -2795,7 +2856,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-details dt:first-child { margin-top:0; }
 .card-inspection-modal .modal-body { overflow:auto; overscroll-behavior:contain; }
 .equipment-poker-explanations { margin-top:0; }
-.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:-46px; right:auto; bottom:auto; left:50%; transform:translateX(-50%); box-sizing:border-box; width:36px; height:36px; min-width:36px; min-height:36px; max-width:36px; max-height:36px; padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px/1 Georgia,serif; cursor:pointer; touch-action:manipulation; visibility:hidden; pointer-events:none; }
+.card-inspection-target > .card-info-button,
+.combatant-leading > .combatant-info { box-sizing:border-box; width:36px; height:36px; min-width:36px; min-height:36px; max-width:36px; max-height:36px; padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
+.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:-46px; right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
 .inspection-selected { outline:3px solid #e0bd68; outline-offset:3px; border-radius:12px; }
 .card-info-button:focus-visible { outline:3px solid #fff0bd; outline-offset:2px; }
@@ -2944,3 +3007,57 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 
 .smith-card-list.as-options { padding-top:64px; }
 .smith-card-list.as-options.grid > .smith-candidate-card { overflow:visible; }
+
+/* Selected content keeps Information after a host redraw, including radio choices. */
+.card-inspection-target:is(.reward-selected, [aria-checked='true']) > .card-info-button {
+  visibility: visible; pointer-events: auto;
+}
+.equipment-poker-card:is(.selected, [aria-selected='true'], [aria-checked='true']) > .card-info-button {
+  visibility: visible; opacity: 1; pointer-events: auto;
+}
+/* Leave space inside scrollports for the above-card control, including wrapped rows. */
+:is(.reward-row, .mount-card-list, .armoury-card-gallery, .pile-body .grid):has(.card-inspection-target) {
+  padding-top: 64px; row-gap: 64px;
+}
+.smith-card-list:has(.card-inspection-target) { padding-top: 64px; row-gap: 64px; }
+.smith-card-list > .card-inspection-target { position: relative; overflow: visible; }
+.mount-row.card-inspection-target { position: relative; padding-right: 54px; }
+.mount-row.card-inspection-target > .card-info-button {
+  top: 50%; right: 8px; left: auto; transform: translateY(-50%);
+}
+/* Focusing a selected card must retain its inspection gutter in scrollports. */
+.card-inspection-target { scroll-margin-top: 64px; }
+@media (max-width: 720px) {
+  .mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 42%) minmax(0, 1fr); }
+}
+
+/* Inspection shows the complete face; compact pickers retain their text budget. */
+.card-inspection-art > .card { min-height:308px; }
+.card-inspection-modal .card-inspection-art > .card { height:auto; aspect-ratio:auto; }
+.card-inspection-art > .card .cd-body { flex:0 0 auto; height:auto; overflow:visible; }
+.card-inspection-art > .card .ctext { display:block; flex:0 0 auto; overflow:visible; -webkit-line-clamp:unset; }
+@media (max-width:600px) {
+  .card-inspection-modal .card-inspection-layout { grid-template-columns:minmax(0,1fr); }
+  .card-inspection-modal .card-inspection-art { width:100%; max-width:220px; }
+}
+/* Green means the primary action is ready; native/ARIA disabled states remain muted. */
+button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
+.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+  background:#255c39; border-color:#6fb580; color:#f0fff3;
+}
+button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover,
+.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover {
+  background:#306e46;
+}
+button.primary:disabled, button.primary[aria-disabled='true'],
+.as-btn.primary:disabled, .as-btn.primary[aria-disabled='true'] {
+  background:var(--panel); border-color:var(--line); color:var(--muted);
+}
+/* Modal height is independent of its standard width. Keep chrome pinned and
+   let the body scroll at its natural text/art size. */
+.modal-veil:not(dialog), .as-veil { padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+.modal, .as-modal { max-height: calc((100dvh - 24px) / var(--ui-zoom, 1)); min-height: 0; }
+.modal[data-height='long'], .as-modal[data-height='long'] { height: calc((100dvh - 24px) / var(--ui-zoom, 1)); }
+.modal-body, .as-body, .as-pane { overscroll-behavior: contain; scrollbar-gutter: stable; }
+.as-pane > * { flex-shrink: 0; }
+.modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { white-space: normal; overflow-wrap: anywhere; }
