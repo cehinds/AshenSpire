@@ -332,6 +332,10 @@
       "count": 1,
       "digest": "8ecba2d09176de17"
     },
+    "tools/ui-sweep.mjs": {
+      "count": 3,
+      "digest": "d53972e2e2f71feb"
+    },
     "tools/uprightgate.mjs": {
       "count": 14,
       "digest": "2c7308ecd506ea35"
