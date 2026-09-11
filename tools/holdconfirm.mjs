@@ -1412,6 +1412,21 @@ async function main() {
       console.log(`    (mutation rewired Rest to commit on a pointer click)`);
     }
     const onShrine = () => ev(`!!document.querySelector('#rest-opt')`);
+    // A SMITH CANDIDATE TAKES THREE TOUCH TAPS TODAY (cardInspection.js: the
+    // first tap selects, the second is swallowed as an information tap, the
+    // third reaches the card's own choose) — measured 2026-09-11, a finding
+    // for the owner and not this tool's to hide. The tool presses as many
+    // times as a thumb has to, stops the moment the Smith's button says an
+    // item is selected, and says how many it took.
+    const selectSmithCandidate = async (p) => {
+      let taps = 0;
+      for (; taps < 3; taps++) {
+        await press(p, 30); await wait(300);
+        if (await ev(`(document.querySelector('.smith-confirm') || { dataset: {} }).dataset.smithActionState !== 'unselected'`)) { taps++; break; }
+      }
+      if (taps > 1) console.log(`    (the Smith candidate took ${taps} touch taps to select — cardInspection swallows the first two)`);
+      return taps;
+    };
     const restBeat = await ev(`(() => { const e = document.querySelector('#rest-opt'); return e ? { beat: e.dataset.beat, ms: Number(e.dataset.holdMs || 0) } : null; })()`);
     if (!restBeat) skip('shrine', 'unasked', 'no ?shot=rest screen at this ref');
     else {
@@ -1431,7 +1446,7 @@ async function main() {
       const cardP = await pointOf('.smith-candidate-card');
       if (!cardP) ok(`the Smith modal offers an armament candidate`, false, 'no .smith-candidate-card — nothing to review');
       else {
-        await press(cardP, 30); await wait(300);
+        await selectSmithCandidate(cardP);
         if (mutate) {
           await ev(`(() => { const el = document.querySelector('.smith-confirm'); if (!el) return 0;
             const c = el.cloneNode(true); el.parentNode.replaceChild(c, el);
@@ -1487,7 +1502,7 @@ async function main() {
       await openShot('rest', { shotSmithingStones: 1 });
       await press(await pointOf('#smith-opt'), 30); await wait(300);
       await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
-      await press(await pointOf('.smith-candidate-card'), 30); await wait(300);
+      await selectSmithCandidate(await pointOf('.smith-candidate-card'));
       const ready = await ev(`(() => { const b = document.querySelector('.smith-confirm'); return b ? {
         nativeDisabled: b.disabled, aria: b.getAttribute('aria-disabled'), state: b.dataset.smithActionState,
         hold: b.dataset.optionHold, holdMs: Number(b.dataset.holdMs || 0), hint: !!b.querySelector('.hold-hint')
@@ -1619,7 +1634,7 @@ async function main() {
       await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
       const cp = await step('.smith-candidate-card', 'the first Smith candidate');
       if (!cp) continue;
-      await press(cp, 30); await wait(300);
+      await selectSmithCandidate(cp);
       await ev(`document.querySelector('.smith-confirm')?.scrollIntoView({ block: 'center' })`); await wait(120);
       const up = await step('.smith-confirm', 'the Smith Upgrade action');
       if (!up) continue;
@@ -1690,7 +1705,17 @@ async function main() {
       const cp = await pointOf('#remove-grid .card');
       if (!cp) ok(`the brazier offers a card`, false, 'no card in #remove-grid');
       else {
-        await press(cp, 30); await wait(260);
+        // A BRAZIER CARD IS A CARD (renderCard + cardInspection): by touch the
+        // first tap selects it and the second is swallowed as an information
+        // tap, so the arm lands on the third — the same three-tap finding the
+        // Smith candidate records above. Pressed until the panel stands, at
+        // most three times, and the count is said.
+        let burnTaps = 0;
+        for (; burnTaps < 3; burnTaps++) {
+          await press(cp, 30); await wait(260);
+          if (await ev(`!!document.querySelector('.confirmation-modal')`)) { burnTaps++; break; }
+        }
+        if (burnTaps > 1) console.log(`    (the brazier card took ${burnTaps} touch taps to arm — cardInspection swallows the first two)`);
         const armed = await ev(`(() => { const p = document.querySelector('.confirmation-modal'); return { panel: !!p,
           q: p ? [p.querySelector('h2')?.textContent || '', p.querySelector('.confirmation-copy')?.textContent || ''].join(' ') : '',
           cards: document.querySelectorAll('#remove-grid .card').length }; })()`);
