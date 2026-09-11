@@ -4,7 +4,6 @@ import { runHeaderModel } from '../models/RunHeaderModel.js';
 import { vitalsPanelModel } from '../models/VitalsPanelModel.js';
 import { quickAccessPanelModel } from '../models/QuickAccessPanelModel.js';
 import { inventoryBeltModel } from '../models/InventoryBeltModel.js';
-import { hudModeGripModel, normalizeHudMode } from '../models/HudModeModel.js';
 
 // Presentation projection only: callers provide a domain snapshot and command
 // ids; the result is a frozen tree with no callbacks or mutable run objects.
@@ -22,10 +21,9 @@ export function runHudViewModel({
   quickSettings,
   overlayHtml = '',
 } = {}) {
-  const hudMode = normalizeHudMode(quickSettings?.settings?.runHudMode);
   return componentModel(UI.sharedRunHud, {
     variant: place,
-    properties: { place, headerClass, overlayHtml, hudMode },
+    properties: { place, headerClass, overlayHtml },
     children: [
       runHeaderModel({ place, cinders, act, actTotal, floor, floorTotal, seed, identity }),
       componentModel(UI.primaryHudRow, {
@@ -38,11 +36,10 @@ export function runHudViewModel({
       // no such component to model. `hudQuickSettingsModel` is still the title
       // screen's, which is the main menu that keeps the pair.
       //
-      // `quickSettings` SURVIVES AS A PARAMETER and that is not residue: the bag
-      // carries `settings`, and `runHudMode` inside it is what decides whether
-      // this band draws compact or expanded (see `hudMode` above). It is the
-      // settings bag, not the pair's model.
-      hudModeGripModel({ mode: hudMode }),
+      // NO MODE GRIP EITHER. The fold control that snapped this band compact
+      // went on 2026-09-11 ("this stray button can go too"); `quickSettings`
+      // stays a parameter so the callers' shape is unchanged, and it is read
+      // by nothing here now.
     ],
   });
 }
