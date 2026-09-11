@@ -99,7 +99,12 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // with the band's rendered width — about a tenth of it — so a 1920 band
       // deals ~200 px cards while a phone keeps its 162.
       const cardCeiling = Math.max(162, band.width * 0.105);
-      const cardWidth = Math.min(cardCeiling, Math.max(72, (bandHeight - 28) * 5 / 7));
+      // THE FLOOR IS A READABLE CARD, not a 72 px thumbnail. At 390x650 the band
+      // is 151 px tall and the old floor dealt 98 px cards with 8.8 px rules
+      // text (measured 2026-09-11). 118 px keeps the text at ~10.6 px; the card
+      // then stands 165 px in a 151 px band and the top 14 px lift into the
+      // field's own bottom padding, which is what the fan's raise already does.
+      const cardWidth = Math.min(cardCeiling, Math.max(118, (bandHeight - 28) * 5 / 7));
       // Every read comes before the one write, so the pass costs one layout
       // rather than one per read.
       const cs = getComputedStyle(handEl);
