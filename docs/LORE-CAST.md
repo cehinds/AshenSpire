@@ -12,6 +12,13 @@ It is the authors' knowledge, assembled by the player from lines.
 
 ## 1. The four who climb
 
+**What all four share** (LORE §4): the seasons stopped and the outside is dying
+of it; the loose Ember has begun to read the unwritten and is drifting toward
+the one hearth built to burn them; only the unmarked can walk the ring and stand
+in the Spire; and each of them has one marked name on the ring, half-read, that
+relighting a hearth will finish. The night before the run, a Forsaken burned in
+their hamlet. That is the push. Below is what each of them brings to it.
+
 Each entry: what they want, what is wrong with them, what they say they want,
 what they are actually walking into, and the thing about them that does not add
 up. The contradiction is the character.
@@ -27,6 +34,8 @@ up. The contradiction is the character.
 - **Actual conflict:** the Fell Warden is the man who hired them, still holding the
   same gate from the other side. Killing him ends the contract. The Reaver has
   never wanted the contract to end.
+- **Their name:** the Fell Warden, who hired them. Finishing his reading ends
+  the contract and the man in the same stroke.
 - **Contradiction:** the only climber who was never marked and never promised,
   and the one who behaves most like something sworn.
 
@@ -41,6 +50,8 @@ up. The contradiction is the character.
 - **Actual conflict:** the Stitched Court is full of people who did not get to
   leave. Every Marionette is somebody's family kept at a post. The Rogue's
   speed is a way of never standing still long enough to be one of them.
+- **Their name:** a Marionette sewn to the Stitched Throne — the sister the
+  surgeon kept at her post. The Thousand Hands are a thousand of these.
 - **Contradiction:** the one who says the flames are nothing, and the one whose
   every move was learned inside the Court that the flame made.
 
@@ -54,9 +65,12 @@ up. The contradiction is the character.
   everything twice and acts once, late.
 - **Stated goal:** reach the Spire and see the fourth hearth. "It's on the
   charts."
-- **Actual conflict:** the Hollow Astronomer wants the Ember to leave the world.
-  The Spire was built to keep it. The Starseer carries the charts for both and
-  has not chosen.
+- **Actual conflict:** the Hollow Astronomer built the Spire, read what it
+  burns, and now wants the Ember to leave the world rather than reach it. The
+  Starseer carries the charts for the tower he built and the sky he wants it
+  sent back to, and has not chosen.
+- **Their name:** the Astronomer himself, marked crown-born, half-read, still
+  standing in his observatory calling down the thing that is eating him.
 - **Contradiction:** starstone remembers what it was before it was a hearth, and
   the Starseer is the only climber whose power is the same substance as the
   thing that burned the kingdom.
@@ -73,6 +87,8 @@ up. The contradiction is the character.
 - **Actual conflict:** the Furnace Saint is their teacher, still feeding an
   empty hearth, and the Herald is the proof that the hearth can refuse a name.
   Beating him is beating the only person who ever told them what they were for.
+- **Their name:** the Furnace Saint. Finishing his reading is the only way to
+  learn what he knew about the Herald's, and he will not say it while he burns.
 - **Contradiction:** the flames' last believer, and the one living argument
   that the flames' promise can be broken.
 
@@ -83,7 +99,7 @@ question from LORE §10.
 
 | Companion | Seat | Voice | Wants | Opposes | Dies if |
 |---|---|---|---|---|---|
-| **The Keeper of the Nameless** | none (met at the Grave) | the Forsaken | to finish walking; does not know where | any choice that writes a name into a hearth | never in a fight: they cannot burn. They *leave* if you feed a name. |
+| **The Keeper of the Nameless** | none (met at the Grave) | the Forsaken | to finish walking; does not know where | any choice that writes a name into a hearth | never in a fight: the fire tried them first, could not finish, and will not try again. They *leave* if you feed a name — unless the name is theirs, given. |
 | **Sergeant Ilse of the Fell Courtyard** (a Wandering Soldier who still knows) | weald | the Warden's field-book | to be finished reading | sparing the Fell Warden | the Bell Keeper's third peal, if asked into that fight |
 | **Aurel, Court Surgeon** (the Rogue's one) | marches | the frozen docks | to unstitch what he stitched, one at a time | any Marionette left standing | the Stitched King's Thousand Hands |
 | **Novice Wen** (the Herald's junior; marked, unburned, does not know why either) | reach | the Chapel liturgy | to reach the Spire and see the heresy | the Blight-Priest's offer | the Furnace Saint's Open Furnace |
@@ -169,7 +185,9 @@ warmth, and the world arranged itself around a fire it did not own.
   in the same night, and never knew why.
 - **Ships stopped coming to the coast** twenty years before the end, when the
   Spire's draw began to pull the weather. Starwatch Terrace logged the tides
-  going wrong. The Saints said heresy; the Astronomer said the tower was working.
+  going wrong. The Saints said heresy; the Astronomer said the tower was
+  working. It was. It was drawing on the coast's ship-breakers, the nearest
+  unwritten, and the tides were the least of what it pulled.
 - **The dragon's sleep was the reach's economy.** Wyrm Aspirants were
   consecrated to keep it under; the Ember Mine ran on the deep heat it slept
   around. The mines made the cinders the Chapel burned. The kingdom was, in the

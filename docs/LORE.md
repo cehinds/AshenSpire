@@ -60,12 +60,22 @@ viaduct runs out over the water to the **Ashen Spire**: a lower city the sea
 has half taken and, above it, the tallest tower the kingdom ever raised. It was
 the Astronomer's project, argued for a hundred years and built in the last
 twenty: a hearth designed to hold the Sovereign Ember and burn **without
-names** — starstone kept alight by the tower's own draw, not by the written
-dead. The Saints called it heresy. The Court funded it because the Ember was
-dimming and the Court was running out of names to promise. The tower was
-finished the spring before the Burning. The hearth was never lit. Nobody knows
-if it works. The fourth spur of viaduct was never joined to the ring; the last
-span stands open over the sea.
+written names** — starstone kept alight by the tower's own draw, not by the
+Chapel's ledger. The Saints called it heresy. The Court funded it because the
+Ember was dimming and the Court was running out of names to promise. The tower
+was finished the spring before the Burning. The hearth was never lit. The
+fourth spur of viaduct was never joined to the ring; the last span stands open
+over the sea.
+
+What "without written names" meant is the thing the Astronomer understood the
+night he finished it, and the reason he wrote one page and never another: a
+hearth that does not read the ledger does not go unfed. It reads what the
+ledger left out. **The Spire burns the unwritten.** Every name nobody promised —
+the hamlets, the ice-fishers, the mine camps, the ship-breakers, the whole
+uncounted kingdom outside the walls — is fuel that was never spent, and the
+fourth hearth was built, by a man who did not know it until it was built, to
+spend it. The Saints called it heresy for the wrong reason. It was heresy for
+this one.
 
 **The Ashen Crown is the Spire's summit, and the road to it is laid by the
 Ember.** The Sovereign Ember left its hearth in the Observatory the night of
@@ -118,8 +128,10 @@ three towers:
   went first, the Field Flame was the weakest. False: the Blight came from
   outside. The King's own Courtly Decree marked the last unmarked.)*
 - **The Astronomer's telling.** Starstone falls, burns, and goes out. What
-  happened was not a disaster. It was the star finishing. *(True. And he
-  watched it and wrote nothing down, because writing is what fed it.)*
+  happened was not a disaster. It was the star finishing. *(True. And he wants
+  it to finish — to leave the world — because the alternative is his own tower,
+  and he read what his tower eats. He wrote that down once and never wrote
+  again.)*
 
 **The whole truth is in exactly one place.** The Astronomer wrote one page in
 his life — the night he understood what fed the Ember — and wrote nothing
@@ -179,35 +191,98 @@ blight-hound between. The act boss holds the largest cinder in the city; killing
 it is what lights the hearth. This is the loop the player already runs — three
 acts, three bosses, cinders spent on the way — given its name.
 
-## 4. The Forsaken
+## 4. The Forsaken, and why they climb
 
 A Forsaken is someone the flames *left*. In the old kingdom every soul was
 marked to one of the three — field-born, court-born, crown-born — and was
 written into the Chapel's memory at death. The Forsaken were never marked.
 They lived outside the walls: in the weald's far hamlets, on the marches' ice,
-in the reach's mine camps. Exiles, the unnamed, the ones the light did not
-reach. That is why they can climb. The Blight takes hold through the
-flame-mark, and the Forsaken never had one.
+in the reach's mine camps, on the coast among the ship-breakers. Exiles, the
+unnamed, the ones the light did not reach. A whole second kingdom, uncounted,
+living in the cold between three warm cities. That is why they can climb. The
+Blight takes hold through the flame-mark, and the Forsaken never had one.
 
 The Forsaken Medallion is a slug of cold iron, blank on both faces. It is the
 only badge of the order, and it is a badge only in the sense that a gravestone
 with no name is a badge.
 
-A Forsaken has no *right* to the Ember. They are not restoring their own
-kingdom. Every ending of the climb is a choice about what the glory of somebody
-else's civilization is worth:
+A Forsaken has no *right* to the Ember and no love for the kingdom that made
+the cold they lived in. They are not climbing to restore anything. They are
+climbing because of four things, and the game gives the player all four in the
+first hour without a speech.
 
-- **Restore.** Relight all three and carry the Ember back to the Observatory's
-  crown, let the cities be rebuilt — and their light will not reach you this
-  time either, and it will need feeding again.
-- **Claim.** Take the Ember for yourself. Become the hearth. Decide whose names
-  it eats.
-- **Transform.** Seat it in the Ashen Spire, the hearth that was built to burn
-  without names and was never tried. It may hold. It may go out. Nobody knows,
-  and the Astronomer's page does not say.
+**1. The seasons stopped, and the outside is dying of it.** The Field Flame
+turned the seasons, for the cities and for everyone the cities sold a spring
+to. When it went out the year stopped where it stood: the weald in a spring
+that will not turn, the marches in a punitive winter, the far lands in
+whatever season they were in that night. The Forsaken survived the Burning
+because the fire could not read them. They are not surviving the winter that
+came after. Hamlets are emptying. The ice-fishers' lake has not thawed in a
+generation. Only a hearth turns a season, and the hearths are inside the walls
+the Forsaken were never allowed past after dusk. The people who can walk the
+ring are the only people left who need a spring and can go and get one.
 
-The game does not tell the player which is correct. The Blighted Valkyrie, the
-Furnace Saint and the Hollow Astronomer are each the champion of one answer.
+**2. The fire has started reading the unwritten.** This is the clock. The
+Ember is loose and starving, and a starving fire does not check the ledger. It
+drifts along the ring toward the one hearth that was built for it — the
+Spire's — and as it drifts, it has begun to try names nobody wrote. It cannot
+finish them. There is nothing written to read. But it is *learning*. The cairn
+of broken swords on the weald road is where the first Forsaken burned: the
+Grave of the Nameless. One of them did not finish, and walks. The night before
+the run begins, another Forsaken burned in the player's own hamlet. That is the
+opening. Every winter the Ember drifts farther out the spur, and if it reaches
+the Spire's hearth on its own, the hearth lights, and it reads every unwritten
+name in the world in one night, the way it read the written ones. The Forsaken
+were safe only while the fire had a ledger. The ledger is gone.
+
+**3. It has to be them, and it has to be now.** The marked cannot walk the
+ring: they burn on it, and are burning. Only the unmarked can carry a cinder
+without the cinder reading them. Only the unmarked can stand in the Spire's
+hearth-room without lighting it. And the fire is faster every year. A Forsaken
+who does not climb this winter is a Forsaken the fire reaches next winter,
+where they stand, in the cold, with no spring coming.
+
+**4. A name.** Every climber has one marked person somewhere on the ring — a
+commander, a sister, a teacher — half-read, burning slowly, still standing.
+Relighting a hearth *finishes the reading*: the cinders you feed it are names
+the fire completes, and the things that carried them stop. That is what
+"relight" costs and what it buys. The Reaver's name is the Fell Warden. The
+Rogue's is a Marionette at the Stitched Throne. The Starseer's is the Astronomer.
+The Herald's is the Furnace Saint. The player does not have to find them. They
+are the bosses. The climb goes through them whether the climber wants it to or
+not, and every one of them will make the offer before the fight: *my hearth-key
+for the Keeper's name. Let the fire have one that was never promised, and you
+can leave me standing.*
+
+So the climb is this: **herd the fire**. A relit hearth is one the Ember will
+not sit in, so three relit hearths close the ring, and the fire has one road
+left — out along the open spur, toward the Spire, with the climber behind it.
+The causeway race is the endgame: reach the hearth-room before the Ember
+seats itself, with cinders enough to hold it, and decide.
+
+- **Restore.** Carry the Ember back to the Observatory's crown and feed it the
+  ledger's names as before. The seasons turn. The marked burn on, finished one
+  by one, and the unwritten stay unwritten and cold outside a kingdom that is
+  warm again. The Blighted Valkyrie's answer: this is what she died to keep.
+- **Claim.** Become the hearth. A Forsaken with the Ember decides what it
+  reads. The seasons turn for whoever the Forsaken chooses. The Furnace Saint's
+  answer, turned inside out: a fire needs a Saint, and here is one with no
+  ledger and every reason to write a new one.
+- **Transform.** Seat it in the Spire's hearth, knowing what the hearth burns,
+  and feed it *one* unwritten name given freely — the Keeper's, offered; or the
+  climber's own — and find out whether a fire can run on a gift instead of a
+  promise. The Physician's quest says a cinder taken by mercy burns the same as
+  one taken by force. Nobody has tried a name that was never taken at all. The
+  Astronomer's answer, the one he could not test: it may hold and turn every
+  season for everyone; it may light and read the world. The page does not say.
+- **Let it go out.** The Hollow Astronomer's answer, and the one he fights for:
+  call the heavens down, send the starstone back where it fell from, and let
+  the world keep whatever season it is in forever. No hearth. No ledger. No
+  Spire. Cold, and nobody read.
+
+The game does not tell the player which is correct. Each ending has a champion
+who has thought about it longer than the player has, and none of them are
+lying.
 
 ## 5. The four who climb
 
@@ -320,9 +395,13 @@ The Observatory stands over the caldera, the empty hearth the Ember left.
 - **The Furnace Saint** keeps the Crown Flame's hearth in the Furnace Chapel at
   the tower's base. He is still feeding a hearth with nothing in it. Beat him
   and the hearth is yours.
-- **The Hollow Astronomer** watched the Burning from the Eclipse Observatory
-  and concluded the star was always going to go out. He wants the Ember to
-  *leave*. He will call the heavens down to see it off.
+- **The Hollow Astronomer** built the Spire, understood on the night he
+  finished it what a hearth without a ledger would read, wrote it down once,
+  and watched the Burning from the Eclipse Observatory knowing his own tower
+  was the worse of the two fires. He wants the Ember to *leave* the world — to
+  finish, as a star finishes — because the alternative is the Spire lighting.
+  He will call the heavens down to see it off, and he will kill a Forsaken to
+  keep one from carrying it there.
 - **The Ashheart Dragon** sleeps in the Ashheart Caldera the tower was built
   over, around the last of the deep heat, the wyrm the Wyrm Aspirants and Wyrm
   Lords were consecrated to. It is the reach's oldest tenant and does not care
@@ -347,6 +426,10 @@ The Spire stands at the end of the open span. The last viaduct arch was never
 closed; the Ember's light lays the missing span across the water for whoever
 follows it. Inside: the hearth-room, the lectern, the Astronomer's one page,
 and a hearth that has never been fed anything.
+
+The hearth has never been fed anything, and it is waiting for the Ember to
+arrive unattended. If it does, it lights on its own, and reads the unwritten.
+That is what the climber is racing (§4).
 
 In play the Spire is the run's ending, not a fourth seat: the tier-3 act's
 terminal is the causeway (SPEC §13.5), the Valkyrie is its boss, and the
@@ -456,7 +539,8 @@ beats and sell-back copy, not cards):
 | Merchant, sell bar, third visit | "Three warm. Don't ask me which three." |
 | Keeper of the Nameless, recruit | "No mark. No name. Nothing for it to read. I kept walking." |
 | Keeper of the Nameless, Spire hearth-room | "If it needs a name, give it mine. It never got one." |
-| Astronomer's page (the one text) | *Fed, it burns. Written, it feeds. Unfed, unwritten, unlit — I built the fourth to find out which of us was wrong.* |
+| Astronomer's page (the one text) | *Fed, it burns. Written, it feeds. I built a hearth that needs no ledger and understood, too late, that a fire with no ledger reads whatever is left. It will read them. God forgive me, it was built for them.* |
+| Opening, the player's hamlet (narrator) | Last night the fire read a name nobody wrote. It did not finish. It will. |
 | Starseer, Star Path | The fourth spur was on his charts before it was on the coast. |
 | Herald, Communion | We watched the heresy from the Tidebound Chapel. We never saw it lit. |
 
@@ -502,8 +586,10 @@ Deliberately unanswered, so events and quest chains have room:
 - Who caught the Ember when it fell, and whether they were Forsaken too.
 - Whether the Ember is fleeing the relit flames or being *called* out along
   the spur by the hearth that was built for it.
-- Whether the Spire's hearth works. The Astronomer's page does not say, and
-  neither ending that uses it tells the player for certain.
+- Whether a name given freely burns differently from one that was promised.
+  The Physician's quest says no for cinders. Nobody has tried a gift. The
+  Transform ending is the only test, and the game never shows its result twice
+  the same way.
 - What the Keeper of the Nameless is walking toward, and whether the second
   cairn is an ending or a door.
 - Whether a relit flame stays lit after the climber leaves, and who it eats
