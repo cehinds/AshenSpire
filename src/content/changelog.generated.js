@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-966",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A red warning stopped appearing over screens that were fine",
+    "detail": "The game has one way of telling you a button just died: a red block that says something stopped working. It was also showing that block for a message the browser sends when it simply ran out of time mid-frame and finished the job on the next one — nothing broke, nothing was lost, and the thing you pressed had worked. It turned up on the character-creation screen, and it named no file or line because there was nothing to name. That notice now goes quietly into the Command log, where it is still there to read if a screen ever does feel sluggish, and the red block is kept for what it was for. A real fault still raises it, including one that merely mentions the same browser feature by name.",
+    "build": "0.6.0.135",
+    "pullRequest": 966,
+    "url": "https://github.com/cehinds/AshenSpire/pull/966"
+  },
+  {
     "id": "pr-954",
     "date": "2026-09-10",
     "group": "2026-09-10",

@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-11
+
+- **A red warning stopped appearing over screens that were fine** ([#966](https://github.com/cehinds/AshenSpire/pull/966), `0.6.0.135`). The game has one way of telling you a button just died: a red block that says something stopped working. It was also showing that block for a message the browser sends when it simply ran out of time mid-frame and finished the job on the next one — nothing broke, nothing was lost, and the thing you pressed had worked. It turned up on the character-creation screen, and it named no file or line because there was nothing to name. That notice now goes quietly into the Command log, where it is still there to read if a screen ever does feel sluggish, and the red block is kept for what it was for. A real fault still raises it, including one that merely mentions the same browser feature by name.
+
 ## 2026-09-10
 
 - **The record of what shipped caught up with what shipped** ([#954](https://github.com/cehinds/AshenSpire/pull/954), `0.6.0.133`). Nothing a player sees changes. Three changes had landed without an entry here, and the number stamped on the downloadable game belonged to an older version of the source — it had been merged without being rebuilt, so the box and its contents disagreed. The three entries are written, and the build is made again so its stamp is honest. One detail worth keeping: each entry's build number was read out of the project's own history at the moment that change landed, not copied from what its author wrote down, and the two disagreed once out of three.
