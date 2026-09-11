@@ -96,3 +96,6 @@ shop.weaponArt.eyebrow,,Weapon art,,
 shop.buy.confirm,,BUY IT,Spend the cinders and take it now.,
 shop.burn.confirm,,BURN IT,Spend the cinders and remove the card for good.,
 shop.sell.confirm,,SELL IT,Hand it over for cinders.,
+# ---- the custom climb -----------------------------------------------------
+customRun.seat.group,,First seat,Which seat the climb opens in.,
+customRun.seat.seeded,,Seeded,The seed decides which seat the climb opens in.,

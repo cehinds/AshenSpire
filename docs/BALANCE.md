@@ -54,6 +54,24 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 | 3 | a3_eliteWyrmLord | elite | 1 | 135 | 8.3 | 1.4 |
 | 3 | a3_bossRotValkyrie | boss | 1 | 250 | 12 | — |
 
+## 2b. Seat tiers (SPEC §13.3)
+
+A seat's rows above were authored at its baseline tier (act 1 → weald, 2 →
+marches, 3 → reach). Climbing a seat at another tier scales enemy HP after the
+roll by `balance.seatTiers[tier] / balance.seatTiers[baseTier]`. The table is
+the measured HP ratio of §2, normals, elites and bosses weighted together:
+
+| tier | multiplier | from |
+|---:|---:|---|
+| 1 | 1.0 | by definition (the validator holds it) |
+| 2 | 1.5 | act-2 normals avg 55.2 HP over act-1 avg 38.1 (1.45); elites 93/70 (1.33); bosses 195/120 (1.63) |
+| 3 | 1.9 | act-3 normals avg 60.7 over 38.1 (1.59); elites 135/70 (1.93); bosses 250/120 (2.08) |
+
+A seat at its own baseline scales by exactly 1, so every default-order run in
+§5 measures the fights it always measured. `node tools/runsim.mjs 300
+--seeded-seats` measures the seeded orders; Strength scaling per tier is
+deliberately not introduced here (Endless owns per-loop Strength).
+
 ## 3. Player baselines (measured naive starting-deck DPS)
 
 Naive bot (leftmost affordable card) vs. an infinite-HP dummy, 10 turns,

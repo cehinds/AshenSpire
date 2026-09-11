@@ -456,5 +456,19 @@ export const uiStrings = [
     "short": "SELL IT",
     "full": "Hand it over for cinders.",
     "tip": ""
+  },
+  {
+    "id": "customRun.seat.group",
+    "extends": "",
+    "short": "First seat",
+    "full": "Which seat the climb opens in.",
+    "tip": ""
+  },
+  {
+    "id": "customRun.seat.seeded",
+    "extends": "",
+    "short": "Seeded",
+    "full": "The seed decides which seat the climb opens in.",
+    "tip": ""
   }
 ];

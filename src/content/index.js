@@ -20,9 +20,10 @@ import { flasks } from './flasks.js';
 import { act1Enemies } from './enemies/act1.js';
 import { act2Enemies } from './enemies/act2.js';
 import { act3Enemies } from './enemies/act3.js';
-import { act1Encounters } from './encounters/act1.js';
-import { act2Encounters } from './encounters/act2.js';
-import { act3Encounters } from './encounters/act3.js';
+import { wealdEncounters } from './encounters/weald.js';
+import { marchesEncounters } from './encounters/marches.js';
+import { reachEncounters } from './encounters/reach.js';
+import { SEATS } from './seats.js';
 import { events, eventHistoryRequirements } from './events.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
@@ -53,7 +54,10 @@ export const contentBundle = {
   // Release series and candidate live here; tools/buildversion.mjs derives the
   // fourth component and resets it to zero whenever this release changes.
   // The owner moved current builds to the 0.6.x.x series on 2026-09-08.
-  version: '0.6.0',
+  // 0.7.1: the first candidate of the 0.7 line — seats (SPEC §13), a new
+  // run-order system live for players with its save-schema migration, is a
+  // MINOR under docs/versioning.md rule 2; the owner's release cut names 0.7.0.
+  version: '0.7.1',
   balance,
   cards,
   relics,
@@ -63,7 +67,13 @@ export const contentBundle = {
   resources,
   keywords,
   enemies: [...act1Enemies, ...act2Enemies, ...act3Enemies],
-  encounters: [...act1Encounters, ...act2Encounters, ...act3Encounters],
+  // Bundle order is read order: the boss pool a map draws from is this list
+  // filtered, so a seat's bosses keep the columns they have always landed in
+  // (SPEC §13.6). The Valkyrie row sits first in reach.js for the same reason.
+  encounters: [...wealdEncounters, ...marchesEncounters, ...reachEncounters],
+  // The seats (SPEC §13.1): a registry, so an encounter's `seat` is a ref the
+  // validator resolves like any other id.
+  seats: SEATS,
   events,
   eventHistoryRequirements,
   flasks,

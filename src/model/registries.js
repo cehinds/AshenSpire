@@ -91,6 +91,7 @@ const TYPE_SINGULAR = {
   events: 'event',
   flasks: 'flask',
   classes: 'class',
+  seats: 'seat',
 };
 
 /**

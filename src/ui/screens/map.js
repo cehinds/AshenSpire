@@ -33,6 +33,7 @@ import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
 import { actRouteStripHtml } from '../components/actRouteStrip.js';
+import { seatNameOf } from '../components/runHud.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { popover, row } from '../kit/index.js';
 
@@ -100,7 +101,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <!-- ONE HUD SHELL: the same band combat, the merchant, the Shrine and an event mount (components/runHud.js). -->
       ${runHudHtml({ registries, run, meta, place: 'map', headerClass: 'map-header' })}
-      ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
+      ${actRouteStripHtml({ title: actTitle(run.actNumber, run.journey ? null : seatNameOf(registries, run)) })}
     </div>`;
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
   // Bars, relics, flasks, Armoury and Menu: components/runHud.js fills the
@@ -128,7 +129,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // The legend belongs to the corner it opens from — the ? in the zoom bar — so
   // it is mounted with the board's chrome, not on the HUD.
   const board = mountMapBoard(app.querySelector('.mapscreen'), {
-    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds },
+    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds },
     showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,

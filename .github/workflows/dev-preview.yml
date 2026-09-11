@@ -77,7 +77,7 @@ jobs:
       # both are pure reads, no execution and no browser, well under a second,
       # on the runner this job already pays for. The 3-OS matrix in ci.yml stays
       # dispatch-only; nothing here re-enables it or spends a Windows minute.
-      - name: Current builds use the 0.6.x.x release series
+      - name: Current builds use the 0.7.x.x release series
         run: node tools/release-series.mjs
       - name: Release series gate rejects older and malformed versions
         run: node tools/release-series.mjs --selftest

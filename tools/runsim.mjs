@@ -17,12 +17,16 @@
 // Run: node tools/runsim.mjs [runsPerClass=30] [--endless]
 //   --endless: Endless Spire mode — acts loop past 3 with per-cycle scaling
 //   (capped at act 15 here); reports climb depth instead of win rate.
+//   --seeded-seats: draw the seat order per seed (SPEC §13.4) instead of the
+//   default order. Off by default so the win-rate corpus keeps comparing the
+//   same climbs it always measured (§13.6); on, it measures every order.
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
+import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
+import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { resolveStartingKit } from '../src/model/startingKits.js';
 import { levelUpPlan, applyLevelUp } from '../src/model/levelup.js';
@@ -70,6 +74,7 @@ const ENDLESS = argv.includes('--endless');
 // bot's shrine behaviour is untouched, only the refill is withheld.
 const GRACE_AB = argv.includes('--grace-ab');
 let GRACE_ON = !argv.includes('--no-grace-refill');
+const SEEDED_SEATS = argv.includes('--seeded-seats');
 // THE CLASS-SPREAD DEEPENING (Vira, 2026-08-15). `--deep` tallies each fight's
 // own eventLog — playerTurnStart / cardPlayed / blockGained / healed / hpLost /
 // damageDealt / energySpent / flaskUsed — into per-class counters, plus the
@@ -277,6 +282,9 @@ function simulateRun(classId, seed, ds = null) {
   run._id = createIdGen('sim');
   run.seenEvents = [];
   const rng = createRng(seed);
+  // SPEC §13.4: the seeded order rides its own stream, so drawing it here moves
+  // no map, event or reward roll below.
+  if (SEEDED_SEATS) run.seatOrder = drawSeatOrder(REG, rng);
   const result = { classId, seed, victory: false, act: 1, floor: 0, deaths: null };
   // ONE exit for every path out of a run, win or death: the purse a run ends
   // with is part of the cinder economy whichever way it ended, and the report
@@ -307,12 +315,18 @@ function simulateRun(classId, seed, ds = null) {
     result.act = act;
     // Endless: acts past 3 reuse act 1-3 content, scaled per completed cycle.
     const { contentAct, loop } = ENDLESS ? endlessActInfo(act) : { contentAct: act, loop: 0 };
-    const cm = loop > 0
-      ? { hpMult: 1 + ENDLESS_HP_PER_LOOP * loop, enemyStatuses: [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop }] }
+    const seat = seatAtTier(run.seatOrder, contentAct);
+    // Endless cycle scaling × the seat's tier ratio (SPEC §13.3; exactly 1
+    // when the seat is climbed at its authored baseline, i.e. every default-
+    // order run this tool ever measured).
+    const tierMult = seatTierHpMult(REG, seat, contentAct);
+    const hpMult = (1 + ENDLESS_HP_PER_LOOP * loop) * tierMult;
+    const cm = hpMult !== 1 || loop > 0
+      ? { hpMult, enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop }] : [] }
       : {};
     // The ONE boot path (#54) — same module main.js and session.mjs use, so a
     // signature change lands on the game and the harnesses in the same act.
-    const map = buildActMap(REG, rng, contentAct, null, { history: run.history });
+    const map = buildActMap(REG, rng, seat, contentAct, null, { history: run.history });
 
     let currentId = null;
     let nextIds = map.startIds;
@@ -354,8 +368,8 @@ function simulateRun(classId, seed, ds = null) {
 
       if (kind === 'monster' || kind === 'fight' || kind === 'elite' || kind === 'boss') {
         const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
-        const encId = pool === 'boss' ? bossEncounterForNode(REG, map, pick.id, contentAct)
-          : rollEncounter(REG, rng, { pool, act: contentAct });
+        const encId = pool === 'boss' ? bossEncounterForNode(REG, map, pick.id, { seat, tier: contentAct })
+          : rollEncounter(REG, rng, { pool, seat });
         if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `${pool}:${encId}`; recordDeath(ds, act, run.hp); return finish(); }
         afterVictory(run, rng, pool);
         if (pool === 'boss') {

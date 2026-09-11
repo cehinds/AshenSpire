@@ -33,6 +33,8 @@ import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from './resbars.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { useRunChargeFlask } from '../../engine/actions.js';
+import { seatAtTier } from '../../model/seats.js';
+import { activeMods, endlessActInfo } from '../../content/customMods.js';
 import { settingOn } from '../screens/settings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { el as kitEl, slot } from '../kit/index.js';
@@ -45,14 +47,26 @@ export const RUN_HUD_MENU_ID = 'open-menu';
  * `place` is the band's variant ('map', 'shop', 'rest', 'event'); `headerClass`
  * is the hook a screen's own stylesheet reads (`map-header` on the map).
  */
+/** The seat's display name for the run's current act (SPEC §13.2), or null
+ * for a run that has no seat (World Journey, a snapshot without an order). */
+export function seatNameOf(registries, run) {
+  if (run.journey || !Array.isArray(run.seatOrder) || !run.seatOrder.length) return null;
+  const tier = run.custom && activeMods(run.custom).endless ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
+  const id = seatAtTier(run.seatOrder, tier);
+  return registries.seats.has(id) ? registries.seats.get(id).name : null;
+}
+
 export function runHudHtml({ registries, run, meta, place, headerClass = 'map-header' }) {
   const map = run.mapGraph;
   const className = registries.classes.get(run.class).name;
+  const seatName = seatNameOf(registries, run);
   return hudShellHtml(runHudViewModel({
     place,
     headerClass,
     cinders: run.cinders,
-    act: run.actNumber,
+    // `Act <tier> · <seat name>` (SPEC §13.2) — the chip prints its value as
+    // text, so the seat rides in the value rather than a new field.
+    act: seatName ? `${run.actNumber} · ${seatName}` : run.actNumber,
     actTotal: run.actNumber > 3 ? null : 3,
     floor: run.floor,
     floorTotal: map ? map.floors : null,

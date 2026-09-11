@@ -26,7 +26,8 @@ import {
   commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan,
 } from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
-import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
+import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
+import { defaultSeatOrder, seatOrderProblems, seatAtTier, seatTierHpMult } from '../src/model/seats.js';
 import { assertSavedBossReferences } from '../src/model/mapReferences.js';
 import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
@@ -107,12 +108,18 @@ export function restoreSession(registries, data) {
   return s;
 }
 
-export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {} }) {
+export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {}, firstSeat = null }) {
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
   if (restore) {
+    // SPEC §13.4: a party save from before seats climbs the default order —
+    // the one it was already climbing — and a save that names an order must
+    // name every seat once.
+    const seatOrder = Array.isArray(restore.seatOrder) ? restore.seatOrder : defaultSeatOrder(registries);
+    const seatProblems = seatOrderProblems(seatOrder, registries);
+    if (seatProblems.length) throw new Error(`Malformed session save: ${seatProblems.join('; ')}`);
     const mapAct = endless ? ((restore.actNumber - 1) % LAST_ACT) + 1 : restore.actNumber;
-    assertSavedBossReferences(registries, restore.mapGraph, mapAct);
-    restore = { ...restore, mapGraph: refreshBossDestinationLabels(registries, restore.mapGraph, mapAct) };
+    assertSavedBossReferences(registries, restore.mapGraph, { seat: seatAtTier(seatOrder, mapAct), tier: mapAct });
+    restore = { ...restore, seatOrder, mapGraph: refreshBossDestinationLabels(registries, restore.mapGraph, mapAct) };
   }
   const seed = restore ? (restore.seed >>> 0) : seedOf(seedString);
   const rng = createRng(seed, restore ? restore.rng : {}); // shared: map gen, encounter rolls
@@ -125,6 +132,9 @@ export function createSession({ registries, seedString, endless = false, restore
     seed,
     endless,
     actNumber: restore ? restore.actNumber : 1,
+    // The party's seat order (SPEC §13.4): drawn once at start() on the shared
+    // rng's `seats` stream; until then the default, so a lobby has a shape.
+    seatOrder: restore ? restore.seatOrder : defaultSeatOrder(registries),
     floor: restore ? restore.floor : 0,
     mapGraph: restore ? restore.mapGraph : null,
     cursorId: restore ? restore.cursorId : null,
@@ -173,6 +183,10 @@ export function createSession({ registries, seedString, endless = false, restore
         }
         const legacyKit = md.run.schemaVersion === 1;
         migrateRunSchema(md.run);
+        // The PARTY's seat order is the member's (SPEC §13.4): a pre-seat
+        // member run has none, and a member that joined mid-climb carries
+        // whatever it was born with; the session is the one authority.
+        md.run.seatOrder = session.seatOrder.slice();
         normalizeRunAttributes(md.run, registries);
         const discoveredArmaments = [...new Set(md.discoveredArmaments || [])];
         validateRunStartingKit(md.run, registries, { discoveredArmaments }, { legacy: legacyKit });
@@ -228,6 +242,9 @@ export function createSession({ registries, seedString, endless = false, restore
   function contentAct() {
     return endless ? ((session.actNumber - 1) % LAST_ACT) + 1 : session.actNumber;
   }
+  function currentSeat() {
+    return seatAtTier(session.seatOrder, contentAct());
+  }
   function loopCount() {
     return endless ? Math.floor((session.actNumber - 1) / LAST_ACT) : 0;
   }
@@ -236,6 +253,9 @@ export function createSession({ registries, seedString, endless = false, restore
     const index = order++;
     const entitlement = [...new Set(discoveredArmaments || [])];
     const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: { discoveredArmaments: entitlement } });
+    // The party's order, not the default: a member's run rides the session's
+    // seats exactly as it rides the session's act and floor (SPEC §13.4).
+    run.seatOrder = session.seatOrder.slice();
     const m = {
       id,
       name: String(name || 'Forsaken').slice(0, 18),
@@ -314,7 +334,7 @@ export function createSession({ registries, seedString, endless = false, restore
   function buildMap() {
     // The ONE boot path (#54) — same module main.js and runsim.mjs use;
     // unknowns come back pre-rolled, seed-determined at map birth.
-    session.mapGraph = buildActMap(registries, rng, contentAct(), null, { history: partyHistory() });
+    session.mapGraph = buildActMap(registries, rng, currentSeat(), contentAct(), null, { history: partyHistory() });
     session.floor = 0;
     session.cursorId = null;
     session.reachableIds = session.mapGraph.startIds.slice();
@@ -325,6 +345,10 @@ export function createSession({ registries, seedString, endless = false, restore
     if (session.started) return;
     session.started = true;
     session.actNumber = 1;
+    // The party's order, drawn once on the shared rng's `seats` stream; the
+    // host may pin the opening seat exactly as Custom Run does (SPEC §13.4).
+    session.seatOrder = drawSeatOrder(registries, rng, { firstSeat });
+    for (const m of members.values()) m.run.seatOrder = session.seatOrder.slice();
     buildMap();
   }
 
@@ -454,12 +478,14 @@ export function createSession({ registries, seedString, endless = false, restore
   // `enc.pool` for the solo player; the caller's pool is only for the roll.
   function enterCombat(pool, forcedEncounterId = null) {
     const encounterId = forcedEncounterId || (pool === 'boss'
-      ? bossEncounterForNode(registries, session.mapGraph, session.cursorId, contentAct())
-      : rollEncounter(registries, rng, { pool, act: contentAct() }));
+      ? bossEncounterForNode(registries, session.mapGraph, session.cursorId, { seat: currentSeat(), tier: contentAct() })
+      : rollEncounter(registries, rng, { pool, seat: currentSeat() }));
     const enc = registries.encounters.get(encounterId);
     if (forcedEncounterId) pool = enc.pool;
     const loop = loopCount();
-    const extraHpMult = 1 + registries.balance.endless.hpPerLoop * loop; // endless cycle scaling (headcount handled by the runner)
+    // Endless cycle scaling × the seat's tier ratio (SPEC §13.3; 1 at the
+    // seat's own baseline). Headcount is handled by the runner.
+    const extraHpMult = (1 + registries.balance.endless.hpPerLoop * loop) * seatTierHpMult(registries, currentSeat(), contentAct());
     const combat = createCoopCombat({
       registries, rng,
       players: connectedMembers().map(memberAsPlayer),
@@ -1234,6 +1260,7 @@ export function createSession({ registries, seedString, endless = false, restore
       seedString: session.seedString,
       endless: session.endless,
       actNumber: session.actNumber,
+      seatOrder: session.seatOrder.slice(),
       floor: session.floor,
       cursorId: session.cursorId,
       reachableIds: session.reachableIds.slice(),

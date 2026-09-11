@@ -815,7 +815,7 @@ async function mutate() {
     }
     // M4 — a dangling id planted into a real encounter.
     {
-      const { contentBundle: mb } = await import(copyContent('m4', [['encounters/act1.js', "'wanderingSoldier'", "'wanderingSoldat'"]]));
+      const { contentBundle: mb } = await import(copyContent('m4', [['encounters/weald.js', "'wanderingSoldier'", "'wanderingSoldat'"]]));
       const r = G.validateContent(mb);
       const hit = (r.errors || []).map((e) => `${e.path}: ${e.msg}`).find((m) => m.includes('wanderingSoldat'));
       report(!r.ok && !!hit, 'M4', "encounter enemy id typo'd to 'wanderingSoldat' — must be named in the message", hit || 'validated clean');

@@ -29,7 +29,7 @@ for (const replaceEnemies of [false, true]) {
   test(`solo and LAN labels follow current ${replaceEnemies ? 'encounter composition' : 'enemy names'} without changing saved identity or RNG`, () => {
     const current = changedContent(replaceEnemies);
     const run = createRunState({ seed: 808, classId: 'reaver', registries: original });
-    run.mapGraph = buildActMap(original, createRng(808), 1);
+    run.mapGraph = buildActMap(original, createRng(808), run.seatOrder[0], 1);
     const id = run.mapGraph.bossIds.find((id) => run.mapGraph.nodes[id].encounterId === 'bossBellKeeper');
     run.mapNodeId = id;
     const before = JSON.stringify(run);
@@ -39,13 +39,13 @@ for (const replaceEnemies of [false, true]) {
     assert(loaded);
     const expected = replaceEnemies ? 'Bellfoundry · The Glass Regent & Renamed Bell Keeper' : 'Bellfoundry · Renamed Bell Keeper';
     assert.equal(loaded.mapGraph.nodes[id].destinationLabel, expected);
-    assert.equal(bossEncounterForNode(current, loaded.mapGraph, id, 1), 'bossBellKeeper');
+    assert.equal(bossEncounterForNode(current, loaded.mapGraph, id, { seat: 'weald', tier: 1 }), 'bossBellKeeper');
     assert.deepEqual(withoutLabels(loaded.mapGraph), withoutLabels(run.mapGraph));
     assert.deepEqual(loaded.streamCounters, run.streamCounters);
     assert.equal(loaded.mapNodeId, id);
     assert.equal(JSON.stringify(run), before);
 
-    const host = createSession({ registries: original, seedString: 'GOLDBOUGH' });
+    const host = createSession({ registries: original, seedString: 'GOLDBOUGH', firstSeat: 'weald' });
     host.addMember({ id: 'p1', name: 'Label tester', classId: 'reaver' }); host.start();
     const saved = structuredClone(host.serialize());
     const terminal = saved.mapGraph.bossIds.find((id) => saved.mapGraph.nodes[id].encounterId === 'bossBellKeeper');
@@ -62,7 +62,7 @@ for (const replaceEnemies of [false, true]) {
 }
 
 test('new map labels and refreshed labels have one source and unchanged labels retain graph identity', () => {
-  const graph = buildActMap(original, createRng(909), 1);
+  const graph = buildActMap(original, createRng(909), 'weald', 1);
   for (const id of graph.bossIds) assert.equal(graph.nodes[id].destinationLabel, bossDestinationLabel(original, graph.nodes[id].encounterId));
   assert.equal(refreshBossDestinationLabels(original, graph, 1), graph);
 });

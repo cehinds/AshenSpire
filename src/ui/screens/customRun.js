@@ -21,6 +21,8 @@ import { applyRunShape, minViableFloors, resolveFloorPlan } from '../../model/fl
 import { sampleActShape } from '../../engine/mapgen.js';
 import { classGlyph } from '../assets.js';
 import { esc } from '../components/tooltip.js';
+// Every sentence this screen says is a row in content/source/uiStrings.csv.
+import { t, tFull } from '../strings.js';
 import { createRunState } from '../../model/state.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
@@ -57,6 +59,7 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
     ascension: 0,
     mods: {}, // explicit toggles (on top of ascension-enabled rules)
     deckMode: 'standard',
+    firstSeat: null, // SPEC §13.4: null = seeded order; a seat id pins the opening seat
   };
 
   // ---- the run shape: every bound below is DERIVED from the acts themselves --
@@ -292,6 +295,31 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
   const deckNote = flavour(DECK_MODES[0].desc, { id: 'cr-deck-note' });
   deckBox.appendChild(row({ tag: 'div', setting: true, labelNode: labelStack({ label: 'Deck mode' }), trail: deckSeg }));
   deckBox.appendChild(deckNote);
+  // ---- first seat: a Segmented (SPEC §13.4) ----
+  // The options are the seats the content authors, read from the registry; a
+  // fourth seat appears here with no edit to this file (Law 0).
+  const seatOptions = [{ id: '', label: t('customRun.seat.seeded'), desc: tFull('customRun.seat.seeded') },
+    ...registries.seats.all().map((seat) => ({ id: seat.id, label: seat.name.replace(/^The /, ''), desc: `Open the climb in ${seat.name}; the seed orders the rest.` }))];
+  const seatSeg = segmented({
+    options: seatOptions.map((o, i) => ({ label: o.label, value: o.id, pressed: i === 0, attrs: { dataset: { seat: o.id }, 'aria-label': `${o.label} — ${o.desc}` } })),
+    attrs: { role: 'group', 'aria-label': t('customRun.seat.group') },
+  });
+  const seatNote = flavour(seatOptions[0].desc, { id: 'cr-seat-note' });
+  deckBox.appendChild(row({ tag: 'div', setting: true, labelNode: labelStack({ label: t('customRun.seat.group') }), trail: seatSeg }));
+  deckBox.appendChild(seatNote);
+  for (const control of seatSeg.querySelectorAll('button')) {
+    control.addEventListener('click', () => {
+      state.firstSeat = control.dataset.seat || null;
+      for (const other of seatSeg.querySelectorAll('button')) {
+        const on = other === control;
+        other.classList.toggle('on', on);
+        other.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+      seatNote.textContent = seatOptions.find((o) => o.id === (state.firstSeat || ''))?.desc || '';
+      refreshSummary();
+    });
+  }
+
   for (const control of deckSeg.querySelectorAll('button')) {
     control.addEventListener('click', () => {
       state.deckMode = control.dataset.deck;
@@ -440,7 +468,8 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
     const rules = Object.entries(activeMods(state)).filter(([, on]) => on).length;
     const deck = DECK_MODES.find((m) => m.id === state.deckMode)?.label || state.deckMode;
     summary.querySelector('.dc-name').textContent = cls ? cls.name : state.classId;
-    summary.querySelector('.dc-line').textContent = `Ascension ${state.ascension} · ${deck} deck · ${rules} rule${rules === 1 ? '' : 's'} on`;
+    const seat = state.firstSeat ? ` · opens in ${registries.seats.get(state.firstSeat).name}` : '';
+    summary.querySelector('.dc-line').textContent = `Ascension ${state.ascension} · ${deck} deck · ${rules} rule${rules === 1 ? '' : 's'} on${seat}`;
     const big = readout?.querySelector('#cr-shape-big')?.textContent;
     summary.querySelector('.dc-meta').textContent = `Seed ${seedInput.value.trim() || '—'}${big && big !== '—' ? ` · ${big}` : ''}`;
   }
@@ -477,6 +506,7 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
         // Absent, not null, when untouched — `custom` keeps the exact shape it
         // has always had for an ordinary Custom Climb.
         ...(mapShape ? { mapShape } : {}),
+        ...(state.firstSeat ? { firstSeat: state.firstSeat } : {}),
       },
     });
   });

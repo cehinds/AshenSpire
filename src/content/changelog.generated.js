@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-11",
     "summary": "The words the game says now live in one table",
     "detail": "Nothing you see changes today. Until now every sentence in the interface was written inside the screen that showed it, so the same idea could be worded two ways on two screens and rewording anything meant editing code. The spoils screen and the merchant now read their words from a single spreadsheet, each entry holding three lengths — the short label, the full sentence, and the tooltip a small button gets — and a new check stops any screen from quietly going back to writing its own.",
-    "build": "0.6.0.166",
+    "build": "0.7.1.3",
     "pullRequest": 991,
     "url": "https://github.com/cehinds/AshenSpire/pull/991"
+  },
+  {
+    "id": "pr-989",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The three regions can now be climbed in any order, and each run picks its own",
+    "detail": "The Hollow Weald, the Pale Marches and the Cinder Reach are now seats: each carries its own enemies, bosses and scenery, and the seed decides which one a new climb opens in. Fighting a seat out of its old order scales its enemies' health to the act you meet it in, so the second and third acts stay the second and third acts wherever you are. The map title and the top band read the act and the seat together. Custom Climb gains a First seat control to open where you choose; a party in Forsaken Together climbs one shared order. The final act still offers the Blighted Valkyrie beside the seat's own bosses, and her fight paints the causeway. Saves from before this change load exactly as they were, climbing the same order they always did, and every existing seed's maps and fights are unchanged. This is the first build of the 0.7 line.",
+    "build": "0.7.1.2",
+    "pullRequest": 989,
+    "url": "https://github.com/cehinds/AshenSpire/pull/989"
   },
   {
     "id": "pr-990",
