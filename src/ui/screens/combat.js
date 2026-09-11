@@ -65,7 +65,7 @@ import { armHold, holdMs, HOLD_DRAG_SETTLE_MS } from '../components/holdconfirm.
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
-import { combatantFrame } from '../components/combatantFrame.js';
+import { combatantFrame, updateCombatantFrame } from '../components/combatantFrame.js';
 import { statureFor } from '../components/stature.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
@@ -82,6 +82,10 @@ function pileButton(kind, label) {
   node.appendChild(count);
   return node;
 }
+
+// The event types that move the displayed hand between beats — the same four
+// applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
+const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
 
 export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {} }) {
   configureTooltipGlossary(registries);
@@ -322,6 +326,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // (stale playback snapshot on a combat-ending play) render inert.
   const handStrip = mountHand($('.hand'), {
     inspectHold: false,
+    reuseCards: true,
     animateArrival: true,
     fitFan: true,
     registries,
@@ -610,12 +615,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     done.addEventListener('click', shell.close);
   }
 
-  function wireCombatantContext(box, subject) {
+  // Attributes a render can change; a reused frame gets these again without
+  // a second set of listeners.
+  function refreshCombatantContext(box, subject) {
     box.tabIndex = -1;
     box.dataset.focusable = '';
     box.setAttribute('role', 'button');
     box.setAttribute('aria-label', `Select ${subject.name}`);
     box.setAttribute('aria-pressed', String(selectedCombatantId === box.dataset.eid));
+  }
+  function wireCombatantContext(box, subject) {
+    refreshCombatantContext(box, subject);
     box.addEventListener('focus', () => { if (box.matches(':focus-visible')) selectCombatant(box.dataset.eid); });
     box.addEventListener('gpfocus', event => { if (event.target === box) selectCombatant(box.dataset.eid); });
     box.addEventListener('keydown', event => {
@@ -790,6 +800,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function renderTopbar() {
     const p = combat.player;
     const pv = dv(p);
+    const key = JSON.stringify([p, pv, readSettings()]);
+    if (topbarRenderKey === key) return;
     // THE MAIN HUD BAR STACK — HP, MP, SP, vertically. Which rows appear is
     // content/resources.js's business, not this screen's. Player Poise belongs
     // only on the combat character card's model surface; it is deliberately
@@ -819,6 +831,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       tray.replaceChildren(); tray.hidden = true;
     }
     $('.topbar .shared-hud')?.setAttribute('data-has-utility-potions', 'false');
+    topbarRenderKey = key;
   }
 
   // #61 M4 — ONE meter grammar for every threshold-proc row, data-driven so a
@@ -1032,13 +1045,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     chip.addEventListener('keydown', inspect);
   }
 
+  let playerArtKey = null;
+  let playerRenderKey = null;
+  let topbarRenderKey = null;
+  let handRenderKey = null;
+  const enemyFrames = new Map();
+
   function renderPlayer() {
     const zone = $('.player-zone');
-    const posePresentation = stageFor(zone)?.presentation;
-    stageFor(zone)?.dispose?.();
-    zone.innerHTML = '';
     const p = combat.player;
     const figure = figureSpec(registries, run.loadout, run.class);
+    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, spritesAreEnabled(), document.documentElement.dataset.performance]);
+    const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
+    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, lastDodge, playerRest, readinessOrder, readSettings()]);
+    if (existing && playerRenderKey === renderKey) return;
+    if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); }
+    playerArtKey = artKey;
     if (isReaverAttackEligible({
       classId: run.class,
       figure,
@@ -1080,18 +1102,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       });
       trailing.push(outcome);
     }
-    const box = combatantFrame({
+    const slots = {
       role: 'player',
       entityId: 'player',
       leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
-      sprite: playerSprite(run.customization || {}, run.class, figure.armourId),
+      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId),
       blockBadge: blockBadge(p),
       name: labelStack({ label: run.customization?.name || registries.classes.get(run.class).name, attrs: { class: 'nm' } }),
       meters: meterBars(p),
       trailing,
-    });
-    wireCombatantContext(box, combatantSubject('player', p));
+    };
+    const box = existing ? updateCombatantFrame(existing, slots) : combatantFrame(slots);
+    // A reused frame keeps its listeners; only the per-render attributes move.
+    if (existing) refreshCombatantContext(box, combatantSubject('player', p));
+    else wireCombatantContext(box, combatantSubject('player', p));
     // When a self/buff card is armed, the player is a confirmable target.
     // Publish that temporary target through the same unified focus door as an
     // enemy target. Without this, armSelf() asks focusFirst() for the player,
@@ -1107,13 +1132,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       box.setAttribute('role', 'button');
       box.setAttribute('aria-label', `Confirm ${armedDef?.name || 'selected card'} on ${playerName}`);
     }
-    box.addEventListener('click', (event) => {
+    if (!existing) box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
-    zone.appendChild(box);
-    stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { resume: posePresentation, immediate: !posePresentation });
+    if (!existing) zone.appendChild(box);
+    stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing });
+    playerRenderKey = renderKey;
   }
 
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
@@ -1127,11 +1153,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderEnemies() {
     const row = $('.enemy-row');
-    row.innerHTML = '';
+    const present = new Set(combat.enemies.map(enemy => enemy.id));
+    for (const [id, record] of enemyFrames) if (!present.has(id)) {
+      stageFor(record.box)?.dispose?.(); record.box.remove(); enemyFrames.delete(id);
+    }
     const targeting = selected || selectedFlask != null;
     const living = combat.enemies.filter((e) => e.alive);
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
+      const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance]);
+      let record = enemyFrames.get(enemy.id);
+      if (record && record.key !== artKey) { stageFor(record.box)?.dispose?.(); record.box.remove(); record = null; }
+      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), combat.player, targeting, selectedCombatantId, living.map(e => e.id), disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
+      if (record?.renderKey === renderKey) continue;
       const leading = [];
       if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), intentEl(enemy));
       // Target-number badge for keyboard targeting (SPEC §7.3).
@@ -1162,19 +1196,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         event.preventDefault();
         openThisRead(event);
       });
-      const box = combatantFrame({
+      const slots = {
         role: 'enemy',
         entityId: enemy.id,
         classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''],
         leading,
-        sprite: enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp }),
+        sprite: record ? null : enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp }),
         blockBadge: blockBadge(enemy),
         name: nm,
         meters: meterBars(enemy),
         trailing: [statusRow(enemy)],
-      });
+      };
+      const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);
+      stageFor(box)?.setState?.({ ...dv(enemy), maxHp: enemy.maxHp });
       box.dataset.stature = statureFor(registries, def.id);
-      if (enemy.alive) {
+      if (enemy.alive && !record) {
         wireCombatantContext(box, combatantSubject('enemy', enemy));
         box.addEventListener('click', (event) => {
           event.stopPropagation();
@@ -1187,7 +1223,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         box.addEventListener('pointerenter', () => (selected || selectedFlask != null) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
       }
-      row.appendChild(box);
+      box.setAttribute('aria-pressed', String(selectedCombatantId === enemy.id));
+      if (!enemy.alive) { delete box.dataset.focusable; box.removeAttribute('tabindex'); box.setAttribute('aria-disabled', 'true'); }
+      else box.removeAttribute('aria-disabled');
+      if (!record) row.appendChild(box);
+      enemyFrames.set(enemy.id, { key: artKey, renderKey, box });
     }
   }
 
@@ -1198,6 +1238,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     $('.hand').inert = busy || enemyPlayback || !!combat.result;
     $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.result));
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
+    const key = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
+      combat.turn, combat.phase, combat.result, selected, selfArm, readSettings()]);
+    if (handRenderKey === key) { syncHandPager(handList); return; }
     handStrip.render({
       cards: handList.map((inst) => {
         // disp.hand is a pre-dispatch snapshot; on a combat-ending play the
@@ -1217,6 +1260,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }),
     });
     syncHandPager(handList);
+    handRenderKey = key;
   }
 
   function inspectionPlayAction(instanceId) {
@@ -1329,10 +1373,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
-    $('.end-turn').replaceChildren('End Turn', keycap(etKey, { class: 'et-key' }));
+    if ($('.end-turn .et-key')?.textContent !== etKey) $('.end-turn').replaceChildren('End Turn', keycap(etKey, { class: 'et-key' }));
     const hasPlayable = endTurnHasPlayable();
     $('.end-turn').classList.toggle('pulse', hasPlayable);
-    $('.end-turn').dataset.confirmReady = String(!hasPlayable);
+    $('.end-turn').dataset.confirmReady = String(combat.phase === 'player' && !hasPlayable);
+
     // The innerHTML above just dropped the HOLD hint on the floor. `refresh()`
     // re-reads the action's state and re-dresses the button — and it is the
     // reason a beat can live on a control its own screen repaints every frame
@@ -1340,7 +1385,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (endTurnBeat) endTurnBeat.refresh();
     $('.end-turn').disabled = busy || enemyPlayback || !!combat.result;
     $('.pile.draw .sp-v').textContent = combat.piles.draw.length;
-    $('.pile.spent').innerHTML = '<span>Discard ' + combat.piles.discard.length + '</span><small>Exhaust ' + combat.piles.exhaust.length + '</small>';
+    const spent = $('.pile.spent');
+    const spentHtml = '<span>Discard ' + combat.piles.discard.length + '</span><small>Exhaust ' + combat.piles.exhaust.length + '</small>';
+    if (spent.innerHTML !== spentHtml) spent.innerHTML = spentHtml;
 
     $('.pile.draw').setAttribute('aria-label', `Draw pile, ${combat.piles.draw.length}`);
     $('.pile.spent').setAttribute('aria-label', `Discard ${combat.piles.discard.length}; Exhaust ${combat.piles.exhaust.length}. Open piles`);
@@ -1823,7 +1870,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             const reaction = bloodRiteReaction(dv(combat.player), event, 'player');
             if (reaction) stageFor($('.combatant.player'))?.react?.(reaction);
           }
-          renderHand();
+          // The displayed hand (disp.hand) moves only on the four card events
+          // applyBeatToDisp handles; every other beat — a hit, a heal, a
+          // status — re-rendered every card in the hand for no change. The
+          // flush and the terminal callback still render the whole board.
+          if (beat.events.some((event) => HAND_BEAT_EVENTS.has(event.type))) renderHand();
           renderControls();
           showPileFeedback(beat.events);
         },
@@ -1844,6 +1895,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         render();
         if (combat.result) {
           removeEventListener('keydown', keyHandler);
+          handStrip.teardown();
           setTimeout(() => onEnd(combat.result, combat), 350);
         } else {
           focusHandDefault(); // land on the leftmost playable card for kb/pad
@@ -2122,6 +2174,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   if (document.body && typeof MutationObserver !== 'undefined') {
     const pagerVeilObserver = new MutationObserver(() => {
       if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
+        handStrip.teardown();
+        stageFor(combatEl.querySelector('.player-zone'))?.dispose?.();
+        for (const record of enemyFrames.values()) stageFor(record.box)?.dispose?.();
+        enemyFrames.clear();
+        removeEventListener('keydown', keyHandler);
+        battlefieldStage.release();
+        aimObserver?.disconnect();
+        clearCardFeedback();
         pagerVeilObserver.disconnect();
         delete combatEl.dataset.handPagerOwner;
         return;
@@ -2137,16 +2197,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // render() also re-applies it. Observing attributes only (childList untouched)
   // avoids feedback from our own inserted silhouette node.
   const field = $('.field');
+  let aimObserver = null;
   if (field && typeof MutationObserver !== 'undefined') {
     const aimObs = new MutationObserver(() => {
       if (aimScheduled) return;
       aimScheduled = true;
       setTimeout(() => {
         aimScheduled = false;
-        if (app.querySelector('.combat')) refreshAim();
+        if (combatEl.isConnected) refreshAim();
       }, 0);
     });
     aimObs.observe(field, { attributes: true, attributeFilter: ['class'], subtree: true });
+    aimObserver = aimObs;
   }
   focusHandDefault();
 

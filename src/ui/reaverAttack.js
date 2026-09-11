@@ -3,6 +3,7 @@
 // WebPs into the standalone build.
 import { assetUrl } from './assetmap.js';
 import { DEFAULT_SPRITE_STYLE } from '../model/spriteStyle.js';
+import { liteRendering } from './performance.js';
 import { hintImage } from './imageHints.js';
 
 const FRAME_ROOT = 'assets/animations/reaver/default-greatsword/right';
@@ -63,7 +64,7 @@ export function preloadReaverAttackFrames() {
 
 export function isReaverAttackEligible({ classId, figure, customization, spritesEnabled }) {
   const style = (customization && customization.spriteStyle) || DEFAULT_SPRITE_STYLE;
-  return spritesEnabled === true
+  return !liteRendering() && spritesEnabled === true
     && classId === 'reaver'
     && style === 'rendered'
     && figure?.armourId === 'default'

@@ -3,24 +3,94 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-945",
+    "id": "pr-956",
     "date": "2026-09-10",
     "group": "2026-09-10",
-    "summary": "Combatant Information follows your selection",
-    "detail": "The Information button matches the gold-ring card motif and appears only above the selected combatant. Intent stays visible; changing selection preserves sprite size, foot positions, and health-bar alignment in solo and co-op.",
-    "build": "0.6.0.119",
-    "pullRequest": 945,
-    "url": "https://github.com/cehinds/AshenSpire/pull/945"
+    "summary": "The combat screen draws again",
+    "detail": "#939 landed reading a name #945 had renamed, so the board mounted with no enemies and no hand. Two words, corrected.",
+    "build": "0.6.0.132",
+    "pullRequest": 956,
+    "url": "https://github.com/cehinds/AshenSpire/pull/956"
+  },
+  {
+    "id": "pr-949",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The tower reveals its menu from River Citadel",
+    "detail": "The title now opens outside an unlit River Citadel: the first activation lights the city, holds for a configurable pause, and fades into the entrance hall before the menu appears; Continue still resumes the saved game. The hall keeps its dark city behind the foreground doorway, a translucent backing keeps the wordmark readable, and the doorway breathes between full and 92% opacity on an eleven-second cycle. Reduced motion disables the idle effect and skips the entrance hold; Ambient Off disables the idle effect too. A Replay entrance control previews the sequence. Physical mobile Safari is untested.",
+    "build": "0.6.0.130",
+    "pullRequest": 949,
+    "url": "https://github.com/cehinds/AshenSpire/pull/949"
+  },
+  {
+    "id": "pr-953",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The test branch comes back when GitHub deletes it",
+    "detail": "The test → release promotion uses test as its pull request head, so the repository's \"Automatically delete head branches\" setting removed test on every promotion merge. A workflow now listens for that deletion and recreates test at release's tip (falling back to dev); nothing in the game changed.",
+    "build": "0.6.0.127",
+    "pullRequest": 953,
+    "url": "https://github.com/cehinds/AshenSpire/pull/953"
+  },
+  {
+    "id": "pr-936",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Compare equipment in the combat test",
+    "detail": "Choose armor, weapon grip, and a Blood Rune before a test route. The preview shows armor, weight, Dodge stamina, grip requirements, weapon impact, and rune-inclusive value. The chosen equipment supplies the real fight's defense and attack properties; incompatible grips and runes explain why they cannot be used. This remains an isolated equipment experiment with fixed resource caps, not production loot or inventory migration.",
+    "build": "0.6.0.127",
+    "pullRequest": 936,
+    "url": "https://github.com/cehinds/AshenSpire/pull/936"
   },
   {
     "id": "pr-938",
     "date": "2026-09-10",
     "group": "2026-09-10",
-    "summary": "Combatants show larger intents and delayed Information",
-    "detail": "Intent and Information share a compact vertical stack above each sprite. Hover, touch, and keyboard selection highlight the control before its delayed explanation. End Turn stays gold while playable cards remain and turns green when none can be played.",
+    "summary": "Combatants share clear overhead controls",
+    "detail": "Solo and co-op combatants gain Information and larger intent controls with delayed tooltips and aligned sprite framing.",
     "build": "0.6.0.116",
     "pullRequest": 938,
     "url": "https://github.com/cehinds/AshenSpire/pull/938"
+  },
+  {
+    "id": "pr-945",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Information follows combatant selection",
+    "detail": "Combatant Information matches card styling and appears on selection while preserving sprite size, foot positions, and health bars.",
+    "build": "0.6.0.119",
+    "pullRequest": 945,
+    "url": "https://github.com/cehinds/AshenSpire/pull/945"
+  },
+  {
+    "id": "pr-940",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Ready actions stand out",
+    "detail": "End Turn turns green when no affordable playable cards remain. Actions and Potions have larger controls beside compact Draw and Discard buttons. Green confirmations fade in smoothly over 480ms, rise slightly and grow subtly, with reduced-motion support. Hold feedback remains visible without interrupting the color fade. Ready modal confirmations fill their footer while Back and Cancel remain available.",
+    "build": "0.6.0.125",
+    "pullRequest": 940,
+    "url": "https://github.com/cehinds/AshenSpire/pull/940"
+  },
+  {
+    "id": "pr-943",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combat draws less, and doors behave the same on every screen",
+    "detail": "Fights used to re-request every frame of your outfit's artwork on every beat of every animation — over two hundred picture requests per turn — and kept a document-wide watcher running for tooltips that were not even open. Both are gone, along with a few smaller drains: the hand is redrawn only when a card actually moves, the world atlas no longer hashes itself before the title can paint, fallen enemies stop bobbing, and the shrine lane's glow pulses without repainting the whole map each frame. Modals now share one way out: a tap that opens a door can no longer close it on release, Escape reaches the Load door wherever focus sits, and every door's height is measured against the same safe margins a notched phone needs. On a phone, a tooltip that has nothing to tap inside it no longer swallows the tap beneath it — the starting-equipment row in character creation could not be opened because the seed hint sat on top of it — and the smaller controls (card info buttons, sliders, toggles, the potion Use button, atlas tools) now honour your Minimum tap size. Event choices show their whole consequence instead of trailing off, and the Potions button's word fits its circle.",
+    "build": "0.6.0.121",
+    "pullRequest": 943,
+    "url": "https://github.com/cehinds/AshenSpire/pull/943"
+  },
+  {
+    "id": "pr-939",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Combat renders lighter on phones, and the standalone ships smaller",
+    "detail": "Mobile combat used to recreate its frames, sprites and hand cards on every routine update; unchanged combatant frames, card nodes and their input bindings are now reused, card measurements are batched, and pose preloads share one bounded cache. Auto rendering picks Lite on a coarse pointer: no costly filters or cloned target silhouettes, a coloured target ring instead, enemy state art loaded on demand and faster pacing by default — Full rendering and explicit pacing stay available. The launcher builds the portable standalone and the external-art web edition, and unused equipment-component authoring assets no longer ship, so the standalone is 7.47 MB smaller. This is a DOM-churn measurement, not a physical-device frame rate.",
+    "build": "0.6.0.128",
+    "pullRequest": 939,
+    "url": "https://github.com/cehinds/AshenSpire/pull/939"
   },
   {
     "id": "pr-904",

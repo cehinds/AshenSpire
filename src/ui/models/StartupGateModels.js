@@ -9,6 +9,13 @@ const DEFAULT_PROMPTS = Object.freeze({
   controller: 'PRESS A / CROSS OR START / MENU',
 });
 
+export const TITLE_ENTRANCE_TIMING = Object.freeze({
+  lightUpMs: 560,
+  fadeMs: 880,
+  holdDefault: '0.5s',
+  holdDurations: Object.freeze({ '0s': 0, '0.3s': 300, '0.5s': 500, '1s': 1000, '2s': 2000 }),
+});
+
 function particles(count = 7) {
   const total = Math.max(0, Math.min(12, Math.floor(Number(count) || 0)));
   return Array.from({ length: total }, (_, index) => Object.freeze({
@@ -26,6 +33,7 @@ export function startupGateModel({
   overline = '',
   prompts = DEFAULT_PROMPTS,
   particleCount = 7,
+  settings = {},
 } = {}) {
   const family = Object.hasOwn(prompts, inputFamily) ? inputFamily : 'keyboard';
   return componentModel(UI.startupGate, {
@@ -37,6 +45,13 @@ export function startupGateModel({
       inputFamily: family,
       prompts: { ...DEFAULT_PROMPTS, ...prompts },
       particles: particles(particleCount),
+      entrance: {
+        lightUpMs: TITLE_ENTRANCE_TIMING.lightUpMs,
+        fadeMs: TITLE_ENTRANCE_TIMING.fadeMs,
+        holdMs: Object.hasOwn(TITLE_ENTRANCE_TIMING.holdDurations, settings.titleCityHold)
+          ? TITLE_ENTRANCE_TIMING.holdDurations[settings.titleCityHold]
+          : TITLE_ENTRANCE_TIMING.holdDurations[TITLE_ENTRANCE_TIMING.holdDefault],
+      },
     },
     accessibility: {
       role: 'button',
