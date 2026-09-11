@@ -309,6 +309,8 @@ award table (about 36 normal combats, 6 elites, 3 bosses, 5 quests) lands near
 
 ## 11. Delivery plan
 
+The engineering breakdown, file by file, is [plan-progression-and-property-system.md](plan-progression-and-property-system.md).
+
 Each phase is one or more pull requests into `dev`, each with its own receipt.
 A phase is done when its acceptance line passes in `tests/run-node.mjs` and
 the named tool.
