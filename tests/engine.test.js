@@ -7149,10 +7149,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'an unreadable safe clearance fails the real boot validator by name');
 
     const tooltipPresentation = REG.balance.ui.tooltipPlacement;
-    eq(`${tooltipPresentation.hoverDelayMs}/${tooltipPresentation.autoFadeMs}`, '500/5000',
+    // 1000 is tooltipHelp's authored default (owner, 2026-09-11: a second's hover).
+    eq(`${tooltipPresentation.hoverDelayMs}/${tooltipPresentation.autoFadeMs}`, '1000/5000',
       'enemy context delay and auto-fade are authored in milliseconds');
     const tooltipModel = tooltipPlacementModel(tooltipPresentation);
-    eq(`${tooltipModel.tokens.hoverDelayMs}/${tooltipModel.tokens.autoFadeMs}`, '500/5000',
+    eq(`${tooltipModel.tokens.hoverDelayMs}/${tooltipModel.tokens.autoFadeMs}`, '1000/5000',
       'tooltip timing reaches the immutable Component Model');
     const malformedTooltip = {
       ...contentBundle,
