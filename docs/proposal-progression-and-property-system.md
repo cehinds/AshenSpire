@@ -162,9 +162,9 @@ card each turn costs stamina only) or **Reservoir** (mana max +3).
 
 ### 7.1 Mana
 
-- **No per-turn regeneration.** Mana recovers from Azure flask charges, a
-  location carrying `restManaFull`, and authored property sources. Mana gain
-  uses the existing `restoreMana` opcode.
+- **No per-turn regeneration.** Mana recovers from Azure flask charges, from
+  every rest (§7.4, amount by config), and from authored property sources.
+  Mana gain uses the existing `restoreMana` opcode.
 - **Every mana card costs at least 1 action and 1 stamina.** Mana is the third
   cost line, never the first. Existing mana cards with a zero action or
   stamina line are re-costed or reclassified. Signature arts cost 2 stamina
@@ -217,7 +217,8 @@ restores is the sum of its tags.
 | `restHpSmall` | heal 25% of max on `rested` |
 | `restHpPartial` | heal 30% of max on `rested` (the current shrine Rest) |
 | `restHpFull` | heal to max on `rested` |
-| `restManaFull` | `restoreMana` to max on `rested`; the only tag that fills the pool |
+| `restMana` | `restoreMana` on `rested` by the configured mode (`rest.mana.mode`): `flat` restores `rest.mana.flat` points; `halfOrFull` restores to half of max, or to full when already at half or above; `full` restores to max |
+| `restManaFlat`, `restManaHalf`, `restManaFull` | Same rule with the mode fixed, for a location that overrides the default |
 | `restFlasks` | refill all flask charges on `arrived` (the current grace refill) |
 | `restAzureOne` | +1 Azure charge on `rested` |
 | `restCleanse` | remove lingering ailments on `rested` |
@@ -226,9 +227,14 @@ restores is the sum of its tags.
 
 | Location | Tags |
 |---|---|
-| Field camp (Unknown-node rest outcome) | `restHpSmall`, `restAzureOne`, `ambushRisk` |
-| Shrine of Emberlight | `restHpPartial`, `restFlasks`, `smith` |
+| Field camp (Unknown-node rest outcome) | `restHpSmall`, `restMana`, `restAzureOne`, `ambushRisk` |
+| Shrine of Emberlight | `restHpPartial`, `restMana`, `restFlasks`, `smith` |
 | Town (atlas settlement) | `restHpFull`, `restManaFull`, `restFlasks`, `restCleanse`, `merchant`, `smith`, `questBoard`, `levelUp` |
+
+Every rest recovers mana. The default mode is a config entry; a location
+that wants a different amount carries the fixed-mode tag instead. Debug
+settings expose `rest.mana.mode` and `rest.mana.flat` the same way they
+expose flask capacity today, editing the same rows.
 
 Town rest is free; towns are capped at one per act on the seeded route, so
 attrition between towns is the run's tension. `inn.price` (default 0) is a
@@ -290,6 +296,8 @@ Every curve uses one shape so one simulator probe measures every track:
 | `attributes.base` / `freePoints` | 5 / 10 | |
 | `attributes.gate.heavyWeapon` / `dualGrip` / `focus` | STR 8 / DEX 8 / INT 8 | |
 | `rest.hpSmallPct` / `hpPartialPct` | 25 / 30 | |
+| `rest.mana.mode` | `halfOrFull` | `flat` / `halfOrFull` / `full`; default for `restMana` |
+| `rest.mana.flat` | 1 | points restored in `flat` mode |
 | `atlas.townsPerActMax` | 1 | |
 | `inn.price` | 0 | |
 
@@ -312,7 +320,7 @@ the named tool.
 | 4. Skill tracks | §6.1 | Simulator reports levels per track per run; one draft per skill per combat |
 | 5. Class card and tree | §4 class card, kits, unlocks, swap; §6.2 | Four classes ship as core cards with kits; a tier 3 node swaps art and name |
 | 6. Character level | §6.3 XP, points, thresholds, cinders | Simulator measures 10–20 levels per run; no cinder level purchase remains |
-| 7. Recovery tags | §7.4 | Shrine and town restore exactly their tag sets; `restDenied` filters by tag |
+| 7. Recovery tags | §7.4 | Shrine and town restore exactly their tag sets; every rest restores mana by `rest.mana.mode`; `restDenied` filters by tag |
 | 8. Mana and Exposure | §7.1–7.3 | No mana card with a zero action or stamina line; four focus properties; player stagger payload from balance rows |
 | 9. Attribute rebase | Base 5, 10 points, formula rewrite | All §3.5 derived values re-derived; creation ships one mode |
 
