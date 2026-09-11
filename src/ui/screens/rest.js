@@ -33,6 +33,7 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { mountServiceOffer, openMountService, mountReceiptLine } from './smithServices.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
+import { runHudHtml, wireRunHud } from '../components/runHud.js';
 // THE FOLDS' INSIDES ARE THE KIT'S (2026-09-04, the sweep): a flask row is a
 // kit Row — the flask's identity as its LabelStack, a −/count/+ Stepper of
 // tap-floor buttons trailing — the total is StatusText, the cinder preview
@@ -87,11 +88,11 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, services, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, services, hud, ...extra,
   });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
@@ -166,7 +167,8 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   ]));
 
   app.innerHTML = `
-    <div class="screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem">
+    ${hud ? runHudHtml({ registries, run, meta, place: 'rest', headerClass: 'map-header room-header' }) : ''}
+    <div class="screen room-screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem">
       <h2>Shrine of Ember</h2>
       <p class="subtitle">The gold light holds, for now</p>
       ${refillLineHtml(registries, refill)}
@@ -269,6 +271,8 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       </div>
       ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
     </div>`;
+
+  if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: () => remount() });
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],

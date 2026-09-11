@@ -1194,7 +1194,11 @@ function showOfflinePlay() {
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury(request = '') {
+// `returnTo` is the screen the Armoury closes back onto. The map is the
+// default; a room (merchant, Shrine, event) passes itself, because the band
+// those rooms now carry opens the Armoury too and a close that went to the
+// map would abandon the room mid-visit.
+function showArmoury(request = '', returnTo = showMap) {
   const initialView = typeof request === 'string' ? request : '';
   const destination = request && typeof request === 'object' ? request.destination || '' : '';
   const armouryMeta = saves.loadMeta();
@@ -1215,7 +1219,7 @@ function showArmoury(request = '') {
       stampDeck(registries, run);
       persist();
     },
-    onClose: showMap,
+    onClose: returnTo,
   });
 }
 
@@ -1995,6 +1999,29 @@ function shopPriceMult() {
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
+// THE BAND EVERY ROOM CARRIES (components/runHud.js). The same callbacks the
+// map hands its HUD, with the Armoury closing back onto the room that opened
+// it. One bag, three rooms, so the merchant cannot offer a menu the Shrine
+// does not.
+function roomHud(returnTo) {
+  return {
+    onMenu: showOverlay,
+    onArmoury: (view) => showArmoury(view, returnTo),
+    onLoad: loadActiveSlot,
+    onQuitWithoutSave: quitWithoutSaving,
+    quickControls: quickMenuControls,
+    onSettingsChange: persistSettingsChange,
+    onSave: () => {
+      persist();
+      return activeSlot;
+    },
+    onQuit: () => {
+      persist(); // the run is resumable from its slot via Continue
+      showCollapsedTitle();
+    },
+  };
+}
+
 function showRest() {
   audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
@@ -2017,6 +2044,7 @@ function showRest() {
   mountRest(app, {
     registries,
     run,
+    hud: roomHud(showRest),
     healMult,
     refill,
     meta: saves.loadMeta(),
@@ -2056,6 +2084,7 @@ function showShop() {
   mountShop(app, {
     registries,
     run,
+    hud: roomHud(showShop),
     meta: saves.loadMeta(),
     onChanged: () => persist(),
     onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
@@ -2072,6 +2101,7 @@ function showEvent(eventId) {
   mountEvent(app, {
     registries,
     run,
+    hud: roomHud(() => showEvent(eventId)),
     // The hold-to-confirm dial lives in meta.settings; the screen reads it the
     // same way every other screen reads a display setting.
     meta: saves.loadMeta(),

@@ -915,6 +915,19 @@ input[type="range"] { min-height: var(--tap-floor); }
    way out drops to its own line under the pair (kit law — a narrow shape is a
    different composition), which is what keeps the corner clear of text. */
 .topbar.map-header { flex-wrap: wrap; row-gap: 0.4rem; }
+/* THE ROOMS WEAR THE MAP'S BAND (components/runHud.js): the merchant, the
+   Shrine and an event mount the same header above their `.screen`, so a
+   player between fights always sees the purse, the pools and the act. The
+   screen below it keeps its own composition; only the top edge changes —
+   a page under a band starts at the band, not at a centred column's top
+   padding. */
+.topbar.room-header { flex-wrap: wrap; row-gap: 0.4rem; }
+.screen.room-screen { justify-content: flex-start; justify-content: safe flex-start; }
+/* The belt (relics left, flasks right) hangs 0.4rem BELOW the band, absolutely,
+   over whatever follows — on the map that is parchment, in a room it was the
+   title ("Shrine of Ember" under a flask at 390 wide). The room's top padding
+   is the belt's own height plus the band's gap, so the page starts under it. */
+.screen.room-screen { padding-top: calc(var(--iconbtn-size) + 1.6rem); }
 
 /* ═══ SCREENS — a page wears the same atoms a door does ═══════════════════ */
 /* A screen's banner is Title·L over an Eyebrow-weight subtitle; the same
