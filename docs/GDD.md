@@ -96,9 +96,9 @@ Narrative is ambient and economical. It appears through locations, silhouettes, 
 
 ### 4.1 Premise
 
-The Goldbough burned. Its light collapsed inward, crystallizing into the Ashen Spire while ember began to flow upward. The Forsaken climbs to restore, claim, or transform the Sovereign Ember at its crown.
+The old kingdom was three great cities, each built around a citadel tower, each tower holding one of the Three Flames lit from the Sovereign Ember. The flames went out and the light collapsed inward: the cities burned toward their towers and stand in their own ash. Ember still moves in the ruins, thin and starving, climbing toward the crown of the last tower. The Forsaken climbs the three towers to restore, claim, or transform the Sovereign Ember at the top.
 
-Three flames once ran the kingdom from the Ember — the Field Flame, the Court Flame and the Crown Flame, one per tier of the Spire. All three are cold; their heat now burns inside the corrupted as cinders. Each act is one hearth: take the cinders, kill the boss that holds the largest, and the flame relights. The full world — the Burning, the Blight, the orders, the bosses' places in it, and the authoring vocabulary — is in [LORE.md](LORE.md).
+Each act is one seat: the Field Flame in the Bastion, the Court Flame in the river Citadel, the Crown Flame in the Observatory. The heat of a cold flame now burns inside the corrupted as cinders; take the cinders, kill the boss that holds the largest, and the hearth relights. The full world — the Burning, the Blight, the orders, the bosses' places in it, the three citadel paintings, and the authoring vocabulary — is in [LORE.md](LORE.md).
 
 ### 4.2 Acts
 
