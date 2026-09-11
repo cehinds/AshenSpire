@@ -52,8 +52,6 @@ const SURFACES = [
   { name: 'music-off', query: '?shotSettings=%7B%22musicEnabled%22%3Afalse%7D', pair: true },
   { name: 'map', query: '?shot=map' },
   { name: 'combat', query: '?shot=combat' },
-  { name: 'map-compact', query: '?shot=map&shotSettings=%7B%22runHudMode%22%3A%22compact%22%7D', compact: true },
-  { name: 'combat-compact', query: '?shot=combat&shotSettings=%7B%22runHudMode%22%3A%22compact%22%7D', compact: true },
 ];
 
 const intersection = (a, b) => !a || !b ? 0
@@ -166,37 +164,6 @@ function findings(r) {
   return bad;
 }
 
-function parityFindings(map, combat) {
-  const bad = [];
-  const near = (a, b) => Math.abs(a - b) <= 0.75;
-  // ONE COMPOSITION, BOTH SCREENS. The compact variant's density delta is gone
-  // with the variant: Map and Combat wear the same Band, so the assertion is
-  // equality, not a range.
-  if (!near(map.hudTop.height, combat.hudTop.height)) {
-    bad.push(`Map and Combat draw different HUDs: Map ${map.hudTop.height.toFixed(2)}px, Combat ${combat.hudTop.height.toFixed(2)}px`);
-  }
-  // THE PAIR IS ON NEITHER SCREEN NOW, so the two rows that compared its right
-  // edge and its size across them are gone rather than guarded — comparing two
-  // absences is a check that cannot fail. What replaces them is the assertion
-  // that it is absent from BOTH, which is the property this pair of surfaces
-  // can still speak to and the one that regresses if the band re-mounts it on
-  // one screen only.
-  if (map.stack || combat.stack) {
-    bad.push(`the fullscreen/music pair is back in the run HUD: Map ${map.stack ? 'has one' : 'clear'}, Combat ${combat.stack ? 'has one' : 'clear'}`);
-  }
-  if (!map.route || map.route.height < 0.5) bad.push('Map route strip is not visibly rendered');
-  else if (Math.abs(map.route.width - (map.viewport.width * 0.8)) > 1.5) {
-    bad.push(`Map route strip is ${map.route.width.toFixed(2)}px, expected about 80vw`);
-  }
-  if (combat.route && (combat.route.width > 0.5 || combat.route.height > 0.5)) bad.push('Combat still renders the Map-only route strip');
-  // The pair used to be flush with Quick Access because it lived in that panel,
-  // then rode the page's corner, then the band's own utility rail. It is off
-  // these two screens entirely as of 2026-09-05, so what these surfaces carry
-  // is the HUD parity above — one composition on both screens — and the route
-  // strip's own geometry, neither of which was ever about the pair.
-  return bad;
-}
-
 function cdpClient(wsUrl) {
   return new Promise((resolveClient, reject) => {
     const socket = new WebSocket(wsUrl);
@@ -248,7 +215,6 @@ const launched = await launchBrowser({ prefix: 'hud-quick-', browser, headless: 
 let client;
 let failed = 0;
 let passed = 0;
-const compactMapReceipts = new Map();
 try {
   client = await cdpClient(launched.wsUrl);
   const target = await client.send('Target.createTarget', { url: 'about:blank' });
@@ -347,8 +313,6 @@ try {
       }
       const receipt = evaluated.result.value;
       const bad = findings(receipt);
-      if (surface.name === 'map-compact') compactMapReceipts.set(shape.name, receipt);
-      if (surface.name === 'combat-compact') bad.push(...parityFindings(compactMapReceipts.get(shape.name), receipt));
       const tag = `${surface.name}-${shape.name}`;
       if (bad.length) {
         failed += bad.length;

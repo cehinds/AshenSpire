@@ -375,7 +375,7 @@ export function attachTooltip(el, contentFn, {
     return showFn ? showFn() : showWith(contentFn(), el.getBoundingClientRect(), avoid, intent, appearance, placementModel, 0, align, 0, el);
   };
   const queue = delay => {
-    if (selectedControl && selectedControl !== el) hideTooltip();
+    if (selectedControl && selectedControl !== el) { clearControlSelection(); hideTooltip(); }
     if (selectionFirst) {
       selectedControl = el;
       el.classList.add('tooltip-selected');
@@ -424,7 +424,7 @@ export function attachTooltip(el, contentFn, {
       ev.preventDefault(); ev.stopPropagation();
       const touch = ev.pointerType === 'touch';
       if (activate && (!touch || (touchSelectedControl === el && selectedControl === el))) {
-        hideTooltip(); activate(el); return;
+        clearControlSelection(); hideTooltip(); activate(el); return;
       }
       queue(delayMs ?? tooltipSettings.open);
       if (touch) touchSelectedControl = el;
@@ -433,20 +433,50 @@ export function attachTooltip(el, contentFn, {
       if (['Enter', ' '].includes(ev.key)) ev.stopPropagation();
     });
   }
+  const isControl = () => !!el.closest('button, [role="button"], a, input, select, [data-hold]');
+  // TAP TO SELECT, TAP AGAIN TO EXPLAIN (owner, 2026-09-11: "click/tap
+  // highlight target and then tapping/clicking again for tool tip"). A pointer
+  // press on a detail that is not itself a control marks it selected and opens
+  // nothing; the next press on the same detail answers at once. Selection
+  // clears when the press lands elsewhere (hideTooltip) or on Escape. Controls
+  // keep their click for what the click does; keyboard Enter/Space on a
+  // tap-to-explain detail still answers at once — a key press is deliberate.
+  const explainOnSecondTap = ev => {
+    // The first press still travels: a status pip inside an enemy is also how
+    // that enemy is targeted, and the selection survives the screen's board
+    // click now that hideTooltip keeps it. The second press is the
+    // explanation's own — combat closes tooltips on any board click, so it
+    // must not run on top of the panel this just opened.
+    if (selectedControl === el) { ev.stopPropagation(); cancelOpen(); show(); return; }
+    if (selectedControl && selectedControl !== el) { clearControlSelection(); hideTooltip(); }
+    cancelOpen(el);
+    selectedControl = el;
+    el.classList.add('tooltip-selected');
+  };
   if (tapToExplain) {
     if (!el.hasAttribute('tabindex')) el.tabIndex = 0;
     if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
     const answer = ev => {
       if (typeof tapToExplain === 'function' && !tapToExplain()) return;
       if (ev.type === 'keydown' && !['Enter', ' '].includes(ev.key)) return;
-      ev.preventDefault(); ev.stopPropagation(); cancelOpen(); show();
+      ev.preventDefault(); ev.stopPropagation();
+      if (ev.type === 'keydown') { cancelOpen(); show(); return; }
+      explainOnSecondTap(ev);
     };
     el.addEventListener('click', answer); el.addEventListener('keydown', answer);
+  } else if (!selectionFirst && !expand) {
+    el.addEventListener('click', ev => {
+      if (isControl() || ev.target?.closest('[data-tip-attached], [data-tip]') !== el) return;
+      explainOnSecondTap(ev);
+    });
   }
   if (expand) {
-    const isControl = () => !!el.closest('button, [role="button"], a, input, select, [data-hold]');
     const open = () => { hideTooltip(); expander?.(contentFn(), { title: expandTitle || el.dataset.tipTitle || '', eyebrow: el.dataset.tipType || 'Detail' }); };
-    if (!isControl()) el.addEventListener('click', (ev) => { ev.preventDefault(); open(); });
+    if (!isControl()) el.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      if (selectedControl === el) { open(); return; }
+      explainOnSecondTap(ev);
+    });
     let holdTimer = null;
     let lastTap = 0;
     el.addEventListener('touchstart', () => {
@@ -501,8 +531,12 @@ export function stickTooltip(el) {
 export function showTooltipAt(x, y, html) {
   return showWith(html, { left: x, top: y, width: 0, height: 0 });
 }
+// Closes the panels. It does NOT forget a tap-selection: screens call this on
+// every render and on any board click (combat's syncCardSelection), and the
+// first tap of "tap to select, tap again to explain" lands in exactly such a
+// click. The selection ends by its own doors — a press elsewhere, Escape, an
+// activation, or the element leaving the DOM (watchScene).
 export function hideTooltip() {
-  clearControlSelection();
   sceneAnchor = null;
   unstick();
   clearTimers();
@@ -545,18 +579,28 @@ function wireTitles() {
     if (!term || panels[1]?.contains(term)) return;
     if (ev.type === 'keydown' && !['Enter', ' '].includes(ev.key)) return;
     ev.preventDefault(); ev.stopPropagation();
-    if (panels[0]?.contains(term)) { cancelNested(); showNested(term); }
-    else showTooltipFor(term, `<div>${esc(term.dataset.tip)}</div>`);
+    if (panels[0]?.contains(term)) { cancelNested(); showNested(term); return; }
+    // Outside the panels the same two-tap rule holds: a click selects the
+    // term, the next click explains it; a key press explains at once.
+    if (ev.type === 'click' && selectedControl !== term) {
+      if (selectedControl) { clearControlSelection(); hideTooltip(); }
+      selectedControl = term;
+      term.classList.add('tooltip-selected');
+      return;
+    }
+    showTooltipFor(term, `<div>${esc(term.dataset.tip)}</div>`);
   };
   document.addEventListener('click', explain, true);
   document.addEventListener('keydown', explain, true);
   document.addEventListener('pointerdown', ev => {
-    if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target) && !selectedControl?.contains(ev.target)) hideTooltip();
+    if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target) && !selectedControl?.contains(ev.target)) {
+      clearControlSelection(); hideTooltip();
+    }
   }, true);
   document.addEventListener('keydown', (ev) => {
     if (ev.key !== 'Escape') return;
     if (state[1].open) { hide(1); ev.stopImmediatePropagation(); }
-    else if (state[0].open || selectedControl) { hideTooltip(); ev.stopImmediatePropagation(); }
+    else if (state[0].open || selectedControl) { clearControlSelection(); hideTooltip(); ev.stopImmediatePropagation(); }
     else { cancelOpen(); cancelNested(); }
   }, true);
   const replace = () => { for (const [i, st] of state.entries()) if (st.open && st.target?.getBoundingClientRect && panels[i]) placeAnchored(panels[i], st.target.getBoundingClientRect(), { intent: panels[i].dataset.tooltipPlacement || 'above' }); };
