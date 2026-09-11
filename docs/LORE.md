@@ -393,7 +393,7 @@ Each boss holds its seat's largest cinder inside an object. In lore that object
 is what lets the flame be lit; in play it is the boss's unique relic and the
 trigger for the flame-lit sequence. The mapping and the seat-as-adventure
 structure it belongs to are in
-[proposal-seat-adventure.md](proposal-seat-adventure.md) §4.
+[proposal-seat-adventure.md](proposal-seat-adventure.md) Part I §4.
 
 ## 10. What stays open
 
