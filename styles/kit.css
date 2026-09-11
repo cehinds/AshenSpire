@@ -2158,6 +2158,10 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
   box-shadow: 0 0 0 1px var(--parchment);
 }
 .as-band { position: relative; }
+/* A detail selected by a tap, waiting for the second tap that explains it
+   (components/tooltip.js). Screens with their own selected look (the combat
+   overhead controls) restate it; this is the one everything else wears. */
+.tooltip-selected:not(.overhead-control) { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1, 4px); }
 
 /* ═══ CARD GRID — faces in a scrolling body, wrapped, one gap ══════════════ */
 .as-cardgrid { display: flex; flex-wrap: wrap; gap: 1.4rem; align-content: flex-start; }
