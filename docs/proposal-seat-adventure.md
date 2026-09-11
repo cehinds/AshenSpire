@@ -19,7 +19,7 @@ wayfarer · quest       quest board · lore     boss from the seat pool
 cache · delve          2–3 rolled sites       hearth-key relic · flame lit
 ```
 
-Seat order is seeded (LORE §6). The seat climbed last hosts the Ashen Crown.
+Seat order is seeded (LORE §6). The causeway to the Ashen Spire opens from the seat climbed last (LORE §1).
 
 ### 2. The road
 
@@ -121,7 +121,7 @@ gate ─ floor 1 ─ … ─ floor n ─ antechamber (camp) ─ BOSS ─ hearth
 | Weald / Bastion | Fell Warden · Bell Keeper · Thorn Matriarch | Fell Warden Brand · *Cracked Clapper* · *Root Crown* |
 | Marches / Citadel | Stitched King · Glass Regent · Marrow Organist | Crown of Stitches · *Regent's Shard* · *Ivory Key* |
 | Reach / Observatory | Furnace Saint · Hollow Astronomer · Ashheart Dragon | Ember Idol · *Eclipse Lens* · Wyrm Heart |
-| last seat | Blighted Valkyrie | the Sovereign Ember (the ending) |
+| last seat, the causeway | Blighted Valkyrie | the Sovereign Ember (the ending, in the Spire's hearth-room) |
 
 *Italic* = new relic.
 
@@ -251,6 +251,10 @@ River Citadel pair.
   the companion's small deck.
 - **Delves**: small World Journey local maps hung off a road node; loot floors
   and one guardian; `tests/local-map.test.mjs` extends.
+- **The drowned city**: a short fourth movement after the causeway — a handful
+  of floors through the Ashen Spire's lower city on the `drowned-coast` region,
+  no boss but the sea, ending in the hearth-room parley (LORE §6, §4). Needs its
+  own SPEC entry; until then the causeway terminal and the ending scene carry it.
 
 ### Decisions taken in this plan (owner may override)
 

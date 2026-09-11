@@ -19,9 +19,10 @@ the old glory is not worth the price and take the Ember for yourself.
 
 ---
 
-## 1. The Three Seats
+## 1. The Three Seats, and the fourth
 
-The kingdom was three regions and three cities. Each city was a **lower city**
+The kingdom was three regions and three cities, and a fourth it never finished.
+Each city was a **lower city**
 — a valley or a river bank or a ridge of homes — and above it a **citadel
 tower**. The towers were not defences. They were hearths. Each held one of the
 **Three Flames**, lit from the **Sovereign Ember** — a coal of fallen starstone
@@ -32,6 +33,7 @@ that gave heat without ash — and the flames ran the kingdom.
 | **The Hollow Weald** — lush meadows, forest, river valleys under mountains ([map](../art/environments/maps/hollow-weald.png)) | **The Bastion** — a fortified ridge city, stepped walls, a bell tower at the crown ([Ashen Bastion](../art/title-background-variations/ashen-bastion.webp)) | **The Field Flame** | The land. Harvest, healing, the seasons turning on time. Its bell told the weald the hour. |
 | **The Pale Marches** — ice tundra, frozen lakes, glacier passes ([map](../art/environments/maps/pale-marches.png)) | **The Citadel** — an island tower in a river city, bridges over water that froze the night the flame died ([River Citadel](../art/title-background-variations/river-citadel.webp)) | **The Court Flame** | The law. Oaths held, a knight's word binding, the throne answered to. |
 | **The Cinder Reach** — volcanic ridges, lava rivers, the caldera ([map](../art/environments/maps/cinder-reach.png)) | **The Observatory** — a spire of astronomical stone over ash-white terraces ([Forgotten Observatory](../art/title-background-variations/forgotten-observatory.webp)) | **The Crown Flame** | The dead. Names written and kept, and the Sovereign Ember itself, fed in the crown until the night it left. |
+| **The Drowned Coast** — salt causeways, a grave of ships, terraces the sea took ([map](../art/environments/maps/drowned-coast.png)) | **The Ashen Spire** — the fourth tower, raised over the water and never lit ([title art](../assets/bg/title-city-tower.webp)) | **no flame** | Nothing yet. Its hearth was built to burn without names. It was never tried. |
 
 The kingdom called itself the **Goldbough**, after its crest: a gilded branch,
 three flames on three twigs. The name survives on relics (Goldbough Sapling,
@@ -48,15 +50,30 @@ The old viaducts still join the three in a ring: the weald's river road to the
 frozen passes, the passes to the basalt stair, the stair back down to the
 weald. There is no first seat. A Forsaken enters from wherever the light never
 reached them — a weald hamlet, the marches' ice, a reach mine camp — and the
-ring decides the rest. That ring, three ash cities and three cold hearths and
-one climb, is what the Forsaken call the **Ashen Spire**.
+ring decides the rest.
 
-**The Ashen Crown is not a place.** The Sovereign Ember left its hearth in the
-Observatory the night of the Burning and has been loose on the ring since,
-drifting the viaducts, thin and starving. A relit flame drives it on: it will
-not sit in a hearth that is fed. So every climb corners it at the last cold
-tower, and that tower's summit, whichever it is this time, is the Ashen Crown
-for this climb. The Blighted Valkyrie goes where the Ember goes.
+**The fourth city.** Off the ring, on the Drowned Coast, a fourth spur of
+viaduct runs out over the water to the **Ashen Spire**: a lower city the sea
+has half taken and, above it, the tallest tower the kingdom ever raised. It was
+the Astronomer's project, argued for a hundred years and built in the last
+twenty: a hearth designed to hold the Sovereign Ember and burn **without
+names** — starstone kept alight by the tower's own draw, not by the written
+dead. The Saints called it heresy. The Court funded it because the Ember was
+dimming and the Court was running out of names to promise. The tower was
+finished the spring before the Burning. The hearth was never lit. Nobody knows
+if it works. The fourth spur of viaduct was never joined to the ring; the last
+span stands open over the sea.
+
+**The Ashen Crown is the Spire's summit, and the road to it is laid by the
+Ember.** The Sovereign Ember left its hearth in the Observatory the night of
+the Burning and has been loose on the ring since, thin and starving. A relit
+flame drives it on: it will not sit in a hearth that is fed. Relight all three
+and it has one place left to go — out along the open spur, toward the hearth
+that owes nobody anything. So the causeway to the Spire opens from whichever
+tower you relight last, its light laid across the water by the Ember fleeing
+ahead of you, and the Blighted Valkyrie waits on that causeway, at the Spire's
+foot, at the top of whatever you climbed to get there. The Ashen Crown is
+reached from any seat; it belongs to none of them.
 
 ## 2. Why the cities died
 
@@ -101,6 +118,15 @@ three towers:
   happened was not a disaster. It was the star finishing. *(True. And he
   watched it and wrote nothing down, because writing is what fed it.)*
 
+**The whole truth is in exactly one place.** The Astronomer wrote one page in
+his life — the night he understood what fed the Ember — and wrote nothing
+after, because writing is what fed it. That page is in the Ashen Spire's
+hearth-room, on the lectern the Ember was meant to be seated from. It is the
+only text in the game that states §2 plainly. Nowhere on the road, in any city,
+on any card, is the whole of it said. A player who reaches the Spire and reads
+the page has earned it; a player who never does still has a complete game and
+three tellings that almost agree.
+
 What this makes of the climb: to **relight a flame with cinders** is to feed
 the fire the kingdom's own people, which is exactly what they agreed to. The
 game does not tell the player whether that is mercy or the same crime again.
@@ -113,6 +139,8 @@ ember without a hearth, burning inside things that were promised to it.
 
 - A soldier who held the Bastion's Fell Courtyard gate is still holding it. He
   is a **Wandering Soldier** now, and there is a cinder where his heart was.
+  Some of them still know it. One in a patrol will lower his blade and ask you
+  to finish reading his name.
 - The river court did not want to die, so it had its surgeons stitch it back
   together. The **Stitched King** is what a throne looks like when it refuses
   to be empty.
@@ -124,6 +152,22 @@ thing you cut down leaves one, and cinders are the only currency in the Spire
 because they are the only thing in the Spire that is still alive. The merchant
 takes them. The smith burns them. The shrines drink them. And the three cold
 hearths will take them too, if you bring enough.
+
+**The Blight talks back.** The corrupted are citizens being burned as
+promised, and a few have not forgotten. Not every fight is silent: a wayfarer
+beat can be a corrupted thing that speaks first (LORE §7 voices, one line, no
+speech), and a rare wayfarer is the fight itself asking to be ended. This is
+where cinders cost something without a cutscene: the currency you spend was a
+person who asked you for it.
+
+**The merchant is complicit.** He takes cinders and he does not say where they
+go. He was a Saint of the Furnace Chapel who left before the Burning with a
+censer under his coat, and he keeps one small hearth alive in the back of the
+cart on the names he buys — a private flame, three people warm, fed by every
+sale. It is never stated. His buy-back lines say it for anyone listening ("Half
+price. The other half is already burning."); his sell bar is the only shop in
+the world that pays in the thing it is spending. The Physician's "a little
+flesh" and the merchant's half price are the same trade at different counters.
 
 **Relighting a flame** is therefore not a ritual. It is a butcher's ledger. To
 put the Field Flame back in the Bastion you have to take back the heat that
@@ -150,12 +194,14 @@ A Forsaken has no *right* to the Ember. They are not restoring their own
 kingdom. Every ending of the climb is a choice about what the glory of somebody
 else's civilization is worth:
 
-- **Restore.** Relight all three, seat the Sovereign Ember in the last hearth,
-  let the cities be rebuilt — and their light will not reach you this time either,
-  and it will need feeding again.
+- **Restore.** Relight all three and carry the Ember back to the Observatory's
+  crown, let the cities be rebuilt — and their light will not reach you this
+  time either, and it will need feeding again.
 - **Claim.** Take the Ember for yourself. Become the hearth. Decide whose names
   it eats.
-- **Transform.** Let it go out. The ember has been climbing for a reason.
+- **Transform.** Seat it in the Ashen Spire, the hearth that was built to burn
+  without names and was never tried. It may hold. It may go out. Nobody knows,
+  and the Astronomer's page does not say.
 
 The game does not tell the player which is correct. The Blighted Valkyrie, the
 Furnace Saint and the Hollow Astronomer are each the champion of one answer.
@@ -166,20 +212,26 @@ The classes are not professions. They are four different relationships with the
 fire.
 
 - **Reaver** — *blood and steel.* Weald-born, a sellsword the Bastion hired
-  and never marked. Fights in two stances because the Wardens taught two: one to
+  and never marked. *Why they climb:* hired to hold the Fell Courtyard gate the
+  night it fell, paid in advance, and never told the job was over. Fights in two stances because the Wardens taught two: one to
   break, one to hold. Bleed is the Reaver's argument that a thing with a cinder
   in it still has blood to lose. Gorefire Stance is the closest a Forsaken can
   come to carrying a flame: it burns the wielder first.
 - **Rogue** — *ash and opportunism.* A river-city scavenger from the frozen
-  docks, one of the people the Court stitched over. Learned poison from the
+  docks, one of the people the Court stitched over. *Why they climb:* looking
+  for the Court Surgeon who stitched their family back to their posts, to ask
+  one question and not wait for the answer. Learned poison from the
   Court Surgeons and speed from the Marionettes. Does not believe in the flames
   and does not need to; a clean opening is a clean opening.
 - **Starseer** — *starstone.* An apprentice of the Observatory who read the
-  Astronomer's charts and left before the eclipse. Casts in sequence because
+  Astronomer's charts and left before the eclipse. *Why they climb:* they took
+  the charts and owe the Astronomer an answer; the Spire was his, and they mean
+  to see whether he was right. Casts in sequence because
   starstone answers rhythm, not force; the second spell is always the true one.
   Fragile because starstone remembers what it was before it was a hearth.
 - **Herald** — *gold and rot.* The last novice of the Furnace Chapel, and the
   only climber who was marked and lived: the fire started on them and stopped.
+  *Why they climb:* to find out why it stopped, and whether it will start again.
   Spends their own health to act because that is what a Saint does: they feed
   the flame from themselves. Their rot is the Blight, turned outward on
   purpose. The Herald is the only climber who actually wants the flames back,
@@ -218,6 +270,14 @@ The Bastion stands on its ridge above the valley, stepped walls and a bell.
 The Grave of the Nameless is on the weald road outside the walls: a cairn of
 broken swords, the graves of Forsaken who climbed before you and were never
 written into memory. What the player does there follows them up the Spire.
+**One of them did not finish dying.** The Keeper of the Nameless is a Forsaken
+who climbed, fell, and was never written — so there was nothing for the fire to
+read, and nothing to stop. They walk. They can be a companion (seat plan §5):
+the only one with no mark, no seat and no voice of their own, who speaks in the
+Forsaken voice because that is all they have left. At the end, in the Spire's
+hearth-room, their name is the one thing the player can choose to feed a hearth
+that has never been fed a name: the Restore ending's first fuel, the Transform
+ending's first test, or the one thing the player refuses to spend.
 
 ### The Pale Marches and the Citadel (the Court Flame)
 
@@ -267,8 +327,29 @@ The Observatory stands over the caldera, the empty hearth the Ember left.
 - **The Blighted Valkyrie** is not the reach's. She is the Ember's. She was the
   last name written into the Chapel's memory before it burned — the last one
   the light saved — and the Blight took her hardest of all. She follows the
-  Ember along the ring and waits at whichever crown it is cornered in. She is
-  what *restore* looks like from the inside.
+  Ember along the ring and waits on the causeway to the Spire, wherever it
+  opens. She is what *restore* looks like from the inside.
+
+### The Drowned Coast and the Ashen Spire (no flame)
+
+Salt causeways, the Grave of Ships, a Tidebound Chapel the Saints built to
+watch the heresy from, Starwatch Terrace where the Astronomer's apprentices
+measured the tower's draw. The sea has the lower city to its second storeys.
+Nothing here burned: there was nothing lit to burn, and the Blight has no one
+here to collect. The Coast is the one region where the corrupted are visitors —
+Ember-Starved Pilgrims who followed the light out along the spur, and what the
+sea gives back.
+
+The Spire stands at the end of the open span. The last viaduct arch was never
+closed; the Ember's light lays the missing span across the water for whoever
+follows it. Inside: the hearth-room, the lectern, the Astronomer's one page,
+and a hearth that has never been fed anything.
+
+In play the Spire is the run's ending, not a fourth seat: the tier-3 act's
+terminal is the causeway (SPEC §13.5), the Valkyrie is its boss, and the
+hearth-room is the ending scene. A short fourth movement through the drowned
+city — a handful of floors, no boss but the sea — is a later phase of the seat
+plan and is stated there, not here.
 
 ## 7. Card flavor: how the world is told
 
@@ -362,6 +443,20 @@ Colorless (the Forsaken), beside the four lines already shipped:
 | Defend | The cairn says: hold. It does not say what for. |
 | Footwork | Climbers before you cut steps. Use them. |
 
+The new pieces, in their voices (merchant and Nameless lines are for parley
+beats and sell-back copy, not cards):
+
+| Where | Line |
+|---|---|
+| Wandering Soldier, wayfarer variant | "Finish it. The fire's had my name half read since winter." |
+| Merchant, buy-back | "Half price. The other half is already burning." |
+| Merchant, sell bar, third visit | "Three warm. Don't ask me which three." |
+| Keeper of the Nameless, recruit | "No mark. No name. Nothing for it to read. I kept walking." |
+| Keeper of the Nameless, Spire hearth-room | "If it needs a name, give it mine. It never got one." |
+| Astronomer's page (the one text) | *Fed, it burns. Written, it feeds. Unfed, unwritten, unlit — I built the fourth to find out which of us was wrong.* |
+| Starseer, Star Path | The fourth spur was on his charts before it was on the coast. |
+| Herald, Communion | We watched the heresy from the Tidebound Chapel. We never saw it lit. |
+
 ## 8. Vocabulary for authors
 
 Use these words consistently in card text, event copy, tooltips and item
@@ -373,8 +468,10 @@ descriptions.
 | **Cinder** | ember in a carried, spendable form; the run's currency; what the corrupted leave | a coin, a small fire |
 | **Flame / hearth** | one of the three great fires and the tower-top that seats it; the act's goal | any campfire or rest node |
 | **Tower / citadel** | the hearth-tower above a city | a dungeon, a generic keep |
-| **Seat** | one of the three regions with its city and tower; unordered | a chair, a throne (the throne is in the Citadel), "act 1" |
-| **The Ashen Crown** | the summit of whichever tower the Ember is cornered in this climb | a fixed place, the reach |
+| **Seat** | one of the three regions with its city and tower; unordered | a chair, a throne (the throne is in the Citadel), "act 1", the Spire |
+| **The Ashen Spire** | the fourth city and its never-lit tower on the Drowned Coast; the run's ending | the whole ring, the game's world, a seat |
+| **The Ashen Crown** | the Spire's summit, reached by the causeway that opens from the last relit tower | a fixed seat, the reach |
+| **The spur / the causeway** | the unjoined fourth viaduct to the Spire; the road the Ember lays across the water | any bridge on the ring |
 | **Mark / marked** | the flame-brand at birth; a name promised to the fire | a curse, a status |
 | **Written / unwritten** | remembered by the Crown Flame or not; fed to it or not | literally literate |
 | **Blight** | ember without a hearth, burning inside a host; the corruption | disease, poison (the Rogue's poison is not Blight) |
@@ -400,8 +497,10 @@ structure it belongs to are in
 Deliberately unanswered, so events and quest chains have room:
 
 - Who caught the Ember when it fell, and whether they were Forsaken too.
-- Whether the Ember is fleeing the relit flames or being *called* around the
-  ring by something that is not a hearth.
+- Whether the Ember is fleeing the relit flames or being *called* out along
+  the spur by the hearth that was built for it.
+- Whether the Spire's hearth works. The Astronomer's page does not say, and
+  neither ending that uses it tells the player for certain.
 - What the Keeper of the Nameless is walking toward, and whether the second
   cairn is an ending or a door.
 - Whether a relit flame stays lit after the climber leaves, and who it eats
