@@ -180,6 +180,41 @@ Tracks: one per weapon group, one per armor group, one per focus group,
     mana, the first mana card each turn costs stamina only; or **Reservoir** —
     mana max +3, no generation.
 
+## F2. Recovery tiers by location
+
+Owner: resting in town fully recovers everything. Generalised: every location
+that offers a rest carries a `restTier` id, and the tier table says what the
+rest restores. The Shrine of Emberlight's current behaviour becomes one tier
+row rather than the only rest in the game.
+
+| Tier | Where | HP | Mana | Flask charges | Statuses | Extras |
+|---|---|---|---|---|---|---|
+| `camp` | Field rest event, some Unknown nodes | +25% max | none | +1 Azure | none | Cheap and interruptible: an ambush roll from the encounter table |
+| `shrine` | Shrine of Emberlight | +30% max (current Rest) | none | Full refill (current grace) | none | Rest or Smith choice as today |
+| `town` | Atlas settlements | Full | Full | Full refill | Clear all lingering ailments | Merchant, Smith, quest board, level-up screen |
+
+Rules:
+
+- Stamina and actions are per-turn resources and are not a rest concern.
+- Mana in the fixed pool refills only at `shrine`-or-better tiers that say so;
+  `town` is the only tier that fills the pool itself, which keeps the
+  no-regeneration line intact. Azure flask charges are what `shrine` refills.
+- Tiers are additive rows, not a ladder in code. A future `sanctum` tier that
+  also removes a curse card is one more row.
+- Town rest is free but towns are rare: at most one per act on the seeded
+  route, placed by the atlas. Attrition between towns is the run's tension.
+  An optional `inn.price` row (default 0) exists if the owner later wants a
+  cinder cost.
+- Relic passives `shrineHealMult` and `shrineNoRest` apply to whichever tier
+  they name; rename to `restHealMult` and `restDenied` with a tier filter so
+  a relic can deny shrine rest without denying town rest.
+- Co-op: a tier applies to every living member on arrival, same as the grace
+  refill today.
+
+Balance rows (K): `rest.tiers[]` with `hpPct`, `manaFill`, `flaskRefill`,
+`clearStatuses`, `services[]`; `atlas.townsPerActMax` default 1;
+`inn.price` default 0.
+
 ## G. Engine touches (closed-set additions, each with schema + test)
 
 46. Mana gain uses the existing `restoreMana` opcode; no new opcode.
@@ -189,13 +224,15 @@ Tracks: one per weapon group, one per armor group, one per focus group,
 50. Zone model in run state (`core`, `worn`, `hands`, `passive`).
 51. One save migration: class id → core card with starter tag set; relic list
     → carriers with tags; armament tiers → skill milestones.
+52. `restTier` on atlas locations and Unknown-node rest outcomes; the tier
+    table replaces the shrine-only heal and refill constants.
 
 ## H. Cut
 
-52. The 15-point pre-assigned creation mode.
-53. Cinder-priced level purchases.
-54. Smithing as an independent tier ladder.
-55. Any player-side exposure bar that refunds mana on fill (that is regen with
+53. The 15-point pre-assigned creation mode.
+54. Cinder-priced level purchases.
+55. Smithing as an independent tier ladder.
+56. Any player-side exposure bar that refunds mana on fill (that is regen with
     a delay).
 
 ## I. Order of work
