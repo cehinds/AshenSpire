@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-982",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Deleting a save asks the way every other decision does",
+    "detail": "The ✕ on a save slot now opens a door that names the slot, shows the climb that would go — class, act, floor, health, seed — and offers a red Delete or Back, instead of a bare hold with no picture of what it erases. A deliberate hold on the ✕ still deletes directly if you keep that setting on. On the way, a red button on a danger door (Overwrite, Delete) had been painted green by the rule that turns a ready button green; it keeps its red now.",
+    "build": "0.6.0.158",
+    "pullRequest": 982,
+    "url": "https://github.com/cehinds/AshenSpire/pull/982"
+  },
+  {
     "id": "pr-980",
     "date": "2026-09-11",
     "group": "2026-09-11",

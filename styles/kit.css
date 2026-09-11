@@ -3157,13 +3157,19 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   .card-inspection-modal .card-inspection-layout { grid-template-columns:minmax(0,1fr); }
   .card-inspection-modal .card-inspection-art { width:100%; max-width:220px; }
 }
-/* Green means the primary action is ready; native/ARIA disabled states remain muted. */
-button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
-.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+/* Green means the primary action is ready; native/ARIA disabled states remain muted.
+   A DANGER PRIMARY IS NOT GREEN. Green is "go" (Constantine, 2026-09-04); a
+   loss that is the way forward — Overwrite, Delete — keeps the danger tint
+   from `button.primary.danger` above. This rule's four :not()s outrank that
+   two-class rule, so without the exclusion every ready danger door painted
+   its red button green (measured on the title's Overwrite and Delete doors,
+   2026-09-11: background rgb(37, 92, 57) on both). */
+button.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
+.as-btn.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
   background-color:#255c39; border-color:#6fb580; color:#f0fff3;
 }
-button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover,
-.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover {
+button.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover,
+.as-btn.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover {
   background-color:#255c39;
 }
 button.primary:disabled, button.primary[aria-disabled='true'],

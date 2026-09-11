@@ -165,6 +165,27 @@ const SLOT_DECISIONS = {
   'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-overwrite', title: (n) => `Overwrite slot ${n}?`, prompt: 'Starting here deletes this saved climb and begins a new one. There is no way back.', back: 'Back to Slots', confirm: 'Overwrite', action: 'review-new', card: true, danger: true },
 };
 
+/**
+ * deleteSlotReview(slot, summary) → the copy the ✕'s review door reads.
+ *
+ * DELETE IS A DECISION DOOR LIKE THE OTHER FOUR (Constantine's review,
+ * 2026-09-11): the head asks "Delete slot n?", the body shows the DetailCard
+ * of the save that would go, the foot answers Delete (danger — the tone is
+ * the secondbeat row's: profile stakes, no undo) or Back. The machinery draws
+ * the door (framework/optionDecision.js → the shared confirmation modal); this
+ * only authors what it says, so the title's two ✕ sites read one home.
+ */
+export function deleteSlotReview(slot, summary = null) {
+  const card = summary
+    ? detailCard({ eyebrow: `Slot ${slot}`, name: summary.className, line: slotFacts(summary), meta: `Seed ${summary.seedString}`, muted: true, attrs: { class: 'title-load-review-slot' } })
+    : null;
+  return {
+    question: `Delete slot ${slot}?`,
+    detailHtml: card ? card.outerHTML : '',
+    confirmLabel: 'DELETE',
+  };
+}
+
 export function slotDecisionDoor({ kind, slot, summary = null }) {
   const spec = SLOT_DECISIONS[`${kind}:${summary ? 'occupied' : 'empty'}`];
   if (!spec) throw new Error(`slotDecisionDoor: no decision for kind '${kind}'`);
@@ -371,7 +392,9 @@ export function openSaveSlotSelector({
     if (onDelete && meta && registries) {
       const arm = beatArmer(meta, registries);
       veil.querySelectorAll('.title-slot-delete[data-slot-delete]').forEach((deleteButton) => {
+        const slot = Number(deleteButton.dataset.slotDelete);
         arm(deleteButton, 'deleteSave', {
+          ...deleteSlotReview(slot, slots.find((record) => record.slot === slot)?.summary || null),
           onConfirm: () => {
             const slot = Number(deleteButton.dataset.slotDelete);
             close({ restoreFocus: false });
