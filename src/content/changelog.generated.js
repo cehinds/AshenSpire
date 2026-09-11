@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-970",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A check that had been crashing instead of checking now runs",
+    "detail": "Nothing a player sees changes. One of the project's own quality checks — the one that proves the Music setting and the Quick Menu agree about what is on — was not failing and not passing: it was dying on startup, before it looked at anything. A small piece of card-drawing code runs two lines when it finds itself inside a browser, and it tested for only half of what those two lines actually use, so a checking harness that supplies the other half and not that half walked straight into a crash. The test now asks for both things it needs. The check reports thirty-two passes where it used to report nothing at all.",
+    "build": "0.6.0.135",
+    "pullRequest": 970,
+    "url": "https://github.com/cehinds/AshenSpire/pull/970"
+  },
+  {
     "id": "pr-954",
     "date": "2026-09-10",
     "group": "2026-09-10",
