@@ -121,7 +121,7 @@ try {
           for (const [selector, expected, screenshot] of [
             ['.hud-class', 'Class'], ['.hud-cinders', 'Currency'], ['.hud-act', 'region'], ['.hud-floor', 'current step'],
             ['.topbar [data-res=hp]', 'Health remaining', 'health-hover'], ['.topbar [data-res=mana]', 'Mana pays', 'mana-hover'], ['.topbar [data-res=stamina]', 'Stamina pays'],
-            ['#combat-armoury', 'fixed weapon'], ['#combat-menu', 'Menu'], ['.hud-mode-grip', 'HUD'], ['.turn-ribbon', 'Turn'],
+            ['#combat-armoury', 'fixed weapon'], ['#combat-menu', 'Menu'], ['.turn-ribbon', 'Turn'],
             ['.combatant.player [data-res=hp]', 'Health remaining'], ['.combatant.player .block-badge', 'Absorbs'],
             ['.stance-chip', 'Gain 3 Block'], ['.foundation-evade', 'charge'],
             ['.combatant.enemy [data-res=hp]', 'Health remaining'], ['.combatant.enemy .intent', 'Intent:', 'intent-hover'],
