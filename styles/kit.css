@@ -2950,6 +2950,15 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-equipment-details h3 { margin:0 0 8px; }
 .cc-choice-context, .cc-package-context { color:var(--muted); font-size:14px; line-height:1.4; margin:0 0 12px; }
 .cc-equipment-continue { grid-column:2; grid-row:2; justify-self:end; align-self:end; min-height:44px; max-width:100%; white-space:normal; }
+/* The ready lift scales the button about its centre, and at the grid's right
+   edge that is a 2px horizontal overflow (measured: section scrollWidth 1100
+   against clientWidth 1098 at 1024 wide). Growing from the right edge keeps
+   the lift inside the section. */
+.cc-equipment-continue, .cz-next, .cc-primary-continue { transform-origin:100% 50%; }
+/* Ready, the label is bold, and bold "Continue to equipment" ran 2px past the
+   long button's box at 1440 wide (measured: scrollWidth 210 in a 208 box).
+   Less side padding than the row's clamp gives it, so the words stay whole. */
+.cz-next { padding-inline:clamp(0.5rem, 5%, 1rem); }
 .cc-starting-package { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
 .cc-starting-package h4 { margin:0 0 8px; color:var(--gold); font-size:18px; }
 .cc-starting-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px 9px; }
@@ -2962,6 +2971,45 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .inspection-lore summary { cursor:pointer; }
 .inspection-lore p { font-style:italic; margin:8px 0 0; }
 .equipment-poker-card .epc-frame > .epc-flavor { display:block; box-sizing:border-box; min-width:0; min-height:0; max-height:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:calc(var(--epc-flavor-row,14px) - 2px); line-height:1; padding-top:0; }
+/* THE EQUIPMENT SUMMARY: one row of inert cards — the character, then what
+   is worn and held in the order the sections ask for it — with the receipts
+   folded beneath. The character card keeps the poker cards' proportion so the
+   row reads as one hand. */
+.cc-summary-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 180px)); gap:16px 14px; justify-content:start; align-items:start; }
+.cc-summary-slot { min-width:0; display:flex; flex-direction:column; gap:6px; }
+.cc-summary-slot > .as-eyebrow { margin:0; }
+.cc-summary-slot > .equipment-poker-card { width:100%; max-width:180px; margin:0; }
+.cc-summary-slot.unmet > .equipment-poker-card { outline:2px solid var(--danger); outline-offset:2px; border-radius:10px; }
+.cc-summary-unmet { margin:0; color:var(--danger); font-size:13px; line-height:1.35; }
+.cc-summary-empty { display:grid; place-items:center; aspect-ratio:5/7; width:100%; max-width:180px; border:1px dashed var(--line); border-radius:10px; color:var(--muted); }
+.cc-summary-character { display:flex; flex-direction:column; gap:8px; width:100%; max-width:180px; aspect-ratio:5/7; box-sizing:border-box; padding:12px; border:1px solid var(--gold); border-radius:10px; background:color-mix(in srgb, var(--gold) 6%, var(--panel)); }
+.cc-summary-eyebrow { color:var(--muted); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; }
+.cc-summary-name { margin:0; color:var(--gold); font:700 18px/1.15 var(--font-display); overflow-wrap:anywhere; }
+.cc-summary-character > .as-hairline { margin:0; }
+.cc-summary-stats { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px 10px; }
+.cc-summary-stats > .as-statpair { justify-content:space-between; font-size:13px; }
+.cc-summary-character > .cc-derived { margin-top:auto; gap:4px 8px; }
+.cc-summary-character > .cc-derived .as-chip { font-size:11px; }
+.cc-summary-calculations { margin-top:4px; }
+/* THE OPEN EQUIPMENT SECTION FITS THE GLASS ON DESKTOP (2026-09-11).
+   Constantine: "the screen is slightly too big, i should be able to see
+   everything when it opens on desktop." Measured at 1366x768 before this
+   rule: the Main Hand section stood 1423px tall — the card-package preview in
+   the detail pane — with its Continue at y=1707 on a 768px glass. The section
+   is capped to what the door body leaves under the section's own face, and
+   its two columns scroll INSIDE that cap: the choices column and the detail
+   pane each own their overflow, so the Continue never leaves the glass. The
+   subtraction is the door's head and foot, the section face and the panel's
+   breathing room, divided by the zoom for the reason .modal's ceiling is.
+   The choices scrollport keeps the 64px head the other card scrollports keep
+   (above), so the above-card inspect control is not clipped on the first
+   row. Phones keep the stacked, page-scrolling layout below. */
+@media(min-width:701px) {
+  .cc-equip-group[data-equipment-section] { max-height:calc(100dvh / var(--ui-zoom, 1) - 25rem); grid-template-rows:minmax(0,1fr) auto; }
+  .cc-equip-group[data-equipment-section] > .cc-card-selectors { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
+  .cc-equip-group[data-equipment-section] > .cc-card-selectors:has(.poker-equipment-choice) { padding-top:64px; }
+  .cc-equip-group[data-equipment-section] > .cc-equipment-details { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
+}
 @media(max-width:700px) {
   .cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { grid-row:auto; }
   .cc-equipment-continue { grid-column:1; grid-row:auto; width:100%; }
@@ -3124,6 +3172,23 @@ button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-read
 }
 .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
   grid-column:1 / -1; order:1; width:100%; max-width:none; min-width:0;
+}
+/* THE CREATION FOOT KEEPS BACK LEFT AND BEGIN RIGHT once Begin is ready. The
+   stacked ready-primary foot above is for a door whose primary is the one
+   thing left to do; here Back is a real way out, and Constantine (2026-09-11):
+   "continue and done etc confirmation buttons should be on the right, and
+   back buttons on the left". Scoped to this foot; every other door keeps the
+   stack. */
+.modal-foot.cz-actions:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) {
+  flex-direction:row; align-items:center;
+}
+.modal-foot.cz-actions:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) > .modal-foot-note { display:block; }
+.modal-foot.cz-actions > .modal-foot-actions:has(> .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) {
+  display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); grid-template-columns:none;
+  width:min(100%, calc(var(--n) * var(--step) + (var(--n) - 1) * 8px)); margin-left:auto;
+}
+.modal-foot.cz-actions > .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+  grid-column:auto; order:0; width:auto;
 }
 @media (prefers-reduced-motion:reduce) { button.primary, .as-btn.primary, button.primary.beat-hold, .as-btn.primary.beat-hold { transition:none; } }
 body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transition:none; }
