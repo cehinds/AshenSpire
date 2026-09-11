@@ -12,10 +12,10 @@ player must follow.
 regions — the green weald, the white marches, the burning reach — and in each
 stood a great city, and above each city a citadel tower, and at the top of each
 tower a flame. The flames are cold. The cities are ash. The only heat left in
-the world is inside the corrupted, as cinders. You climb the three towers, you
-kill what holds the heat, you take the cinders, and you relight the flames —
-or you decide the old glory is not worth the price and take the crown for
-yourself.
+the world is inside the corrupted, as cinders. You enter wherever the light
+never reached you, climb the three towers in whatever order the road gives,
+kill what holds the heat, take the cinders, and relight the flames — or decide
+the old glory is not worth the price and take the Ember for yourself.
 
 ---
 
@@ -27,11 +27,11 @@ tower**. The towers were not defences. They were hearths. Each held one of the
 **Three Flames**, lit from the **Sovereign Ember** — a coal of fallen starstone
 that gave heat without ash — and the flames ran the kingdom.
 
-| Region (map art) | Lower city and tower (title art) | The flame | What it kept | Act |
-|---|---|---|---|---|
-| **The Hollow Weald** — lush meadows, forest, river valleys under mountains ([map](../art/environments/maps/hollow-weald.png)) | **The Bastion** — a fortified ridge city, stepped walls, a bell tower at the crown ([Ashen Bastion](../art/title-background-variations/ashen-bastion.webp)) | **The Field Flame** | The land. Harvest, healing, the seasons turning on time. Its bell told the weald the hour. | I |
-| **The Pale Marches** — ice tundra, frozen lakes, glacier passes ([map](../art/environments/maps/pale-marches.png)) | **The Citadel** — an island tower in a river city, bridges over water that froze the night the flame died ([River Citadel](../art/title-background-variations/river-citadel.webp)) | **The Court Flame** | The law. Oaths held, a knight's word binding, the throne answered to. | II |
-| **The Cinder Reach** — volcanic ridges, lava rivers, the caldera ([map](../art/environments/maps/cinder-reach.png)) | **The Observatory** — a spire of astronomical stone over ash-white terraces; its summit is the **Ashen Crown** ([Forgotten Observatory](../art/title-background-variations/forgotten-observatory.webp)) | **The Crown Flame** | The dead. Names written and kept, and the Sovereign Ember itself, fed in the crown. | III |
+| Region (map art) | Lower city and tower (title art) | The flame | What it kept |
+|---|---|---|---|
+| **The Hollow Weald** — lush meadows, forest, river valleys under mountains ([map](../art/environments/maps/hollow-weald.png)) | **The Bastion** — a fortified ridge city, stepped walls, a bell tower at the crown ([Ashen Bastion](../art/title-background-variations/ashen-bastion.webp)) | **The Field Flame** | The land. Harvest, healing, the seasons turning on time. Its bell told the weald the hour. |
+| **The Pale Marches** — ice tundra, frozen lakes, glacier passes ([map](../art/environments/maps/pale-marches.png)) | **The Citadel** — an island tower in a river city, bridges over water that froze the night the flame died ([River Citadel](../art/title-background-variations/river-citadel.webp)) | **The Court Flame** | The law. Oaths held, a knight's word binding, the throne answered to. |
+| **The Cinder Reach** — volcanic ridges, lava rivers, the caldera ([map](../art/environments/maps/cinder-reach.png)) | **The Observatory** — a spire of astronomical stone over ash-white terraces ([Forgotten Observatory](../art/title-background-variations/forgotten-observatory.webp)) | **The Crown Flame** | The dead. Names written and kept, and the Sovereign Ember itself, fed in the crown until the night it left. |
 
 The kingdom called itself the **Goldbough**, after its crest: a gilded branch,
 three flames on three twigs. The name survives on relics (Goldbough Sapling,
@@ -44,10 +44,19 @@ Each flame had an order: **Wardens** in the Bastion, **Knights** in the Citadel,
 or a censer. Several survive as relics (Warden Horn, Ancestral Horn, Howling
 Standard, Radiant Aegis) and none of them work the way they used to.
 
-The old viaducts still join the three: the weald's river road climbs to the
-frozen passes, and the passes climb to the basalt stair. That road, three ash
-cities and three cold hearths and one climb, is what the Forsaken call the
-**Ashen Spire**. The Observatory, tallest and last, is the Spire proper.
+The old viaducts still join the three in a ring: the weald's river road to the
+frozen passes, the passes to the basalt stair, the stair back down to the
+weald. There is no first seat. A Forsaken enters from wherever the light never
+reached them — a weald hamlet, the marches' ice, a reach mine camp — and the
+ring decides the rest. That ring, three ash cities and three cold hearths and
+one climb, is what the Forsaken call the **Ashen Spire**.
+
+**The Ashen Crown is not a place.** The Sovereign Ember left its hearth in the
+Observatory the night of the Burning and has been loose on the ring since,
+drifting the viaducts, thin and starving. A relit flame drives it on: it will
+not sit in a hearth that is fed. So every climb corners it at the last cold
+tower, and that tower's summit, whichever it is this time, is the Ashen Crown
+for this climb. The Blighted Valkyrie goes where the Ember goes.
 
 ## 2. Why the cities died
 
@@ -141,8 +150,8 @@ A Forsaken has no *right* to the Ember. They are not restoring their own
 kingdom. Every ending of the climb is a choice about what the glory of somebody
 else's civilization is worth:
 
-- **Restore.** Relight all three, return the Sovereign Ember to the crown, let
-  the cities be rebuilt — and their light will not reach you this time either,
+- **Restore.** Relight all three, seat the Sovereign Ember in the last hearth,
+  let the cities be rebuilt — and their light will not reach you this time either,
   and it will need feeding again.
 - **Claim.** Take the Ember for yourself. Become the hearth. Decide whose names
   it eats.
@@ -176,9 +185,17 @@ fire.
   purpose. The Herald is the only climber who actually wants the flames back,
   and the one the flames would cost the most.
 
-## 6. The three regions
+## 6. The three seats
 
-### Act I — The Hollow Weald and the Bastion (the Field Flame)
+The order is seeded. A run may open in the weald, on the ice, or at the mine
+mouth, and the seat reached last is where the Ember is cornered. Each seat is
+therefore written to stand on its own: its own history, its own bosses, its own
+flame, no "before" or "after" that depends on the other two. (Difficulty tiering
+by act is a separate mechanics knob and is not lore; if seat order is seeded,
+seat bosses travel with their seat and the tier scales them — a SPEC change,
+not a lore one.)
+
+### The Hollow Weald and the Bastion (the Field Flame)
 
 Lush meadows under mountains, river valleys, lanternwood, a drowned hamlet.
 Umber, iron, faint gold, and too much green. Growth without a Field Flame does
@@ -202,7 +219,7 @@ The Grave of the Nameless is on the weald road outside the walls: a cairn of
 broken swords, the graves of Forsaken who climbed before you and were never
 written into memory. What the player does there follows them up the Spire.
 
-### Act II — The Pale Marches and the Citadel (the Court Flame)
+### The Pale Marches and the Citadel (the Court Flame)
 
 Ice tundra: frozen lakes, Frostgate Pass, the Pilgrim Road under snow, a
 monastery that took a vow of silence and kept it past death. Gilded stone,
@@ -224,7 +241,7 @@ The Citadel stands on its island in the frozen river, bridges and the tower.
   are the court's dead. He is the only one in the Citadel who still remembers
   the funeral service, and he is playing it for all of them at once.
 
-### Act III — The Cinder Reach and the Observatory (the Crown Flame)
+### The Cinder Reach and the Observatory (the Crown Flame)
 
 Volcanic ridges, the Basalt Stair, the Dead Foundry, the Ember Mine Mouth,
 lava rivers where the viaducts used to carry water. Mineral ash, bone light,
@@ -235,10 +252,11 @@ Revenants reform because the Crown Flame's job was memory, and it is still
 trying to remember them into shape. Ember-Starved Pilgrims came up the stair
 hoping to be warmed.
 
-The Observatory stands over the caldera, its summit the Ashen Crown.
+The Observatory stands over the caldera, the empty hearth the Ember left.
 
 - **The Furnace Saint** keeps the Crown Flame's hearth in the Furnace Chapel at
-  the tower's base. He is still feeding it. Beat him and the hearth is yours.
+  the tower's base. He is still feeding a hearth with nothing in it. Beat him
+  and the hearth is yours.
 - **The Hollow Astronomer** watched the Burning from the Eclipse Observatory
   and concluded the star was always going to go out. He wants the Ember to
   *leave*. He will call the heavens down to see it off.
@@ -246,10 +264,11 @@ The Observatory stands over the caldera, its summit the Ashen Crown.
   over, around the last of the deep heat, the wyrm the Wyrm Aspirants and Wyrm
   Lords were consecrated to. It is the reach's oldest tenant and does not care
   what you came for.
-- **The Blighted Valkyrie** waits at the crown itself. She was the last name
-  written into the Chapel's memory before it burned — the last one the light
-  saved — and the Blight took her hardest of all. She is what *restore* looks
-  like from the inside.
+- **The Blighted Valkyrie** is not the reach's. She is the Ember's. She was the
+  last name written into the Chapel's memory before it burned — the last one
+  the light saved — and the Blight took her hardest of all. She follows the
+  Ember along the ring and waits at whichever crown it is cornered in. She is
+  what *restore* looks like from the inside.
 
 ## 7. Card flavor: how the world is told
 
@@ -354,7 +373,8 @@ descriptions.
 | **Cinder** | ember in a carried, spendable form; the run's currency; what the corrupted leave | a coin, a small fire |
 | **Flame / hearth** | one of the three great fires and the tower-top that seats it; the act's goal | any campfire or rest node |
 | **Tower / citadel** | the hearth-tower above a city | a dungeon, a generic keep |
-| **Seat** | one of the three regions with its city and tower | a chair, a throne (the throne is in the Citadel) |
+| **Seat** | one of the three regions with its city and tower; unordered | a chair, a throne (the throne is in the Citadel), "act 1" |
+| **The Ashen Crown** | the summit of whichever tower the Ember is cornered in this climb | a fixed place, the reach |
 | **Mark / marked** | the flame-brand at birth; a name promised to the fire | a curse, a status |
 | **Written / unwritten** | remembered by the Crown Flame or not; fed to it or not | literally literate |
 | **Blight** | ember without a hearth, burning inside a host; the corruption | disease, poison (the Rogue's poison is not Blight) |
@@ -372,8 +392,8 @@ cracked, stitched, starving, still ringing*.
 Deliberately unanswered, so events and quest chains have room:
 
 - Who caught the Ember when it fell, and whether they were Forsaken too.
-- Whether the Ember is fleeing the Spire or being *called* up by something above
-  the Observatory's crown.
+- Whether the Ember is fleeing the relit flames or being *called* around the
+  ring by something that is not a hearth.
 - What the Keeper of the Nameless is walking toward, and whether the second
   cairn is an ending or a door.
 - Whether a relit flame stays lit after the climber leaves, and who it eats
