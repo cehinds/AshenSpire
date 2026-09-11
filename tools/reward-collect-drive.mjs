@@ -223,7 +223,9 @@ const durableKinds = await ev(`(async()=>{
   const cases = [
     { kind:'cinders', rewards:{ cinders:17 }, take:(root)=>root.querySelector('[data-kind="cinders"]').click(), kept:(r)=>r.cinders===17 },
     { kind:'flask', rewards:{ flaskId:'crimsonFlask' }, take:(root)=>{root.querySelector('[data-kind="flask"]').click();root.querySelector('#reward-detail-take').click();}, kept:(r)=>r.flasks.some(x=>x.flaskId==='crimsonFlask') },
-    { kind:'relic', rewards:{ relicId:'forsakenMedallion' }, take:(root)=>root.querySelector('[data-kind="relic"]').click(), kept:(r)=>r.relics.includes('forsakenMedallion') },
+    // Relics are inspect-before-collect like flasks and armaments (reward.js):
+    // the row opens the detail door and Take collects.
+    { kind:'relic', rewards:{ relicId:'forsakenMedallion' }, take:(root)=>{root.querySelector('[data-kind="relic"]').click();root.querySelector('#reward-detail-take').click();}, kept:(r)=>r.relics.includes('forsakenMedallion') },
     { kind:'armament', rewards:{ armamentId:'greatsword' }, take:(root)=>{root.querySelector('[data-kind="armament"]').click();root.querySelector('#reward-detail-take').click();}, kept:(r)=>r.loadout.storage.includes('greatsword') },
   ];
   const out = {};
@@ -404,7 +406,18 @@ check('S7 no discovery receipt was written (count 0 — structurally 0 in showca
 async function finishPosedCombat(expectedTitle) {
   await waitFor(`!!window.__combat && !!document.querySelector('.end-turn')`, `${expectedTitle} combat`);
   await sleep(1800); // let the production intro/timeline release combat's busy gate
-  await ev(`(()=>{for(const e of window.__combat.enemies){e.hp=0;e.alive=false;}document.querySelector('.end-turn').click();return true})()`);
+  await ev(`(()=>{for(const e of window.__combat.enemies){e.hp=0;e.alive=false;}return true})()`);
+  // THE BOSS SPLASH IS FROZEN IN THE ?shot=boss POSE (main.js showBossIntro
+  // { hold }: a photograph pose with no close wired — no press, no key, no
+  // timer lifts it), and a hold pressed through it lands on the splash, not
+  // on End Turn. The pose's freeze is lifted here by hand; the fight under it
+  // is the real one, and nothing about the reward is decided by the splash.
+  await ev(`document.querySelector('.boss-intro')?.remove(); true`);
+  // END TURN OWES A HOLD (secondbeat.js; a tap opens the review instead): the
+  // same deliberate press #reward-continue takes below, so the turn ends the
+  // way a player ends it, and the victory beat (balance.ui.victoryBeat.ms)
+  // stands before the door — the 12 s wait covers both.
+  await holdSel('.end-turn');
   await waitFor(`!!document.querySelector('.reward-menu')`, `${expectedTitle} rewards`, 12000);
   check(`${expectedTitle} real combat onEnd mounts the expected reward screen`, (await title()) === expectedTitle, `title '${await title()}'`);
   check(`${expectedTitle} route offers an armament through its production roll`, await ev(`!!document.querySelector('[data-kind="armament"]')`));

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-986",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A breath between the last blow and the loot",
+    "detail": "When the last enemy falls, the fight's title — Victory, Elite vanquished, or the boss's name falling — now stands over the battlefield for a moment before the reward screen opens, instead of the loot appearing the instant the fight ends. The Reduced motion setting skips the pause.",
+    "build": "0.6.0.159",
+    "pullRequest": 986,
+    "url": "https://github.com/cehinds/AshenSpire/pull/986"
+  },
+  {
     "id": "pr-982",
     "date": "2026-09-11",
     "group": "2026-09-11",

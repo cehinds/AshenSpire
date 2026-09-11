@@ -755,6 +755,11 @@ export const balance = {
     // without becoming a chore. `short` is for players who find the wait
     // irritating, `long` for hands that need the room. `off` is 0 and disables
     // only the shortcut; the short activation still opens the review modal.
+    // THE VICTORY BEAT (Constantine's review, 2026-09-11): when the last enemy
+    // falls, the fight's title stands over the battlefield for this long
+    // before the spoils door opens — a breath between the blow and the loot.
+    // Reduced motion skips it entirely (ui/components/victoryBeat.js).
+    victoryBeat: { ms: 600 },
     holdConfirm: {
       def: 'normal',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },

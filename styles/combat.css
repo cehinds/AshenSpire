@@ -1206,6 +1206,25 @@
   background: linear-gradient(90deg, transparent, #332515e8 20%, #332515e8 80%, transparent);
 }
 .turn-ribbon::before { content: '‹ ✧ '; } .turn-ribbon::after { content: ' ✧ ›'; }
+/* THE VICTORY BEAT (components/victoryBeat.js): the fight's title over the
+   battlefield for balance.ui.victoryBeat.ms, drawn in the ribbon's own ink so
+   it reads as the same voice that said "Player Turn". Absolute inside .combat
+   like the ribbon; px through --ui-zoom, never vw/vh. */
+.victory-beat {
+  position: absolute; inset: 0; z-index: 60; pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, #00000088, #000000cc);
+  opacity: 0; transition: opacity 180ms ease;
+}
+.victory-beat.is-in { opacity: 1; }
+.victory-beat-title {
+  margin: 0; width: 100%; text-align: center;
+  padding: calc(8px / var(--ui-zoom,1)) calc(40px / var(--ui-zoom,1));
+  font: small-caps bold calc(34px / var(--ui-zoom,1))/1.2 Georgia, serif; letter-spacing: .14em;
+  color: #ead294; border-block: 1px solid #ac854b;
+  background: linear-gradient(90deg, transparent, #332515e8 20%, #332515e8 80%, transparent);
+}
+.victory-beat-title::before { content: '‹ ✧ '; } .victory-beat-title::after { content: ' ✧ ›'; }
 [data-turn='enemy'] .turn-ribbon { color: #ffc0a4; border-color: #9f492f; background: linear-gradient(90deg, transparent, #5a2017ec 20%, #5a2017ec 80%, transparent); }
 @media (max-height: 500px) {
   :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(42px / var(--ui-zoom,1)) !important; padding-block: 0; }
