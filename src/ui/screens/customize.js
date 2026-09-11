@@ -51,7 +51,7 @@ import {
 } from '../components/creationCards.js';
 import {
   el, eyebrow, titleS, subtitle, flavour, hairline, artWell, options, row, labelStack,
-  button, buttonRow, modalHead, modalFooter, pane,
+  button, buttonRow, modalHead, modalFooter, pane, statPair,
 } from '../kit/index.js';
 
 /** A section's head: Eyebrow + Title·S on the left, its controls on the right. */
@@ -62,9 +62,20 @@ function sectionHead(kicker, title, trail = []) {
   ]);
 }
 
-/** The way on from a section: one long button, at the end of the row. */
-function nextRow(label, next) {
-  return buttonRow({ size: 'long', className: 'end', buttons: [button({ label, className: 'cz-next', attrs: { dataset: { next } } })] });
+/** The way on from a section: one long button, at the end of the row.
+ *  A gated step's button is primary — green once the step is complete, muted
+ *  with its reason until then (refusal.js). The seed's is a plain button:
+ *  Begin, in the foot, is the one that turns green at the end. */
+function nextRow(label, next, weight = 'primary') {
+  return buttonRow({ size: 'long', className: 'end', buttons: [button({ label, weight, className: 'cz-next', attrs: { dataset: { next } } })] });
+}
+
+/** Show or stash a live node. Inline display, not `hidden` alone — the kit's
+ *  author display rules beat the UA `[hidden]` rule (disclosure.js measured it). */
+function showNode(node, on) {
+  if (!node) return;
+  node.hidden = !on;
+  node.style.display = on ? '' : 'none';
 }
 
 export function mountCustomize(app, {
@@ -73,19 +84,31 @@ export function mountCustomize(app, {
   const firstClass = registries.classes.all()[0];
   const creationLayout = registries.characterCreation.layout || {};
   const visibleModes = creationModeViews(registries);
+  // THE FLOW IS GATED (2026-09-11). Constantine: "continue to character
+  // didn't turn green after I selected a class". Nothing was waiting for a
+  // choice — class, Standard, keepsake and armour were all preselected at
+  // mount, and the section Continues were secondary-weight, which can never
+  // turn green. Now each step starts UNCHOSEN and its Continue refuses, with
+  // the reason as its tooltip, until the step is complete. `classId` still
+  // carries the first class so everything derived from it (preview, kit,
+  // relic) has a value; `classChosen` is whether the player has said so.
+  // The component catalogue keeps the old preselection: its specimens need
+  // a chosen state to draw.
+  const gated = !catalog;
   const state = {
     classId: firstClass.id,
+    classChosen: !gated,
     name: 'Forsaken',
     glyph: PORTRAIT_GLYPHS[0],
     tint: PORTRAIT_TINTS[0].id,
     spriteStyle: DEFAULT_SPRITE_STYLE,
-    keepsakeId: registries.characterCreation.keepsakes[0].id,
+    keepsakeId: gated ? null : registries.characterCreation.keepsakes[0].id,
     startingKitId: null,
     startingHands: { leftHand: null, rightHand: null },
     startingSlotChoices: {},
     startingArmourId: null,
     startingRelicId: firstClass.startingRelic,
-    attributeMode: visibleModes[0].id,
+    attributeMode: gated ? null : visibleModes[0].id,
     attributes: null,
     classChoiceView: creationLayout.classChoiceView,
     equipmentChoiceView: creationLayout.equipmentChoiceView,
@@ -103,6 +126,7 @@ export function mountCustomize(app, {
   if (shotPose) {
     if (shotPose.classId && registries.classes.all().some((c) => c.id === shotPose.classId)) {
       state.classId = shotPose.classId;
+      state.classChosen = true;
       state.startingRelicId = registries.classes.get(shotPose.classId).startingRelic;
     }
     if (shotPose.tint && PORTRAIT_TINTS.some((t) => t.id === shotPose.tint)) {
@@ -118,7 +142,12 @@ export function mountCustomize(app, {
   let refreshSpriteFaces = () => {};
   let refreshEquipmentFaces = () => {};
   const refreshFaces = () => { refreshSectionFaces(); refreshCharacterFaces(); refreshSpriteFaces(); refreshEquipmentFaces(); };
-  let updateStartRefusal = () => {};
+  // Every gated Continue re-reads its step when the start refusal does: one
+  // call site per state change, and the gates cannot fall behind Begin.
+  const gateRefreshers = [];
+  let equipmentGateRefreshers = [];
+  const refreshGates = () => { for (const refresh of [...gateRefreshers, ...equipmentGateRefreshers]) refresh(); };
+  let updateStartRefusal = () => { refreshGates(); };
 
   // ---- the page door -------------------------------------------------------
   const spriteSide = registries.characterCreation.spritePreviewSide;
@@ -141,6 +170,11 @@ export function mountCustomize(app, {
         el('div', { id: 'cz-statedit', class: 'cz-statedit' }),
         el('div', { id: 'cz-primary-stats', class: 'as-stack tight cc-primary-stats' }),
         el('div', { id: 'cz-derived', class: 'cc-derived', 'aria-label': 'Derived resources' }),
+        // The way on from the stats, bottom-right of the section: shown once a
+        // mode is chosen, green once the allocation is complete.
+        buttonRow({ size: 'long', className: 'end cc-primary-continue-row', buttons: [
+          button({ label: 'Continue', weight: 'primary', className: 'cc-primary-continue' }),
+        ] }),
       ]),
       el('section', { id: 'cz-keepsake-group', class: 'cc-character-picker' }, options([], { id: 'cz-keepsakes', class: 'cz-keepsakes' })),
     ]),
@@ -185,7 +219,7 @@ export function mountCustomize(app, {
       el('div', { id: 'cz-equipment-fold', class: 'cc-equipment-fold cz-disc' }),
       el('div', { id: 'cz-equipment-receipts', class: 'cc-equip-group', 'aria-live': 'polite' }),
       flavour('An armament is one carried object. Choosing it for the other hand moves it.', { class: 'cc-move-note' }),
-      nextRow('Continue to seed', 'seed'),
+      nextRow('Continue to seed', 'seed', 'secondary'),
     ]),
     seed: el('section', { id: 'cz-seed-panel', class: 'as-pane flush cz-stage' }, [journeyRow, seedRow]),
   };
@@ -285,31 +319,59 @@ export function mountCustomize(app, {
     state.startingKitId = kit.id;
     state.startingHands = { leftHand: kit.leftHand || null, rightHand: kit.rightHand || null };
     state.startingSlotChoices = {};
-    state.startingArmourId = armourChoices()[0].id;
+    // Armour is the player's to choose: it starts unchosen and the armour
+    // step's Continue waits for it. Hands and relic keep the class defaults
+    // so the common case is one click per step, not four mandatory picks.
+    state.startingArmourId = gated ? null : armourChoices()[0].id;
     state.startingRelicId = registries.classes.get(state.classId).startingRelic;
     if (state.attributeMode === POINTBUY) resetAttributes();
   }
+
+  // ---- what each step still needs ------------------------------------------
+  // One reason per step, read by that step's Continue AND by Begin, so the
+  // foot and the section can never disagree about what is missing.
+  function classProblem() { return state.classChosen ? null : 'Choose a class.'; }
+  function modeProblem() { return state.attributeMode ? null : 'Choose Standard or Assign points.'; }
+  function keepsakeProblem() { return state.keepsakeId ? null : 'Choose a keepsake.'; }
+  function armourProblem() { return state.startingArmourId ? null : 'Choose starting armour.'; }
+  /** The stats step: the mode, then a complete and legal allocation. */
+  function statsStepProblem() { return modeProblem() || allocationProblem(); }
+  function characterProblem() { return statsStepProblem() || keepsakeProblem(); }
+  function equipmentProblem() { return armourProblem() || handsProblem(); }
+  function flowProblem() { return classProblem() || characterProblem() || equipmentProblem(); }
 
   function pointbuyMode() { return creationMode(registries, POINTBUY); }
   function remainingPoints() {
     if (!state.attributes) return pointbuyMode().bonusPool;
     return allocationTotal(registries, POINTBUY) - Object.values(state.attributes).reduce((sum, value) => sum + value, 0);
   }
-  function statsProblem() {
-    let attributes = classAttributePreset(registries, state.classId, state.attributeMode);
-    if (state.attributeMode === POINTBUY && state.attributes) {
-      const remaining = remainingPoints();
-      if (remaining !== 0) return remaining > 0
-        ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign.`
-        : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool.`;
-      const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
-      if (problems.length) return problems[0].msg;
-      attributes = state.attributes;
-    }
-    const rejected = startingHandsRequirementFailure(registries, state.startingHands, attributes);
+  /** The point-buy alone: the pool spent exactly, every stat in bounds. */
+  function allocationProblem() {
+    if (state.attributeMode !== POINTBUY || !state.attributes) return null;
+    const remaining = remainingPoints();
+    if (remaining !== 0) return remaining > 0
+      ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign.`
+      : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool.`;
+    const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
+    return problems.length ? problems[0].msg : null;
+  }
+  /** The attributes the run would begin with: a complete point-buy, else the
+   *  class preset for the chosen mode (Standard until one is chosen). */
+  function effectiveAttributes() {
+    if (state.attributeMode === POINTBUY && state.attributes && !allocationProblem()) return state.attributes;
+    return classAttributePreset(registries, state.classId, state.attributeMode || STANDARD);
+  }
+  /** A held weapon the effective attributes cannot wield. Checked at the
+   *  hand step and at Begin — NOT in Assign points, which used to refuse
+   *  "Done" at 0 points because the default staff wanted INT 12, a fact the
+   *  player had not yet been shown and could not act on from that door. */
+  function handsProblem(hands = state.startingHands) {
+    const rejected = startingHandsRequirementFailure(registries, hands, effectiveAttributes());
     if (rejected) return `${rejected.piece.name} needs ${rejected.failure.attributeId} ${rejected.failure.required} — you have ${rejected.failure.actual}.`;
     return null;
   }
+  function handProblem(slot) { return handsProblem({ [slot]: state.startingHands[slot] }); }
+  function statsProblem() { return allocationProblem() || handsProblem(); }
 
   function previewRun() {
     // Validate the live allocation independently of weapon requirements.
@@ -391,6 +453,29 @@ export function mountCustomize(app, {
       }));
     }
     statBox.replaceChildren(modes);
+    // Until a mode is chosen the section is the question alone: the stat rows,
+    // the resources and the way on appear with the answer.
+    const chosen = Boolean(state.attributeMode);
+    showNode($('#cz-primary-stats'), chosen);
+    showNode($('#cz-derived'), chosen);
+    showNode($('.cc-primary-continue-row'), chosen);
+  }
+
+  /** Bring a fold's face to the top of the scroll and seat the cursor on
+   *  `target` (the face itself by default), once the layout has it. */
+  function seatFace(key, target = null) {
+    queueMicrotask(() => {
+      const face = app.querySelector(`[data-face="${key}"]`);
+      if (!face) return;
+      face.scrollIntoView({ block: 'start' });
+      focusElement(target || face);
+    });
+  }
+
+  /** Stats settled: fold Primary Stats, unfold Keepsake, put the cursor there. */
+  function advanceToKeepsake({ focus = true } = {}) {
+    characterFold.open('keepsake');
+    if (focus) seatFace('keepsake', $('#cz-keepsakes .cz-keepsake'));
   }
 
   // THE POINT-BUY IS A DOOR. Opened by the one door-opener (through the shared
@@ -486,6 +571,7 @@ export function mountCustomize(app, {
       remaining: remainingPoints(),
       modal: true,
       cancelLabel: 'Standard',
+      doneLabel: 'Continue',
       rows: rowsNow(),
       onDecrease: (id) => step(id, -1),
       onIncrease: (id) => step(id, 1),
@@ -496,8 +582,8 @@ export function mountCustomize(app, {
         teardownPointBuy();
         if (outcome === 'reopen') return;
         if (outcome === 'done') {
-          renderCharacterPreview();
-          if (restore) focusElement(statBox.querySelector('.se-mode.chosen'));
+          renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+          advanceToKeepsake({ focus: restore });
           return;
         }
         state.attributeMode = STANDARD;
@@ -510,9 +596,11 @@ export function mountCustomize(app, {
     });
     door.close = allocation.close;
     pointBuy = door;
-    refreshDone = refusesWhen(allocation.done, statsProblem, 'Apply these stats');
+    // Green at 0 points with a legal spread. Weapon requirements are the hand
+    // step's question, asked there (handProblem) and at Begin (flowProblem).
+    refreshDone = refusesWhen(allocation.done, allocationProblem, 'Apply these stats and choose a keepsake');
     allocation.done.addEventListener('click', () => {
-      if (statsProblem()) return;
+      if (allocationProblem()) return;
       door.outcome = 'done';
       allocation.close();
     });
@@ -539,14 +627,26 @@ export function mountCustomize(app, {
   function renderClasses() {
     classBox.dataset.view = state.classChoiceView;
     const cards = registries.classes.all().map((cls) => classChoiceCard(cls, {
-      selected: cls.id === state.classId,
+      selected: state.classChosen && cls.id === state.classId,
       visual: classGlyph(cls.id),
       onChoose: () => {
-        if (state.classId === cls.id) return;
-        state.classId = cls.id; resetClassChoices();
+        if (state.classChosen && state.classId === cls.id) return;
+        state.classId = cls.id; state.classChosen = true; resetClassChoices();
         renderClasses(); renderEquipment(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
       },
     }));
+    // Before a pick the preview pane follows the pointer, so it is never a
+    // portrait of a class nobody chose; a pick pins it.
+    for (const card of cards) {
+      const id = card.dataset.class;
+      if (!id || card.classList.contains('locked')) continue;
+      card.addEventListener('pointerenter', () => {
+        if (state.classChosen || state.classId === id) return;
+        // The kit, relic and armour follow the class; nothing is chosen yet,
+        // so the reset costs the player nothing.
+        state.classId = id; resetClassChoices(); renderClassPreview();
+      });
+    }
     for (const cls of LOCKED_CLASSES) cards.push(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
     classBox.replaceChildren(...cards);
     renderViewToggles();
@@ -563,13 +663,14 @@ export function mountCustomize(app, {
       state.glyph = glyph; renderAppearance(); renderCharacterPreview(); refreshFaces();
     })));
     $('#cz-keepsakes').replaceChildren(...registries.characterCreation.keepsakes.map((keepsake) => keepsakeChoiceButton(keepsake, keepsake.id === state.keepsakeId, () => {
-      state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces();
+      state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces(); updateStartRefusal();
     })));
   }
 
   function renderEquipment(preferredOpenId = null) {
     equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices() });
     equipmentNodes = new Map();
+    equipmentGateRefreshers = [];
     const refreshers = [];
     for (const section of equipmentSectionViews) {
       const boxId = section.kind === 'armour' ? 'cz-armours'
@@ -658,12 +759,16 @@ export function mountCustomize(app, {
       refreshers.push(refresh); refresh();
       const next = equipmentSectionViews.find(row => row.id === section.nextId);
       const nextLabel = next ? next.label.toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase()) : 'Seed';
-      const continueButton = button({ label: `Continue to ${nextLabel}`, weight: 'primary', className: 'cc-equipment-continue' });
+      // Armour waits for a pick; a hand waits for a weapon the stats can
+      // wield; the last section's button is plain — Begin is what goes green.
+      const sectionProblem = () => (section.kind === 'armour' ? armourProblem()
+        : section.kind === 'hand' ? handProblem(section.slot) : null);
+      const continueButton = button({ label: `Continue to ${nextLabel}`, weight: next ? 'primary' : 'secondary', className: 'cc-equipment-continue' });
+      if (next) equipmentGateRefreshers.push(refusesWhen(continueButton, sectionProblem, `On to ${nextLabel.toLowerCase()}.`));
       continueButton.addEventListener('click', () => {
-        if (next) {
-          equipmentFold.open(next.id);
-          queueMicrotask(() => focusElement(app.querySelector(`[data-face="${next.id}"]`)));
-        } else app.querySelector('.cz-next[data-next="seed"]')?.click();
+        if (sectionProblem()) return;
+        if (next) openEquipmentSection(next.id);
+        else app.querySelector('.cz-next[data-next="seed"]')?.click();
       });
       node.append(continueButton);
     }
@@ -687,26 +792,99 @@ export function mountCustomize(app, {
     renderEquipmentSummary();
   }
 
-  function renderEquipmentSummary() {
-    const surface = equipmentSurfaceReceipt(registries, previewRun());
+  // THE EQUIPMENT SUMMARY IS CARDS (2026-09-11). Constantine: "it should show
+  // stats on a card, then armor, then main hand, off hand (if any, otherwise
+  // skipped) then relic card." The cards are the pickers' own renderers, drawn
+  // inert; a weapon the stats cannot wield wears the refusal under its card.
+  // The calculations the old summary printed — card packages, requirements,
+  // poise — fold under the cards, still drawn by the shared receipt renderers
+  // (tools/equipment-surface-receipts.mjs reads that this screen uses them).
+  const summaryBody = el('div', { class: 'as-stack cc-summary' });
+  let summaryFold = null;
+  function characterSummaryCard(run, projection) {
+    const cls = registries.classes.get(state.classId);
+    const stats = el('div', { class: 'cc-summary-stats', role: 'list', 'aria-label': 'Primary stats' },
+      orderedAttributes(registries).map((def) => statPair({
+        key: def.shortLabel, value: String(run.attributes[def.id]),
+        attrs: { role: 'listitem', dataset: { stat: def.id } },
+      })));
+    return el('article', { class: 'cc-summary-character', 'aria-label': `${state.name} character card` }, [
+      el('span', { class: 'cc-summary-eyebrow', text: cls.name }),
+      el('p', { class: 'cc-summary-name', text: state.name || 'Forsaken' }),
+      hairline(),
+      stats,
+      hairline(),
+      resourceStrip(projection.derived, playerPoiseThresholdReceipt(registries, run)),
+    ]);
+  }
+  function fillSummary() {
+    const run = previewRun();
+    const projection = statProjection(registries, run);
+    const surface = equipmentSurfaceReceipt(registries, run);
+    const inert = { interactive: false, inspection: false };
+    const armament = (id) => registries.equipment.armaments.find((row) => row.id === id) || null;
+    const slots = [
+      { key: 'character', label: 'Character', node: characterSummaryCard(run, projection) },
+    ];
+    const armour = registries.equipment.armour.find((row) => row.classId === state.classId && row.id === state.startingArmourId);
+    slots.push({ key: 'armour', label: 'Armour', node: armour ? renderEquipmentCard(registries, armour, inert).card : null, empty: 'Not chosen yet' });
+    const handSlot = (slot, label) => {
+      const piece = armament(state.startingHands[slot]);
+      const node = piece
+        ? renderEquipmentCard(registries, piece, inert).card
+        : renderEquipmentCard(registries, { id: 'empty-hand', name: 'Empty Hand', emptyHand: true }, { ...inert, presentation: EMPTY_HAND_PRESENTATION }).card;
+      return { key: slot, label, node, unmet: piece ? handProblem(slot) : null };
+    };
+    slots.push(handSlot('rightHand', 'Main hand'));
+    if (state.startingHands.leftHand) slots.push(handSlot('leftHand', 'Off hand'));
+    const relic = registries.relics.get(state.startingRelicId);
+    slots.push({ key: 'relic', label: 'Relic', node: relic ? renderCollectibleCard(registries, relic, 'Relic', inert).card : null, empty: 'None' });
+    const cards = el('div', { class: 'cc-summary-cards', role: 'list' }, slots.map((slot) => el('div', {
+      class: `cc-summary-slot${slot.unmet ? ' unmet' : ''}`, role: 'listitem', dataset: { summarySlot: slot.key },
+    }, [
+      eyebrow(slot.label),
+      slot.node || flavour(slot.empty || '—', { class: 'cc-summary-empty' }),
+      slot.unmet ? el('p', { class: 'cc-summary-unmet', text: slot.unmet }) : null,
+    ])));
     const receiptBody = el('div', { class: 'as-stack' });
     receiptBody.innerHTML = '<section class="equip-role-receipts"><b>Starting equipment card packages</b>'
       + renderRoleCopies(surface)
       + '</section>'
       + renderEquipmentRequirements(surface.requirements)
       + renderPlayerPoise(surface.poise);
-    mountDisclosure($('#cz-equipment-receipts'), [{ key: 'equipment-summary', kind: 'pick', disclosure: 'face',
-      face: { label: 'Equipment summary', value: 'Cards, requirements and poise' },
+    const calculations = el('div', { class: 'cc-summary-calculations cz-disc' });
+    mountDisclosure(calculations, [{ key: 'equipment-calculations', kind: 'pick', disclosure: 'face',
+      face: { label: 'Show calculations', value: 'Card packages, requirements and poise' },
       reveal: { node: receiptBody },
     }], { structure: 'details' });
+    summaryBody.replaceChildren(cards, calculations);
+  }
+  function renderEquipmentSummary() {
+    fillSummary();
+    if (summaryFold) return;
+    summaryFold = mountDisclosure($('#cz-equipment-receipts'), [{ key: 'equipment-summary', kind: 'pick', disclosure: 'face',
+      face: { label: 'Equipment summary', value: 'Your character and cards' },
+      reveal: { node: summaryBody },
+    }], { structure: 'details' });
+    // Stats can change after the equipment renders (Assign points, a class
+    // reset), so the cards are redrawn when the summary is opened.
+    $('#cz-equipment-receipts [data-face="equipment-summary"]').addEventListener('click', () => { if (summaryFold.openKey) fillSummary(); });
+  }
+
+  /** Open one equipment section and bring its face to the top of the scroll,
+   *  so the section — capped to the glass on desktop (kit.css, THE OPEN
+   *  EQUIPMENT SECTION) — is wholly in view with its Continue. */
+  function openEquipmentSection(id) {
+    if (!id || !equipmentFold) return;
+    equipmentFold.open(id);
+    seatFace(id);
   }
 
   function advanceEquipment(sectionId) {
     if (!state.equipmentAutoAdvance || !equipmentFold) return;
     const current = equipmentSectionViews.find((section) => section.id === sectionId || section.slot === sectionId || section.kind === sectionId);
     if (!current?.nextId) return;
-    equipmentFold.open(current.nextId);
-    queueMicrotask(() => focusElement(app.querySelector(`[data-face="${current.nextId}"]`)));
+    openEquipmentSection(current.nextId);
   }
 
   const selectedRow = (id, rows) => rows.find((row) => row.id === id);
@@ -725,12 +903,15 @@ export function mountCustomize(app, {
     for (const row of spriteRows) spriteFold.setValue(row.key, row.value());
   };
 
+  // A face names what is chosen; an unmade choice says so with a dash rather
+  // than borrowing the first option's name.
+  const UNCHOSEN = '—';
   const characterRows = [
     { key: 'primary', label: 'PRIMARY STATS', node: $('#cz-primary-group'), value: () => (
-      selectedRow(state.attributeMode, visibleModes)?.label || state.attributeMode
+      selectedRow(state.attributeMode, visibleModes)?.label || UNCHOSEN
     ) },
     { key: 'keepsake', label: 'KEEPSAKE', node: $('#cz-keepsake-group'), value: () => (
-      selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || state.keepsakeId
+      selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || UNCHOSEN
     ) },
   ];
   const characterFold = mountDisclosure($('#cz-character-fold'), characterRows.map((row) => ({
@@ -757,7 +938,7 @@ export function mountCustomize(app, {
   const equipmentValue = (section) => {
     if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
       row.classId === state.classId && row.id === state.startingArmourId
-    ))?.name || 'None';
+    ))?.name || UNCHOSEN;
     if (section.kind === 'relic') return section.choices.find((row) => row.id === state.startingRelicId)?.name || 'None';
     if (section.kind === 'slot') return section.choices.find((row) => row.id === state.startingSlotChoices[section.id])?.name || 'None';
     const id = state.startingHands[section.slot];
@@ -769,7 +950,7 @@ export function mountCustomize(app, {
   const panels = stages;
   const selectedName = (id, rows, fallback = '—') => (rows.find((row) => row.id === id) || {}).name || fallback;
   const sectionRows = [
-    { key: 'class', label: 'CLASS', node: panels.class, value: () => registries.classes.get(state.classId).name },
+    { key: 'class', label: 'CLASS', node: panels.class, value: () => (state.classChosen ? registries.classes.get(state.classId).name : UNCHOSEN) },
     { key: 'character', label: 'CHARACTER', node: panels.character, value: () => state.name || 'Forsaken' },
     { key: 'equipment', label: 'STARTING EQUIP', node: panels.equipment, value: () => {
       const arms = registries.equipment.armaments;
@@ -922,32 +1103,66 @@ export function mountCustomize(app, {
     fold.open('class');
   }
 
-  app.querySelectorAll('.cz-next').forEach((control) => control.addEventListener('click', () => {
-    if (catalog) {
-      const target = app.querySelector(`[data-catalog-component="${control.dataset.next}"]`);
-      target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-      focusElement(target?.querySelector('button, input'));
-      return;
-    }
-    fold.open(control.dataset.next);
-    const target = app.querySelector(`[data-face="${control.dataset.next}"]`);
-    if (target) focusElement(target);
-  }));
+  // THE WAY ON, per step: what it waits for, and what it opens inside the next
+  // section so the player lands on the next question rather than a shut fold.
+  const nextGates = {
+    character: { problem: classProblem, tip: 'On to the character.' },
+    equipment: { problem: characterProblem, tip: 'On to starting equipment.' },
+  };
+  const openInside = {
+    character: () => {
+      characterFold.open('primary');
+      seatFace('primary', statBox.querySelector('.se-mode.chosen') || statBox.querySelector('.se-mode'));
+      return null; // seatFace seats the cursor itself
+    },
+    equipment: () => {
+      openEquipmentSection(equipmentSectionViews[0]?.id);
+      return null; // openEquipmentSection seats the cursor itself
+    },
+  };
+  app.querySelectorAll('.cz-next').forEach((control) => {
+    const gate = nextGates[control.dataset.next];
+    if (gate && !catalog) gateRefreshers.push(refusesWhen(control, gate.problem, gate.tip));
+    control.addEventListener('click', () => {
+      if (catalog) {
+        const target = app.querySelector(`[data-catalog-component="${control.dataset.next}"]`);
+        target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        focusElement(target?.querySelector('button, input'));
+        return;
+      }
+      if (gate && gate.problem()) return;
+      fold.open(control.dataset.next);
+      const opener = openInside[control.dataset.next];
+      const target = opener ? opener() : app.querySelector(`[data-face="${control.dataset.next}"]`);
+      if (target) queueMicrotask(() => focusElement(target));
+    });
+  });
+  const primaryContinue = $('.cc-primary-continue');
+  gateRefreshers.push(refusesWhen(primaryContinue, statsStepProblem, 'On to the keepsake.'));
+  primaryContinue.addEventListener('click', () => {
+    if (statsStepProblem()) return;
+    advanceToKeepsake();
+  });
 
   nameInput.addEventListener('input', () => { state.name = nameInput.value.trim() || 'Forsaken'; refreshFaces(); });
   attachTooltip(nameInput, () => `Your character's name. Up to ${nameInput.maxLength} characters.`);
   const seed = attachSeedField(seedInput);
   seed.onChange(() => { refreshFaces(); updateStartRefusal(); });
 
-  updateStartRefusal = refusesWhen(start, () => seed.problem() || statsProblem(), () => {
+  // Begin waits for the whole flow, and its tooltip names the first unmet
+  // step. The catalogue has no flow to complete; it keeps the seed and stats
+  // checks the specimens can answer.
+  const beginProblem = () => seed.problem() || (gated ? flowProblem() : statsProblem());
+  const refreshStart = refusesWhen(start, beginProblem, () => {
     const cls = registries.classes.get(state.classId);
     const keepsake = registries.characterCreation.keepsakes.find((row) => row.id === state.keepsakeId);
-    return `Begin as <b>${esc(cls.name)}</b> with <b>${esc(keepsake.name)}</b>.`;
+    return `Begin as <b>${esc(cls.name)}</b>${keepsake ? ` with <b>${esc(keepsake.name)}</b>` : ''}.`;
   });
+  updateStartRefusal = () => { refreshStart(); refreshGates(); };
   attachTooltip(back, () => 'Back to the title screen. Nothing here is saved.');
   back.addEventListener('click', onBack);
   start.addEventListener('click', () => {
-    if (seed.problem() || statsProblem()) return;
+    if (beginProblem()) return;
     onStart({
       classId: state.classId,
       seedString: seedInput.value.trim(),
