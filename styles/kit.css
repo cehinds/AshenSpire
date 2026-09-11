@@ -2157,8 +2157,8 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
   border-color: var(--parchment);
   box-shadow: 0 0 0 1px var(--parchment);
 }
-/* A band's grip hangs off its bottom edge, centred: the control that folds it. */
 .as-band { position: relative; }
+<<<<<<< HEAD
 /* A detail selected by a tap, waiting for the second tap that explains it
    (components/tooltip.js). Screens with their own selected look (the combat
    overhead controls) restate it; this is the one everything else wears. */
@@ -2167,6 +2167,8 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .as-band > .as-grip:hover, .as-band > .as-grip:focus-visible { color: var(--gold); }
 /* A band that folds: `data-fold="compact"` hides what is marked foldable. */
 .as-band[data-hud-mode="compact"] .fold, .as-band[data-fold="compact"] .fold { display: none; }
+=======
+>>>>>>> origin/dev
 
 /* ═══ CARD GRID — faces in a scrolling body, wrapped, one gap ══════════════ */
 .as-cardgrid { display: flex; flex-wrap: wrap; gap: 1.4rem; align-content: flex-start; }

@@ -26,7 +26,7 @@ const REQUIRED_IDS = Object.freeze([
   'shared-run-hud', 'act-route-strip', 'run-header-strip', 'identity-cluster', 'portrait-badge',
   'character-title', 'cinders-counter', 'build-metadata-trail', 'primary-hud-row',
   'vitals-panel', 'resource-meter', 'quick-access-panel', 'armoury-control',
-  'quick-menu-control', 'hud-quick-settings', 'hud-mode-grip', 'fullscreen-control', 'music-control',
+  'quick-menu-control', 'hud-quick-settings', 'fullscreen-control', 'music-control',
   'crimson-flask-control', 'azure-flask-control',
   'inventory-belt', 'relic-tray', 'potion-tray', 'battlefield-stage',
   'combatant-frame', 'player-combatant-frame', 'enemy-combatant-frame',
@@ -61,7 +61,7 @@ export function receipt() {
     behaviorModel: read('src/ui/models/BehaviorModel.js'),
     hudModels: [
       'HudPrimitiveModels', 'RunHeaderModel', 'VitalsPanelModel',
-      'QuickAccessPanelModel', 'InventoryBeltModel', 'HudQuickSettingsModel', 'HudModeModel',
+      'QuickAccessPanelModel', 'InventoryBeltModel', 'HudQuickSettingsModel',
     ].map((name) => read(`src/ui/models/${name}.js`)).join('\n'),
     hudViewModel: read('src/ui/viewModels/RunHudViewModel.js'),
     menuModels: read('src/ui/models/MenuModels.js'),
@@ -301,7 +301,7 @@ export function findings(r) {
       // The ORDER of what remains is still pinned, which is what this line is
       // for, and the second clause pins the removal itself so the child cannot
       // reappear without a finding.
-      || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)[\s\S]*hudModeGripModel\(\{ mode: hudMode \}\)/.test(r.hudViewModel)
+      || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)/.test(r.hudViewModel)
       || /hudQuickSettingsModel\(\{ place/.test(r.hudViewModel)
       || !/UI\.componentBackground/.test(r.hudModels)
       || !/\.NET-inspired application and Component Model contract/.test(r.spec)) {

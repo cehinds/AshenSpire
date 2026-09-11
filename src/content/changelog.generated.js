@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-11",
     "summary": "Explanations wait for you to ask",
     "detail": "A tooltip now opens after a second of hovering instead of half a second; the delay setting still offers faster. Tapping or clicking a detail highlights it, and a second tap or click explains it — so a stray touch never opens one. Cards no longer explain themselves on hover: select a card and use its Information button. Keyboard focus still explains after half a second.",
-    "build": "0.6.0.136",
+    "build": "0.6.0.138",
     "pullRequest": 968,
     "url": "https://github.com/cehinds/AshenSpire/pull/968"
+  },
+  {
+    "id": "pr-964",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The combat board fills a desktop screen",
+    "detail": "On a wide window the fighters and the hand grew with the stage instead of staying phone-sized; Draw and Discard stopped stretching across a third of the screen each, and Actions, End Turn and Potions stand as tall as their row allows. Phones keep the layout they had. The small fold button above the turn banner that snapped the top bar compact is gone, and with it the compact top bar.",
+    "build": "0.6.0.136",
+    "pullRequest": 964,
+    "url": "https://github.com/cehinds/AshenSpire/pull/964"
   },
   {
     "id": "pr-963",
