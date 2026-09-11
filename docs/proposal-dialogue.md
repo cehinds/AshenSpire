@@ -141,7 +141,7 @@ Portrait phone (the combat shell's narrow layout):
 
 ### Stage and portraits
 
-- **Positions are the combat positions.** Player side left, others right, feet
+- **Positions are the combat positions** (owner-confirmed 2026-09-11). Player side left, others right, feet
   on the combat foot line (`groundAnchor`). Up to three faces: player, one or two
   others. A companion stands beside the player, half a step back.
 - **Focus is one state on one actor.** `focus: 'speaker'` gives: full size, full
