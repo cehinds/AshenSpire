@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-963",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The boot check waits for the tower's entrance",
+    "detail": "#949 lights the city, holds, and fades before the title appears; the startup check still judged the reveal a fraction of a second after the press and called it missing. It now waits for the title the way it already did for a mouse or a tap, and its \"gate still standing\" claims no longer count a reveal that has begun. Nothing in the game changed.",
+    "build": "0.6.0.134",
+    "pullRequest": 963,
+    "url": "https://github.com/cehinds/AshenSpire/pull/963"
+  },
+  {
     "id": "pr-954",
     "date": "2026-09-10",
     "group": "2026-09-10",
