@@ -43,6 +43,12 @@ build/web/
 # a third copy of the art in git.
 preview/
 
+# standalone/ — the second half of that same workflow's output. It used to sit
+# inside preview/ and is now uploaded as its own artifact, so the ~39 MB
+# double-clickable file can be downloaded without the ~152 MB of preview it was
+# buried in. One derived file, rebuilt every run.
+standalone/
+
 # dist: keep the stable standalone (dist/AshenSpire.html — the root README links
 # it as the canonical twin of the root current-build alias); the version-stamped copies the launcher emits are build
 # artifacts. The name here MUST match what tools/launch.mjs:53 writes: this rule
