@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-969",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A safety check that had started failing for the wrong reason works again",
+    "detail": "Nothing a player sees changes. The automatic check that proves the opening screen answers every way of starting the game — key, mouse, touch, controller — had been reporting twelve failures that were not real: the title screen's new arrival takes about two seconds now, with a pause in the middle whose length you choose in Settings, and the check was looking about a fifth of a second after asking, calling a screen that was still on its way a screen that never came. It now waits for the title to actually arrive rather than for a length of time that could never be right for everyone. Six related checks were quietly weakened by the same change — the ones proving an interrupted press cannot start the game by accident — and they now watch for the opening itself beginning rather than merely for it not having finished.",
+    "build": "0.6.0.134",
+    "pullRequest": 969,
+    "url": "https://github.com/cehinds/AshenSpire/pull/969"
+  },
+  {
     "id": "pr-954",
     "date": "2026-09-10",
     "group": "2026-09-10",

@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-11
+
+- **A safety check that had started failing for the wrong reason works again** ([#969](https://github.com/cehinds/AshenSpire/pull/969), `0.6.0.134`). Nothing a player sees changes. The automatic check that proves the opening screen answers every way of starting the game — key, mouse, touch, controller — had been reporting twelve failures that were not real: the title screen's new arrival takes about two seconds now, with a pause in the middle whose length you choose in Settings, and the check was looking about a fifth of a second after asking, calling a screen that was still on its way a screen that never came. It now waits for the title to actually arrive rather than for a length of time that could never be right for everyone. Six related checks were quietly weakened by the same change — the ones proving an interrupted press cannot start the game by accident — and they now watch for the opening itself beginning rather than merely for it not having finished.
+
 ## 2026-09-10
 
 - **The record of what shipped caught up with what shipped** ([#954](https://github.com/cehinds/AshenSpire/pull/954), `0.6.0.133`). Nothing a player sees changes. Three changes had landed without an entry here, and the number stamped on the downloadable game belonged to an older version of the source — it had been merged without being rebuilt, so the box and its contents disagreed. The three entries are written, and the build is made again so its stamp is honest. One detail worth keeping: each entry's build number was read out of the project's own history at the moment that change landed, not copied from what its author wrote down, and the two disagreed once out of three.
