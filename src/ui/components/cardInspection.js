@@ -124,7 +124,28 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     clearTimeout(revealTimer);
     card.classList.remove('inspection-info-visible');
   });
-  card.append(info);
+  // TRUNCATED IS NEVER A DEAD END, AND ON TOUCH THE WAY IN IS VISIBLE
+  // (Constantine's review, 2026-09-11). A face whose text was clipped
+  // (fitCardFace → data-truncated) used to carry a muted `›` drawn by CSS —
+  // a hint a mouse could hover but a thumb could not act on, since the `i`
+  // only shows once the card is selected. The chevron is the control now: a
+  // tap-floor box in the corner the `›` sat in, shown only on a truncated
+  // face (kit.css), opening the same inspect door the `i` opens. It swallows
+  // its own pointer and touch so the card's tap accounting never sees it.
+  const more = document.createElement('button');
+  more.type = 'button';
+  more.className = 'card-more-button';
+  more.textContent = '›';
+  more.setAttribute('aria-label', `Read the full text of ${title}`);
+  for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
+    more.addEventListener(type, event => event.stopImmediatePropagation());
+  }
+  more.addEventListener('click', event => {
+    event.preventDefault(); event.stopImmediatePropagation();
+    touchedIdentity = null; touchTaps = 0;
+    select(); open(more);
+  });
+  card.append(info, more);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });
   card.addEventListener('click', event => {
     if (event.target === info) return;

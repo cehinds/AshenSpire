@@ -835,8 +835,24 @@ input[type="range"] { min-height: var(--tap-floor); }
 .card[data-tag-rows="0"] .ctext { -webkit-line-clamp: 4; }
 .card[data-tag-rows="1"] .ctext { -webkit-line-clamp: 3; }
 .card[data-tag-rows="2"] .ctext { -webkit-line-clamp: 2; }
-/* Truncated is never a dead end: the chevron says there is more. */
+/* Truncated is never a dead end: the chevron says there is more. On a face
+   with inspection bound (cardInspection.js) the chevron IS the control — a
+   tap-floor box drawn in the same corner, the glyph where it always sat —
+   and the drawn-only mark yields to it; a face without inspection keeps the
+   mark alone. */
 .card[data-truncated="true"]::after { content: '›'; position: absolute; bottom: 0.3rem; right: 0.5rem; color: var(--muted); font-size: 1.3rem; line-height: 1; }
+.card.card-inspection-target[data-truncated="true"]::after { content: none; }
+.card-inspection-target > .card-more-button { display: none; }
+.card-inspection-target[data-truncated="true"] > .card-more-button {
+  display: flex; align-items: flex-end; justify-content: flex-end;
+  position: absolute; right: 0; bottom: 0; z-index: 7;
+  width: var(--tap-floor); height: var(--tap-floor); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  margin: 0; padding: 0 0.5rem 0.3rem 0; border: 0; border-radius: 0; background: transparent;
+  color: var(--muted); font: inherit; font-size: 1.3rem; line-height: 1; cursor: pointer;
+}
+.card-inspection-target[data-truncated="true"] > .card-more-button:hover,
+.card-inspection-target[data-truncated="true"] > .card-more-button:focus-visible { color: var(--gold); background: transparent; }
+.card-inspection-target[data-truncated="true"] > .card-more-button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 
 /* ═══ COMBATANT — one shape, three statures ════════════════════════════════ */
 /* Stature is DERIVED from the encounter pool (normal → normal, elite → large,
