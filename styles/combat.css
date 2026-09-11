@@ -976,7 +976,6 @@
 :root .combat:not(.coop) .combat-action-row > :is(.energy-orb, .combat-potions) { width: var(--combat-control-size); min-width: 0; border-radius: 50%; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 :root .combat:not(.coop) .combat-action-row > .combat-potions { font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
 :root .combat:not(.coop) .combat-action-row .spent { display: flex; flex-direction: column; justify-content: center; }
-
 /* Focus the figure, never paint the full-height combatant layout box. */
 .combat:not(.coop) .combatant { border: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; }
 .combat .combatant:focus-visible .sprite { filter: drop-shadow(0 0 3px var(--gold)); }
@@ -1168,6 +1167,37 @@
   width: 100%; padding: calc(8px / var(--ui-zoom,1)); margin: 0; align-items: center;
 }
 :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(52px / var(--ui-zoom,1)) !important; }
+/* THE DESKTOP ACTION ROW (owner, 2026-09-11): Draw and Discard were stretched
+   to a third of a 1920 window each, and Actions / End Turn / Potions stood
+   52-64 px tall in a row that owns 15% of the viewport. The row keeps the
+   contract tools/combat-action-row.mjs states — Actions and Potions pinned to
+   the edges, Draw / End Turn / Discard a centre cluster, End Turn the wide
+   one — and sizes it from the viewport instead of the window's width: the
+   round controls and End Turn stand ~13vh tall, the piles ~60% of that, the
+   cluster is 15vw / 30vw / 15vw with the leftover width spent between the
+   edges and the cluster rather than inside the piles. The `/ var(--ui-zoom)`
+   is the shape every viewport length wears under the body zoom (base.css).
+   Below 600px tall the formation's own 52/42 px rule above still stands. */
+@media (min-height: 600px) {
+:root[data-layout='wide'] .combat[data-layout='formation']:not(.coop) > .hand-area > .combat-action-row {
+  --combat-control-size: calc(13vh / var(--ui-zoom, 1)) !important;
+  --combat-pile-w: calc(15vw / var(--ui-zoom, 1));
+  --combat-end-w: calc(30vw / var(--ui-zoom, 1));
+  grid-template-columns: var(--combat-control-size) var(--combat-pile-w) var(--combat-end-w) var(--combat-pile-w) var(--combat-control-size);
+  justify-content: space-between;
+}
+:root[data-layout='wide'] .combat:not(.coop)[data-layout='formation'] .combat-action-row > .end-turn {
+  height: calc(var(--combat-control-size) * .8); min-height: calc(var(--combat-control-size) * .8);
+  font-size: max(1.05rem, calc(2.4vh / var(--ui-zoom, 1)));
+}
+:root[data-layout='wide'] .combat:not(.coop)[data-layout='formation'] .combat-action-row > .pile {
+  height: calc(var(--combat-control-size) * .62); min-height: calc(var(--combat-control-size) * .62);
+  font-size: max(0.95rem, calc(1.9vh / var(--ui-zoom, 1)));
+}
+:root[data-layout='wide'] .combat:not(.coop)[data-layout='formation'] .combat-action-row > :is(.energy-orb, .combat-potions) {
+  font-size: max(1.1rem, calc(2.1vh / var(--ui-zoom, 1)));
+}
+}
 .turn-ribbon {
   position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 40; pointer-events: none;
   padding: calc(3px / var(--ui-zoom,1)) calc(32px / var(--ui-zoom,1));

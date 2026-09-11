@@ -474,60 +474,26 @@ async function assertPromptFamilies() {
   await p.close();
 }
 
-// THE REVEAL IS NO LONGER AN INSTANT, AND NO CONSTANT CAN STAND IN FOR IT.
-//
-// #949 gave the entrance three stages: the tower lights up (560 ms), HOLDS for
-// a pause the player chooses, then fades into the hall (880 ms). At the default
-// hold that is ~1.94 s; at the longest ('2s') it is 3.44 s. Every assertion
-// below waited a fixed 180-260 ms and then asked whether the title had arrived
-// — a wait that was comfortably longer than the old reveal and is now shorter
-// than its FIRST stage. Twelve checks went red on `dev` reading
-// `"active":"screen startup-gate is-revealing"`: the gate photographed
-// mid-transition and reported a screen that had not finished arriving as a
-// screen that never did.
-//
-// Raising the number would be the same bug with a bigger constant, because the
-// hold is a player SETTING. So wait for the thing, not for a duration.
-//
-// It returns rather than throwing, unlike `until`: a reveal that genuinely
-// never lands must stay a RED check with its facts printed beside it, not a
-// crashed tool that takes the other seventy checks down with it.
-//
-// THE BUDGET IS 8 s against a 3.44 s worst legitimate case, and the headroom is
-// deliberate. A timeout here is a FALSE RED on a loaded runner, which is the
-// most expensive kind of failure this file can produce; the cost of the margin
-// is paid only by a plant that genuinely broke the reveal, and only in
-// --selftest, where a handful of sites wait the full budget once each.
-async function settleReveal(p, timeout = 8000) {
-  const started = Date.now();
-  while (Date.now() - started < timeout) {
-    if (await p.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`).catch(() => false)) return true;
-    await wait(60);
-  }
-  return false;
-}
-
-// AND THE OTHER HALF: a reveal that has not happened YET looks exactly like a
-// reveal that was correctly refused, for nearly two seconds. Every check below
-// that proves a cancelled or unowned press CANNOT reveal used to be safe at
-// 240 ms because a real reveal would already have landed by then. It no longer
-// would. So those checks ask whether the entrance ever STARTED — the gate
-// publishes that as `.is-revealing` the instant it commits (startupGate.js's
-// `finish`), before any of the three stages run — rather than only whether it
-// has finished. Without this the cancel checks would pass on a gate that had
-// begun revealing and simply not arrived yet, which is the exact regression
-// they exist to catch.
-const NOT_REVEALING = `!!document.querySelector('.startup-gate') && !document.querySelector('.startup-gate.is-revealing') && !document.querySelector('.title-screen')`;
+// #949 gives the tower an entrance: on the completing edge the gate keeps
+// standing with `.is-revealing` through light-up + lit-city hold + fade before
+// the title mounts. The longest configurable hold is 2 s, so ~3.4 s is the
+// honest end of a reveal; the ceiling below is the 'never reveals' verdict.
+// GATE_STANDING is stricter than "no title yet": a gate that has begun its
+// exit is already a reveal, and the negative claims must say so.
+const TITLE_REVEALED = `!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`;
+const GATE_STANDING = `!!document.querySelector('.startup-gate') && !document.querySelector('.startup-gate.is-revealing') && !document.querySelector('.title-screen')`;
+const REVEAL_CEILING_MS = 6000;
+const awaitReveal = (p, label) => p.until(TITLE_REVEALED, label, REVEAL_CEILING_MS).catch(() => { /* the verdict below reads the truth */ });
 
 async function assertKeyboard(key, code) {
   const p = await page();
   await p.until(`!!document.querySelector('.startup-gate')`, `${key} startup`);
   const release = await p.key(key);
-  verdict(await p.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), `${code}.DOWN-CONSUMED`, `${JSON.stringify(key)} down is consumed and does not reveal`);
+  verdict(await p.ev(GATE_STANDING), `${code}.DOWN-CONSUMED`, `${JSON.stringify(key)} down is consumed and does not reveal`);
   await release();
-  const landed = await settleReveal(p);
+  await awaitReveal(p, `${key} reveal`);
   const receipt = await p.ev(`({startup:!!document.querySelector('.startup-gate'), title:!!document.querySelector('.title-screen'), customize:!!document.querySelector('.customize'), active:document.activeElement?.className||''})`);
-  verdict(landed && !receipt.startup && receipt.title && !receipt.customize, `${code}.REVEAL-ONCE`, `${JSON.stringify(key)} release reveals title without activating it (${JSON.stringify(receipt)})`);
+  verdict(!receipt.startup && receipt.title && !receipt.customize, `${code}.REVEAL-ONCE`, `${JSON.stringify(key)} release reveals title without activating it (${JSON.stringify(receipt)})`);
   verdict(/title-menu-item/.test(receipt.active), `${code}.TITLE-FOCUS`, `default title control owns DOM focus (${receipt.active || 'none'})`);
   await p.close();
 }
@@ -560,12 +526,12 @@ async function assertGamepad(button) {
   const p = await page({ pad: true });
   await p.until(`!!document.querySelector('.startup-gate')`, `gamepad ${button} startup`);
   await p.ev(`window.__startupPad.set(${button},true)`); await wait(100);
-  verdict(await p.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.startup-gate.is-revealing') && !document.querySelector('.title-screen')`), 'A7.GAMEPAD-RELEASE', `button ${button} down is consumed without beginning reveal`);
+  verdict(await p.ev(GATE_STANDING), 'A7.GAMEPAD-RELEASE', `button ${button} down is consumed without beginning reveal`);
   await p.ev(`window.__startupPad.set(${button},false)`);
-  const landed = await settleReveal(p);
+  await awaitReveal(p, `gamepad ${button} reveal`);
   const r = await p.ev(`({title:!!document.querySelector('.title-screen'),startup:!!document.querySelector('.startup-gate'),customize:!!document.querySelector('.customize'),veil:!!document.querySelector('.modal-veil'),active:document.activeElement?.className||''})`);
-  verdict(landed && r.title && !r.startup, 'A7.GAMEPAD-REVEAL', `button ${button} release reveals the title (${JSON.stringify(r)})`);
-  verdict(landed && r.title && !r.startup && !r.customize && !r.veil && /title-menu-item/.test(r.active), 'A7.GAMEPAD-NO-DOUBLE', `button ${button} release reveals/focuses without title activation (${JSON.stringify(r)})`);
+  verdict(r.title && !r.startup, 'A7.GAMEPAD-REVEAL', `button ${button} release reveals the title (${JSON.stringify(r)})`);
+  verdict(r.title && !r.startup && !r.customize && !r.veil && /title-menu-item/.test(r.active), 'A7.GAMEPAD-NO-DOUBLE', `button ${button} release reveals/focuses without title activation (${JSON.stringify(r)})`);
   await p.close();
 }
 
@@ -576,7 +542,7 @@ async function assertInterruptedPresses() {
   await keyboard.ev(`dispatchEvent(new Event('blur'))`);
   await release();
   await wait(220);
-  verdict(await keyboard.ev(NOT_REVEALING), 'A7.INTERRUPT-CANCEL', 'blur cancels the armed keyboard press; its orphaned keyup cannot reveal title');
+  verdict(await keyboard.ev(GATE_STANDING), 'A7.INTERRUPT-CANCEL', 'blur cancels the armed keyboard press; its orphaned keyup cannot reveal title');
   const freshRelease = await keyboard.key('Enter'); await freshRelease();
   await keyboard.until(`!!document.querySelector('.title-screen')`, 'fresh keyboard press after blur');
   await keyboard.close();
@@ -586,14 +552,15 @@ async function assertInterruptedPresses() {
   await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await pad.ev(`window.__startupPad.disconnect()`); await wait(100);
   await pad.ev(`window.__startupPad.set(0,false); window.__startupPad.connect()`); await wait(140);
-  verdict(await pad.ev(NOT_REVEALING), 'A7.INTERRUPT-CANCEL', 'disconnect cancels an armed controller press; reconnecting unpressed cannot synthesize a reveal');
+  verdict(await pad.ev(GATE_STANDING), 'A7.INTERRUPT-CANCEL', 'disconnect cancels an armed controller press; reconnecting unpressed cannot synthesize a reveal');
   await pad.ev(`window.__startupPad.disconnect()`); await wait(100);
   await pad.ev(`window.__startupPad.set(0,true); window.__startupPad.connect()`); await wait(140);
   await pad.ev(`window.__startupPad.set(0,false)`); await wait(240);
-  verdict(await pad.ev(NOT_REVEALING), 'A7.HELD-AT-RECONNECT', 'a button pressed while disconnected and held through reconnect is seeded, not invented as a new press');
+  verdict(await pad.ev(GATE_STANDING), 'A7.HELD-AT-RECONNECT', 'a button pressed while disconnected and held through reconnect is seeded, not invented as a new press');
   await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await pad.ev(`window.__startupPad.set(0,false)`);
-  verdict(await settleReveal(pad), 'A7.INTERRUPT-RECOVERY', 'a fresh complete controller press still reveals after reconnect');
+  await awaitReveal(pad, 'reconnect recovery reveal');
+  verdict(await pad.ev(TITLE_REVEALED), 'A7.INTERRUPT-RECOVERY', 'a fresh complete controller press still reveals after reconnect');
   await pad.close();
 
   const blurredPad = await page({ pad: true });
@@ -601,29 +568,32 @@ async function assertInterruptedPresses() {
   await blurredPad.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await blurredPad.ev(`dispatchEvent(new Event('blur'))`);
   await blurredPad.ev(`window.__startupPad.set(0,false)`); await wait(240);
-  verdict(await blurredPad.ev(NOT_REVEALING), 'A7.GAMEPAD-BLUR-CANCEL', 'window blur cancels controller ownership; the orphaned release cannot reveal title');
+  verdict(await blurredPad.ev(GATE_STANDING), 'A7.GAMEPAD-BLUR-CANCEL', 'window blur cancels controller ownership; the orphaned release cannot reveal title');
   await blurredPad.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await blurredPad.ev(`window.__startupPad.set(0,false)`);
-  verdict(await settleReveal(blurredPad), 'A7.GAMEPAD-BLUR-RECOVERY', 'a fresh complete controller press still reveals after focus returns');
+  await awaitReveal(blurredPad, 'blur recovery reveal');
+  verdict(await blurredPad.ev(TITLE_REVEALED), 'A7.GAMEPAD-BLUR-RECOVERY', 'a fresh complete controller press still reveals after focus returns');
   await blurredPad.close();
 
   const held = await page({ pad: true, heldButton: 0 });
   await held.until(`!!document.querySelector('.startup-gate')`, 'held-at-boot startup');
   await wait(120);
   await held.ev(`window.__startupPad.set(0,false)`); await wait(240);
-  verdict(await held.ev(NOT_REVEALING), 'A7.HELD-AT-BOOT', 'a button already held when polling begins is seeded, not invented as a fresh activation');
+  verdict(await held.ev(GATE_STANDING), 'A7.HELD-AT-BOOT', 'a button already held when polling begins is seeded, not invented as a fresh activation');
   await held.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await held.ev(`window.__startupPad.set(0,false)`);
-  verdict(await settleReveal(held), 'A7.HELD-RECOVERY', 'release then a fresh complete press reveals normally');
+  await awaitReveal(held, 'held-at-boot recovery reveal');
+  verdict(await held.ev(TITLE_REVEALED), 'A7.HELD-RECOVERY', 'release then a fresh complete press reveals normally');
   await held.close();
 
   const multiple = await page({ pad: true, secondHeldButton: 0 });
   await multiple.until(`!!document.querySelector('.startup-gate')`, 'multiple gamepads startup');
   await multiple.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await multiple.ev(`window.__startupPad.setSecond(0,false)`); await wait(240);
-  verdict(await multiple.ev(NOT_REVEALING), 'A7.MULTIPAD-OWNERSHIP', 'releasing a seeded hold on pad 1 cannot complete the activation begun by pad 0');
+  verdict(await multiple.ev(GATE_STANDING), 'A7.MULTIPAD-OWNERSHIP', 'releasing a seeded hold on pad 1 cannot complete the activation begun by pad 0');
   await multiple.ev(`window.__startupPad.set(0,false)`);
-  verdict(await settleReveal(multiple), 'A7.MULTIPAD-RECOVERY', 'releasing the same pad that began the activation reveals normally');
+  await awaitReveal(multiple, 'multipad recovery reveal');
+  verdict(await multiple.ev(TITLE_REVEALED), 'A7.MULTIPAD-RECOVERY', 'releasing the same pad that began the activation reveals normally');
   await multiple.close();
 }
 

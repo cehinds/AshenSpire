@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-11",
     "summary": "A check that had been crashing instead of checking now runs",
     "detail": "Nothing a player sees changes. One of the project's own quality checks — the one that proves the Music setting and the Quick Menu agree about what is on — was not failing and not passing: it was dying on startup, before it looked at anything. A small piece of card-drawing code runs two lines when it finds itself inside a browser, and it tested for only half of what those two lines actually use, so a checking harness that supplies the other half and not that half walked straight into a crash. The test now asks for both things it needs. The check reports thirty-two passes where it used to report nothing at all.",
-    "build": "0.6.0.135",
+    "build": "0.6.0.143",
     "pullRequest": 970,
     "url": "https://github.com/cehinds/AshenSpire/pull/970"
+  },
+  {
+    "id": "pr-968",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Explanations wait for you to ask",
+    "detail": "A tooltip now opens after a second of hovering instead of half a second; the delay setting still offers faster. Tapping or clicking a detail highlights it, and a second tap or click explains it — so a stray touch never opens one. Cards no longer explain themselves on hover: select a card and use its Information button. Keyboard focus still explains after half a second.",
+    "build": "0.6.0.140",
+    "pullRequest": 968,
+    "url": "https://github.com/cehinds/AshenSpire/pull/968"
+  },
+  {
+    "id": "pr-964",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The combat board fills a desktop screen",
+    "detail": "On a wide window the fighters and the hand grew with the stage instead of staying phone-sized; Draw and Discard stopped stretching across a third of the screen each, and Actions, End Turn and Potions stand as tall as their row allows. Phones keep the layout they had. The small fold button above the turn banner that snapped the top bar compact is gone, and with it the compact top bar.",
+    "build": "0.6.0.136",
+    "pullRequest": 964,
+    "url": "https://github.com/cehinds/AshenSpire/pull/964"
+  },
+  {
+    "id": "pr-963",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The boot check waits for the tower's entrance",
+    "detail": "#949 lights the city, holds, and fades before the title appears; the startup check still judged the reveal a fraction of a second after the press and called it missing. It now waits for the title the way it already did for a mouse or a tap, and its \"gate still standing\" claims no longer count a reveal that has begun. Nothing in the game changed.",
+    "build": "0.6.0.134",
+    "pullRequest": 963,
+    "url": "https://github.com/cehinds/AshenSpire/pull/963"
   },
   {
     "id": "pr-954",

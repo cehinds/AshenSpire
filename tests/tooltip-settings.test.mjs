@@ -6,13 +6,14 @@ import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 
 test('sparse and invalid stored preferences use authored defaults', () => {
   const defaults = resolveTooltipSettings();
-  assert.equal(defaults.open, 500);
+  assert.equal(defaults.open, 1000);
+  assert.equal(defaults.focus, 500);
   assert.equal(defaults.hoverEnabled, true);
   assert.deepEqual(resolveTooltipSettings({ tooltipDelay: -1, tooltipCloseDelay: 'toString', hoverTooltips: 'false' }), defaults);
 });
-test('opening, handover and focus share the selected delay; closing is independent', () => {
-  const resolved = resolveTooltipSettings({ tooltipDelay: '1s', tooltipCloseDelay: '0.25s', hoverTooltips: false });
-  assert.deepEqual([resolved.open, resolved.handover, resolved.focus, resolved.close, resolved.hoverEnabled], [1000, 1000, 1000, 250, false]);
+test('opening and handover share the selected delay; focus and closing are independent', () => {
+  const resolved = resolveTooltipSettings({ tooltipDelay: '1.5s', tooltipCloseDelay: '0.25s', hoverTooltips: false });
+  assert.deepEqual([resolved.open, resolved.handover, resolved.focus, resolved.close, resolved.hoverEnabled], [1500, 1500, 500, 250, false]);
 });
 test('editing authored options and defaults updates both the resolver and settings controls', () => {
   const policy = structuredClone(tooltipHelp);
