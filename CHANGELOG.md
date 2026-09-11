@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-11
+
+- **The boot check waits for the tower's entrance** ([#963](https://github.com/cehinds/AshenSpire/pull/963), `0.6.0.133`). #949 lights the city, holds, and fades before the title appears; the startup check still judged the reveal a fraction of a second after the press and called it missing. It now waits for the title the way it already did for a mouse or a tap, and its "gate still standing" claims no longer count a reveal that has begun. Nothing in the game changed.
+
 ## 2026-09-10
 
 - **The combat screen draws again** ([#956](https://github.com/cehinds/AshenSpire/pull/956), `0.6.0.132`). #939 landed reading a name #945 had renamed, so the board mounted with no enemies and no hand. Two words, corrected.
