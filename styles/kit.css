@@ -406,15 +406,18 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
   background: rgba(0, 0, 0, 0.62);
   animation: door-veil-in var(--door-ms) ease-out;
 }
-/* A DOOR IS PLACED, NOT POPPED: the veil fades up and the door settles from
-   98% over --door-ms (one number; the tooltip's open reads it too, its rung
+/* A DOOR IS PLACED, NOT POPPED: the veil fades up and the door fades in over
+   it over --door-ms (one number; the tooltip's open reads it too, its rung
    step is tooltipHelp.stepMs). The reduced-motion kill in base.css collapses
-   both. OPEN ONLY, on purpose: a door's removal is synchronous by contract —
-   thirteen tools and the confirmation contract read `.modal-veil` absence on
-   the tick of the close — so the way out stays a cut rather than a veil that
-   lingers over the board. */
+   both. NO SCALE, measured: a 98% settle shrinks every rect inside the door
+   for its first frames, and the instruments read the tap floor the tick a
+   door opens — startup-gate read Load Game's Close at 43.9 of 44 px (CI run
+   1454) — so the door's box is final from frame one. OPEN ONLY, on purpose:
+   a door's removal is synchronous by contract — thirteen tools and the
+   confirmation contract read `.modal-veil` absence on the tick of the close —
+   so the way out stays a cut rather than a veil that lingers over the board. */
 @keyframes door-veil-in { from { opacity: 0; } }
-@keyframes door-in { from { opacity: 0; transform: scale(0.98); } }
+@keyframes door-in { from { opacity: 0; } }
 .modal-veil > .modal, .modal-veil > .as-modal, .as-veil > .as-modal { animation: door-in var(--door-ms) ease-out; }
 /* Under reduced motion the door is simply there — no name, not a 0.01 ms
    run whose first frame is still at 0 (measured: frame one read opacity 0
