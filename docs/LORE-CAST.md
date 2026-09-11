@@ -129,8 +129,18 @@ the existing event figures, given a seat and a want.
 
 **No other realm.** Nothing in this world came from anywhere else, and the
 question "are they from another realm" is one the player should ask and the
-world should answer *no* to. Everything that is wrong here is the kingdom's own,
-and the one thing that fell from the sky fell before the kingdom existed.
+world should answer *no* to. Not one enemy, companion, quest giver or beast
+walked in from somewhere outside. Everything that is wrong here is the
+kingdom's own.
+
+The single exception is not a character and never becomes one: the object the
+caldera families caught. Whether it fell, when it fell, whether it was ever a
+star, whether anything about it was alive when it arrived, and whether it is
+the only one — none of that is answered, by anyone, ever
+([LORE-EMBER.md](LORE-EMBER.md)). A Forsaken who decides the Ember came from
+another realm is entitled to that opinion. So is one who decides the Chapel
+built it out of eight hundred years of dead people. The game agrees with
+neither.
 
 The corrupted come in four kinds, and the kind says what the fire did to them:
 

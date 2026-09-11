@@ -1,7 +1,8 @@
 # AshenSpire — The world
 
-Companion to [LORE.md](LORE.md) (what the world is) and [LORE-CAST.md](LORE-CAST.md)
-(who is in it). This is everything around them: history, magic, war, faith,
+Companion to [LORE.md](LORE.md) (what the world is), [LORE-CAST.md](LORE-CAST.md)
+(who is in it) and [LORE-EMBER.md](LORE-EMBER.md) (what is not known and stays
+that way). This is everything around them: history, magic, war, faith,
 equipment, neighbours, peoples, ecology, factions, and what everyone wants.
 Grounded in the game's own vocabulary — the five damage schools (`physical`,
 `magic`, `arcane`, `holy`, `fire`), the statuses (Bleed, Frost, Insanity, Blight,
@@ -15,10 +16,17 @@ weather, stonework, a coin, a line.
 
 ## 1. History — six ages and one night
 
+Dates in this table are the **Goldbough's accepted count**: its calendar begins
+at the Catching, and every figure below is a number the kingdom wrote about
+itself. Something happened eleven hundred years ago. What it was, whether a
+star was involved, and whether it was the first time are open permanently —
+[LORE-EMBER.md](LORE-EMBER.md) §6 and §7 hold the readings and the rule that
+none of them ever wins. Read the table as doctrine with good bookkeeping.
+
 | Age | When (before the Burning) | What happened |
 |---|---|---|
-| **The Fall** | ~1,100 years | A star fell into the caldera of what is now the Cinder Reach. Starstone, burning. The people who lived around the caldera caught it before it went out. |
-| **The Cinderwrights** | 1,100 – 800 years | The catchers learned what starstone answers to — rhythm, draw, seal — and built with it: the viaduct ring, the sealstone doors, the astronomical stone the Observatory stands on, the standing stones that hum. They never wrote a name into the Ember. They **sealed** it, and drew its heat through stone. |
+| **The Fall** | ~1,100 years, by the count | A star fell into the caldera of what is now the Cinder Reach — so the kingdom teaches. Starstone, burning. The people who lived around the caldera caught it before it went out. The crater is real. The caldera is much older than the count, and the courses under it are older than that. |
+| **The Cinderwrights** | 1,100 – 800 years | The catchers learned what starstone answers to — rhythm, draw, seal — and built with it: the viaduct ring, the sealstone doors, the astronomical stone the Observatory stands on, the standing stones that hum. They never wrote a name into the Ember. They **sealed** it, and drew its heat through stone. Their script has a verb for what they did to it and no noun for the thing itself, and some of their seams run under the caldera rim, below where a fall should have melted them. |
 | **The Founding of the Goldbough** | ~800 years | A caldera priest — the first Saint — discovered that a name spoken into the Ember at death made it burn brighter, and that a name *written* fed it for good. The Cinderwrights refused. They were absorbed in two generations: their ring inherited, their script kept only by cantors and astronomers, their name forgotten. Three hearths lit from the one Ember. The kingdom took the gilded branch as its crest. |
 | **The Marking** | ~400 years | The kingdom outgrew its dead. The Saints began marking the living at birth: a promise of the name later, a citizen's right to warmth now. Everyone inside the walls, marked. Everyone outside, not. The Forsaken are born here as a category. |
 | **The Spring Wars** | ~300 – 150 years | The Field Flame turned the seasons for whoever paid. The kingdom never fielded an army against a neighbour; it withheld a spring. The Northern Holds, the Salt Reaches and the Ashland Kings all bought their years from the Bastion. Tribute was called *the hour*. |
@@ -31,11 +39,26 @@ weather, stonework, a coin, a line.
 Cinderwrights drew heat without spending anyone. The Founding was a shortcut
 that worked for eight hundred years and then took the whole bill at once.
 
+**What came before that** is a fog the Goldbough had no reason to clear. Two
+generations after the Founding, *before the Fall* stopped meaning *earlier* in
+court usage and started meaning *not real*. Foreign traditions put fires like
+this one thousands of years earlier, in words the ring does not use — an
+oath-fire, a fallen dawn, a buried sun, a nameless light — and contradict each
+other about how many there were. The Chapel's Concordance bought and
+translated most of them four hundred years ago. What survived uncensored
+survived by accident.
+
 ## 2. Magic — five schools, one substance
 
 Everything that is not steel comes from starstone, and starstone answers to
 three things: **rhythm** (the Starseer's sequence), **writing** (the Chapel's
-ledger), and **draw** (the Cinderwrights' stone and the Spire). The five damage
+ledger), and **draw** (the Cinderwrights' stone and the Spire). Nobody knows
+why any of the three works. The most common learned guess — held by one
+Astronomer's apprentice and no institution — is that starstone holds on to what
+happens to it, and that a name written into it is the only thing anyone has
+ever handed it that was shaped to be held on to. Where that property comes from,
+and whether living things have it for the same reason, is open and stays open
+([LORE-EMBER.md](LORE-EMBER.md) §3, §5). The five damage
 schools are five relationships with it:
 
 | School | Source | Who | Status it leaves | What it is, in-world |
@@ -156,6 +179,13 @@ ship-breaker is a foreigner; a ship-breaker thinks a hamlet had it soft.
 | **The Salt Reaches** | across the sea | city-states, traders, the only fleet; refused tribute once and lost three winters | the ring's warmth by sea; later, marks for their merchant houses | ships stopped coming when the Spire's draw turned the tides; their marked houses burned | to know why. No ship has come in twenty years. The Abbey watches the horizon for the first. |
 | **The Ashland Kings** | past the reach, over the caldera rim | rival miners; sold ember-ore; kept small false hearths of coal | ember-ore prices; the reach's mines | the only warm people left, on coal; never marked, never burned | the ring. An Ashland column is on the Basalt Stair now, with coal and steel, to take a hearth they will not know how to light. |
 | **The Cinderwrights** | nowhere; everywhere | the builders | to seal, never to spend | gone eight hundred years | nothing. But their doors still answer a key, and someone still chants in their tongue. |
+
+Each of these peoples carries an older account of a fire like the ring's, in
+its own vocabulary, and none of the accounts agree — the Holds sing one fire
+that asked once, the Salt Reaches copied a chronicle that says seven (or one,
+seven times, depending on the copy), the Ashland tablets put a sun under the
+mountain before there were people at all. The table of traditions, what each
+claims and what each fails to match is in [LORE-EMBER.md](LORE-EMBER.md) §7.
 
 **The geopolitical situation, in one line:** three empty warm cities, one
 hearth that must not light, an uncounted people who alone can walk between,
