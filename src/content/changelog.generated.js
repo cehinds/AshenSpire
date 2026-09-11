@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-988",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Every control shows the same gold ring when you land on it",
+    "detail": "Moving through the game with a keyboard or a controller now draws one ring — a thin gold line — around whatever you are on, everywhere: buttons, cards, the map, the Armoury, settings. Before, different screens drew different rings in different colours and thicknesses, and some drew a soft halo instead. The controller's cursor uses the same ring.",
+    "build": "0.6.0.162",
+    "pullRequest": 988,
+    "url": "https://github.com/cehinds/AshenSpire/pull/988"
+  },
+  {
     "id": "pr-985",
     "date": "2026-09-11",
     "group": "2026-09-11",
