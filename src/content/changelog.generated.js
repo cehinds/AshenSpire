@@ -3,6 +3,66 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-961",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Two more entries the record was missing",
+    "detail": "Nothing a player sees changes. Two changes had landed without a line here. Their build numbers are read from the project's own history at the moment each one landed rather than from what its author wrote down, which is the habit that caught an earlier entry naming a build one short of the real one.",
+    "build": "0.6.0.142",
+    "pullRequest": 961,
+    "url": "https://github.com/cehinds/AshenSpire/pull/961"
+  },
+  {
+    "id": "pr-968",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Explanations wait for you to ask",
+    "detail": "A tooltip now opens after a second of hovering instead of half a second; the delay setting still offers faster. Tapping or clicking a detail highlights it, and a second tap or click explains it — so a stray touch never opens one. Cards no longer explain themselves on hover: select a card and use its Information button. Keyboard focus still explains after half a second.",
+    "build": "0.6.0.140",
+    "pullRequest": 968,
+    "url": "https://github.com/cehinds/AshenSpire/pull/968"
+  },
+  {
+    "id": "pr-964",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The combat board fills a desktop screen",
+    "detail": "On a wide window the fighters and the hand grew with the stage instead of staying phone-sized; Draw and Discard stopped stretching across a third of the screen each, and Actions, End Turn and Potions stand as tall as their row allows. Phones keep the layout they had. The small fold button above the turn banner that snapped the top bar compact is gone, and with it the compact top bar.",
+    "build": "0.6.0.136",
+    "pullRequest": 964,
+    "url": "https://github.com/cehinds/AshenSpire/pull/964"
+  },
+  {
+    "id": "pr-963",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The boot check waits for the tower's entrance",
+    "detail": "#949 lights the city, holds, and fades before the title appears; the startup check still judged the reveal a fraction of a second after the press and called it missing. It now waits for the title the way it already did for a mouse or a tap, and its \"gate still standing\" claims no longer count a reveal that has begun. Nothing in the game changed.",
+    "build": "0.6.0.134",
+    "pullRequest": 963,
+    "url": "https://github.com/cehinds/AshenSpire/pull/963"
+  },
+  {
+    "id": "pr-928",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "A place you inspect and the fight you walk into now look like the same place",
+    "detail": "Looking at a location on the world map and then travelling there could show you two different scenes. Both now resolve the same spot to the same setting and draw from the same pool of paintings, and the choice is remembered once you enter, so it holds from turn to turn. Where a time-of-day or weather variant does not exist, it falls back within the same setting rather than to something unrelated. Travel is green and sits bottom-right, and the local map controls follow the direction they move you.",
+    "build": "0.6.0.122",
+    "pullRequest": 928,
+    "url": "https://github.com/cehinds/AshenSpire/pull/928"
+  },
+  {
+    "id": "pr-952",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The pose editor's companion application is named",
+    "detail": "Nothing a player sees changes. The Pose and Effects Studio notes said the outside editor that opens this project was unknown; it is Spire Studio, and the note now records how to connect it and which file formats it leaves alone.",
+    "build": "0.6.0.122",
+    "pullRequest": 952,
+    "url": "https://github.com/cehinds/AshenSpire/pull/952"
+  },
+  {
     "id": "pr-954",
     "date": "2026-09-10",
     "group": "2026-09-10",
