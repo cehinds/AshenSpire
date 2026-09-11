@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-967",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The double-clickable game can be downloaded on its own",
+    "detail": "Nothing in the game changes. Each development build produces the game two ways: a folder you serve, whose art arrives a screen at a time, and one large file you double-click that needs no server at all. They were bundled into a single download of about 191 MB, with the double-clickable file buried inside the folder, so there was no way to ask for just the one you wanted. They are now two separate downloads — about 152 MB for the folder and about 39 MB for the single file — from the same build, and the folder's read-me says which one it is and where the other lives.",
+    "build": "0.6.0.148",
+    "pullRequest": 967,
+    "url": "https://github.com/cehinds/AshenSpire/pull/967"
+  },
+  {
     "id": "pr-966",
     "date": "2026-09-11",
     "group": "2026-09-11",
