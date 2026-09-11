@@ -963,10 +963,16 @@ input[type="range"] { min-height: var(--tap-floor); }
 .event-door .as-option.ev-choice { min-height: var(--tap-floor); }
 .event-door .as-option.ev-choice[disabled] { opacity: 0.55; cursor: default; }
 .event-door .as-option .on { white-space: normal; }
-/* The label's own ellipsis rule (.as-label-text above) outranked the line
-   above, so a choice's consequence — "gain 90 cinders; take 6 damage" — was
-   cut to "gain 90 cinders; t…" on a phone. A choice wraps; it never hides. */
-.event-door .as-option .on .as-label-text { white-space: normal; overflow: visible; text-overflow: clip; }
+/* The label's own ellipsis rule outranked the line above, so a choice's
+   consequence — "gain 90 cinders; take 6 damage" — was cut to "gain 90
+   cinders; t…" on a phone. A choice wraps; it never hides.
+   MEASURED, NOT REASONED — the first fix here was `.event-door .as-option .on
+   .as-label-text` at (0,4,0) and it lost: the ellipsis rule is `.as-option .on
+   > span:not(.as-pill):not(.as-tag)` (§ OptionCard below), and `:not()` counts
+   its argument, so that rule is (0,4,1). The label still read `nowrap` at
+   390x844 on 2026-09-11 with the "fix" in the file. `.ev-choices` lifts this
+   to (0,5,0), which is the smallest step that actually wins. */
+.event-door .ev-choices .as-option .on .as-label-text { white-space: normal; overflow: visible; text-overflow: clip; }
 
 /* ═══ ARMOURY — an xl door on the shell ════════════════════════════════════ */
 /* The head is the kit's (tab strip = the views, IconButton close in the same
