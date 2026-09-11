@@ -407,6 +407,12 @@ async function finishPosedCombat(expectedTitle) {
   await waitFor(`!!window.__combat && !!document.querySelector('.end-turn')`, `${expectedTitle} combat`);
   await sleep(1800); // let the production intro/timeline release combat's busy gate
   await ev(`(()=>{for(const e of window.__combat.enemies){e.hp=0;e.alive=false;}return true})()`);
+  // THE BOSS SPLASH IS FROZEN IN THE ?shot=boss POSE (main.js showBossIntro
+  // { hold }: a photograph pose with no close wired — no press, no key, no
+  // timer lifts it), and a hold pressed through it lands on the splash, not
+  // on End Turn. The pose's freeze is lifted here by hand; the fight under it
+  // is the real one, and nothing about the reward is decided by the splash.
+  await ev(`document.querySelector('.boss-intro')?.remove(); true`);
   // END TURN OWES A HOLD (secondbeat.js; a tap opens the review instead): the
   // same deliberate press #reward-continue takes below, so the turn ends the
   // way a player ends it, and the victory beat (balance.ui.victoryBeat.ms)
