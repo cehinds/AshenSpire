@@ -38,6 +38,7 @@ import { validateRunStartingKit } from '../model/startingKits.js';
 import { openLedger, closeLedger, note, readLedger } from '../model/healLedger.js';
 import { combatSnapshotReferenceProblems } from '../model/combatSnapshot.js';
 import { assertSavedBossReferences } from '../model/mapReferences.js';
+import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.js';
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
@@ -515,6 +516,13 @@ export function createSaveManager(storage) {
       let run;
       try {
         run = deserializeRun(json);
+        // SPEC §13.4: a save from before seats climbs the order it was already
+        // climbing — the default — and nothing else about it moves, no draw.
+        // A save that HAS an order must name every seat once, or it is a
+        // dangling id and refused like any other (§3.12).
+        if (!Array.isArray(run.seatOrder)) run.seatOrder = defaultSeatOrder(registries);
+        const seatProblems = seatOrderProblems(run.seatOrder, registries);
+        if (seatProblems.length) throw new Error(`Malformed run save: ${seatProblems.join('; ')}`);
         const mapAct = run.custom && activeMods(run.custom).endless ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
         if (run.journey) {
           // deserializeRun validated the pinned manifest. Its graph is a derived
@@ -522,7 +530,7 @@ export function createSaveManager(storage) {
           for (const id of Object.keys(run.journey.outcomes)) journeyEncounter(run.journey, id, registries);
           run.mapGraph = journeyGraph(run.journey);
         } else {
-          assertSavedBossReferences(registries, run.mapGraph, mapAct);
+          assertSavedBossReferences(registries, run.mapGraph, { seat: seatAtTier(run.seatOrder, mapAct), tier: mapAct });
           run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
         }
         const snapshotReferenceProblems = combatSnapshotReferenceProblems(run.combatEntered?.snapshot, registries);

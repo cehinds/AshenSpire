@@ -24,17 +24,21 @@ import { carriedIds } from '../model/loadout.js';
 // ---------------------------------------------------------------------------
 
 /**
- * rollEncounter(registries, rng, { pool, act, exclude }) → encounter id.
- * Weighted pick from the act's pool; `exclude` is the no-repeat window
- * (pass the last 1–2 fought encounter ids). Encounters default to act 1.
+ * rollEncounter(registries, rng, { pool, seat, exclude }) → encounter id.
+ * Weighted pick from the SEAT's pool (SPEC §13.2); `exclude` is the no-repeat
+ * window (pass the last 1–2 fought encounter ids). `seat` is required and an
+ * `act` argument is refused: an act is a tier, and a tier has no pool of its
+ * own — guessing "act 1" would be the default this section exists to remove.
  */
-export function rollEncounter(registries, rng, { pool, act = 1, exclude = [] } = {}) {
-  const inActPool = (e) => e.pool === pool && (e.act || 1) === act;
-  let candidates = registries.encounters.all().filter((e) => inActPool(e) && !exclude.includes(e.id));
+export function rollEncounter(registries, rng, { pool, seat, act, exclude = [] } = {}) {
+  if (act !== undefined) throw new Error('rollEncounter: `act` is retired — pass the seat (SPEC §13.2)');
+  if (typeof seat !== 'string' || !seat) throw new Error('rollEncounter: a seat id is required (SPEC §13.2)');
+  const inSeatPool = (e) => e.pool === pool && e.seat === seat;
+  let candidates = registries.encounters.all().filter((e) => inSeatPool(e) && !exclude.includes(e.id));
   if (candidates.length === 0) {
-    candidates = registries.encounters.all().filter(inActPool);
+    candidates = registries.encounters.all().filter(inSeatPool);
   }
-  if (candidates.length === 0) throw new Error(`No encounters in pool '${pool}' for act ${act}`);
+  if (candidates.length === 0) throw new Error(`No encounters in pool '${pool}' for seat '${seat}'`);
   const total = candidates.reduce((a, e) => a + e.weight, 0);
   let r = rng.float('enemyAI') * total;
   for (const e of candidates) {
@@ -263,19 +267,22 @@ function rollShopCards(registries, rng, classId, count) {
 // ---------------------------------------------------------------------------
 
 /**
- * resolveUnknownNode(registries, rng, { seenEvents, act, history }) →
+ * resolveUnknownNode(registries, rng, { seenEvents, tier, history }) →
  *   { kind: 'event', eventId } | { kind: 'fight'|'shrine'|'treasure' }
- * Odds from mapConfigs[act].unknownWeights — per act, beside the geometry they
- * describe (they used to be `balance.unknownNode`, a flat global that could not
- * differ per act while the map did). `act` is required: guessing act 1 would be
- * a default nobody authored, which is the fallback this rework exists to remove.
+ * Odds from mapConfigs[tier].unknownWeights — per TIER, beside the geometry
+ * they describe (they used to be `balance.unknownNode`, a flat global that
+ * could not differ per act while the map did). `tier` is required: guessing
+ * tier 1 would be a default nobody authored, which is the fallback this rework
+ * exists to remove. (It was `act`; SPEC §13 made the act number the tier and
+ * the seat the content — unknown odds are geometry, so they stay with the tier.)
  * Events avoid repeats within a run while unseen ones remain. Stream 'events'
  * (SPEC §5.6).
  */
-export function resolveUnknownNode(registries, rng, { seenEvents = [], act, history = [] } = {}) {
-  const cfg = registries.mapConfig(act);
+export function resolveUnknownNode(registries, rng, { seenEvents = [], tier, act, history = [] } = {}) {
+  if (act !== undefined) throw new Error('resolveUnknownNode: `act` is retired — pass the tier (SPEC §13.2)');
+  const cfg = registries.mapConfig(tier);
   const odds = cfg && cfg.unknownWeights;
-  if (!odds) throw new Error(`resolveUnknownNode: act ${JSON.stringify(act)} has no unknownWeights`);
+  if (!odds) throw new Error(`resolveUnknownNode: tier ${JSON.stringify(tier)} has no unknownWeights`);
   const total = Object.values(odds).reduce((a, b) => a + b, 0);
   let r = rng.float('events') * total;
   let kind = 'event';

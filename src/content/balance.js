@@ -274,6 +274,16 @@ export const balance = {
     strPerLoop: 1, // +Strength per completed cycle
     actsPerCycle: 3, // acts before the spire loops (also the act count)
   },
+  // ---- Seats (SPEC §13.3) ------------------------------------------------------
+  // One multiplier per TIER. A seat's rosters were authored at its baseTier
+  // (content/seats.js), so a fight in seat S at tier T scales enemy HP by
+  // seatTiers[T] / seatTiers[S.baseTier] — exactly 1 at the baseline, which is
+  // what keeps every existing seed's fights byte-identical (§13.6). The values
+  // are the measured HP ratio of the shipped rosters (docs/BALANCE.md §2):
+  // act-2 rows average ≈1.5× act-1, act-3 rows ≈1.9× (normals, elites and
+  // bosses weighted together). Tier 1 is 1 by definition and the validator
+  // holds it there.
+  seatTiers: { 1: 1, 2: 1.5, 3: 1.9 },
   customMods: {
     toughElitesHpMult: 1.3, // Tough Elites: elites & bosses ×HP
     bigBossesHpMult: 1.5, // Dread Bosses: act bosses ×HP

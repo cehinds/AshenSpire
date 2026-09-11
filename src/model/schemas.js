@@ -342,6 +342,9 @@ export const REGISTRY_TYPES = Object.freeze([
   'events',
   'flasks',
   'classes',
+  // The seats (SPEC §13.1): a region with its content. A registry so that an
+  // encounter's `seat` is a ref the validator resolves like any other id.
+  'seats',
 ]);
 
 // Per-opcode field contracts used by validate.js. `refs` maps a field to the
@@ -403,6 +406,9 @@ const obj = (fields) => ({ k: 'obj', fields });
 const ref = (reg) => ({ k: 'ref', reg });
 const union = (...anyOf) => ({ k: 'union', anyOf });
 const opt = (node) => ({ ...node, opt: true });
+// The literal null — for the ONE field the spec admits it on (encounter.seat,
+// SPEC §13.5) and nowhere else. `opt` is absence; this is presence-as-null.
+const nul = { k: 'null' };
 
 // A FLOOR ANCHOR — the closed set in model/floorplan.js, as a schema node.
 // `index` and `of` are optional here because which one is required depends on
@@ -780,9 +786,20 @@ export const SCHEMAS = Object.freeze({
     weight: num,
     minFloor: opt(int),
     pool: en(...ENCOUNTER_POOLS),
-    act: int,
+    // The seat this row belongs to (SPEC §13.2). `act` is RETIRED: an act is a
+    // tier, and a row bound to a tier would be fought at the wrong strength in
+    // every seat but one. The one admitted null is the Valkyrie (§13.5), and
+    // validate.js holds it to exactly one row.
+    seat: union(ref('seats'), nul),
     floorBand: levelBandSchema,
     targetBand: levelBandSchema,
+  }),
+
+  seat: obj({
+    id: str,
+    regionId: str,
+    name: str,
+    baseTier: int,
   }),
 
   event: obj({

@@ -1413,13 +1413,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       const r = createRng(0xaa11);
       const rn = createRunState({ seed: 0xaa11, classId: 'reaver', registries: REG });
       return JSON.stringify([
-        rollEncounter(REG, r, { pool: 'normal' }),
+        rollEncounter(REG, r, { pool: 'normal', seat: rn.seatOrder[0] }),
         rollRuneReward(REG, r, 'normal', []),
         rollCardRewardIds(REG, r, { classId: 'reaver', pool: 'normal' }),
         rollFlaskDrop(REG, r, rn),
         rollRelicReward(REG, r, ['forsakenMedallion']),
         buildShopStock(REG, r, rn),
-        resolveUnknownNode(REG, r, { act: 1 }),
+        resolveUnknownNode(REG, r, { tier: 1 }),
       ]);
     };
     eq(rollAll(), rollAll(), 'reward/shop/unknown rolls deterministic');
@@ -1720,17 +1720,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // ---- 21. M3 phase 2: Acts II–III mechanics ------------------------------------------------
-  test('21. act-scoped encounters; Blighted Valkyrie heal-on-hit; player-side Bleed; Stitched King phase', () => {
-    // Encounter rolls are act-scoped.
+  test('21. seat-scoped encounters; Blighted Valkyrie heal-on-hit; player-side Bleed; Stitched King phase', () => {
+    // Encounter rolls are SEAT-scoped (SPEC §13.2); an act argument is refused.
     for (let i = 0; i < 20; i++) {
       const r = createRng(i * 7919);
-      assert(rollEncounter(REG, r, { pool: 'normal', act: 2 }).startsWith('a2_'), 'act 2 pool only');
-      assert(rollEncounter(REG, r, { pool: 'normal', act: 3 }).startsWith('a3_'), 'act 3 pool only');
-      assert(!rollEncounter(REG, r, { pool: 'normal', act: 1 }).startsWith('a2_'), 'act 1 pool untouched');
+      assert(rollEncounter(REG, r, { pool: 'normal', seat: 'marches' }).startsWith('a2_'), 'marches pool only');
+      assert(rollEncounter(REG, r, { pool: 'normal', seat: 'reach' }).startsWith('a3_'), 'reach pool only');
+      assert(!rollEncounter(REG, r, { pool: 'normal', seat: 'weald' }).startsWith('a2_'), 'weald pool untouched');
     }
-    const act3Boss = REG.encounters.get(rollEncounter(REG, createRng(1), { pool: 'boss', act: 3 }));
-    eq(act3Boss.act, 3, 'boss stays in act 3');
-    eq(act3Boss.pool, 'boss', 'boss pool only');
+    let refused = null;
+    try { rollEncounter(REG, createRng(1), { pool: 'normal', act: 2 }); } catch (e) { refused = e.message; }
+    assert(/retired/.test(refused || ''), 'act is refused by name');
+    const reachBoss = REG.encounters.get(rollEncounter(REG, createRng(1), { pool: 'boss', seat: 'reach' }));
+    eq(reachBoss.seat, 'reach', 'boss stays in its seat');
+    eq(reachBoss.pool, 'boss', 'boss pool only');
 
     // Blighted Valkyrie: heals 2 whenever SHE lands a hit (persistent phase trigger);
     // her thrust also Bleeds the PLAYER (entity-agnostic status model).
@@ -1795,7 +1798,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (let act = 4; act <= 12; act++) {
       const ca = endlessActInfo(act).contentAct;
       assert(REG.mapConfig(ca), `mapConfig exists for looped act ${act} → ${ca}`);
-      assert(rollEncounter(REG, createRng(act), { pool: 'boss', act: ca }), `boss encounter rolls for looped act ${act}`);
+      assert(rollEncounter(REG, createRng(act), { pool: 'boss', seat: ['weald', 'marches', 'reach'][ca - 1] }), `boss encounter rolls for looped act ${act}`);
     }
     // Cycle scaling applies in combat: +35% HP and +1 Strength per loop.
     const base = createCombat({
@@ -6084,13 +6087,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // shape leaves every existing seed byte-for-byte identical, and a shaped
     // run is flagged out of win-rate telemetry.
     const reg = createRegistries(contentBundle);
-    const graphOf = (shape) => JSON.stringify(buildActMap(reg, createRng(0x715e), 1, shape));
+    const graphOf = (shape) => JSON.stringify(buildActMap(reg, createRng(0x715e), 'weald', 1, shape));
     eq(graphOf(null), graphOf(undefined), 'no shape and an absent shape are the same run');
     // `shortest`, not a literal, for the same reason as above: this call really
     // does build a map, so it must name a length this act's own rules resolve.
     assert(graphOf(null) !== graphOf({ floors: shortest }), 'a shape reaches the generator through buildActMap');
     let threw = null;
-    try { buildActMap(reg, createRng(1), 1, { columns: 1 }); } catch (e) { threw = e.message; }
+    try { buildActMap(reg, createRng(1), 'weald', 1, { columns: 1 }); } catch (e) { threw = e.message; }
     assert(threw && threw.includes('corridor'), `a bad shape throws at act boot and names the knob — got ${threw}`);
     assert(isCustomRun({ mapShape: { floors: 6 } }), 'a shaped run is kept out of win-rate stats');
     assert(!isCustomRun({ ascension: 0, mods: {}, deckMode: 'standard' }), '…and an unshaped one is not');

@@ -299,7 +299,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       <div class="map-canvas">
         <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
           ${groundSvg}
-          <text class="map-act-title" x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(act.actNumber)}</text>
+          <text class="map-act-title" x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(act.actNumber, act.seatName)}</text>
           ${edgeSvg}
           <!-- BOTH AN ID AND A CLASS, and the id is not decoration: two
                instruments key on the ids map-nodes, zoom-in, zoom-out and
