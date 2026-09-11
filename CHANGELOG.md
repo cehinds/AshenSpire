@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-11
+
+- **Explanations wait for you to ask** ([#968](https://github.com/cehinds/AshenSpire/pull/968), `0.6.0.135`). A tooltip now opens after a second of hovering instead of half a second; the delay setting still offers faster. Tapping or clicking a detail highlights it, and a second tap or click explains it — so a stray touch never opens one. Cards no longer explain themselves on hover: select a card and use its Information button. Keyboard focus still explains after half a second.
+
 ## 2026-09-10
 
 - **The record of what shipped caught up with what shipped** ([#954](https://github.com/cehinds/AshenSpire/pull/954), `0.6.0.133`). Nothing a player sees changes. Three changes had landed without an entry here, and the number stamped on the downloadable game belonged to an older version of the source — it had been merged without being rebuilt, so the box and its contents disagreed. The three entries are written, and the build is made again so its stamp is honest. One detail worth keeping: each entry's build number was read out of the project's own history at the moment that change landed, not copied from what its author wrote down, and the two disagreed once out of three.
