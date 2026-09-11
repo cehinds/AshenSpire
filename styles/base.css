@@ -363,12 +363,15 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
    open, so opening Settings on a phone PAINTS it every time, and the census
    caught it on the 390x844 capture.
 
-   `:where()` on purpose — specificity ZERO, so the fourteen rules that already
-   style their own focus keep winning without being touched or re-listed here.
-   This is the floor under them, not a competitor to them. */
+   `:where()` on purpose — specificity ZERO, so a component that must move the
+   ring INWARD (a control inside a card, a tab) can set its own offset without
+   out-ranking anything. The ink is never restated: `--focus-ring` (kit.css)
+   is the one token, and the pad's cursor (`.gp-focus`, ui.css) wears the same
+   ring. Since 2026-09-11 this is not a floor under fourteen rings — it IS the
+   ring; the per-component box-shadow halos, 3px outlines and pale inks went. */
 :where(a, button, input, select, summary, textarea, [role='button'], [tabindex]:not([tabindex='-1'])):focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .bar {

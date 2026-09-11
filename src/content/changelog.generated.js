@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-11",
     "summary": "The three regions can now be climbed in any order, and each run picks its own",
     "detail": "The Hollow Weald, the Pale Marches and the Cinder Reach are now seats: each carries its own enemies, bosses and scenery, and the seed decides which one a new climb opens in. Fighting a seat out of its old order scales its enemies' health to the act you meet it in, so the second and third acts stay the second and third acts wherever you are. The map title and the top band read the act and the seat together. Custom Climb gains a First seat control to open where you choose; a party in Forsaken Together climbs one shared order. The final act still offers the Blighted Valkyrie beside the seat's own bosses, and her fight paints the causeway. Saves from before this change load exactly as they were, climbing the same order they always did, and every existing seed's maps and fights are unchanged. This is the first build of the 0.7 line.",
-    "build": "0.7.1.1",
+    "build": "0.7.1.2",
     "pullRequest": 989,
     "url": "https://github.com/cehinds/AshenSpire/pull/989"
+  },
+  {
+    "id": "pr-990",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Doors and explanations arrive with a small motion",
+    "detail": "Every window that opens over the game — settings, the Armoury, a confirmation, the loot screen — now fades in and settles into place over a fraction of a second instead of appearing all at once, and explanations fade in the same way. When an explanation grows because you moved to something with more to say, the extra part is revealed rather than snapped open. The Reduced motion setting, or the same preference in your operating system, turns all of this off.",
+    "build": "0.6.0.165",
+    "pullRequest": 990,
+    "url": "https://github.com/cehinds/AshenSpire/pull/990"
+  },
+  {
+    "id": "pr-988",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Every control shows the same gold ring when you land on it",
+    "detail": "Moving through the game with a keyboard or a controller now draws one ring — a thin gold line — around whatever you are on, everywhere: buttons, cards, the map, the Armoury, settings. Before, different screens drew different rings in different colours and thicknesses, and some drew a soft halo instead. The controller's cursor uses the same ring.",
+    "build": "0.6.0.162",
+    "pullRequest": 988,
+    "url": "https://github.com/cehinds/AshenSpire/pull/988"
   },
   {
     "id": "pr-985",
