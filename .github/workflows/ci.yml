@@ -263,7 +263,7 @@ jobs:
         # other leg of this gate green.
         run: node tools/verdict.mjs -- node tools/dirorder.mjs --mutate
 
-      - name: Current builds use the 0.6.x.x release series
+      - name: Current builds use the 0.7.x.x release series
         run: node tools/release-series.mjs
       - name: Release series gate rejects older and malformed versions
         run: node tools/release-series.mjs --selftest
