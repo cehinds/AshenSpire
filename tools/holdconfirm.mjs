@@ -711,6 +711,12 @@ async function main() {
       `progress ${mid.progress} at 45% of ${before.holdMs} ms`);
     ok(`the bar returned to rest after the abort`, mutate ? true : aborted.holdState === 'idle' && aborted.progress === 0,
       `state=${aborted.holdState} progress=${aborted.progress}`);
+    // AN EARLY RELEASE IS A TAP, AND A TAP REVIEWS (the universal option
+    // contract, components/holdconfirm.js arm(): short activation → review
+    // modal, deliberate hold → commit). So the abort above leaves the review
+    // standing over the bars, and a hold pressed through that veil lands on
+    // nothing. Put it away the way a player does — Back — before the hold.
+    if (aborted.reviewing) { await press(await pointOf('.confirmation-cancel'), 30); await wait(260); }
 
     // ---- 2. A COMPLETED HOLD COMMITS.
     // If the abort above already committed, there is no bar left to hold and
@@ -1019,7 +1025,13 @@ async function main() {
     const seen = new Map();      // id -> Set(forms drawn)
     const undeclared = [];
     for (const surface of surfaces) {
-      await openShot(surface, surface === 'event' ? { shotEvent: EVENT } : {});
+      // THE SMITH'S SERVICES WANT A STONE. A fresh `?shot=rest` run carries
+      // none, so #smith-opt opens on a refusal and the three smith beats are
+      // never drawn — the census reading "not affordable" as "not wired". One
+      // Stone through main.js's own `?shotSmithingStones` door (values closed
+      // to 0|1) stands the run on the affordable side, as a player with a
+      // Stone in the purse is.
+      await openShot(surface, surface === 'event' ? { shotEvent: EVENT } : surface === 'rest' ? { shotSmithingStones: 1 } : {});
       // Two of the controls live behind a reveal (the Smith's grid, the
       // merchant's brazier). A census that only reads the first paint would
       // report them absent, which is the same word as "not wired" and means the
@@ -1044,7 +1056,10 @@ async function main() {
       // behind LOAD. Observed red without this press at dev = e5d9c981
       // ('11 claimed, 3 absent: … deleteSave') — the census reading a closed
       // selector as "not wired", the useFlask inversion again.
-      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .as-option:first-child', '[data-face="bar:sell"]', '[data-title-action="load"]']) {
+      // The Potions menu is a list of `.potion-fold` rows now (combat.js
+      // openPotions, 2026-09): the healing row's summary is pressed so its
+      // armed Use control stands where a thumb finds it.
+      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .potion-fold:first-of-type > summary', '[data-face="bar:sell"]', '[data-title-action="load"]']) {
         // SCROLLED INTO VIEW FIRST: the shop's bars stack below an open CARDS
         // shelf, so bar:remove sits at y=976 on a 844 phone — measured — and a
         // press at an off-viewport point lands on nothing while reporting
@@ -1298,8 +1313,8 @@ async function main() {
       { id: 'useFlask', of: 'drink the flask', sel: '[data-beat-action="useFlask"]', key: 'Enter', btn: 0,
         open: async (d) => { await openShot('combat', { shotSettings: JSON.stringify({ holdConfirm: d }) });
           await press(await pointOf('.combat-potions'), 60); await wait(400);
-          await press(await pointOf('.combat-potion-menu .as-option:first-child'), 60); await wait(400);
-          if (!await ev(`!!document.querySelector('[data-flask-action="use"][data-beat-action="useFlask"]')`)) {
+          await press(await pointOf('.combat-potion-menu .potion-fold:first-of-type > summary'), 60); await wait(400);
+          if (!await ev(`!!document.querySelector('.potion-use[data-beat-action="useFlask"]')`)) {
             throw new Error('Potions menu did not expose the armed healing-flask Use action');
           }
         },
