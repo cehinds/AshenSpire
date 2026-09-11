@@ -404,6 +404,26 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
   position: fixed; inset: 0; z-index: 500;
   display: flex; align-items: center; justify-content: center;
   background: rgba(0, 0, 0, 0.62);
+  animation: door-veil-in var(--door-ms) ease-out;
+}
+/* A DOOR IS PLACED, NOT POPPED: the veil fades up and the door settles from
+   98% over --door-ms (one number; the tooltip's open reads it too, its rung
+   step is tooltipHelp.stepMs). The reduced-motion kill in base.css collapses
+   both. OPEN ONLY, on purpose: a door's removal is synchronous by contract —
+   thirteen tools and the confirmation contract read `.modal-veil` absence on
+   the tick of the close — so the way out stays a cut rather than a veil that
+   lingers over the board. */
+@keyframes door-veil-in { from { opacity: 0; } }
+@keyframes door-in { from { opacity: 0; transform: scale(0.98); } }
+.modal-veil > .modal, .modal-veil > .as-modal, .as-veil > .as-modal { animation: door-in var(--door-ms) ease-out; }
+/* Under reduced motion the door is simply there — no name, not a 0.01 ms
+   run whose first frame is still at 0 (measured: frame one read opacity 0
+   under the kill alone). */
+.reduced-motion .modal-veil, .reduced-motion .as-veil, .reduced-motion .modal-veil > .modal, .reduced-motion .modal-veil > .as-modal, .reduced-motion .as-veil > .as-modal,
+.reduced-motion #tooltip[data-open="true"], .reduced-motion #tooltip-2[data-open="true"] { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .modal-veil, .as-veil, .modal-veil > .modal, .modal-veil > .as-modal, .as-veil > .as-modal,
+  #tooltip[data-open="true"], #tooltip-2[data-open="true"] { animation: none; }
 }
 /* THE INSET IS THE DOOR'S: one number, all four sides, every bar. */
 .as-modal, .modal {
@@ -658,7 +678,11 @@ input[type="range"] { min-height: var(--tap-floor); }
 #tooltip[data-size="large"],    #tooltip-2[data-size="large"]    { --tip-w: 37.5rem; --tip-h: 27rem; }
 #tooltip[data-size="expanded"], #tooltip-2[data-size="expanded"] { --tip-w: 37.5rem; --tip-h: 42rem; }
 #tooltip[data-overflow="true"], #tooltip-2[data-overflow="true"] { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
-#tooltip[data-open="true"], #tooltip-2[data-open="true"] { opacity: 1; visibility: visible; pointer-events: auto; }
+/* THE TOOLTIP OPENS THE WAY A DOOR DOES — the declared opacity transition
+   never ran on open (display none → block is a fresh render), so the open is a
+   keyframe; the rung's step-up is a clip reveal driven from tooltip.js. */
+@keyframes tip-in { from { opacity: 0; } }
+#tooltip[data-open="true"], #tooltip-2[data-open="true"] { opacity: 1; visibility: visible; pointer-events: auto; animation: tip-in var(--door-ms) ease-out; }
 #tooltip[data-stuck="true"] { pointer-events: none; }
 /* ON A TOUCH SCREEN A TOOLTIP THAT NOTHING INSIDE CAN ANSWER IS SEE-THROUGH.
    There is no hover to keep, so an open tooltip only ever needs the finger
@@ -1950,7 +1974,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
    per-component rings (2px, 3px, gold, #f2d87e, #fff0bd, box-shadow halos,
    inset lines) used to say the same thing in different inks; a component
    may still move its OFFSET (inside a card, on a tab) but never its ink. */
-:root { --focus-ring: 2px solid var(--gold); --focus-ring-offset: 2px; }
+:root { --focus-ring: 2px solid var(--gold); --focus-ring-offset: 2px; --door-ms: 150ms; }
 
 /* ═══ METER — a resource read at a glance ══════════════════════════════════ */
 /* Label · value · track. The TRACK's length is data (the surface writes its
