@@ -30,6 +30,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-11
+
+- **The combat board fills a desktop screen** ([#964](https://github.com/cehinds/AshenSpire/pull/964), `0.6.0.136`). On a wide window the fighters and the hand grew with the stage instead of staying phone-sized; Draw and Discard stopped stretching across a third of the screen each, and Actions, End Turn and Potions stand as tall as their row allows. Phones keep the layout they had. The small fold button above the turn banner that snapped the top bar compact is gone, and with it the compact top bar.
+- **The boot check waits for the tower's entrance** ([#963](https://github.com/cehinds/AshenSpire/pull/963), `0.6.0.134`). #949 lights the city, holds, and fades before the title appears; the startup check still judged the reveal a fraction of a second after the press and called it missing. It now waits for the title the way it already did for a mouse or a tap, and its "gate still standing" claims no longer count a reveal that has begun. Nothing in the game changed.
+
 ## 2026-09-10
 
 - **The record of what shipped caught up with what shipped** ([#954](https://github.com/cehinds/AshenSpire/pull/954), `0.6.0.133`). Nothing a player sees changes. Three changes had landed without an entry here, and the number stamped on the downloadable game belonged to an older version of the source — it had been merged without being rebuilt, so the box and its contents disagreed. The three entries are written, and the build is made again so its stamp is honest. One detail worth keeping: each entry's build number was read out of the project's own history at the moment that change landed, not copied from what its author wrote down, and the two disagreed once out of three.
