@@ -7,7 +7,7 @@
 import { beatArmer } from '../../framework/optionDecision.js';
 import { buildStampHtml } from '../components/buildstamp.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
-import { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
+import { closeSaveSlotSelector, deleteSlotReview, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
 import { html, titleMenu } from '../kit/index.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
@@ -205,7 +205,11 @@ export function mountTitle(app, {
     if (!onDelete) return;
     const arm = beatArmer(meta, registries);
     root.querySelectorAll('.title-slot-delete').forEach((button) => {
-      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slotDelete, 'new') });
+      const slot = +button.dataset.slotDelete;
+      arm(button, 'deleteSave', {
+        ...deleteSlotReview(slot, slots.find((record) => record.slot === slot)?.summary || null),
+        onConfirm: () => onDelete(slot, 'new'),
+      });
       button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
     });
   };

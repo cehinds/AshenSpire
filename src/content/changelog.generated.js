@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-11",
     "summary": "A written plan for how your character will grow",
     "detail": "Nothing a player sees changes. The owner's design for the next ruleset is now a document in the repository rather than a conversation: weapons, armour, relics and your class all become cards you wear; using a weapon levels a skill that offers you cards; your character levels from experience and grants one attribute point each time; mana stays a fixed pool that only potions, rests and named effects refill; every rest restores some mana; and every number in it is a settings row. It ends with the order the work will land in.",
-    "build": "0.6.0.158",
+    "build": "0.6.0.159",
     "pullRequest": 985,
     "url": "https://github.com/cehinds/AshenSpire/pull/985"
+  },
+  {
+    "id": "pr-982",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Deleting a save asks the way every other decision does",
+    "detail": "The ✕ on a save slot now opens a door that names the slot, shows the climb that would go — class, act, floor, health, seed — and offers a red Delete or Back, instead of a bare hold with no picture of what it erases. A deliberate hold on the ✕ still deletes directly if you keep that setting on. On the way, a red button on a danger door (Overwrite, Delete) had been painted green by the rule that turns a ready button green; it keeps its red now.",
+    "build": "0.6.0.158",
+    "pullRequest": 982,
+    "url": "https://github.com/cehinds/AshenSpire/pull/982"
   },
   {
     "id": "pr-980",
