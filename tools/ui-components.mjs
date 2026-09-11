@@ -86,8 +86,10 @@ export function receipt() {
     catalogMarkdown: read('docs/COMPONENT-CATALOG.md'),
     catalogHtml: read('docs/component-catalog.html'),
     frame: read('src/ui/components/combatantFrame.js'),
+    overhead: read('src/ui/components/combatantOverhead.js'),
     battlefieldStage: read('src/ui/components/battlefieldStage.js'),
     battlefieldStageModel: read('src/ui/models/BattlefieldStageModel.js'),
+    spriteScale: read('src/ui/models/CombatSpriteScaleModel.js'),
     tooltip: read('src/ui/components/tooltip.js'),
     exposure: read('src/ui/components/arcaneExposure.js'),
     fx: read('src/ui/fx.js'),
@@ -150,7 +152,9 @@ export function findings(r) {
     bad.push('C3 Map and Combat no longer consume the same shared HUD composition');
   }
   if (!/export function combatantFrame/.test(r.frame)
-      || (r.combat.match(/combatantFrame\(\{/g) || []).length !== 2
+      // Player and enemy each build a `slots` bag and hand it to the ONE frame
+      // component (or its updater on a reused box) — two consumers, no third.
+      || (r.combat.match(/: combatantFrame\(slots\);/g) || []).length !== 2
       || /document\.createElement\('div'\);\s*\n\s*box\.className = `combatant/.test(r.combat)) {
     bad.push('C4 player and enemy no longer consume one Combatant Frame component');
   }
@@ -183,15 +187,16 @@ export function findings(r) {
   }
   if (!/UI\.battlefieldStage/.test(r.combat)
       || !/centerHeightRatio/.test(r.battlefieldStageModel)
-      || !/availableHeight \* centerHeightRatio/.test(r.battlefieldStage)
-      || !/measureFrame\(frame, model\.tokens\.intentGapPx, model\.tokens\.centerHeightRatio\)/.test(r.battlefieldStage)
-      // ONE SCALE FOR THE STAGE (2026-09-04). The stage used to divide each
-      // card by its OWN sprite's natural height, so every combatant rendered a
-      // different width. It now measures every frame and applies the smallest
-      // scale any of them needs — this asserts the reduce and the apply, so a
-      // return to per-frame scaling is red.
-      || !/measures\.reduce\(\(least, m\) => Math\.min\(least, m\.fits\), Infinity\)/.test(r.battlefieldStage)
-      || !/for \(const measure of measures\) applyFrame\(measure, scale\)/.test(r.battlefieldStage)
+      // ONE SCALE FOR THE STAGE (2026-09-04; re-homed 2026-09-09 in
+      // models/CombatSpriteScaleModel.js `fitCombatSprites`). The stage used
+      // to divide each card by its OWN sprite's natural height, so every
+      // combatant rendered a different width. The fitter now reduces ONE
+      // `base` across every actor and derives each sprite's height from it —
+      // this asserts the reduce and the apply, so a return to per-frame
+      // scaling is red.
+      || !/fitCombatSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors \}\)/.test(r.battlefieldStage)
+      || !/base = Math\.min\(base, maxHeight \/ ratio,/.test(r.spriteScale)
+      || !/const visibleHeight = base \* a\.ratio \* a\.slot\.depth;/.test(r.spriteScale)
       || !/function renderCombatantStage\(\)[\s\S]*?renderPlayer\(\);\s*renderEnemies\(\);[\s\S]*?battlefieldStage\.refresh\(\);[\s\S]*?function render\(\)/.test(r.combat)
       || (r.combat.match(/renderCombatantStage\(\);/g) || []).length < 2
       || !/UI\.playerHandTray/.test(r.combat)
@@ -203,7 +208,7 @@ export function findings(r) {
       || !/UI\.poiseStatusBar/.test(r.combat)
       || !/UI\.procStatusBar/.test(r.combat)
       || !/UI\.statusEffectTray/.test(r.combat)
-      || !/UI\.intentIndicator/.test(r.combat)
+      || !/UI\.intentIndicator/.test(r.overhead)
       || !/UI\.blockBadge/.test(r.combat)
       || !/UI\.arcaneExposureBar/.test(r.exposure)
       || !/UI\.tooltip/.test(r.tooltip)
@@ -505,7 +510,7 @@ function selftest() {
     ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${runHudHtml({', '${(() => "")({') })],
     ['give the merchant its own band', 'C3 ', (r) => ({ ...r, shop: r.shop.replace('wireRunHud(app, {', 'wireMerchantBand(app, {') })],
     ['detach the run HUD from the shared shell', 'C3 ', (r) => ({ ...r, runHud: r.runHud.replace('hudShellHtml(runHudViewModel({', 'ownShell({') })],
-    ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
+    ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace("const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);", "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void slots;") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("childModel(model, UI.metadataField, 'floor')", "childModel(model, UI.metadataField, 'seed')") })],
     // Substitutes the declaration whatever its authored value, so this plant

@@ -6,6 +6,11 @@ import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { tooltipHelp } from '../src/content/tooltipHelp.js';
+
+// A focus-opened tooltip answers after the policy's own wait, read from its
+// one home — never a number typed here that the policy can drift from.
+const TOOLTIP_FOCUS_MS = tooltipHelp.focusMs;
 
 // EVERY CREATION DISCLOSURE IS A `<details>` STRUCTURE, so a face is a
 // `<summary>`, not a button in a `.disc-faces` row. `mountDisclosure(...,
@@ -121,6 +126,16 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     await wait(100);
   };
   const setInput = async (selector, value) => evaluate(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); e.value=${JSON.stringify(value)}; e.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:${JSON.stringify(value)}})); e.dispatchEvent(new Event('change',{bubbles:true})); return e.value; })()`);
+  // A CHOICE IS TWO TAPS (equipment.js pieceChip): the card face first — it
+  // takes focus and shows its Choose button — then Choose. One tap on a chip
+  // is an inspection, not a choice, and the pressed state lives on the Choose
+  // button, not on the chip. Every pick below walks that road and reads that
+  // button.
+  const choosePiece = async (chip, index = 0) => {
+    await click(`${chip} .equipment-poker-card`, index);
+    await click(`${chip} .equipment-choose`, index);
+  };
+  const pressed = (chip, index = 0) => evaluate(`document.querySelectorAll(${JSON.stringify(chip)})[${index}]?.querySelector('.equipment-choose')?.getAttribute('aria-pressed') ?? null`);
   // OPEN MEANS OPEN, NOT TOGGLE. A face is a `<summary>` whose click toggles,
   // and the folds keep their own state: a top-level section closing does not
   // close the pickers nested inside it. So a second `open('primary')` on an
@@ -244,11 +259,11 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     // the difference between "the selection did not persist" and "the
     // selection was never made".
     await open('armour');
-    await click('#cz-armours [data-starting-armour-id="oathsworn"]');
+    await choosePiece('#cz-armours [data-starting-armour-id="oathsworn"]');
     await open('character');
     await open('equipment');
     await open('armour');
-    assert((await evaluate(`document.querySelector('#cz-armours [data-starting-armour-id="oathsworn"]').getAttribute('aria-pressed')`)) === 'true', `${width}x${height}: profile-earned armour selection persists through section changes`);
+    assert((await pressed('#cz-armours [data-starting-armour-id="oathsworn"]')) === 'true', `${width}x${height}: profile-earned armour selection persists through section changes`);
   }
 
   await open('character');
@@ -300,10 +315,15 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   const attributeShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
   writeFileSync(join(OUT, `attribute-cards-${width < 700 ? 'mobile' : 'desktop'}.png`), Buffer.from(attributeShot.data, 'base64'));
   await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new CustomEvent('gpfocus'))`);
-  await wait(180);
+  // A focus-opened tooltip waits content/tooltipHelp.js `focusMs` (500 ms
+  // today) before it shows; 180 ms read the panel before it could open.
+  await wait(TOOLTIP_FOCUS_MS + 200);
   assert(await evaluate(`document.querySelector('#tooltip')?.style.display === 'block' && /Dexterity/.test(document.querySelector('#tooltip')?.textContent || '')`),
     `${width}x${height}: folded attributes expose the same description by tooltip`);
   await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new CustomEvent('gpblur'))`);
+  // The panel closes after its own close delay; a click sent while it still
+  // stands lands on the panel, not on the control under it.
+  await until(`document.querySelector('#tooltip')?.style.display !== 'block'`, 'attribute tooltip closed');
   // SPRITE LEFT THIS FOLD IN #692, which moved the sprite/sigil/tint group
   // beside the preview instead of nesting it under Character. The row is
   // asserted where it now lives rather than dropped: this check exists so the
@@ -360,10 +380,11 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
       && allocationGeometry.controls?.top >= allocationGeometry.face?.top && allocationGeometry.controls?.bottom <= allocationGeometry.face?.bottom && allocationGeometry.controls?.right <= allocationGeometry.face?.right && allocationGeometry.reveal?.top >= allocationGeometry.face?.bottom - 1,
     `${width}x${height}: Assign Points disclosure spans the invisible stat-and-controls parent (${JSON.stringify(allocationGeometry)})`);
   await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new CustomEvent('gpfocus'))`);
-  await wait(180);
+  await wait(TOOLTIP_FOCUS_MS + 200);
   assert(await evaluate(`document.querySelector('#tooltip')?.style.display === 'block' && /Constitution/.test(document.querySelector('#tooltip')?.textContent || '')`),
     `${width}x${height}: Assign Points exposes the shared attribute tooltip`);
   await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new CustomEvent('gpblur'))`);
+  await until(`document.querySelector('#tooltip')?.style.display !== 'block'`, 'Assign Points tooltip closed');
   const allocationShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
   writeFileSync(join(OUT, `attribute-assignment-${width < 700 ? 'mobile' : 'desktop'}.png`), Buffer.from(allocationShot.data, 'base64'));
   assert(await evaluate(`(() => { const overlay=document.querySelector('.cc-stat-overlay'); overlay.querySelector('button')?.focus(); return document.querySelector('.screen.customize').inert === true && overlay.contains(document.activeElement); })()`), `${width}x${height}: Assign Points scopes the screen and keeps focus inside the dialog`);
@@ -568,40 +589,20 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   // button), then Choose. One tap on the card is an inspection, not a choice —
   // which is what this gate used to do, and why it reported that auto-advance
   // never advanced.
-  const chooseArmour = async (index) => {
-    await click('#cz-armours .equip-chip', index);
-    await click('#cz-armours .equip-chip .equipment-choose', index);
-  };
+  const chooseArmour = (index) => choosePiece('#cz-armours .equip-chip', index);
   await open('armour');
   await chooseArmour(1);
   assert((await evaluate(`[...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face).join(',')`)) === 'armour', `${width}x${height}: disabled auto-advance keeps the current equipment subcard open`);
-  // Back through the door with the preference ON, then the same choice.
-  await bootCreation({ creationAutoAdvance: true });
-  await open('equipment');
-  await click('#cz-equipment-view-toggle [data-view-mode="list"]');
-  await open('armour');
-  await chooseArmour(1);
-  // THE NEXT SUBCARD IS WHICHEVER ONE THE CONFIGURATION PUTS NEXT, read off the
-  // fold rather than named here. This row demanded `leftHand`, and the
-  // configured order is armour → rightHand → leftHand → relic, so it was
-  // asserting a hand-copied order that had since changed: the screen advanced
-  // correctly and the gate called it a regression. Reading the order makes the
-  // row about advancing, which is what auto-advance means.
-  const advance = await evaluate(`(() => {
-    const order = [...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold'))})].map(e=>e.dataset.face);
-    const open = [...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face);
-    return { order, open, after: order[order.indexOf('armour') + 1] ?? null };
-  })()`);
-  assert(advance.open.join(',') === advance.after,
-    `${width}x${height}: a valid equipment choice auto-advances to the next configured subcard (${JSON.stringify(advance)})`);
-  await click('#cz-left-hand [data-armament-id="ashStaff"]');
-  await click('#cz-right-hand [data-armament-id="ashStaff"]');
-  const moved = await evaluate(`(() => ({left:document.querySelector('#cz-left-hand [data-armament-id="ashStaff"]').getAttribute('aria-pressed'),right:document.querySelector('#cz-right-hand [data-armament-id="ashStaff"]').getAttribute('aria-pressed')}))()`);
+  await open('leftHand');
+  await choosePiece('#cz-left-hand [data-armament-id="ashStaff"]');
+  await open('rightHand');
+  await choosePiece('#cz-right-hand [data-armament-id="ashStaff"]');
+  const moved = { left: await pressed('#cz-left-hand [data-armament-id="ashStaff"]'), right: await pressed('#cz-right-hand [data-armament-id="ashStaff"]') };
   assert(moved.left === 'false' && moved.right === 'true', `${width}x${height}: choosing one armament for the other hand moves it`);
   await open('leftHand');
-  await click('#cz-left-hand [data-armament-id="starstoneStaff"]');
+  await choosePiece('#cz-left-hand [data-armament-id="starstoneStaff"]');
   await open('relic');
-  await click('#cz-relics .cc-relic-card', 1);
+  await choosePiece('#cz-relics .equip-chip', 1);
 
   await open('character');
   const persisted = await evaluate(`(() => ({
@@ -612,11 +613,12 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(persisted.name === 'Marya' && persisted.pointbuy === 'true' && persisted.keepsake === 'true', `${width}x${height}: character choices persist through section changes`);
   await open('equipment');
   const gearPersisted = await evaluate(`(() => ({
-    armour:document.querySelectorAll('#cz-armours .equip-chip')[0].getAttribute('aria-pressed'),
-    left:document.querySelector('#cz-left-hand [data-armament-id="starstoneStaff"]').getAttribute('aria-pressed'),
-    right:document.querySelector('#cz-right-hand [data-armament-id="ashStaff"]').getAttribute('aria-pressed'),
-    relic:document.querySelectorAll('#cz-relics .cc-relic-card')[1].getAttribute('aria-pressed'),
-    leftPressed:[...document.querySelectorAll('#cz-left-hand [data-armament-id]')].filter(e=>e.getAttribute('aria-pressed')==='true').map(e=>e.dataset.armamentId),
+    // chooseArmour(1) above is the armour pick that must survive.
+    armour:document.querySelectorAll('#cz-armours .equip-chip')[1].querySelector('.equipment-choose').getAttribute('aria-pressed'),
+    left:document.querySelector('#cz-left-hand [data-armament-id="starstoneStaff"] .equipment-choose').getAttribute('aria-pressed'),
+    right:document.querySelector('#cz-right-hand [data-armament-id="ashStaff"] .equipment-choose').getAttribute('aria-pressed'),
+    relic:document.querySelectorAll('#cz-relics .equip-chip')[1].querySelector('.equipment-choose').getAttribute('aria-pressed'),
+    leftPressed:[...document.querySelectorAll('#cz-left-hand [data-armament-id]')].filter(e=>e.querySelector('.equipment-choose')?.getAttribute('aria-pressed')==='true').map(e=>e.dataset.armamentId),
     leftRefused:document.querySelector('#cz-left-hand [data-armament-id="starstoneStaff"]')?.getAttribute('aria-disabled') ?? null
   }))()`);
   // Only the four CHOICES decide this row; `leftPressed` and `leftRefused` are
@@ -657,20 +659,49 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   let entered = await until(`!!document.querySelector('.mapscreen')`, 'Begin to enter the map', 4000, false);
   if (!entered) {
     const refusal = await evaluate(`document.querySelector('#tooltip')?.textContent?.trim().slice(0, 200) || null`);
-    assert(/stat points? still to assign/i.test(refusal || ''),
+    // A CLASS CHANGE RESETS THE KIT AS WELL AS THE POOL (the screen's own rule,
+    // asserted above as "armour arrives unchosen after a class change"), so
+    // the refusal Begin gives here is whichever step the reset emptied first
+    // — armour, the pool, a keepsake. Each is a step a player finishes before
+    // pressing Begin again; the gate finishes them the same way, in the order
+    // the screen asks, and holds only that the refusal SAID WHY.
+    assert(/stat points? still to assign|choose (starting armour|a keepsake)|needs \w+ \d+/i.test(refusal || ''),
       `${width}x${height}: Begin refuses an unfinished allocation and says why (${JSON.stringify(refusal)})`);
-    await open('character');
-    await open('primary');
-    await open('primary');
-  await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
-    if (await until(`!!document.querySelector('.cc-stat-overlay')`, 'Assign Points after a class change', 8000, false)) {
-      await spendPool();
-      await click('.cc-stat-overlay [data-stat-done]');
-      await until(`!document.querySelector('.cc-stat-overlay')`, 'Assign Points close after a class change', 8000, false);
+    for (let round = 0; round < 4 && !entered; round++) {
+      const why = await evaluate(`document.querySelector('#tooltip')?.textContent?.trim().slice(0, 200) || ''`);
+      if (/starting armour/i.test(why)) {
+        await open('equipment');
+        await open('armour');
+        await choosePiece('#cz-armours [data-starting-armour-id="default"]');
+      } else if (/keepsake/i.test(why)) {
+        await open('character');
+        await open('keepsake');
+        await click('#cz-keepsakes [data-keepsake-id="oldCinder"]');
+      } else {
+        await open('character');
+        await open('primary');
+        await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
+        if (await until(`!!document.querySelector('.cc-stat-overlay')`, 'Assign Points after a class change', 8000, false)) {
+          // "Ash Staff needs intelligence 12 — you have 10." is the kit's own
+          // requirement; reopening refunds the pool, so the named stat is
+          // raised first and the rest of the pool spent after it.
+          const need = why.match(/needs (\w+) (\d+)/i);
+          if (need) {
+            for (let n = 0; n < Number(need[2]); n++) {
+              const row = await evaluate(`(() => { const c = document.querySelector('.cc-stat-overlay [data-stat-action="increase"][data-stat-id="${need[1].toLowerCase()}"]'); const v = c?.closest('.se-row')?.querySelector('.se-value'); return { open: c?.getAttribute('aria-disabled') === 'false', value: Number(v?.textContent || 0) }; })()`);
+              if (!row.open || row.value >= Number(need[2])) break;
+              await click(`.cc-stat-overlay [data-stat-action="increase"][data-stat-id="${need[1].toLowerCase()}"]`);
+            }
+          }
+          await spendPool();
+          await click('.cc-stat-overlay [data-stat-done]');
+          await until(`!document.querySelector('.cc-stat-overlay')`, 'Assign Points close after a class change', 8000, false);
+        }
+      }
+      await open('seed');
+      await click('#cz-start');
+      entered = await until(`!!document.querySelector('.mapscreen')`, 'Begin to enter the map', 8000, false);
     }
-    await open('seed');
-    await click('#cz-start');
-    entered = await until(`!!document.querySelector('.mapscreen')`, 'Begin to enter the map', 15000, false);
   }
   const stillRefusing = entered ? null : await evaluate(`(() => ({
     tip: document.querySelector('#tooltip')?.textContent?.trim().slice(0, 200) || null,
@@ -695,6 +726,32 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     assert(/starseer/i.test(begun.cls || ''),
       `${width}x${height}: Begin consumes the class chosen last (${JSON.stringify(begun)})`);
   }
+  // ---- THE AUTO-ADVANCE DETOUR, LAST. `bootCreation` is a fresh door — the
+  // name, the mode, the keepsake and every pick above are gone with it — so
+  // this walk stands after Begin, where nothing downstream reads the flow it
+  // resets. Same shape, same class, one choice with the preference ON.
+  // Back through the door with the preference ON, then the same choice.
+  await bootCreation({ creationAutoAdvance: true });
+  // A fresh door is a fresh flow: no class is chosen on arrival (gated
+  // 2026-09-11), and the kit below is Starseer's — choose it again first.
+  await click('.cz-class[data-class="starseer"]');
+  await open('equipment');
+  await click('#cz-equipment-view-toggle [data-view-mode="list"]');
+  await open('armour');
+  await chooseArmour(1);
+  // THE NEXT SUBCARD IS WHICHEVER ONE THE CONFIGURATION PUTS NEXT, read off the
+  // fold rather than named here. This row demanded `leftHand`, and the
+  // configured order is armour → rightHand → leftHand → relic, so it was
+  // asserting a hand-copied order that had since changed: the screen advanced
+  // correctly and the gate called it a regression. Reading the order makes the
+  // row about advancing, which is what auto-advance means.
+  const advance = await evaluate(`(() => {
+    const order = [...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold'))})].map(e=>e.dataset.face);
+    const open = [...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face);
+    return { order, open, after: order[order.indexOf('armour') + 1] ?? null };
+  })()`);
+  assert(advance.open.join(',') === advance.after,
+    `${width}x${height}: a valid equipment choice auto-advances to the next configured subcard (${JSON.stringify(advance)})`);
   assert(errors.length === 0, `${width}x${height}: no uncaught browser exceptions`);
   await cdp.send('Target.closeTarget', { targetId });
 }
@@ -768,13 +825,17 @@ async function checkCatalog(width, height, screenshotName) {
   const interactive = await evaluate(`(() => {
     const second = (key, selector) => document.querySelectorAll('[data-catalog-component="'+key+'"] '+selector)[1];
     const choose = (key, selector) => { const node=second(key,selector); node?.click(); return node ? document.querySelectorAll('[data-catalog-component="'+key+'"] '+selector)[1]?.getAttribute('aria-pressed') : null; };
+    // A kit chip (equipment.js pieceChip) chooses through its Choose button,
+    // and that button carries the pressed state — the chip itself carries none.
+    // The relic specimen is still the catalogue's OptionCard, pressed on itself.
+    const chooseChip = (key) => { const chip=second(key,'.equip-chip'); const btn=chip?.querySelector('.equipment-choose'); btn?.click(); return btn ? document.querySelectorAll('[data-catalog-component="'+key+'"] .equip-chip')[1]?.querySelector('.equipment-choose')?.getAttribute('aria-pressed') : null; };
     const auto=document.querySelector('[data-catalog-component="boolean-setting-toggle"] .cc-switch'); auto.click();
     return {
       classChoice:choose('class-choice-card','.cz-class'),
       auto:document.querySelector('[data-catalog-component="boolean-setting-toggle"] .cc-switch').getAttribute('aria-checked'),
       mode:choose('mode-choice','.se-mode'), sprite:choose('sprite-choice','.style'), tint:choose('tint-choice','.tint'),
       sigil:choose('sigil-choice','.sigil'), keepsake:choose('keepsake-choice','.cz-keepsake'),
-      equipment:choose('equipment-choice-card','.equip-chip'), relic:choose('relic-choice-card','.cc-relic-card'),
+      equipment:chooseChip('equipment-choice-card'), relic:choose('relic-choice-card','.cc-relic-card'),
     };
   })()`);
   assert(interactive.classChoice === 'true' && interactive.auto === 'false'
