@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-11",
     "summary": "Doors and explanations arrive with a small motion",
     "detail": "Every window that opens over the game — settings, the Armoury, a confirmation, the loot screen — now fades in and settles into place over a fraction of a second instead of appearing all at once, and explanations fade in the same way. When an explanation grows because you moved to something with more to say, the extra part is revealed rather than snapped open. The Reduced motion setting, or the same preference in your operating system, turns all of this off.",
-    "build": "0.6.0.163",
+    "build": "0.6.0.165",
     "pullRequest": 990,
     "url": "https://github.com/cehinds/AshenSpire/pull/990"
   },
