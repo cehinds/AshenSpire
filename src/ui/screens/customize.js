@@ -27,6 +27,7 @@ import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
+import { settingOn } from './settings.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation } from '../../model/attributes.js';
@@ -89,7 +90,10 @@ export function mountCustomize(app, {
     classChoiceView: creationLayout.classChoiceView,
     equipmentChoiceView: creationLayout.equipmentChoiceView,
     classPreviewPercent: creationLayout.classPreviewPercent,
-    equipmentAutoAdvance: creationLayout.equipmentAutoAdvance,
+    // The preference lives in Settings (Advanced → Gameplay); the authored
+    // layout key is the fallback for a mount that carries no settings bag.
+    equipmentAutoAdvance: meta.settings && 'creationAutoAdvance' in meta.settings
+      ? settingOn(meta.settings, 'creationAutoAdvance') : creationLayout.equipmentAutoAdvance,
   };
 
   // A capture can pose the class figure: ?shot=customize&shotClass=rogue&shotTint=ember.
@@ -176,7 +180,7 @@ export function mountCustomize(app, {
       nextRow('Continue to equipment', 'equipment'),
     ]),
     equipment: el('section', { id: 'cz-equipment-panel', class: 'as-pane flush cz-stage' }, [
-      sectionHead('Choose', 'Starting equipment', [el('div', { id: 'cz-auto-advance-toggle' }), el('div', { id: 'cz-equipment-view-toggle' })]),
+      sectionHead('Choose', 'Starting equipment', [el('div', { id: 'cz-equipment-view-toggle' })]),
       hairline(),
       el('div', { id: 'cz-equipment-fold', class: 'cc-equipment-fold cz-disc' }),
       el('div', { id: 'cz-equipment-receipts', class: 'cc-equip-group', 'aria-live': 'polite' }),
@@ -256,10 +260,6 @@ export function mountCustomize(app, {
       for (const node of equipmentNodes.values()) node.querySelector('.cc-card-selectors').dataset.view = mode;
       renderViewToggles();
     }, 'Starting equipment choice view'));
-    $('#cz-auto-advance-toggle').replaceChildren(booleanSettingToggle('Auto-advance on valid choice', state.equipmentAutoAdvance, (value) => {
-      state.equipmentAutoAdvance = value;
-      renderViewToggles();
-    }));
   }
 
   function baseKit() {

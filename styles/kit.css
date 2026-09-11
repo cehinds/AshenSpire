@@ -354,6 +354,12 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
 .as-option[aria-disabled="true"], .as-option:disabled { opacity: 0.55; cursor: default; }
 .as-option[aria-disabled="true"] .on, .as-option:disabled .on { color: var(--muted); }
 .as-option.noarrow { padding-right: 1.5rem; }
+/* `.class-pick` (§ SCREENS) re-declares the padding at 1.5rem all round, and
+   an OptionCard that is also a class-pick kept its chevron: the last word of a
+   two-line description ran under the › (measured on the Reaver and Herald rows,
+   2026-09-11 — text edge 17 px from the border, chevron 12.8 px in). The arrow
+   side keeps the OptionCard's own clearance. */
+.as-option.class-pick:not(.noarrow) { padding-right: 3.3rem; }
 .as-option.noarrow::after { content: none; }
 /* A row of an option and a trailing IconButton (delete) share one height. */
 .as-optionrow { display: flex; align-items: stretch; gap: 0.75rem; }
@@ -950,6 +956,10 @@ input[type="range"] { min-height: var(--tap-floor); }
 .class-pick:hover { border-color: var(--line-soft); }
 .class-pick.selected, .class-pick[aria-checked="true"], .class-pick[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18); }
 .class-pick.locked { opacity: 0.55; cursor: default; }
+/* `quiet`: still a choice, but not the one to reach for — Rest at full
+   health and mana still ends the visit, so it stays pressable and reads muted. */
+.class-pick.quiet { opacity: 0.7; }
+.class-pick.quiet > .cp-body > h3 { color: var(--muted); }
 .class-pick.locked:hover { border-color: var(--line); }
 .class-pick > .glyph { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
 .class-pick > .cp-body, .class-pick > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
@@ -1250,6 +1260,12 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 @container (max-width: 64rem) {
   .as-split { grid-template-columns: minmax(0, 1fr); }
   .as-split-handle { display: none; }
+  /* THE DECISION COMES FIRST ON A PHONE. Stacked, the class step led with the
+     preview pane — figure, resources, relic — and the list of classes, the
+     one thing the step asks for, began below the fold at 390x844 (measured
+     2026-09-11). Beside each other the order is preview | chooser and reads
+     fine; stacked, the chooser goes first and the preview follows it. */
+  .cc-class-split > .cc-class-preview-host { order: 2; }
 }
 
 /* ═══ OPTIONS — list or grid, one atom ══════════════════════════════════════ */
@@ -2763,8 +2779,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    clip every hit spark to a border, and would look harmless in review because
    nothing else in this file mentions the layers. Hence this paragraph. */
 .armoury-card-gallery .art { min-height: calc(55px / var(--ui-zoom, 1)); overflow: hidden; contain: layout paint; }
-.armoury[data-responsive='phone'] .armoury-head [role='tablist'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; }
-.armoury[data-responsive='phone'] .armoury-head .modal-tab { min-width: 0; padding-inline: .5rem; }
+/* ONE ROW OF TABS ON A PHONE. The 2x2 grid put the close control in a cell
+   beside the tabs and the second row of views under the first (measured
+   390x844, 2026-09-11). Four views at 13 px fit one row beside the close;
+   the strip scrolls sideways before it ever wraps. */
+.armoury[data-responsive='phone'] .armoury-head [role='tablist'] { display: flex; flex-wrap: nowrap; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.armoury[data-responsive='phone'] .armoury-head .modal-tab { flex: 1 0 auto; min-width: 0; padding-inline: .3rem; white-space: nowrap; font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
 /* Approved 350 × 490 poker canvas. Every measurement scales together. */
 .equipment-poker-card { display:block; position:relative; width:100%; max-width:392px; aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
 .equipment-poker-card .epc-frame { box-sizing:border-box; display:grid; grid-template-rows:25px minmax(0,1fr) 25px 39px 19px 82px 36px 13px; position:absolute; inset:0 auto auto 0; width:var(--epc-frame-w,350px); height:var(--epc-frame-h,490px); padding:var(--epc-pad,18px); gap:var(--epc-gap,5px); border:1px solid var(--accent); border-radius:13px; transform-origin:top left; transform:scale(var(--card-scale,1)); box-shadow:0 9px 26px #0006,inset 0 0 0 4px #17120e,inset 0 0 0 5px #695334; background:linear-gradient(125deg,#302319,#19150f 45%,#251d15); font:13px/1.35 Arial,sans-serif; }
@@ -2964,6 +2984,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* Retain the action slot so browsing does not move the next row under a pointer. */
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .card-info-button { visibility:hidden; pointer-events:none; }
+/* IN THE CARD'S CORNER, not floating above it. Elsewhere the info button
+   hangs a tap floor above a selected card and the row reserves 64 px for it;
+   the creation selectors reserve nothing, so the button straddled the STARTING
+   ARMOUR header's border (measured 1280x800, 2026-09-11). Here it sits inside
+   the card's top-right corner at 32 px — the corner holds no reading. */
+.cc-card-selectors .card-inspection-target > .card-info-button { --card-info-size: 32px; top: 6px; left: auto; right: 6px; transform: none; font-size: 16px; }
 .cc-equipment-details { max-width:none; }
 .cc-equipment-details h3 { margin:0 0 8px; }
 .cc-choice-context, .cc-package-context { color:var(--muted); font-size:14px; line-height:1.4; margin:0 0 12px; }

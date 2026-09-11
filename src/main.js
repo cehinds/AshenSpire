@@ -2022,7 +2022,7 @@ function roomHud(returnTo) {
   };
 }
 
-function showRest() {
+function showRest(openPanel = null) {
   audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
   // AUTOMATIC, AND IT HAPPENS BEFORE THE CHOICE. Constantine: "flasks should
@@ -2044,7 +2044,8 @@ function showRest() {
   mountRest(app, {
     registries,
     run,
-    hud: roomHud(showRest),
+    hud: roomHud(() => showRest()),
+    openPanel,
     healMult,
     refill,
     meta: saves.loadMeta(),
@@ -2438,7 +2439,7 @@ if (shotState) {
 
 if (shotState === 'combat-test') {
   mountCombatTest(app, { params: shotParams, meta: activeMeta });
-} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
+} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -2640,7 +2641,7 @@ if (shotState === 'combat-test') {
     // bars. `?shotEvent=<id>` overrides it, through the one `shotParams` const.
     const evId = shotParams.get('shotEvent') || 'graveOfTheNameless';
     showEvent(evId);
-  } else if (shotState === 'rest') {
+  } else if (shotState === 'rest' || shotState === 'smith') {
     // A REACH STATE, not the denominator. Constantine could not scroll the
     // Smith grid on a phone; the reason nobody caught it is that the Shrine is
     // one of seven player-facing screens no instrument we own can open, so
@@ -2675,7 +2676,13 @@ if (shotState === 'combat-test') {
     // discipline as the twenty-card deck above — enough to reach the control,
     // no rng, identical every run.
     run.cinders = 999;
-    showRest();
+    // `?shot=smith` — THE SAME SHRINE WITH THE UPGRADE TRANSACTION OPEN. The
+    // Smith is a modal over the Shrine, not a screen of its own, so the review
+    // of 2026-09-11 could not photograph it: `?shot=smith` was not a state and
+    // fell through to the title. One Stone so the upgrade is affordable and
+    // the modal opens on an offer, not a refusal.
+    if (shotState === 'smith') run.smithingStones = Math.max(1, run.smithingStones || 0);
+    showRest(shotState === 'smith' ? 'smith' : null);
   } else if (shotState === 'shop') {
     // A REACH STATE, and the fourth of the same shape (`?shotEvent`, `?shotAt`,
     // `?shot=rest`). The merchant is one of the screens no instrument this repo

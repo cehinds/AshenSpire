@@ -140,25 +140,35 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     return root.scrollWidth<=root.clientWidth+1 && scrollers.every(e=>e.scrollWidth<=e.clientWidth+1);
   })()`);
 
-  if (profileMeta) {
-    await cdp.send('Page.addScriptToEvaluateOnNewDocument', {
-      source: `localStorage.clear(); localStorage.setItem('sote_meta_v1', ${JSON.stringify(JSON.stringify(profileMeta))});`,
-    }, sessionId);
-  }
-
-  await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/${profileMeta ? '' : '?shot=customize'}` }, sessionId);
-  if (profileMeta) {
-    await until(`!!document.querySelector('.startup-gate') || !!document.querySelector('.slot-new')`, 'startup gate or title screen for veteran profile', 60000);
-    if (await evaluate(`!!document.querySelector('.startup-gate')`)) await click('.startup-gate');
-    await until(`!!document.querySelector('.slot-new')`, 'title screen for veteran profile');
-    await click('.slot-new');
-    await until(`!!document.querySelector('.title-menu-modal [data-title-action="modal-continue"]:not([disabled])')`, 'new-run slot selection');
-    await click('.title-menu-modal [data-title-action="modal-continue"]');
-    await until(`!!document.querySelector('.title-menu-modal [data-title-action="review-new"]:not([disabled])')`, 'new-run confirmation');
-    await click('.title-menu-modal [data-title-action="review-new"]');
-  }
-  await until(`document.querySelectorAll(${JSON.stringify(faces('.cz-flow'))}).length===4`, 'four creation sections');
-  await wait(250);
+  // ONE DOOR INTO THE SCREEN, taken twice: on arrival, and again with the
+  // auto-advance preference on. The preference is a Settings row now
+  // (Advanced → Gameplay, `creationAutoAdvance`), not a switch in the flow, so
+  // the only way to flip it is the way a player flips it — through the
+  // settings bag the boot reads. A `?shot=` boot takes it as `?shotSettings`;
+  // a veteran-profile boot carries it in the stored meta's settings.
+  const bootCreation = async (extraSettings = null) => {
+    if (profileMeta) {
+      const storedMeta = extraSettings ? { ...profileMeta, settings: { ...(profileMeta.settings || {}), ...extraSettings } } : profileMeta;
+      await cdp.send('Page.addScriptToEvaluateOnNewDocument', {
+        source: `localStorage.clear(); localStorage.setItem('sote_meta_v1', ${JSON.stringify(JSON.stringify(storedMeta))});`,
+      }, sessionId);
+    }
+    const shotSettings = extraSettings ? `&shotSettings=${encodeURIComponent(JSON.stringify(extraSettings))}` : '';
+    await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/${profileMeta ? '' : `?shot=customize${shotSettings}`}` }, sessionId);
+    if (profileMeta) {
+      await until(`!!document.querySelector('.startup-gate') || !!document.querySelector('.slot-new')`, 'startup gate or title screen for veteran profile', 60000);
+      if (await evaluate(`!!document.querySelector('.startup-gate')`)) await click('.startup-gate');
+      await until(`!!document.querySelector('.slot-new')`, 'title screen for veteran profile');
+      await click('.slot-new');
+      await until(`!!document.querySelector('.title-menu-modal [data-title-action="modal-continue"]:not([disabled])')`, 'new-run slot selection');
+      await click('.title-menu-modal [data-title-action="modal-continue"]');
+      await until(`!!document.querySelector('.title-menu-modal [data-title-action="review-new"]:not([disabled])')`, 'new-run confirmation');
+      await click('.title-menu-modal [data-title-action="review-new"]');
+    }
+    await until(`document.querySelectorAll(${JSON.stringify(faces('.cz-flow'))}).length===4`, 'four creation sections');
+    await wait(250);
+  };
+  await bootCreation();
   const arrival = await evaluate(`(() => ({
     labels:[...document.querySelectorAll(${JSON.stringify(faces('.cz-flow', ' .disc-name'))})].map(e=>e.textContent.trim()),
     open:[...document.querySelectorAll(${JSON.stringify(faces('.cz-flow', '[aria-expanded="true"]'))})].map(e=>e.dataset.face)
@@ -526,12 +536,25 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert((await evaluate(`document.querySelectorAll('#cz-armours .equip-chip').length`)) >= 2, `${width}x${height}: at least two armour cards are direct selectors`);
   assert((await evaluate(`document.querySelectorAll('#cz-left-hand .equip-chip').length`)) >= 2, `${width}x${height}: Left Hand has direct armament cards`);
   assert((await evaluate(`document.querySelectorAll('#cz-right-hand .equip-chip').length`)) >= 2, `${width}x${height}: Right Hand has direct armament cards`);
-  await click('#cz-auto-advance-toggle .cc-switch');
+  // Auto-advance is OFF by default (the Settings row and the authored layout
+  // agree), so a choice keeps the current subcard open.
+  // A CHOICE IS TWO TAPS: the card first (it takes focus and shows its Choose
+  // button), then Choose. One tap on the card is an inspection, not a choice —
+  // which is what this gate used to do, and why it reported that auto-advance
+  // never advanced.
+  const chooseArmour = async (index) => {
+    await click('#cz-armours .equip-chip', index);
+    await click('#cz-armours .equip-chip .equipment-choose', index);
+  };
   await open('armour');
-  await click('#cz-armours .equip-chip', 1);
+  await chooseArmour(1);
   assert((await evaluate(`[...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face).join(',')`)) === 'armour', `${width}x${height}: disabled auto-advance keeps the current equipment subcard open`);
-  await click('#cz-auto-advance-toggle .cc-switch');
-  await click('#cz-armours .equip-chip', 0);
+  // Back through the door with the preference ON, then the same choice.
+  await bootCreation({ creationAutoAdvance: true });
+  await open('equipment');
+  await click('#cz-equipment-view-toggle [data-view-mode="list"]');
+  await open('armour');
+  await chooseArmour(1);
   // THE NEXT SUBCARD IS WHICHEVER ONE THE CONFIGURATION PUTS NEXT, read off the
   // fold rather than named here. This row demanded `leftHand`, and the
   // configured order is armour → rightHand → leftHand → relic, so it was

@@ -101,6 +101,11 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // rest already taken at this Shrine under Multi-use — never a relic the
   // player does not carry.
   const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
+  // Rest at full health and full Mana led the list as if it were the thing to
+  // do — "Heal 0 HP (62 → 62/62)" in the first, brightest card (review,
+  // 2026-09-11). It stays a choice (it is still the way to end a visit without
+  // spending anything), reads muted, and says what it would not restore.
+  const nothingToRestore = !noRest && heal <= 0 && run.mana >= run.maxMana;
   const smith = smithingPlan(registries, run);
   // WHICH SERVICES THIS SMITH OFFERS is the table in balance.smithing.services,
   // resolved at the door (main.js) and handed in; a screen mounted without it
@@ -173,11 +178,11 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       <p class="subtitle">The gold light holds, for now</p>
       ${refillLineHtml(registries, refill)}
       <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
-        <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
+        <div class="class-pick${noRest ? ' locked' : nothingToRestore ? ' quiet' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
           <div class="cp-body">
             <h3>Rest</h3>
-            <p>${noRest ? noRestCopy : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+            <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP with full Mana. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
         <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
@@ -474,6 +479,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       });
     };
     smithOption.addEventListener('click', openSmith);
+    if (openPanel === 'smith') openSmith();
     smithOption.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();

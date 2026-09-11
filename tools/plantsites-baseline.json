@@ -186,7 +186,7 @@
     },
     "tools/flaskbox.mjs": {
       "count": 6,
-      "digest": "be113152db0960cf"
+      "digest": "601fc9365791d717"
     },
     "tools/fullscreen-control.mjs": {
       "count": 5,
@@ -218,7 +218,7 @@
     },
     "tools/hudparity.mjs": {
       "count": 18,
-      "digest": "ed51eea7692ad338"
+      "digest": "39c6558a1814857d"
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,

@@ -251,6 +251,11 @@ const SCREENS = [
   // a confirm panel that pushes a CANCEL button off a 360 px screen is exactly
   // the class this sweep exists to catch.
   { name: 'rest', q: '?shot=rest', ready: `!!document.querySelector('#rest-opt')` },
+  // THE SMITH is a modal over the Shrine, and until 2026-09-11 it had no state
+  // of its own — the review that photographed every room got the title screen
+  // for `?shot=smith`. Its controls (the candidates, Back, Upgrade) are as
+  // reachable-or-not as any room's.
+  { name: 'smith', q: '?shot=smith', ready: `!!document.querySelector('.smith-candidate-region')` },
   { name: 'shop', q: '?shot=shop', ready: `!!document.querySelector('#leave-shop')` },
 ];
 
