@@ -96,19 +96,19 @@ Narrative is ambient and economical. It appears through locations, silhouettes, 
 
 ### 4.1 Premise
 
-The old kingdom was three regions, each with a great lower city and a citadel tower above it, each tower holding one of the Three Flames lit from the Sovereign Ember. The flames went out and the light collapsed inward: the cities burned toward their towers and stand in their own ash. The Ember left its hearth that night and drifts the viaduct ring between the three towers, thin and starving. The Forsaken enters from whichever region the light never reached, relights the three hearths in the order the road gives, and corners the Ember at the last cold tower to restore, claim, or transform it.
+The old kingdom was three regions, each with a great lower city and a citadel tower above it, each tower holding one of the Three Flames lit from the Sovereign Ember. The flames went out and the light collapsed inward: the cities burned toward their towers and stand in their own ash. The Ember left its hearth that night and drifts the viaduct ring between the three towers, thin and starving. The Forsaken enters from whichever region the light never reached, relights the three hearths in the order the road gives, and follows the Ember out along the open causeway to the Ashen Spire, the fourth tower the kingdom raised and never lit, to restore, claim, or transform it.
 
 Each act is one seat, and the order is seeded. The heat of a cold flame now burns inside the corrupted as cinders; take the cinders, kill the boss that holds the largest, and the hearth relights. Why the cities died is known to the authors and assembled by the player from card flavor and event copy, never stated outright. The full world — the Burning, the Blight, the orders, the bosses' places in it, the region and citadel art, the card-flavor voices, and the authoring vocabulary — is in [LORE.md](LORE.md).
 
 ### 4.2 Seats
 
-Three seats, one per act, in seeded order. The act tier (first, second, third) sets difficulty; the seat sets place, palette, enemies and boss. The seat climbed last hosts the Ashen Crown for that run.
+Three seats, one per act, in seeded order. The act tier (first, second, third) sets difficulty; the seat sets place, palette, enemies and boss. The causeway to the Ashen Spire opens from the seat climbed last; the Spire is the run's ending, not a fourth seat.
 
 - **The Hollow Weald and the Bastion:** Lush meadows and forest under mountains; broken soldiery, blight-touched beasts, grave-wisps; a fortified ridge city with a bell tower. Umber, iron, faint gold, too much green.
 - **The Pale Marches and the Stitched Court:** Ice tundra and a river city frozen the night its flame died; a court that stitched itself back together to survive. Gilded stone, oxidized metal, surgical joins, verdigris, rime.
 - **The Cinder Reach and the Observatory:** Volcanic ridges and the caldera under the Observatory; mineral ash, bone light, concentrated ember.
 
-The first act teaches intent reading and immediate tradeoffs, the second tests whether the deck has a plan, the third judges whether the build is tuned and resilient — whichever seat each lands on. Seeded seat order is a mechanics change and needs its own SPEC entry before content moves; this section states the narrative shape only.
+The first act teaches intent reading and immediate tradeoffs, the second tests whether the deck has a plan, the third judges whether the build is tuned and resilient — whichever seat each lands on. Seeded seat order is governed by SPEC §13; this section states the narrative shape only.
 
 ### 4.3 Narrative rule
 
