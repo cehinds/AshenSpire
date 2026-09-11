@@ -9,7 +9,10 @@ rule (GDD §4.3): it is the ground the content stands on, not a script the
 player must follow. Who is in this world — the climbers' motives and
 contradictions, companions, quest givers, what each enemy was and why none of
 them came from anywhere else, and what the Burning did to the lands beyond the
-ring — is in [LORE-CAST.md](LORE-CAST.md).
+ring — is in [LORE-CAST.md](LORE-CAST.md). The world around them — its
+ages, how magic works, war, faiths, materials, neighbours and peoples, the
+vanished builders, the food chain, factions and what everyone is after — is in
+[LORE-WORLD.md](LORE-WORLD.md).
 
 **Premise, one breath.** You are a Forsaken. The old kingdom was three
 regions — the green weald, the white marches, the burning reach — and in each
