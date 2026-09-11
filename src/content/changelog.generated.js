@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-11",
     "summary": "Explanations wait for you to ask",
     "detail": "A tooltip now opens after a second of hovering instead of half a second; the delay setting still offers faster. Tapping or clicking a detail highlights it, and a second tap or click explains it — so a stray touch never opens one. Cards no longer explain themselves on hover: select a card and use its Information button. Keyboard focus still explains after half a second.",
-    "build": "0.6.0.138",
+    "build": "0.6.0.140",
     "pullRequest": 968,
     "url": "https://github.com/cehinds/AshenSpire/pull/968"
   },
