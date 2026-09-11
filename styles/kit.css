@@ -3119,11 +3119,37 @@ button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-read
   flex-direction:column; align-items:stretch;
 }
 .modal-foot:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) > .modal-foot-note { display:none; }
+/* THE WAY ON IS ON THE RIGHT; THE WAY BACK IS ON THE LEFT. Constantine,
+   2026-09-11: "progression buttons should be on the right, and back buttons
+   should be on the left". `modalFooter()` already builds the row in that
+   order — every secondary, then the one primary — and `.modal-btnrow` lays it
+   out as equal grid tracks, which is the owner's earlier rule from
+   2026-09-03: "make primary and secondary buttons at the bottom uniform in
+   size" (tools/modal-shell-contract.mjs asserts those equal tracks). So a
+   ready primary needs NOTHING here but the full width of the foot to divide.
+
+   IT USED TO TAKE MORE THAN THAT, AND THAT IS WHAT PUT IT ON THE LEFT. The
+   block replaced the ladder's tracks with `grid-template-columns:repeat(2,
+   minmax(0,1fr))` and gave the primary `grid-column:1 / -1; order:1`,
+   intending a full-width row of its own. Grid does not place it that way: the
+   ordered item takes the explicit two-track span, the auto-placed secondary
+   is pushed into an IMPLICIT third track, and the line reads primary-then-back
+   from the left. Measured at 1280x800 before this change — creation's foot
+   computed `grid-template-columns: 383.47px 383.47px 383.47px`, Begin at x=10
+   spanning 842px and Back at x=854; the title's slot picker did the same with
+   Continue at x=424 and Back at x=717.
+
+   A FLEX ROW IS NOT THE FIX EITHER, measured rather than assumed: the ladder's
+   buttons carry `min-width:0` with an ellipsis, so a primary on `flex:1 1 auto`
+   shrank Back to a 32px box with the word gone — on both surfaces, and
+   `flex:0 0 auto` on the secondaries did not bring it back. The tracks stay;
+   only the overrides go. The emphasis this block was written for is the
+   primary's colour, lift and focus ring above, none of which moved. */
 .modal-foot-actions:has(> .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) {
-  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; margin-left:0;
+  width:100%; margin-left:0;
 }
 .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
-  grid-column:1 / -1; order:1; width:100%; max-width:none; min-width:0;
+  max-width:none; min-width:0;
 }
 @media (prefers-reduced-motion:reduce) { button.primary, .as-btn.primary, button.primary.beat-hold, .as-btn.primary.beat-hold { transition:none; } }
 body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transition:none; }
