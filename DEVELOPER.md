@@ -329,6 +329,42 @@ node tools/combat-save.mjs --selftest
 node tools/combat-save.mjs --artifact --screenshots
 ```
 
+## Reword the interface (one file: `content/source/uiStrings.csv`)
+
+Every sentence a screen says is a row in `content/source/uiStrings.csv`, and a
+screen asks for it by id:
+
+```js
+import { t, tFull, tTip } from '../strings.js';
+t('reward.continue')                         // the control's own words
+t('reward.cinders.title', { amount: 40 })    // {tokens} come from the caller
+tFull('reward.blocked.storage')              // the sentence it means
+tTip('reward.skip')                          // the tooltip a small face gets
+```
+
+Three authored forms per id, never a runtime guess between them: `short` is
+what the control wears, `full` is the sentence it means, `tip` is the tooltip
+title. A blank cell means "this id has no such form", and asking for it throws
+by name — an empty button is the defect this prevents. `extends` fills only the
+cells a row leaves blank, so `reward.skip` is the house Skip with one sentence
+changed.
+
+Rewording the game is then a spreadsheet edit and a rebuild, touching no code:
+
+```bash
+node tools/content-build.mjs      # csv → src/content/generated/uiStrings.js
+node tools/uistrings.mjs --check  # the ratchet, below
+node tests/run-node.mjs           # tests/ui-strings.test.mjs holds the rules
+```
+
+**The migration is a one-way street.** Most screens still hold their own
+sentences; `tools/uistrings.mjs` counts what is left, per file, against
+`tools/uistrings-baseline.json`, and `--check` fails in BOTH directions — a
+file that grew a hardcoded sentence, and a file that migrated one without
+recording it (an overstated baseline hides the next regression in its slack).
+A screen you migrate ends with `node tools/uistrings.mjs --write-baseline` in
+the same commit.
+
 ## Add a card (one file: `src/content/cards/<class>.js`)
 
 ```js

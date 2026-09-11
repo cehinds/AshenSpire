@@ -67,8 +67,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the toggled-off SELL bar comes back greyed instead of absent',
         edits: [{
           file: 'src/ui/screens/shop.js',
-          find: '      ...(sellOn() ? [{ key: \'bar:sell\', label: \'SELL\', node: sellRow,',
-          replace: '      ...(true ? [{ key: \'bar:sell\', label: \'SELL\', node: sellRow, // planted: discoverable over absent',
+          find: '      ...(sellOn() ? [{ key: \'bar:sell\', label: t(\'shop.bar.sell\'), node: sellRow,',
+          replace: '      ...(true ? [{ key: \'bar:sell\', label: t(\'shop.bar.sell\'), node: sellRow, // planted: discoverable over absent',
         }],
         expectRed: /BAD\s+S6 .*bar:sell/,
       },
@@ -101,8 +101,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the FLASKS bar quietly stops being declared',
         edits: [{
           file: 'src/ui/screens/shop.js',
-          find: "      { key: 'bar:flasks', label: 'FLASKS', node: flasksRow,",
-          replace: "      ...(false ? [] : []), { key: 'bar:flasksX', label: 'FLASKS', node: flasksRow, // planted: renamed off the roster",
+          find: "      { key: 'bar:flasks', label: t('shop.bar.flasks'), node: flasksRow,",
+          replace: "      ...(false ? [] : []), { key: 'bar:flasksX', label: t('shop.bar.flasks'), node: flasksRow, // planted: renamed off the roster",
         }],
         expectRed: /BAD\s+S1 /,
       },
