@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-974",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The record now names the two entries that wrote the record",
+    "detail": "Nothing a player sees changes. This project keeps a rule that every change landed has a line here naming it, and a change whose only content was writing two of those lines had not written one for itself. Both are written now, this one included, so the count of unnamed changes falls instead of moving sideways.",
+    "build": "0.6.0.149",
+    "pullRequest": 974,
+    "url": "https://github.com/cehinds/AshenSpire/pull/974"
+  },
+  {
+    "id": "pr-973",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A missing line about the download split",
+    "detail": "Nothing a player sees changes. The entry explaining that the double-clickable game can now be downloaded on its own had been left out when that change landed, because it altered no part of the game itself. The rule asks for a line whether or not the game moved, and it has one.",
+    "build": "0.6.0.148",
+    "pullRequest": 973,
+    "url": "https://github.com/cehinds/AshenSpire/pull/973"
+  },
+  {
     "id": "pr-967",
     "date": "2026-09-11",
     "group": "2026-09-11",
