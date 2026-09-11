@@ -1309,11 +1309,17 @@
   width:100%; max-width:100%; box-sizing:border-box;
 }
 
-/* Status capacity is reserved even when empty; opening overflow does not reflow the HUD. */
+/* Status capacity is reserved even when empty; opening overflow does not reflow the HUD.
+   THE RESERVED TRAY ANSWERS NO HIT. A back-row fighter's stack lands over the
+   front row's nameplates, and this tray — 24 px tall with nothing in it — was
+   what `elementFromPoint` returned at the centre of the second Blight Hound's
+   name at 390x650 (tools/screenreach.mjs, red on dev since #788). Only the pips
+   inside it are controls; the tray and its gaps pass the press through. */
 :root .combat[data-layout='formation'] .combatant .statuses {
  display:flex; flex-wrap:nowrap; align-items:center; gap:calc(3px / var(--ui-zoom,1));
- height:calc(24px / var(--ui-zoom,1)); min-height:calc(24px / var(--ui-zoom,1)); width:100%; margin:0; pointer-events:auto;
+ height:calc(24px / var(--ui-zoom,1)); min-height:calc(24px / var(--ui-zoom,1)); width:100%; margin:0; pointer-events:none;
 }
+:root .combat[data-layout='formation'] .combatant .statuses > * { pointer-events:auto; }
 :root .combat[data-layout='formation'] .statuses .status-icon {
  flex:none; width:calc(21px / var(--ui-zoom,1)); height:calc(21px / var(--ui-zoom,1)); min-width:0; min-height:0;
  font-size:calc(13px / var(--ui-zoom,1)); box-sizing:border-box;
@@ -1400,10 +1406,24 @@
   height:calc(52px / var(--ui-zoom,1)); min-height:calc(52px / var(--ui-zoom,1)); padding-inline:2px;
 }
 @media (max-width:480px) {
+  /* A PHONE'S ROW, measured at 390x844 on 2026-09-11: the two 78 px orbs took
+     156 of 374 px, Draw and Discard were 64 wide, and End Turn was a 74x52 box
+     carrying "End Turn", the E keycap and HOLD on three lines. The orbs come
+     down to 56 (still over the 44 tap floor), the keycap goes (a thumb has no E
+     to press — the kit already hides keycaps under `pointer: coarse`, and a
+     phone-wide viewport is the same statement made by width), and End Turn
+     stacks its label over its hold hint on one line each. */
+  :root .combat:not(.coop)[data-layout='formation'] > .hand-area { --combat-orb-size:calc(56px / var(--ui-zoom,1)); }
   :root .combat:not(.coop)[data-layout='formation'] > .hand-area > .combat-action-row {
     grid-template-columns:var(--combat-orb-size) minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr) var(--combat-orb-size);
     gap:calc(4px / var(--ui-zoom,1));
   }
+  :root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .end-turn {
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(2px / var(--ui-zoom,1));
+    white-space:nowrap; padding-inline:2px; font-size:max(1.2rem, calc(13px / var(--ui-zoom,1)));
+  }
+  :root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .end-turn > .et-key { display:none; }
+  :root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .end-turn > .hold-hint { margin-left:0; }
 }
 @media (max-height:500px) {
   :root .combat:not(.coop)[data-layout='formation'] { grid-template-rows:10% minmax(0,1fr) calc(248px / var(--ui-zoom,1)); }
