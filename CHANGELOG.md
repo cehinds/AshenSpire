@@ -32,7 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-11
 
-- **Explanations wait for you to ask** ([#968](https://github.com/cehinds/AshenSpire/pull/968), `0.6.0.135`). A tooltip now opens after a second of hovering instead of half a second; the delay setting still offers faster. Tapping or clicking a detail highlights it, and a second tap or click explains it — so a stray touch never opens one. Cards no longer explain themselves on hover: select a card and use its Information button. Keyboard focus still explains after half a second.
+- **Explanations wait for you to ask** ([#968](https://github.com/cehinds/AshenSpire/pull/968), `0.6.0.136`). A tooltip now opens after a second of hovering instead of half a second; the delay setting still offers faster. Tapping or clicking a detail highlights it, and a second tap or click explains it — so a stray touch never opens one. Cards no longer explain themselves on hover: select a card and use its Information button. Keyboard focus still explains after half a second.
+- **The boot check waits for the tower's entrance** ([#963](https://github.com/cehinds/AshenSpire/pull/963), `0.6.0.134`). #949 lights the city, holds, and fades before the title appears; the startup check still judged the reveal a fraction of a second after the press and called it missing. It now waits for the title the way it already did for a mouse or a tap, and its "gate still standing" claims no longer count a reveal that has begun. Nothing in the game changed.
 
 ## 2026-09-10
 
