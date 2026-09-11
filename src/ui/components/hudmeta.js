@@ -127,19 +127,17 @@ export function inventoryBeltHtml(model) {
 }
 
 export function sharedRunHudHtml(model) {
-  const { place, headerClass, overlayHtml, hudMode } = model.properties;
-  const grip = childModel(model, UI.hudModeGrip);
-  const gripButton = iconButton({
-    glyph: hudMode === 'compact' ? '⌄' : '⌃', label: grip.accessibility.label, className: 'hud-mode-grip as-grip',
-    attrs: { ...attrsOf(uiComponentAttrs(grip.component, grip.variant)), 'data-next-mode': grip.properties.next, title: grip.accessibility.hint },
-  });
-  return `<header class="topbar combat-hud shared-hud as-band stack${headerClass ? ` ${esc(headerClass)}` : ''}" data-hud-mode="${esc(hudMode)}" data-has-utility-potions="false" ${uiComponentAttrs(model.component, place)}>
+  const { place, headerClass, overlayHtml } = model.properties;
+  // NO GRIP. The band used to hang a fold control off its bottom edge that
+  // snapped it between Expanded and a compact strip; the owner called it a
+  // stray button (2026-09-11) and it went, and the compact mode with it — the
+  // band draws one way.
+  return `<header class="topbar combat-hud shared-hud as-band stack${headerClass ? ` ${esc(headerClass)}` : ''}" data-has-utility-potions="false" ${uiComponentAttrs(model.component, place)}>
     <div class="hud-top as-cluster stack">
       ${runHeaderStripHtml(childModel(model, UI.runHeaderStrip))}
       ${primaryHudRowHtml(childModel(model, UI.primaryHudRow))}
       ${inventoryBeltHtml(childModel(model, UI.inventoryBelt))}
     </div>
-    ${html(gripButton)}
     ${overlayHtml}
   </header>`;
 }
