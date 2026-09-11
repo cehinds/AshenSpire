@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-11",
     "summary": "A written plan for how your character will grow",
     "detail": "Nothing a player sees changes. The owner's design for the next ruleset is now a document in the repository rather than a conversation: weapons, armour, relics and your class all become cards you wear; using a weapon levels a skill that offers you cards; your character levels from experience and grants one attribute point each time; mana stays a fixed pool that only potions, rests and named effects refill; every rest restores some mana; and every number in it is a settings row. It ends with the order the work will land in.",
-    "build": "0.6.0.159",
+    "build": "0.6.0.160",
     "pullRequest": 985,
     "url": "https://github.com/cehinds/AshenSpire/pull/985"
+  },
+  {
+    "id": "pr-986",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A breath between the last blow and the loot",
+    "detail": "When the last enemy falls, the fight's title — Victory, Elite vanquished, or the boss's name falling — now stands over the battlefield for a moment before the reward screen opens, instead of the loot appearing the instant the fight ends. The Reduced motion setting skips the pause.",
+    "build": "0.6.0.159",
+    "pullRequest": 986,
+    "url": "https://github.com/cehinds/AshenSpire/pull/986"
   },
   {
     "id": "pr-982",
