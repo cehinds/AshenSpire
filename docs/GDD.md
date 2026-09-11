@@ -98,6 +98,8 @@ Narrative is ambient and economical. It appears through locations, silhouettes, 
 
 The Goldbough burned. Its light collapsed inward, crystallizing into the Ashen Spire while ember began to flow upward. The Forsaken climbs to restore, claim, or transform the Sovereign Ember at its crown.
 
+Three flames once ran the kingdom from the Ember — the Field Flame, the Court Flame and the Crown Flame, one per tier of the Spire. All three are cold; their heat now burns inside the corrupted as cinders. Each act is one hearth: take the cinders, kill the boss that holds the largest, and the flame relights. The full world — the Burning, the Blight, the orders, the bosses' places in it, and the authoring vocabulary — is in [LORE.md](LORE.md).
+
 ### 4.2 Acts
 
 - **Act I — The Fallow Marches:** Overgrown foothills, broken soldiery, blight-touched beasts, grave-wisps. Umber, iron, and faint gold. The act teaches intent reading and immediate tradeoffs.
