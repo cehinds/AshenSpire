@@ -1142,7 +1142,7 @@
 :root .combat[data-layout='formation'] .combatant :is(.status-row,.stance-chip,.foundation-evade,.dodge-receipt) { pointer-events: auto; }
 :root .combat[data-layout='formation'] .combatant [data-tip-attached], .combat .turn-ribbon { pointer-events: auto; }
 .combat-ability-badge { cursor: pointer; }
-.combat-ability-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.combat-ability-badge:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
 :root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) .combatant-leading { z-index: 30; }
 :root .combat[data-layout='formation'] > .hand-area {
   grid-row: 3; height: 100%; min-height: 0; margin: 0; padding: 0;
@@ -1394,7 +1394,7 @@
 .combatant-leading .intent.staggered { font-size: calc(18px / var(--ui-zoom, 1)); }
 .combatant-leading .intent.dashed { border-style: dashed; }
 .combatant-leading .overhead-control:is(.tooltip-selected, :focus-visible) {
-  outline: calc(3px / var(--ui-zoom, 1)) solid #fff2bd;
+  outline: var(--focus-ring);
   outline-offset: calc(3px / var(--ui-zoom, 1));
   box-shadow: 0 0 12px #f8d98588, inset 0 1px 0 #ffffff55;
 }

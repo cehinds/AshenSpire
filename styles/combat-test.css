@@ -14,7 +14,7 @@
 .combat-test-setup select,.combat-test-setup input[type=number]{width:100%;min-height:46px;padding:10px;background:#211f1d;color:#eee5d6;border:1px solid #686054;border-radius:6px;font:inherit}
 .combat-test-setup button,.test-exit{min-height:48px;padding:12px 22px;border:1px solid #c9ac71;border-radius:6px;background:#302b23;color:#f7edda;font:inherit;cursor:pointer;margin:0 12px 12px 0}
 .combat-test-setup .test-start{background:#c9ac71;color:#171510;font-weight:bold}
-.combat-test-setup :focus-visible{outline:3px solid #a9d9fb;outline-offset:4px}
+.combat-test-setup :focus-visible{outline:var(--focus-ring);outline-offset:4px}
 .test-help{margin:20px 0;padding:16px 0;border-top:1px solid #554d42}
 .test-help summary{cursor:pointer;min-height:40px}
 .test-note{color:#a8a49b;font-size:13px;max-width:780px}

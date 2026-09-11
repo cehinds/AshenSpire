@@ -101,8 +101,7 @@ button, .as-btn {
   cursor: pointer;
   transition: background 120ms, border-color 120ms;
 }
-button:hover, .as-btn:hover, button:focus-visible, .as-btn:focus-visible { background: var(--panel); border-color: var(--gold); outline: none; }
-button:focus-visible, .as-btn:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
+button:hover, .as-btn:hover, button:focus-visible, .as-btn:focus-visible { background: var(--panel); border-color: var(--gold); }
 button:disabled, .as-btn:disabled, .as-btn[aria-disabled="true"] { border-color: var(--line); color: var(--muted); background: var(--panel); cursor: default; }
 button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 1.38rem; padding: 0.75rem 1.65rem; }
 button.primary, .as-btn.primary { background-color: color-mix(in srgb, var(--gold) 20%, var(--panel)); border-color: var(--gold); color: var(--parchment); font-weight: 600; }
@@ -134,7 +133,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
   cursor: pointer;
 }
 .as-iconbtn:hover, .modal-iconbtn:hover, .modal-close:hover,
-.as-iconbtn:focus-visible, .modal-iconbtn:focus-visible, .modal-close:focus-visible { border-color: var(--gold); color: var(--gold); outline: none; background: var(--panel); }
+.as-iconbtn:focus-visible, .modal-iconbtn:focus-visible, .modal-close:focus-visible { border-color: var(--gold); color: var(--gold); background: var(--panel); }
 
 /* Close keeps the full accessible hit target above, while its visible square
    is 75% of that target. Every modal inherits the same smaller corner mark. */
@@ -146,7 +145,6 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
 }
 .modal-close:hover, .modal-close:focus-visible { background: transparent; border-color: transparent; }
 .modal-close:hover > .modal-close-face, .modal-close:focus-visible > .modal-close-face { border-color: var(--gold); }
-.modal-close:focus-visible > .modal-close-face { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
 
 /* ButtonRow — a grid of EQUAL tracks; the row is min(box, n × step). */
 .as-btnrow, .modal-btnrow {
@@ -193,7 +191,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
   cursor: pointer;
 }
 .as-tab[aria-selected="true"], .modal-tab[aria-selected="true"], .modal-tab.on, .as-tab.on { color: var(--gold); border-bottom-color: var(--gold); background: transparent; }
-.as-tab:hover, .modal-tab:hover, .as-tab:focus-visible, .modal-tab:focus-visible { color: var(--parchment); outline: none; background: transparent; border-color: transparent; border-bottom-color: var(--line-soft); box-shadow: none; }
+.as-tab:hover, .modal-tab:hover, .as-tab:focus-visible, .modal-tab:focus-visible { color: var(--parchment); background: transparent; border-color: transparent; border-bottom-color: var(--line-soft); box-shadow: none; }
 .as-tab[aria-selected="true"]:hover, .modal-tab[aria-selected="true"]:hover, .modal-tab.on:hover { border-bottom-color: var(--gold); }
 
 /* RailItem — switches SECTION. Bordered, full width of its rail, gold when
@@ -301,8 +299,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
   text-align: left; white-space: nowrap;
   cursor: pointer;
 }
-.as-row:hover, .as-row:focus-visible { background: var(--panel); border-color: transparent; outline: none; box-shadow: none; }
-.as-row:focus-visible { box-shadow: inset 0 0 0 1px var(--gold); }
+.as-row:hover, .as-row:focus-visible { background: var(--panel); border-color: transparent; box-shadow: none; }
 .as-row > .r-label { flex: 0 1 auto; }
 .as-row > .as-status, .as-row > .r-trail { margin-left: auto; }
 .as-row > .as-status + .r-trail { margin-left: 0; }
@@ -571,7 +568,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
   letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase;
   cursor: pointer;
 }
-.as-titlemenu .tm-entry:hover, .as-titlemenu .tm-entry:focus-visible { color: var(--gold); outline: none; background: transparent; box-shadow: none; }
+.as-titlemenu .tm-entry:hover, .as-titlemenu .tm-entry:focus-visible { color: var(--gold); background: transparent; box-shadow: none; }
 .as-titlemenu .tm-entry:disabled { color: var(--muted); background: transparent; }
 .as-titlemenu > .as-ornament { margin-top: 1.35rem; margin-inline: auto; }
 .as-titlemenu .tm-foot { --track: 0.2em; margin-top: 1.5rem; color: var(--muted); font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; }
@@ -609,7 +606,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
 }
 .as-row.setting input[type="number"] { width: 9rem; text-align: right; }
 .as-row.setting input[type="text"] { width: min(100%, 30rem); }
-.as-row.setting input:focus-visible { border-color: var(--gold); outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
+.as-row.setting input:focus-visible { border-color: var(--gold); }
 .as-row.setting input[type="range"] { width: 18rem; accent-color: var(--gold); cursor: pointer; }
 input[type="range"] { min-height: var(--tap-floor); }
 .as-row.setting > .as-status.range-val { flex: 0 0 auto; margin-left: auto; min-width: 3.6rem; color: var(--gold); font-variant-numeric: tabular-nums; }
@@ -852,7 +849,7 @@ input[type="range"] { min-height: var(--tap-floor); }
 }
 .card-inspection-target[data-truncated="true"] > .card-more-button:hover,
 .card-inspection-target[data-truncated="true"] > .card-more-button:focus-visible { color: var(--gold); background: transparent; }
-.card-inspection-target[data-truncated="true"] > .card-more-button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.card-inspection-target[data-truncated="true"] > .card-more-button:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
 
 /* ═══ COMBATANT — one shape, three statures ════════════════════════════════ */
 /* Stature is DERIVED from the encounter pool (normal → normal, elite → large,
@@ -876,7 +873,7 @@ input[type="range"] { min-height: var(--tap-floor); }
    cursor and the focus ring. */
 .combatant .nm-inspect { cursor: help; min-height: var(--tap-floor); display: flex; flex-direction: column; justify-content: center; }
 .combatant .nm-inspect:hover .ls-label, .combatant .nm-inspect:focus-visible .ls-label { color: var(--gold); }
-.combatant .nm-inspect:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1); }
+.combatant .nm-inspect:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); border-radius: var(--r-1); }
 .as-tip[data-tooltip-variant="combatant-context"] > .as-btn {
   display: flex; width: 100%; min-height: 0; padding: 3px 8px;
   margin-top: 6px; font-size: 0.85em; line-height: 1.3;
@@ -1453,7 +1450,7 @@ details.character-info-card > summary > .character-info-head > .as-status {
   font-size: max(1.2rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.45;
   white-space: normal; overflow-wrap: anywhere; overflow: visible;
 }
-details.character-info-card > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+details.character-info-card > summary:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
 /* ═══ STEPPER — a −/count/+ unit of two tap-floor buttons ═════════════════ */
 .as-stepper { display: inline-flex; align-items: center; gap: 0.75rem; flex: 0 0 auto; }
 .as-stepper > .as-btn { width: var(--tap-floor); min-width: var(--tap-floor); padding: 0; font-size: 1.8rem; line-height: 1; }
@@ -1466,7 +1463,6 @@ details.character-info-card > summary:focus-visible { outline: 2px solid var(--g
 .as-splitter::before { content: ''; position: absolute; inset: 0 0.28rem; background: var(--line-soft); border-radius: var(--r-pill); }
 .as-splitter[aria-orientation="horizontal"]::before { inset: 0.22rem 0; }
 .as-splitter:hover::before, .as-splitter:focus-visible::before, .as-splitter.dragging::before { background: var(--gold); box-shadow: 0 0 0.5rem rgba(var(--accent-rgb), 0.55); }
-.as-splitter:focus-visible { outline: none; }
 /* ═══ FOLDING TRAY — a docked region that folds to its header ═════════════ */
 /* The header is a Row (caret Glyph + Title·S + StatusText count) beside an
    IconButton; the body is a Pane. Folded, only the header stands; unfolded,
@@ -1948,6 +1944,13 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 /* The kit's danger tint (the kit page's rgba(212, 98, 46)); nothing in
    base.css named it, so every `.danger` weight read an unset variable. */
 :root { --danger: #d4622e; }
+/* THE FOCUS RING, ONE TOKEN (Constantine's review, 2026-09-11). Every control
+   — kit atom, repo hook class, the pad's cursor — wears this ring on
+   :focus-visible and .gp-focus, from base.css's one house rule. Fourteen
+   per-component rings (2px, 3px, gold, #f2d87e, #fff0bd, box-shadow halos,
+   inset lines) used to say the same thing in different inks; a component
+   may still move its OFFSET (inside a card, on a tab) but never its ink. */
+:root { --focus-ring: 2px solid var(--gold); --focus-ring-offset: 2px; }
 
 /* ═══ METER — a resource read at a glance ══════════════════════════════════ */
 /* Label · value · track. The TRACK's length is data (the surface writes its
@@ -2027,8 +2030,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
    (a chip that is only read). The count is a round StatePill on the corner,
    the key a Keycap in the other. */
 .as-slot { position: relative; display: inline-grid; place-items: center; flex: 0 0 auto; box-sizing: border-box; width: var(--iconbtn-size); height: var(--iconbtn-size); min-width: var(--iconbtn-size); min-height: var(--iconbtn-size); padding: 0; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2); color: var(--parchment); cursor: pointer; overflow: visible; }
-.as-slot:hover, .as-slot:focus-visible { border-color: var(--gold); background: var(--panel); outline: none; }
-.as-slot:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
+.as-slot:hover, .as-slot:focus-visible { border-color: var(--gold); background: var(--panel); }
 .as-slot.is-selected { border-color: var(--parchment); box-shadow: 0 0 0 1px var(--parchment); }
 .as-slot[aria-disabled="true"] > .sl-art { opacity: 0.5; filter: grayscale(0.6); }
 .as-slot.sm { width: 3rem; height: 3rem; min-width: 3rem; min-height: 3rem; }
@@ -2201,9 +2203,6 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .shared-hud .hud-bottom .as-slot:focus-visible::before {
   border-color: var(--gold);
 }
-.shared-hud .hud-bottom .as-slot:focus-visible::before {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent);
-}
 .shared-hud .hud-bottom .as-slot.is-selected::before {
   border-color: var(--parchment);
   box-shadow: 0 0 0 1px var(--parchment);
@@ -2336,7 +2335,7 @@ body.pad-mode .as-keycap.float { display: none; }
 .combatant-ability { border-bottom: 1px solid var(--line); padding-block: 0.25rem; }
 .combatant-ability > summary { color: var(--gold); font-weight: 600; }
 .combatant-ability > .as-prose { margin: 0.2rem 0 0.65rem; }
-.combatant-abilities summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.combatant-abilities summary:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 .combatant-inspector-section > .as-hairline { margin: 0.35rem 0 0.2rem; }
 .combatant-inspector-row { padding-inline: 0; white-space: normal; align-items: flex-start; }
 .combatant-inspector-row > .r-label { flex: 0 1 auto; }
@@ -2822,7 +2821,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-flavor { font:italic 12px/1.3 Georgia,serif; color:#baa98c; padding-top:6px; border-top:1px solid #5e4c32; }
 .epc-footer { display:flex; justify-content:space-between; gap:8px; font:10px/1.1 Arial,sans-serif; color:#ac9c7f; text-transform:uppercase; letter-spacing:.04em; }
 .epc-footer > :last-child { color:var(--accent); }
-.equipment-poker-card [tabindex]:focus-visible { outline:2px solid #f2d87e; outline-offset:2px; }
+.equipment-poker-card [tabindex]:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .equipment-poker-inspection { min-width:0; width:100%; }
 .equipment-poker-explanations { margin-top:12px; font:14px/1.5 Arial,sans-serif; color:#eee3ca; text-align:left; overflow-wrap:anywhere; }
 .equipment-poker-explanations summary { cursor:pointer; padding:12px; border:1px solid #74603c; border-radius:5px; background:#221b14; }
@@ -2948,7 +2947,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--card-info-size,var(--tap-floor)) + 10px)); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
 .inspection-selected { outline:3px solid #e0bd68; outline-offset:3px; border-radius:12px; }
-.card-info-button:focus-visible { outline:3px solid #fff0bd; outline-offset:2px; }
+.card-info-button:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .card-info-button::before { content:''; position:absolute; inset:100% -8px -12px; }
 .card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,190px) minmax(0,1fr); }
 .card-inspection-modal .card-inspection-art > .card { width:100%; height:auto; aspect-ratio:5/7; box-sizing:border-box; }
@@ -2969,7 +2968,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .inspection-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
 .inspection-tag { display:inline-block; max-width:100%; padding:4px 8px; border:1px solid var(--line); border-radius:5px; color:var(--gold); font:inherit; font-size:13px; line-height:1.4; white-space:normal; overflow-wrap:anywhere; cursor:help; }
 .tooltip-keyword { color:var(--gold); border-bottom:1px dotted currentColor; cursor:help; }
-.tooltip-keyword:focus-visible, .inspection-tag:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
+.tooltip-keyword:focus-visible, .inspection-tag:focus-visible { outline:var(--focus-ring); outline-offset:3px; }
 .inspection-facts { display:flex; flex-wrap:wrap; gap:8px; }
 .inspection-facts .inspection-tag { font-size:15px; color:var(--parchment); }
 .inspection-effect { margin:0 0 14px; font-size:18px; line-height:1.55; }
@@ -3222,13 +3221,8 @@ button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-read
 .as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
   scale:1.015; translate:0 -2px; box-shadow:0 4px 10px #0005;
 }
-/* The lift's shadow sits at higher specificity than the house focus ring and
-   used to replace it, so a keyboard user focusing a ready primary saw nothing
-   change. Ring and lift together. */
-button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):focus-visible,
-.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):focus-visible {
-  box-shadow:0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent), 0 4px 10px #0005;
-}
+/* The lift's shadow used to replace a box-shadow ring here; the ring is an
+   OUTLINE now (--focus-ring, base.css), so lift and ring never compete. */
 .modal-foot:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) {
   flex-direction:column; align-items:stretch;
 }
