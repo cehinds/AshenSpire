@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-11
+
+- **The combat board fills a desktop screen** ([#964](https://github.com/cehinds/AshenSpire/pull/964), `0.6.0.134`). On a wide window the fighters and the hand grew with the stage instead of staying phone-sized; Draw and Discard stopped stretching across a third of the screen each, and Actions, End Turn and Potions stand as tall as their row allows. Phones keep the layout they had. The small fold button above the turn banner that snapped the top bar compact is gone, and with it the compact top bar.
+
 ## 2026-09-10
 
 - **The combat screen draws again** ([#956](https://github.com/cehinds/AshenSpire/pull/956), `0.6.0.132`). #939 landed reading a name #945 had renamed, so the board mounted with no enemies and no hand. Two words, corrected.

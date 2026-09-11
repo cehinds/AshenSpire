@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-964",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The combat board fills a desktop screen",
+    "detail": "On a wide window the fighters and the hand grew with the stage instead of staying phone-sized; Draw and Discard stopped stretching across a third of the screen each, and Actions, End Turn and Potions stand as tall as their row allows. Phones keep the layout they had. The small fold button above the turn banner that snapped the top bar compact is gone, and with it the compact top bar.",
+    "build": "0.6.0.134",
+    "pullRequest": 964,
+    "url": "https://github.com/cehinds/AshenSpire/pull/964"
+  },
+  {
     "id": "pr-956",
     "date": "2026-09-10",
     "group": "2026-09-10",
