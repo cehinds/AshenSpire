@@ -28,7 +28,7 @@ Seat order is seeded (LORE §6). The seat climbed last hosts the Ashen Crown.
 | Fight / Elite | lane, pool | unchanged |
 | Camp | rest, upgrade, or *keep watch* (companion talk, a rumor) | today's shrine, renamed, with a third option |
 | Wayfarer | one villager, one line of world, one choice | an event with `kind: 'wayfarer'`; short, 2 choices |
-| Quest | accept a task with an objective on the road or in the city | World Journey quest rows, bound to road nodes |
+| Quest | accept a task with an objective on the road or in the city; the objective lights on the map and a lane leads to it (§2b) | World Journey quest rows, bound to road nodes |
 | Cache | loot with a catch (pay cinders, a card, HP, or a companion's trust) | treasure node that opens an event before the reward |
 | Caravan | small seat-specific shop, buys back | shop with a `caravan` stock profile |
 | Delve | optional cave, 2–3 floors, one guardian, leave any time | World Journey local map, small; phase 6 |
@@ -37,6 +37,56 @@ Seat order is seeded (LORE §6). The seat climbed last hosts the Ashen Crown.
 Suggested mix per seat (data, `typeWeights`): fight 35, wayfarer 15, camp 12,
 cache 10, quest 8, elite 8, delve 6, caravan 6. Fixed rows: first floor fight,
 city at ~0.50, treasure removed (the cache replaces it).
+
+### 2b. Quest light — how a quest shows on the map
+
+Today the map already answers "how much do you know about this node" on one
+ladder (`hidden → placed → known`, `model/mapknowledge.js`) and already draws one
+guided walk, the shrine lane, clipped to what the fog has revealed. A quest is a
+**second light source and a second lane** on that same machinery. Nothing new is
+invented; two rules are added to the ones that exist.
+
+**Accepting a quest lights its objective.** The objective node lifts from
+`hidden` straight to `known`: you were told what it is and where. Nothing else
+lifts. Edges draw only when both ends are drawn (the existing rule), so the road
+to it stays under fog — the node is unfogged, not the path.
+
+**The quest lane.** From where the player stands, the forward walk to the
+objective is computed exactly as the shrine lane is (same BFS, same
+deterministic tie-break, recomputed on every mount, never stored) and painted
+only where nodes are already drawn. It uses its own colour channel, distinct from
+shrine gold and from the reachable ring, so it can never read as "you may step
+here". One token, `--map-quest-lane`, judged against the same 3:1 rule as every
+other map cue (proposal-45).
+
+**Lookahead.** The lane also carries a little light of its own: the next `N`
+floors of the walk ahead of the player lift from `hidden` to `placed` — a `?`
+mark, "something is on the way" — never to `known`. `N` is data per quest
+(default 2) so a long escort can be generous and a hunt can stay blind. This is
+the "revealed x stages early" ask, kept at node level.
+
+**Objectives chain.** A quest is a list of objectives; each has its own light and
+lane in turn. Reaching one completes it and moves the lane to the next; the last
+is usually the turn-in (a city quest board, a giver on the road). A completed
+objective keeps a small mark so the map remembers what you did there.
+
+**Out of reach.** The climb is forward-only. A fork that cuts the objective off
+makes the lane vanish and marks the quest *out of reach this seat* on the board,
+with the fork named. Whether it fails or carries to the city or the next seat is
+per quest (data). Nothing silently disappears.
+
+**Several quests.** Each accepted quest has a lane. Shared edges take the colour
+of the nearer objective; at most two lanes paint at once, the rest show on the
+board only. Settings → Display gains *Quest path glow*, default on, beside the
+shrine toggle; reduced motion keeps the glow and drops the pulse.
+
+**Fog invariant, unchanged.** Quest light is a *light source* (accepted
+objectives, plus lookahead from where you stand), not a lane that paints through
+fog. Accepted quests only grow and position only moves forward, so the light stays
+monotone, which is the property the fog self-test asserts today.
+
+**World Journey.** Same two rules over its terrain reveal: an accepted quest
+marks its objective landmark on the parchment; roads stay unrevealed until walked.
 
 ### 3. The city
 
@@ -98,7 +148,7 @@ requirements beside content, exactly as event requirements are.
 
 | Authored per seat | Seeded per run |
 |---|---|
-| region, city, tower, boss pool, companion pool, voices | seat order, road graph, node types, wayfarer draws, rolled sites, boss pick and form, floor count, caravan and card-teacher stock |
+| region, city, tower, boss pool, companion pool, voices, quest objectives and lookahead | seat order, road graph, node types, wayfarer draws, rolled sites, boss pick and form, floor count, caravan and card-teacher stock, which quests are offered |
 
 ## Part II — Implementation plan
 
@@ -160,6 +210,19 @@ River Citadel pair.
 | Caravan = `buildShopStock` with a `caravan` profile (small, seat-flavored) | `engine/encounters.js:193`, `content/balance.js` |
 | Remove the fixed treasure row | `content/mapconfig.js` |
 | Tests: weights sum, wayfarer length rule enforced by `validateContent`, cache always yields a reward path | `tests/engine.test.js` |
+
+### Phase 3b — Quest light · S
+
+| Change | Where |
+|---|---|
+| Quest row: `objectives: [{ target: nodeId or { type }, lookahead: 2, onCutOff: 'fail' or 'carry' }]`, `laneKind` | `content/quests.js` (classic) / atlas `quests` table (World Journey); schema + validate |
+| Run state `quests: { [questId]: { state: 'accepted' or 'done' or 'cutOff', objectiveIndex } }`; accept/complete/turn-in are run facts like event choices | `model/quests.js`, `model/state.js` |
+| `litNodes` gains two sources: accepted objectives (→ `known`) and lane lookahead (→ `placed`); `questLane` beside `shrineLane`, same BFS | `model/mapknowledge.js` |
+| Board clips the quest lane to drawn nodes exactly as the shrine lane; per-lane class and colour token; done-mark on completed objectives | `ui/components/mapboard.js`, `styles/map.css`, `--map-quest-lane` |
+| Settings → Display · Quest path glow, default on; reduced-motion rule | `ui/screens/settings.js`, `model/mapknowledge.js resolveQuestGlow` |
+| Cut-off detection: objective unreachable from the current node ⇒ `cutOff`; the board names the fork | `model/mapknowledge.js`, quest board UI |
+| Fog self-test asserts lane containment and light monotonicity with quests on | `tools/mapfog.mjs --selftest` |
+| Tests: accept lights only the objective, lookahead never yields `known`, lane never paints a hidden node, two-lane cap, cut-off names the fork, save round-trip | new `tests/questLight.test.mjs` |
 
 ### Phase 4 — Consequence targets · S
 
