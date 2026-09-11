@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-11",
     "summary": "A red warning stopped appearing over screens that were fine",
     "detail": "The game has one way of telling you a button just died: a red block that says something stopped working. It was also showing that block for a message the browser sends when it simply ran out of time mid-frame and finished the job on the next one — nothing broke, nothing was lost, and the thing you pressed had worked. It turned up on the character-creation screen, and it named no file or line because there was nothing to name. That notice now goes quietly into the Command log, where it is still there to read if a screen ever does feel sluggish, and the red block is kept for what it was for. A real fault still raises it, including one that merely mentions the same browser feature by name.",
-    "build": "0.6.0.145",
+    "build": "0.6.0.147",
     "pullRequest": 966,
     "url": "https://github.com/cehinds/AshenSpire/pull/966"
+  },
+  {
+    "id": "pr-970",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A check that had been crashing instead of checking now runs",
+    "detail": "Nothing a player sees changes. One of the project's own quality checks — the one that proves the Music setting and the Quick Menu agree about what is on — was not failing and not passing: it was dying on startup, before it looked at anything. A small piece of card-drawing code runs two lines when it finds itself inside a browser, and it tested for only half of what those two lines actually use, so a checking harness that supplies the other half and not that half walked straight into a crash. The test now asks for both things it needs. The check reports thirty-two passes where it used to report nothing at all.",
+    "build": "0.6.0.145",
+    "pullRequest": 970,
+    "url": "https://github.com/cehinds/AshenSpire/pull/970"
   },
   {
     "id": "pr-961",
