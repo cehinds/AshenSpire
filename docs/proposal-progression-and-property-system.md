@@ -140,8 +140,10 @@ Tracks: one per weapon group, one per armor group, one per focus group,
 
 ## F. Combat resources and defense
 
-37. **Mana has no natural regeneration** (contract line stands). Every mana
-    card costs at least 1 action and 1 stamina; mana is the third cost line,
+37. **Mana has no per-turn regeneration** (contract line stands). It recovers
+    only from Azure flask charges (mana potions) and a full rest at the Shrine
+    of Emberlight, plus authored property sources such as `siphon` and
+    Lodestar Shard. Every mana card costs at least 1 action and 1 stamina; mana is the third cost line,
     never the first. Payoff scale versus a same-action physical card:
 
     | Cost | Expected payoff |
@@ -156,7 +158,7 @@ Tracks: one per weapon group, one per armor group, one per focus group,
     visible on the face.
 40. **Arcane Exposure stays an enemy meter.** Mana refund is a property, not a
     meter rule: `siphon` on the scepter → on `arcaneBreak` where source is
-    owner, gain 1 mana; focus level 7 raises it to 2 via a `skillLevelAtLeast`
+    owner, `restoreMana` 1; focus level 7 raises it to 2 via a `skillLevelAtLeast`
     branch in the same row. Staff `staggerBreak` (6 poise damage on break),
     wand `overcharge` (buildup ×1.5, no break bonus), orb `resonance` (break
     spreads half the threshold to other enemies). Tune so a break costs more
@@ -180,7 +182,7 @@ Tracks: one per weapon group, one per armor group, one per focus group,
 
 ## G. Engine touches (closed-set additions, each with schema + test)
 
-46. `gainMana` opcode if not present.
+46. Mana gain uses the existing `restoreMana` opcode; no new opcode.
 47. Equipment-granted trigger mount path, shared with relics (one function).
 48. Predicates `skillLevelAtLeast` and `classLevelAtLeast`.
 49. Skill XP ledger, level curve, pending reward queue.
