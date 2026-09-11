@@ -11,6 +11,131 @@ import { previewFoundationAction, foundationTriggerAllowed, foundationDamage } f
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyStatus, advanceStatusClock } from '../src/engine/statuses.js';
+import { prototypeEquipment, prototypeEquipmentRules } from '../src/content/prototypes/combatEquipment.js';
+import { prototypeBuilds, prototypeRegistries } from '../src/content/prototypes/combatBuilds.js';
+import { deriveEquipmentCombatProfile } from '../src/model/equipmentCombatProfile.js';
+import { foundationCarrier } from '../src/engine/combatRules.js';
+
+const gear = (build = 'heavy', options = {}) => prototypeEquipment(prototypeRegistries(), prototypeBuilds[build], options);
+const deriveGear = equipment => deriveEquipmentCombatProfile(equipment, combatRules, prototypeEquipmentRules);
+
+test('equipment projections derive load separately from armor without changing input', () => {
+  const { equipment, profile } = gear();
+  const before = JSON.stringify(equipment);
+  assert.equal(profile.armor, 30); assert.equal(profile.equipmentReceipt.weight, 20); assert.equal(profile.weightClass, 'heavy');
+  const projection = deriveGear(equipment);
+  projection.sources.mainHand.tags.push('local-only');
+  assert.equal(JSON.stringify(equipment), before);
+  equipment.items[1].armor = 80;
+  assert.equal(deriveGear(equipment).equipmentReceipt.weight, 20);
+  assert.equal(deriveGear(equipment).armor, 80);
+  assert.equal(gear('heavy', { armor: 'empty' }).profile.weightClass, 'light');
+  assert.equal(gear('heavy', { armor: 'leather' }).profile.weightClass, 'medium');
+});
+
+test('native two-handed grip requires ceil(1.5x STR) only when one-handed', () => {
+  const { equipment } = gear('heavy', { grip: 'oneHand' });
+  assert.equal(deriveGear(equipment).equipmentReceipt.items[0].requirements.strength, 18);
+  equipment.attributes.strength = 17;
+  const before = JSON.stringify(equipment);
+  assert.throws(() => deriveGear(equipment), /requires 18 strength/);
+  assert.equal(JSON.stringify(equipment), before);
+  equipment.hands.mainHand.grip = 'twoHand'; equipment.attributes.strength = 12;
+  assert.equal(deriveGear(equipment).sources.mainHand.grip, 'twoHand');
+  equipment.items[0].requirements.strength = 13;
+  equipment.hands.mainHand.grip = 'oneHand'; equipment.attributes.strength = 19;
+  assert.throws(() => deriveGear(equipment), /requires 20 strength/);
+  assert.throws(() => gear('bleed', { grip: 'twoHand' }), /unsupported grip/);
+  equipment.items[0].allowedGrips = ['twoHand']; equipment.attributes.strength = 30;
+  assert.throws(() => deriveGear(equipment), /unsupported grip/);
+});
+
+test('equipment refuses conflicting hands and duplicate item or rune identities atomically', () => {
+  const { equipment } = gear('heavy', { bloodRune: true });
+  equipment.hands.offHand = { ...equipment.hands.mainHand };
+  assert.throws(() => deriveGear(equipment), /other hand empty/);
+  equipment.hands.mainHand.grip = equipment.hands.offHand.grip = 'oneHand';
+  assert.throws(() => deriveGear(equipment), /cannot occupy two slots/);
+  equipment.hands.offHand = null;
+  equipment.items.push(structuredClone(equipment.items[0]));
+  assert.throws(() => deriveGear(equipment), /duplicate.*item instance/);
+  equipment.items.at(-1).instanceId = 'second-copy';
+  assert.throws(() => deriveGear(equipment), /duplicate.*rune instance/);
+  equipment.items.at(-1).runes[0].instanceId = 'second-rune';
+  equipment.hands.offHand = { instanceId: 'second-copy', grip: 'oneHand' };
+  assert.equal(deriveGear(equipment).sources.offHand.id, 'second-copy');
+});
+
+test('runes obey quality sockets, compatibility and configured tag/status registries', () => {
+  const { equipment } = gear('bleed');
+  equipment.items[0].quality = 'standard';
+  assert.throws(() => deriveGear(equipment), /socket capacity/);
+  equipment.items[0].quality = 'fine';
+  equipment.items[0].runes[0].scope = 'actor';
+  assert.throws(() => deriveGear(equipment), /unsupported rune scope/);
+  equipment.items[0].runes[0].scope = 'source';
+  equipment.items[0].runes[0].tags.push('invented:tag');
+  assert.throws(() => deriveGear(equipment), /unregistered rune tag/);
+  equipment.items[0].runes[0].tags.pop(); equipment.items[0].runes[0].buildup[0].status = 'invented';
+  assert.throws(() => deriveGear(equipment), /unknown buildup status/);
+  assert.throws(() => gear('caster', { bloodRune: true }), /incompatible rune/);
+  const regs = prototypeRegistries();
+  for (const tag of prototypeEquipmentRules.runeTags) assert(regs.tags.some(row => row.id === tag && row.domain === 'theme'));
+});
+
+test('removing a rune removes derived tags, contact buildup and its value exactly once', () => {
+  const { equipment, profile } = gear('bleed');
+  assert(profile.sources.mainHand.tags.includes('theme:blood'));
+  assert.equal(profile.equipmentReceipt.items[0].value, 125);
+  equipment.items[0].runes = [];
+  const removed = deriveGear(equipment);
+  assert(!removed.sources.mainHand.tags.includes('theme:blood'));
+  assert.deepEqual(removed.sources.mainHand.buildup, []);
+  assert.equal(removed.equipmentReceipt.items[0].value, 100);
+  equipment.hands.mainHand = null;
+  assert.deepEqual(deriveGear(equipment).sources, {});
+  assert.equal(deriveGear(equipment).equipmentReceipt.weight, 3);
+});
+
+test('equipped blade rune stays on its own weapon and cannot leak into focus spells', () => {
+  const { equipment } = gear('bleed');
+  const focus = gear('caster', { grip: 'oneHand' }).equipment.items[0];
+  equipment.items.push(focus); equipment.attributes.intelligence = 18;
+  equipment.hands.offHand = { instanceId: focus.instanceId, grip: 'oneHand' };
+  const input = prototypeInput('bleed', 'basic', 1); input.combatProfiles.player = deriveGear(equipment);
+  const c = createCombat(input);
+  assert(foundationCarrier(c, c.player, { attack: { source: 'weapon' } }).tags.includes('theme:blood'));
+  const spell = foundationCarrier(c, c.player, { attack: { source: 'spell' } });
+  assert.equal(spell.resolvedSource.id, focus.instanceId); assert(!spell.tags.includes('theme:blood'));
+  assert.deepEqual(spell.resolvedSource.buildup, []);
+  equipment.hands.mainHand = null; c.foundation.profiles.player = deriveGear(equipment);
+  const unarmed = foundationCarrier(c, c.player, { attack: { source: 'weapon' } });
+  assert.equal(unarmed.resolvedSource.sourceType, 'unarmed'); assert(!unarmed.tags.includes('theme:blood'));
+});
+
+test('equipment options change real Dodge payment, grip impact and contact Bleed', () => {
+  const light = createCombat(prototypeInput('heavy', 'basic', 1, { equipmentOptions: { armor: 'empty', grip: 'oneHand' } }));
+  play(light, 'dodgeRoll'); assert.equal(light.player.stamina, 4);
+  assert.equal(light.foundation.profiles.player.armor, 0);
+  const result = play(light, 'prototypeHeavy');
+  assert.equal(result.events.filter(e => e.type === 'impactDealt').reduce((sum, e) => sum + e.amount, 0), 4);
+  const bare = createCombat(prototypeInput('bleed', 'basic', 1, { equipmentOptions: { bloodRune: false } }));
+  play(bare, 'prototypeFast'); assert.equal(bare.enemies[0].statuses.bleed, undefined);
+  const blood = createCombat(prototypeInput('bleed', 'basic', 1));
+  play(blood, 'prototypeFast'); assert.equal(blood.enemies[0].statuses.bleed.meter.value, 2);
+});
+
+test('equipment-derived snapshots and previews preserve source identity and damage after reload', () => {
+  const c = createCombat(prototypeInput('bleed', 'armored', 9, { equipmentOptions: { armor: 'plate' } }));
+  const id = inHand(c, 'prototypeFast');
+  const intent = { type: 'playCard', cardInstanceId: id, targetId: 'e1' };
+  const before = state(c);
+  const preview = previewFoundationAction(c, candidate => dispatch(candidate, intent));
+  assert.equal(state(c), before);
+  const restored = restoreCombatSnapshot({ snapshot: serializeCombatSnapshot(c), registries: c.registries, rng: createRng(c.rng.seed, c.rng.getCounters()) });
+  assert.deepEqual(restored.foundation.profiles, c.foundation.profiles);
+  assert.deepEqual(dispatch(restored, intent).events, preview.result.events);
+});
 
 function inHand(c, cardId) {
   for (const pile of ['hand', 'draw', 'discard']) {
