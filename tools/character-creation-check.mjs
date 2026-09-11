@@ -825,13 +825,17 @@ async function checkCatalog(width, height, screenshotName) {
   const interactive = await evaluate(`(() => {
     const second = (key, selector) => document.querySelectorAll('[data-catalog-component="'+key+'"] '+selector)[1];
     const choose = (key, selector) => { const node=second(key,selector); node?.click(); return node ? document.querySelectorAll('[data-catalog-component="'+key+'"] '+selector)[1]?.getAttribute('aria-pressed') : null; };
+    // A kit chip (equipment.js pieceChip) chooses through its Choose button,
+    // and that button carries the pressed state — the chip itself carries none.
+    // The relic specimen is still the catalogue's OptionCard, pressed on itself.
+    const chooseChip = (key) => { const chip=second(key,'.equip-chip'); const btn=chip?.querySelector('.equipment-choose'); btn?.click(); return btn ? document.querySelectorAll('[data-catalog-component="'+key+'"] .equip-chip')[1]?.querySelector('.equipment-choose')?.getAttribute('aria-pressed') : null; };
     const auto=document.querySelector('[data-catalog-component="boolean-setting-toggle"] .cc-switch'); auto.click();
     return {
       classChoice:choose('class-choice-card','.cz-class'),
       auto:document.querySelector('[data-catalog-component="boolean-setting-toggle"] .cc-switch').getAttribute('aria-checked'),
       mode:choose('mode-choice','.se-mode'), sprite:choose('sprite-choice','.style'), tint:choose('tint-choice','.tint'),
       sigil:choose('sigil-choice','.sigil'), keepsake:choose('keepsake-choice','.cz-keepsake'),
-      equipment:choose('equipment-choice-card','.equip-chip'), relic:choose('relic-choice-card','.cc-relic-card'),
+      equipment:chooseChip('equipment-choice-card'), relic:choose('relic-choice-card','.cc-relic-card'),
     };
   })()`);
   assert(interactive.classChoice === 'true' && interactive.auto === 'false'
