@@ -253,6 +253,7 @@ export function openSaveSlotSelector({
     tooltipCleanup?.();
     tooltipCleanup = null;
     hideTooltip();
+    document.removeEventListener('keydown', onKeydown, true);
     veil.remove();
     if (activeSelector?.veil === veil) activeSelector = null;
     if (restoreFocus) queueMicrotask(restoreLauncher);
@@ -403,8 +404,15 @@ export function openSaveSlotSelector({
     focus(`[data-slot-pick="${selectedSlot}"]`);
   };
 
+  // A click on the scrim closes only when the press began there: the gesture
+  // that opened this door can end on the veil, and its trailing click must
+  // not close what it just opened (the shell's bindModalDismiss says why).
+  let scrimPressed = false;
+  veil.addEventListener('pointerdown', (event) => { scrimPressed = event.target === veil; });
   veil.addEventListener('click', (event) => {
-    if (event.target === veil) return close();
+    const pressedHere = scrimPressed;
+    scrimPressed = false;
+    if (event.target === veil) { if (pressedHere) close(); return; }
     const control = event.target.closest('[data-title-action], [data-slot-pick]');
     if (!control || !veil.contains(control)) return;
     const action = control.dataset.titleAction;
@@ -423,10 +431,18 @@ export function openSaveSlotSelector({
     }
     else if (control.dataset.slotPick && !control.classList.contains('is-filled')) activateSlot(Number(control.dataset.slotPick));
   });
-  veil.addEventListener('keydown', (event) => {
+  // Escape and Tab are answered on the document, in capture, and only while
+  // this door is the topmost `[aria-modal]` — the shell's rule. Bound to the
+  // veil, Escape was dead whenever focus sat outside it.
+  const onKeydown = (event) => {
+    if (event.defaultPrevented || closed) return;
+    if (event.key !== 'Escape' && event.key !== 'Tab') return;
+    const top = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
+    if (!veil.contains(top)) return;
     if (event.key === 'Escape') {
+      if (event.repeat) return;
       event.preventDefault();
-      event.stopPropagation();
+      event.stopImmediatePropagation();
       if (loadReviewSlot != null) {
         const slot = loadReviewSlot;
         loadReviewSlot = null;
@@ -443,9 +459,13 @@ export function openSaveSlotSelector({
       } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault();
         first?.focus({ preventScroll: true });
+      } else if (!veil.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first)?.focus({ preventScroll: true });
       }
     }
-  });
+  };
+  document.addEventListener('keydown', onKeydown, true);
 
   host.appendChild(veil);
   activeSelector = { veil, close };

@@ -1,0 +1,1192 @@
+{
+  "settings": [
+    {
+      "settingId": "road"
+    },
+    {
+      "settingId": "city"
+    },
+    {
+      "settingId": "forest"
+    },
+    {
+      "settingId": "dungeon"
+    },
+    {
+      "settingId": "mine"
+    },
+    {
+      "settingId": "shore"
+    }
+  ],
+  "times": [
+    {
+      "timeId": "day"
+    },
+    {
+      "timeId": "dusk"
+    },
+    {
+      "timeId": "night"
+    }
+  ],
+  "weather": [
+    {
+      "weatherId": "any"
+    },
+    {
+      "weatherId": "clear"
+    },
+    {
+      "weatherId": "rain"
+    },
+    {
+      "weatherId": "snow"
+    }
+  ],
+  "profiles": [
+    {
+      "profileId": "ashen-crown/city",
+      "regionId": "ashen-crown",
+      "settingId": "city"
+    },
+    {
+      "profileId": "ashen-crown/dungeon",
+      "regionId": "ashen-crown",
+      "settingId": "dungeon"
+    },
+    {
+      "profileId": "ashen-crown/forest",
+      "regionId": "ashen-crown",
+      "settingId": "forest"
+    },
+    {
+      "profileId": "ashen-crown/road",
+      "regionId": "ashen-crown",
+      "settingId": "road"
+    },
+    {
+      "profileId": "hollow-weald/city",
+      "regionId": "hollow-weald",
+      "settingId": "city"
+    },
+    {
+      "profileId": "hollow-weald/dungeon",
+      "regionId": "hollow-weald",
+      "settingId": "dungeon"
+    },
+    {
+      "profileId": "hollow-weald/forest",
+      "regionId": "hollow-weald",
+      "settingId": "forest"
+    },
+    {
+      "profileId": "hollow-weald/road",
+      "regionId": "hollow-weald",
+      "settingId": "road"
+    },
+    {
+      "profileId": "pale-marches/city",
+      "regionId": "pale-marches",
+      "settingId": "city"
+    },
+    {
+      "profileId": "pale-marches/dungeon",
+      "regionId": "pale-marches",
+      "settingId": "dungeon"
+    },
+    {
+      "profileId": "pale-marches/road",
+      "regionId": "pale-marches",
+      "settingId": "road"
+    },
+    {
+      "profileId": "pale-marches/shore",
+      "regionId": "pale-marches",
+      "settingId": "shore"
+    },
+    {
+      "profileId": "cinder-reach/city",
+      "regionId": "cinder-reach",
+      "settingId": "city"
+    },
+    {
+      "profileId": "cinder-reach/dungeon",
+      "regionId": "cinder-reach",
+      "settingId": "dungeon"
+    },
+    {
+      "profileId": "cinder-reach/mine",
+      "regionId": "cinder-reach",
+      "settingId": "mine"
+    },
+    {
+      "profileId": "cinder-reach/road",
+      "regionId": "cinder-reach",
+      "settingId": "road"
+    },
+    {
+      "profileId": "cinder-reach/shore",
+      "regionId": "cinder-reach",
+      "settingId": "shore"
+    },
+    {
+      "profileId": "drowned-coast/city",
+      "regionId": "drowned-coast",
+      "settingId": "city"
+    },
+    {
+      "profileId": "drowned-coast/dungeon",
+      "regionId": "drowned-coast",
+      "settingId": "dungeon"
+    },
+    {
+      "profileId": "drowned-coast/road",
+      "regionId": "drowned-coast",
+      "settingId": "road"
+    },
+    {
+      "profileId": "drowned-coast/shore",
+      "regionId": "drowned-coast",
+      "settingId": "shore"
+    }
+  ],
+  "nodeProfiles": [
+    {
+      "nodeId": "crownfall",
+      "profileId": "ashen-crown/city"
+    },
+    {
+      "nodeId": "ashen-crown:01:0",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:01:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:01:2",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:02:0",
+      "profileId": "ashen-crown/city"
+    },
+    {
+      "nodeId": "ashen-crown:02:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:02:2",
+      "profileId": "ashen-crown/city"
+    },
+    {
+      "nodeId": "ashen-crown:03:0",
+      "profileId": "ashen-crown/city"
+    },
+    {
+      "nodeId": "ashen-crown:03:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:03:2",
+      "profileId": "ashen-crown/city"
+    },
+    {
+      "nodeId": "ashen-crown:04:0",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:04:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:04:2",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:05:0",
+      "profileId": "ashen-crown/city"
+    },
+    {
+      "nodeId": "ashen-crown:05:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:05:2",
+      "profileId": "ashen-crown/city"
+    },
+    {
+      "nodeId": "bellhaven",
+      "profileId": "ashen-crown/city"
+    },
+    {
+      "nodeId": "ashen-crown:06:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:06:2",
+      "profileId": "ashen-crown/city"
+    },
+    {
+      "nodeId": "ashen-crown:07:0",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:07:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:07:2",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:08:0",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:08:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:08:2",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:09:0",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:09:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:09:2",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:10:0",
+      "profileId": "ashen-crown/dungeon"
+    },
+    {
+      "nodeId": "ashen-crown:10:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:10:2",
+      "profileId": "ashen-crown/dungeon"
+    },
+    {
+      "nodeId": "ashen-crown:11:0",
+      "profileId": "ashen-crown/dungeon"
+    },
+    {
+      "nodeId": "ashen-crown:11:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:11:2",
+      "profileId": "ashen-crown/dungeon"
+    },
+    {
+      "nodeId": "ashen-crown:12:0",
+      "profileId": "ashen-crown/dungeon"
+    },
+    {
+      "nodeId": "ashen-crown:12:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:12:2",
+      "profileId": "ashen-crown/dungeon"
+    },
+    {
+      "nodeId": "black-spire",
+      "profileId": "ashen-crown/dungeon"
+    },
+    {
+      "nodeId": "ashen-crown:13:1",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "ashen-crown:13:2",
+      "profileId": "ashen-crown/dungeon"
+    },
+    {
+      "nodeId": "hollow-weald:01:0",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:01:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:01:2",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:02:0",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:02:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:02:2",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:03:0",
+      "profileId": "hollow-weald/forest"
+    },
+    {
+      "nodeId": "hollow-weald:03:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:03:2",
+      "profileId": "hollow-weald/forest"
+    },
+    {
+      "nodeId": "hollow-weald:04:0",
+      "profileId": "hollow-weald/city"
+    },
+    {
+      "nodeId": "hollow-weald:04:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:04:2",
+      "profileId": "hollow-weald/city"
+    },
+    {
+      "nodeId": "hollow-weald:05:0",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:05:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:05:2",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "lantern-haven",
+      "profileId": "hollow-weald/city"
+    },
+    {
+      "nodeId": "hollow-weald:06:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:06:2",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:07:0",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:07:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:07:2",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:08:0",
+      "profileId": "hollow-weald/forest"
+    },
+    {
+      "nodeId": "hollow-weald:08:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:08:2",
+      "profileId": "hollow-weald/forest"
+    },
+    {
+      "nodeId": "hollow-weald:09:0",
+      "profileId": "hollow-weald/forest"
+    },
+    {
+      "nodeId": "hollow-weald:09:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:09:2",
+      "profileId": "hollow-weald/forest"
+    },
+    {
+      "nodeId": "hollow-weald:10:0",
+      "profileId": "hollow-weald/forest"
+    },
+    {
+      "nodeId": "hollow-weald:10:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:10:2",
+      "profileId": "hollow-weald/forest"
+    },
+    {
+      "nodeId": "hollow-weald:11:0",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:11:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:11:2",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:12:0",
+      "profileId": "hollow-weald/forest"
+    },
+    {
+      "nodeId": "hollow-weald:12:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:12:2",
+      "profileId": "hollow-weald/forest"
+    },
+    {
+      "nodeId": "elder-root",
+      "profileId": "hollow-weald/dungeon"
+    },
+    {
+      "nodeId": "hollow-weald:13:1",
+      "profileId": "hollow-weald/road"
+    },
+    {
+      "nodeId": "hollow-weald:13:2",
+      "profileId": "hollow-weald/forest"
+    },
+    {
+      "nodeId": "pale-marches:01:0",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:01:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:01:2",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:02:0",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:02:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:02:2",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:03:0",
+      "profileId": "pale-marches/shore"
+    },
+    {
+      "nodeId": "pale-marches:03:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:03:2",
+      "profileId": "pale-marches/shore"
+    },
+    {
+      "nodeId": "pale-marches:04:0",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:04:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:04:2",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:05:0",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:05:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:05:2",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "frostgate",
+      "profileId": "pale-marches/city"
+    },
+    {
+      "nodeId": "pale-marches:06:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:06:2",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:07:0",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:07:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:07:2",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:08:0",
+      "profileId": "pale-marches/shore"
+    },
+    {
+      "nodeId": "pale-marches:08:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:08:2",
+      "profileId": "pale-marches/shore"
+    },
+    {
+      "nodeId": "pale-marches:09:0",
+      "profileId": "pale-marches/city"
+    },
+    {
+      "nodeId": "pale-marches:09:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:09:2",
+      "profileId": "pale-marches/city"
+    },
+    {
+      "nodeId": "pale-marches:10:0",
+      "profileId": "pale-marches/city"
+    },
+    {
+      "nodeId": "pale-marches:10:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:10:2",
+      "profileId": "pale-marches/city"
+    },
+    {
+      "nodeId": "pale-marches:11:0",
+      "profileId": "pale-marches/city"
+    },
+    {
+      "nodeId": "pale-marches:11:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:11:2",
+      "profileId": "pale-marches/city"
+    },
+    {
+      "nodeId": "pale-marches:12:0",
+      "profileId": "pale-marches/city"
+    },
+    {
+      "nodeId": "pale-marches:12:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:12:2",
+      "profileId": "pale-marches/city"
+    },
+    {
+      "nodeId": "silent-monastery",
+      "profileId": "pale-marches/dungeon"
+    },
+    {
+      "nodeId": "pale-marches:13:1",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "pale-marches:13:2",
+      "profileId": "pale-marches/city"
+    },
+    {
+      "nodeId": "cinder-reach:01:0",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:01:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:01:2",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:02:0",
+      "profileId": "cinder-reach/mine"
+    },
+    {
+      "nodeId": "cinder-reach:02:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:02:2",
+      "profileId": "cinder-reach/mine"
+    },
+    {
+      "nodeId": "cinder-reach:03:0",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:03:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:03:2",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:04:0",
+      "profileId": "cinder-reach/shore"
+    },
+    {
+      "nodeId": "cinder-reach:04:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:04:2",
+      "profileId": "cinder-reach/shore"
+    },
+    {
+      "nodeId": "cinder-reach:05:0",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:05:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:05:2",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "emberhold",
+      "profileId": "cinder-reach/city"
+    },
+    {
+      "nodeId": "cinder-reach:06:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:06:2",
+      "profileId": "cinder-reach/city"
+    },
+    {
+      "nodeId": "cinder-reach:07:0",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:07:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:07:2",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:08:0",
+      "profileId": "cinder-reach/mine"
+    },
+    {
+      "nodeId": "cinder-reach:08:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:08:2",
+      "profileId": "cinder-reach/mine"
+    },
+    {
+      "nodeId": "cinder-reach:09:0",
+      "profileId": "cinder-reach/city"
+    },
+    {
+      "nodeId": "cinder-reach:09:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:09:2",
+      "profileId": "cinder-reach/city"
+    },
+    {
+      "nodeId": "cinder-reach:10:0",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:10:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:10:2",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:11:0",
+      "profileId": "cinder-reach/city"
+    },
+    {
+      "nodeId": "cinder-reach:11:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:11:2",
+      "profileId": "cinder-reach/city"
+    },
+    {
+      "nodeId": "cinder-reach:12:0",
+      "profileId": "cinder-reach/city"
+    },
+    {
+      "nodeId": "cinder-reach:12:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:12:2",
+      "profileId": "cinder-reach/city"
+    },
+    {
+      "nodeId": "dead-foundry",
+      "profileId": "cinder-reach/dungeon"
+    },
+    {
+      "nodeId": "cinder-reach:13:1",
+      "profileId": "cinder-reach/road"
+    },
+    {
+      "nodeId": "cinder-reach:13:2",
+      "profileId": "cinder-reach/city"
+    },
+    {
+      "nodeId": "drowned-coast:01:0",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:01:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:01:2",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:02:0",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:02:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:02:2",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:03:0",
+      "profileId": "drowned-coast/shore"
+    },
+    {
+      "nodeId": "drowned-coast:03:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:03:2",
+      "profileId": "drowned-coast/shore"
+    },
+    {
+      "nodeId": "drowned-coast:04:0",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:04:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:04:2",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:05:0",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:05:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:05:2",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "saltwatch",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:06:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:06:2",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:07:0",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:07:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:07:2",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:08:0",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:08:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:08:2",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:09:0",
+      "profileId": "drowned-coast/shore"
+    },
+    {
+      "nodeId": "drowned-coast:09:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:09:2",
+      "profileId": "drowned-coast/shore"
+    },
+    {
+      "nodeId": "drowned-coast:10:0",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:10:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:10:2",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:11:0",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:11:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:11:2",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:12:0",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "drowned-coast:12:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:12:2",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "tidebound-abbey",
+      "profileId": "drowned-coast/dungeon"
+    },
+    {
+      "nodeId": "drowned-coast:13:1",
+      "profileId": "drowned-coast/road"
+    },
+    {
+      "nodeId": "drowned-coast:13:2",
+      "profileId": "drowned-coast/city"
+    },
+    {
+      "nodeId": "junction:ashen-crown:hollow-weald",
+      "profileId": "ashen-crown/road"
+    },
+    {
+      "nodeId": "junction:hollow-weald:pale-marches",
+      "profileId": "hollow-weald/city"
+    },
+    {
+      "nodeId": "junction:pale-marches:cinder-reach",
+      "profileId": "pale-marches/road"
+    },
+    {
+      "nodeId": "junction:cinder-reach:drowned-coast",
+      "profileId": "cinder-reach/city"
+    }
+  ],
+  "scenes": [
+    {
+      "sceneId": "ashen-crown-1",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "ashen-crown-2",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "ashen-crown-3",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "ashen-crown-4",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "hollow-weald-1",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "hollow-weald-2",
+      "timeId": "night",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "hollow-weald-3",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "hollow-weald-4",
+      "timeId": "night",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "pale-marches-1",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "pale-marches-2",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "pale-marches-3",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "pale-marches-4",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "cinder-reach-1",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "cinder-reach-2",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "cinder-reach-3",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "cinder-reach-4",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "drowned-coast-1",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "drowned-coast-2",
+      "timeId": "day",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "drowned-coast-3",
+      "timeId": "night",
+      "weatherId": "any"
+    },
+    {
+      "sceneId": "drowned-coast-4",
+      "timeId": "day",
+      "weatherId": "any"
+    }
+  ],
+  "sceneProfiles": [
+    {
+      "profileId": "ashen-crown/road",
+      "sceneId": "ashen-crown-1",
+      "weight": 1
+    },
+    {
+      "profileId": "ashen-crown/city",
+      "sceneId": "ashen-crown-2",
+      "weight": 1
+    },
+    {
+      "profileId": "ashen-crown/city",
+      "sceneId": "ashen-crown-3",
+      "weight": 1
+    },
+    {
+      "profileId": "ashen-crown/forest",
+      "sceneId": "ashen-crown-3",
+      "weight": 1
+    },
+    {
+      "profileId": "ashen-crown/dungeon",
+      "sceneId": "ashen-crown-4",
+      "weight": 1
+    },
+    {
+      "profileId": "hollow-weald/road",
+      "sceneId": "hollow-weald-1",
+      "weight": 1
+    },
+    {
+      "profileId": "hollow-weald/forest",
+      "sceneId": "hollow-weald-1",
+      "weight": 1
+    },
+    {
+      "profileId": "hollow-weald/city",
+      "sceneId": "hollow-weald-2",
+      "weight": 1
+    },
+    {
+      "profileId": "hollow-weald/forest",
+      "sceneId": "hollow-weald-3",
+      "weight": 1
+    },
+    {
+      "profileId": "hollow-weald/dungeon",
+      "sceneId": "hollow-weald-3",
+      "weight": 1
+    },
+    {
+      "profileId": "hollow-weald/forest",
+      "sceneId": "hollow-weald-4",
+      "weight": 1
+    },
+    {
+      "profileId": "pale-marches/road",
+      "sceneId": "pale-marches-1",
+      "weight": 1
+    },
+    {
+      "profileId": "pale-marches/road",
+      "sceneId": "pale-marches-2",
+      "weight": 1
+    },
+    {
+      "profileId": "pale-marches/city",
+      "sceneId": "pale-marches-3",
+      "weight": 1
+    },
+    {
+      "profileId": "pale-marches/dungeon",
+      "sceneId": "pale-marches-3",
+      "weight": 1
+    },
+    {
+      "profileId": "pale-marches/shore",
+      "sceneId": "pale-marches-4",
+      "weight": 1
+    },
+    {
+      "profileId": "cinder-reach/road",
+      "sceneId": "cinder-reach-1",
+      "weight": 1
+    },
+    {
+      "profileId": "cinder-reach/city",
+      "sceneId": "cinder-reach-2",
+      "weight": 1
+    },
+    {
+      "profileId": "cinder-reach/dungeon",
+      "sceneId": "cinder-reach-2",
+      "weight": 1
+    },
+    {
+      "profileId": "cinder-reach/shore",
+      "sceneId": "cinder-reach-3",
+      "weight": 1
+    },
+    {
+      "profileId": "cinder-reach/mine",
+      "sceneId": "cinder-reach-4",
+      "weight": 1
+    },
+    {
+      "profileId": "drowned-coast/city",
+      "sceneId": "drowned-coast-1",
+      "weight": 1
+    },
+    {
+      "profileId": "drowned-coast/dungeon",
+      "sceneId": "drowned-coast-1",
+      "weight": 1
+    },
+    {
+      "profileId": "drowned-coast/road",
+      "sceneId": "drowned-coast-2",
+      "weight": 1
+    },
+    {
+      "profileId": "drowned-coast/city",
+      "sceneId": "drowned-coast-3",
+      "weight": 1
+    },
+    {
+      "profileId": "drowned-coast/shore",
+      "sceneId": "drowned-coast-4",
+      "weight": 1
+    }
+  ],
+  "music": [],
+  "musicProfiles": []
+}

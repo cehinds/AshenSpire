@@ -3,6 +3,31 @@
 // role semantics, and component identity.
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
+const ownedClasses = new WeakMap();
+
+// Reuse the frame, its focus/input listeners, and the animation's sprite host.
+// Only screen-owned slots are replaced. Effects below .sprite survive a beat.
+export function updateCombatantFrame(frame, { classNames = [], leading = [], blockBadge = null, name = null, meters = null, trailing = [] }) {
+  for (const value of ownedClasses.get(frame) || []) if (!classNames.includes(value)) frame.classList.remove(value);
+  for (const value of classNames.filter(Boolean)) frame.classList.add(value);
+  ownedClasses.set(frame, classNames.filter(Boolean));
+  const leadingHost = frame.querySelector('.combatant-leading');
+  leadingHost.replaceChildren(...leading.filter(Boolean));
+  const card = frame.querySelector('.combatant-card');
+  const spriteHost = card.querySelector(':scope > .sprite');
+  spriteHost.querySelector(':scope > .block-badge')?.remove();
+  if (blockBadge) spriteHost.appendChild(blockBadge);
+  for (const child of [...card.children]) if (child !== spriteHost) child.remove();
+  if (name) {
+    markUiComponent(name, UI.combatantNameplate, frame.classList.contains('player') ? 'player' : 'enemy');
+    card.appendChild(name);
+  }
+  if (meters) card.appendChild(meters);
+  appendAll(card, trailing.filter(n => n?.classList.contains('statuses')));
+  appendAll(card, trailing.filter(n => !n?.classList.contains('statuses')));
+  return frame;
+}
+
 function appendAll(parent, nodes) {
   for (const node of nodes || []) if (node) parent.appendChild(node);
 }
@@ -37,6 +62,7 @@ export function combatantFrame({
 
   const frame = document.createElement('article');
   frame.className = ['combatant', role, ...classNames.filter(Boolean)].join(' ');
+  ownedClasses.set(frame, classNames.filter(Boolean));
   frame.dataset.eid = entityId;
   markUiComponent(frame, UI.combatantFrame, role);
   frame.dataset.uiBackgroundComponent = UI.componentBackground;
