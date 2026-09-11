@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-961",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "Two more entries the record was missing",
+    "detail": "Nothing a player sees changes. Two changes had landed without a line here. Their build numbers are read from the project's own history at the moment each one landed rather than from what its author wrote down, which is the habit that caught an earlier entry naming a build one short of the real one.",
+    "build": "0.6.0.135",
+    "pullRequest": 961,
+    "url": "https://github.com/cehinds/AshenSpire/pull/961"
+  },
+  {
     "id": "pr-928",
     "date": "2026-09-10",
     "group": "2026-09-10",

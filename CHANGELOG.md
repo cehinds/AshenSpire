@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-10
 
+- **Two more entries the record was missing** ([#961](https://github.com/cehinds/AshenSpire/pull/961), `0.6.0.135`). Nothing a player sees changes. Two changes had landed without a line here. Their build numbers are read from the project's own history at the moment each one landed rather than from what its author wrote down, which is the habit that caught an earlier entry naming a build one short of the real one.
+
 - **A place you inspect and the fight you walk into now look like the same place** ([#928](https://github.com/cehinds/AshenSpire/pull/928), `0.6.0.122`). Looking at a location on the world map and then travelling there could show you two different scenes. Both now resolve the same spot to the same setting and draw from the same pool of paintings, and the choice is remembered once you enter, so it holds from turn to turn. Where a time-of-day or weather variant does not exist, it falls back within the same setting rather than to something unrelated. Travel is green and sits bottom-right, and the local map controls follow the direction they move you.
 
 - **The pose editor's companion application is named** ([#952](https://github.com/cehinds/AshenSpire/pull/952), `0.6.0.122`). Nothing a player sees changes. The Pose and Effects Studio notes said the outside editor that opens this project was unknown; it is Spire Studio, and the note now records how to connect it and which file formats it leaves alone.
