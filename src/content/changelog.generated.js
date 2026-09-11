@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-980",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "One tap picks an item at the Smith and one tap arms a burn at the merchant",
+    "detail": "On a phone, choosing an armament for the Smith to upgrade took three taps, and so did arming a card to burn out of your deck at the merchant: the first tap selected the card, the second was taken as a request for its explanation, and only the third did what you meant. Both cards now answer the first tap, the same way a card in your hand does. Upgrading and burning still ask you to confirm.",
+    "build": "0.6.0.157",
+    "pullRequest": 980,
+    "url": "https://github.com/cehinds/AshenSpire/pull/980"
+  },
+  {
     "id": "pr-979",
     "date": "2026-09-11",
     "group": "2026-09-11",
