@@ -180,40 +180,58 @@ Tracks: one per weapon group, one per armor group, one per focus group,
     mana, the first mana card each turn costs stamina only; or **Reservoir** —
     mana max +3, no generation.
 
-## F2. Recovery tiers by location
+## F2. Recovery as location properties
 
-Owner: resting in town fully recovers everything. Generalised: every location
-that offers a rest carries a `restTier` id, and the tier table says what the
-rest restores. The Shrine of Emberlight's current behaviour becomes one tier
-row rather than the only rest in the game.
+Owner: resting in town fully recovers everything, and recovery is a tag
+thing. So there is no tier table. A location is a `property` carrier like a
+weapon or a class card: it holds tags, each tag has one `propertyRules` row,
+and the rules mount on arrival and unmount on departure. A rest fires a
+`rested` event with the location as source; recovery rules are triggers on
+that event. What a place restores is the sum of its tags.
 
-| Tier | Where | HP | Mana | Flask charges | Statuses | Extras |
-|---|---|---|---|---|---|---|
-| `camp` | Field rest event, some Unknown nodes | +25% max | none | +1 Azure | none | Cheap and interruptible: an ambush roll from the encounter table |
-| `shrine` | Shrine of Emberlight | +30% max (current Rest) | none | Full refill (current grace) | none | Rest or Smith choice as today |
-| `town` | Atlas settlements | Full | Full | Full refill | Clear all lingering ailments | Merchant, Smith, quest board, level-up screen |
+Recovery tags (one rule row each, all amounts balance rows):
+
+| Tag | On `rested` |
+|---|---|
+| `restHpSmall` | heal `rest.hpSmallPct` of max (25%) |
+| `restHpPartial` | heal `rest.hpPartialPct` of max (30%, the current Rest) |
+| `restHpFull` | heal to max |
+| `restManaFull` | `restoreMana` to max. The only tag that fills the pool itself; keeps the no-regeneration line |
+| `restFlasks` | refill all flask charges (the current grace refill) |
+| `restAzureOne` | +1 Azure charge |
+| `restCleanse` | remove lingering ailments |
+| `ambushRisk` | a seeded encounter roll before the rest resolves |
+
+Service tags on the same carrier (`merchant`, `smith`, `questBoard`,
+`levelUp`) are what the location screen offers; they are the same domain, so
+adding a service to a place is a tagging row.
+
+Authored locations as tag sets:
+
+- **Field camp** (rest outcome of some Unknown nodes): `restHpSmall`,
+  `restAzureOne`, `ambushRisk`.
+- **Shrine of Emberlight**: `restHpPartial`, `restFlasks`, `smith`. Refill
+  stays automatic on arrival, so `restFlasks` triggers on `arrived` rather
+  than `rested`; the row says which.
+- **Town** (atlas settlements): `restHpFull`, `restManaFull`, `restFlasks`,
+  `restCleanse`, `merchant`, `smith`, `questBoard`, `levelUp`.
+- A future sanctum that also removes a curse card is a new `restUncurse` row
+  plus tagging rows. No tier ladder to extend.
 
 Rules:
 
-- Stamina and actions are per-turn resources and are not a rest concern.
-- Mana in the fixed pool refills only at `shrine`-or-better tiers that say so;
-  `town` is the only tier that fills the pool itself, which keeps the
-  no-regeneration line intact. Azure flask charges are what `shrine` refills.
-- Tiers are additive rows, not a ladder in code. A future `sanctum` tier that
-  also removes a curse card is one more row.
-- Town rest is free but towns are rare: at most one per act on the seeded
-  route, placed by the atlas. Attrition between towns is the run's tension.
-  An optional `inn.price` row (default 0) exists if the owner later wants a
-  cinder cost.
-- Relic passives `shrineHealMult` and `shrineNoRest` apply to whichever tier
-  they name; rename to `restHealMult` and `restDenied` with a tier filter so
-  a relic can deny shrine rest without denying town rest.
-- Co-op: a tier applies to every living member on arrival, same as the grace
+- Stamina and actions are per-turn resources and never a rest concern.
+- Town rest is free but towns are rare: `atlas.townsPerActMax` default 1,
+  placed by the seeded route. Attrition between towns is the run's tension.
+  `inn.price` (default 0) exists if the owner later wants a cinder cost; it is
+  a modifier on the `rested` payment, not a separate tag.
+- Relic passives `shrineHealMult` and `shrineNoRest` become `restHealMult` and
+  `restDenied` with an optional tag filter, so a relic can deny `restHpPartial`
+  at a shrine without denying `restHpFull` in town.
+- Co-op: rules mount for every living member on arrival, same as the grace
   refill today.
-
-Balance rows (K): `rest.tiers[]` with `hpPct`, `manaFill`, `flaskRefill`,
-`clearStatuses`, `services[]`; `atlas.townsPerActMax` default 1;
-`inn.price` default 0.
+- Validation: a location may carry only `property` tags from the recovery and
+  service sets; a combat property on a location fails with a named row.
 
 ## G. Engine touches (closed-set additions, each with schema + test)
 
@@ -224,8 +242,9 @@ Balance rows (K): `rest.tiers[]` with `hpPct`, `manaFill`, `flaskRefill`,
 50. Zone model in run state (`core`, `worn`, `hands`, `passive`).
 51. One save migration: class id → core card with starter tag set; relic list
     → carriers with tags; armament tiers → skill milestones.
-52. `restTier` on atlas locations and Unknown-node rest outcomes; the tier
-    table replaces the shrine-only heal and refill constants.
+52. Locations as `property` carriers with mount on arrival and unmount on
+    departure; `arrived` and `rested` events; the recovery rule rows replace
+    the shrine-only heal and refill constants.
 
 ## H. Cut
 
