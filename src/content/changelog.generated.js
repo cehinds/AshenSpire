@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-11",
     "summary": "A check that had been crashing instead of checking now runs",
     "detail": "Nothing a player sees changes. One of the project's own quality checks — the one that proves the Music setting and the Quick Menu agree about what is on — was not failing and not passing: it was dying on startup, before it looked at anything. A small piece of card-drawing code runs two lines when it finds itself inside a browser, and it tested for only half of what those two lines actually use, so a checking harness that supplies the other half and not that half walked straight into a crash. The test now asks for both things it needs. The check reports thirty-two passes where it used to report nothing at all.",
-    "build": "0.6.0.143",
+    "build": "0.6.0.145",
     "pullRequest": 970,
     "url": "https://github.com/cehinds/AshenSpire/pull/970"
+  },
+  {
+    "id": "pr-961",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Two more entries the record was missing",
+    "detail": "Nothing a player sees changes. Two changes had landed without a line here. Their build numbers are read from the project's own history at the moment each one landed rather than from what its author wrote down, which is the habit that caught an earlier entry naming a build one short of the real one.",
+    "build": "0.6.0.142",
+    "pullRequest": 961,
+    "url": "https://github.com/cehinds/AshenSpire/pull/961"
   },
   {
     "id": "pr-968",
@@ -41,6 +51,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.134",
     "pullRequest": 963,
     "url": "https://github.com/cehinds/AshenSpire/pull/963"
+  },
+  {
+    "id": "pr-928",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "A place you inspect and the fight you walk into now look like the same place",
+    "detail": "Looking at a location on the world map and then travelling there could show you two different scenes. Both now resolve the same spot to the same setting and draw from the same pool of paintings, and the choice is remembered once you enter, so it holds from turn to turn. Where a time-of-day or weather variant does not exist, it falls back within the same setting rather than to something unrelated. Travel is green and sits bottom-right, and the local map controls follow the direction they move you.",
+    "build": "0.6.0.122",
+    "pullRequest": 928,
+    "url": "https://github.com/cehinds/AshenSpire/pull/928"
+  },
+  {
+    "id": "pr-952",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The pose editor's companion application is named",
+    "detail": "Nothing a player sees changes. The Pose and Effects Studio notes said the outside editor that opens this project was unknown; it is Spire Studio, and the note now records how to connect it and which file formats it leaves alone.",
+    "build": "0.6.0.122",
+    "pullRequest": 952,
+    "url": "https://github.com/cehinds/AshenSpire/pull/952"
   },
   {
     "id": "pr-954",
