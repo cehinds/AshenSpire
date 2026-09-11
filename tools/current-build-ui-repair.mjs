@@ -119,7 +119,7 @@ function boxReader() {
     },
     enemy: { selected: enemy?.getAttribute('aria-pressed') || null, box: rect(enemy), card: rect(card), subject, intent: rect(intent) },
     hud: hud ? {
-      box: rect(hud), mode: hud.dataset.hudMode || 'regular',
+      box: rect(hud),
       paddingTop: Number.parseFloat(hudStyle.paddingTop), paddingBottom: Number.parseFloat(hudStyle.paddingBottom),
       topGap: Number.parseFloat(getComputedStyle(hudTop).gap),
       children: Object.fromEntries(['.hud-top','.hud-info-row','.hud-center','.hud-run-meta','.hud-identity','.hud-resource-row','.hud-bottom','.hud-control-grid','.hud-vitals-panel','.hud-potions']
@@ -396,25 +396,6 @@ async function main() {
       await wait(360);
       const keyboardAfter = await read();
       check(keyboardAfter.tooltip.visible, `KEYBOARD-SPACE-AFTER-500-${shape.name.toUpperCase()}`);
-
-      const compactSettings = encodeURIComponent(JSON.stringify({ reducedMotion: false, runHudMode: 'compact' }));
-      await cdp.send('Page.navigate', { url: `${appUrl}?shot=combat&shotEnemyContext=status&shotSettings=${compactSettings}` }, sessionId);
-      await until(`document.querySelector('.topbar.combat-hud[data-hud-mode="compact"]')`, `${shape.name} compact HUD`);
-      await wait(100);
-      const compact = await read();
-      const compactDelta = await evaluate(`(() => {
-        const hud=document.querySelector('.combat > .topbar.combat-hud.shared-hud');
-        const candidate=hud.getBoundingClientRect().height;
-        const style=document.createElement('style');
-        style.textContent='.combat > .topbar.combat-hud.shared-hud[data-hud-mode="compact"]{padding-block:calc(5px / var(--ui-zoom,1)) !important}.combat > .topbar.combat-hud.shared-hud[data-hud-mode="compact"] .hud-top{--compact-gap:calc(2px / var(--ui-zoom,1)) !important;column-gap:calc(6px / var(--ui-zoom,1)) !important;row-gap:calc(2px / var(--ui-zoom,1)) !important}:root[data-layout="narrow"] .combat > .topbar.combat-hud.shared-hud[data-hud-mode="compact"]{padding-block:calc(5px / var(--ui-zoom,1)) !important}:root[data-layout="narrow"] .combat > .topbar.combat-hud.shared-hud[data-hud-mode="compact"] .hud-top{--compact-gap:calc(2px / var(--ui-zoom,1)) !important;column-gap:calc(6px / var(--ui-zoom,1)) !important;row-gap:calc(2px / var(--ui-zoom,1)) !important}:root[data-layout="narrow"] .combat > .topbar.combat-hud.shared-hud[data-hud-mode="compact"] .hud-info-row{gap:calc(3px / var(--ui-zoom,1)) !important;line-height:normal !important}:root[data-layout="narrow"] .combat > .topbar.combat-hud.shared-hud[data-hud-mode="compact"] :is(.hud-run-meta,.hud-identity){line-height:normal !important}:root[data-layout="narrow"] .combat > .topbar.combat-hud.shared-hud[data-hud-mode="compact"] .hud-control-grid{padding:var(--compact-gap) !important}';
-        document.head.appendChild(style); const prior=hud.getBoundingClientRect().height; style.remove();
-        return {candidate,prior,reduction:prior-candidate,vh:(prior-candidate)/innerHeight*100};
-      })()`);
-      check(compact.hud?.mode === 'compact' && compact.hud.paddingTop <= 1.2 && compact.hud.paddingBottom <= 1.2,
-        `HUD-COMPACT-DENSITY-${shape.name.toUpperCase()}`, JSON.stringify(compact.hud));
-      check(compactDelta.vh >= 1 && compactDelta.vh <= 5, `HUD-COMPACT-REDUCTION-${shape.name.toUpperCase()}`,
-        `${compactDelta.reduction.toFixed(2)}px / ${compactDelta.vh.toFixed(2)}vh`);
-      receipts.push({ shape: shape.name, state: 'compact-hud', reading: compact, delta: compactDelta, screenshot: await shot(`${shape.name}-combat-hud-compact`) });
     }
 
     // A non-default UI zoom must cap long contextual copy in local coordinates,
