@@ -123,8 +123,8 @@ const sourceContract = ({ map, input, css, combatCss, kit, tool }) => {
   if (!kitSlotBox || boxedByAScreen) {
     bad.push('F4 map utility flask no longer shares the topbar control box');
   }
-  if (!surfaceBlock.includes("{ group: 'utility', name: 'map utility', sel: '.topbar .hud-potions .mh-flask', door: 'map-after-shop' }")) {
-    bad.push('F5 flaskbox no longer measures the current map topbar surface');
+  if (!surfaceBlock.includes("{ group: 'utility', name: 'room utility', sel: '.shared-hud .hud-potions .mh-flask', door: 'shop-after-buy' }")) {
+    bad.push('F5 flaskbox no longer measures the current run-HUD potion surface');
   }
   return bad;
 };
@@ -153,7 +153,7 @@ if (process.argv.includes('--source-selftest')) {
       name: 'flaskbox points back at the removed map sub-strip',
       expected: 'F5 ',
       mutate: (s) => ({ ...s, tool: s.tool.replace(
-        "  { group: 'belt', name: 'combat utility', sel: '.combat-potion-menu .potion-fold[data-potion-slot] .potion-use', door: 'combat' },\n  { group: 'utility', name: 'map utility', sel: '.topbar .hud-potions .mh-flask', door: 'map-after-shop' },",
+        "  { group: 'belt', name: 'combat utility', sel: '.combat-potion-menu .potion-fold[data-potion-slot] .potion-use', door: 'combat' },\n  { group: 'utility', name: 'room utility', sel: '.shared-hud .hud-potions .mh-flask', door: 'shop-after-buy' },",
         "  { group: 'belt', name: 'combat utility', sel: '.combat-potion-menu .potion-fold[data-potion-slot] .potion-use', door: 'combat' },\n  { group: 'utility', name: 'map sub-strip', sel: '.map-substrip .mh-flask', door: 'map-after-shop' },"
       ) }),
     },
@@ -292,12 +292,17 @@ const SHAPES = [
 // different box from the map's Slot — a list row, not a chip — and the row's
 // height follows its description, so the CONTROL that spends the potion is
 // the row's Use button: its own group ('belt'), one box for every Use, never
-// compared with the map's chips. Co-op is listed by the selector its own screen writes.
+// compared with the map's chips.
+// THE MAP HIDES ITS STRIP (Constantine, 07069c68 2026-09-09: "hide inventory
+// strip on maps" — map.css `.mapscreen .shared-hud .hud-bottom {display:none}`),
+// so the band's relic and flask chips are measured where the owner shows
+// them: the same run HUD at the merchant, right after the purchase that put
+// a flask in it. Co-op is listed by the selector its own screen writes.
 const SURFACES = [
   { group: 'belt', name: 'combat charge', sel: '.combat-potion-menu .potion-fold[data-charge-kind] .potion-use', door: 'combat' },
-  { group: 'charge', name: 'map charge', sel: '.topbar .hud-charge-flasks .flask-slot', door: 'map-after-shop' },
+  { group: 'charge', name: 'room charge', sel: '.shared-hud .hud-potions .flask-charge', door: 'shop-after-buy' },
   { group: 'belt', name: 'combat utility', sel: '.combat-potion-menu .potion-fold[data-potion-slot] .potion-use', door: 'combat' },
-  { group: 'utility', name: 'map utility', sel: '.topbar .hud-potions .mh-flask', door: 'map-after-shop' },
+  { group: 'utility', name: 'room utility', sel: '.shared-hud .hud-potions .mh-flask', door: 'shop-after-buy' },
   { group: 'utility', name: 'co-op board', sel: '.combat.coop .coop-flask', door: 'coop' },
 ];
 
@@ -400,17 +405,19 @@ async function main() {
           for (let pass = 0; pass < 6; pass++) {
             const face = document.querySelector('[data-face="bar:flasks"]');
             if (face && face.getAttribute('aria-expanded') !== 'true') face.click();
+            // The shelf's rows are the flasks (a rendered collectible card each
+            // since 2026-09, no .flask-identity inside); an affordable one is
+            // armed as a shopBuy decision. NO BACKTICKS HERE: this is a template.
+            // The rendered collectible card replaced the old identity block.
             const row = [...document.querySelectorAll('#shop-flasks .class-pick')]
-              .find((el) => el.querySelector('.flask-identity') && !el.classList.contains('locked'));
+              .find((el) => el.dataset.beatAction === 'shopBuy' && !el.classList.contains('locked'));
             if (!row) break; row.click(); await sleep(250);
             const buy = document.querySelector('.confirmation-modal .confirmation-confirm');
             if (!buy) break; buy.click(); await sleep(400); n++; }
           return n; })()`);
-        if (!bought) { bad('B0', shape, 'the merchant stocked no affordable flask — the map surface was NOT reached, and nothing below is a measurement of it'); continue; }
+        if (!bought) { bad('B0', shape, 'the merchant stocked no affordable flask — the band never held one, and nothing below is a measurement of it'); continue; }
         await wait(300);
-        await ev(`document.querySelector('#leave-shop').click(); true`);
-        await until(`!!document.querySelector('.mapscreen')`, 'map after shop');
-        console.log(`       map reached by the shop door: ${bought} flask(s) bought, then LEAVE`);
+        console.log(`       the band's chips reached at the merchant: ${bought} flask(s) bought`);
       }
       await wait(600);
 

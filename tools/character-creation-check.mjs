@@ -593,28 +593,6 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await open('armour');
   await chooseArmour(1);
   assert((await evaluate(`[...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face).join(',')`)) === 'armour', `${width}x${height}: disabled auto-advance keeps the current equipment subcard open`);
-  // Back through the door with the preference ON, then the same choice.
-  await bootCreation({ creationAutoAdvance: true });
-  // A fresh door is a fresh flow: no class is chosen on arrival (gated
-  // 2026-09-11), and the kit below is Starseer's — choose it again first.
-  await click('.cz-class[data-class="starseer"]');
-  await open('equipment');
-  await click('#cz-equipment-view-toggle [data-view-mode="list"]');
-  await open('armour');
-  await chooseArmour(1);
-  // THE NEXT SUBCARD IS WHICHEVER ONE THE CONFIGURATION PUTS NEXT, read off the
-  // fold rather than named here. This row demanded `leftHand`, and the
-  // configured order is armour → rightHand → leftHand → relic, so it was
-  // asserting a hand-copied order that had since changed: the screen advanced
-  // correctly and the gate called it a regression. Reading the order makes the
-  // row about advancing, which is what auto-advance means.
-  const advance = await evaluate(`(() => {
-    const order = [...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold'))})].map(e=>e.dataset.face);
-    const open = [...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face);
-    return { order, open, after: order[order.indexOf('armour') + 1] ?? null };
-  })()`);
-  assert(advance.open.join(',') === advance.after,
-    `${width}x${height}: a valid equipment choice auto-advances to the next configured subcard (${JSON.stringify(advance)})`);
   await open('leftHand');
   await choosePiece('#cz-left-hand [data-armament-id="ashStaff"]');
   await open('rightHand');
@@ -635,7 +613,8 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(persisted.name === 'Marya' && persisted.pointbuy === 'true' && persisted.keepsake === 'true', `${width}x${height}: character choices persist through section changes`);
   await open('equipment');
   const gearPersisted = await evaluate(`(() => ({
-    armour:document.querySelectorAll('#cz-armours .equip-chip')[0].querySelector('.equipment-choose').getAttribute('aria-pressed'),
+    // chooseArmour(1) above is the armour pick that must survive.
+    armour:document.querySelectorAll('#cz-armours .equip-chip')[1].querySelector('.equipment-choose').getAttribute('aria-pressed'),
     left:document.querySelector('#cz-left-hand [data-armament-id="starstoneStaff"] .equipment-choose').getAttribute('aria-pressed'),
     right:document.querySelector('#cz-right-hand [data-armament-id="ashStaff"] .equipment-choose').getAttribute('aria-pressed'),
     relic:document.querySelectorAll('#cz-relics .equip-chip')[1].querySelector('.equipment-choose').getAttribute('aria-pressed'),
@@ -680,20 +659,49 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   let entered = await until(`!!document.querySelector('.mapscreen')`, 'Begin to enter the map', 4000, false);
   if (!entered) {
     const refusal = await evaluate(`document.querySelector('#tooltip')?.textContent?.trim().slice(0, 200) || null`);
-    assert(/stat points? still to assign/i.test(refusal || ''),
+    // A CLASS CHANGE RESETS THE KIT AS WELL AS THE POOL (the screen's own rule,
+    // asserted above as "armour arrives unchosen after a class change"), so
+    // the refusal Begin gives here is whichever step the reset emptied first
+    // — armour, the pool, a keepsake. Each is a step a player finishes before
+    // pressing Begin again; the gate finishes them the same way, in the order
+    // the screen asks, and holds only that the refusal SAID WHY.
+    assert(/stat points? still to assign|choose (starting armour|a keepsake)|needs \w+ \d+/i.test(refusal || ''),
       `${width}x${height}: Begin refuses an unfinished allocation and says why (${JSON.stringify(refusal)})`);
-    await open('character');
-    await open('primary');
-    await open('primary');
-  await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
-    if (await until(`!!document.querySelector('.cc-stat-overlay')`, 'Assign Points after a class change', 8000, false)) {
-      await spendPool();
-      await click('.cc-stat-overlay [data-stat-done]');
-      await until(`!document.querySelector('.cc-stat-overlay')`, 'Assign Points close after a class change', 8000, false);
+    for (let round = 0; round < 4 && !entered; round++) {
+      const why = await evaluate(`document.querySelector('#tooltip')?.textContent?.trim().slice(0, 200) || ''`);
+      if (/starting armour/i.test(why)) {
+        await open('equipment');
+        await open('armour');
+        await choosePiece('#cz-armours [data-starting-armour-id="default"]');
+      } else if (/keepsake/i.test(why)) {
+        await open('character');
+        await open('keepsake');
+        await click('#cz-keepsakes [data-keepsake-id="oldCinder"]');
+      } else {
+        await open('character');
+        await open('primary');
+        await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
+        if (await until(`!!document.querySelector('.cc-stat-overlay')`, 'Assign Points after a class change', 8000, false)) {
+          // "Ash Staff needs intelligence 12 — you have 10." is the kit's own
+          // requirement; reopening refunds the pool, so the named stat is
+          // raised first and the rest of the pool spent after it.
+          const need = why.match(/needs (\w+) (\d+)/i);
+          if (need) {
+            for (let n = 0; n < Number(need[2]); n++) {
+              const row = await evaluate(`(() => { const c = document.querySelector('.cc-stat-overlay [data-stat-action="increase"][data-stat-id="${need[1].toLowerCase()}"]'); const v = c?.closest('.se-row')?.querySelector('.se-value'); return { open: c?.getAttribute('aria-disabled') === 'false', value: Number(v?.textContent || 0) }; })()`);
+              if (!row.open || row.value >= Number(need[2])) break;
+              await click(`.cc-stat-overlay [data-stat-action="increase"][data-stat-id="${need[1].toLowerCase()}"]`);
+            }
+          }
+          await spendPool();
+          await click('.cc-stat-overlay [data-stat-done]');
+          await until(`!document.querySelector('.cc-stat-overlay')`, 'Assign Points close after a class change', 8000, false);
+        }
+      }
+      await open('seed');
+      await click('#cz-start');
+      entered = await until(`!!document.querySelector('.mapscreen')`, 'Begin to enter the map', 8000, false);
     }
-    await open('seed');
-    await click('#cz-start');
-    entered = await until(`!!document.querySelector('.mapscreen')`, 'Begin to enter the map', 15000, false);
   }
   const stillRefusing = entered ? null : await evaluate(`(() => ({
     tip: document.querySelector('#tooltip')?.textContent?.trim().slice(0, 200) || null,
@@ -718,6 +726,32 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     assert(/starseer/i.test(begun.cls || ''),
       `${width}x${height}: Begin consumes the class chosen last (${JSON.stringify(begun)})`);
   }
+  // ---- THE AUTO-ADVANCE DETOUR, LAST. `bootCreation` is a fresh door — the
+  // name, the mode, the keepsake and every pick above are gone with it — so
+  // this walk stands after Begin, where nothing downstream reads the flow it
+  // resets. Same shape, same class, one choice with the preference ON.
+  // Back through the door with the preference ON, then the same choice.
+  await bootCreation({ creationAutoAdvance: true });
+  // A fresh door is a fresh flow: no class is chosen on arrival (gated
+  // 2026-09-11), and the kit below is Starseer's — choose it again first.
+  await click('.cz-class[data-class="starseer"]');
+  await open('equipment');
+  await click('#cz-equipment-view-toggle [data-view-mode="list"]');
+  await open('armour');
+  await chooseArmour(1);
+  // THE NEXT SUBCARD IS WHICHEVER ONE THE CONFIGURATION PUTS NEXT, read off the
+  // fold rather than named here. This row demanded `leftHand`, and the
+  // configured order is armour → rightHand → leftHand → relic, so it was
+  // asserting a hand-copied order that had since changed: the screen advanced
+  // correctly and the gate called it a regression. Reading the order makes the
+  // row about advancing, which is what auto-advance means.
+  const advance = await evaluate(`(() => {
+    const order = [...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold'))})].map(e=>e.dataset.face);
+    const open = [...document.querySelectorAll(${JSON.stringify(faces('#cz-equipment-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face);
+    return { order, open, after: order[order.indexOf('armour') + 1] ?? null };
+  })()`);
+  assert(advance.open.join(',') === advance.after,
+    `${width}x${height}: a valid equipment choice auto-advances to the next configured subcard (${JSON.stringify(advance)})`);
   assert(errors.length === 0, `${width}x${height}: no uncaught browser exceptions`);
   await cdp.send('Target.closeTarget', { targetId });
 }

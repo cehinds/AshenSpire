@@ -1059,7 +1059,12 @@ async function main() {
       // The Potions menu is a list of `.potion-fold` rows now (combat.js
       // openPotions, 2026-09): the healing row's summary is pressed so its
       // armed Use control stands where a thumb finds it.
-      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .potion-fold:first-of-type > summary', '[data-face="bar:sell"]', '[data-title-action="load"]']) {
+      // A SMITH CANDIDATE TAKES THREE TOUCH TAPS TODAY (cardInspection.js: the
+      // first selects, the second is swallowed as an information tap, the
+      // third reaches the card's own choose) — measured 2026-09-11, and a
+      // finding for the owner, not this census's to hide: the census presses
+      // the card as many times as a thumb has to, and the count is on record.
+      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '.smith-candidate-card', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .potion-fold:first-of-type > summary', '[data-face="bar:sell"]', '[data-title-action="load"]']) {
         // SCROLLED INTO VIEW FIRST: the shop's bars stack below an open CARDS
         // shelf, so bar:remove sits at y=976 on a 844 phone — measured — and a
         // press at an off-viewport point lands on nothing while reporting
