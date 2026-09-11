@@ -1,13 +1,17 @@
 // Authored tooltip policy, settings rows, and combat help copy.
 export const tooltipHelp = {
   delays: { '0.25s': 250, '0.5s': 500, '1s': 1000, '1.5s': 1500 },
+  // Keyboard and gamepad focus is deliberate, not a pointer passing over;
+  // it answers after this wait regardless of the hover delay chosen.
+  focusMs: 500,
   holdMs: 420,
   doubleTapMs: 300,
   fadeMs: 160,
   textLengths: { medium: 90, detailedLarge: 220, large: 420 },
   settings: [
     { key: 'hoverTooltips', def: true, label: 'Hover explanations', note: 'Show explanations when the pointer rests on a detail. Keyboard and explicit inspection remain available.' },
-    { key: 'tooltipDelay', type: 'choice', def: '0.5s', label: 'Explanation delay', note: 'Wait before opening or switching hover, keyboard, and nested explanations.' },
+    // Owner, 2026-09-11: 'all tool tips to require a hover for a second or so'.
+    { key: 'tooltipDelay', type: 'choice', def: '1s', label: 'Explanation delay', note: 'Wait before opening or switching hover and nested explanations. A tap or click selects a detail; a second one explains it.' },
     { key: 'tooltipCloseDelay', type: 'choice', def: '0.5s', label: 'Explanation close delay', note: 'Wait after leaving a detail and its explanation before closing it.' },
   ],
   combatTargets: [
