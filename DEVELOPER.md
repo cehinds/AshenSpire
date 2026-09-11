@@ -90,7 +90,18 @@ npx serve .            # then http://localhost:3000
 # tests (22 assertions, SPEC §8)
 node tests/run-node.mjs        # CI-style, exits 1 on failure
 # or open tests/index.html in a browser — same suite, green/red list
+
+# what raises the red failure banner, and what must not
+node --test tests/debug-banner.test.mjs
 ```
+
+The failure banner (`src/ui/debuglog.js`) is the game's one claim that a control
+died, so it must never make that claim about a working screen. `window.onerror`
+also carries browser *notifications* — `ResizeObserver loop completed with
+undelivered notifications` is the one a player met, arriving with no filename and
+no line (`at :0`) because there is no throw site. Those are logged as `NOTICE`
+and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
+`tests/debug-banner.test.mjs` holds both edges.
 
 ## The CI door: a tool's silence is not its success (#12)
 

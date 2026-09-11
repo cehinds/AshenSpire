@@ -274,7 +274,20 @@ function fitCardFaces(cards) {
   rows.forEach((row, i) => { row.el.dataset.truncated = String(truncated[i]); });
 }
 
-if (typeof window !== 'undefined') {
+// GUARDED ON WHAT THE BLOCK ACTUALLY USES, WHICH IS BOTH. `window` alone was
+// the whole test, and both lines below reach for `document` — so a harness that
+// stands up a bare `window` (tools/webaudio-stub.mjs installs
+// `globalThis.window = { AudioContext }` and nothing else) walks straight into
+// `ReferenceError: document is not defined` at import time, before a single
+// check runs. That is what `node tools/verdict.mjs -- node
+// tools/music-toggle-parity.mjs` was doing on every runner: dying of an
+// unhandled exception, which verdict.mjs correctly reports as
+// "HARNESS COULD NOT RUN" rather than as a finding.
+//
+// It stayed invisible because ci.yml is `workflow_dispatch:`-only, so the step
+// that imports this module had not fired. The half-guard was wrong the day it
+// was written; nothing was asking.
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   window.addEventListener('resize', () => scheduleCardFits(document.querySelectorAll('.card')));
   document.fonts?.ready.then(() => scheduleCardFits(document.querySelectorAll('.card')));
 }

@@ -410,6 +410,37 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   // the stats must clear is the weapon's own refusal.
   assert(!/Greatsword/.test(await evaluate(`document.querySelector('#cz-start').dataset.refusal || ''`)), `${width}x${height}: correcting stats clears the equipment refusal`);
 
+  // THE WAY ON IS ON THE RIGHT, THE WAY BACK ON THE LEFT (owner, 2026-09-11).
+  // modalFooter() appends the secondaries and then the primary, so document
+  // order already says it — but a stylesheet can undo that and one did: a
+  // `grid-column:1 / -1; order:1` on the primary drew Begin at x=10 and Back at
+  // x=854 here, the row reading forward-then-back. tools/modal-shell-contract
+  // holds the source order and bans that rule; only a real page can say where
+  // the buttons LANDED, so this row measures the rendered left edges and the
+  // equal ladder tracks the owner asked for on 2026-09-03 in the same breath.
+  const footOrder = await evaluate(`(() => {
+    const row = document.querySelector('.cz-actions .modal-foot-actions, .modal-foot-actions');
+    if (!row) return null;
+    // BY IDENTITY, NOT BY CLASS: refusesWhen rewrites this button's classes as
+    // the allocation goes valid and invalid, so a test for the component's own
+    // primary marker reads false at the wrong moment. On this screen the way on
+    // is #cz-start and nothing else is.
+    const kids = [...row.children].map((b) => ({
+      label: (b.textContent || '').trim().slice(0, 12),
+      isPrimary: b.id === 'cz-start',
+      left: Math.round(b.getBoundingClientRect().left),
+      width: Math.round(b.getBoundingClientRect().width),
+    }));
+    return { kids, primary: kids.find((k) => k.isPrimary) || null, backs: kids.filter((k) => !k.isPrimary) };
+  })()`);
+  assert(footOrder && footOrder.primary && footOrder.backs.length > 0
+    && footOrder.backs.every((back) => back.left < footOrder.primary.left),
+  `${width}x${height}: the creation foot puts every way back left of the way on (${JSON.stringify(footOrder)})`);
+  // Uniform size is the other half of the same instruction; a primary that grew
+  // to take the row is how it ended up on the left last time.
+  assert(footOrder && footOrder.backs.every((back) => Math.abs(back.width - footOrder.primary.width) <= 12),
+    `${width}x${height}: the foot's buttons stay one size (${JSON.stringify(footOrder && footOrder.kids)})`);
+
   await open('class');
 
   await click('.cz-class[data-class="starseer"]');

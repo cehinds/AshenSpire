@@ -3,14 +3,64 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-965",
+    "id": "pr-974",
     "date": "2026-09-11",
     "group": "2026-09-11",
-    "summary": "Character creation walks you through it, one green Continue at a time",
-    "detail": "Every step now starts unchosen, and its Continue stays muted — saying why on hover or tap — until the step is complete, then turns green and opens the next one. Pick a class and Continue to character opens Primary Stats on the Standard / Assign points question; Standard shows the stats with a Continue, Assign points' Continue goes green at zero points (a weapon your stats cannot wield is now explained at the Main Hand step and at Begin, not while you assign); the Keepsake unfolds when the stats settle; Continue to equipment opens Starting Armour with nothing chosen; each equipment Continue folds its section and opens the next, and Begin is the button that goes green at the end, naming whatever is still missing. Open equipment sections now fit a desktop screen instead of running off it, Back stays left and Begin right, and the Equipment summary shows your character, armour, main hand, off hand and relic as cards with the calculations folded beneath.",
+    "summary": "The record now names the two entries that wrote the record",
+    "detail": "Nothing a player sees changes. This project keeps a rule that every change landed has a line here naming it, and a change whose only content was writing two of those lines had not written one for itself. Both are written now, this one included, so the count of unnamed changes falls instead of moving sideways.",
+    "build": "0.6.0.149",
+    "pullRequest": 974,
+    "url": "https://github.com/cehinds/AshenSpire/pull/974"
+  },
+  {
+    "id": "pr-973",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A missing line about the download split",
+    "detail": "Nothing a player sees changes. The entry explaining that the double-clickable game can now be downloaded on its own had been left out when that change landed, because it altered no part of the game itself. The rule asks for a line whether or not the game moved, and it has one.",
+    "build": "0.6.0.148",
+    "pullRequest": 973,
+    "url": "https://github.com/cehinds/AshenSpire/pull/973"
+  },
+  {
+    "id": "pr-967",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The double-clickable game can be downloaded on its own",
+    "detail": "Nothing in the game changes. Each development build produces the game two ways: a folder you serve, whose art arrives a screen at a time, and one large file you double-click that needs no server at all. They were bundled into a single download of about 191 MB, with the double-clickable file buried inside the folder, so there was no way to ask for just the one you wanted. They are now two separate downloads — about 152 MB for the folder and about 39 MB for the single file — from the same build, and the folder's read-me says which one it is and where the other lives.",
+    "build": "0.6.0.148",
+    "pullRequest": 967,
+    "url": "https://github.com/cehinds/AshenSpire/pull/967"
+  },
+  {
+    "id": "pr-966",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A red warning stopped appearing over screens that were fine",
+    "detail": "The game has one way of telling you a button just died: a red block that says something stopped working. It was also showing that block for a message the browser sends when it simply ran out of time mid-frame and finished the job on the next one — nothing broke, nothing was lost, and the thing you pressed had worked. It turned up on the character-creation screen, and it named no file or line because there was nothing to name. That notice now goes quietly into the Command log, where it is still there to read if a screen ever does feel sluggish, and the red block is kept for what it was for. A real fault still raises it, including one that merely mentions the same browser feature by name.",
+    "build": "0.6.0.147",
+    "pullRequest": 966,
+    "url": "https://github.com/cehinds/AshenSpire/pull/966"
+  },
+  {
+    "id": "pr-970",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A check that had been crashing instead of checking now runs",
+    "detail": "Nothing a player sees changes. One of the project's own quality checks — the one that proves the Music setting and the Quick Menu agree about what is on — was not failing and not passing: it was dying on startup, before it looked at anything. A small piece of card-drawing code runs two lines when it finds itself inside a browser, and it tested for only half of what those two lines actually use, so a checking harness that supplies the other half and not that half walked straight into a crash. The test now asks for both things it needs. The check reports thirty-two passes where it used to report nothing at all.",
+    "build": "0.6.0.145",
+    "pullRequest": 970,
+    "url": "https://github.com/cehinds/AshenSpire/pull/970"
+  },
+  {
+    "id": "pr-961",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Two more entries the record was missing",
+    "detail": "Nothing a player sees changes. Two changes had landed without a line here. Their build numbers are read from the project's own history at the moment each one landed rather than from what its author wrote down, which is the habit that caught an earlier entry naming a build one short of the real one.",
     "build": "0.6.0.142",
-    "pullRequest": 965,
-    "url": "https://github.com/cehinds/AshenSpire/pull/965"
+    "pullRequest": 961,
+    "url": "https://github.com/cehinds/AshenSpire/pull/961"
   },
   {
     "id": "pr-968",
@@ -41,6 +91,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.134",
     "pullRequest": 963,
     "url": "https://github.com/cehinds/AshenSpire/pull/963"
+  },
+  {
+    "id": "pr-928",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "A place you inspect and the fight you walk into now look like the same place",
+    "detail": "Looking at a location on the world map and then travelling there could show you two different scenes. Both now resolve the same spot to the same setting and draw from the same pool of paintings, and the choice is remembered once you enter, so it holds from turn to turn. Where a time-of-day or weather variant does not exist, it falls back within the same setting rather than to something unrelated. Travel is green and sits bottom-right, and the local map controls follow the direction they move you.",
+    "build": "0.6.0.122",
+    "pullRequest": 928,
+    "url": "https://github.com/cehinds/AshenSpire/pull/928"
+  },
+  {
+    "id": "pr-952",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The pose editor's companion application is named",
+    "detail": "Nothing a player sees changes. The Pose and Effects Studio notes said the outside editor that opens this project was unknown; it is Spire Studio, and the note now records how to connect it and which file formats it leaves alone.",
+    "build": "0.6.0.122",
+    "pullRequest": 952,
+    "url": "https://github.com/cehinds/AshenSpire/pull/952"
   },
   {
     "id": "pr-954",
