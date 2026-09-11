@@ -96,15 +96,15 @@ Narrative is ambient and economical. It appears through locations, silhouettes, 
 
 ### 4.1 Premise
 
-The old kingdom was three great cities, each built around a citadel tower, each tower holding one of the Three Flames lit from the Sovereign Ember. The flames went out and the light collapsed inward: the cities burned toward their towers and stand in their own ash. Ember still moves in the ruins, thin and starving, climbing toward the crown of the last tower. The Forsaken climbs the three towers to restore, claim, or transform the Sovereign Ember at the top.
+The old kingdom was three regions, each with a great lower city and a citadel tower above it, each tower holding one of the Three Flames lit from the Sovereign Ember. The flames went out and the light collapsed inward: the cities burned toward their towers and stand in their own ash. Ember still moves in the ruins, thin and starving, climbing toward the crown of the last tower. The Forsaken climbs the three towers to restore, claim, or transform the Sovereign Ember at the top.
 
-Each act is one seat: the Field Flame in the Bastion, the Court Flame in the river Citadel, the Crown Flame in the Observatory. The heat of a cold flame now burns inside the corrupted as cinders; take the cinders, kill the boss that holds the largest, and the hearth relights. The full world — the Burning, the Blight, the orders, the bosses' places in it, the three citadel paintings, and the authoring vocabulary — is in [LORE.md](LORE.md).
+Each act is one seat. The heat of a cold flame now burns inside the corrupted as cinders; take the cinders, kill the boss that holds the largest, and the hearth relights. Why the cities died is known to the authors and assembled by the player from card flavor and event copy, never stated outright. The full world — the Burning, the Blight, the orders, the bosses' places in it, the region and citadel art, the card-flavor voices, and the authoring vocabulary — is in [LORE.md](LORE.md).
 
 ### 4.2 Acts
 
-- **Act I — The Fallow Marches:** Overgrown foothills, broken soldiery, blight-touched beasts, grave-wisps. Umber, iron, and faint gold. The act teaches intent reading and immediate tradeoffs.
-- **Act II — The Stitched Court:** A ruined court that remade itself to survive. Gilded stone, oxidized metal, surgical joins, and verdigris. The act tests whether the player's deck has a plan.
-- **Act III — The Ashen Crown:** Burned canopy, mineral ash, bone light, and concentrated ember. The act judges whether the build is tuned and resilient.
+- **Act I — The Hollow Weald and the Bastion:** Lush meadows and forest under mountains; broken soldiery, blight-touched beasts, grave-wisps; a fortified ridge city with a bell tower. Umber, iron, faint gold, too much green. The act teaches intent reading and immediate tradeoffs.
+- **Act II — The Pale Marches and the Stitched Court:** Ice tundra and a river city frozen the night its flame died; a court that stitched itself back together to survive. Gilded stone, oxidized metal, surgical joins, verdigris, rime. The act tests whether the player's deck has a plan.
+- **Act III — The Cinder Reach and the Ashen Crown:** Volcanic ridges and the caldera under the Observatory; mineral ash, bone light, concentrated ember. The act judges whether the build is tuned and resilient.
 
 ### 4.3 Narrative rule
 
