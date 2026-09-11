@@ -2,7 +2,6 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
 import { fitStatusTray } from './statusTray.js';
-import { alignCombatGround } from './environmentArt.js';
 import { combatSpriteRatio, fitCombatSprites } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 
@@ -89,7 +88,6 @@ export function wireBattlefieldStage(field, model) {
     const rect = combat.getBoundingClientRect();
     combat.style.setProperty('--environment-top', `${(fieldRect.top - rect.top) / zoom}px`);
     combat.style.setProperty('--environment-height', `${fieldRect.height / zoom}px`);
-    alignCombatGround(combat.querySelector('.environment-backdrop'), plan.ground / fieldRect.height);
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };

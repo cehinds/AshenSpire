@@ -236,8 +236,8 @@ if (args.includes('--selftest')) {
       {
         name: 'reveal transition skips its deterministic cleanup deadline',
         file: 'src/ui/components/startupGate.js',
-        find: "    const delay = document.body.classList.contains('reduced-motion') ? 140 : 180;",
-        replace: "    const delay = document.body.classList.contains('reduced-motion') ? 900 : 180; // startup-gate selftest plant",
+        find: "    const delay = reducedMotion ? 140 : lightUpMs + holdMs + fadeMs;",
+        replace: "    const delay = reducedMotion ? 900 : lightUpMs + holdMs + fadeMs; // startup-gate selftest plant",
         expectRed: /RED A10\.REVEAL-CLEANUP/,
       },
       {

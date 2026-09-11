@@ -4,6 +4,7 @@ import { combatRules } from '../combatRules.js';
 import { createRegistries } from '../../model/registries.js';
 import { createCombat } from '../../engine/combat.js';
 import { createRng } from '../../engine/rng.js';
+import { prototypeEquipment } from './combatEquipment.js';
 import { computeTokenBindings } from '../../model/validate.js';
 
 const card = (id, name, cost, effects, extra = {}) => ({ id, name, class: 'colorless', rarity: 'special', cost, type: 'attack', keywords: [], effects,
@@ -37,13 +38,13 @@ const descriptions = {
 for (const def of prototypeCards) def.textTemplate = descriptions[def.id];
 
 export const prototypeBuilds = {
-  heavy: { name: 'Heavy physical', classId: 'reaver', itemId: 'greatsword', family: 'blade', grip: 'twoHand', damageType: 'slashing', armor: 30, weightClass: 'heavy', maxStamina: 5, maxMana: 1,
+  heavy: { name: 'Heavy physical', classId: 'reaver', itemId: 'greatsword', family: 'blade', grip: 'twoHand', damageType: 'slashing', armorId: 'plate', maxStamina: 5, maxMana: 1,
     attributes: { strength: 18, constitution: 14, dexterity: 10, intelligence: 8, wisdom: 10 },
     cards: ['prototypeHeavy', 'prototypeHeavy', 'prototypeHeavy', 'prototypeSmash', 'prototypeCleave'], stance: 'prototypePhysicalStance' },
-  bleed: { name: 'Fast Bleed', classId: 'rogue', itemId: 'dagger', family: 'blade', grip: 'oneHand', damageType: 'piercing', armor: 10, weightClass: 'light', maxStamina: 5, maxMana: 1,
+  bleed: { name: 'Fast Bleed', classId: 'rogue', itemId: 'dagger', family: 'blade', grip: 'oneHand', damageType: 'piercing', armorId: 'leather', maxStamina: 5, maxMana: 1,
     attributes: { strength: 10, constitution: 12, dexterity: 18, intelligence: 8, wisdom: 12 },
-    buildup: [{ status: 'bleed', amount: 1 }], cards: ['prototypeFast', 'prototypeFast', 'prototypeFast', 'prototypeSetup', 'prototypeFinish'], stance: 'prototypePhysicalStance' },
-  caster: { name: 'Rare-mana caster', classId: 'starseer', itemId: 'ashStaff', family: 'focus', grip: 'twoHand', damageType: 'arcane', armor: 5, weightClass: 'light', maxStamina: 3, maxMana: 3,
+    bloodRune: true, cards: ['prototypeFast', 'prototypeFast', 'prototypeFast', 'prototypeSetup', 'prototypeFinish'], stance: 'prototypePhysicalStance' },
+  caster: { name: 'Rare-mana caster', classId: 'starseer', itemId: 'ashStaff', family: 'focus', grip: 'twoHand', damageType: 'arcane', armorId: 'robes', maxStamina: 3, maxMana: 3,
     attributes: { strength: 8, constitution: 10, dexterity: 10, intelligence: 18, wisdom: 14 },
     cards: ['prototypeSpell', 'prototypeSpell', 'prototypeSpell', 'prototypeComet', 'prototypeNova'], stance: 'prototypeCasterStance' },
 };
@@ -83,15 +84,13 @@ export function prototypeInput(buildId = 'heavy', scenarioId = 'basic', seed = 1
   const build = prototypeBuilds[buildId], scenario = prototypeScenarios[scenarioId];
   if (!build || !scenario) throw new Error('Unknown prototype build/scenario');
   const regs = prototypeRegistries(overrides.pressure || 1);
-  const weapon = regs.equipment.armaments.find((item) => item.id === build.itemId);
+  const { equipmentOptions = {}, ...playerOverrides } = overrides;
   const deck = ['dodgeRoll', 'prototypeGuard', 'prototypeGuard', 'prototypeRecover', build.stance, ...build.cards].map((cardId, i) => ({ instanceId: `prototype${i}`, cardId, upgraded: false }));
-  const profiles = { player: { armor: build.armor, weightClass: build.weightClass, sources: { mainHand: {
-    id: `armament/${build.itemId}/prototype`, itemId: build.itemId, weight: weapon.weight, family: build.family, grip: build.grip, damageType: build.damageType, tags: [], buildup: build.buildup || [],
-  } } } };
+  const profiles = { player: prototypeEquipment(regs, build, equipmentOptions).profile };
   for (let i = 0; i < scenario.count; i++) profiles[`e${i + 1}`] = { armor: scenario.armor || 0,
     sources: { mainHand: { id: `enemy/${scenarioId}`, weight: 4, family: 'natural', grip: 'oneHand', damageType: 'blunt' } } };
   return { registries: regs, rng: createRng(seed), ruleset: combatRules, combatProfiles: profiles,
-    player: { classId: build.classId, maxHp: 80, hp: 80, deck, attributes: build.attributes, relicIds: [], energyMax: 3, drawPerTurn: 5, maxStamina: build.maxStamina, stamina: build.maxStamina, maxMana: build.maxMana, mana: build.maxMana, ...overrides },
+    player: { classId: build.classId, maxHp: 80, hp: 80, deck, attributes: build.attributes, relicIds: [], energyMax: 3, drawPerTurn: 5, maxStamina: build.maxStamina, stamina: build.maxStamina, maxMana: build.maxMana, mana: build.maxMana, ...playerOverrides },
     enemyIds: Array(scenario.count).fill(`prototype_${scenarioId}`),
     enemyStatuses: scenario.resistBleed ? [{ status: 'prototypeClotted', stacks: 1 }] : [],
   };

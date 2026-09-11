@@ -9,6 +9,11 @@ For how work is branched, reviewed, and merged, see
 
 ## Run & test
 
+`node tools/launch.mjs --build-only` produces the standalone aliases and an
+external-art web edition in `build/web/`. Serve the whole web directory for
+mobile testing. Rendering-quality behavior and performance checks are described
+in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
+
 The opt-in combat workshop is documented in [docs/COMBAT-WORKSHOP.md](docs/COMBAT-WORKSHOP.md).
 Tag assignments and source ownership are documented in [docs/COMBAT-TAG-SOURCES.md](docs/COMBAT-TAG-SOURCES.md).
 Run `node tools/attack-source-audit.mjs --write` after editing the tag junction;

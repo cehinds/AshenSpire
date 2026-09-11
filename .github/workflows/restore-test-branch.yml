@@ -1,0 +1,64 @@
+name: restore-test-branch
+
+# WHY THIS EXISTS — `test` keeps disappearing, and nobody deletes it on purpose.
+#
+# The test → release promotion uses `test` AS the pull request's head branch.
+# GitHub's "Automatically delete head branches" setting then deletes `test` the
+# moment that promotion merges (first seen 2026-09-04; again 2026-09-09 on #828
+# and 2026-09-10 on #918). pages-builds.yml already works around the missing
+# branch; this workflow puts it back.
+#
+# THE SETTING IS THE ROOT CAUSE. Turning it off (Settings → General → Pull
+# Requests → "Automatically delete head branches"), or a ruleset on `test`
+# with "Restrict deletions", makes this workflow a no-op. Until one of those
+# holds, this is the fix that lives in the repository.
+#
+# WHAT IT RESTORES `test` TO — the tip of `release`. A test → release merge
+# commit carries the old `test` tip as its second parent, so `release`'s tip
+# is the old `test` plus whatever the promotion added: nothing is lost, and
+# the next dev → test promotion starts from where the last one ended. If
+# `release` itself is missing, `dev` is the fallback — the branch `test` is
+# cut from in CONTRIBUTING.md's branch model.
+#
+# BOUNDARY — this restores a branch pointer. It does not re-run any gate,
+# rebuild any artifact, or claim the restored `test` is playable; every one of
+# those is the promotion's job, not this file's.
+
+on:
+  delete:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: restore-test-branch
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    # `delete` fires for every branch and tag; only `test` is ours to put back.
+    if: github.event.ref_type == 'branch' && github.event.ref == 'test'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Recreate test from release (or dev)
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin test >/dev/null 2>&1; then
+            echo "test already exists on origin — nothing to restore"
+            exit 0
+          fi
+          if git fetch --no-tags origin release 2>/dev/null; then
+            source=release
+          elif git fetch --no-tags origin dev 2>/dev/null; then
+            source=dev
+          else
+            echo "::error title=Cannot restore test::neither release nor dev exists on origin"
+            exit 1
+          fi
+          sha="$(git rev-parse "origin/$source")"
+          git push origin "$sha:refs/heads/test"
+          echo "restored test at $sha (from $source)"
+          echo "::warning title=test branch restored::test was deleted (auto-delete of a merged head branch) and recreated at $sha from $source — turn off 'Automatically delete head branches' or add a ruleset restricting deletion of test to stop this recurring"
