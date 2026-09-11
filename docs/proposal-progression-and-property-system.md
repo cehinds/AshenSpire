@@ -217,8 +217,8 @@ restores is the sum of its tags.
 | `restHpSmall` | heal 25% of max on `rested` |
 | `restHpPartial` | heal 30% of max on `rested` (the current shrine Rest) |
 | `restHpFull` | heal to max on `rested` |
-| `restMana` | `restoreMana` on `rested` by the configured mode (`rest.mana.mode`): `flat` restores `rest.mana.flat` points; `halfOrFull` restores to half of max, or to full when already at half or above; `full` restores to max |
-| `restManaFlat`, `restManaHalf`, `restManaFull` | Same rule with the mode fixed, for a location that overrides the default |
+| `restMana` | `restoreMana` on `rested` by the configured mode (`rest.mana.mode`): `flat` restores `rest.mana.flat` points; `floorOrFull` restores to `rest.mana.floorPct` of max, or to full when already at or above that floor; `full` restores to max |
+| `restManaFlat`, `restManaFloor`, `restManaFull` | Same rule with the mode fixed, for a location that overrides the default |
 | `restFlasks` | refill all flask charges on `arrived` (the current grace refill) |
 | `restAzureOne` | +1 Azure charge on `rested` |
 | `restCleanse` | remove lingering ailments on `rested` |
@@ -233,8 +233,8 @@ restores is the sum of its tags.
 
 Every rest recovers mana. The default mode is a config entry; a location
 that wants a different amount carries the fixed-mode tag instead. Debug
-settings expose `rest.mana.mode` and `rest.mana.flat` the same way they
-expose flask capacity today, editing the same rows.
+settings expose `rest.mana.mode`, `rest.mana.flat` and `rest.mana.floorPct`
+the same way they expose flask capacity today, editing the same rows.
 
 Town rest is free; towns are capped at one per act on the seeded route, so
 attrition between towns is the run's tension. `inn.price` (default 0) is a
@@ -296,8 +296,9 @@ Every curve uses one shape so one simulator probe measures every track:
 | `attributes.base` / `freePoints` | 5 / 10 | |
 | `attributes.gate.heavyWeapon` / `dualGrip` / `focus` | STR 8 / DEX 8 / INT 8 | |
 | `rest.hpSmallPct` / `hpPartialPct` | 25 / 30 | |
-| `rest.mana.mode` | `halfOrFull` | `flat` / `halfOrFull` / `full`; default for `restMana` |
+| `rest.mana.mode` | `floorOrFull` | `flat` / `floorOrFull` / `full`; default for `restMana` |
 | `rest.mana.flat` | 1 | points restored in `flat` mode |
+| `rest.mana.floorPct` | 50 | `floorOrFull`: below the floor restores to it; at or above restores to full |
 | `atlas.townsPerActMax` | 1 | |
 | `inn.price` | 0 | |
 

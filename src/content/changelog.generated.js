@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-985",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A written plan for how your character will grow",
+    "detail": "Nothing a player sees changes. The owner's design for the next ruleset is now a document in the repository rather than a conversation: weapons, armour, relics and your class all become cards you wear; using a weapon levels a skill that offers you cards; your character levels from experience and grants one attribute point each time; mana stays a fixed pool that only potions, rests and named effects refill; every rest restores some mana; and every number in it is a settings row. It ends with the order the work will land in.",
+    "build": "0.6.0.158",
+    "pullRequest": 985,
+    "url": "https://github.com/cehinds/AshenSpire/pull/985"
+  },
+  {
     "id": "pr-980",
     "date": "2026-09-11",
     "group": "2026-09-11",
