@@ -134,9 +134,15 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     if (already) return;
     await click(`[data-face="${key}"]`);
   };
+  // The property is "nothing scrolls sideways": the root and every element
+  // that CAN scroll (overflow-x auto/scroll). An element clipped by design
+  // (overflow: hidden — a card's tag strip, an info button's glyph box) never
+  // scrolls and never widens the page, so it is not asked. It used to be, and
+  // the gated flow (2026-09-11) opens the armour section on arrival, which put
+  // those by-design clips in front of this reader for the first time.
   const noOverflow = () => evaluate(`(() => {
     const root=document.querySelector('.customize');
-    const scrollers=[root,...root.querySelectorAll('*')].filter(e=>getComputedStyle(e).overflowX!=='visible');
+    const scrollers=[root,...root.querySelectorAll('*')].filter(e=>['auto','scroll'].includes(getComputedStyle(e).overflowX));
     return root.scrollWidth<=root.clientWidth+1 && scrollers.every(e=>e.scrollWidth<=e.clientWidth+1);
   })()`);
 
@@ -165,6 +171,13 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   }))()`);
   assert(JSON.stringify(arrival.labels) === JSON.stringify(['CLASS', 'CHARACTER', 'STARTING EQUIP', 'SEED']), `${width}x${height}: sections are in the requested order`);
   assert(JSON.stringify(arrival.open) === JSON.stringify(['class']), `${width}x${height}: exactly Class opens on arrival`);
+  // THE FLOW IS GATED (2026-09-11): no class is chosen on arrival, and every
+  // later step's Continue waits for the one before it. The exercise below
+  // reads Reaver's kit, so Reaver is chosen here as a player would.
+  assert((await evaluate(`document.querySelectorAll('#cz-classes .cz-class.chosen').length`)) === 0, `${width}x${height}: no class is chosen on arrival`);
+  assert((await evaluate(`document.querySelector('.cz-next[data-next="character"]').dataset.refusal || ''`)) === 'Choose a class.', `${width}x${height}: Continue to character refuses until a class is chosen`);
+  await click('.cz-class[data-class="reaver"]');
+  assert((await evaluate(`document.querySelector('.cz-next[data-next="character"]').hasAttribute('aria-disabled')`)) === false, `${width}x${height}: choosing a class readies Continue to character`);
   const classLayout = await evaluate(`(() => ({
     preview:!!document.querySelector('.cc-class-preview'), resources:document.querySelectorAll('.cc-class-resource').length,
     view:document.querySelector('#cz-classes').dataset.view,
@@ -245,6 +258,9 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(nestedArrival.length === 0,
     `${width}x${height}: Character's own pickers all arrive folded (${JSON.stringify(nestedArrival)})`);
   await open('primary');
+  // THE FLOW IS GATED (2026-09-11): Primary Stats opens on the Standard /
+  // Assign points question alone, and the stat cards appear with the answer.
+  await click('#cz-statedit .se-mode[data-creation-mode="standard"]');
   // `faces` reads A NATIVELY ACTIVATABLE FACE, not specifically a <button>:
   // every creation disclosure mounts with structure 'details' now, so each
   // face is the fold's own <summary> — focusable and activatable by keyboard
@@ -292,7 +308,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(JSON.stringify(characterFold.labels) === JSON.stringify(['PRIMARY STATS', 'KEEPSAKE'])
     && JSON.stringify(characterFold.previewLabels) === JSON.stringify(['SPRITE'])
     && JSON.stringify(characterFold.open) === JSON.stringify(['primary'])
-    && JSON.stringify(characterFold.resourceOrder) === JSON.stringify(['cz-statedit', 'cz-primary-stats', 'cz-derived']),
+    && JSON.stringify(characterFold.resourceOrder.slice(0, 3)) === JSON.stringify(['cz-statedit', 'cz-primary-stats', 'cz-derived']),
   `${width}x${height}: Character nests modes, stats and keepsake one-open, with SPRITE beside the preview`);
   await open('primary');
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
@@ -359,15 +375,19 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await open('equipment');
   await open('rightHand');
   const errorsBeforeIncompatiblePick = errors.length;
-  await click('#cz-right-hand [data-armament-id="greatsword"]');
+  await click('#cz-right-hand [data-armament-id="greatsword"] .equipment-poker-card');
+  await click('#cz-right-hand [data-armament-id="greatsword"] .equipment-choose');
+  // The weapon's refusal is explained where the player can act on it: the
+  // Main Hand section's own Continue (Begin names the first unmet step, which
+  // may still be the keepsake or the armour).
   const incompatible = await evaluate(`(() => {
-    const begin = document.querySelector('#cz-start');
-    const choice = document.querySelector('#cz-right-hand [data-armament-id="greatsword"]');
-    return { disabled: begin.getAttribute('aria-disabled'), refusal: begin.dataset.refusal || '', selected:choice?.getAttribute('aria-pressed') };
+    const next = document.querySelector('[data-equipment-section="rightHand"] .cc-equipment-continue');
+    const choice = document.querySelector('#cz-right-hand [data-armament-id="greatsword"] .equipment-choose');
+    return { disabled: next.getAttribute('aria-disabled'), refusal: next.dataset.refusal || '', selected:choice?.getAttribute('aria-pressed') };
   })()`);
   assert(errors.length === errorsBeforeIncompatiblePick, `${width}x${height}: incompatible hand selection keeps the live preview total`);
   assert((incompatible.disabled === 'true' && /Greatsword needs strength 12/.test(incompatible.refusal)) || incompatible.selected === 'false',
-    `${width}x${height}: incompatible equipment is rejected at its card or explained at Begin (${JSON.stringify(incompatible)})`);
+    `${width}x${height}: incompatible equipment is rejected at its card or explained at its section's Continue (${JSON.stringify(incompatible)})`);
   await open('character');
   await open('primary');
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
@@ -386,7 +406,9 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   for (let i = 0; i < 3; i += 1) await click('.cc-stat-overlay [aria-label="Increase Constitution"]');
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver correction overlay close');
-  assert((await evaluate(`document.querySelector('#cz-start').hasAttribute('aria-disabled')`)) === false, `${width}x${height}: correcting stats clears the equipment refusal`);
+  // Begin may still wait on later steps (keepsake, armour); what correcting
+  // the stats must clear is the weapon's own refusal.
+  assert(!/Greatsword/.test(await evaluate(`document.querySelector('#cz-start').dataset.refusal || ''`)), `${width}x${height}: correcting stats clears the equipment refusal`);
 
   // THE WAY ON IS ON THE RIGHT, THE WAY BACK ON THE LEFT (owner, 2026-09-11).
   // modalFooter() appends the secondaries and then the primary, so document
@@ -424,6 +446,10 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await click('.cz-class[data-class="starseer"]');
   assert((await evaluate(`document.querySelector('[data-face="class"] .disc-value').textContent`)) === 'Starseer', `${width}x${height}: class selector updates its receipt`);
   await open('equipment');
+  await open('armour');
+  assert((await evaluate(`document.querySelector('#cz-equipment-fold [data-face="armour"] .disc-value').textContent`)) === '—', `${width}x${height}: armour arrives unchosen after a class change`);
+  await click('#cz-armours [data-starting-armour-id="default"] .equipment-poker-card');
+  await click('#cz-armours [data-starting-armour-id="default"] .equipment-choose');
   assert((await evaluate(`document.querySelector('#cz-equipment-fold [data-face="armour"] .disc-value').textContent`)) === 'Nightweave', `${width}x${height}: armour receipt is scoped to the selected class`);
   await open('character');
   assert(await noOverflow(), `${width}x${height}: Character has no horizontal overflow`);
@@ -435,7 +461,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await click('#cz-tints .cz-opt', 1);
   await click('#cz-sprite-fold [data-face="sigil"]');
   await click('#cz-glyphs .cz-opt', 1);
-  await click('#cz-character-fold [data-face="keepsake"]');
+  await open('keepsake');
   await click('#cz-keepsakes .cz-keepsake', 1);
   assert((await evaluate(`[...document.querySelectorAll(${JSON.stringify(faces('#cz-character-fold', '[aria-expanded="true"]'))})].map(e=>e.dataset.face).join(',')`)) === 'keepsake', `${width}x${height}: nested Character disclosures keep only the focused picker open`);
   await setInput('#cz-name', 'Marya');

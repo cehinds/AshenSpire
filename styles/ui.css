@@ -423,6 +423,14 @@
   min-width: 0;
 }
 .cc-primary-stat .disc-summary { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* On a desktop-wide column the summary sits on one line, so the two-line
+   reserve (kit.css, "Primary stats keep this compact face") is dead height:
+   five of them put the section's Continue under the fold at 1366x768
+   (measured: the open PRIMARY STATS reveal stood 578px in a 594px body).
+   Narrow screens keep the reserve, where the summary does wrap. */
+@media (min-width: 701px) {
+  .customize .cc-primary-stats .as-option.cc-primary-stat.hosts-face > .as-row { min-height: 5.6rem; }
+}
 
 @media (max-width: 30rem) {
   .cc-preview-side { min-height: 28rem; }
