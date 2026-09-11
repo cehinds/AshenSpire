@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-987",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A card whose text is cut short can be opened with one tap",
+    "detail": "When a card's text does not fit its face, the small › in its corner is now a button: tap it on a phone and the card's full information opens, the same window the i button shows. Before, the › was only a hint, and the i only appeared after you had already selected the card.",
+    "build": "0.6.0.160",
+    "pullRequest": 987,
+    "url": "https://github.com/cehinds/AshenSpire/pull/987"
+  },
+  {
     "id": "pr-986",
     "date": "2026-09-11",
     "group": "2026-09-11",
