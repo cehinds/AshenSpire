@@ -71,7 +71,7 @@ in each section; the rest is the accepted shape after discussion.
     table that tracks keepsake and outfit unlocks.
 14. **Class swap mid-run** is an event or boss drop only, never a menu. Swapping
     replaces the core card, keeps weapon skills, resets class level, and
-    removes tags the new class does not permit.
+    removes tags the new class does not permit. **Owner: ships in v1.**
 
 ## C. Collection and deck
 
@@ -79,11 +79,12 @@ in each section; the rest is the accepted shape after discussion.
 16. **Equipping injects base cards into the collection** and locks them in the
     deck while the source is equipped. Unequip removes them (source-removal
     rule).
-17. **Deck minimum** is a balance value (start 15) rising with character level.
-    Under minimum blocks leaving the loadout screen.
+17. **Deck minimum** is a balance value (owner: start 8) rising with character
+    level. Under minimum blocks leaving the loadout screen.
 18. **Swap Armament** colorless card, one per run: switch to an inventoried
     weapon mid-combat. Old base cards exhaust, new base cards shuffle into the
-    draw pile. Exercises the action-snapshot rule.
+    draw pile. Exercises the action-snapshot rule. **Owner: v2.** v1 keeps
+    the existing `allowChangesInCombat` Armoury path only.
 19. **Dynamic tags** are computed at action snapshot from equipment state and
     never written to the card. `dual` derives from the grip mode.
 
@@ -163,9 +164,11 @@ Tracks: one per weapon group, one per armor group, one per focus group,
     back).
 41. **Action-only spells also add buildup** so an empty caster still works
     toward a break.
-42. **Player poise meter.** `poiseMax` from CON plus body armor. Player stagger:
-    lose the first draw next turn and take +50% until end of the enemy turn.
-    Milder than the enemy version.
+42. **Player poise meter.** `poiseMax` from CON plus body armor. Player stagger
+    (owner wording): lose 1 action next turn and gain `staggerVulnerable`
+    stacks of Vulnerable and `staggerWeak` stacks of Weak (defaults 2 and 2,
+    ordinary per-turn decay). Same `staggered` status model as enemies, with
+    the player-side payload authored as those three numbers.
 43. **Defense stack unchanged** (Evade → armor → typed resistance → Block →
     impact/buildup). Block never scales with a stat; armor only from worn.
 44. **Enemy casters** have authored mana that empties. A dry caster boss is a
@@ -204,10 +207,60 @@ Tracks: one per weapon group, one per armor group, one per focus group,
    §3.5 formula.
 7. Mana costing pass and Exposure properties (F) — can run beside step 3.
 
-## J. Open decisions still with the owner
+## J. Owner decisions (2026-09-11, second pass)
 
-- Deck minimum starting value and growth rate.
-- Skill XP amounts per hit, per win, per kill (balance data; the simulator
-  should measure levels per run before numbers are chosen).
-- Whether class swap items exist in v1 or are a forward hook only.
-- Player stagger penalty wording (draw loss vs. action loss).
+- Everything numeric below is configurable. One row each in
+  `content/balance.js`; no screen or engine literal.
+- Deck minimum starts at 8.
+- XP starts small: 100 XP for the first character level, scaling from there.
+  Curve and award amounts are the proposer's call, listed in K, and the run
+  simulator measures levels per run before any retune.
+- Class swap ships in v1. Swap Armament (mid-combat weapon swap) is v2.
+- Player stagger: lose an action, gain X Vulnerable and X Weak.
+
+## K. Balance defaults (all in `content/balance.js`, all provisional)
+
+Curves use one shape so the simulator's `--level-cost` style probe works on
+every track: `xpToNext(n) = round(base × growth^(n−1), roundTo)` for the
+zero-based level step `n`.
+
+| Key | Default | Note |
+|---|---|---|
+| `deck.minimum` | 8 | Owner value |
+| `deck.minimumPerLevel` | 0.5 | +1 minimum every 2 character levels, floored |
+| `level.xp.base` | 100 | Owner value |
+| `level.xp.growth` | 1.15 | ~11 levels over a full run at the award table below; retune from simulator output, target 10–20 |
+| `level.xp.roundTo` | 10 | |
+| `level.pointsPerLevel` | 1 | Owner value, kept |
+| `level.thresholdEvery` | 5 | HP / mana / stamina / hand-size bump cadence |
+| `xp.combatWin` | 20 | Per combat |
+| `xp.kill.normal` / `elite` / `boss` | 10 / 30 / 80 | Per enemy defeated |
+| `xp.quest` | 50 | Per quest completion |
+| `skill.xp.base` | 30 | Skill tracks level faster than the character |
+| `skill.xp.growth` | 1.2 | |
+| `skill.xp.roundTo` | 5 | |
+| `skill.xp.perHit` | 2 | Card of the group resolves a hit or block on a live target |
+| `skill.xp.perWinEquipped` | 5 | Flat per equipped group on combat win |
+| `skill.xp.killMult` | 1.5 | Multiplies the per-win bonus when the group landed the killing hit |
+| `skill.xp.armorAbsorbPer` | 1 per 5 impact absorbed | Heavy armor |
+| `skill.xp.armorEvadePer` | 3 per evade | Light armor |
+| `skill.xp.focusBuildupPer` | 1 per 5 buildup | Focus groups |
+| `skill.class.xp.base` / `growth` | 60 / 1.25 | Class track, slower |
+| `skill.rarityUnlock` | common 1, uncommon 4, rare 7, legendary 10 | Skill level that opens each tier |
+| `skill.draftSize` | 3 | Owner default |
+| `skill.draftsPerCombat` | 1 | Per skill; extras queue |
+| `stagger.player.actionLoss` | 1 | Owner wording |
+| `stagger.player.vulnerable` | 2 | X |
+| `stagger.player.weak` | 2 | X |
+| `exposure.siphonRefund` | 1 | Scepter `siphon`; 2 at focus level 7 |
+| `exposure.buildupPerManaSpell` | 5 | Against the shipped threshold 20 |
+| `mana.minActionCost` / `minStaminaCost` | 1 / 1 | Validation rule, not a runtime number |
+| `attributes.base` | 5 | Per attribute |
+| `attributes.freePoints` | 10 | Single creation mode |
+| `attributes.gate.heavyWeapon` / `dualGrip` / `focus` | STR 8 / DEX 8 / INT 8 | |
+
+Worked receipt for the character curve at the defaults: step costs 100, 120,
+130, 150, 170, 200, 230, 270, 310, 350; cumulative to level 11 ≈ 2,030. A full
+run at the award table lands near 2,300 XP (about 36 normal combats, 6 elites,
+3 bosses, 5 quests), so roughly level 11–12. That is a curve receipt, not a
+second hard-coded total.
