@@ -478,6 +478,22 @@ async function main() {
     return true;
   }
 
+  // A SMITH CANDIDATE TAKES THREE TOUCH TAPS TODAY (cardInspection.js: the
+  // first tap selects, the second is swallowed as an information tap, the
+  // third reaches the card's own choose) — measured 2026-09-11, a finding
+  // for the owner and not this tool's to hide. The tool presses as many
+  // times as a thumb has to, stops the moment the Smith's button says an
+  // item is selected, and says how many it took.
+  const selectSmithCandidate = async (p) => {
+    let taps = 0;
+    for (; taps < 3; taps++) {
+      await press(p, 30); await wait(300);
+      if (await ev(`(document.querySelector('.smith-confirm') || { dataset: {} }).dataset.smithActionState !== 'unselected'`)) { taps++; break; }
+    }
+    if (taps > 1) console.log(`    (the Smith candidate took ${taps} touch taps to select — cardInspection swallows the first two)`);
+    return taps;
+  };
+
   async function openShot(state, extra = {}) {
     const q = [`shot=${state}`, ...Object.entries(extra).map(([k, v]) => `${k}=${encodeURIComponent(v)}`)];
     await cdp.send('Page.navigate', { url: `${base}?${q.join('&')}` }, sessionId);
@@ -1412,21 +1428,6 @@ async function main() {
       console.log(`    (mutation rewired Rest to commit on a pointer click)`);
     }
     const onShrine = () => ev(`!!document.querySelector('#rest-opt')`);
-    // A SMITH CANDIDATE TAKES THREE TOUCH TAPS TODAY (cardInspection.js: the
-    // first tap selects, the second is swallowed as an information tap, the
-    // third reaches the card's own choose) — measured 2026-09-11, a finding
-    // for the owner and not this tool's to hide. The tool presses as many
-    // times as a thumb has to, stops the moment the Smith's button says an
-    // item is selected, and says how many it took.
-    const selectSmithCandidate = async (p) => {
-      let taps = 0;
-      for (; taps < 3; taps++) {
-        await press(p, 30); await wait(300);
-        if (await ev(`(document.querySelector('.smith-confirm') || { dataset: {} }).dataset.smithActionState !== 'unselected'`)) { taps++; break; }
-      }
-      if (taps > 1) console.log(`    (the Smith candidate took ${taps} touch taps to select — cardInspection swallows the first two)`);
-      return taps;
-    };
     const restBeat = await ev(`(() => { const e = document.querySelector('#rest-opt'); return e ? { beat: e.dataset.beat, ms: Number(e.dataset.holdMs || 0) } : null; })()`);
     if (!restBeat) skip('shrine', 'unasked', 'no ?shot=rest screen at this ref');
     else {

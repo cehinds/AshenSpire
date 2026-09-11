@@ -206,7 +206,8 @@ export function openConfirmationModal({
   // press that began on it. A keyboard or synthetic activation carries
   // `detail === 0` and no press, and passes untouched.
   const ANSWERS = '.confirmation-close, .confirmation-cancel, .confirmation-confirm';
-  const answerOf = (target) => (target instanceof Element ? target.closest(ANSWERS) : null);
+  // Duck-typed: the contract test drives this in a minimal DOM with no `Element`.
+  const answerOf = (target) => (typeof target?.closest === 'function' ? target.closest(ANSWERS) : null);
   let scrimPressed = false;
   let pressedAnswer = null;
   veil.addEventListener('pointerdown', (event) => {
