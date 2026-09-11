@@ -7,6 +7,8 @@ export const tooltipHelp = {
   holdMs: 420,
   doubleTapMs: 300,
   fadeMs: 160,
+  // A tooltip that re-opens at a larger rung reveals the difference over this.
+  stepMs: 150,
   textLengths: { medium: 90, detailedLarge: 220, large: 420 },
   settings: [
     { key: 'hoverTooltips', def: true, label: 'Hover explanations', note: 'Show explanations when the pointer rests on a detail. Keyboard and explicit inspection remain available.' },
