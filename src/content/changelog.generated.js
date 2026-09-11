@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-928",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "A place you inspect and the fight you walk into now look like the same place",
+    "detail": "Looking at a location on the world map and then travelling there could show you two different scenes. Both now resolve the same spot to the same setting and draw from the same pool of paintings, and the choice is remembered once you enter, so it holds from turn to turn. Where a time-of-day or weather variant does not exist, it falls back within the same setting rather than to something unrelated. Travel is green and sits bottom-right, and the local map controls follow the direction they move you.",
+    "build": "0.6.0.122",
+    "pullRequest": 928,
+    "url": "https://github.com/cehinds/AshenSpire/pull/928"
+  },
+  {
+    "id": "pr-952",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The pose editor's companion application is named",
+    "detail": "Nothing a player sees changes. The Pose and Effects Studio notes said the outside editor that opens this project was unknown; it is Spire Studio, and the note now records how to connect it and which file formats it leaves alone.",
+    "build": "0.6.0.122",
+    "pullRequest": 952,
+    "url": "https://github.com/cehinds/AshenSpire/pull/952"
+  },
+  {
     "id": "pr-954",
     "date": "2026-09-10",
     "group": "2026-09-10",
