@@ -223,6 +223,14 @@ jobs:
       - name: World Journey normalized data and seeded routes
         run: node tests/world-atlas.test.mjs
 
+      # A player met "SOMETHING JUST STOPPED WORKING / ResizeObserver loop
+      # completed with undelivered notifications. at :0" over a screen that was
+      # working. The banner is the game's one claim that a control died, so a
+      # false one costs the whole instrument. Both edges are here: the browser
+      # notification raises nothing, and a real uncaught error still raises.
+      - name: The failure banner fires for failures and not for notifications
+        run: node --test tests/debug-banner.test.mjs
+
       - name: Fullscreen capability, enter, exit, and refusal states
         run: node tools/verdict.mjs -- node tools/fullscreen-control.mjs
 

@@ -9,8 +9,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 import { resolveCard } from '../../model/registries.js';
 import { computeTokenBindings, relicTokens, tokenRe } from '../../model/validate.js';
 import { flaskGrowthClause } from '../../model/flaskgrowth.js';
-import { attachTooltip, esc } from './tooltip.js';
-import { helpText } from '../../model/tooltipSettings.js';
+import { esc } from './tooltip.js';
 import { statusTooltipText } from '../uiContent.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
@@ -182,24 +181,12 @@ export function renderCard(registries, ref, opts = {}) {
     el.style.setProperty('--boost-tint', boost.boostTint);
   }
 
-  // opts.tooltipFn overrides the default tooltip. A parent that already owns a
-  // persistent detail region may suppress the transient tooltip entirely.
-  if (opts.tooltip !== false) {
-    // A combat card's preview already resolved its live costs (Weight Class
-    // pricing, Power reductions); the tooltip must say the same numbers the
-    // badge and the engine do, so it takes them instead of re-deriving.
-    const liveCosts = opts.preview
-      ? { variable: !!opts.preview.costIsX, action: opts.preview.cost, mana: opts.preview.manaCost, stamina: opts.preview.staminaCost }
-      : null;
-    attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts)));
-    for (const [selector, resource, amount] of [['.cost', 'action', cost], ['.mana-cost', 'mana', manaCost], ['.stamina-cost', 'stamina', staminaCost]]) {
-      const badge = el.querySelector(selector);
-      if (badge) attachTooltip(badge, () => {
-        const values = { resource: registries.framework.resourceWord(resource), amount, card: def.name };
-        return `<div class="tt-title">${esc(helpText('costTitle', values))}</div>${esc(helpText(amount === 'X' ? 'costAll' : 'cost', values))}`;
-      });
-    }
-  }
+  // NO HOVER TOOLTIP ON A CARD (owner, 2026-09-11: "all cards will use the
+  // (i) over on selection"). Selecting a card reveals its Information button
+  // (bindCardInspection below), and that opens the same reading the hover used
+  // to — `opts.tooltipFn` or cardTooltip — with the live costs. The cost badges
+  // say their number and explain it there too. `opts.tooltip: false` remains
+  // the callers' word for "no transient explanation" and now names the default.
   if (opts.small) el.dataset.small = 'true';
   if (opts.inspection !== false) bindCardInspection(el, { title: def.name, readOnly: opts.inspectReadOnly === true,
     touchSelectionSafe: Boolean(opts.preview?.needsTarget),
@@ -287,7 +274,20 @@ function fitCardFaces(cards) {
   rows.forEach((row, i) => { row.el.dataset.truncated = String(truncated[i]); });
 }
 
-if (typeof window !== 'undefined') {
+// GUARDED ON WHAT THE BLOCK ACTUALLY USES, WHICH IS BOTH. `window` alone was
+// the whole test, and both lines below reach for `document` — so a harness that
+// stands up a bare `window` (tools/webaudio-stub.mjs installs
+// `globalThis.window = { AudioContext }` and nothing else) walks straight into
+// `ReferenceError: document is not defined` at import time, before a single
+// check runs. That is what `node tools/verdict.mjs -- node
+// tools/music-toggle-parity.mjs` was doing on every runner: dying of an
+// unhandled exception, which verdict.mjs correctly reports as
+// "HARNESS COULD NOT RUN" rather than as a finding.
+//
+// It stayed invisible because ci.yml is `workflow_dispatch:`-only, so the step
+// that imports this module had not fired. The half-guard was wrong the day it
+// was written; nothing was asking.
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   window.addEventListener('resize', () => scheduleCardFits(document.querySelectorAll('.card')));
   document.fonts?.ready.then(() => scheduleCardFits(document.querySelectorAll('.card')));
 }

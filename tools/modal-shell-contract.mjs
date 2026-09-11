@@ -199,6 +199,27 @@ check('the footer actions row is a button row',
 check('openModal hands its footSize to the footer', /modalFooter\(\{[^}]*size: footSize/.test(shellSource));
 check('footer buttons share one height', /\.modal-btnrow\s*\{[^}]*align-items:\s*stretch/.test(css) && !/\.modal-foot-actions\s*\{[^}]*align-items:\s*center/.test(css),
   'the foot is a button row; a centred row lets a two-line secondary sit taller than its primary');
+// THE WAY ON IS ON THE RIGHT, THE WAY BACK ON THE LEFT (owner, 2026-09-11).
+// `modalFooter()` appends every secondary and THEN the primary, so document
+// order already says it; what can undo it is a stylesheet, and one did. A
+// `grid-column:1 / -1; order:1` on the primary — meant to give it a full-width
+// row — instead took the explicit span while the auto-placed secondary spilled
+// into an implicit third track, drawing the row primary-then-back. Measured at
+// 1280x800: creation's foot computed three 383.47px tracks with Begin at x=10
+// and Back at x=854.
+//
+// SOURCE ORDER IS CHECKED HERE; PLACE IS CHECKED IN A BROWSER. This tool never
+// opens a DOM (see the header), so it holds the two halves it CAN read: the
+// component appends in the house order, and no rule reorders or re-spans a foot
+// primary. tools/character-creation-check.mjs measures the rendered left edges.
+check('the footer appends every way back before the one way forward',
+  /for \(const button of secondary\) if \(button\) actions\.appendChild\(button\);[\s\S]{0,900}?actions\.appendChild\(primary\);/.test(shellSource),
+  'the primary must be the last child, or the way on is not on the right');
+check('no rule reorders or re-spans the foot primary',
+  !/\.modal-foot-actions\s*>\s*\.primary[^{]*\{[^}]*\border\s*:/.test(css)
+    && !/\.modal-foot-actions\s*>\s*\.primary[^{]*\{[^}]*grid-column\s*:/.test(css),
+  'order: or grid-column: on a foot primary moves it off the right — the 2026-09-10 regression');
+
 check('the foot note is whole or absent, never a stub',
   /\.modal-foot-note\s*\{[^}]*container-type:\s*inline-size/.test(css) && /@container\s*\(max-width:[^)]*\)\s*\{\s*\.modal-foot-note\s*>\s*span\s*\{\s*visibility:\s*hidden/.test(css)
     && /const text = document\.createElement\('span'\);\s*text\.textContent = note;/.test(shellSource),

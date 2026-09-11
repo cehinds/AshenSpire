@@ -118,11 +118,13 @@ jobs:
           cp -r art/readiness-poses/inspection preview/art/readiness-poses/inspection
           # TWO SHAPES, AND THE ROOT IS THE FAST ONE.
           #
-          # preview/            the de-inlined build: 4.9 MB of HTML beside the
-          #                     art, which arrives per screen and stays in the
-          #                     browser cache. This is what a phone should open.
-          # preview/standalone/ the consolidated single file, 57.6 MB, every
-          #                     asset inlined. Needs no server — double-click it.
+          # preview/     the de-inlined build: 4.9 MB of HTML beside the art,
+          #              which arrives per screen and stays in the browser
+          #              cache. This is what a phone should open, and it is
+          #              uploaded as the dev-preview artifact.
+          # standalone/  the consolidated single file, every asset inlined.
+          #              Needs no server — double-click it. Uploaded as its
+          #              OWN artifact, dev-standalone; see the upload steps.
           #
           # The root used to be the single file, so opening the preview on a
           # phone meant 57.6 MB before the first frame. --external-art writes
@@ -130,8 +132,10 @@ jobs:
           # pass, so the copies that used to place those by hand are gone with it.
           node tools/bundle.mjs --external-art --out preview
           cp preview/AshenSpire.html preview/index.html
-          mkdir -p preview/standalone
-          cp AshenSpire.html preview/standalone/AshenSpire.html
+          # The standalone is uploaded as its OWN artifact rather than nested
+          # here — see the two upload steps below for why.
+          mkdir -p standalone
+          cp AshenSpire.html standalone/AshenSpire.html
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
           cp -r src preview/src
           cp world-atlas-preview.html preview/
@@ -174,6 +178,11 @@ jobs:
             echo "art/combat-effects-2026-09-07/index.html?integrated=1."
             echo "Card/tag assignments and screenshots are in the same art folder."
             echo
+            echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
+            echo "(or run serve-preview.mjs). It needs a server. For the double-clickable"
+            echo "single file that needs none, download the dev-standalone artifact from"
+            echo "this same run — it is ~39 MB rather than all of this."
+            echo
             echo "This is an inspection artifact, not a deployment. Pages serves main;"
             echo "dev has no hosted URL."
           } > preview/README.txt
@@ -201,10 +210,34 @@ jobs:
       - name: That gate still catches its own known-bads
         run: node tools/verdict.mjs -- node tools/verify-external.mjs --selftest --dir preview
 
+      # TWO ARTIFACTS, NOT ONE FOLDER INSIDE ANOTHER.
+      #
+      # MEASURED on this tree, as downloads — the zipped sizes GitHub actually
+      # serves, not the bytes on disk:
+      #
+      #   one artifact, standalone nested        ~191 MB
+      #   dev-preview-<sha>                      ~152 MB
+      #   dev-standalone-<sha>                    ~39 MB
+      #
+      # The split is not a saving for someone who wanted the preview anyway.
+      # It is the whole download for someone who wanted the other thing: the
+      # double-clickable file was 39 MB of a 191 MB download, and there was no
+      # way to ask for only it. Now there is.
+      #
+      # They stay two DOWNLOADS of one build, not two builds: both come from
+      # the same commit in the same job, and the standalone is the same
+      # AshenSpire.html that verify-shipped.mjs has already proven is this
+      # source. Naming the sha in both makes that visible at the download.
       - uses: actions/upload-artifact@v4
         with:
           name: dev-preview-${{ github.sha }}
           path: preview/
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dev-standalone-${{ github.sha }}
+          path: standalone/
           retention-days: 14
 
   # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.

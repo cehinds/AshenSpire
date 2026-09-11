@@ -41,7 +41,6 @@ import { hudShellHtml } from '../components/hudmeta.js';
 import { actRouteStripHtml } from '../components/actRouteStrip.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
-import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
@@ -130,15 +129,15 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           menuId: 'open-menu',
           menuHint: actionHint('menu'),
         },
-        // The settings bag, for `runHudMode` — the band's compact/expanded
-        // state. `presentation` went with the fullscreen/music pair.
+        // The settings bag. `presentation` went with the fullscreen/music pair,
+        // and the band's compact/expanded grip went on 2026-09-11; nothing in
+        // the bag steers the HUD now, the parameter keeps the callers' shape.
         quickSettings: { settings: meta.settings || {} },
         overlayHtml: '',
       }))}
       ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
     </div>`;
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
-  wireHudModeGrip(app, { settings: meta.settings || {}, onSettingsChange });
 
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
   //
@@ -394,12 +393,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     });
   };
   const viewport = window.visualViewport;
-  for (const type of ['resize', 'ashenspire:hud-mode-change']) window.addEventListener(type, recenterAfterSettle);
+  window.addEventListener('resize', recenterAfterSettle);
   for (const type of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(type, recenterAfterSettle);
   viewport?.addEventListener('resize', recenterAfterSettle);
   liveMapViewportRelease = () => {
     cancelAnimationFrame(frameA); cancelAnimationFrame(frameB);
-    for (const type of ['resize', 'ashenspire:hud-mode-change']) window.removeEventListener(type, recenterAfterSettle);
+    window.removeEventListener('resize', recenterAfterSettle);
     for (const type of ['fullscreenchange', 'webkitfullscreenchange']) document.removeEventListener(type, recenterAfterSettle);
     viewport?.removeEventListener('resize', recenterAfterSettle);
   };

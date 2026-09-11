@@ -69,7 +69,6 @@ import { combatantFrame, updateCombatantFrame } from '../components/combatantFra
 import { statureFor } from '../components/stature.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
-import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
@@ -118,8 +117,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           menuId: 'combat-menu',
           menuHint: actionHint('menu'),
         },
-        // The settings bag, for `runHudMode` — the band's compact/expanded
-        // state. `presentation` went with the fullscreen/music pair.
+        // The settings bag. `presentation` went with the fullscreen/music pair,
+        // and the band's compact/expanded grip went on 2026-09-11; nothing in
+        // the bag steers the HUD now, the parameter keeps the callers' shape.
         quickSettings: { settings: meta.settings || {} },
       }))}
       ${combatBackdropHtml(run, previewSceneId)}
@@ -164,7 +164,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     </div>`;
 
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
-  wireHudModeGrip(app, { settings: meta.settings || {}, onSettingsChange });
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
