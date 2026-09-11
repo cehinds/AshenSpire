@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `54c0d662346e7d97a274e60289115a1b1517f6f6`
+- Source commit: `7c797834531531617d96cd6985ca61bd8a1d2472`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -27,11 +27,11 @@
 | Presentation projections | `src/ui/viewModels/` | 1 |
 | Component models and behavior records | `src/ui/models/` | 26 |
 | DOM components and observer adapters | `src/ui/components/` | 66 |
-| Code-side content adapters | `src/content/` | 88 |
-| Authoritative JSON/CSV content | `content/source/` | 23 |
+| Code-side content adapters | `src/content/` | 89 |
+| Authoritative JSON/CSV content | `content/source/` | 24 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 63 |
-| Architecture/tooling | `tools/` | 344 |
+| Tests | `tests/` | 64 |
+| Architecture/tooling | `tools/` | 346 |
 
 ## Current implementation signals
 
@@ -39,7 +39,7 @@
 - Shared presentation projection: `src/ui/viewModels/RunHudViewModel.js`.
 - Immutable presentation records: `src/ui/models/ComponentModel.js` and `BehaviorModel.js`.
 - Headless simulation boundary: `src/engine/` imports model/content, not UI/screens.
-- Authoritative content inputs: 5 JSON file(s) and 18 CSV file(s) under `content/source/`.
+- Authoritative content inputs: 5 JSON file(s) and 19 CSV file(s) under `content/source/`.
 
 ## Automated boundary checks
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **5299**.
-Extensions: `.bat` 1, `.cjs` 9, `.cmd` 1, `.css` 13, `.csv` 21, `.gitattributes` 1, `.gitignore` 7, `.html` 48, `.js` 367, `.json` 115, `.log` 23, `.md` 132, `.mjs` 337, `.nojekyll` 1, `.png` 1388, `.ps1` 1, `.py` 7, `.sh` 4, `.sql` 1, `.svg` 13, `.txt` 12, `.webp` 2790, `.yml` 6, `(none)` 1.
+Tracked files: **5305**.
+Extensions: `.bat` 1, `.cjs` 9, `.cmd` 1, `.css` 13, `.csv` 22, `.gitattributes` 1, `.gitignore` 7, `.html` 48, `.js` 369, `.json` 116, `.log` 23, `.md` 132, `.mjs` 339, `.nojekyll` 1, `.png` 1388, `.ps1` 1, `.py` 7, `.sh` 4, `.sql` 1, `.svg` 13, `.txt` 12, `.webp` 2790, `.yml` 6, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
