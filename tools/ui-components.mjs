@@ -98,6 +98,9 @@ export function receipt() {
     saveSlotSelector: read('src/ui/components/saveSlotSelector.js'),
     balance: read('src/content/balance.js'),
     main: read('src/main.js'),
+    runHud: read('src/ui/components/runHud.js'),
+    shop: read('src/ui/screens/shop.js'),
+    event: read('src/ui/screens/event.js'),
     validate: read('src/model/validate.js'),
     map: read('src/ui/screens/map.js'),
     combat: read('src/ui/screens/combat.js'),
@@ -133,9 +136,17 @@ export function findings(r) {
       || !/export function wireHudQuickSettings/.test(r.quickSettings)) {
     bad.push('C2 the shared HUD is no longer composed from exported reusable assets');
   }
-  if (![r.map, r.combat].every((text) => /import \{ hudShellHtml \}/.test(text)
-      && /import \{ runHudViewModel \}/.test(text)
-      && /\$\{hudShellHtml\(runHudViewModel\(\{/.test(text))) {
+  // C3 — ONE COMPOSITION. Combat renders `hudShellHtml(runHudViewModel({…}))`
+  // itself; the map and the three rooms (merchant, Shrine, event) render it
+  // through components/runHud.js, which is the same call behind one function.
+  // Each consumer is named so a room that grows its own band goes red here.
+  const composes = (text) => /import \{ hudShellHtml \}/.test(text)
+    && /import \{ runHudViewModel \}/.test(text)
+    && /hudShellHtml\(runHudViewModel\(\{/.test(text);
+  const viaRunHud = (text) => /import \{ runHudHtml, wireRunHud \} from '\.\.\/components\/runHud\.js'/.test(text)
+    && /\$\{[^`]*runHudHtml\(\{/.test(text) && /wireRunHud\(app, \{/.test(text);
+  if (!composes(r.combat) || !composes(r.runHud) || ![r.map, r.rest, r.shop].every(viaRunHud)
+      || !/runHudHtml\(\{/.test(r.event) || !/wireRunHud\(app, \{/.test(r.event)) {
     bad.push('C3 Map and Combat no longer consume the same shared HUD composition');
   }
   if (!/export function combatantFrame/.test(r.frame)
@@ -491,7 +502,9 @@ function selftest() {
   const plants = [
     ['remove Vitals id', 'C1 ', (r) => ({ ...r, registry: r.registry.replace("vitalsPanel: 'vitals-panel',", '') })],
     ['remove Vitals export', 'C2 ', (r) => ({ ...r, hud: r.hud.replace('export function vitalsPanelHtml', 'function vitalsPanelHtml') })],
-    ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${hudShellHtml(runHudViewModel({', '${(() => "")({') })],
+    ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${runHudHtml({', '${(() => "")({') })],
+    ['give the merchant its own band', 'C3 ', (r) => ({ ...r, shop: r.shop.replace('wireRunHud(app, {', 'wireMerchantBand(app, {') })],
+    ['detach the run HUD from the shared shell', 'C3 ', (r) => ({ ...r, runHud: r.runHud.replace('hudShellHtml(runHudViewModel({', 'ownShell({') })],
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("childModel(model, UI.metadataField, 'floor')", "childModel(model, UI.metadataField, 'seed')") })],

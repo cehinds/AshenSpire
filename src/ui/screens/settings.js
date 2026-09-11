@@ -166,6 +166,16 @@ const ROWS = [
   // data-driven instruction for an unsettled 'maybe' asks.
   { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
     note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
+  // A SETTING, NOT A SWITCH IN THE FLOW. The creation screen's Starting
+  // equipment head carried an "Auto-advance on valid choice" toggle beside
+  // the List/Grid control — a preference standing in the middle of a decision
+  // (review, 2026-09-11). It lives here with the other Gameplay preferences;
+  // the screen reads it the way it reads every other display setting. OFF
+  // matches the shipped creation layout (content/source/characterCreation.json
+  // `equipmentAutoAdvance`), which stays the screen's fallback when no
+  // settings bag reaches it.
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'creationAutoAdvance', def: false, label: 'Auto-advance character creation',
+    note: 'After a valid starting-equipment choice, open the next equipment section. Off: each section waits for you to continue.' },
   { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'useRestorativeFlasksOutsideCombat', def: false, label: 'Use flasks outside combat',
     note: 'Allow Crimson and Azure Flask charges to restore Health or Mana from the map. Their charges still refill only at a Shrine.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
