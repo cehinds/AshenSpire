@@ -21,6 +21,8 @@ import { applyRunShape, minViableFloors, resolveFloorPlan } from '../../model/fl
 import { sampleActShape } from '../../engine/mapgen.js';
 import { classGlyph } from '../assets.js';
 import { esc } from '../components/tooltip.js';
+// Every sentence this screen says is a row in content/source/uiStrings.csv.
+import { t, tFull } from '../strings.js';
 import { createRunState } from '../../model/state.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
@@ -296,14 +298,14 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
   // ---- first seat: a Segmented (SPEC §13.4) ----
   // The options are the seats the content authors, read from the registry; a
   // fourth seat appears here with no edit to this file (Law 0).
-  const seatOptions = [{ id: '', label: 'Seeded', desc: 'The seed decides which seat the climb opens in.' },
+  const seatOptions = [{ id: '', label: t('customRun.seat.seeded'), desc: tFull('customRun.seat.seeded') },
     ...registries.seats.all().map((seat) => ({ id: seat.id, label: seat.name.replace(/^The /, ''), desc: `Open the climb in ${seat.name}; the seed orders the rest.` }))];
   const seatSeg = segmented({
     options: seatOptions.map((o, i) => ({ label: o.label, value: o.id, pressed: i === 0, attrs: { dataset: { seat: o.id }, 'aria-label': `${o.label} — ${o.desc}` } })),
-    attrs: { role: 'group', 'aria-label': 'First seat' },
+    attrs: { role: 'group', 'aria-label': t('customRun.seat.group') },
   });
   const seatNote = flavour(seatOptions[0].desc, { id: 'cr-seat-note' });
-  deckBox.appendChild(row({ tag: 'div', setting: true, labelNode: labelStack({ label: 'First seat' }), trail: seatSeg }));
+  deckBox.appendChild(row({ tag: 'div', setting: true, labelNode: labelStack({ label: t('customRun.seat.group') }), trail: seatSeg }));
   deckBox.appendChild(seatNote);
   for (const control of seatSeg.querySelectorAll('button')) {
     control.addEventListener('click', () => {

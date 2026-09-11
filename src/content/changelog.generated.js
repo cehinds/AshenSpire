@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-991",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The words the game says now live in one table",
+    "detail": "Nothing you see changes today. Until now every sentence in the interface was written inside the screen that showed it, so the same idea could be worded two ways on two screens and rewording anything meant editing code. The spoils screen and the merchant now read their words from a single spreadsheet, each entry holding three lengths — the short label, the full sentence, and the tooltip a small button gets — and a new check stops any screen from quietly going back to writing its own.",
+    "build": "0.7.1.6",
+    "pullRequest": 991,
+    "url": "https://github.com/cehinds/AshenSpire/pull/991"
+  },
+  {
     "id": "pr-989",
     "date": "2026-09-11",
     "group": "2026-09-11",

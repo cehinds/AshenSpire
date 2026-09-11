@@ -1,0 +1,101 @@
+# content/source/uiStrings.csv — THE UI copy table (Ashen Spire)
+#
+# Every sentence the interface says to a player is a row here, not a literal in
+# a screen. A screen asks for an id; this table owns the words. Rewording the
+# game is then a spreadsheet edit that touches no code, and two screens saying
+# the same thing say it the same way because they read the same row.
+#
+# THREE AUTHORED STRINGS PER ID, because a control needs three different
+# lengths and guessing between them at runtime is how copy drifts:
+#   short  what the control wears (a button label, a chip, a title)
+#   full   the sentence it means (a tooltip body, an aria description)
+#   tip    the tooltip title a control gets when its face is too small to read
+# A blank cell is not empty prose — it is "this id has no such form", and
+# asking for one is a loud error, never a silent ''.
+#
+# EXTENDS is inheritance, one level of lookup per hop: a row inherits every
+# cell it leaves blank from the row it names, so `reward.skip` can be the house
+# Skip with one word changed. A cycle, or a parent that does not exist, is a
+# build-time error (src/ui/strings.js resolves it; tests/ui-strings.test.mjs
+# holds the rules).
+#
+# TOKENS are written {likeThis} and are substituted by the caller:
+#   t('reward.cinders.title', { amount: 40 })
+# A token left unresolved is an error, not a visible brace: prose that names a
+# number the caller did not pass is prose lying about the game state.
+#
+# Commas are fine inside "quoted fields". A '|' is NOT: the CSV reader turns a
+# cell containing one into an array, and the loader refuses it by name rather
+# than joining it back into a sentence nobody authored.
+id,extends,short,full,tip
+# ---- the house vocabulary — the words every screen shares ------------------
+common.back,,Back,Return to the screen before this one.,Back
+common.continue,,Continue,Move on from this screen.,Continue
+common.skip,,Skip,Leave this behind and move on.,Skip
+common.confirm,,Confirm,Commit the choice you have made.,Confirm
+common.take,,Take,Collect this into your kit.,Take
+# ---- the spoils door ------------------------------------------------------
+reward.eyebrow.spoils,,Spoils,What the fight left behind.,Spoils
+reward.eyebrow.claim,,Claim your spoils,Take what the fight left behind.,Claim your spoils
+reward.title.victory,,Victory,The fight is won.,Victory
+reward.continue,common.continue,,"Leave the spoils door; anything unclaimed stays behind.",
+reward.back,common.back,,Return to the list of spoils.,
+reward.skip,common.skip,,Leave this blocked reward behind.,Skip unavailable reward
+reward.skip.aria,,Skip unavailable {kind} reward,,
+reward.confirm,common.confirm,,Add the chosen card to your deck.,
+reward.take,common.take,,Tap to collect.,Take
+reward.hold.complete,,Hold to continue — rewards complete,Every row is settled; a deliberate hold leaves the door.,
+reward.hold.takesRest,,Hold to continue — takes the rest,A deliberate hold collects every row still pending.,
+reward.hold.leavesRest,,Hold to continue — leaves the rest,A deliberate hold leaves every row still pending behind.,
+reward.state.taken,,Taken,This row is already in your kit.,Taken
+reward.state.skipped,,Skipped,You left this one behind.,Skipped
+reward.state.blocked,,Full — choose Skip to leave it behind,There is no room for this one.,
+reward.card.choose,,Choose a card,Opens the offer; Back returns here.,Choose a card
+reward.card.take,,Take the card,Opens the offer; Back returns here.,Take the card
+reward.card.eyebrow,,Choose a card,Pick one card to join the deck.,
+reward.card.new,,NEW,A card you have never been offered before.,
+reward.card.saveFailed,,"Card could not be saved. Your selection is kept. Try Confirm again.",,
+reward.card.aria,,Card rewards,,
+reward.blocked.storage,,Storage full,Your armament storage is at its cap; this one stays where it fell.,Storage full
+reward.blocked.slots,,Flask slots full,"Drink or make room; this one stays in the mud.",Flask slots full
+reward.cinders.title,,{amount} cinders,The climb’s coin.,
+reward.cinders.taken,,Granted · {total} total,,
+reward.stone.title,,{amount} Smithing Stone{plural},,
+reward.stone.body,,<b>{total} total</b> · secured for the next Shrine.,,
+reward.kind.card,,Card,,
+reward.kind.flask,,Flask,,
+reward.kind.armament,,Armament,,
+reward.kind.relic,,Relic,,
+reward.card.joins,,<b>{name}</b> joins the deck.,,
+reward.card.chooseOne,,Choose one of {count}.,,
+reward.card.offered,,One card offered.,,
+reward.flask.blocked,,A {name} — but your flask slots are full. It stays in the mud.,,
+reward.armament.blocked,,{name} — but your storage is full. It stays where it fell.,,
+reward.armament.plain,,plain steel,,
+reward.armament.none,,An armament.,,
+reward.armament.carried,,Carried. Slot it in the Armoury (⚒).,,
+reward.inspect.eyebrow,,Inspect the {kind},,
+reward.kind.potion,,Potion,,
+reward.close,,Rewards,,
+reward.detail.take,,Take {kind},Collect this into your kit.,
+reward.detail.back,common.back,,Return without collecting; your other choices keep.,
+reward.chooser.back,common.back,,Return to the spoils — the offer keeps.,
+reward.leave.question,,Leave these rewards and continue?,,
+reward.leave.confirm,,CONTINUE,Leave the spoils door with rows still unclaimed.,
+# ---- the merchant ---------------------------------------------------------
+shop.bar.cards,,CARDS,Cards the merchant will sell you.,
+shop.bar.armaments,,ARMAMENTS,Weapons and armour on the merchant's rack.,
+shop.bar.weaponArts,,WEAPON ARTS,Arts that ride on the weapon you carry.,
+shop.bar.relics,,RELICS,Relics the merchant has come by.,
+shop.bar.flasks,,FLASKS,Flasks and their upgrades.,
+shop.bar.remove,,REMOVE A CARD,Pay to take a card out of the deck for good.,
+shop.bar.sell,,SELL,Turn what you carry back into cinders.,
+shop.bar.smith,,THE SMITH,The smith's work on what you already own.,
+shop.back,common.back,,Return to the merchant's shelves.,
+shop.weaponArt.eyebrow,,Weapon art,,
+shop.buy.confirm,,BUY IT,Spend the cinders and take it now.,
+shop.burn.confirm,,BURN IT,Spend the cinders and remove the card for good.,
+shop.sell.confirm,,SELL IT,Hand it over for cinders.,
+# ---- the custom climb -----------------------------------------------------
+customRun.seat.group,,First seat,Which seat the climb opens in.,
+customRun.seat.seeded,,Seeded,The seed decides which seat the climb opens in.,
