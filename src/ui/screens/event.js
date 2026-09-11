@@ -14,8 +14,9 @@ import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { availableEventChoices, recordEventChoice } from '../../model/quests.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { el, html, modalHead, modalFooter, artWell, prose, options, optionCard, decide, button } from '../kit/index.js';
+import { runHudHtml, wireRunHud } from '../components/runHud.js';
 
-export function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
+export function mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud = null }) {
   const def = registries.events.get(eventId);
   // THE ONE DOOR. This screen no longer knows what a hold is, what the dial
   // says, or which choices deserve one — it names the action and hands over the
@@ -59,8 +60,10 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
     })),
   ]);
   app.innerHTML = '';
-  const screen = el('div', { class: 'screen event-screen' }, door);
+  if (hud) app.insertAdjacentHTML('afterbegin', runHudHtml({ registries, run, meta, place: 'event', headerClass: 'map-header room-header' }));
+  const screen = el('div', { class: 'screen event-screen room-screen' }, door);
   app.appendChild(screen);
+  if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: () => mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud }) });
 
   const box = app.querySelector('#choices');
   const visibleChoices = availableEventChoices(eventChoicesWithHistory(def), run);

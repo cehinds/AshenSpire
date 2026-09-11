@@ -33,6 +33,7 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { mountServiceOffer, openMountService, mountReceiptLine } from './smithServices.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
+import { runHudHtml, wireRunHud } from '../components/runHud.js';
 // THE FOLDS' INSIDES ARE THE KIT'S (2026-09-04, the sweep): a flask row is a
 // kit Row — the flask's identity as its LabelStack, a −/count/+ Stepper of
 // tap-floor buttons trailing — the total is StatusText, the cinder preview
@@ -87,11 +88,11 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, services, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, services, hud, ...extra,
   });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
@@ -100,6 +101,11 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // rest already taken at this Shrine under Multi-use — never a relic the
   // player does not carry.
   const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
+  // Rest at full health and full Mana led the list as if it were the thing to
+  // do — "Heal 0 HP (62 → 62/62)" in the first, brightest card (review,
+  // 2026-09-11). It stays a choice (it is still the way to end a visit without
+  // spending anything), reads muted, and says what it would not restore.
+  const nothingToRestore = !noRest && heal <= 0 && run.mana >= run.maxMana;
   const smith = smithingPlan(registries, run);
   // WHICH SERVICES THIS SMITH OFFERS is the table in balance.smithing.services,
   // resolved at the door (main.js) and handed in; a screen mounted without it
@@ -166,16 +172,17 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   ]));
 
   app.innerHTML = `
-    <div class="screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem">
+    ${hud ? runHudHtml({ registries, run, meta, place: 'rest', headerClass: 'map-header room-header' }) : ''}
+    <div class="screen room-screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem">
       <h2>Shrine of Ember</h2>
       <p class="subtitle">The gold light holds, for now</p>
       ${refillLineHtml(registries, refill)}
       <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
-        <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
+        <div class="class-pick${noRest ? ' locked' : nothingToRestore ? ' quiet' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
           <div class="cp-body">
             <h3>Rest</h3>
-            <p>${noRest ? noRestCopy : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+            <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP with full Mana. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
         <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
@@ -269,6 +276,8 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       </div>
       ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
     </div>`;
+
+  if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: () => remount() });
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
@@ -470,6 +479,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       });
     };
     smithOption.addEventListener('click', openSmith);
+    if (openPanel === 'smith') openSmith();
     smithOption.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
