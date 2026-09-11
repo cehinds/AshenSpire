@@ -108,7 +108,7 @@ Three seats, one per act, in seeded order. The act tier (first, second, third) s
 - **The Pale Marches and the Stitched Court:** Ice tundra and a river city frozen the night its flame died; a court that stitched itself back together to survive. Gilded stone, oxidized metal, surgical joins, verdigris, rime.
 - **The Cinder Reach and the Observatory:** Volcanic ridges and the caldera under the Observatory; mineral ash, bone light, concentrated ember.
 
-The first act teaches intent reading and immediate tradeoffs, the second tests whether the deck has a plan, the third judges whether the build is tuned and resilient — whichever seat each lands on. Seeded seat order is a mechanics change and needs its own SPEC entry before content moves; this section states the narrative shape only.
+The first act teaches intent reading and immediate tradeoffs, the second tests whether the deck has a plan, the third judges whether the build is tuned and resilient — whichever seat each lands on. Seeded seat order is governed by SPEC §13; this section states the narrative shape only.
 
 ### 4.3 Narrative rule
 

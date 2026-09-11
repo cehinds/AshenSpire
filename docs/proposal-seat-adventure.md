@@ -173,7 +173,7 @@ scenery bind to the act number.
 | Custom Run: pin the first seat | `ui/screens/customRun.js` |
 | Tests: seat filter, tier scaling, migration, seed stability (existing maps unchanged), pinned order | `tests/branchingBosses.test.mjs`, `tests/engine.test.js`, new `tests/seats.test.mjs` |
 
-SPEC: new §Seats; amend §map generation, §3.12 save schema, §5 encounter pools.
+SPEC: §13 Seats (landed with the 0.7 SPEC PR); §3.11 gains the `seats` stream.
 
 ### Phase 1 — The tower · M
 
