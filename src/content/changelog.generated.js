@@ -3,16 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-<<<<<<< HEAD
     "id": "pr-961",
-    "date": "2026-09-10",
-    "group": "2026-09-10",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
     "summary": "Two more entries the record was missing",
     "detail": "Nothing a player sees changes. Two changes had landed without a line here. Their build numbers are read from the project's own history at the moment each one landed rather than from what its author wrote down, which is the habit that caught an earlier entry naming a build one short of the real one.",
-    "build": "0.6.0.135",
+    "build": "0.6.0.142",
     "pullRequest": 961,
     "url": "https://github.com/cehinds/AshenSpire/pull/961"
-=======
+  },
+  {
     "id": "pr-968",
     "date": "2026-09-11",
     "group": "2026-09-11",
@@ -31,7 +31,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.6.0.136",
     "pullRequest": 964,
     "url": "https://github.com/cehinds/AshenSpire/pull/964"
->>>>>>> origin/dev
+  },
+  {
+    "id": "pr-963",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The boot check waits for the tower's entrance",
+    "detail": "#949 lights the city, holds, and fades before the title appears; the startup check still judged the reveal a fraction of a second after the press and called it missing. It now waits for the title the way it already did for a mouse or a tap, and its \"gate still standing\" claims no longer count a reveal that has begun. Nothing in the game changed.",
+    "build": "0.6.0.134",
+    "pullRequest": 963,
+    "url": "https://github.com/cehinds/AshenSpire/pull/963"
   },
   {
     "id": "pr-928",
