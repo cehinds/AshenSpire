@@ -62,21 +62,21 @@ if (args.includes('--selftest')) {
       file: 'styles/kit.css',
       find: '.event-door .ev-choices .as-option .on .as-label-text { white-space: normal;',
       replace: '.event-door .as-option .on .as-label-text { white-space: normal;',
-      expectRed: /R1 .*event/,
+      expectRed: /FAIL R1 event/,
     },
     {
       name: 'reduced motion goes back to a 0.01ms transition on every property',
       file: 'styles/base.css',
       find: '.reduced-motion, .reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {\n  animation-duration: 0.01ms !important;\n  animation-iteration-count: 1 !important;\n  transition: none !important;',
       replace: '.reduced-motion, .reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {\n  animation-duration: 0.01ms !important;\n  animation-iteration-count: 1 !important;\n  transition-duration: 0.01ms !important;',
-      expectRed: /R4 .*map/,
+      expectRed: /FAIL R4 map/,
     },
     {
       name: 'the reserved status tray answers hits again',
       file: 'styles/combat.css',
       find: 'width:100%; margin:0; pointer-events:none;\n}\n:root .combat[data-layout=\'formation\'] .combatant .statuses > * { pointer-events:auto; }',
       replace: 'width:100%; margin:0; pointer-events:auto;\n}',
-      expectRed: /R3 .*combat/,
+      expectRed: /FAIL R3 combat .*status tray/,
     },
   ];
   process.exit(await doorSelftest({ tool: 'ui-sweep.mjs', plants, args: ['--only', 'event,map,combat'], timeoutMs: 400000 }));
