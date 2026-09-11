@@ -223,7 +223,7 @@ function runStates(registries) {
     build: () => {
       const run = createRunState({ seed: 0x3311, classId: 'starseer', registries });
       const rng = createRng(run.seed);
-      run.mapGraph = buildActMap(registries, rng, 1, null);
+      run.mapGraph = buildActMap(registries, rng, run.seatOrder[0], 1, null);
       run.floor = 4;
       run.mapNodeId = Object.keys(run.mapGraph.nodes)[3] || null;
       run.history = [{ nodeId: 'n0_0', kind: 'combat' }, { nodeId: 'n1_0', kind: 'event' }];

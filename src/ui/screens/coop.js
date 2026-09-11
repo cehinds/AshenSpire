@@ -585,7 +585,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           }))}
           <div class="hud-top">
             <div class="resbars-host"></div>
-            <span class="fight-label">${esc(actTitle(snap.actNumber))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
+            <span class="fight-label">${esc(actTitle(snap.actNumber, snap.seatName || null))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
             <button class="subtle coop-leave" id="coop-leave">Leave</button>
           </div>
         </header>

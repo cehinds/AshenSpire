@@ -25,6 +25,7 @@ import { generateActMap, assignBossDestinations } from './mapgen.js';
 import { resolveUnknownNode } from './encounters.js';
 import { applyRunShape } from '../model/floorplan.js';
 import { MAP_SHAPE_LIMITS, LEGACY_ACT_BOSSES } from '../content/mapconfig.js';
+import { defaultSeatOrder, encounterFitsSeat, finalTier } from '../model/seats.js';
 import { bossDestinationLabel } from '../model/bossDestinationLabels.js';
 
 /**
@@ -53,8 +54,14 @@ import { bossDestinationLabel } from '../model/bossDestinationLabels.js';
  * means a shape arrived from somewhere the screen does not guard — a hand-edited
  * save, a future caller. That is precisely when a loud failure is worth its cost.
  */
-export function buildActMap(registries, rng, act, mapShape = null, { history = [] } = {}) {
-  const authored = registries.mapConfig(act);
+export function buildActMap(registries, rng, seat, tier, mapShape = null, { history = [] } = {}) {
+  // SPEC §13.2: the SEAT names the content, the TIER names the geometry. A
+  // number in the seat slot is a caller still passing an act — refused by
+  // name rather than read as a seat that does not exist.
+  if (typeof seat !== 'string' || !seat) throw new Error(`buildActMap: a seat id is required, got ${JSON.stringify(seat)} (SPEC §13.2)`);
+  if (!Number.isInteger(tier) || tier < 1) throw new Error(`buildActMap: tier must be a positive integer, got ${JSON.stringify(tier)}`);
+  registries.seats.get(seat); // an unknown seat throws by name here, before any draw
+  const authored = registries.mapConfig(tier);
   const shaped = applyRunShape(authored, mapShape, MAP_SHAPE_LIMITS);
   if (shaped.errors.length) {
     throw new Error(`buildActMap: this run's map shape does not resolve — ${
@@ -64,12 +71,17 @@ export function buildActMap(registries, rng, act, mapShape = null, { history = [
   const assigned = [];
   for (const node of Object.values(map.nodes)) {
     if (node.type === 'event') {
-      node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned, act, history });
+      node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned, tier, history });
       if (node.resolved.kind === 'event') assigned.push(node.resolved.eventId);
     }
   }
-  const pool = registries.encounters.all().filter((encounter) => encounter.pool === 'boss' && (encounter.act || 1) === act);
-  if (!pool.length) throw new Error(`buildActMap: act ${act} has no boss encounters`);
+  // The boss pool is the seat's boss rows PLUS, at the final tier, the one
+  // null-seat row (SPEC §13.5) — filtered in bundle order, never appended, so
+  // the columns each destination lands in are the columns it always landed in
+  // (§13.6: the Valkyrie row keeps its place in reach.js for exactly this).
+  const fit = { seat, tier, finalTier: finalTier(registries) };
+  const pool = registries.encounters.all().filter((encounter) => encounter.pool === 'boss' && encounterFitsSeat(encounter, fit));
+  if (!pool.length) throw new Error(`buildActMap: seat '${seat}' has no boss encounters`);
   // Every available slot has a different destination. When a narrow custom
   // map cannot fit the pool, choose a seeded subset without replacement.
   const selected = pool.length > map.columns ? rng.shuffle('map', pool).slice(0, map.columns) : pool;
@@ -80,12 +92,34 @@ export function buildActMap(registries, rng, act, mapShape = null, { history = [
 }
 
 /** Authoritative encounter identity for solo, LAN, and simulations. Read-only:
- * loading/entering a legacy terminal never rerolls or regenerates its graph. */
-export function bossEncounterForNode(registries, graph, nodeId, act) {
+ * loading/entering a legacy terminal never rerolls or regenerates its graph.
+ * `{ seat, tier }`: a legacy singular graph (no `bossIds`) maps by TIER through
+ * LEGACY_ACT_BOSSES — such a graph only exists in a pre-§13 save, which the
+ * load door gives the default order, so tier n is the seat act n always was. */
+export function bossEncounterForNode(registries, graph, nodeId, { seat, tier } = {}) {
+  if (typeof seat !== 'string' || !seat || !Number.isInteger(tier)) throw new Error('bossEncounterForNode: pass { seat, tier } (SPEC §13.2)');
   const node = graph?.nodes?.[nodeId];
   if (!node || node.type !== 'boss') throw new Error(`Boss destination '${nodeId}' is not a boss node`);
-  const encounterId = node.encounterId || (!graph.bossIds && graph.bossId === nodeId ? LEGACY_ACT_BOSSES[act] : null);
-  const encounter = encounterId && registries.encounters.get(encounterId);
-  if (!encounter || encounter.pool !== 'boss' || (encounter.act || 1) !== act) throw new Error(`Boss destination '${nodeId}' has no valid encounter for act ${act}`);
+  const encounterId = node.encounterId || (!graph.bossIds && graph.bossId === nodeId ? LEGACY_ACT_BOSSES[tier] : null);
+  const encounter = encounterId && registries.encounters.has(encounterId) ? registries.encounters.get(encounterId) : null;
+  if (!encounter || encounter.pool !== 'boss' || !encounterFitsSeat(encounter, { seat, tier, finalTier: finalTier(registries) })) {
+    throw new Error(`Boss destination '${nodeId}' has no valid encounter for seat '${seat}' at tier ${tier}`);
+  }
   return encounterId;
+}
+
+/**
+ * drawSeatOrder(registries, rng, { firstSeat }) → seat ids, seeded (SPEC §13.4).
+ *
+ * ONE draw, on the `seats` stream and no other, so every pre-existing stream's
+ * counters and values are untouched for every existing seed (§13.6). A pinned
+ * first seat ROTATES the drawn order rather than skipping the draw: one draw
+ * either way, so pinning changes nothing any later stream rolls.
+ */
+export function drawSeatOrder(registries, rng, { firstSeat = null } = {}) {
+  const drawn = rng.shuffle('seats', defaultSeatOrder(registries));
+  if (firstSeat == null) return drawn;
+  const at = drawn.indexOf(firstSeat);
+  if (at < 0) throw new Error(`drawSeatOrder: unknown first seat '${firstSeat}'`);
+  return [...drawn.slice(at), ...drawn.slice(0, at)];
 }

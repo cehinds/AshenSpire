@@ -702,6 +702,7 @@ function collectContentProblems(bundle, errors = []) {
     events: SCHEMAS.event,
     flasks: SCHEMAS.flask,
     classes: SCHEMAS.class,
+    seats: SCHEMAS.seat,
   };
   for (const type of REGISTRY_TYPES) {
     // A registry that is present but not an array was SILENTLY SKIPPED here —
@@ -864,6 +865,50 @@ function collectContentProblems(bundle, errors = []) {
       if (encounter[field] == null) continue;
       for (const problem of levelBandProblems(encounter[field], `encounters.${encounter.id || '?'}.${field}`)) {
         err(problem.path, problem.msg);
+      }
+    }
+  }
+
+  // ---- Seats (SPEC §13) ------------------------------------------------------
+  // Three rules the schema cannot say: baselines are one per seat and cover
+  // 1..N; the null seat is exactly one boss row; every seat can be climbed —
+  // it has a normal, an elite and a boss row, or a map for it cannot be built.
+  {
+    const seats = Array.isArray(b.seats) ? b.seats.filter(Boolean) : [];
+    const encounters = Array.isArray(b.encounters) ? b.encounters.filter(Boolean) : [];
+    const tiers = seats.map((seat) => seat.baseTier).sort((x, y) => x - y);
+    if (seats.length && tiers.some((tier, i) => tier !== i + 1)) {
+      err('seats', `baseTier values must be exactly 1..${seats.length}, one per seat (got ${JSON.stringify(tiers)})`);
+    }
+    const nullSeat = encounters.filter((encounter) => encounter.seat === null);
+    if (encounters.length && nullSeat.length !== 1) {
+      err('encounters', `exactly one encounter may carry seat: null — the final tier's extra terminal (got ${nullSeat.length}: ${nullSeat.map((e) => e.id).join(', ') || 'none'})`);
+    }
+    for (const encounter of nullSeat) {
+      if (encounter.pool !== 'boss') err(`encounters.${encounter.id}.seat`, 'the null-seat encounter must be a boss');
+    }
+    for (const seat of seats) {
+      for (const pool of ['normal', 'elite', 'boss']) {
+        if (!encounters.some((encounter) => encounter.seat === seat.id && encounter.pool === pool)) {
+          err(`seats.${seat.id}`, `no '${pool}' encounter is bound to this seat; a map for it cannot be built`);
+        }
+      }
+    }
+    const table = b.balance && b.balance.seatTiers;
+    const cycle = b.balance && b.balance.endless && b.balance.endless.actsPerCycle;
+    if (b.balance !== undefined) {
+      if (!isPlainObject(table)) {
+        err('balance.seatTiers', 'must be an object keyed by tier (1..actsPerCycle) with a positive multiplier each');
+      } else {
+        for (let tier = 1; tier <= (Number(cycle) || 0); tier++) {
+          const mult = table[tier];
+          if (typeof mult !== 'number' || !(mult > 0)) err(`balance.seatTiers.${tier}`, `tier ${tier} needs a positive multiplier (got ${JSON.stringify(mult)})`);
+        }
+        if (table[1] !== 1) err('balance.seatTiers.1', `tier 1 is the definition of scale 1 and must be exactly 1 (got ${JSON.stringify(table[1])})`);
+        for (const key of Object.keys(table)) {
+          const tier = Number(key);
+          if (!Number.isInteger(tier) || tier < 1 || tier > (Number(cycle) || 0)) err(`balance.seatTiers.${key}`, `tier keys must be 1..${cycle}`);
+        }
       }
     }
   }
@@ -1594,6 +1639,9 @@ function walkSchema(value, node, path, vctx) {
       err(path, `Value ${describe(value)} matched no allowed variant`);
       return;
     }
+    case 'null':
+      if (value !== null) err(path, `Expected null, got ${describe(value)}`);
+      return;
     case 'ref':
       if (typeof value !== 'string') {
         err(path, `Expected ${node.reg} id string, got ${describe(value)}`);

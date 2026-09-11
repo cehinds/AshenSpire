@@ -29,12 +29,13 @@ import { resolveRelicModifiers } from './relicModifiers.js';
 // One home for the mechanic: src/model/healLedger.js.
 import { openLedger, closeLedger, note } from './healLedger.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
+import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
 // saves lack the ledger and are attributed once at the load door
 // (initializeRunFlaskCharges); v1 additionally predates starting kits.
-export const RUN_SCHEMA_VERSION = 5;
+export const RUN_SCHEMA_VERSION = 6;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -140,6 +141,11 @@ export function createRunState({
     levelPoints: 0,
     floor: 0,
     actNumber: 1,
+    // The DEFAULT order — seats by authored baseline — so a run made here is
+    // byte-for-byte the run this function always made. The orchestrator draws
+    // the seeded order on the `seats` stream right after (drawSeatOrder,
+    // engine/actmap.js); a test or tool that never does gets the old climb.
+    seatOrder: defaultSeatOrder(registries),
     mapNodeId: null,
     hp: oldMaxHp,
     maxHp: oldMaxHp,
@@ -531,6 +537,11 @@ export const RUN_SHAPE = [
   { key: 'removedAttackSlotIds', type: 'array', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
+  // SPEC §13.4: the seats this run climbs, in order; `actNumber` is the tier
+  // and `seatOrder[tier - 1]` the seat. Required at schema 6; a pre-§13 save
+  // gets the default order at the load door (save.js), never here — this file
+  // has no registries and may not spell a seat id (DEVELOPER.md rule 1).
+  { key: 'seatOrder', type: 'array' },
   { key: 'hp', type: 'number' },
   { key: 'maxHp', type: 'number' },
   { key: 'maxHpAdjustment', type: 'number' },
@@ -586,7 +597,7 @@ function typeOk(value, type) {
 /** validateRunShape(run) → [] when sound, else a list of human-readable problems.
  *  `legacy` admits v1 saves (pre-starting-kit); `preLedger` admits v1/v2 saves
  *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false } = {}) {
   const problems = [];
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
@@ -594,6 +605,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
     if (preHpLedger && (f.key === 'maxHpAdjustment' || f.key === 'damageBySchoolAdd')) continue;
     if (preEquipmentPools && (f.key === 'equipmentPoolBonuses' || f.key === 'equipmentPoolDeficits')) continue;
+    if (preSeats && f.key === 'seatOrder') continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -609,6 +621,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   const attributesAbsent = run.attributes === undefined;
   if (modeAbsent !== attributesAbsent) problems.push('attributeMode and attributes must both be present or both be absent');
   if (modeAbsent && run.attributeModeSnapshot !== undefined) problems.push('attributeModeSnapshot requires attributeMode and attributes');
+  if (run.seatOrder !== undefined) problems.push(...seatOrderProblems(run.seatOrder));
   if (!attributesAbsent && typeOk(run.attributes, 'object')) {
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
@@ -915,10 +928,13 @@ export function migrateRunSchema(run) {
   const preLedger = legacy || run.schemaVersion === 2; // v2: no flaskCharges capacity ledger yet
   const preHpLedger = [1, 2, 3].includes(run.schemaVersion);
   const preEquipmentPools = [1, 2, 3, 4].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, ${RUN_SCHEMA_VERSION})`);
+  // v5 and older: no seatOrder. Admitted here; FILLED at the load door
+  // (save.js), which has the registries this file does not (SPEC §13.4).
+  const preSeats = [1, 2, 3, 4, 5].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats });
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
   if (originalVersion !== RUN_SCHEMA_VERSION) {
     run.migratedFromRunSchemaVersion = originalVersion;
