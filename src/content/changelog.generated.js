@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-954",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "The record of what shipped caught up with what shipped",
+    "detail": "Nothing a player sees changes. Three changes had landed without an entry here, and the number stamped on the downloadable game belonged to an older version of the source — it had been merged without being rebuilt, so the box and its contents disagreed. The three entries are written, and the build is made again so its stamp is honest. One detail worth keeping: each entry's build number was read out of the project's own history at the moment that change landed, not copied from what its author wrote down, and the two disagreed once out of three.",
+    "build": "0.6.0.133",
+    "pullRequest": 954,
+    "url": "https://github.com/cehinds/AshenSpire/pull/954"
+  },
+  {
+    "id": "pr-921",
+    "date": "2026-09-10",
+    "group": "2026-09-10",
+    "summary": "City maps and pop-up panels stay readable when there is a lot to show",
+    "detail": "All eleven local maps use a tall layout that protects the map area, lets the benefit details scroll on their own, and pins Return and the service buttons where you can always reach them. A short, wide screen puts the map and its details side by side instead. Shared dialogs keep their usual widths but grow taller when the content needs it, with headers and footers staying put while the middle scrolls.",
+    "build": "0.6.0.108",
+    "pullRequest": 921,
+    "url": "https://github.com/cehinds/AshenSpire/pull/921"
+  },
+  {
     "id": "pr-956",
     "date": "2026-09-10",
     "group": "2026-09-10",
