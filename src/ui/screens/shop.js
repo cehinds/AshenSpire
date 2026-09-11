@@ -229,7 +229,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         run.deck.forEach((inst) => {
           // Basic attacks are run-owned even when equipment supplies their face.
           if (!canRemoveDeckCard(inst)) return;
-          const el = renderCard(registries, inst, { small: true });
+          // The card IS the control the burn is armed on (arm(el, …) below),
+          // so it owns its touch: one tap opens the review, as one click does,
+          // instead of the third (holdconfirm, 2026-09-11: three taps).
+          const el = renderCard(registries, inst, { small: true, actionOwnsTouch: true });
           const def = registries.cards.get(inst.cardId);
           // Same fixed box, same host: the hold hint stands under the card.
           const wrap = document.createElement('div');

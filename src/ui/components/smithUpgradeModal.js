@@ -210,7 +210,12 @@ export function mountSmithUpgradeModal(host, initialModel, {
     const piece = item.itemKind === 'relic' ? registries.relics.get(item.itemId)
       : item.itemKind === 'armor' ? registries.equipment.armour.find(piece => piece.id === item.itemId && piece.classId === item.classId)
         : registries.equipment.armaments.find(piece => piece.id === item.itemId);
-    if (piece) bindCardInspection(card, { title: item.name, open: opener => {
+    // THE CARD'S OWN CLICK IS THE CHOICE (`choose` below), so the card owns
+    // its touch: one tap selects the candidate, as one click does. Without
+    // this the inspection swallowed the first two touch taps (select, then
+    // information) and a thumb needed three — measured by tools/holdconfirm.mjs
+    // on 2026-09-11. Selecting is reversible; Upgrade still owes its beat.
+    if (piece) bindCardInspection(card, { title: item.name, actionOwnsTouch: true, open: opener => {
       const rendered = item.itemKind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { inspection: false, interactive: false })
         : renderEquipmentCard(registries, piece, { inspection: false, interactive: false });
       const details = equipmentDetails(rendered.explanations);
