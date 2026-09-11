@@ -98,7 +98,9 @@ Narrative is ambient and economical. It appears through locations, silhouettes, 
 
 The old kingdom was three regions, each with a great lower city and a citadel tower above it, each tower holding one of the Three Flames lit from the Sovereign Ember. The flames went out and the light collapsed inward: the cities burned toward their towers and stand in their own ash. The Ember left its hearth that night and drifts the viaduct ring between the three towers, thin and starving. The Forsaken enters from whichever region the light never reached, relights the three hearths in the order the road gives, and follows the Ember out along the open causeway to the Ashen Spire, the fourth tower the kingdom raised and never lit, to restore, claim, or transform it.
 
-Each act is one seat, and the order is seeded. The heat of a cold flame now burns inside the corrupted as cinders; take the cinders, kill the boss that holds the largest, and the hearth relights. Why the cities died is known to the authors and assembled by the player from card flavor and event copy, never stated outright. The full world — the Burning, the Blight, the orders, the bosses' places in it, the region and citadel art, the card-flavor voices, and the authoring vocabulary — is in [LORE.md](LORE.md).
+Each act is one seat, and the order is seeded. The heat of a cold flame now burns inside the corrupted as cinders; take the cinders, kill the boss that holds the largest, and the hearth relights. Why the cities died is known to the authors and assembled by the player from card flavor and event copy, never stated outright. The full world — the Burning, the Blight, the orders, the bosses' places in it, the region and citadel art, the card-flavor voices, and the authoring vocabulary — is in [LORE.md](LORE.md). What the world does
+not know about its own fire, and the rules that keep it that way, is in
+[LORE-EMBER.md](LORE-EMBER.md).
 
 ### 4.2 Seats
 

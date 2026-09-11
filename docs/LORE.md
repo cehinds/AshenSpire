@@ -12,7 +12,11 @@ them came from anywhere else, and what the Burning did to the lands beyond the
 ring — is in [LORE-CAST.md](LORE-CAST.md). The world around them — its
 ages, how magic works, war, faiths, materials, neighbours and peoples, the
 vanished builders, the food chain, factions and what everyone is after — is in
-[LORE-WORLD.md](LORE-WORLD.md).
+[LORE-WORLD.md](LORE-WORLD.md). What the Sovereign Ember actually is, whether
+it has been learning on what it was fed, and how little of the recorded past
+can be trusted — everything this document states as settled and is not — is in
+[LORE-EMBER.md](LORE-EMBER.md), together with the rules that keep it
+unsettled.
 
 **Premise, one breath.** You are a Forsaken. The old kingdom was three
 regions — the green weald, the white marches, the burning reach — and in each
@@ -32,7 +36,10 @@ Each city was a **lower city**
 — a valley or a river bank or a ridge of homes — and above it a **citadel
 tower**. The towers were not defences. They were hearths. Each held one of the
 **Three Flames**, lit from the **Sovereign Ember** — a coal of fallen starstone
-that gave heat without ash — and the flames ran the kingdom.
+that gave heat without ash, by the kingdom's own account — and the
+flames ran the kingdom. Everything in that phrase except the heat is the
+Goldbough's claim, and the game never confirms any of it
+([LORE-EMBER.md](LORE-EMBER.md) §1, §6).
 
 | Region (map art) | Lower city and tower (title art) | The flame | What it kept |
 |---|---|---|---|
@@ -93,12 +100,16 @@ reached from any seat; it belongs to none of them.
 
 ## 2. Why the cities died
 
-This is the answer the authors know and the player assembles. It is never
+This is the answer the authors know and the player assembles. It answers what
+the kingdom did and what happened to its cities. It does not answer what the
+Sovereign Ember is, and nothing in the game does. It is never
 stated in one place in the game. It is spread across card flavor, event copy
 and boss names, and a player who reads none of it still has a complete game.
 
 **The Ember was never free.** Starstone falls burning and goes out. The
-Sovereign Ember kept burning for a thousand years because it was fed, and what
+Sovereign Ember kept burning for as long as the Goldbough's calendar runs —
+eleven hundred years by a count the kingdom wrote itself
+([LORE-EMBER.md](LORE-EMBER.md) §6) — because it was fed, and what
 it was fed was **names**. That was the funeral rite of the Goldbough: at death
 your name was *written* into the Crown Flame, and the writing was the fuel.
 The dead kept the living warm. The kingdom found this beautiful and built a
@@ -131,19 +142,27 @@ three towers:
   went first, the Field Flame was the weakest. False: the Blight came from
   outside. The King's own Courtly Decree marked the last unmarked.)*
 - **The Astronomer's telling.** Starstone falls, burns, and goes out. What
-  happened was not a disaster. It was the star finishing. *(True. And he wants
-  it to finish — to leave the world — because the alternative is his own tower,
-  and he read what his tower eats. He wrote that down once and never wrote
-  again.)*
+  happened was not a disaster. It was the star finishing. *(His observations
+  are the best in the world; the conclusion is his own, and he has never in a
+  hundred years watched one finish. And he wants it to finish — to leave the
+  world — because the alternative is his own tower, and he read what his tower
+  eats. He wrote that down once and never wrote again. What he is actually
+  looking at stays open: [LORE-EMBER.md](LORE-EMBER.md) §10.)*
 
-**The whole truth is in exactly one place.** The Astronomer wrote one page in
-his life — the night he understood what fed the Ember — and wrote nothing
-after, because writing is what fed it. That page is in the Ashen Spire's
-hearth-room, on the lectern the Ember was meant to be seated from. It is the
-only text in the game that states §2 plainly. Nowhere on the road, in any city,
-on any card, is the whole of it said. A player who reaches the Spire and reads
-the page has earned it; a player who never does still has a complete game and
-three tellings that almost agree.
+**The mechanism is stated plainly in exactly one place.** The Astronomer wrote
+one page in his life — the night he understood what fed the Ember — and wrote
+nothing after, because writing is what fed it. That page is in the Ashen
+Spire's hearth-room, on the lectern the Ember was meant to be seated from. It
+is the only text in the game that says *fed, it burns; written, it feeds*
+without hedging. Nowhere on the road, in any city, on any card is the whole of
+that said. A player who reaches the Spire and reads the page has earned it; a
+player who never does still has a complete game and three tellings that almost
+agree.
+
+The page is a confession about a tower, not an explanation of the fire, and it
+is not the authors speaking. The man who wrote it knew what the Ember does and
+never learned what it is; he says so on the page. Keeping that open is a rule,
+and the rule is in [LORE-EMBER.md](LORE-EMBER.md).
 
 What this makes of the climb: to **relight a flame with cinders** is to feed
 the fire the kingdom's own people, which is exactly what they agreed to. The
@@ -459,6 +478,10 @@ co-op cards carry one today, and card inspection does not yet render it.
   player assembles §2 from them; no single card states it.
 - **Voice belongs to the class pool.** Four voices, below. Colorless cards use
   the Forsaken voice.
+- **Somebody said it.** Every line is someone's claim — a field-book, a
+  liturgy, a chart margin, a song. None of them is the authors. A line may be
+  wrong; the world does not correct it. Lines about the Ember, the fall or the
+  old world follow [LORE-EMBER.md](LORE-EMBER.md) §12.
 
 ### Four voices
 
@@ -542,7 +565,7 @@ beats and sell-back copy, not cards):
 | Merchant, sell bar, third visit | "Three warm. Don't ask me which three." |
 | Keeper of the Nameless, recruit | "No mark. No name. Nothing for it to read. I kept walking." |
 | Keeper of the Nameless, Spire hearth-room | "If it needs a name, give it mine. It never got one." |
-| Astronomer's page (the one text) | *Fed, it burns. Written, it feeds. I built a hearth that needs no ledger and understood, too late, that a fire with no ledger reads whatever is left. It will read them. God forgive me, it was built for them.* |
+| Astronomer's page (the deepest source; still a witness) | *Fed, it burns. Written, it feeds. I built a hearth that needs no ledger, and a fire without a ledger reads whatever remains. It was built for them. God forgive me, I do not know what I built it for.* |
 | Opening, the player's hamlet (narrator) | Last night the fire read a name nobody wrote. It did not finish. It will. |
 | Starseer, Star Path | The fourth spur was on his charts before it was on the coast. |
 | Herald, Communion | We watched the heresy from the Tidebound Chapel. We never saw it lit. |
@@ -568,7 +591,11 @@ descriptions.
 | **Forsaken** | one the fire was never promised; the player, and those who climbed before | a class name, an insult |
 | **Nameless** | Forsaken who died on the climb and were never written | generic undead |
 | **Goldbough** | the old kingdom and its crest, a gilded three-flamed branch | a tree, the Spire, the current world |
-| **Starstone** | what the Ember fell as; the Starseer's element | generic mana or magic |
+| **Starstone** | what the Ember fell as; the Starseer's element | generic mana or magic; anything anyone understands |
+| **The accepted count** | the Goldbough's calendar — eleven hundred years from the Catching; the only date anyone has | the real date, which no source in the game establishes |
+| **The record** | everything written down, all of it partisan, damaged or bought | evidence; a codex; a reliable source |
+| **The fall / the Catching** | the event the calendar starts from, as taught | a confirmed impact, a confirmed date, a first occurrence |
+| **An older fire** | what a foreign tradition describes in its own words — an oath-fire, a fallen dawn, a buried sun | a second Sovereign Ember, which is never confirmed |
 
 Tone: short, concrete, physical. A sentence about the world should name a
 thing you could pick up. Avoid "ancient," "eldritch," "eternal." Prefer *cold,
@@ -584,7 +611,12 @@ structure it belongs to are in
 
 ## 10. What stays open
 
-Deliberately unanswered, so events and quest chains have room:
+Deliberately unanswered, so events and quest chains have room. What stays open
+*permanently* — what the Ember is, when or whether a star fell, whether it is
+the first, and whose mind is in it — is a separate and stricter list, in
+[LORE-EMBER.md](LORE-EMBER.md) §13.
+
+Room for content:
 
 - Who caught the Ember when it fell, and whether they were Forsaken too.
 - Whether the Ember is fleeing the relit flames or being *called* out along
@@ -597,3 +629,8 @@ Deliberately unanswered, so events and quest chains have room:
   cairn is an ending or a door.
 - Whether a relit flame stays lit after the climber leaves, and who it eats
   next.
+- Which of the three things the Astronomer never published he is hiding from
+  the Chapel, and which from himself.
+- Where the second crater is, and whether anyone has taken anything out of it.
+- What the other three Tidebound words say, and whether *seal* is the verb or
+  the object.
