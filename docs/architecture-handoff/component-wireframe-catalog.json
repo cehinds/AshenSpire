@@ -1,0 +1,202 @@
+[
+  {
+    "id": "WP0",
+    "name": "Component contract",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP1",
+    "name": "Inspect control",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP2",
+    "name": "Nameplate",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP3",
+    "name": "Sprite / artwork",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP4",
+    "name": "Health meter",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP5",
+    "name": "Resource meter",
+    "parent": "WP4",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP6",
+    "name": "Buildup meter",
+    "parent": "WP5",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP7",
+    "name": "Stance strip",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP8",
+    "name": "Status icon",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP9",
+    "name": "Icon overflow",
+    "parent": "WP8",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP10",
+    "name": "Intent indicator",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP11",
+    "name": "Defense badge",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP12",
+    "name": "Aura layer",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP13",
+    "name": "Buff layer",
+    "parent": "WP12",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP14",
+    "name": "Metadata footer",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP15",
+    "name": "Context action",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP16",
+    "name": "Ordered active stack",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP17",
+    "name": "Selection effect",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP18",
+    "name": "Inspector facts",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP19",
+    "name": "Tooltip presenter",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  }
+]

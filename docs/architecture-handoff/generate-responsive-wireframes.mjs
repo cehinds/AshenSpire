@@ -245,6 +245,6 @@ const verification='## Verification\n\nVerify every parent and child in all thre
 text+=verification;detailedText+=verification;
 writeFileSync(join(root,'RESPONSIVE-WIREFRAMES.md'),text);
 const cardDocument=readFileSync(join(root,'card-wireframes.md'),'utf8').replace(/^# Card wireframes[^\n]*\n/,'## Card hierarchy — WC0 and descendants\n');
-writeFileSync(join(root,'wireframe.md'),detailedText+'\n'+cardDocument+'\n'+readFileSync(join(root,'tooltip-wireframes.md'),'utf8'));
+writeFileSync(join(root,'wireframe.md'),detailedText+'\n'+cardDocument+'\n'+readFileSync(join(root,'tooltip-wireframes.md'),'utf8')+'\n'+readFileSync(join(root,'component-wireframes.md'),'utf8'));
 writeFileSync(join(root,'wireframe-catalog.json'),JSON.stringify(sections.map(({id,name,parent})=>({id,name,parent,orientations:['wide','compact','portrait']})),null,2)+'\n');
 console.log(`Generated W0, ${sections.filter(s=>s.parent==='W0').length} parents and ${sections.filter(s=>s.parent&&s.parent!=='W0').length} children; ${sections.length*3} ASCII views.`);

@@ -3,7 +3,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const source=fs.readFileSync(path.join(root,'wireframe.md'),'utf8');
-const catalog=[...JSON.parse(fs.readFileSync(path.join(root,'tooltip-wireframe-catalog.json'))),...JSON.parse(fs.readFileSync(path.join(root,'wireframe-catalog.json'))),...JSON.parse(fs.readFileSync(path.join(root,'card-wireframe-catalog.json')))];
+const catalog=[...JSON.parse(fs.readFileSync(path.join(root,'component-wireframe-catalog.json'))),...JSON.parse(fs.readFileSync(path.join(root,'tooltip-wireframe-catalog.json'))),...JSON.parse(fs.readFileSync(path.join(root,'wireframe-catalog.json'))),...JSON.parse(fs.readFileSync(path.join(root,'card-wireframe-catalog.json')))];
 const headings=[...source.matchAll(/^#{2,3} Wireframe (W\w+): (.+)$/gm)];
 const data=catalog.map(entry=>{
  const index=headings.findIndex(h=>h[1]===entry.id);if(index<0)throw Error('Missing '+entry.id);
