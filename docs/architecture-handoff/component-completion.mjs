@@ -95,7 +95,7 @@ const rows = [
  ['WGC8','Draw pile button',['WCB3'],'footer','[Draw · 12] → shared pile workspace','Open draw pile inspector on activation. Use current pile count; no invented draw-card command. Empty state follows configured faded styling.'],
  ['WGC9','End turn button',['WCB3'],'footer','[ End turn ]  ← center / large','Project turn readiness. Highlight green when legal and remaining actions exhausted or selected. Never fade solely because actions are empty. Revalidate end-turn command on activation.'],
  ['WGC10','Discard / exhaust',['WCB3'],'footer','[Discard · 4 / Exhaust · 1]','Open shared categorized pile workspace with selected category. Counts come from snapshot; preserve one control between End turn and Potions.'],
- ['WGC11','Potion control',['WCB3'],'footer',' ( 2 )\nPotions','Open owned potion selection. Resolve selected item action and target through domain. Use the shared large circular footer control and fade empty state.'],
+ ['WGC11','Potion control',['WGH8','WCB3'],'footer','(Potions)\n  [HP ×2]\n  [MP ×1]\n  [Smoke vial ×1]','Open shared WGH8 contents inside the Potions control: charge flasks and carried consumables are entries in one projection, never sibling HUD buttons. Resolve selected item action and target through domain. Use the shared large circular footer control and fade empty state.'],
  ['WGM0','Map composition',['WGH4','WGM1','WGM4','WGM6','WGM7'],'map','Shared HUD\nMap viewport: connected node graph\nSelected node: known details\n[Recenter]                 [Enter town]','Compose shared HUD, camera viewport, selected-node details and inline footer. Use configured map bands; selection projects details and never enters a node immediately.'],
  ['WGM1','Map viewport',['WGM2','WGM3','WGM5'],'map','         [?]\n        /   \\\n   [Combat] [Town]\n        \\   /\n       [Visited]','Render graph paths and buttons in a shared camera coordinate space. Preserve node identity during pan/zoom. Apply knowledge filtering before rendering unknown node labels.'],
  ['WGM2','Map paths',[],'map','      ●\n     / \\\n    ●   ●\n     \\ /\n      ●','Read graph edges and registered node positions. Render noninteractive SVG paths beneath buttons; expose graph connections in accessible node descriptions.'],
@@ -143,3 +143,4 @@ export function applyComponentCompletions(definitions) {
   }
   return definitions;
 }
+

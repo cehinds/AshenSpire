@@ -9574,6 +9574,7 @@
   {
     "id": "WGC11",
     "children": [
+      "WGH8",
       "WCB3"
     ],
     "implementation": {
@@ -9862,6 +9863,13 @@
         "chargeFlasks": true,
         "modeGrip": false
       },
+      "potions": {
+        "componentId": "WGC11",
+        "contentsComponentId": "WGH8",
+        "openIntent": "openPotions",
+        "combineChargeFlasks": true,
+        "combineCarriedPotions": true
+      },
       "experience": {
         "contexts": [
           "combat"
@@ -9984,6 +9992,13 @@
         "chargeFlasks": true,
         "modeGrip": false
       },
+      "potions": {
+        "componentId": "WGC11",
+        "contentsComponentId": "WGH8",
+        "openIntent": "openPotions",
+        "combineChargeFlasks": true,
+        "combineCarriedPotions": true
+      },
       "experience": {
         "contexts": [
           "combat"
@@ -10099,6 +10114,13 @@
         "chargeFlasks": true,
         "modeGrip": false
       },
+      "potions": {
+        "componentId": "WGC11",
+        "contentsComponentId": "WGH8",
+        "openIntent": "openPotions",
+        "combineChargeFlasks": true,
+        "combineCarriedPotions": true
+      },
       "experience": {
         "contexts": [
           "combat"
@@ -10213,6 +10235,13 @@
         "experience": true,
         "chargeFlasks": true,
         "modeGrip": false
+      },
+      "potions": {
+        "componentId": "WGC11",
+        "contentsComponentId": "WGH8",
+        "openIntent": "openPotions",
+        "combineChargeFlasks": true,
+        "combineCarriedPotions": true
       },
       "experience": {
         "contexts": [
@@ -10340,6 +10369,13 @@
         "chargeFlasks": true,
         "modeGrip": false
       },
+      "potions": {
+        "componentId": "WGC11",
+        "contentsComponentId": "WGH8",
+        "openIntent": "openPotions",
+        "combineChargeFlasks": true,
+        "combineCarriedPotions": true
+      },
       "experience": {
         "contexts": [
           "combat"
@@ -10442,6 +10478,13 @@
         "experience": true,
         "chargeFlasks": true,
         "modeGrip": false
+      },
+      "potions": {
+        "componentId": "WGC11",
+        "contentsComponentId": "WGH8",
+        "openIntent": "openPotions",
+        "combineChargeFlasks": true,
+        "combineCarriedPotions": true
       },
       "experience": {
         "contexts": [
@@ -10558,6 +10601,13 @@
         "chargeFlasks": true,
         "modeGrip": false
       },
+      "potions": {
+        "componentId": "WGC11",
+        "contentsComponentId": "WGH8",
+        "openIntent": "openPotions",
+        "combineChargeFlasks": true,
+        "combineCarriedPotions": true
+      },
       "experience": {
         "contexts": [
           "combat"
@@ -10671,6 +10721,13 @@
         "experience": true,
         "chargeFlasks": true,
         "modeGrip": false
+      },
+      "potions": {
+        "componentId": "WGC11",
+        "contentsComponentId": "WGH8",
+        "openIntent": "openPotions",
+        "combineChargeFlasks": true,
+        "combineCarriedPotions": true
       },
       "experience": {
         "contexts": [
@@ -10787,6 +10844,13 @@
         "chargeFlasks": true,
         "modeGrip": false
       },
+      "potions": {
+        "componentId": "WGC11",
+        "contentsComponentId": "WGH8",
+        "openIntent": "openPotions",
+        "combineChargeFlasks": true,
+        "combineCarriedPotions": true
+      },
       "experience": {
         "contexts": [
           "combat"
@@ -10889,6 +10953,13 @@
         "experience": true,
         "chargeFlasks": true,
         "modeGrip": false
+      },
+      "potions": {
+        "componentId": "WGC11",
+        "contentsComponentId": "WGH8",
+        "openIntent": "openPotions",
+        "combineChargeFlasks": true,
+        "combineCarriedPotions": true
       },
       "experience": {
         "contexts": [
@@ -19342,6 +19413,13 @@
           "chargeFlasks": true,
           "modeGrip": false
         },
+        "potions": {
+          "componentId": "WGC11",
+          "contentsComponentId": "WGH8",
+          "openIntent": "openPotions",
+          "combineChargeFlasks": true,
+          "combineCarriedPotions": true
+        },
         "experience": {
           "contexts": [
             "combat"
@@ -19630,6 +19708,13 @@
           "chargeFlasks": true,
           "modeGrip": false
         },
+        "potions": {
+          "componentId": "WGC11",
+          "contentsComponentId": "WGH8",
+          "openIntent": "openPotions",
+          "combineChargeFlasks": true,
+          "combineCarriedPotions": true
+        },
         "experience": {
           "contexts": [
             "combat"
@@ -19909,6 +19994,13 @@
           "chargeFlasks": true,
           "modeGrip": false
         },
+        "potions": {
+          "componentId": "WGC11",
+          "contentsComponentId": "WGH8",
+          "openIntent": "openPotions",
+          "combineChargeFlasks": true,
+          "combineCarriedPotions": true
+        },
         "experience": {
           "contexts": [
             "combat"
@@ -20187,6 +20279,13 @@
           "experience": true,
           "chargeFlasks": true,
           "modeGrip": false
+        },
+        "potions": {
+          "componentId": "WGC11",
+          "contentsComponentId": "WGH8",
+          "openIntent": "openPotions",
+          "combineChargeFlasks": true,
+          "combineCarriedPotions": true
         },
         "experience": {
           "contexts": [

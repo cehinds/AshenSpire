@@ -43,4 +43,9 @@ The source baseline and the live checkout disagree in several areas. The atlas d
 
 ## Configurable comparison added to the HUD reference
 
-The HUD playground now provides **Proposed HUD** and **Current checkout HUD** presets. Current-checkout placement composes WGH8 charge-flask controls beneath Armoury/Menu and exposes WGH9 expanded/compact grip. Proposed placement moves charge controls below the main band and defaults the grip off. Both preserve the shared resource meters; flask buttons are actions, not duplicate meters. Individual layers remain configurable. The compact reference demonstrates collapsing the band; it does not claim pixel-identical production compact styling. WGH5 blue experience remains a proposed feature in either preset.
+The HUD playground now provides **Proposed HUD** and **Current checkout HUD** presets. Current-checkout placement composes WGH8 charge-flask controls beneath Armoury/Menu and exposes WGH9 expanded/compact grip. Proposed placement uses one shared Potions control (WGC11) with WGH8 contents; HP/MP charge providers and carried items such as Smoke vial appear inside its opened contents, never as separate HUD buttons. The proposed preset defaults the grip off. Both preserve the shared resource meters; flask buttons are actions, not duplicate meters. Individual layers remain configurable. The compact reference demonstrates collapsing the band; it does not claim pixel-identical production compact styling. WGH5 blue experience remains a proposed feature in either preset.
+
+
+### Superseding Potions composition correction
+
+The latest owner direction combines HP potion, MP potion and carried consumables under the same reusable Potions control. WGH8 now documents that control's contents and WGH6 references WGC11 rather than individual consumable buttons. Source data may retain separate charge providers and inventory records; their view model joins references without duplicating ownership. The current-checkout source comparison above remains historical evidence of the existing separate-control layout, not the desired layout.

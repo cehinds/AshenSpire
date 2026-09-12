@@ -43,6 +43,13 @@
       "chargeFlasks": true,
       "modeGrip": false
     },
+    "potions": {
+      "componentId": "WGC11",
+      "contentsComponentId": "WGH8",
+      "openIntent": "openPotions",
+      "combineChargeFlasks": true,
+      "combineCarriedPotions": true
+    },
     "experience": {
       "contexts": [
         "combat"

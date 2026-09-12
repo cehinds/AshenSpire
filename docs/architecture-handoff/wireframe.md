@@ -9008,6 +9008,13 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       "chargeFlasks": true,
       "modeGrip": false
     },
+    "potions": {
+      "componentId": "WGC11",
+      "contentsComponentId": "WGH8",
+      "openIntent": "openPotions",
+      "combineChargeFlasks": true,
+      "combineCarriedPotions": true
+    },
     "experience": {
       "contexts": [
         "combat"
@@ -9592,6 +9599,13 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       "chargeFlasks": true,
       "modeGrip": false
     },
+    "potions": {
+      "componentId": "WGC11",
+      "contentsComponentId": "WGH8",
+      "openIntent": "openPotions",
+      "combineChargeFlasks": true,
+      "combineCarriedPotions": true
+    },
     "experience": {
       "contexts": [
         "combat"
@@ -10153,6 +10167,13 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       "experience": true,
       "chargeFlasks": true,
       "modeGrip": false
+    },
+    "potions": {
+      "componentId": "WGC11",
+      "contentsComponentId": "WGH8",
+      "openIntent": "openPotions",
+      "combineChargeFlasks": true,
+      "combineCarriedPotions": true
     },
     "experience": {
       "contexts": [
@@ -10743,6 +10764,13 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       "experience": true,
       "chargeFlasks": true,
       "modeGrip": false
+    },
+    "potions": {
+      "componentId": "WGC11",
+      "contentsComponentId": "WGH8",
+      "openIntent": "openPotions",
+      "combineChargeFlasks": true,
+      "combineCarriedPotions": true
     },
     "experience": {
       "contexts": [
@@ -34541,8 +34569,10 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 **Wide**
 
 ```text
- ( 2 )
-Potions
+(Potions)
+  [HP ×2]
+  [MP ×1]
+  [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -34552,8 +34582,10 @@ Potions
 **Compact**
 
 ```text
- ( 2 )
-Potions
+(Potions)
+  [HP ×2]
+  [MP ×1]
+  [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -34566,8 +34598,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
- ( 2 )
-Potions
+(Potions)
+  [HP ×2]
+  [MP ×1]
+  [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -34581,8 +34615,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
- ( 2 )
-Potions
+(Potions)
+  [HP ×2]
+  [MP ×1]
+  [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -34599,7 +34635,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Open owned potion selection. Resolve selected item action and target through domain. Use the shared large circular footer control and fade empty state.
+// Open shared WGH8 contents inside the Potions control: charge flasks and carried consumables are entries in one projection, never sibling HUD buttons. Resolve selected item action and target through domain. Use the shared large circular footer control and fade empty state.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -34621,7 +34657,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 - [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
 - [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
+**Referenced components:** [WGH8](wireframe-gallery.html#WGH8), [WCB3](wireframe-gallery.html#WCB3)
 
 **Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
 
@@ -34638,6 +34674,10 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "active": true,
   "selected": false,
   "children": [
+    {
+      "componentId": "WGH8",
+      "modelRef": "model:WGH8"
+    },
     {
       "componentId": "WCB3",
       "modelRef": "model:WCB3"
@@ -34926,7 +34966,12 @@ visible = FilterConfiguredActiveLayers(model, config.layers)
 // Collapsed layers leave no reserved row or gap.
 ComposeHeader(visible.class, visible.cinders, visible.position)
 ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
-ComposeDetachedRail(visible.relics, visible.potions)
+// One Potions control owns flask charges and carried consumables.
+potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
+ComposeDetachedRail(visible.relics, SharedPotionsControl(config.potions, potionEntries))
+// HP, MP and Smoke vial are revealed inside that control, never sibling HUD buttons.
+OnPotionsActivate: OpenSharedPotionContents(potionEntries)
+OnPotionChoice: EmitRegisteredUseIntent(); DomainRevalidatesReadiness()
 IF visible.experience AND context IN config.experience.contexts
   RenderExperienceStrip(model.experience, config.experience)
 // XP animation consumes an authoritative before/after settlement event.
@@ -35019,6 +35064,13 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "potions": {
+    "componentId": "WGC11",
+    "contentsComponentId": "WGH8",
+    "openIntent": "openPotions",
+    "combineChargeFlasks": true,
+    "combineCarriedPotions": true
   },
   "experience": {
     "contexts": [
@@ -35155,7 +35207,12 @@ visible = FilterConfiguredActiveLayers(model, config.layers)
 // Collapsed layers leave no reserved row or gap.
 ComposeHeader(visible.class, visible.cinders, visible.position)
 ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
-ComposeDetachedRail(visible.relics, visible.potions)
+// One Potions control owns flask charges and carried consumables.
+potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
+ComposeDetachedRail(visible.relics, SharedPotionsControl(config.potions, potionEntries))
+// HP, MP and Smoke vial are revealed inside that control, never sibling HUD buttons.
+OnPotionsActivate: OpenSharedPotionContents(potionEntries)
+OnPotionChoice: EmitRegisteredUseIntent(); DomainRevalidatesReadiness()
 IF visible.experience AND context IN config.experience.contexts
   RenderExperienceStrip(model.experience, config.experience)
 // XP animation consumes an authoritative before/after settlement event.
@@ -35249,6 +35306,13 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "potions": {
+    "componentId": "WGC11",
+    "contentsComponentId": "WGH8",
+    "openIntent": "openPotions",
+    "combineChargeFlasks": true,
+    "combineCarriedPotions": true
   },
   "experience": {
     "contexts": [
@@ -35458,6 +35522,13 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "chargeFlasks": true,
     "modeGrip": false
   },
+  "potions": {
+    "componentId": "WGC11",
+    "contentsComponentId": "WGH8",
+    "openIntent": "openPotions",
+    "combineChargeFlasks": true,
+    "combineCarriedPotions": true
+  },
   "experience": {
     "contexts": [
       "combat"
@@ -35666,6 +35737,13 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "chargeFlasks": true,
     "modeGrip": false
   },
+  "potions": {
+    "componentId": "WGC11",
+    "contentsComponentId": "WGH8",
+    "openIntent": "openPotions",
+    "combineChargeFlasks": true,
+    "combineCarriedPotions": true
+  },
   "experience": {
     "contexts": [
       "combat"
@@ -35741,7 +35819,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 │ Mana    ██████░░░░  6/10                            │
 │ Stamina ███████░░░  8/12                            │
 ├─────────────────────────────────────────────────────┤
-│ [Ash seal] [Ember charm]       [Crimson ×2][Azure ×1]│
+│ [Ash seal] [Ember charm]       [Potions]           │
 └─────────────────────────────────────────────────────┘
 ████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
@@ -35759,7 +35837,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 │ Mana    ██████░░░░  6/10                            │
 │ Stamina ███████░░░  8/12                            │
 ├─────────────────────────────────────────────────────┤
-│ [Ash seal] [Ember charm]       [Crimson ×2][Azure ×1]│
+│ [Ash seal] [Ember charm]       [Potions]           │
 └─────────────────────────────────────────────────────┘
 ████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
@@ -35779,7 +35857,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 │ HP  █████░░ 32/40 [⚔] [☰]   │
 │ MP  ███░░░░  6/10           │
 │ STA ████░░░  8/12           │
-│ [Relics]      [Red2][Blue1]  │
+│ [Relics]      [Potions]     │
 └──────────────────────────────┘
 ████████████░░░░░░░░░░░░░░░░░░
 ```
@@ -35800,7 +35878,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 │ HP  █████░░ 32/40 [⚔] [☰]   │
 │ MP  ███░░░░  6/10           │
 │ STA ████░░░  8/12           │
-│ [Relics]      [Red2][Blue1]  │
+│ [Relics]      [Potions]     │
 └──────────────────────────────┘
 ████████████░░░░░░░░░░░░░░░░░░
 ```
@@ -35823,7 +35901,12 @@ visible = FilterConfiguredActiveLayers(model, config.layers)
 // Collapsed layers leave no reserved row or gap.
 ComposeHeader(visible.class, visible.cinders, visible.position)
 ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
-ComposeDetachedRail(visible.relics, visible.potions)
+// One Potions control owns flask charges and carried consumables.
+potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
+ComposeDetachedRail(visible.relics, SharedPotionsControl(config.potions, potionEntries))
+// HP, MP and Smoke vial are revealed inside that control, never sibling HUD buttons.
+OnPotionsActivate: OpenSharedPotionContents(potionEntries)
+OnPotionChoice: EmitRegisteredUseIntent(); DomainRevalidatesReadiness()
 IF visible.experience AND context IN config.experience.contexts
   RenderExperienceStrip(model.experience, config.experience)
 // XP animation consumes an authoritative before/after settlement event.
@@ -35917,6 +36000,13 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "potions": {
+    "componentId": "WGC11",
+    "contentsComponentId": "WGH8",
+    "openIntent": "openPotions",
+    "combineChargeFlasks": true,
+    "combineCarriedPotions": true
   },
   "experience": {
     "contexts": [
@@ -36136,6 +36226,13 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "chargeFlasks": true,
     "modeGrip": false
   },
+  "potions": {
+    "componentId": "WGC11",
+    "contentsComponentId": "WGH8",
+    "openIntent": "openPotions",
+    "combineChargeFlasks": true,
+    "combineCarriedPotions": true
+  },
   "experience": {
     "contexts": [
       "combat"
@@ -36205,7 +36302,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Wide**
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]    [Crimson ×2] [Azure ×1]
+[Relic: Ash seal] [Relic: Ember charm]    [WGC11 Potions]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36215,7 +36312,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Compact**
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]    [Crimson ×2] [Azure ×1]
+[Relic: Ash seal] [Relic: Ember charm]    [WGC11 Potions]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36228,7 +36325,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]    [Crimson ×2] [Azure ×1]
+[Relic: Ash seal] [Relic: Ember charm]    [WGC11 Potions]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36242,7 +36339,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]    [Crimson ×2] [Azure ×1]
+[Relic: Ash seal] [Relic: Ember charm]    [WGC11 Potions]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36256,7 +36353,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 // Config entries carry units; convert through the shared layout adapter.
 // Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
-// Filter config layers, project actual inventory entries, preserve stable entity IDs. Reuse card/slot views. Emit inspect or potion-use intent through command registry; never duplicate resource flask ownership.
+// Filter layers and preserve stable entity IDs. Relics use shared cards. The single WGC11 Potions control opens WGH8 contents combining HP/MP charge providers and carried consumables. No individual potion is a sibling rail button. Resource meters remain distinct information components.
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -36343,6 +36440,13 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "potions": {
+    "componentId": "WGC11",
+    "contentsComponentId": "WGH8",
+    "openIntent": "openPotions",
+    "combineChargeFlasks": true,
+    "combineCarriedPotions": true
   },
   "experience": {
     "contexts": [
@@ -36552,6 +36656,13 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "chargeFlasks": true,
     "modeGrip": false
   },
+  "potions": {
+    "componentId": "WGC11",
+    "contentsComponentId": "WGH8",
+    "openIntent": "openPotions",
+    "combineChargeFlasks": true,
+    "combineCarriedPotions": true
+  },
   "experience": {
     "contexts": [
       "combat"
@@ -36614,29 +36725,31 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 
 </details>
 <!-- reference-metadata:end -->
-## Wireframe WGH8: Charge flask controls
+## Wireframe WGH8: Potions contents
 
-**Parent: WCB2.** Use cases: Current-checkout quick access 2×2 grid; separate from resource meters and carried potions. Owner selection propagates to the component; no duplicated selected state.
+**Parent: WCB2.** Use cases: Shared Potions control contents; combat footer and HUD reuse WGC11. Owner selection propagates to the component; no duplicated selected state.
 
 **Wide**
 
 ```text
-[HP flask ×2] [MP flask ×1]
+[WGC11 Potions]
+    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH8.root | quick access group width | config.layout.actionHeightRem | owning component slot | beneath Armoury/Menu | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH8.root | shared Potions content host width | content-fit; action height config.layout.actionHeightRem | owning component slot | inside shared Potions control disclosure; not separate HUD buttons | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
 ```text
-[HP flask ×2] [MP flask ×1]
+[WGC11 Potions]
+    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH8.root | quick access group width | config.layout.actionHeightRem | owning component slot | beneath Armoury/Menu | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH8.root | shared Potions content host width | content-fit; action height config.layout.actionHeightRem | owning component slot | inside shared Potions control disclosure; not separate HUD buttons | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -36644,12 +36757,13 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HP flask ×2] [MP flask ×1]
+[WGC11 Potions]
+    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH8.root | quick access group width | config.layout.actionHeightRem | owning component slot | beneath Armoury/Menu | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH8.root | shared Potions content host width | content-fit; action height config.layout.actionHeightRem | owning component slot | inside shared Potions control disclosure; not separate HUD buttons | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -36658,12 +36772,13 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HP flask ×2] [MP flask ×1]
+[WGC11 Potions]
+    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH8.root | quick access group width | config.layout.actionHeightRem | owning component slot | beneath Armoury/Menu | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH8.root | shared Potions content host width | content-fit; action height config.layout.actionHeightRem | owning component slot | inside shared Potions control disclosure; not separate HUD buttons | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
@@ -36672,9 +36787,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 // Config entries carry units; convert through the shared layout adapter.
 // Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
-// Current source renders HP and MP charge controls, not duplicate health meters.
-ProjectFlaskReadiness(snapshot, config.layers.chargeFlasks)
-OnActivate: EmitRegisteredFlaskIntent(); DomainRevalidatesCharges()
+// Proposed owner correction supersedes separate flask buttons.
+entries = ProjectPotionEntries(snapshot.chargeFlasks, snapshot.carriedPotions, config.potions)
+RenderInsideSharedControl(config.potions.componentId, entries)
+// Data keeps charge providers separate from owned item instances; view combines references only.
+OnChoose(entry): EmitRegisteredUseIntent(entry.id); DomainRevalidatesChargesAndTarget()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -36761,6 +36878,13 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "potions": {
+    "componentId": "WGC11",
+    "contentsComponentId": "WGH8",
+    "openIntent": "openPotions",
+    "combineChargeFlasks": true,
+    "combineCarriedPotions": true
   },
   "experience": {
     "contexts": [
@@ -36970,6 +37094,13 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "potions": {
+    "componentId": "WGC11",
+    "contentsComponentId": "WGH8",
+    "openIntent": "openPotions",
+    "combineChargeFlasks": true,
+    "combineCarriedPotions": true
   },
   "experience": {
     "contexts": [

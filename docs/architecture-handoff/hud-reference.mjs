@@ -1,6 +1,7 @@
 export const hudConfig = {
   context: 'combat', enabled: true, layoutPreset: 'proposed', hudMode: 'expanded',
   layers: { header: true, class: true, cinders: true, position: true, vitality: true, health: true, mana: true, stamina: true, armoury: true, menu: true, rail: true, relics: true, potions: true, experience: true, chargeFlasks: true, modeGrip: false },
+  potions: { componentId: 'WGC11', contentsComponentId: 'WGH8', openIntent: 'openPotions', combineChargeFlasks: true, combineCarriedPotions: true },
   experience: { contexts: ['combat'], color: '#398bd1', heightRem: 0.35, animationMs: 650, awardPreview: 15 },
   layout: { gapRem: 0.35, insetRem: 0.5, meterHeightRem: 1.15, actionHeightRem: 2.75, radiusRem: 0.25 },
   colors: { background: '#211a12', gold: '#d5af68', text: '#eee2ca', health: '#668c46', mana: '#478dbc', stamina: '#bf9949' },
@@ -26,7 +27,12 @@ visible = FilterConfiguredActiveLayers(model, config.layers)
 // Collapsed layers leave no reserved row or gap.
 ComposeHeader(visible.class, visible.cinders, visible.position)
 ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
-ComposeDetachedRail(visible.relics, visible.potions)
+// One Potions control owns flask charges and carried consumables.
+potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
+ComposeDetachedRail(visible.relics, SharedPotionsControl(config.potions, potionEntries))
+// HP, MP and Smoke vial are revealed inside that control, never sibling HUD buttons.
+OnPotionsActivate: OpenSharedPotionContents(potionEntries)
+OnPotionChoice: EmitRegisteredUseIntent(); DomainRevalidatesReadiness()
 IF visible.experience AND context IN config.experience.contexts
   RenderExperienceStrip(model.experience, config.experience)
 // XP animation consumes an authoritative before/after settlement event.
@@ -34,13 +40,13 @@ ON combatSettled(event): AnimateProjectedFill(event.before, event.after, config.
 ON action(intent): commandRegistry.dispatch(intent)
 ON configurationChanged: ReprojectAndRender(); RestoreFocusedControl()`;
 export const hudDefinitions = [
-['WGH8','Charge flask controls','WCB2','[HP flask ×2] [MP flask ×1]','Current-checkout quick access 2×2 grid; separate from resource meters and carried potions','beneath Armoury/Menu','quick access group width','config.layout.actionHeightRem','// Current source renders HP and MP charge controls, not duplicate health meters.\nProjectFlaskReadiness(snapshot, config.layers.chargeFlasks)\nOnActivate: EmitRegisteredFlaskIntent(); DomainRevalidatesCharges()'],
+['WGH8','Potions contents','WCB2','[WGC11 Potions]\n    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]','Shared Potions control contents; combat footer and HUD reuse WGC11','inside shared Potions control disclosure; not separate HUD buttons','shared Potions content host width','content-fit; action height config.layout.actionHeightRem','// Proposed owner correction supersedes separate flask buttons.\nentries = ProjectPotionEntries(snapshot.chargeFlasks, snapshot.carriedPotions, config.potions)\nRenderInsideSharedControl(config.potions.componentId, entries)\n// Data keeps charge providers separate from owned item instances; view combines references only.\nOnChoose(entry): EmitRegisteredUseIntent(entry.id); DomainRevalidatesChargesAndTarget()'],
 ['WGH9','HUD mode grip','WCB2','[⌃ Compact HUD / ⌄ Expand HUD]','Current-checkout expanded/compact HUD model','HUD bottom center','content-fit','config.layout.actionHeightRem','// Compatibility reference to current checkout HudModeModel.\nProjectNextMode(config.hudMode)\nOnActivate: SetPresentationMode(nextMode); RecomposeActiveLayers()'],
 ['WGH0','HUD composition contract','WCF2','[WGH7 Run header]\n[WGH1 Vitality] [WGH2 Armoury] [WGH3 Menu]\n[WGH6 Relics / potions rail]\n[WGH5 Experience strip when configured]','WGH4 concrete composition; WGS2 shared scene slot','scene top; shared parent bounds','100% host width','content-fit within configured scene band',behavior],
 ['WGH1','Vitality HUD','WCF2','[HP       ████████░░ 32/40]\n[Mana     ██████░░░░  6/10]\n[Stamina  ███████░░░  8/12]','WGH4; WGS2; combat and map HUD','primary row left; align meter edges','remaining primary row width','active meters × config.layout.meterHeightRem',behavior],
 ['WGH2','Armoury control','WCB2','[ ⚔ Armoury ]','WGH4 primary row; equipment workspace','right of vitality; before Menu','content-fit','config.layout.actionHeightRem','// Reuse WCB2. Project armoury command readiness; dispatch openArmoury intent. No loadout mutation in this control.'],
 ['WGH3','Menu control','WCB2','[ ☰ Menu ]','WGH4 primary row; quick menu','primary row far right','content-fit','config.layout.actionHeightRem','// Reuse WCB2. Dispatch openMenu; focus first available menu control and restore trigger on dismissal.'],
-['WGH4','Total HUD','WCF2','┌─────────────────────────────────────────────────────┐\n│ Class: Warden       Cinders: 120       Act 1 Floor 4 │\n│ HP      ████████░░ 32/40     [Armoury] [Menu]        │\n│ Mana    ██████░░░░  6/10                            │\n│ Stamina ███████░░░  8/12                            │\n├─────────────────────────────────────────────────────┤\n│ [Ash seal] [Ember charm]       [Crimson ×2][Azure ×1]│\n└─────────────────────────────────────────────────────┘\n████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░','W4a W4b; WGS2 aliases this composition','top full-width; XP directly below entire HUD','100% host / 100vw in full-screen scene','content-fit within configured scene HUD band',behavior],
+['WGH4','Total HUD','WCF2','┌─────────────────────────────────────────────────────┐\n│ Class: Warden       Cinders: 120       Act 1 Floor 4 │\n│ HP      ████████░░ 32/40     [Armoury] [Menu]        │\n│ Mana    ██████░░░░  6/10                            │\n│ Stamina ███████░░░  8/12                            │\n├─────────────────────────────────────────────────────┤\n│ [Ash seal] [Ember charm]       [Potions]           │\n└─────────────────────────────────────────────────────┘\n████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░','W4a W4b; WGS2 aliases this composition','top full-width; XP directly below entire HUD','100% host / 100vw in full-screen scene','content-fit within configured scene HUD band',behavior],
 ['WGH5','Experience strip','WCM2','████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░\nBlue fill / full host width / no permanent caption','WGH4 below detached rail; combat-only default','below total HUD; left-to-right','100% host; 100vw when host is viewport','config.experience.heightRem',`// Proposed owner extension; not existing game XP rules.
 IF config.layers.experience AND context IN config.experience.contexts
   ratio = SafeNormalizedProgress(snapshot.experience)
@@ -49,7 +55,7 @@ ON authoritativeCombatSettlement(event)
   AnimateFill(event.previousProgress, event.currentProgress, config.experience.animationMs)
 // Announce progress through accessible meter label; level thresholds come from domain.
 // Ignore duplicate settlement IDs; reduced-motion uses immediate final projection.`],
-['WGH6','Inventory rail','WCF2','[Relic: Ash seal] [Relic: Ember charm]    [Crimson ×2] [Azure ×1]','WGH4; separate source inventoryBelt model','below primary row; relics left / potions right','100% usable HUD width','content-fit','// Filter config layers, project actual inventory entries, preserve stable entity IDs. Reuse card/slot views. Emit inspect or potion-use intent through command registry; never duplicate resource flask ownership.'],
+['WGH6','Inventory rail','WCF2','[Relic: Ash seal] [Relic: Ember charm]    [WGC11 Potions]','WGH4; separate source inventoryBelt model','below primary row; relics left / potions right','100% usable HUD width','content-fit','// Filter layers and preserve stable entity IDs. Relics use shared cards. The single WGC11 Potions control opens WGH8 contents combining HP/MP charge providers and carried consumables. No individual potion is a sibling rail button. Resource meters remain distinct information components.'],
 ['WGH7','Run header strip','WCF2','Class: Warden           Cinders: 120           Act 1 · Floor 4','WGH4; map/combat run header','top baseline; left / center / right','100% usable HUD width','content-fit','// Project class, Cinders, Act and Floor from run snapshot. Filter config layers before arranging tracks. Use localization and semantic fields, not parsed text.']
 ];
-export const hudDiagrams = Object.fromEntries(hudDefinitions.map(def => [def[0], { wide: def[3], compact: def[3], portraitSE: def[0] === 'WGH4' ? '┌──────────────────────────────┐\n│ Warden    ⛁120    Act1 Floor4│\n│ HP  █████░░ 32/40 [⚔] [☰]   │\n│ MP  ███░░░░  6/10           │\n│ STA ████░░░  8/12           │\n│ [Relics]      [Red2][Blue1]  │\n└──────────────────────────────┘\n████████████░░░░░░░░░░░░░░░░░░' : def[3], portraitS24: def[3] }]));
+export const hudDiagrams = Object.fromEntries(hudDefinitions.map(def => [def[0], { wide: def[3], compact: def[3], portraitSE: def[0] === 'WGH4' ? '┌──────────────────────────────┐\n│ Warden    ⛁120    Act1 Floor4│\n│ HP  █████░░ 32/40 [⚔] [☰]   │\n│ MP  ███░░░░  6/10           │\n│ STA ████░░░  8/12           │\n│ [Relics]      [Potions]     │\n└──────────────────────────────┘\n████████████░░░░░░░░░░░░░░░░░░' : def[3], portraitS24: def[3] }]));

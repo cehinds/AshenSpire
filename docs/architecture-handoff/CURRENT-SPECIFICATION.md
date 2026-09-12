@@ -73,3 +73,7 @@ WGH0–WGH9 cover the HUD contract, vitality, armoury, menu, total HUD, XP, inve
 W1x, W1x1 and W1x2 reuse W1 for progression overview, weapons and skills. WGP0–WGP4 supply shared proficiency components. Practice, thresholds, unlocks and event history come from data; rank/progress are derived. The playground can preview awards and visibility without mutating game state. PROGRESSION-SPECIFICATION.md defines the proposed normalized schema and domain boundary. Exact mechanics require a separate SPEC.md change before implementation.
 
 Build the complete package with build-reference.mjs. reference-defaults.json and reference-coverage.json are generated alongside the atlas. Browser validation exercises every entry and all preview tabs; see VALIDATION.md for coverage and limits.
+
+## Potions ownership
+
+WGC11 is the single Potions control. WGH8 supplies its contents: HP potion, MP potion and carried consumables such as Smoke vial, with their counts. The HUD must not render these as sibling buttons or duplicate them in its inventory rail. HUD and combat footer reuse the same contents projection. Config can hide provider categories; selecting an entry emits a host intent and does not bypass targeting or confirmation.
