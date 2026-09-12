@@ -295,5 +295,41 @@
     "100% scene",
     "config.background.floorHeightPercent",
     "ground plane under actors; preserve stage baseline"
+  ],
+  [
+    "WGH1",
+    "Vitality HUD",
+    "WGS2",
+    "HUD left",
+    "configured fraction",
+    "HUD inner height",
+    "compose identity and health/resource meter components from player model"
+  ],
+  [
+    "WGH2",
+    "Armament HUD",
+    "WGS2",
+    "HUD center",
+    "configured fraction",
+    "HUD inner height",
+    "compose active loadout slots; links to equipment cards and armament workspace"
+  ],
+  [
+    "WGH3",
+    "Menu HUD",
+    "WGS2",
+    "HUD right",
+    "content-fit",
+    "HUD inner height",
+    "compose shared menu/exit action primitives"
+  ],
+  [
+    "WGH4",
+    "Total HUD",
+    "WGS2",
+    "top band",
+    "100% host",
+    "config.hud",
+    "compose WGH1 vitality, WGH2 armament, WGH3 menu; one shared snapshot"
   ]
 ]

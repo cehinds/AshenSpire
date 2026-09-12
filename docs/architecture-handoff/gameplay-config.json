@@ -36,7 +36,11 @@
       "WGC10",
       "WGC11",
       "WGS6",
-      "WGS7"
+      "WGS7",
+      "WGH1",
+      "WGH2",
+      "WGH3",
+      "WGH4"
     ],
     "background": {
       "floorHeightPercent": 35,
@@ -76,7 +80,11 @@
       "WGM6",
       "WGM7",
       "WGS6",
-      "WGS7"
+      "WGS7",
+      "WGH1",
+      "WGH2",
+      "WGH3",
+      "WGH4"
     ],
     "background": {
       "floorHeightPercent": 35,
@@ -115,7 +123,11 @@
       "WGQ7",
       "WGQ8",
       "WGS6",
-      "WGS7"
+      "WGS7",
+      "WGH1",
+      "WGH2",
+      "WGH3",
+      "WGH4"
     ],
     "background": {
       "floorHeightPercent": 35,

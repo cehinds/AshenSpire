@@ -14433,6 +14433,321 @@ On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
+## Wireframe WGH0: HUD composition
+
+**Parent: none.** Use cases: HUD composition reusable component family. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
+INPUT: immutable component model, owner state, context, layout tokens
+Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGH1: Vitality HUD
+
+**Parent: WGS2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Vitality HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH1.root | configured fraction | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Vitality HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH1.root | configured fraction | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Vitality HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH1.root | configured fraction | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Vitality HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH1.root | configured fraction | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
+INPUT: immutable component model, owner state, context, layout tokens
+compose identity and health/resource meter components from player model; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGH2: Armament HUD
+
+**Parent: WGS2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Armament HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH2.root | configured fraction | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Armament HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH2.root | configured fraction | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Armament HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH2.root | configured fraction | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Armament HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH2.root | configured fraction | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
+INPUT: immutable component model, owner state, context, layout tokens
+compose active loadout slots; links to equipment cards and armament workspace; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGH3: Menu HUD
+
+**Parent: WGS2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Menu HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH3.root | content-fit | HUD inner height | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Menu HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH3.root | content-fit | HUD inner height | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Menu HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH3.root | content-fit | HUD inner height | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Menu HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH3.root | content-fit | HUD inner height | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
+INPUT: immutable component model, owner state, context, layout tokens
+compose shared menu/exit action primitives; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGH4: Total HUD
+
+**Parent: WGS2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Total HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH4.root | 100% host | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Total HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH4.root | 100% host | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Total HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH4.root | 100% host | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Total HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH4.root | 100% host | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
+INPUT: immutable component model, owner state, context, layout tokens
+compose WGH1 vitality, WGH2 armament, WGH3 menu; one shared snapshot; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
 ## Wireframe WGM0: Map composition
 
 **Parent: none.** Use cases: Map composition reusable component family. Owner selection propagates to the component; no duplicated selected state.

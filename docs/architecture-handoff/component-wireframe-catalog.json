@@ -451,6 +451,61 @@
     ]
   },
   {
+    "id": "WGH0",
+    "name": "HUD composition",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH1",
+    "name": "Vitality HUD",
+    "parent": "WGS2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH2",
+    "name": "Armament HUD",
+    "parent": "WGS2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH3",
+    "name": "Menu HUD",
+    "parent": "WGS2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH4",
+    "name": "Total HUD",
+    "parent": "WGS2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
     "id": "WGM0",
     "name": "Map composition",
     "parent": null,

@@ -28,7 +28,7 @@ defs.push(
  ['WCB5','Exit button','WCB4','[ × ]','Shared modal header','header top-right','minimum target token','minimum target token','Use accessible Close label and inherited dismissal policy. Danger highlight; do not commit pending domain actions.']
 );
 for(const [id,name,parent,anchor,width,height,logic] of JSON.parse(fs.readFileSync(path.join(root,'gameplay-components.json'),'utf8')))defs.push([id,name,parent,'['+name+']','Combat/map/dialogue composition',anchor,width,height,logic+'; read configuration from gameplay-config.json. Emit semantic intents only.']);
-const families=[['WCF0','Component foundations'],['WCB0','Buttons and inspection'],['WCI0','Identity and artwork'],['WCM0','Meters and statuses'],['WCO0','Combat overlays'],['WCT0','Tooltip components'],['WGS0','Shared scene layers'],['WGC0','Combat composition'],['WGM0','Map composition'],['WGQ0','Dialogue composition']];
+const families=[['WCF0','Component foundations'],['WCB0','Buttons and inspection'],['WCI0','Identity and artwork'],['WCM0','Meters and statuses'],['WCO0','Combat overlays'],['WCT0','Tooltip components'],['WGS0','Shared scene layers'],['WGC0','Combat composition'],['WGM0','Map composition'],['WGQ0','Dialogue composition'],['WGH0','HUD composition']];
 for(const def of defs){if(!def[0].startsWith('WG'))def[2]=def[0].slice(0,3)+'0';}
 for(const [id,name] of families)defs.push([id,name,null,'{Shared family components}',name+' reusable component family','owning context','configured by child','configured by child','Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.']);
 defs.sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));

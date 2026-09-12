@@ -61,3 +61,5 @@ Preview tabs: Wireframe shows structural schematic, Example shows documentation 
 W4a composition: WGS2 shared HUD + WGC1 battlefield + WGC5 hand + WGC6 packed action footer. WGS2 and WGC6 standalone examples call exactly the same reference renderers as the W4a example. Footer children reference WGC7–WGC11; scene component links navigate to each reusable definition.
 
 Third preview-tab correction: Component composition replaces Live game. It executes the reference composition from shared component parts and exposes links to their definitions. It does not embed the production game. W4a composition uses the shared HUD/footer renderers and scene model.
+
+HUD composition WGH0: WGH1 Vitality, WGH2 Armament, WGH3 Menu, WGH4 Total HUD. WGS2 uses the same total renderer; scene preview now composes WC4a combatants and WC1 playing-card renderers rather than chess-piece/card-box placeholders. Links expose referenced definitions. Reference composition scales components uniformly for diagram fit; production layout validation remains required.
