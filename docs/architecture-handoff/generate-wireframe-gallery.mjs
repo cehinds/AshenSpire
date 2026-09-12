@@ -1,3 +1,4 @@
+import { configurablePseudocode } from './pseudocode-configuration.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -13,6 +14,7 @@ const data=catalog.map(entry=>{
  if(views.length!==3||views.some(v=>!v.ascii||v.rows.length<2))throw Error('Incomplete '+entry.id);
  return {...entry,description:section.slice(section.indexOf('\n')+1,modes[0].index).trim(),views,pseudo:section.match(/\*\*Language-agnostic pseudocode\*\*\s*```text\s*\n([\s\S]*?)```/)?.[1]||''};
 });
+for(const entry of data)if(!entry.pseudo.startsWith('// Load'))entry.pseudo=configurablePseudocode(entry.pseudo);
 const template=fs.readFileSync(path.join(root,'wireframe-gallery-template.html'),'utf8');
-fs.writeFileSync(path.join(root,'wireframe-gallery.html'),template.replace('/*DATA*/',JSON.stringify(data).replaceAll('<','\\u003c')));
+fs.writeFileSync(path.join(root,'wireframe-gallery.html'),template.replace('/*CONFIG*/',JSON.stringify(JSON.parse(fs.readFileSync(path.join(root,'pseudocode-config.json'),'utf8')))).replace('/*DATA*/',JSON.stringify(data).replaceAll('<','\\u003c')));
 console.log(`Built ${data.length} wireframes / ${data.reduce((n,d)=>n+d.views.length,0)} views, with positioning tables and pseudocode.`);

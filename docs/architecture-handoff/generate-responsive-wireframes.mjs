@@ -1,3 +1,4 @@
+import { configurablePseudocode } from './pseudocode-configuration.mjs';
 // Documentation-only generator. Does not modify game code or game configuration.
 import { writeFileSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -239,12 +240,13 @@ for (const s of sections) {
   }
   if(!pseudocode[s.id])throw new Error('Missing pseudocode '+s.id);
   text+=heading+description+visual;
-  detailedText+=heading+description+visual+'**Language-agnostic pseudocode**\n\n```text\n'+pseudocode[s.id]+'\n```\n\n';
+  detailedText+=heading+description+visual+'**Language-agnostic pseudocode**\n\n```text\n'+configurablePseudocode(pseudocode[s.id])+'\n```\n\n';
 }
 const verification='## Verification\n\nVerify every parent and child in all three views, at supported text/UI scales, with keyboard/controller/touch, long copy, empty/blocked states, active modal and preserved selection across rotation. Portrait is an explicit target: audit the existing upright/orientation gate before implementation. Do not shrink hit targets or clip required text to claim a no-scroll layout. This is a documentation specification; it does not claim implemented or browser-verified UI.\n';
 text+=verification;detailedText+=verification;
 writeFileSync(join(root,'RESPONSIVE-WIREFRAMES.md'),text);
 const cardDocument=readFileSync(join(root,'card-wireframes.md'),'utf8').replace(/^# Card wireframes[^\n]*\n/,'## Card hierarchy — WC0 and descendants\n');
-writeFileSync(join(root,'wireframe.md'),detailedText+'\n'+cardDocument+'\n'+readFileSync(join(root,'tooltip-wireframes.md'),'utf8')+'\n'+readFileSync(join(root,'component-wireframes.md'),'utf8'));
+const normalizeBlocks=doc=>doc.replace(/(\*\*Language-agnostic pseudocode\*\*\s*```text\n)([\s\S]*?)(```)/g,(_,a,b,c)=>a+(b.startsWith('// Load')?b:configurablePseudocode(b))+c);
+writeFileSync(join(root,'wireframe.md'),normalizeBlocks(detailedText+'\n'+cardDocument+'\n'+readFileSync(join(root,'tooltip-wireframes.md'),'utf8')+'\n'+readFileSync(join(root,'component-wireframes.md'),'utf8'))+'\n## Configuration defaults\n\n```json\n'+readFileSync(join(root,'pseudocode-config.json'),'utf8')+'```\n');
 writeFileSync(join(root,'wireframe-catalog.json'),JSON.stringify(sections.map(({id,name,parent})=>({id,name,parent,orientations:['wide','compact','portrait']})),null,2)+'\n');
 console.log(`Generated W0, ${sections.filter(s=>s.parent==='W0').length} parents and ${sections.filter(s=>s.parent&&s.parent!=='W0').length} children; ${sections.length*3} ASCII views.`);

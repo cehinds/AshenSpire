@@ -1,3 +1,4 @@
+import { configurablePseudocode } from './pseudocode-configuration.mjs';
 import { positioning } from './wireframe-positioning.mjs';
 // Generates handoff documents only. No runtime code/content modification.
 import { writeFileSync } from 'node:fs';
@@ -207,7 +208,7 @@ out+='Names use `WCid.region.component`; named detail rows include their semanti
 for(const c of cards){
  out+=`${c.parent?'###':'##'} Wireframe ${c.id}: ${c.name}\n\n**Parent: ${c.parent||'none — master card'}.** ${c.extra}\n\n**Construction tags (proposed):** ${c.tags.map(t=>'`'+t+'`').join(', ')}. Inherit ancestor tag requirements; compatible feature tags attach additional components.\n\n`;
  for(const mode of ['wide','compact','portrait'])out+=`**${mode==='wide'?'Wide':mode==='compact'?'Compact':'Vertical / Mobile'}**\n\n\`\`\`text\n${frame(c,mode)}\n\`\`\`\n\n`+sizes(c,mode);
- out+='**Language-agnostic pseudocode**\n\n```text\n'+pseudo(c)+'\n```\n\n';
+ out+='**Language-agnostic pseudocode**\n\n```text\n'+configurablePseudocode(pseudo(c))+'\n```\n\n';
 }
 out+='## Verification\n\nValidate all three modes, inherited construction, multi-tag combinations, missing/unknown tags, optional components, state transitions, scoped entity IDs, readable artwork/text, inline actions and minimum targets. Adding a supported item/class/relic variation should require only normalized data/tag rows, with no new renderer branch. New behavior requires a registered tested primitive first.\n';
 writeFileSync(join(root,'card-wireframes.md'),out);

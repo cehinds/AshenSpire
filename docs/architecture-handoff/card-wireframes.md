@@ -124,6 +124,9 @@ Names use `WCid.region.component`; named detail rows include their semantic sub-
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context, validatedTagRegistry
 OUTPUT: immutable CardViewModel + semantic action intents
 
@@ -148,7 +151,7 @@ FUNCTION RenderCard(model):
     FOR each ordered slot IN model.components:
         RenderRegisteredComponent(slot.componentId, slot.displayData)
     BindSelectionSeparateFromExplicitPlayUseEquipCommands()
-    ApplyCardRelativeBands(header=10%, art=40%, body=40%, footer=10%)
+    ApplyCardRelativeBands(config.card.bandFractions)
     // Visible badges are inside art; outline and info are outside band budget.
     ApplySharedPaletteFocusSelectionAndDisabledStates()
     RenderFooterMetadataOnly(); owningHost.RendersAvailableActionOutsideCard()
@@ -162,7 +165,7 @@ ON selectionChanged(selected):
         ApplySharedSelectionOutline(); LiftVisuallyWithoutReflow()
         owningHost.ShowContextAction(); HighlightDomainEligibleTargets()
         DisableCommitUntilRequiredTargetIsSelected()
-        After(config.infoDelayMs = 1000):
+        After(config.infoDelayMs = config.referenceTokens.value_1000.value):
             IF stillSelected AND mounted AND generationIsCurrent:
                 FadeInInfoButton(config.infoFadeMs); EnableInfoInput()
     ELSE: RemoveLiftOutlineAndInfo(); RestoreNormalStackOrder()
@@ -297,6 +300,9 @@ Never branch on entity names or inject executable markup from tags.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC0
 REQUIRED PROPOSED TAGS: card-kind:playing
@@ -438,6 +444,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC1
 REQUIRED PROPOSED TAGS: ability:attack
@@ -579,6 +588,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC1
 REQUIRED PROPOSED TAGS: ability:skill
@@ -719,6 +731,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC1
 REQUIRED PROPOSED TAGS: ability:power
@@ -860,6 +875,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC1
 REQUIRED PROPOSED TAGS: ability:curse
@@ -1001,6 +1019,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC1
 REQUIRED PROPOSED TAGS: ability:status
@@ -1143,6 +1164,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC0
 REQUIRED PROPOSED TAGS: card-kind:possession
@@ -1283,6 +1307,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2
 REQUIRED PROPOSED TAGS: item-kind:equipment
@@ -1429,6 +1456,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2a
 REQUIRED PROPOSED TAGS: equipment-kind:weapon
@@ -1576,6 +1606,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2a
 REQUIRED PROPOSED TAGS: equipment-kind:armor
@@ -1718,6 +1751,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2
 REQUIRED PROPOSED TAGS: item-kind:relic
@@ -1859,6 +1895,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2b
 REQUIRED PROPOSED TAGS: effect-mode:passive
@@ -2000,6 +2039,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2b
 REQUIRED PROPOSED TAGS: effect-mode:triggered
@@ -2140,6 +2182,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2
 REQUIRED PROPOSED TAGS: item-kind:consumable
@@ -2280,6 +2325,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2c
 REQUIRED PROPOSED TAGS: effect-purpose:healing
@@ -2420,6 +2468,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2c
 REQUIRED PROPOSED TAGS: effect-purpose:resource
@@ -2560,6 +2611,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2c
 REQUIRED PROPOSED TAGS: effect-purpose:utility
@@ -2703,6 +2757,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC0
 REQUIRED PROPOSED TAGS: card-kind:creationChoice
@@ -2844,6 +2901,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC3
 REQUIRED PROPOSED TAGS: choice-kind:class
@@ -2984,6 +3044,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC3
 REQUIRED PROPOSED TAGS: choice-kind:startingKit
@@ -3133,29 +3196,32 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: combatant snapshot, player knowledge, role, presentation config, host size
 PARENT: WC4 (WC4 inherits WC0 identity and interactions, NOT item-card geometry)
 ResolveSizeVariant(WC4); derive height from clamped width, preserve art ratio
 intentVisible = domain.intentActive AND config.intentVisibleForRole(role)
-// Defaults: player=false, enemy=true; explicit presentation override permitted.
+// Defaults: player=config.combatant.playerIntentVisible, enemy=config.combatant.enemyIntentVisible; explicit presentation override permitted.
 blockVisible = domain.blockActive
 resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
-ReserveHP(); remainingRows = 5 - HP - present(stance) - present(statusIcons OR buildupRows)
+ReserveHP(); remainingRows = config.combatant.maxStackRows - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs
 ComposeActiveRowsInOrder(HP, resources, buildup, stance, icons)
 CollapseAbsentRowsAndGaps(); sprite receives remaining height
-SetOtherResourceAndBuildupHeight(0.5 * hpHeight); SetStanceHeight(hpHeight)
-UseFullBarWidthForStance(); UseSharedGap(0.2rem)
-FitSquareIcons(1.575rem); reserve last tile for +N hidden icons if overflow
+SetOtherResourceAndBuildupHeight(config.combatant.extraBarHeightRatio * hpHeight); SetStanceHeight(hpHeight)
+UseFullBarWidthForStance(); UseSharedGap(config.combatant.stackGapRem)
+FitSquareIcons(config.combatant.iconSizeRem); reserve last tile for +N hidden icons if overflow
 AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
-AnchorDefenseAtSprite50PercentHeight(gap=0.5rem, player=right, enemy=left)
+AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
-On selected: glow whole visible assembly; reveal info after 1000ms
-On hover/focus/tap tag: schedule shared tooltip after 1000ms; cancel stale timer
+On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
 Inspector detail providers: HP/intent/defense, active current state,
@@ -3290,29 +3356,32 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: combatant snapshot, player knowledge, role, presentation config, host size
 PARENT: WC4 (WC4 inherits WC0 identity and interactions, NOT item-card geometry)
 ResolveSizeVariant(WC4a); derive height from clamped width, preserve art ratio
 intentVisible = domain.intentActive AND config.intentVisibleForRole(role)
-// Defaults: player=false, enemy=true; explicit presentation override permitted.
+// Defaults: player=config.combatant.playerIntentVisible, enemy=config.combatant.enemyIntentVisible; explicit presentation override permitted.
 blockVisible = domain.blockActive
 resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
-ReserveHP(); remainingRows = 5 - HP - present(stance) - present(statusIcons OR buildupRows)
+ReserveHP(); remainingRows = config.combatant.maxStackRows - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs
 ComposeActiveRowsInOrder(HP, resources, buildup, stance, icons)
 CollapseAbsentRowsAndGaps(); sprite receives remaining height
-SetOtherResourceAndBuildupHeight(0.5 * hpHeight); SetStanceHeight(hpHeight)
-UseFullBarWidthForStance(); UseSharedGap(0.2rem)
-FitSquareIcons(1.575rem); reserve last tile for +N hidden icons if overflow
+SetOtherResourceAndBuildupHeight(config.combatant.extraBarHeightRatio * hpHeight); SetStanceHeight(hpHeight)
+UseFullBarWidthForStance(); UseSharedGap(config.combatant.stackGapRem)
+FitSquareIcons(config.combatant.iconSizeRem); reserve last tile for +N hidden icons if overflow
 AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
-AnchorDefenseAtSprite50PercentHeight(gap=0.5rem, player=right, enemy=left)
+AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
-On selected: glow whole visible assembly; reveal info after 1000ms
-On hover/focus/tap tag: schedule shared tooltip after 1000ms; cancel stale timer
+On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
 Inspector detail providers: HP/intent/defense, active current state,
@@ -3447,29 +3516,32 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: combatant snapshot, player knowledge, role, presentation config, host size
 PARENT: WC4 (WC4 inherits WC0 identity and interactions, NOT item-card geometry)
 ResolveSizeVariant(WC4b); derive height from clamped width, preserve art ratio
 intentVisible = domain.intentActive AND config.intentVisibleForRole(role)
-// Defaults: player=false, enemy=true; explicit presentation override permitted.
+// Defaults: player=config.combatant.playerIntentVisible, enemy=config.combatant.enemyIntentVisible; explicit presentation override permitted.
 blockVisible = domain.blockActive
 resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
-ReserveHP(); remainingRows = 5 - HP - present(stance) - present(statusIcons OR buildupRows)
+ReserveHP(); remainingRows = config.combatant.maxStackRows - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs
 ComposeActiveRowsInOrder(HP, resources, buildup, stance, icons)
 CollapseAbsentRowsAndGaps(); sprite receives remaining height
-SetOtherResourceAndBuildupHeight(0.5 * hpHeight); SetStanceHeight(hpHeight)
-UseFullBarWidthForStance(); UseSharedGap(0.2rem)
-FitSquareIcons(1.575rem); reserve last tile for +N hidden icons if overflow
+SetOtherResourceAndBuildupHeight(config.combatant.extraBarHeightRatio * hpHeight); SetStanceHeight(hpHeight)
+UseFullBarWidthForStance(); UseSharedGap(config.combatant.stackGapRem)
+FitSquareIcons(config.combatant.iconSizeRem); reserve last tile for +N hidden icons if overflow
 AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
-AnchorDefenseAtSprite50PercentHeight(gap=0.5rem, player=right, enemy=left)
+AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
-On selected: glow whole visible assembly; reveal info after 1000ms
-On hover/focus/tap tag: schedule shared tooltip after 1000ms; cancel stale timer
+On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
 Inspector detail providers: HP/intent/defense, active current state,
@@ -3604,29 +3676,32 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: combatant snapshot, player knowledge, role, presentation config, host size
 PARENT: WC4 (WC4 inherits WC0 identity and interactions, NOT item-card geometry)
 ResolveSizeVariant(WC4c); derive height from clamped width, preserve art ratio
 intentVisible = domain.intentActive AND config.intentVisibleForRole(role)
-// Defaults: player=false, enemy=true; explicit presentation override permitted.
+// Defaults: player=config.combatant.playerIntentVisible, enemy=config.combatant.enemyIntentVisible; explicit presentation override permitted.
 blockVisible = domain.blockActive
 resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
-ReserveHP(); remainingRows = 5 - HP - present(stance) - present(statusIcons OR buildupRows)
+ReserveHP(); remainingRows = config.combatant.maxStackRows - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs
 ComposeActiveRowsInOrder(HP, resources, buildup, stance, icons)
 CollapseAbsentRowsAndGaps(); sprite receives remaining height
-SetOtherResourceAndBuildupHeight(0.5 * hpHeight); SetStanceHeight(hpHeight)
-UseFullBarWidthForStance(); UseSharedGap(0.2rem)
-FitSquareIcons(1.575rem); reserve last tile for +N hidden icons if overflow
+SetOtherResourceAndBuildupHeight(config.combatant.extraBarHeightRatio * hpHeight); SetStanceHeight(hpHeight)
+UseFullBarWidthForStance(); UseSharedGap(config.combatant.stackGapRem)
+FitSquareIcons(config.combatant.iconSizeRem); reserve last tile for +N hidden icons if overflow
 AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
-AnchorDefenseAtSprite50PercentHeight(gap=0.5rem, player=right, enemy=left)
+AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
-On selected: glow whole visible assembly; reveal info after 1000ms
-On hover/focus/tap tag: schedule shared tooltip after 1000ms; cancel stale timer
+On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
 Inspector detail providers: HP/intent/defense, active current state,

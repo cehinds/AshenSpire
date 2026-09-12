@@ -129,6 +129,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: definitionId, immutableViewModel, commandBindings, host, inputContext
 OUTPUT: viewHandle(update, dispose), semantic intents
 
@@ -150,8 +153,8 @@ FUNCTION MountMaster(inputs):
 
 FUNCTION RenderFooter(actions, placement):
     visible = FilterByDeclaredVisibility(actions) // disabled visible actions count
-    IF count(visible) == 0: OmitFooter(); RETURN
-    IF count(visible) == 1:
+    IF count(visible) == config.referenceTokens.value_0.value: OmitFooter(); RETURN
+    IF count(visible) == config.referenceTokens.value_1.value:
         PlaceOneButtonFullUsableWidth(labelCentered = true); RETURN
     IF placement == packedCombat:
         CenterOneGroup(Actions, Draw, EndTurn, DiscardExhaust, Potions)
@@ -288,12 +291,15 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: workspaceDefinition, categories, activeCategoryId, bodyModel, actions
 INHERITS: W0 geometry, footer, palette, transitions, focus, cleanup
 
 FUNCTION RenderWorkspace(model):
     validCategory = ResolveAvailableCategory(model.activeCategoryId)
-    navigation = IF count(categories) > 1 THEN
+    navigation = IF count(categories) > config.referenceTokens.value_1.value THEN
         wide: LeftRail(categories)
         compact/portrait: AccessibleCategorySelector(categories)
       ELSE absent
@@ -425,6 +431,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: settingsSnapshot, settingsDefinitions, browserCapabilities
 PARENT: W1
 model.categories = ProjectRegisteredSettingCategories()
@@ -556,6 +565,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: townDefinition, playerSnapshot, npcAndServiceRegistries
 PARENT: W1
 available = EvaluateTownMembershipAndProgressionPredicates()
@@ -688,6 +700,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: creationDefinitions, draftCharacter, proposedDestinationSlot
 PARENT: W1
 model.categories = AvailableCreationStagesWithPrerequisiteReasons()
@@ -824,6 +839,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: savedShopStock, runSnapshot, shopDefinitions, localSelection
 PARENT: W1; BODY: W1v offer model
 model.categories = ProjectAvailableShopCategoriesFromData()
@@ -954,6 +972,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: loadoutSnapshot, armouryDefinitions, savedViewPreference
 PARENT: W1
 model.categories = CharacterInventoryHybridWithExistingSavedIDs()
@@ -1078,6 +1099,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: contentRegistries, discoverySnapshot, categoryAndEntrySelection
 PARENT: W1
 model.categories = RegisteredCompendiumGroups()
@@ -1202,6 +1226,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: profileSnapshot, profileCapabilities, categorySelection
 PARENT: W1
 model.categories = ExistingSupportedProfileCategories()
@@ -1326,6 +1353,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: committedCombatSnapshot, selectedPile, selectedCardRef
 PARENT: W1
 model.categories = DiscardAndExhaustWithCounts()
@@ -1450,6 +1480,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: serviceDefinition, runSnapshot, selectedItemRef
 PARENT: W1; BODY: selection/detail
 plan = ExistingSmithingPlan(runSnapshot)
@@ -1577,6 +1610,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: extractionDefinition, runSnapshot, itemSelection, mountSelection
 PARENT: W1; BODY: selection/detail with mount selector
 plan = ExistingExtractionPlan(runSnapshot)
@@ -1708,6 +1744,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: installDefinition, runSnapshot, itemMountCardSelection
 PARENT: W1; BODY: selection/detail with dependent selectors
 plan = ExistingInstallPlan(runSnapshot)
@@ -1831,6 +1870,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: saveSlotSummaries, selectedSlot, draftCreationContext
 PARENT: W1; BODY: shared SaveSlotSelection(mode = new)
 model.body = SlotsWithEmptyAndOccupiedStates()
@@ -1951,6 +1993,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: saveSlotSummaries, selectedSlot, activeRunContext
 PARENT: W1; BODY: shared SaveSlotSelection(mode = load)
 model.body = SlotsWithLoadabilityAndReasons()
@@ -2076,6 +2121,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: inventorySnapshot, equipmentContext, selectedItemRef
 PARENT: W1; BODY: selection/detail, embeddable inside W1e
 plan = ExistingEquipmentPreview(selectedItemRef, equipmentContext)
@@ -2195,6 +2243,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: itemDefinitionRef, instanceSnapshot, inspectionContext
 PARENT: W1; BODY: inspection
 model.body = ItemNameArtTagsStatsRequirementsAndEffects()
@@ -2313,6 +2364,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: combatantRef, committedCombatSnapshot, visibilityRules
 PARENT: W1; BODY: inspection
 model.body = VisibleCombatantIdentityVitalsStatusesAndIntent()
@@ -2431,6 +2485,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: potionRef, runSnapshot, useContext
 PARENT: W1; BODY: inspection
 plan = ExistingPotionUsePlan(potionRef, useContext)
@@ -2551,6 +2608,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: activeRunIdentity, activeSlotIdentity, saveStatus
 PARENT: W1; BODY: status, no art slot
 model.body = CharacterLocationDestinationLastSavedAndStatus()
@@ -2672,6 +2732,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: restDefinition, runSnapshot, refillAndServiceContext
 PARENT: W1; BODY: choice/progression
 plan = ExistingRestAndServicePlans()
@@ -2792,6 +2855,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: persistedPendingRewards, currentPossessions, claimState
 PARENT: W1; BODY: choice/progression
 plan = ExistingRewardPlan(pendingRewards, capacities)
@@ -2913,6 +2979,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: eventDefinition, questHistory, runSnapshot
 PARENT: W1; BODY: choice/progression, page presentation when required
 choices = ExistingAvailableEventChoices(history, snapshot)
@@ -3039,6 +3108,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: activeShopCategory, savedStock, runSnapshot
 PARENT: W1; BODY embedded in W1d, not another complete shell
 offers = DomainShopQuery(activeCategory, snapshot, savedStock)
@@ -3187,13 +3259,16 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, context, returnFocusTarget
 PARENT: W1
 ResolveCurrentEntityOrShowUnavailableState()
 MountInheritedW1Shell(title, exit, inlineFooter)
 ReplaceCategoryRailWithReadOnlyCardPreview()
-UseTwoColumns(leftCard=wideOrCompact34PercentOrPortrait32Percent, gap=2vw, rightDetails=remaining)
-ContainLeftPreview(maxWidth=14rem); reserve header and footer
+UseTwoColumns(leftCard=config.inspector.previewFractionForMode, gap=config.inspector.gapVw, rightDetails=remaining)
+ContainLeftPreview(maxWidth=config.inspector.maxPreviewWidthRem); reserve header and footer
 AlignFactLabelsAndValuesToSharedLeftAlignedColumns()
 IfNoRelevantDomainAction: RenderFullWidthBackButton()
 RenderWC0PreviewWithInheritedRatiosAndNoNestedInfoButton()
@@ -3316,6 +3391,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: exactTarget, consequence, decisionPolicy, confirmBinding
 PARENT: W0; VARIANT: compact confirmation
 model.body = ConcreteQuestionTargetAndConsequence()
@@ -3434,6 +3512,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: selectedServicePlan, targetRef, existingConfirmationPolicy
 PARENT: W2
 model = ServiceQuestionExactCostChangesAndTarget(selectedServicePlan)
@@ -3546,6 +3627,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: selectedSaveIdentity, actualRetentionPolicy
 PARENT: W2
 model = DeleteQuestionForExactSlotAndCharacter()
@@ -3663,6 +3747,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: occupiedSlotIdentity, validatedNewRunDraft
 PARENT: W2
 model = ReplacementQuestionOldIdentityNewIdentityAndConsequence()
@@ -3776,6 +3863,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: selectedLoadIdentity, currentRunSaveStatus
 PARENT: W2
 model = LoadQuestionWithExactCurrentProgressConsequence()
@@ -3888,6 +3978,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: requestedQuitOperation, runIdentity, saveCapabilities
 PARENT: W2
 model = ConcreteQuitQuestionFromActualSaveOrLossPolicy()
@@ -4003,6 +4096,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: menuDefinition, supportedDestinations, saveSummaries, highlightState
 PARENT: W0; VARIANT: full-screen title menu
 model.titlePlacement = screenCenter
@@ -4134,6 +4230,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: mainMenuContext where Continue is not actively highlighted
 PARENT: W3
 model.layout = centeredMenu
@@ -4272,6 +4371,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: mainMenuContext with available Continue highlighted
 PARENT: W3
 target = ExactSlotUsedByContinueCommand()
@@ -4394,6 +4496,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: committedSnapshot, regionDefinition, localInteractionState
 PARENT: W0; VARIANT: gameplay/encounter region host
 model.header = SharedHUDProjection(snapshot)
@@ -4528,6 +4633,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: committedCombatSnapshot, enginePreviewAPI, localTargetSelection
 PARENT: W4
 model.scene = BattlefieldIntentAndStatusProjection()
@@ -4537,12 +4645,12 @@ model.actions = [ActionsRemaining, DrawPile, EndTurn, DiscardExhaust, Potions]
 model.footerSizes = large(ActionsRemaining, EndTurn, Potions), small(pileButtons)
 RenderWithW4(model); CenterGroupWithMinimalSharedGapsInEveryMode()
 EmptyResourceOrPileIndicatorsFade(); EndTurnNeverUsesEmptyFade()
-EndTurnGreen = canEndTurn AND (actionsRemaining == 0 OR highlightedEndTurn)
+EndTurnGreen = canEndTurn AND (NoActionsRemain(actionsRemaining) OR highlightedEndTurn)
 ON DrawPile: OpenReadOnlyDrawViewer()
 ON DiscardExhaust: OpenW1h()
 ON EndTurn: DispatchExistingEngineOrServerCommandIfLegal()
 ON card/target/potion intent: UseExistingValidatedCombatBindings()
-The discussed 10/40/35/15 region split is a starting allocation to verify.
+The discussed config.combat.regionFractions region split is a starting allocation to verify.
 Preserve RNG calls, simulation timing, combat saves, and server authority.
 ```
 
@@ -4663,10 +4771,13 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: mapSnapshot, revealRules, selectedNodeId, viewport
 PARENT: W4
-model.regionFractions = [topHUD:0.10, map:0.60, details:0.20, footer:0.10]
-model.mapInlineFraction = 0.95
+model.regionFractions = config.map.regionFractions
+model.mapInlineFraction = config.map.inlineFraction
 model.header = HUDIncludingRegionSelector()
 model.scene = RevealedMapAndReachabilityProjection()
 model.context = KnownSelectedNodeFactsAndBlockers()
@@ -4801,6 +4912,9 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: dialogueGraph, questSnapshot, playerIdentity, npcIdentity, locale
 PARENT: W4; BODY: portrait dialogue replacing hand/cards
 model.scene = PlayerPortraitLeftAndNPCPortraitRight()
@@ -4809,7 +4923,7 @@ model.actions = [Back, SkipSpeech, Continue]
 RenderWithW4(model); KeepFooterInlineAndPortraitSidesStable()
 
 FUNCTION ShowBeat(id, reviewing = false):
-    StopClipAndTimers(); generation = generation + 1
+    StopClipAndTimers(); generation = NextGenerationToken()
     activeGeneration = generation
     ProjectAndRenderBeat(id)
     IF reviewing OR noPlayableVoice: AwaitManualContinue(); RETURN
@@ -4959,6 +5073,9 @@ Names use `WCid.region.component`; named detail rows include their semantic sub-
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context, validatedTagRegistry
 OUTPUT: immutable CardViewModel + semantic action intents
 
@@ -4983,7 +5100,7 @@ FUNCTION RenderCard(model):
     FOR each ordered slot IN model.components:
         RenderRegisteredComponent(slot.componentId, slot.displayData)
     BindSelectionSeparateFromExplicitPlayUseEquipCommands()
-    ApplyCardRelativeBands(header=10%, art=40%, body=40%, footer=10%)
+    ApplyCardRelativeBands(config.card.bandFractions)
     // Visible badges are inside art; outline and info are outside band budget.
     ApplySharedPaletteFocusSelectionAndDisabledStates()
     RenderFooterMetadataOnly(); owningHost.RendersAvailableActionOutsideCard()
@@ -4997,7 +5114,7 @@ ON selectionChanged(selected):
         ApplySharedSelectionOutline(); LiftVisuallyWithoutReflow()
         owningHost.ShowContextAction(); HighlightDomainEligibleTargets()
         DisableCommitUntilRequiredTargetIsSelected()
-        After(config.infoDelayMs = 1000):
+        After(config.infoDelayMs = config.referenceTokens.value_1000.value):
             IF stillSelected AND mounted AND generationIsCurrent:
                 FadeInInfoButton(config.infoFadeMs); EnableInfoInput()
     ELSE: RemoveLiftOutlineAndInfo(); RestoreNormalStackOrder()
@@ -5132,6 +5249,9 @@ Never branch on entity names or inject executable markup from tags.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC0
 REQUIRED PROPOSED TAGS: card-kind:playing
@@ -5273,6 +5393,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC1
 REQUIRED PROPOSED TAGS: ability:attack
@@ -5414,6 +5537,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC1
 REQUIRED PROPOSED TAGS: ability:skill
@@ -5554,6 +5680,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC1
 REQUIRED PROPOSED TAGS: ability:power
@@ -5695,6 +5824,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC1
 REQUIRED PROPOSED TAGS: ability:curse
@@ -5836,6 +5968,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC1
 REQUIRED PROPOSED TAGS: ability:status
@@ -5978,6 +6113,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC0
 REQUIRED PROPOSED TAGS: card-kind:possession
@@ -6118,6 +6256,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2
 REQUIRED PROPOSED TAGS: item-kind:equipment
@@ -6264,6 +6405,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2a
 REQUIRED PROPOSED TAGS: equipment-kind:weapon
@@ -6411,6 +6555,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2a
 REQUIRED PROPOSED TAGS: equipment-kind:armor
@@ -6553,6 +6700,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2
 REQUIRED PROPOSED TAGS: item-kind:relic
@@ -6694,6 +6844,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2b
 REQUIRED PROPOSED TAGS: effect-mode:passive
@@ -6835,6 +6988,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2b
 REQUIRED PROPOSED TAGS: effect-mode:triggered
@@ -6975,6 +7131,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2
 REQUIRED PROPOSED TAGS: item-kind:consumable
@@ -7115,6 +7274,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2c
 REQUIRED PROPOSED TAGS: effect-purpose:healing
@@ -7255,6 +7417,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2c
 REQUIRED PROPOSED TAGS: effect-purpose:resource
@@ -7395,6 +7560,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC2c
 REQUIRED PROPOSED TAGS: effect-purpose:utility
@@ -7538,6 +7706,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC0
 REQUIRED PROPOSED TAGS: card-kind:creationChoice
@@ -7679,6 +7850,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC3
 REQUIRED PROPOSED TAGS: choice-kind:class
@@ -7819,6 +7993,9 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: entityRef, instanceSnapshot, context
 PARENT: WC3
 REQUIRED PROPOSED TAGS: choice-kind:startingKit
@@ -7968,29 +8145,32 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: combatant snapshot, player knowledge, role, presentation config, host size
 PARENT: WC4 (WC4 inherits WC0 identity and interactions, NOT item-card geometry)
 ResolveSizeVariant(WC4); derive height from clamped width, preserve art ratio
 intentVisible = domain.intentActive AND config.intentVisibleForRole(role)
-// Defaults: player=false, enemy=true; explicit presentation override permitted.
+// Defaults: player=config.combatant.playerIntentVisible, enemy=config.combatant.enemyIntentVisible; explicit presentation override permitted.
 blockVisible = domain.blockActive
 resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
-ReserveHP(); remainingRows = 5 - HP - present(stance) - present(statusIcons OR buildupRows)
+ReserveHP(); remainingRows = config.combatant.maxStackRows - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs
 ComposeActiveRowsInOrder(HP, resources, buildup, stance, icons)
 CollapseAbsentRowsAndGaps(); sprite receives remaining height
-SetOtherResourceAndBuildupHeight(0.5 * hpHeight); SetStanceHeight(hpHeight)
-UseFullBarWidthForStance(); UseSharedGap(0.2rem)
-FitSquareIcons(1.575rem); reserve last tile for +N hidden icons if overflow
+SetOtherResourceAndBuildupHeight(config.combatant.extraBarHeightRatio * hpHeight); SetStanceHeight(hpHeight)
+UseFullBarWidthForStance(); UseSharedGap(config.combatant.stackGapRem)
+FitSquareIcons(config.combatant.iconSizeRem); reserve last tile for +N hidden icons if overflow
 AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
-AnchorDefenseAtSprite50PercentHeight(gap=0.5rem, player=right, enemy=left)
+AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
-On selected: glow whole visible assembly; reveal info after 1000ms
-On hover/focus/tap tag: schedule shared tooltip after 1000ms; cancel stale timer
+On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
 Inspector detail providers: HP/intent/defense, active current state,
@@ -8125,29 +8305,32 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: combatant snapshot, player knowledge, role, presentation config, host size
 PARENT: WC4 (WC4 inherits WC0 identity and interactions, NOT item-card geometry)
 ResolveSizeVariant(WC4a); derive height from clamped width, preserve art ratio
 intentVisible = domain.intentActive AND config.intentVisibleForRole(role)
-// Defaults: player=false, enemy=true; explicit presentation override permitted.
+// Defaults: player=config.combatant.playerIntentVisible, enemy=config.combatant.enemyIntentVisible; explicit presentation override permitted.
 blockVisible = domain.blockActive
 resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
-ReserveHP(); remainingRows = 5 - HP - present(stance) - present(statusIcons OR buildupRows)
+ReserveHP(); remainingRows = config.combatant.maxStackRows - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs
 ComposeActiveRowsInOrder(HP, resources, buildup, stance, icons)
 CollapseAbsentRowsAndGaps(); sprite receives remaining height
-SetOtherResourceAndBuildupHeight(0.5 * hpHeight); SetStanceHeight(hpHeight)
-UseFullBarWidthForStance(); UseSharedGap(0.2rem)
-FitSquareIcons(1.575rem); reserve last tile for +N hidden icons if overflow
+SetOtherResourceAndBuildupHeight(config.combatant.extraBarHeightRatio * hpHeight); SetStanceHeight(hpHeight)
+UseFullBarWidthForStance(); UseSharedGap(config.combatant.stackGapRem)
+FitSquareIcons(config.combatant.iconSizeRem); reserve last tile for +N hidden icons if overflow
 AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
-AnchorDefenseAtSprite50PercentHeight(gap=0.5rem, player=right, enemy=left)
+AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
-On selected: glow whole visible assembly; reveal info after 1000ms
-On hover/focus/tap tag: schedule shared tooltip after 1000ms; cancel stale timer
+On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
 Inspector detail providers: HP/intent/defense, active current state,
@@ -8282,29 +8465,32 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: combatant snapshot, player knowledge, role, presentation config, host size
 PARENT: WC4 (WC4 inherits WC0 identity and interactions, NOT item-card geometry)
 ResolveSizeVariant(WC4b); derive height from clamped width, preserve art ratio
 intentVisible = domain.intentActive AND config.intentVisibleForRole(role)
-// Defaults: player=false, enemy=true; explicit presentation override permitted.
+// Defaults: player=config.combatant.playerIntentVisible, enemy=config.combatant.enemyIntentVisible; explicit presentation override permitted.
 blockVisible = domain.blockActive
 resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
-ReserveHP(); remainingRows = 5 - HP - present(stance) - present(statusIcons OR buildupRows)
+ReserveHP(); remainingRows = config.combatant.maxStackRows - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs
 ComposeActiveRowsInOrder(HP, resources, buildup, stance, icons)
 CollapseAbsentRowsAndGaps(); sprite receives remaining height
-SetOtherResourceAndBuildupHeight(0.5 * hpHeight); SetStanceHeight(hpHeight)
-UseFullBarWidthForStance(); UseSharedGap(0.2rem)
-FitSquareIcons(1.575rem); reserve last tile for +N hidden icons if overflow
+SetOtherResourceAndBuildupHeight(config.combatant.extraBarHeightRatio * hpHeight); SetStanceHeight(hpHeight)
+UseFullBarWidthForStance(); UseSharedGap(config.combatant.stackGapRem)
+FitSquareIcons(config.combatant.iconSizeRem); reserve last tile for +N hidden icons if overflow
 AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
-AnchorDefenseAtSprite50PercentHeight(gap=0.5rem, player=right, enemy=left)
+AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
-On selected: glow whole visible assembly; reveal info after 1000ms
-On hover/focus/tap tag: schedule shared tooltip after 1000ms; cancel stale timer
+On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
 Inspector detail providers: HP/intent/defense, active current state,
@@ -8439,29 +8625,32 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: combatant snapshot, player knowledge, role, presentation config, host size
 PARENT: WC4 (WC4 inherits WC0 identity and interactions, NOT item-card geometry)
 ResolveSizeVariant(WC4c); derive height from clamped width, preserve art ratio
 intentVisible = domain.intentActive AND config.intentVisibleForRole(role)
-// Defaults: player=false, enemy=true; explicit presentation override permitted.
+// Defaults: player=config.combatant.playerIntentVisible, enemy=config.combatant.enemyIntentVisible; explicit presentation override permitted.
 blockVisible = domain.blockActive
 resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
-ReserveHP(); remainingRows = 5 - HP - present(stance) - present(statusIcons OR buildupRows)
+ReserveHP(); remainingRows = config.combatant.maxStackRows - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs
 ComposeActiveRowsInOrder(HP, resources, buildup, stance, icons)
 CollapseAbsentRowsAndGaps(); sprite receives remaining height
-SetOtherResourceAndBuildupHeight(0.5 * hpHeight); SetStanceHeight(hpHeight)
-UseFullBarWidthForStance(); UseSharedGap(0.2rem)
-FitSquareIcons(1.575rem); reserve last tile for +N hidden icons if overflow
+SetOtherResourceAndBuildupHeight(config.combatant.extraBarHeightRatio * hpHeight); SetStanceHeight(hpHeight)
+UseFullBarWidthForStance(); UseSharedGap(config.combatant.stackGapRem)
+FitSquareIcons(config.combatant.iconSizeRem); reserve last tile for +N hidden icons if overflow
 AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
-AnchorDefenseAtSprite50PercentHeight(gap=0.5rem, player=right, enemy=left)
+AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
-On selected: glow whole visible assembly; reveal info after 1000ms
-On hover/focus/tap tag: schedule shared tooltip after 1000ms; cancel stale timer
+On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
 Inspector detail providers: HP/intent/defense, active current state,
@@ -8539,12 +8728,15 @@ Three configurable sizes: compact, standard and expanded. WT0 is an anchored ove
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 ResolveTooltipModelFromTagRegistry(trigger.tagId, locale)
 ChooseConfiguredSize(WT0)
 MeasureContentWithinClampedWidth()
 PlaceAboveTrigger(); if overflow: FlipBelow(); ShiftInsideSafeViewport()
 PointArrowAtTrigger(); renderInActiveModalOverlayOrRoot()
-On hover/focus/tap: schedule after config.delayMs=1000; cancel on leave/blur/removal; on Escape/outside tap: dismiss
+On hover/focus/tap: schedule after config.delayMs=config.referenceTokens.value_1000.value; cancel on leave/blur/removal; on Escape/outside tap: dismiss
 KeepOpenAcrossTriggerToTooltipPointerTransition()
 CancelOnTriggerRemoval(); never execute domain commands
 ```
@@ -8610,12 +8802,15 @@ CancelOnTriggerRemoval(); never execute domain commands
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 ResolveTooltipModelFromTagRegistry(trigger.tagId, locale)
 ChooseConfiguredSize(WT1)
 MeasureContentWithinClampedWidth()
 PlaceAboveTrigger(); if overflow: FlipBelow(); ShiftInsideSafeViewport()
 PointArrowAtTrigger(); renderInActiveModalOverlayOrRoot()
-On hover/focus/tap: schedule after config.delayMs=1000; cancel on leave/blur/removal; on Escape/outside tap: dismiss
+On hover/focus/tap: schedule after config.delayMs=config.referenceTokens.value_1000.value; cancel on leave/blur/removal; on Escape/outside tap: dismiss
 KeepOpenAcrossTriggerToTooltipPointerTransition()
 CancelOnTriggerRemoval(); never execute domain commands
 ```
@@ -8681,12 +8876,15 @@ CancelOnTriggerRemoval(); never execute domain commands
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 ResolveTooltipModelFromTagRegistry(trigger.tagId, locale)
 ChooseConfiguredSize(WT2)
 MeasureContentWithinClampedWidth()
 PlaceAboveTrigger(); if overflow: FlipBelow(); ShiftInsideSafeViewport()
 PointArrowAtTrigger(); renderInActiveModalOverlayOrRoot()
-On hover/focus/tap: schedule after config.delayMs=1000; cancel on leave/blur/removal; on Escape/outside tap: dismiss
+On hover/focus/tap: schedule after config.delayMs=config.referenceTokens.value_1000.value; cancel on leave/blur/removal; on Escape/outside tap: dismiss
 KeepOpenAcrossTriggerToTooltipPointerTransition()
 CancelOnTriggerRemoval(); never execute domain commands
 ```
@@ -8752,12 +8950,15 @@ CancelOnTriggerRemoval(); never execute domain commands
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 ResolveTooltipModelFromTagRegistry(trigger.tagId, locale)
 ChooseConfiguredSize(WT3)
 MeasureContentWithinClampedWidth()
 PlaceAboveTrigger(); if overflow: FlipBelow(); ShiftInsideSafeViewport()
 PointArrowAtTrigger(); renderInActiveModalOverlayOrRoot()
-On hover/focus/tap: schedule after config.delayMs=1000; cancel on leave/blur/removal; on Escape/outside tap: dismiss
+On hover/focus/tap: schedule after config.delayMs=config.referenceTokens.value_1000.value; cancel on leave/blur/removal; on Escape/outside tap: dismiss
 KeepOpenAcrossTriggerToTooltipPointerTransition()
 CancelOnTriggerRemoval(); never execute domain commands
 ```
@@ -8804,6 +9005,9 @@ WP identifiers describe composable parts, not additional screen families. Every 
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Validate model; resolve inherited tokens; render only if active; dispose subscriptions.
 On model change: reproject registered values; preserve stable identity
@@ -8850,6 +9054,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 On continuous selection schedule reveal after1000ms. Cancel on deselect/disposal. On activation stop propagation and open W1w with entity reference and context. Restore origin focus. Read-only inspector previews omit nested inspect.
 On model change: reproject registered values; preserve stable identity
@@ -8893,6 +9100,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Resolve localized display name once. Render text, never HTML. Follow context anchor; inherit owner selected glow.
 On model change: reproject registered values; preserve stable identity
@@ -8936,6 +9146,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Resolve registered asset and pose. Contain intrinsic aspect ratio. Mirror art only by facing. No independent entity facts.
 On model change: reproject registered values; preserve stable identity
@@ -8979,6 +9192,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Project HP/current maximum. Render label and accessible meter. HP persists; clamp visual fill only, never mutate value.
 On model change: reproject registered values; preserve stable identity
@@ -9022,6 +9238,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Filter with domain activity predicate. Project resource metadata/current/max. Use registered semantic color. Reserve available row by configured priority.
 On model change: reproject registered values; preserve stable identity
@@ -9065,6 +9284,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Project buildup and threshold. If optional row budget exhausted, emit progress-icon model instead. Never treat buildup as active status duration.
 On model change: reproject registered values; preserve stable identity
@@ -9108,6 +9330,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Render active stance only with uniform dimensions. Localize label and tooltip. No stance command from informational activation.
 On model change: reproject registered values; preserve stable identity
@@ -9151,6 +9376,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Render icon only. Accessible name and tooltip contain stacks/duration/progress. Subscribe to owner selection rather than local duplicate state.
 On model change: reproject registered values; preserve stable identity
@@ -9194,6 +9422,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Measure available width. Reserve last slot if all icons cannot fit. N equals hidden entries. Activate opens complete status list in W1w. Recompute on resize/model update.
 On model change: reproject registered values; preserve stable identity
@@ -9237,6 +9468,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Require active domain intent AND role visibility; default player false, enemy true. Project action preview. No duplicate AI logic.
 On model change: reproject registered values; preserve stable identity
@@ -9280,6 +9514,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Render active defense value. Place outside sprite with0.5rem gap and center vertically. Inspector uses facts instead of overlay.
 On model change: reproject registered values; preserve stable identity
@@ -9323,6 +9560,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Match active visual-effect tags to allowlisted provider. Paint full bounds without pointer events. Never create gameplay state.
 On model change: reproject registered values; preserve stable identity
@@ -9366,6 +9606,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Reuse effect lifecycle; paint above art below controls. Omit in inspector. Respect reduced motion.
 On model change: reproject registered values; preserve stable identity
@@ -9409,6 +9652,9 @@ Rarity               Owned: n
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Render applicable registered metadata left/right. Omit unsupported values. No Use/Play button in footer.
 On model change: reproject registered values; preserve stable identity
@@ -9452,6 +9698,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Project available domain intent. Required target gates readiness. Commit revalidates state once. No generic eligible-target button in production.
 On model change: reproject registered values; preserve stable identity
@@ -9507,6 +9756,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Filter inactive components before ordering. Reserve HP and present stance/icon rows. Admit priority bars within remaining budget. Convert excess buildup to icons. Use shared0.2rem gap, no empty rows.
 On model change: reproject registered values; preserve stable identity
@@ -9550,6 +9802,9 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Observe owner selected state. Apply one shared glow to complete visible assembly; no nested additive glow. Preserve position and omit hidden parts.
 On model change: reproject registered values; preserve stable identity
@@ -9596,6 +9851,9 @@ Label          Value
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Project knowledge-filtered snapshot through registered providers. Order HP/intent/defense, current state, history, abilities, traits, lore. Use shared label/value columns; right pane scrolls.
 On model change: reproject registered values; preserve stable identity
@@ -9645,9 +9903,78 @@ On dispose: release timers, observers and events
 **Language-agnostic pseudocode**
 
 ```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
 Delay1000ms; cancel stale timers. Keep open across trigger-to-tooltip transition. Escape/outside tap dismiss. Reuse active modal overlay root.
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
+
+## Configuration defaults
+
+```json
+{
+  "combatant": {
+    "maxStackRows": 5,
+    "extraBarHeightRatio": 0.5,
+    "stackGapRem": 0.2,
+    "iconSizeRem": 1.575,
+    "defenseOffsetRatio": 0.5,
+    "defenseGapRem": 0.5,
+    "playerIntentVisible": false,
+    "enemyIntentVisible": true
+  },
+  "interaction": {
+    "inspectDelayMs": 1000,
+    "tooltipDelayMs": 1000
+  },
+  "card": {
+    "bandFractions": {
+      "header": 0.1,
+      "art": 0.4,
+      "body": 0.4,
+      "footer": 0.1
+    }
+  },
+  "map": {
+    "regionFractions": {
+      "topHUD": 0.1,
+      "map": 0.6,
+      "details": 0.2,
+      "footer": 0.1
+    },
+    "inlineFraction": 0.95
+  },
+  "combat": {
+    "regionFractions": {
+      "topHUD": 0.1,
+      "battlefield": 0.4,
+      "hand": 0.35,
+      "footer": 0.15
+    }
+  },
+  "inspector": {
+    "widePreviewFraction": 0.34,
+    "portraitPreviewFraction": 0.32,
+    "gapVw": 2,
+    "maxPreviewWidthRem": 14
+  },
+  "referenceTokens": {
+    "value_1000": {
+      "value": 1000,
+      "unit": "count"
+    },
+    "value_0": {
+      "value": 0,
+      "unit": "count"
+    },
+    "value_1": {
+      "value": 1,
+      "unit": "count"
+    }
+  }
+}
+```
