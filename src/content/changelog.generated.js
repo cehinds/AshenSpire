@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1002",
+    "date": "2026-09-12",
+    "group": "2026-09-12",
+    "summary": "Groundwork: the game now keeps one record of which card you have selected",
+    "detail": "Nothing you see changes. Selecting a card used to be tracked in two places at once — a note the code kept to itself, and the highlight drawn on the card — which had to be kept in step by searching the whole screen for whatever was lit. Three changes in three days got the tap counting wrong because of it: the tap that should have acted on a card was spent, skipped, or swallowed depending on which screen you were on. There is now one record, with its own tests, including the two mistakes that kept recurring: reading a card's information no longer loses your next tap, and re-selecting the card you already picked no longer forgets that you picked it.",
+    "build": "0.7.1.11",
+    "pullRequest": 1002,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1002"
+  },
+  {
     "id": "pr-1001",
     "date": "2026-09-12",
     "group": "2026-09-12",
