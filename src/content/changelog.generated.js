@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-994",
+    "date": "2026-09-12",
+    "group": "2026-09-12",
+    "summary": "The i that explains a card now sits on the card",
+    "detail": "Pick a card anywhere in the game — in a fight, at the merchant, in the Armoury, in the spoils — and the small gold i that opens its full text appears in the card's own top-right corner. Until now it floated above the card everywhere except the equipment you choose when making a character, where it already sat in the corner. Floating meant every row and grid of cards held an empty strip above it for a button that is only there while a card is picked, and on the top row of a scrolling list the button could still be cut off or land on the heading above. The corner is the same place on every screen now, the strips are gone, and the i is as easy to hit with a thumb as it ever was.",
+    "build": "0.7.1.8",
+    "pullRequest": 994,
+    "url": "https://github.com/cehinds/AshenSpire/pull/994"
+  },
+  {
     "id": "pr-993",
     "date": "2026-09-11",
     "group": "2026-09-11",
