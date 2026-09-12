@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-12
+
+- **A card you have picked is ringed, not labelled** ([#997](https://github.com/cehinds/AshenSpire/pull/997), `0.7.1.9`). Picking a card told you so in three different ways depending on where you were: at the victory screen the card you chose was ringed in green, in character creation a full-width button under the card read "Selected", and at the stables the picked card was outlined in gold. The victory ring is now the one signal everywhere — the card you have chosen wears a green edge, and the button that made the choice steps out of the way instead of turning into a word you cannot press. Gold still means where you are and what you are looking at. An armed card in combat is unchanged: aiming is not the same as choosing, and it keeps its gold lift.
+
 ## 2026-09-11
 
 - **Levelling and the merchant catch up with the tripled cinders** ([#993](https://github.com/cehinds/AshenSpire/pull/993), `0.7.1.7`). Cinder rewards were tripled a week ago and nothing else moved, so levels at the shrine had become far too cheap — a simulated climb bought 27 of them where the design asks for 10 to 20 — and every price at the merchant was effectively a third of what it was meant to be. A level now starts at 50 cinders and rises by 10 each time, which a 40-run simulation puts back at 15 levels a climb; armaments, weapon arts, cards, relics, flasks and card removal all cost three times what they did, which is exactly the number of fights per purchase they were tuned to before. Selling prices follow automatically, and nothing about how much you earn has changed.

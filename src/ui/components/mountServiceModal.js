@@ -140,6 +140,9 @@ export function mountMountServiceModal(host, initialModel, {
       const card = document.createElement('div');
       card.className = `as-card smith-candidate-card smith-weapon-card rarity-${item.rarity}`;
       card.classList.toggle('selected', item.selected);
+      // The picked item wears the game's one chosen ring (kit.css), not a
+      // gold outline of the stables' own invention.
+      card.classList.toggle('is-chosen', item.selected);
       card.setAttribute('role', 'option');
       card.setAttribute('aria-selected', String(item.selected));
       card.dataset.itemRef = item.itemRef;
@@ -228,6 +231,7 @@ export function mountMountServiceModal(host, initialModel, {
         for (const card of p.selectedMount.cards) {
           const el = renderCard(registries, { cardId: card.cardId, upgraded: card.upgraded, instanceId: card.instanceId }, { small: true, actionOwnsTouch: true });
           el.classList.toggle('selected', card.selected);
+          el.classList.toggle('is-chosen', card.selected);
           el.setAttribute('role', 'option');
           el.setAttribute('aria-selected', String(card.selected));
           el.dataset.instanceId = card.instanceId;

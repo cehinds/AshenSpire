@@ -36,7 +36,7 @@ import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
   selectStartingHand,
 } from '../../model/characterCreation.js';
-import { pieceChip } from './equipment.js';
+import { pieceChip, setPieceChipChosen } from './equipment.js';
 import { ATLAS } from '../../model/worldAtlas.js';
 import { relicText, renderCard } from '../components/card.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
@@ -747,11 +747,11 @@ export function mountCustomize(app, {
       const refresh = () => {
         for (const row of choiceRows) {
           const selected = isSelected(row.piece);
-          row.node.classList.toggle('on', selected);
+          // `selected` on the face is the inspection hook (it reveals the info
+          // button); the chosen ring, the quiet button and the spoken note are
+          // one call, so they cannot drift apart.
           row.face.classList.toggle('selected', selected);
-          const choose = row.node.querySelector('.equipment-choose');
-          choose.textContent = selected ? 'Selected' : `Choose ${row.piece.name}`;
-          choose.setAttribute('aria-pressed', String(selected));
+          setPieceChipChosen(row.node, selected);
         }
         const chosen = section.choices.find(isSelected);
         if (chosen) focusChoice(chosen);

@@ -788,6 +788,35 @@ input[type="range"] { min-height: var(--tap-floor); }
 .card.rarity-special { border-color: #6a3a7a; }
 /* SELECTION CHANGES COLOUR, NEVER FOOTPRINT — the same signal as an OptionCard. */
 .card.selected, .card[data-selected="true"], .as-card[data-selected="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.4), 0 0 20px rgba(var(--accent-rgb), 0.2); }
+/* THE CHOSEN CARD WEARS ONE GREEN RING, AND NOTHING STANDS UNDER IT.
+   Victory wrote this signal first (`.reward-selected`): the card you picked is
+   ringed in green, on its own edge. Every other card picker now borrows the
+   SAME ring — creation's kit, the stables' mounts — because a player who
+   learns the signal at the spoils door should not have to learn a second one
+   in the Armoury, and because a word printed under the art ("Selected") reads
+   as a button you can press when it is really a state you are in.
+   GOLD STAYS HOVER, FOCUS AND INSPECTION; GREEN IS THE CHOICE THAT STANDS.
+   `.hand .card.selected` in combat is deliberately NOT this: an armed card is
+   a momentary aim you can still cancel, not a commitment, and it keeps the
+   gold lift combat.css gives it.
+   Two arms because the two card families are drawn differently — a `.card`
+   carries its own border, while an `.equipment-poker-card` is only the aspect
+   box and the frame it draws is `.epc-frame`, whose inset bevel has to
+   survive the ring (restated here, not dropped). */
+:is(.card, .as-card).is-chosen,
+.reward-door .reward-row .card.reward-selected {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px var(--green), 0 10px 30px color-mix(in srgb, var(--green) 28%, transparent);
+}
+.equipment-poker-card.is-chosen > .epc-frame {
+  border-color: var(--green);
+  box-shadow:
+    0 0 0 2px var(--green),
+    0 0 20px color-mix(in srgb, var(--green) 30%, transparent),
+    0 9px 26px #0006,
+    inset 0 0 0 4px #17120e,
+    inset 0 0 0 5px color-mix(in srgb, var(--green) 45%, #695334);
+}
 .card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
 .card[data-small="true"] { transform: scale(0.92); }
 /* CostMedallion — top-left, outside the frame, the only element allowed to break the edge. */
@@ -1232,11 +1261,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-menu { max-width: none; width: 100%; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
-.reward-door .reward-row .card.reward-selected {
-  border-color: var(--green);
-  box-shadow: 0 0 0 2px var(--green), 0 10px 30px color-mix(in srgb, var(--green) 28%, transparent);
-  transform: translateY(-8px) scale(1.06);
-}
+/* The ring itself is the shared one above; the door adds only the lift. */
+.reward-door .reward-row .card.reward-selected { transform: translateY(-8px) scale(1.06); }
 .reward-door .reward-confirm:not(:disabled) {
   background: color-mix(in srgb, var(--green) 22%, var(--panel));
   border-color: var(--green);
@@ -2896,8 +2922,19 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card.playing-poker-card .ctag { border-radius:3px; background:#221b14; }
 .card.playing-poker-card .ctext { text-align:left; color:#e5dccb; }
 .card.playing-poker-card .cost { background:#211a12; border-color:#d0ac5d; color:#f0dfaf; box-shadow:0 2px 5px #0008,inset 0 0 0 2px #17120e; }
-.card.playing-poker-card:is(.selected,[data-selected='true'],:focus-visible) {
+/* A CHOSEN CARD IS NOT MERELY A SELECTED ONE, and this gold ring stands down
+   for it (`:not(.is-chosen)`) rather than out-specifying the green one by
+   accident of where it sits in the file. Focus keeps the gold ring on a chosen
+   card too — where you are and what you picked are two different facts. */
+.card.playing-poker-card:is(.selected,[data-selected='true']):not(.is-chosen),
+.card.playing-poker-card:focus-visible {
   border-color:#f2d87e; box-shadow:0 0 0 2px #d0ac5d,0 0 18px #d0ac5d66,inset 0 0 0 3px #17120e,inset 0 0 0 4px #b39760;
+}
+/* The chosen ring on a poker card, restated at the weight the gold one carries
+   so the two cannot trade places: the green edge, the card's own inset bevel. */
+.card.playing-poker-card.is-chosen {
+  border-color:var(--green);
+  box-shadow:0 0 0 2px var(--green),0 0 18px color-mix(in srgb, var(--green) 40%, transparent),inset 0 0 0 3px #17120e,inset 0 0 0 4px color-mix(in srgb, var(--green) 45%, #b39760);
 }
 
 /* One fixed grid track size prevents the last row from stretching its cards. */
@@ -3015,7 +3052,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   .inspection-tag { min-height:32px; display:inline-flex; align-items:center; }
 }
 .equipment-choose { width:100%; margin-top:10px; min-height:44px; }
-.poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
+/* CHOSEN IS THE RING ON THE CARD, NOT A LABEL UNDER IT. The button that made
+   the choice goes quiet once the choice is made — hidden, never removed, so
+   the row keeps the height it had and the cards beneath it do not walk up the
+   page when you pick one. The state a sighted player reads off the ring is
+   carried for everyone else by the chip's `.equip-chosen-note`. */
+.poker-equipment-choice.on > .equipment-choose { visibility:hidden; pointer-events:none; }
 
 /* Creation keeps card nodes in place so focus can lift and settle smoothly. */
 .cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { padding:20px 6px 14px; gap:32px 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
