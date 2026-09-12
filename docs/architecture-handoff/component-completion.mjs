@@ -8,7 +8,7 @@ export const componentCompletionDefaults = {
   meter: { healthHeightRem: 1.4, secondaryHeightRatio: 0.5, stanceHeightRatio: 1, maxRows: 5 },
   selection: { revealDelayMs: 1000, tooltipDelayMs: 1000, liftRem: 0.25 },
   overlay: { defenseAnchorRatio: 0.5, defenseGapRem: 0.5, playerIntent: false, enemyIntent: true },
-  scene: { actorBaselinePercent: 66.667, groundCutout: 'polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)', floorHeightPercent: 45, playerWidthPercent: 25, enemyWidthPercent: 65, playerCount: 1, enemyCount: 2, skyline: true, floor: true },
+  scene: { actorBaselinePercent: 66.667, actorHeightFraction: 0.72, actorSlotPadding: 1, actorWidthRem: 12, groundCutout: 'polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)', floorHeightPercent: 45, playerWidthPercent: 25, enemyWidthPercent: 65, playerCount: 1, enemyCount: 2, skyline: true, floor: true },
   hand: { cardWidthRem: 7, cardAspectRatio: '5 / 8', gapRem: 0.2, fixtureIds: ['WC1a', 'WC1b', 'WC1c'] },
   tooltip: { widthRem: 18, maxWidthPercent: 95 },
   map: { viewBox: '0 0 100 100', selectedNode: 'town', nodeSizeRem: 2.75 },

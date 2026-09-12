@@ -10691,7 +10691,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "WGH9"
     ],
     "background": {
-      "floorHeightPercent": 35,
+      "floorHeightPercent": 45,
       "skylineColor": "#635139",
       "floorColor": "#382c20"
     },
@@ -10836,7 +10836,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "WGH9"
     ],
     "background": {
-      "floorHeightPercent": 35,
+      "floorHeightPercent": 45,
       "skylineColor": "#635139",
       "floorColor": "#382c20"
     },
@@ -11302,7 +11302,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "WGH9"
     ],
     "background": {
-      "floorHeightPercent": 35,
+      "floorHeightPercent": 45,
       "skylineColor": "#635139",
       "floorColor": "#382c20"
     },
@@ -11447,7 +11447,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "WGH9"
     ],
     "background": {
-      "floorHeightPercent": 35,
+      "floorHeightPercent": 45,
       "skylineColor": "#635139",
       "floorColor": "#382c20"
     },
@@ -23942,6 +23942,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -24314,6 +24317,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -24722,6 +24728,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -25121,6 +25130,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -25516,6 +25528,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -25889,6 +25904,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -26274,6 +26292,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -26646,6 +26667,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -27047,6 +27071,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -27444,6 +27471,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -27828,6 +27858,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -28221,6 +28254,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -28589,6 +28625,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -28969,6 +29008,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -29333,6 +29375,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -29738,6 +29783,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -30102,6 +30150,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -30471,6 +30522,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -30840,6 +30894,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -31204,6 +31261,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -31568,6 +31628,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -31937,6 +32000,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -32334,6 +32400,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -32706,6 +32775,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -33074,6 +33146,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -33455,6 +33530,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -33836,6 +33914,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -34213,6 +34294,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -34593,6 +34677,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -34986,6 +35073,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -35379,6 +35469,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -35760,6 +35853,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -36137,6 +36233,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -36510,6 +36609,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -36883,6 +36985,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -37269,6 +37374,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -37638,6 +37746,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -38008,6 +38119,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -38378,6 +38492,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -38748,6 +38865,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -39134,6 +39254,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -42016,6 +42139,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -42404,6 +42530,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -42783,6 +42912,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -43151,6 +43283,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -43531,6 +43666,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -43894,6 +44032,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -44262,6 +44403,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -44630,6 +44774,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -46277,6 +46424,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -46667,6 +46817,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -47041,6 +47194,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -47415,6 +47571,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -47793,6 +47952,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -48162,6 +48324,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -48532,6 +48697,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -48902,6 +49070,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -49272,6 +49443,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -49665,6 +49839,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -50058,6 +50235,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -50439,6 +50619,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -50808,6 +50991,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -51185,6 +51371,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -51554,6 +51743,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -51934,6 +52126,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,
@@ -52376,6 +52571,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "scene": {
     "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
     "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
     "floorHeightPercent": 45,
     "playerWidthPercent": 25,

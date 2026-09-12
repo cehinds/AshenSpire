@@ -396,6 +396,9 @@
     },
     "scene": {
       "actorBaselinePercent": 66.667,
+      "actorHeightFraction": 0.72,
+      "actorSlotPadding": 1,
+      "actorWidthRem": 12,
       "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
       "floorHeightPercent": 45,
       "playerWidthPercent": 25,

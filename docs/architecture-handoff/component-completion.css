@@ -32,3 +32,11 @@
 .cc-reference .cc-background>.cc-floor{z-index:1;border-top:0}
 .cc-reference .cc-battlefield>.cc-formation{position:absolute;inset:0 0 auto;height:var(--cc-actor-baseline);padding-top:0;align-items:end;z-index:2}
 .cc-reference .cc-battlefield>.cc-formation>.cc-actor-slots{align-items:end}
+
+/* Battlefield placement is measured after its preview becomes visible. */
+.cc-reference .cc-battlefield>.cc-formation{inset:0;height:100%;width:100%;min-width:0;display:block;padding:0}
+.cc-reference .cc-battlefield .cc-actor-slots{display:contents}
+.cc-reference .cc-battlefield .cc-native-actor{position:absolute;width:var(--cc-actor-width);max-width:none;transform-origin:top center;margin:0;padding:0;border:0;background:transparent}
+.cc-reference .cc-battlefield .cc-native-actor .cardhost{width:var(--cc-actor-width)!important;max-width:none!important;margin:0!important}
+.scene-stage:has(.cc-battlefield),.cc-reference .cc-battlefield{overflow:hidden!important}
+.cc-reference .cc-battlefield .cc-native-actor.cc-eligible{outline:none}
