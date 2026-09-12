@@ -2561,7 +2561,11 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Vitality HUD]
+┌──────────────────────────────────────┐
+│ [Portrait]  Ashen Sentinel   Lv. 4    │
+│             HP [████████░░] 32 / 40  │
+│             XP [████░░░░░░] 40 / 100 │
+└──────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2571,7 +2575,11 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Vitality HUD]
+┌──────────────────────────────────────┐
+│ [Portrait]  Ashen Sentinel   Lv. 4    │
+│             HP [████████░░] 32 / 40  │
+│             XP [████░░░░░░] 40 / 100 │
+└──────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2584,7 +2592,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Vitality HUD]
+┌──────────────────────────────────────┐
+│ [Portrait]  Ashen Sentinel   Lv. 4    │
+│             HP [████████░░] 32 / 40  │
+│             XP [████░░░░░░] 40 / 100 │
+└──────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2598,7 +2610,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Vitality HUD]
+┌──────────────────────────────────────┐
+│ [Portrait]  Ashen Sentinel   Lv. 4    │
+│             HP [████████░░] 32 / 40  │
+│             XP [████░░░░░░] 40 / 100 │
+└──────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2621,7 +2637,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Armament HUD]
+┌──────────────────────────────────────┐
+│ [Weapon] [Armor] [Relic]              │
+│ Iron blade  ·  Equipped loadout       │
+└──────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2631,7 +2650,10 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Armament HUD]
+┌──────────────────────────────────────┐
+│ [Weapon] [Armor] [Relic]              │
+│ Iron blade  ·  Equipped loadout       │
+└──────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2644,7 +2666,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Armament HUD]
+┌──────────────────────────────────────┐
+│ [Weapon] [Armor] [Relic]              │
+│ Iron blade  ·  Equipped loadout       │
+└──────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2658,7 +2683,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Armament HUD]
+┌──────────────────────────────────────┐
+│ [Weapon] [Armor] [Relic]              │
+│ Iron blade  ·  Equipped loadout       │
+└──────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2681,7 +2709,9 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Menu HUD]
+┌──────────────────────────────────────┐
+│ Gold: 120       [Profile] [Menu]      │
+└──────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2691,7 +2721,9 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Menu HUD]
+┌──────────────────────────────────────┐
+│ Gold: 120       [Profile] [Menu]      │
+└──────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2704,7 +2736,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Menu HUD]
+┌──────────────────────────────────────┐
+│ Gold: 120       [Profile] [Menu]      │
+└──────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2718,7 +2752,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Menu HUD]
+┌──────────────────────────────────────┐
+│ Gold: 120       [Profile] [Menu]      │
+└──────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2741,7 +2777,11 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Total HUD]
+┌─────────────────────────────────────────────────────────┐
+│ WGH1 Vitality    │ WGH2 Armament       │ WGH3 Menu        │
+│ Portrait · HP   │ Weapon Armor Relic │ Gold Profile Menu│
+│ Name · Level XP │ Equipped loadout   │                  │
+└─────────────────────────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2751,7 +2791,11 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Total HUD]
+┌─────────────────────────────────────────────────────────┐
+│ WGH1 Vitality    │ WGH2 Armament       │ WGH3 Menu        │
+│ Portrait · HP   │ Weapon Armor Relic │ Gold Profile Menu│
+│ Name · Level XP │ Equipped loadout   │                  │
+└─────────────────────────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2764,7 +2808,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Total HUD]
+┌─────────────────────────────────────────────────────────┐
+│ WGH1 Vitality    │ WGH2 Armament       │ WGH3 Menu        │
+│ Portrait · HP   │ Weapon Armor Relic │ Gold Profile Menu│
+│ Name · Level XP │ Equipped loadout   │                  │
+└─────────────────────────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2778,7 +2826,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Total HUD]
+┌─────────────────────────────────────────────────────────┐
+│ WGH1 Vitality    │ WGH2 Armament       │ WGH3 Menu        │
+│ Portrait · HP   │ Weapon Armor Relic │ Gold Profile Menu│
+│ Name · Level XP │ Equipped loadout   │                  │
+└─────────────────────────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
