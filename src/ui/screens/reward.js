@@ -454,10 +454,36 @@ export function mountRewards(app, {
     let confirming = false;
     const message = el('p', { role: 'status', class: 'reward-confirm-status', hidden: true });
     strip.after(message);
+    // ONE SELECTION PATH. The strip's own click and the inspect door's Choose
+    // both land here, so a card chosen from inside the door is lit in the
+    // strip behind it and Back still shows what you picked.
+    const selectCard = (cardId) => {
+      selectedCardId = cardId;
+      pendingCardId = cardId;
+      for (const candidate of strip.querySelectorAll('.card')) {
+        const selected = candidate.dataset.cardId === cardId;
+        candidate.classList.toggle('reward-selected', selected);
+        candidate.setAttribute('aria-checked', String(selected));
+      }
+      confirmButton.disabled = false;
+      message.hidden = true;
+    };
     for (const cardId of row.cardIds) {
       // This face only selects; collection belongs to Confirm. Inspection must
       // not consume the touch tap before selection enables that button.
-      const el = renderCard(registries, { cardId, upgraded: false }, { actionOwnsTouch: true });
+      // THE DOOR OFFERS THE VERB THE PLAYER CAME FOR. Opening a card here used
+      // to show a dead `Play card` — combat's verb, inherited from the default
+      // that services/cardActions.js replaced — on the one screen whose whole
+      // purpose is taking the card being read. Choosing from inside the door
+      // lights the same card behind it and presses the same Confirm, so there
+      // is one commit and one place the receipt is written.
+      const el = renderCard(registries, { cardId, upgraded: false }, {
+        actionOwnsTouch: true,
+        surface: 'reward',
+        availability: { choose: states.card ? t('reward.card.alreadyTaken') : true },
+        commands: { choose: () => { selectCard(cardId); confirmButton.click(); } },
+      });
+      el.dataset.cardId = cardId;
       el.setAttribute('role', 'radio');
       el.setAttribute('aria-checked', String(cardId === selectedCardId));
       el.classList.toggle('reward-selected', cardId === selectedCardId);
@@ -474,17 +500,7 @@ export function mountRewards(app, {
         badge.textContent = t('reward.card.new');
         el.appendChild(badge);
       }
-      el.addEventListener('click', () => {
-        selectedCardId = cardId;
-        pendingCardId = cardId;
-        for (const candidate of strip.querySelectorAll('.card')) {
-          const selected = candidate === el;
-          candidate.classList.toggle('reward-selected', selected);
-          candidate.setAttribute('aria-checked', String(selected));
-        }
-        confirmButton.disabled = false;
-        message.hidden = true;
-      });
+      el.addEventListener('click', () => selectCard(cardId));
       strip.appendChild(el);
     }
     confirmButton.disabled = !selectedCardId;

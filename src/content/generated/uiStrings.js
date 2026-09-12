@@ -276,6 +276,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.card.alreadyTaken",
+    "extends": "",
+    "short": "Already taken",
+    "full": "A card has already been taken from this reward.",
+    "tip": ""
+  },
+  {
     "id": "reward.flask.blocked",
     "extends": "",
     "short": "A {name} — but your flask slots are full. It stays in the mud.",

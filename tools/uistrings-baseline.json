@@ -5,8 +5,8 @@
     "src/ui/screens/reward.js",
     "src/ui/screens/shop.js"
   ],
-  "sites": 462,
-  "distinct": 384,
+  "sites": 461,
+  "distinct": 383,
   "files": {
     "src/ui/screens/settings.js": 103,
     "src/ui/screens/customize.js": 50,
@@ -42,7 +42,6 @@
     "src/ui/models/SmithSelectionModel.js": 3,
     "src/ui/screens/event.js": 3,
     "src/ui/screens/rest.js": 3,
-    "src/ui/components/cardInspection.js": 2,
     "src/ui/components/creationCards.js": 2,
     "src/ui/components/equipmentCard.js": 2,
     "src/ui/components/flask.js": 2,
@@ -51,6 +50,7 @@
     "src/ui/screens/combatTest.js": 2,
     "src/ui/components/arcaneExposure.js": 1,
     "src/ui/components/armamentRadial.js": 1,
+    "src/ui/components/cardInspection.js": 1,
     "src/ui/components/collectibleCard.js": 1,
     "src/ui/components/emptyHandCard.js": 1,
     "src/ui/components/enemyMoveCards.js": 1,

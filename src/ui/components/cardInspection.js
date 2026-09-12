@@ -21,37 +21,76 @@ export function cardInspectionLayout(card, details) {
   return body;
 }
 
-export function openCardInspection({ title, card, details, opener, getAction = null }) {
+// THE DOOR ASKS; IT DOES NOT DECIDE. This used to build exactly one button,
+// label it `Play card`, and take its enabled state from a `getAction` whose
+// default — set in card.js, inherited by every surface but combat — was
+// "disabled, because you play cards from your combat hand". So the spoils
+// screen offered a dead Play on the very card the player had come to take.
+//
+// It now receives a LIST of `{ id, verb, enabled, reason }` from
+// services/cardActions.js and a `commands` map of `{ [id]: fn }` from the
+// screen that owns the state. No verb is written in this file. A surface with
+// nothing to offer passes an empty list and gets a reading door with no
+// footer at all — which is the honest shape for the compendium, and is not
+// the same thing as a greyed button apologising about combat.
+//
+// `actions` may be a function so a door that stands open while the run moves
+// re-reads on press rather than acting on what was true when it opened. That
+// is the one behaviour the old `getAction()`-on-click had right.
+export function openCardInspection({ title, card, details, opener, actions = null, commands = {} }) {
   hideTooltip();
   document.getSelection()?.removeAllRanges();
-  const action = getAction?.();
-  const play = action ? document.createElement('button') : null;
-  const reason = action ? document.createElement('p') : null;
-  if (reason) {
-    reason.className = 'card-play-reason'; reason.setAttribute('role', 'status');
-    reason.textContent = action.reason || (action.needsTarget ? 'Choose a target after playing.' : 'Ready to play.');
-    details.append(reason);
+  const read = () => {
+    const rows = typeof actions === 'function' ? actions() : actions;
+    return Array.isArray(rows) ? rows : [];
+  };
+  const rows = read();
+  // The refusal sentence stands in the body, where a reader is already
+  // looking, and only when there is one. An enabled act needs no caption:
+  // the button says what it does.
+  const blocked = rows.filter((row) => !row.enabled && row.reason);
+  let note = null;
+  if (blocked.length) {
+    note = document.createElement('p');
+    note.className = 'card-action-reason';
+    note.setAttribute('role', 'status');
+    note.textContent = blocked.map((row) => row.reason).join(' ');
+    details.append(note);
   }
-  if (play) {
-    play.type = 'button'; play.className = 'card-inspection-play';
-    play.textContent = 'Play card'; play.disabled = !action.enabled;
-    play.title = action.reason || (action.needsTarget ? 'Choose a target after closing this window.' : 'Play this card.');
-  }
+  const buttons = rows.map((row) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'card-inspection-act';
+    button.dataset.act = row.id;
+    button.textContent = row.verb;
+    button.disabled = !row.enabled;
+    if (row.reason) button.title = row.reason;
+    return button;
+  });
   const shell = openModal({ title, eyebrow: 'Card information', size: 'lg',
     className: 'card-inspection-modal', opener,
-    primary: play,
+    primary: buttons[0] || null,
+    secondary: buttons.slice(1),
     body: cardInspectionLayout(card, details) });
-  play?.addEventListener('click', () => {
-    const current = getAction();
-    if (!current.enabled) {
-      play.disabled = true; play.title = current.reason;
-      if (reason) reason.textContent = current.reason;
-      return;
-    }
-    play.disabled = true;
-    shell.close();
-    current.play();
-  });
+  for (const button of buttons) {
+    button.addEventListener('click', () => {
+      // Re-read rather than trusting the row this button was drawn from: the
+      // door can stand open while the run moves underneath it.
+      const current = read().find((row) => row.id === button.dataset.act);
+      const commit = commands[button.dataset.act];
+      if (!current || !current.enabled || typeof commit !== 'function') {
+        button.disabled = true;
+        if (current && current.reason) {
+          button.title = current.reason;
+          if (note) note.textContent = current.reason;
+        }
+        return;
+      }
+      button.disabled = true;
+      shell.close();
+      commit();
+    });
+  }
   shell.panel.addEventListener('keydown', event => {
     if (event.key !== 'Tab') return;
     const targets = [...shell.panel.querySelectorAll('button:not([disabled]), [tabindex="0"], a[href]')].filter(el => el.getClientRects().length);
