@@ -198,5 +198,35 @@
       "compact",
       "portrait"
     ]
+  },
+  {
+    "id": "WP20",
+    "name": "Primary / confirmation button",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP21",
+    "name": "Back / cancel button",
+    "parent": "WP0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WP22",
+    "name": "Exit button",
+    "parent": "WP21",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
   }
 ]

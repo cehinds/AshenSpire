@@ -9912,6 +9912,144 @@ On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
+## Wireframe WP20: Primary / confirmation button
+
+**Parent: WP0.** Use cases: Modal confirmation, contextual Use/Play/Equip. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[ Confirm ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WP20.root | shared action width | minimum target token | owning component slot | footer right; full-width when sole action | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[ Confirm ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WP20.root | shared action width | minimum target token | owning component slot | footer right; full-width when sole action | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[ Confirm ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WP20.root | shared action width | minimum target token | owning component slot | footer right; full-width when sole action | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
+INPUT: immutable component model, owner state, context, layout tokens
+Receive label, command intent, readiness and busy state. Green when ready/highlighted; disabled/busy wins. Emit one semantic intent; domain revalidates. Destructive role uses danger override.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WP21: Back / cancel button
+
+**Parent: WP0.** Use cases: W0 modal footers and cancellation. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[ Back ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WP21.root | shared action width | minimum target token | owning component slot | footer left; full-width when sole action | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[ Back ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WP21.root | shared action width | minimum target token | owning component slot | footer left; full-width when sole action | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[ Back ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WP21.root | shared action width | minimum target token | owning component slot | footer left; full-width when sole action | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
+INPUT: immutable component model, owner state, context, layout tokens
+Inherit action primitive. Highlight danger color on focus/hover. Cancel only current presentation flow; restore origin focus.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WP22: Exit button
+
+**Parent: WP21.** Use cases: Shared modal header. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[ × ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WP22.root | minimum target token | minimum target token | owning component slot | header top-right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[ × ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WP22.root | minimum target token | minimum target token | owning component slot | header top-right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[ × ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WP22.root | minimum target token | minimum target token | owning component slot | header top-right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
+INPUT: immutable component model, owner state, context, layout tokens
+Use accessible Close label and inherited dismissal policy. Danger highlight; do not commit pending domain actions.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
 
 ## Configuration defaults
 
