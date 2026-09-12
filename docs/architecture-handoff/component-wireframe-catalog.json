@@ -933,5 +933,16 @@
       "iphoneSE",
       "galaxyS24"
     ]
+  },
+  {
+    "id": "WGS8",
+    "name": "Ground formation grid",
+    "parent": "WGS7",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
   }
 ]

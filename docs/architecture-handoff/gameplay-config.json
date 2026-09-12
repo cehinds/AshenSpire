@@ -3,8 +3,8 @@
     "parent": "W4",
     "bands": {
       "hud": 10,
-      "scene": 40,
-      "context": 35,
+      "scene": 50,
+      "context": 25,
       "footer": 15
     },
     "layers": {

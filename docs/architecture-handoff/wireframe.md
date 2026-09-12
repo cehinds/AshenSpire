@@ -10646,8 +10646,8 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
     "parent": "W4",
     "bands": {
       "hud": 10,
-      "scene": 40,
-      "context": 35,
+      "scene": 50,
+      "context": 25,
       "footer": 15
     },
     "layers": {
@@ -10791,8 +10791,8 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
     "parent": "W4",
     "bands": {
       "hud": 10,
-      "scene": 40,
-      "context": 35,
+      "scene": 50,
+      "context": 25,
       "footer": 15
     },
     "layers": {
@@ -11257,8 +11257,8 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
     "parent": "W4",
     "bands": {
       "hud": 10,
-      "scene": 40,
-      "context": 35,
+      "scene": 50,
+      "context": 25,
       "footer": 15
     },
     "layers": {
@@ -11402,8 +11402,8 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
     "parent": "W4",
     "bands": {
       "hud": 10,
-      "scene": 40,
-      "context": 35,
+      "scene": 50,
+      "context": 25,
       "footer": 15
     },
     "layers": {
@@ -23940,6 +23940,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -24323,6 +24331,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -24744,6 +24760,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -25155,6 +25179,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -25562,6 +25594,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -25946,6 +25986,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -26344,6 +26392,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -26727,6 +26783,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -27141,6 +27205,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -27550,6 +27622,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -27945,6 +28025,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -28351,6 +28439,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -28730,6 +28826,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -29123,6 +29227,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -29498,6 +29610,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -29916,6 +30036,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -30291,6 +30419,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -30673,6 +30809,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -31054,6 +31198,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -31430,6 +31582,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -31805,6 +31965,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -32186,6 +32354,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -32600,6 +32776,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -32984,6 +33168,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -33363,6 +33555,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -33757,6 +33957,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -34150,6 +34358,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -34539,6 +34755,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -34927,6 +35151,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -35319,6 +35551,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -35725,6 +35965,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -36130,6 +36378,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -36523,6 +36779,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -36912,6 +37176,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -37297,6 +37569,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -37681,6 +37961,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -38080,6 +38368,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -38460,6 +38756,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -38843,6 +39147,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -39225,6 +39537,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -39606,6 +39926,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -40004,6 +40332,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -42899,6 +43235,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -43299,6 +43643,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -43690,6 +44042,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -44069,6 +44429,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -44462,6 +44830,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -44836,6 +45212,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -45217,6 +45601,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -45596,6 +45988,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -47256,6 +47656,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -47658,6 +48066,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -48044,6 +48460,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -48429,6 +48853,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -48820,6 +49252,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -49200,6 +49640,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -49583,6 +50031,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -49965,6 +50421,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -50346,6 +50810,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -50752,6 +51224,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -51157,6 +51637,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -51550,6 +52038,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -51930,6 +52426,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -52320,6 +52824,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -52700,6 +53212,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,
@@ -53093,6 +53613,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
   "groundShadow": {
     "enabled": true,
     "widthPercent": 55,
@@ -53358,6 +53886,407 @@ On dispose: release timers, observers and events
 ```
 
 
+<!-- reference-metadata:start -->
+**Source description and inheritance**
+
+Reuses the background source boundary. The current working game uses backdropClass in combat.js; the documentation dev baseline adds environmentArt with a cropped SVG painting. Independent skyline and floor layers are a proposed documentation contract.
+
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/uiContent.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/uiContent.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+
+**Referenced components:** [WGS8](wireframe-gallery.html#WGS8)
+
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+
+Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
+
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+
+<details><summary>Model JSON</summary>
+
+```json
+{
+  "id": "WGS7",
+  "contextRef": "sample:background",
+  "active": true,
+  "selected": false,
+  "children": [
+    {
+      "componentId": "WGS8",
+      "modelRef": "model:WGS8"
+    }
+  ],
+  "configRef": "componentCompletionDefaults",
+  "dataSource": "immutable snapshot and knowledge-filtered registered providers",
+  "sampleDataRef": "componentCompletionDefaults.samples"
+}
+```
+
+</details>
+
+<details><summary>Configuration defaults JSON</summary>
+
+```json
+{
+  "buttonWidths": {
+    "standardHeight": "2.75rem",
+    "heightMultipliers": {
+      "standard": 1,
+      "tall": 1.5,
+      "double": 2
+    },
+    "sizes": {
+      "third-standard": {
+        "width": "third",
+        "height": "standard"
+      },
+      "third-tall": {
+        "width": "third",
+        "height": "tall"
+      },
+      "third-double": {
+        "width": "third",
+        "height": "double"
+      },
+      "half-standard": {
+        "width": "half",
+        "height": "standard"
+      },
+      "half-tall": {
+        "width": "half",
+        "height": "tall"
+      },
+      "half-double": {
+        "width": "half",
+        "height": "double"
+      },
+      "full-standard": {
+        "width": "full",
+        "height": "standard"
+      },
+      "full-tall": {
+        "width": "full",
+        "height": "tall"
+      },
+      "full-double": {
+        "width": "full",
+        "height": "double"
+      }
+    },
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
+  "spacing": {
+    "gapRem": 0.2,
+    "insetRem": 0.75,
+    "sectionGapRem": 0.75
+  },
+  "target": {
+    "minRem": 2.75,
+    "iconRem": 1.575,
+    "largeRem": 3.4,
+    "smallRem": 2.75
+  },
+  "meter": {
+    "healthHeightRem": 1.4,
+    "secondaryHeightRatio": 0.5,
+    "stanceHeightRatio": 1,
+    "maxRows": 5
+  },
+  "selection": {
+    "revealDelayMs": 1000,
+    "tooltipDelayMs": 1000,
+    "liftRem": 0.25
+  },
+  "overlay": {
+    "defenseAnchorRatio": 0.5,
+    "defenseGapRem": 0.5,
+    "playerIntent": false,
+    "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
+  },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
+  "scene": {
+    "groundContactDepthFraction": 0.3,
+    "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
+    "playerWidthPercent": 25,
+    "enemyWidthPercent": 65,
+    "playerCount": 1,
+    "enemyCount": 2,
+    "skyline": true,
+    "floor": true
+  },
+  "hand": {
+    "cardWidthRem": 7,
+    "cardAspectRatio": "5 / 8",
+    "gapRem": 0.2,
+    "fixtureIds": [
+      "WC1a",
+      "WC1b",
+      "WC1c"
+    ]
+  },
+  "tooltip": {
+    "widthRem": 18,
+    "maxWidthPercent": 95
+  },
+  "map": {
+    "viewBox": "0 0 100 100",
+    "selectedNode": "town",
+    "nodeSizeRem": 2.75
+  },
+  "dialogue": {
+    "speakingId": "keeper",
+    "autoAdvance": false,
+    "currentBeat": "welcome"
+  },
+  "samples": {
+    "health": {
+      "label": "HP",
+      "current": 32,
+      "maximum": 40
+    },
+    "resource": {
+      "label": "Mana",
+      "current": 6,
+      "maximum": 10
+    },
+    "buildup": {
+      "label": "Burn buildup",
+      "current": 65,
+      "maximum": 100
+    },
+    "stance": {
+      "label": "Aggressive",
+      "active": true
+    },
+    "intent": {
+      "label": "Attack",
+      "icon": "⚔",
+      "amount": 12,
+      "active": true
+    },
+    "defense": {
+      "label": "Block",
+      "icon": "◇",
+      "amount": 8,
+      "active": true
+    },
+    "footer": {
+      "actions": 3,
+      "draw": 12,
+      "discard": 4,
+      "exhaust": 1,
+      "potions": 2
+    },
+    "statuses": [
+      {
+        "id": "regen",
+        "icon": "✚",
+        "name": "Regeneration",
+        "detail": "2 stacks · 3 turns"
+      },
+      {
+        "id": "poison",
+        "icon": "☠",
+        "name": "Poison",
+        "detail": "3 stacks · 2 turns"
+      },
+      {
+        "id": "weak",
+        "icon": "↓",
+        "name": "Weakened",
+        "detail": "1 stack · 1 turn"
+      }
+    ],
+    "mapNodes": [
+      {
+        "id": "start",
+        "label": "Visited",
+        "icon": "●",
+        "x": 50,
+        "y": 82,
+        "state": "visited"
+      },
+      {
+        "id": "combat",
+        "label": "Combat",
+        "icon": "⚔",
+        "x": 25,
+        "y": 53,
+        "state": "reachable"
+      },
+      {
+        "id": "town",
+        "label": "Town",
+        "icon": "⌂",
+        "x": 73,
+        "y": 53,
+        "state": "reachable"
+      },
+      {
+        "id": "unknown",
+        "label": "Unknown",
+        "icon": "?",
+        "x": 50,
+        "y": 18,
+        "state": "blocked"
+      }
+    ],
+    "mapEdges": [
+      [
+        "start",
+        "combat"
+      ],
+      [
+        "start",
+        "town"
+      ],
+      [
+        "combat",
+        "unknown"
+      ],
+      [
+        "town",
+        "unknown"
+      ]
+    ],
+    "beats": [
+      {
+        "id": "welcome",
+        "speaker": "The Keeper",
+        "text": "The forge is still warm. What brings you here?"
+      },
+      {
+        "id": "offer",
+        "speaker": "The Keeper",
+        "text": "I can mend what the ash has taken.",
+        "choices": [
+          "Ask about the forge",
+          "Leave the forge"
+        ]
+      }
+    ]
+  }
+}
+```
+
+</details>
+<!-- reference-metadata:end -->
+## Wireframe WGS8: Ground formation grid
+
+**Parent: WGS7.** Use cases: Floor-owned actor slots. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+Allies · fill left to right         Enemies · fill left to right
+[A1][A2][A3][A4]     gap     [E1][E2][E3][E4]
+ ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
+         shadow centers anchor to ground
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS8.root | full floor width minus configured padding | ground contact row | owning component slot | ground contact row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+Allies · fill left to right         Enemies · fill left to right
+[A1][A2][A3][A4]     gap     [E1][E2][E3][E4]
+ ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
+         shadow centers anchor to ground
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS8.root | full floor width minus configured padding | ground contact row | owning component slot | ground contact row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Allies · fill left to right         Enemies · fill left to right
+[A1][A2][A3][A4]     gap     [E1][E2][E3][E4]
+ ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
+         shadow centers anchor to ground
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS8.root | full floor width minus configured padding | ground contact row | owning component slot | ground contact row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Allies · fill left to right         Enemies · fill left to right
+[A1][A2][A3][A4]     gap     [E1][E2][E3][E4]
+ ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
+         shadow centers anchor to ground
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS8.root | full floor width minus configured padding | ground contact row | owning component slot | ground contact row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
+INPUT: immutable component model, owner state, context, layout tokens
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve four slots on each side even when empty. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Apply config.groundGrid.actorScale.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+
 ## Configuration defaults
 
 ```json
@@ -53396,8 +54325,8 @@ On dispose: release timers, observers and events
   "combat": {
     "regionFractions": {
       "topHUD": 0.1,
-      "battlefield": 0.4,
-      "hand": 0.35,
+      "battlefield": 0.5,
+      "hand": 0.25,
       "footer": 0.15
     }
   },
@@ -53427,10 +54356,10 @@ On dispose: release timers, observers and events
 <!-- reference-metadata:start -->
 **Source description and inheritance**
 
-Reuses the background source boundary. The current working game uses backdropClass in combat.js; the documentation dev baseline adds environmentArt with a cropped SVG painting. Independent skyline and floor layers are a proposed documentation contract.
+Reuses the stage source boundary. Current stage derives safe formation geometry from host and actor models. Reference section percentages and layer toggles are proposed, not replacements for production geometry validation.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/uiContent.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/uiContent.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
 - [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
@@ -53445,8 +54374,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
-  "id": "WGS7",
-  "contextRef": "sample:background",
+  "id": "WGS8",
+  "contextRef": "sample:stage",
   "active": true,
   "selected": false,
   "children": [],
@@ -53546,6 +54475,14 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
+  },
+  "groundGrid": {
+    "slotsPerSide": 4,
+    "paddingRem": 1,
+    "slotGapRem": 0.5,
+    "centerGapRem": 2,
+    "actorScale": 0.8,
+    "showGuides": true
   },
   "groundShadow": {
     "enabled": true,

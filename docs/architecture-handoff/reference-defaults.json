@@ -394,6 +394,14 @@
       "playerIntent": false,
       "enemyIntent": true
     },
+    "groundGrid": {
+      "slotsPerSide": 4,
+      "paddingRem": 1,
+      "slotGapRem": 0.5,
+      "centerGapRem": 2,
+      "actorScale": 0.8,
+      "showGuides": true
+    },
     "groundShadow": {
       "enabled": true,
       "widthPercent": 55,

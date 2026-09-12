@@ -6737,3 +6737,84 @@ On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
+## Wireframe WGS8: Ground formation grid
+
+**Parent: WGS7.** Use cases: Floor-owned actor slots. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+Allies · fill left to right         Enemies · fill left to right
+[A1][A2][A3][A4]     gap     [E1][E2][E3][E4]
+ ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
+         shadow centers anchor to ground
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS8.root | full floor width minus configured padding | ground contact row | owning component slot | ground contact row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+Allies · fill left to right         Enemies · fill left to right
+[A1][A2][A3][A4]     gap     [E1][E2][E3][E4]
+ ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
+         shadow centers anchor to ground
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS8.root | full floor width minus configured padding | ground contact row | owning component slot | ground contact row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Allies · fill left to right         Enemies · fill left to right
+[A1][A2][A3][A4]     gap     [E1][E2][E3][E4]
+ ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
+         shadow centers anchor to ground
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS8.root | full floor width minus configured padding | ground contact row | owning component slot | ground contact row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Allies · fill left to right         Enemies · fill left to right
+[A1][A2][A3][A4]     gap     [E1][E2][E3][E4]
+ ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
+         shadow centers anchor to ground
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS8.root | full floor width minus configured padding | ground contact row | owning component slot | ground contact row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve four slots on each side even when empty. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Apply config.groundGrid.actorScale.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+

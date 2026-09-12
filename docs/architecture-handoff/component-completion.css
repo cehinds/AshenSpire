@@ -40,3 +40,9 @@
 .cc-reference .cc-battlefield .cc-native-actor .cardhost{width:var(--cc-actor-width)!important;max-width:none!important;margin:0!important}
 .scene-stage:has(.cc-battlefield),.cc-reference .cc-battlefield{overflow:hidden!important}
 .cc-reference .cc-battlefield .cc-native-actor.cc-eligible{outline:none}
+
+.cc-ground-grid{position:absolute;top:30%;left:0;right:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--grid-center);padding-inline:var(--grid-padding);transform:translateY(-50%);pointer-events:none;box-sizing:border-box}
+.cc-ground-side{display:grid;grid-template-columns:repeat(var(--grid-count),minmax(0,1fr));gap:var(--grid-gap);min-width:0}
+.cc-ground-slot{min-width:0;height:1rem;display:grid;place-items:center;font-size:.5rem;color:transparent}
+.cc-ground-grid.guides .cc-ground-slot{border-bottom:.0625rem dashed #cbb17c;color:#cbb17c}
+.cc-reference[data-component=WGS8]>.cc-ground-grid{position:relative;top:auto;transform:none;min-height:5rem;align-items:center}
