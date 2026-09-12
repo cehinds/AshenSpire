@@ -23941,7 +23941,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -24311,7 +24313,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -24717,7 +24721,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -25114,7 +25120,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -25507,7 +25515,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -25878,7 +25888,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -26261,7 +26273,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -26631,7 +26645,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -27030,7 +27046,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -27425,7 +27443,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -27807,7 +27827,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -28198,7 +28220,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -28564,7 +28588,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -28942,7 +28968,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -29304,7 +29332,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -29707,7 +29737,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -30069,7 +30101,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -30436,7 +30470,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -30803,7 +30839,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -31165,7 +31203,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -31527,7 +31567,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -31894,7 +31936,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -32289,7 +32333,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -32659,7 +32705,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -33025,7 +33073,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -33404,7 +33454,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -33783,7 +33835,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -34158,7 +34212,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -34536,7 +34592,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -34927,7 +34985,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -35165,7 +35225,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project authored formation slots from host size and stable actor IDs. Compose player and enemy WC4 instances on the same baseline above background with target overlay.
+// Project authored formation slots from host size and stable actor IDs. Compose player and enemy WC4 instances at config.scene.actorBaselinePercent of battlefield height. Align sprite feet to that baseline; labels and status stacks continue below. Paint skyline first, ground cutout second and actors above both. Preserve target overlays.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -35318,7 +35378,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -35697,7 +35759,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -36072,7 +36136,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -36443,7 +36509,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -36814,7 +36882,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -37198,7 +37268,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -37565,7 +37637,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -37933,7 +38007,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -38301,7 +38377,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -38669,7 +38747,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -39053,7 +39133,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -41933,7 +42015,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -42319,7 +42403,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -42696,7 +42782,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -43062,7 +43150,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -43440,7 +43530,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -43801,7 +43893,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -44167,7 +44261,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -44533,7 +44629,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -46178,7 +46276,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -46566,7 +46666,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -46938,7 +47040,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -47310,7 +47414,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -47686,7 +47792,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -48053,7 +48161,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -48421,7 +48531,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -48789,7 +48901,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -49157,7 +49271,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -49548,7 +49664,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -49939,7 +50057,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -50318,7 +50438,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -50685,7 +50807,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -51060,7 +51184,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -51427,7 +51553,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -51805,7 +51933,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,
@@ -52043,7 +52173,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Paint floor at scene bottom using config.scene.floorHeightPercent. Omit when config.scene.floor is disabled without shifting the actor placement model.
+// Paint a foreground ground cutout over the full-bounds skyline using config.scene.groundCutout and config.scene.floorHeightPercent. Skyline remains underneath, visible through transparent cutout areas. Omit when config.scene.floor is disabled without shifting the actor placement model.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -52245,7 +52375,9 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "enemyIntent": true
   },
   "scene": {
-    "floorHeightPercent": 35,
+    "actorBaselinePercent": 66.667,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
     "playerWidthPercent": 25,
     "enemyWidthPercent": 65,
     "playerCount": 1,

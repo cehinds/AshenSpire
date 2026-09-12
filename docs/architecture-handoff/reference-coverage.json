@@ -449,7 +449,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -736,7 +738,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -1032,7 +1036,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -1326,7 +1332,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -1620,7 +1628,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -1914,7 +1924,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -2206,7 +2218,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -2493,7 +2507,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -2786,7 +2802,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -3078,7 +3096,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -3365,7 +3385,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -3656,7 +3678,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -3943,7 +3967,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -4230,7 +4256,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -4517,7 +4545,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -4811,7 +4841,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -5098,7 +5130,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -5387,7 +5421,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -5676,7 +5712,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -5963,7 +6001,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -6250,7 +6290,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -6539,7 +6581,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -6831,7 +6875,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -7118,7 +7164,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -7405,7 +7453,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -7694,7 +7744,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -7983,7 +8035,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -8272,7 +8326,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -8559,7 +8615,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -8851,7 +8909,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -9143,7 +9203,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -9432,7 +9494,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -9721,7 +9785,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -10010,7 +10076,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -10299,7 +10367,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -10599,7 +10669,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -10893,7 +10965,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -11189,7 +11263,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -11485,7 +11561,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -11781,7 +11859,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -12078,7 +12158,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -13800,7 +13882,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -14083,7 +14167,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -14363,7 +14449,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -14645,7 +14733,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -14927,7 +15017,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -15207,7 +15299,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -15489,7 +15583,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -15771,7 +15867,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -16573,7 +16671,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -16871,7 +16971,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -17167,7 +17269,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -17463,7 +17567,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -17759,7 +17865,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -18053,7 +18161,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -18349,7 +18459,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -18645,7 +18757,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -18941,7 +19055,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -19231,7 +19347,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -19521,7 +19639,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -19810,7 +19930,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -20099,7 +20221,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -20389,7 +20513,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -20678,7 +20804,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -20965,7 +21093,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,
@@ -21252,7 +21382,9 @@
         "enemyIntent": true
       },
       "scene": {
-        "floorHeightPercent": 35,
+        "actorBaselinePercent": 66.667,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
         "playerWidthPercent": 25,
         "enemyWidthPercent": 65,
         "playerCount": 1,

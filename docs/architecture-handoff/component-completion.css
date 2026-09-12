@@ -26,3 +26,9 @@
 .cc-reference .cc-potions-control>.hud-potions>summary::before,.cc-reference .cc-potions-control>.hud-potions>summary::after{content:none}
 .cc-reference .cc-potions-control .hud-potions-items{margin:0}
 .cc-reference .cc-footer>.cc-button.large,.cc-reference .cc-footer>.cc-potions-control{transform:translateY(calc(var(--cc-large) * -.04))}
+
+/* Skyline is the underlay; transparent ground cutout is the foreground. */
+.cc-reference .cc-background>.cc-sky{z-index:0}
+.cc-reference .cc-background>.cc-floor{z-index:1;border-top:0}
+.cc-reference .cc-battlefield>.cc-formation{position:absolute;inset:0 0 auto;height:var(--cc-actor-baseline);padding-top:0;align-items:end;z-index:2}
+.cc-reference .cc-battlefield>.cc-formation>.cc-actor-slots{align-items:end}
