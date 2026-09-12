@@ -43,3 +43,5 @@ Do not store rank or next threshold in CharacterProficiency when they are derive
 - `progression-reference-client.js` and `progression-reference.css`: actual runnable documentation renderer and styles.
 
 The gallery must label this as a proposed reference composition, not execution of the production game. Source file paths above are present source references; no line numbers are frozen because they drift as the game changes.
+
+Horizontal alignment: the shell supplies the sole outside inset for header, body and footer. The first category button starts on the title/Back left edge; detail values end on the exit/footer right edge. Category navigation has only an internal right gutter; the list has two internal gutters; details has only an internal left gutter. Column allocation compensates for these gutters so category buttons and proficiency tiles retain identical usable widths. All detail headings, meters and text share one left edge without additional title padding.

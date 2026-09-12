@@ -54,7 +54,7 @@ entries = ProjectKnownProficiencies(character, category)
 selected = ResolveStableSelection(entries)
 ComposeW1Shell(title=config.progression.labels.title)
 // Columns share a top anchor; category buttons and tiles never stretch to fill height.
-SetCategoryButtonHeight(config.progression.layout.standardButtonHeight)
+// Shell inset alone defines outer left/right anchors; add gutters only at internal dividers.\n// Compensate column tracks for unequal gutter counts so usable button widths match.\nAlignDetailHeadingsMetersAndTextToOneInlineStart()\nSetCategoryButtonHeight(config.progression.layout.standardButtonHeight)
 SetTileHeight(config.progression.layout.standardButtonHeight * config.progression.layout.tileHeightMultiplier)
 SetColumnTracks(config.progression.layout.sidebar, config.progression.layout.list, config.progression.layout.detail)
 // Category and tile tracks have equal width and equal horizontal insets.

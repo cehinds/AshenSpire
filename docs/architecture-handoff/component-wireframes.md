@@ -110,6 +110,9 @@ entries = ProjectKnownProficiencies(character, category)
 selected = ResolveStableSelection(entries)
 ComposeW1Shell(title=config.progression.labels.title)
 // Columns share a top anchor; category buttons and tiles never stretch to fill height.
+// Shell inset alone defines outer left/right anchors; add gutters only at internal dividers.
+// Compensate column tracks for unequal gutter counts so usable button widths match.
+AlignDetailHeadingsMetersAndTextToOneInlineStart()
 SetCategoryButtonHeight(config.progression.layout.standardButtonHeight)
 SetTileHeight(config.progression.layout.standardButtonHeight * config.progression.layout.tileHeightMultiplier)
 SetColumnTracks(config.progression.layout.sidebar, config.progression.layout.list, config.progression.layout.detail)
@@ -242,6 +245,9 @@ entries = ProjectKnownProficiencies(character, category)
 selected = ResolveStableSelection(entries)
 ComposeW1Shell(title=config.progression.labels.title)
 // Columns share a top anchor; category buttons and tiles never stretch to fill height.
+// Shell inset alone defines outer left/right anchors; add gutters only at internal dividers.
+// Compensate column tracks for unequal gutter counts so usable button widths match.
+AlignDetailHeadingsMetersAndTextToOneInlineStart()
 SetCategoryButtonHeight(config.progression.layout.standardButtonHeight)
 SetTileHeight(config.progression.layout.standardButtonHeight * config.progression.layout.tileHeightMultiplier)
 SetColumnTracks(config.progression.layout.sidebar, config.progression.layout.list, config.progression.layout.detail)
@@ -375,6 +381,9 @@ entries = ProjectKnownProficiencies(character, category)
 selected = ResolveStableSelection(entries)
 ComposeW1Shell(title=config.progression.labels.title)
 // Columns share a top anchor; category buttons and tiles never stretch to fill height.
+// Shell inset alone defines outer left/right anchors; add gutters only at internal dividers.
+// Compensate column tracks for unequal gutter counts so usable button widths match.
+AlignDetailHeadingsMetersAndTextToOneInlineStart()
 SetCategoryButtonHeight(config.progression.layout.standardButtonHeight)
 SetTileHeight(config.progression.layout.standardButtonHeight * config.progression.layout.tileHeightMultiplier)
 SetColumnTracks(config.progression.layout.sidebar, config.progression.layout.list, config.progression.layout.detail)
