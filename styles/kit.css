@@ -3014,15 +3014,32 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   .inspection-effect { font-size:16px; }
   .inspection-tag { min-height:32px; display:inline-flex; align-items:center; }
 }
-.equipment-choose { width:100%; margin-top:10px; min-height:44px; }
+.equipment-choose { width:100%; margin-top:10px; min-height:var(--tap-floor); }
 .poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
 
 /* Creation keeps card nodes in place so focus can lift and settle smoothly. */
-.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { padding:20px 6px 14px; gap:32px 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
-.cc-card-selectors .poker-equipment-choice { min-width:0; max-width:220px; width:100%; justify-self:center; }
+/* FOUR CHOICES IN THE GLASS, NOT TWO (2026-09-12). Constantine: "cards are
+   too big. I should easily be able to see 4 cards on this screen." Measured
+   before this rule, the Main Hand choices column showed exactly two cards at
+   every desktop size (1366x768: a 497x505 scrollport holding 228x371 cards;
+   1440x900: 548x600 holding 252x412; 1920x1080: 703x710 holding 326x529) —
+   the column was pinned to two tracks and each row cost a card plus a
+   reserved 44px Choose button plus a 32px gap, about 360px, against a
+   scrollport the cap leaves near 490px. So the track count is unpinned and
+   the card is browsing-sized; the reading is the detail pane's job and the
+   art is the inspect modal's. */
+.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { padding:12px 6px 10px; gap:14px 10px; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); grid-row:1 / span 2; align-content:start; }
+.cc-card-selectors .poker-equipment-choice { position:relative; min-width:0; max-width:152px; width:100%; justify-self:center; padding:4px; }
+/* THE CHOOSE BUTTON OVERLAYS ITS CARD rather than standing under it. Under
+   it, the button's 44px tap floor and 10px margin were charged to EVERY row
+   — a second row's worth of height across four cards — while only the
+   focused card ever shows one. Laid over the card's foot it still never
+   moves the grid (the slot it used to reserve is gone for every card alike),
+   and it covers the flavour line, which the detail pane prints in full. */
+.cc-card-selectors .equipment-choose { position:absolute; left:6px; right:6px; bottom:6px; z-index:4; width:auto; margin-top:0; }
 .cc-card-selectors .equipment-poker-card { position:relative; z-index:1; transform-origin:center bottom; transition:transform 180ms ease-out, box-shadow 180ms ease-out; }
 .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-6px) scale(1.05); z-index:3; box-shadow:0 12px 26px #0008,0 0 18px #d0ac5d55; border-radius:12px; }
-.cc-card-selectors .equipment-choose { white-space:normal; overflow-wrap:anywhere; line-height:1.3; padding:8px; }
+.cc-card-selectors .equipment-choose { white-space:normal; overflow-wrap:anywhere; line-height:1.2; padding:6px 4px; font-size:14px; }
 /* Retain the action slot so browsing does not move the next row under a pointer. */
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .card-info-button { visibility:hidden; pointer-events:none; }
@@ -3087,13 +3104,13 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    pane each own their overflow, so the Continue never leaves the glass. The
    subtraction is the door's head and foot, the section face and the panel's
    breathing room, divided by the zoom for the reason .modal's ceiling is.
-   The choices scrollport keeps the 64px head the other card scrollports keep
-   (above), so the above-card inspect control is not clipped on the first
-   row. Phones keep the stacked, page-scrolling layout below. */
+   The choices scrollport used to keep a 64px head for an inspect control
+   that floated above the card; that control has sat INSIDE the card's
+   top-right corner since the rule below it, so the head was 64px of nothing
+   and is gone. Phones keep the stacked, page-scrolling layout below. */
 @media(min-width:701px) {
   .cc-equip-group[data-equipment-section] { max-height:calc(100dvh / var(--ui-zoom, 1) - 25rem); grid-template-rows:minmax(0,1fr) auto; }
   .cc-equip-group[data-equipment-section] > .cc-card-selectors { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
-  .cc-equip-group[data-equipment-section] > .cc-card-selectors:has(.poker-equipment-choice) { padding-top:64px; }
   .cc-equip-group[data-equipment-section] > .cc-equipment-details { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
 }
 @media(max-width:700px) {
