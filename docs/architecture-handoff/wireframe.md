@@ -9008,6 +9008,15 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       "chargeFlasks": true,
       "modeGrip": false
     },
+    "vitality": {
+      "referenceMaximum": {
+        "health": 200,
+        "mana": 10,
+        "stamina": 10
+      },
+      "maximumWidthPercent": 100,
+      "scaleByMaximum": true
+    },
     "potions": {
       "placement": "footerOnly",
       "componentId": "WGC11",
@@ -9055,7 +9064,7 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       },
       "stamina": {
         "value": 8,
-        "maximum": 12
+        "maximum": 10
       },
       "experience": {
         "value": 40,
@@ -9600,6 +9609,15 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       "chargeFlasks": true,
       "modeGrip": false
     },
+    "vitality": {
+      "referenceMaximum": {
+        "health": 200,
+        "mana": 10,
+        "stamina": 10
+      },
+      "maximumWidthPercent": 100,
+      "scaleByMaximum": true
+    },
     "potions": {
       "placement": "footerOnly",
       "componentId": "WGC11",
@@ -9647,7 +9665,7 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       },
       "stamina": {
         "value": 8,
-        "maximum": 12
+        "maximum": 10
       },
       "experience": {
         "value": 40,
@@ -10170,6 +10188,15 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       "chargeFlasks": true,
       "modeGrip": false
     },
+    "vitality": {
+      "referenceMaximum": {
+        "health": 200,
+        "mana": 10,
+        "stamina": 10
+      },
+      "maximumWidthPercent": 100,
+      "scaleByMaximum": true
+    },
     "potions": {
       "placement": "footerOnly",
       "componentId": "WGC11",
@@ -10217,7 +10244,7 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       },
       "stamina": {
         "value": 8,
-        "maximum": 12
+        "maximum": 10
       },
       "experience": {
         "value": 40,
@@ -10768,6 +10795,15 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       "chargeFlasks": true,
       "modeGrip": false
     },
+    "vitality": {
+      "referenceMaximum": {
+        "health": 200,
+        "mana": 10,
+        "stamina": 10
+      },
+      "maximumWidthPercent": 100,
+      "scaleByMaximum": true
+    },
     "potions": {
       "placement": "footerOnly",
       "componentId": "WGC11",
@@ -10815,7 +10851,7 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       },
       "stamina": {
         "value": 8,
-        "maximum": 12
+        "maximum": 10
       },
       "experience": {
         "value": 40,
@@ -35023,7 +35059,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   },
   "stamina": {
     "value": 8,
-    "maximum": 12
+    "maximum": 10
   },
   "experience": {
     "value": 40,
@@ -35070,6 +35106,15 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "vitality": {
+    "referenceMaximum": {
+      "health": 200,
+      "mana": 10,
+      "stamina": 10
+    },
+    "maximumWidthPercent": 100,
+    "scaleByMaximum": true
   },
   "potions": {
     "placement": "footerOnly",
@@ -35118,7 +35163,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     },
     "stamina": {
       "value": 8,
-      "maximum": 12
+      "maximum": 10
     },
     "experience": {
       "value": 40,
@@ -35148,9 +35193,9 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Wide**
 
 ```text
-[HP       ████████░░ 32/40]
-[Mana     ██████░░░░  6/10]
-[Stamina  ███████░░░  8/12]
+HP      [████░]                 32 / 40
+Mana    [████████████░░░░░░░░]    6 / 10
+Stamina [████████████████░░░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35160,9 +35205,9 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Compact**
 
 ```text
-[HP       ████████░░ 32/40]
-[Mana     ██████░░░░  6/10]
-[Stamina  ███████░░░  8/12]
+HP      [████░]                 32 / 40
+Mana    [████████████░░░░░░░░]    6 / 10
+Stamina [████████████████░░░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35175,9 +35220,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HP       ████████░░ 32/40]
-[Mana     ██████░░░░  6/10]
-[Stamina  ███████░░░  8/12]
+HP      [████░]                 32 / 40
+Mana    [████████████░░░░░░░░]    6 / 10
+Stamina [████████████████░░░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35191,9 +35236,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HP       ████████░░ 32/40]
-[Mana     ██████░░░░  6/10]
-[Stamina  ███████░░░  8/12]
+HP      [████░]                 32 / 40
+Mana    [████████████░░░░░░░░]    6 / 10
+Stamina [████████████████░░░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35207,27 +35252,18 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 // Config entries carry units; convert through the shared layout adapter.
 // Wireframe IDs are identifiers. Domain facts come from the model, not config.
 INPUT: immutable component model, owner state, context, layout tokens
-INPUT snapshot, context, config, commandRegistry
-// This is a reference projection. Never award XP or spend inventory in a view.
-model = ProjectKnownHudFields(snapshot, config.sample)
-visible = FilterConfiguredActiveLayers(model, config.layers)
-// Collapsed layers leave no reserved row or gap.
-ComposeHeader(visible.class, visible.cinders, visible.position)
-ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
-// One Potions control owns flask charges and carried consumables.
-potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
-ComposeDetachedRail(visible.relics)
-// Top HUD never renders Potions in either preset. Footer owns WGC11.
-PublishFooterPotionsModel(config.potions.componentId, potionEntries)
-// HP, MP and Smoke vial are revealed inside the FOOTER Potions control only.
-OnPotionsActivate: OpenSharedPotionContents(potionEntries)
-OnPotionChoice: EmitRegisteredUseIntent(); DomainRevalidatesReadiness()
-IF visible.experience AND context IN config.experience.contexts
-  RenderExperienceStrip(model.experience, config.experience)
-// XP animation consumes an authoritative before/after settlement event.
-ON combatSettled(event): AnimateProjectedFill(event.before, event.after, config.experience.animationMs)
-ON action(intent): commandRegistry.dispatch(intent)
-ON configurationChanged: ReprojectAndRender(); RestoreFocusedControl()
+INPUT resource snapshot, config.vitality, availableWidth
+// Current source resourceBarPlan separates track length from fill.
+FOR each configured active resource
+  reference = config.vitality.referenceMaximum[resource.id]
+  allowedWidth = availableWidth * PercentFraction(config.vitality.maximumWidthPercent)
+  trackWidth = IF config.vitality.scaleByMaximum THEN ClampToHost(resource.maximum / reference * allowedWidth) ELSE allowedWidth
+  fillWidth = SafeProgressFraction(resource.current, resource.maximum) * trackWidth
+  RenderTrack(trackWidth); RenderFill(fillWidth)
+  RenderExternalValue(resource.current, resource.maximum)
+// Current/max label occupies a shared outside column, never squeezed inside a short track.
+// Reference maximum caps presentation width only; never caps domain maximum or value.
+// Proposed reference defaults: read config; current source uses different mana/stamina references.
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -35241,6 +35277,8 @@ Current source anchors inform this proposed reference. Sample records are illust
 - [src/ui/components/hudmeta.js:79](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/hudmeta.js#L79) — Current owner checkout (including inspected local edits)
 - [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
 - [src/ui/models/VitalsPanelModel.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/models/VitalsPanelModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/resources.js:196](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/model/resources.js#L196) — Current owner checkout (including inspected local edits)
+- [src/content/resources.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/content/resources.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2)
 
@@ -35268,7 +35306,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   },
   "stamina": {
     "value": 8,
-    "maximum": 12
+    "maximum": 10
   },
   "experience": {
     "value": 40,
@@ -35315,6 +35353,15 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "vitality": {
+    "referenceMaximum": {
+      "health": 200,
+      "mana": 10,
+      "stamina": 10
+    },
+    "maximumWidthPercent": 100,
+    "scaleByMaximum": true
   },
   "potions": {
     "placement": "footerOnly",
@@ -35363,7 +35410,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     },
     "stamina": {
       "value": 8,
-      "maximum": 12
+      "maximum": 10
     },
     "experience": {
       "value": 40,
@@ -35484,7 +35531,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   },
   "stamina": {
     "value": 8,
-    "maximum": 12
+    "maximum": 10
   },
   "experience": {
     "value": 40,
@@ -35531,6 +35578,15 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "vitality": {
+    "referenceMaximum": {
+      "health": 200,
+      "mana": 10,
+      "stamina": 10
+    },
+    "maximumWidthPercent": 100,
+    "scaleByMaximum": true
   },
   "potions": {
     "placement": "footerOnly",
@@ -35579,7 +35635,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     },
     "stamina": {
       "value": 8,
-      "maximum": 12
+      "maximum": 10
     },
     "experience": {
       "value": 40,
@@ -35700,7 +35756,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   },
   "stamina": {
     "value": 8,
-    "maximum": 12
+    "maximum": 10
   },
   "experience": {
     "value": 40,
@@ -35747,6 +35803,15 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "vitality": {
+    "referenceMaximum": {
+      "health": 200,
+      "mana": 10,
+      "stamina": 10
+    },
+    "maximumWidthPercent": 100,
+    "scaleByMaximum": true
   },
   "potions": {
     "placement": "footerOnly",
@@ -35795,7 +35860,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     },
     "stamina": {
       "value": 8,
-      "maximum": 12
+      "maximum": 10
     },
     "experience": {
       "value": 40,
@@ -35829,7 +35894,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 │ Class: Warden       Cinders: 120       Act 1 Floor 4 │
 │ HP      ████████░░ 32/40     [Armoury] [Menu]        │
 │ Mana    ██████░░░░  6/10                            │
-│ Stamina ███████░░░  8/12                            │
+│ Stamina ███████░░░  8/10                            │
 ├─────────────────────────────────────────────────────┤
 │ [Ash seal] [Ember charm]                           │
 └─────────────────────────────────────────────────────┘
@@ -35847,7 +35912,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 │ Class: Warden       Cinders: 120       Act 1 Floor 4 │
 │ HP      ████████░░ 32/40     [Armoury] [Menu]        │
 │ Mana    ██████░░░░  6/10                            │
-│ Stamina ███████░░░  8/12                            │
+│ Stamina ███████░░░  8/10                            │
 ├─────────────────────────────────────────────────────┤
 │ [Ash seal] [Ember charm]                           │
 └─────────────────────────────────────────────────────┘
@@ -35967,7 +36032,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   },
   "stamina": {
     "value": 8,
-    "maximum": 12
+    "maximum": 10
   },
   "experience": {
     "value": 40,
@@ -36014,6 +36079,15 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "vitality": {
+    "referenceMaximum": {
+      "health": 200,
+      "mana": 10,
+      "stamina": 10
+    },
+    "maximumWidthPercent": 100,
+    "scaleByMaximum": true
   },
   "potions": {
     "placement": "footerOnly",
@@ -36062,7 +36136,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     },
     "stamina": {
       "value": 8,
-      "maximum": 12
+      "maximum": 10
     },
     "experience": {
       "value": 40,
@@ -36193,7 +36267,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   },
   "stamina": {
     "value": 8,
-    "maximum": 12
+    "maximum": 10
   },
   "experience": {
     "value": 40,
@@ -36240,6 +36314,15 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "vitality": {
+    "referenceMaximum": {
+      "health": 200,
+      "mana": 10,
+      "stamina": 10
+    },
+    "maximumWidthPercent": 100,
+    "scaleByMaximum": true
   },
   "potions": {
     "placement": "footerOnly",
@@ -36288,7 +36371,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     },
     "stamina": {
       "value": 8,
-      "maximum": 12
+      "maximum": 10
     },
     "experience": {
       "value": 40,
@@ -36409,7 +36492,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   },
   "stamina": {
     "value": 8,
-    "maximum": 12
+    "maximum": 10
   },
   "experience": {
     "value": 40,
@@ -36456,6 +36539,15 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "vitality": {
+    "referenceMaximum": {
+      "health": 200,
+      "mana": 10,
+      "stamina": 10
+    },
+    "maximumWidthPercent": 100,
+    "scaleByMaximum": true
   },
   "potions": {
     "placement": "footerOnly",
@@ -36504,7 +36596,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     },
     "stamina": {
       "value": 8,
-      "maximum": 12
+      "maximum": 10
     },
     "experience": {
       "value": 40,
@@ -36625,7 +36717,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   },
   "stamina": {
     "value": 8,
-    "maximum": 12
+    "maximum": 10
   },
   "experience": {
     "value": 40,
@@ -36672,6 +36764,15 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "vitality": {
+    "referenceMaximum": {
+      "health": 200,
+      "mana": 10,
+      "stamina": 10
+    },
+    "maximumWidthPercent": 100,
+    "scaleByMaximum": true
   },
   "potions": {
     "placement": "footerOnly",
@@ -36720,7 +36821,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     },
     "stamina": {
       "value": 8,
-      "maximum": 12
+      "maximum": 10
     },
     "experience": {
       "value": 40,
@@ -36850,7 +36951,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   },
   "stamina": {
     "value": 8,
-    "maximum": 12
+    "maximum": 10
   },
   "experience": {
     "value": 40,
@@ -36897,6 +36998,15 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "vitality": {
+    "referenceMaximum": {
+      "health": 200,
+      "mana": 10,
+      "stamina": 10
+    },
+    "maximumWidthPercent": 100,
+    "scaleByMaximum": true
   },
   "potions": {
     "placement": "footerOnly",
@@ -36945,7 +37055,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     },
     "stamina": {
       "value": 8,
-      "maximum": 12
+      "maximum": 10
     },
     "experience": {
       "value": 40,
@@ -37067,7 +37177,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   },
   "stamina": {
     "value": 8,
-    "maximum": 12
+    "maximum": 10
   },
   "experience": {
     "value": 40,
@@ -37114,6 +37224,15 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "experience": true,
     "chargeFlasks": true,
     "modeGrip": false
+  },
+  "vitality": {
+    "referenceMaximum": {
+      "health": 200,
+      "mana": 10,
+      "stamina": 10
+    },
+    "maximumWidthPercent": 100,
+    "scaleByMaximum": true
   },
   "potions": {
     "placement": "footerOnly",
@@ -37162,7 +37281,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     },
     "stamina": {
       "value": 8,
-      "maximum": 12
+      "maximum": 10
     },
     "experience": {
       "value": 40,

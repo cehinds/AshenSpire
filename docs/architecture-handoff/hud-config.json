@@ -1,0 +1,98 @@
+{
+  "context": "combat",
+  "enabled": true,
+  "layoutPreset": "proposed",
+  "hudMode": "expanded",
+  "layers": {
+    "header": true,
+    "class": true,
+    "cinders": true,
+    "position": true,
+    "vitality": true,
+    "health": true,
+    "mana": true,
+    "stamina": true,
+    "armoury": true,
+    "menu": true,
+    "rail": true,
+    "relics": true,
+    "potions": true,
+    "experience": true,
+    "chargeFlasks": true,
+    "modeGrip": false
+  },
+  "vitality": {
+    "referenceMaximum": {
+      "health": 200,
+      "mana": 10,
+      "stamina": 10
+    },
+    "maximumWidthPercent": 100,
+    "scaleByMaximum": true
+  },
+  "potions": {
+    "placement": "footerOnly",
+    "componentId": "WGC11",
+    "contentsComponentId": "WGH8",
+    "openIntent": "openPotions",
+    "combineChargeFlasks": true,
+    "combineCarriedPotions": true
+  },
+  "experience": {
+    "contexts": [
+      "combat"
+    ],
+    "color": "#398bd1",
+    "heightRem": 0.35,
+    "animationMs": 650,
+    "awardPreview": 15
+  },
+  "layout": {
+    "gapRem": 0.35,
+    "insetRem": 0.5,
+    "meterHeightRem": 1.15,
+    "actionHeightRem": 2.75,
+    "radiusRem": 0.25
+  },
+  "colors": {
+    "background": "#211a12",
+    "gold": "#d5af68",
+    "text": "#eee2ca",
+    "health": "#668c46",
+    "mana": "#478dbc",
+    "stamina": "#bf9949"
+  },
+  "sample": {
+    "className": "Warden",
+    "cinders": 120,
+    "act": 1,
+    "floor": 4,
+    "health": {
+      "value": 32,
+      "maximum": 40
+    },
+    "mana": {
+      "value": 6,
+      "maximum": 10
+    },
+    "stamina": {
+      "value": 8,
+      "maximum": 10
+    },
+    "experience": {
+      "value": 40,
+      "maximum": 100
+    },
+    "relics": [
+      "Ash seal",
+      "Ember charm"
+    ],
+    "potions": [
+      "Smoke vial ×1"
+    ],
+    "chargeFlasks": [
+      "HP ×2",
+      "MP ×1"
+    ]
+  }
+}

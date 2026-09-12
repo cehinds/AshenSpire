@@ -3586,9 +3586,9 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[HP       ████████░░ 32/40]
-[Mana     ██████░░░░  6/10]
-[Stamina  ███████░░░  8/12]
+HP      [████░]                 32 / 40
+Mana    [████████████░░░░░░░░]    6 / 10
+Stamina [████████████████░░░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3598,9 +3598,9 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[HP       ████████░░ 32/40]
-[Mana     ██████░░░░  6/10]
-[Stamina  ███████░░░  8/12]
+HP      [████░]                 32 / 40
+Mana    [████████████░░░░░░░░]    6 / 10
+Stamina [████████████████░░░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3613,9 +3613,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HP       ████████░░ 32/40]
-[Mana     ██████░░░░  6/10]
-[Stamina  ███████░░░  8/12]
+HP      [████░]                 32 / 40
+Mana    [████████████░░░░░░░░]    6 / 10
+Stamina [████████████████░░░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3629,9 +3629,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HP       ████████░░ 32/40]
-[Mana     ██████░░░░  6/10]
-[Stamina  ███████░░░  8/12]
+HP      [████░]                 32 / 40
+Mana    [████████████░░░░░░░░]    6 / 10
+Stamina [████████████████░░░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3642,27 +3642,18 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-INPUT snapshot, context, config, commandRegistry
-// This is a reference projection. Never award XP or spend inventory in a view.
-model = ProjectKnownHudFields(snapshot, config.sample)
-visible = FilterConfiguredActiveLayers(model, config.layers)
-// Collapsed layers leave no reserved row or gap.
-ComposeHeader(visible.class, visible.cinders, visible.position)
-ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
-// One Potions control owns flask charges and carried consumables.
-potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
-ComposeDetachedRail(visible.relics)
-// Top HUD never renders Potions in either preset. Footer owns WGC11.
-PublishFooterPotionsModel(config.potions.componentId, potionEntries)
-// HP, MP and Smoke vial are revealed inside the FOOTER Potions control only.
-OnPotionsActivate: OpenSharedPotionContents(potionEntries)
-OnPotionChoice: EmitRegisteredUseIntent(); DomainRevalidatesReadiness()
-IF visible.experience AND context IN config.experience.contexts
-  RenderExperienceStrip(model.experience, config.experience)
-// XP animation consumes an authoritative before/after settlement event.
-ON combatSettled(event): AnimateProjectedFill(event.before, event.after, config.experience.animationMs)
-ON action(intent): commandRegistry.dispatch(intent)
-ON configurationChanged: ReprojectAndRender(); RestoreFocusedControl()
+INPUT resource snapshot, config.vitality, availableWidth
+// Current source resourceBarPlan separates track length from fill.
+FOR each configured active resource
+  reference = config.vitality.referenceMaximum[resource.id]
+  allowedWidth = availableWidth * PercentFraction(config.vitality.maximumWidthPercent)
+  trackWidth = IF config.vitality.scaleByMaximum THEN ClampToHost(resource.maximum / reference * allowedWidth) ELSE allowedWidth
+  fillWidth = SafeProgressFraction(resource.current, resource.maximum) * trackWidth
+  RenderTrack(trackWidth); RenderFill(fillWidth)
+  RenderExternalValue(resource.current, resource.maximum)
+// Current/max label occupies a shared outside column, never squeezed inside a short track.
+// Reference maximum caps presentation width only; never caps domain maximum or value.
+// Proposed reference defaults: read config; current source uses different mana/stamina references.
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3798,7 +3789,7 @@ On dispose: release timers, observers and events
 │ Class: Warden       Cinders: 120       Act 1 Floor 4 │
 │ HP      ████████░░ 32/40     [Armoury] [Menu]        │
 │ Mana    ██████░░░░  6/10                            │
-│ Stamina ███████░░░  8/12                            │
+│ Stamina ███████░░░  8/10                            │
 ├─────────────────────────────────────────────────────┤
 │ [Ash seal] [Ember charm]                           │
 └─────────────────────────────────────────────────────┘
@@ -3816,7 +3807,7 @@ On dispose: release timers, observers and events
 │ Class: Warden       Cinders: 120       Act 1 Floor 4 │
 │ HP      ████████░░ 32/40     [Armoury] [Menu]        │
 │ Mana    ██████░░░░  6/10                            │
-│ Stamina ███████░░░  8/12                            │
+│ Stamina ███████░░░  8/10                            │
 ├─────────────────────────────────────────────────────┤
 │ [Ash seal] [Ember charm]                           │
 └─────────────────────────────────────────────────────┘

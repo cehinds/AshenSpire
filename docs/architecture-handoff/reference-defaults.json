@@ -43,6 +43,15 @@
       "chargeFlasks": true,
       "modeGrip": false
     },
+    "vitality": {
+      "referenceMaximum": {
+        "health": 200,
+        "mana": 10,
+        "stamina": 10
+      },
+      "maximumWidthPercent": 100,
+      "scaleByMaximum": true
+    },
     "potions": {
       "placement": "footerOnly",
       "componentId": "WGC11",
@@ -90,7 +99,7 @@
       },
       "stamina": {
         "value": 8,
-        "maximum": 12
+        "maximum": 10
       },
       "experience": {
         "value": 40,

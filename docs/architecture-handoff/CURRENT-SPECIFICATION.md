@@ -77,3 +77,9 @@ Build the complete package with build-reference.mjs. reference-defaults.json and
 ## Potions ownership
 
 WGC11 is the single Potions control. WGH8 supplies its contents: HP potion, MP potion and carried consumables such as Smoke vial, with their counts. The HUD must not render these as sibling buttons or duplicate them in its inventory rail. Only the footer HUD renders the Potions control; the top HUD never renders it, in either placement preset. WGC11 consumes the shared WGH8 contents projection. Config can hide provider categories; selecting an entry emits a host intent and does not bypass targeting or confirmation.
+
+## Vitality length and fill
+
+WGH1 uses separate capacity and fill calculations. Track width = clamp(characterMaximum / configuredReferenceMaximum, 0, 1) × maximumAllowedWidth. Filled width = clamp(current / characterMaximum, 0, 1) × track width. Defaults are 200 HP, 10 MP and 10 SP reference maxima; these are presentation scales, not gameplay stat limits. Above-reference maxima saturate track length while the exact current/maximum label remains visible. At zero maximum, render an empty track without division by zero. Do not impose a minimum track length that hides differences in maximum stats. All tracks share a left anchor; current/maximum labels sit outside narrow tracks.
+
+The generated hud-config.json contains the complete editable preview defaults. Change its vitality and sample sections in the HUD playground Configuration JSON and select Apply configuration to compare outcomes. Persistent generator defaults live in hud-reference.mjs; rebuild rather than hand-edit generated files. Example: 32/40 HP uses 20% of the allowed track envelope and fills that track to 80%; 6/10 MP uses the whole envelope with 60% fill. This updates the documentation reference only.
