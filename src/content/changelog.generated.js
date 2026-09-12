@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1000",
+    "date": "2026-09-12",
+    "group": "2026-09-12",
+    "summary": "Inspecting a card now offers what that screen is for",
+    "detail": "Opening a card to read it used to show a greyed-out Play card button with the words \"Play cards from your combat hand\" — on every screen except combat, including the spoils screen, where you had opened the card in order to take it. A card's buttons now come from the screen it is standing on: the spoils screen offers Choose this card, and choosing it there picks the same card in the row behind the window. A card you are only reading, such as one in the compendium, simply shows no button at all instead of a dead one.",
+    "build": "0.7.1.9",
+    "pullRequest": 1000,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1000"
+  },
+  {
     "id": "pr-998",
     "date": "2026-09-12",
     "group": "2026-09-12",
