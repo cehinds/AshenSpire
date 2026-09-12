@@ -1,0 +1,327 @@
+[
+  {
+    "id": "WC0",
+    "parent": null,
+    "name": "Master card",
+    "proposedTags": [
+      "presentable:card"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC1",
+    "parent": "WC0",
+    "name": "Playing card",
+    "proposedTags": [
+      "card-kind:playing"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC1a",
+    "parent": "WC1",
+    "name": "Attack card",
+    "proposedTags": [
+      "ability:attack"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC1b",
+    "parent": "WC1",
+    "name": "Skill card",
+    "proposedTags": [
+      "ability:skill"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC1c",
+    "parent": "WC1",
+    "name": "Power card",
+    "proposedTags": [
+      "ability:power"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC1d",
+    "parent": "WC1",
+    "name": "Curse card",
+    "proposedTags": [
+      "ability:curse"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC1e",
+    "parent": "WC1",
+    "name": "Status card",
+    "proposedTags": [
+      "ability:status"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC2",
+    "parent": "WC0",
+    "name": "Possession card",
+    "proposedTags": [
+      "card-kind:possession"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC2a",
+    "parent": "WC2",
+    "name": "Equipment card",
+    "proposedTags": [
+      "item-kind:equipment"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC2a1",
+    "parent": "WC2a",
+    "name": "Weapon card",
+    "proposedTags": [
+      "equipment-kind:weapon"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC2a2",
+    "parent": "WC2a",
+    "name": "Armor card",
+    "proposedTags": [
+      "equipment-kind:armor"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC2b",
+    "parent": "WC2",
+    "name": "Relic card",
+    "proposedTags": [
+      "item-kind:relic"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC2b1",
+    "parent": "WC2b",
+    "name": "Passive relic",
+    "proposedTags": [
+      "effect-mode:passive"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC2b2",
+    "parent": "WC2b",
+    "name": "Triggered relic",
+    "proposedTags": [
+      "effect-mode:triggered"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC2c",
+    "parent": "WC2",
+    "name": "Consumable card",
+    "proposedTags": [
+      "item-kind:consumable"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC2c1",
+    "parent": "WC2c",
+    "name": "Healing consumable",
+    "proposedTags": [
+      "effect-purpose:healing"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC2c2",
+    "parent": "WC2c",
+    "name": "Resource consumable",
+    "proposedTags": [
+      "effect-purpose:resource"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC2c3",
+    "parent": "WC2c",
+    "name": "Utility consumable",
+    "proposedTags": [
+      "effect-purpose:utility"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC3",
+    "parent": "WC0",
+    "name": "Character-choice card",
+    "proposedTags": [
+      "card-kind:creationChoice"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC3a",
+    "parent": "WC3",
+    "name": "Class card",
+    "proposedTags": [
+      "choice-kind:class"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC3b",
+    "parent": "WC3",
+    "name": "Starting-kit card",
+    "proposedTags": [
+      "choice-kind:startingKit"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC4",
+    "parent": "WC0",
+    "name": "Combatant card",
+    "proposedTags": [
+      "card-kind:combatant"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC4a",
+    "parent": "WC4",
+    "name": "Compact combatant",
+    "proposedTags": [
+      "card-kind:combatant"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC4b",
+    "parent": "WC4",
+    "name": "Standard combatant",
+    "proposedTags": [
+      "card-kind:combatant"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WC4c",
+    "parent": "WC4",
+    "name": "Expanded combatant",
+    "proposedTags": [
+      "card-kind:combatant"
+    ],
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  }
+]
