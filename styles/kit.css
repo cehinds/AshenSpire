@@ -3045,6 +3045,14 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    long button's box at 1440 wide (measured: scrollWidth 210 in a 208 box).
    Less side padding than the row's clamp gives it, so the words stay whole. */
 .cz-next { padding-inline:clamp(0.5rem, 5%, 1rem); }
+/* AND THE ROW GIVES THE WORDS THE ROOM, because the padding alone could not.
+   Creation's physical text floor (`.customize :is(..., button)`, 16px over the
+   zoom) outranks the ButtonRow's fit-to-box type clamp, so the label does not
+   shrink into a `long` row: "Continue to character" wanted 227px of that row's
+   208px box at 1280x720 and ellipsed to "Continue to chara...". The step's way
+   on is one button alone on its row, so the row is sized to the longest of
+   those labels instead of the shared `long` step. */
+.as-btnrow:has(> .cz-next), .modal-btnrow:has(> .cz-next) { --step: 26rem; }
 .cc-starting-package { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
 .cc-starting-package h4 { margin:0 0 8px; color:var(--gold); font-size:18px; }
 .cc-starting-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px 9px; }
@@ -3077,6 +3085,35 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-summary-character > .cc-derived { margin-top:auto; gap:4px 8px; }
 .cc-summary-character > .cc-derived .as-chip { font-size:11px; }
 .cc-summary-calculations { margin-top:4px; }
+/* THE CLASS STEP FITS THE GLASS ON DESKTOP (2026-09-12).
+   Constantine: "continue button is cut off". The step's one way on — its
+   "Continue to character" — stood below the door's foot at EVERY desktop size
+   measured, because the split grows to its content inside a scrolling body and
+   the Continue row is the last thing in that column:
+
+     1280x720   glass 477px, step 598px, Continue at y=725, foot at y=621
+     1366x768   glass 515px, step 628px, Continue at y=762, foot at y=666
+     1512x860   glass 584px, step 694px, Continue at y=842, foot at y=752
+     1920x1080  glass 737px, step 859px, Continue at y=1044, foot at y=946
+
+   Same cure as THE OPEN EQUIPMENT SECTION below, one step later in the same
+   flow: the split is capped to what the door body leaves under the step's own
+   face, and its two panes scroll INSIDE that cap — the class list and the
+   preview each own their overflow — so the Continue never leaves the glass.
+   The subtraction is the same one, for the same reason: the door's head and
+   foot, the step face and the panel's breathing room, over the zoom (the
+   chrome measured 23.2-24.5rem across the four sizes above, so 25rem is the
+   conservative floor for all of them). The `max()` keeps a short window from
+   collapsing the split to nothing — under it the body scrolls as it did.
+   Below the split's own stacking width the phone layout stands: chooser first,
+   preview after it, the page scrolling as one. */
+@container (width > 64rem) {
+  .cc-class-split { max-height: max(30rem, calc(100dvh / var(--ui-zoom, 1) - 25rem)); grid-template-rows: minmax(0, 1fr); }
+  .cc-class-split > .as-split-pane { min-height: 0; }
+  .cc-class-split > .as-split-pane > .as-pane { min-height: 0; overflow: hidden; }
+  .cc-class-split > .cc-class-preview-host > .as-pane { overflow-y: auto; scrollbar-gutter: stable; }
+  .cc-class-split .cc-choice-collection { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
+}
 /* THE OPEN EQUIPMENT SECTION FITS THE GLASS ON DESKTOP (2026-09-11).
    Constantine: "the screen is slightly too big, i should be able to see
    everything when it opens on desktop." Measured at 1366x768 before this
