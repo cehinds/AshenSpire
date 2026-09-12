@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-998",
+    "date": "2026-09-12",
+    "group": "2026-09-12",
+    "summary": "Every card answers the same two taps",
+    "detail": "Tap a card once and it lights up, with the small i appearing beside it a moment later; tap it again — or press and hold it — and it does the thing you came for. That is now true of every card in the game. Two recent changes had pulled it apart: choosing an armament at the Smith and arming a card to burn at the merchant had started acting on the first tap, so you committed to a card before you had been shown it, and a card whose text was cut short opened its information straight from the small arrow in its corner, which no other card did. The arrow now selects the card like a tap anywhere else on it, and the i is the one way in to a card's full information everywhere. Reading a card and then tapping it no longer loses that tap. The merchant's burn shelf gains the green confirm button the loot screen and the Smith already had, so burning a card can be done with a second tap, a hold, or the button.",
+    "build": "0.7.1.8",
+    "pullRequest": 998,
+    "url": "https://github.com/cehinds/AshenSpire/pull/998"
+  },
+  {
     "id": "pr-993",
     "date": "2026-09-11",
     "group": "2026-09-11",
