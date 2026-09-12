@@ -3496,7 +3496,7 @@ On dispose: release timers, observers and events
 ```text
 [WGH7 Run header]
 [WGH1 Vitality] [WGH2 Armoury] [WGH3 Menu]
-[WGH6 Relics / potions rail]
+[WGH6 Relics rail]
 [WGH5 Experience strip when configured]
 ```
 
@@ -3509,7 +3509,7 @@ On dispose: release timers, observers and events
 ```text
 [WGH7 Run header]
 [WGH1 Vitality] [WGH2 Armoury] [WGH3 Menu]
-[WGH6 Relics / potions rail]
+[WGH6 Relics rail]
 [WGH5 Experience strip when configured]
 ```
 
@@ -3525,7 +3525,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
 [WGH7 Run header]
 [WGH1 Vitality] [WGH2 Armoury] [WGH3 Menu]
-[WGH6 Relics / potions rail]
+[WGH6 Relics rail]
 [WGH5 Experience strip when configured]
 ```
 
@@ -3542,7 +3542,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
 [WGH7 Run header]
 [WGH1 Vitality] [WGH2 Armoury] [WGH3 Menu]
-[WGH6 Relics / potions rail]
+[WGH6 Relics rail]
 [WGH5 Experience strip when configured]
 ```
 
@@ -3563,8 +3563,10 @@ ComposeHeader(visible.class, visible.cinders, visible.position)
 ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
 // One Potions control owns flask charges and carried consumables.
 potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
-ComposeDetachedRail(visible.relics, SharedPotionsControl(config.potions, potionEntries))
-// HP, MP and Smoke vial are revealed inside that control, never sibling HUD buttons.
+ComposeDetachedRail(visible.relics)
+// Top HUD never renders Potions in either preset. Footer owns WGC11.
+PublishFooterPotionsModel(config.potions.componentId, potionEntries)
+// HP, MP and Smoke vial are revealed inside the FOOTER Potions control only.
 OnPotionsActivate: OpenSharedPotionContents(potionEntries)
 OnPotionChoice: EmitRegisteredUseIntent(); DomainRevalidatesReadiness()
 IF visible.experience AND context IN config.experience.contexts
@@ -3649,8 +3651,10 @@ ComposeHeader(visible.class, visible.cinders, visible.position)
 ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
 // One Potions control owns flask charges and carried consumables.
 potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
-ComposeDetachedRail(visible.relics, SharedPotionsControl(config.potions, potionEntries))
-// HP, MP and Smoke vial are revealed inside that control, never sibling HUD buttons.
+ComposeDetachedRail(visible.relics)
+// Top HUD never renders Potions in either preset. Footer owns WGC11.
+PublishFooterPotionsModel(config.potions.componentId, potionEntries)
+// HP, MP and Smoke vial are revealed inside the FOOTER Potions control only.
 OnPotionsActivate: OpenSharedPotionContents(potionEntries)
 OnPotionChoice: EmitRegisteredUseIntent(); DomainRevalidatesReadiness()
 IF visible.experience AND context IN config.experience.contexts
@@ -3796,7 +3800,7 @@ On dispose: release timers, observers and events
 │ Mana    ██████░░░░  6/10                            │
 │ Stamina ███████░░░  8/12                            │
 ├─────────────────────────────────────────────────────┤
-│ [Ash seal] [Ember charm]       [Potions]           │
+│ [Ash seal] [Ember charm]                           │
 └─────────────────────────────────────────────────────┘
 ████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
@@ -3814,7 +3818,7 @@ On dispose: release timers, observers and events
 │ Mana    ██████░░░░  6/10                            │
 │ Stamina ███████░░░  8/12                            │
 ├─────────────────────────────────────────────────────┤
-│ [Ash seal] [Ember charm]       [Potions]           │
+│ [Ash seal] [Ember charm]                           │
 └─────────────────────────────────────────────────────┘
 ████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
@@ -3834,7 +3838,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 │ HP  █████░░ 32/40 [⚔] [☰]   │
 │ MP  ███░░░░  6/10           │
 │ STA ████░░░  8/12           │
-│ [Relics]      [Potions]     │
+│ [Relics]                   │
 └──────────────────────────────┘
 ████████████░░░░░░░░░░░░░░░░░░
 ```
@@ -3855,7 +3859,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 │ HP  █████░░ 32/40 [⚔] [☰]   │
 │ MP  ███░░░░  6/10           │
 │ STA ████░░░  8/12           │
-│ [Relics]      [Potions]     │
+│ [Relics]                   │
 └──────────────────────────────┘
 ████████████░░░░░░░░░░░░░░░░░░
 ```
@@ -3877,8 +3881,10 @@ ComposeHeader(visible.class, visible.cinders, visible.position)
 ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
 // One Potions control owns flask charges and carried consumables.
 potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
-ComposeDetachedRail(visible.relics, SharedPotionsControl(config.potions, potionEntries))
-// HP, MP and Smoke vial are revealed inside that control, never sibling HUD buttons.
+ComposeDetachedRail(visible.relics)
+// Top HUD never renders Potions in either preset. Footer owns WGC11.
+PublishFooterPotionsModel(config.potions.componentId, potionEntries)
+// HP, MP and Smoke vial are revealed inside the FOOTER Potions control only.
 OnPotionsActivate: OpenSharedPotionContents(potionEntries)
 OnPotionChoice: EmitRegisteredUseIntent(); DomainRevalidatesReadiness()
 IF visible.experience AND context IN config.experience.contexts
@@ -3962,29 +3968,29 @@ On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
-## Wireframe WGH6: Inventory rail
+## Wireframe WGH6: Relic rail
 
 **Parent: WCF2.** Use cases: WGH4; separate source inventoryBelt model. Owner selection propagates to the component; no duplicated selected state.
 
 **Wide**
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]    [WGC11 Potions]
+[Relic: Ash seal] [Relic: Ember charm]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH6.root | 100% usable HUD width | content-fit | owning component slot | below primary row; relics left / potions right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH6.root | 100% usable HUD width | content-fit | owning component slot | below primary row; relics left; no potion controls | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]    [WGC11 Potions]
+[Relic: Ash seal] [Relic: Ember charm]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH6.root | 100% usable HUD width | content-fit | owning component slot | below primary row; relics left / potions right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH6.root | 100% usable HUD width | content-fit | owning component slot | below primary row; relics left; no potion controls | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -3992,12 +3998,12 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]    [WGC11 Potions]
+[Relic: Ash seal] [Relic: Ember charm]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH6.root | 100% usable HUD width | content-fit | owning component slot | below primary row; relics left / potions right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH6.root | 100% usable HUD width | content-fit | owning component slot | below primary row; relics left; no potion controls | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -4006,18 +4012,18 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]    [WGC11 Potions]
+[Relic: Ash seal] [Relic: Ember charm]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH6.root | 100% usable HUD width | content-fit | owning component slot | below primary row; relics left / potions right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH6.root | 100% usable HUD width | content-fit | owning component slot | below primary row; relics left; no potion controls | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-// Filter layers and preserve stable entity IDs. Relics use shared cards. The single WGC11 Potions control opens WGH8 contents combining HP/MP charge providers and carried consumables. No individual potion is a sibling rail button. Resource meters remain distinct information components.
+// Filter layers and preserve stable entity IDs. Relics use shared cards. Potions are exclusively footer-owned: WGC11 opens WGH8 contents combining HP/MP charge providers and carried consumables. Never render any potion control in this top-HUD rail, regardless of preset. Resource meters remain distinct information components.
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -4084,7 +4090,7 @@ On dispose: release timers, observers and events
 
 ## Wireframe WGH8: Potions contents
 
-**Parent: WCB2.** Use cases: Shared Potions control contents; combat footer and HUD reuse WGC11. Owner selection propagates to the component; no duplicated selected state.
+**Parent: WCB2.** Use cases: Shared footer Potions control contents; WGC11 owns presentation. Owner selection propagates to the component; no duplicated selected state.
 
 **Wide**
 
@@ -4095,7 +4101,7 @@ On dispose: release timers, observers and events
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH8.root | shared Potions content host width | content-fit; action height config.layout.actionHeightRem | owning component slot | inside shared Potions control disclosure; not separate HUD buttons | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH8.root | shared Potions content host width | content-fit; action height config.layout.actionHeightRem | owning component slot | inside footer WGC11 disclosure; never in top HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
@@ -4106,7 +4112,7 @@ On dispose: release timers, observers and events
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH8.root | shared Potions content host width | content-fit; action height config.layout.actionHeightRem | owning component slot | inside shared Potions control disclosure; not separate HUD buttons | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH8.root | shared Potions content host width | content-fit; action height config.layout.actionHeightRem | owning component slot | inside footer WGC11 disclosure; never in top HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -4120,7 +4126,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH8.root | shared Potions content host width | content-fit; action height config.layout.actionHeightRem | owning component slot | inside shared Potions control disclosure; not separate HUD buttons | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH8.root | shared Potions content host width | content-fit; action height config.layout.actionHeightRem | owning component slot | inside footer WGC11 disclosure; never in top HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -4135,7 +4141,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH8.root | shared Potions content host width | content-fit; action height config.layout.actionHeightRem | owning component slot | inside shared Potions control disclosure; not separate HUD buttons | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH8.root | shared Potions content host width | content-fit; action height config.layout.actionHeightRem | owning component slot | inside footer WGC11 disclosure; never in top HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
@@ -4144,6 +4150,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 // Proposed owner correction supersedes separate flask buttons.
 entries = ProjectPotionEntries(snapshot.chargeFlasks, snapshot.carriedPotions, config.potions)
 RenderInsideSharedControl(config.potions.componentId, entries)
+// Footer-only placement applies to current and proposed preview presets.
 // Data keeps charge providers separate from owned item instances; view combines references only.
 OnChoose(entry): EmitRegisteredUseIntent(entry.id); DomainRevalidatesChargesAndTarget()
 On model change: reproject registered values; preserve stable identity

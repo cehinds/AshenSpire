@@ -49,3 +49,8 @@ The HUD playground now provides **Proposed HUD** and **Current checkout HUD** pr
 ### Superseding Potions composition correction
 
 The latest owner direction combines HP potion, MP potion and carried consumables under the same reusable Potions control. WGH8 now documents that control's contents and WGH6 references WGC11 rather than individual consumable buttons. Source data may retain separate charge providers and inventory records; their view model joins references without duplicating ownership. The current-checkout source comparison above remains historical evidence of the existing separate-control layout, not the desired layout.
+
+
+### Final placement correction: footer only
+
+The owner subsequently clarified that **Potions belongs exclusively to the footer HUD**. This supersedes all earlier proposed top-HUD rail placements. WGH4 and WGH6 must omit Potions in both preview presets. WGC11 in the footer opens shared WGH8 contents containing HP/MP charge providers and carried items. Configuration/sample fields remain available for that footer projection; they do not authorize a second control in the top HUD. The current-checkout comparison above describes existing source only, not the desired or preview placement.

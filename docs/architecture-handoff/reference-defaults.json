@@ -44,6 +44,7 @@
       "modeGrip": false
     },
     "potions": {
+      "placement": "footerOnly",
       "componentId": "WGC11",
       "contentsComponentId": "WGH8",
       "openIntent": "openPotions",

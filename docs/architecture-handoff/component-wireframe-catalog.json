@@ -551,7 +551,7 @@
   },
   {
     "id": "WGH6",
-    "name": "Inventory rail",
+    "name": "Relic rail",
     "parent": "WCF2",
     "orientations": [
       "wide",

@@ -76,4 +76,4 @@ Build the complete package with build-reference.mjs. reference-defaults.json and
 
 ## Potions ownership
 
-WGC11 is the single Potions control. WGH8 supplies its contents: HP potion, MP potion and carried consumables such as Smoke vial, with their counts. The HUD must not render these as sibling buttons or duplicate them in its inventory rail. HUD and combat footer reuse the same contents projection. Config can hide provider categories; selecting an entry emits a host intent and does not bypass targeting or confirmation.
+WGC11 is the single Potions control. WGH8 supplies its contents: HP potion, MP potion and carried consumables such as Smoke vial, with their counts. The HUD must not render these as sibling buttons or duplicate them in its inventory rail. Only the footer HUD renders the Potions control; the top HUD never renders it, in either placement preset. WGC11 consumes the shared WGH8 contents projection. Config can hide provider categories; selecting an entry emits a host intent and does not bypass targeting or confirmation.
