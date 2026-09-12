@@ -3,14 +3,24 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-994",
+    "id": "pr-1000",
     "date": "2026-09-12",
     "group": "2026-09-12",
-    "summary": "The i that explains a card sits above it on every screen",
-    "detail": "Pick a card anywhere in the game and the small gold i that opens its full text appears just above the card. That is where it has always been — except on the equipment you choose when making a character, where it sat inside the card's top-right corner instead, because that screen left no room above the cards and the badge would otherwise have crossed the STARTING ARMOUR heading. The room is there now, so that screen shows the i in the same place as every other one, whole and clear of the heading, and the same control no longer appears in two places depending on where you are.",
+    "summary": "Inspecting a card now offers what that screen is for",
+    "detail": "Opening a card to read it used to show a greyed-out Play card button with the words \"Play cards from your combat hand\" — on every screen except combat, including the spoils screen, where you had opened the card in order to take it. A card's buttons now come from the screen it is standing on: the spoils screen offers Choose this card, and choosing it there picks the same card in the row behind the window. A card you are only reading, such as one in the compendium, simply shows no button at all instead of a dead one.",
     "build": "0.7.1.9",
-    "pullRequest": 994,
-    "url": "https://github.com/cehinds/AshenSpire/pull/994"
+    "pullRequest": 1000,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1000"
+  },
+  {
+    "id": "pr-998",
+    "date": "2026-09-12",
+    "group": "2026-09-12",
+    "summary": "Every card answers the same two taps",
+    "detail": "Tap a card once and it lights up, with the small i appearing beside it a moment later; tap it again — or press and hold it — and it does the thing you came for. That is now true of every card in the game. Two recent changes had pulled it apart: choosing an armament at the Smith and arming a card to burn at the merchant had started acting on the first tap, so you committed to a card before you had been shown it, and a card whose text was cut short opened its information straight from the small arrow in its corner, which no other card did. The arrow now selects the card like a tap anywhere else on it, and the i is the one way in to a card's full information everywhere. Reading a card and then tapping it no longer loses that tap. The merchant's burn shelf gains the green confirm button the loot screen and the Smith already had, so burning a card can be done with a second tap, a hold, or the button.",
+    "build": "0.7.1.8",
+    "pullRequest": 998,
+    "url": "https://github.com/cehinds/AshenSpire/pull/998"
   },
   {
     "id": "pr-993",

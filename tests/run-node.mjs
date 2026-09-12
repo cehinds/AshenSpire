@@ -990,6 +990,18 @@ try {
   console.error('FAIL  Card removal and touch flick regressions:', error);
 }
 try {
+  await import('./card-two-beats.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Every card owes two beats:', error);
+}
+try {
+  await import('./card-actions.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The card action service:', error);
+}
+try {
   await import('./starting-equipment-preview.test.mjs');
 } catch (error) {
   zoomExtra++;

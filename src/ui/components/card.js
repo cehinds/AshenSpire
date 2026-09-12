@@ -1,4 +1,5 @@
 import { bindCardInspection, openCardInspection } from './cardInspection.js';
+import { cardActions } from '../../services/cardActions.js';
 import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js';
 // src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
 //
@@ -198,8 +199,20 @@ export function renderCard(registries, ref, opts = {}) {
       decorateKeywords(details);
       const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false });
       details.classList.add('playing-card-details');
+      // NO DEFAULT VERB. This line used to read
+      //   `opts.inspectionAction || (() => ({ enabled: false, reason: 'Play cards from your combat hand.' }))`
+      // and that fallback was the defect: every surface but combat inherited
+      // combat's verb as a dead button, on the spoils screen most absurdly,
+      // where the player had opened the card in order to take it.
+      //
+      // A surface now says which one it is (`opts.surface`) and hands over the
+      // commits it owns (`opts.commands`); services/cardActions.js answers what
+      // that surface offers. A card with nothing to offer gets a reading door
+      // and no footer, which is the honest shape rather than an apology.
+      const surface = opts.surface || 'none';
       return openCardInspection({ title: def.name, card: face, details, opener,
-        getAction: opts.inspectionAction || (() => ({ enabled:false, reason:'Play cards from your combat hand.' })) });
+        actions: () => cardActions(surface, ref, { availability: opts.availability, only: opts.only }),
+        commands: opts.commands || {} });
     } });
   return el;
 }

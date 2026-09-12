@@ -276,6 +276,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.card.alreadyTaken",
+    "extends": "",
+    "short": "Already taken",
+    "full": "A card has already been taken from this reward.",
+    "tip": ""
+  },
+  {
     "id": "reward.flask.blocked",
     "extends": "",
     "short": "A {name} — but your flask slots are full. It stays in the mud.",
@@ -448,6 +455,20 @@ export const uiStrings = [
     "extends": "",
     "short": "BURN IT",
     "full": "Spend the cinders and remove the card for good.",
+    "tip": ""
+  },
+  {
+    "id": "shop.burn.idle",
+    "extends": "",
+    "short": "SELECT A CARD",
+    "full": "Tap a card to light it; this button burns the one you light.",
+    "tip": ""
+  },
+  {
+    "id": "shop.burn.ready",
+    "extends": "",
+    "short": "BURN {name} ({cost})",
+    "full": "Take {name} out of the deck for good for {cost} cinders.",
     "tip": ""
   },
   {
