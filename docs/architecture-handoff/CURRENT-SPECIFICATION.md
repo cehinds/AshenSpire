@@ -59,3 +59,5 @@ Portrait reference profiles: iPhone SE3 at375×667 CSS px and Galaxy S24 at360×
 Preview tabs: Wireframe shows structural schematic, Example shows documentation renderer, Live game embeds a configurable actual game-build URL. Live game starts only on Run game, keeps real game navigation, and is never claimed to implement a proposed wireframe. Browser embedding may be restricted; Open separately exposes the same build. No gameplay script is rewritten or auto-executed to simulate passing validation.
 
 W4a composition: WGS2 shared HUD + WGC1 battlefield + WGC5 hand + WGC6 packed action footer. WGS2 and WGC6 standalone examples call exactly the same reference renderers as the W4a example. Footer children reference WGC7–WGC11; scene component links navigate to each reusable definition.
+
+Third preview-tab correction: Component composition replaces Live game. It executes the reference composition from shared component parts and exposes links to their definitions. It does not embed the production game. W4a composition uses the shared HUD/footer renderers and scene model.
