@@ -15,3 +15,14 @@
 .cc-reference[data-component=WCB2]>.cc-button,.cc-reference[data-component=WCB3]>.cc-button,.cc-reference[data-component=WCB4]>.cc-button{width:var(--button-choice);box-sizing:border-box;white-space:normal;overflow-wrap:anywhere}
 .cc-action-row>.cc-button{flex:1 1 0;min-width:0}
 .cc-action-row>.cc-button:only-child{width:100%;flex-basis:100%}
+
+/* WGC6 owns every control's track; disclosure wrappers cannot add layout. */
+.cc-reference .cc-footer{display:grid;grid-template-columns:var(--cc-large) var(--cc-small) var(--cc-large) var(--cc-small) var(--cc-large);width:max-content;max-width:100%;align-items:center;gap:var(--cc-gap)}
+.cc-reference .cc-footer>.cc-button{width:100%;height:var(--cc-small);min-height:0;margin:0;box-sizing:border-box}
+.cc-reference .cc-footer>.cc-button.large{height:var(--cc-large);transform:translateY(-.15em)}
+.cc-reference .cc-potions-control{border:0;padding:0;margin:0;width:var(--cc-large);height:var(--cc-large);min-height:0;position:relative;transform:translateY(-.15em)}
+.cc-reference .cc-potions-control>.hud-potions{border:0;padding:0;margin:0;width:100%;height:100%;min-height:0;background:transparent}
+.cc-reference .cc-potions-control>.hud-potions>summary{box-sizing:border-box;width:100%;height:100%;min-height:0;min-width:0;margin:0;padding:.2em;display:grid;place-items:center;border:.0625rem solid var(--cc-gold);border-radius:50%;font:inherit;font-size:clamp(.65rem,2cqw,.9rem);line-height:1.15;list-style:none}
+.cc-reference .cc-potions-control>.hud-potions>summary::before,.cc-reference .cc-potions-control>.hud-potions>summary::after{content:none}
+.cc-reference .cc-potions-control .hud-potions-items{margin:0}
+.cc-reference .cc-footer>.cc-button.large,.cc-reference .cc-footer>.cc-potions-control{transform:translateY(calc(var(--cc-large) * -.04))}
