@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1001",
+    "date": "2026-09-12",
+    "group": "2026-09-12",
+    "summary": "Groundwork: a card's facts now live apart from its picture",
+    "detail": "Nothing you see changes. Until now, working out what a card is — its cost, its type colour, which subtypes it carries, which class it belongs to — happened inside the same step that drew it, so nothing else in the game could ask those questions without drawing a card first. Those answers now live on their own, and drawing reads them. Two small things it fixes on the way: the cost shown on a card's corner and the cost written in its full description were worked out separately and could in principle disagree, and now cannot; and a card's facts can be written out whole, which is what lets the same card be drawn more than one way later.",
+    "build": "0.7.1.10",
+    "pullRequest": 1001,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1001"
+  },
+  {
     "id": "pr-1000",
     "date": "2026-09-12",
     "group": "2026-09-12",
