@@ -448,17 +448,41 @@ function pieceArt(piece, fallback = '⚔') {
 /** The kit picker's chip (creation's starting kit): an OptionCard — art, name, mods, tags. `.ec-*` are the hooks the tools read. */
 export function pieceChip(registries, piece, { selected, kind = null, presentation = null }) {
   const card = document.createElement('div');
-  card.className = 'equip-chip poker-equipment-choice' + (selected ? ' on' : '');
+  card.className = 'equip-chip poker-equipment-choice';
   const face = (kind ? renderCollectibleCard(registries, piece, kind, { interactive: false }) : renderEquipmentCard(registries, piece, { interactive: false, presentation })).card;
   face.tabIndex = 0;
   face.setAttribute('role', 'group');
   const choose = document.createElement('button');
   choose.type = 'button';
   choose.className = 'equipment-choose';
-  choose.textContent = selected ? 'Selected' : 'Choose ' + piece.name;
-  choose.setAttribute('aria-pressed', String(selected));
-  card.append(face, choose);
+  // THE BUTTON ONLY EVER OFFERS THE CHOICE; it never reports it. A chosen card
+  // is read off the ring the card wears (kit.css, `.is-chosen`), which is the
+  // same ring the spoils door draws — one signal for the whole game.
+  choose.textContent = 'Choose ' + piece.name;
+  // The ring is a colour, and a colour is not available to everyone. This note
+  // is the same fact in words, sized out of the layout (`.sr-only`), so the
+  // state survives for a screen reader once the button goes quiet.
+  const note = document.createElement('span');
+  note.className = 'sr-only equip-chosen-note';
+  card.append(face, choose, note);
+  setPieceChipChosen(card, selected);
   return card;
+}
+
+/**
+ * Put a kit chip into (or out of) its chosen state — the ring on the card, the
+ * quiet button, the spoken note. The picker calls this instead of writing the
+ * three of them itself, so a chip can never wear a ring while its button still
+ * offers the choice.
+ */
+export function setPieceChipChosen(chip, chosen) {
+  const on = !!chosen;
+  chip.classList.toggle('on', on);
+  chip.querySelector('.equipment-poker-card, .card')?.classList.toggle('is-chosen', on);
+  const choose = chip.querySelector('.equipment-choose');
+  if (choose) choose.setAttribute('aria-pressed', String(on));
+  const note = chip.querySelector('.equip-chosen-note');
+  if (note) note.textContent = on ? 'Selected' : '';
 }
 
 function inventoryFace(registries, row, {

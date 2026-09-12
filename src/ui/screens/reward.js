@@ -460,7 +460,10 @@ export function mountRewards(app, {
       const el = renderCard(registries, { cardId, upgraded: false }, { actionOwnsTouch: true });
       el.setAttribute('role', 'radio');
       el.setAttribute('aria-checked', String(cardId === selectedCardId));
+      // `reward-selected` is the door's own lift; `is-chosen` is the ring the
+      // whole game now shares (kit.css). Both, always together.
       el.classList.toggle('reward-selected', cardId === selectedCardId);
+      el.classList.toggle('is-chosen', cardId === selectedCardId);
       if (marks.cards.includes(cardId)) {
         // The marker is a RENDERED badge, not only a data attribute — Codex
         // 4989824448's third finding: `data-new` alone had no consumer in any
@@ -480,6 +483,7 @@ export function mountRewards(app, {
         for (const candidate of strip.querySelectorAll('.card')) {
           const selected = candidate === el;
           candidate.classList.toggle('reward-selected', selected);
+          candidate.classList.toggle('is-chosen', selected);
           candidate.setAttribute('aria-checked', String(selected));
         }
         confirmButton.disabled = false;

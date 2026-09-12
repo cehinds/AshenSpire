@@ -10,10 +10,20 @@ const browser = await chromium.launch({headless:true, ...(process.env.QA_BROWSER
 const checks=[], errors=[];
 function check(ok,label){assert.ok(ok,label);checks.push(label);}
 const snapshot = async(page,name)=>{await page.mouse.move(0,0);await page.waitForTimeout(550);await page.screenshot({path:join(out,`${name}.png`)});};
+// A CHOSEN CHIP HAS NO BUTTON UNDER IT (equipment.js pieceChip): the green
+// ring on the card is the state, and the Choose button goes quiet once the
+// choice is made. So choosing what is already chosen is one tap, not two.
 async function chooseItem(choice) {
   await choice.locator('.equipment-poker-card').click();
-  await choice.locator('.equipment-choose').click();
+  if (await choice.locator('.equipment-choose:visible').count()) await choice.locator('.equipment-choose').click();
 }
+// The ring is the claim this screen shares with the spoils door, so it is read
+// as a COLOUR off the card's own frame, against `--green` resolved in the page.
+const wearsChosenRing = (choice) => choice.locator('.equipment-poker-card').evaluate(el => {
+  const probe = document.createElement('span'); probe.style.color = 'var(--green)'; el.append(probe);
+  const green = getComputedStyle(probe).color; probe.remove();
+  return el.classList.contains('is-chosen') && getComputedStyle(el.querySelector('.epc-frame')).borderTopColor === green;
+});
 async function open(page,cls='reaver') {
   await page.goto(`${base}/index.html?shot=customize&shotClass=${cls}`,{waitUntil:'domcontentloaded'});
   await page.locator('[data-face=equipment]').click();await page.locator('[data-face=rightHand]').click();
@@ -32,11 +42,15 @@ try {
         for(const id of ids) {
           const choice=panel.locator(`[data-armament-id=${id}]`);
           await choice.locator('.equipment-poker-card').click();
-          check(await panel.locator('.equipment-choose:visible').count()===1,`${name}/${cls}/${slot}/${id}: only focused choice exposes an action`);
-          check(await choice.locator('.equipment-choose').isVisible(),`${name}/${cls}/${slot}/${id}: browsing reveals Choose before equipping`);
+          const alreadyChosen=await choice.evaluate(el=>el.classList.contains('on'));
+          check(await panel.locator('.equipment-choose:visible').count()===(alreadyChosen?0:1),`${name}/${cls}/${slot}/${id}: only a focused, unchosen choice exposes an action`);
+          check(await choice.locator('.equipment-choose').isVisible()!==alreadyChosen,`${name}/${cls}/${slot}/${id}: browsing reveals Choose, and the chosen card hides it`);
           check(await choice.locator('.epc-name').evaluate(e=>e.scrollHeight<=e.clientHeight+1),`${name}/${cls}/${slot}/${id}: title is not vertically clipped`);
-          await choice.locator('.equipment-choose').click();
+          if(!alreadyChosen)await choice.locator('.equipment-choose').click();
           check(await panel.locator('.poker-equipment-choice.on').count()===1,`${name}/${cls}/${slot}/${id}: one selected choice`);
+          check(await wearsChosenRing(choice),`${name}/${cls}/${slot}/${id}: the chosen card wears the green ring`);
+          check(!await choice.locator('.equipment-choose').isVisible(),`${name}/${cls}/${slot}/${id}: nothing is printed under the chosen card`);
+          check(await choice.locator('.equip-chosen-note').evaluate(el=>el.textContent)==='Selected',`${name}/${cls}/${slot}/${id}: the state is spoken for a screen reader`);
           check(await panel.locator('.cc-equipment-details').getAttribute('data-preview-item')===id,`${name}/${cls}/${slot}/${id}: matching details`);
           check(await choice.locator('.equipment-choose').getAttribute('aria-pressed')==='true',`${name}/${cls}/${slot}/${id}: pressed state`);
           check(await panel.isVisible(),`${name}/${cls}/${slot}/${id}: waits for Continue`);
