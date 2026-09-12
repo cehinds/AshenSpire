@@ -1,5 +1,18 @@
 {
   "screens": {
+    "buttonWidths": {
+      "presets": {
+        "quarter": 25,
+        "third": 30,
+        "half": 50,
+        "full": 100
+      },
+      "choice": "half",
+      "minimumReadable": "8rem",
+      "iconSize": "2.75rem",
+      "footer": "equalSharesAfterGaps",
+      "singleFooter": "full"
+    },
     "inset": "1rem",
     "gap": ".5rem",
     "sidebarShare": "26%",
@@ -68,6 +81,16 @@
       "heightRem": 0.35,
       "animationMs": 650,
       "awardPreview": 15
+    },
+    "diagram": {
+      "columns": {
+        "wide": 62,
+        "compact": 48,
+        "portraitSE": 40,
+        "portraitS24": 42
+      },
+      "trackColumns": 20,
+      "labelColumns": 8
     },
     "layout": {
       "gapRem": 0.35,
@@ -242,6 +265,19 @@
     }
   },
   "components": {
+    "buttonWidths": {
+      "presets": {
+        "quarter": 25,
+        "third": 30,
+        "half": 50,
+        "full": 100
+      },
+      "choice": "half",
+      "minimumReadable": "8rem",
+      "iconSize": "2.75rem",
+      "footer": "equalSharesAfterGaps",
+      "singleFooter": "full"
+    },
     "spacing": {
       "gapRem": 0.2,
       "insetRem": 0.75,

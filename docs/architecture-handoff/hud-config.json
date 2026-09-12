@@ -47,6 +47,16 @@
     "animationMs": 650,
     "awardPreview": 15
   },
+  "diagram": {
+    "columns": {
+      "wide": 62,
+      "compact": 48,
+      "portraitSE": 40,
+      "portraitS24": 42
+    },
+    "trackColumns": 20,
+    "labelColumns": 8
+  },
   "layout": {
     "gapRem": 0.35,
     "insetRem": 0.5,

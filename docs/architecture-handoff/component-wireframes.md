@@ -377,10 +377,14 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-Header  Title                         [×]
-Owner               (i)
-Footer  [Back]                   [Confirm]
-Selected card       [Context action]
+Host content width = 100%
+Presets: quarter 25% · third 30%
+         half 50% · full 100%
+Choices [ equal half ] gap [ equal half ]
+Footer  [    Back    ] gap [   Confirm  ]
+Solo    [            Full             ]
+Header  Title                       [×]
+Owner                (i)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -390,10 +394,14 @@ Selected card       [Context action]
 **Compact**
 
 ```text
-Header  Title                         [×]
-Owner               (i)
-Footer  [Back]                   [Confirm]
-Selected card       [Context action]
+Host content width = 100%
+Presets: quarter 25% · third 30%
+         half 50% · full 100%
+Choices [ equal half ] gap [ equal half ]
+Footer  [    Back    ] gap [   Confirm  ]
+Solo    [            Full             ]
+Header  Title                       [×]
+Owner                (i)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -406,10 +414,14 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Header  Title                         [×]
-Owner               (i)
-Footer  [Back]                   [Confirm]
-Selected card       [Context action]
+Host content width = 100%
+Presets: quarter 25% · third 30%
+         half 50% · full 100%
+Choices [ equal half ] gap [ equal half ]
+Footer  [    Back    ] gap [   Confirm  ]
+Solo    [            Full             ]
+Header  Title                       [×]
+Owner                (i)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -423,10 +435,14 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Header  Title                         [×]
-Owner               (i)
-Footer  [Back]                   [Confirm]
-Selected card       [Context action]
+Host content width = 100%
+Presets: quarter 25% · third 30%
+         half 50% · full 100%
+Choices [ equal half ] gap [ equal half ]
+Footer  [    Back    ] gap [   Confirm  ]
+Solo    [            Full             ]
+Header  Title                       [×]
+Owner                (i)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -440,9 +456,31 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Resolve every control through the shared action contract. Keep footer actions inline; sole action spans its footer. Inherit focus, disabled, busy, selected, and semantic role tokens.
+// Resolve every control through the shared action contract and config.buttonWidths.presets. Percentages reference the owning host content width; vw is valid only for a viewport-width host. Sibling text buttons use the same selected preset and equal gap-aware widths. Choice controls default to the half preset. Footer siblings divide the available width after gaps equally, remain inline, and a sole footer action uses full width. Exit, inspect, status-icon, map-node and packed combat-footer controls retain their explicitly configured compact or circular geometry. Inherit focus, disabled, busy, selected, and semantic role tokens.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
+
+// Width presets are configuration data; percentages use the owning content box.
+hostWidth = MeasureContentWidth(context.buttonHost)
+role = ResolveButtonRole(model, context)
+preset = ResolveRolePreset(role, config.buttonWidths)
+// Choice role resolves to the shared half preset by default.
+requestedWidth = hostWidth * PercentFraction(config.buttonWidths.presets[preset])
+siblings = FilterVisibleSiblingButtons(IncludingCurrentButton(context.actionGroup, model))
+IF HasCompactGeometryException(context, config.buttonWidths)
+  width = ResolveConfiguredCompactGeometry(context)
+ELSE IF IsFooter(context) AND IsSoleAction(siblings)
+  width = hostWidth
+ELSE IF IsFooter(context) OR SharesButtonWidth(siblings)
+  gapWidth = BetweenItemGapCount(siblings) * ResolveSharedGap(config)
+  equalShare = AvailableAfterGaps(hostWidth, gapWidth) / Count(siblings)
+  width = IF IsFooter(context) THEN equalShare ELSE FitPresetToShare(requestedWidth, equalShare)
+ELSE
+  width = FitToHost(requestedWidth, hostWidth)
+// Apply the same resolved width to sibling text buttons, regardless of label length.
+ApplyEqualSiblingWidths(siblings, width)
+// Percent CSS is local to the host. Use viewport units only when the host is the viewport.
+KeepFooterInline(); PreserveConfiguredReadableTextAndTargetMinimums()
 RenderRegisteredComponent(model, children, config)
 // Local preview actions never mutate the game. Production host revalidates commands.
 On activation: DispatchSemanticIntent(model.intent, context)
@@ -536,7 +574,10 @@ On dispose: release timers, observers and events
 
 ```text
           selected card
-           [ Use ] ← outside card footer
+[        Use · full host width        ]
+             outside card footer
+Choice group: [ half ] gap [ half ]
+Other presets: 25% · 30% · 50% · 100%
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -547,7 +588,10 @@ On dispose: release timers, observers and events
 
 ```text
           selected card
-           [ Use ] ← outside card footer
+[        Use · full host width        ]
+             outside card footer
+Choice group: [ half ] gap [ half ]
+Other presets: 25% · 30% · 50% · 100%
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -561,7 +605,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 ```text
           selected card
-           [ Use ] ← outside card footer
+[        Use · full host width        ]
+             outside card footer
+Choice group: [ half ] gap [ half ]
+Other presets: 25% · 30% · 50% · 100%
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -576,7 +623,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
           selected card
-           [ Use ] ← outside card footer
+[        Use · full host width        ]
+             outside card footer
+Choice group: [ half ] gap [ half ]
+Other presets: 25% · 30% · 50% · 100%
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -590,9 +640,31 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project domain action and readiness. Omit absent actions. Await required target when applicable; revalidate once on commit. Never place Use inside metadata footer.
+// Project domain action and readiness. Omit absent actions. Resolve the named width preset through config.buttonWidths.presets; choice controls use config.buttonWidths.choice, default half. Sibling actions share an equal gap-aware width; sole footer action spans the entire footer content width. Await required target when applicable; revalidate once on commit. Never place Use inside metadata footer. Compact HUD and packed combat-footer contexts retain their declared geometry exceptions.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
+
+// Width presets are configuration data; percentages use the owning content box.
+hostWidth = MeasureContentWidth(context.buttonHost)
+role = ResolveButtonRole(model, context)
+preset = ResolveRolePreset(role, config.buttonWidths)
+// Choice role resolves to the shared half preset by default.
+requestedWidth = hostWidth * PercentFraction(config.buttonWidths.presets[preset])
+siblings = FilterVisibleSiblingButtons(IncludingCurrentButton(context.actionGroup, model))
+IF HasCompactGeometryException(context, config.buttonWidths)
+  width = ResolveConfiguredCompactGeometry(context)
+ELSE IF IsFooter(context) AND IsSoleAction(siblings)
+  width = hostWidth
+ELSE IF IsFooter(context) OR SharesButtonWidth(siblings)
+  gapWidth = BetweenItemGapCount(siblings) * ResolveSharedGap(config)
+  equalShare = AvailableAfterGaps(hostWidth, gapWidth) / Count(siblings)
+  width = IF IsFooter(context) THEN equalShare ELSE FitPresetToShare(requestedWidth, equalShare)
+ELSE
+  width = FitToHost(requestedWidth, hostWidth)
+// Apply the same resolved width to sibling text buttons, regardless of label length.
+ApplyEqualSiblingWidths(siblings, width)
+// Percent CSS is local to the host. Use viewport units only when the host is the viewport.
+KeepFooterInline(); PreserveConfiguredReadableTextAndTargetMinimums()
 RenderRegisteredComponent(model, children, config)
 // Local preview actions never mutate the game. Production host revalidates commands.
 On activation: DispatchSemanticIntent(model.intent, context)
@@ -608,8 +680,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-Footer right      [Confirm]
-Sole action       [       Confirm       ]
+Footer [ equal Back ] gap [ equal Confirm ]
+Solo   [          Confirm · 100%          ]
+Choice [ half 50% ] gap [ half 50% ]
+Presets: 25% · 30% · 50% · 100% of host
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -619,8 +693,10 @@ Sole action       [       Confirm       ]
 **Compact**
 
 ```text
-Footer right      [Confirm]
-Sole action       [       Confirm       ]
+Footer [ equal Back ] gap [ equal Confirm ]
+Solo   [          Confirm · 100%          ]
+Choice [ half 50% ] gap [ half 50% ]
+Presets: 25% · 30% · 50% · 100% of host
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -633,8 +709,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Footer right      [Confirm]
-Sole action       [       Confirm       ]
+Footer [ equal Back ] gap [ equal Confirm ]
+Solo   [          Confirm · 100%          ]
+Choice [ half 50% ] gap [ half 50% ]
+Presets: 25% · 30% · 50% · 100% of host
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -648,8 +726,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Footer right      [Confirm]
-Sole action       [       Confirm       ]
+Footer [ equal Back ] gap [ equal Confirm ]
+Solo   [          Confirm · 100%          ]
+Choice [ half 50% ] gap [ half 50% ]
+Presets: 25% · 30% · 50% · 100% of host
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -663,9 +743,31 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Bind model.label and model.intent. Ready and focused primary uses configured green; disabled and busy states take precedence. Revalidate command at activation.
+// Bind model.label and model.intent. Resolve widths from config.buttonWidths.presets and the configured role; percentages describe the owning content box, not the device viewport. Choice role defaults to half. Footer actions use equal shares of remaining inline width after configured gaps, or full when alone. Sibling labels never determine different button widths. Ready and focused primary uses configured green; disabled and busy states take precedence. Revalidate command at activation.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
+
+// Width presets are configuration data; percentages use the owning content box.
+hostWidth = MeasureContentWidth(context.buttonHost)
+role = ResolveButtonRole(model, context)
+preset = ResolveRolePreset(role, config.buttonWidths)
+// Choice role resolves to the shared half preset by default.
+requestedWidth = hostWidth * PercentFraction(config.buttonWidths.presets[preset])
+siblings = FilterVisibleSiblingButtons(IncludingCurrentButton(context.actionGroup, model))
+IF HasCompactGeometryException(context, config.buttonWidths)
+  width = ResolveConfiguredCompactGeometry(context)
+ELSE IF IsFooter(context) AND IsSoleAction(siblings)
+  width = hostWidth
+ELSE IF IsFooter(context) OR SharesButtonWidth(siblings)
+  gapWidth = BetweenItemGapCount(siblings) * ResolveSharedGap(config)
+  equalShare = AvailableAfterGaps(hostWidth, gapWidth) / Count(siblings)
+  width = IF IsFooter(context) THEN equalShare ELSE FitPresetToShare(requestedWidth, equalShare)
+ELSE
+  width = FitToHost(requestedWidth, hostWidth)
+// Apply the same resolved width to sibling text buttons, regardless of label length.
+ApplyEqualSiblingWidths(siblings, width)
+// Percent CSS is local to the host. Use viewport units only when the host is the viewport.
+KeepFooterInline(); PreserveConfiguredReadableTextAndTargetMinimums()
 RenderRegisteredComponent(model, children, config)
 // Local preview actions never mutate the game. Production host revalidates commands.
 On activation: DispatchSemanticIntent(model.intent, context)
@@ -681,7 +783,9 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-Footer left [Back]        [Primary]
+Footer [ equal Back ] gap [ equal Primary ]
+Solo   [            Back · 100%           ]
+Width follows the shared sibling preset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -691,7 +795,9 @@ Footer left [Back]        [Primary]
 **Compact**
 
 ```text
-Footer left [Back]        [Primary]
+Footer [ equal Back ] gap [ equal Primary ]
+Solo   [            Back · 100%           ]
+Width follows the shared sibling preset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -704,7 +810,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Footer left [Back]        [Primary]
+Footer [ equal Back ] gap [ equal Primary ]
+Solo   [            Back · 100%           ]
+Width follows the shared sibling preset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -718,7 +826,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Footer left [Back]        [Primary]
+Footer [ equal Back ] gap [ equal Primary ]
+Solo   [            Back · 100%           ]
+Width follows the shared sibling preset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -732,9 +842,31 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Apply shared action contract with dismissal role. Use configured danger highlight on focus and pointer hover. Cancel presentation state and restore originating focus.
+// Apply shared action contract with dismissal role and the same config.buttonWidths preset as sibling footer actions. Deduct gaps before assigning equal widths; keep the footer inline, and span full host width when Back is the sole action. Use configured danger highlight on focus and pointer hover. Cancel presentation state and restore originating focus. Compact exit and icon controls inherit dismissal behavior while retaining their own target-size exception.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
+
+// Width presets are configuration data; percentages use the owning content box.
+hostWidth = MeasureContentWidth(context.buttonHost)
+role = ResolveButtonRole(model, context)
+preset = ResolveRolePreset(role, config.buttonWidths)
+// Choice role resolves to the shared half preset by default.
+requestedWidth = hostWidth * PercentFraction(config.buttonWidths.presets[preset])
+siblings = FilterVisibleSiblingButtons(IncludingCurrentButton(context.actionGroup, model))
+IF HasCompactGeometryException(context, config.buttonWidths)
+  width = ResolveConfiguredCompactGeometry(context)
+ELSE IF IsFooter(context) AND IsSoleAction(siblings)
+  width = hostWidth
+ELSE IF IsFooter(context) OR SharesButtonWidth(siblings)
+  gapWidth = BetweenItemGapCount(siblings) * ResolveSharedGap(config)
+  equalShare = AvailableAfterGaps(hostWidth, gapWidth) / Count(siblings)
+  width = IF IsFooter(context) THEN equalShare ELSE FitPresetToShare(requestedWidth, equalShare)
+ELSE
+  width = FitToHost(requestedWidth, hostWidth)
+// Apply the same resolved width to sibling text buttons, regardless of label length.
+ApplyEqualSiblingWidths(siblings, width)
+// Percent CSS is local to the host. Use viewport units only when the host is the viewport.
+KeepFooterInline(); PreserveConfiguredReadableTextAndTargetMinimums()
 RenderRegisteredComponent(model, children, config)
 // Local preview actions never mutate the game. Production host revalidates commands.
 On activation: DispatchSemanticIntent(model.intent, context)
@@ -1121,7 +1253,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Observe owner selection once. Apply inherited glow to the entire visible assembly. Reveal inspect after config.selection.revealDelayMs. Cancel pending reveal on deselection and disposal.
+// Observe owner selection once. Apply inherited glow to the entire visible assembly, including the active lower stack. Reveal inspect after config.selection.revealDelayMs. Cancel pending reveal on deselection and disposal.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -1210,7 +1342,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project known values using registered detail providers. Render shared label/value columns in declared section order. Unknown is distinct from absent. Preserve one independently scrolling details pane.
+// Project known values using registered detail providers. Render HP, intent and defense as facts, never embed sprite-overlay components in this pane. Render shared label/value columns in declared section order. Omit inactive current-state fields; unknown is distinct from absent. Preserve one independently scrolling details pane.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -2598,10 +2730,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-Shared HUD
+Shared HUD + optional blue XP strip
 Battlefield: player →   ← enemies
 Hand: [card] [card] [card]
-(A)[Draw][End turn][Discard](P)
+(A)[Draw][End turn][Discard](Potions)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2611,10 +2743,10 @@ Hand: [card] [card] [card]
 **Compact**
 
 ```text
-Shared HUD
+Shared HUD + optional blue XP strip
 Battlefield: player →   ← enemies
 Hand: [card] [card] [card]
-(A)[Draw][End turn][Discard](P)
+(A)[Draw][End turn][Discard](Potions)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2627,10 +2759,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Shared HUD
+Shared HUD + optional blue XP strip
 Battlefield: player →   ← enemies
 Hand: [card] [card] [card]
-(A)[Draw][End turn][Discard](P)
+(A)[Draw][End turn][Discard](Potions)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2644,10 +2776,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Shared HUD
+Shared HUD + optional blue XP strip
 Battlefield: player →   ← enemies
 Hand: [card] [card] [card]
-(A)[Draw][End turn][Discard](P)
+(A)[Draw][End turn][Discard](Potions)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2661,7 +2793,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose shared HUD, stage, hand and footer using scene band config. Child modules receive the same immutable snapshot and emit domain intents through the host dispatcher.
+// Compose shared HUD, stage, hand and footer using scene band config. Child modules receive the same immutable snapshot and emit domain intents through the host dispatcher. WGC11 is the single Potions control; it opens WGH8 charge-flask and carried-potion contents inside the footer.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -2823,7 +2955,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Allocate the player slot and render shared combatant card with player-facing context. Intent is hidden by role default but configurable. Preserve sprite proportions.
+// Allocate player slots from config.scene.playerCount and stable actor IDs; render shared combatant cards with player-facing context. Intent is hidden by role default but configurable. Preserve sprite proportions. Counts are preview fixture configuration, not a gameplay party-size rule.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -2900,7 +3032,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project stable enemy IDs to authored slots. Render the same combatant component with enemy-facing context and active intent; do not mirror controls or names.
+// Project stable enemy IDs to authored slots; the preview count comes from config.scene.enemyCount. Render the same combatant component with enemy-facing context and active intent; do not mirror controls or names.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -3046,7 +3178,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project stable hand cards through the shared WC1 renderer. Use configured spacing and card ratio; fit/paginate when minimum readable width cannot fit. Do not implement draw or damage logic here.
+// Project stable hand cards through the shared WC1 renderer; reference fixtures resolve config.hand.fixtureIds through the registry. Use configured spacing and card ratio; fit/paginate when minimum readable width cannot fit. Do not implement draw or damage logic here.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -3586,9 +3718,9 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-HP      [████░]                 32 / 40
-Mana    [██████░░░░]    6 / 10
-Stamina [████████░░]    8 / 10
+HP      [███░]                32 / 40
+MP      [██████░░░░]          6 / 10
+Stamina [████████░░]          8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3598,9 +3730,9 @@ Stamina [████████░░]    8 / 10
 **Compact**
 
 ```text
-HP      [████░]                 32 / 40
-Mana    [██████░░░░]    6 / 10
-Stamina [████████░░]    8 / 10
+HP      [███░]                32 / 40
+MP      [██████░░░░]          6 / 10
+Stamina [████████░░]          8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3613,9 +3745,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-HP      [████░]                 32 / 40
-Mana    [██████░░░░]    6 / 10
-Stamina [████████░░]    8 / 10
+HP      [███░]                32 / 40
+MP      [██████░░░░]          6 / 10
+Stamina [████████░░]          8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3629,9 +3761,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-HP      [████░]                 32 / 40
-Mana    [██████░░░░]    6 / 10
-Stamina [████████░░]    8 / 10
+HP      [███░]                32 / 40
+MP      [██████░░░░]          6 / 10
+Stamina [████████░░]          8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3646,14 +3778,15 @@ INPUT resource snapshot, config.vitality, availableWidth
 // Current source resourceBarPlan separates track length from fill.
 FOR each configured active resource
   reference = config.vitality.referenceMaximum[resource.id]
-  allowedWidth = availableWidth * PercentFraction(config.vitality.maximumWidthPercent)
-  trackWidth = IF config.vitality.scaleByMaximum THEN ClampToHost(resource.maximum / reference * allowedWidth) ELSE allowedWidth
+  meterLaneWidth = ReserveExternalLabelColumns(availableWidth, localizedLabels, currentMaxValues)
+  allowedWidth = meterLaneWidth * ClampUnit(PercentFraction(config.vitality.maximumWidthPercent))
+  trackWidth = IF config.vitality.scaleByMaximum THEN ClampToRange(resource.maximum / reference * allowedWidth, EmptyLength(), allowedWidth) ELSE allowedWidth
   fillWidth = SafeProgressFraction(resource.current, resource.maximum) * trackWidth
   RenderTrack(trackWidth); RenderFill(fillWidth)
   RenderExternalValue(resource.current, resource.maximum)
 // Current/max label occupies a shared outside column, never squeezed inside a short track.
 // Reference maximum caps presentation width only; never caps domain maximum or value.
-// Proposed reference defaults: read config; current source uses different mana/stamina references.
+// Defaults and source references currently agree; read config rather than retyping their maxima.
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3785,15 +3918,15 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-┌─────────────────────────────────────────────────────┐
-│ Class: Warden       Cinders: 120       Act 1 Floor 4 │
-│ HP      ████████░░ 32/40     [Armoury] [Menu]        │
-│ Mana    ██████░░░░  6/10                            │
-│ Stamina ███████░░░  8/10                            │
-├─────────────────────────────────────────────────────┤
-│ [Ash seal] [Ember charm]                           │
-└─────────────────────────────────────────────────────┘
-████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+┌──────────────────────────────────────────────────────────────┐
+│Warden · Cinders 120 · Act 1 Floor 4                          │
+│HP      [███░]                32 / 40                         │
+│MP      [██████░░░░]          6 / 10                          │
+│Stamina [████████░░]          8 / 10                          │
+│[Armoury] [Menu]                                              │
+│[Ash seal] [Ember charm]                                      │
+└──────────────────────────────────────────────────────────────┘
+█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3803,15 +3936,15 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-┌─────────────────────────────────────────────────────┐
-│ Class: Warden       Cinders: 120       Act 1 Floor 4 │
-│ HP      ████████░░ 32/40     [Armoury] [Menu]        │
-│ Mana    ██████░░░░  6/10                            │
-│ Stamina ███████░░░  8/10                            │
-├─────────────────────────────────────────────────────┤
-│ [Ash seal] [Ember charm]                           │
-└─────────────────────────────────────────────────────┘
-████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+┌──────────────────────────────────────────────────────────────┐
+│Warden · Cinders 120 · Act 1 Floor 4                          │
+│HP      [███░]                32 / 40                         │
+│MP      [██████░░░░]          6 / 10                          │
+│Stamina [████████░░]          8 / 10                          │
+│[Armoury] [Menu]                                              │
+│[Ash seal] [Ember charm]                                      │
+└──────────────────────────────────────────────────────────────┘
+█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3824,14 +3957,15 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-┌──────────────────────────────┐
-│ Warden    ⛁120    Act1 Floor4│
-│ HP  █████░░ 32/40 [⚔] [☰]   │
-│ MP  ███░░░░  6/10           │
-│ STA ████░░░  8/12           │
-│ [Relics]                   │
-└──────────────────────────────┘
-████████████░░░░░░░░░░░░░░░░░░
+┌────────────────────────────────────────┐
+│Warden · Cinders 120 · Act 1 Floor 4    │
+│HP      [███░]                32 / 40   │
+│MP      [██████░░░░]          6 / 10    │
+│Stamina [████████░░]          8 / 10    │
+│[Armoury] [Menu]                        │
+│[Ash seal] [Ember charm]                │
+└────────────────────────────────────────┘
+████████████████░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3845,14 +3979,15 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-┌──────────────────────────────┐
-│ Warden    ⛁120    Act1 Floor4│
-│ HP  █████░░ 32/40 [⚔] [☰]   │
-│ MP  ███░░░░  6/10           │
-│ STA ████░░░  8/12           │
-│ [Relics]                   │
-└──────────────────────────────┘
-████████████░░░░░░░░░░░░░░░░░░
+┌────────────────────────────────────────┐
+│Warden · Cinders 120 · Act 1 Floor 4    │
+│HP      [███░]                32 / 40   │
+│MP      [██████░░░░]          6 / 10    │
+│Stamina [████████░░]          8 / 10    │
+│[Armoury] [Menu]                        │
+│[Ash seal] [Ember charm]                │
+└────────────────────────────────────────┘
+████████████████░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3895,8 +4030,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
-Blue fill / full host width / no permanent caption
+█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+Blue strip · 0.35rem · full host width
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3906,8 +4041,8 @@ Blue fill / full host width / no permanent caption
 **Compact**
 
 ```text
-████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
-Blue fill / full host width / no permanent caption
+█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+Blue strip · 0.35rem · full host width
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3920,8 +4055,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
-Blue fill / full host width / no permanent caption
+████████████████░░░░░░░░░░░░░░░░░░░░░░░░
+Blue strip · 0.35rem · full host width
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3935,8 +4070,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
-Blue fill / full host width / no permanent caption
+████████████████░░░░░░░░░░░░░░░░░░░░░░░░
+Blue strip · 0.35rem · full host width
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3966,7 +4101,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]
+[Ash seal] [Ember charm]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3976,7 +4111,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]
+[Ash seal] [Ember charm]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3989,7 +4124,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]
+[Ash seal] [Ember charm]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4003,7 +4138,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]
+[Ash seal] [Ember charm]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4026,7 +4161,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-Class: Warden           Cinders: 120           Act 1 · Floor 4
+Warden · Cinders 120 · Act 1 Floor 4
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4036,7 +4171,7 @@ Class: Warden           Cinders: 120           Act 1 · Floor 4
 **Compact**
 
 ```text
-Class: Warden           Cinders: 120           Act 1 · Floor 4
+Warden · Cinders 120 · Act 1 Floor 4
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4049,7 +4184,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Class: Warden           Cinders: 120           Act 1 · Floor 4
+Warden · Cinders 120 · Act 1 Floor 4
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4063,7 +4198,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Class: Warden           Cinders: 120           Act 1 · Floor 4
+Warden · Cinders 120 · Act 1 Floor 4
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4086,8 +4221,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[WGC11 Potions]
-    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]
+[WGC11 Potions · footer only]
+[HP ×2] [MP ×1] [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4097,8 +4232,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[WGC11 Potions]
-    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]
+[WGC11 Potions · footer only]
+[HP ×2] [MP ×1] [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4111,8 +4246,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[WGC11 Potions]
-    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]
+[WGC11 Potions · footer only]
+[HP ×2] [MP ×1] [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4126,8 +4261,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[WGC11 Potions]
-    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]
+[WGC11 Potions · footer only]
+[HP ×2] [MP ×1] [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4218,6 +4353,7 @@ On dispose: release timers, observers and events
 
 ```text
 Shared HUD
+Region [Ashen March ▾]
 Map viewport: connected node graph
 Selected node: known details
 [Recenter]                 [Enter town]
@@ -4231,6 +4367,7 @@ Selected node: known details
 
 ```text
 Shared HUD
+Region [Ashen March ▾]
 Map viewport: connected node graph
 Selected node: known details
 [Recenter]                 [Enter town]
@@ -4247,6 +4384,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 ```text
 Shared HUD
+Region [Ashen March ▾]
 Map viewport: connected node graph
 Selected node: known details
 [Recenter]                 [Enter town]
@@ -4264,6 +4402,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 Shared HUD
+Region [Ashen March ▾]
 Map viewport: connected node graph
 Selected node: known details
 [Recenter]                 [Enter town]
@@ -4280,7 +4419,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose shared HUD, camera viewport, selected-node details and inline footer. Use configured map bands; selection projects details and never enters a node immediately.
+// Compose shared HUD, region selector, camera viewport, selected-node details and inline footer. Use configured map bands; node-selection callback updates details and entry readiness without entering immediately. Region selection is separate from camera graph contents.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -4365,7 +4504,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Render graph paths and buttons in a shared camera coordinate space. Preserve node identity during pan/zoom. Apply knowledge filtering before rendering unknown node labels.
+// Render graph paths and buttons in a shared camera coordinate space. Preserve node identity during pan/zoom. Apply knowledge filtering before rendering unknown node labels. Publish selected-node model to the WGM4 details host; the sibling WGM5 owns region selection.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -6014,7 +6153,8 @@ On dispose: release timers, observers and events
 ```text
 Class          Cinders          Act / Floor
 Resource meters               Armoury Menu
-Relic rail                      Potion rail
+Relic rail
+Blue experience strip when configured
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -6026,7 +6166,8 @@ Relic rail                      Potion rail
 ```text
 Class          Cinders          Act / Floor
 Resource meters               Armoury Menu
-Relic rail                      Potion rail
+Relic rail
+Blue experience strip when configured
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -6041,7 +6182,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
 Class          Cinders          Act / Floor
 Resource meters               Armoury Menu
-Relic rail                      Potion rail
+Relic rail
+Blue experience strip when configured
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -6057,7 +6199,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
 Class          Cinders          Act / Floor
 Resource meters               Armoury Menu
-Relic rail                      Potion rail
+Relic rail
+Blue experience strip when configured
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -6071,7 +6214,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Render the shared RunHud view model through WGH4. Toggle configured children before layout; never maintain separate combat and map HUD facts.
+// Render the shared RunHud view model through WGH4. Toggle configured children before layout; never maintain separate combat and map HUD facts. WGH5 experience fills the full HUD host width directly below the HUD and defaults to combat context. Potions are exclusively WGC11 footer contents through WGH8; no potion or charge-flask button appears in the top HUD in either preview preset.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -6140,7 +6283,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project class identity and run metadata from RunHeaderModel. Reuse shared header renderer rather than adding portrait, XP or duplicate character facts.
+// Project class identity and run metadata from RunHeaderModel using the same WGH7 header contract. This identity row contains only its declared fields; the separately configured WGH5 experience strip belongs below the total HUD.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -6231,7 +6374,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-HUD right        [Armoury] [Menu]
+HUD right                 [Menu]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -6241,7 +6384,7 @@ HUD right        [Armoury] [Menu]
 **Compact**
 
 ```text
-HUD right        [Armoury] [Menu]
+HUD right                 [Menu]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -6254,7 +6397,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-HUD right        [Armoury] [Menu]
+HUD right                 [Menu]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -6268,7 +6411,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-HUD right        [Armoury] [Menu]
+HUD right                 [Menu]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -6282,7 +6425,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose shared menu action with accessible label and command intent. Opening a menu follows configured simulation/input policy.
+// Compose the shared Menu action only, equivalent to the WGH3 menu slot; WGH2 owns the separate Armoury action. Opening a menu follows configured simulation/input policy and restores trigger focus on dismissal.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)

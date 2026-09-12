@@ -309,7 +309,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -346,6 +347,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -544,7 +558,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -574,6 +589,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -774,7 +802,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -811,6 +840,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -1009,7 +1051,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -1046,6 +1089,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -1244,7 +1300,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -1281,6 +1338,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -1479,7 +1549,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -1516,6 +1587,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -1719,7 +1803,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -1749,6 +1834,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -1947,7 +2045,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -1977,6 +2076,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -2181,7 +2293,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -2211,6 +2324,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -2407,13 +2533,15 @@
     "children": [
       "WCB1",
       "WCI1",
-      "WCI2"
+      "WCI2",
+      "WCF2"
     ],
     "implementation": {
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -2443,6 +2571,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -2636,16 +2777,13 @@
   },
   {
     "id": "WCF4",
-    "children": [
-      "WCM1",
-      "WCO1",
-      "WCO2"
-    ],
+    "children": [],
     "implementation": {
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -2675,6 +2813,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -2877,7 +3028,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -2907,6 +3059,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -3105,7 +3270,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -3135,6 +3301,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -3333,7 +3512,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -3363,6 +3543,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -3561,7 +3754,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -3591,6 +3785,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -3796,7 +4003,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -3826,6 +4034,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -4024,7 +4245,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -4054,6 +4276,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -4254,7 +4489,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -4284,6 +4520,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -4484,7 +4733,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -4514,6 +4764,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -4712,7 +4975,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -4742,6 +5006,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -4940,7 +5217,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -4970,6 +5248,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -5170,7 +5461,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -5200,6 +5492,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -5403,7 +5708,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -5433,6 +5739,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -5631,7 +5950,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -5661,6 +5981,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -5859,7 +6192,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -5889,6 +6223,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -6089,7 +6436,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -6119,6 +6467,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -6319,7 +6680,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -6349,6 +6711,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -6549,7 +6924,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -6579,6 +6955,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -6777,7 +7166,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -6807,6 +7197,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -7010,7 +7413,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -7040,6 +7444,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -7243,7 +7660,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -7273,6 +7691,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -7473,7 +7904,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -7503,6 +7935,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -7703,7 +8148,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -7733,6 +8179,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -7933,7 +8392,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -7963,6 +8423,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -8163,7 +8636,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -8193,6 +8667,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -8397,7 +8884,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -8434,6 +8922,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -8632,7 +9133,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -8669,6 +9171,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -8869,7 +9384,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -8906,6 +9422,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -9106,7 +9635,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -9143,6 +9673,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -9343,7 +9886,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -9380,6 +9924,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -9581,7 +10138,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -9618,6 +10176,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -9889,6 +10460,16 @@
         "animationMs": 650,
         "awardPreview": 15
       },
+      "diagram": {
+        "columns": {
+          "wide": 62,
+          "compact": 48,
+          "portraitSE": 40,
+          "portraitS24": 42
+        },
+        "trackColumns": 20,
+        "labelColumns": 8
+      },
       "layout": {
         "gapRem": 0.35,
         "insetRem": 0.5,
@@ -10043,6 +10624,16 @@
         "animationMs": 650,
         "awardPreview": 15
       },
+      "diagram": {
+        "columns": {
+          "wide": 62,
+          "compact": 48,
+          "portraitSE": 40,
+          "portraitS24": 42
+        },
+        "trackColumns": 20,
+        "labelColumns": 8
+      },
       "layout": {
         "gapRem": 0.35,
         "insetRem": 0.5,
@@ -10175,6 +10766,16 @@
         "animationMs": 650,
         "awardPreview": 15
       },
+      "diagram": {
+        "columns": {
+          "wide": 62,
+          "compact": 48,
+          "portraitSE": 40,
+          "portraitS24": 42
+        },
+        "trackColumns": 20,
+        "labelColumns": 8
+      },
       "layout": {
         "gapRem": 0.35,
         "insetRem": 0.5,
@@ -10306,6 +10907,16 @@
         "heightRem": 0.35,
         "animationMs": 650,
         "awardPreview": 15
+      },
+      "diagram": {
+        "columns": {
+          "wide": 62,
+          "compact": 48,
+          "portraitSE": 40,
+          "portraitS24": 42
+        },
+        "trackColumns": 20,
+        "labelColumns": 8
       },
       "layout": {
         "gapRem": 0.35,
@@ -10450,6 +11061,16 @@
         "animationMs": 650,
         "awardPreview": 15
       },
+      "diagram": {
+        "columns": {
+          "wide": 62,
+          "compact": 48,
+          "portraitSE": 40,
+          "portraitS24": 42
+        },
+        "trackColumns": 20,
+        "labelColumns": 8
+      },
       "layout": {
         "gapRem": 0.35,
         "insetRem": 0.5,
@@ -10570,6 +11191,16 @@
         "animationMs": 650,
         "awardPreview": 15
       },
+      "diagram": {
+        "columns": {
+          "wide": 62,
+          "compact": 48,
+          "portraitSE": 40,
+          "portraitS24": 42
+        },
+        "trackColumns": 20,
+        "labelColumns": 8
+      },
       "layout": {
         "gapRem": 0.35,
         "insetRem": 0.5,
@@ -10623,8 +11254,7 @@
   {
     "id": "WGH6",
     "children": [
-      "WC2b",
-      "WC2c"
+      "WC2b"
     ],
     "implementation": {
       "renderer": "hudPlayground",
@@ -10701,6 +11331,16 @@
         "heightRem": 0.35,
         "animationMs": 650,
         "awardPreview": 15
+      },
+      "diagram": {
+        "columns": {
+          "wide": 62,
+          "compact": 48,
+          "portraitSE": 40,
+          "portraitS24": 42
+        },
+        "trackColumns": 20,
+        "labelColumns": 8
       },
       "layout": {
         "gapRem": 0.35,
@@ -10832,6 +11472,16 @@
         "heightRem": 0.35,
         "animationMs": 650,
         "awardPreview": 15
+      },
+      "diagram": {
+        "columns": {
+          "wide": 62,
+          "compact": 48,
+          "portraitSE": 40,
+          "portraitS24": 42
+        },
+        "trackColumns": 20,
+        "labelColumns": 8
       },
       "layout": {
         "gapRem": 0.35,
@@ -10965,6 +11615,16 @@
         "animationMs": 650,
         "awardPreview": 15
       },
+      "diagram": {
+        "columns": {
+          "wide": 62,
+          "compact": 48,
+          "portraitSE": 40,
+          "portraitS24": 42
+        },
+        "trackColumns": 20,
+        "labelColumns": 8
+      },
       "layout": {
         "gapRem": 0.35,
         "insetRem": 0.5,
@@ -11085,6 +11745,16 @@
         "animationMs": 650,
         "awardPreview": 15
       },
+      "diagram": {
+        "columns": {
+          "wide": 62,
+          "compact": 48,
+          "portraitSE": 40,
+          "portraitS24": 42
+        },
+        "trackColumns": 20,
+        "labelColumns": 8
+      },
       "layout": {
         "gapRem": 0.35,
         "insetRem": 0.5,
@@ -11139,6 +11809,7 @@
     "id": "WGM0",
     "children": [
       "WGH4",
+      "WGM5",
       "WGM1",
       "WGM4",
       "WGM6",
@@ -11148,7 +11819,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -11171,6 +11843,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -11366,14 +12051,14 @@
     "id": "WGM1",
     "children": [
       "WGM2",
-      "WGM3",
-      "WGM5"
+      "WGM3"
     ],
     "implementation": {
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -11396,6 +12081,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -11594,7 +12292,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -11617,6 +12316,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -11817,7 +12529,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -11840,6 +12553,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -12040,7 +12766,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -12063,6 +12790,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -12261,7 +13001,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -12284,6 +13025,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -12484,7 +13238,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -12507,6 +13262,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -12707,7 +13475,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -12730,6 +13499,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -13411,7 +14193,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -13448,6 +14231,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -13650,7 +14446,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -13687,6 +14484,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -13887,7 +14697,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -13924,6 +14735,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -14124,7 +14948,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -14161,6 +14986,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -14361,7 +15199,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -14398,6 +15237,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -14596,7 +15448,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -14633,6 +15486,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -14833,7 +15699,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -14870,6 +15737,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -15070,7 +15950,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -15107,6 +15988,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -15307,7 +16201,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -15344,6 +16239,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -15545,7 +16453,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -15575,6 +16484,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -15776,7 +16698,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -15806,6 +16729,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -16006,7 +16942,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -16036,6 +16973,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -16236,7 +17186,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -16266,6 +17217,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -16467,7 +17431,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -16497,6 +17462,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -16697,7 +17675,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -16727,6 +17706,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -16925,7 +17917,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -16955,6 +17948,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -17153,7 +18159,8 @@
       "renderer": "renderCompletedComponent",
       "source": [
         "component-completion-client.js",
-        "component-completion.mjs"
+        "component-completion.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "component-completion.css"
@@ -17183,6 +18190,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "spacing": {
         "gapRem": 0.2,
         "insetRem": 0.75,
@@ -17384,7 +18404,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -17401,6 +18422,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -17432,7 +18466,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -17449,6 +18484,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -17480,7 +18528,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -17497,6 +18546,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -17528,7 +18590,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -17545,6 +18608,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -17577,7 +18653,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -17595,6 +18672,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -17626,7 +18716,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -17644,6 +18735,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -17675,7 +18779,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -17693,6 +18798,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -17725,7 +18843,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -17752,6 +18871,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -17785,7 +18917,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -17812,6 +18945,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -17845,7 +18991,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -17863,6 +19010,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -17896,7 +19056,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -17922,6 +19083,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -17953,7 +19127,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -17971,6 +19146,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18002,7 +19190,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18020,6 +19209,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18052,7 +19254,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18069,6 +19272,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18102,7 +19318,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18120,6 +19337,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18153,7 +19383,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18171,6 +19402,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18204,7 +19448,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18222,6 +19467,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18254,7 +19512,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18272,6 +19531,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18304,7 +19576,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18322,6 +19595,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18355,7 +19641,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18373,6 +19660,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18405,7 +19705,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18422,6 +19723,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18457,7 +19771,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18483,6 +19798,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18516,7 +19844,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18533,6 +19862,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18564,7 +19906,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18581,6 +19924,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18613,7 +19969,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18631,6 +19988,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18664,7 +20034,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18682,6 +20053,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18714,7 +20098,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18732,6 +20117,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18765,7 +20163,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18783,6 +20182,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18818,7 +20230,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18844,6 +20257,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18876,7 +20302,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18893,6 +20320,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18925,7 +20365,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18942,6 +20383,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -18974,7 +20428,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -18991,6 +20446,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -19023,7 +20491,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -19040,6 +20509,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -19072,7 +20554,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -19089,6 +20572,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -19121,7 +20617,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -19138,6 +20635,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -19168,7 +20678,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -19185,6 +20696,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -19215,7 +20739,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -19232,6 +20757,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -19262,7 +20800,8 @@
       "renderer": "renderScreenReference",
       "source": [
         "screen-reference-client.js",
-        "screen-reference.mjs"
+        "screen-reference.mjs",
+        "button-widths.mjs"
       ],
       "styles": [
         "screen-reference.css"
@@ -19279,6 +20818,19 @@
       }
     ],
     "defaults": {
+      "buttonWidths": {
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
       "inset": "1rem",
       "gap": ".5rem",
       "sidebarShare": "26%",
@@ -19553,6 +21105,16 @@
           "heightRem": 0.35,
           "animationMs": 650,
           "awardPreview": 15
+        },
+        "diagram": {
+          "columns": {
+            "wide": 62,
+            "compact": 48,
+            "portraitSE": 40,
+            "portraitS24": 42
+          },
+          "trackColumns": 20,
+          "labelColumns": 8
         },
         "layout": {
           "gapRem": 0.35,
@@ -19859,6 +21421,16 @@
           "animationMs": 650,
           "awardPreview": 15
         },
+        "diagram": {
+          "columns": {
+            "wide": 62,
+            "compact": 48,
+            "portraitSE": 40,
+            "portraitS24": 42
+          },
+          "trackColumns": 20,
+          "labelColumns": 8
+        },
         "layout": {
           "gapRem": 0.35,
           "insetRem": 0.5,
@@ -20155,6 +21727,16 @@
           "animationMs": 650,
           "awardPreview": 15
         },
+        "diagram": {
+          "columns": {
+            "wide": 62,
+            "compact": 48,
+            "portraitSE": 40,
+            "portraitS24": 42
+          },
+          "trackColumns": 20,
+          "labelColumns": 8
+        },
         "layout": {
           "gapRem": 0.35,
           "insetRem": 0.5,
@@ -20450,6 +22032,16 @@
           "heightRem": 0.35,
           "animationMs": 650,
           "awardPreview": 15
+        },
+        "diagram": {
+          "columns": {
+            "wide": 62,
+            "compact": 48,
+            "portraitSE": 40,
+            "portraitS24": 42
+          },
+          "trackColumns": 20,
+          "labelColumns": 8
         },
         "layout": {
           "gapRem": 0.35,
@@ -24378,132 +25970,23 @@
       }
     ],
     "defaults": {
-      "geometry": {
-        "ratioWidth": 5,
-        "ratioHeight": 8,
-        "widthMinimum": "10rem",
-        "widthPreferred": "18vw",
-        "widthMaximum": "16rem",
-        "bands": {
-          "header": 10,
-          "art": 40,
-          "body": 40,
-          "footer": 10
-        }
-      },
-      "selection": {
-        "delayMs": 1000
-      },
-      "tooltip": {
-        "delayMs": 1000
+      "combatant": {
+        "maxStackRows": 5,
+        "extraBarHeightRatio": 0.5,
+        "stackGapRem": 0.2,
+        "iconSizeRem": 1.575,
+        "defenseOffsetRatio": 0.5,
+        "defenseGapRem": 0.5,
+        "playerIntentVisible": false,
+        "enemyIntentVisible": true
       },
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
       },
-      "metadata": {
-        "ownedLabel": "Owned",
-        "unknown": "Unknown",
-        "empty": "None"
-      },
-      "body": {
-        "maximumPreviewFacts": 2,
-        "showFlavor": false
-      },
-      "components": {
-        "identity": "WCI1",
-        "art": "WCI2",
-        "footer": "WCI3",
-        "inspect": "WCB1",
-        "action": "WCB2",
-        "facts": "WCF4"
-      },
-      "features": [
-        {
-          "tag": "feature:rules",
-          "component": "rules",
-          "order": 10
-        },
-        {
-          "tag": "feature:facts",
-          "component": "facts",
-          "order": 20
-        },
-        {
-          "tag": "feature:availability",
-          "component": "availability",
-          "order": 30
-        }
-      ],
-      "tags": {
-        "attack": {
-          "label": "Attack",
-          "description": "An attack card. Target and effect come from its projected rules."
-        },
-        "skill": {
-          "label": "Skill",
-          "description": "A skill card with a context-defined effect."
-        },
-        "power": {
-          "label": "Power",
-          "description": "A card whose projected effect can persist."
-        },
-        "curse": {
-          "label": "Curse",
-          "description": "An unfavorable card; this fixture cannot be played."
-        },
-        "status": {
-          "label": "Status",
-          "description": "A temporary deck condition in this fixture."
-        },
-        "weapon": {
-          "label": "Weapon",
-          "description": "Equipment with projected weapon facts and requirements."
-        },
-        "armor": {
-          "label": "Armor",
-          "description": "Equipment with projected protection and requirements."
-        },
-        "relic": {
-          "label": "Relic",
-          "description": "An owned object with authored passive or triggered effects."
-        },
-        "passive": {
-          "label": "Passive",
-          "description": "Applies while its domain activation condition is true."
-        },
-        "triggered": {
-          "label": "Triggered",
-          "description": "Applies when its registered trigger resolves."
-        },
-        "consumable": {
-          "label": "Consumable",
-          "description": "Using this object consumes its projected charge or quantity."
-        },
-        "healing": {
-          "label": "Healing",
-          "description": "Restores health, subject to projected limits."
-        },
-        "resource": {
-          "label": "Resource",
-          "description": "Changes the projected resource pool."
-        },
-        "utility": {
-          "label": "Utility",
-          "description": "Provides a situational effect."
-        },
-        "class": {
-          "label": "Class",
-          "description": "A character archetype and its known starting properties."
-        },
-        "kit": {
-          "label": "Starting kit",
-          "description": "A collection of initial equipment and cards."
-        },
-        "combatant": {
-          "label": "Combatant",
-          "description": "A borderless actor assembly using WC4 geometry."
-        }
+      "geometry": {
+        "presentation": "borderless combatant assembly",
+        "artwork": "preserve intrinsic ratio; sprite receives remaining height"
       }
     }
   },
@@ -24561,132 +26044,23 @@
       }
     ],
     "defaults": {
-      "geometry": {
-        "ratioWidth": 5,
-        "ratioHeight": 8,
-        "widthMinimum": "10rem",
-        "widthPreferred": "18vw",
-        "widthMaximum": "16rem",
-        "bands": {
-          "header": 10,
-          "art": 40,
-          "body": 40,
-          "footer": 10
-        }
-      },
-      "selection": {
-        "delayMs": 1000
-      },
-      "tooltip": {
-        "delayMs": 1000
+      "combatant": {
+        "maxStackRows": 5,
+        "extraBarHeightRatio": 0.5,
+        "stackGapRem": 0.2,
+        "iconSizeRem": 1.575,
+        "defenseOffsetRatio": 0.5,
+        "defenseGapRem": 0.5,
+        "playerIntentVisible": false,
+        "enemyIntentVisible": true
       },
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
       },
-      "metadata": {
-        "ownedLabel": "Owned",
-        "unknown": "Unknown",
-        "empty": "None"
-      },
-      "body": {
-        "maximumPreviewFacts": 2,
-        "showFlavor": false
-      },
-      "components": {
-        "identity": "WCI1",
-        "art": "WCI2",
-        "footer": "WCI3",
-        "inspect": "WCB1",
-        "action": "WCB2",
-        "facts": "WCF4"
-      },
-      "features": [
-        {
-          "tag": "feature:rules",
-          "component": "rules",
-          "order": 10
-        },
-        {
-          "tag": "feature:facts",
-          "component": "facts",
-          "order": 20
-        },
-        {
-          "tag": "feature:availability",
-          "component": "availability",
-          "order": 30
-        }
-      ],
-      "tags": {
-        "attack": {
-          "label": "Attack",
-          "description": "An attack card. Target and effect come from its projected rules."
-        },
-        "skill": {
-          "label": "Skill",
-          "description": "A skill card with a context-defined effect."
-        },
-        "power": {
-          "label": "Power",
-          "description": "A card whose projected effect can persist."
-        },
-        "curse": {
-          "label": "Curse",
-          "description": "An unfavorable card; this fixture cannot be played."
-        },
-        "status": {
-          "label": "Status",
-          "description": "A temporary deck condition in this fixture."
-        },
-        "weapon": {
-          "label": "Weapon",
-          "description": "Equipment with projected weapon facts and requirements."
-        },
-        "armor": {
-          "label": "Armor",
-          "description": "Equipment with projected protection and requirements."
-        },
-        "relic": {
-          "label": "Relic",
-          "description": "An owned object with authored passive or triggered effects."
-        },
-        "passive": {
-          "label": "Passive",
-          "description": "Applies while its domain activation condition is true."
-        },
-        "triggered": {
-          "label": "Triggered",
-          "description": "Applies when its registered trigger resolves."
-        },
-        "consumable": {
-          "label": "Consumable",
-          "description": "Using this object consumes its projected charge or quantity."
-        },
-        "healing": {
-          "label": "Healing",
-          "description": "Restores health, subject to projected limits."
-        },
-        "resource": {
-          "label": "Resource",
-          "description": "Changes the projected resource pool."
-        },
-        "utility": {
-          "label": "Utility",
-          "description": "Provides a situational effect."
-        },
-        "class": {
-          "label": "Class",
-          "description": "A character archetype and its known starting properties."
-        },
-        "kit": {
-          "label": "Starting kit",
-          "description": "A collection of initial equipment and cards."
-        },
-        "combatant": {
-          "label": "Combatant",
-          "description": "A borderless actor assembly using WC4 geometry."
-        }
+      "geometry": {
+        "presentation": "borderless combatant assembly",
+        "artwork": "preserve intrinsic ratio; sprite receives remaining height"
       }
     }
   },
@@ -24744,132 +26118,23 @@
       }
     ],
     "defaults": {
-      "geometry": {
-        "ratioWidth": 5,
-        "ratioHeight": 8,
-        "widthMinimum": "10rem",
-        "widthPreferred": "18vw",
-        "widthMaximum": "16rem",
-        "bands": {
-          "header": 10,
-          "art": 40,
-          "body": 40,
-          "footer": 10
-        }
-      },
-      "selection": {
-        "delayMs": 1000
-      },
-      "tooltip": {
-        "delayMs": 1000
+      "combatant": {
+        "maxStackRows": 5,
+        "extraBarHeightRatio": 0.5,
+        "stackGapRem": 0.2,
+        "iconSizeRem": 1.575,
+        "defenseOffsetRatio": 0.5,
+        "defenseGapRem": 0.5,
+        "playerIntentVisible": false,
+        "enemyIntentVisible": true
       },
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
       },
-      "metadata": {
-        "ownedLabel": "Owned",
-        "unknown": "Unknown",
-        "empty": "None"
-      },
-      "body": {
-        "maximumPreviewFacts": 2,
-        "showFlavor": false
-      },
-      "components": {
-        "identity": "WCI1",
-        "art": "WCI2",
-        "footer": "WCI3",
-        "inspect": "WCB1",
-        "action": "WCB2",
-        "facts": "WCF4"
-      },
-      "features": [
-        {
-          "tag": "feature:rules",
-          "component": "rules",
-          "order": 10
-        },
-        {
-          "tag": "feature:facts",
-          "component": "facts",
-          "order": 20
-        },
-        {
-          "tag": "feature:availability",
-          "component": "availability",
-          "order": 30
-        }
-      ],
-      "tags": {
-        "attack": {
-          "label": "Attack",
-          "description": "An attack card. Target and effect come from its projected rules."
-        },
-        "skill": {
-          "label": "Skill",
-          "description": "A skill card with a context-defined effect."
-        },
-        "power": {
-          "label": "Power",
-          "description": "A card whose projected effect can persist."
-        },
-        "curse": {
-          "label": "Curse",
-          "description": "An unfavorable card; this fixture cannot be played."
-        },
-        "status": {
-          "label": "Status",
-          "description": "A temporary deck condition in this fixture."
-        },
-        "weapon": {
-          "label": "Weapon",
-          "description": "Equipment with projected weapon facts and requirements."
-        },
-        "armor": {
-          "label": "Armor",
-          "description": "Equipment with projected protection and requirements."
-        },
-        "relic": {
-          "label": "Relic",
-          "description": "An owned object with authored passive or triggered effects."
-        },
-        "passive": {
-          "label": "Passive",
-          "description": "Applies while its domain activation condition is true."
-        },
-        "triggered": {
-          "label": "Triggered",
-          "description": "Applies when its registered trigger resolves."
-        },
-        "consumable": {
-          "label": "Consumable",
-          "description": "Using this object consumes its projected charge or quantity."
-        },
-        "healing": {
-          "label": "Healing",
-          "description": "Restores health, subject to projected limits."
-        },
-        "resource": {
-          "label": "Resource",
-          "description": "Changes the projected resource pool."
-        },
-        "utility": {
-          "label": "Utility",
-          "description": "Provides a situational effect."
-        },
-        "class": {
-          "label": "Class",
-          "description": "A character archetype and its known starting properties."
-        },
-        "kit": {
-          "label": "Starting kit",
-          "description": "A collection of initial equipment and cards."
-        },
-        "combatant": {
-          "label": "Combatant",
-          "description": "A borderless actor assembly using WC4 geometry."
-        }
+      "geometry": {
+        "presentation": "borderless combatant assembly",
+        "artwork": "preserve intrinsic ratio; sprite receives remaining height"
       }
     }
   },
@@ -24927,132 +26192,23 @@
       }
     ],
     "defaults": {
-      "geometry": {
-        "ratioWidth": 5,
-        "ratioHeight": 8,
-        "widthMinimum": "10rem",
-        "widthPreferred": "18vw",
-        "widthMaximum": "16rem",
-        "bands": {
-          "header": 10,
-          "art": 40,
-          "body": 40,
-          "footer": 10
-        }
-      },
-      "selection": {
-        "delayMs": 1000
-      },
-      "tooltip": {
-        "delayMs": 1000
+      "combatant": {
+        "maxStackRows": 5,
+        "extraBarHeightRatio": 0.5,
+        "stackGapRem": 0.2,
+        "iconSizeRem": 1.575,
+        "defenseOffsetRatio": 0.5,
+        "defenseGapRem": 0.5,
+        "playerIntentVisible": false,
+        "enemyIntentVisible": true
       },
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
       },
-      "metadata": {
-        "ownedLabel": "Owned",
-        "unknown": "Unknown",
-        "empty": "None"
-      },
-      "body": {
-        "maximumPreviewFacts": 2,
-        "showFlavor": false
-      },
-      "components": {
-        "identity": "WCI1",
-        "art": "WCI2",
-        "footer": "WCI3",
-        "inspect": "WCB1",
-        "action": "WCB2",
-        "facts": "WCF4"
-      },
-      "features": [
-        {
-          "tag": "feature:rules",
-          "component": "rules",
-          "order": 10
-        },
-        {
-          "tag": "feature:facts",
-          "component": "facts",
-          "order": 20
-        },
-        {
-          "tag": "feature:availability",
-          "component": "availability",
-          "order": 30
-        }
-      ],
-      "tags": {
-        "attack": {
-          "label": "Attack",
-          "description": "An attack card. Target and effect come from its projected rules."
-        },
-        "skill": {
-          "label": "Skill",
-          "description": "A skill card with a context-defined effect."
-        },
-        "power": {
-          "label": "Power",
-          "description": "A card whose projected effect can persist."
-        },
-        "curse": {
-          "label": "Curse",
-          "description": "An unfavorable card; this fixture cannot be played."
-        },
-        "status": {
-          "label": "Status",
-          "description": "A temporary deck condition in this fixture."
-        },
-        "weapon": {
-          "label": "Weapon",
-          "description": "Equipment with projected weapon facts and requirements."
-        },
-        "armor": {
-          "label": "Armor",
-          "description": "Equipment with projected protection and requirements."
-        },
-        "relic": {
-          "label": "Relic",
-          "description": "An owned object with authored passive or triggered effects."
-        },
-        "passive": {
-          "label": "Passive",
-          "description": "Applies while its domain activation condition is true."
-        },
-        "triggered": {
-          "label": "Triggered",
-          "description": "Applies when its registered trigger resolves."
-        },
-        "consumable": {
-          "label": "Consumable",
-          "description": "Using this object consumes its projected charge or quantity."
-        },
-        "healing": {
-          "label": "Healing",
-          "description": "Restores health, subject to projected limits."
-        },
-        "resource": {
-          "label": "Resource",
-          "description": "Changes the projected resource pool."
-        },
-        "utility": {
-          "label": "Utility",
-          "description": "Provides a situational effect."
-        },
-        "class": {
-          "label": "Class",
-          "description": "A character archetype and its known starting properties."
-        },
-        "kit": {
-          "label": "Starting kit",
-          "description": "A collection of initial equipment and cards."
-        },
-        "combatant": {
-          "label": "Combatant",
-          "description": "A borderless actor assembly using WC4 geometry."
-        }
+      "geometry": {
+        "presentation": "borderless combatant assembly",
+        "artwork": "preserve intrinsic ratio; sprite receives remaining height"
       }
     }
   }

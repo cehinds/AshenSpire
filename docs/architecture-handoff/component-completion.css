@@ -10,3 +10,8 @@
 .scene-demo .cc-dialogue-scene .cc-art{height:100%;min-height:0;}
 .scene-demo .cc-captions{min-height:0;height:100%;overflow:auto;}
 .scene-demo .cc-hand{min-height:0;height:100%;}
+
+/* Shared action presets; footer and icon geometry keep their own contracts. */
+.cc-reference[data-component=WCB2]>.cc-button,.cc-reference[data-component=WCB3]>.cc-button,.cc-reference[data-component=WCB4]>.cc-button{width:var(--button-choice);box-sizing:border-box;white-space:normal;overflow-wrap:anywhere}
+.cc-action-row>.cc-button{flex:1 1 0;min-width:0}
+.cc-action-row>.cc-button:only-child{width:100%;flex-basis:100%}

@@ -7,3 +7,15 @@ dialog.inspector[open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto;h
 .preview-tabpanel nav{position:static;height:auto;min-height:0;max-height:none;overflow:visible;width:auto;padding:0;border:0;background:transparent}.preview-tabpanel nav button{min-width:0}.preview-tabpanel nav a{margin:0}.preview-tabpanel .cc-reference .cc-references{padding:.5rem 0}.pg-preview-tools nav{height:auto!important;position:static!important;min-height:0!important;padding:.5rem 0!important}
 
 .cc-reference .cc-button.info{position:static;opacity:1;visibility:visible;transform:none;display:grid;place-items:center}.exit:hover,.exit:focus-visible{background:var(--red);color:var(--text)}
+
+/* Width belongs to a shared preset, never to the translated label length. */
+.reference-record>button[data-width]{width:var(--button-half);flex:0 0 var(--button-half);min-width:min(var(--button-minimum),100%);max-width:100%;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere}
+.reference-record>button[data-width=quarter]{width:var(--button-quarter);flex-basis:var(--button-quarter)}
+.reference-record>button[data-width=third]{width:var(--button-third);flex-basis:var(--button-third)}
+.reference-record>button[data-width=full]{width:var(--button-full);flex-basis:var(--button-full)}
+.reference-record:has(>button[data-width]){flex-wrap:nowrap}
+.reference-record>span:first-child{min-width:0;overflow-wrap:anywhere}
+.reference-shell>footer>button{flex:1 1 0;width:0;max-width:none}
+.reference-shell>footer>button:only-child{width:100%;flex-basis:100%}
+.reference-shell>header>button[data-width=icon]{width:var(--button-icon);flex:0 0 var(--button-icon)}
+.reference-record:has(>button~button)>button[data-width]{width:var(--button-third);flex-basis:var(--button-third);min-width:0}

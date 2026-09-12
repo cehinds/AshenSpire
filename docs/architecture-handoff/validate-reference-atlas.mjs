@@ -16,6 +16,9 @@ function serializedInitializer(name){const start=html.indexOf(`const ${name}=`);
 let data=[];
 try{data=JSON.parse(serializedInitializer('DATA'));}catch(error){failures.push(`DATA extraction: ${error.message}`);}
 const ids=new Set(data.map(d=>d.id));check(ids.size===data.length,'Duplicate wireframe IDs');
+// The code viewer must show the exact source that produced this artifact.
+const embeddedSources=JSON.parse(serializedInitializer('REFERENCE_SOURCE_TEXT'));
+for(const [file,contents] of Object.entries(embeddedSources))check(contents===read(file),`Stale actual-code snapshot: ${file}`);
 const expectedModes=['wide','compact','iphoneSE','galaxyS24'];
 const placeholder=/^\s*(?:\{Shared family components\}|\{Active body model\})\s*$/;
 function existsReference(file){const clean=file.split('#')[0].replace(/:\d+$/,'');return fs.existsSync(path.resolve(repo,clean))||fs.existsSync(path.resolve(root,clean));}
@@ -50,7 +53,14 @@ try{
  const sandbox={HUD_REFERENCE_CONFIG:hudConfig,structuredClone};vm.createContext(sandbox);vm.runInContext(read('hud-reference-client.js'),sandbox);
  for(const def of hudDefinitions){const rendered=sandbox.renderHUDComponent(def[0]);check(rendered.includes('hud-reference')&&rendered.length>100,`${def[0]}: empty HUD markup`);hudCount++;}
  const map=structuredClone(hudConfig);map.context='map';check(!sandbox.renderConfiguredHUD(map).includes('data-component="WGH5"'),'XP rendered in default map context');check(!sandbox.hudXpPreviewEnabled(map),'XP award enabled on map');
- const disabled=structuredClone(hudConfig);disabled.layers.mana=false;check(!sandbox.renderConfiguredHUD(disabled).includes('aria-label="mana"'),'Hidden mana still rendered');
+ const disabled=structuredClone(hudConfig);disabled.layers.mana=false;check(!sandbox.renderConfiguredHUD(disabled).includes('aria-label="MP"'),'Hidden mana still rendered');
+ for(const preset of ['current','proposed']){const c=structuredClone(hudConfig);c.layoutPreset=preset;check(!sandbox.renderConfiguredHUD(c).includes('data-component="WGH8"'),`${preset}: Potions leaked into top HUD`);}
+ for(const [key,reference] of Object.entries(hudConfig.vitality.referenceMaximum)){
+  const c=structuredClone(hudConfig);c.sample[key]={value:reference/4,maximum:reference/2};
+  const markup=sandbox.hudVitalityMeter(key,c);
+  check(markup.includes('hud-vitality-track" style="width:50%"')&&markup.includes('--fill:50%'),`${key}: capacity/fill are not independent`);
+ }
+ check(JSON.stringify(JSON.parse(read('hud-config.json')))===JSON.stringify(hudConfig),'HUD JSON differs from source defaults');
  check(sandbox.renderHUDComponent('WGH1').includes('#WCM1'),'HUD health does not link to shared meter');
  for(const bad of [-1,NaN,Infinity]){const config=structuredClone(hudConfig);config.sample.experience.value=bad;let rejected=false;try{sandbox.validateHudConfig(config);}catch{rejected=true;}check(rejected,`HUD accepted invalid XP ${bad}`);}
 }catch(error){failures.push(`HUD reference execution: ${error.stack}`);}

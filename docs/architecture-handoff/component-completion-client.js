@@ -67,6 +67,8 @@ function createComponentReferenceRenderers(configuration) {
   };
   function family(id,children,mode){const n=wrap(id,'cc-family');for(const child of children){const s=E('section','cc-family-child');s.append(ref(child),factories[child](mode));n.append(s);}return n;}
   function applyTokens(n){n.classList.add('cc-reference');
+    for(const [preset,share] of Object.entries(cfg().buttonWidths.presets))n.style.setProperty('--button-'+preset,share+'%');
+    n.style.setProperty('--button-choice',cfg().buttonWidths.presets[cfg().buttonWidths.choice]+'%');
     const c=cfg();for(const [key,value] of Object.entries({'--cc-gap':c.spacing.gapRem+'rem','--cc-inset':c.spacing.insetRem+'rem','--cc-section-gap':c.spacing.sectionGapRem+'rem','--cc-target':c.target.minRem+'rem','--cc-icon':c.target.iconRem+'rem','--cc-large':c.target.largeRem+'rem','--cc-small':c.target.smallRem+'rem','--cc-hp':c.meter.healthHeightRem+'rem','--cc-secondary':c.meter.secondaryHeightRatio,'--cc-floor':c.scene.floorHeightPercent+'%','--cc-card-width':c.hand.cardWidthRem+'rem','--cc-card-ratio':c.hand.cardAspectRatio,'--cc-defense-gap':c.overlay.defenseGapRem+'rem','--cc-defense-y':c.overlay.defenseAnchorRatio*100+'%'}))n.style.setProperty(key,value);
     return n;
   }

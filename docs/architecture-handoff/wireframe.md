@@ -234,7 +234,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -280,6 +280,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -489,7 +502,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -537,6 +550,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -746,7 +772,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -832,6 +858,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -1045,7 +1084,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -1118,6 +1157,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -1341,7 +1393,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC3a](wireframe-gallery.html#WC3a)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -1433,6 +1485,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -1643,7 +1708,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC2a1](wireframe-gallery.html#WC2a1)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -1702,6 +1767,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -1912,7 +1990,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC2a1](wireframe-gallery.html#WC2a1)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -1975,6 +2053,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -2176,7 +2267,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -2233,6 +2324,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -2439,7 +2543,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -2506,6 +2610,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -2708,7 +2825,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WC1a](wireframe-gallery.html#WC1a)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -2752,6 +2869,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -2958,7 +3088,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC2a1](wireframe-gallery.html#WC2a1)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -3012,6 +3142,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -3220,7 +3363,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC1a](wireframe-gallery.html#WC1a)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -3264,6 +3407,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -3479,7 +3635,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC1a](wireframe-gallery.html#WC1a)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -3523,6 +3679,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -3724,7 +3893,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -3770,6 +3939,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -3974,7 +4156,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -4020,6 +4202,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -4222,7 +4417,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC2a1](wireframe-gallery.html#WC2a1)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -4266,6 +4461,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -4463,7 +4671,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WC2a1](wireframe-gallery.html#WC2a1)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -4510,6 +4718,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -4708,7 +4929,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WC4b](wireframe-gallery.html#WC4b), [WCF4](wireframe-gallery.html#WCF4), [WCM1](wireframe-gallery.html#WCM1), [WCI2](wireframe-gallery.html#WCI2)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -4743,6 +4964,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -4941,7 +5175,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC2c1](wireframe-gallery.html#WC2c1)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -4988,6 +5222,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -5188,7 +5435,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -5234,6 +5481,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -5435,7 +5695,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -5490,6 +5750,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -5689,7 +5962,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC1a](wireframe-gallery.html#WC1a)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -5740,6 +6013,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -5943,7 +6229,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -5989,6 +6275,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -6192,7 +6491,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC2a1](wireframe-gallery.html#WC2a1)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -6234,6 +6533,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -6489,7 +6801,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WC4b](wireframe-gallery.html#WC4b), [WCF4](wireframe-gallery.html#WCF4), [WCM1](wireframe-gallery.html#WCM1), [WCI2](wireframe-gallery.html#WCI2)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -6524,6 +6836,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -6718,7 +7043,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -6739,6 +7064,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -6926,7 +7264,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -6947,6 +7285,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -7137,7 +7488,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -7159,6 +7510,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -7354,7 +7718,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -7376,6 +7740,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -7567,7 +7944,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -7588,6 +7965,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -7778,7 +8168,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -7799,6 +8189,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -7997,7 +8400,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -8017,6 +8420,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -8222,7 +8638,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -8242,6 +8658,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -8466,7 +8895,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -8486,6 +8915,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -9033,6 +9475,16 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       "heightRem": 0.35,
       "animationMs": 650,
       "awardPreview": 15
+    },
+    "diagram": {
+      "columns": {
+        "wide": 62,
+        "compact": 48,
+        "portraitSE": 40,
+        "portraitS24": 42
+      },
+      "trackColumns": 20,
+      "labelColumns": 8
     },
     "layout": {
       "gapRem": 0.35,
@@ -9635,6 +10087,16 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       "animationMs": 650,
       "awardPreview": 15
     },
+    "diagram": {
+      "columns": {
+        "wide": 62,
+        "compact": 48,
+        "portraitSE": 40,
+        "portraitS24": 42
+      },
+      "trackColumns": 20,
+      "labelColumns": 8
+    },
     "layout": {
       "gapRem": 0.35,
       "insetRem": 0.5,
@@ -10213,6 +10675,16 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       "heightRem": 0.35,
       "animationMs": 650,
       "awardPreview": 15
+    },
+    "diagram": {
+      "columns": {
+        "wide": 62,
+        "compact": 48,
+        "portraitSE": 40,
+        "portraitS24": 42
+      },
+      "trackColumns": 20,
+      "labelColumns": 8
     },
     "layout": {
       "gapRem": 0.35,
@@ -10820,6 +11292,16 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       "heightRem": 0.35,
       "animationMs": 650,
       "awardPreview": 15
+    },
+    "diagram": {
+      "columns": {
+        "wide": 62,
+        "compact": 48,
+        "portraitSE": 40,
+        "portraitS24": 42
+      },
+      "trackColumns": 20,
+      "labelColumns": 8
     },
     "layout": {
       "gapRem": 0.35,
@@ -19064,132 +19546,23 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 
 ```json
 {
-  "geometry": {
-    "ratioWidth": 5,
-    "ratioHeight": 8,
-    "widthMinimum": "10rem",
-    "widthPreferred": "18vw",
-    "widthMaximum": "16rem",
-    "bands": {
-      "header": 10,
-      "art": 40,
-      "body": 40,
-      "footer": 10
-    }
-  },
-  "selection": {
-    "delayMs": 1000
-  },
-  "tooltip": {
-    "delayMs": 1000
+  "combatant": {
+    "maxStackRows": 5,
+    "extraBarHeightRatio": 0.5,
+    "stackGapRem": 0.2,
+    "iconSizeRem": 1.575,
+    "defenseOffsetRatio": 0.5,
+    "defenseGapRem": 0.5,
+    "playerIntentVisible": false,
+    "enemyIntentVisible": true
   },
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
   },
-  "metadata": {
-    "ownedLabel": "Owned",
-    "unknown": "Unknown",
-    "empty": "None"
-  },
-  "body": {
-    "maximumPreviewFacts": 2,
-    "showFlavor": false
-  },
-  "components": {
-    "identity": "WCI1",
-    "art": "WCI2",
-    "footer": "WCI3",
-    "inspect": "WCB1",
-    "action": "WCB2",
-    "facts": "WCF4"
-  },
-  "features": [
-    {
-      "tag": "feature:rules",
-      "component": "rules",
-      "order": 10
-    },
-    {
-      "tag": "feature:facts",
-      "component": "facts",
-      "order": 20
-    },
-    {
-      "tag": "feature:availability",
-      "component": "availability",
-      "order": 30
-    }
-  ],
-  "tags": {
-    "attack": {
-      "label": "Attack",
-      "description": "An attack card. Target and effect come from its projected rules."
-    },
-    "skill": {
-      "label": "Skill",
-      "description": "A skill card with a context-defined effect."
-    },
-    "power": {
-      "label": "Power",
-      "description": "A card whose projected effect can persist."
-    },
-    "curse": {
-      "label": "Curse",
-      "description": "An unfavorable card; this fixture cannot be played."
-    },
-    "status": {
-      "label": "Status",
-      "description": "A temporary deck condition in this fixture."
-    },
-    "weapon": {
-      "label": "Weapon",
-      "description": "Equipment with projected weapon facts and requirements."
-    },
-    "armor": {
-      "label": "Armor",
-      "description": "Equipment with projected protection and requirements."
-    },
-    "relic": {
-      "label": "Relic",
-      "description": "An owned object with authored passive or triggered effects."
-    },
-    "passive": {
-      "label": "Passive",
-      "description": "Applies while its domain activation condition is true."
-    },
-    "triggered": {
-      "label": "Triggered",
-      "description": "Applies when its registered trigger resolves."
-    },
-    "consumable": {
-      "label": "Consumable",
-      "description": "Using this object consumes its projected charge or quantity."
-    },
-    "healing": {
-      "label": "Healing",
-      "description": "Restores health, subject to projected limits."
-    },
-    "resource": {
-      "label": "Resource",
-      "description": "Changes the projected resource pool."
-    },
-    "utility": {
-      "label": "Utility",
-      "description": "Provides a situational effect."
-    },
-    "class": {
-      "label": "Class",
-      "description": "A character archetype and its known starting properties."
-    },
-    "kit": {
-      "label": "Starting kit",
-      "description": "A collection of initial equipment and cards."
-    },
-    "combatant": {
-      "label": "Combatant",
-      "description": "A borderless actor assembly using WC4 geometry."
-    }
+  "geometry": {
+    "presentation": "borderless combatant assembly",
+    "artwork": "preserve intrinsic ratio; sprite receives remaining height"
   }
 }
 ```
@@ -19444,132 +19817,23 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 
 ```json
 {
-  "geometry": {
-    "ratioWidth": 5,
-    "ratioHeight": 8,
-    "widthMinimum": "10rem",
-    "widthPreferred": "18vw",
-    "widthMaximum": "16rem",
-    "bands": {
-      "header": 10,
-      "art": 40,
-      "body": 40,
-      "footer": 10
-    }
-  },
-  "selection": {
-    "delayMs": 1000
-  },
-  "tooltip": {
-    "delayMs": 1000
+  "combatant": {
+    "maxStackRows": 5,
+    "extraBarHeightRatio": 0.5,
+    "stackGapRem": 0.2,
+    "iconSizeRem": 1.575,
+    "defenseOffsetRatio": 0.5,
+    "defenseGapRem": 0.5,
+    "playerIntentVisible": false,
+    "enemyIntentVisible": true
   },
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
   },
-  "metadata": {
-    "ownedLabel": "Owned",
-    "unknown": "Unknown",
-    "empty": "None"
-  },
-  "body": {
-    "maximumPreviewFacts": 2,
-    "showFlavor": false
-  },
-  "components": {
-    "identity": "WCI1",
-    "art": "WCI2",
-    "footer": "WCI3",
-    "inspect": "WCB1",
-    "action": "WCB2",
-    "facts": "WCF4"
-  },
-  "features": [
-    {
-      "tag": "feature:rules",
-      "component": "rules",
-      "order": 10
-    },
-    {
-      "tag": "feature:facts",
-      "component": "facts",
-      "order": 20
-    },
-    {
-      "tag": "feature:availability",
-      "component": "availability",
-      "order": 30
-    }
-  ],
-  "tags": {
-    "attack": {
-      "label": "Attack",
-      "description": "An attack card. Target and effect come from its projected rules."
-    },
-    "skill": {
-      "label": "Skill",
-      "description": "A skill card with a context-defined effect."
-    },
-    "power": {
-      "label": "Power",
-      "description": "A card whose projected effect can persist."
-    },
-    "curse": {
-      "label": "Curse",
-      "description": "An unfavorable card; this fixture cannot be played."
-    },
-    "status": {
-      "label": "Status",
-      "description": "A temporary deck condition in this fixture."
-    },
-    "weapon": {
-      "label": "Weapon",
-      "description": "Equipment with projected weapon facts and requirements."
-    },
-    "armor": {
-      "label": "Armor",
-      "description": "Equipment with projected protection and requirements."
-    },
-    "relic": {
-      "label": "Relic",
-      "description": "An owned object with authored passive or triggered effects."
-    },
-    "passive": {
-      "label": "Passive",
-      "description": "Applies while its domain activation condition is true."
-    },
-    "triggered": {
-      "label": "Triggered",
-      "description": "Applies when its registered trigger resolves."
-    },
-    "consumable": {
-      "label": "Consumable",
-      "description": "Using this object consumes its projected charge or quantity."
-    },
-    "healing": {
-      "label": "Healing",
-      "description": "Restores health, subject to projected limits."
-    },
-    "resource": {
-      "label": "Resource",
-      "description": "Changes the projected resource pool."
-    },
-    "utility": {
-      "label": "Utility",
-      "description": "Provides a situational effect."
-    },
-    "class": {
-      "label": "Class",
-      "description": "A character archetype and its known starting properties."
-    },
-    "kit": {
-      "label": "Starting kit",
-      "description": "A collection of initial equipment and cards."
-    },
-    "combatant": {
-      "label": "Combatant",
-      "description": "A borderless actor assembly using WC4 geometry."
-    }
+  "geometry": {
+    "presentation": "borderless combatant assembly",
+    "artwork": "preserve intrinsic ratio; sprite receives remaining height"
   }
 }
 ```
@@ -19824,132 +20088,23 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 
 ```json
 {
-  "geometry": {
-    "ratioWidth": 5,
-    "ratioHeight": 8,
-    "widthMinimum": "10rem",
-    "widthPreferred": "18vw",
-    "widthMaximum": "16rem",
-    "bands": {
-      "header": 10,
-      "art": 40,
-      "body": 40,
-      "footer": 10
-    }
-  },
-  "selection": {
-    "delayMs": 1000
-  },
-  "tooltip": {
-    "delayMs": 1000
+  "combatant": {
+    "maxStackRows": 5,
+    "extraBarHeightRatio": 0.5,
+    "stackGapRem": 0.2,
+    "iconSizeRem": 1.575,
+    "defenseOffsetRatio": 0.5,
+    "defenseGapRem": 0.5,
+    "playerIntentVisible": false,
+    "enemyIntentVisible": true
   },
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
   },
-  "metadata": {
-    "ownedLabel": "Owned",
-    "unknown": "Unknown",
-    "empty": "None"
-  },
-  "body": {
-    "maximumPreviewFacts": 2,
-    "showFlavor": false
-  },
-  "components": {
-    "identity": "WCI1",
-    "art": "WCI2",
-    "footer": "WCI3",
-    "inspect": "WCB1",
-    "action": "WCB2",
-    "facts": "WCF4"
-  },
-  "features": [
-    {
-      "tag": "feature:rules",
-      "component": "rules",
-      "order": 10
-    },
-    {
-      "tag": "feature:facts",
-      "component": "facts",
-      "order": 20
-    },
-    {
-      "tag": "feature:availability",
-      "component": "availability",
-      "order": 30
-    }
-  ],
-  "tags": {
-    "attack": {
-      "label": "Attack",
-      "description": "An attack card. Target and effect come from its projected rules."
-    },
-    "skill": {
-      "label": "Skill",
-      "description": "A skill card with a context-defined effect."
-    },
-    "power": {
-      "label": "Power",
-      "description": "A card whose projected effect can persist."
-    },
-    "curse": {
-      "label": "Curse",
-      "description": "An unfavorable card; this fixture cannot be played."
-    },
-    "status": {
-      "label": "Status",
-      "description": "A temporary deck condition in this fixture."
-    },
-    "weapon": {
-      "label": "Weapon",
-      "description": "Equipment with projected weapon facts and requirements."
-    },
-    "armor": {
-      "label": "Armor",
-      "description": "Equipment with projected protection and requirements."
-    },
-    "relic": {
-      "label": "Relic",
-      "description": "An owned object with authored passive or triggered effects."
-    },
-    "passive": {
-      "label": "Passive",
-      "description": "Applies while its domain activation condition is true."
-    },
-    "triggered": {
-      "label": "Triggered",
-      "description": "Applies when its registered trigger resolves."
-    },
-    "consumable": {
-      "label": "Consumable",
-      "description": "Using this object consumes its projected charge or quantity."
-    },
-    "healing": {
-      "label": "Healing",
-      "description": "Restores health, subject to projected limits."
-    },
-    "resource": {
-      "label": "Resource",
-      "description": "Changes the projected resource pool."
-    },
-    "utility": {
-      "label": "Utility",
-      "description": "Provides a situational effect."
-    },
-    "class": {
-      "label": "Class",
-      "description": "A character archetype and its known starting properties."
-    },
-    "kit": {
-      "label": "Starting kit",
-      "description": "A collection of initial equipment and cards."
-    },
-    "combatant": {
-      "label": "Combatant",
-      "description": "A borderless actor assembly using WC4 geometry."
-    }
+  "geometry": {
+    "presentation": "borderless combatant assembly",
+    "artwork": "preserve intrinsic ratio; sprite receives remaining height"
   }
 }
 ```
@@ -20212,132 +20367,23 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 
 ```json
 {
-  "geometry": {
-    "ratioWidth": 5,
-    "ratioHeight": 8,
-    "widthMinimum": "10rem",
-    "widthPreferred": "18vw",
-    "widthMaximum": "16rem",
-    "bands": {
-      "header": 10,
-      "art": 40,
-      "body": 40,
-      "footer": 10
-    }
-  },
-  "selection": {
-    "delayMs": 1000
-  },
-  "tooltip": {
-    "delayMs": 1000
+  "combatant": {
+    "maxStackRows": 5,
+    "extraBarHeightRatio": 0.5,
+    "stackGapRem": 0.2,
+    "iconSizeRem": 1.575,
+    "defenseOffsetRatio": 0.5,
+    "defenseGapRem": 0.5,
+    "playerIntentVisible": false,
+    "enemyIntentVisible": true
   },
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
   },
-  "metadata": {
-    "ownedLabel": "Owned",
-    "unknown": "Unknown",
-    "empty": "None"
-  },
-  "body": {
-    "maximumPreviewFacts": 2,
-    "showFlavor": false
-  },
-  "components": {
-    "identity": "WCI1",
-    "art": "WCI2",
-    "footer": "WCI3",
-    "inspect": "WCB1",
-    "action": "WCB2",
-    "facts": "WCF4"
-  },
-  "features": [
-    {
-      "tag": "feature:rules",
-      "component": "rules",
-      "order": 10
-    },
-    {
-      "tag": "feature:facts",
-      "component": "facts",
-      "order": 20
-    },
-    {
-      "tag": "feature:availability",
-      "component": "availability",
-      "order": 30
-    }
-  ],
-  "tags": {
-    "attack": {
-      "label": "Attack",
-      "description": "An attack card. Target and effect come from its projected rules."
-    },
-    "skill": {
-      "label": "Skill",
-      "description": "A skill card with a context-defined effect."
-    },
-    "power": {
-      "label": "Power",
-      "description": "A card whose projected effect can persist."
-    },
-    "curse": {
-      "label": "Curse",
-      "description": "An unfavorable card; this fixture cannot be played."
-    },
-    "status": {
-      "label": "Status",
-      "description": "A temporary deck condition in this fixture."
-    },
-    "weapon": {
-      "label": "Weapon",
-      "description": "Equipment with projected weapon facts and requirements."
-    },
-    "armor": {
-      "label": "Armor",
-      "description": "Equipment with projected protection and requirements."
-    },
-    "relic": {
-      "label": "Relic",
-      "description": "An owned object with authored passive or triggered effects."
-    },
-    "passive": {
-      "label": "Passive",
-      "description": "Applies while its domain activation condition is true."
-    },
-    "triggered": {
-      "label": "Triggered",
-      "description": "Applies when its registered trigger resolves."
-    },
-    "consumable": {
-      "label": "Consumable",
-      "description": "Using this object consumes its projected charge or quantity."
-    },
-    "healing": {
-      "label": "Healing",
-      "description": "Restores health, subject to projected limits."
-    },
-    "resource": {
-      "label": "Resource",
-      "description": "Changes the projected resource pool."
-    },
-    "utility": {
-      "label": "Utility",
-      "description": "Provides a situational effect."
-    },
-    "class": {
-      "label": "Class",
-      "description": "A character archetype and its known starting properties."
-    },
-    "kit": {
-      "label": "Starting kit",
-      "description": "A collection of initial equipment and cards."
-    },
-    "combatant": {
-      "label": "Combatant",
-      "description": "A borderless actor assembly using WC4 geometry."
-    }
+  "geometry": {
+    "presentation": "borderless combatant assembly",
+    "artwork": "preserve intrinsic ratio; sprite receives remaining height"
   }
 }
 ```
@@ -20453,7 +20499,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -20473,6 +20519,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -20606,7 +20665,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -20626,6 +20685,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -20759,7 +20831,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -20779,6 +20851,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -20917,7 +21002,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
-**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs)
+**Actual reference code:** [screen-reference-client.js](screen-reference-client.js), [screen-reference.mjs](screen-reference.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -20937,6 +21022,19 @@ Renderer binding: `renderScreenReference`. The HTML “Component composition” 
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "inset": "1rem",
   "gap": ".5rem",
   "sidebarShare": "26%",
@@ -21858,10 +21956,14 @@ Renderer binding: `renderProgression`. The HTML “Component composition” tab 
 **Wide**
 
 ```text
-Header  Title                         [×]
-Owner               (i)
-Footer  [Back]                   [Confirm]
-Selected card       [Context action]
+Host content width = 100%
+Presets: quarter 25% · third 30%
+         half 50% · full 100%
+Choices [ equal half ] gap [ equal half ]
+Footer  [    Back    ] gap [   Confirm  ]
+Solo    [            Full             ]
+Header  Title                       [×]
+Owner                (i)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -21871,10 +21973,14 @@ Selected card       [Context action]
 **Compact**
 
 ```text
-Header  Title                         [×]
-Owner               (i)
-Footer  [Back]                   [Confirm]
-Selected card       [Context action]
+Host content width = 100%
+Presets: quarter 25% · third 30%
+         half 50% · full 100%
+Choices [ equal half ] gap [ equal half ]
+Footer  [    Back    ] gap [   Confirm  ]
+Solo    [            Full             ]
+Header  Title                       [×]
+Owner                (i)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -21887,10 +21993,14 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Header  Title                         [×]
-Owner               (i)
-Footer  [Back]                   [Confirm]
-Selected card       [Context action]
+Host content width = 100%
+Presets: quarter 25% · third 30%
+         half 50% · full 100%
+Choices [ equal half ] gap [ equal half ]
+Footer  [    Back    ] gap [   Confirm  ]
+Solo    [            Full             ]
+Header  Title                       [×]
+Owner                (i)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -21904,10 +22014,14 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Header  Title                         [×]
-Owner               (i)
-Footer  [Back]                   [Confirm]
-Selected card       [Context action]
+Host content width = 100%
+Presets: quarter 25% · third 30%
+         half 50% · full 100%
+Choices [ equal half ] gap [ equal half ]
+Footer  [    Back    ] gap [   Confirm  ]
+Solo    [            Full             ]
+Header  Title                       [×]
+Owner                (i)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -21924,9 +22038,31 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Resolve every control through the shared action contract. Keep footer actions inline; sole action spans its footer. Inherit focus, disabled, busy, selected, and semantic role tokens.
+// Resolve every control through the shared action contract and config.buttonWidths.presets. Percentages reference the owning host content width; vw is valid only for a viewport-width host. Sibling text buttons use the same selected preset and equal gap-aware widths. Choice controls default to the half preset. Footer siblings divide the available width after gaps equally, remain inline, and a sole footer action uses full width. Exit, inspect, status-icon, map-node and packed combat-footer controls retain their explicitly configured compact or circular geometry. Inherit focus, disabled, busy, selected, and semantic role tokens.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
+
+// Width presets are configuration data; percentages use the owning content box.
+hostWidth = MeasureContentWidth(context.buttonHost)
+role = ResolveButtonRole(model, context)
+preset = ResolveRolePreset(role, config.buttonWidths)
+// Choice role resolves to the shared half preset by default.
+requestedWidth = hostWidth * PercentFraction(config.buttonWidths.presets[preset])
+siblings = FilterVisibleSiblingButtons(IncludingCurrentButton(context.actionGroup, model))
+IF HasCompactGeometryException(context, config.buttonWidths)
+  width = ResolveConfiguredCompactGeometry(context)
+ELSE IF IsFooter(context) AND IsSoleAction(siblings)
+  width = hostWidth
+ELSE IF IsFooter(context) OR SharesButtonWidth(siblings)
+  gapWidth = BetweenItemGapCount(siblings) * ResolveSharedGap(config)
+  equalShare = AvailableAfterGaps(hostWidth, gapWidth) / Count(siblings)
+  width = IF IsFooter(context) THEN equalShare ELSE FitPresetToShare(requestedWidth, equalShare)
+ELSE
+  width = FitToHost(requestedWidth, hostWidth)
+// Apply the same resolved width to sibling text buttons, regardless of label length.
+ApplyEqualSiblingWidths(siblings, width)
+// Percent CSS is local to the host. Use viewport units only when the host is the viewport.
+KeepFooterInline(); PreserveConfiguredReadableTextAndTargetMinimums()
 RenderRegisteredComponent(model, children, config)
 // Local preview actions never mutate the game. Production host revalidates commands.
 On activation: DispatchSemanticIntent(model.intent, context)
@@ -21948,7 +22084,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCB3](wireframe-gallery.html#WCB3), [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -21959,7 +22095,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCB0",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:buttons",
   "active": true,
   "selected": false,
   "children": [
@@ -21996,6 +22132,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -22282,7 +22431,7 @@ Reuses the inspect source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -22293,7 +22442,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCB1",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:inspect",
   "active": true,
   "selected": false,
   "children": [],
@@ -22309,6 +22458,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -22511,7 +22673,10 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```text
           selected card
-           [ Use ] ← outside card footer
+[        Use · full host width        ]
+             outside card footer
+Choice group: [ half ] gap [ half ]
+Other presets: 25% · 30% · 50% · 100%
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -22522,7 +22687,10 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```text
           selected card
-           [ Use ] ← outside card footer
+[        Use · full host width        ]
+             outside card footer
+Choice group: [ half ] gap [ half ]
+Other presets: 25% · 30% · 50% · 100%
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -22536,7 +22704,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 ```text
           selected card
-           [ Use ] ← outside card footer
+[        Use · full host width        ]
+             outside card footer
+Choice group: [ half ] gap [ half ]
+Other presets: 25% · 30% · 50% · 100%
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -22551,7 +22722,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
           selected card
-           [ Use ] ← outside card footer
+[        Use · full host width        ]
+             outside card footer
+Choice group: [ half ] gap [ half ]
+Other presets: 25% · 30% · 50% · 100%
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -22568,9 +22742,31 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project domain action and readiness. Omit absent actions. Await required target when applicable; revalidate once on commit. Never place Use inside metadata footer.
+// Project domain action and readiness. Omit absent actions. Resolve the named width preset through config.buttonWidths.presets; choice controls use config.buttonWidths.choice, default half. Sibling actions share an equal gap-aware width; sole footer action spans the entire footer content width. Await required target when applicable; revalidate once on commit. Never place Use inside metadata footer. Compact HUD and packed combat-footer contexts retain their declared geometry exceptions.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
+
+// Width presets are configuration data; percentages use the owning content box.
+hostWidth = MeasureContentWidth(context.buttonHost)
+role = ResolveButtonRole(model, context)
+preset = ResolveRolePreset(role, config.buttonWidths)
+// Choice role resolves to the shared half preset by default.
+requestedWidth = hostWidth * PercentFraction(config.buttonWidths.presets[preset])
+siblings = FilterVisibleSiblingButtons(IncludingCurrentButton(context.actionGroup, model))
+IF HasCompactGeometryException(context, config.buttonWidths)
+  width = ResolveConfiguredCompactGeometry(context)
+ELSE IF IsFooter(context) AND IsSoleAction(siblings)
+  width = hostWidth
+ELSE IF IsFooter(context) OR SharesButtonWidth(siblings)
+  gapWidth = BetweenItemGapCount(siblings) * ResolveSharedGap(config)
+  equalShare = AvailableAfterGaps(hostWidth, gapWidth) / Count(siblings)
+  width = IF IsFooter(context) THEN equalShare ELSE FitPresetToShare(requestedWidth, equalShare)
+ELSE
+  width = FitToHost(requestedWidth, hostWidth)
+// Apply the same resolved width to sibling text buttons, regardless of label length.
+ApplyEqualSiblingWidths(siblings, width)
+// Percent CSS is local to the host. Use viewport units only when the host is the viewport.
+KeepFooterInline(); PreserveConfiguredReadableTextAndTargetMinimums()
 RenderRegisteredComponent(model, children, config)
 // Local preview actions never mutate the game. Production host revalidates commands.
 On activation: DispatchSemanticIntent(model.intent, context)
@@ -22592,7 +22788,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -22603,7 +22799,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCB2",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:buttons",
   "active": true,
   "selected": false,
   "children": [
@@ -22624,6 +22820,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -22825,8 +23034,10 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 **Wide**
 
 ```text
-Footer right      [Confirm]
-Sole action       [       Confirm       ]
+Footer [ equal Back ] gap [ equal Confirm ]
+Solo   [          Confirm · 100%          ]
+Choice [ half 50% ] gap [ half 50% ]
+Presets: 25% · 30% · 50% · 100% of host
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -22836,8 +23047,10 @@ Sole action       [       Confirm       ]
 **Compact**
 
 ```text
-Footer right      [Confirm]
-Sole action       [       Confirm       ]
+Footer [ equal Back ] gap [ equal Confirm ]
+Solo   [          Confirm · 100%          ]
+Choice [ half 50% ] gap [ half 50% ]
+Presets: 25% · 30% · 50% · 100% of host
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -22850,8 +23063,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Footer right      [Confirm]
-Sole action       [       Confirm       ]
+Footer [ equal Back ] gap [ equal Confirm ]
+Solo   [          Confirm · 100%          ]
+Choice [ half 50% ] gap [ half 50% ]
+Presets: 25% · 30% · 50% · 100% of host
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -22865,8 +23080,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Footer right      [Confirm]
-Sole action       [       Confirm       ]
+Footer [ equal Back ] gap [ equal Confirm ]
+Solo   [          Confirm · 100%          ]
+Choice [ half 50% ] gap [ half 50% ]
+Presets: 25% · 30% · 50% · 100% of host
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -22883,9 +23100,31 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Bind model.label and model.intent. Ready and focused primary uses configured green; disabled and busy states take precedence. Revalidate command at activation.
+// Bind model.label and model.intent. Resolve widths from config.buttonWidths.presets and the configured role; percentages describe the owning content box, not the device viewport. Choice role defaults to half. Footer actions use equal shares of remaining inline width after configured gaps, or full when alone. Sibling labels never determine different button widths. Ready and focused primary uses configured green; disabled and busy states take precedence. Revalidate command at activation.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
+
+// Width presets are configuration data; percentages use the owning content box.
+hostWidth = MeasureContentWidth(context.buttonHost)
+role = ResolveButtonRole(model, context)
+preset = ResolveRolePreset(role, config.buttonWidths)
+// Choice role resolves to the shared half preset by default.
+requestedWidth = hostWidth * PercentFraction(config.buttonWidths.presets[preset])
+siblings = FilterVisibleSiblingButtons(IncludingCurrentButton(context.actionGroup, model))
+IF HasCompactGeometryException(context, config.buttonWidths)
+  width = ResolveConfiguredCompactGeometry(context)
+ELSE IF IsFooter(context) AND IsSoleAction(siblings)
+  width = hostWidth
+ELSE IF IsFooter(context) OR SharesButtonWidth(siblings)
+  gapWidth = BetweenItemGapCount(siblings) * ResolveSharedGap(config)
+  equalShare = AvailableAfterGaps(hostWidth, gapWidth) / Count(siblings)
+  width = IF IsFooter(context) THEN equalShare ELSE FitPresetToShare(requestedWidth, equalShare)
+ELSE
+  width = FitToHost(requestedWidth, hostWidth)
+// Apply the same resolved width to sibling text buttons, regardless of label length.
+ApplyEqualSiblingWidths(siblings, width)
+// Percent CSS is local to the host. Use viewport units only when the host is the viewport.
+KeepFooterInline(); PreserveConfiguredReadableTextAndTargetMinimums()
 RenderRegisteredComponent(model, children, config)
 // Local preview actions never mutate the game. Production host revalidates commands.
 On activation: DispatchSemanticIntent(model.intent, context)
@@ -22907,7 +23146,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -22918,7 +23157,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCB3",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:buttons",
   "active": true,
   "selected": false,
   "children": [],
@@ -22934,6 +23173,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -23135,7 +23387,9 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 **Wide**
 
 ```text
-Footer left [Back]        [Primary]
+Footer [ equal Back ] gap [ equal Primary ]
+Solo   [            Back · 100%           ]
+Width follows the shared sibling preset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -23145,7 +23399,9 @@ Footer left [Back]        [Primary]
 **Compact**
 
 ```text
-Footer left [Back]        [Primary]
+Footer [ equal Back ] gap [ equal Primary ]
+Solo   [            Back · 100%           ]
+Width follows the shared sibling preset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -23158,7 +23414,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Footer left [Back]        [Primary]
+Footer [ equal Back ] gap [ equal Primary ]
+Solo   [            Back · 100%           ]
+Width follows the shared sibling preset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -23172,7 +23430,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Footer left [Back]        [Primary]
+Footer [ equal Back ] gap [ equal Primary ]
+Solo   [            Back · 100%           ]
+Width follows the shared sibling preset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -23189,9 +23449,31 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Apply shared action contract with dismissal role. Use configured danger highlight on focus and pointer hover. Cancel presentation state and restore originating focus.
+// Apply shared action contract with dismissal role and the same config.buttonWidths preset as sibling footer actions. Deduct gaps before assigning equal widths; keep the footer inline, and span full host width when Back is the sole action. Use configured danger highlight on focus and pointer hover. Cancel presentation state and restore originating focus. Compact exit and icon controls inherit dismissal behavior while retaining their own target-size exception.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
+
+// Width presets are configuration data; percentages use the owning content box.
+hostWidth = MeasureContentWidth(context.buttonHost)
+role = ResolveButtonRole(model, context)
+preset = ResolveRolePreset(role, config.buttonWidths)
+// Choice role resolves to the shared half preset by default.
+requestedWidth = hostWidth * PercentFraction(config.buttonWidths.presets[preset])
+siblings = FilterVisibleSiblingButtons(IncludingCurrentButton(context.actionGroup, model))
+IF HasCompactGeometryException(context, config.buttonWidths)
+  width = ResolveConfiguredCompactGeometry(context)
+ELSE IF IsFooter(context) AND IsSoleAction(siblings)
+  width = hostWidth
+ELSE IF IsFooter(context) OR SharesButtonWidth(siblings)
+  gapWidth = BetweenItemGapCount(siblings) * ResolveSharedGap(config)
+  equalShare = AvailableAfterGaps(hostWidth, gapWidth) / Count(siblings)
+  width = IF IsFooter(context) THEN equalShare ELSE FitPresetToShare(requestedWidth, equalShare)
+ELSE
+  width = FitToHost(requestedWidth, hostWidth)
+// Apply the same resolved width to sibling text buttons, regardless of label length.
+ApplyEqualSiblingWidths(siblings, width)
+// Percent CSS is local to the host. Use viewport units only when the host is the viewport.
+KeepFooterInline(); PreserveConfiguredReadableTextAndTargetMinimums()
 RenderRegisteredComponent(model, children, config)
 // Local preview actions never mutate the game. Production host revalidates commands.
 On activation: DispatchSemanticIntent(model.intent, context)
@@ -23213,7 +23495,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -23224,7 +23506,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCB4",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:buttons",
   "active": true,
   "selected": false,
   "children": [],
@@ -23240,6 +23522,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -23519,7 +23814,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -23530,7 +23825,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCB5",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:buttons",
   "active": true,
   "selected": false,
   "children": [],
@@ -23546,6 +23841,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -23828,7 +24136,7 @@ Reuses the contract source boundary. Reference sample data and interaction styli
 
 **Referenced components:** [WCF1](wireframe-gallery.html#WCF1), [WCF2](wireframe-gallery.html#WCF2), [WCF3](wireframe-gallery.html#WCF3), [WCF4](wireframe-gallery.html#WCF4)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -23839,7 +24147,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCF0",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:contract",
   "active": true,
   "selected": false,
   "children": [
@@ -23872,6 +24180,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -24158,7 +24479,7 @@ Reuses the contract source boundary. Reference sample data and interaction styli
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -24169,7 +24490,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCF1",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:contract",
   "active": true,
   "selected": false,
   "children": [],
@@ -24185,6 +24506,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -24479,7 +24813,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 **Referenced components:** [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM6](wireframe-gallery.html#WCM6)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -24490,7 +24824,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCF2",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:status",
   "active": true,
   "selected": false,
   "children": [
@@ -24527,6 +24861,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -24798,7 +25145,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Observe owner selection once. Apply inherited glow to the entire visible assembly. Reveal inspect after config.selection.revealDelayMs. Cancel pending reveal on deselection and disposal.
+// Observe owner selection once. Apply inherited glow to the entire visible assembly, including the active lower stack. Reveal inspect after config.selection.revealDelayMs. Cancel pending reveal on deselection and disposal.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -24819,9 +25166,9 @@ Reuses the selection source boundary. Reference sample data and interaction styl
 - [src/ui/components/hand.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/hand.js#L1) — Current owner checkout (including inspected local edits)
 - [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WCB1](wireframe-gallery.html#WCB1), [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2)
+**Referenced components:** [WCB1](wireframe-gallery.html#WCB1), [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCF2](wireframe-gallery.html#WCF2)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -24832,7 +25179,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCF3",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:selection",
   "active": true,
   "selected": false,
   "children": [
@@ -24847,6 +25194,10 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     {
       "componentId": "WCI2",
       "modelRef": "model:WCI2"
+    },
+    {
+      "componentId": "WCF2",
+      "modelRef": "model:WCF2"
     }
   ],
   "configRef": "componentCompletionDefaults",
@@ -24861,6 +25212,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -25136,7 +25500,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project known values using registered detail providers. Render shared label/value columns in declared section order. Unknown is distinct from absent. Preserve one independently scrolling details pane.
+// Project known values using registered detail providers. Render HP, intent and defense as facts, never embed sprite-overlay components in this pane. Render shared label/value columns in declared section order. Omit inactive current-state fields; unknown is distinct from absent. Preserve one independently scrolling details pane.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -25157,9 +25521,9 @@ Reuses the inspector source boundary. Reference sample data and interaction styl
 - [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
 - [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WCM1](wireframe-gallery.html#WCM1), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2)
+**Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -25170,23 +25534,10 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCF4",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:inspector",
   "active": true,
   "selected": false,
-  "children": [
-    {
-      "componentId": "WCM1",
-      "modelRef": "model:WCM1"
-    },
-    {
-      "componentId": "WCO1",
-      "modelRef": "model:WCO1"
-    },
-    {
-      "componentId": "WCO2",
-      "modelRef": "model:WCO2"
-    }
-  ],
+  "children": [],
   "configRef": "componentCompletionDefaults",
   "dataSource": "immutable snapshot and knowledge-filtered registered providers",
   "sampleDataRef": "componentCompletionDefaults.samples"
@@ -25199,6 +25550,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -25493,7 +25857,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -25504,7 +25868,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCI0",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:identity",
   "active": true,
   "selected": false,
   "children": [
@@ -25533,6 +25897,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -25815,7 +26192,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -25826,7 +26203,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCI1",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:identity",
   "active": true,
   "selected": false,
   "children": [],
@@ -25842,6 +26219,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -26136,7 +26526,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -26147,7 +26537,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCI2",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:identity",
   "active": true,
   "selected": false,
   "children": [],
@@ -26163,6 +26553,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -26441,7 +26844,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -26452,7 +26855,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCI3",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:identity",
   "active": true,
   "selected": false,
   "children": [],
@@ -26468,6 +26871,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -26762,7 +27178,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 **Referenced components:** [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -26773,7 +27189,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCM0",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:meter",
   "active": true,
   "selected": false,
   "children": [
@@ -26814,6 +27230,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -27092,7 +27521,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -27103,7 +27532,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCM1",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:meter",
   "active": true,
   "selected": false,
   "children": [],
@@ -27119,6 +27548,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -27397,7 +27839,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 **Referenced components:** [WCM1](wireframe-gallery.html#WCM1)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -27408,7 +27850,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCM2",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:meter",
   "active": true,
   "selected": false,
   "children": [
@@ -27429,6 +27871,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -27707,7 +28162,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 **Referenced components:** [WCM2](wireframe-gallery.html#WCM2)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -27718,7 +28173,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCM3",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:meter",
   "active": true,
   "selected": false,
   "children": [
@@ -27739,6 +28194,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -28017,7 +28485,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -28028,7 +28496,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCM4",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:status",
   "active": true,
   "selected": false,
   "children": [],
@@ -28044,6 +28512,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -28322,7 +28803,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -28333,7 +28814,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCM5",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:status",
   "active": true,
   "selected": false,
   "children": [],
@@ -28349,6 +28830,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -28627,7 +29121,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 **Referenced components:** [WCM5](wireframe-gallery.html#WCM5)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -28638,7 +29132,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCM6",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:status",
   "active": true,
   "selected": false,
   "children": [
@@ -28659,6 +29153,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -28953,7 +29460,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -28964,7 +29471,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCO0",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:overlay",
   "active": true,
   "selected": false,
   "children": [
@@ -28997,6 +29504,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -29283,7 +29803,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -29294,7 +29814,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCO1",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:overlay",
   "active": true,
   "selected": false,
   "children": [],
@@ -29310,6 +29830,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -29592,7 +30125,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -29603,7 +30136,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCO2",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:overlay",
   "active": true,
   "selected": false,
   "children": [],
@@ -29619,6 +30152,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -29909,7 +30455,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** [WCI2](wireframe-gallery.html#WCI2)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -29920,7 +30466,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCO3",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:overlay",
   "active": true,
   "selected": false,
   "children": [
@@ -29941,6 +30487,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -30231,7 +30790,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** [WCI2](wireframe-gallery.html#WCI2)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -30242,7 +30801,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCO4",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:overlay",
   "active": true,
   "selected": false,
   "children": [
@@ -30263,6 +30822,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -30549,7 +31121,7 @@ Reuses the tooltip source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** [WCT1](wireframe-gallery.html#WCT1)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -30560,7 +31132,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCT0",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:tooltip",
   "active": true,
   "selected": false,
   "children": [
@@ -30581,6 +31153,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -30875,7 +31460,7 @@ Reuses the tooltip source boundary. Reference sample data and interaction stylin
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -30886,7 +31471,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WCT1",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:tooltip",
   "active": true,
   "selected": false,
   "children": [],
@@ -30902,6 +31487,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -31103,10 +31701,10 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 **Wide**
 
 ```text
-Shared HUD
+Shared HUD + optional blue XP strip
 Battlefield: player →   ← enemies
 Hand: [card] [card] [card]
-(A)[Draw][End turn][Discard](P)
+(A)[Draw][End turn][Discard](Potions)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -31116,10 +31714,10 @@ Hand: [card] [card] [card]
 **Compact**
 
 ```text
-Shared HUD
+Shared HUD + optional blue XP strip
 Battlefield: player →   ← enemies
 Hand: [card] [card] [card]
-(A)[Draw][End turn][Discard](P)
+(A)[Draw][End turn][Discard](Potions)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -31132,10 +31730,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Shared HUD
+Shared HUD + optional blue XP strip
 Battlefield: player →   ← enemies
 Hand: [card] [card] [card]
-(A)[Draw][End turn][Discard](P)
+(A)[Draw][End turn][Discard](Potions)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -31149,10 +31747,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Shared HUD
+Shared HUD + optional blue XP strip
 Battlefield: player →   ← enemies
 Hand: [card] [card] [card]
-(A)[Draw][End turn][Discard](P)
+(A)[Draw][End turn][Discard](Potions)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -31169,7 +31767,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose shared HUD, stage, hand and footer using scene band config. Child modules receive the same immutable snapshot and emit domain intents through the host dispatcher.
+// Compose shared HUD, stage, hand and footer using scene band config. Child modules receive the same immutable snapshot and emit domain intents through the host dispatcher. WGC11 is the single Potions control; it opens WGH8 charge-flask and carried-potion contents inside the footer.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -31192,7 +31790,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 **Referenced components:** [WGH4](wireframe-gallery.html#WGH4), [WGC1](wireframe-gallery.html#WGC1), [WGC5](wireframe-gallery.html#WGC5), [WGC6](wireframe-gallery.html#WGC6)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -31203,7 +31801,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGC0",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:stage",
   "active": true,
   "selected": false,
   "children": [
@@ -31236,6 +31834,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -31526,7 +32137,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 **Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGC2](wireframe-gallery.html#WGC2), [WGC3](wireframe-gallery.html#WGC3), [WGC4](wireframe-gallery.html#WGC4)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -31537,7 +32148,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGC1",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:stage",
   "active": true,
   "selected": false,
   "children": [
@@ -31570,6 +32181,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -31837,7 +32461,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Allocate the player slot and render shared combatant card with player-facing context. Intent is hidden by role default but configurable. Preserve sprite proportions.
+// Allocate player slots from config.scene.playerCount and stable actor IDs; render shared combatant cards with player-facing context. Intent is hidden by role default but configurable. Preserve sprite proportions. Counts are preview fixture configuration, not a gameplay party-size rule.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -31860,7 +32484,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 **Referenced components:** [WC4a](wireframe-gallery.html#WC4a)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -31871,7 +32495,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGC2",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:stage",
   "active": true,
   "selected": false,
   "children": [
@@ -31892,6 +32516,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -32155,7 +32792,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project stable enemy IDs to authored slots. Render the same combatant component with enemy-facing context and active intent; do not mirror controls or names.
+// Project stable enemy IDs to authored slots; the preview count comes from config.scene.enemyCount. Render the same combatant component with enemy-facing context and active intent; do not mirror controls or names.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -32178,7 +32815,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 **Referenced components:** [WC4a](wireframe-gallery.html#WC4a)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -32189,7 +32826,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGC3",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:stage",
   "active": true,
   "selected": false,
   "children": [
@@ -32210,6 +32847,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -32492,7 +33142,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 **Referenced components:** [WCF3](wireframe-gallery.html#WCF3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -32503,7 +33153,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGC4",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:stage",
   "active": true,
   "selected": false,
   "children": [
@@ -32524,6 +33174,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -32783,7 +33446,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project stable hand cards through the shared WC1 renderer. Use configured spacing and card ratio; fit/paginate when minimum readable width cannot fit. Do not implement draw or damage logic here.
+// Project stable hand cards through the shared WC1 renderer; reference fixtures resolve config.hand.fixtureIds through the registry. Use configured spacing and card ratio; fit/paginate when minimum readable width cannot fit. Do not implement draw or damage logic here.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -32806,7 +33469,7 @@ Reuses the hand source boundary. Reference sample data and interaction styling a
 
 **Referenced components:** [WC1](wireframe-gallery.html#WC1)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -32817,7 +33480,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGC5",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:hand",
   "active": true,
   "selected": false,
   "children": [
@@ -32838,6 +33501,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -33117,7 +33793,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 **Referenced components:** [WGC7](wireframe-gallery.html#WGC7), [WGC8](wireframe-gallery.html#WGC8), [WGC9](wireframe-gallery.html#WGC9), [WGC10](wireframe-gallery.html#WGC10), [WGC11](wireframe-gallery.html#WGC11)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -33128,7 +33804,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGC6",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:footer",
   "active": true,
   "selected": false,
   "children": [
@@ -33165,6 +33841,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -33448,7 +34137,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -33459,7 +34148,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGC7",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:footer",
   "active": true,
   "selected": false,
   "children": [],
@@ -33475,6 +34164,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -33754,7 +34456,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -33765,7 +34467,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGC8",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:footer",
   "active": true,
   "selected": false,
   "children": [
@@ -33786,6 +34488,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -34065,7 +34780,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -34076,7 +34791,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGC9",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:footer",
   "active": true,
   "selected": false,
   "children": [
@@ -34097,6 +34812,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -34376,7 +35104,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -34387,7 +35115,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGC10",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:footer",
   "active": true,
   "selected": false,
   "children": [
@@ -34408,6 +35136,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -34699,7 +35440,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 **Referenced components:** [WGH8](wireframe-gallery.html#WGH8), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -34710,7 +35451,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGC11",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:footer",
   "active": true,
   "selected": false,
   "children": [
@@ -34735,6 +35476,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -35133,6 +35887,16 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "animationMs": 650,
     "awardPreview": 15
   },
+  "diagram": {
+    "columns": {
+      "wide": 62,
+      "compact": 48,
+      "portraitSE": 40,
+      "portraitS24": 42
+    },
+    "trackColumns": 20,
+    "labelColumns": 8
+  },
   "layout": {
     "gapRem": 0.35,
     "insetRem": 0.5,
@@ -35193,9 +35957,9 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Wide**
 
 ```text
-HP      [████░]                 32 / 40
-Mana    [██████░░░░]    6 / 10
-Stamina [████████░░]    8 / 10
+HP      [███░]                32 / 40
+MP      [██████░░░░]          6 / 10
+Stamina [████████░░]          8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35205,9 +35969,9 @@ Stamina [████████░░]    8 / 10
 **Compact**
 
 ```text
-HP      [████░]                 32 / 40
-Mana    [██████░░░░]    6 / 10
-Stamina [████████░░]    8 / 10
+HP      [███░]                32 / 40
+MP      [██████░░░░]          6 / 10
+Stamina [████████░░]          8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35220,9 +35984,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-HP      [████░]                 32 / 40
-Mana    [██████░░░░]    6 / 10
-Stamina [████████░░]    8 / 10
+HP      [███░]                32 / 40
+MP      [██████░░░░]          6 / 10
+Stamina [████████░░]          8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35236,9 +36000,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-HP      [████░]                 32 / 40
-Mana    [██████░░░░]    6 / 10
-Stamina [████████░░]    8 / 10
+HP      [███░]                32 / 40
+MP      [██████░░░░]          6 / 10
+Stamina [████████░░]          8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35256,14 +36020,15 @@ INPUT resource snapshot, config.vitality, availableWidth
 // Current source resourceBarPlan separates track length from fill.
 FOR each configured active resource
   reference = config.vitality.referenceMaximum[resource.id]
-  allowedWidth = availableWidth * PercentFraction(config.vitality.maximumWidthPercent)
-  trackWidth = IF config.vitality.scaleByMaximum THEN ClampToHost(resource.maximum / reference * allowedWidth) ELSE allowedWidth
+  meterLaneWidth = ReserveExternalLabelColumns(availableWidth, localizedLabels, currentMaxValues)
+  allowedWidth = meterLaneWidth * ClampUnit(PercentFraction(config.vitality.maximumWidthPercent))
+  trackWidth = IF config.vitality.scaleByMaximum THEN ClampToRange(resource.maximum / reference * allowedWidth, EmptyLength(), allowedWidth) ELSE allowedWidth
   fillWidth = SafeProgressFraction(resource.current, resource.maximum) * trackWidth
   RenderTrack(trackWidth); RenderFill(fillWidth)
   RenderExternalValue(resource.current, resource.maximum)
 // Current/max label occupies a shared outside column, never squeezed inside a short track.
 // Reference maximum caps presentation width only; never caps domain maximum or value.
-// Proposed reference defaults: read config; current source uses different mana/stamina references.
+// Defaults and source references currently agree; read config rather than retyping their maxima.
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -35379,6 +36144,16 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "heightRem": 0.35,
     "animationMs": 650,
     "awardPreview": 15
+  },
+  "diagram": {
+    "columns": {
+      "wide": 62,
+      "compact": 48,
+      "portraitSE": 40,
+      "portraitS24": 42
+    },
+    "trackColumns": 20,
+    "labelColumns": 8
   },
   "layout": {
     "gapRem": 0.35,
@@ -35605,6 +36380,16 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "animationMs": 650,
     "awardPreview": 15
   },
+  "diagram": {
+    "columns": {
+      "wide": 62,
+      "compact": 48,
+      "portraitSE": 40,
+      "portraitS24": 42
+    },
+    "trackColumns": 20,
+    "labelColumns": 8
+  },
   "layout": {
     "gapRem": 0.35,
     "insetRem": 0.5,
@@ -35830,6 +36615,16 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "animationMs": 650,
     "awardPreview": 15
   },
+  "diagram": {
+    "columns": {
+      "wide": 62,
+      "compact": 48,
+      "portraitSE": 40,
+      "portraitS24": 42
+    },
+    "trackColumns": 20,
+    "labelColumns": 8
+  },
   "layout": {
     "gapRem": 0.35,
     "insetRem": 0.5,
@@ -35890,15 +36685,15 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Wide**
 
 ```text
-┌─────────────────────────────────────────────────────┐
-│ Class: Warden       Cinders: 120       Act 1 Floor 4 │
-│ HP      ████████░░ 32/40     [Armoury] [Menu]        │
-│ Mana    ██████░░░░  6/10                            │
-│ Stamina ███████░░░  8/10                            │
-├─────────────────────────────────────────────────────┤
-│ [Ash seal] [Ember charm]                           │
-└─────────────────────────────────────────────────────┘
-████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+┌──────────────────────────────────────────────────────────────┐
+│Warden · Cinders 120 · Act 1 Floor 4                          │
+│HP      [███░]                32 / 40                         │
+│MP      [██████░░░░]          6 / 10                          │
+│Stamina [████████░░]          8 / 10                          │
+│[Armoury] [Menu]                                              │
+│[Ash seal] [Ember charm]                                      │
+└──────────────────────────────────────────────────────────────┘
+█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35908,15 +36703,15 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Compact**
 
 ```text
-┌─────────────────────────────────────────────────────┐
-│ Class: Warden       Cinders: 120       Act 1 Floor 4 │
-│ HP      ████████░░ 32/40     [Armoury] [Menu]        │
-│ Mana    ██████░░░░  6/10                            │
-│ Stamina ███████░░░  8/10                            │
-├─────────────────────────────────────────────────────┤
-│ [Ash seal] [Ember charm]                           │
-└─────────────────────────────────────────────────────┘
-████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+┌──────────────────────────────────────────────────────────────┐
+│Warden · Cinders 120 · Act 1 Floor 4                          │
+│HP      [███░]                32 / 40                         │
+│MP      [██████░░░░]          6 / 10                          │
+│Stamina [████████░░]          8 / 10                          │
+│[Armoury] [Menu]                                              │
+│[Ash seal] [Ember charm]                                      │
+└──────────────────────────────────────────────────────────────┘
+█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35929,14 +36724,15 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-┌──────────────────────────────┐
-│ Warden    ⛁120    Act1 Floor4│
-│ HP  █████░░ 32/40 [⚔] [☰]   │
-│ MP  ███░░░░  6/10           │
-│ STA ████░░░  8/12           │
-│ [Relics]                   │
-└──────────────────────────────┘
-████████████░░░░░░░░░░░░░░░░░░
+┌────────────────────────────────────────┐
+│Warden · Cinders 120 · Act 1 Floor 4    │
+│HP      [███░]                32 / 40   │
+│MP      [██████░░░░]          6 / 10    │
+│Stamina [████████░░]          8 / 10    │
+│[Armoury] [Menu]                        │
+│[Ash seal] [Ember charm]                │
+└────────────────────────────────────────┘
+████████████████░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35950,14 +36746,15 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-┌──────────────────────────────┐
-│ Warden    ⛁120    Act1 Floor4│
-│ HP  █████░░ 32/40 [⚔] [☰]   │
-│ MP  ███░░░░  6/10           │
-│ STA ████░░░  8/12           │
-│ [Relics]                   │
-└──────────────────────────────┘
-████████████░░░░░░░░░░░░░░░░░░
+┌────────────────────────────────────────┐
+│Warden · Cinders 120 · Act 1 Floor 4    │
+│HP      [███░]                32 / 40   │
+│MP      [██████░░░░]          6 / 10    │
+│Stamina [████████░░]          8 / 10    │
+│[Armoury] [Menu]                        │
+│[Ash seal] [Ember charm]                │
+└────────────────────────────────────────┘
+████████████████░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36106,6 +36903,16 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "animationMs": 650,
     "awardPreview": 15
   },
+  "diagram": {
+    "columns": {
+      "wide": 62,
+      "compact": 48,
+      "portraitSE": 40,
+      "portraitS24": 42
+    },
+    "trackColumns": 20,
+    "labelColumns": 8
+  },
   "layout": {
     "gapRem": 0.35,
     "insetRem": 0.5,
@@ -36166,8 +36973,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Wide**
 
 ```text
-████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
-Blue fill / full host width / no permanent caption
+█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+Blue strip · 0.35rem · full host width
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36177,8 +36984,8 @@ Blue fill / full host width / no permanent caption
 **Compact**
 
 ```text
-████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
-Blue fill / full host width / no permanent caption
+█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+Blue strip · 0.35rem · full host width
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36191,8 +36998,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
-Blue fill / full host width / no permanent caption
+████████████████░░░░░░░░░░░░░░░░░░░░░░░░
+Blue strip · 0.35rem · full host width
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36206,8 +37013,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
-Blue fill / full host width / no permanent caption
+████████████████░░░░░░░░░░░░░░░░░░░░░░░░
+Blue strip · 0.35rem · full host width
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36341,6 +37148,16 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "animationMs": 650,
     "awardPreview": 15
   },
+  "diagram": {
+    "columns": {
+      "wide": 62,
+      "compact": 48,
+      "portraitSE": 40,
+      "portraitS24": 42
+    },
+    "trackColumns": 20,
+    "labelColumns": 8
+  },
   "layout": {
     "gapRem": 0.35,
     "insetRem": 0.5,
@@ -36401,7 +37218,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Wide**
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]
+[Ash seal] [Ember charm]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36411,7 +37228,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Compact**
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]
+[Ash seal] [Ember charm]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36424,7 +37241,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]
+[Ash seal] [Ember charm]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36438,7 +37255,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Relic: Ash seal] [Relic: Ember charm]
+[Ash seal] [Ember charm]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36466,7 +37283,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 - [src/ui/components/hudmeta.js:120](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/hudmeta.js#L120) — Current owner checkout (including inspected local edits)
 - [src/ui/models/InventoryBeltModel.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/models/InventoryBeltModel.js#L1) — Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WC2b](wireframe-gallery.html#WC2b), [WC2c](wireframe-gallery.html#WC2c)
+**Referenced components:** [WC2b](wireframe-gallery.html#WC2b)
 
 **Actual reference code:** [hud-reference-client.js](hud-reference-client.js), [hud-reference.mjs](hud-reference.mjs)
 
@@ -36566,6 +37383,16 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "animationMs": 650,
     "awardPreview": 15
   },
+  "diagram": {
+    "columns": {
+      "wide": 62,
+      "compact": 48,
+      "portraitSE": 40,
+      "portraitS24": 42
+    },
+    "trackColumns": 20,
+    "labelColumns": 8
+  },
   "layout": {
     "gapRem": 0.35,
     "insetRem": 0.5,
@@ -36626,7 +37453,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Wide**
 
 ```text
-Class: Warden           Cinders: 120           Act 1 · Floor 4
+Warden · Cinders 120 · Act 1 Floor 4
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36636,7 +37463,7 @@ Class: Warden           Cinders: 120           Act 1 · Floor 4
 **Compact**
 
 ```text
-Class: Warden           Cinders: 120           Act 1 · Floor 4
+Warden · Cinders 120 · Act 1 Floor 4
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36649,7 +37476,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Class: Warden           Cinders: 120           Act 1 · Floor 4
+Warden · Cinders 120 · Act 1 Floor 4
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36663,7 +37490,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Class: Warden           Cinders: 120           Act 1 · Floor 4
+Warden · Cinders 120 · Act 1 Floor 4
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36791,6 +37618,16 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "animationMs": 650,
     "awardPreview": 15
   },
+  "diagram": {
+    "columns": {
+      "wide": 62,
+      "compact": 48,
+      "portraitSE": 40,
+      "portraitS24": 42
+    },
+    "trackColumns": 20,
+    "labelColumns": 8
+  },
   "layout": {
     "gapRem": 0.35,
     "insetRem": 0.5,
@@ -36851,8 +37688,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Wide**
 
 ```text
-[WGC11 Potions]
-    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]
+[WGC11 Potions · footer only]
+[HP ×2] [MP ×1] [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36862,8 +37699,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 **Compact**
 
 ```text
-[WGC11 Potions]
-    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]
+[WGC11 Potions · footer only]
+[HP ×2] [MP ×1] [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36876,8 +37713,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[WGC11 Potions]
-    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]
+[WGC11 Potions · footer only]
+[HP ×2] [MP ×1] [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -36891,8 +37728,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[WGC11 Potions]
-    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]
+[WGC11 Potions · footer only]
+[HP ×2] [MP ×1] [Smoke vial ×1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -37024,6 +37861,16 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "heightRem": 0.35,
     "animationMs": 650,
     "awardPreview": 15
+  },
+  "diagram": {
+    "columns": {
+      "wide": 62,
+      "compact": 48,
+      "portraitSE": 40,
+      "portraitS24": 42
+    },
+    "trackColumns": 20,
+    "labelColumns": 8
   },
   "layout": {
     "gapRem": 0.35,
@@ -37251,6 +38098,16 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
     "animationMs": 650,
     "awardPreview": 15
   },
+  "diagram": {
+    "columns": {
+      "wide": 62,
+      "compact": 48,
+      "portraitSE": 40,
+      "portraitS24": 42
+    },
+    "trackColumns": 20,
+    "labelColumns": 8
+  },
   "layout": {
     "gapRem": 0.35,
     "insetRem": 0.5,
@@ -37312,6 +38169,7 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 
 ```text
 Shared HUD
+Region [Ashen March ▾]
 Map viewport: connected node graph
 Selected node: known details
 [Recenter]                 [Enter town]
@@ -37325,6 +38183,7 @@ Selected node: known details
 
 ```text
 Shared HUD
+Region [Ashen March ▾]
 Map viewport: connected node graph
 Selected node: known details
 [Recenter]                 [Enter town]
@@ -37341,6 +38200,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 ```text
 Shared HUD
+Region [Ashen March ▾]
 Map viewport: connected node graph
 Selected node: known details
 [Recenter]                 [Enter town]
@@ -37358,6 +38218,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 Shared HUD
+Region [Ashen March ▾]
 Map viewport: connected node graph
 Selected node: known details
 [Recenter]                 [Enter town]
@@ -37377,7 +38238,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose shared HUD, camera viewport, selected-node details and inline footer. Use configured map bands; selection projects details and never enters a node immediately.
+// Compose shared HUD, region selector, camera viewport, selected-node details and inline footer. Use configured map bands; node-selection callback updates details and entry readiness without entering immediately. Region selection is separate from camera graph contents.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -37397,9 +38258,9 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 - [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
 - [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/styles/map.css#L1) — Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WGH4](wireframe-gallery.html#WGH4), [WGM1](wireframe-gallery.html#WGM1), [WGM4](wireframe-gallery.html#WGM4), [WGM6](wireframe-gallery.html#WGM6), [WGM7](wireframe-gallery.html#WGM7)
+**Referenced components:** [WGH4](wireframe-gallery.html#WGH4), [WGM5](wireframe-gallery.html#WGM5), [WGM1](wireframe-gallery.html#WGM1), [WGM4](wireframe-gallery.html#WGM4), [WGM6](wireframe-gallery.html#WGM6), [WGM7](wireframe-gallery.html#WGM7)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -37410,13 +38271,17 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGM0",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:map",
   "active": true,
   "selected": false,
   "children": [
     {
       "componentId": "WGH4",
       "modelRef": "model:WGH4"
+    },
+    {
+      "componentId": "WGM5",
+      "modelRef": "model:WGM5"
     },
     {
       "componentId": "WGM1",
@@ -37447,6 +38312,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -37718,7 +38596,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Render graph paths and buttons in a shared camera coordinate space. Preserve node identity during pan/zoom. Apply knowledge filtering before rendering unknown node labels.
+// Render graph paths and buttons in a shared camera coordinate space. Preserve node identity during pan/zoom. Apply knowledge filtering before rendering unknown node labels. Publish selected-node model to the WGM4 details host; the sibling WGM5 owns region selection.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -37738,9 +38616,9 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 - [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
 - [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/styles/map.css#L1) — Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WGM2](wireframe-gallery.html#WGM2), [WGM3](wireframe-gallery.html#WGM3), [WGM5](wireframe-gallery.html#WGM5)
+**Referenced components:** [WGM2](wireframe-gallery.html#WGM2), [WGM3](wireframe-gallery.html#WGM3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -37751,7 +38629,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGM1",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:map",
   "active": true,
   "selected": false,
   "children": [
@@ -37762,10 +38640,6 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     {
       "componentId": "WGM3",
       "modelRef": "model:WGM3"
-    },
-    {
-      "componentId": "WGM5",
-      "modelRef": "model:WGM5"
     }
   ],
   "configRef": "componentCompletionDefaults",
@@ -37780,6 +38654,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -38073,7 +38960,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -38084,7 +38971,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGM2",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:map",
   "active": true,
   "selected": false,
   "children": [],
@@ -38100,6 +38987,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -38377,7 +39277,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -38388,7 +39288,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGM3",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:map",
   "active": true,
   "selected": false,
   "children": [
@@ -38409,6 +39309,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -38698,7 +39611,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 **Referenced components:** [WCF4](wireframe-gallery.html#WCF4)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -38709,7 +39622,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGM4",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:map",
   "active": true,
   "selected": false,
   "children": [
@@ -38730,6 +39643,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -39007,7 +39933,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -39018,7 +39944,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGM5",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:map",
   "active": true,
   "selected": false,
   "children": [],
@@ -39034,6 +39960,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -39311,7 +40250,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -39322,7 +40261,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGM6",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:map",
   "active": true,
   "selected": false,
   "children": [
@@ -39343,6 +40282,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -39620,7 +40572,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -39631,7 +40583,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGM7",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:map",
   "active": true,
   "selected": false,
   "children": [
@@ -39652,6 +40604,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -41157,7 +42122,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 **Referenced components:** [WGQ1](wireframe-gallery.html#WGQ1), [WGQ4](wireframe-gallery.html#WGQ4), [WGQ5](wireframe-gallery.html#WGQ5), [WGQ6](wireframe-gallery.html#WGQ6), [WGQ7](wireframe-gallery.html#WGQ7), [WGQ8](wireframe-gallery.html#WGQ8)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -41168,7 +42133,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGQ0",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:dialogue",
   "active": true,
   "selected": false,
   "children": [
@@ -41209,6 +42174,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -41500,7 +42478,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 **Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGQ2](wireframe-gallery.html#WGQ2), [WGQ3](wireframe-gallery.html#WGQ3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -41511,7 +42489,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGQ1",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:dialogue",
   "active": true,
   "selected": false,
   "children": [
@@ -41540,6 +42518,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -41823,7 +42814,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 **Referenced components:** [WCI2](wireframe-gallery.html#WCI2)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -41834,7 +42825,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGQ2",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:dialogue",
   "active": true,
   "selected": false,
   "children": [
@@ -41855,6 +42846,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -42138,7 +43142,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 **Referenced components:** [WCI2](wireframe-gallery.html#WCI2)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -42149,7 +43153,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGQ3",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:dialogue",
   "active": true,
   "selected": false,
   "children": [
@@ -42170,6 +43174,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -42457,7 +43474,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -42468,7 +43485,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGQ4",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:dialogue",
   "active": true,
   "selected": false,
   "children": [
@@ -42489,6 +43506,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -42772,7 +43802,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -42783,7 +43813,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGQ5",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:dialogue",
   "active": true,
   "selected": false,
   "children": [],
@@ -42799,6 +43829,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -43078,7 +44121,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -43089,7 +44132,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGQ6",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:dialogue",
   "active": true,
   "selected": false,
   "children": [
@@ -43110,6 +44153,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -43389,7 +44445,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -43400,7 +44456,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGQ7",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:dialogue",
   "active": true,
   "selected": false,
   "children": [
@@ -43421,6 +44477,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -43700,7 +44769,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -43711,7 +44780,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGQ8",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:dialogue",
   "active": true,
   "selected": false,
   "children": [
@@ -43732,6 +44801,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -44030,7 +45112,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 **Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -44041,7 +45123,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGS0",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:background",
   "active": true,
   "selected": false,
   "children": [
@@ -44066,6 +45148,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -44364,7 +45459,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 **Referenced components:** [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -44375,7 +45470,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGS1",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:background",
   "active": true,
   "selected": false,
   "children": [
@@ -44400,6 +45495,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -44603,7 +45711,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```text
 Class          Cinders          Act / Floor
 Resource meters               Armoury Menu
-Relic rail                      Potion rail
+Relic rail
+Blue experience strip when configured
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -44615,7 +45724,8 @@ Relic rail                      Potion rail
 ```text
 Class          Cinders          Act / Floor
 Resource meters               Armoury Menu
-Relic rail                      Potion rail
+Relic rail
+Blue experience strip when configured
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -44630,7 +45740,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
 Class          Cinders          Act / Floor
 Resource meters               Armoury Menu
-Relic rail                      Potion rail
+Relic rail
+Blue experience strip when configured
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -44646,7 +45757,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
 Class          Cinders          Act / Floor
 Resource meters               Armoury Menu
-Relic rail                      Potion rail
+Relic rail
+Blue experience strip when configured
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -44663,7 +45775,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Render the shared RunHud view model through WGH4. Toggle configured children before layout; never maintain separate combat and map HUD facts.
+// Render the shared RunHud view model through WGH4. Toggle configured children before layout; never maintain separate combat and map HUD facts. WGH5 experience fills the full HUD host width directly below the HUD and defaults to combat context. Potions are exclusively WGC11 footer contents through WGH8; no potion or charge-flask button appears in the top HUD in either preview preset.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -44678,7 +45790,7 @@ On dispose: release timers, observers and events
 <!-- reference-metadata:start -->
 **Source description and inheritance**
 
-Reuses the hud source boundary. Source HUD is class/Cinders/Act/Floor, resource meters, Armoury/Menu, and detached relic/potion rail. Newly requested experience bar is separately configured by the HUD reference.
+Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, resource meters, Armoury/Menu, and inventory providers. The owner-requested reference supersedes source potion placement: top HUD contains relics only, while WGC11 opens WGH8 combined charge-flask and carried-potion contents exclusively in the footer in both presets. The proposed configurable WGH5 blue experience strip spans the full host width below the HUD, combat-only by default.
 
 - [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
 - [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
@@ -44686,7 +45798,7 @@ Reuses the hud source boundary. Source HUD is class/Cinders/Act/Floor, resource 
 
 **Referenced components:** [WGH4](wireframe-gallery.html#WGH4)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -44697,7 +45809,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGS2",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:hud",
   "active": true,
   "selected": false,
   "children": [
@@ -44718,6 +45830,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -44973,7 +46098,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project class identity and run metadata from RunHeaderModel. Reuse shared header renderer rather than adding portrait, XP or duplicate character facts.
+// Project class identity and run metadata from RunHeaderModel using the same WGH7 header contract. This identity row contains only its declared fields; the separately configured WGH5 experience strip belongs below the total HUD.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -44988,7 +46113,7 @@ On dispose: release timers, observers and events
 <!-- reference-metadata:start -->
 **Source description and inheritance**
 
-Reuses the hud source boundary. Source HUD is class/Cinders/Act/Floor, resource meters, Armoury/Menu, and detached relic/potion rail. Newly requested experience bar is separately configured by the HUD reference.
+Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, resource meters, Armoury/Menu, and inventory providers. The owner-requested reference supersedes source potion placement: top HUD contains relics only, while WGC11 opens WGH8 combined charge-flask and carried-potion contents exclusively in the footer in both presets. The proposed configurable WGH5 blue experience strip spans the full host width below the HUD, combat-only by default.
 
 - [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
 - [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
@@ -44996,7 +46121,7 @@ Reuses the hud source boundary. Source HUD is class/Cinders/Act/Floor, resource 
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -45007,7 +46132,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGS3",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:hud",
   "active": true,
   "selected": false,
   "children": [
@@ -45028,6 +46153,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -45302,7 +46440,7 @@ On dispose: release timers, observers and events
 <!-- reference-metadata:start -->
 **Source description and inheritance**
 
-Reuses the hud source boundary. Source HUD is class/Cinders/Act/Floor, resource meters, Armoury/Menu, and detached relic/potion rail. Newly requested experience bar is separately configured by the HUD reference.
+Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, resource meters, Armoury/Menu, and inventory providers. The owner-requested reference supersedes source potion placement: top HUD contains relics only, while WGC11 opens WGH8 combined charge-flask and carried-potion contents exclusively in the footer in both presets. The proposed configurable WGH5 blue experience strip spans the full host width below the HUD, combat-only by default.
 
 - [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
 - [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
@@ -45310,7 +46448,7 @@ Reuses the hud source boundary. Source HUD is class/Cinders/Act/Floor, resource 
 
 **Referenced components:** [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -45321,7 +46459,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGS4",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:hud",
   "active": true,
   "selected": false,
   "children": [
@@ -45346,6 +46484,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -45547,7 +46698,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 **Wide**
 
 ```text
-HUD right        [Armoury] [Menu]
+HUD right                 [Menu]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -45557,7 +46708,7 @@ HUD right        [Armoury] [Menu]
 **Compact**
 
 ```text
-HUD right        [Armoury] [Menu]
+HUD right                 [Menu]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -45570,7 +46721,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-HUD right        [Armoury] [Menu]
+HUD right                 [Menu]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -45584,7 +46735,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-HUD right        [Armoury] [Menu]
+HUD right                 [Menu]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -45601,7 +46752,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose shared menu action with accessible label and command intent. Opening a menu follows configured simulation/input policy.
+// Compose the shared Menu action only, equivalent to the WGH3 menu slot; WGH2 owns the separate Armoury action. Opening a menu follows configured simulation/input policy and restores trigger focus on dismissal.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -45616,7 +46767,7 @@ On dispose: release timers, observers and events
 <!-- reference-metadata:start -->
 **Source description and inheritance**
 
-Reuses the hud source boundary. Source HUD is class/Cinders/Act/Floor, resource meters, Armoury/Menu, and detached relic/potion rail. Newly requested experience bar is separately configured by the HUD reference.
+Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, resource meters, Armoury/Menu, and inventory providers. The owner-requested reference supersedes source potion placement: top HUD contains relics only, while WGC11 opens WGH8 combined charge-flask and carried-potion contents exclusively in the footer in both presets. The proposed configurable WGH5 blue experience strip spans the full host width below the HUD, combat-only by default.
 
 - [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
 - [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
@@ -45624,7 +46775,7 @@ Reuses the hud source boundary. Source HUD is class/Cinders/Act/Floor, resource 
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -45635,7 +46786,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGS5",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:hud",
   "active": true,
   "selected": false,
   "children": [
@@ -45656,6 +46807,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -45950,7 +47114,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -45961,7 +47125,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGS6",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:background",
   "active": true,
   "selected": false,
   "children": [],
@@ -45977,6 +47141,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -46333,7 +47510,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
@@ -46344,7 +47521,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```json
 {
   "id": "WGS7",
-  "entityRef": "sample:combatant",
+  "contextRef": "sample:background",
   "active": true,
   "selected": false,
   "children": [],
@@ -46360,6 +47537,19 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```json
 {
+  "buttonWidths": {
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,

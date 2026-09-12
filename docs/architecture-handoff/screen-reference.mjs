@@ -1,8 +1,9 @@
 // Executable documentation models. Sample records are not game balance data.
+import {buttonWidths} from './button-widths.mjs';
 const source = (file, symbol) => ({file, symbol, status:'Current source reference; proposed W0/W1 layout'});
 const screen = (categories, primary, references, extra={}) => ({categories, primary, references, ...extra});
 const row = (label, value, kind='fact') => ({label,value,kind});
-export const screenConfig={inset:'1rem',gap:'.5rem',sidebarShare:'26%',minimumTarget:'2.75rem',bodyHeight:'26rem',portraitBodyHeight:'25rem',previewCardWidth:'12rem',controls:{rangeMin:0,rangeMax:150,rangeStep:5,attributeMin:0,attributeMax:20,attributeStep:1,attributeBudget:3},headerShare:10,bodyShare:80,footerShare:10};
+export const screenConfig={buttonWidths,inset:'1rem',gap:'.5rem',sidebarShare:'26%',minimumTarget:'2.75rem',bodyHeight:'26rem',portraitBodyHeight:'25rem',previewCardWidth:'12rem',controls:{rangeMin:0,rangeMax:150,rangeStep:5,attributeMin:0,attributeMax:20,attributeStep:1,attributeBudget:3},headerShare:10,bodyShare:80,footerShare:10};
 export const screenModels={
  W0:screen({Body:[row('Model','Immutable snapshot'),row('Input','Semantic intent'),row('Layout','Header / active body / inline footer')]},'Confirm',[source('src/ui/components/modalShell.js','modalCloseButton')]),
  W1:screen({Overview:[row('Selected category','Overview'),row('Shared body','Registered component composition')],Details:[row('State','Changes with selected category')]},null,[source('src/ui/components/modalShell.js','modalFooter')]),
